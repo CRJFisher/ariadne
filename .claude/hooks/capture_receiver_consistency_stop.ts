@@ -5,13 +5,14 @@
  *
  * Runs only when a changed file is a `queries/*.scm` query or a
  * `capture_handlers/*.ts` receiver — the two inputs that can put the registry
- * and the emitted captures out of sync. The invariant logic lives in
- * capture_receiver_consistency.ts; this wrapper supplies git state and the
- * filesystem read.
+ * and the emitted captures out of sync. The invariant logic, the trigger
+ * predicate, and the topology file reads all live in
+ * capture_receiver_consistency.ts; this wrapper supplies git state and stdin.
  *
- * Dead handlers block: an unreachable handler is cheap to delete, so re-blocking
- * until it is gone is the intended behavior (matching stage_boundary_stop.ts).
- * Orphan captures only warn: an emitted capture with no handler is often
+ * Blocks deterministically with no stop_hook_active guard (matching
+ * stage_boundary_stop.ts): an unreachable handler is cheap to delete, so
+ * re-blocking every Stop until it is gone is the intended behavior. Orphan
+ * captures only warn — an emitted capture with no handler is often
  * work-in-progress, and blocking it would wedge a query author mid-change.
  *
  * WHY try/catch → silent exit 0: a crashing guard must fail open rather than
@@ -26,26 +27,15 @@ import {
 } from "./utils.js";
 import {
   check_project,
+  is_trigger_file,
   format_dead_handlers,
   format_orphan_captures,
 } from "./capture_receiver_consistency.js";
 
 const log = create_logger("capture-receiver-consistency");
 
-const QUERY_FILE = /query_code_tree\/queries\/.+\.scm$/;
-const RECEIVER_FILE = /query_code_tree\/capture_handlers\/.+\.ts$/;
-
-function is_trigger_file(repo_path: string): boolean {
-  if (repo_path.endsWith(".test.ts")) return false;
-  return QUERY_FILE.test(repo_path) || RECEIVER_FILE.test(repo_path);
-}
-
 function main(): void {
-  const input = parse_stdin();
-  if (input && input.stop_hook_active) {
-    log("Skipping - already running from stop hook (stop_hook_active=true)");
-    return;
-  }
+  parse_stdin();
 
   const project_dir = get_project_dir();
   const changed = get_changed_files(project_dir);

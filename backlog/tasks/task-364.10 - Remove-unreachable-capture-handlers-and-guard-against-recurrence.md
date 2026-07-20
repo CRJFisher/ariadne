@@ -1,7 +1,7 @@
 ---
 id: TASK-364.10
 title: "Remove unreachable capture handlers and guard against recurrence"
-status: To Do
+status: Done
 assignee: []
 labels:
   - hygiene
@@ -136,12 +136,52 @@ not a delete list:
 
 <!-- SECTION:NOTES:BEGIN -->
 
-Surfaced by TASK-364.8, which fixed a real bug (`Duplicate export name`) in the
-one live re-export handler and left its seven dead siblings in place. The
-dispatch site to model is `process_definitions` in
-`packages/core/src/index_single_file/index_single_file.ts` (`registry[capture.name]`).
-The hook pattern to follow: `.claude/hooks/<name>.ts` (pure logic + colocated
-`.test.ts`) plus `<name>_stop.ts` (git/stdin wrapper using
-`get_changed_files`), registered in `.claude/settings.json` `hooks.Stop`.
+## High-level summary
+
+Definition capture handlers dispatch by an exact `registry[capture.name]` lookup
+in `process_definitions` (`packages/core/src/index_single_file/index_single_file.ts`),
+with no normalization and no prefix fallback. That makes two silent failure
+modes possible: a handler registered under a key no `.scm` query emits is
+unreachable dead code, and a capture a query emits with no matching handler is
+silently dropped. TASK-364.8 exposed the first mode in the re-export handlers; a
+full cross-reference showed it was systemic across all three languages.
+
+A pure module, `.claude/hooks/capture_receiver_consistency.ts`, models the
+dispatch exactly. It parses each `queries/*.scm` for emitted `@<name>` captures
+(ignoring `;` comments and predicate-only names) and each
+`capture_handlers.<lang>.ts` for registry keys, reads the
+`...JAVASCRIPT_HANDLERS` spread edge that makes JS handlers reachable from
+TypeScript straight out of the registry file, and reports **dead handlers** and
+**orphan captures**. It ships a CLI entry and a colocated test whose live-repo
+integration case asserts zero dead handlers and pins the known orphans.
+`capture_receiver_consistency_stop.ts` runs it as a Stop hook when a query or
+receiver file changed — blocking deterministically on dead handlers (cheap to
+delete), warning on orphans (often work-in-progress) — registered in
+`.claude/settings.json`.
+
+The check confirmed 44 unreachable handlers, all removed with their registry
+entries and dead-only tests across JavaScript (14), Python (19), and Rust (11);
+`control_flow_variable_handlers.python.ts` disappeared entirely once its five
+handlers proved dead. No shared helper lost its last caller. Two direct unit
+tests were restored for live neighbours the deleted dead-handler tests had
+incidentally exercised (JS `definition.parameter`; Rust pub/private type-alias
+`is_exported`).
+
+**Where to start:** the invariant is documented in
+`.claude/rules/semantic-indexing.md` (Capture/Receiver Consistency). The model
+lives in `capture_receiver_consistency.ts` — `check_consistency` is the core;
+the trigger predicate and block-vs-warn policy live in the `_stop.ts` wrapper.
+
+**Watch:** two orphan captures remain by decision, not oversight —
+`@definition.type_parameter` (TypeScript) and `@decorator.macro` (Rust) are
+emitted with no handler, so their extraction never runs. They are pinned by an
+integration test and warned by the hook; writing handlers (or dropping the
+captures) is real feature work, a candidate follow-up task. The hook files are
+typecheck-gated via `.claude/hooks/tsconfig.json`, not covered by `pnpm lint`
+(consistent with every sibling hook). Orphan detection is scoped to the
+`definition`/`decorator`/`import` categories; the `assignment` family is
+deliberately excluded because it is dominated by reference-pass captures, and
+its one dispatched key (`assignment.property`) stays honest through the
+dead-handler side.
 
 <!-- SECTION:NOTES:END -->

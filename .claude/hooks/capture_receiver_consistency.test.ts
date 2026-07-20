@@ -4,35 +4,23 @@ import path from "path";
 import { fileURLToPath } from "url";
 import {
   parse_emitted_captures,
+  strip_scm_comments,
   parse_registry,
   check_consistency,
   check_project,
+  is_trigger_file,
+  format_dead_handlers,
+  format_orphan_captures,
+  REGISTRY_TOPOLOGY,
   RegistryModel,
   DEFINITION_DISPATCH_CATEGORIES,
 } from "./capture_receiver_consistency.js";
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 
-function model(
-  language: string,
-  registry_symbol: string,
-  registry_ts: string,
-  emitted: string[],
-  spreads: string[] = [],
-): RegistryModel {
-  return {
-    source: {
-      language,
-      registry_symbol,
-      registry_file: `${language}.ts`,
-      query_file: `${language}.scm`,
-      spreads,
-    },
-    parsed: parse_registry(registry_ts, registry_symbol),
-    emitted: new Set(emitted),
-  };
-}
-
+// Build a registry object literal fixture. `spreads` become `...SYMBOL` lines,
+// which parse_registry reads — the model derives spread edges from these, not
+// from any separately-declared topology.
 function registry(symbol: string, entries: Record<string, string>, spreads: string[] = []): string {
   const spread_lines = spreads.map((s) => `  ...${s},`).join("\n");
   const entry_lines = Object.entries(entries)
@@ -40,6 +28,38 @@ function registry(symbol: string, entries: Record<string, string>, spreads: stri
     .join("\n");
   return `export const ${symbol}: HandlerRegistry = {\n${spread_lines}\n${entry_lines}\n} as const;\n`;
 }
+
+function model(
+  language: string,
+  registry_symbol: string,
+  registry_ts: string,
+  emitted: string[],
+): RegistryModel {
+  return {
+    source: {
+      language,
+      registry_symbol,
+      registry_file: `${language}.ts`,
+      query_file: `${language}.scm`,
+    },
+    parsed: parse_registry(registry_ts, registry_symbol),
+    emitted: new Set(emitted),
+  };
+}
+
+describe("strip_scm_comments", () => {
+  it("removes a full-line comment", () => {
+    expect(strip_scm_comments("; a comment\n(node)")).toBe("\n(node)");
+  });
+
+  it("removes a trailing comment but keeps the code before it", () => {
+    expect(strip_scm_comments("(node) @definition.x  ; trailing")).toBe("(node) @definition.x  ");
+  });
+
+  it("does not treat a semicolon inside a string as a comment", () => {
+    expect(strip_scm_comments('(#eq? @x ";keep")')).toBe('(#eq? @x ";keep")');
+  });
+});
 
 describe("parse_emitted_captures", () => {
   it("extracts dotted capture names", () => {
@@ -60,6 +80,11 @@ describe("parse_emitted_captures", () => {
   it("ignores bare single-segment predicate anchors", () => {
     const captures = parse_emitted_captures("(#eq? @classmethod)\n(x) @definition.method");
     expect([...captures]).toEqual(["definition.method"]);
+  });
+
+  it("does not count a capture named only inside a comment", () => {
+    const captures = parse_emitted_captures("; narrates @definition.ghost\n(node) @definition.real");
+    expect([...captures]).toEqual(["definition.real"]);
   });
 
   it("deduplicates repeated captures", () => {
@@ -106,8 +131,7 @@ describe("check_consistency dead handlers", () => {
       registry("JS_HANDLERS", { "definition.arrow": "handle_arrow" }),
       [],
     );
-    const report = check_consistency([js]);
-    expect(report.dead_handlers).toEqual([
+    expect(check_consistency([js]).dead_handlers).toEqual([
       { language: "javascript", capture: "definition.arrow", handler: "handle_arrow" },
     ]);
   });
@@ -134,12 +158,16 @@ describe("check_consistency dead handlers", () => {
       "TS_HANDLERS",
       registry("TS_HANDLERS", {}, ["JS_HANDLERS"]),
       ["definition.namespace"],
-      ["JS_HANDLERS"],
     );
     expect(check_consistency([js, ts]).dead_handlers).toEqual([]);
   });
 
-  it("flags a JS handler dead when TypeScript overrides its key and neither query emits it", () => {
+  it("flags the JS handler dead when TypeScript redeclares its key, even though the TS query emits the capture", () => {
+    // Discriminating fixture for the spread/override wrinkle: the TS query DOES
+    // emit definition.variable, so a model without the override cutoff would find
+    // the JS handler reachable-via-TS and NOT flag it. The correct model cuts the
+    // inherited JS entry off from the TS query because TS redeclares the key, so
+    // only the JS handler is dead; the TS handler stays live.
     const js = model(
       "javascript",
       "JS_HANDLERS",
@@ -150,16 +178,27 @@ describe("check_consistency dead handlers", () => {
       "typescript",
       "TS_HANDLERS",
       registry("TS_HANDLERS", { "definition.variable": "handle_ts_variable" }, ["JS_HANDLERS"]),
-      [],
-      ["JS_HANDLERS"],
+      ["definition.variable"],
     );
-    const dead = check_consistency([js, ts]).dead_handlers;
-    // The JS entry is unreachable: TS shadows it, and no query emits the capture.
-    expect(dead).toContainEqual({
-      language: "javascript",
-      capture: "definition.variable",
-      handler: "handle_js_variable",
-    });
+    expect(check_consistency([js, ts]).dead_handlers).toEqual([
+      { language: "javascript", capture: "definition.variable", handler: "handle_js_variable" },
+    ]);
+  });
+
+  it("reports a handler dead when its capture appears only in a query comment", () => {
+    const js = model(
+      "javascript",
+      "JS_HANDLERS",
+      registry("JS_HANDLERS", { "definition.ghost": "handle_ghost" }),
+      [],
+    );
+    const from_comment: RegistryModel = {
+      ...js,
+      emitted: parse_emitted_captures("; @definition.ghost\n(x) @definition.other"),
+    };
+    expect(check_consistency([from_comment]).dead_handlers).toEqual([
+      { language: "javascript", capture: "definition.ghost", handler: "handle_ghost" },
+    ]);
   });
 });
 
@@ -173,6 +212,30 @@ describe("check_consistency orphan captures", () => {
     );
     expect(check_consistency([js]).orphan_captures).toEqual([
       { language: "javascript", capture: "definition.type_parameter" },
+    ]);
+  });
+
+  it("flags an emitted import-family capture with no handler", () => {
+    const js = model(
+      "javascript",
+      "JS_HANDLERS",
+      registry("JS_HANDLERS", { "import.reexport": "handle_reexport" }),
+      ["import.reexport", "import.reexport.named"],
+    );
+    expect(check_consistency([js]).orphan_captures).toEqual([
+      { language: "javascript", capture: "import.reexport.named" },
+    ]);
+  });
+
+  it("flags an emitted decorator-family capture with no handler", () => {
+    const py = model(
+      "python",
+      "PY_HANDLERS",
+      registry("PY_HANDLERS", { "decorator.method": "handle_decorator_method" }),
+      ["decorator.method", "decorator.macro"],
+    );
+    expect(check_consistency([py]).orphan_captures).toEqual([
+      { language: "python", capture: "decorator.macro" },
     ]);
   });
 
@@ -198,7 +261,6 @@ describe("check_consistency orphan captures", () => {
       "TS_HANDLERS",
       registry("TS_HANDLERS", {}, ["JS_HANDLERS"]),
       ["definition.class"],
-      ["JS_HANDLERS"],
     );
     expect(check_consistency([js, ts]).orphan_captures).toEqual([]);
   });
@@ -208,15 +270,64 @@ describe("check_consistency orphan captures", () => {
   });
 });
 
-describe("check_project against the live repository", () => {
-  it("reports zero dead handlers — every registered handler is reachable", () => {
-    const report = check_project(REPO_ROOT);
-    expect(report.dead_handlers).toEqual([]);
+describe("is_trigger_file", () => {
+  const base = "packages/core/src/index_single_file/query_code_tree";
+
+  it("triggers on a query file", () => {
+    expect(is_trigger_file(`${base}/queries/rust.scm`)).toBe(true);
   });
 
-  it("reads the four language registries and their queries without error", () => {
-    // Guards the topology paths: a moved registry or query file would throw here.
-    expect(() => check_project(REPO_ROOT)).not.toThrow();
-    expect(fs.existsSync(path.join(REPO_ROOT, "packages/core/src/index_single_file"))).toBe(true);
+  it("triggers on a receiver file", () => {
+    expect(is_trigger_file(`${base}/capture_handlers/capture_handlers.rust.ts`)).toBe(true);
+  });
+
+  it("skips a receiver test file", () => {
+    expect(is_trigger_file(`${base}/capture_handlers/capture_handlers.rust.test.ts`)).toBe(false);
+  });
+
+  it("skips an unrelated source file", () => {
+    expect(is_trigger_file("packages/core/src/index_single_file/index_single_file.ts")).toBe(false);
+  });
+});
+
+describe("formatters", () => {
+  it("renders a dead handler with its count and capture", () => {
+    const out = format_dead_handlers([
+      { language: "python", capture: "definition.lambda", handler: "handle_definition_lambda" },
+    ]);
+    expect(out).toContain("Dead capture handlers (1)");
+    expect(out).toContain(
+      'python: "definition.lambda" → handle_definition_lambda (no query emits @definition.lambda)',
+    );
+  });
+
+  it("renders an orphan capture with its count and @name", () => {
+    const out = format_orphan_captures([{ language: "rust", capture: "decorator.macro" }]);
+    expect(out).toContain("Orphan definition captures (1)");
+    expect(out).toContain("rust: @decorator.macro (emitted, no handler registered)");
+  });
+});
+
+describe("check_project against the live repository", () => {
+  it("reports zero dead handlers — every registered handler is reachable", () => {
+    expect(check_project(REPO_ROOT).dead_handlers).toEqual([]);
+  });
+
+  it("reports exactly the two known orphan captures", () => {
+    // These are emitted by a query with no handler — genuine latent gaps left as
+    // warn-level (see TASK-364.10 Implementation Notes). Pinning them here turns
+    // orphan drift (a new orphan, or one of these silently gaining/losing a
+    // handler) into a failing test.
+    expect(check_project(REPO_ROOT).orphan_captures).toEqual([
+      { language: "typescript", capture: "definition.type_parameter" },
+      { language: "rust", capture: "decorator.macro" },
+    ]);
+  });
+
+  it("resolves every REGISTRY_TOPOLOGY path — guards against silent topology rot", () => {
+    for (const entry of REGISTRY_TOPOLOGY) {
+      expect(fs.existsSync(path.join(REPO_ROOT, entry.registry_file))).toBe(true);
+      expect(fs.existsSync(path.join(REPO_ROOT, entry.query_file))).toBe(true);
+    }
   });
 });

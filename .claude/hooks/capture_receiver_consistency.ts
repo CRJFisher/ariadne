@@ -18,12 +18,14 @@
  * `JAVASCRIPT_HANDLERS`, so a JavaScript handler is reachable when indexing a
  * TypeScript file too. A JS registry key is therefore dead only when neither
  * `javascript.scm` nor `typescript.scm` emits it — unless a TS-specific entry
- * overrides that key, in which case the JS handler is no longer reachable via
- * the TypeScript path.
+ * redeclares that key, in which case the JS handler is no longer reachable via
+ * the TypeScript path. The spread edges are read from the registry files
+ * themselves (the `...SYMBOL` lines), not declared a second time here.
  *
- * Pure string parsing and set algebra only — the filesystem read and git
- * trigger live in capture_receiver_consistency_stop.ts so these functions run
- * against fixture strings in tests.
+ * `parse_emitted_captures`, `parse_registry`, and `check_consistency` are pure
+ * string and set algebra, tested against fixture strings. `check_project` is
+ * the IO edge that reads the topology files; capture_receiver_consistency_stop.ts
+ * adds only the git trigger and stdin.
  */
 
 import fs from "fs";
@@ -33,39 +35,59 @@ import { pathToFileURL } from "url";
 /**
  * Capture categories the definition dispatch owns. Orphan detection is scoped
  * to these: a query emits far more captures than the definition registry
- * handles (`reference.*`, `scope.*`, `export.*`, `modifier.*`, `return.*`,
- * `assignment.variable`, …) and those are consumed by other passes, so flagging
- * them as orphans would be noise. `import` covers `import.reexport`.
+ * handles (`reference.*`, `scope.*`, `export.*`, `modifier.*`, `return.*`), and
+ * those are consumed by other passes. `import` covers `import.reexport`.
+ *
+ * `assignment` is deliberately excluded even though the Python registry
+ * dispatches the single key `assignment.property`: the assignment family is
+ * dominated by reference-pass captures (`assignment.variable`,
+ * `assignment.constructor.qualified`) that no definition handler consumes, so
+ * scoping orphans to `assignment` would warn on them forever. The one
+ * definition-dispatched assignment key stays honest through the dead-handler
+ * side instead — it is reported dead if its query stops emitting it.
  */
 export const DEFINITION_DISPATCH_CATEGORIES = ["definition", "decorator", "import"] as const;
 
+/** Query and receiver paths that feed the definition dispatch. */
+const QUERY_FILE = /query_code_tree\/queries\/.+\.scm$/;
+const RECEIVER_FILE = /query_code_tree\/capture_handlers\/.+\.ts$/;
+
 /**
- * One concrete handler registry and the query that feeds it. `spreads` names
- * the registries whose entries this one inherits (TS spreads JS). `overrides`
- * are keys this registry redeclares, which shadow the inherited handler and cut
- * the inherited entry off from this registry's query.
+ * A repo-relative change is worth re-running the check when it edits a query
+ * (`queries/*.scm`) or a receiver (`capture_handlers/*.ts`) — the two inputs
+ * that can put registry keys and emitted captures out of sync. Receiver test
+ * files are excluded: the check reads only the registry `.ts` and query `.scm`,
+ * never test files.
  */
-export interface RegistrySource {
+export function is_trigger_file(repo_path: string): boolean {
+  if (repo_path.endsWith(".test.ts")) return false;
+  return QUERY_FILE.test(repo_path) || RECEIVER_FILE.test(repo_path);
+}
+
+/**
+ * One registry and the query that feeds it. The spread relationship (TS spreads
+ * JS) is not recorded here — it is read from each registry file's `...SYMBOL`
+ * lines by `parse_registry`, so this stays a single source of truth.
+ */
+export interface RegistryTopologyEntry {
   language: string;
   registry_file: string;
   registry_symbol: string;
   query_file: string;
-  spreads: string[];
 }
 
 /**
- * The fixed topology of the definition-handler dispatch. Registry symbols and
- * query paths are stable; the consistency check reads these files and models
- * the spread relationship between them.
+ * The fixed topology of the definition-handler dispatch: which registry symbol
+ * lives in which file and which query feeds it. The consistency check reads
+ * these files and models the spread relationship discovered inside them.
  */
-export const REGISTRY_TOPOLOGY: RegistrySource[] = [
+export const REGISTRY_TOPOLOGY: RegistryTopologyEntry[] = [
   {
     language: "javascript",
     registry_file:
       "packages/core/src/index_single_file/query_code_tree/capture_handlers/capture_handlers.javascript.ts",
     registry_symbol: "JAVASCRIPT_HANDLERS",
     query_file: "packages/core/src/index_single_file/query_code_tree/queries/javascript.scm",
-    spreads: [],
   },
   {
     language: "typescript",
@@ -73,7 +95,6 @@ export const REGISTRY_TOPOLOGY: RegistrySource[] = [
       "packages/core/src/index_single_file/query_code_tree/capture_handlers/capture_handlers.typescript.ts",
     registry_symbol: "TYPESCRIPT_HANDLERS",
     query_file: "packages/core/src/index_single_file/query_code_tree/queries/typescript.scm",
-    spreads: ["JAVASCRIPT_HANDLERS"],
   },
   {
     language: "python",
@@ -81,7 +102,6 @@ export const REGISTRY_TOPOLOGY: RegistrySource[] = [
       "packages/core/src/index_single_file/query_code_tree/capture_handlers/capture_handlers.python.ts",
     registry_symbol: "PYTHON_HANDLERS",
     query_file: "packages/core/src/index_single_file/query_code_tree/queries/python.scm",
-    spreads: [],
   },
   {
     language: "rust",
@@ -89,7 +109,6 @@ export const REGISTRY_TOPOLOGY: RegistrySource[] = [
       "packages/core/src/index_single_file/query_code_tree/capture_handlers/capture_handlers.rust.ts",
     registry_symbol: "RUST_HANDLERS",
     query_file: "packages/core/src/index_single_file/query_code_tree/queries/rust.scm",
-    spreads: [],
   },
 ];
 
@@ -122,6 +141,40 @@ export interface ParsedRegistry {
 }
 
 /**
+ * Drop tree-sitter query comments before scanning for captures. A `.scm`
+ * comment runs from an unquoted `;` to end of line, and the query files narrate
+ * their captures in prose (`; captures @definition.field`); without this, a
+ * capture named only in a comment would be counted as emitted, masking a real
+ * dead handler — the exact drift this guard exists to catch.
+ */
+export function strip_scm_comments(scm: string): string {
+  let out = "";
+  let in_string = false;
+  for (let i = 0; i < scm.length; i++) {
+    const ch = scm[i];
+    if (in_string) {
+      out += ch;
+      if (ch === "\\" && i + 1 < scm.length) {
+        out += scm[++i];
+      } else if (ch === '"') {
+        in_string = false;
+      }
+      continue;
+    }
+    if (ch === '"') {
+      in_string = true;
+      out += ch;
+    } else if (ch === ";") {
+      while (i < scm.length && scm[i] !== "\n") i++;
+      if (i < scm.length) out += "\n";
+    } else {
+      out += ch;
+    }
+  }
+  return out;
+}
+
+/**
  * Extract the `@<name>` captures a `.scm` query emits. Only dotted, non-hidden
  * names count: tree-sitter's underscore-prefixed captures (`@_require`) and
  * bare predicate anchors (`@classmethod`) are query-internal, never dispatched.
@@ -130,7 +183,8 @@ export function parse_emitted_captures(scm: string): Set<string> {
   const captures = new Set<string>();
   const re = /@([a-z][a-z0-9_]*(?:\.[a-z0-9_]+)+)/g;
   let match: RegExpExecArray | null;
-  while ((match = re.exec(scm)) !== null) {
+  const source = strip_scm_comments(scm);
+  while ((match = re.exec(source)) !== null) {
     captures.add(match[1]);
   }
   return captures;
@@ -185,7 +239,7 @@ function is_definition_dispatch_capture(capture: string): boolean {
 
 /** Registry object plus the captures its own query emits, keyed by symbol. */
 export interface RegistryModel {
-  source: RegistrySource;
+  source: RegistryTopologyEntry;
   parsed: ParsedRegistry;
   emitted: Set<string>;
 }
@@ -196,11 +250,13 @@ export interface RegistryModel {
  * A registry entry is reachable from a query when that query emits the entry's
  * capture. An entry's feeding queries are its own registry's query plus the
  * queries of any registry that spreads it in — but only for keys the inheriting
- * registry does not override. A handler is dead when none of its feeding
- * queries emit its capture.
+ * registry does not redeclare. A handler is dead when none of its feeding
+ * queries emit its capture. Spread edges come from each registry's parsed
+ * `...SYMBOL` lines and are resolved one level deep (the current topology only
+ * spreads TS→JS; a transitively-spreading language would need this widened).
  *
  * Orphan captures are reported per language against that language's effective
- * registry (own keys plus inherited-and-not-overridden spread keys), scoped to
+ * registry (own keys plus inherited-and-not-redeclared spread keys), scoped to
  * the definition-dispatch categories.
  */
 export function check_consistency(models: RegistryModel[]): ConsistencyReport {
@@ -209,13 +265,10 @@ export function check_consistency(models: RegistryModel[]): ConsistencyReport {
     by_symbol.set(model.source.registry_symbol, model);
   }
 
-  // For each registry symbol, the queries able to reach a given own key: its
-  // own query, plus the query of every registry that spreads it in and does not
-  // override the key.
   const dead_handlers: DeadHandler[] = [];
   for (const model of models) {
     const inheritors = models.filter((m) =>
-      m.source.spreads.includes(model.source.registry_symbol),
+      m.parsed.spreads.includes(model.source.registry_symbol),
     );
     for (const capture of model.parsed.keys) {
       const feeders = [model.emitted];
@@ -235,12 +288,10 @@ export function check_consistency(models: RegistryModel[]): ConsistencyReport {
     }
   }
 
-  // Orphans: definition-family captures a language emits with no effective
-  // handler. Effective keys = own keys plus keys inherited from spreads.
   const orphan_captures: OrphanCapture[] = [];
   for (const model of models) {
     const effective_keys = new Set<string>(model.parsed.keys);
-    for (const symbol of model.source.spreads) {
+    for (const symbol of model.parsed.spreads) {
       const spread_model = by_symbol.get(symbol);
       if (spread_model) {
         for (const key of spread_model.parsed.keys) {

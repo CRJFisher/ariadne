@@ -161,7 +161,7 @@ Language-specific features explicitly allowed:
 - `@definition.enum` - Enum definitions
 - `@definition.enum.member` - Enum members
 - `@definition.namespace` - Namespaces
-- `@definition.type_parameter` - Generic type parameters
+- `@definition.type_parameter` - Generic type parameters (emitted; no handler currently consumes it — see Validation)
 - `@definition.property` - Class properties
 - `@reference.call.generic` - Generic calls
 - `@reference.constructor` - Constructor calls
@@ -213,6 +213,15 @@ Language-specific features explicitly allowed:
 ## Validation
 
 Captures are validated automatically in CI using `validate_captures.ts`.
+
+Naming is one of two invariants. The other is **capture/receiver consistency**: a
+`definition`/`decorator`/`import` capture emitted here must have a handler in the
+matching `capture_handlers.<lang>.ts` registry, because definitions dispatch by
+exact `registry[capture.name]` lookup. A capture with no handler is silently
+dropped; `@definition.type_parameter` (TypeScript) and `@decorator.macro` (Rust)
+are currently in this state. The Stop hook
+`.claude/hooks/capture_receiver_consistency_stop.ts` enforces it (see
+`.claude/rules/semantic-indexing.md`).
 
 ### Run Validation Locally
 
