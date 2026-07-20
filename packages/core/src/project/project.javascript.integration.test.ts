@@ -166,13 +166,20 @@ describe("Project Integration - JavaScript", () => {
         project.update_file(main_file, main_source);
       });
 
-      it("marks the class as the file's default export", () => {
+      it("marks the class as the file's default export and binds the require to it", () => {
         const mod_index = project.get_index_single_file(mod_file);
         const widget = Array.from(mod_index!.classes.values()).find(
           (c) => c.name === ("Widget" as SymbolName)
         );
         expect(widget!.is_exported).toBe(true);
         expect(widget!.export).toEqual({ is_default: true });
+
+        const call = project.resolutions
+          .get_calls_for_file(main_file)
+          .find((c) => c.name === ("make" as SymbolName));
+        expect(project.resolutions.resolve(call!.scope_id, "Widget" as SymbolName)).toEqual(
+          widget!.symbol_id
+        );
       });
 
       it("resolves a static method call `Widget.make()` to the class's static method", () => {
@@ -282,6 +289,82 @@ describe("Project Integration - JavaScript", () => {
       });
       expect(targets).toEqual(["function:helper"]);
     });
+
+    it("does not rebind an ESM `import * as` namespace of a default-class module", () => {
+      const mod_file = file_path("modules/esm_default_class.js");
+      const main_file = file_path("modules/uses_esm_default_class.js");
+      project.update_file(
+        mod_file,
+        "export default class Widget { static make() {} }"
+      );
+      project.update_file(
+        main_file,
+        "import * as ns from './esm_default_class';\nfunction use() { return ns.make(); }"
+      );
+
+      // `ns` is a namespace object, not the class; `ns.make()` is not a real
+      // call, so it must stay unresolved rather than being rebound to the class.
+      const call = project.resolutions
+        .get_calls_for_file(main_file)
+        .find((c) => c.name === ("make" as SymbolName));
+      expect(call!.resolutions).toEqual([]);
+      expect(call!.resolution_failure).toBeDefined();
+    });
+
+    it("keeps a function default export (`module.exports = fn`) a namespace import", () => {
+      const mod_file = file_path("modules/cjs_default_fn.js");
+      const main_file = file_path("modules/uses_cjs_default_fn.js");
+      project.update_file(
+        mod_file,
+        "function build() {}\nmodule.exports = build;"
+      );
+      project.update_file(
+        main_file,
+        "const build = require('./cjs_default_fn');\nfunction use() { return build(); }"
+      );
+
+      const mod_index = project.get_index_single_file(mod_file);
+      const fn = Array.from(mod_index!.functions.values()).find(
+        (f) => f.name === ("build" as SymbolName)
+      );
+      // The function is the module's default export (public surface)...
+      expect(fn!.is_exported).toBe(true);
+      expect(fn!.export).toEqual({ is_default: true });
+      // ...but the `kind === "class"` gate keeps the require a namespace import:
+      // `build` must not be rebound to the function (only a class default rebinds).
+      const call = project.resolutions
+        .get_calls_for_file(main_file)
+        .find((c) => c.name === ("build" as SymbolName));
+      const bound = project.resolutions.resolve(call!.scope_id, "build" as SymbolName);
+      expect(bound).not.toEqual(fn!.symbol_id);
+    });
+
+    it.each([
+      ["variable-bound", "const C = class Bar {};"],
+      ["object-property", "const obj = {};\nobj.prop = class Bar {};"],
+    ])(
+      "does not capture a non-export named class expression (%s)",
+      (_label, decl) => {
+        const file = file_path("modules/local_class_expr.js");
+        project.update_file(
+          file,
+          `${decl}\nfunction Bar() {}\nfunction use() { return Bar(); }`
+        );
+
+        const index = project.get_index_single_file(file);
+        // The class expression's inner name `Bar` must not register a stray
+        // class definition that would shadow the sibling `function Bar`.
+        expect(Array.from(index!.classes.values())).toEqual([]);
+        const call = project.resolutions
+          .get_calls_for_file(file)
+          .find((c) => c.name === ("Bar" as SymbolName));
+        const targets = call!.resolutions.map((r) => {
+          const def = project.definitions.get(r.symbol_id);
+          return def ? `${def.kind}:${def.name}` : String(r.symbol_id);
+        });
+        expect(targets).toEqual(["function:Bar"]);
+      }
+    );
   });
 
   describe("ES6 Module Resolution", () => {

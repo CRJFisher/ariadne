@@ -590,6 +590,7 @@ export class DefinitionBuilder {
     original_name?: SymbolName;
     import_kind: "named" | "default" | "namespace";
     is_type_only?: boolean;
+    is_commonjs_require?: boolean;
     export?: ExportMetadata;
   }): DefinitionBuilder {
     this.imports.set(definition.symbol_id, {
@@ -603,6 +604,7 @@ export class DefinitionBuilder {
       original_name: definition.original_name,
       import_kind: definition.import_kind,
       is_type_only: definition.is_type_only,
+      is_commonjs_require: definition.is_commonjs_require,
     });
     return this;
   }

@@ -126,26 +126,29 @@ function resolve_scope_recursive(
       // symbol so static, instance, and constructor dispatch resolve through the
       // ordinary class machinery. An object module (`module.exports = { a, b }`)
       // has named exports and no sole default, so it stays a namespace import
-      // and keeps its member-lookup dispatch.
-      const source_file = context.imports.get_resolved_import_path(
-        imp_def.symbol_id
-      );
-      if (source_file) {
-        const default_class = context.exports.resolve_sole_default_export(
-          source_file,
-          context.languages,
-          context.root_folder
+      // and keeps its member-lookup dispatch. Gated to `require` so an ESM
+      // `import * as X` — a genuine namespace object — is never rebound.
+      if (imp_def.is_commonjs_require) {
+        const source_file = context.imports.get_resolved_import_path(
+          imp_def.symbol_id
         );
-        if (
-          default_class &&
-          context.definitions.get(default_class)?.kind === "class"
-        ) {
-          resolved = default_class;
-          // `const X = require()` also surfaces `X` as a scope-level import
-          // definition, so the local-definition pass below would otherwise
-          // revert this rebind to the import symbol. Record the name to keep
-          // the class binding.
-          require_default_rebinds.add(imp_def.name);
+        if (source_file) {
+          const sole_default = context.exports.resolve_sole_default_export(
+            source_file,
+            context.languages,
+            context.root_folder
+          );
+          if (
+            sole_default &&
+            context.definitions.get(sole_default)?.kind === "class"
+          ) {
+            resolved = sole_default;
+            // `const X = require()` also surfaces `X` as a scope-level import
+            // definition, so the local-definition pass below would otherwise
+            // revert this rebind to the import symbol. Record the name to keep
+            // the class binding.
+            require_default_rebinds.add(imp_def.name);
+          }
         }
       }
     } else {
