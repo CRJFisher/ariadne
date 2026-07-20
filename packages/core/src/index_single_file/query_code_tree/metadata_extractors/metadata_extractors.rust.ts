@@ -7,7 +7,9 @@
  * Supports:
  * - Type annotations: Rust's explicit type system with generics and lifetimes
  * - Property chains: Recursive traversal of field_expression and index_expression
+ * - Receiver info: receiver location plus self/super detection from field_expression patterns
  * - Constructor tracking: Finds target variables in let_declaration patterns
+ * - Turbofish syntax: recognises ::<Type> and reduces it to the bare path segment
  * - No optional chaining: Rust lacks ?. syntax, always returns false
  *
  * All extraction is purely tree-sitter AST-based - no type inference or

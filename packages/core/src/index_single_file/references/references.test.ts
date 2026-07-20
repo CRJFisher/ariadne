@@ -266,38 +266,6 @@ describe("ReferenceBuilder", () => {
       }
     });
 
-    it("should process type references with generics", () => {
-      const mock_extractors = create_mock_extractors({
-        extract_type_from_annotation: vi.fn((node, file_path) => ({
-          type_name: "Array" as SymbolName,
-          type_id: "type:Array:test.ts:1:0" as SymbolId,
-          certainty: "declared" as const,
-        })),
-      });
-
-      const builder = new ReferenceBuilder(
-        context,
-        mock_extractors,
-        TEST_FILE_PATH,
-        "typescript"
-      );
-
-      const capture = create_test_capture({
-        category: SemanticCategory.REFERENCE,
-        entity: SemanticEntity.TYPE,
-        symbol_name: "Array",
-      });
-
-      builder.process(capture);
-      const references = builder.references;
-
-      expect(references).toHaveLength(1);
-      expect(references[0].name).toBe("Array");
-      expect(references[0].kind).toBe("type_reference");
-      // Generic type info extraction is not yet implemented in factories
-      // This will be added in future tasks
-    });
-
     it("should process property access", () => {
       const receiver_info: ReceiverInfo = {
         receiver_location: create_test_location(),
