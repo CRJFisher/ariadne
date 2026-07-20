@@ -358,3 +358,52 @@ export function run(): number {
     expect(entry).toBeUndefined();
   });
 });
+
+// Variable-bound named function expression (task-355): `var X = function X(){}`
+// registers the outer `X` in the enclosing scope, so intra-file references
+// resolve and `X` is not surfaced as a spurious entry point.
+describe("TypeScript Variable-Bound Named Function Expression", () => {
+  const temp_dirs: string[] = [];
+  afterAll(() => {
+    for (const dir of temp_dirs) {
+      if (fs.existsSync(dir)) {
+        fs.rmSync(dir, { recursive: true, force: true });
+      }
+    }
+  });
+
+  it("resolves an intra-file bare-name call to the outer function binding", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "mod.ts": `var X = function X(): number {
+  return 1;
+};
+
+export function run(): number {
+  return X();
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    const call = project.resolutions
+      .get_calls_for_file(file_paths["mod.ts"])
+      .find((c) => c.name === ("X" as SymbolName));
+    expect(call!.resolution_failure).toBeUndefined();
+    expect(call!.resolutions.length).toEqual(1);
+
+    const x_def_ids = project.definitions
+      .get_definitions_by_name("X" as SymbolName)
+      .filter((def) => def.location.file_path === file_paths["mod.ts"])
+      .map((def) => def.symbol_id);
+    expect(x_def_ids).toContain(call!.resolutions[0].symbol_id);
+
+    const x_entries = project.get_call_graph().entry_points.filter((ep) => {
+      const node = project.get_call_graph().nodes.get(ep);
+      return (
+        node?.name === ("X" as SymbolName) &&
+        node.location.file_path === file_paths["mod.ts"]
+      );
+    });
+    expect(x_entries).toEqual([]);
+  });
+});

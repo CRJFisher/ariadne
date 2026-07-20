@@ -368,6 +368,81 @@ export function doWork() {
     });
   });
 
+  // Variable-bound named function expression (task-355): `var X = function X(){}`
+  // registers the outer `X` in the enclosing scope, so intra-file references
+  // resolve and `X` is not surfaced as a spurious entry point.
+  describe("variable-bound named function expression", () => {
+    it("resolves an intra-file bare-name call to the outer function binding", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "mod.js": `var X = function X() {
+  return 1;
+};
+
+export function run() {
+  return X();
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const call = project.resolutions
+        .get_calls_for_file(file_paths["mod.js"])
+        .find((c) => c.name === ("X" as SymbolName));
+      expect(call!.resolution_failure).toBeUndefined();
+      expect(call!.resolutions.length).toEqual(1);
+
+      // The call resolves to a `X` function definition in this file (the outer
+      // var binding registered in the module scope).
+      const x_def_ids = project.definitions
+        .get_definitions_by_name("X" as SymbolName)
+        .filter((def) => def.location.file_path === file_paths["mod.js"])
+        .map((def) => def.symbol_id);
+      expect(x_def_ids).toContain(call!.resolutions[0].symbol_id);
+
+      const x_entries = project.get_call_graph().entry_points.filter((ep) => {
+        const node = project.get_call_graph().nodes.get(ep);
+        return (
+          node?.name === ("X" as SymbolName) &&
+          node.location.file_path === file_paths["mod.js"]
+        );
+      });
+      expect(x_entries).toEqual([]);
+    });
+
+    it("keeps a constructor-only var-bound function off the entry-point set", async () => {
+      // `Widget` is used only via `new Widget()`. The `new` site's name-resolved
+      // read reaches the outer binding, so `Widget` is reachable and not a
+      // spurious entry point — the false positive this task removes.
+      const { project, temp_dir, file_paths } = await setup_project({
+        "mod.js": `var Widget = function Widget() {
+  return { ok: true };
+};
+
+export function main() {
+  return new Widget();
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const new_call = project.resolutions
+        .get_calls_for_file(file_paths["mod.js"])
+        .find((c) => c.name === ("Widget" as SymbolName));
+      expect(new_call).not.toBeUndefined();
+
+      const widget_entries = project
+        .get_call_graph()
+        .entry_points.filter((ep) => {
+          const node = project.get_call_graph().nodes.get(ep);
+          return (
+            node?.name === ("Widget" as SymbolName) &&
+            node.location.file_path === file_paths["mod.js"]
+          );
+        });
+      expect(widget_entries).toEqual([]);
+    });
+  });
+
   // Self-initializer (task-349.3, Change C.1): a `const x = x(…)` binding does
   // not shadow its own import for the call inside its initializer.
   describe("self-initializer binding", () => {

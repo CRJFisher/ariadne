@@ -10,6 +10,7 @@ import TypeScript from "tree-sitter-typescript";
 import type {
   Language,
   FilePath,
+  SymbolName,
   FunctionCallReference,
   MethodCallReference,
   ConstructorCallReference,
@@ -49,6 +50,47 @@ describe("Semantic Index - TypeScript", () => {
   beforeAll(() => {
     parser = new Parser();
     parser.setLanguage(TypeScript.typescript);
+  });
+
+  describe("Variable-bound named function expression", () => {
+    it("registers the outer var name in the enclosing scope and the inner name in the function scope", () => {
+      const code = `var X = function X(): number {
+  return 1;
+};`;
+
+      const tree = parser.parse(code);
+      const parsed_file = create_parsed_file(
+        code,
+        "test.ts" as FilePath,
+        tree,
+        "typescript" as Language,
+      );
+      const index = build_index_single_file(
+        parsed_file,
+        tree,
+        "typescript" as Language,
+      );
+
+      const file_scope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "module" && s.parent_id === null,
+      );
+      expect(file_scope).toBeDefined();
+      const file_scope_id = file_scope!.id;
+
+      const function_scope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "function",
+      );
+      expect(function_scope).toBeDefined();
+
+      // Two function definitions named `X`: the outer var binding lives in the
+      // enclosing (module) scope so intra-file calls resolve; the inner
+      // expression name lives in the function scope for self-reference.
+      const x_scopes = Array.from(index.functions.values())
+        .filter((f) => f.name === ("X" as SymbolName))
+        .map((f) => f.defining_scope_id)
+        .sort();
+      expect(x_scopes).toEqual([file_scope_id, function_scope!.id].sort());
+    });
   });
 
   describe("Basic TypeScript features", () => {

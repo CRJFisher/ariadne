@@ -171,12 +171,21 @@ export function handle_definition_function(
   //   - 'fact' is visible in parent scope
   //   - 'factorial' is only visible inside the function
   let scope_id;
+  let body_capture: CaptureNode | undefined = capture;
   if (
     capture.node.parent?.type === "function_expression" ||
     capture.node.parent?.type === "function"
   ) {
     // This is a named function expression - assign to function's own scope
     scope_id = find_function_scope_at_location(capture.location, context);
+    // When the expression is bound to a variable, the outer var name is
+    // registered separately (as @definition.function) and owns the body
+    // scope and call-graph node. Register the inner name for self-reference
+    // resolution only — without a body scope — so it neither duplicates the
+    // node nor surfaces as a spurious entry point.
+    if (capture.node.parent?.parent?.type === "variable_declarator") {
+      body_capture = undefined;
+    }
   } else {
     // This is a function declaration - assign to parent scope
     scope_id = context.get_scope_id(capture.location);
@@ -192,7 +201,7 @@ export function handle_definition_function(
       export: export_info.export,
       docstring,
     },
-    capture
+    body_capture
   );
 }
 

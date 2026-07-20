@@ -321,6 +321,15 @@ export function handle_ts_definition_function(
   const export_info = extract_export_info(capture.node, capture.text);
   const docstring = consume_documentation(capture.location);
 
+  // The inner name of a variable-bound named function expression is visible only
+  // inside the body. Its outer var name is registered separately (as
+  // @definition.function) and owns the body scope and call-graph node. Register
+  // the inner name for self-reference resolution only — without a body scope — so
+  // it neither duplicates the node nor surfaces as a spurious entry point.
+  const is_var_bound_expression_name =
+    capture.node.parent?.type === "function_expression" &&
+    capture.node.parent?.parent?.type === "variable_declarator";
+
   builder.add_function(
     {
       symbol_id: func_id,
@@ -332,7 +341,7 @@ export function handle_ts_definition_function(
       return_type: extract_return_type(capture.node),
       docstring,
     },
-    capture
+    is_var_bound_expression_name ? undefined : capture
   );
 }
 
