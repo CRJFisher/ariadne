@@ -29,14 +29,8 @@ function create_mock_extractors(
 ): MetadataExtractors {
   return {
     extract_type_from_annotation: vi.fn((node, file_path) => undefined),
-    extract_call_receiver: vi.fn((node, file_path) => undefined),
     extract_property_chain: vi.fn((node) => undefined),
-    extract_assignment_parts: vi.fn((node, file_path) => ({
-      source: undefined,
-      target: undefined,
-    })),
     extract_construct_target: vi.fn((node, file_path) => undefined),
-    extract_type_arguments: vi.fn((node) => undefined),
     extract_is_optional_chain: vi.fn((node) => false),
     is_method_call: vi.fn((node) => false),
     extract_call_name: vi.fn((node) => undefined),
@@ -279,7 +273,6 @@ describe("ReferenceBuilder", () => {
           type_id: "type:Array:test.ts:1:0" as SymbolId,
           certainty: "declared" as const,
         })),
-        extract_type_arguments: vi.fn((node) => ["string"]),
       });
 
       const builder = new ReferenceBuilder(

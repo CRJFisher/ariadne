@@ -92,39 +92,6 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
   },
 
   /**
-   * Extract receiver location from a method call, i.e. the object a method is
-   * called on. For `a.b.c.method()` the receiver is the whole `a.b.c` chain.
-   */
-  extract_call_receiver(
-    node: SyntaxNode | null | undefined,
-    file_path: FilePath
-  ): Location | undefined {
-    if (!node) {
-      return undefined;
-    }
-
-    if (node.type === "call") {
-      const function_node = node.childForFieldName("function");
-
-      if (function_node && function_node.type === "attribute") {
-        const object_node = function_node.childForFieldName("object");
-        if (object_node) {
-          return node_to_location(object_node, file_path);
-        }
-      }
-    }
-
-    if (node.type === "attribute") {
-      const object_node = node.childForFieldName("object");
-      if (object_node) {
-        return node_to_location(object_node, file_path);
-      }
-    }
-
-    return undefined;
-  },
-
-  /**
    * Extract the left-to-right property access chain from an attribute/subscript/call node.
    * `a.b.c.d` → ["a", "b", "c", "d"]; string subscript keys are included
    * (`obj['key'].prop` → ["obj", "key", "prop"]) while numeric/variable keys are dropped.
@@ -280,64 +247,6 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
   },
 
   /**
-   * Extract assignment source and target locations. In Python's grammar an
-   * annotated assignment (`x: int = 5`) is an `assignment` node with a "type"
-   * field, so the `annotated_assignment` branch below covers only grammars that
-   * emit a distinct node.
-   */
-  extract_assignment_parts(
-    node: SyntaxNode | null | undefined,
-    file_path: FilePath
-  ): { source: Location | undefined; target: Location | undefined } {
-    if (!node) {
-      return { source: undefined, target: undefined };
-    }
-
-    if (node.type === "assignment") {
-      const left = node.childForFieldName("left");
-      const right = node.childForFieldName("right");
-
-      return {
-        target: left ? node_to_location(left, file_path) : undefined,
-        source: right ? node_to_location(right, file_path) : undefined,
-      };
-    }
-
-    if (node.type === "annotated_assignment") {
-      const target_node = node.childForFieldName("target");
-      const value_node = node.childForFieldName("value");
-
-      return {
-        target: target_node ? node_to_location(target_node, file_path) : undefined,
-        source: value_node ? node_to_location(value_node, file_path) : undefined,
-      };
-    }
-
-    if (node.type === "augmented_assignment") {
-      const left = node.childForFieldName("left");
-      const right = node.childForFieldName("right");
-
-      return {
-        target: left ? node_to_location(left, file_path) : undefined,
-        source: right ? node_to_location(right, file_path) : undefined,
-      };
-    }
-
-    // Walrus operator (`x := value`).
-    if (node.type === "named_expression") {
-      const name = node.childForFieldName("name");
-      const value = node.childForFieldName("value");
-
-      return {
-        target: name ? node_to_location(name, file_path) : undefined,
-        source: value ? node_to_location(value, file_path) : undefined,
-      };
-    }
-
-    return { source: undefined, target: undefined };
-  },
-
-  /**
    * Extract the assignment target that receives a constructor call. Python
    * constructors are ordinary calls, so this walks up from the call node to the
    * enclosing assignment/annotated-assignment/walrus and returns its target,
@@ -381,83 +290,6 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
     }
 
     return undefined;
-  },
-
-  /**
-   * Extract the top-level generic type arguments, keeping nested generics whole.
-   * `Dict[str, int]` → ["str", "int"]; `List[Dict[str, int]]` → ["Dict[str, int]"];
-   * `Callable[[int, str], bool]` → ["[int, str]", "bool"].
-   */
-  extract_type_arguments(node: SyntaxNode | null | undefined): string[] | undefined {
-    if (!node) {
-      return undefined;
-    }
-
-    const args: string[] = [];
-
-    if (node.type === "generic_type") {
-      for (let i = 0; i < node.namedChildCount; i++) {
-        const child = node.namedChild(i);
-        if (child && child.type === "type_parameter") {
-          for (let j = 0; j < child.namedChildCount; j++) {
-            const type_child = child.namedChild(j);
-            if (type_child && type_child.type === "type") {
-              args.push(type_child.text);
-            }
-          }
-        }
-      }
-    }
-
-    if (node.type === "subscript") {
-      const subscript_node = node.childForFieldName("subscript");
-      if (subscript_node) {
-        if (subscript_node.type === "tuple") {
-          for (let i = 0; i < subscript_node.childCount; i++) {
-            const child = subscript_node.child(i);
-            if (child && child.type !== "," && child.type !== "(" && child.type !== ")") {
-              args.push(child.text);
-            }
-          }
-        } else {
-          args.push(subscript_node.text);
-        }
-      }
-    }
-
-    // Text fallback for shapes the node walks above miss; depth tracking keeps
-    // Callable's inner `[int, str]` from splitting at its inner comma.
-    if (args.length === 0) {
-      const text = node.text;
-      const match = text.match(/\w+\[([^\]]+)\]/);
-      if (match) {
-        const type_arg_string = match[1];
-        if (type_arg_string.includes("[") && type_arg_string.includes("]")) {
-          const parts: string[] = [];
-          let current = "";
-          let depth = 0;
-          for (const char of type_arg_string) {
-            if (char === "[") depth++;
-            else if (char === "]") depth--;
-            else if (char === "," && depth === 0) {
-              parts.push(current.trim());
-              current = "";
-              continue;
-            }
-            current += char;
-          }
-          if (current.trim()) {
-            parts.push(current.trim());
-          }
-          args.push(...parts);
-        } else {
-          const type_args = type_arg_string.split(",").map(arg => arg.trim());
-          args.push(...type_args);
-        }
-      }
-    }
-
-    return args.length > 0 ? args : undefined;
   },
 
   // Python has no optional chaining syntax.

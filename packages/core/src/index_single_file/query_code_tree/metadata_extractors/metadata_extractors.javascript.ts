@@ -92,35 +92,6 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
   },
 
   /**
-   * The receiver location enables looking up the receiver's type to determine
-   * which class defines the method.
-   */
-  extract_call_receiver(
-    node: SyntaxNode,
-    file_path: FilePath
-  ): Location | undefined {
-    if (node.type === "call_expression") {
-      const function_node = node.childForFieldName("function");
-
-      if (function_node && function_node.type === "member_expression") {
-        const object_node = function_node.childForFieldName("object");
-        if (object_node) {
-          return node_to_location(object_node, file_path);
-        }
-      }
-    }
-
-    if (node.type === "member_expression") {
-      const object_node = node.childForFieldName("object");
-      if (object_node) {
-        return node_to_location(object_node, file_path);
-      }
-    }
-
-    return undefined;
-  },
-
-  /**
    * The ordered access chain (root object first) lets chained method calls
    * resolve against the full path rather than just the immediate receiver.
    */
@@ -254,43 +225,6 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
     return undefined;
   },
 
-  extract_assignment_parts(
-    node: SyntaxNode,
-    file_path: FilePath
-  ): { source: Location | undefined; target: Location | undefined } {
-    if (node.type === "assignment_expression") {
-      const left = node.childForFieldName("left");
-      const right = node.childForFieldName("right");
-
-      return {
-        target: left ? node_to_location(left, file_path) : undefined,
-        source: right ? node_to_location(right, file_path) : undefined,
-      };
-    }
-
-    if (node.type === "variable_declarator") {
-      const name = node.childForFieldName("name");
-      const value = node.childForFieldName("value");
-
-      return {
-        target: name ? node_to_location(name, file_path) : undefined,
-        source: value ? node_to_location(value, file_path) : undefined,
-      };
-    }
-
-    if (node.type === "augmented_assignment_expression") {
-      const left = node.childForFieldName("left");
-      const right = node.childForFieldName("right");
-
-      return {
-        target: left ? node_to_location(left, file_path) : undefined,
-        source: right ? node_to_location(right, file_path) : undefined,
-      };
-    }
-
-    return { source: undefined, target: undefined };
-  },
-
   /**
    * `const x = new Y()` fixes x's type to Y without inference, so the assigned
    * target is the most reliable type signal. Walks up to the enclosing declarator
@@ -322,33 +256,6 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
     }
 
     return undefined;
-  },
-
-  extract_type_arguments(node: SyntaxNode): string[] | undefined {
-    const args: string[] = [];
-
-    if (node.type === "generic_type" || node.type === "type_identifier") {
-      const type_args = node.childForFieldName("type_arguments");
-      if (type_args) {
-        for (let i = 0; i < type_args.childCount; i++) {
-          const child = type_args.child(i);
-          if (child && child.type !== "," && child.type !== "<" && child.type !== ">") {
-            args.push(child.text);
-          }
-        }
-      }
-    }
-
-    // JSDoc encodes generics as Array.<Type> / Object.<Key, Value> in comment text.
-    const text = node.text;
-    const jsdoc_match = text.match(/[A-Z]\w*\.<([^>]+)>/);
-    if (jsdoc_match) {
-      const type_arg_string = jsdoc_match[1];
-      const type_args = type_arg_string.split(",").map(arg => arg.trim());
-      args.push(...type_args);
-    }
-
-    return args.length > 0 ? args : undefined;
   },
 
   /**

@@ -155,100 +155,6 @@ describe("Python Metadata Extractors", () => {
     });
   });
 
-  describe("extract_call_receiver", () => {
-    it("extracts receiver from method call", () => {
-      const tree = parser.parse("obj.method()");
-      const call = tree.rootNode.descendantsOfType("call")[0];
-
-      const result = PYTHON_METADATA_EXTRACTORS.extract_call_receiver(call, TEST_FILE);
-
-      expect(result).toEqual(at(1, 3));
-    });
-
-    it("extracts full chain as receiver from chained method call", () => {
-      const tree = parser.parse("user.profile.get_name()");
-      const call = tree.rootNode.descendantsOfType("call")[0];
-
-      const result = PYTHON_METADATA_EXTRACTORS.extract_call_receiver(call, TEST_FILE);
-
-      expect(result).toEqual(at(1, 12));
-    });
-
-    it("extracts 'self' as receiver", () => {
-      const tree = parser.parse("self.process()");
-      const call = tree.rootNode.descendantsOfType("call")[0];
-
-      const result = PYTHON_METADATA_EXTRACTORS.extract_call_receiver(call, TEST_FILE);
-
-      expect(result).toEqual(at(1, 4));
-    });
-
-    it("extracts 'cls' as receiver", () => {
-      const tree = parser.parse("cls.create()");
-      const call = tree.rootNode.descendantsOfType("call")[0];
-
-      const result = PYTHON_METADATA_EXTRACTORS.extract_call_receiver(call, TEST_FILE);
-
-      expect(result).toEqual(at(1, 3));
-    });
-
-    it("extracts the super() node as receiver", () => {
-      const tree = parser.parse("super().method()");
-      const call = tree.rootNode.descendantsOfType("call")[0];
-
-      const result = PYTHON_METADATA_EXTRACTORS.extract_call_receiver(call, TEST_FILE);
-
-      expect(result).toEqual(at(1, 7));
-    });
-
-    it("returns undefined for a standalone function call", () => {
-      const tree = parser.parse("print(\"hello\")");
-      const call = tree.rootNode.descendantsOfType("call")[0];
-
-      const result = PYTHON_METADATA_EXTRACTORS.extract_call_receiver(call, TEST_FILE);
-
-      expect(result).toBeUndefined();
-    });
-
-    it("extracts receiver from an attribute node outside a call", () => {
-      const tree = parser.parse("obj.prop");
-      const attribute = tree.rootNode.descendantsOfType("attribute")[0];
-
-      const result = PYTHON_METADATA_EXTRACTORS.extract_call_receiver(attribute, TEST_FILE);
-
-      expect(result).toEqual(at(1, 3));
-    });
-
-    it("extracts full chain from a nested attribute node", () => {
-      const tree = parser.parse("user.profile.name");
-      const attribute = tree.rootNode.descendantsOfType("attribute")[0];
-
-      const result = PYTHON_METADATA_EXTRACTORS.extract_call_receiver(attribute, TEST_FILE);
-
-      expect(result).toEqual(at(1, 12));
-    });
-
-    it("extracts the class name as receiver from a static/class method call", () => {
-      const tree = parser.parse("MyClass.create()");
-      const call = tree.rootNode.descendantsOfType("call")[0];
-
-      const result = PYTHON_METADATA_EXTRACTORS.extract_call_receiver(call, TEST_FILE);
-
-      expect(result).toEqual(at(1, 7));
-    });
-
-    it("extracts receiver when given the attribute (function field) node directly", () => {
-      const tree = parser.parse("UserManager.new()");
-      const call = tree.rootNode.descendantsOfType("call")[0];
-      const func = call.childForFieldName("function");
-      expect(func?.type).toBe("attribute");
-
-      const result = PYTHON_METADATA_EXTRACTORS.extract_call_receiver(func!, TEST_FILE);
-
-      expect(result).toEqual(at(1, 11));
-    });
-  });
-
   describe("extract_property_chain", () => {
     it("extracts a simple property chain", () => {
       const tree = parser.parse("a.b.c");
@@ -350,71 +256,6 @@ describe("Python Metadata Extractors", () => {
     });
   });
 
-  describe("extract_assignment_parts", () => {
-    it("extracts target and source from a simple assignment", () => {
-      const tree = parser.parse("x = y");
-      const assignment = tree.rootNode.descendantsOfType("assignment")[0];
-
-      const result = PYTHON_METADATA_EXTRACTORS.extract_assignment_parts(assignment, TEST_FILE);
-
-      expect(result).toEqual({ target: at(1, 1), source: at(5, 5) });
-    });
-
-    it("extracts target and source from an annotated assignment", () => {
-      const tree = parser.parse("x: int = 5");
-      const assignment = tree.rootNode.descendantsOfType("assignment")[0];
-
-      const result = PYTHON_METADATA_EXTRACTORS.extract_assignment_parts(assignment, TEST_FILE);
-
-      expect(result).toEqual({ target: at(1, 1), source: at(10, 10) });
-    });
-
-    it("extracts target and source from an augmented assignment", () => {
-      const tree = parser.parse("x += 5");
-      const augmented_assign = tree.rootNode.descendantsOfType("augmented_assignment")[0];
-
-      const result = PYTHON_METADATA_EXTRACTORS.extract_assignment_parts(augmented_assign, TEST_FILE);
-
-      expect(result).toEqual({ target: at(1, 1), source: at(6, 6) });
-    });
-
-    it("spans the whole tuple for multiple assignment", () => {
-      const tree = parser.parse("a, b = c, d");
-      const assignment = tree.rootNode.descendantsOfType("assignment")[0];
-
-      const result = PYTHON_METADATA_EXTRACTORS.extract_assignment_parts(assignment, TEST_FILE);
-
-      expect(result).toEqual({ target: at(1, 4), source: at(8, 11) });
-    });
-
-    it("spans the whole attribute path as the target", () => {
-      const tree = parser.parse("obj.prop = value");
-      const assignment = tree.rootNode.descendantsOfType("assignment")[0];
-
-      const result = PYTHON_METADATA_EXTRACTORS.extract_assignment_parts(assignment, TEST_FILE);
-
-      expect(result).toEqual({ target: at(1, 8), source: at(12, 16) });
-    });
-
-    it("spans the whole unpacking pattern as the target", () => {
-      const tree = parser.parse("a, *rest = values");
-      const assignment = tree.rootNode.descendantsOfType("assignment")[0];
-
-      const result = PYTHON_METADATA_EXTRACTORS.extract_assignment_parts(assignment, TEST_FILE);
-
-      expect(result).toEqual({ target: at(1, 8), source: at(12, 17) });
-    });
-
-    it("extracts name and value from a walrus expression", () => {
-      const tree = parser.parse("if (n := len(data)) > 0: pass");
-      const named_expr = tree.rootNode.descendantsOfType("named_expression")[0];
-
-      const result = PYTHON_METADATA_EXTRACTORS.extract_assignment_parts(named_expr, TEST_FILE);
-
-      expect(result).toEqual({ target: at(5, 5), source: at(10, 18) });
-    });
-  });
-
   describe("extract_construct_target", () => {
     it("extracts the target of a constructor in a simple assignment", () => {
       const tree = parser.parse("obj = MyClass()");
@@ -462,130 +303,10 @@ describe("Python Metadata Extractors", () => {
     });
   });
 
-  describe("extract_type_arguments", () => {
-    it("extracts a single type argument from a generic", () => {
-      const tree = parser.parse("x: List[int] = []");
-      const generic_type = tree.rootNode.descendantsOfType("generic_type")[0];
-
-      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
-
-      expect(result).toEqual(["int"]);
-    });
-
-    it("extracts multiple type arguments", () => {
-      const tree = parser.parse("d: Dict[str, int] = {}");
-      const generic_type = tree.rootNode.descendantsOfType("generic_type")[0];
-
-      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
-
-      expect(result).toEqual(["str", "int"]);
-    });
-
-    it("keeps a nested generic as a single argument", () => {
-      const tree = parser.parse("x: List[Dict[str, int]] = []");
-      const generic_type = tree.rootNode.descendantsOfType("generic_type")[0];
-
-      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
-
-      expect(result).toEqual(["Dict[str, int]"]);
-    });
-
-    it("extracts each member of a Union", () => {
-      const tree = parser.parse("x: Union[str, int, None] = None");
-      const generic_type = tree.rootNode.descendantsOfType("generic_type")[0];
-
-      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
-
-      expect(result).toEqual(["str", "int", "None"]);
-    });
-
-    it("keeps the bracketed parameter list of a Callable intact", () => {
-      const tree = parser.parse("f: Callable[[int, str], bool] = lambda x, y: True");
-      const generic_type = tree.rootNode.descendantsOfType("generic_type")[0];
-
-      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
-
-      expect(result).toEqual(["[int, str]", "bool"]);
-    });
-
-    it("returns undefined for a non-generic type", () => {
-      const tree = parser.parse("x: int = 5");
-      const identifier = tree.rootNode.descendantsOfType("identifier")[0];
-
-      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(identifier);
-
-      expect(result).toBeUndefined();
-    });
-
-    it("splits deeply nested generics at the top level only", () => {
-      const tree = parser.parse("x: Dict[str, List[Tuple[int, str]]] = {}");
-      const generic_type = tree.rootNode.descendantsOfType("generic_type")[0];
-
-      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
-
-      expect(result).toEqual(["str", "List[Tuple[int, str]]"]);
-    });
-
-    it("extracts the argument of Optional", () => {
-      const tree = parser.parse("x: Optional[str] = None");
-      const generic_type = tree.rootNode.descendantsOfType("generic_type")[0];
-
-      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
-
-      expect(result).toEqual(["str"]);
-    });
-
-    it("splits a Union of nested generics at the top level", () => {
-      const tree = parser.parse("x: Union[int, List[str], Dict[str, Any]] = []");
-      const generic_type = tree.rootNode.descendantsOfType("generic_type")[0];
-
-      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
-
-      expect(result).toEqual(["int", "List[str]", "Dict[str, Any]"]);
-    });
-
-    it("keeps quoted Literal arguments verbatim", () => {
-      const tree = parser.parse("x: Literal[\"foo\", \"bar\"] = \"foo\"");
-      const generic_type = tree.rootNode.descendantsOfType("generic_type")[0];
-
-      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
-
-      expect(result).toEqual(["\"foo\"", "\"bar\""]);
-    });
-
-    it("extracts a single type argument from a subscript node", () => {
-      const tree = parser.parse("x = items[str]");
-      const subscript = tree.rootNode.descendantsOfType("subscript")[0];
-
-      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(subscript);
-
-      expect(result).toEqual(["str"]);
-    });
-
-    it("splits a tuple subscript into separate type arguments", () => {
-      const tree = parser.parse("x = mapping[(str, int)]");
-      const subscript = tree.rootNode.descendantsOfType("subscript")[0];
-
-      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(subscript);
-
-      expect(result).toEqual(["str", "int"]);
-    });
-  });
-
   describe("null/undefined handling", () => {
     it("extract_type_from_annotation returns undefined for null", () => {
       // @ts-ignore - testing null input
       const result = PYTHON_METADATA_EXTRACTORS.extract_type_from_annotation(null, TEST_FILE);
-      expect(result).toBeUndefined();
-    });
-
-    it("extract_call_receiver returns undefined for null", () => {
-      const result = PYTHON_METADATA_EXTRACTORS.extract_call_receiver(null as any, TEST_FILE);
-      expect(result).toBeUndefined();
-    });
-
-    it("extract_call_receiver returns undefined for undefined", () => {
-      const result = PYTHON_METADATA_EXTRACTORS.extract_call_receiver(undefined as any, TEST_FILE);
       expect(result).toBeUndefined();
     });
 
@@ -599,16 +320,6 @@ describe("Python Metadata Extractors", () => {
       expect(result).toBeUndefined();
     });
 
-    it("extract_assignment_parts returns empty parts for null", () => {
-      const result = PYTHON_METADATA_EXTRACTORS.extract_assignment_parts(null as any, TEST_FILE);
-      expect(result).toEqual({ source: undefined, target: undefined });
-    });
-
-    it("extract_assignment_parts returns empty parts for undefined", () => {
-      const result = PYTHON_METADATA_EXTRACTORS.extract_assignment_parts(undefined as any, TEST_FILE);
-      expect(result).toEqual({ source: undefined, target: undefined });
-    });
-
     it("extract_construct_target returns undefined for null", () => {
       const result = PYTHON_METADATA_EXTRACTORS.extract_construct_target(null as any, TEST_FILE);
       expect(result).toBeUndefined();
@@ -617,37 +328,6 @@ describe("Python Metadata Extractors", () => {
     it("extract_construct_target returns undefined for undefined", () => {
       const result = PYTHON_METADATA_EXTRACTORS.extract_construct_target(undefined as any, TEST_FILE);
       expect(result).toBeUndefined();
-    });
-
-    it("extract_type_arguments returns undefined for null", () => {
-      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(null as any);
-      expect(result).toBeUndefined();
-    });
-
-    it("extract_type_arguments returns undefined for undefined", () => {
-      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(undefined as any);
-      expect(result).toBeUndefined();
-    });
-  });
-
-  describe("extract_call_receiver edge cases", () => {
-    it("extracts the full super(...) node as receiver when super has arguments", () => {
-      const tree = parser.parse("super(MyClass, self).method()");
-      const call = tree.rootNode.descendantsOfType("call")[0];
-
-      const result = PYTHON_METADATA_EXTRACTORS.extract_call_receiver(call, TEST_FILE);
-
-      expect(result).toEqual(at(1, 20));
-    });
-
-    it("extracts the inner call chain as receiver of the outermost call", () => {
-      const code = "obj.method1().method2().method3()";
-      const tree = parser.parse(code);
-      const call = tree.rootNode.descendantsOfType("call")[0];
-
-      const result = PYTHON_METADATA_EXTRACTORS.extract_call_receiver(call, TEST_FILE);
-
-      expect(result).toEqual(at(1, 23));
     });
   });
 
