@@ -65,6 +65,96 @@ function extract_typescript_type(node: SyntaxNode): string | undefined {
   return type_annotation.text;
 }
 
+/**
+ * The bindable type name of a cast target, or undefined when the target has no
+ * nominal name to bind to — a structural-literal `{ m(): void }`, a qualified
+ * `ns.Concrete`, or a missing node. A generic target `Concrete<T>` binds to its
+ * erased head `Concrete`, matching how method reachability is keyed by type name.
+ */
+function nominal_cast_type_name(
+  type_node: SyntaxNode | null | undefined
+): string | undefined {
+  if (!type_node) return undefined;
+  if (type_node.type === "type_identifier") {
+    return type_node.text;
+  }
+  if (type_node.type === "generic_type") {
+    const name = type_node.childForFieldName("name");
+    if (name && name.type === "type_identifier") {
+      return name.text;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Peel parentheses and type casts off a receiver's object node so a method call
+ * resolves against the receiver's real type.
+ *
+ * A nominal cast — `(x as Concrete)`, `(<Concrete>x)`, and their generic
+ * spellings `Concrete<T>` — re-types the whole inner expression, so the cast
+ * target's name is contributed as the receiver's chain base (`chain[0]`);
+ * receiver resolution binds that name to its own type. Everything else is
+ * transparent, falling through to the inner expression's real type: plain
+ * parentheses, a `satisfies` check (which validates conformance without
+ * re-typing the expression), and a structural-literal cast target
+ * (`{ m(): void }`, which has no nominal type to bind to).
+ *
+ * @language typescript — as_expression / satisfies_expression / type_assertion
+ * are TypeScript-only grammar nodes, inert in JavaScript source.
+ */
+function peel_receiver_object(
+  node: SyntaxNode
+): { node: SyntaxNode; cast_type_name?: string } {
+  let current = node;
+  for (;;) {
+    if (current.type === "parenthesized_expression") {
+      const inner = current.namedChild(0);
+      if (!inner) return { node: current };
+      current = inner;
+      continue;
+    }
+
+    // `x satisfies T` keeps x's own (often narrower) type, so it is transparent.
+    if (current.type === "satisfies_expression") {
+      const expr = current.namedChild(0);
+      if (expr) {
+        current = expr;
+        continue;
+      }
+      return { node: current };
+    }
+
+    // `x as Concrete` places the expression first, the target type second.
+    if (current.type === "as_expression") {
+      const cast_type_name = nominal_cast_type_name(current.namedChild(1));
+      if (cast_type_name) return { node: current, cast_type_name };
+      const expr = current.namedChild(0);
+      if (expr) {
+        current = expr;
+        continue;
+      }
+      return { node: current };
+    }
+
+    // `<Concrete>x` places the type_arguments first, the expression second.
+    if (current.type === "type_assertion") {
+      const cast_type_name = nominal_cast_type_name(
+        current.namedChild(0)?.namedChild(0)
+      );
+      if (cast_type_name) return { node: current, cast_type_name };
+      const expr = current.namedChild(1);
+      if (expr) {
+        current = expr;
+        continue;
+      }
+      return { node: current };
+    }
+
+    return { node: current };
+  }
+}
+
 export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
   extract_type_from_annotation(
     node: SyntaxNode,
@@ -98,20 +188,30 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
   extract_property_chain(node: SyntaxNode): SymbolName[] | undefined {
     const chain: string[] = [];
 
+    function descend_object(object_node: SyntaxNode): void {
+      const peeled = peel_receiver_object(object_node);
+      if (peeled.cast_type_name) {
+        chain.push(peeled.cast_type_name);
+        return;
+      }
+      const effective = peeled.node;
+      if (effective.type === "member_expression" ||
+          effective.type === "optional_chain" ||
+          effective.type === "subscript_expression" ||
+          effective.type === "call_expression") {
+        traverse(effective);
+      } else if (effective.type === "identifier" || effective.type === "this" || effective.type === "super") {
+        chain.push(effective.text);
+      }
+    }
+
     function traverse(current: SyntaxNode): void {
       if (current.type === "member_expression" || current.type === "optional_chain") {
         const object_node = current.childForFieldName("object");
         const property_node = current.childForFieldName("property");
 
         if (object_node) {
-          if (object_node.type === "member_expression" ||
-              object_node.type === "optional_chain" ||
-              object_node.type === "subscript_expression" ||
-              object_node.type === "call_expression") {
-            traverse(object_node);
-          } else if (object_node.type === "identifier" || object_node.type === "this" || object_node.type === "super") {
-            chain.push(object_node.text);
-          }
+          descend_object(object_node);
         }
 
         if (property_node && property_node.type === "property_identifier") {
@@ -122,14 +222,7 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
         const index_node = current.childForFieldName("index");
 
         if (object_node) {
-          if (object_node.type === "member_expression" ||
-              object_node.type === "subscript_expression" ||
-              object_node.type === "optional_chain" ||
-              object_node.type === "call_expression") {
-            traverse(object_node);
-          } else if (object_node.type === "identifier" || object_node.type === "this" || object_node.type === "super") {
-            chain.push(object_node.text);
-          }
+          descend_object(object_node);
         }
 
         // Only static string keys contribute a resolvable name; dynamic indices
