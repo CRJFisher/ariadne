@@ -288,6 +288,7 @@ the rule, and each of its `new_evidence[]` rows carries its own
 ## Cross-references
 
 - Canonical writer matrix and lifecycle: `.claude/rules/classifier-lifecycle.md`
+- Stale-lock recovery (honest-contention vs crashed-writer): `RUNBOOK.md`
 - Producer of `classifier_regressions[]`: `.claude/skills/triage/SKILL.md`
 - The backlog-side analogue this skill mirrors: `.claude/skills/prioritize/SKILL.md` over `.claude/skills/plan/scripts/export_to_backlog.ts`
 - The permanent-slice generator: `.claude/skills/triage/scripts/generate_permanent_data.ts`
