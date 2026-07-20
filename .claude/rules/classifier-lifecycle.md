@@ -1,3 +1,12 @@
+---
+paths:
+  - .claude/skills/triage/**
+  - .claude/skills/plan/**
+  - .claude/skills/reconcile-registry/**
+  - packages/core/src/classify_entry_points/builtins/**
+  - packages/skill-fs/src/**
+---
+
 # Classifier Rule Lifecycle — Write-Boundary Contract
 
 The classifier registry at `.claude/skills/triage/known_issues/registry.json` is the loop-closure surface for the self-healing pipeline. Lifecycle transitions are owned by exactly one writer; this doc names each owner so the surface stays auditable.

@@ -31,7 +31,7 @@ Source: the IA-enforcement strategy (2026-07-05 workflow over the `ia-review` dr
 
 ### 2. classifier-lifecycle.md (114 lines, currently unscoped = loads on every file-edit context)
 
-- Add `paths:` frontmatter covering every registry-adjacent surface: `.claude/skills/triage/**`, `.claude/skills/plan/**`, `.claude/skills/reconcile-registry/**`, `packages/core/src/classify_entry_points/builtins/**`, `packages/skill-fs/src/**` (include the `known_issues` dir via the triage glob).
+- **The `paths:` frontmatter landed early in 362.9's branch** — the file already carries `.claude/skills/triage/**`, `.claude/skills/plan/**`, `.claude/skills/reconcile-registry/**`, `packages/core/src/classify_entry_points/builtins/**`, `packages/skill-fs/src/**`, so it no longer loads on every file-edit context. The remaining work below (compression, runbook move) is what stays for this task; do not re-add the frontmatter.
 - Compress the opening contract prose to 4 bullets (who owns writes; registry = permanent-limitations catalog; every write via `atomic_update_registry`; agent hand-off prints a `reconcile_registry` command).
 - Move the Stale-lock recovery runbook to `.claude/skills/reconcile-registry/RUNBOOK.md` and reference it. Keep the Writers table and Lifecycle diagram.
 - Enforcement is unchanged — `registry_write_guard.ts` (PreToolUse ask) and `registry_writers.test.ts` (AST walk) are the real guards, and **per the standing rule the hook and permission surface must not be weakened**. The pipeline's force-injected system-reminder is independent of `paths:` scoping and unaffected.
