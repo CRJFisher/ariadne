@@ -692,14 +692,15 @@
   argument: (identifier) @reference.variable.update
 )
 
-; JSX components (only valid in TSX, commented out for plain TypeScript)
-; (jsx_opening_element
-;   (identifier) @reference.call.jsx
-; )
-;
-; (jsx_self_closing_element
-;   (identifier) @reference.call.jsx
-; )
+; JSX components — a JSX element is how a component is invoked, so its tag name
+; captures as a call reference to the component definition.
+(jsx_opening_element
+  (identifier) @reference.call.jsx
+)
+
+(jsx_self_closing_element
+  (identifier) @reference.call.jsx
+)
 
 ; this references (important for method context)
 (this) @reference.this

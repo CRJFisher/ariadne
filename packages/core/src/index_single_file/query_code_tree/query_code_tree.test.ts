@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import Parser from "tree-sitter";
 import JavaScript from "tree-sitter-javascript";
-import TypeScript from "tree-sitter-typescript";
+import { LANGUAGE_TO_TREESITTER_LANG } from "./parsers";
 import Python from "tree-sitter-python";
 import Rust from "tree-sitter-rust";
 import { query_tree } from "./query_code_tree";
@@ -115,7 +115,7 @@ const arrow = (a: number): number => a + 1;
 `;
       const names = unique_capture_names(
         "typescript",
-        TypeScript.typescript,
+        LANGUAGE_TO_TREESITTER_LANG.get("typescript")!,
         code,
       );
       expect(names).toEqual([
@@ -159,7 +159,7 @@ const arrow = (a: number): number => a + 1;
       const code = "enum Direction { Up, Down, Left, Right }";
       const names = unique_capture_names(
         "typescript",
-        TypeScript.typescript,
+        LANGUAGE_TO_TREESITTER_LANG.get("typescript")!,
         code,
       );
       expect(names).toContain("definition.enum");
@@ -176,7 +176,7 @@ interface Repository {
 `;
       const names = unique_capture_names(
         "typescript",
-        TypeScript.typescript,
+        LANGUAGE_TO_TREESITTER_LANG.get("typescript")!,
         code,
       );
       expect(names).toContain("definition.interface");
@@ -190,7 +190,7 @@ interface Repository {
       const code = "type Result<T> = { ok: true; value: T } | { ok: false; error: Error };";
       const names = unique_capture_names(
         "typescript",
-        TypeScript.typescript,
+        LANGUAGE_TO_TREESITTER_LANG.get("typescript")!,
         code,
       );
       expect(names).toContain("definition.type_alias");
@@ -206,7 +206,7 @@ class Foo {
 `;
       const names = unique_capture_names(
         "typescript",
-        TypeScript.typescript,
+        LANGUAGE_TO_TREESITTER_LANG.get("typescript")!,
         code,
       );
       expect(names).toContain("modifier.access_modifier");

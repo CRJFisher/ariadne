@@ -4,7 +4,7 @@
 
 import { describe, it, expect, beforeEach, beforeAll } from "vitest";
 import Parser from "tree-sitter";
-import TypeScript from "tree-sitter-typescript";
+import { LANGUAGE_TO_TREESITTER_LANG } from "../query_code_tree/parsers";
 import JavaScript from "tree-sitter-javascript";
 import Python from "tree-sitter-python";
 import Rust from "tree-sitter-rust";
@@ -861,7 +861,7 @@ describe("scopes", () => {
 
       beforeAll(() => {
         parser = new Parser();
-        parser.setLanguage(TypeScript.typescript);
+        parser.setLanguage(LANGUAGE_TO_TREESITTER_LANG.get("typescript")!);
       });
 
       it("should capture only class body as scope, not entire declaration", () => {
@@ -1410,7 +1410,7 @@ describe("scopes", () => {
 
       it("should start scope after 'function' keyword for named function expressions in TypeScript", () => {
         const ts_parser = new Parser();
-        ts_parser.setLanguage(TypeScript.typescript);
+        ts_parser.setLanguage(LANGUAGE_TO_TREESITTER_LANG.get("typescript")!);
 
         const code = `const factorial = function fact(n: number): number {
   return n * fact(n - 1);
@@ -1614,7 +1614,7 @@ describe("scopes", () => {
 
       beforeAll(() => {
         ts_parser = new Parser();
-        ts_parser.setLanguage(TypeScript.typescript);
+        ts_parser.setLanguage(LANGUAGE_TO_TREESITTER_LANG.get("typescript")!);
       });
 
       it("should create block scopes for for/while/if/switch/try/catch/finally", () => {
@@ -1750,7 +1750,7 @@ describe("scopes", () => {
 
       beforeAll(() => {
         ts_parser = new Parser();
-        ts_parser.setLanguage(TypeScript.typescript);
+        ts_parser.setLanguage(LANGUAGE_TO_TREESITTER_LANG.get("typescript")!);
       });
 
       it("should create constructor scope as child of class scope", () => {
@@ -1801,7 +1801,7 @@ describe("scopes", () => {
 
       beforeAll(() => {
         ts_parser = new Parser();
-        ts_parser.setLanguage(TypeScript.typescript);
+        ts_parser.setLanguage(LANGUAGE_TO_TREESITTER_LANG.get("typescript")!);
       });
 
       it("should create module scope for namespace declaration", () => {
@@ -2390,7 +2390,7 @@ fn main() {}`;
 
         beforeAll(() => {
           parser = new Parser();
-          parser.setLanguage(TypeScript.typescript);
+          parser.setLanguage(LANGUAGE_TO_TREESITTER_LANG.get("typescript")!);
         });
 
         it("constructor produces exactly one @scope.constructor, not @scope.method", () => {

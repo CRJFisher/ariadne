@@ -4,11 +4,15 @@ import Python from "tree-sitter-python";
 import Rust from "tree-sitter-rust";
 import TypeScript from "tree-sitter-typescript";
 
-// TypeScript maps to the `.typescript` grammar rather than `.tsx` so a single
-// query works for both `.ts` and `.tsx` sources.
+// TypeScript maps to the `.tsx` grammar so a single query works for both `.ts`
+// and `.tsx` sources: `.tsx` parses as a superset of `.ts`, and only this grammar
+// yields the `jsx_opening_element` / `jsx_self_closing_element` nodes that let a
+// JSX component usage capture as a call reference. The trade-off is that
+// angle-bracket type assertions (`<T>x`) parse as JSX; only `as` expressions are
+// supported for casts, which `typescript.scm` already relies on.
 export const LANGUAGE_TO_TREESITTER_LANG = new Map([
   ["javascript", JavaScript],
-  ["typescript", TypeScript.typescript],
+  ["typescript", TypeScript.tsx],
   ["python", Python],
   ["rust", Rust],
 ]);

@@ -980,4 +980,60 @@ function main(): void {
     });
   });
 
+  describe("JSX Component Usage", () => {
+    it("resolves a JSX element to its component definition and marks it referenced", async () => {
+      const source = `
+        function Icon() {
+          return null;
+        }
+        function Panel() {
+          return null;
+        }
+        function App() {
+          return (
+            <Panel>
+              <Icon />
+            </Panel>
+          );
+        }
+      `;
+      const file = file_path("jsx_component_usage.tsx");
+      project.update_file(file, source);
+
+      const index = project.get_index_single_file(file);
+      expect(index).toBeDefined();
+
+      const functions = Array.from(index!.functions.values());
+      const icon_fn = functions.find((f) => f.name === ("Icon" as SymbolName));
+      const panel_fn = functions.find((f) => f.name === ("Panel" as SymbolName));
+      expect(icon_fn).toBeDefined();
+      expect(panel_fn).toBeDefined();
+
+      // The self-closing `<Icon />` and the opening `<Panel>` tag each emit a
+      // call reference to the component.
+      const jsx_calls = index!.references.filter(
+        (r): r is FunctionCallReference =>
+          r.kind === "function_call" &&
+          (r.name === ("Icon" as SymbolName) || r.name === ("Panel" as SymbolName))
+      );
+      const icon_call = jsx_calls.find((c) => c.name === ("Icon" as SymbolName));
+      const panel_call = jsx_calls.find((c) => c.name === ("Panel" as SymbolName));
+      expect(icon_call).toBeDefined();
+      expect(panel_call).toBeDefined();
+
+      expect(
+        project.resolutions.resolve(icon_call!.scope_id, icon_call!.name)
+      ).toBe(icon_fn!.symbol_id);
+      expect(
+        project.resolutions.resolve(panel_call!.scope_id, panel_call!.name)
+      ).toBe(panel_fn!.symbol_id);
+
+      // A component used only as a JSX element has an incoming call edge, so it
+      // is no longer an unreachable entry point.
+      const referenced = project.resolutions.get_all_referenced_symbols();
+      expect(referenced.has(icon_fn!.symbol_id)).toBe(true);
+      expect(referenced.has(panel_fn!.symbol_id)).toBe(true);
+    });
+  });
+
 });

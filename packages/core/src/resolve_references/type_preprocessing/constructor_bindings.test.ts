@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import Parser from "tree-sitter";
 import JavaScript from "tree-sitter-javascript";
-import TypeScript from "tree-sitter-typescript";
+import { LANGUAGE_TO_TREESITTER_LANG } from "../../index_single_file/query_code_tree/parsers";
 import Python from "tree-sitter-python";
 import Rust from "tree-sitter-rust";
 import type { Language, FilePath } from "@ariadnejs/types";
@@ -223,7 +223,7 @@ describe("Constructor Tracking - TypeScript", () => {
 
   beforeAll(() => {
     parser = new Parser();
-    parser.setLanguage(TypeScript.typescript);
+    parser.setLanguage(LANGUAGE_TO_TREESITTER_LANG.get("typescript")!);
   });
 
   it("binds a type-annotated assignment to its class name", () => {
@@ -705,7 +705,7 @@ describe("Constructor Tracking - Edge Cases", () => {
 
   it("skips constructor calls that carry no construct_target", () => {
     const parser = new Parser();
-    parser.setLanguage(TypeScript.typescript);
+    parser.setLanguage(LANGUAGE_TO_TREESITTER_LANG.get("typescript")!);
 
     const code = `
       class Logger {}

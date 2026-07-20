@@ -5,7 +5,7 @@
 import { describe, it, expect } from "vitest";
 import Parser from "tree-sitter";
 import JavaScript from "tree-sitter-javascript";
-import TypeScript from "tree-sitter-typescript";
+import { LANGUAGE_TO_TREESITTER_LANG } from "../parsers";
 import { JAVASCRIPT_HANDLERS } from "./capture_handlers.javascript";
 import { TYPESCRIPT_HANDLERS } from "./capture_handlers.typescript";
 import { DefinitionBuilder } from "../../definitions/definition_builder";
@@ -18,7 +18,7 @@ const js_parser = new Parser();
 js_parser.setLanguage(JavaScript);
 
 const ts_parser = new Parser();
-ts_parser.setLanguage(TypeScript.typescript);
+ts_parser.setLanguage(LANGUAGE_TO_TREESITTER_LANG.get("typescript")!);
 
 const TEST_FILE_PATH: FilePath = "test.js" as FilePath;
 

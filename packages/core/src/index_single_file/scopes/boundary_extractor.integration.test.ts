@@ -8,7 +8,7 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import Parser from "tree-sitter";
 import Python from "tree-sitter-python";
-import TypeScript from "tree-sitter-typescript";
+import { LANGUAGE_TO_TREESITTER_LANG } from "../query_code_tree/parsers";
 import JavaScript from "tree-sitter-javascript";
 import Rust from "tree-sitter-rust";
 import { build_index_single_file } from "../index_single_file";
@@ -31,7 +31,7 @@ describe("Scope Boundary Extractor - All Languages", () => {
     python_parser.setLanguage(Python);
 
     typescript_parser = new Parser();
-    typescript_parser.setLanguage(TypeScript.typescript);
+    typescript_parser.setLanguage(LANGUAGE_TO_TREESITTER_LANG.get("typescript")!);
 
     javascript_parser = new Parser();
     javascript_parser.setLanguage(JavaScript);

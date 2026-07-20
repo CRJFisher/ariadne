@@ -6,7 +6,7 @@ import { describe, it, expect, beforeAll } from "vitest";
 import { readFileSync } from "fs";
 import { join } from "path";
 import Parser from "tree-sitter";
-import TypeScript from "tree-sitter-typescript";
+import { LANGUAGE_TO_TREESITTER_LANG } from "./query_code_tree/parsers";
 import type {
   Language,
   FilePath,
@@ -48,7 +48,7 @@ describe("Semantic Index - TypeScript", () => {
 
   beforeAll(() => {
     parser = new Parser();
-    parser.setLanguage(TypeScript.typescript);
+    parser.setLanguage(LANGUAGE_TO_TREESITTER_LANG.get("typescript")!);
   });
 
   describe("Basic TypeScript features", () => {

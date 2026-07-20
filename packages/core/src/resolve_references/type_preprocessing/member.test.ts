@@ -9,7 +9,7 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import Parser from "tree-sitter";
 import JavaScript from "tree-sitter-javascript";
-import TypeScript from "tree-sitter-typescript";
+import { LANGUAGE_TO_TREESITTER_LANG } from "../../index_single_file/query_code_tree/parsers";
 import Python from "tree-sitter-python";
 import Rust from "tree-sitter-rust";
 import type { Language, FilePath, SymbolName } from "@ariadnejs/types";
@@ -199,7 +199,7 @@ describe("Member Extraction - TypeScript", () => {
 
   beforeAll(() => {
     parser = new Parser();
-    parser.setLanguage(TypeScript.typescript);
+    parser.setLanguage(LANGUAGE_TO_TREESITTER_LANG.get("typescript")!);
   });
 
   it("should extract class methods and properties", () => {

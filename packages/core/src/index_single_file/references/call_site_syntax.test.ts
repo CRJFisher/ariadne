@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import Parser from "tree-sitter";
-import TypeScript from "tree-sitter-typescript";
+import { LANGUAGE_TO_TREESITTER_LANG } from "../query_code_tree/parsers";
 import Python from "tree-sitter-python";
 import Rust from "tree-sitter-rust";
 import type { SyntaxNode } from "tree-sitter";
@@ -31,7 +31,7 @@ describe("extract_call_site_syntax language dispatch", () => {
 
   beforeAll(() => {
     ts_parser = new Parser();
-    ts_parser.setLanguage(TypeScript.typescript);
+    ts_parser.setLanguage(LANGUAGE_TO_TREESITTER_LANG.get("typescript")!);
     py_parser = new Parser();
     py_parser.setLanguage(Python);
     rust_parser = new Parser();

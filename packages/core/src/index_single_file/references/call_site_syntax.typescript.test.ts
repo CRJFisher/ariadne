@@ -1,6 +1,6 @@
 import { describe, it, expect, test, beforeAll } from "vitest";
 import Parser from "tree-sitter";
-import TypeScript from "tree-sitter-typescript";
+import { LANGUAGE_TO_TREESITTER_LANG } from "../query_code_tree/parsers";
 import type { SyntaxNode } from "tree-sitter";
 import { extract_call_site_syntax_typescript } from "./call_site_syntax.typescript";
 import { find_first_call } from "./call_site_syntax.test";
@@ -10,7 +10,7 @@ describe("extract_call_site_syntax_typescript", () => {
 
   beforeAll(() => {
     ts_parser = new Parser();
-    ts_parser.setLanguage(TypeScript.typescript);
+    ts_parser.setLanguage(LANGUAGE_TO_TREESITTER_LANG.get("typescript")!);
   });
 
   function parse_ts_call(code: string): SyntaxNode {

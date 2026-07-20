@@ -6,7 +6,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import Parser from "tree-sitter";
 import JavaScript from "tree-sitter-javascript";
 // @ts-ignore - TypeScript grammar is available but not typed
-import TypeScript from "tree-sitter-typescript";
+import { LANGUAGE_TO_TREESITTER_LANG } from "../parsers";
 import { JAVASCRIPT_METADATA_EXTRACTORS } from "./metadata_extractors.javascript";
 import { TYPESCRIPT_METADATA_EXTRACTORS } from "./metadata_extractors.typescript";
 import type { FilePath } from "@ariadnejs/types";
@@ -521,7 +521,7 @@ describe("TypeScript Metadata Extractors", () => {
 
   beforeEach(() => {
     parser = new Parser();
-    parser.setLanguage(TypeScript.typescript);
+    parser.setLanguage(LANGUAGE_TO_TREESITTER_LANG.get("typescript")!);
   });
 
   describe("extract_type_from_annotation - TypeScript", () => {
@@ -750,7 +750,7 @@ describe("TYPESCRIPT_METADATA_EXTRACTORS", () => {
 
   beforeEach(() => {
     parser = new Parser();
-    parser.setLanguage(TypeScript.typescript);
+    parser.setLanguage(LANGUAGE_TO_TREESITTER_LANG.get("typescript")!);
   });
 
   describe("extract_type_from_annotation", () => {

@@ -8,7 +8,7 @@ import {
 } from "./serialize_index";
 import { build_index_single_file } from "../index_single_file/index_single_file";
 import Parser from "tree-sitter";
-import TypeScriptParser from "tree-sitter-typescript";
+import { LANGUAGE_TO_TREESITTER_LANG } from "../index_single_file/query_code_tree/parsers";
 import PythonParser from "tree-sitter-python";
 import JavaScriptParser from "tree-sitter-javascript";
 import RustParser from "tree-sitter-rust";
@@ -32,7 +32,7 @@ function make_parsed_file(
 
 function parse_ts(content: string, file_path = "test.ts"): SemanticIndex {
   const parser = new Parser();
-  parser.setLanguage(TypeScriptParser.typescript);
+  parser.setLanguage(LANGUAGE_TO_TREESITTER_LANG.get("typescript")!);
   const tree = parser.parse(content);
   const parsed = make_parsed_file(
     content,

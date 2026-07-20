@@ -4,8 +4,8 @@
 
 import { describe, it, expect, beforeAll } from "vitest";
 import Parser from "tree-sitter";
-import TypeScript from "tree-sitter-typescript";
 import type { SyntaxNode } from "tree-sitter";
+import { LANGUAGE_TO_TREESITTER_LANG } from "../parsers";
 import { TYPESCRIPT_HANDLERS } from "./capture_handlers.typescript";
 import { extract_return_type, detect_callback_context } from "../symbol_factories/symbol_factories.typescript";
 import { JAVASCRIPT_HANDLERS } from "./capture_handlers.javascript";
@@ -34,7 +34,7 @@ describe("TypeScript Builder Configuration", () => {
 
   beforeAll(() => {
     parser = new Parser();
-    parser.setLanguage(TypeScript.typescript);
+    parser.setLanguage(LANGUAGE_TO_TREESITTER_LANG.get("typescript")!);
   });
 
   // Helper function to get AST node from code

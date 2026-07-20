@@ -4,7 +4,7 @@
 
 import { describe, it, expect } from "vitest";
 import Parser from "tree-sitter";
-import TypeScript from "tree-sitter-typescript";
+import { LANGUAGE_TO_TREESITTER_LANG } from "../parsers";
 import type { SyntaxNode } from "tree-sitter";
 import {
   create_interface_id,
@@ -61,7 +61,7 @@ const file_path = "/test.ts" as FilePath;
 
 function parse_typescript(code: string): SyntaxNode {
   const parser = new Parser();
-  parser.setLanguage(TypeScript.typescript);
+  parser.setLanguage(LANGUAGE_TO_TREESITTER_LANG.get("typescript")!);
   const tree = parser.parse(code);
   return tree.rootNode;
 }

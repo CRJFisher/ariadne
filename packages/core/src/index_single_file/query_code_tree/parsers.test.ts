@@ -16,7 +16,7 @@ describe("parsers", () => {
       ]);
       expect(LANGUAGE_TO_TREESITTER_LANG.get("javascript")).toBe(JavaScript);
       expect(LANGUAGE_TO_TREESITTER_LANG.get("typescript")).toBe(
-        TypeScript.typescript
+        TypeScript.tsx
       );
       expect(LANGUAGE_TO_TREESITTER_LANG.get("python")).toBe(Python);
       expect(LANGUAGE_TO_TREESITTER_LANG.get("rust")).toBe(Rust);
