@@ -2418,6 +2418,7 @@ export const NESTED = {
       expect(reexport.name).toBe("foo");
       expect(reexport.original_name).toBeUndefined(); // No alias
       expect(reexport.export?.is_reexport).toBe(true);
+      expect(reexport.export?.export_name).toBeUndefined(); // No alias → no distinct export name
     });
 
     it("should handle multiple aliased re-exports in same statement", async () => {

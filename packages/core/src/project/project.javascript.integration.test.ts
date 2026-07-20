@@ -919,4 +919,42 @@ function process(x) {}
     });
   });
 
+  describe("Re-export barrel — multiple aliases of one source (TASK-364.8)", () => {
+    it("registers both aliases without a forged duplicate export", () => {
+      // Two specifiers share the source name create_class_id but carry
+      // distinct aliases, so each must reach ExportRegistry under its own
+      // export name; a source-name-keyed collapse would make update_file
+      // throw "Duplicate export name create_py_class_id".
+      const barrel = file_path("modules/reexport_barrel_multi_alias.js");
+      const content = `export { create_class_id as create_js_class_id } from "./sf_js";
+export { create_class_id as create_py_class_id } from "./sf_py";
+`;
+
+      expect(() => project.update_file(barrel, content)).not.toThrow();
+
+      const js_export = project.exports.get_export(
+        barrel,
+        "create_js_class_id" as SymbolName
+      );
+      const py_export = project.exports.get_export(
+        barrel,
+        "create_py_class_id" as SymbolName
+      );
+
+      expect(js_export?.export_name).toBe("create_js_class_id" as SymbolName);
+      expect(js_export?.is_reexport).toBe(true);
+      expect(js_export?.import_def?.import_path).toBe("./sf_js");
+      expect(js_export?.import_def?.original_name).toBe(
+        "create_class_id" as SymbolName
+      );
+
+      expect(py_export?.export_name).toBe("create_py_class_id" as SymbolName);
+      expect(py_export?.is_reexport).toBe(true);
+      expect(py_export?.import_def?.import_path).toBe("./sf_py");
+      expect(py_export?.import_def?.original_name).toBe(
+        "create_class_id" as SymbolName
+      );
+    });
+  });
+
 });
