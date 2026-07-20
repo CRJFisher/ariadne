@@ -986,9 +986,16 @@ function main(): void {
     // to the factory, so a factory invoked only as a decorator gains an inbound
     // reference and is not reported as an unreachable entry point.
     it("resolves a class decorator-factory call to the factory and keeps it reachable", async () => {
+      // `unused_control` shares the factory's fate except for the decorator: it
+      // is a local, never-called function, so it is the entry-point control. It
+      // must surface as an entry point while the decorated `Route` must not.
       const code = `
 function Route(path: string) {
   return (target: Function) => target;
+}
+
+function unused_control() {
+  return 1;
 }
 
 @Route('/users')
@@ -1017,13 +1024,20 @@ export class UserController {}
       expect(resolved_def!.name).toBe("Route" as SymbolName);
       expect(resolved_def!.location.file_path).toContain("decorator_factory_class.ts");
 
-      // AC2: the local factory, used only as a decorator, is not an entry point.
-      const call_graph = project.get_call_graph();
-      const route_fn = Array.from(index!.functions.values()).find(
-        (f) => f.name === ("Route" as SymbolName)
+      // AC2: the decorated factory is not an unreachable entry point, while the
+      // never-called control is. include_tests keeps both nodes in the graph
+      // (the fixture path is under tests/), so the control proves entry-point
+      // detection is live and the assertion fails if the capture regresses.
+      const call_graph = project.get_call_graph({ include_tests: true });
+      const functions = Array.from(index!.functions.values());
+      const route_fn = functions.find((f) => f.name === ("Route" as SymbolName));
+      const control_fn = functions.find(
+        (f) => f.name === ("unused_control" as SymbolName)
       );
       expect(route_fn).toBeDefined();
+      expect(control_fn).toBeDefined();
       const entry_point_ids = new Set(call_graph.entry_points);
+      expect(entry_point_ids.has(control_fn!.symbol_id)).toBe(true);
       expect(entry_point_ids.has(route_fn!.symbol_id)).toBe(false);
     });
 
@@ -1031,6 +1045,10 @@ export class UserController {}
       const code = `
 function Cache() {
   return (target: object, key: string, desc: PropertyDescriptor) => desc;
+}
+
+function unused_control() {
+  return 1;
 }
 
 export class Service {
@@ -1060,13 +1078,19 @@ export class Service {
       expect(resolved_def!.name).toBe("Cache" as SymbolName);
       expect(resolved_def!.location.file_path).toContain("decorator_factory_method.ts");
 
-      // AC2: the factory is not an unreachable entry point.
-      const call_graph = project.get_call_graph();
-      const cache_fn = Array.from(index!.functions.values()).find(
-        (f) => f.name === ("Cache" as SymbolName)
+      // AC2: the decorated factory is not an unreachable entry point, while the
+      // never-called control is (see the class case for why include_tests and
+      // the control are required for this assertion to bite).
+      const call_graph = project.get_call_graph({ include_tests: true });
+      const functions = Array.from(index!.functions.values());
+      const cache_fn = functions.find((f) => f.name === ("Cache" as SymbolName));
+      const control_fn = functions.find(
+        (f) => f.name === ("unused_control" as SymbolName)
       );
       expect(cache_fn).toBeDefined();
+      expect(control_fn).toBeDefined();
       const entry_point_ids = new Set(call_graph.entry_points);
+      expect(entry_point_ids.has(control_fn!.symbol_id)).toBe(true);
       expect(entry_point_ids.has(cache_fn!.symbol_id)).toBe(false);
     });
   });
