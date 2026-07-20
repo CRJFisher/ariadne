@@ -980,4 +980,95 @@ function main(): void {
     });
   });
 
+  describe("Decorator Factory Invocation - Entry Point Detection (Task 359)", () => {
+    // A decorator-factory call `@Deco(args)` invokes the factory. The inner
+    // call_expression is captured as a `function_call` reference that resolves
+    // to the factory, so a factory invoked only as a decorator gains an inbound
+    // reference and is not reported as an unreachable entry point.
+    it("resolves a class decorator-factory call to the factory and keeps it reachable", async () => {
+      const code = `
+function Route(path: string) {
+  return (target: Function) => target;
+}
+
+@Route('/users')
+export class UserController {}
+`;
+      const file = file_path("decorator_factory_class.ts");
+      project.update_file(file, code);
+
+      const index = project.get_index_single_file(file);
+      expect(index).toBeDefined();
+
+      // AC1: the factory invocation emits a function_call reference to Route.
+      const route_call = index!.references.find(
+        (r): r is FunctionCallReference =>
+          r.kind === "function_call" && r.name === ("Route" as SymbolName)
+      );
+      expect(route_call).toBeDefined();
+
+      // AC1: that call resolves to the local factory function.
+      const resolved = project.resolutions.resolve(
+        route_call!.scope_id,
+        route_call!.name
+      );
+      expect(resolved).toBeDefined();
+      const resolved_def = project.definitions.get(resolved!);
+      expect(resolved_def!.name).toBe("Route" as SymbolName);
+      expect(resolved_def!.location.file_path).toContain("decorator_factory_class.ts");
+
+      // AC2: the local factory, used only as a decorator, is not an entry point.
+      const call_graph = project.get_call_graph();
+      const route_fn = Array.from(index!.functions.values()).find(
+        (f) => f.name === ("Route" as SymbolName)
+      );
+      expect(route_fn).toBeDefined();
+      const entry_point_ids = new Set(call_graph.entry_points);
+      expect(entry_point_ids.has(route_fn!.symbol_id)).toBe(false);
+    });
+
+    it("resolves a method decorator-factory call to the factory and keeps it reachable", async () => {
+      const code = `
+function Cache() {
+  return (target: object, key: string, desc: PropertyDescriptor) => desc;
+}
+
+export class Service {
+  @Cache()
+  getUsers() {}
+}
+`;
+      const file = file_path("decorator_factory_method.ts");
+      project.update_file(file, code);
+
+      const index = project.get_index_single_file(file);
+      expect(index).toBeDefined();
+
+      // AC1: the method decorator-factory invocation emits a function_call to Cache.
+      const cache_call = index!.references.find(
+        (r): r is FunctionCallReference =>
+          r.kind === "function_call" && r.name === ("Cache" as SymbolName)
+      );
+      expect(cache_call).toBeDefined();
+
+      const resolved = project.resolutions.resolve(
+        cache_call!.scope_id,
+        cache_call!.name
+      );
+      expect(resolved).toBeDefined();
+      const resolved_def = project.definitions.get(resolved!);
+      expect(resolved_def!.name).toBe("Cache" as SymbolName);
+      expect(resolved_def!.location.file_path).toContain("decorator_factory_method.ts");
+
+      // AC2: the factory is not an unreachable entry point.
+      const call_graph = project.get_call_graph();
+      const cache_fn = Array.from(index!.functions.values()).find(
+        (f) => f.name === ("Cache" as SymbolName)
+      );
+      expect(cache_fn).toBeDefined();
+      const entry_point_ids = new Set(call_graph.entry_points);
+      expect(entry_point_ids.has(cache_fn!.symbol_id)).toBe(false);
+    });
+  });
+
 });
