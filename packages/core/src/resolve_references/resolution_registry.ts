@@ -5,6 +5,7 @@ import type {
   ScopeId,
   SymbolName,
   Language,
+  IndirectReachability,
 } from "@ariadnejs/types";
 import type { FileSystemFolder } from "./file_folders";
 import type { DefinitionRegistry } from "./registries/definition";
@@ -36,7 +37,6 @@ import {
   resolve_names as resolve_names_impl,
   type NameResolutionContext,
 } from "./name_resolution";
-import type { IndirectReachabilityEntry } from "./indirect_reachability";
 
 /**
  * Coordinates the two resolution phases and owns the immutable `ResolutionState`.
@@ -143,7 +143,7 @@ export class ResolutionRegistry {
     return get_calls_for_file_from_state(this.state, file_id);
   }
 
-  get_indirect_reachability(): ReadonlyMap<SymbolId, IndirectReachabilityEntry> {
+  get_indirect_reachability(): ReadonlyMap<SymbolId, IndirectReachability> {
     return get_indirect_reachability_from_state(this.state);
   }
 

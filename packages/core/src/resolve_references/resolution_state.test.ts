@@ -23,9 +23,9 @@ import type {
   FilePath,
   Location,
   CallReference,
+  IndirectReachability,
+  IndirectReachabilityReason,
 } from "@ariadnejs/types";
-import type { IndirectReachabilityEntry } from "./indirect_reachability";
-import type { IndirectReachabilityReason } from "@ariadnejs/types";
 
 const TEST_FILE = "test.ts" as FilePath;
 const FILE_A = "a.ts" as FilePath;
@@ -234,7 +234,7 @@ describe("get_all_referenced_symbols", () => {
       collection_id: MOCK_COLLECTION_ID,
       read_location: MOCK_LOCATION,
     };
-    const entry: IndirectReachabilityEntry = {
+    const entry: IndirectReachability = {
       reason,
     };
 
@@ -254,7 +254,7 @@ describe("get_all_referenced_symbols", () => {
       type: "function_reference",
       read_location: MOCK_LOCATION,
     };
-    const entry: IndirectReachabilityEntry = {
+    const entry: IndirectReachability = {
       reason,
     };
 
@@ -279,7 +279,7 @@ describe("get_all_referenced_symbols", () => {
       scope_id: SCOPE_A,
       resolutions: [{ symbol_id: called, confidence: "certain", reason: { type: "direct" } }],
     };
-    const entry: IndirectReachabilityEntry = {
+    const entry: IndirectReachability = {
       reason: {
         type: "function_reference",
         read_location: MOCK_LOCATION,
@@ -343,7 +343,7 @@ describe("get_indirect_reachability", () => {
       collection_id: MOCK_COLLECTION_ID,
       read_location: MOCK_LOCATION,
     };
-    const entry: IndirectReachabilityEntry = {
+    const entry: IndirectReachability = {
       reason,
     };
 
@@ -482,10 +482,10 @@ describe("remove_file", () => {
       collection_id: MOCK_COLLECTION_ID_B,
       read_location: MOCK_LOCATION_B,
     };
-    const entry_a: IndirectReachabilityEntry = {
+    const entry_a: IndirectReachability = {
       reason: reason_a,
     };
-    const entry_b: IndirectReachabilityEntry = {
+    const entry_b: IndirectReachability = {
       reason: reason_b,
     };
 
@@ -515,10 +515,10 @@ describe("remove_file", () => {
       type: "function_reference",
       read_location: MOCK_LOCATION_B,
     };
-    const entry_a: IndirectReachabilityEntry = {
+    const entry_a: IndirectReachability = {
       reason: reason_a,
     };
-    const entry_b: IndirectReachabilityEntry = {
+    const entry_b: IndirectReachability = {
       reason: reason_b,
     };
 
@@ -664,7 +664,7 @@ describe("apply_call_resolution", () => {
       collection_id: MOCK_COLLECTION_ID_A,
       read_location: MOCK_LOCATION_A,
     };
-    const entry: IndirectReachabilityEntry = {
+    const entry: IndirectReachability = {
       reason,
     };
 
@@ -687,7 +687,7 @@ describe("apply_call_resolution", () => {
       type: "function_reference",
       read_location: MOCK_LOCATION_A,
     };
-    const entry: IndirectReachabilityEntry = {
+    const entry: IndirectReachability = {
       reason,
     };
 
