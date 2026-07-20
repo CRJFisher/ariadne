@@ -37,7 +37,8 @@
     "eslint-plugin-unused-imports": "^4.3.0",
     "markdownlint-cli": "^0.47.0",
     "tsx": "^4.19.2",
-    "typescript": "^6.0.2"
+    "typescript": "^6.0.2",
+    "vitest": "^3.2.4"
   },
   "engines": {
     "node": ">=20.0.0"
