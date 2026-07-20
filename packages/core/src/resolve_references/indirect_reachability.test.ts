@@ -1,6 +1,5 @@
 import { describe, it, expect } from "vitest";
 import { detect_indirect_reachability } from "./indirect_reachability";
-import type { IndirectReachabilityEntry } from "./indirect_reachability";
 import { function_symbol, method_symbol, variable_symbol } from "@ariadnejs/types";
 import type {
   SymbolId,
@@ -8,6 +7,7 @@ import type {
   FilePath,
   Location,
   FunctionCollection,
+  IndirectReachability,
   AnyDefinition,
   ScopeId,
   FunctionDefinition,
@@ -69,7 +69,7 @@ function run(
   refs: ReadRef[],
   registry: DefinitionRegistry,
   resolve: (scope_id: string, name: SymbolName) => SymbolId | null,
-): Map<SymbolId, IndirectReachabilityEntry> {
+): Map<SymbolId, IndirectReachability> {
   const file_references = new Map<FilePath, readonly ReadRef[]>([[TEST_FILE, refs]]);
   return detect_indirect_reachability(file_references, registry, resolve);
 }
@@ -159,7 +159,7 @@ describe("detect_indirect_reachability", () => {
       );
 
       expect(result).toEqual(
-        new Map<SymbolId, IndirectReachabilityEntry>([
+        new Map<SymbolId, IndirectReachability>([
           [
             fn_def.symbol_id,
             { reason: { type: "function_reference", read_location: READ_LOCATION } },
@@ -217,7 +217,7 @@ describe("detect_indirect_reachability", () => {
       );
 
       expect(result).toEqual(
-        new Map<SymbolId, IndirectReachabilityEntry>([
+        new Map<SymbolId, IndirectReachability>([
           [
             fn_a.symbol_id,
             { reason: { type: "function_reference", read_location: READ_LOCATION } },
@@ -281,7 +281,7 @@ describe("detect_indirect_reachability", () => {
       );
 
       expect(result).toEqual(
-        new Map<SymbolId, IndirectReachabilityEntry>([
+        new Map<SymbolId, IndirectReachability>([
           [
             method_def.symbol_id,
             { reason: { type: "function_reference", read_location: READ_LOCATION } },
@@ -344,7 +344,7 @@ describe("detect_indirect_reachability", () => {
       );
 
       expect(result).toEqual(
-        new Map<SymbolId, IndirectReachabilityEntry>([
+        new Map<SymbolId, IndirectReachability>([
           [
             fn_def.symbol_id,
             {
@@ -382,7 +382,7 @@ describe("detect_indirect_reachability", () => {
       );
 
       expect(result).toEqual(
-        new Map<SymbolId, IndirectReachabilityEntry>([
+        new Map<SymbolId, IndirectReachability>([
           [
             fn_def.symbol_id,
             {
@@ -432,7 +432,7 @@ describe("detect_indirect_reachability", () => {
       );
 
       expect(result).toEqual(
-        new Map<SymbolId, IndirectReachabilityEntry>([
+        new Map<SymbolId, IndirectReachability>([
           [
             inner_fn.symbol_id,
             {
@@ -474,7 +474,7 @@ describe("detect_indirect_reachability", () => {
       );
 
       expect(result).toEqual(
-        new Map<SymbolId, IndirectReachabilityEntry>([
+        new Map<SymbolId, IndirectReachability>([
           [
             fn_def.symbol_id,
             {

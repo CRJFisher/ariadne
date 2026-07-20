@@ -11,12 +11,8 @@
  * These callables should not be considered entry points.
  */
 
-import type { FilePath, SymbolId, SymbolName, Location, FunctionCollection, IndirectReachabilityReason } from "@ariadnejs/types";
+import type { FilePath, SymbolId, SymbolName, Location, FunctionCollection, IndirectReachability } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "./registries/definition";
-
-export interface IndirectReachabilityEntry {
-  reason: IndirectReachabilityReason;
-}
 
 type SymbolResolver = (scope_id: string, name: SymbolName) => SymbolId | null;
 
@@ -39,8 +35,8 @@ export function detect_indirect_reachability(
   file_references: Map<FilePath, readonly VariableReadReference[]>,
   definitions: DefinitionRegistry,
   resolve: SymbolResolver
-): Map<SymbolId, IndirectReachabilityEntry> {
-  const indirect_reachability = new Map<SymbolId, IndirectReachabilityEntry>();
+): Map<SymbolId, IndirectReachability> {
+  const indirect_reachability = new Map<SymbolId, IndirectReachability>();
 
   for (const references of file_references.values()) {
     for (const ref of references) {
@@ -102,7 +98,7 @@ function mark_collection_as_consumed(
   read_location: Location,
   definitions: DefinitionRegistry,
   resolve: SymbolResolver,
-  indirect_reachability: Map<SymbolId, IndirectReachabilityEntry>,
+  indirect_reachability: Map<SymbolId, IndirectReachability>,
   visited: Set<SymbolId>
 ): void {
   if (visited.has(collection_id)) return;

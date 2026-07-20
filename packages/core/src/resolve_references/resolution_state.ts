@@ -9,8 +9,8 @@ import type {
   CallReference,
   ScopeId,
   SymbolName,
+  IndirectReachability,
 } from "@ariadnejs/types";
-import type { IndirectReachabilityEntry } from "./indirect_reachability";
 
 // ============================================================================
 // Types
@@ -42,7 +42,7 @@ export interface ResolutionState {
    */
   readonly indirect_reachability: ReadonlyMap<
     SymbolId,
-    IndirectReachabilityEntry
+    IndirectReachability
   >;
 }
 
@@ -65,7 +65,7 @@ export interface CallResolutionResult {
   >;
   readonly indirect_reachability: ReadonlyMap<
     SymbolId,
-    IndirectReachabilityEntry
+    IndirectReachability
   >;
 }
 
@@ -137,7 +137,7 @@ export function get_all_referenced_symbols(
 
 export function get_indirect_reachability(
   state: ResolutionState
-): ReadonlyMap<SymbolId, IndirectReachabilityEntry> {
+): ReadonlyMap<SymbolId, IndirectReachability> {
   return state.indirect_reachability;
 }
 
@@ -179,7 +179,7 @@ export function remove_file(
 
   // Indirect entries are keyed by the reachable function, not the file, so
   // evict by the read site that made the function reachable.
-  const new_indirect_reachability = new Map<SymbolId, IndirectReachabilityEntry>();
+  const new_indirect_reachability = new Map<SymbolId, IndirectReachability>();
   for (const [fn_id, entry] of state.indirect_reachability) {
     if (entry.reason.read_location.file_path !== file_id) {
       new_indirect_reachability.set(fn_id, entry);
