@@ -3,8 +3,10 @@ paths:
   - .claude/skills/triage/**
   - .claude/skills/plan/**
   - .claude/skills/reconcile-registry/**
+  - .claude/hooks/registry_write_guard.ts
   - packages/core/src/classify_entry_points/builtins/**
-  - packages/skill-fs/src/**
+  - packages/skill-fs/src/atomic_update_registry.ts
+  - packages/skill-fs/src/registry_writers.test.ts
 ---
 
 # Classifier Rule Lifecycle — Write-Boundary Contract
