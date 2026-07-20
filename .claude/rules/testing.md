@@ -1,5 +1,10 @@
 ---
-paths: packages/*/src/**
+paths:
+  - packages/*/src/**
+  - packages/*/tests/**
+  - .claude/hooks/**
+  - .claude/skills/**
+  - scripts/**
 ---
 
 # Testing Requirements

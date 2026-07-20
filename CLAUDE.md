@@ -30,8 +30,8 @@ The core pipeline has three stages. Subsystem-specific guidance lives in `.claud
 
 Detailed, situational guidance lives in `.claude/rules/` and auto-loads by file path when you touch a matching file — this trunk never restates it:
 
-- **File naming** (`file-naming.md`) and **testing** (`testing.md`) load on `packages/*/src/**`.
-- **Documentation style** (`documentation-style.md`) carries the project-specific carve-out and loads on any Markdown edit; the canonical doc-style rules are always-on globally.
+- **File naming** (`file-naming.md`) loads on `packages/*/src/**`; **testing** (`testing.md`) loads on the test-bearing trees (`packages/*/src/**`, `packages/*/tests/**`, `.claude/hooks/**`, `.claude/skills/**`, `scripts/**`).
+- **Documentation style** (`documentation-style.md`) loads on any Markdown edit.
 - Pipeline-stage and subsystem rules load on their owning source paths.
 
 ## Code Structure
