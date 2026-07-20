@@ -164,5 +164,48 @@ describe("load_project", () => {
       );
       expect(entry_names).not.toContain("Button");
     });
+
+    it("resolves a default-exported component used from MDX", async () => {
+      await fs.writeFile(
+        path.join(temp_dir, "button.jsx"),
+        "export default function Button(props) {\n  return props.label;\n}\n",
+      );
+      await fs.writeFile(
+        path.join(temp_dir, "page.mdx"),
+        "import Button from \"./button\";\n\n# Heading\n\n<Button label=\"Click\" />\n",
+      );
+
+      const project = await load_project({ project_path: temp_dir });
+
+      const call_graph = project.get_call_graph();
+      const names = [...call_graph.nodes.values()].map((n) => n.name);
+      expect(names).toContain("Button");
+
+      const entry_names = call_graph.entry_points.map(
+        (id) => call_graph.nodes.get(id)?.name,
+      );
+      expect(entry_names).not.toContain("Button");
+    });
+
+    it("does not index plain .md files, so a component used only in Markdown stays an entry point", async () => {
+      // Only `.mdx` is indexed; `.md` must not route to the JavaScript grammar,
+      // so a component used solely inside a `.md` file has no textual caller.
+      await fs.writeFile(
+        path.join(temp_dir, "button.jsx"),
+        "export function Button(props) {\n  return props.label;\n}\n",
+      );
+      await fs.writeFile(
+        path.join(temp_dir, "page.md"),
+        "import { Button } from \"./button\";\n\n# Heading\n\n<Button label=\"Click\" />\n",
+      );
+
+      const project = await load_project({ project_path: temp_dir });
+
+      const call_graph = project.get_call_graph();
+      const entry_names = call_graph.entry_points.map(
+        (id) => call_graph.nodes.get(id)?.name,
+      );
+      expect(entry_names).toContain("Button");
+    });
   });
 });

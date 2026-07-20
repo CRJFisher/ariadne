@@ -8,11 +8,11 @@ import { has_file_in_tree } from "../file_folders";
  *
  * Relative imports (`./`, `../`) are probed against the file tree for `.js`,
  * `.jsx`, `.mjs`, `.cjs` extensions first, then `.ts`/`.tsx`, and `index.*`
- * files. The TypeScript-family fallback lets a JavaScript or MDX file resolve a
- * component defined in a `.ts`/`.tsx` module in a mixed project; JS targets win
- * when both exist, so pure-JavaScript resolution is unchanged. Bare and package
- * imports are opaque here — they name external modules, not project files — so
- * they are returned unchanged.
+ * files. Probing the TypeScript family after the JavaScript one lets a
+ * JavaScript file in a mixed project resolve a component defined in a
+ * `.ts`/`.tsx` module while a JavaScript target still wins when both exist.
+ * Bare and package imports are opaque here — they name external modules, not
+ * project files — so they are returned unchanged.
  *
  * @param import_path - Import path from import statement
  * @param importing_file - Path to file containing the import (absolute or relative to root_folder)

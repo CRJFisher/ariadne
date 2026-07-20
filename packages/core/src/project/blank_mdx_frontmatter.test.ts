@@ -9,11 +9,17 @@ describe("blank_mdx_frontmatter", () => {
 
   it("preserves total length so downstream locations stay accurate", () => {
     const content = "---\ntitle: Demo\ntags: [a, b]\n---\nimport { Button } from \"./button\";\n";
-    const result = blank_mdx_frontmatter(content);
+    // Each blanked frontmatter line keeps its original length as spaces, so the
+    // import line below the block sits at its original row and column.
+    const expected =
+      " ".repeat("---".length) + "\n" +
+      " ".repeat("title: Demo".length) + "\n" +
+      " ".repeat("tags: [a, b]".length) + "\n" +
+      " ".repeat("---".length) + "\n" +
+      "import { Button } from \"./button\";\n";
 
-    expect(result.length).toBe(content.length);
-    expect(result.endsWith("import { Button } from \"./button\";\n")).toBe(true);
-    expect(result.split("\n").length).toBe(content.split("\n").length);
+    expect(blank_mdx_frontmatter(content)).toBe(expected);
+    expect(expected.length).toBe(content.length);
   });
 
   it("leaves content without frontmatter unchanged", () => {
@@ -29,5 +35,10 @@ describe("blank_mdx_frontmatter", () => {
   it("blanks a CRLF frontmatter block preserving carriage returns and newlines", () => {
     const content = "---\r\na\r\n---\r\nX\r\n";
     expect(blank_mdx_frontmatter(content)).toBe("   \r\n \r\n   \r\nX\r\n");
+  });
+
+  it("blanks a frontmatter block that closes at end of file with no trailing newline", () => {
+    const content = "---\na\n---";
+    expect(blank_mdx_frontmatter(content)).toBe("   \n \n   ");
   });
 });
