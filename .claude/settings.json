@@ -74,6 +74,10 @@
           {
             "type": "command",
             "command": "cd \"$CLAUDE_PROJECT_DIR\" && pnpm exec tsx \"$CLAUDE_PROJECT_DIR/.claude/hooks/doc_path_truth.ts\""
+          },
+          {
+            "type": "command",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && pnpm exec tsx \"$CLAUDE_PROJECT_DIR/.claude/hooks/capture_receiver_consistency_stop.ts\""
           }
         ]
       }

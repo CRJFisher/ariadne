@@ -49,7 +49,6 @@ import {
 // Import method and free-function handlers from their separate files
 import {
   handle_definition_method,
-  handle_definition_method_associated,
   handle_definition_method_default,
   handle_definition_method_async,
   handle_definition_constructor,
@@ -64,7 +63,6 @@ import {
 
 export {
   handle_definition_method,
-  handle_definition_method_associated,
   handle_definition_method_default,
   handle_definition_method_async,
   handle_definition_constructor,
@@ -354,28 +352,6 @@ export function handle_definition_parameter_self(
   });
 }
 
-export function handle_definition_parameter_closure(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const param_id = create_parameter_id(capture);
-  const parent_id = find_containing_callable(capture);
-
-  if (!parent_id) return;
-
-  const param_type = extract_parameter_type(capture.node.parent || capture.node);
-
-  builder.add_parameter_to_callable(parent_id, {
-    symbol_id: param_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    type: param_type,
-    optional: false,
-  });
-}
-
 // ============================================================================
 // VARIABLE AND CONSTANT HANDLERS
 // ============================================================================
@@ -513,48 +489,9 @@ export function handle_definition_module(
   });
 }
 
-export function handle_definition_module_public(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const module_id = create_module_id(capture);
-
-  builder.add_namespace({
-    symbol_id: module_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    is_exported: true,
-    export: undefined,
-  });
-}
-
 // ============================================================================
 // TYPE HANDLERS
 // ============================================================================
-
-export function handle_definition_type(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const type_id = create_type_alias_id(capture);
-  const generics = extract_generic_parameters(capture.node.parent || capture.node);
-  const export_info = extract_export_info(capture.node.parent || capture.node);
-
-  builder.add_type_alias({
-    kind: "type_alias",
-    symbol_id: type_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    is_exported: export_info.is_exported,
-    export: export_info.export,
-    type_expression: extract_type_expression(capture.node) as SymbolName | undefined,
-    generics: generics.length > 0 ? generics : undefined,
-  });
-}
 
 export function handle_definition_type_alias(
   capture: CaptureNode,
@@ -575,25 +512,6 @@ export function handle_definition_type_alias(
     export: export_info.export,
     type_expression: extract_type_expression(capture.node) as SymbolName | undefined,
     generics: generics.length > 0 ? generics : undefined,
-  });
-}
-
-export function handle_definition_type_alias_impl(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const type_id = create_type_alias_id(capture);
-
-  builder.add_type_alias({
-    kind: "type_alias",
-    symbol_id: type_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    is_exported: true,
-    export: undefined,
-    type_expression: extract_type_expression(capture.node) as SymbolName | undefined,
   });
 }
 
@@ -633,14 +551,6 @@ export function handle_definition_type_parameter(
   _context: ProcessingContext
 ): void {
   // Type parameters are handled as part of the containing definition
-}
-
-export function handle_definition_type_parameter_constrained(
-  _capture: CaptureNode,
-  _builder: DefinitionBuilder,
-  _context: ProcessingContext
-): void {
-  // Constrained type parameters are handled as part of the containing definition
 }
 
 // ============================================================================
@@ -736,46 +646,6 @@ export function handle_definition_function_closure(
   // Handled elsewhere
 }
 
-export function handle_definition_function_async_closure(
-  _capture: CaptureNode,
-  _builder: DefinitionBuilder,
-  _context: ProcessingContext
-): void {
-  // Handled elsewhere
-}
-
-export function handle_definition_function_async_move_closure(
-  _capture: CaptureNode,
-  _builder: DefinitionBuilder,
-  _context: ProcessingContext
-): void {
-  // Handled elsewhere
-}
-
-export function handle_definition_function_returns_impl(
-  _capture: CaptureNode,
-  _builder: DefinitionBuilder,
-  _context: ProcessingContext
-): void {
-  // Handled elsewhere
-}
-
-export function handle_definition_function_accepts_impl(
-  _capture: CaptureNode,
-  _builder: DefinitionBuilder,
-  _context: ProcessingContext
-): void {
-  // Handled elsewhere
-}
-
-export function handle_definition_visibility(
-  _capture: CaptureNode,
-  _builder: DefinitionBuilder,
-  _context: ProcessingContext
-): void {
-  // Visibility modifiers are handled as part of the containing definition
-}
-
 // ============================================================================
 // HANDLER REGISTRY
 // ============================================================================
@@ -811,7 +681,6 @@ export const RUST_HANDLERS: HandlerRegistry = {
   // Parameters
   "definition.parameter": handle_definition_parameter,
   "definition.parameter.self": handle_definition_parameter_self,
-  "definition.parameter.closure": handle_definition_parameter_closure,
 
   // Variables and constants
   "definition.variable": handle_definition_variable,
@@ -820,19 +689,15 @@ export const RUST_HANDLERS: HandlerRegistry = {
 
   // Module definitions
   "definition.module": handle_definition_module,
-  "definition.module.public": handle_definition_module_public,
 
   // Type definitions
-  "definition.type": handle_definition_type,
   "definition.type_alias": handle_definition_type_alias,
-  "definition.type_alias.impl": handle_definition_type_alias_impl,
 
   // Macro definitions
   "definition.macro": handle_definition_macro,
 
   // Type parameters
   "definition.type_parameter": handle_definition_type_parameter,
-  "definition.type_parameter.constrained": handle_definition_type_parameter_constrained,
 
   // Imports
   "definition.import": handle_definition_import,
@@ -843,15 +708,9 @@ export const RUST_HANDLERS: HandlerRegistry = {
 
   // Other captures (no-op handlers)
   "definition.function.closure": handle_definition_function_closure,
-  "definition.function.async_closure": handle_definition_function_async_closure,
-  "definition.function.async_move_closure": handle_definition_function_async_move_closure,
-  "definition.function.returns_impl": handle_definition_function_returns_impl,
-  "definition.function.accepts_impl": handle_definition_function_accepts_impl,
-  "definition.visibility": handle_definition_visibility,
 
   // Method definitions
   "definition.method": handle_definition_method,
-  "definition.method.associated": handle_definition_method_associated,
   "definition.method.default": handle_definition_method_default,
   "definition.method.async": handle_definition_method_async,
   "definition.constructor": handle_definition_constructor,

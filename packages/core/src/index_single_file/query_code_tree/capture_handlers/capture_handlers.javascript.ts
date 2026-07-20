@@ -196,27 +196,6 @@ export function handle_definition_function(
   );
 }
 
-export function handle_definition_arrow(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const func_id = create_function_id(capture);
-  const export_info = extract_export_info(capture.node, capture.text);
-
-  builder.add_function(
-    {
-      symbol_id: func_id,
-      name: capture.text,
-      location: capture.location,
-      scope_id: context.get_scope_id(capture.location),
-      is_exported: export_info.is_exported,
-      export: export_info.export,
-    },
-    capture
-  );
-}
-
 export function handle_definition_anonymous_function(
   capture: CaptureNode,
   builder: DefinitionBuilder,
@@ -238,24 +217,6 @@ export function handle_definition_anonymous_function(
     },
     capture
   );
-}
-
-export function handle_definition_param(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const param_id = create_parameter_id(capture);
-  const parent_id = find_containing_callable(capture);
-
-  builder.add_parameter_to_callable(parent_id, {
-    symbol_id: param_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    type: extract_parameter_type(capture.node),
-    default_value: extract_default_value(capture.node),
-  });
 }
 
 export function handle_definition_parameter(
@@ -359,26 +320,6 @@ export function handle_definition_field(
   }
 }
 
-export function handle_definition_property(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const prop_id = create_property_id(capture);
-  const class_id = find_containing_class(capture);
-
-  if (class_id) {
-    builder.add_property_to_class(class_id, {
-      symbol_id: prop_id,
-      name: capture.text,
-      location: capture.location,
-      scope_id: context.get_scope_id(capture.location),
-      type: extract_property_type(capture.node),
-      initial_value: extract_initial_value(capture.node),
-    });
-  }
-}
-
 // ============================================================================
 // IMPORT HANDLERS
 // ============================================================================
@@ -421,108 +362,6 @@ export function handle_definition_import(
     import_path: extract_import_path(import_stmt),
     import_kind,
     original_name: extract_original_name(import_stmt, capture.text),
-  });
-}
-
-export function handle_definition_import_named(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const import_id = create_import_id(capture);
-
-  // Check if this is an aliased import by looking at the parent import_specifier
-  const import_specifier = capture.node.parent;
-  if (import_specifier?.type === "import_specifier") {
-    const alias_node = import_specifier.childForFieldName("alias");
-    const name_node = import_specifier.childForFieldName("name");
-
-    // If there's an alias and we captured the NAME (not the alias), skip it
-    // We'll handle it when we capture the ALIAS
-    if (alias_node && capture.node === name_node) {
-      return; // Skip - will be handled by alias capture
-    }
-
-    // If there's an alias and we captured the ALIAS, extract the original name
-    if (alias_node && capture.node === alias_node) {
-      // Navigate up to find import statement
-      let import_stmt = capture.node.parent;
-      while (import_stmt && import_stmt.type !== "import_statement") {
-        import_stmt = import_stmt.parent;
-      }
-
-      const original_name = name_node?.text as SymbolName | undefined;
-
-      builder.add_import({
-        symbol_id: import_id,
-        name: capture.text, // This is the alias
-        location: capture.location,
-        scope_id: context.get_scope_id(capture.location),
-        import_path: extract_import_path(import_stmt),
-        import_kind: "named",
-        original_name: original_name,
-      });
-      return;
-    }
-  }
-
-  // Simple import (no alias)
-  // Navigate up to find import statement
-  let import_stmt = capture.node.parent;
-  while (import_stmt && import_stmt.type !== "import_statement") {
-    import_stmt = import_stmt.parent;
-  }
-
-  builder.add_import({
-    symbol_id: import_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    import_path: extract_import_path(import_stmt),
-    import_kind: "named",
-    original_name: undefined,
-  });
-}
-
-export function handle_definition_import_default(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const import_id = create_import_id(capture);
-  const import_stmt = capture.node.parent?.parent; // import_clause -> import_statement
-
-  builder.add_import({
-    symbol_id: import_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    import_path: extract_import_path(import_stmt),
-    import_kind: "default",
-    original_name: undefined,
-  });
-}
-
-export function handle_definition_import_namespace(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const import_id = create_import_id(capture);
-  // Navigate up to import statement
-  let import_stmt = capture.node.parent;
-  while (import_stmt && import_stmt.type !== "import_statement") {
-    import_stmt = import_stmt.parent;
-  }
-
-  builder.add_import({
-    symbol_id: import_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    import_path: extract_import_path(import_stmt),
-    import_kind: "namespace",
-    original_name: undefined,
   });
 }
 
@@ -693,259 +532,6 @@ export function handle_import_reexport(
   }
 }
 
-export function handle_import_reexport_named_simple(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const import_id = create_import_id(capture);
-  // Navigate up to export_statement
-  let export_stmt = capture.node.parent;
-  while (export_stmt && export_stmt.type !== "export_statement") {
-    export_stmt = export_stmt.parent;
-  }
-
-  if (!export_stmt) {
-    throw new Error("Export statement not found for re-export capture");
-  }
-
-  // Check if this export_specifier has an alias - if so, skip it
-  // (it will be handled by import.reexport.named.alias handler)
-  const export_specifier = capture.node.parent;
-  if (export_specifier?.childForFieldName?.("alias")) {
-    return; // Skip - has alias
-  }
-
-  const export_info = extract_export_info(export_stmt, capture.text);
-
-  builder.add_import({
-    symbol_id: import_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    import_path: extract_import_path(export_stmt),
-    import_kind: "named",
-    original_name: undefined,
-    export: export_info.export,
-  });
-}
-
-export function handle_import_reexport_named(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const import_id = create_import_id(capture);
-  // Navigate up to export_statement
-  let export_stmt = capture.node.parent;
-  while (export_stmt && export_stmt.type !== "export_statement") {
-    export_stmt = export_stmt.parent;
-  }
-
-  if (!export_stmt) {
-    throw new Error("Export statement not found for re-export capture");
-  }
-
-  const export_info = extract_export_info(export_stmt, capture.text);
-
-  builder.add_import({
-    symbol_id: import_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    import_path: extract_import_path(export_stmt),
-    import_kind: "named",
-    original_name: undefined,
-    export: export_info.export,
-  });
-}
-
-export function handle_import_reexport_named_alias(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const import_id = create_import_id(capture);
-  // Navigate up to export_statement
-  let export_stmt = capture.node.parent;
-  while (export_stmt && export_stmt.type !== "export_statement") {
-    export_stmt = export_stmt.parent;
-  }
-  if (!export_stmt) {
-    return;
-  }
-
-  // Get the original name from the export_specifier
-  const export_specifier = capture.node.parent;
-  const original_node = export_specifier?.childForFieldName?.("name");
-  const original_name = original_node?.text as SymbolName | undefined;
-
-  const export_info = extract_export_info(export_stmt, capture.text);
-
-  builder.add_import({
-    symbol_id: import_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    import_path: extract_import_path(export_stmt),
-    import_kind: "named",
-    original_name,
-    export: export_info.export,
-  });
-}
-
-export function handle_import_reexport_default_original(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const import_id = create_import_id(capture);
-  // Navigate up to export_statement
-  let export_stmt = capture.node.parent;
-  while (export_stmt && export_stmt.type !== "export_statement") {
-    export_stmt = export_stmt.parent;
-  }
-  if (!export_stmt) {
-    return;
-  }
-
-  // Check if there's an alias
-  const export_specifier = capture.node.parent;
-  const alias_node = export_specifier?.childForFieldName?.("alias");
-  const local_name = alias_node?.text || "default";
-
-  const export_info = extract_export_info(export_stmt, local_name as SymbolName);
-
-  builder.add_import({
-    symbol_id: import_id,
-    name: local_name as SymbolName,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    import_path: extract_import_path(export_stmt),
-    import_kind: "default",
-    original_name: undefined,
-    export: export_info.export,
-  });
-}
-
-export function handle_import_reexport_default_alias(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const import_id = create_import_id(capture);
-  // Navigate up to export_statement
-  let export_stmt = capture.node.parent;
-  while (export_stmt && export_stmt.type !== "export_statement") {
-    export_stmt = export_stmt.parent;
-  }
-  if (!export_stmt) {
-    return;
-  }
-
-  const export_info = extract_export_info(export_stmt, capture.text);
-
-  builder.add_import({
-    symbol_id: import_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    import_path: extract_import_path(export_stmt),
-    import_kind: "default",
-    original_name: "default" as SymbolName,
-    export: export_info.export,
-  });
-}
-
-export function handle_import_reexport_as_default_alias(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const import_id = create_import_id(capture);
-  // Navigate up to export_statement
-  let export_stmt = capture.node.parent;
-  while (export_stmt && export_stmt.type !== "export_statement") {
-    export_stmt = export_stmt.parent;
-  }
-  if (!export_stmt) {
-    return;
-  }
-
-  // Get the original name from the export_specifier
-  const export_specifier = capture.node.parent;
-  const original_node = export_specifier?.childForFieldName?.("name");
-  const original_name = original_node?.text as SymbolName | undefined;
-
-  const export_info = extract_export_info(export_stmt, capture.text);
-
-  builder.add_import({
-    symbol_id: import_id,
-    name: original_name || capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    import_path: extract_import_path(export_stmt),
-    import_kind: "named",
-    original_name: undefined,
-    export: export_info.export,
-  });
-}
-
-export function handle_import_reexport_namespace_source(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  // This handles: export * from './module'
-  // Note: This is a special case - no specific name to import
-  // We create a synthetic import entry for the namespace re-export
-  const import_id = create_import_id(capture);
-  const export_stmt = capture.node;
-
-  const export_info = extract_export_info(export_stmt, "*" as SymbolName);
-
-  // For bare namespace re-exports, we use "*" as the name
-  builder.add_import({
-    symbol_id: import_id,
-    name: "*" as SymbolName,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    import_path: extract_import_path(export_stmt),
-    import_kind: "namespace",
-    original_name: undefined,
-    export: export_info.export,
-  });
-}
-
-export function handle_import_reexport_namespace_alias(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const import_id = create_import_id(capture);
-  // Navigate up to export_statement
-  let export_stmt = capture.node.parent;
-  while (export_stmt && export_stmt.type !== "export_statement") {
-    export_stmt = export_stmt.parent;
-  }
-  if (!export_stmt) {
-    return;
-  }
-
-  const export_info = extract_export_info(export_stmt, capture.text);
-
-  builder.add_import({
-    symbol_id: import_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    import_path: extract_import_path(export_stmt),
-    import_kind: "namespace",
-    original_name: undefined,
-    export: export_info.export,
-  });
-}
-
 // ============================================================================
 // HANDLER REGISTRY
 // ============================================================================
@@ -959,30 +545,16 @@ export const JAVASCRIPT_HANDLERS: HandlerRegistry = {
   "definition.method": handle_definition_method,
   "definition.constructor": handle_definition_constructor,
   "definition.function": handle_definition_function,
-  "definition.arrow": handle_definition_arrow,
   "definition.anonymous_function": handle_definition_anonymous_function,
-  "definition.param": handle_definition_param,
   "definition.parameter": handle_definition_parameter,
   "definition.variable": handle_definition_variable,
   "definition.field": handle_definition_field,
-  "definition.property": handle_definition_property,
 
   // Imports
   "definition.import": handle_definition_import,
-  "definition.import.named": handle_definition_import_named,
-  "definition.import.default": handle_definition_import_default,
-  "definition.import.namespace": handle_definition_import_namespace,
   "definition.import.require": handle_definition_import_require,
   "definition.import.require.simple": handle_definition_import_require_simple,
 
   // Re-exports
   "import.reexport": handle_import_reexport,
-  "import.reexport.named.simple": handle_import_reexport_named_simple,
-  "import.reexport.named": handle_import_reexport_named,
-  "import.reexport.named.alias": handle_import_reexport_named_alias,
-  "import.reexport.default.original": handle_import_reexport_default_original,
-  "import.reexport.default.alias": handle_import_reexport_default_alias,
-  "import.reexport.as_default.alias": handle_import_reexport_as_default_alias,
-  "import.reexport.namespace.source": handle_import_reexport_namespace_source,
-  "import.reexport.namespace.alias": handle_import_reexport_namespace_alias,
 } as const;
