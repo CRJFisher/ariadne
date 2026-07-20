@@ -81,6 +81,22 @@ export interface SelfReferenceCall extends BaseReference {
 export type SelfReferenceKeyword = "this" | "self" | "super" | "cls";
 
 /**
+ * Positional call-argument identifier names, aligned index-for-index with a
+ * `property_chain`. Entry `i` holds the bare-identifier argument names of the
+ * call invoked at chain position `i`, or `null` when that position is not an
+ * invoked call. Within a call's entry, a `null` element is a non-identifier
+ * argument (literal, expression, spread) kept to preserve positional index so a
+ * later parameter still aligns to its argument.
+ *
+ * @example injector.get(Token).method()
+ * // property_chain:        ["injector", "get", "method"]
+ * // chain_call_arguments:  [null, ["Token"], null]
+ *
+ * @language javascript,typescript
+ */
+export type ChainCallArguments = readonly (readonly (SymbolName | null)[] | null)[];
+
+/**
  * Regular method call: obj.method(), receiver.getName()
  *
  * Represents method calls where the receiver is a variable, parameter, or
@@ -112,6 +128,16 @@ export interface MethodCallReference extends BaseReference {
    * and other signals; core stores only the observation.
    */
   readonly call_site_syntax?: CallSiteSyntax;
+  /**
+   * Positional call arguments per chain position, index-aligned to
+   * `property_chain`. Present only when at least one chain position is an
+   * invoked call carrying identifier arguments (omitted otherwise). Drives
+   * TypeScript generic-return-type inference from `Type<T>` token arguments in
+   * chained receivers (`injector.get(Token).method()`).
+   *
+   * @language javascript,typescript
+   */
+  readonly chain_call_arguments?: ChainCallArguments;
 }
 
 /**

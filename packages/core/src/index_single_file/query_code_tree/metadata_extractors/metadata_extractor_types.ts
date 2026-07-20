@@ -1,5 +1,5 @@
 import type { SyntaxNode } from "tree-sitter";
-import type { Location, SymbolName, TypeInfo, FilePath, SelfReferenceKeyword } from "@ariadnejs/types";
+import type { Location, SymbolName, TypeInfo, FilePath, SelfReferenceKeyword, ChainCallArguments } from "@ariadnejs/types";
 
 /**
  * Receiver information for method calls and property access
@@ -16,6 +16,14 @@ export interface ReceiverInfo {
   readonly is_self_reference: boolean;
   /** The self-reference keyword used (if is_self_reference is true) */
   readonly self_keyword?: SelfReferenceKeyword;
+  /**
+   * Positional call arguments per property-chain position, aligned to
+   * `property_chain`. Present only when a chain position is an invoked call
+   * carrying identifier arguments. Powers generic-return type-token inference.
+   *
+   * @language javascript,typescript
+   */
+  readonly chain_call_arguments?: ChainCallArguments;
 }
 
 /**

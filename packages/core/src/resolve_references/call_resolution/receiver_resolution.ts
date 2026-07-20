@@ -28,6 +28,8 @@ import type {
   SelfReferenceCall,
   MethodCallReference,
   SelfReferenceKeyword,
+  ChainCallArguments,
+  MethodDefinition,
   Result,
   ResolutionFailure,
 } from "@ariadnejs/types";
@@ -49,6 +51,13 @@ export interface ReceiverExpression {
     | { type: "identifier"; value: SymbolName };
   /** Properties between the base and the method being called, both excluded. */
   readonly chain: readonly SymbolName[];
+  /**
+   * Call arguments for each `chain` position, aligned index-for-index (`null`
+   * where that position is not an invoked call). Carries the type-token
+   * argument (`injector.get(Token)`) into generic-return inference. Absent when
+   * the receiver has no chained-call arguments.
+   */
+  readonly chain_arguments?: ChainCallArguments;
   readonly method_name: SymbolName;
   readonly scope_id: ScopeId;
 }
@@ -102,9 +111,15 @@ export function extract_receiver(
     };
   }
 
+  const chain_arguments =
+    ref.kind === "method_call" && ref.chain_call_arguments
+      ? ref.chain_call_arguments.slice(1, -1)
+      : undefined;
+
   return {
     base: { type: "identifier", value: chain[0] as SymbolName },
     chain: chain.slice(1, -1) as SymbolName[],
+    ...(chain_arguments !== undefined && { chain_arguments }),
     method_name: ref.name,
     scope_id: ref.scope_id,
   };
@@ -130,7 +145,13 @@ export function resolve_receiver_type(
     return base_result;
   }
 
-  return walk_property_chain(base_result.value, receiver.chain, context);
+  return walk_property_chain(
+    base_result.value,
+    receiver.chain,
+    receiver.chain_arguments,
+    receiver.scope_id,
+    context
+  );
 }
 
 /**
@@ -263,11 +284,14 @@ function resolve_identifier_base(
 function walk_property_chain(
   start_type: SymbolId,
   chain: readonly SymbolName[],
+  chain_arguments: ChainCallArguments | undefined,
+  scope_id: ScopeId,
   context: ReceiverResolutionContext
 ): Result<SymbolId, ResolutionFailure> {
   let current_type = start_type;
 
-  for (const property_name of chain) {
+  for (let index = 0; index < chain.length; index++) {
+    const property_name = chain[index];
     let member_symbol = context.types.get_type_member(current_type, property_name);
 
     // The member index catches members the TypeRegistry has not resolved a type for.
@@ -308,6 +332,18 @@ function walk_property_chain(
             member_def.defining_scope_id,
             member_def.type
           );
+        } else if (member_def.kind === "method") {
+          // @language typescript
+          // A generic method returning its own type parameter (get<T>(): T) has
+          // no resolvable return type until the parameter is bound. When the
+          // binding parameter is a type token (token: Type<T>), infer T from the
+          // call's token argument at this chain position.
+          member_type = infer_generic_return_from_type_token(
+            member_def,
+            chain_arguments?.[index] ?? null,
+            scope_id,
+            context
+          );
         }
       }
     }
@@ -324,6 +360,128 @@ function walk_property_chain(
   }
 
   return ok(current_type);
+}
+
+// @language typescript
+/**
+ * Infer the concrete return type of a generic method whose return type is one
+ * of its own type parameters bound by a type-token parameter — the DI shape
+ * `get<T>(token: Type<T>): T`. Returns the type the token argument names, or
+ * null when the method is not that shape or the argument cannot be resolved
+ * (leaving the caller's `member_type_unknown` failure intact).
+ */
+function infer_generic_return_from_type_token(
+  method_def: MethodDefinition,
+  call_arguments_at_position: readonly (SymbolName | null)[] | null,
+  scope_id: ScopeId,
+  context: ReceiverResolutionContext
+): SymbolId | null {
+  const return_type = method_def.return_type;
+  if (!return_type || !method_def.generics?.includes(return_type)) {
+    return null;
+  }
+  if (!call_arguments_at_position) {
+    return null;
+  }
+
+  // The token parameter is the one whose declared type wraps the return-type
+  // parameter exactly (token: Type<T> for a method returning T).
+  const token_index = method_def.parameters.findIndex(
+    (param) =>
+      param.type !== undefined &&
+      parse_single_type_argument(param.type) === return_type
+  );
+  if (token_index < 0) {
+    return null;
+  }
+
+  const argument_name = call_arguments_at_position[token_index] ?? null;
+  if (!argument_name) {
+    return null;
+  }
+
+  return resolve_token_argument_type(argument_name, scope_id, context);
+}
+
+// @language typescript
+/**
+ * Resolve a type-token argument to the class it designates: a class/type used
+ * directly (`injector.get(Service)`) is its own type; a typed token binding
+ * (`const TOKEN: Type<Service>`) resolves through its `Type<…>` annotation to
+ * the wrapped class.
+ */
+function resolve_token_argument_type(
+  argument_name: SymbolName,
+  scope_id: ScopeId,
+  context: ReceiverResolutionContext
+): SymbolId | null {
+  const symbol_id = context.resolutions.resolve(scope_id, argument_name);
+  if (!symbol_id) {
+    return null;
+  }
+
+  const def = context.definitions.get(symbol_id);
+  if (!def) {
+    return null;
+  }
+
+  if (
+    def.kind === "class" ||
+    def.kind === "interface" ||
+    def.kind === "enum" ||
+    def.kind === "type" ||
+    def.kind === "type_alias"
+  ) {
+    return symbol_id;
+  }
+
+  if (
+    (def.kind === "variable" ||
+      def.kind === "constant" ||
+      def.kind === "parameter" ||
+      def.kind === "property") &&
+    def.type
+  ) {
+    const wrapped_type = parse_single_type_argument(def.type);
+    if (wrapped_type) {
+      return context.resolutions.resolve(def.defining_scope_id, wrapped_type);
+    }
+  }
+
+  return null;
+}
+
+// @language typescript
+/**
+ * The single type argument of a `Wrapper<Inner>` annotation (`Type<T>` → `T`),
+ * or null when the annotation is not a single-argument generic — no `<…>`, a
+ * trailing modifier (`Type<T> | null`), or multiple arguments (`Map<K, V>`).
+ */
+function parse_single_type_argument(annotation: SymbolName): SymbolName | null {
+  const open = annotation.indexOf("<");
+  if (open < 0 || !annotation.endsWith(">")) {
+    return null;
+  }
+
+  const inner = annotation.slice(open + 1, -1).trim();
+  if (inner.length === 0) {
+    return null;
+  }
+
+  // Reject multiple top-level arguments (Map<K, V>) while allowing a nested
+  // single argument (Provider<Foo<Bar>>).
+  let depth = 0;
+  for (const char of inner) {
+    if (char === "<") {
+      depth++;
+    } else if (char === ">") {
+      depth--;
+    } else if (char === "," && depth === 0) {
+      return null;
+    }
+  }
+
+  return inner as SymbolName;
 }
 
 /**

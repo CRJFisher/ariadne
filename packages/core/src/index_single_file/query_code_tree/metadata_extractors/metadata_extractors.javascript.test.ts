@@ -120,6 +120,49 @@ describe("JavaScript Metadata Extractors", () => {
     });
   });
 
+  describe("extract_receiver_info chain_call_arguments", () => {
+    it("captures an intermediate call's identifier argument aligned to the chain", () => {
+      const code = "injector.get(Token).handle()";
+      const tree = parser.parse(code);
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const info = JAVASCRIPT_METADATA_EXTRACTORS.extract_receiver_info(call_expr, TEST_FILE);
+
+      expect(info?.property_chain).toEqual(["injector", "get", "handle"]);
+      expect(info?.chain_call_arguments).toEqual([null, ["Token"], []]);
+    });
+
+    it("preserves positional index for a non-identifier argument", () => {
+      const code = "injector.get(options, Token).handle()";
+      const tree = parser.parse(code);
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const info = JAVASCRIPT_METADATA_EXTRACTORS.extract_receiver_info(call_expr, TEST_FILE);
+
+      expect(info?.chain_call_arguments).toEqual([null, ["options", "Token"], []]);
+    });
+
+    it("omits the field for a literal-only intermediate call", () => {
+      const code = "builder.add(5).build()";
+      const tree = parser.parse(code);
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const info = JAVASCRIPT_METADATA_EXTRACTORS.extract_receiver_info(call_expr, TEST_FILE);
+
+      expect(info?.chain_call_arguments).toBeUndefined();
+    });
+
+    it("omits the field for a plain method call with no intermediate call", () => {
+      const code = "user.getName()";
+      const tree = parser.parse(code);
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const info = JAVASCRIPT_METADATA_EXTRACTORS.extract_receiver_info(call_expr, TEST_FILE);
+
+      expect(info?.chain_call_arguments).toBeUndefined();
+    });
+  });
+
   describe("extract_construct_target", () => {
     it("takes the declared variable as target in a variable declaration", () => {
       const code = "const obj = new MyClass()";
