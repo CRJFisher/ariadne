@@ -47,12 +47,12 @@ jobs:
         run: pnpm test
 
       - name: Run root-level script tests (e.g. check-commit-message)
-        run: pnpm exec vitest run scripts/ .claude/hooks/
+        run: pnpm exec vitest run scripts/
 
       - name: Run triage skill tests (registry guard, reconcile)
         run: cd .claude/skills/triage && pnpm exec vitest run
 
-      - name: Run hook tests (file naming rules)
+      - name: Run hook tests
         run: pnpm exec vitest run .claude/hooks/
 
       - name: Validate commit message convention
