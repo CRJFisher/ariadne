@@ -20,6 +20,7 @@ import {
   consume_documentation,
   extract_collection_source,
   extract_call_initializer_name,
+  extract_accessor_kind,
 } from "../symbol_factories/symbol_factories.javascript";
 import {
   create_interface_id,
@@ -479,6 +480,7 @@ export function handle_ts_definition_method(
       abstract: is_abstract_method(capture.node),
       static: is_static_method(capture.node),
       async: is_async_method(capture.node),
+      accessor_kind: extract_accessor_kind(capture.node),
       return_type: extract_return_type(capture.node),
       generics: parent ? extract_type_parameters(parent) : [],
       docstring,

@@ -32,6 +32,7 @@ import type { CallResolutionResult } from "../resolution_state";
 import type { ResolutionRegistry } from "../resolve_references";
 import { detect_indirect_reachability } from "../indirect_reachability";
 import { resolve_method_call } from "./method_call";
+import { create_method_call_reference } from "../../index_single_file/references/factories";
 import { resolve_constructor_call, include_constructors_for_class_symbols } from "./constructor";
 import { resolve_collection_dispatch } from "./collection_dispatch";
 import { resolve_function_call } from "./function_call";
@@ -232,8 +233,40 @@ function resolve_calls(
           );
           break;
 
+        case "property_access": {
+          // A bare property read (`obj.value`) invokes a getter accessor
+          // (`get value()`), which is otherwise unreachable because no
+          // call_expression fires on the read. Resolve it through the
+          // method-call machinery, but emit a call edge ONLY when the resolved
+          // member is a getter — plain field reads must never forge edges.
+          const getter_call = create_method_call_reference(
+            ref.name,
+            ref.location,
+            ref.scope_id,
+            ref.receiver_location,
+            ref.property_chain,
+            ref.is_optional_chain
+          );
+          const getters = resolve_method_call(
+            getter_call,
+            context.scopes,
+            context.definitions,
+            context.types,
+            context.resolutions,
+            context.imports
+          ).filter((sym) => {
+            const def = context.definitions.get(sym);
+            return def?.kind === "method" && def.accessor_kind === "getter";
+          });
+          if (getters.length > 0) {
+            resolved_calls.push(
+              build_call_reference(getter_call, getters, context.definitions)
+            );
+          }
+          continue;
+        }
+
         case "variable_reference":
-        case "property_access":
         case "type_reference":
         case "assignment":
           // Not call references - skip

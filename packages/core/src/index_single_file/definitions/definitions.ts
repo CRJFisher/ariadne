@@ -283,6 +283,7 @@ export class DefinitionBuilder {
       async?: boolean;
       generics?: SymbolName[];
       docstring?: string;
+      accessor_kind?: "getter" | "setter";
     },
     capture: CaptureNode
   ): DefinitionBuilder {

@@ -23,6 +23,7 @@ import {
   find_containing_class,
   find_containing_callable,
   extract_export_info,
+  extract_accessor_kind,
   extract_return_type,
   extract_parameter_type,
   extract_property_type,
@@ -99,6 +100,7 @@ export function handle_definition_method(
         location: capture.location,
         scope_id: context.get_scope_id(capture.location),
         return_type: extract_return_type(capture.node),
+        accessor_kind: extract_accessor_kind(capture.node),
         docstring,
       },
       capture

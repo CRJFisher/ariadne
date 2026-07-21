@@ -235,6 +235,25 @@ export function extract_return_type(node: SyntaxNode): SymbolName | undefined {
 }
 
 /**
+ * Accessor kind for a method definition, read from the `get` / `set` keyword
+ * token that precedes the name on a class accessor. `undefined` for ordinary
+ * methods. The name node's parent is the `method_definition`. Shared by JS and
+ * TS — the accessor grammar is identical in both.
+ */
+export function extract_accessor_kind(
+  node: SyntaxNode
+): "getter" | "setter" | undefined {
+  const parent = node.parent;
+  if (parent) {
+    for (const child of parent.children || []) {
+      if (child.type === "get") return "getter";
+      if (child.type === "set") return "setter";
+    }
+  }
+  return undefined;
+}
+
+/**
  * Extract parameter type
  */
 export function extract_parameter_type(node: SyntaxNode): SymbolName | undefined {

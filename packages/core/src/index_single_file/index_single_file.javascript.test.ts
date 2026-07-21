@@ -10,6 +10,7 @@ import JavaScript from "tree-sitter-javascript";
 import type {
   Language,
   FilePath,
+  SymbolName,
   FunctionCallReference,
   MethodCallReference,
   ConstructorCallReference,
@@ -2190,6 +2191,71 @@ const names = items.map(({id, name}) => name);`;
       expect(callback.callback_context).not.toBe(undefined);
       expect(callback.callback_context!.is_callback).toBe(true);
       expect(callback.callback_context!.receiver_location).not.toBe(null);
+    });
+  });
+
+  describe("Member reference capture gaps (task-351)", () => {
+    function build_index(code: string) {
+      const tree = parser.parse(code);
+      return build_index_single_file(
+        create_parsed_file(code, "test.js" as FilePath, tree, "javascript" as Language),
+        tree,
+        "javascript" as Language,
+      );
+    }
+
+    function methods_of(index: ReturnType<typeof build_index>) {
+      return Array.from(index.classes.values()).flatMap((c) => c.methods ?? []);
+    }
+
+    it("captures this.#method() private call as a self-reference call", () => {
+      const code = `class Vault {
+        #open() { return 1; }
+        run() { return this.#open(); }
+      }`;
+      const index = build_index(code);
+      const call = index.references.find(
+        (r): r is SelfReferenceCall =>
+          r.kind === "self_reference_call" && r.name === ("#open" as SymbolName),
+      );
+      expect(call).toBeDefined();
+      expect(call!.keyword).toBe("this");
+    });
+
+    it("indexes a computed-key method and captures calls from its body", () => {
+      const code = `class Bag {
+        helper() { return 1; }
+        [Symbol.iterator]() { this.helper(); }
+      }`;
+      const index = build_index(code);
+      const computed = methods_of(index).find(
+        (m) => m.name === ("[Symbol.iterator]" as SymbolName),
+      );
+      expect(computed).toBeDefined();
+      expect(computed!.body_scope_id).toBeDefined();
+
+      const body_call = index.references.find(
+        (r): r is SelfReferenceCall =>
+          r.kind === "self_reference_call" && r.name === ("helper" as SymbolName),
+      );
+      expect(body_call).toBeDefined();
+    });
+
+    it("flags accessor_kind on getter and setter definitions", () => {
+      const code = `class Box {
+        get value() { return 1; }
+        set value(v) {}
+        plain() { return 2; }
+      }`;
+      const methods = methods_of(build_index(code));
+      const getter = methods.find((m) => m.accessor_kind === "getter");
+      const setter = methods.find((m) => m.accessor_kind === "setter");
+      const plain = methods.find((m) => m.name === ("plain" as SymbolName));
+      expect(getter).toBeDefined();
+      expect(getter!.name).toBe("value");
+      expect(setter).toBeDefined();
+      expect(plain).toBeDefined();
+      expect(plain!.accessor_kind).toBeUndefined();
     });
   });
 });
