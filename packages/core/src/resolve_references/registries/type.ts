@@ -12,6 +12,7 @@ import {
   extract_constructor_bindings,
   extract_type_members,
   extract_type_alias_metadata,
+  set_member_symbol,
 } from "../type_preprocessing";
 import { ResolutionRegistry } from "../resolve_references";
 import { resolve_namespace_export } from "../call_resolution/method_lookup";
@@ -348,10 +349,11 @@ export class TypeRegistry {
       // Use the constructors field from ClassDefinition (language-agnostic)
       const constructor_symbol_id = def.constructors?.[0]?.symbol_id;
 
+      const methods = new Map<SymbolName, SymbolId>();
+      for (const m of def.methods) set_member_symbol(methods, m);
+
       return {
-        methods: new Map(
-          def.methods.map((m) => [m.name as SymbolName, m.symbol_id])
-        ),
+        methods,
         properties: new Map(
           def.properties.map((p) => [p.name as SymbolName, p.symbol_id])
         ),

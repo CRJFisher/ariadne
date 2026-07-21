@@ -1047,22 +1047,46 @@ function main(): void {
       expect(entry_points.has(compute!)).toBe(true);
     });
 
-    it("does not forge an edge from a plain (non-getter) property read", () => {
+    it("makes a getter reachable even when a same-named setter is declared", () => {
+      // A `get value()` / `set value()` pair share one member name; the getter
+      // must still be reached by a bare read despite the name collision.
+      const file = file_path("getter_setter.ts");
+      project.update_file(
+        file,
+        `class Widget {
+          get value() { return 1; }
+          set value(v: number) {}
+        }
+        function main() { const w = new Widget(); return w.value; }`
+      );
+      const referenced = project.resolutions.get_all_referenced_symbols();
+      const value = method_symbol(file, "Widget", "value");
+      expect(value).toBeDefined();
+      expect(referenced.has(value!)).toBe(true);
+    });
+
+    it("forges an edge only for getters — a non-getter member read creates none", () => {
       const file = file_path("field_read.ts");
       project.update_file(
         file,
         `class Box {
           field = 1;
-          only() { return 3; }
+          plain() { return 3; }
         }
-        function main() { const b = new Box(); return b.field; }`
+        function main() {
+          const b = new Box();
+          const f = b.field;   // plain data-property read
+          const m = b.plain;   // ordinary method read as a value (not a call)
+          return [f, m];
+        }`
       );
       const referenced = project.resolutions.get_all_referenced_symbols();
-      const only = method_symbol(file, "Box", "only");
-      expect(only).toBeDefined();
-      // `b.field` is a plain data-property read, not a getter, so it must not
-      // create a spurious call edge to a same-named or nearby member.
-      expect(referenced.has(only!)).toBe(false);
+      const plain = method_symbol(file, "Box", "plain");
+      expect(plain).toBeDefined();
+      // Reading a field or a non-getter method as a value must not forge a call
+      // edge — this is what the `accessor_kind === "getter"` guard enforces
+      // (the coarser kind check alone would already reject the field read).
+      expect(referenced.has(plain!)).toBe(false);
     });
   });
 

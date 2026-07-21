@@ -3295,23 +3295,43 @@ const result = items.map((x) =>
       expect(call!.keyword).toBe("this");
     });
 
-    it("indexes a computed-key method and captures calls from its body", () => {
-      const code = `class Bag {
+    it("indexes computed-key methods (member-expression and identifier keys) and captures calls from their bodies", () => {
+      const computed_key = "run";
+      const code = `const ${computed_key} = "run";
+      class Bag {
         helper() { return 1; }
         [Symbol.iterator]() { this.helper(); }
+        [${computed_key}]() { this.helper(); }
       }`;
       const index = build_index(code);
-      const computed = methods_of(index).find(
+      const methods = methods_of(index);
+
+      // Member-expression key: [Symbol.iterator]
+      const symbol_iterator = methods.find(
         (m) => m.name === ("[Symbol.iterator]" as SymbolName),
       );
-      expect(computed).toBeDefined();
-      expect(computed!.body_scope_id).toBeDefined();
+      expect(symbol_iterator).toBeDefined();
+      expect(symbol_iterator!.body_scope_id).toBeDefined();
 
-      const body_call = index.references.find(
+      // Identifier/variable key: [run]
+      const identifier_key = methods.find(
+        (m) => m.name === (`[${computed_key}]` as SymbolName),
+      );
+      expect(identifier_key).toBeDefined();
+      expect(identifier_key!.body_scope_id).toBeDefined();
+
+      // The `this.helper()` call inside the computed method body is captured AND
+      // attributed to that method's body scope (proving the body is a real scope).
+      const body_calls = index.references.filter(
         (r): r is SelfReferenceCall =>
           r.kind === "self_reference_call" && r.name === ("helper" as SymbolName),
       );
-      expect(body_call).toBeDefined();
+      expect(
+        body_calls.some((c) => c.scope_id === symbol_iterator!.body_scope_id),
+      ).toBe(true);
+      expect(
+        body_calls.some((c) => c.scope_id === identifier_key!.body_scope_id),
+      ).toBe(true);
     });
 
     it("flags accessor_kind on getter and setter definitions", () => {

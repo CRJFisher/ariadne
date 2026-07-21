@@ -236,9 +236,21 @@ function resolve_calls(
         case "property_access": {
           // A bare property read (`obj.value`) invokes a getter accessor
           // (`get value()`), which is otherwise unreachable because no
-          // call_expression fires on the read. Resolve it through the
-          // method-call machinery, but emit a call edge ONLY when the resolved
-          // member is a getter — plain field reads must never forge edges.
+          // call_expression fires on the read. Resolve it through the method-call
+          // machinery via a synthetic method_call ref, and keep an edge only for
+          // members whose definition is a getter: a data-field read resolves to a
+          // property (kind !== "method"), and a plain method read resolves to a
+          // non-accessor method — both are filtered out, so only getter reads
+          // become edges. (Polymorphic dispatch can still surface a subclass's
+          // getter override of the read name; that mirrors ordinary method-call
+          // over-approximation and is intended.)
+          //
+          // This branch builds its own edge and `continue`s rather than falling
+          // through to the shared tail because `property_access` is not a call
+          // kind: `build_call_reference` is exhaustive over call kinds and would
+          // reject the raw ref, hence the synthetic method_call. The tail's
+          // constructor-inclusion and late-binding enrichments don't apply to
+          // getter reads.
           const getter_call = create_method_call_reference(
             ref.name,
             ref.location,

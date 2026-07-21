@@ -12,6 +12,7 @@ import type {
   FunctionCollection,
 } from "@ariadnejs/types";
 import { is_exportable, location_key } from "@ariadnejs/types";
+import { set_member_symbol } from "../type_preprocessing/member";
 
 /**
  * Central registry for all definitions across the project.
@@ -139,7 +140,7 @@ export class DefinitionRegistry {
           // Register method as first-class definition in by_symbol
           this.by_symbol.set(method.symbol_id, method);
 
-          flat_members.set(method.name, method.symbol_id);
+          set_member_symbol(flat_members, method);
           // Add method to location index for type binding resolution
           const method_loc_key = location_key(method.location);
           this.location_to_symbol.set(method_loc_key, method.symbol_id);
