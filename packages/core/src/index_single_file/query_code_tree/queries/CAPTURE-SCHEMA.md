@@ -161,7 +161,7 @@ Language-specific features explicitly allowed:
 - `@definition.enum` - Enum definitions
 - `@definition.enum.member` - Enum members
 - `@definition.namespace` - Namespaces
-- `@definition.type_parameter` - Generic type parameters
+- `@definition.type_parameter` - Generic type parameters (emitted; no handler currently consumes it — see Validation)
 - `@definition.property` - Class properties
 - `@reference.call.generic` - Generic calls
 - `@reference.constructor` - Constructor calls
@@ -212,28 +212,22 @@ Language-specific features explicitly allowed:
 
 ## Validation
 
-Captures are validated automatically in CI using `validate_captures.ts`.
+Two invariants keep query captures healthy.
 
-### Run Validation Locally
+**Naming** — every capture belongs to the required or optional lists above and
+matches `@{category}.{entity}[.{qualifier}]` (at most three parts). Capturing a
+fragment (a `property_identifier` instead of the whole `call_expression`) or
+duplicating a capture on one line breaks the complete-capture principle. These
+rules are the spec reviewers hold new and changed queries to.
 
-```bash
-npm run validate:captures              # All languages
-npm run validate:captures -- --lang=typescript  # Specific language
-```
-
-### Validation Checks
-
-**Errors** (fail CI):
-
-- Capture not in required OR optional lists
-- Invalid naming convention
-- Exceeds max depth (>3 parts)
-
-**Warnings** (visible but don't fail):
-
-- Capture on fragment node (property_identifier instead of call_expression)
-- Duplicate captures on same line
-- Heuristic checks for "complete capture" principle
+**Capture/receiver consistency** — every `definition`/`decorator`/`import`
+capture a query emits must have a handler in the matching
+`capture_handlers.<lang>.ts` registry, because definitions dispatch by exact
+`registry[capture.name]` lookup. A capture with no handler is silently dropped;
+`@definition.type_parameter` (TypeScript) and `@decorator.macro` (Rust) are
+currently in this state. The Stop hook
+`.claude/hooks/capture_receiver_consistency_stop.ts` enforces this on changed
+query and receiver files (see `.claude/rules/semantic-indexing.md`).
 
 ---
 
@@ -292,9 +286,12 @@ When adding support for a new language:
 
 2. **Implement required captures**: All captures from "Required" section above
 
-3. **Add language-specific captures**: Add to optional list in `capture_schema.ts`
+3. **Add language-specific captures**: Add them to the Optional Captures list above
 
-4. **Validate**: Run `npm run validate:captures` - must pass with 0 errors
+4. **Validate**: Confirm every capture matches this schema and that each
+   `definition`/`decorator`/`import` capture has a handler — the
+   capture/receiver consistency Stop hook blocks a dead handler and warns on an
+   orphan (see Validation)
 
 5. **Test**: Ensure semantic index tests pass
 
@@ -310,16 +307,17 @@ When adding support for a new language:
 
 ### Q: Can I add custom qualifiers?
 
-**A**: Yes, but add the full capture pattern to the optional captures list in `capture_schema.ts` first. Qualifiers must be semantic (`.generic`, `.optional`) not structural (`.full`, `.chained`).
+**A**: Yes, but add the full capture pattern to the Optional Captures list above first. Qualifiers must be semantic (`.generic`, `.optional`) not structural (`.full`, `.chained`).
 
 ### Q: What if my language needs something not in the schema?
 
 **A**: Add it as an optional capture with clear justification:
 
-1. Add pattern to `capture_schema.ts` optional list
+1. Add the pattern to the Optional Captures list above
 2. Document in this file under language-specific section
 3. Explain why it's needed
-4. Run validation to confirm it works
+4. Add its handler to the matching `capture_handlers.<lang>.ts` registry so the
+   capture/receiver consistency check does not report it as an orphan
 
 ### Q: How do I handle language-specific syntax differences?
 
@@ -365,5 +363,4 @@ This separation means:
 
 **Last Updated**: 2025-10-29
 **Schema Version**: 1.0
-**Validation**: `npm run validate:captures`
-**Schema Definition**: `capture_schema.ts` in parent directory
+**Enforcement**: capture/receiver consistency Stop hook, `.claude/hooks/capture_receiver_consistency_stop.ts` (see Validation)

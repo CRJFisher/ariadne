@@ -67,3 +67,14 @@ Tree-Sitter Query → CaptureNode (raw position)
 ## Arrow Function Handling
 
 Arrow functions and function expressions assigned to variables are captured as function definitions only, not as both function and variable definitions. This prevents duplicate symbols — the function symbol is sufficient for call graph analysis and reference resolution.
+
+## Capture/Receiver Consistency
+
+Definition captures dispatch by exact name: `process_definitions` in `index_single_file.ts` does `registry[capture.name]` and runs the handler only when one exists — no normalization, no prefix fallback. A registry key and the `.scm` `@<name>` that reaches it must be byte-identical, so registry keys and emitted captures must agree. `TYPESCRIPT_HANDLERS` spreads `JAVASCRIPT_HANDLERS`, so a JavaScript handler is reachable from `typescript.scm` too; a redeclared key shadows the inherited one.
+
+Two ways they drift:
+
+- **Dead handler** — a registry key no feeding query emits. The handler is unreachable and is deleted (function, registry entry, sole-use helpers, dead-only tests).
+- **Orphan capture** — a query emits a `definition`/`decorator`/`import` capture with no matching handler, so the extraction silently never runs.
+
+The Stop hook `.claude/hooks/capture_receiver_consistency_stop.ts` enforces this on changed files: it runs when a `queries/*.scm` or `capture_handlers/*.ts` file changed, **blocks** on dead handlers (cheap to delete), and **warns** on orphan captures (often work-in-progress). The pure model in `.claude/hooks/capture_receiver_consistency.ts` also has a CLI entry (`tsx .claude/hooks/capture_receiver_consistency.ts`). This invariant is about handler existence — orthogonal to the capture *naming* rules in `queries/CAPTURE-SCHEMA.md`.
