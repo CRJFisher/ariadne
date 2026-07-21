@@ -14,8 +14,10 @@
 import type {
   SymbolId,
   SymbolName,
+  ScopeId,
   SymbolReference,
   MethodCallReference,
+  CollectionMember,
   Result,
   ResolutionFailure,
 } from "@ariadnejs/types";
@@ -23,6 +25,51 @@ import { err, ok } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "../registries/definition";
 import type { ResolutionRegistry } from "../resolution_registry";
 
+/**
+ * The member named `name` in a collection, or undefined. The last match wins,
+ * matching last-write-wins reassignment and duplicate object keys.
+ */
+export function find_named_member(
+  members: readonly CollectionMember[],
+  name: SymbolName
+): CollectionMember | undefined {
+  let matched: CollectionMember | undefined;
+  for (const member of members) {
+    if (member.name === name) matched = member;
+  }
+  return matched;
+}
+
+/**
+ * The callable a member names: an inline function value directly, or a value
+ * identifier resolved in `scope_id`. Undefined for a nested member, which names an
+ * object rather than a function.
+ */
+function member_callable(
+  member: CollectionMember,
+  scope_id: ScopeId,
+  resolutions: ResolutionRegistry
+): SymbolId | undefined {
+  if ("symbol_id" in member) return member.symbol_id;
+  if ("reference_name" in member) {
+    return resolutions.resolve(scope_id, member.reference_name) ?? undefined;
+  }
+  return undefined;
+}
+
+/**
+ * Resolve the callable named `name` within a collection's members. Undefined when
+ * the name is absent or names a nested object (not itself callable).
+ */
+export function resolve_named_member(
+  members: readonly CollectionMember[],
+  name: SymbolName,
+  scope_id: ScopeId,
+  resolutions: ResolutionRegistry
+): SymbolId | undefined {
+  const member = find_named_member(members, name);
+  return member ? member_callable(member, scope_id, resolutions) : undefined;
+}
 
 /**
  * @returns Resolved function symbol_ids on success, or a `ResolutionFailure`
@@ -104,7 +151,66 @@ export function resolve_collection_dispatch(
     });
   }
 
+  // A static object-property alias (`var A = Ns.A`) names one member by key, so it
+  // dispatches to exactly that member — never the union of everything in `Ns`.
+  if (target_def.collection_source_key) {
+    return resolve_keyed_alias(
+      collection_id,
+      target_def.collection_source_key,
+      call_ref,
+      definitions,
+      resolutions
+    );
+  }
+
   return get_collection_functions(collection_id, definitions, resolutions);
+}
+
+/**
+ * Resolve a static object-property alias call to the single keyed member it names.
+ * `alias_key` addresses the aliased value in the collection's keyed members; a method
+ * call then addresses a function one property deeper (inside the aliased nested
+ * object), a direct call targets the aliased value itself. A miss returns a failure
+ * rather than falling back to the union.
+ */
+function resolve_keyed_alias(
+  collection_id: SymbolId,
+  alias_key: SymbolName,
+  call_ref: SymbolReference,
+  definitions: DefinitionRegistry,
+  resolutions: ResolutionRegistry
+): Result<SymbolId[], ResolutionFailure> {
+  const collection = definitions.get_function_collection(collection_id);
+  const collection_def = definitions.get(collection_id);
+  const member = collection?.named_members
+    ? find_named_member(collection.named_members, alias_key)
+    : undefined;
+  if (!collection || !collection_def || !member) {
+    return err({
+      stage: "collection_dispatch",
+      reason: "collection_dispatch_miss",
+      partial_info: { resolved_receiver_type: collection_id },
+    });
+  }
+
+  const scope_id = collection_def.defining_scope_id;
+  // A method call addresses a function one property deeper (inside the aliased
+  // nested object); a direct call targets the aliased value itself.
+  const target =
+    call_ref.kind === "method_call"
+      ? "nested" in member
+        ? resolve_named_member(member.nested, call_ref.name, scope_id, resolutions)
+        : undefined
+      : member_callable(member, scope_id, resolutions);
+
+  if (!target) {
+    return err({
+      stage: "collection_dispatch",
+      reason: "collection_dispatch_miss",
+      partial_info: { resolved_receiver_type: collection_id },
+    });
+  }
+  return ok([target]);
 }
 
 function get_collection_functions(

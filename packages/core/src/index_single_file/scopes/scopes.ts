@@ -67,6 +67,20 @@ function extract_scope_name(
     scope_type === "method" ||
     scope_type === "constructor"
   ) {
+    // A function expression bound to a variable is named after its outer var, so
+    // the outer function symbol registered in the enclosing scope matches this
+    // body scope by name. The inner expression name stays resolvable inside the
+    // body via its own definition, independent of the scope name.
+    if (
+      node.type === "function_expression" &&
+      node.parent?.type === "variable_declarator"
+    ) {
+      const declarator_name = node.parent.childForFieldName("name");
+      if (declarator_name?.type === "identifier") {
+        return declarator_name.text as SymbolName;
+      }
+    }
+
     // Try to get the name field first
     const name_node = node.childForFieldName("name");
     if (name_node) {
@@ -94,7 +108,7 @@ function extract_scope_name(
 export function process_scopes(
   captures: CaptureNode[],
   file: ParsedFile
-): ReadonlyMap<ScopeId, LexicalScope> {
+): { scopes: ReadonlyMap<ScopeId, LexicalScope>; root_scope_id: ScopeId } {
   const scopes = new Map<ScopeId, LexicalScope>();
 
   // Create root module scope for the file
@@ -180,7 +194,7 @@ export function process_scopes(
     scopes.set(scope_id, scope);
   }
 
-  return scopes;
+  return { scopes, root_scope_id };
 }
 
 /**
@@ -188,10 +202,10 @@ export function process_scopes(
  */
 export function create_processing_context(
   scopes: ReadonlyMap<ScopeId, LexicalScope>,
+  root_scope_id: ScopeId,
   captures: CaptureNode[]
 ): ProcessingContext {
   const scope_depths = new Map<ScopeId, number>();
-  const root_scope_id = find_root_scope(scopes);
 
   // Precompute all depths once
   for (const scope of scopes.values()) {
@@ -331,18 +345,6 @@ function locations_equal(a: Location, b: Location): boolean {
     a.end_line === b.end_line &&
     a.end_column === b.end_column
   );
-}
-
-/**
- * Find the root scope in a collection
- */
-function find_root_scope(scopes: ReadonlyMap<ScopeId, LexicalScope>): ScopeId {
-  for (const scope of scopes.values()) {
-    if (scope.parent_id === null) {
-      return scope.id;
-    }
-  }
-  throw new Error("No root scope found");
 }
 
 /**

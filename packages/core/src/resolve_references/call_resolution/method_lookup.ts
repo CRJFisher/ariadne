@@ -7,6 +7,7 @@ import type {
 import { err, ok } from "@ariadnejs/types";
 import { DefinitionRegistry } from "../registries/definition";
 import { resolve_namespace_export, resolve_named_import } from "../export_chain_lookup";
+import { resolve_named_member } from "./collection_dispatch";
 import type { ReceiverResolutionContext } from "./receiver_resolution";
 
 /**
@@ -297,6 +298,24 @@ function resolve_collection_method(
     });
   }
 
+  // Property-named members carry the sibling looked up by `obj.method()` /
+  // `this.method()`: an inline function value, an identifier resolved in the
+  // collection's defining scope, or a nested object literal (not itself
+  // callable). The last member wins, matching last-write-wins reassignment
+  // (`app.m = a; app.m = b;`) and duplicate object keys.
+  const var_def = definitions.get(variable_id);
+  if (var_def) {
+    const resolved = resolve_named_member(
+      fn_collection.named_members ?? [],
+      method_name,
+      var_def.defining_scope_id,
+      context.resolutions
+    );
+    if (resolved) {
+      return ok([resolved]);
+    }
+  }
+
   // stored_functions are inline anonymous definitions keyed by SymbolId; match
   // on each definition's own name.
   for (const stored_fn_id of fn_collection.stored_functions) {
@@ -308,15 +327,12 @@ function resolve_collection_method(
 
   // stored_references are names of functions defined elsewhere; resolve them in
   // the scope where the collection variable is declared.
-  if (fn_collection.stored_references) {
+  if (fn_collection.stored_references && var_def) {
     for (const ref_name of fn_collection.stored_references) {
       if (ref_name === method_name) {
-        const var_def = definitions.get(variable_id);
-        if (var_def) {
-          const resolved = context.resolutions.resolve(var_def.defining_scope_id, method_name);
-          if (resolved) {
-            return ok([resolved]);
-          }
+        const resolved = context.resolutions.resolve(var_def.defining_scope_id, method_name);
+        if (resolved) {
+          return ok([resolved]);
         }
       }
     }

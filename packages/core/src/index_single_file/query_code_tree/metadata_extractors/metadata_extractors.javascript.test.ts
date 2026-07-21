@@ -859,4 +859,110 @@ describe("TYPESCRIPT_METADATA_EXTRACTORS", () => {
       expect(result!.property_chain).toEqual(["this", "method"]);
     });
   });
+
+  describe("cast and parenthesized receivers", () => {
+    it("nominal as-cast receiver contributes the cast target as the chain base", () => {
+      const code = "(x as Concrete).method();";
+      const tree = parser.parse(code);
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = TYPESCRIPT_METADATA_EXTRACTORS.extract_property_chain(call_expr);
+
+      expect(result).toEqual(["Concrete", "method"]);
+    });
+
+    it("angle-bracket cast receiver contributes the cast target as the chain base", () => {
+      const code = "(<Concrete>x).method();";
+      const tree = parser.parse(code);
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = TYPESCRIPT_METADATA_EXTRACTORS.extract_property_chain(call_expr);
+
+      expect(result).toEqual(["Concrete", "method"]);
+    });
+
+    it("generic as-cast receiver contributes the erased type head as the chain base", () => {
+      const code = "(x as Concrete<T>).method();";
+      const tree = parser.parse(code);
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = TYPESCRIPT_METADATA_EXTRACTORS.extract_property_chain(call_expr);
+
+      expect(result).toEqual(["Concrete", "method"]);
+    });
+
+    it("generic angle-bracket cast receiver contributes the erased type head as the chain base", () => {
+      const code = "(<Concrete<T>>x).method();";
+      const tree = parser.parse(code);
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = TYPESCRIPT_METADATA_EXTRACTORS.extract_property_chain(call_expr);
+
+      expect(result).toEqual(["Concrete", "method"]);
+    });
+
+    it("satisfies check is transparent, preserving the inner expression's real type", () => {
+      const code = "(x satisfies Concrete).method();";
+      const tree = parser.parse(code);
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = TYPESCRIPT_METADATA_EXTRACTORS.extract_property_chain(call_expr);
+
+      expect(result).toEqual(["x", "method"]);
+    });
+
+    it("structural-literal cast is transparent, falling through to the inner identifier", () => {
+      const code = "(x as { m(): void }).m();";
+      const tree = parser.parse(code);
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = TYPESCRIPT_METADATA_EXTRACTORS.extract_property_chain(call_expr);
+
+      expect(result).toEqual(["x", "m"]);
+    });
+
+    it("nominal cast collapses a multi-part inner expression to a single base slot", () => {
+      const code = "(foo.bar as Concrete).method();";
+      const tree = parser.parse(code);
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = TYPESCRIPT_METADATA_EXTRACTORS.extract_property_chain(call_expr);
+
+      expect(result).toEqual(["Concrete", "method"]);
+    });
+
+    it("properties after a cast receiver stay in the chain", () => {
+      const code = "(x as Concrete).a.method();";
+      const tree = parser.parse(code);
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = TYPESCRIPT_METADATA_EXTRACTORS.extract_property_chain(call_expr);
+
+      expect(result).toEqual(["Concrete", "a", "method"]);
+    });
+
+    it("plain parentheses are transparent", () => {
+      const code = "(x).method();";
+      const tree = parser.parse(code);
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = TYPESCRIPT_METADATA_EXTRACTORS.extract_property_chain(call_expr);
+
+      expect(result).toEqual(["x", "method"]);
+    });
+
+    it("cast receiver info carries the cast target base and is not a self-reference", () => {
+      const code = "(x as Concrete).method();";
+      const tree = parser.parse(code);
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = TYPESCRIPT_METADATA_EXTRACTORS.extract_receiver_info(call_expr, TEST_FILE);
+
+      expect(result).toEqual({
+        receiver_location: { file_path: TEST_FILE, start_line: 1, start_column: 1, end_line: 1, end_column: 15 },
+        property_chain: ["Concrete", "method"],
+        is_self_reference: false,
+      });
+    });
+  });
 });

@@ -13,6 +13,7 @@ import type {
   Location,
   ScopeId,
   CallbackContext,
+  CollectionMember,
   FunctionCollectionInfo,
   FilePath,
 } from "@ariadnejs/types";
@@ -231,6 +232,25 @@ export function extract_return_type(node: SyntaxNode): SymbolName | undefined {
   const return_type = node.childForFieldName("return_type");
   if (return_type) {
     return return_type.text as SymbolName;
+  }
+  return undefined;
+}
+
+/**
+ * Accessor kind for a method definition, read from the `get` / `set` keyword
+ * token that precedes the name on a class accessor. `undefined` for ordinary
+ * methods. The name node's parent is the `method_definition`. Shared by JS and
+ * TS — the accessor grammar is identical in both.
+ */
+export function extract_accessor_kind(
+  node: SyntaxNode
+): "getter" | "setter" | undefined {
+  const parent = node.parent;
+  if (parent) {
+    for (const child of parent.children || []) {
+      if (child.type === "get") return "getter";
+      if (child.type === "set") return "setter";
+    }
   }
   return undefined;
 }
@@ -587,18 +607,112 @@ export function detect_function_collection(
 
   // Check for object literal: { key: fn, ... }
   if (initializer.type === "object") {
-    const { functions, references } = extract_functions_from_object(initializer, file_path);
-    if (functions.length > 0 || references.length > 0) {
+    const { functions, references, named_members } = extract_functions_from_object(
+      initializer,
+      file_path
+    );
+    // A pure-nested object (`{ A: { prop: fn } }`) has empty flat lists but a
+    // named member, so register on named_members too.
+    if (functions.length > 0 || references.length > 0 || named_members.length > 0) {
       return {
         collection_type: "Object",
         location: node_to_location(initializer, file_path),
         stored_functions: functions,
         stored_references: references,
+        named_members,
       };
     }
   }
 
   return null;
+}
+
+/**
+ * The property key of a static object-property alias initializer (`var alias = Ns.A`
+ * → "A"), or undefined when the initializer is not a plain member access. A dynamic
+ * `get(...)` call or `[...]` subscript returns undefined so the alias stays on the
+ * keyless union dispatch path rather than a keyed one.
+ */
+export function extract_collection_source_key(node: SyntaxNode): SymbolName | undefined {
+  let target_node = node;
+  if (node.type === "identifier" || node.type === "property_identifier") {
+    target_node = node.parent || node;
+  }
+
+  const value_node =
+    target_node.childForFieldName("value") || target_node.childForFieldName("init");
+  if (!value_node || value_node.type !== "member_expression") {
+    return undefined;
+  }
+
+  const property_node = value_node.childForFieldName("property");
+  if (property_node?.type === "property_identifier") {
+    return property_node.text as SymbolName;
+  }
+  return undefined;
+}
+
+/**
+ * Detect a member-assigned function value: `app.method = function () {}` or
+ * `Counter.prototype.method = () => {}`. Returns the holder identifier and the
+ * property-named member function, or null when the assignment is not a function
+ * value on a simple (optionally `.prototype`) receiver.
+ *
+ * The member function's symbol matches the anonymous-function definition the
+ * right-hand side is indexed as, so the collection points at a real node.
+ */
+export function detect_member_assignment(
+  assignment_node: SyntaxNode,
+  file_path: FilePath
+): { holder_name: SymbolName; member: CollectionMember } | null {
+  const left = assignment_node.childForFieldName?.("left");
+  const right = assignment_node.childForFieldName?.("right");
+  if (!left || left.type !== "member_expression" || !right) {
+    return null;
+  }
+
+  if (
+    right.type !== "arrow_function" &&
+    right.type !== "function_expression" &&
+    right.type !== "function"
+  ) {
+    return null;
+  }
+
+  const property = left.childForFieldName("property");
+  if (!property || property.type !== "property_identifier") {
+    return null;
+  }
+
+  const object = left.childForFieldName("object");
+  if (!object) {
+    return null;
+  }
+
+  let holder_name: string | undefined;
+  if (object.type === "identifier") {
+    holder_name = object.text; // app.method = fn
+  } else if (object.type === "member_expression") {
+    const inner_property = object.childForFieldName("property");
+    const inner_object = object.childForFieldName("object");
+    if (inner_property?.text === "prototype" && inner_object?.type === "identifier") {
+      holder_name = inner_object.text; // Counter.prototype.method = fn
+    }
+  }
+  if (!holder_name) {
+    return null;
+  }
+
+  const member_location = node_to_location(right, file_path);
+  const member_id = anonymous_function_symbol(member_location);
+  return {
+    holder_name: holder_name as SymbolName,
+    member: {
+      name: property.text as SymbolName,
+      symbol_id: member_id,
+      location: member_location,
+    },
+  };
 }
 
 /**
@@ -682,20 +796,46 @@ function extract_functions_from_array(
 }
 
 /**
+ * The static property name of an object-literal key node, or undefined for a
+ * computed key. A string key contributes its unquoted text; a shorthand or
+ * `property_identifier` its identifier.
+ */
+function object_property_key(key_node: SyntaxNode | null | undefined): SymbolName | undefined {
+  if (!key_node) return undefined;
+  if (key_node.type === "property_identifier" || key_node.type === "identifier") {
+    return key_node.text as SymbolName;
+  }
+  if (key_node.type === "string") {
+    return key_node.text.slice(1, -1) as SymbolName;
+  }
+  return undefined;
+}
+
+/**
  * Extract function SymbolIds from object literal: { key: fn, ... }
+ *
+ * `named_members` records the property name → member function — an inline function,
+ * a value identifier, or a nested object literal — for `obj.method()` /
+ * `this.method()` resolution and for following a local object-property alias one
+ * property deeper. `functions`/`references` feed keyless dispatch and
+ * indirect-reachability. A nested object-literal value contributes a `nested`
+ * member only; its functions never enter the flat lists, so the keyless union
+ * path cannot reach them. Duplicate keys are resolved last-wins at lookup.
  */
 function extract_functions_from_object(
   obj_node: SyntaxNode,
   file_path: FilePath
-): { functions: SymbolId[]; references: SymbolName[] } {
+): { functions: SymbolId[]; references: SymbolName[]; named_members: CollectionMember[] } {
   const function_ids: SymbolId[] = [];
   const references: SymbolName[] = [];
+  const named_members: CollectionMember[] = [];
 
   for (let i = 0; i < obj_node.namedChildCount; i++) {
     const child = obj_node.namedChild(i);
     if (!child) continue;
 
-    // Handle spread elements: { ...OTHER_HANDLERS }
+    // Handle spread elements: { ...OTHER_HANDLERS }. A spread has no key, so it
+    // flattens into the union view only.
     if (child.type === "spread_element") {
       const spread_arg = child.namedChildren[0];
       if (spread_arg?.type === "identifier") {
@@ -709,7 +849,9 @@ function extract_functions_from_object(
       const name_node = child.childForFieldName("name");
       if (name_node) {
         const location = node_to_location(child, file_path);
-        function_ids.push(method_symbol(name_node.text, location));
+        const method_id = method_symbol(name_node.text, location);
+        function_ids.push(method_id);
+        named_members.push({ name: name_node.text as SymbolName, symbol_id: method_id, location });
       }
       continue;
     }
@@ -720,17 +862,27 @@ function extract_functions_from_object(
     const value = child.childForFieldName?.("value");
     if (!value) continue;
 
+    const name = object_property_key(child.childForFieldName?.("key"));
+
     if (
       value.type === "arrow_function" ||
       value.type === "function_expression" ||
       value.type === "function"
     ) {
       const location = node_to_location(value, file_path);
-      function_ids.push(anonymous_function_symbol(location));
+      const fn_id = anonymous_function_symbol(location);
+      function_ids.push(fn_id);
+      if (name) named_members.push({ name, symbol_id: fn_id, location });
     } else if (value.type === "identifier") {
       references.push(value.text as SymbolName);
+      if (name) named_members.push({ name, reference_name: value.text as SymbolName });
+    } else if (value.type === "object" && name) {
+      const nested = extract_functions_from_object(value, file_path);
+      if (nested.named_members.length > 0) {
+        named_members.push({ name, nested: nested.named_members });
+      }
     }
   }
 
-  return { functions: function_ids, references };
+  return { functions: function_ids, references, named_members };
 }

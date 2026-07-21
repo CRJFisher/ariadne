@@ -4,6 +4,7 @@ import path from "path";
 import fs from "fs";
 import type {
   FilePath,
+  SymbolId,
   SymbolName,
   FunctionCallReference,
   MethodCallReference,
@@ -750,6 +751,311 @@ export class TypeRegistry {
     });
   });
 
+  describe("Cast receiver resolution (TASK-353)", () => {
+    function method_call_resolves_to(
+      caller_name: string,
+      method_name: string,
+      target_id: SymbolId
+    ): boolean {
+      const call_graph = project.get_call_graph();
+      const caller = Array.from(call_graph.nodes.values()).find(
+        (n) => n.name === caller_name
+      );
+      if (!caller) return false;
+      return caller.enclosed_calls.some(
+        (call) =>
+          call.name === (method_name as SymbolName) &&
+          call.resolutions.some((r) => r.symbol_id === target_id)
+      );
+    }
+
+    function method_id(file: FilePath, class_name: string, method_name: string): SymbolId {
+      const index = project.get_index_single_file(file);
+      const cls = Array.from(index!.classes.values()).find(
+        (c) => c.name === (class_name as SymbolName)
+      );
+      const type_info = project.get_type_info(cls!.symbol_id);
+      const id = type_info!.methods.get(method_name as SymbolName);
+      if (!id) throw new Error(`no method ${class_name}.${method_name}`);
+      return id;
+    }
+
+    it("resolves (x as Concrete).method() against the cast target, not x's declared type", async () => {
+      const code = `
+interface Base {}
+class Concrete implements Base {
+  greet(): void {}
+}
+function run(x: Base): void {
+  (x as Concrete).greet();
+}
+`;
+      const file = file_path("cast_as_receiver.ts");
+      project.update_file(file, code);
+
+      const greet_id = method_id(file, "Concrete", "greet");
+      expect(method_call_resolves_to("run", "greet", greet_id)).toBe(true);
+
+      // The resolved method is called, so it is not an entry point.
+      const call_graph = project.get_call_graph();
+      expect(call_graph.entry_points.includes(greet_id)).toBe(false);
+    });
+
+    it("resolves the (<Concrete>x).method() angle-bracket cast form equivalently", async () => {
+      const code = `
+interface Base {}
+class Concrete implements Base {
+  greet(): void {}
+}
+function run(x: Base): void {
+  (<Concrete>x).greet();
+}
+`;
+      const file = file_path("cast_angle_receiver.ts");
+      project.update_file(file, code);
+
+      const greet_id = method_id(file, "Concrete", "greet");
+      expect(method_call_resolves_to("run", "greet", greet_id)).toBe(true);
+    });
+
+    it("resolves a structural-literal cast through the concrete underlying object's type", async () => {
+      const code = `
+class Foo {
+  m(): void {}
+}
+function run(): void {
+  const x = new Foo();
+  (x as { m(): void }).m();
+}
+`;
+      const file = file_path("cast_structural_receiver.ts");
+      project.update_file(file, code);
+
+      const m_id = method_id(file, "Foo", "m");
+      expect(method_call_resolves_to("run", "m", m_id)).toBe(true);
+    });
+
+    it("resolves a cast to an imported class against the imported method", async () => {
+      const target_source = `
+export class Concrete {
+  greet(): void {}
+}
+`;
+      const consumer_source = `
+import { Concrete } from "./cast_target";
+function run(x: unknown): void {
+  (x as Concrete).greet();
+}
+`;
+      const target_file = file_path("cast_target.ts");
+      const consumer_file = file_path("cast_consumer.ts");
+      project.update_file(target_file, target_source);
+      project.update_file(consumer_file, consumer_source);
+
+      const greet_id = method_id(target_file, "Concrete", "greet");
+      expect(method_call_resolves_to("run", "greet", greet_id)).toBe(true);
+    });
+  });
+
+  describe("Object-property alias resolution (TASK-356)", () => {
+    function method_call_resolves_to(
+      caller_name: string,
+      method_name: string,
+      target_id: SymbolId
+    ): boolean {
+      const call_graph = project.get_call_graph();
+      const caller = Array.from(call_graph.nodes.values()).find(
+        (n) => n.name === caller_name
+      );
+      if (!caller) return false;
+      return caller.enclosed_calls.some(
+        (call) =>
+          call.name === (method_name as SymbolName) &&
+          call.resolutions.some((r) => r.symbol_id === target_id)
+      );
+    }
+
+    function free_function_id(file: FilePath, name: string): SymbolId {
+      const index = project.get_index_single_file(file);
+      const fn = Array.from(index!.functions.values()).find(
+        (f) => f.name === (name as SymbolName)
+      );
+      if (!fn) throw new Error(`no function ${name}`);
+      return fn.symbol_id;
+    }
+
+    function sole_anonymous_function_id(file: FilePath): SymbolId {
+      const index = project.get_index_single_file(file);
+      const anon = Array.from(index!.functions.values()).filter(
+        (f) => f.name === ("<anonymous>" as SymbolName)
+      );
+      if (anon.length !== 1) {
+        throw new Error(`expected exactly one anonymous function, got ${anon.length}`);
+      }
+      return anon[0].symbol_id;
+    }
+
+    function method_id(file: FilePath, class_name: string, method_name: string): SymbolId {
+      const index = project.get_index_single_file(file);
+      const cls = Array.from(index!.classes.values()).find(
+        (c) => c.name === (class_name as SymbolName)
+      );
+      const type_info = project.get_type_info(cls!.symbol_id);
+      const id = type_info!.methods.get(method_name as SymbolName);
+      if (!id) throw new Error(`no method ${class_name}.${method_name}`);
+      return id;
+    }
+
+    it("follows a local object-property alias to a nested function-expression property (AC#2)", () => {
+      const code = `
+const Ns = { A: { prop: function () {} } };
+function run(): void {
+  var A = Ns.A;
+  A.prop();
+}
+`;
+      const file = file_path("alias_nested_fn_expr.ts");
+      project.update_file(file, code);
+
+      const prop_id = sole_anonymous_function_id(file);
+      expect(method_call_resolves_to("run", "prop", prop_id)).toBe(true);
+    });
+
+    it("follows a local object-property alias to a nested identifier-valued property (AC#2)", () => {
+      const code = `
+function target(): void {}
+const Ns = { A: { prop: target } };
+function run(): void {
+  var A = Ns.A;
+  A.prop();
+}
+`;
+      const file = file_path("alias_nested_reference.ts");
+      project.update_file(file, code);
+
+      expect(
+        method_call_resolves_to("run", "prop", free_function_id(file, "target"))
+      ).toBe(true);
+    });
+
+    it("resolves an aliased property call to only the keyed member, not sibling functions", () => {
+      const code = `
+function target(): void {}
+function decoy(): void {}
+const Ns = { A: { prop: target }, B: { prop: decoy } };
+function run(): void {
+  var A = Ns.A;
+  A.prop();
+}
+`;
+      const file = file_path("alias_precision.ts");
+      project.update_file(file, code);
+
+      expect(
+        method_call_resolves_to("run", "prop", free_function_id(file, "target"))
+      ).toBe(true);
+      expect(
+        method_call_resolves_to("run", "prop", free_function_id(file, "decoy"))
+      ).toBe(false);
+    });
+
+    it("leaves an aliased call to an absent key unresolved rather than fanning out", () => {
+      // `sibling` is a top-level function member, so Ns's keyless union is non-empty:
+      // a union fallback on the keyed miss would wrongly resolve `A.missing()` to it.
+      const code = `
+function target(): void {}
+function sibling(): void {}
+const Ns = { A: { prop: target }, sibling: sibling };
+function run(): void {
+  var A = Ns.A;
+  A.missing();
+}
+`;
+      const file = file_path("alias_absent_key.ts");
+      project.update_file(file, code);
+
+      const call_graph = project.get_call_graph();
+      const run_node = Array.from(call_graph.nodes.values()).find(
+        (n) => n.name === "run"
+      );
+      const missing_call = run_node!.enclosed_calls.find(
+        (c) => c.name === ("missing" as SymbolName)
+      );
+      expect(missing_call!.resolutions).toEqual([]);
+    });
+
+    it("resolves a direct object-literal function-expression property call by key", () => {
+      const code = `
+const obj = { prop: function () {} };
+function run(): void {
+  obj.prop();
+}
+`;
+      const file = file_path("direct_object_dispatch.ts");
+      project.update_file(file, code);
+
+      const prop_id = sole_anonymous_function_id(file);
+      expect(method_call_resolves_to("run", "prop", prop_id)).toBe(true);
+    });
+
+    it("does not create a spurious edge for a member alias whose property is a non-function value", () => {
+      const code = `
+class Svc {
+  run(): void {}
+}
+function helper(): void {}
+const container = { svc: new Svc(), helper: helper };
+function main(): void {
+  const s = container.svc;
+  s.run();
+}
+`;
+      const file = file_path("member_alias_non_function.ts");
+      project.update_file(file, code);
+
+      // container carries a function member (helper); the svc alias must not
+      // fan `s.run()` out to it — svc's value is a class instance, not a member key.
+      expect(
+        method_call_resolves_to("main", "run", free_function_id(file, "helper"))
+      ).toBe(false);
+    });
+
+    it("follows an aliased import to the original class through a type-cast receiver (AC#1, via TASK-353)", () => {
+      const target_source = `
+export class ViewRef {
+  detachFromAppRef(): void {}
+}
+`;
+      const distractor_source = `
+export class Other {
+  detachFromAppRef(): void {}
+}
+`;
+      const consumer_source = `
+import { ViewRef as InternalViewRef } from "./aliased_view_ref";
+import { Other } from "./aliased_other";
+function run(viewRef: unknown): void {
+  (viewRef as InternalViewRef<any>).detachFromAppRef();
+}
+`;
+      const target_file = file_path("aliased_view_ref.ts");
+      const distractor_file = file_path("aliased_other.ts");
+      const consumer_file = file_path("aliased_consumer.ts");
+      project.update_file(target_file, target_source);
+      project.update_file(distractor_file, distractor_source);
+      project.update_file(consumer_file, consumer_source);
+
+      const detach_id = method_id(target_file, "ViewRef", "detachFromAppRef");
+      const decoy_id = method_id(distractor_file, "Other", "detachFromAppRef");
+      expect(
+        method_call_resolves_to("run", "detachFromAppRef", detach_id)
+      ).toBe(true);
+      expect(
+        method_call_resolves_to("run", "detachFromAppRef", decoy_id)
+      ).toBe(false);
+    });
+  });
+
   describe("Polymorphic Interface Resolution (Task 11.158)", () => {
     it("should mark all interface implementations as called (not entry points)", async () => {
       const source = load_source("polymorphic_handler.ts");
@@ -1042,6 +1348,116 @@ function main(): void {
         (r) => r.kind === "function_call" && r.name === ("div" as SymbolName)
       );
       expect(div_calls).toEqual([]);
+    });
+  });
+
+  describe("Member reference reachability (task-351)", () => {
+    function method_symbol(file: FilePath, class_name: string, method: string) {
+      const index = project.get_index_single_file(file);
+      const cls = Array.from(index!.classes.values()).find(
+        (c) => c.name === (class_name as SymbolName)
+      );
+      return project.get_type_info(cls!.symbol_id)!.methods.get(method as SymbolName);
+    }
+
+    it("resolves a this.#method() private call to the private method", () => {
+      const file = file_path("private_call.ts");
+      project.update_file(
+        file,
+        `class Vault {
+          #open() { return 1; }
+          run() { return this.#open(); }
+        }`
+      );
+      const referenced = project.resolutions.get_all_referenced_symbols();
+      const open = method_symbol(file, "Vault", "#open");
+      expect(open).toBeDefined();
+      expect(referenced.has(open!)).toBe(true);
+    });
+
+    it("resolves calls made from a computed-key method body", () => {
+      const file = file_path("computed_body.ts");
+      project.update_file(
+        file,
+        `class Bag {
+          helper() { return 1; }
+          [Symbol.iterator]() { this.helper(); }
+        }`
+      );
+      const referenced = project.resolutions.get_all_referenced_symbols();
+      const helper = method_symbol(file, "Bag", "helper");
+      expect(helper).toBeDefined();
+      expect(referenced.has(helper!)).toBe(true);
+    });
+
+    it("makes a getter reachable when invoked via a bare property read", () => {
+      const file = file_path("getter_read.ts");
+      project.update_file(
+        file,
+        `class Widget {
+          get value() { return 1; }
+          compute() { return 2; }
+        }
+        function main() { const w = new Widget(); return w.value; }`
+      );
+      const referenced = project.resolutions.get_all_referenced_symbols();
+      const value = method_symbol(file, "Widget", "value");
+      const compute = method_symbol(file, "Widget", "compute");
+      expect(value).toBeDefined();
+
+      // The getter is invoked by `w.value` and is therefore reachable...
+      expect(referenced.has(value!)).toBe(true);
+      // ...while an ordinary method that is never called stays unreachable
+      // (the getter edge is getter-specific, not a blanket reachability rule).
+      expect(referenced.has(compute!)).toBe(false);
+
+      const entry_points = new Set(
+        project.get_call_graph({ include_tests: true }).entry_points
+      );
+      expect(entry_points.has(value!)).toBe(false);
+      expect(entry_points.has(compute!)).toBe(true);
+    });
+
+    it("makes a getter reachable even when a same-named setter is declared", () => {
+      // A `get value()` / `set value()` pair share one member name; the getter
+      // must still be reached by a bare read despite the name collision.
+      const file = file_path("getter_setter.ts");
+      project.update_file(
+        file,
+        `class Widget {
+          get value() { return 1; }
+          set value(v: number) {}
+        }
+        function main() { const w = new Widget(); return w.value; }`
+      );
+      const referenced = project.resolutions.get_all_referenced_symbols();
+      const value = method_symbol(file, "Widget", "value");
+      expect(value).toBeDefined();
+      expect(referenced.has(value!)).toBe(true);
+    });
+
+    it("forges an edge only for getters — a non-getter member read creates none", () => {
+      const file = file_path("field_read.ts");
+      project.update_file(
+        file,
+        `class Box {
+          field = 1;
+          plain() { return 3; }
+        }
+        function main() {
+          const b = new Box();
+          const f = b.field;   // plain data-property read
+          const m = b.plain;   // ordinary method read as a value (not a call)
+          return [f, m];
+        }`
+      );
+      const referenced = project.resolutions.get_all_referenced_symbols();
+      const plain = method_symbol(file, "Box", "plain");
+      expect(plain).toBeDefined();
+      // Reading a field or a non-getter method as a value must not forge a call
+      // edge — this is what the `accessor_kind === "getter"` guard enforces
+      // (the coarser kind check alone would already reject the field read).
+      expect(referenced.has(plain!)).toBe(false);
     });
   });
 

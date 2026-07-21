@@ -28,12 +28,14 @@ import {
   decorator_symbol,
   ConstructorDefinition,
   CallbackContext,
+  CollectionMember,
   FunctionCollection,
 } from "@ariadnejs/types";
 
 import type { CaptureNode } from "../capture_types";
 import type { ProcessingContext } from "../scopes/processing_context";
 import { find_body_scope_for_definition } from "../scopes/scope_lookup";
+import { attach_collection_members } from "./attach_collection_members";
 import type {
   ClassBuilderState,
   ConstructorBuilderState,
@@ -84,6 +86,14 @@ export class DefinitionBuilder {
   private readonly types = new Map<SymbolId, TypeAliasDefinition>();
   private readonly decorators = new Map<SymbolId, DecoratorDefinition>();
 
+  // Member functions assigned to a holder across separate statements
+  // (`app.method = function () {}`), keyed by the holder identifier name.
+  // Attached to the holder's definition as a FunctionCollection in build().
+  private readonly pending_collection_members = new Map<
+    SymbolName,
+    CollectionMember[]
+  >();
+
   // Orphan captures (waiting for their parent to be added)
   private readonly orphan_methods = new Map<Location, MethodBuilderState>();
   private readonly orphan_properties = new Map<
@@ -102,6 +112,12 @@ export class DefinitionBuilder {
    * Build final categorized definitions (single-file only)
    */
   build(): BuilderResult {
+    attach_collection_members(
+      this.pending_collection_members,
+      this.variables,
+      this.functions
+    );
+
     // Build complex types into maps
     const functions = new Map<SymbolId, FunctionDefinition>();
     const classes = new Map<SymbolId, ClassDefinition>();
@@ -136,6 +152,23 @@ export class DefinitionBuilder {
       decorators: this.decorators,
       imports: this.imports,
     };
+  }
+
+  /**
+   * Record a function assigned to a holder's property (`app.method = fn`).
+   * Members accumulate by holder name and attach to the holder in build().
+   */
+  add_collection_member(
+    holder_name: SymbolName,
+    member: CollectionMember
+  ): DefinitionBuilder {
+    const members = this.pending_collection_members.get(holder_name);
+    if (members) {
+      members.push(member);
+    } else {
+      this.pending_collection_members.set(holder_name, [member]);
+    }
+    return this;
   }
 
   // ============================================================================
@@ -194,6 +227,7 @@ export class DefinitionBuilder {
       async?: boolean;
       generics?: SymbolName[];
       docstring?: string;
+      accessor_kind?: "getter" | "setter";
     },
   ): DefinitionBuilder {
     const class_state = this.classes.get(class_id);
@@ -558,6 +592,7 @@ export class DefinitionBuilder {
     docstring?: string;
     function_collection?: FunctionCollection;
     collection_source?: SymbolName;
+    collection_source_key?: SymbolName;
     initialized_from_call?: SymbolName;
   }): DefinitionBuilder {
     this.variables.set(definition.symbol_id, {
@@ -573,6 +608,7 @@ export class DefinitionBuilder {
       docstring: definition.docstring,
       function_collection: definition.function_collection,
       collection_source: definition.collection_source,
+      collection_source_key: definition.collection_source_key,
       initialized_from_call: definition.initialized_from_call,
     });
     return this;
@@ -590,6 +626,7 @@ export class DefinitionBuilder {
     original_name?: SymbolName;
     import_kind: "named" | "default" | "namespace";
     is_type_only?: boolean;
+    is_commonjs_require?: boolean;
     export?: ExportMetadata;
   }): DefinitionBuilder {
     this.imports.set(definition.symbol_id, {
@@ -603,6 +640,7 @@ export class DefinitionBuilder {
       original_name: definition.original_name,
       import_kind: definition.import_kind,
       is_type_only: definition.is_type_only,
+      is_commonjs_require: definition.is_commonjs_require,
     });
     return this;
   }

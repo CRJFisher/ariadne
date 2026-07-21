@@ -1,9 +1,10 @@
 ---
 id: TASK-365
-title: "Make git worktrees buildable and committable out of the box"
-status: To Do
+title: Make git worktrees buildable and committable out of the box
+status: Done
 assignee: []
-created_date: "2026-07-20 00:00"
+created_date: '2026-07-20 00:00'
+updated_date: '2026-07-20 23:11'
 labels:
   - ops
   - dx
@@ -21,7 +22,6 @@ priority: medium
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
-
 A fresh git worktree (e.g. created by the `EnterWorktree` tool or
 `git worktree add` for a `/build-and-review` run) cannot run the repo's
 `pnpm`-based tooling or commit without a long sequence of manual repair steps.
@@ -86,34 +86,36 @@ an environment precheck failing, which is easy to misdiagnose.
   `tree-sitter`, builds workspace packages, and sets `verifyDepsBeforeRun`.
 - **Fix the sandbox reflink path** so `pnpm install` succeeds inside worktree
   directories without disabling the sandbox.
-
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
-
 <!-- AC:BEGIN -->
-
-- [ ] A newly created worktree can run `pnpm exec tsc`, `pnpm exec eslint`,
+- [x] #1 A newly created worktree can run `pnpm exec tsc`, `pnpm exec eslint`,
       and the full `vitest` suite with no manual repair.
-- [ ] The turn-end Stop hook and the `pre-commit` hook pass in a fresh
+- [x] #2 The turn-end Stop hook and the `pre-commit` hook pass in a fresh
       worktree when the code is green (no `ERR_PNPM_IGNORED_BUILDS` /
       `ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY`).
-- [ ] `tree-sitter` native bindings build automatically during worktree
+- [x] #3 `tree-sitter` native bindings build automatically during worktree
       setup (no hand-run `node-gyp rebuild`).
-- [ ] The superseded pnpm config (`public-hoist-pattern[]` in `.npmrc`,
+- [x] #4 The superseded pnpm config (`public-hoist-pattern[]` in `.npmrc`,
       `pnpm.onlyBuiltDependencies` in `package.json`) is removed so pnpm 11
       stops emitting the ignored-keys warning.
-
 <!-- AC:END -->
 
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
+## High-level summary
 
-Surfaced during TASK-364.8 (`/build-and-review` in a worktree). The commit
-there landed only after replicating local `main`'s `pnpm-workspace.yaml`
-config into the worktree and setting `verifyDepsBeforeRun: false`; those
-changes were left as worktree-local scaffolding and not committed to the
-fix branch.
+A fresh git worktree could not run the repo's `pnpm`-based tooling or commit without a long manual repair sequence. A worktree created with the default `worktree.baseRef: fresh` branches from `origin/<default>`, which lagged local `main`, so it inherited the superseded pnpm config (`public-hoist-pattern[]` in `.npmrc`, `pnpm.onlyBuiltDependencies` in `package.json`) that pnpm 11 silently ignores. The consequences: native builds were skipped (`ERR_PNPM_IGNORED_BUILDS`, so `tree-sitter` never compiled), and the missing hoist config made pnpm treat `node_modules` as perpetually out of sync, aborting every `pnpm exec` with `ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY` — which blocked the turn-end and pre-commit hooks even on green code.
 
+The corrected config (`publicHoistPattern` + `allowBuilds` in `pnpm-workspace.yaml`) already lives on local branches. Setting `worktree.baseRef: head` in `.claude/settings.json` makes the `EnterWorktree` tool branch new worktrees from local HEAD, so they inherit that config instead of the stale origin base. A single `pnpm install` then populates `node_modules`, auto-approves and compiles the `tree-sitter` native bindings (no hand-run `node-gyp rebuild`), and leaves `pnpm exec` runnable without a purge. `scripts/hydrate-worktree.sh` wraps `install` + `build` as the one setup command.
+
+To navigate: the pnpm config is in `pnpm-workspace.yaml` (`publicHoistPattern`, `allowBuilds`); the worktree branching policy is `worktree.baseRef` in `.claude/settings.json`; the setup entry point is `scripts/hydrate-worktree.sh`.
+
+All four acceptance criteria are satisfied: a fresh worktree runs `pnpm exec tsc`/`eslint`/`vitest` after one hydrate run; the commit and turn-end hooks pass with no `ERR_PNPM_*`; `tree-sitter` bindings build automatically during install; and the superseded config keys are absent on this lineage, so pnpm 11 emits no ignored-keys warning.
+
+Watch: hydration runs once and is not auto-triggered by worktree creation — run the script after creating a worktree. The Bash sandbox allows writes to the session's own working directories, so a session launched in the worktree runs `pnpm install` normally under the sandbox. A worktree created and entered mid-session is not yet a session working directory, so it sits outside the sandbox's write allowlist and the install there must run with the sandbox disabled — this is what the "fix the sandbox reflink path" direction traced to (a Claude Code Bash-sandbox scoping behaviour, not a pnpm defect), and no acceptance criterion requires a sandboxed install of a mid-session worktree. The git commit flow and turn-end hooks are harness-run rather than Bash-sandboxed, so they need no exception once `node_modules` exists.
+
+Surfaced during TASK-364.8 (a `/build-and-review` run in a worktree), where the commit landed only after replicating local `main`'s config into the worktree and setting `verifyDepsBeforeRun: false` — scaffolding that this change makes unnecessary.
 <!-- SECTION:NOTES:END -->

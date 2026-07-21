@@ -227,6 +227,40 @@ export default [
     }
   },
   {
+    // TASK-363: every runtime use of tree-sitter and the grammar packages must
+    // route through the process-global loader (packages/core/src/native.ts) so
+    // a re-evaluated module registry reuses one set of native class identities.
+    // Type-only imports are erased at compile time and stay allowed. The loader
+    // itself and test files (which build throwaway parsers) are exempt. Dev
+    // scripts are covered too, so nothing outside the loader requires the
+    // packages directly.
+    files: ["packages/core/src/**/*.ts", "packages/core/scripts/**/*.ts"],
+    ignores: [
+      "packages/core/src/native.ts",
+      "**/*.test.ts",
+      "**/*.spec.ts"
+    ],
+    rules: {
+      "@typescript-eslint/no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            "tree-sitter",
+            "tree-sitter-javascript",
+            "tree-sitter-python",
+            "tree-sitter-rust",
+            "tree-sitter-typescript"
+          ].map((name) => ({
+            name,
+            message:
+              "Import tree-sitter and grammar packages through the process-global loader at packages/core/src/native.ts (TASK-363). Type-only imports are allowed.",
+            allowTypeImports: true
+          }))
+        }
+      ]
+    }
+  },
+  {
     ignores: [
       "node_modules/**",
       "dist/**",

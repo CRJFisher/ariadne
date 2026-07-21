@@ -13,11 +13,13 @@
 import fs from "fs";
 import path from "path";
 import { glob } from "glob";
-import Parser from "tree-sitter";
-import TypeScript from "tree-sitter-typescript";
-import JavaScript from "tree-sitter-javascript";
-import Python from "tree-sitter-python";
-import Rust from "tree-sitter-rust";
+import {
+  Parser,
+  TypeScript,
+  JavaScript,
+  Python,
+  Rust,
+} from "../src/native";
 import type { Language, FilePath } from "@ariadnejs/types";
 import { build_index_single_file } from "../src/index_single_file/index_single_file";
 import { write_index_single_file_fixture } from "../tests/fixtures/index_single_file_json";

@@ -358,3 +358,150 @@ export function run(): number {
     expect(entry).toBeUndefined();
   });
 });
+
+// Variable-bound named function expression (task-355): `var X = function X(){}`
+// registers the outer `X` in the enclosing scope, so intra-file references
+// resolve and `X` is not surfaced as a spurious entry point.
+describe("TypeScript Variable-Bound Named Function Expression", () => {
+  const temp_dirs: string[] = [];
+  afterAll(() => {
+    for (const dir of temp_dirs) {
+      if (fs.existsSync(dir)) {
+        fs.rmSync(dir, { recursive: true, force: true });
+      }
+    }
+  });
+
+  it("resolves an intra-file bare-name call to the outer function binding", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "mod.ts": `var X = function X(): number {
+  return 1;
+};
+
+export function run(): number {
+  return X();
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    const call = project.resolutions
+      .get_calls_for_file(file_paths["mod.ts"])
+      .find((c) => c.name === ("X" as SymbolName));
+    expect(call!.resolution_failure).toBeUndefined();
+    expect(call!.resolutions.length).toEqual(1);
+
+    const x_def_ids = project.definitions
+      .get_definitions_by_name("X" as SymbolName)
+      .filter((def) => def.location.file_path === file_paths["mod.ts"])
+      .map((def) => def.symbol_id);
+    expect(x_def_ids).toContain(call!.resolutions[0].symbol_id);
+
+    const x_entries = project.get_call_graph().entry_points.filter((ep) => {
+      const node = project.get_call_graph().nodes.get(ep);
+      return (
+        node?.name === ("X" as SymbolName) &&
+        node.location.file_path === file_paths["mod.ts"]
+      );
+    });
+    expect(x_entries).toEqual([]);
+  });
+
+  it("keeps a constructor-only var-bound function off the entry-point set", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "mod.ts": `var Widget = function Widget() {
+  return { ok: true };
+};
+
+export function main() {
+  return new Widget();
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    const widget_calls = project.resolutions
+      .get_calls_for_file(file_paths["mod.ts"])
+      .filter((c) => c.name === ("Widget" as SymbolName));
+    expect(widget_calls.length).toEqual(1);
+
+    const call_graph = project.get_call_graph();
+    const widget_nodes = Array.from(call_graph.nodes.values()).filter(
+      (n) =>
+        n.name === ("Widget" as SymbolName) &&
+        n.location.file_path === file_paths["mod.ts"]
+    );
+    expect(widget_nodes.length).toEqual(1);
+    const widget_entries = call_graph.entry_points.filter((ep) => {
+      const node = call_graph.nodes.get(ep);
+      return (
+        node?.name === ("Widget" as SymbolName) &&
+        node.location.file_path === file_paths["mod.ts"]
+      );
+    });
+    expect(widget_entries).toEqual([]);
+  });
+
+  it("resolves the self-reference and the outer binding for a distinct inner name", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "mod.ts": `const factorial = function fact(n: number): number {
+  return n <= 1 ? 1 : n * fact(n - 1);
+};
+
+export function run(): number {
+  return factorial(5);
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    const calls = project.resolutions.get_calls_for_file(file_paths["mod.ts"]);
+    const outer_call = calls.find(
+      (c) => c.name === ("factorial" as SymbolName)
+    );
+    expect(outer_call!.resolution_failure).toBeUndefined();
+    expect(outer_call!.resolutions.length).toEqual(1);
+    const self_call = calls.find((c) => c.name === ("fact" as SymbolName));
+    expect(self_call!.resolution_failure).toBeUndefined();
+    expect(self_call!.resolutions.length).toEqual(1);
+
+    const call_graph = project.get_call_graph();
+    const factorial_nodes = Array.from(call_graph.nodes.values()).filter(
+      (n) =>
+        n.name === ("factorial" as SymbolName) &&
+        n.location.file_path === file_paths["mod.ts"]
+    );
+    expect(factorial_nodes.length).toEqual(1);
+    const stray_entries = call_graph.entry_points.filter((ep) => {
+      const node = call_graph.nodes.get(ep);
+      return (
+        (node?.name === ("factorial" as SymbolName) ||
+          node?.name === ("fact" as SymbolName)) &&
+        node.location.file_path === file_paths["mod.ts"]
+      );
+    });
+    expect(stray_entries).toEqual([]);
+  });
+
+  it("indexes an exported binding without a duplicate-export error and exports only the outer name", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "mod.ts": `export const X = function X(): number {
+  return 1;
+};
+`,
+      "use.ts": `import { X } from "./mod";
+
+export function run(): number {
+  return X();
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    const call = project.resolutions
+      .get_calls_for_file(file_paths["use.ts"])
+      .find((c) => c.name === ("X" as SymbolName));
+    expect(call!.resolution_failure).toBeUndefined();
+    expect(call!.resolutions.length).toEqual(1);
+  });
+});

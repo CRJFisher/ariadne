@@ -7,7 +7,6 @@ import Parser from "tree-sitter";
 import Rust from "tree-sitter-rust";
 import {
   handle_definition_method,
-  handle_definition_method_associated,
   handle_definition_method_default,
   handle_definition_method_async,
   handle_definition_constructor,
@@ -123,54 +122,6 @@ impl MyStruct {
       const result = builder.build();
       expect(Array.from(result.classes.values())).toHaveLength(0);
       expect(Array.from(result.functions.values())).toHaveLength(0);
-    });
-  });
-
-  describe("handle_definition_method_associated", () => {
-    it("should add associated function (static) to struct", () => {
-      const code = `struct MyStruct { value: String }
-impl MyStruct {
-    pub fn from_str(s: &str) -> Self {
-        MyStruct { value: s.to_string() }
-    }
-}`;
-      const tree = parser.parse(code);
-      const struct_node = find_node(tree.rootNode, "type_identifier", "MyStruct");
-      const method_node = find_node(tree.rootNode, "identifier", "from_str");
-      const context = create_context();
-      const builder = new DefinitionBuilder(context);
-
-      // Add struct
-      RUST_HANDLERS["definition.class"]({
-        category: "definition" as any,
-        entity: "class" as any,
-        node: struct_node,
-        text: "MyStruct" as SymbolName,
-        name: "definition.class",
-        location: node_to_location(struct_node, "test.rs" as FilePath),
-      }, builder, context);
-
-      // Add associated function
-      handle_definition_method_associated(
-        {
-          category: "definition" as any,
-          entity: "method" as any,
-          node: method_node,
-          text: "from_str" as SymbolName,
-          name: "definition.method.associated",
-          location: node_to_location(method_node, "test.rs" as FilePath),
-        },
-        builder,
-        context
-      );
-
-      const result = builder.build();
-      const classes = Array.from(result.classes.values());
-      expect(classes).toHaveLength(1);
-      expect(classes[0].methods).toHaveLength(1);
-      expect(classes[0].methods[0].name).toBe("from_str");
-      expect(classes[0].methods[0].static).toBe(true);
-      expect(classes[0].methods[0].return_type).toBe("Self");
     });
   });
 

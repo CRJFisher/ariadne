@@ -14,6 +14,7 @@ import {
   extract_type_bindings,
   extract_constructor_bindings,
   extract_type_members,
+  set_member_symbol,
 } from "../type_preprocessing";
 import type { ResolutionRegistry } from "../resolution_registry";
 import { resolve_namespace_export } from "../export_chain_lookup";
@@ -277,10 +278,11 @@ export class TypeRegistry {
     if (!def) return undefined;
 
     if (def.kind === "class") {
+      const methods = new Map<SymbolName, SymbolId>();
+      for (const m of def.methods) set_member_symbol(methods, m);
+
       return {
-        methods: new Map(
-          def.methods.map((m) => [m.name as SymbolName, m.symbol_id])
-        ),
+        methods,
         properties: new Map(
           def.properties.map((p) => [p.name as SymbolName, p.symbol_id])
         ),

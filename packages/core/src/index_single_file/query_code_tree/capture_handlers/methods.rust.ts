@@ -56,38 +56,6 @@ export function handle_definition_method(
   }
 }
 
-export function handle_definition_method_associated(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const method_id = create_method_id(capture);
-  const impl_info = find_containing_impl(capture);
-  const return_type = extract_return_type(capture.node.parent || capture.node);
-  const docstring = consume_documentation(capture.location);
-
-  if (impl_info?.struct_name) {
-    const method_def = {
-      symbol_id: method_id,
-      name: capture.text,
-      location: capture.location,
-      scope_id: context.get_scope_id(capture.location),
-      return_type: return_type,
-      static: true as const,
-      docstring,
-    };
-    const struct_id = builder.find_class_by_name(impl_info.struct_name);
-    if (struct_id) {
-      builder.add_method_to_class(struct_id, method_def);
-    } else {
-      const enum_id = builder.find_enum_by_name(impl_info.struct_name);
-      if (enum_id) {
-        builder.add_method_to_enum(enum_id, method_def);
-      }
-    }
-  }
-}
-
 export function handle_definition_method_default(
   capture: CaptureNode,
   builder: DefinitionBuilder,

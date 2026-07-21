@@ -283,6 +283,14 @@
   value: (arrow_function)
 ) @assignment.variable
 
+; Function expressions assigned to variables — registers the outer var name as a
+; function in the enclosing scope. The inner name of a named function expression
+; is captured separately above and stays scoped to the function body.
+(variable_declarator
+  name: (identifier) @definition.function @assignment.variable
+  value: (function_expression)
+) @assignment.variable
+
 ; === Anonymous arrow functions (inline callbacks, config objects, etc.) ===
 
 ; Inline arrow functions in call expression arguments (forEach, map, filter, etc.)
@@ -326,6 +334,15 @@
   name: (identifier) @assignment.variable
   value: (_) @assignment.variable
 ) @assignment.variable
+
+; Prototype-style method assignment: Counter.prototype.method = function () {}
+; (the simple `app.method = fn` form is captured by the member-access @assignment.property below)
+(assignment_expression
+  left: (member_expression
+    object: (member_expression)
+    property: (property_identifier)
+  )
+) @assignment.property
 
 ; Variable declarations with namespace-qualified constructor calls
 (variable_declarator
@@ -379,6 +396,13 @@
 
 (method_definition
   name: (private_property_identifier) @definition.method
+) @scope.method
+
+; Computed-key method definitions: [Symbol.iterator]() { ... }
+; Indexed as a callable node (the whole key text, e.g. `[Symbol.iterator]`, is the
+; name) so the method body is a scope and any calls it makes are captured.
+(method_definition
+  name: (computed_property_name) @definition.method
 ) @scope.method
 
 ; Abstract method signatures in classes (not interfaces)
@@ -612,6 +636,17 @@
   )
 ) @reference.call
 
+; Private method calls: this.#method()
+; Private members use `private_property_identifier` rather than `property_identifier`,
+; so the receiver-tracking rule above misses them. The extractor derives `#method`
+; and the `this` self-reference identically for both property node types.
+(call_expression
+  function: (member_expression
+    object: (_) @reference.variable
+    property: (private_property_identifier)
+  )
+) @reference.call
+
 ; Constructor calls
 (new_expression
   constructor: (identifier) @reference.constructor
@@ -692,20 +727,11 @@
   argument: (identifier) @reference.variable.update
 )
 
-; JSX components — a JSX element is how a component is invoked, so its tag name
-; captures as a call reference to the component definition. A tag whose name
-; starts with a lowercase letter is an intrinsic host element (`<div>`), not a
-; reference to any definition; every other tag (`<Panel>`, `<_Private>`) names a
-; component, so the match excludes only the lowercase-initial host form.
-(jsx_opening_element
-  (identifier) @reference.call.jsx
-  (#not-match? @reference.call.jsx "^[a-z]")
-)
-
-(jsx_self_closing_element
-  (identifier) @reference.call.jsx
-  (#not-match? @reference.call.jsx "^[a-z]")
-)
+; JSX component usages are captured only for `.tsx`, which is parsed with the tsx
+; grammar; the JSX patterns live in query_loader's JSX_COMPONENT_CAPTURES and are
+; appended there. This file stays JSX-free so it compiles against the typescript
+; grammar used for `.ts`, where an angle-bracket `<T>x` is a type assertion, not
+; a JSX element.
 
 ; this references (important for method context)
 (this) @reference.this

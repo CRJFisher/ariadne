@@ -17,7 +17,9 @@ import {
   extract_type_annotation,
   extract_initial_value,
   extract_collection_source,
+  extract_collection_source_key,
   extract_call_initializer_name,
+  extract_accessor_kind,
 } from "../symbol_factories/symbol_factories.javascript";
 import {
   consume_documentation,
@@ -112,6 +114,7 @@ export function handle_ts_definition_variable(
     : undefined;
 
   const collection_source = extract_collection_source(capture.node);
+  const collection_source_key = extract_collection_source_key(capture.node);
   const initialized_from_call = extract_call_initializer_name(capture.node);
 
   builder.add_variable({
@@ -126,6 +129,7 @@ export function handle_ts_definition_variable(
     docstring,
     function_collection,
     collection_source,
+    collection_source_key,
     initialized_from_call,
   });
 }
@@ -321,18 +325,31 @@ export function handle_ts_definition_function(
   const export_info = extract_export_info(capture.node, capture.text);
   const docstring = consume_documentation(capture.location);
 
+  // The inner name of a variable-bound named function expression is visible only
+  // inside the body. Its outer var name is registered separately (as
+  // @definition.function) and owns the body scope, call-graph node, and any
+  // export. Register the inner name for self-reference resolution only — without
+  // a body scope, and never as an export — so it neither duplicates the node,
+  // surfaces as a spurious entry point, nor collides with the outer name in the
+  // export registry.
+  const is_var_bound_expression_name =
+    capture.node.parent?.type === "function_expression" &&
+    capture.node.parent?.parent?.type === "variable_declarator";
+
   builder.add_function(
     {
       symbol_id: func_id,
       name: capture.text,
       location: capture.location,
       scope_id: context.get_scope_id(capture.location),
-      is_exported: export_info.is_exported,
-      export: export_info.export,
+      is_exported: is_var_bound_expression_name
+        ? false
+        : export_info.is_exported,
+      export: is_var_bound_expression_name ? undefined : export_info.export,
       return_type: extract_return_type(capture.node),
       docstring,
     },
-    capture
+    is_var_bound_expression_name ? undefined : capture
   );
 }
 
@@ -425,6 +442,7 @@ export function handle_ts_definition_method(
       abstract: is_abstract_method(capture.node),
       static: is_static_method(capture.node),
       async: is_async_method(capture.node),
+      accessor_kind: extract_accessor_kind(capture.node),
       return_type: extract_return_type(capture.node),
       generics: parent ? extract_type_parameters(parent) : [],
       docstring,

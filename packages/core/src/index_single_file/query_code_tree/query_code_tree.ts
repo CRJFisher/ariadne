@@ -1,43 +1,41 @@
 import type { Language } from "@ariadnejs/types";
-import { type Tree, Query, type QueryCapture } from "tree-sitter";
-import { load_query } from "./query_loader";
-import { LANGUAGE_TO_TREESITTER_LANG } from "./parsers";
+import type { Tree, QueryCapture, Query as TreeSitterQuery } from "tree-sitter";
+import { Query, COMPILED_QUERY_CACHE } from "../../native";
+import { load_query, query_dialect } from "./query_loader";
+import { grammar_for_dialect, is_tsx_file } from "./parsers";
 
 /**
- * Cache for compiled Query objects per language.
- * Query compilation is expensive (~100ms per language), but the query
- * is identical for all files of the same language.
+ * Get or compile a Query for the given language dialect.
+ * Returns cached Query if available, otherwise compiles and caches. The `.tsx`
+ * dialect compiles the JSX-augmented query against the tsx grammar; every other
+ * file uses the bare language grammar and query.
  */
-const COMPILED_QUERY_CACHE = new Map<Language, Query>();
-
-/**
- * Get or compile a Query for the given language.
- * Returns cached Query if available, otherwise compiles and caches.
- */
-function get_compiled_query(lang: Language): Query {
-  const cached = COMPILED_QUERY_CACHE.get(lang);
+function get_compiled_query(lang: Language, tsx: boolean): TreeSitterQuery {
+  const dialect = query_dialect(lang, tsx);
+  const cached = COMPILED_QUERY_CACHE.get(dialect);
   if (cached) {
     return cached;
   }
 
-  const query_string = load_query(lang);
-  const parser = LANGUAGE_TO_TREESITTER_LANG.get(lang);
-  if (!parser) {
-    throw new Error(`No tree-sitter parser found for language: ${lang}`);
-  }
+  const query_string = load_query(lang, tsx);
+  const query = new Query(grammar_for_dialect(lang, tsx), query_string);
 
-  const query = new Query(parser, query_string);
-
-  COMPILED_QUERY_CACHE.set(lang, query);
+  COMPILED_QUERY_CACHE.set(dialect, query);
   return query;
 }
 
 /**
  * Query tree and get raw captures.
- * Returns raw tree-sitter captures for processing.
+ * `file_path` selects the tsx dialect for a `.tsx` file, so the query compiled
+ * matches the grammar the tree was parsed with; omitting it uses the base
+ * language query (callers that parse raw `.ts`/`.js` snippets need no path).
  */
-export function query_tree(lang: Language, tree: Tree): QueryCapture[] {
-  const query = get_compiled_query(lang);
+export function query_tree(
+  lang: Language,
+  tree: Tree,
+  file_path?: string
+): QueryCapture[] {
+  const tsx = file_path !== undefined && is_tsx_file(lang, file_path);
+  const query = get_compiled_query(lang, tsx);
   return query.captures(tree.rootNode);
 }
-

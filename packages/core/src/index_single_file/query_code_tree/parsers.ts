@@ -1,20 +1,14 @@
 import type { Language } from "@ariadnejs/types";
-import JavaScript from "tree-sitter-javascript";
-import Python from "tree-sitter-python";
-import Rust from "tree-sitter-rust";
-import TypeScript from "tree-sitter-typescript";
+import type TreeSitter from "tree-sitter";
+import { JavaScript, Python, Rust, TypeScript } from "../../native";
 
-// TypeScript maps to the `.tsx` grammar so a single query works for both `.ts`
-// and `.tsx` sources: `.tsx` parses as a superset of `.ts`, and only this grammar
-// yields the `jsx_opening_element` / `jsx_self_closing_element` nodes that let a
-// JSX component usage capture as a call reference. The trade-off is that an
-// angle-bracket type assertion (`<T>x`) — legal in `.ts` but forbidden in `.tsx` —
-// parses as a JSX element inside an error region, which drops the surrounding
-// statement's captures. Casts must use the `as` form, which `typescript.scm`
-// already relies on for its only type-assertion capture.
-export const LANGUAGE_TO_TREESITTER_LANG = new Map([
+type Grammar = TreeSitter.Language;
+
+// The default grammar per language. TypeScript maps to the `.typescript`
+// grammar; a `.tsx` file overrides this to the `.tsx` grammar (see grammar_for).
+export const LANGUAGE_TO_TREESITTER_LANG = new Map<Language, Grammar>([
   ["javascript", JavaScript],
-  ["typescript", TypeScript.tsx],
+  ["typescript", TypeScript.typescript],
   ["python", Python],
   ["rust", Rust],
 ]);
@@ -25,3 +19,32 @@ export const SUPPORTED_LANGUAGES: readonly Language[] = [
   "python",
   "rust",
 ] as const;
+
+// A `.tsx` file is parsed with the tsx grammar, which yields the
+// `jsx_opening_element` / `jsx_self_closing_element` nodes a component usage
+// captures against. A `.ts` file keeps the typescript grammar so an
+// angle-bracket type assertion (`<T>x`) still parses as a cast rather than a JSX
+// element. Both are language "typescript"; only the grammar and the JSX half of
+// the query differ, so the distinction stays inside the parse/query layer and
+// never reaches the by-language dispatchers downstream.
+export function is_tsx_file(language: Language, file_path: string): boolean {
+  return language === "typescript" && file_path.endsWith(".tsx");
+}
+
+// Grammar for a compiled query, selected by the same tsx dialect the parser
+// uses so a query always compiles against the grammar its tree was parsed with.
+export function grammar_for_dialect(language: Language, tsx: boolean): Grammar {
+  if (language === "typescript" && tsx) {
+    return TypeScript.tsx;
+  }
+  const grammar = LANGUAGE_TO_TREESITTER_LANG.get(language);
+  if (!grammar) {
+    throw new Error(`No tree-sitter grammar for language: ${language}`);
+  }
+  return grammar;
+}
+
+// Grammar for parsing a file, dispatching `.tsx` to the tsx grammar.
+export function grammar_for(language: Language, file_path: string): Grammar {
+  return grammar_for_dialect(language, is_tsx_file(language, file_path));
+}

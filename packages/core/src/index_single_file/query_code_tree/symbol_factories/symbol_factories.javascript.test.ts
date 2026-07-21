@@ -18,6 +18,7 @@ import {
   extract_return_type,
   extract_parameter_type,
   extract_collection_source,
+  extract_collection_source_key,
   extract_extends,
   extract_call_initializer_name,
   detect_callback_context,
@@ -556,6 +557,29 @@ describe("extract_collection_source", () => {
   });
 });
 
+describe("extract_collection_source_key", () => {
+  it("extracts the property key of a static member alias: Ns.A", () => {
+    const root = parse_js("const alias = Ns.A;");
+    const declarator = find_node_by_type(root, "variable_declarator")!;
+    const name_node = declarator.childForFieldName("name")!;
+    expect(extract_collection_source_key(name_node)).toBe("A");
+  });
+
+  it("returns undefined for a dynamic get() retrieval", () => {
+    const root = parse_js("const handler = config.get('key');");
+    const declarator = find_node_by_type(root, "variable_declarator")!;
+    const name_node = declarator.childForFieldName("name")!;
+    expect(extract_collection_source_key(name_node)).toBeUndefined();
+  });
+
+  it("returns undefined for a subscript retrieval", () => {
+    const root = parse_js("const handler = config['key'];");
+    const declarator = find_node_by_type(root, "variable_declarator")!;
+    const name_node = declarator.childForFieldName("name")!;
+    expect(extract_collection_source_key(name_node)).toBeUndefined();
+  });
+});
+
 // ============================================================================
 // Function Collection Detection
 // ============================================================================
@@ -588,6 +612,58 @@ describe("detect_function_collection", () => {
     expect(result?.collection_type).toBe("Object");
     expect(result?.stored_references).toContain("BASE_HANDLERS");
     expect(result?.stored_references).toContain("fn1");
+  });
+
+  it("keys each function-valued property by its name", () => {
+    const code = "const handlers = { a: function () {}, b: fn2 };";
+    const root = parse_ts(code);
+    const declarator = root.child(0)!.namedChildren[0]!;
+    // The function-expression value keeps its property name even though its own
+    // symbol name is <anonymous>; its id is the anonymous symbol at its location.
+    const fn_node = find_node_by_type(root, "function_expression")!;
+    const a_location = node_to_location(fn_node, file_path);
+    const a_id = anonymous_function_symbol(a_location);
+
+    const result = detect_function_collection(declarator, file_path);
+
+    expect(result?.named_members).toEqual([
+      { name: "a", symbol_id: a_id, location: a_location },
+      { name: "b", reference_name: "fn2" },
+    ]);
+  });
+
+  it("captures quoted string keys, skips computed keys, and records duplicate keys in order", () => {
+    const code =
+      "const handlers = { \"a-b\": fn1, [dynamic]: fn2, dup: first, dup: second };";
+    const root = parse_ts(code);
+    const declarator = root.child(0)!.namedChildren[0]!;
+
+    const result = detect_function_collection(declarator, file_path);
+
+    // Computed keys cannot be named statically, so `fn2` is only in the union view.
+    // Duplicate keys stay in source order; last-wins is resolved at lookup.
+    expect(result?.named_members).toEqual([
+      { name: "a-b", reference_name: "fn1" },
+      { name: "dup", reference_name: "first" },
+      { name: "dup", reference_name: "second" },
+    ]);
+    expect(result?.stored_references).toContain("fn2");
+  });
+
+  it("records a nested object literal as a nested member, kept out of the flat union lists", () => {
+    const code = "const Ns = { A: { prop: fn1 } };";
+    const root = parse_ts(code);
+    const declarator = root.child(0)!.namedChildren[0]!;
+
+    const result = detect_function_collection(declarator, file_path);
+
+    expect(result?.collection_type).toBe("Object");
+    expect(result?.named_members).toEqual([
+      { name: "A", nested: [{ name: "prop", reference_name: "fn1" }] },
+    ]);
+    // The nested function does not leak into the keyless union lists.
+    expect(result?.stored_references ?? []).not.toContain("fn1");
+    expect(result?.stored_functions ?? []).toHaveLength(0);
   });
 
   it("should detect array with function references", () => {

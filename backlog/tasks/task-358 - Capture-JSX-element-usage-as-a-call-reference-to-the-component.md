@@ -59,14 +59,25 @@ longer flagged as an unreachable entry point.
 
 ### How it works
 
-The TypeScript language maps to the `tsx` tree-sitter grammar (`parsers.ts`), a
-superset of the plain-TypeScript grammar and the only one that yields
-`jsx_opening_element` / `jsx_self_closing_element` nodes, so a single query serves
-both `.ts` and `.tsx`. `.jsx` already parses with a JSX-capable grammar. The JSX
-captures in `typescript.scm` (and the matching ones in `javascript.scm`) tag the
-element's identifier as `@reference.call.jsx`; the reference builder routes the
-`.jsx`-qualified capture through the same path as an ordinary function call, so it
-resolves and participates in reachability with no JSX-specific handling downstream.
+Grammar selection is extension-aware within the `typescript` language. A `.tsx`
+file parses with the `tsx` tree-sitter grammar — the only one that yields
+`jsx_opening_element` / `jsx_self_closing_element` nodes — while a `.ts` file
+keeps the `typescript` grammar so an angle-bracket type assertion (`<T>x`) still
+parses as a cast. `grammar_for` in `parsers.ts` owns that dispatch, and
+`parse_file` calls it at the single parse ingress. `.jsx`/`.mdx` parse with the
+JavaScript grammar, which handles JSX natively.
+
+The query matches the grammar. `typescript.scm` stays JSX-free so it compiles
+against the `typescript` grammar; the `.tsx` query appends
+`JSX_COMPONENT_CAPTURES` (in `query_loader`) and compiles against the `tsx`
+grammar, cached under the `typescript:tsx` dialect. `javascript.scm` carries an
+identical JSX block inline for `.js`/`.jsx`/`.mdx`. `query_tree` takes the file
+path so it selects the same dialect the tree was parsed with.
+
+The JSX capture tags the element's identifier as `@reference.call.jsx`; the
+reference builder routes the `.jsx`-qualified capture through the same path as an
+ordinary function call, so it resolves and participates in reachability with no
+JSX-specific handling downstream.
 
 Only the component form is captured: a tag whose name starts with a lowercase
 letter is an intrinsic host element (`<div>`) that names no definition, so the
@@ -88,22 +99,23 @@ capture excludes it via `(#not-match? @reference.call.jsx "^[a-z]")`. `<Panel>`,
 
 ### Boundaries
 
-- Parsing every `.ts` file with the `tsx` grammar means an angle-bracket type
-  assertion (`<T>x`) — legal in `.ts`, forbidden in `.tsx` — parses as a JSX
-  element in an error region that drops the surrounding statement's captures.
-  Casts must use the `as` form, which the query already relies on for its only
-  type-assertion capture.
+- Extension-aware grammar selection keeps `.ts` on the `typescript` grammar, so
+  angle-bracket cast receiver resolution (`(<Concrete>x).method()`) is unaffected
+  — JSX support and angle-bracket casts coexist.
 - JSX component references flow through the ordinary function-call resolver, so
   cross-file resolution of an imported component behaves identically to a
   cross-file `Foo()` call; there is no JSX-specific cross-file path.
 - Member-expression tags (`<Foo.Bar/>`) are not captured, matching the existing
   `javascript.scm` behavior for the same form.
+- The JSX capture block is duplicated: inline in `javascript.scm` (for
+  `.js`/`.jsx`/`.mdx`) and as `JSX_COMPONENT_CAPTURES` in `query_loader` (for the
+  `.tsx` query). The two carry a cross-reference comment and must stay in sync.
 
 ### Test-harness alignment
 
-The grammar map is the single source of truth for grammar selection. Test parsers
-read the grammar from `LANGUAGE_TO_TREESITTER_LANG.get("typescript")` rather than
-naming a grammar directly, so a test's parse grammar always matches the grammar the
-query is compiled against.
+Grammar selection has a single owner in `parsers.ts` (`LANGUAGE_TO_TREESITTER_LANG`
+plus `grammar_for` / `is_tsx_file`). Test parsers read the grammar from the map
+rather than naming a grammar directly, so a test's parse grammar matches the query
+grammar; TASK-369 tracks enforcing this at write time.
 
 <!-- SECTION:NOTES:END -->

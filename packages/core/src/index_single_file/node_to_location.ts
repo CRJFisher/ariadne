@@ -2,7 +2,7 @@
  * Converts a tree-sitter AST node to a Location
  */
 
-import { SyntaxNode } from "tree-sitter";
+import type { SyntaxNode } from "tree-sitter";
 import { FilePath, Location } from "@ariadnejs/types";
 
 export function node_to_location(
