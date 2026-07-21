@@ -78,24 +78,38 @@ function build_export_cache(root: SyntaxNode): ExportCache {
             }
           }
 
-          // Property-assignment CommonJS export: exports.NAME = local or
-          // module.exports.NAME = local. The cache is keyed by the local RHS
-          // identifier, so an anonymous RHS (exports.foo = function () {})
-          // has no local symbol to mark and stays out of reach. The top-level
-          // walk excludes assignments inside function bodies; computed keys
-          // (exports["foo"]) parse as subscript_expression and never enter
-          // this member_expression branch.
+          // Property-assignment CommonJS export: exports.NAME = <rhs> or
+          // module.exports.NAME = <rhs>. The cache is keyed by the name of the
+          // definition the @definition capture already produced, so the export
+          // property can point at it. Two RHS shapes carry such a name:
+          //   exports.foo = local            -> key "local" (the identifier)
+          //   exports.foo = function foo(){}  -> key "foo"  (the fn-expr name)
+          // An anonymous function or arrow RHS has no name here and no
+          // @definition.function capture, so it becomes an exported definition
+          // through the dedicated CommonJS-export-function capture rather than
+          // this cache. The top-level walk excludes assignments inside function
+          // bodies; computed keys (exports["foo"]) parse as subscript_expression
+          // and never enter this member_expression branch.
           if (
-            right?.type === "identifier" &&
             property?.type === "property_identifier" &&
             is_commonjs_exports_base(object)
           ) {
-            const symbol_name = right.text as SymbolName;
             const export_name = property.text as SymbolName;
-            commonjs_exports.set(
-              symbol_name,
-              export_name !== symbol_name ? { export_name } : {}
-            );
+            let symbol_name: SymbolName | undefined;
+            if (right?.type === "identifier") {
+              symbol_name = right.text as SymbolName;
+            } else if (right?.type === "function_expression") {
+              const fn_name = right.childForFieldName("name");
+              if (fn_name) {
+                symbol_name = fn_name.text as SymbolName;
+              }
+            }
+            if (symbol_name) {
+              commonjs_exports.set(
+                symbol_name,
+                export_name !== symbol_name ? { export_name } : {}
+              );
+            }
           }
         }
       }
