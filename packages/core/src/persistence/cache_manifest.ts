@@ -5,7 +5,7 @@ import type { ContentHash } from "./content_hash";
  * Increment when the cache format changes in a way that invalidates existing caches.
  * On load, if the version doesn't match, the entire cache is discarded. No migrations.
  */
-export const CURRENT_SCHEMA_VERSION = 2;
+export const CURRENT_SCHEMA_VERSION = 3;
 
 export interface CacheManifestEntry {
   readonly content_hash: ContentHash;

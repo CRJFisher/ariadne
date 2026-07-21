@@ -113,6 +113,10 @@ Two capabilities make this work, one per pipeline stage:
 - `packages/core/src/resolve_references/call_resolution/receiver_resolution.ts` —
   `ReceiverExpression.chain_arguments`; the type-token inference and its
   `resolve_token_argument_type` / `parse_single_type_argument` helpers.
+- `packages/core/src/persistence/cache_manifest.ts` — `CURRENT_SCHEMA_VERSION`
+  bumped to `3` so an on-disk index cache written before this change is
+  discarded and re-indexed, ensuring the new capture field (and therefore the
+  inference) applies to already-cached files rather than being silently skipped.
 
 ### Boundaries (deliberately out of scope)
 

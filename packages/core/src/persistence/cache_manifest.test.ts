@@ -18,8 +18,8 @@ function ch(s: string): ContentHash {
 
 describe("cache_manifest", () => {
   describe("CURRENT_SCHEMA_VERSION", () => {
-    it("is 2", () => {
-      expect(CURRENT_SCHEMA_VERSION).toEqual(2);
+    it("is 3", () => {
+      expect(CURRENT_SCHEMA_VERSION).toEqual(3);
     });
 
     it("rejects v1 manifests via deserialize_manifest", () => {

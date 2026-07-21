@@ -398,6 +398,59 @@ function run(injector: Injector): void {
     expect(handle_call?.resolution_failure?.reason).toBe("member_type_unknown");
   });
 
+  it("does not infer when the return type is a composite of the generic, not the bare generic", async () => {
+    const { project } = await project_from_inline(`
+class Service {
+  handle(): void {}
+}
+interface Type<T> {}
+class Injector {
+  get<T>(token: Type<T>): T[] {
+    return [];
+  }
+}
+function run(injector: Injector): void {
+  injector.get(Service).handle();
+}
+`);
+    const call_graph = project.get_call_graph();
+
+    const run_node = Array.from(call_graph.nodes.values()).find(
+      (n) => n.name === ("run" as SymbolName)
+    );
+    const handle_call = run_node?.enclosed_calls.find(
+      (c) => c.name === ("handle" as SymbolName)
+    );
+    expect(handle_call?.resolutions).toEqual([]);
+    expect(handle_call?.resolution_failure?.reason).toBe("member_type_unknown");
+  });
+
+  it("does not infer when the parameter is an array of the generic, not a token wrapping it", async () => {
+    const { project } = await project_from_inline(`
+class Service {
+  handle(): void {}
+}
+class Injector {
+  get<T>(tokens: T[]): T {
+    return null as unknown as T;
+  }
+}
+function run(injector: Injector, tokens: Service[]): void {
+  injector.get(tokens).handle();
+}
+`);
+    const call_graph = project.get_call_graph();
+
+    const run_node = Array.from(call_graph.nodes.values()).find(
+      (n) => n.name === ("run" as SymbolName)
+    );
+    const handle_call = run_node?.enclosed_calls.find(
+      (c) => c.name === ("handle" as SymbolName)
+    );
+    expect(handle_call?.resolutions).toEqual([]);
+    expect(handle_call?.resolution_failure?.reason).toBe("member_type_unknown");
+  });
+
   it("does not infer when the generic return has no type-token parameter", async () => {
     const { project } = await project_from_inline(`
 class Service {

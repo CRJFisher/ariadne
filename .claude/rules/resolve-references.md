@@ -28,6 +28,7 @@ Resolves call references to their target definitions using name resolution resul
 - **Method calls** → Receiver type → class definition → member lookup (with polymorphic dispatch)
 - **Constructor calls** → Type name → class definition → constructor lookup
 - **Collection dispatch** → Variable holding function collection → member function lookup
+- **Type-token generic return** → A chained method whose return type is a bare generic bound by a type-token parameter (`get<T>(token: Type<T>): T`) resolves against the class the token argument names. The token is carried on the reference's `property_chain_arguments` (captured in `index_single_file`, aligned to `property_chain`) and inferred in `receiver_resolution.ts`.
 
 **Output:** `Map<FilePath, CallReference[]>` — resolved call references with target `SymbolId`s.
 
