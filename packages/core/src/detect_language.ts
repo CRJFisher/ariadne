@@ -15,7 +15,11 @@ export function detect_language(file_path: string): Language | null {
     file_path.endsWith(".js") ||
     file_path.endsWith(".jsx") ||
     file_path.endsWith(".mjs") ||
-    file_path.endsWith(".cjs")
+    file_path.endsWith(".cjs") ||
+    // MDX is Markdown with embedded JSX and ESM. The JavaScript grammar is the
+    // only one that captures JSX element usages as references, so a component
+    // called only from `.mdx` resolves and is not flagged unreachable.
+    file_path.endsWith(".mdx")
   ) {
     return "javascript";
   }

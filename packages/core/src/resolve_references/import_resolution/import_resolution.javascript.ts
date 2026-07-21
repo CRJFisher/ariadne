@@ -7,9 +7,12 @@ import { has_file_in_tree } from "../file_folders";
  * Resolve a JavaScript import path to a file path.
  *
  * Relative imports (`./`, `../`) are probed against the file tree for `.js`,
- * `.jsx`, `.mjs`, `.cjs` extensions and `index.*` files. Bare and package
- * imports are opaque here — they name external modules, not project files —
- * so they are returned unchanged.
+ * `.jsx`, `.mjs`, `.cjs` extensions first, then `.ts`/`.tsx`, and `index.*`
+ * files. Probing the TypeScript family after the JavaScript one lets a
+ * JavaScript file in a mixed project resolve a component defined in a
+ * `.ts`/`.tsx` module while a JavaScript target still wins when both exist.
+ * Bare and package imports are opaque here — they name external modules, not
+ * project files — so they are returned unchanged.
  *
  * @param import_path - Import path from import statement
  * @param importing_file - Path to file containing the import (absolute or relative to root_folder)
@@ -61,10 +64,14 @@ function resolve_relative_javascript(
     `${resolved_absolute}.jsx`,
     `${resolved_absolute}.mjs`,
     `${resolved_absolute}.cjs`,
+    `${resolved_absolute}.ts`,
+    `${resolved_absolute}.tsx`,
     path.join(resolved_absolute, "index.js"),
     path.join(resolved_absolute, "index.jsx"),
     path.join(resolved_absolute, "index.mjs"),
     path.join(resolved_absolute, "index.cjs"),
+    path.join(resolved_absolute, "index.ts"),
+    path.join(resolved_absolute, "index.tsx"),
   ];
 
   let found_absolute: string | null = null;
