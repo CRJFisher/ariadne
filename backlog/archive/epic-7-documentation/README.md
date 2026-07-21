@@ -3,11 +3,13 @@
 **Priority: MEDIUM** - Essential for adoption
 
 ## Goal
+
 Create comprehensive documentation and testing infrastructure to ensure code quality and ease of adoption.
 
 ## Tasks
 
 ### In Progress
+
 - [ ] task-16: Improve root README documentation
 - [ ] task-23: Create comprehensive API documentation
 - [ ] task-24: Create integration tests for Code Charter
@@ -18,7 +20,9 @@ Create comprehensive documentation and testing infrastructure to ensure code qua
 - [ ] task-100.10: Complete JavaScript test updates (task-99)
 
 ## Refactoring Process
+
 When improving documentation:
+
 1. Follow documentation standards
 2. Apply `@rules/refactoring.md` for code changes
 3. Follow `@rules/testing.md` for test coverage
@@ -26,6 +30,7 @@ When improving documentation:
 5. Keep examples up to date
 
 ## Success Criteria
+
 - API fully documented with examples
 - Integration tests comprehensive
 - Validation metrics clear and detailed

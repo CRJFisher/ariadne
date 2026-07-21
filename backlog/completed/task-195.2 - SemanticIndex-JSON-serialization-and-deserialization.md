@@ -1,7 +1,7 @@
 ---
 id: TASK-195.2
 title: SemanticIndex JSON serialization and deserialization
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-03-26 11:02"
 labels: []

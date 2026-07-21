@@ -1,7 +1,7 @@
 ---
 id: TASK-190.15.20
 title: Run self-healing pipeline on launchbadge/sqlx (Rust)
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-04-15 21:57"
 labels:

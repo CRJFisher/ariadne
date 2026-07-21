@@ -1,7 +1,7 @@
 ---
 id: TASK-190.15.9
 title: Run self-healing pipeline on typeorm/typeorm (TypeScript)
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-04-15 21:55"
 labels:

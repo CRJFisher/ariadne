@@ -1,7 +1,7 @@
 ---
 id: TASK-204
 title: Trace argument lambdas through higher-order calls in entry-point detector
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-04-17 22:46"
 labels:

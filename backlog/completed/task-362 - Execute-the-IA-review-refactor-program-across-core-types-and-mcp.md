@@ -1,7 +1,7 @@
 ---
 id: TASK-362
 title: "Execute the IA-review refactor program across core, types, and mcp"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-07-05 00:00"
 labels:

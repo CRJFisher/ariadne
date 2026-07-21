@@ -1,7 +1,7 @@
 ---
 id: task-104
 title: Research early MCP server initialization for background parsing
-status: To Do
+status: Done
 assignee: []
 created_date: '2025-08-12 15:10'
 labels: []

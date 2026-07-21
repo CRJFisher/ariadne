@@ -3,11 +3,13 @@
 **Priority: HIGH** - Critical for quality
 
 ## Goal
+
 Maintain a healthy, fast, and comprehensive test suite that stays within tree-sitter limits and provides confidence in the codebase.
 
 ## Immediate Tasks
 
 ### Oversized Test Files (>32KB limit)
+
 - [ ] Split `tests/call_graph.test.ts` (51KB) into logical modules
   - Extract method resolution tests
   - Extract cross-file tests
@@ -18,6 +20,7 @@ Maintain a healthy, fast, and comprehensive test suite that stays within tree-si
   - Extract edge case tests
 
 ### Process
+
 1. Split files into logical units
 2. Apply `@rules/refactoring.md` for the split
 3. Follow `@rules/testing.md` for test standards
@@ -25,12 +28,14 @@ Maintain a healthy, fast, and comprehensive test suite that stays within tree-si
 5. Maintain test organization clarity
 
 ## Ongoing Maintenance
+
 - Monitor test file sizes weekly
 - Review and enable skipped tests
 - Maintain test coverage above 80%
 - Fix flaky tests immediately
 
 ## Success Criteria
+
 - All test files under 32KB
 - Zero flaky tests
 - Coverage > 80%

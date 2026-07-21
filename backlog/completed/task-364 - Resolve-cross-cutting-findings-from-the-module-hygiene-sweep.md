@@ -1,7 +1,7 @@
 ---
 id: TASK-364
 title: "Resolve cross-cutting findings from the module-hygiene sweep"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-07-12 00:00"
 labels:

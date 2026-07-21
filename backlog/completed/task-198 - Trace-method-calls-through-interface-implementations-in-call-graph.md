@@ -1,7 +1,7 @@
 ---
 id: TASK-198
 title: Trace method calls through interface implementations in call graph
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-03-27 10:25"
 labels:

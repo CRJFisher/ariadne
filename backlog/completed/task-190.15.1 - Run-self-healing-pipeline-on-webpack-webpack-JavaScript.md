@@ -1,7 +1,7 @@
 ---
 id: TASK-190.15.1
 title: Run self-healing pipeline on webpack/webpack (JavaScript)
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-04-15 21:54"
 labels:

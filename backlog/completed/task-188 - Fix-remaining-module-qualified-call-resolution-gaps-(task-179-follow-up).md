@@ -1,7 +1,7 @@
 ---
 id: task-188
 title: Fix remaining module-qualified call resolution gaps (task-179 follow-up)
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-02-12 18:19'
 labels:

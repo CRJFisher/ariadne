@@ -1,7 +1,7 @@
 ---
 id: TASK-195
 title: Add persistence to Project via cached SemanticIndex
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-03-26 11:01"
 labels:

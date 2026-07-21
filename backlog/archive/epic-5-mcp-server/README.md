@@ -3,11 +3,13 @@
 **Priority: MEDIUM** - Product differentiation
 
 ## Goal
+
 Enhance the MCP (Model Context Protocol) server with advanced features for better AI agent integration and developer experience.
 
 ## Tasks
 
 ### In Progress
+
 - [ ] task-49: Add code tree visualization
 - [ ] task-50: Add refactoring diff preview
 - [ ] task-52: Test MCP implementation with open source agents
@@ -17,7 +19,9 @@ Enhance the MCP (Model Context Protocol) server with advanced features for bette
 - [ ] task-101: Test MCP integration with Claude Code
 
 ## Refactoring Process
+
 When adding MCP features:
+
 1. Follow MCP protocol specifications
 2. Apply `@rules/refactoring.md` for all changes
 3. Follow `@rules/testing.md` for test coverage
@@ -25,6 +29,7 @@ When adding MCP features:
 5. Update MCP documentation
 
 ## Success Criteria
+
 - All MCP tools working with Claude Code
 - Sub-agent capabilities functional
 - Documentation complete and clear

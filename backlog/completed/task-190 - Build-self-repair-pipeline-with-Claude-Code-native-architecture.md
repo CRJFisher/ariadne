@@ -1,7 +1,7 @@
 ---
 id: task-190
 title: Build triage-entrypoints with Claude Code native architecture
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-02-17 16:56'
 updated_date: '2026-02-17 16:56'

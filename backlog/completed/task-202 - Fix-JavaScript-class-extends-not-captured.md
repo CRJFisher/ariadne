@@ -1,7 +1,7 @@
 ---
 id: TASK-202
 title: Fix JavaScript class extends not captured
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-03-29 20:13"
 labels:
