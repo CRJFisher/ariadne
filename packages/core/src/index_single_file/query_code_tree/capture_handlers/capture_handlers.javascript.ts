@@ -444,6 +444,7 @@ export function handle_definition_import_require(
     import_path: extract_require_path(string_node),
     import_kind: "named",
     original_name: undefined,
+    is_commonjs_require: true,
   });
 }
 
@@ -485,6 +486,7 @@ export function handle_definition_import_require_simple(
     import_path: extract_require_path(string_node),
     import_kind: "namespace",
     original_name: undefined,
+    is_commonjs_require: true,
   });
 }
 

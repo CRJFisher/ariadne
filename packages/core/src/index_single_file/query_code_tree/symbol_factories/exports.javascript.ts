@@ -20,6 +20,18 @@ function build_export_cache(root: SyntaxNode): ExportCache {
   const named_exports = new Map<SymbolName, ExportMetadata>();
   const commonjs_exports = new Map<SymbolName, ExportMetadata>();
 
+  // `module.exports = X` is a whole-module default export; a later reassignment
+  // supersedes the earlier one (JS runtime semantics), so only the last-written
+  // symbol keeps `is_default` — the ExportRegistry rejects two defaults per file.
+  let default_export_name: SymbolName | null = null;
+  const set_commonjs_default = (symbol_name: SymbolName): void => {
+    if (default_export_name && default_export_name !== symbol_name) {
+      commonjs_exports.delete(default_export_name);
+    }
+    default_export_name = symbol_name;
+    commonjs_exports.set(symbol_name, { is_default: true });
+  };
+
   for (let i = 0; i < root.childCount; i++) {
     const child = root.child(i);
     if (!child) continue;
@@ -49,6 +61,21 @@ function build_export_cache(root: SyntaxNode): ExportCache {
         if (left?.type === "member_expression") {
           const object = left.childForFieldName("object");
           const property = left.childForFieldName("property");
+
+          // Whole-module default export: `module.exports = Widget` (an already
+          // declared class/function) or `module.exports = class Widget {}` (a
+          // named class expression). The single exported value is the file's
+          // default export.
+          if (object?.text === "module" && property?.text === "exports") {
+            if (right?.type === "identifier") {
+              set_commonjs_default(right.text as SymbolName);
+            } else if (right?.type === "class") {
+              const class_name = right.childForFieldName("name");
+              if (class_name) {
+                set_commonjs_default(class_name.text as SymbolName);
+              }
+            }
+          }
 
           if (object?.text === "module" && property?.text === "exports" && right?.type === "object") {
             for (let j = 0; j < right.childCount; j++) {
@@ -81,15 +108,17 @@ function build_export_cache(root: SyntaxNode): ExportCache {
           // Property-assignment CommonJS export: exports.NAME = <rhs> or
           // module.exports.NAME = <rhs>. The cache is keyed by the name of the
           // definition the @definition capture already produced, so the export
-          // property can point at it. Two RHS shapes carry such a name:
+          // property can point at it. Three RHS shapes carry such a name:
           //   exports.foo = local            -> key "local" (the identifier)
           //   exports.foo = function foo(){}  -> key "foo"  (the fn-expr name)
-          // An anonymous function or arrow RHS has no name here and no
-          // @definition.function capture, so it becomes an exported definition
-          // through the dedicated CommonJS-export-function capture rather than
-          // this cache. The top-level walk excludes assignments inside function
-          // bodies; computed keys (exports["foo"]) parse as subscript_expression
-          // and never enter this member_expression branch.
+          //   exports.X   = class X {}        -> key "X"    (the class-expr name)
+          // An anonymous function/arrow/class RHS has no name here; an anonymous
+          // function or arrow becomes an exported definition through the
+          // dedicated CommonJS-export-function capture rather than this cache,
+          // and an anonymous class stays out of reach. The top-level walk
+          // excludes assignments inside function bodies; computed keys
+          // (exports["foo"]) parse as subscript_expression and never enter this
+          // member_expression branch.
           if (
             property?.type === "property_identifier" &&
             is_commonjs_exports_base(object)
@@ -102,6 +131,14 @@ function build_export_cache(root: SyntaxNode): ExportCache {
               const fn_name = right.childForFieldName("name");
               if (fn_name) {
                 symbol_name = fn_name.text as SymbolName;
+              }
+            } else if (right?.type === "class") {
+              // A named class expression export (`exports.X = class X {}`) is
+              // keyed by the class's own name — the name the class definition
+              // carries — so its `export_name` metadata attaches to that symbol.
+              const class_name = right.childForFieldName("name");
+              if (class_name) {
+                symbol_name = class_name.text as SymbolName;
               }
             }
             if (symbol_name) {

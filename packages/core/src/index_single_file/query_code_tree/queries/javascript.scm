@@ -167,6 +167,26 @@
   )?
 )
 
+; Named class expressions assigned to a CommonJS export, e.g.
+; `module.exports = class X {}` or `exports.X = class X {}`. Anchoring the
+; assignment target to an `exports` / `module` base keeps a non-export class
+; expression (`const C = class Bar {}`, `obj.prop = class Bar {}`, a class passed
+; as an argument) from registering a stray definition whose inner name would
+; shadow an enclosing binding. An anonymous `class {}` has no name to identify
+; and is left uncaptured.
+(assignment_expression
+  left: (member_expression
+    object: (identifier) @_export_base
+    (#match? @_export_base "^(module|exports)$")
+  )
+  right: (class
+    name: (identifier) @definition.class
+    (class_heritage
+      (identifier) @reference.type_reference
+    )?
+  )
+)
+
 ; Method definitions (capture static modifier)
 (method_definition
   "static"? @modifier.visibility
