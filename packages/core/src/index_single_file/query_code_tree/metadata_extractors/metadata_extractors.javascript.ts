@@ -155,6 +155,121 @@ function peel_receiver_object(
   }
 }
 
+/**
+ * Positional identifier arguments of a call expression: each argument that is a
+ * bare identifier becomes its name; anything else (literal, expression, spread)
+ * becomes `null` so a later argument keeps its positional index.
+ */
+function extract_identifier_arguments(
+  call_node: SyntaxNode
+): (SymbolName | null)[] {
+  const arguments_node = call_node.childForFieldName("arguments");
+  if (!arguments_node) return [];
+  return arguments_node.namedChildren.map((arg) =>
+    arg.type === "identifier" ? (arg.text as SymbolName) : null
+  );
+}
+
+/**
+ * When `member_node` is the callee of a call expression (`obj.get(x)` — the
+ * `obj.get` member is the call's `function`), the call's identifier arguments;
+ * `null` for a plain property access. This pairs a chain step's method name
+ * with the arguments passed where it is invoked.
+ */
+function call_arguments_of_callee(
+  member_node: SyntaxNode
+): (SymbolName | null)[] | null {
+  const parent = member_node.parent;
+  if (
+    parent &&
+    parent.type === "call_expression" &&
+    parent.childForFieldName("function") === member_node
+  ) {
+    return extract_identifier_arguments(parent);
+  }
+  return null;
+}
+
+/**
+ * The ordered access chain (root object first) plus, aligned index-for-index,
+ * the call arguments at each chain position. Chained method calls resolve
+ * against the full path, and an intermediate call's arguments (e.g. the `Token`
+ * in `injector.get(Token).method()`) survive for generic-return inference.
+ * Both arrays grow in lockstep — one `call_arguments` entry per pushed name.
+ */
+function build_property_chain(
+  node: SyntaxNode
+): { chain: SymbolName[]; call_arguments: (readonly (SymbolName | null)[] | null)[] } | undefined {
+  const chain: SymbolName[] = [];
+  const call_arguments: (readonly (SymbolName | null)[] | null)[] = [];
+
+  function push(name: string, args: (SymbolName | null)[] | null): void {
+    chain.push(name as SymbolName);
+    call_arguments.push(args);
+  }
+
+  // A nominal cast on the receiver (`(x as Concrete).m()`) contributes the cast
+  // target's name as the chain base; every other object is transparent to its
+  // real type. The base is never a call callee, so it carries no arguments.
+  function descend_object(object_node: SyntaxNode): void {
+    const peeled = peel_receiver_object(object_node);
+    if (peeled.cast_type_name) {
+      push(peeled.cast_type_name, null);
+      return;
+    }
+    const effective = peeled.node;
+    if (effective.type === "member_expression" ||
+        effective.type === "optional_chain" ||
+        effective.type === "subscript_expression" ||
+        effective.type === "call_expression") {
+      traverse(effective);
+    } else if (effective.type === "identifier" || effective.type === "this" || effective.type === "super") {
+      push(effective.text, null);
+    }
+  }
+
+  function traverse(current: SyntaxNode): void {
+    if (current.type === "member_expression" || current.type === "optional_chain") {
+      const object_node = current.childForFieldName("object");
+      const property_node = current.childForFieldName("property");
+
+      if (object_node) {
+        descend_object(object_node);
+      }
+
+      if (property_node && property_node.type === "property_identifier") {
+        push(property_node.text, call_arguments_of_callee(current));
+      }
+    } else if (current.type === "subscript_expression") {
+      const object_node = current.childForFieldName("object");
+      const index_node = current.childForFieldName("index");
+
+      if (object_node) {
+        descend_object(object_node);
+      }
+
+      // Only static string keys contribute a resolvable name; dynamic indices
+      // are dropped from the chain.
+      if (index_node && index_node.type === "string") {
+        if (index_node.text.startsWith("\"") || index_node.text.startsWith("'")) {
+          push(index_node.text.slice(1, -1), null);
+        }
+      }
+    } else if (current.type === "call_expression") {
+      const function_node = current.childForFieldName("function");
+      if (function_node && (function_node.type === "member_expression" ||
+                           function_node.type === "optional_chain" ||
+                           function_node.type === "subscript_expression")) {
+        traverse(function_node);
+      }
+    }
+  }
+
+  traverse(node);
+
+  return chain.length > 0 ? { chain, call_arguments } : undefined;
+}
+
 export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
   extract_type_from_annotation(
     node: SyntaxNode,
@@ -186,66 +301,7 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
    * resolve against the full path rather than just the immediate receiver.
    */
   extract_property_chain(node: SyntaxNode): SymbolName[] | undefined {
-    const chain: string[] = [];
-
-    function descend_object(object_node: SyntaxNode): void {
-      const peeled = peel_receiver_object(object_node);
-      if (peeled.cast_type_name) {
-        chain.push(peeled.cast_type_name);
-        return;
-      }
-      const effective = peeled.node;
-      if (effective.type === "member_expression" ||
-          effective.type === "optional_chain" ||
-          effective.type === "subscript_expression" ||
-          effective.type === "call_expression") {
-        traverse(effective);
-      } else if (effective.type === "identifier" || effective.type === "this" || effective.type === "super") {
-        chain.push(effective.text);
-      }
-    }
-
-    function traverse(current: SyntaxNode): void {
-      if (current.type === "member_expression" || current.type === "optional_chain") {
-        const object_node = current.childForFieldName("object");
-        const property_node = current.childForFieldName("property");
-
-        if (object_node) {
-          descend_object(object_node);
-        }
-
-        if (property_node && property_node.type === "property_identifier") {
-          chain.push(property_node.text);
-        }
-      } else if (current.type === "subscript_expression") {
-        const object_node = current.childForFieldName("object");
-        const index_node = current.childForFieldName("index");
-
-        if (object_node) {
-          descend_object(object_node);
-        }
-
-        // Only static string keys contribute a resolvable name; dynamic indices
-        // are dropped from the chain.
-        if (index_node && index_node.type === "string") {
-          if (index_node.text.startsWith("\"") || index_node.text.startsWith("'")) {
-            const prop = index_node.text.slice(1, -1);
-            chain.push(prop);
-          }
-        }
-      } else if (current.type === "call_expression") {
-        const function_node = current.childForFieldName("function");
-        if (function_node && (function_node.type === "member_expression" ||
-                             function_node.type === "optional_chain" ||
-                             function_node.type === "subscript_expression")) {
-          traverse(function_node);
-        }
-      }
-    }
-
-    traverse(node);
-
-    return chain.length > 0 ? chain.map(name => name as SymbolName) : undefined;
+    return build_property_chain(node)?.chain;
   },
 
   /**
@@ -294,7 +350,8 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
         };
       }
 
-      const object_chain = JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(target_node);
+      const built = build_property_chain(target_node);
+      const object_chain = built?.chain;
 
       const chain = object_chain || (property_name
         ? [object_node.text as SymbolName, property_name as SymbolName]
@@ -307,11 +364,23 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
       };
       const keyword = SELF_KEYWORDS[chain[0]];
 
+      // Carry chain arguments only when an intermediate position is a call with
+      // an identifier argument — the raw material for generic-return inference.
+      // Literal-only intermediate calls (add(5)) stay omitted so unrelated
+      // method-call references keep their existing shape.
+      const property_chain_arguments = built?.call_arguments;
+      const has_inference_argument =
+        property_chain_arguments !== undefined &&
+        property_chain_arguments
+          .slice(1, -1)
+          .some((entry) => entry !== null && entry.some((arg) => arg !== null));
+
       return {
         receiver_location: node_to_location(object_node, file_path),
         property_chain: chain,
         is_self_reference: keyword !== undefined,
         ...(keyword ? { self_keyword: keyword } : {}),
+        ...(has_inference_argument ? { property_chain_arguments } : {}),
       };
     }
 

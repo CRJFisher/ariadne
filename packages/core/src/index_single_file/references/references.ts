@@ -244,7 +244,8 @@ function process_method_reference(
       receiver_info.property_chain,
       is_optional_chain,
       potential_construct_target,
-      call_site_syntax
+      call_site_syntax,
+      receiver_info.property_chain_arguments
     );
   }
 

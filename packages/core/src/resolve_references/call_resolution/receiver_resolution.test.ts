@@ -230,6 +230,29 @@ describe("extract_receiver", () => {
       });
     });
 
+    it("slices property_chain_arguments to align with the mid-chain properties", () => {
+      const ref: MethodCallReference = {
+        kind: "method_call",
+        name: "handle" as SymbolName,
+        property_chain: ["injector", "get", "handle"] as SymbolName[],
+        property_chain_arguments: [null, ["Token" as SymbolName], []],
+        scope_id: METHOD_SCOPE_ID,
+        location: MOCK_LOCATION,
+        receiver_location: MOCK_LOCATION,
+        is_optional_chain: false,
+      };
+
+      const result = extract_receiver(ref);
+
+      expect(result).toEqual({
+        base: { type: "identifier", value: "injector" as SymbolName },
+        chain: ["get" as SymbolName],
+        chain_arguments: [["Token" as SymbolName]],
+        method_name: "handle" as SymbolName,
+        scope_id: METHOD_SCOPE_ID,
+      });
+    });
+
     it("detects 'this' in method_call and treat as keyword", () => {
       // this.property.method() is indexed as method_call, yet 'this' is a keyword base.
       const ref: MethodCallReference = {
