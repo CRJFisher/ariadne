@@ -11,11 +11,18 @@ set -e
 
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
+# Nested worktree dirs are pruned ANCHORED to PROJECT_DIR, not by an unanchored
+# `*/.claude/worktrees*` substring. When this script runs from inside a worktree
+# (a commit made in the worktree), PROJECT_DIR *is* that worktree, whose own path
+# contains `.claude/worktrees` — an unanchored match would prune every file and
+# find zero test roots. Anchoring skips only worktrees nested under the current
+# project, so the current project's own tests always run.
+
 # Discover test roots with vitest configs
 VITEST_ROOTS=$(find "$PROJECT_DIR" \
   -name node_modules -prune -o \
-  -name .worktrees -prune -o \
-  -path "*/.claude/worktrees*" -prune -o \
+  -path "$PROJECT_DIR/.worktrees" -prune -o \
+  -path "$PROJECT_DIR/.claude/worktrees" -prune -o \
   -name .git -prune -o \
   -name dist -prune -o \
   \( -name 'vitest.config.mjs' -o -name 'vitest.config.ts' -o -name 'vitest.config.js' \) -print \
@@ -25,8 +32,8 @@ VITEST_ROOTS=$(find "$PROJECT_DIR" \
 # Discover package.json roots that contain *.test.ts files
 PKG_ROOTS=$(find "$PROJECT_DIR" \
   -name node_modules -prune -o \
-  -name .worktrees -prune -o \
-  -path "*/.claude/worktrees*" -prune -o \
+  -path "$PROJECT_DIR/.worktrees" -prune -o \
+  -path "$PROJECT_DIR/.claude/worktrees" -prune -o \
   -name .git -prune -o \
   -name dist -prune -o \
   -name 'package.json' -print \

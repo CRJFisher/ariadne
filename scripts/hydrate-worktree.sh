@@ -16,10 +16,12 @@
 #
 # Idempotent: safe to re-run — pnpm reuses the store and skips up-to-date work.
 #
-# Under a Claude Code agent, run this once with the Bash sandbox disabled: the
-# install writes temp files under .claude/worktrees/**, which the sandbox
-# denies. The git commit flow and turn-end hooks are harness-run rather than
-# Bash-sandboxed, so they need no such exception once node_modules exists.
+# Under a Claude Code agent, the Bash sandbox allows writes to the session's own
+# working directories, so a session launched in this worktree runs the install
+# normally. A worktree entered mid-session is not yet a session working
+# directory and sits outside the sandbox's write allowlist, so run the install
+# there with the sandbox disabled. The commit flow and turn-end hooks are
+# harness-run rather than Bash-sandboxed and need no exception.
 
 set -e
 
