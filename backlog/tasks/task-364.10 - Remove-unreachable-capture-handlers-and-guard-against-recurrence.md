@@ -176,7 +176,7 @@ the trigger predicate and block-vs-warn policy live in the `_stop.ts` wrapper.
 `@definition.type_parameter` (TypeScript) and `@decorator.macro` (Rust) are
 emitted with no handler, so their extraction never runs. They are pinned by an
 integration test and warned by the hook; writing handlers (or dropping the
-captures) is real feature work, a candidate follow-up task. The hook files are
+captures) is real feature work, tracked as TASK-364.11. The hook files are
 typecheck-gated via `.claude/hooks/tsconfig.json`, not covered by `pnpm lint`
 (consistent with every sibling hook). Orphan detection is scoped to the
 `definition`/`decorator`/`import` categories; the `assignment` family is
