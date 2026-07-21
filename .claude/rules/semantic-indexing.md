@@ -76,5 +76,3 @@ Two ways they drift:
 
 - **Dead handler** — a registry key no feeding query emits. The handler is unreachable and is deleted (function, registry entry, sole-use helpers, dead-only tests).
 - **Orphan capture** — a query emits a `definition`/`decorator`/`import` capture with no matching handler, so the extraction silently never runs.
-
-The Stop hook `.claude/hooks/capture_receiver_consistency_stop.ts` enforces this on changed files: it runs when a `queries/*.scm` or `capture_handlers/*.ts` file changed, **blocks** on dead handlers (cheap to delete), and **warns** on orphan captures (often work-in-progress). The pure model in `.claude/hooks/capture_receiver_consistency.ts` also has a CLI entry (`tsx .claude/hooks/capture_receiver_consistency.ts`). This invariant is about handler existence — orthogonal to the capture *naming* rules in `queries/CAPTURE-SCHEMA.md`.
