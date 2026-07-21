@@ -33,6 +33,21 @@ function location_contains(outer: Location, inner: Location): boolean {
 }
 
 /**
+ * Whether span `a` is tighter than span `b`, comparing line extent first and
+ * column extent as a tiebreaker. For two spans that both contain the same point,
+ * the more deeply nested one is always the tighter — so this orders enclosing
+ * collection members from innermost to outermost with no magic scale factor.
+ */
+function is_tighter_span(a: Location, b: Location): boolean {
+  const a_lines = a.end_line - a.start_line;
+  const b_lines = b.end_line - b.start_line;
+  if (a_lines !== b_lines) {
+    return a_lines < b_lines;
+  }
+  return a.end_column - a.start_column < b.end_column - b.start_column;
+}
+
+/**
  * Rebind `alias_name` in `flat_members` to the symbol of the member named by
  * `target_name`, when `target_name` is a bare reference to another member. A
  * no-op when there is no such member or the alias points at itself.
@@ -380,35 +395,38 @@ export class DefinitionRegistry {
   }
 
   /**
-   * Find the function collection whose body encloses `location`, returning its
-   * holder symbol. This binds a `this`/self receiver inside an object-literal
-   * method or member-assigned function to the collection it belongs to, so
-   * `this.method()` resolves against its sibling members.
+   * Find the collection holder whose member function most tightly encloses
+   * `location`, binding a `this`/self receiver inside an object-literal method or
+   * member/prototype-assigned function to the collection it belongs to so
+   * `this.method()` resolves against its siblings.
    *
-   * A location is inside a collection when the collection's own span contains it
-   * (object literals, whose span covers every method body) or when one of the
-   * collection's member functions contains it (member/prototype assignments,
-   * whose members are spread across separate statements).
+   * Selection is by the innermost enclosing member (smallest span): a call inside
+   * a nested object literal binds to the nearest collection member that owns it,
+   * not to an outer literal that merely contains it. Only inline members carry an
+   * enclosure span; reference members (`{ method: helper }`) live elsewhere.
    *
    * @param location - The receiver call site (its enclosing scope span)
    * @returns The collection holder's SymbolId, or null if none encloses it
    */
   find_enclosing_collection(location: Location): SymbolId | null {
+    let best_holder: SymbolId | null = null;
+    let best_span: Location | null = null;
+
     for (const [collection_id, collection] of this.function_collections) {
       for (const member of collection.named_members ?? []) {
-        if (!member.symbol_id) {
+        if (!("location" in member)) {
           continue;
         }
-        const member_def = this.by_symbol.get(member.symbol_id);
-        if (member_def && location_contains(member_def.location, location)) {
-          return collection_id;
+        if (location_contains(member.location, location)) {
+          if (best_span === null || is_tighter_span(member.location, best_span)) {
+            best_span = member.location;
+            best_holder = collection_id;
+          }
         }
       }
-      if (location_contains(collection.location, location)) {
-        return collection_id;
-      }
     }
-    return null;
+
+    return best_holder;
   }
 
   /**

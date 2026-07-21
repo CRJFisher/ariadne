@@ -29,9 +29,12 @@ function merge_collection_members(
   existing: FunctionCollection | undefined,
   members: readonly CollectionMember[]
 ): FunctionCollection {
-  const stored_members = members
-    .map((member) => member.symbol_id)
-    .filter((symbol_id): symbol_id is SymbolId => symbol_id !== undefined);
+  const stored_members: SymbolId[] = [];
+  for (const member of members) {
+    if ("symbol_id" in member) {
+      stored_members.push(member.symbol_id);
+    }
+  }
 
   return {
     collection_id: holder_id,

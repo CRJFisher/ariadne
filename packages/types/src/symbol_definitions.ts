@@ -209,15 +209,22 @@ export interface FunctionCollection {
  * `obj.method()` or `this.method()`. Covers object-literal properties and
  * member/prototype assignments (`app.method = function () {}`).
  *
- * A member holds an inline function value directly (`symbol_id`) or names a
- * value identifier resolved in the collection's defining scope
- * (`reference_name`, e.g. `{ method: helper }`). Exactly one is set.
+ * An inline member holds the function value directly (`symbol_id`) plus its body
+ * span (`location`), used to bind a `this` receiver inside that body to the
+ * enclosing collection. A reference member names a value identifier resolved in
+ * the collection's defining scope (`reference_name`, e.g. `{ method: helper }`),
+ * whose body lives elsewhere and so carries no enclosure span.
  */
-export interface CollectionMember {
-  readonly name: SymbolName;
-  readonly symbol_id?: SymbolId;
-  readonly reference_name?: SymbolName;
-}
+export type CollectionMember =
+  | {
+      readonly name: SymbolName;
+      readonly symbol_id: SymbolId;
+      readonly location: Location;
+    }
+  | {
+      readonly name: SymbolName;
+      readonly reference_name: SymbolName;
+    };
 
 /**
  * Partial function collection without collection_id (set by caller)

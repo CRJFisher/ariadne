@@ -321,32 +321,14 @@
   value: (function_expression) @definition.anonymous_function
 )
 
-; Functions assigned to a receiver property (app.method = ..., Fn.prototype.method = ...)
-(assignment_expression
-  left: (member_expression)
-  right: (arrow_function) @definition.anonymous_function
-)
-
-(assignment_expression
-  left: (member_expression)
-  right: (function_expression) @definition.anonymous_function
-)
-
 ; Variable declarations with assignments (tracking only — definition created by generic pattern above)
 (variable_declarator
   name: (identifier) @assignment.variable
   value: (_) @assignment.variable
 ) @assignment.variable
 
-; Member-assigned function collection: app.method = fn, Fn.prototype.method = fn
-(assignment_expression
-  left: (member_expression
-    object: (identifier) @reference.variable.object
-    property: (property_identifier) @reference.property.assign
-  ) @reference.member_access.assign
-  right: (_) @reference.variable.source
-) @assignment.property
-
+; Prototype-style method assignment: Counter.prototype.method = function () {}
+; (the simple `app.method = fn` form is captured by the member-access @assignment.property below)
 (assignment_expression
   left: (member_expression
     object: (member_expression)

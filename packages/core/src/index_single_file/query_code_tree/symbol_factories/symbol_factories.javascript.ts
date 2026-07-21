@@ -654,10 +654,15 @@ export function detect_member_assignment(
     return null;
   }
 
-  const member_id = anonymous_function_symbol(node_to_location(right, file_path));
+  const member_location = node_to_location(right, file_path);
+  const member_id = anonymous_function_symbol(member_location);
   return {
     holder_name: holder_name as SymbolName,
-    member: { name: property.text as SymbolName, symbol_id: member_id },
+    member: {
+      name: property.text as SymbolName,
+      symbol_id: member_id,
+      location: member_location,
+    },
   };
 }
 
@@ -776,7 +781,7 @@ function extract_functions_from_object(
         const location = node_to_location(child, file_path);
         const method_id = method_symbol(name_node.text, location);
         function_ids.push(method_id);
-        named_members.push({ name: name_node.text as SymbolName, symbol_id: method_id });
+        named_members.push({ name: name_node.text as SymbolName, symbol_id: method_id, location });
       }
       continue;
     }
@@ -802,7 +807,7 @@ function extract_functions_from_object(
       const fn_id = anonymous_function_symbol(location);
       function_ids.push(fn_id);
       if (member_name) {
-        named_members.push({ name: member_name, symbol_id: fn_id });
+        named_members.push({ name: member_name, symbol_id: fn_id, location });
       }
     } else if (value.type === "identifier") {
       references.push(value.text as SymbolName);

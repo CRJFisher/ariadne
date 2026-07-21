@@ -480,89 +480,79 @@ describe("TypeScript Self-Reference Resolution Integration", () => {
       expect(call).toBeDefined();
       return project.resolutions
         .get_calls_by_caller_scope(call!.scope_id)
+        .filter((resolved) => resolved.name === method)
         .flatMap((resolved) => resolved.resolutions.map((r) => r.symbol_id));
     }
 
-    function collection_member_target(
-      file: FilePath,
-      holder: SymbolName,
-      member: SymbolName
-    ): SymbolId {
-      const index = project.get_index_single_file(file);
-      const holder_def = [
-        ...index!.variables.values(),
-        ...index!.functions.values(),
-      ].find((d) => d.name === holder);
-      expect(holder_def).toBeDefined();
-      const collection = project.definitions.get_function_collection(
-        holder_def!.symbol_id
+    // The resolved target's own declaration line (SymbolId is `kind:path:line:...`),
+    // an oracle independent of the collection's named_members.
+    function target_lines(file: FilePath, method: SymbolName): number[] {
+      return this_call_targets(file, method).map((id) =>
+        Number(String(id).split(":")[2])
       );
-      const named = collection!.named_members!.find((m) => m.name === member);
-      expect(named).toBeDefined();
-      if (named!.symbol_id) {
-        return named!.symbol_id;
-      }
-      const resolved = project.resolutions.resolve(
-        holder_def!.defining_scope_id,
-        named!.reference_name!
-      );
-      expect(resolved).not.toBeNull();
-      return resolved!;
+    }
+
+    function line_of(code: string, needle: string): number {
+      return code.split("\n").findIndex((line) => line.includes(needle)) + 1;
     }
 
     it("resolves this.method() to a sibling object-literal shorthand method", () => {
-      const code = `
-        const app = {
-          path() { return this.sibling(); },
-          sibling() { return 42; },
-        };
-      `;
+      const code = [
+        "const app = {",
+        "  path() { return this.sibling(); },",
+        "  sibling() { return 42; },",
+        "};",
+      ].join("\n");
       const file = path.join(temp_dir, "ts_object_shorthand.ts") as FilePath;
       project.update_file(file, code);
 
-      expect(this_call_targets(file, "sibling" as SymbolName)).toEqual([
-        collection_member_target(
-          file,
-          "app" as SymbolName,
-          "sibling" as SymbolName
-        ),
+      expect(target_lines(file, "sibling" as SymbolName)).toEqual([
+        line_of(code, "sibling() { return 42; }"),
       ]);
     });
 
     it("resolves this.method() to a sibling member-assigned function", () => {
-      const code = `
-        const app: Record<string, unknown> = {};
-        app.path = function () { return this.sibling(); };
-        app.sibling = function () { return 42; };
-      `;
+      const code = [
+        "const app: Record<string, unknown> = {};",
+        "app.path = function () { return this.sibling(); };",
+        "app.sibling = function () { return 42; };",
+      ].join("\n");
       const file = path.join(temp_dir, "ts_member_assign.ts") as FilePath;
       project.update_file(file, code);
 
-      expect(this_call_targets(file, "sibling" as SymbolName)).toEqual([
-        collection_member_target(
-          file,
-          "app" as SymbolName,
-          "sibling" as SymbolName
-        ),
+      expect(target_lines(file, "sibling" as SymbolName)).toEqual([
+        line_of(code, "app.sibling = function"),
       ]);
     });
 
     it("resolves this.method() to a sibling prototype-assigned function", () => {
-      const code = `
-        function Counter() { this.count = 0; }
-        Counter.prototype.increment = function () { return this.getCount(); };
-        Counter.prototype.getCount = function () { return this.count; };
-      `;
+      const code = [
+        "function Counter() { this.count = 0; }",
+        "Counter.prototype.increment = function () { return this.getCount(); };",
+        "Counter.prototype.getCount = function () { return this.count; };",
+      ].join("\n");
       const file = path.join(temp_dir, "ts_prototype.ts") as FilePath;
       project.update_file(file, code);
 
-      expect(this_call_targets(file, "getCount" as SymbolName)).toEqual([
-        collection_member_target(
-          file,
-          "Counter" as SymbolName,
-          "getCount" as SymbolName
-        ),
+      expect(target_lines(file, "getCount" as SymbolName)).toEqual([
+        line_of(code, "Counter.prototype.getCount = function"),
       ]);
+    });
+
+    it("binds this to the innermost collection member, not an enclosing literal", () => {
+      const code = [
+        "const config = {",
+        "  a() { return 1; },",
+        "  handlers: {",
+        "    a() { return 2; },",
+        "    b() { return this.a(); },",
+        "  },",
+        "};",
+      ].join("\n");
+      const file = path.join(temp_dir, "ts_nested_literal.ts") as FilePath;
+      project.update_file(file, code);
+
+      expect(this_call_targets(file, "a" as SymbolName)).toEqual([]);
     });
   });
 });
