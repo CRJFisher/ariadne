@@ -129,6 +129,7 @@ describe("JavaScript Builder Configuration", () => {
   describe("JAVASCRIPT_HANDLERS", () => {
     it("should export a valid handler registry with all expected handlers", () => {
       expect(Object.keys(JAVASCRIPT_HANDLERS).sort()).toEqual([
+        "assignment.property",
         "definition.anonymous_function",
         "definition.arrow",
         "definition.class",

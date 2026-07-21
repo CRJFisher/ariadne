@@ -28,12 +28,14 @@ import {
   decorator_symbol,
   ConstructorDefinition,
   CallbackContext,
+  CollectionMember,
   FunctionCollection,
 } from "@ariadnejs/types";
 
 import type { CaptureNode } from "../capture_types";
 import type { ProcessingContext } from "../scopes/processing_context";
 import { find_body_scope_for_definition } from "../scopes/scope_lookup";
+import { attach_collection_members } from "./attach_collection_members";
 import type {
   ClassBuilderState,
   ConstructorBuilderState,
@@ -84,6 +86,14 @@ export class DefinitionBuilder {
   private readonly types = new Map<SymbolId, TypeAliasDefinition>();
   private readonly decorators = new Map<SymbolId, DecoratorDefinition>();
 
+  // Member functions assigned to a holder across separate statements
+  // (`app.method = function () {}`), keyed by the holder identifier name.
+  // Attached to the holder's definition as a FunctionCollection in build().
+  private readonly pending_collection_members = new Map<
+    SymbolName,
+    CollectionMember[]
+  >();
+
   // Orphan captures (waiting for their parent to be added)
   private readonly orphan_methods = new Map<Location, MethodBuilderState>();
   private readonly orphan_properties = new Map<
@@ -102,6 +112,12 @@ export class DefinitionBuilder {
    * Build final categorized definitions (single-file only)
    */
   build(): BuilderResult {
+    attach_collection_members(
+      this.pending_collection_members,
+      this.variables,
+      this.functions
+    );
+
     // Build complex types into maps
     const functions = new Map<SymbolId, FunctionDefinition>();
     const classes = new Map<SymbolId, ClassDefinition>();
@@ -136,6 +152,26 @@ export class DefinitionBuilder {
       decorators: this.decorators,
       imports: this.imports,
     };
+  }
+
+  /**
+   * Record a function value assigned to a holder's property across a separate
+   * statement (`app.method = function () {}`). Members accumulate by holder name
+   * and are attached to the holder's definition as a FunctionCollection in
+   * build(), so `app.method()` and `this.method()` resolve to the assigned
+   * function.
+   */
+  add_collection_member(
+    holder_name: SymbolName,
+    member: CollectionMember
+  ): DefinitionBuilder {
+    const members = this.pending_collection_members.get(holder_name);
+    if (members) {
+      members.push(member);
+    } else {
+      this.pending_collection_members.set(holder_name, [member]);
+    }
+    return this;
   }
 
   // ============================================================================

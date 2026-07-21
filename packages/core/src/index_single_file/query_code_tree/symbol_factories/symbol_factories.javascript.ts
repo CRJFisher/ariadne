@@ -13,6 +13,7 @@ import type {
   Location,
   ScopeId,
   CallbackContext,
+  CollectionMember,
   FunctionCollectionInfo,
   FilePath,
 } from "@ariadnejs/types";
@@ -587,18 +588,77 @@ export function detect_function_collection(
 
   // Check for object literal: { key: fn, ... }
   if (initializer.type === "object") {
-    const { functions, references } = extract_functions_from_object(initializer, file_path);
+    const { functions, references, named_members } = extract_functions_from_object(initializer, file_path);
     if (functions.length > 0 || references.length > 0) {
       return {
         collection_type: "Object",
         location: node_to_location(initializer, file_path),
         stored_functions: functions,
         stored_references: references,
+        named_members,
       };
     }
   }
 
   return null;
+}
+
+/**
+ * Detect a member-assigned function value: `app.method = function () {}` or
+ * `Counter.prototype.method = () => {}`. Returns the holder identifier and the
+ * property-named member function, or null when the assignment is not a function
+ * value on a simple (optionally `.prototype`) receiver.
+ *
+ * The member function's symbol matches the anonymous-function definition the
+ * right-hand side is indexed as, so the collection points at a real node.
+ */
+export function detect_member_assignment(
+  assignment_node: SyntaxNode,
+  file_path: FilePath
+): { holder_name: SymbolName; member: CollectionMember } | null {
+  const left = assignment_node.childForFieldName?.("left");
+  const right = assignment_node.childForFieldName?.("right");
+  if (!left || left.type !== "member_expression" || !right) {
+    return null;
+  }
+
+  if (
+    right.type !== "arrow_function" &&
+    right.type !== "function_expression" &&
+    right.type !== "function"
+  ) {
+    return null;
+  }
+
+  const property = left.childForFieldName("property");
+  if (!property || property.type !== "property_identifier") {
+    return null;
+  }
+
+  const object = left.childForFieldName("object");
+  if (!object) {
+    return null;
+  }
+
+  let holder_name: string | undefined;
+  if (object.type === "identifier") {
+    holder_name = object.text; // app.method = fn
+  } else if (object.type === "member_expression") {
+    const inner_property = object.childForFieldName("property");
+    const inner_object = object.childForFieldName("object");
+    if (inner_property?.text === "prototype" && inner_object?.type === "identifier") {
+      holder_name = inner_object.text; // Counter.prototype.method = fn
+    }
+  }
+  if (!holder_name) {
+    return null;
+  }
+
+  const member_id = anonymous_function_symbol(node_to_location(right, file_path));
+  return {
+    holder_name: holder_name as SymbolName,
+    member: { name: property.text as SymbolName, symbol_id: member_id },
+  };
 }
 
 /**
@@ -683,13 +743,18 @@ function extract_functions_from_array(
 
 /**
  * Extract function SymbolIds from object literal: { key: fn, ... }
+ *
+ * `named_members` records the property name → function value for `obj.method()`
+ * and `this.method()` resolution; `functions`/`references` feed dispatch and
+ * indirect-reachability tracking.
  */
 function extract_functions_from_object(
   obj_node: SyntaxNode,
   file_path: FilePath
-): { functions: SymbolId[]; references: SymbolName[] } {
+): { functions: SymbolId[]; references: SymbolName[]; named_members: CollectionMember[] } {
   const function_ids: SymbolId[] = [];
   const references: SymbolName[] = [];
+  const named_members: CollectionMember[] = [];
 
   for (let i = 0; i < obj_node.namedChildCount; i++) {
     const child = obj_node.namedChild(i);
@@ -709,7 +774,9 @@ function extract_functions_from_object(
       const name_node = child.childForFieldName("name");
       if (name_node) {
         const location = node_to_location(child, file_path);
-        function_ids.push(method_symbol(name_node.text, location));
+        const method_id = method_symbol(name_node.text, location);
+        function_ids.push(method_id);
+        named_members.push({ name: name_node.text as SymbolName, symbol_id: method_id });
       }
       continue;
     }
@@ -717,8 +784,14 @@ function extract_functions_from_object(
     // Handle pair nodes: { key: value }
     if (child.type !== "pair") continue;
 
+    const key = child.childForFieldName?.("key");
     const value = child.childForFieldName?.("value");
     if (!value) continue;
+
+    const member_name =
+      key && (key.type === "property_identifier" || key.type === "identifier")
+        ? (key.text as SymbolName)
+        : undefined;
 
     if (
       value.type === "arrow_function" ||
@@ -726,11 +799,18 @@ function extract_functions_from_object(
       value.type === "function"
     ) {
       const location = node_to_location(value, file_path);
-      function_ids.push(anonymous_function_symbol(location));
+      const fn_id = anonymous_function_symbol(location);
+      function_ids.push(fn_id);
+      if (member_name) {
+        named_members.push({ name: member_name, symbol_id: fn_id });
+      }
     } else if (value.type === "identifier") {
       references.push(value.text as SymbolName);
+      if (member_name) {
+        named_members.push({ name: member_name, reference_name: value.text as SymbolName });
+      }
     }
   }
 
-  return { functions: function_ids, references };
+  return { functions: function_ids, references, named_members };
 }

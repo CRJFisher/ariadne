@@ -297,6 +297,31 @@ function resolve_collection_method(
     });
   }
 
+  // Property-named members carry the sibling looked up by `obj.method()` /
+  // `this.method()`: an inline function value, or a value identifier resolved
+  // in the collection's defining scope.
+  for (const member of fn_collection.named_members ?? []) {
+    if (member.name !== method_name) {
+      continue;
+    }
+    if (member.symbol_id) {
+      return ok([member.symbol_id]);
+    }
+    if (member.reference_name) {
+      const var_def = definitions.get(variable_id);
+      if (var_def) {
+        const resolved = context.resolutions.resolve(
+          var_def.defining_scope_id,
+          member.reference_name
+        );
+        if (resolved) {
+          return ok([resolved]);
+        }
+      }
+    }
+    break;
+  }
+
   // stored_functions are inline anonymous definitions keyed by SymbolId; match
   // on each definition's own name.
   for (const stored_fn_id of fn_collection.stored_functions) {

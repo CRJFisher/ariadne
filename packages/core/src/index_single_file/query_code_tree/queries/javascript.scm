@@ -96,6 +96,17 @@
   value: (function_expression) @definition.anonymous_function
 )
 
+; Functions assigned to a receiver property (app.method = ..., Fn.prototype.method = ...)
+(assignment_expression
+  left: (member_expression)
+  right: (arrow_function) @definition.anonymous_function
+)
+
+(assignment_expression
+  left: (member_expression)
+  right: (function_expression) @definition.anonymous_function
+)
+
 ; Variable declarations with assignments
 (variable_declarator
   name: (identifier) @definition.variable @assignment.variable
@@ -407,6 +418,14 @@
     property: (property_identifier) @reference.property.assign
   ) @reference.member_access.assign
   right: (_) @reference.variable.source
+) @assignment.property
+
+; Prototype-style method assignment: Counter.prototype.method = function () {}
+(assignment_expression
+  left: (member_expression
+    object: (member_expression)
+    property: (property_identifier)
+  )
 ) @assignment.property
 
 ; Return statements

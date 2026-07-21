@@ -2,6 +2,7 @@ import type {
   SymbolId,
   FilePath,
   AnyDefinition,
+  Location,
   LocationKey,
   ScopeId,
   SymbolName,
@@ -11,6 +12,25 @@ import type {
   FunctionCollection,
 } from "@ariadnejs/types";
 import { is_exportable, location_key } from "@ariadnejs/types";
+
+/**
+ * Whether `outer` fully encloses `inner` within the same file, comparing
+ * (line, column) start/end tuples.
+ */
+function location_contains(outer: Location, inner: Location): boolean {
+  if (outer.file_path !== inner.file_path) {
+    return false;
+  }
+  const starts_before =
+    outer.start_line < inner.start_line ||
+    (outer.start_line === inner.start_line &&
+      outer.start_column <= inner.start_column);
+  const ends_after =
+    outer.end_line > inner.end_line ||
+    (outer.end_line === inner.end_line &&
+      outer.end_column >= inner.end_column);
+  return starts_before && ends_after;
+}
 
 /**
  * Rebind `alias_name` in `flat_members` to the symbol of the member named by
@@ -139,7 +159,12 @@ export class DefinitionRegistry {
         this.register_type_inheritance(def);
       }
 
-      if ((def.kind === "variable" || def.kind === "constant") && def.function_collection) {
+      if (
+        (def.kind === "variable" ||
+          def.kind === "constant" ||
+          def.kind === "function") &&
+        def.function_collection
+      ) {
         this.function_collections.set(def.symbol_id, def.function_collection);
       }
     }
@@ -352,6 +377,38 @@ export class DefinitionRegistry {
     variable_id: SymbolId
   ): FunctionCollection | undefined {
     return this.function_collections.get(variable_id);
+  }
+
+  /**
+   * Find the function collection whose body encloses `location`, returning its
+   * holder symbol. This binds a `this`/self receiver inside an object-literal
+   * method or member-assigned function to the collection it belongs to, so
+   * `this.method()` resolves against its sibling members.
+   *
+   * A location is inside a collection when the collection's own span contains it
+   * (object literals, whose span covers every method body) or when one of the
+   * collection's member functions contains it (member/prototype assignments,
+   * whose members are spread across separate statements).
+   *
+   * @param location - The receiver call site (its enclosing scope span)
+   * @returns The collection holder's SymbolId, or null if none encloses it
+   */
+  find_enclosing_collection(location: Location): SymbolId | null {
+    for (const [collection_id, collection] of this.function_collections) {
+      for (const member of collection.named_members ?? []) {
+        if (!member.symbol_id) {
+          continue;
+        }
+        const member_def = this.by_symbol.get(member.symbol_id);
+        if (member_def && location_contains(member_def.location, location)) {
+          return collection_id;
+        }
+      }
+      if (location_contains(collection.location, location)) {
+        return collection_id;
+      }
+    }
+    return null;
   }
 
   /**

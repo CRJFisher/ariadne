@@ -158,6 +158,19 @@ function resolve_keyword_base(
 ): Result<SymbolId, ResolutionFailure> {
   const class_scope_id = find_containing_class_scope(scope_id, context.scopes, context.definitions);
   if (!class_scope_id) {
+    // Object-literal methods and prototype/member-assigned functions have no
+    // enclosing class scope. Bind `this`/self to the function collection whose
+    // body encloses the call so `this.method()` resolves against its siblings.
+    if (keyword !== "super") {
+      const scope = context.scopes.get_scope(scope_id);
+      if (scope) {
+        const collection_id = context.definitions.find_enclosing_collection(scope.location);
+        if (collection_id) {
+          return ok(collection_id);
+        }
+      }
+    }
+
     return err({
       stage: "receiver_resolution",
       reason: "no_enclosing_class_scope",

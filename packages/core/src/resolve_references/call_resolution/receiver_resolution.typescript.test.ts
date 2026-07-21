@@ -7,6 +7,7 @@ import { Project } from "../../project/project";
 import type {
   FilePath,
   SymbolName,
+  SymbolId,
   SelfReferenceCall,
 } from "@ariadnejs/types";
 import * as fs from "fs";
@@ -464,6 +465,104 @@ describe("TypeScript Self-Reference Resolution Integration", () => {
 
       const parent_type_info = project.get_type_info(parent_class!.symbol_id);
       expect(parent_type_info!.methods.has("method" as SymbolName)).toBe(true);
+    });
+  });
+
+  // TASK-352: `this.method()` inside object-literal methods and prototype/member
+  // -assigned functions binds `this` to the enclosing function collection.
+  describe("object-literal and prototype receivers", () => {
+    function this_call_targets(file: FilePath, method: SymbolName): SymbolId[] {
+      const index = project.get_index_single_file(file);
+      const call = index!.references.find(
+        (r): r is SelfReferenceCall =>
+          r.kind === "self_reference_call" && r.name === method
+      );
+      expect(call).toBeDefined();
+      return project.resolutions
+        .get_calls_by_caller_scope(call!.scope_id)
+        .flatMap((resolved) => resolved.resolutions.map((r) => r.symbol_id));
+    }
+
+    function collection_member_target(
+      file: FilePath,
+      holder: SymbolName,
+      member: SymbolName
+    ): SymbolId {
+      const index = project.get_index_single_file(file);
+      const holder_def = [
+        ...index!.variables.values(),
+        ...index!.functions.values(),
+      ].find((d) => d.name === holder);
+      expect(holder_def).toBeDefined();
+      const collection = project.definitions.get_function_collection(
+        holder_def!.symbol_id
+      );
+      const named = collection!.named_members!.find((m) => m.name === member);
+      expect(named).toBeDefined();
+      if (named!.symbol_id) {
+        return named!.symbol_id;
+      }
+      const resolved = project.resolutions.resolve(
+        holder_def!.defining_scope_id,
+        named!.reference_name!
+      );
+      expect(resolved).not.toBeNull();
+      return resolved!;
+    }
+
+    it("resolves this.method() to a sibling object-literal shorthand method", () => {
+      const code = `
+        const app = {
+          path() { return this.sibling(); },
+          sibling() { return 42; },
+        };
+      `;
+      const file = path.join(temp_dir, "ts_object_shorthand.ts") as FilePath;
+      project.update_file(file, code);
+
+      expect(this_call_targets(file, "sibling" as SymbolName)).toEqual([
+        collection_member_target(
+          file,
+          "app" as SymbolName,
+          "sibling" as SymbolName
+        ),
+      ]);
+    });
+
+    it("resolves this.method() to a sibling member-assigned function", () => {
+      const code = `
+        const app: Record<string, unknown> = {};
+        app.path = function () { return this.sibling(); };
+        app.sibling = function () { return 42; };
+      `;
+      const file = path.join(temp_dir, "ts_member_assign.ts") as FilePath;
+      project.update_file(file, code);
+
+      expect(this_call_targets(file, "sibling" as SymbolName)).toEqual([
+        collection_member_target(
+          file,
+          "app" as SymbolName,
+          "sibling" as SymbolName
+        ),
+      ]);
+    });
+
+    it("resolves this.method() to a sibling prototype-assigned function", () => {
+      const code = `
+        function Counter() { this.count = 0; }
+        Counter.prototype.increment = function () { return this.getCount(); };
+        Counter.prototype.getCount = function () { return this.count; };
+      `;
+      const file = path.join(temp_dir, "ts_prototype.ts") as FilePath;
+      project.update_file(file, code);
+
+      expect(this_call_targets(file, "getCount" as SymbolName)).toEqual([
+        collection_member_target(
+          file,
+          "Counter" as SymbolName,
+          "getCount" as SymbolName
+        ),
+      ]);
     });
   });
 });

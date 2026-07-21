@@ -321,11 +321,38 @@
   value: (function_expression) @definition.anonymous_function
 )
 
+; Functions assigned to a receiver property (app.method = ..., Fn.prototype.method = ...)
+(assignment_expression
+  left: (member_expression)
+  right: (arrow_function) @definition.anonymous_function
+)
+
+(assignment_expression
+  left: (member_expression)
+  right: (function_expression) @definition.anonymous_function
+)
+
 ; Variable declarations with assignments (tracking only — definition created by generic pattern above)
 (variable_declarator
   name: (identifier) @assignment.variable
   value: (_) @assignment.variable
 ) @assignment.variable
+
+; Member-assigned function collection: app.method = fn, Fn.prototype.method = fn
+(assignment_expression
+  left: (member_expression
+    object: (identifier) @reference.variable.object
+    property: (property_identifier) @reference.property.assign
+  ) @reference.member_access.assign
+  right: (_) @reference.variable.source
+) @assignment.property
+
+(assignment_expression
+  left: (member_expression
+    object: (member_expression)
+    property: (property_identifier)
+  )
+) @assignment.property
 
 ; Variable declarations with namespace-qualified constructor calls
 (variable_declarator

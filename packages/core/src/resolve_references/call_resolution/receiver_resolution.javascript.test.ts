@@ -7,6 +7,7 @@ import { Project } from "../../project/project";
 import type {
   FilePath,
   SymbolName,
+  SymbolId,
   SelfReferenceCall,
 } from "@ariadnejs/types";
 import * as fs from "fs";
@@ -304,6 +305,169 @@ describe("JavaScript Self-Reference Resolution Integration", () => {
 
       // Base method should be referenced (child override not tracked due to missing extends extraction)
       expect(referenced.has(base_helper!)).toBe(true);
+    });
+  });
+
+  // TASK-352: `this.method()` inside object-literal methods and prototype/member
+  // -assigned functions binds `this` to the enclosing function collection, so the
+  // call resolves to the sibling property rather than failing with
+  // no_enclosing_class_scope.
+  describe("object-literal and prototype receivers", () => {
+    // The symbols `this.<method>()` resolves to, taken from the resolved call
+    // edge itself (not get_all_referenced_symbols, which also reports members
+    // reachable only through collection membership).
+    function this_call_targets(file: FilePath, method: SymbolName): SymbolId[] {
+      const index = project.get_index_single_file(file);
+      const call = index!.references.find(
+        (r): r is SelfReferenceCall =>
+          r.kind === "self_reference_call" && r.name === method
+      );
+      expect(call).toBeDefined();
+      return project.resolutions
+        .get_calls_by_caller_scope(call!.scope_id)
+        .flatMap((resolved) => resolved.resolutions.map((r) => r.symbol_id));
+    }
+
+    // The symbol the holder's function collection records for `member`, which is
+    // exactly what the sibling call must resolve to.
+    function collection_member_target(
+      file: FilePath,
+      holder: SymbolName,
+      member: SymbolName
+    ): SymbolId {
+      const index = project.get_index_single_file(file);
+      const holder_def = [
+        ...index!.variables.values(),
+        ...index!.functions.values(),
+      ].find((d) => d.name === holder);
+      expect(holder_def).toBeDefined();
+      const collection = project.definitions.get_function_collection(
+        holder_def!.symbol_id
+      );
+      const named = collection!.named_members!.find((m) => m.name === member);
+      expect(named).toBeDefined();
+      if (named!.symbol_id) {
+        return named!.symbol_id;
+      }
+      const resolved = project.resolutions.resolve(
+        holder_def!.defining_scope_id,
+        named!.reference_name!
+      );
+      expect(resolved).not.toBeNull();
+      return resolved!;
+    }
+
+    it("resolves this.method() to a sibling object-literal shorthand method", () => {
+      const code = `
+        const app = {
+          path() { return this.sibling(); },
+          sibling() { return 42; },
+        };
+      `;
+      const file = path.join(temp_dir, "object_shorthand.js") as FilePath;
+      project.update_file(file, code);
+
+      expect(this_call_targets(file, "sibling" as SymbolName)).toEqual([
+        collection_member_target(
+          file,
+          "app" as SymbolName,
+          "sibling" as SymbolName
+        ),
+      ]);
+    });
+
+    it("resolves this.method() to a sibling object-literal function-expression property", () => {
+      const code = `
+        const app = {
+          path: function () { return this.sibling(); },
+          sibling: function () { return 42; },
+        };
+      `;
+      const file = path.join(temp_dir, "object_function.js") as FilePath;
+      project.update_file(file, code);
+
+      expect(this_call_targets(file, "sibling" as SymbolName)).toEqual([
+        collection_member_target(
+          file,
+          "app" as SymbolName,
+          "sibling" as SymbolName
+        ),
+      ]);
+    });
+
+    it("resolves this.method() to a sibling object-literal arrow property", () => {
+      const code = `
+        const app = {
+          path: () => { return this.sibling(); },
+          sibling: () => 42,
+        };
+      `;
+      const file = path.join(temp_dir, "object_arrow.js") as FilePath;
+      project.update_file(file, code);
+
+      expect(this_call_targets(file, "sibling" as SymbolName)).toEqual([
+        collection_member_target(
+          file,
+          "app" as SymbolName,
+          "sibling" as SymbolName
+        ),
+      ]);
+    });
+
+    it("resolves this.method() to a named-reference object-literal property", () => {
+      const code = `
+        function helper() { return 42; }
+        const app = {
+          path() { return this.sib(); },
+          sib: helper,
+        };
+      `;
+      const file = path.join(temp_dir, "object_reference.js") as FilePath;
+      project.update_file(file, code);
+
+      expect(this_call_targets(file, "sib" as SymbolName)).toEqual([
+        collection_member_target(
+          file,
+          "app" as SymbolName,
+          "sib" as SymbolName
+        ),
+      ]);
+    });
+
+    it("resolves this.method() to a sibling member-assigned function", () => {
+      const code = `
+        const app = {};
+        app.path = function () { return this.sibling(); };
+        app.sibling = function () { return 42; };
+      `;
+      const file = path.join(temp_dir, "member_assign.js") as FilePath;
+      project.update_file(file, code);
+
+      expect(this_call_targets(file, "sibling" as SymbolName)).toEqual([
+        collection_member_target(
+          file,
+          "app" as SymbolName,
+          "sibling" as SymbolName
+        ),
+      ]);
+    });
+
+    it("resolves this.method() to a sibling prototype-assigned function", () => {
+      const code = `
+        function Counter() { this.count = 0; }
+        Counter.prototype.increment = function () { return this.getCount(); };
+        Counter.prototype.getCount = function () { return this.count; };
+      `;
+      const file = path.join(temp_dir, "prototype.js") as FilePath;
+      project.update_file(file, code);
+
+      expect(this_call_targets(file, "getCount" as SymbolName)).toEqual([
+        collection_member_target(
+          file,
+          "Counter" as SymbolName,
+          "getCount" as SymbolName
+        ),
+      ]);
     });
   });
 });

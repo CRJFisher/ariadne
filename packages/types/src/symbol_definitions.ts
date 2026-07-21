@@ -73,6 +73,7 @@ export interface FunctionDefinition extends Definition {
   readonly generics?: SymbolName[];
   readonly body_scope_id: ScopeId; // The scope ID of this function's body
   readonly callback_context?: CallbackContext; // For anonymous functions that are callbacks
+  readonly function_collection?: FunctionCollection; // Prototype-style methods assigned as `Fn.prototype.method = ...`
 }
 
 export interface FunctionSignature {
@@ -200,6 +201,22 @@ export interface FunctionCollection {
   readonly location: Location;
   readonly stored_functions: readonly SymbolId[];
   readonly stored_references?: readonly SymbolName[]; // Names of referenced functions (e.g. "handler" in [handler])
+  readonly named_members?: readonly CollectionMember[]; // Property name → member function, for `obj.method()` / `this.method()` resolution
+}
+
+/**
+ * A property-named function value on a collection: the sibling looked up by
+ * `obj.method()` or `this.method()`. Covers object-literal properties and
+ * member/prototype assignments (`app.method = function () {}`).
+ *
+ * A member holds an inline function value directly (`symbol_id`) or names a
+ * value identifier resolved in the collection's defining scope
+ * (`reference_name`, e.g. `{ method: helper }`). Exactly one is set.
+ */
+export interface CollectionMember {
+  readonly name: SymbolName;
+  readonly symbol_id?: SymbolId;
+  readonly reference_name?: SymbolName;
 }
 
 /**

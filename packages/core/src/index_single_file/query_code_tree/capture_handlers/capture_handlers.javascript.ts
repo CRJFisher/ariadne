@@ -33,6 +33,7 @@ import {
   extract_extends,
   detect_callback_context,
   detect_function_collection,
+  detect_member_assignment,
   extract_collection_source,
   extract_call_initializer_name,
 } from "../symbol_factories/symbol_factories.javascript";
@@ -337,6 +338,22 @@ export function handle_definition_variable(
     collection_source,
     initialized_from_call,
   });
+}
+
+/**
+ * Record a function assigned to a receiver property (`app.method = function () {}`,
+ * `Counter.prototype.method = () => {}`) as a member of the holder's function
+ * collection, so `app.method()` and `this.method()` resolve to it.
+ */
+export function handle_assignment_property(
+  capture: CaptureNode,
+  builder: DefinitionBuilder,
+  _context: ProcessingContext
+): void {
+  const assignment = detect_member_assignment(capture.node, capture.location.file_path);
+  if (assignment) {
+    builder.add_collection_member(assignment.holder_name, assignment.member);
+  }
 }
 
 export function handle_definition_field(
@@ -966,6 +983,7 @@ export const JAVASCRIPT_HANDLERS: HandlerRegistry = {
   "definition.variable": handle_definition_variable,
   "definition.field": handle_definition_field,
   "definition.property": handle_definition_property,
+  "assignment.property": handle_assignment_property,
 
   // Imports
   "definition.import": handle_definition_import,
