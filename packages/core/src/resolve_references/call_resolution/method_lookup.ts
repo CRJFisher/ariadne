@@ -7,6 +7,7 @@ import type {
 import { err, ok } from "@ariadnejs/types";
 import { DefinitionRegistry } from "../registries/definition";
 import { resolve_namespace_export, resolve_named_import } from "../export_chain_lookup";
+import { resolve_keyed_member } from "./collection_dispatch";
 import type { ReceiverResolutionContext } from "./receiver_resolution";
 
 /**
@@ -297,6 +298,22 @@ function resolve_collection_method(
     });
   }
 
+  // Object-literal members carry their property key, so `collection.method()`
+  // dispatches to exactly the member at that key — including function-expression
+  // values, whose own name is `<anonymous>`.
+  const var_def = definitions.get(variable_id);
+  if (fn_collection.keyed_members && var_def) {
+    const keyed = resolve_keyed_member(
+      fn_collection.keyed_members,
+      method_name,
+      var_def.defining_scope_id,
+      context.resolutions
+    );
+    if (keyed) {
+      return ok([keyed]);
+    }
+  }
+
   // stored_functions are inline anonymous definitions keyed by SymbolId; match
   // on each definition's own name.
   for (const stored_fn_id of fn_collection.stored_functions) {
@@ -308,15 +325,12 @@ function resolve_collection_method(
 
   // stored_references are names of functions defined elsewhere; resolve them in
   // the scope where the collection variable is declared.
-  if (fn_collection.stored_references) {
+  if (fn_collection.stored_references && var_def) {
     for (const ref_name of fn_collection.stored_references) {
       if (ref_name === method_name) {
-        const var_def = definitions.get(variable_id);
-        if (var_def) {
-          const resolved = context.resolutions.resolve(var_def.defining_scope_id, method_name);
-          if (resolved) {
-            return ok([resolved]);
-          }
+        const resolved = context.resolutions.resolve(var_def.defining_scope_id, method_name);
+        if (resolved) {
+          return ok([resolved]);
         }
       }
     }

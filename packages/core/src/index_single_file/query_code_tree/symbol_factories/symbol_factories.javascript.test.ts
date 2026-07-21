@@ -18,6 +18,7 @@ import {
   extract_return_type,
   extract_parameter_type,
   extract_collection_source,
+  extract_collection_source_key,
   extract_extends,
   extract_call_initializer_name,
   detect_callback_context,
@@ -556,6 +557,29 @@ describe("extract_collection_source", () => {
   });
 });
 
+describe("extract_collection_source_key", () => {
+  it("extracts the property key of a static member alias: Ns.A", () => {
+    const root = parse_js("const alias = Ns.A;");
+    const declarator = find_node_by_type(root, "variable_declarator")!;
+    const name_node = declarator.childForFieldName("name")!;
+    expect(extract_collection_source_key(name_node)).toBe("A");
+  });
+
+  it("returns undefined for a dynamic get() retrieval", () => {
+    const root = parse_js("const handler = config.get('key');");
+    const declarator = find_node_by_type(root, "variable_declarator")!;
+    const name_node = declarator.childForFieldName("name")!;
+    expect(extract_collection_source_key(name_node)).toBeUndefined();
+  });
+
+  it("returns undefined for a subscript retrieval", () => {
+    const root = parse_js("const handler = config['key'];");
+    const declarator = find_node_by_type(root, "variable_declarator")!;
+    const name_node = declarator.childForFieldName("name")!;
+    expect(extract_collection_source_key(name_node)).toBeUndefined();
+  });
+});
+
 // ============================================================================
 // Function Collection Detection
 // ============================================================================
@@ -588,6 +612,38 @@ describe("detect_function_collection", () => {
     expect(result?.collection_type).toBe("Object");
     expect(result?.stored_references).toContain("BASE_HANDLERS");
     expect(result?.stored_references).toContain("fn1");
+  });
+
+  it("keys each function-valued property by its name", () => {
+    const code = "const handlers = { a: function () {}, b: fn2 };";
+    const root = parse_ts(code);
+    const declarator = root.child(0)!.namedChildren[0]!;
+
+    const result = detect_function_collection(declarator, file_path);
+
+    expect(result?.keyed_members).toBeDefined();
+    expect(result?.keyed_members?.map((m) => m.key)).toEqual(["a", "b"]);
+    // The function-expression value keeps its property key (its own name is <anonymous>).
+    expect(result?.keyed_members?.[0].function_id).toBeDefined();
+    expect(result?.keyed_members?.[0].reference).toBeUndefined();
+    // The identifier value is recorded as a reference under its key.
+    expect(result?.keyed_members?.[1].reference).toBe("fn2");
+  });
+
+  it("records a nested object literal as a keyed nested member, kept out of the flat union lists", () => {
+    const code = "const Ns = { A: { prop: fn1 } };";
+    const root = parse_ts(code);
+    const declarator = root.child(0)!.namedChildren[0]!;
+
+    const result = detect_function_collection(declarator, file_path);
+
+    expect(result?.collection_type).toBe("Object");
+    expect(result?.keyed_members?.map((m) => m.key)).toEqual(["A"]);
+    expect(result?.keyed_members?.[0].nested?.map((m) => m.key)).toEqual(["prop"]);
+    expect(result?.keyed_members?.[0].nested?.[0].reference).toBe("fn1");
+    // The nested function does not leak into the keyless union lists.
+    expect(result?.stored_references ?? []).not.toContain("fn1");
+    expect(result?.stored_functions ?? []).toHaveLength(0);
   });
 
   it("should detect array with function references", () => {

@@ -14,6 +14,7 @@ import type {
   ScopeId,
   CallbackContext,
   FunctionCollectionInfo,
+  KeyedCollectionEntry,
   FilePath,
 } from "@ariadnejs/types";
 import {
@@ -587,18 +588,47 @@ export function detect_function_collection(
 
   // Check for object literal: { key: fn, ... }
   if (initializer.type === "object") {
-    const { functions, references } = extract_functions_from_object(initializer, file_path);
-    if (functions.length > 0 || references.length > 0) {
+    const { functions, references, keyed_members } = extract_functions_from_object(
+      initializer,
+      file_path
+    );
+    if (functions.length > 0 || references.length > 0 || keyed_members.length > 0) {
       return {
         collection_type: "Object",
         location: node_to_location(initializer, file_path),
         stored_functions: functions,
         stored_references: references,
+        keyed_members: keyed_members.length > 0 ? keyed_members : undefined,
       };
     }
   }
 
   return null;
+}
+
+/**
+ * The property key of a static object-property alias initializer (`var alias = Ns.A`
+ * → "A"), or undefined when the initializer is not a plain member access. A dynamic
+ * `get(...)` call or `[...]` subscript returns undefined so the alias stays on the
+ * keyless union dispatch path rather than a keyed one.
+ */
+export function extract_collection_source_key(node: SyntaxNode): SymbolName | undefined {
+  let target_node = node;
+  if (node.type === "identifier" || node.type === "property_identifier") {
+    target_node = node.parent || node;
+  }
+
+  const value_node =
+    target_node.childForFieldName("value") || target_node.childForFieldName("init");
+  if (!value_node || value_node.type !== "member_expression") {
+    return undefined;
+  }
+
+  const property_node = value_node.childForFieldName("property");
+  if (property_node?.type === "property_identifier") {
+    return property_node.text as SymbolName;
+  }
+  return undefined;
 }
 
 /**
@@ -682,20 +712,43 @@ function extract_functions_from_array(
 }
 
 /**
+ * The static property name of an object-literal key node, or undefined for a
+ * computed key. A string key contributes its unquoted text; a shorthand or
+ * `property_identifier` its identifier.
+ */
+function object_property_key(key_node: SyntaxNode | null | undefined): SymbolName | undefined {
+  if (!key_node) return undefined;
+  if (key_node.type === "property_identifier" || key_node.type === "identifier") {
+    return key_node.text as SymbolName;
+  }
+  if (key_node.type === "string") {
+    return key_node.text.slice(1, -1) as SymbolName;
+  }
+  return undefined;
+}
+
+/**
  * Extract function SymbolIds from object literal: { key: fn, ... }
+ *
+ * `keyed_members` additionally records the property key of each function/nested value
+ * so `X.key()` dispatches precisely. A nested object-literal value contributes a
+ * `nested` entry only — its functions are never added to the flat `functions`/
+ * `references` lists, so the keyless union path cannot reach them.
  */
 function extract_functions_from_object(
   obj_node: SyntaxNode,
   file_path: FilePath
-): { functions: SymbolId[]; references: SymbolName[] } {
+): { functions: SymbolId[]; references: SymbolName[]; keyed_members: KeyedCollectionEntry[] } {
   const function_ids: SymbolId[] = [];
   const references: SymbolName[] = [];
+  const keyed_members: KeyedCollectionEntry[] = [];
 
   for (let i = 0; i < obj_node.namedChildCount; i++) {
     const child = obj_node.namedChild(i);
     if (!child) continue;
 
-    // Handle spread elements: { ...OTHER_HANDLERS }
+    // Handle spread elements: { ...OTHER_HANDLERS }. A spread has no key, so it
+    // flattens into the union view only.
     if (child.type === "spread_element") {
       const spread_arg = child.namedChildren[0];
       if (spread_arg?.type === "identifier") {
@@ -709,7 +762,10 @@ function extract_functions_from_object(
       const name_node = child.childForFieldName("name");
       if (name_node) {
         const location = node_to_location(child, file_path);
-        function_ids.push(method_symbol(name_node.text, location));
+        const method_id = method_symbol(name_node.text, location);
+        function_ids.push(method_id);
+        const key = object_property_key(name_node);
+        if (key) keyed_members.push({ key, function_id: method_id });
       }
       continue;
     }
@@ -720,17 +776,27 @@ function extract_functions_from_object(
     const value = child.childForFieldName?.("value");
     if (!value) continue;
 
+    const key = object_property_key(child.childForFieldName?.("key"));
+
     if (
       value.type === "arrow_function" ||
       value.type === "function_expression" ||
       value.type === "function"
     ) {
       const location = node_to_location(value, file_path);
-      function_ids.push(anonymous_function_symbol(location));
+      const fn_id = anonymous_function_symbol(location);
+      function_ids.push(fn_id);
+      if (key) keyed_members.push({ key, function_id: fn_id });
     } else if (value.type === "identifier") {
       references.push(value.text as SymbolName);
+      if (key) keyed_members.push({ key, reference: value.text as SymbolName });
+    } else if (value.type === "object" && key) {
+      const nested = extract_functions_from_object(value, file_path);
+      if (nested.keyed_members.length > 0) {
+        keyed_members.push({ key, nested: nested.keyed_members });
+      }
     }
   }
 
-  return { functions: function_ids, references };
+  return { functions: function_ids, references, keyed_members };
 }

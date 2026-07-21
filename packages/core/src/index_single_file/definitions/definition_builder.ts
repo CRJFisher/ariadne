@@ -558,6 +558,7 @@ export class DefinitionBuilder {
     docstring?: string;
     function_collection?: FunctionCollection;
     collection_source?: SymbolName;
+    collection_source_key?: SymbolName;
     initialized_from_call?: SymbolName;
   }): DefinitionBuilder {
     this.variables.set(definition.symbol_id, {
@@ -573,6 +574,7 @@ export class DefinitionBuilder {
       docstring: definition.docstring,
       function_collection: definition.function_collection,
       collection_source: definition.collection_source,
+      collection_source_key: definition.collection_source_key,
       initialized_from_call: definition.initialized_from_call,
     });
     return this;

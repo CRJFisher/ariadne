@@ -486,4 +486,80 @@ describe("resolve_collection_dispatch", () => {
       expect(result.value).toEqual([inner_collection_var]);
     }
   });
+
+  it("resolves a keyed object-property alias to only the named nested member", () => {
+    const target = fn_id("target");
+    const decoy = fn_id("decoy");
+    const collection: FunctionCollection = {
+      collection_id: variable_symbol("Ns", MOCK_LOCATION),
+      collection_type: "Object",
+      location: MOCK_LOCATION,
+      stored_functions: [],
+      keyed_members: [
+        { key: "A" as SymbolName, nested: [{ key: "prop" as SymbolName, reference: "target" as SymbolName }] },
+        { key: "B" as SymbolName, nested: [{ key: "prop" as SymbolName, reference: "decoy" as SymbolName }] },
+      ],
+    };
+    const { id: ns_id, def: ns_def } = make_var_def("Ns", {
+      kind: "constant",
+      function_collection: collection,
+    });
+    const { id: alias_id, def: alias_def } = make_var_def("A", {
+      collection_source: "Ns" as SymbolName,
+      collection_source_key: "A" as SymbolName,
+    });
+
+    register(definitions, resolutions, [ns_def, alias_def], {
+      Ns: ns_id,
+      A: alias_id,
+      target,
+      decoy,
+    });
+
+    const result = resolve_collection_dispatch(
+      method_call(["A", "prop"]),
+      definitions,
+      resolutions
+    );
+
+    expect(is_ok(result)).toBe(true);
+    if (is_ok(result)) {
+      expect(result.value).toEqual([target]);
+    }
+  });
+
+  it("fails a keyed alias whose key is absent rather than unioning the collection", () => {
+    const target = fn_id("target");
+    const collection: FunctionCollection = {
+      collection_id: variable_symbol("Ns", MOCK_LOCATION),
+      collection_type: "Object",
+      location: MOCK_LOCATION,
+      stored_functions: [target],
+      keyed_members: [
+        { key: "A" as SymbolName, nested: [{ key: "prop" as SymbolName, reference: "target" as SymbolName }] },
+      ],
+    };
+    const { id: ns_id, def: ns_def } = make_var_def("Ns", {
+      kind: "constant",
+      function_collection: collection,
+    });
+    const { id: alias_id, def: alias_def } = make_var_def("A", {
+      collection_source: "Ns" as SymbolName,
+      collection_source_key: "A" as SymbolName,
+    });
+
+    register(definitions, resolutions, [ns_def, alias_def], {
+      Ns: ns_id,
+      A: alias_id,
+      target,
+    });
+
+    const result = resolve_collection_dispatch(
+      method_call(["A", "missing"]),
+      definitions,
+      resolutions
+    );
+
+    expect(is_err(result)).toBe(true);
+  });
 });

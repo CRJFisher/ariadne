@@ -14,14 +14,34 @@
 import type {
   SymbolId,
   SymbolName,
+  ScopeId,
   SymbolReference,
   MethodCallReference,
+  KeyedCollectionEntry,
   Result,
   ResolutionFailure,
 } from "@ariadnejs/types";
 import { err, ok } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "../registries/definition";
 import type { ResolutionRegistry } from "../resolution_registry";
+
+/**
+ * Resolve the callable at `key` within a keyed object-literal collection: an inline
+ * function value directly, or an identifier value resolved in `scope_id`. Returns
+ * undefined when the key is absent or names a nested object (not itself callable).
+ */
+export function resolve_keyed_member(
+  entries: readonly KeyedCollectionEntry[],
+  key: SymbolName,
+  scope_id: ScopeId,
+  resolutions: ResolutionRegistry
+): SymbolId | undefined {
+  const entry = entries.find((e) => e.key === key);
+  if (!entry) return undefined;
+  if (entry.function_id) return entry.function_id;
+  if (entry.reference) return resolutions.resolve(scope_id, entry.reference) ?? undefined;
+  return undefined;
+}
 
 
 /**
@@ -104,7 +124,63 @@ export function resolve_collection_dispatch(
     });
   }
 
+  // A static object-property alias (`var A = Ns.A`) names one member by key, so it
+  // dispatches to exactly that member — never the union of everything in `Ns`.
+  if (target_def.collection_source_key) {
+    return resolve_keyed_alias(
+      collection_id,
+      target_def.collection_source_key,
+      call_ref,
+      definitions,
+      resolutions
+    );
+  }
+
   return get_collection_functions(collection_id, definitions, resolutions);
+}
+
+/**
+ * Resolve a static object-property alias call to the single keyed member it names.
+ * `alias_key` addresses the aliased value in the collection's keyed members; a method
+ * call then addresses a function one property deeper (inside the aliased nested
+ * object), a direct call targets the aliased value itself. A miss returns a failure
+ * rather than falling back to the union.
+ */
+function resolve_keyed_alias(
+  collection_id: SymbolId,
+  alias_key: SymbolName,
+  call_ref: SymbolReference,
+  definitions: DefinitionRegistry,
+  resolutions: ResolutionRegistry
+): Result<SymbolId[], ResolutionFailure> {
+  const collection = definitions.get_function_collection(collection_id);
+  const collection_def = definitions.get(collection_id);
+  const entry = collection?.keyed_members?.find((m) => m.key === alias_key);
+  if (!collection || !collection_def || !entry) {
+    return err({
+      stage: "collection_dispatch",
+      reason: "collection_dispatch_miss",
+      partial_info: { resolved_receiver_type: collection_id },
+    });
+  }
+
+  const scope_id = collection_def.defining_scope_id;
+  const target =
+    call_ref.kind === "method_call"
+      ? entry.nested
+        ? resolve_keyed_member(entry.nested, call_ref.name, scope_id, resolutions)
+        : undefined
+      : entry.function_id ??
+        (entry.reference ? resolutions.resolve(scope_id, entry.reference) ?? undefined : undefined);
+
+  if (!target) {
+    return err({
+      stage: "collection_dispatch",
+      reason: "collection_dispatch_miss",
+      partial_info: { resolved_receiver_type: collection_id },
+    });
+  }
+  return ok([target]);
 }
 
 function get_collection_functions(

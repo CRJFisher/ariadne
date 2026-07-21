@@ -200,6 +200,29 @@ export interface FunctionCollection {
   readonly location: Location;
   readonly stored_functions: readonly SymbolId[];
   readonly stored_references?: readonly SymbolName[]; // Names of referenced functions (e.g. "handler" in [handler])
+  /**
+   * @language javascript,typescript
+   * Object-literal entries keyed by property name, for precise `X.key()` dispatch
+   * and following a local alias into a nested object literal (`var A = Ns.A; A.prop()`).
+   * Nested-object function values live here only — never flattened into
+   * `stored_functions` — so the keyless union path (`collection_dispatch`) never fans
+   * a keyed member call out to unrelated siblings.
+   */
+  readonly keyed_members?: readonly KeyedCollectionEntry[];
+}
+
+/**
+ * @language javascript,typescript
+ * One object-literal property key and the dispatch target held at that key.
+ * Exactly one of `function_id` / `reference` / `nested` is set: a function/arrow/method
+ * value, an identifier value (resolved in the collection's defining scope), or a nested
+ * object literal whose own keyed members are addressed one property deeper.
+ */
+export interface KeyedCollectionEntry {
+  readonly key: SymbolName;
+  readonly function_id?: SymbolId;
+  readonly reference?: SymbolName;
+  readonly nested?: readonly KeyedCollectionEntry[];
 }
 
 /**
@@ -218,6 +241,14 @@ export interface VariableDefinition extends Definition {
   readonly docstring?: DocString;
   readonly function_collection?: FunctionCollection;
   readonly collection_source?: SymbolName; // Name of the collection variable this was looked up from (e.g. "config" in "const handler = config.get(...)")
+  /**
+   * @language javascript,typescript
+   * Property key accessed on `collection_source` for a static object-property alias
+   * (e.g. "A" in `var alias = Ns.A`). Present only for a plain member access, never a
+   * dynamic `get(...)`/subscript retrieval, so dispatch on the alias is keyed rather
+   * than unioned.
+   */
+  readonly collection_source_key?: SymbolName;
   readonly initialized_from_call?: SymbolName; // Name of the function called in initializer (e.g. "getHandler" in "const h = getHandler()")
 }
 

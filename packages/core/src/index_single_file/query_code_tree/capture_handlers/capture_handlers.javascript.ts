@@ -34,6 +34,7 @@ import {
   detect_callback_context,
   detect_function_collection,
   extract_collection_source,
+  extract_collection_source_key,
   extract_call_initializer_name,
 } from "../symbol_factories/symbol_factories.javascript";
 import {
@@ -354,6 +355,7 @@ export function handle_definition_variable(
     : undefined;
 
   const collection_source = extract_collection_source(capture.node);
+  const collection_source_key = extract_collection_source_key(capture.node);
   const initialized_from_call = extract_call_initializer_name(capture.node);
 
   builder.add_variable({
@@ -368,6 +370,7 @@ export function handle_definition_variable(
     docstring,
     function_collection,
     collection_source,
+    collection_source_key,
     initialized_from_call,
   });
 }
