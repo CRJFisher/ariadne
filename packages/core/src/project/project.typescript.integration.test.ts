@@ -4,6 +4,7 @@ import path from "path";
 import fs from "fs";
 import type {
   FilePath,
+  SymbolId,
   SymbolName,
   FunctionCallReference,
   MethodCallReference,
@@ -747,6 +748,112 @@ export class TypeRegistry {
       // THIS IS THE KEY TEST: walk_inheritance_chain should NOT be an entry point
       const is_entry_point = call_graph.entry_points.includes(walk_inheritance_chain_node!.symbol_id);
       expect(is_entry_point).toBe(false);
+    });
+  });
+
+  describe("Cast receiver resolution (TASK-353)", () => {
+    function method_call_resolves_to(
+      caller_name: string,
+      method_name: string,
+      target_id: SymbolId
+    ): boolean {
+      const call_graph = project.get_call_graph();
+      const caller = Array.from(call_graph.nodes.values()).find(
+        (n) => n.name === caller_name
+      );
+      if (!caller) return false;
+      return caller.enclosed_calls.some(
+        (call) =>
+          call.name === (method_name as SymbolName) &&
+          call.resolutions.some((r) => r.symbol_id === target_id)
+      );
+    }
+
+    function method_id(file: FilePath, class_name: string, method_name: string): SymbolId {
+      const index = project.get_index_single_file(file);
+      const cls = Array.from(index!.classes.values()).find(
+        (c) => c.name === (class_name as SymbolName)
+      );
+      const type_info = project.get_type_info(cls!.symbol_id);
+      const id = type_info!.methods.get(method_name as SymbolName);
+      if (!id) throw new Error(`no method ${class_name}.${method_name}`);
+      return id;
+    }
+
+    it("resolves (x as Concrete).method() against the cast target, not x's declared type", async () => {
+      const code = `
+interface Base {}
+class Concrete implements Base {
+  greet(): void {}
+}
+function run(x: Base): void {
+  (x as Concrete).greet();
+}
+`;
+      const file = file_path("cast_as_receiver.ts");
+      project.update_file(file, code);
+
+      const greet_id = method_id(file, "Concrete", "greet");
+      expect(method_call_resolves_to("run", "greet", greet_id)).toBe(true);
+
+      // The resolved method is called, so it is not an entry point.
+      const call_graph = project.get_call_graph();
+      expect(call_graph.entry_points.includes(greet_id)).toBe(false);
+    });
+
+    it("resolves the (<Concrete>x).method() angle-bracket cast form equivalently", async () => {
+      const code = `
+interface Base {}
+class Concrete implements Base {
+  greet(): void {}
+}
+function run(x: Base): void {
+  (<Concrete>x).greet();
+}
+`;
+      const file = file_path("cast_angle_receiver.ts");
+      project.update_file(file, code);
+
+      const greet_id = method_id(file, "Concrete", "greet");
+      expect(method_call_resolves_to("run", "greet", greet_id)).toBe(true);
+    });
+
+    it("resolves a structural-literal cast through the concrete underlying object's type", async () => {
+      const code = `
+class Foo {
+  m(): void {}
+}
+function run(): void {
+  const x = new Foo();
+  (x as { m(): void }).m();
+}
+`;
+      const file = file_path("cast_structural_receiver.ts");
+      project.update_file(file, code);
+
+      const m_id = method_id(file, "Foo", "m");
+      expect(method_call_resolves_to("run", "m", m_id)).toBe(true);
+    });
+
+    it("resolves a cast to an imported class against the imported method", async () => {
+      const target_source = `
+export class Concrete {
+  greet(): void {}
+}
+`;
+      const consumer_source = `
+import { Concrete } from "./cast_target";
+function run(x: unknown): void {
+  (x as Concrete).greet();
+}
+`;
+      const target_file = file_path("cast_target.ts");
+      const consumer_file = file_path("cast_consumer.ts");
+      project.update_file(target_file, target_source);
+      project.update_file(consumer_file, consumer_source);
+
+      const greet_id = method_id(target_file, "Concrete", "greet");
+      expect(method_call_resolves_to("run", "greet", greet_id)).toBe(true);
     });
   });
 
