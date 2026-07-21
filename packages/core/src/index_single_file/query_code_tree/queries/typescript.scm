@@ -283,6 +283,14 @@
   value: (arrow_function)
 ) @assignment.variable
 
+; Function expressions assigned to variables — registers the outer var name as a
+; function in the enclosing scope. The inner name of a named function expression
+; is captured separately above and stays scoped to the function body.
+(variable_declarator
+  name: (identifier) @definition.function @assignment.variable
+  value: (function_expression)
+) @assignment.variable
+
 ; === Anonymous arrow functions (inline callbacks, config objects, etc.) ===
 
 ; Inline arrow functions in call expression arguments (forEach, map, filter, etc.)

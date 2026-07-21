@@ -67,6 +67,20 @@ function extract_scope_name(
     scope_type === "method" ||
     scope_type === "constructor"
   ) {
+    // A function expression bound to a variable is named after its outer var, so
+    // the outer function symbol registered in the enclosing scope matches this
+    // body scope by name. The inner expression name stays resolvable inside the
+    // body via its own definition, independent of the scope name.
+    if (
+      node.type === "function_expression" &&
+      node.parent?.type === "variable_declarator"
+    ) {
+      const declarator_name = node.parent.childForFieldName("name");
+      if (declarator_name?.type === "identifier") {
+        return declarator_name.text as SymbolName;
+      }
+    }
+
     // Try to get the name field first
     const name_node = node.childForFieldName("name");
     if (name_node) {
