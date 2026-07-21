@@ -2,6 +2,7 @@ import type {
   SymbolId,
   FilePath,
   AnyDefinition,
+  Location,
   LocationKey,
   ScopeId,
   SymbolName,
@@ -11,6 +12,41 @@ import type {
   FunctionCollection,
 } from "@ariadnejs/types";
 import { is_exportable, location_key } from "@ariadnejs/types";
+import { set_member_symbol } from "../type_preprocessing/member";
+
+/**
+ * Whether `outer` fully encloses `inner` within the same file, comparing
+ * (line, column) start/end tuples.
+ */
+function location_contains(outer: Location, inner: Location): boolean {
+  if (outer.file_path !== inner.file_path) {
+    return false;
+  }
+  const starts_before =
+    outer.start_line < inner.start_line ||
+    (outer.start_line === inner.start_line &&
+      outer.start_column <= inner.start_column);
+  const ends_after =
+    outer.end_line > inner.end_line ||
+    (outer.end_line === inner.end_line &&
+      outer.end_column >= inner.end_column);
+  return starts_before && ends_after;
+}
+
+/**
+ * Whether span `a` is tighter than span `b`, comparing line extent first and
+ * column extent as a tiebreaker. For two spans that both contain the same point,
+ * the more deeply nested one is always the tighter — so this orders enclosing
+ * collection members from innermost to outermost with no magic scale factor.
+ */
+function is_tighter_span(a: Location, b: Location): boolean {
+  const a_lines = a.end_line - a.start_line;
+  const b_lines = b.end_line - b.start_line;
+  if (a_lines !== b_lines) {
+    return a_lines < b_lines;
+  }
+  return a.end_column - a.start_column < b.end_column - b.start_column;
+}
 
 /**
  * Rebind `alias_name` in `flat_members` to the symbol of the member named by
@@ -89,7 +125,7 @@ export class DefinitionRegistry {
 
         for (const method of def.methods) {
           this.by_symbol.set(method.symbol_id, method);
-          flat_members.set(method.name, method.symbol_id);
+          set_member_symbol(flat_members, method);
           const method_loc_key = location_key(method.location);
           this.location_to_symbol.set(method_loc_key, method.symbol_id);
         }
@@ -139,7 +175,12 @@ export class DefinitionRegistry {
         this.register_type_inheritance(def);
       }
 
-      if ((def.kind === "variable" || def.kind === "constant") && def.function_collection) {
+      if (
+        (def.kind === "variable" ||
+          def.kind === "constant" ||
+          def.kind === "function") &&
+        def.function_collection
+      ) {
         this.function_collections.set(def.symbol_id, def.function_collection);
       }
     }
@@ -352,6 +393,41 @@ export class DefinitionRegistry {
     variable_id: SymbolId
   ): FunctionCollection | undefined {
     return this.function_collections.get(variable_id);
+  }
+
+  /**
+   * Find the collection holder whose member function most tightly encloses
+   * `location`, binding a `this`/self receiver inside an object-literal method or
+   * member/prototype-assigned function to the collection it belongs to so
+   * `this.method()` resolves against its siblings.
+   *
+   * Selection is by the innermost enclosing member (smallest span): a call inside
+   * a nested object literal binds to the nearest collection member that owns it,
+   * not to an outer literal that merely contains it. Only inline members carry an
+   * enclosure span; reference members (`{ method: helper }`) live elsewhere.
+   *
+   * @param location - The receiver call site (its enclosing scope span)
+   * @returns The collection holder's SymbolId, or null if none encloses it
+   */
+  find_enclosing_collection(location: Location): SymbolId | null {
+    let best_holder: SymbolId | null = null;
+    let best_span: Location | null = null;
+
+    for (const [collection_id, collection] of this.function_collections) {
+      for (const member of collection.named_members ?? []) {
+        if (!("location" in member)) {
+          continue;
+        }
+        if (location_contains(member.location, location)) {
+          if (best_span === null || is_tighter_span(member.location, best_span)) {
+            best_span = member.location;
+            best_holder = collection_id;
+          }
+        }
+      }
+    }
+
+    return best_holder;
   }
 
   /**

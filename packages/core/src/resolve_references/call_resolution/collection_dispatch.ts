@@ -17,7 +17,7 @@ import type {
   ScopeId,
   SymbolReference,
   MethodCallReference,
-  KeyedCollectionEntry,
+  CollectionMember,
   Result,
   ResolutionFailure,
 } from "@ariadnejs/types";
@@ -26,32 +26,49 @@ import type { DefinitionRegistry } from "../registries/definition";
 import type { ResolutionRegistry } from "../resolution_registry";
 
 /**
- * The callable a keyed entry names: an inline function value directly, or an
- * identifier value resolved in `scope_id`. Undefined for a `nested` entry, which
- * names an object rather than a function.
+ * The member named `name` in a collection, or undefined. The last match wins,
+ * matching last-write-wins reassignment and duplicate object keys.
  */
-function entry_callable(
-  entry: KeyedCollectionEntry,
+export function find_named_member(
+  members: readonly CollectionMember[],
+  name: SymbolName
+): CollectionMember | undefined {
+  let matched: CollectionMember | undefined;
+  for (const member of members) {
+    if (member.name === name) matched = member;
+  }
+  return matched;
+}
+
+/**
+ * The callable a member names: an inline function value directly, or a value
+ * identifier resolved in `scope_id`. Undefined for a nested member, which names an
+ * object rather than a function.
+ */
+function member_callable(
+  member: CollectionMember,
   scope_id: ScopeId,
   resolutions: ResolutionRegistry
 ): SymbolId | undefined {
-  if (entry.function_id) return entry.function_id;
-  if (entry.reference) return resolutions.resolve(scope_id, entry.reference) ?? undefined;
+  if ("symbol_id" in member) return member.symbol_id;
+  if ("reference_name" in member) {
+    return resolutions.resolve(scope_id, member.reference_name) ?? undefined;
+  }
   return undefined;
 }
 
 /**
- * Resolve the callable at `key` within a keyed object-literal collection. Returns
- * undefined when the key is absent or names a nested object (not itself callable).
+ * Resolve the callable named `name` within a collection's members. Undefined when
+ * the name is absent or names a nested object (not itself callable).
  */
-export function resolve_keyed_member(
-  entries: readonly KeyedCollectionEntry[],
-  key: SymbolName,
+export function resolve_named_member(
+  members: readonly CollectionMember[],
+  name: SymbolName,
   scope_id: ScopeId,
   resolutions: ResolutionRegistry
 ): SymbolId | undefined {
-  const entry = entries.find((e) => e.key === key);
-  return entry ? entry_callable(entry, scope_id, resolutions) : undefined;
+  const member = find_named_member(members, name);
+  return member ? member_callable(member, scope_id, resolutions) : undefined;
 }
 
 /**
@@ -165,8 +182,10 @@ function resolve_keyed_alias(
 ): Result<SymbolId[], ResolutionFailure> {
   const collection = definitions.get_function_collection(collection_id);
   const collection_def = definitions.get(collection_id);
-  const entry = collection?.keyed_members?.find((e) => e.key === alias_key);
-  if (!collection || !collection_def || !entry) {
+  const member = collection?.named_members
+    ? find_named_member(collection.named_members, alias_key)
+    : undefined;
+  if (!collection || !collection_def || !member) {
     return err({
       stage: "collection_dispatch",
       reason: "collection_dispatch_miss",
@@ -179,10 +198,10 @@ function resolve_keyed_alias(
   // nested object); a direct call targets the aliased value itself.
   const target =
     call_ref.kind === "method_call"
-      ? entry.nested
-        ? resolve_keyed_member(entry.nested, call_ref.name, scope_id, resolutions)
+      ? "nested" in member
+        ? resolve_named_member(member.nested, call_ref.name, scope_id, resolutions)
         : undefined
-      : entry_callable(entry, scope_id, resolutions);
+      : member_callable(member, scope_id, resolutions);
 
   if (!target) {
     return err({

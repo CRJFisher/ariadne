@@ -13,8 +13,8 @@ import type {
   Location,
   ScopeId,
   CallbackContext,
+  CollectionMember,
   FunctionCollectionInfo,
-  KeyedCollectionEntry,
   FilePath,
 } from "@ariadnejs/types";
 import {
@@ -232,6 +232,25 @@ export function extract_return_type(node: SyntaxNode): SymbolName | undefined {
   const return_type = node.childForFieldName("return_type");
   if (return_type) {
     return return_type.text as SymbolName;
+  }
+  return undefined;
+}
+
+/**
+ * Accessor kind for a method definition, read from the `get` / `set` keyword
+ * token that precedes the name on a class accessor. `undefined` for ordinary
+ * methods. The name node's parent is the `method_definition`. Shared by JS and
+ * TS — the accessor grammar is identical in both.
+ */
+export function extract_accessor_kind(
+  node: SyntaxNode
+): "getter" | "setter" | undefined {
+  const parent = node.parent;
+  if (parent) {
+    for (const child of parent.children || []) {
+      if (child.type === "get") return "getter";
+      if (child.type === "set") return "setter";
+    }
   }
   return undefined;
 }
@@ -588,17 +607,19 @@ export function detect_function_collection(
 
   // Check for object literal: { key: fn, ... }
   if (initializer.type === "object") {
-    const { functions, references, keyed_members } = extract_functions_from_object(
+    const { functions, references, named_members } = extract_functions_from_object(
       initializer,
       file_path
     );
-    if (functions.length > 0 || references.length > 0 || keyed_members.length > 0) {
+    // A pure-nested object (`{ A: { prop: fn } }`) has empty flat lists but a
+    // named member, so register on named_members too.
+    if (functions.length > 0 || references.length > 0 || named_members.length > 0) {
       return {
         collection_type: "Object",
         location: node_to_location(initializer, file_path),
         stored_functions: functions,
         stored_references: references,
-        keyed_members: keyed_members.length > 0 ? keyed_members : undefined,
+        named_members,
       };
     }
   }
@@ -629,6 +650,69 @@ export function extract_collection_source_key(node: SyntaxNode): SymbolName | un
     return property_node.text as SymbolName;
   }
   return undefined;
+}
+
+/**
+ * Detect a member-assigned function value: `app.method = function () {}` or
+ * `Counter.prototype.method = () => {}`. Returns the holder identifier and the
+ * property-named member function, or null when the assignment is not a function
+ * value on a simple (optionally `.prototype`) receiver.
+ *
+ * The member function's symbol matches the anonymous-function definition the
+ * right-hand side is indexed as, so the collection points at a real node.
+ */
+export function detect_member_assignment(
+  assignment_node: SyntaxNode,
+  file_path: FilePath
+): { holder_name: SymbolName; member: CollectionMember } | null {
+  const left = assignment_node.childForFieldName?.("left");
+  const right = assignment_node.childForFieldName?.("right");
+  if (!left || left.type !== "member_expression" || !right) {
+    return null;
+  }
+
+  if (
+    right.type !== "arrow_function" &&
+    right.type !== "function_expression" &&
+    right.type !== "function"
+  ) {
+    return null;
+  }
+
+  const property = left.childForFieldName("property");
+  if (!property || property.type !== "property_identifier") {
+    return null;
+  }
+
+  const object = left.childForFieldName("object");
+  if (!object) {
+    return null;
+  }
+
+  let holder_name: string | undefined;
+  if (object.type === "identifier") {
+    holder_name = object.text; // app.method = fn
+  } else if (object.type === "member_expression") {
+    const inner_property = object.childForFieldName("property");
+    const inner_object = object.childForFieldName("object");
+    if (inner_property?.text === "prototype" && inner_object?.type === "identifier") {
+      holder_name = inner_object.text; // Counter.prototype.method = fn
+    }
+  }
+  if (!holder_name) {
+    return null;
+  }
+
+  const member_location = node_to_location(right, file_path);
+  const member_id = anonymous_function_symbol(member_location);
+  return {
+    holder_name: holder_name as SymbolName,
+    member: {
+      name: property.text as SymbolName,
+      symbol_id: member_id,
+      location: member_location,
+    },
+  };
 }
 
 /**
@@ -728,33 +812,23 @@ function object_property_key(key_node: SyntaxNode | null | undefined): SymbolNam
 }
 
 /**
- * Record a keyed member, keeping the last occurrence on a duplicate key to match
- * the runtime object (`{ prop: a, prop: b }` evaluates `prop` to `b`).
- */
-function set_keyed_member(members: KeyedCollectionEntry[], entry: KeyedCollectionEntry): void {
-  const existing = members.findIndex((m) => m.key === entry.key);
-  if (existing >= 0) {
-    members[existing] = entry;
-  } else {
-    members.push(entry);
-  }
-}
-
-/**
  * Extract function SymbolIds from object literal: { key: fn, ... }
  *
- * `keyed_members` additionally records the property key of each function/nested value
- * so `X.key()` dispatches precisely. A nested object-literal value contributes a
- * `nested` entry only — its functions are never added to the flat `functions`/
- * `references` lists, so the keyless union path cannot reach them.
+ * `named_members` records the property name → member function — an inline function,
+ * a value identifier, or a nested object literal — for `obj.method()` /
+ * `this.method()` resolution and for following a local object-property alias one
+ * property deeper. `functions`/`references` feed keyless dispatch and
+ * indirect-reachability. A nested object-literal value contributes a `nested`
+ * member only; its functions never enter the flat lists, so the keyless union
+ * path cannot reach them. Duplicate keys are resolved last-wins at lookup.
  */
 function extract_functions_from_object(
   obj_node: SyntaxNode,
   file_path: FilePath
-): { functions: SymbolId[]; references: SymbolName[]; keyed_members: KeyedCollectionEntry[] } {
+): { functions: SymbolId[]; references: SymbolName[]; named_members: CollectionMember[] } {
   const function_ids: SymbolId[] = [];
   const references: SymbolName[] = [];
-  const keyed_members: KeyedCollectionEntry[] = [];
+  const named_members: CollectionMember[] = [];
 
   for (let i = 0; i < obj_node.namedChildCount; i++) {
     const child = obj_node.namedChild(i);
@@ -777,8 +851,7 @@ function extract_functions_from_object(
         const location = node_to_location(child, file_path);
         const method_id = method_symbol(name_node.text, location);
         function_ids.push(method_id);
-        const key = object_property_key(name_node);
-        if (key) set_keyed_member(keyed_members, { key, function_id: method_id });
+        named_members.push({ name: name_node.text as SymbolName, symbol_id: method_id, location });
       }
       continue;
     }
@@ -789,7 +862,7 @@ function extract_functions_from_object(
     const value = child.childForFieldName?.("value");
     if (!value) continue;
 
-    const key = object_property_key(child.childForFieldName?.("key"));
+    const name = object_property_key(child.childForFieldName?.("key"));
 
     if (
       value.type === "arrow_function" ||
@@ -799,17 +872,17 @@ function extract_functions_from_object(
       const location = node_to_location(value, file_path);
       const fn_id = anonymous_function_symbol(location);
       function_ids.push(fn_id);
-      if (key) set_keyed_member(keyed_members, { key, function_id: fn_id });
+      if (name) named_members.push({ name, symbol_id: fn_id, location });
     } else if (value.type === "identifier") {
       references.push(value.text as SymbolName);
-      if (key) set_keyed_member(keyed_members, { key, reference: value.text as SymbolName });
-    } else if (value.type === "object" && key) {
+      if (name) named_members.push({ name, reference_name: value.text as SymbolName });
+    } else if (value.type === "object" && name) {
       const nested = extract_functions_from_object(value, file_path);
-      if (nested.keyed_members.length > 0) {
-        set_keyed_member(keyed_members, { key, nested: nested.keyed_members });
+      if (nested.named_members.length > 0) {
+        named_members.push({ name, nested: nested.named_members });
       }
     }
   }
 
-  return { functions: function_ids, references, keyed_members };
+  return { functions: function_ids, references, named_members };
 }

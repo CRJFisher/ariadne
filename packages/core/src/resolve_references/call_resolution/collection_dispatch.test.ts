@@ -495,9 +495,9 @@ describe("resolve_collection_dispatch", () => {
       collection_type: "Object",
       location: MOCK_LOCATION,
       stored_functions: [],
-      keyed_members: [
-        { key: "A" as SymbolName, nested: [{ key: "prop" as SymbolName, reference: "target" as SymbolName }] },
-        { key: "B" as SymbolName, nested: [{ key: "prop" as SymbolName, reference: "decoy" as SymbolName }] },
+      named_members: [
+        { name: "A" as SymbolName, nested: [{ name: "prop" as SymbolName, reference_name: "target" as SymbolName }] },
+        { name: "B" as SymbolName, nested: [{ name: "prop" as SymbolName, reference_name: "decoy" as SymbolName }] },
       ],
     };
     const { id: ns_id, def: ns_def } = make_var_def("Ns", {
@@ -535,8 +535,8 @@ describe("resolve_collection_dispatch", () => {
       collection_type: "Object",
       location: MOCK_LOCATION,
       stored_functions: [target],
-      keyed_members: [
-        { key: "A" as SymbolName, nested: [{ key: "prop" as SymbolName, reference: "target" as SymbolName }] },
+      named_members: [
+        { name: "A" as SymbolName, nested: [{ name: "prop" as SymbolName, reference_name: "target" as SymbolName }] },
       ],
     };
     const { id: ns_id, def: ns_def } = make_var_def("Ns", {

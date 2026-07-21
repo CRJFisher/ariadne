@@ -73,6 +73,7 @@ export interface FunctionDefinition extends Definition {
   readonly generics?: SymbolName[];
   readonly body_scope_id: ScopeId; // The scope ID of this function's body
   readonly callback_context?: CallbackContext; // For anonymous functions that are callbacks
+  readonly function_collection?: FunctionCollection; // Prototype-style methods assigned as `Fn.prototype.method = ...`
 }
 
 export interface FunctionSignature {
@@ -114,6 +115,10 @@ export interface MethodDefinition extends Definition {
   readonly async?: boolean;
   readonly body_scope_id?: ScopeId; // The scope ID of this method's body - undefined in interfaces
   readonly access_modifier?: AccessModifier;
+  // Set for class accessors (`get x()` / `set x()`); absent for ordinary methods.
+  // A getter is invoked by a bare property read, so call resolution consults this
+  // to turn `obj.x` reads into call edges to the getter.
+  readonly accessor_kind?: "getter" | "setter";
 }
 
 export interface ConstructorDefinition extends Definition {
@@ -200,30 +205,36 @@ export interface FunctionCollection {
   readonly location: Location;
   readonly stored_functions: readonly SymbolId[];
   readonly stored_references?: readonly SymbolName[]; // Names of referenced functions (e.g. "handler" in [handler])
-  /**
-   * @language javascript,typescript
-   * Object-literal entries keyed by property name, for precise `X.key()` dispatch
-   * and following a local alias into a nested object literal (`var A = Ns.A; A.prop()`).
-   * Nested-object function values live here only — never flattened into
-   * `stored_functions` — so the keyless union path (`collection_dispatch`) never fans
-   * a keyed member call out to unrelated siblings.
-   */
-  readonly keyed_members?: readonly KeyedCollectionEntry[];
+  readonly named_members?: readonly CollectionMember[]; // Property name → member function, for `obj.method()` / `this.method()` resolution
 }
 
 /**
- * @language javascript,typescript
- * One object-literal property key and the dispatch target held at that key.
- * Exactly one of `function_id` / `reference` / `nested` is set: a function/arrow/method
- * value, an identifier value (resolved in the collection's defining scope), or a nested
- * object literal whose own keyed members are addressed one property deeper.
+ * A property-named function value on a collection: the sibling looked up by
+ * `obj.method()` or `this.method()`. Covers object-literal properties and
+ * member/prototype assignments (`app.method = function () {}`).
+ *
+ * An inline member holds the function value directly (`symbol_id`) plus its body
+ * span (`location`), used to bind a `this` receiver inside that body to the
+ * enclosing collection. A reference member names a value identifier resolved in
+ * the collection's defining scope (`reference_name`, e.g. `{ method: helper }`),
+ * whose body lives elsewhere and so carries no enclosure span. A nested member
+ * holds a nested object literal's own members (`{ A: { prop: fn } }`), addressed
+ * one property deeper when following a local object-property alias.
  */
-export interface KeyedCollectionEntry {
-  readonly key: SymbolName;
-  readonly function_id?: SymbolId;
-  readonly reference?: SymbolName;
-  readonly nested?: readonly KeyedCollectionEntry[];
-}
+export type CollectionMember =
+  | {
+      readonly name: SymbolName;
+      readonly symbol_id: SymbolId;
+      readonly location: Location;
+    }
+  | {
+      readonly name: SymbolName;
+      readonly reference_name: SymbolName;
+    }
+  | {
+      readonly name: SymbolName;
+      readonly nested: readonly CollectionMember[];
+    };
 
 /**
  * Partial function collection without collection_id (set by caller)
@@ -262,6 +273,12 @@ export interface ImportDefinition extends Definition {
   readonly import_kind: "named" | "default" | "namespace"; // Type of import
   readonly original_name?: SymbolName; // Original name in source module if aliased (for named imports)
   readonly is_type_only?: boolean; // TypeScript type-only import (e.g., import type { Foo })
+  // @language javascript
+  // True for a CommonJS `require()` binding. A whole-module `const X = require()`
+  // and an ESM `import * as X` both carry import_kind "namespace"; this flag
+  // separates them so only the require form is reinterpreted as its module's
+  // sole default export.
+  readonly is_commonjs_require?: boolean;
 }
 
 /**

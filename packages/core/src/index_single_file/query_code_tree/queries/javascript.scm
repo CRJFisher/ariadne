@@ -58,6 +58,14 @@
   value: (arrow_function) @reference.variable
 ) @assignment.variable
 
+; Function expressions assigned to variables — registers the outer var name as a
+; function in the enclosing scope. The inner name of a named function expression
+; is captured separately above and stays scoped to the function body.
+(variable_declarator
+  name: (identifier) @definition.function @assignment.variable
+  value: (function_expression) @reference.variable
+) @assignment.variable
+
 ; === Anonymous arrow functions (inline callbacks, config objects, etc.) ===
 
 ; Inline arrow functions in call expression arguments (forEach, map, filter, etc.)
@@ -167,6 +175,26 @@
   )?
 )
 
+; Named class expressions assigned to a CommonJS export, e.g.
+; `module.exports = class X {}` or `exports.X = class X {}`. Anchoring the
+; assignment target to an `exports` / `module` base keeps a non-export class
+; expression (`const C = class Bar {}`, `obj.prop = class Bar {}`, a class passed
+; as an argument) from registering a stray definition whose inner name would
+; shadow an enclosing binding. An anonymous `class {}` has no name to identify
+; and is left uncaptured.
+(assignment_expression
+  left: (member_expression
+    object: (identifier) @_export_base
+    (#match? @_export_base "^(module|exports)$")
+  )
+  right: (class
+    name: (identifier) @definition.class
+    (class_heritage
+      (identifier) @reference.type_reference
+    )?
+  )
+)
+
 ; Method definitions (capture static modifier)
 (method_definition
   "static"? @modifier.visibility
@@ -176,6 +204,13 @@
 
 (method_definition
   name: (private_property_identifier) @definition.method
+) @scope.method
+
+; Computed-key method definitions: [Symbol.iterator]() { ... }
+; Indexed as a callable node (the whole key text, e.g. `[Symbol.iterator]`, is the
+; name) so the method body is a scope and any calls it makes are captured.
+(method_definition
+  name: (computed_property_name) @definition.method
 ) @scope.method
 
 ; Constructor
@@ -395,6 +430,17 @@
   )
 ) @reference.call
 
+; Private method calls: this.#method()
+; Private members use `private_property_identifier` rather than `property_identifier`,
+; so the receiver-tracking rule above misses them. The extractor derives `#method`
+; and the `this` self-reference identically for both property node types.
+(call_expression
+  function: (member_expression
+    object: (_) @reference.variable
+    property: (private_property_identifier)
+  )
+) @reference.call
+
 ; Constructor calls
 (new_expression
   constructor: (identifier) @reference.constructor
@@ -435,6 +481,14 @@
     property: (property_identifier) @reference.property.assign
   ) @reference.member_access.assign
   right: (_) @reference.variable.source
+) @assignment.property
+
+; Prototype-style method assignment: Counter.prototype.method = function () {}
+(assignment_expression
+  left: (member_expression
+    object: (member_expression)
+    property: (property_identifier)
+  )
 ) @assignment.property
 
 ; Return statements

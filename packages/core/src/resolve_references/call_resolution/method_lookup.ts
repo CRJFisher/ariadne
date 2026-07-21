@@ -7,7 +7,7 @@ import type {
 import { err, ok } from "@ariadnejs/types";
 import { DefinitionRegistry } from "../registries/definition";
 import { resolve_namespace_export, resolve_named_import } from "../export_chain_lookup";
-import { resolve_keyed_member } from "./collection_dispatch";
+import { resolve_named_member } from "./collection_dispatch";
 import type { ReceiverResolutionContext } from "./receiver_resolution";
 
 /**
@@ -298,19 +298,21 @@ function resolve_collection_method(
     });
   }
 
-  // Object-literal members carry their property key, so `collection.method()`
-  // dispatches to exactly the member at that key — including function-expression
-  // values, whose own name is `<anonymous>`.
+  // Property-named members carry the sibling looked up by `obj.method()` /
+  // `this.method()`: an inline function value, an identifier resolved in the
+  // collection's defining scope, or a nested object literal (not itself
+  // callable). The last member wins, matching last-write-wins reassignment
+  // (`app.m = a; app.m = b;`) and duplicate object keys.
   const var_def = definitions.get(variable_id);
-  if (fn_collection.keyed_members && var_def) {
-    const keyed = resolve_keyed_member(
-      fn_collection.keyed_members,
+  if (var_def) {
+    const resolved = resolve_named_member(
+      fn_collection.named_members ?? [],
       method_name,
       var_def.defining_scope_id,
       context.resolutions
     );
-    if (keyed) {
-      return ok([keyed]);
+    if (resolved) {
+      return ok([resolved]);
     }
   }
 

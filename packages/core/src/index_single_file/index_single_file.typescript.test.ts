@@ -10,6 +10,7 @@ import TypeScript from "tree-sitter-typescript";
 import type {
   Language,
   FilePath,
+  SymbolName,
   FunctionCallReference,
   MethodCallReference,
   ConstructorCallReference,
@@ -49,6 +50,47 @@ describe("Semantic Index - TypeScript", () => {
   beforeAll(() => {
     parser = new Parser();
     parser.setLanguage(TypeScript.typescript);
+  });
+
+  describe("Variable-bound named function expression", () => {
+    it("registers the outer var name in the enclosing scope and the inner name in the function scope", () => {
+      const code = `var X = function X(): number {
+  return 1;
+};`;
+
+      const tree = parser.parse(code);
+      const parsed_file = create_parsed_file(
+        code,
+        "test.ts" as FilePath,
+        tree,
+        "typescript" as Language,
+      );
+      const index = build_index_single_file(
+        parsed_file,
+        tree,
+        "typescript" as Language,
+      );
+
+      const file_scope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "module" && s.parent_id === null,
+      );
+      expect(file_scope).toBeDefined();
+      const file_scope_id = file_scope!.id;
+
+      const function_scope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "function",
+      );
+      expect(function_scope).toBeDefined();
+
+      // Two function definitions named `X`: the outer var binding lives in the
+      // enclosing (module) scope so intra-file calls resolve; the inner
+      // expression name lives in the function scope for self-reference.
+      const x_scopes = Array.from(index.functions.values())
+        .filter((f) => f.name === ("X" as SymbolName))
+        .map((f) => f.defining_scope_id)
+        .sort();
+      expect(x_scopes).toEqual([file_scope_id, function_scope!.id].sort());
+    });
   });
 
   describe("Basic TypeScript features", () => {
@@ -3263,6 +3305,91 @@ const result = items.map((x) =>
       const fn = Array.from(index.functions.values()).find(f => f.name === "no_doc");
       expect(fn).toBeDefined();
       expect(fn!.docstring).toBeUndefined();
+    });
+  });
+
+  describe("Member reference capture gaps (task-351)", () => {
+    function build_index(code: string) {
+      const tree = parser.parse(code);
+      return build_index_single_file(
+        create_parsed_file(code, "test.ts" as FilePath, tree, "typescript" as Language),
+        tree,
+        "typescript" as Language
+      );
+    }
+
+    function methods_of(index: ReturnType<typeof build_index>) {
+      return Array.from(index.classes.values()).flatMap((c) => c.methods ?? []);
+    }
+
+    it("captures this.#method() private call as a self-reference call", () => {
+      const code = `class Vault {
+        #open() { return 1; }
+        run() { return this.#open(); }
+      }`;
+      const index = build_index(code);
+      const call = index.references.find(
+        (r): r is SelfReferenceCall =>
+          r.kind === "self_reference_call" && r.name === ("#open" as SymbolName),
+      );
+      expect(call).toBeDefined();
+      expect(call!.keyword).toBe("this");
+    });
+
+    it("indexes computed-key methods (member-expression and identifier keys) and captures calls from their bodies", () => {
+      const computed_key = "run";
+      const code = `const ${computed_key} = "run";
+      class Bag {
+        helper() { return 1; }
+        [Symbol.iterator]() { this.helper(); }
+        [${computed_key}]() { this.helper(); }
+      }`;
+      const index = build_index(code);
+      const methods = methods_of(index);
+
+      // Member-expression key: [Symbol.iterator]
+      const symbol_iterator = methods.find(
+        (m) => m.name === ("[Symbol.iterator]" as SymbolName),
+      );
+      expect(symbol_iterator).toBeDefined();
+      expect(symbol_iterator!.body_scope_id).toBeDefined();
+
+      // Identifier/variable key: [run]
+      const identifier_key = methods.find(
+        (m) => m.name === (`[${computed_key}]` as SymbolName),
+      );
+      expect(identifier_key).toBeDefined();
+      expect(identifier_key!.body_scope_id).toBeDefined();
+
+      // The `this.helper()` call inside the computed method body is captured AND
+      // attributed to that method's body scope (proving the body is a real scope).
+      const body_calls = index.references.filter(
+        (r): r is SelfReferenceCall =>
+          r.kind === "self_reference_call" && r.name === ("helper" as SymbolName),
+      );
+      expect(
+        body_calls.some((c) => c.scope_id === symbol_iterator!.body_scope_id),
+      ).toBe(true);
+      expect(
+        body_calls.some((c) => c.scope_id === identifier_key!.body_scope_id),
+      ).toBe(true);
+    });
+
+    it("flags accessor_kind on getter and setter definitions", () => {
+      const code = `class Box {
+        get value() { return 1; }
+        set value(v: number) {}
+        plain() { return 2; }
+      }`;
+      const methods = methods_of(build_index(code));
+      const getter = methods.find((m) => m.accessor_kind === "getter");
+      const setter = methods.find((m) => m.accessor_kind === "setter");
+      const plain = methods.find((m) => m.name === ("plain" as SymbolName));
+      expect(getter).toBeDefined();
+      expect(getter!.name).toBe("value");
+      expect(setter).toBeDefined();
+      expect(plain).toBeDefined();
+      expect(plain!.accessor_kind).toBeUndefined();
     });
   });
 
