@@ -11,6 +11,7 @@ import type {
   FunctionCollection,
 } from "@ariadnejs/types";
 import { is_exportable, location_key } from "@ariadnejs/types";
+import { set_member_symbol } from "../type_preprocessing/member";
 
 /**
  * Rebind `alias_name` in `flat_members` to the symbol of the member named by
@@ -89,7 +90,7 @@ export class DefinitionRegistry {
 
         for (const method of def.methods) {
           this.by_symbol.set(method.symbol_id, method);
-          flat_members.set(method.name, method.symbol_id);
+          set_member_symbol(flat_members, method);
           const method_loc_key = location_key(method.location);
           this.location_to_symbol.set(method_loc_key, method.symbol_id);
         }

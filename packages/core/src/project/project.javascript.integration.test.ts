@@ -1384,4 +1384,110 @@ export { create_class_id as create_py_class_id } from "./sf_py";
     });
   });
 
+  describe("Member reference reachability (task-351)", () => {
+    function method_symbol(file: FilePath, class_name: string, method: string) {
+      const index = project.get_index_single_file(file);
+      const cls = Array.from(index!.classes.values()).find(
+        (c) => c.name === (class_name as SymbolName)
+      );
+      return project.get_type_info(cls!.symbol_id)!.methods.get(method as SymbolName);
+    }
+
+    it("resolves a this.#method() private call to the private method", () => {
+      const file = file_path("private_call.js");
+      project.update_file(
+        file,
+        `class Vault {
+          #open() { return 1; }
+          run() { return this.#open(); }
+        }`
+      );
+      const referenced = project.resolutions.get_all_referenced_symbols();
+      const open = method_symbol(file, "Vault", "#open");
+      expect(open).toBeDefined();
+      expect(referenced.has(open!)).toBe(true);
+    });
+
+    it("resolves calls made from a computed-key method body", () => {
+      const file = file_path("computed_body.js");
+      project.update_file(
+        file,
+        `class Bag {
+          helper() { return 1; }
+          [Symbol.iterator]() { this.helper(); }
+        }`
+      );
+      const referenced = project.resolutions.get_all_referenced_symbols();
+      const helper = method_symbol(file, "Bag", "helper");
+      expect(helper).toBeDefined();
+      expect(referenced.has(helper!)).toBe(true);
+    });
+
+    it("makes a getter reachable when invoked via a bare property read", () => {
+      const file = file_path("getter_read.js");
+      project.update_file(
+        file,
+        `class Widget {
+          get value() { return 1; }
+          compute() { return 2; }
+        }
+        function main() { const w = new Widget(); return w.value; }`
+      );
+      const referenced = project.resolutions.get_all_referenced_symbols();
+      const value = method_symbol(file, "Widget", "value");
+      const compute = method_symbol(file, "Widget", "compute");
+      expect(value).toBeDefined();
+
+      expect(referenced.has(value!)).toBe(true);
+      expect(referenced.has(compute!)).toBe(false);
+
+      const entry_points = new Set(
+        project.get_call_graph({ include_tests: true }).entry_points
+      );
+      expect(entry_points.has(value!)).toBe(false);
+      expect(entry_points.has(compute!)).toBe(true);
+    });
+
+    it("makes a getter reachable even when a same-named setter is declared", () => {
+      // A `get value()` / `set value()` pair share one member name; the getter
+      // must still be reached by a bare read despite the name collision.
+      const file = file_path("getter_setter.js");
+      project.update_file(
+        file,
+        `class Widget {
+          get value() { return 1; }
+          set value(v) {}
+        }
+        function main() { const w = new Widget(); return w.value; }`
+      );
+      const referenced = project.resolutions.get_all_referenced_symbols();
+      const value = method_symbol(file, "Widget", "value");
+      expect(value).toBeDefined();
+      expect(referenced.has(value!)).toBe(true);
+    });
+
+    it("forges an edge only for getters — a non-getter member read creates none", () => {
+      const file = file_path("field_read.js");
+      project.update_file(
+        file,
+        `class Box {
+          field = 1;
+          plain() { return 3; }
+        }
+        function main() {
+          const b = new Box();
+          const f = b.field;   // plain data-property read
+          const m = b.plain;   // ordinary method read as a value (not a call)
+          return [f, m];
+        }`
+      );
+      const referenced = project.resolutions.get_all_referenced_symbols();
+      const plain = method_symbol(file, "Box", "plain");
+      expect(plain).toBeDefined();
+      // Reading a field or a non-getter method as a value must not forge a call
+      // edge — this is what the `accessor_kind === "getter"` guard enforces.
+      expect(referenced.has(plain!)).toBe(false);
+    });
+  });
+
 });
