@@ -21,8 +21,7 @@
     "release": "pnpm build && changeset publish",
     "prepublishOnly": "pnpm build",
     "check:size": "pnpm exec tsx scripts/check-file-sizes.ts",
-    "check:size:warn": "pnpm exec tsx scripts/check-file-sizes.ts || true",
-    "validate:captures": "pnpm exec tsx scripts/validate_captures.ts"
+    "check:size:warn": "pnpm exec tsx scripts/check-file-sizes.ts || true"
   },
   "devDependencies": {
     "@ariadnejs/core": "workspace:*",

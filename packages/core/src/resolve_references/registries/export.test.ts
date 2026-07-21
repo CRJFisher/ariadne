@@ -246,6 +246,50 @@ describe("ExportRegistry", () => {
     });
   });
 
+  describe("resolve_sole_default_export", () => {
+    it("returns the default when it is the file's only export", () => {
+      const fn = create_function_definition("Widget", file_id, 1, {
+        is_default: true,
+      });
+      const registry = new ExportRegistry();
+      registry.update_file(file_id, create_definition_registry({ [file_id]: [fn] }));
+
+      expect(
+        registry.resolve_sole_default_export(file_id, ALL_TS, ROOT_FOLDER)
+      ).toBe(fn.symbol_id);
+    });
+
+    it("returns null for an object module with only named exports", () => {
+      const a = create_function_definition("helper", file_id, 1);
+      const b = create_function_definition("process", file_id, 2);
+      const registry = new ExportRegistry();
+      registry.update_file(
+        file_id,
+        create_definition_registry({ [file_id]: [a, b] })
+      );
+
+      expect(
+        registry.resolve_sole_default_export(file_id, ALL_TS, ROOT_FOLDER)
+      ).toBeNull();
+    });
+
+    it("returns null when a default coexists with a named export", () => {
+      const def = create_function_definition("Widget", file_id, 1, {
+        is_default: true,
+      });
+      const named = create_function_definition("helper", file_id, 2);
+      const registry = new ExportRegistry();
+      registry.update_file(
+        file_id,
+        create_definition_registry({ [file_id]: [def, named] })
+      );
+
+      expect(
+        registry.resolve_sole_default_export(file_id, ALL_TS, ROOT_FOLDER)
+      ).toBeNull();
+    });
+  });
+
   describe("duplicate handling", () => {
     it("throws on two exported functions sharing a name", () => {
       const a = create_function_definition("dup", "app.ts" as FilePath, 1);

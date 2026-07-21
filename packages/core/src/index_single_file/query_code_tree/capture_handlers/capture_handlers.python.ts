@@ -50,13 +50,6 @@ import {
   store_python_docstring,
   consume_python_docstring,
 } from "../symbol_factories/documentation_state.python";
-import {
-  handle_definition_loop_var,
-  handle_definition_loop_var_multiple,
-  handle_definition_comprehension_var,
-  handle_definition_except_var,
-  handle_definition_with_var,
-} from "./control_flow_variable_handlers.python";
 import { handle_definition_import } from "./imports.python";
 
 // ============================================================================
@@ -150,58 +143,6 @@ export function handle_definition_method(
         return_type: extract_return_type(capture.node.parent || capture.node),
         ...method_type,
         async: is_async,
-        docstring,
-      },
-    );
-  }
-}
-
-export function handle_definition_method_static(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const method_id = create_method_id(capture);
-  const class_id = find_containing_class(capture);
-  const docstring = consume_python_docstring(capture.location.start_line);
-
-  if (class_id) {
-    builder.add_method_to_class(
-      class_id,
-      {
-        symbol_id: method_id,
-        name: capture.text,
-        location: capture.location,
-        scope_id: context.get_scope_id(capture.location),
-        return_type: extract_return_type(capture.node.parent || capture.node),
-        static: true,
-        async: is_async_function(capture.node.parent || capture.node),
-        docstring,
-      },
-    );
-  }
-}
-
-export function handle_definition_method_class(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const method_id = create_method_id(capture);
-  const class_id = find_containing_class(capture);
-  const docstring = consume_python_docstring(capture.location.start_line);
-
-  if (class_id) {
-    builder.add_method_to_class(
-      class_id,
-      {
-        symbol_id: method_id,
-        name: capture.text,
-        location: capture.location,
-        scope_id: context.get_scope_id(capture.location),
-        return_type: extract_return_type(capture.node.parent || capture.node),
-        abstract: true, // Use abstract flag for classmethod
-        async: is_async_function(capture.node.parent || capture.node),
         docstring,
       },
     );
@@ -415,25 +356,6 @@ export function handle_definition_function(
   );
 }
 
-export function handle_definition_lambda(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const func_id = create_function_id(capture);
-
-  builder.add_function(
-    {
-      symbol_id: func_id,
-      name: "lambda" as SymbolName,
-      location: capture.location,
-      scope_id: context.get_scope_id(capture.location),
-      is_exported: false, // Lambda functions are never exported
-    },
-    capture
-  );
-}
-
 export function handle_definition_anonymous_function(
   capture: CaptureNode,
   builder: DefinitionBuilder,
@@ -480,96 +402,6 @@ export function handle_definition_parameter(
     scope_id: context.get_scope_id(capture.location),
     type: extract_parameter_type(capture.node),
     default_value: extract_default_value(capture.node),
-  });
-}
-
-export function handle_definition_parameter_default(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const param_id = create_parameter_id(capture);
-  const parent_id = find_containing_callable(capture);
-
-  builder.add_parameter_to_callable(parent_id, {
-    symbol_id: param_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    type: extract_parameter_type(capture.node),
-    default_value: extract_default_value(capture.node),
-    optional: true,
-  });
-}
-
-export function handle_definition_parameter_typed(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const param_id = create_parameter_id(capture);
-  const parent_id = find_containing_callable(capture);
-
-  builder.add_parameter_to_callable(parent_id, {
-    symbol_id: param_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    type: extract_parameter_type(capture.node),
-    default_value: extract_default_value(capture.node),
-  });
-}
-
-export function handle_definition_parameter_typed_default(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const param_id = create_parameter_id(capture);
-  const parent_id = find_containing_callable(capture);
-
-  builder.add_parameter_to_callable(parent_id, {
-    symbol_id: param_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    type: extract_parameter_type(capture.node),
-    default_value: extract_default_value(capture.node),
-    optional: true,
-  });
-}
-
-export function handle_definition_parameter_args(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const param_id = create_parameter_id(capture);
-  const parent_id = find_containing_callable(capture);
-
-  builder.add_parameter_to_callable(parent_id, {
-    symbol_id: param_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    type: "tuple" as SymbolName, // *args is a tuple
-  });
-}
-
-export function handle_definition_parameter_kwargs(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const param_id = create_parameter_id(capture);
-  const parent_id = find_containing_callable(capture);
-
-  builder.add_parameter_to_callable(parent_id, {
-    symbol_id: param_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    type: "dict" as SymbolName, // **kwargs is a dict
   });
 }
 
@@ -621,124 +453,6 @@ export function handle_definition_variable(
     initial_value: extract_initial_value(capture.node),
     function_collection,
     collection_source,
-  });
-}
-
-export function handle_definition_variable_typed(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const var_id = create_variable_id(capture);
-  const name = capture.text;
-
-  const defining_scope_id = context.get_scope_id(capture.location);
-  const export_info = extract_export_info(
-    name,
-    defining_scope_id,
-    context.root_scope_id
-  );
-
-  const collection_source = extract_collection_source(capture.node);
-
-  builder.add_variable({
-    kind: "variable",
-    symbol_id: var_id,
-    name: name,
-    location: capture.location,
-    scope_id: defining_scope_id,
-    is_exported: export_info.is_exported,
-    export: export_info.export,
-    type: extract_type_annotation(capture.node),
-    initial_value: extract_initial_value(capture.node),
-    collection_source,
-  });
-}
-
-export function handle_definition_variable_multiple(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  // Handle multiple assignment like: a, b = 1, 2
-  const var_id = create_variable_id(capture);
-  const name = capture.text;
-
-  const defining_scope_id = context.get_scope_id(capture.location);
-  const export_info = extract_export_info(
-    name,
-    defining_scope_id,
-    context.root_scope_id
-  );
-
-  builder.add_variable({
-    kind: "variable",
-    symbol_id: var_id,
-    name: name,
-    location: capture.location,
-    scope_id: defining_scope_id,
-    is_exported: export_info.is_exported,
-    export: export_info.export,
-    type: undefined, // Type inference would be complex for unpacking
-    initial_value: undefined, // Value would be partial
-  });
-}
-
-export function handle_definition_variable_tuple(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  // Handle tuple unpacking like: (a, b) = (1, 2)
-  const var_id = create_variable_id(capture);
-  const name = capture.text;
-
-  const defining_scope_id = context.get_scope_id(capture.location);
-  const export_info = extract_export_info(
-    name,
-    defining_scope_id,
-    context.root_scope_id
-  );
-
-  builder.add_variable({
-    kind: "variable",
-    symbol_id: var_id,
-    name: name,
-    location: capture.location,
-    scope_id: defining_scope_id,
-    is_exported: export_info.is_exported,
-    export: export_info.export,
-    type: undefined,
-    initial_value: undefined,
-  });
-}
-
-export function handle_definition_variable_destructured(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  // Handle destructuring assignment
-  const var_id = create_variable_id(capture);
-  const name = capture.text;
-
-  const defining_scope_id = context.get_scope_id(capture.location);
-  const export_info = extract_export_info(
-    name,
-    defining_scope_id,
-    context.root_scope_id
-  );
-
-  builder.add_variable({
-    kind: "variable",
-    symbol_id: var_id,
-    name: name,
-    location: capture.location,
-    scope_id: defining_scope_id,
-    is_exported: export_info.is_exported,
-    export: export_info.export,
-    type: undefined,
-    initial_value: undefined,
   });
 }
 
@@ -842,40 +556,6 @@ export function handle_definition_enum_member(
 // DECORATOR HANDLERS
 // ============================================================================
 
-export function handle_decorator_variable(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const target_id = find_decorator_target(capture);
-  if (!target_id) return;
-
-  const decorator_name = capture.text;
-
-  builder.add_decorator_to_target(target_id, {
-    name: decorator_name,
-    defining_scope_id: context.get_scope_id(capture.location),
-    location: capture.location,
-  });
-}
-
-export function handle_decorator_function(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const target_id = find_decorator_target(capture);
-  if (!target_id) return;
-
-  const decorator_name = capture.text;
-
-  builder.add_decorator_to_target(target_id, {
-    name: decorator_name,
-    defining_scope_id: context.get_scope_id(capture.location),
-    location: capture.location,
-  });
-}
-
 export function handle_decorator_property(
   capture: CaptureNode,
   builder: DefinitionBuilder,
@@ -953,8 +633,6 @@ export const PYTHON_HANDLERS: HandlerRegistry = {
 
   // Methods
   "definition.method": handle_definition_method,
-  "definition.method.static": handle_definition_method_static,
-  "definition.method.class": handle_definition_method_class,
   "definition.constructor": handle_definition_constructor,
 
   // Properties
@@ -964,30 +642,13 @@ export const PYTHON_HANDLERS: HandlerRegistry = {
 
   // Functions
   "definition.function": handle_definition_function,
-  "definition.lambda": handle_definition_lambda,
   "definition.anonymous_function": handle_definition_anonymous_function,
 
   // Parameters
   "definition.parameter": handle_definition_parameter,
-  "definition.parameter.default": handle_definition_parameter_default,
-  "definition.parameter.typed": handle_definition_parameter_typed,
-  "definition.parameter.typed.default": handle_definition_parameter_typed_default,
-  "definition.parameter.args": handle_definition_parameter_args,
-  "definition.parameter.kwargs": handle_definition_parameter_kwargs,
 
   // Variables
   "definition.variable": handle_definition_variable,
-  "definition.variable.typed": handle_definition_variable_typed,
-  "definition.variable.multiple": handle_definition_variable_multiple,
-  "definition.variable.tuple": handle_definition_variable_tuple,
-  "definition.variable.destructured": handle_definition_variable_destructured,
-
-  // Loop and comprehension variables
-  "definition.loop_var": handle_definition_loop_var,
-  "definition.loop_var.multiple": handle_definition_loop_var_multiple,
-  "definition.comprehension_var": handle_definition_comprehension_var,
-  "definition.except_var": handle_definition_except_var,
-  "definition.with_var": handle_definition_with_var,
 
   // Imports
   "definition.import": handle_definition_import,
@@ -1001,8 +662,6 @@ export const PYTHON_HANDLERS: HandlerRegistry = {
   "definition.enum_member": handle_definition_enum_member,
 
   // Decorators
-  "decorator.variable": handle_decorator_variable,
-  "decorator.function": handle_decorator_function,
   "decorator.property": handle_decorator_property,
   "decorator.method": handle_decorator_method,
 

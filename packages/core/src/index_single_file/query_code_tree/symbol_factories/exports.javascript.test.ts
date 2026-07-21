@@ -50,6 +50,7 @@ const DECLARATION_PARENTS = new Set([
   "function_declaration",
   "generator_function_declaration",
   "class_declaration",
+  "class",
   "variable_declarator",
   "method_definition",
 ]);
@@ -86,6 +87,39 @@ function def_name_node(root: SyntaxNode, name: string): SyntaxNode {
 
 function info(code: string, name: string) {
   return extract_export_info(def_name_node(parse(code), name), name as SymbolName);
+}
+
+/**
+ * Locate the name identifier of a named function expression, e.g. the `castArray`
+ * in `exports.castArray = function castArray(){}`. This is the `capture.node` the
+ * @definition.function handler hands to `extract_export_info` for that shape,
+ * whose parent is a function_expression rather than a declaration.
+ */
+function fn_expr_name_node(root: SyntaxNode, name: string): SyntaxNode {
+  function search(node: SyntaxNode): SyntaxNode | undefined {
+    if (
+      node.type === "identifier" &&
+      node.text === name &&
+      node.parent?.type === "function_expression"
+    ) {
+      return node;
+    }
+    for (let i = 0; i < node.childCount; i++) {
+      const child = node.child(i);
+      if (child) {
+        const found = search(child);
+        if (found) return found;
+      }
+    }
+    return undefined;
+  }
+  const found = search(root);
+  if (!found) throw new Error(`no named function expression ${name} found`);
+  return found;
+}
+
+function info_fn_expr(code: string, name: string) {
+  return extract_export_info(fn_expr_name_node(parse(code), name), name as SymbolName);
 }
 
 describe("extract_export_info direct exports", () => {
@@ -204,6 +238,30 @@ describe("extract_export_info CommonJS exports", () => {
     });
   });
 
+  it("marks a named function expression assigned to exports.name as exported", () => {
+    const code = "exports.castArray = function castArray(v) { return [v]; };";
+    expect(info_fn_expr(code, "castArray")).toEqual({
+      is_exported: true,
+      export: {},
+    });
+  });
+
+  it("marks a named function expression assigned to module.exports.name as exported", () => {
+    const code = "module.exports.isBrowser = function isBrowser() { return false; };";
+    expect(info_fn_expr(code, "isBrowser")).toEqual({
+      is_exported: true,
+      export: {},
+    });
+  });
+
+  it("records the public name when a named function expression's name differs from the property", () => {
+    const code = "exports.publicName = function internalName() {};";
+    expect(info_fn_expr(code, "internalName")).toEqual({
+      is_exported: true,
+      export: { export_name: "publicName" as SymbolName },
+    });
+  });
+
   it("leaves a sibling local not assigned to exports unexported", () => {
     const code = "function foo() {}\nfunction bar() {}\nexports.foo = foo;";
     expect(info(code, "foo")).toEqual({ is_exported: true, export: {} });
@@ -238,6 +296,49 @@ describe("extract_export_info CommonJS exports", () => {
   it("does not mark a same-named local when the exports assignment carries an anonymous function", () => {
     const code = "function bar() {}\nexports.bar = () => {};";
     expect(info(code, "bar")).toEqual({ is_exported: false });
+  });
+
+  it("marks `module.exports = ClassName` as the file's default export", () => {
+    const code = "class Widget {}\nmodule.exports = Widget;";
+    expect(info(code, "Widget")).toEqual({
+      is_exported: true,
+      export: { is_default: true },
+    });
+  });
+
+  it("marks `module.exports = class Named {}` as the file's default export", () => {
+    const code = "module.exports = class Widget {};";
+    expect(info(code, "Widget")).toEqual({
+      is_exported: true,
+      export: { is_default: true },
+    });
+  });
+
+  it("leaves a sibling local unexported alongside a `module.exports = ClassName` default", () => {
+    const code = "class Widget {}\nfunction other() {}\nmodule.exports = Widget;";
+    expect(info(code, "other")).toEqual({ is_exported: false });
+  });
+
+  it("keeps only the last symbol as default across repeated `module.exports =`", () => {
+    const code = "class A {}\nclass B {}\nmodule.exports = A;\nmodule.exports = B;";
+    expect(info(code, "A")).toEqual({ is_exported: false });
+    expect(info(code, "B")).toEqual({
+      is_exported: true,
+      export: { is_default: true },
+    });
+  });
+
+  it("marks `exports.Name = class Name {}` as a named export", () => {
+    const code = "exports.Gadget = class Gadget {};";
+    expect(info(code, "Gadget")).toEqual({ is_exported: true, export: {} });
+  });
+
+  it("records the public name for `exports.Public = class Local {}`", () => {
+    const code = "exports.Renderer = class Gadget {};";
+    expect(info(code, "Gadget")).toEqual({
+      is_exported: true,
+      export: { export_name: "Renderer" },
+    });
   });
 });
 

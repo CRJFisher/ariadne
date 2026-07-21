@@ -133,7 +133,7 @@ describe("Python Builder Configuration", () => {
 
   describe("PYTHON_HANDLERS", () => {
     it("should export a valid handler registry with all expected keys", () => {
-      expect(Object.keys(PYTHON_HANDLERS).length).toEqual(38);
+      expect(Object.keys(PYTHON_HANDLERS).length).toEqual(19);
     });
 
     it("should contain class definition capture mappings", () => {
@@ -149,8 +149,6 @@ describe("Python Builder Configuration", () => {
     it("should contain method definition capture mappings", () => {
       const method_mappings = [
         "definition.method",
-        "definition.method.static",
-        "definition.method.class",
         "definition.constructor",
       ];
 
@@ -164,7 +162,6 @@ describe("Python Builder Configuration", () => {
     it("should contain function definition capture mappings", () => {
       const function_mappings = [
         "definition.function",
-        "definition.lambda",
       ];
 
       for (const mapping of function_mappings) {
@@ -177,11 +174,6 @@ describe("Python Builder Configuration", () => {
     it("should contain parameter definition capture mappings", () => {
       const param_mappings = [
         "definition.parameter",
-        "definition.parameter.default",
-        "definition.parameter.typed",
-        "definition.parameter.typed.default",
-        "definition.parameter.args",
-        "definition.parameter.kwargs",
       ];
 
       for (const mapping of param_mappings) {
@@ -194,15 +186,6 @@ describe("Python Builder Configuration", () => {
     it("should contain variable definition capture mappings", () => {
       const variable_mappings = [
         "definition.variable",
-        "definition.variable.typed",
-        "definition.variable.multiple",
-        "definition.variable.tuple",
-        "definition.variable.destructured",
-        "definition.loop_var",
-        "definition.loop_var.multiple",
-        "definition.comprehension_var",
-        "definition.except_var",
-        "definition.with_var",
       ];
 
       for (const mapping of variable_mappings) {
@@ -319,85 +302,6 @@ describe("Python Builder Configuration", () => {
       expect(import_def.name).toEqual("os");
     });
 
-    it("should handle lambda functions", () => {
-      const code = "f = lambda x: x * 2";
-      const capture = create_capture(code, "definition.lambda", "lambda");
-      const context = create_test_context(true);
-      const builder = new DefinitionBuilder(context);
-
-      PYTHON_HANDLERS["definition.lambda"]!(capture, builder, context);
-
-      const definitions = builder.build();
-      expect(definitions.functions.size).toEqual(1);
-      const func = definitions.functions.values().next().value!;
-      expect(func.name).toEqual("lambda");
-      expect(func.is_exported).toEqual(false);
-    });
-
-    it("should handle static methods", () => {
-      const code = `class MyClass:
-    @staticmethod
-    def static_method():
-        pass`;
-      const context = create_test_context();
-      const builder = new DefinitionBuilder(context);
-
-      // Register class first
-      const class_capture = create_capture(code, "definition.class", "identifier");
-      PYTHON_HANDLERS["definition.class"]!(class_capture, builder, context);
-
-      // Find and register the method
-      const ast = parser.parse(code);
-      const func_def = find_node_by_type(ast.rootNode, "function_definition")!;
-      const method_name_node = func_def.childForFieldName("name")!;
-      const method_capture: CaptureNode = {
-        name: "definition.method.static",
-        category: "definition" as SemanticCategory,
-        entity: "method" as SemanticEntity,
-        node: method_name_node as any,
-        text: method_name_node.text as SymbolName,
-        location: node_to_location(method_name_node, "test.py" as any),
-      };
-      PYTHON_HANDLERS["definition.method.static"]!(method_capture, builder, context);
-
-      const definitions = builder.build();
-      const cls = definitions.classes.values().next().value!;
-      expect(cls.methods.length).toEqual(1);
-      expect(cls.methods[0]!.name).toEqual("static_method");
-      expect(cls.methods[0]!.static).toEqual(true);
-    });
-
-    it("should handle class methods", () => {
-      const code = `class MyClass:
-    @classmethod
-    def class_method(cls):
-        pass`;
-      const context = create_test_context();
-      const builder = new DefinitionBuilder(context);
-
-      const class_capture = create_capture(code, "definition.class", "identifier");
-      PYTHON_HANDLERS["definition.class"]!(class_capture, builder, context);
-
-      const ast = parser.parse(code);
-      const func_def = find_node_by_type(ast.rootNode, "function_definition")!;
-      const method_name_node = func_def.childForFieldName("name")!;
-      const method_capture: CaptureNode = {
-        name: "definition.method.class",
-        category: "definition" as SemanticCategory,
-        entity: "method" as SemanticEntity,
-        node: method_name_node as any,
-        text: method_name_node.text as SymbolName,
-        location: node_to_location(method_name_node, "test.py" as any),
-      };
-      PYTHON_HANDLERS["definition.method.class"]!(method_capture, builder, context);
-
-      const definitions = builder.build();
-      const cls = definitions.classes.values().next().value!;
-      expect(cls.methods.length).toEqual(1);
-      expect(cls.methods[0]!.name).toEqual("class_method");
-      expect(cls.methods[0]!.abstract).toEqual(true); // classmethod uses abstract flag
-    });
-
     it("should handle properties", () => {
       const code = `class MyClass:
     @property
@@ -442,45 +346,6 @@ describe("Python Builder Configuration", () => {
       const cls = definitions.classes.values().next().value!;
       expect(cls.name).toEqual("Child");
       expect(cls.extends).toContain("Parent");
-    });
-
-    it("should handle typed parameters with default values", () => {
-      const code = `def func(x: int = 10):
-    pass`;
-      const ast = parser.parse(code);
-      const func_def = find_node_by_type(ast.rootNode, "function_definition")!;
-      const func_name = func_def.childForFieldName("name")!;
-      const typed_default = find_node_by_type(ast.rootNode, "typed_default_parameter")!;
-      const name_node = typed_default.childForFieldName("name")!;
-
-      const context = create_test_context();
-      const builder = new DefinitionBuilder(context);
-
-      const func_capture: CaptureNode = {
-        name: "definition.function",
-        category: "definition" as SemanticCategory,
-        entity: "function" as SemanticEntity,
-        node: func_name as any,
-        text: func_name.text as SymbolName,
-        location: node_to_location(func_name, "test.py" as any),
-      };
-      PYTHON_HANDLERS["definition.function"]!(func_capture, builder, context);
-
-      const param_capture: CaptureNode = {
-        name: "definition.parameter.typed.default",
-        category: "definition" as SemanticCategory,
-        entity: "parameter" as SemanticEntity,
-        node: name_node as any,
-        text: name_node.text as SymbolName,
-        location: node_to_location(name_node, "test.py" as any),
-      };
-      PYTHON_HANDLERS["definition.parameter.typed.default"]!(param_capture, builder, context);
-
-      const definitions = builder.build();
-      const func = definitions.functions.values().next().value!;
-      expect(func.signature.parameters.length).toEqual(1);
-      expect(func.signature.parameters[0]!.name).toEqual("x");
-      expect(func.signature.parameters[0]!.optional).toEqual(true);
     });
 
     it("should handle from imports", () => {
@@ -679,90 +544,6 @@ describe("Python Builder Configuration", () => {
     });
 
     describe("Decorator handlers", () => {
-      it("should handle decorator.variable on a class", () => {
-        const code = `@dataclass
-class MyClass:
-    name: str`;
-        const ast = parser.parse(code);
-        const context = create_test_context();
-        const builder = new DefinitionBuilder(context);
-
-        // Register class — use the class_definition name from the same AST
-        const decorated_def = find_node_by_type(ast.rootNode, "decorated_definition")!;
-        const class_def = decorated_def.childForFieldName("definition")!;
-        const class_name_node = class_def.childForFieldName("name")!;
-        const class_capture: CaptureNode = {
-          name: "definition.class",
-          category: "definition" as SemanticCategory,
-          entity: "class" as SemanticEntity,
-          node: class_name_node as any,
-          text: class_name_node.text as SymbolName,
-          location: node_to_location(class_name_node, "test.py" as any),
-        };
-        PYTHON_HANDLERS["definition.class"]!(class_capture, builder, context);
-
-        // Register decorator
-        const decorator_node = find_node_by_type(ast.rootNode, "decorator")!;
-        const dec_name_node = decorator_node.child(1)!;
-        const dec_capture: CaptureNode = {
-          name: "decorator.variable",
-          category: "decorator" as SemanticCategory,
-          entity: "variable" as SemanticEntity,
-          node: dec_name_node as any,
-          text: dec_name_node.text as SymbolName,
-          location: node_to_location(dec_name_node, "test.py" as any),
-        };
-        PYTHON_HANDLERS["decorator.variable"]!(dec_capture, builder, context);
-
-        const definitions = builder.build();
-        const cls = definitions.classes.values().next().value!;
-        expect(cls.decorators.length).toEqual(1);
-        expect(cls.decorators[0]!.name).toEqual("dataclass");
-      });
-
-      it("should handle decorator.function on a function", () => {
-        const code = `@app.route("/")
-def index():
-    pass`;
-        const ast = parser.parse(code);
-        const context = create_test_context(true);
-        const builder = new DefinitionBuilder(context);
-
-        const decorated_def = find_node_by_type(ast.rootNode, "decorated_definition")!;
-        const func_def = decorated_def.childForFieldName("definition")!;
-        const func_name = func_def.childForFieldName("name")!;
-        const func_capture: CaptureNode = {
-          name: "definition.function",
-          category: "definition" as SemanticCategory,
-          entity: "function" as SemanticEntity,
-          node: func_name as any,
-          text: func_name.text as SymbolName,
-          location: node_to_location(func_name, "test.py" as any),
-        };
-        PYTHON_HANDLERS["definition.function"]!(func_capture, builder, context);
-
-        const decorator_node = find_node_by_type(ast.rootNode, "decorator")!;
-        const call_node = find_node_by_type(decorator_node, "call");
-        const attr_node = call_node ? find_node_by_type(call_node, "attribute") : null;
-        const dec_node = attr_node || decorator_node.child(1)!;
-        const dec_capture: CaptureNode = {
-          name: "decorator.function",
-          category: "decorator" as SemanticCategory,
-          entity: "function" as SemanticEntity,
-          node: dec_node as any,
-          text: dec_node.text as SymbolName,
-          location: node_to_location(dec_node, "test.py" as any),
-        };
-        PYTHON_HANDLERS["decorator.function"]!(dec_capture, builder, context);
-
-        const definitions = builder.build();
-        expect(definitions.functions.size).toEqual(1);
-        const func = definitions.functions.values().next().value!;
-        expect(func.name).toEqual("index");
-        expect(func.decorators!.length).toEqual(1);
-        expect(func.decorators![0]!.name).toEqual("app.route");
-      });
-
       it("should handle decorator.method on a method", () => {
         const code = `class MyClass:
     @staticmethod
@@ -789,14 +570,14 @@ def index():
         const func_def = find_node_by_type(ast.rootNode, "function_definition")!;
         const method_name_node = func_def.childForFieldName("name")!;
         const method_capture: CaptureNode = {
-          name: "definition.method.static",
+          name: "definition.method",
           category: "definition" as SemanticCategory,
           entity: "method" as SemanticEntity,
           node: method_name_node as any,
           text: method_name_node.text as SymbolName,
           location: node_to_location(method_name_node, "test.py" as any),
         };
-        PYTHON_HANDLERS["definition.method.static"]!(method_capture, builder, context);
+        PYTHON_HANDLERS["definition.method"]!(method_capture, builder, context);
 
         // Register decorator from same AST
         const decorator_node = find_node_by_type(ast.rootNode, "decorator")!;
@@ -945,158 +726,6 @@ def index():
         expect(func.signature.parameters[0]!.name).toEqual("x");
       });
 
-      it("should handle definition.parameter.default for optional parameter", () => {
-        const code = `def func(x=10):
-    pass`;
-        const ast = parser.parse(code);
-        const func_def = find_node_by_type(ast.rootNode, "function_definition")!;
-        const func_name = func_def.childForFieldName("name")!;
-        const default_param = find_node_by_type(ast.rootNode, "default_parameter")!;
-        const name_node = default_param.childForFieldName("name")!;
-
-        const context = create_test_context();
-        const builder = new DefinitionBuilder(context);
-
-        const func_capture: CaptureNode = {
-          name: "definition.function",
-          category: "definition" as SemanticCategory,
-          entity: "function" as SemanticEntity,
-          node: func_name as any,
-          text: func_name.text as SymbolName,
-          location: node_to_location(func_name, "test.py" as any),
-        };
-        PYTHON_HANDLERS["definition.function"]!(func_capture, builder, context);
-
-        const param_capture: CaptureNode = {
-          name: "definition.parameter.default",
-          category: "definition" as SemanticCategory,
-          entity: "parameter" as SemanticEntity,
-          node: name_node as any,
-          text: name_node.text as SymbolName,
-          location: node_to_location(name_node, "test.py" as any),
-        };
-        PYTHON_HANDLERS["definition.parameter.default"]!(param_capture, builder, context);
-
-        const definitions = builder.build();
-        const func = definitions.functions.values().next().value!;
-        expect(func.signature.parameters.length).toEqual(1);
-        expect(func.signature.parameters[0]!.name).toEqual("x");
-        expect(func.signature.parameters[0]!.optional).toEqual(true);
-      });
-
-      it("should handle definition.parameter.typed for typed parameter", () => {
-        const code = `def func(x: int):
-    pass`;
-        const ast = parser.parse(code);
-        const func_def = find_node_by_type(ast.rootNode, "function_definition")!;
-        const func_name = func_def.childForFieldName("name")!;
-        const typed_param = find_node_by_type(ast.rootNode, "typed_parameter")!;
-        // The name of a typed_parameter is the first child identifier
-        const name_node = typed_param.namedChild(0)!;
-
-        const context = create_test_context();
-        const builder = new DefinitionBuilder(context);
-
-        const func_capture: CaptureNode = {
-          name: "definition.function",
-          category: "definition" as SemanticCategory,
-          entity: "function" as SemanticEntity,
-          node: func_name as any,
-          text: func_name.text as SymbolName,
-          location: node_to_location(func_name, "test.py" as any),
-        };
-        PYTHON_HANDLERS["definition.function"]!(func_capture, builder, context);
-
-        const param_capture: CaptureNode = {
-          name: "definition.parameter.typed",
-          category: "definition" as SemanticCategory,
-          entity: "parameter" as SemanticEntity,
-          node: name_node as any,
-          text: name_node.text as SymbolName,
-          location: node_to_location(name_node, "test.py" as any),
-        };
-        PYTHON_HANDLERS["definition.parameter.typed"]!(param_capture, builder, context);
-
-        const definitions = builder.build();
-        const func = definitions.functions.values().next().value!;
-        expect(func.signature.parameters.length).toEqual(1);
-        expect(func.signature.parameters[0]!.name).toEqual("x");
-        expect(func.signature.parameters[0]!.type).toEqual("int");
-      });
-
-      it("should handle definition.parameter.args for *args", () => {
-        const code = `def func(*args):
-    pass`;
-        const ast = parser.parse(code);
-        const func_def = find_node_by_type(ast.rootNode, "function_definition")!;
-        const func_name = func_def.childForFieldName("name")!;
-        const splat_node = find_node_by_type(ast.rootNode, "list_splat_pattern")!;
-
-        const context = create_test_context();
-        const builder = new DefinitionBuilder(context);
-
-        const func_capture: CaptureNode = {
-          name: "definition.function",
-          category: "definition" as SemanticCategory,
-          entity: "function" as SemanticEntity,
-          node: func_name as any,
-          text: func_name.text as SymbolName,
-          location: node_to_location(func_name, "test.py" as any),
-        };
-        PYTHON_HANDLERS["definition.function"]!(func_capture, builder, context);
-
-        const param_capture: CaptureNode = {
-          name: "definition.parameter.args",
-          category: "definition" as SemanticCategory,
-          entity: "parameter" as SemanticEntity,
-          node: splat_node as any,
-          text: splat_node.text as SymbolName,
-          location: node_to_location(splat_node, "test.py" as any),
-        };
-        PYTHON_HANDLERS["definition.parameter.args"]!(param_capture, builder, context);
-
-        const definitions = builder.build();
-        const func = definitions.functions.values().next().value!;
-        expect(func.signature.parameters.length).toEqual(1);
-        expect(func.signature.parameters[0]!.type).toEqual("tuple");
-      });
-
-      it("should handle definition.parameter.kwargs for **kwargs", () => {
-        const code = `def func(**kwargs):
-    pass`;
-        const ast = parser.parse(code);
-        const func_def = find_node_by_type(ast.rootNode, "function_definition")!;
-        const func_name = func_def.childForFieldName("name")!;
-        const splat_node = find_node_by_type(ast.rootNode, "dictionary_splat_pattern")!;
-
-        const context = create_test_context();
-        const builder = new DefinitionBuilder(context);
-
-        const func_capture: CaptureNode = {
-          name: "definition.function",
-          category: "definition" as SemanticCategory,
-          entity: "function" as SemanticEntity,
-          node: func_name as any,
-          text: func_name.text as SymbolName,
-          location: node_to_location(func_name, "test.py" as any),
-        };
-        PYTHON_HANDLERS["definition.function"]!(func_capture, builder, context);
-
-        const param_capture: CaptureNode = {
-          name: "definition.parameter.kwargs",
-          category: "definition" as SemanticCategory,
-          entity: "parameter" as SemanticEntity,
-          node: splat_node as any,
-          text: splat_node.text as SymbolName,
-          location: node_to_location(splat_node, "test.py" as any),
-        };
-        PYTHON_HANDLERS["definition.parameter.kwargs"]!(param_capture, builder, context);
-
-        const definitions = builder.build();
-        const func = definitions.functions.values().next().value!;
-        expect(func.signature.parameters.length).toEqual(1);
-        expect(func.signature.parameters[0]!.type).toEqual("dict");
-      });
     });
 
     describe("End-to-end integration tests", () => {
@@ -1476,25 +1105,6 @@ def index():
           expect(func?.is_exported).toBe(false);
         });
 
-        it("should have is_exported=false for lambda functions", () => {
-          const code = "f = lambda x: x * 2";
-          const context = create_test_context(true); // Need scopes for function bodies
-          const builder = new DefinitionBuilder(context);
-          const capture = create_capture(code, "definition.lambda", "lambda");
-
-          PYTHON_HANDLERS["definition.lambda"]!(
-            capture,
-            builder,
-            context
-          );
-
-          const definitions = builder.build();
-          const func = definitions.functions.values().next().value;
-
-          expect(func).toBeDefined();
-          expect(func?.name).toBe("lambda");
-          expect(func?.is_exported).toBe(false);
-        });
       });
 
       describe("Classes", () => {
@@ -1636,26 +1246,6 @@ def index():
           expect(variable?.is_exported).toBe(false);
         });
 
-        it("should have is_exported=false for loop variables", () => {
-          const code = `for i in range(10):
-    pass`;
-          const context = create_test_context();
-          const builder = new DefinitionBuilder(context);
-          const capture = create_capture(code, "definition.loop_var", "identifier");
-
-          PYTHON_HANDLERS["definition.loop_var"]!(
-            capture,
-            builder,
-            context
-          );
-
-          const definitions = builder.build();
-          const variable = definitions.variables.values().next().value;
-
-          expect(variable).toBeDefined();
-          expect(variable?.name).toBe("i");
-          expect(variable?.is_exported).toBe(false);
-        });
       });
 
       describe("Imports", () => {

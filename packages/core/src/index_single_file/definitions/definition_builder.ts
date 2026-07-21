@@ -155,11 +155,8 @@ export class DefinitionBuilder {
   }
 
   /**
-   * Record a function value assigned to a holder's property across a separate
-   * statement (`app.method = function () {}`). Members accumulate by holder name
-   * and are attached to the holder's definition as a FunctionCollection in
-   * build(), so `app.method()` and `this.method()` resolve to the assigned
-   * function.
+   * Record a function assigned to a holder's property (`app.method = fn`).
+   * Members accumulate by holder name and attach to the holder in build().
    */
   add_collection_member(
     holder_name: SymbolName,
@@ -230,6 +227,7 @@ export class DefinitionBuilder {
       async?: boolean;
       generics?: SymbolName[];
       docstring?: string;
+      accessor_kind?: "getter" | "setter";
     },
   ): DefinitionBuilder {
     const class_state = this.classes.get(class_id);
@@ -626,6 +624,7 @@ export class DefinitionBuilder {
     original_name?: SymbolName;
     import_kind: "named" | "default" | "namespace";
     is_type_only?: boolean;
+    is_commonjs_require?: boolean;
     export?: ExportMetadata;
   }): DefinitionBuilder {
     this.imports.set(definition.symbol_id, {
@@ -639,6 +638,7 @@ export class DefinitionBuilder {
       original_name: definition.original_name,
       import_kind: definition.import_kind,
       is_type_only: definition.is_type_only,
+      is_commonjs_require: definition.is_commonjs_require,
     });
     return this;
   }

@@ -12,6 +12,7 @@ import type {
   FunctionCollection,
 } from "@ariadnejs/types";
 import { is_exportable, location_key } from "@ariadnejs/types";
+import { set_member_symbol } from "../type_preprocessing/member";
 
 /**
  * Whether `outer` fully encloses `inner` within the same file, comparing
@@ -124,7 +125,7 @@ export class DefinitionRegistry {
 
         for (const method of def.methods) {
           this.by_symbol.set(method.symbol_id, method);
-          flat_members.set(method.name, method.symbol_id);
+          set_member_symbol(flat_members, method);
           const method_loc_key = location_key(method.location);
           this.location_to_symbol.set(method_loc_key, method.symbol_id);
         }

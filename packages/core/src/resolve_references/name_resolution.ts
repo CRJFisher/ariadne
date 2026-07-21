@@ -109,11 +109,48 @@ function resolve_scope_recursive(
 
   const import_defs = context.imports.get_scope_imports(scope_id);
 
+  // Names bound to a CommonJS default-export class by the import pass below; the
+  // local-definition pass must not revert them to the raw import symbol.
+  const require_default_rebinds = new Set<SymbolName>();
+
   for (const imp_def of import_defs) {
     let resolved: SymbolId | null = null;
 
     if (imp_def.import_kind === "namespace") {
       resolved = imp_def.symbol_id;
+
+      // @language javascript
+      // A CommonJS `const X = require('./mod')` binds the whole `module.exports`
+      // value. When that module's sole export is a default class
+      // (`module.exports = Class`), X *is* the class: rebind X to the class
+      // symbol so static, instance, and constructor dispatch resolve through the
+      // ordinary class machinery. An object module (`module.exports = { a, b }`)
+      // has named exports and no sole default, so it stays a namespace import
+      // and keeps its member-lookup dispatch. Gated to `require` so an ESM
+      // `import * as X` — a genuine namespace object — is never rebound.
+      if (imp_def.is_commonjs_require) {
+        const source_file = context.imports.get_resolved_import_path(
+          imp_def.symbol_id
+        );
+        if (source_file) {
+          const sole_default = context.exports.resolve_sole_default_export(
+            source_file,
+            context.languages,
+            context.root_folder
+          );
+          if (
+            sole_default &&
+            context.definitions.get(sole_default)?.kind === "class"
+          ) {
+            resolved = sole_default;
+            // `const X = require()` also surfaces `X` as a scope-level import
+            // definition, so the local-definition pass below would otherwise
+            // revert this rebind to the import symbol. Record the name to keep
+            // the class binding.
+            require_default_rebinds.add(imp_def.name);
+          }
+        }
+      }
     } else {
       const source_file = context.imports.get_resolved_import_path(
         imp_def.symbol_id
@@ -191,6 +228,11 @@ function resolve_scope_recursive(
     // shapes this targets (serde `let has_flatten = has_flatten(fields)`), and
     // the call edge — what entry-point detection needs — is what we recover.
     if (scope_resolutions.has(name) && is_self_initializer(symbol_id, name, context)) {
+      continue;
+    }
+    // Preserve a CommonJS `const X = require()` rebind to the default-export
+    // class over the same-named import definition in this scope.
+    if (require_default_rebinds.has(name)) {
       continue;
     }
     scope_resolutions.set(name, symbol_id);

@@ -36,6 +36,7 @@ import type { CallResolutionResult } from "../resolution_state";
 import type { ResolutionRegistry } from "../resolution_registry";
 import { detect_indirect_reachability } from "../indirect_reachability";
 import { resolve_method_call } from "./method_call";
+import { create_method_call_reference } from "../../index_single_file/references/factories";
 import { resolve_constructor_call, include_constructors_for_class_symbols } from "./constructor";
 import { resolve_collection_dispatch } from "./collection_dispatch";
 import { resolve_function_call } from "./function_call";
@@ -214,8 +215,58 @@ function resolve_calls(
           );
           break;
 
+        case "property_access": {
+          // A bare property read (`obj.value`) invokes a getter accessor
+          // (`get value()`), which is otherwise unreachable because no
+          // call_expression fires on the read. Resolve it through the method-call
+          // machinery via a synthetic method_call ref, and keep an edge only for
+          // members whose definition is a getter: a data-field read resolves to a
+          // property (kind !== "method"), and a plain method read resolves to a
+          // non-accessor method — both are filtered out, so only getter reads
+          // become edges. (Polymorphic dispatch can still surface a subclass's
+          // getter override of the read name; that mirrors ordinary method-call
+          // over-approximation and is intended.)
+          //
+          // This branch builds its own edge and `continue`s rather than falling
+          // through to the shared tail because `property_access` is not a call
+          // kind: `build_call_reference` is exhaustive over call kinds and would
+          // reject the raw ref, hence the synthetic method_call. The tail's
+          // constructor-inclusion and late-binding enrichments don't apply to
+          // getter reads.
+          const getter_call = create_method_call_reference(
+            ref.name,
+            ref.location,
+            ref.scope_id,
+            ref.receiver_location,
+            ref.property_chain,
+            ref.is_optional_chain
+          );
+          const getter_result = resolve_method_call(
+            getter_call,
+            context.scopes,
+            context.definitions,
+            context.types,
+            context.resolutions,
+            context.imports,
+            context.exports,
+            context.languages,
+            context.root_folder
+          );
+          const getters = (
+            is_ok(getter_result) ? getter_result.value : []
+          ).filter((sym) => {
+            const def = context.definitions.get(sym);
+            return def?.kind === "method" && def.accessor_kind === "getter";
+          });
+          if (getters.length > 0) {
+            resolved_calls.push(
+              build_call_reference(getter_call, getters, context.definitions)
+            );
+          }
+          continue;
+        }
+
         case "variable_reference":
-        case "property_access":
         case "type_reference":
         case "assignment":
           continue;

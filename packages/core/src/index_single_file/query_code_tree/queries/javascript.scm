@@ -96,6 +96,34 @@
   value: (function_expression) @definition.anonymous_function
 )
 
+; === CommonJS property exports of a function value ===
+; exports.NAME = function () {} / () => {}   and   module.exports.NAME = ...
+; The `(program (expression_statement ...))` anchor restricts the match to
+; module top level, matching the export cache's top-level-only walk — a
+; `exports.x = () => {}` nested in a function body is a local assignment, not a
+; module export. Named function expressions are excluded (!name): they already
+; produce a @definition.function (function_expression rule above) and are marked
+; exported through the export cache. The body scope attaches to this
+; property-located definition via find_body_scope_for_definition, exactly as for
+; `const NAME = () => {}`.
+(program
+  (expression_statement
+    (assignment_expression
+      left: (member_expression
+        object: (identifier) @_obj
+        property: (property_identifier) @definition.function.commonjs_export)
+      right: [(function_expression !name) (arrow_function)]
+      (#eq? @_obj "exports"))))
+
+(program
+  (expression_statement
+    (assignment_expression
+      left: (member_expression
+        object: (member_expression) @_obj
+        property: (property_identifier) @definition.function.commonjs_export)
+      right: [(function_expression !name) (arrow_function)]
+      (#eq? @_obj "module.exports"))))
+
 ; Variable declarations with assignments
 (variable_declarator
   name: (identifier) @definition.variable @assignment.variable
@@ -139,6 +167,26 @@
   )?
 )
 
+; Named class expressions assigned to a CommonJS export, e.g.
+; `module.exports = class X {}` or `exports.X = class X {}`. Anchoring the
+; assignment target to an `exports` / `module` base keeps a non-export class
+; expression (`const C = class Bar {}`, `obj.prop = class Bar {}`, a class passed
+; as an argument) from registering a stray definition whose inner name would
+; shadow an enclosing binding. An anonymous `class {}` has no name to identify
+; and is left uncaptured.
+(assignment_expression
+  left: (member_expression
+    object: (identifier) @_export_base
+    (#match? @_export_base "^(module|exports)$")
+  )
+  right: (class
+    name: (identifier) @definition.class
+    (class_heritage
+      (identifier) @reference.type_reference
+    )?
+  )
+)
+
 ; Method definitions (capture static modifier)
 (method_definition
   "static"? @modifier.visibility
@@ -148,6 +196,13 @@
 
 (method_definition
   name: (private_property_identifier) @definition.method
+) @scope.method
+
+; Computed-key method definitions: [Symbol.iterator]() { ... }
+; Indexed as a callable node (the whole key text, e.g. `[Symbol.iterator]`, is the
+; name) so the method body is a scope and any calls it makes are captured.
+(method_definition
+  name: (computed_property_name) @definition.method
 ) @scope.method
 
 ; Constructor
@@ -364,6 +419,17 @@
   function: (member_expression
     object: (_) @reference.variable
     property: (property_identifier)
+  )
+) @reference.call
+
+; Private method calls: this.#method()
+; Private members use `private_property_identifier` rather than `property_identifier`,
+; so the receiver-tracking rule above misses them. The extractor derives `#method`
+; and the `this` self-reference identically for both property node types.
+(call_expression
+  function: (member_expression
+    object: (_) @reference.variable
+    property: (private_property_identifier)
   )
 ) @reference.call
 

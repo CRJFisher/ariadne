@@ -477,67 +477,6 @@ impl MyStruct {
       expect(classes[0].methods[0].name).toBe("get_value");
       expect(classes[0].methods[0].return_type).toBe("String");
     });
-
-    it("should process associated function (static method)", () => {
-      const code = `struct MyStruct { value: String }
-impl MyStruct {
-    pub fn new() -> Self {
-        MyStruct { value: String::new() }
-    }
-}`;
-
-      const tree = parser.parse(code);
-      const struct_node = find_node(tree.rootNode, "type_identifier", "MyStruct");
-      const method_node = find_node(tree.rootNode, "identifier", "new");
-
-      const struct_location = node_to_location(struct_node, "test.rs" as FilePath);
-      const method_location = node_to_location(method_node, "test.rs" as FilePath);
-
-      const root_scope_id = "module:test.rs:1:0:100:0:<module>" as ScopeId;
-      const context: ProcessingContext = {
-        captures: [],
-        scopes: new Map(),
-        scope_depths: new Map(),
-        root_scope_id,
-        get_scope_id: (_location: Location) => root_scope_id,
-        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
-          throw new Error(`Child scope with name ${_name} not found in scope ${_scope_id}`);
-        },
-      };
-
-      const builder = new DefinitionBuilder(context);
-
-      // Add struct first
-      const struct_capture: CaptureNode = {
-        category: "definition" as any,
-        entity: "class" as any,
-        node: struct_node,
-        text: "MyStruct" as SymbolName,
-        name: "definition.class",
-        location: struct_location,
-      };
-      RUST_HANDLERS["definition.class"](struct_capture, builder, context);
-
-      // Now process the associated function
-      const method_capture: CaptureNode = {
-        category: "definition" as any,
-        entity: "method" as any,
-        node: method_node,
-        text: "new" as SymbolName,
-        name: "definition.method.associated",
-        location: method_location,
-      };
-      RUST_HANDLERS["definition.method.associated"](method_capture, builder, context);
-
-      const result = builder.build();
-      const classes = Array.from(result.classes.values());
-      expect(classes).toHaveLength(1);
-      expect(classes[0].name).toBe("MyStruct");
-      expect(classes[0].methods).toHaveLength(1);
-      expect(classes[0].methods[0].name).toBe("new");
-      expect(classes[0].methods[0].static).toBe(true);
-      expect(classes[0].methods[0].return_type).toBe("Self");
-    });
   });
 
   describe("variable and constant definitions", () => {
@@ -1024,6 +963,36 @@ impl MyStruct {
       expect(definitions.classes[0].export).toBeUndefined();
     });
 
+    it("should set is_exported=true for pub type alias", () => {
+      const code = "pub type Alias = Bar;";
+
+      const definitions = process_capture(
+        code,
+        "definition.type_alias",
+        "type_identifier",
+        "Alias"
+      );
+
+      expect(definitions.types).toHaveLength(1);
+      expect(definitions.types[0].name).toBe("Alias");
+      expect(definitions.types[0].is_exported).toBe(true);
+    });
+
+    it("should set is_exported=false for private type alias", () => {
+      const code = "type Alias = Bar;";
+
+      const definitions = process_capture(
+        code,
+        "definition.type_alias",
+        "type_identifier",
+        "Alias"
+      );
+
+      expect(definitions.types).toHaveLength(1);
+      expect(definitions.types[0].name).toBe("Alias");
+      expect(definitions.types[0].is_exported).toBe(false);
+    });
+
     it("should set is_exported=true for pub(crate) fn", () => {
       const code = "pub(crate) fn foo() {}";
 
@@ -1119,38 +1088,6 @@ impl MyStruct {
       expect(definitions.classes[0].name).toBe("Internal");
       expect(definitions.classes[0].is_exported).toBe(true);
       expect(definitions.classes[0].export).toBeUndefined();
-    });
-
-    it("should set is_exported=true for pub type alias", () => {
-      const code = "pub type Result<T> = std::result::Result<T, Error>;";
-
-      const definitions = process_capture(
-        code,
-        "definition.type",
-        "type_identifier",
-        "Result"
-      );
-
-      expect(definitions.types).toHaveLength(1);
-      expect(definitions.types[0].name).toBe("Result");
-      expect(definitions.types[0].is_exported).toBe(true);
-      expect(definitions.types[0].export).toBeUndefined();
-    });
-
-    it("should set is_exported=false for private type alias", () => {
-      const code = "type Result<T> = std::result::Result<T, Error>;";
-
-      const definitions = process_capture(
-        code,
-        "definition.type",
-        "type_identifier",
-        "Result"
-      );
-
-      expect(definitions.types).toHaveLength(1);
-      expect(definitions.types[0].name).toBe("Result");
-      expect(definitions.types[0].is_exported).toBe(false);
-      expect(definitions.types[0].export).toBeUndefined();
     });
 
     it("should set is_exported=true for pub trait", () => {
@@ -1249,22 +1186,6 @@ impl MyStruct {
       expect(definitions.functions[0].name).toBe("raw_ptr");
       expect(definitions.functions[0].is_exported).toBe(true);
       expect(definitions.functions[0].export).toBeUndefined();
-    });
-
-    it("should set is_exported=true for pub mod", () => {
-      const code = "pub mod utils;";
-
-      const definitions = process_capture(
-        code,
-        "definition.module.public",
-        "identifier",
-        "utils"
-      );
-
-      expect(definitions.namespaces).toHaveLength(1);
-      expect(definitions.namespaces[0].name).toBe("utils");
-      expect(definitions.namespaces[0].is_exported).toBe(true);
-      expect(definitions.namespaces[0].export).toBeUndefined();
     });
 
     it("should set is_exported=false for private mod", () => {
@@ -1616,77 +1537,6 @@ impl MyStruct {
       expect(definitions.variables).toHaveLength(1);
       expect(definitions.variables[0].name).toBe("items");
       expect(definitions.variables[0].kind).toBe("variable");
-    });
-  });
-
-  describe("type alias in impl block", () => {
-    it("should process type alias in impl", () => {
-      const code = "type Output = String;";
-
-      const definitions = process_capture(
-        code,
-        "definition.type_alias.impl",
-        "type_identifier",
-        "Output"
-      );
-
-      expect(definitions.types).toHaveLength(1);
-      expect(definitions.types[0].name).toBe("Output");
-      expect(definitions.types[0].is_exported).toBe(true);
-    });
-  });
-
-  describe("closure parameter definitions", () => {
-    it("should process closure parameter", () => {
-      const code = "fn apply(f: impl Fn(i32) -> i32) {}";
-      const tree = parser.parse(code);
-
-      const fn_node = find_node(tree.rootNode, "identifier", "apply");
-      const param_node = find_node(tree.rootNode, "identifier", "f");
-
-      const fn_location = node_to_location(fn_node, "test.rs" as FilePath);
-      const param_location = node_to_location(param_node, "test.rs" as FilePath);
-
-      const root_scope_id = "module:test.rs:1:0:100:0:<module>" as ScopeId;
-      const context: ProcessingContext = {
-        captures: [],
-        scopes: new Map(),
-        scope_depths: new Map(),
-        root_scope_id,
-        get_scope_id: (_location: Location) => root_scope_id,
-        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
-          throw new Error("Child scope not found");
-        },
-      };
-
-      const builder = new DefinitionBuilder(context);
-
-      // Add function first
-      RUST_HANDLERS["definition.function"]({
-        category: "definition" as any,
-        entity: "function" as any,
-        node: fn_node,
-        text: "apply" as SymbolName,
-        name: "definition.function",
-        location: fn_location,
-      }, builder, context);
-
-      // Add closure parameter
-      RUST_HANDLERS["definition.parameter.closure"]({
-        category: "definition" as any,
-        entity: "parameter" as any,
-        node: param_node,
-        text: "f" as SymbolName,
-        name: "definition.parameter.closure",
-        location: param_location,
-      }, builder, context);
-
-      const result = builder.build();
-      const functions = Array.from(result.functions.values());
-      expect(functions).toHaveLength(1);
-      expect(functions[0].name).toBe("apply");
-      expect(functions[0].signature.parameters).toHaveLength(1);
-      expect(functions[0].signature.parameters[0].name).toBe("f");
     });
   });
 

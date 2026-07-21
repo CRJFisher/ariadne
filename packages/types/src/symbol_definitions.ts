@@ -115,6 +115,10 @@ export interface MethodDefinition extends Definition {
   readonly async?: boolean;
   readonly body_scope_id?: ScopeId; // The scope ID of this method's body - undefined in interfaces
   readonly access_modifier?: AccessModifier;
+  // Set for class accessors (`get x()` / `set x()`); absent for ordinary methods.
+  // A getter is invoked by a bare property read, so call resolution consults this
+  // to turn `obj.x` reads into call edges to the getter.
+  readonly accessor_kind?: "getter" | "setter";
 }
 
 export interface ConstructorDefinition extends Definition {
@@ -255,6 +259,12 @@ export interface ImportDefinition extends Definition {
   readonly import_kind: "named" | "default" | "namespace"; // Type of import
   readonly original_name?: SymbolName; // Original name in source module if aliased (for named imports)
   readonly is_type_only?: boolean; // TypeScript type-only import (e.g., import type { Foo })
+  // @language javascript
+  // True for a CommonJS `require()` binding. A whole-module `const X = require()`
+  // and an ESM `import * as X` both carry import_kind "namespace"; this flag
+  // separates them so only the require form is reinterpreted as its module's
+  // sole default export.
+  readonly is_commonjs_require?: boolean;
 }
 
 /**

@@ -390,6 +390,13 @@
   name: (private_property_identifier) @definition.method
 ) @scope.method
 
+; Computed-key method definitions: [Symbol.iterator]() { ... }
+; Indexed as a callable node (the whole key text, e.g. `[Symbol.iterator]`, is the
+; name) so the method body is a scope and any calls it makes are captured.
+(method_definition
+  name: (computed_property_name) @definition.method
+) @scope.method
+
 ; Abstract method signatures in classes (not interfaces)
 ; These are abstract methods declared in abstract classes
 ; Try both method_signature and abstract_method_signature
@@ -618,6 +625,17 @@
   function: (member_expression
     object: (_) @reference.variable
     property: (property_identifier)
+  )
+) @reference.call
+
+; Private method calls: this.#method()
+; Private members use `private_property_identifier` rather than `property_identifier`,
+; so the receiver-tracking rule above misses them. The extractor derives `#method`
+; and the `this` self-reference identically for both property node types.
+(call_expression
+  function: (member_expression
+    object: (_) @reference.variable
+    property: (private_property_identifier)
   )
 ) @reference.call
 
