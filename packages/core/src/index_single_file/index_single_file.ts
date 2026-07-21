@@ -74,8 +74,8 @@ export function build_index_single_file(
   });
 
   // PASS 2: Build scope tree
-  const scopes = process_scopes(capture_nodes, file);
-  const context = create_processing_context(scopes, capture_nodes);
+  const { scopes, root_scope_id } = process_scopes(capture_nodes, file);
+  const context = create_processing_context(scopes, root_scope_id, capture_nodes);
 
   // PASS 3: Process definitions with language-specific handler registry.
   // Reset documentation state to prevent cross-file contamination from prior indexing passes

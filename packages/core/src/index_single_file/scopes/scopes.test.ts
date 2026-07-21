@@ -125,7 +125,7 @@ describe("scopes", () => {
     it("should create root module scope for empty file", () => {
       const captures: CaptureNode[] = [];
 
-      const scopes = process_scopes(captures, file);
+      const { scopes } = process_scopes(captures, file);
 
       expect(scopes.size).toBe(1);
       const root = Array.from(scopes.values())[0];
@@ -150,7 +150,7 @@ describe("scopes", () => {
         ),
       ];
 
-      const scopes = process_scopes(captures, file);
+      const { scopes } = process_scopes(captures, file);
 
       expect(scopes.size).toBe(2);
 
@@ -212,7 +212,7 @@ describe("scopes", () => {
         ),
       ];
 
-      const scopes = process_scopes(captures, file);
+      const { scopes } = process_scopes(captures, file);
 
       expect(scopes.size).toBe(4); // root + class + method + block
 
@@ -283,7 +283,7 @@ describe("scopes", () => {
         ),
       ];
 
-      const scopes = process_scopes(captures, file);
+      const { scopes } = process_scopes(captures, file);
 
       expect(scopes.size).toBe(4); // root + 3 functions
 
@@ -332,7 +332,7 @@ describe("scopes", () => {
         ),
       ];
 
-      const scopes = process_scopes(captures, file);
+      const { scopes } = process_scopes(captures, file);
 
       expect(scopes.size).toBe(3); // root + outer + inner
 
@@ -377,7 +377,7 @@ describe("scopes", () => {
         ),
       ];
 
-      const scopes = process_scopes(captures, file);
+      const { scopes } = process_scopes(captures, file);
 
       expect(scopes.size).toBe(3); // root + interface + enum
 
@@ -448,7 +448,7 @@ describe("scopes", () => {
       });
 
       const captures: CaptureNode[] = [];
-      const context = create_processing_context(scopes, captures);
+      const context = create_processing_context(scopes, root_id, captures);
 
       expect(context.scope_depths.get(root_id)).toBe(0);
       expect(context.scope_depths.get(func_id)).toBe(1);
@@ -509,7 +509,7 @@ describe("scopes", () => {
       });
 
       const captures: CaptureNode[] = [];
-      const context = create_processing_context(scopes, captures);
+      const context = create_processing_context(scopes, root_id, captures);
 
       // Location in module but outside function
       expect(
@@ -615,7 +615,7 @@ describe("scopes", () => {
       });
 
       const captures: CaptureNode[] = [];
-      const context = create_processing_context(scopes, captures);
+      const context = create_processing_context(scopes, root_id, captures);
 
       // Location in method1
       expect(
@@ -684,7 +684,7 @@ describe("scopes", () => {
           ),
         ];
 
-        const scopes = process_scopes(captures, file);
+        const { scopes } = process_scopes(captures, file);
 
         if (entity === "module" || entity === "namespace") {
           // Mock nodes have equal symbol_location and scope_location,
@@ -748,7 +748,7 @@ describe("scopes", () => {
       });
 
       const captures: CaptureNode[] = [];
-      const context = create_processing_context(scopes, captures);
+      const context = create_processing_context(scopes, root_id, captures);
 
       // Class name is at 1:7:1:14 - BEFORE the class body scope
       // Should be assigned to module scope, not class scope
@@ -814,7 +814,11 @@ describe("scopes", () => {
       });
 
       const captures: CaptureNode[] = [];
-      const context = create_processing_context(scopes, captures);
+      const context = create_processing_context(
+        scopes,
+        small_module_id,
+        captures
+      );
 
       // Location at 1:5:1:10 is contained in both scopes
       const location: Location = {
