@@ -960,9 +960,12 @@ function run(): void {
     });
 
     it("leaves an aliased call to an absent key unresolved rather than fanning out", () => {
+      // `sibling` is a top-level function member, so Ns's keyless union is non-empty:
+      // a union fallback on the keyed miss would wrongly resolve `A.missing()` to it.
       const code = `
 function target(): void {}
-const Ns = { A: { prop: target } };
+function sibling(): void {}
+const Ns = { A: { prop: target }, sibling: sibling };
 function run(): void {
   var A = Ns.A;
   A.missing();

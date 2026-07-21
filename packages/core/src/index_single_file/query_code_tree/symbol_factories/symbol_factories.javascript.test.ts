@@ -618,16 +618,33 @@ describe("detect_function_collection", () => {
     const code = "const handlers = { a: function () {}, b: fn2 };";
     const root = parse_ts(code);
     const declarator = root.child(0)!.namedChildren[0]!;
+    // The function-expression value keeps its property key even though its own
+    // symbol name is <anonymous>; its id is the anonymous symbol at its location.
+    const fn_node = find_node_by_type(root, "function_expression")!;
+    const a_id = anonymous_function_symbol(node_to_location(fn_node, file_path));
 
     const result = detect_function_collection(declarator, file_path);
 
-    expect(result?.keyed_members).toBeDefined();
-    expect(result?.keyed_members?.map((m) => m.key)).toEqual(["a", "b"]);
-    // The function-expression value keeps its property key (its own name is <anonymous>).
-    expect(result?.keyed_members?.[0].function_id).toBeDefined();
-    expect(result?.keyed_members?.[0].reference).toBeUndefined();
-    // The identifier value is recorded as a reference under its key.
-    expect(result?.keyed_members?.[1].reference).toBe("fn2");
+    expect(result?.keyed_members).toEqual([
+      { key: "a", function_id: a_id },
+      { key: "b", reference: "fn2" },
+    ]);
+  });
+
+  it("captures quoted string keys, skips computed keys, and keeps the last of a duplicate key", () => {
+    const code =
+      "const handlers = { \"a-b\": fn1, [dynamic]: fn2, dup: first, dup: second };";
+    const root = parse_ts(code);
+    const declarator = root.child(0)!.namedChildren[0]!;
+
+    const result = detect_function_collection(declarator, file_path);
+
+    // Computed keys cannot be keyed statically, so `fn2` is only in the union view.
+    expect(result?.keyed_members).toEqual([
+      { key: "a-b", reference: "fn1" },
+      { key: "dup", reference: "second" },
+    ]);
+    expect(result?.stored_references).toContain("fn2");
   });
 
   it("records a nested object literal as a keyed nested member, kept out of the flat union lists", () => {

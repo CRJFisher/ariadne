@@ -728,6 +728,19 @@ function object_property_key(key_node: SyntaxNode | null | undefined): SymbolNam
 }
 
 /**
+ * Record a keyed member, keeping the last occurrence on a duplicate key to match
+ * the runtime object (`{ prop: a, prop: b }` evaluates `prop` to `b`).
+ */
+function set_keyed_member(members: KeyedCollectionEntry[], entry: KeyedCollectionEntry): void {
+  const existing = members.findIndex((m) => m.key === entry.key);
+  if (existing >= 0) {
+    members[existing] = entry;
+  } else {
+    members.push(entry);
+  }
+}
+
+/**
  * Extract function SymbolIds from object literal: { key: fn, ... }
  *
  * `keyed_members` additionally records the property key of each function/nested value
@@ -765,7 +778,7 @@ function extract_functions_from_object(
         const method_id = method_symbol(name_node.text, location);
         function_ids.push(method_id);
         const key = object_property_key(name_node);
-        if (key) keyed_members.push({ key, function_id: method_id });
+        if (key) set_keyed_member(keyed_members, { key, function_id: method_id });
       }
       continue;
     }
@@ -786,14 +799,14 @@ function extract_functions_from_object(
       const location = node_to_location(value, file_path);
       const fn_id = anonymous_function_symbol(location);
       function_ids.push(fn_id);
-      if (key) keyed_members.push({ key, function_id: fn_id });
+      if (key) set_keyed_member(keyed_members, { key, function_id: fn_id });
     } else if (value.type === "identifier") {
       references.push(value.text as SymbolName);
-      if (key) keyed_members.push({ key, reference: value.text as SymbolName });
+      if (key) set_keyed_member(keyed_members, { key, reference: value.text as SymbolName });
     } else if (value.type === "object" && key) {
       const nested = extract_functions_from_object(value, file_path);
       if (nested.keyed_members.length > 0) {
-        keyed_members.push({ key, nested: nested.keyed_members });
+        set_keyed_member(keyed_members, { key, nested: nested.keyed_members });
       }
     }
   }

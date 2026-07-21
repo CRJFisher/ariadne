@@ -26,8 +26,22 @@ import type { DefinitionRegistry } from "../registries/definition";
 import type { ResolutionRegistry } from "../resolution_registry";
 
 /**
- * Resolve the callable at `key` within a keyed object-literal collection: an inline
- * function value directly, or an identifier value resolved in `scope_id`. Returns
+ * The callable a keyed entry names: an inline function value directly, or an
+ * identifier value resolved in `scope_id`. Undefined for a `nested` entry, which
+ * names an object rather than a function.
+ */
+function entry_callable(
+  entry: KeyedCollectionEntry,
+  scope_id: ScopeId,
+  resolutions: ResolutionRegistry
+): SymbolId | undefined {
+  if (entry.function_id) return entry.function_id;
+  if (entry.reference) return resolutions.resolve(scope_id, entry.reference) ?? undefined;
+  return undefined;
+}
+
+/**
+ * Resolve the callable at `key` within a keyed object-literal collection. Returns
  * undefined when the key is absent or names a nested object (not itself callable).
  */
 export function resolve_keyed_member(
@@ -37,12 +51,8 @@ export function resolve_keyed_member(
   resolutions: ResolutionRegistry
 ): SymbolId | undefined {
   const entry = entries.find((e) => e.key === key);
-  if (!entry) return undefined;
-  if (entry.function_id) return entry.function_id;
-  if (entry.reference) return resolutions.resolve(scope_id, entry.reference) ?? undefined;
-  return undefined;
+  return entry ? entry_callable(entry, scope_id, resolutions) : undefined;
 }
-
 
 /**
  * @returns Resolved function symbol_ids on success, or a `ResolutionFailure`
@@ -155,7 +165,7 @@ function resolve_keyed_alias(
 ): Result<SymbolId[], ResolutionFailure> {
   const collection = definitions.get_function_collection(collection_id);
   const collection_def = definitions.get(collection_id);
-  const entry = collection?.keyed_members?.find((m) => m.key === alias_key);
+  const entry = collection?.keyed_members?.find((e) => e.key === alias_key);
   if (!collection || !collection_def || !entry) {
     return err({
       stage: "collection_dispatch",
@@ -165,13 +175,14 @@ function resolve_keyed_alias(
   }
 
   const scope_id = collection_def.defining_scope_id;
+  // A method call addresses a function one property deeper (inside the aliased
+  // nested object); a direct call targets the aliased value itself.
   const target =
     call_ref.kind === "method_call"
       ? entry.nested
         ? resolve_keyed_member(entry.nested, call_ref.name, scope_id, resolutions)
         : undefined
-      : entry.function_id ??
-        (entry.reference ? resolutions.resolve(scope_id, entry.reference) ?? undefined : undefined);
+      : entry_callable(entry, scope_id, resolutions);
 
   if (!target) {
     return err({
