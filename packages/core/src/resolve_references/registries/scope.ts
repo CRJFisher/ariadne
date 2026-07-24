@@ -50,10 +50,6 @@ export class ScopeRegistry {
     return this.scope_trees.get(file_path);
   }
 
-  get_all_scopes(): ReadonlyMap<ScopeId, LexicalScope> {
-    return this.by_scope_id;
-  }
-
   /**
    * Walk up the scope tree from `scope_id` to the nearest enclosing
    * function/method/constructor scope. A call at module level has no enclosing

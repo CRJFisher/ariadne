@@ -101,10 +101,13 @@ describe("ScopeRegistry", () => {
     });
 
     it("indexes nothing for an empty scope map", () => {
+      const previously_indexed = module_root(file1);
+      registry.update_file(file1, scope_map(previously_indexed));
+
       registry.update_file(file1, new Map());
 
       expect(registry.get_file_root_scope(file1)).toBeUndefined();
-      expect(registry.get_all_scopes().size).toEqual(0);
+      expect(registry.get_scope(previously_indexed.id)).toBeUndefined();
     });
 
     it("falls back to the first scope when no parent-less root exists", () => {
@@ -145,20 +148,6 @@ describe("ScopeRegistry", () => {
     });
   });
 
-  describe("get_all_scopes", () => {
-    it("returns scopes aggregated across every indexed file", () => {
-      const root1 = module_root(file1);
-      const root2 = module_root(file2);
-      registry.update_file(file1, scope_map(root1));
-      registry.update_file(file2, scope_map(root2));
-
-      const all = registry.get_all_scopes();
-      expect(all.size).toEqual(2);
-      expect(all.get(root1.id)).toEqual(root1);
-      expect(all.get(root2.id)).toEqual(root2);
-    });
-  });
-
   describe("remove_file", () => {
     it("purges a whole nested tree from the flattened index", () => {
       const root_loc = location(file1, 0, 100);
@@ -188,22 +177,29 @@ describe("ScopeRegistry", () => {
     });
 
     it("does nothing for a file that was never indexed", () => {
+      const root1 = module_root(file1);
+      registry.update_file(file1, scope_map(root1));
+
       registry.remove_file("missing.ts" as FilePath);
 
-      expect(registry.get_all_scopes().size).toEqual(0);
+      expect(registry.get_file_root_scope(file1)).toEqual(root1);
+      expect(registry.get_scope(root1.id)).toEqual(root1);
     });
   });
 
   describe("clear", () => {
     it("empties every file tree and the flattened index", () => {
-      registry.update_file(file1, scope_map(module_root(file1)));
-      registry.update_file(file2, scope_map(module_root(file2)));
+      const root1 = module_root(file1);
+      const root2 = module_root(file2);
+      registry.update_file(file1, scope_map(root1));
+      registry.update_file(file2, scope_map(root2));
 
       registry.clear();
 
-      expect(registry.get_all_scopes().size).toEqual(0);
       expect(registry.get_file_root_scope(file1)).toBeUndefined();
       expect(registry.get_file_root_scope(file2)).toBeUndefined();
+      expect(registry.get_scope(root1.id)).toBeUndefined();
+      expect(registry.get_scope(root2.id)).toBeUndefined();
     });
   });
 

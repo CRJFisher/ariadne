@@ -11,13 +11,8 @@ import { resolve, join } from "path";
 const GIT_TIMEOUT_MS = 10_000;
 const MAX_BUFFER = 10 * 1024 * 1024; // 10MB — handles ~125k files
 
-/** Branded type for git tree SHA-1 hashes. */
-export type GitTreeHash = string & { _brand: "GitTreeHash" };
-
 /** Per-file state from the git index. */
 export interface GitFileState {
-  /** SHA-1 hash of the HEAD tree object. */
-  readonly tree_hash: GitTreeHash;
   /** Absolute path → git blob SHA-1 for tracked files in the index. */
   readonly tracked_hashes: ReadonlyMap<string, string>;
   /** Absolute paths of files with unstaged working-tree changes. */
@@ -50,24 +45,17 @@ export async function query_git_file_state(
   try {
     const abs_root = resolve(project_path);
 
-    const [tree_hash_raw, ls_files_raw, diff_files_raw, untracked_raw] =
-      await Promise.all([
-        exec_git(abs_root, ["rev-parse", "HEAD^{tree}"]),
-        exec_git(abs_root, ["ls-files", "-s"]),
-        exec_git(abs_root, ["diff-files", "--name-only"]),
-        exec_git(abs_root, [
-          "ls-files",
-          "--others",
-          "--exclude-standard",
-        ]),
-      ]);
+    const [ls_files_raw, diff_files_raw, untracked_raw] = await Promise.all([
+      exec_git(abs_root, ["ls-files", "-s"]),
+      exec_git(abs_root, ["diff-files", "--name-only"]),
+      exec_git(abs_root, ["ls-files", "--others", "--exclude-standard"]),
+    ]);
 
-    const tree_hash = tree_hash_raw.trim() as GitTreeHash;
     const tracked_hashes = parse_ls_files_output(ls_files_raw, abs_root);
     const dirty_files = parse_name_list(diff_files_raw, abs_root);
     const untracked_files = parse_name_list(untracked_raw, abs_root);
 
-    return { tree_hash, tracked_hashes, dirty_files, untracked_files };
+    return { tracked_hashes, dirty_files, untracked_files };
   } catch {
     return null;
   }

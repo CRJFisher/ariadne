@@ -18,8 +18,8 @@ function ch(s: string): ContentHash {
 
 describe("cache_manifest", () => {
   describe("CURRENT_SCHEMA_VERSION", () => {
-    it("is 3", () => {
-      expect(CURRENT_SCHEMA_VERSION).toEqual(3);
+    it("is 4", () => {
+      expect(CURRENT_SCHEMA_VERSION).toEqual(4);
     });
 
     it("rejects v1 manifests via deserialize_manifest", () => {
@@ -93,19 +93,6 @@ describe("cache_manifest", () => {
   });
 
   describe("git fields", () => {
-    it("round-trips git_tree_hash", () => {
-      const manifest: CacheManifest = {
-        schema_version: CURRENT_SCHEMA_VERSION,
-        git_tree_hash: "abc123def456abc123def456abc123def456abc1",
-        entries: new Map(),
-      };
-      const json = serialize_manifest(manifest);
-      const restored = deserialize_manifest(json);
-      expect(restored?.git_tree_hash).toEqual(
-        "abc123def456abc123def456abc123def456abc1",
-      );
-    });
-
     it("round-trips entries with git_blob_hash", () => {
       const entries = new Map<FilePath, CacheManifestEntry>([
         [
@@ -128,16 +115,6 @@ describe("cache_manifest", () => {
       expect(restored?.entries.get(fp("/a.ts"))?.content_hash).toEqual(
         ch("sha256hash"),
       );
-    });
-
-    it("handles missing git_tree_hash (non-git repo)", () => {
-      const manifest: CacheManifest = {
-        schema_version: CURRENT_SCHEMA_VERSION,
-        entries: new Map(),
-      };
-      const json = serialize_manifest(manifest);
-      const restored = deserialize_manifest(json);
-      expect(restored?.git_tree_hash).toBeUndefined();
     });
 
     it("handles entries without git_blob_hash", () => {

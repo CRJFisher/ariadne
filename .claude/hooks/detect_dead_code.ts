@@ -2,12 +2,13 @@
 /**
  * Stop hook: detects dead code introduced during a coding session.
  *
- * Runs Ariadne against git-modified packages and cross-checks flagged entry
- * points against the project's static known-entrypoints whitelist at
- * .claude/known_entrypoints/<package>.json (repo-relative, committed to git).
- * Blocks the session if any exported-but-uncalled entry point is not on the
- * whitelist. A package with no whitelist file is skipped (logged); a present
- * whitelist with no entries deliberately blocks every flagged entry point.
+ * Runs Ariadne against the packages changed since the last commit this hook
+ * cleared, and cross-checks flagged entry points against the project's static
+ * known-entrypoints whitelist at .claude/known_entrypoints/<package>.json
+ * (repo-relative, committed to git). Blocks the session if any
+ * exported-but-uncalled entry point is not on the whitelist. A package with no
+ * whitelist file is skipped (logged); a present whitelist with no entries
+ * deliberately blocks every flagged entry point.
  *
  * The whitelist is human-maintained (edit the JSON and commit). This hook only
  * reads it — it never writes. The triage skill's classifier registry is
@@ -17,14 +18,11 @@
 import { load_project, FileSystemStorage, resolve_cache_dir } from "@ariadnejs/core";
 import type { PersistenceStorage } from "@ariadnejs/core";
 import * as fs from "fs/promises";
+import * as fs_sync from "fs";
 import * as path from "path";
 import { execSync } from "child_process";
-import { fileURLToPath, pathToFileURL } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const LOG_FILE = path.join(__dirname, "..", "hook_log.txt");
+import { pathToFileURL } from "url";
+import { create_logger } from "./utils.js";
 
 export interface EntryPoint {
   name: string;
@@ -39,15 +37,29 @@ interface KnownEntrypointSource {
   entrypoints: { name: string; file_path?: string }[];
 }
 
-function log(message: string): void {
-  const timestamp = new Date().toISOString();
-  const entry = `[${timestamp}] [entrypoint] ${message}\n`;
-  fs.appendFile(LOG_FILE, entry).catch(() => {});
+const log = create_logger("entrypoint");
+
+/**
+ * Node flushes pipe writes asynchronously, so `console.log` followed by
+ * `process.exit` can discard the verdict before the harness ever reads it.
+ * The block decision is the hook's only output that matters — write it with a
+ * syscall that has completed by the time it returns.
+ */
+function write_stdout_sync(text: string): void {
+  const buffer = Buffer.from(text, "utf8");
+  let written = 0;
+  while (written < buffer.length) {
+    try {
+      written += fs_sync.writeSync(1, buffer, written, buffer.length - written);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "EAGAIN") throw error;
+    }
+  }
 }
 
 function output_result(decision: "block" | "approve", reason?: string): void {
   if (decision === "block" && reason) {
-    console.log(JSON.stringify({ decision, reason }));
+    write_stdout_sync(`${JSON.stringify({ decision, reason })}\n`);
   }
   process.exit(0);
 }
@@ -69,29 +81,93 @@ export function packages_from_changed_files(files: string[]): string[] {
 }
 
 /**
- * Get list of packages that have modified files (staged or unstaged)
+ * `git` reads GIT_DIR, GIT_INDEX_FILE and friends from the environment in
+ * preference to the working directory, so a caller that inherits them — any
+ * process spawned under a git hook — would silently query a repository other
+ * than `project_dir`. Dropping them makes the directory the only thing that
+ * selects the repository.
  */
-function get_modified_packages(project_dir: string): string[] {
+const AMBIENT_GIT_VARS = [
+  "GIT_DIR",
+  "GIT_COMMON_DIR",
+  "GIT_INDEX_FILE",
+  "GIT_WORK_TREE",
+  "GIT_PREFIX",
+  "GIT_OBJECT_DIRECTORY",
+  "GIT_ALTERNATE_OBJECT_DIRECTORIES",
+];
+
+function git(project_dir: string, args: string): string {
+  const env = { ...process.env };
+  for (const name of AMBIENT_GIT_VARS) delete env[name];
+
+  return execSync(`git ${args}`, {
+    cwd: project_dir,
+    encoding: "utf8",
+    stdio: ["pipe", "pipe", "pipe"],
+    env,
+  }).trim();
+}
+
+/**
+ * The commit this hook last cleared. Every scan runs from here rather than from
+ * HEAD, because a working-tree diff goes blind the moment a session commits:
+ * the edit that killed a caller is already in history, the tree is clean, and
+ * the scan finds nothing to do. Anchoring at the last cleared commit also makes
+ * the hook self-healing — a run that is killed or crashes never advances the
+ * mark, so the next run re-covers the same range.
+ *
+ * It lives in the git directory, which git keeps per-worktree, so a worktree
+ * tracks the commits made inside it independently of the main checkout.
+ */
+const SCAN_BASE_FILE = "ariadne_dead_code_scan_base";
+
+function scan_base_path(project_dir: string): string {
+  return path.join(git(project_dir, "rev-parse --absolute-git-dir"), SCAN_BASE_FILE);
+}
+
+/**
+ * Returns null when no mark exists yet, or when the marked commit is no longer
+ * an ancestor of HEAD — after a branch switch or rebase its range describes
+ * work that is not in this history, so the caller re-anchors at HEAD.
+ */
+export function read_scan_base(project_dir: string): string | null {
+  let sha: string;
   try {
-    // Get both staged and unstaged changes
-    const diff_output = execSync("git diff --name-only HEAD", {
-      cwd: project_dir,
-      encoding: "utf8",
-    }).trim();
-
-    const staged_output = execSync("git diff --name-only --cached", {
-      cwd: project_dir,
-      encoding: "utf8",
-    }).trim();
-
-    const all_files = [...diff_output.split("\n"), ...staged_output.split("\n")].filter(
-      (f) => f.trim(),
-    );
-
-    return packages_from_changed_files(all_files);
+    sha = fs_sync.readFileSync(scan_base_path(project_dir), "utf8").trim();
   } catch {
-    return [];
+    return null;
   }
+  if (!sha) return null;
+
+  try {
+    git(project_dir, `merge-base --is-ancestor ${sha} HEAD`);
+    return sha;
+  } catch {
+    return null;
+  }
+}
+
+export function write_scan_base(project_dir: string, sha: string): void {
+  fs_sync.writeFileSync(scan_base_path(project_dir), `${sha}\n`);
+}
+
+/**
+ * Every path touched since `scan_base`, whether it landed as a commit or is
+ * still sitting in the working tree.
+ */
+export function changed_files_since(project_dir: string, scan_base: string | null): string[] {
+  const outputs = [
+    git(project_dir, "diff --name-only HEAD"),
+    git(project_dir, "ls-files --others --exclude-standard"),
+  ];
+  if (scan_base) {
+    outputs.push(git(project_dir, `diff --name-only ${scan_base}..HEAD`));
+  }
+
+  return [
+    ...new Set(outputs.flatMap((output) => output.split("\n")).filter((f) => f.trim())),
+  ];
 }
 
 /**
@@ -201,10 +277,16 @@ async function main(): Promise<void> {
   const storage = cache_dir ? new FileSystemStorage(cache_dir) : undefined;
   log(`Cache: ${cache_dir ?? "disabled"}`);
 
-  // Get modified packages
-  const modified_packages = get_modified_packages(project_dir);
+  const scan_base = read_scan_base(project_dir);
+  const head = git(project_dir, "rev-parse HEAD");
+  log(`Scan base: ${scan_base ?? `none, anchoring at HEAD ${head}`}`);
+
+  const modified_packages = packages_from_changed_files(
+    changed_files_since(project_dir, scan_base),
+  );
   if (modified_packages.length === 0) {
     log("No packages modified, skipping analysis");
+    write_scan_base(project_dir, head);
     process.exit(0);
   }
 
@@ -212,6 +294,7 @@ async function main(): Promise<void> {
 
   const start_time = Date.now();
   const all_unexpected: { package: string; entry_points: EntryPoint[] }[] = [];
+  let every_package_analyzed = true;
 
   // Analyze each modified package
   for (const pkg of modified_packages) {
@@ -231,6 +314,7 @@ async function main(): Promise<void> {
       }
       log(`  Found ${unexpected.length} unexpected entry points in ${pkg}`);
     } catch (error) {
+      every_package_analyzed = false;
       log(`  Error analyzing ${pkg}: ${error}`);
     }
   }
@@ -257,8 +341,13 @@ async function main(): Promise<void> {
         `  1. Delete the dead code\n` +
         `  2. Add to the flagged package's .claude/known_entrypoints/<package>.json if legitimate API`
     );
+  } else if (every_package_analyzed) {
+    // Only a run that cleared every package may move the mark; otherwise the
+    // unanalyzed range must stay in scope for the next session.
+    write_scan_base(project_dir, head);
+    log(`All entry points are in whitelists (${elapsed_s}s); scan base advanced to ${head}`);
   } else {
-    log(`All entry points are in whitelists (${elapsed_s}s)`);
+    log(`No unexpected entry points, but a package failed to analyze; scan base held`);
   }
 
   process.exit(0);

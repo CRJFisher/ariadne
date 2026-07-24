@@ -9,10 +9,11 @@ import {
   deserialize_manifest,
   CURRENT_SCHEMA_VERSION,
 } from "../persistence";
-import type { GitFileState, GitTreeHash } from "../persistence";
+import type { GitFileState } from "../persistence";
 import { build_index_single_file } from "../index_single_file/index_single_file";
 import { parse_file } from "./parse_file";
 import {
+  blob_hash_for_indexed_content,
   can_use_cache,
   content_matches_cache,
   read_cache_manifest,
@@ -57,7 +58,6 @@ function memory_storage(): PersistenceStorage & {
 
 function git_state(overrides: Partial<GitFileState>): GitFileState {
   return {
-    tree_hash: "tree-a" as GitTreeHash,
     tracked_hashes: new Map(),
     dirty_files: new Set(),
     untracked_files: new Set(),
@@ -73,50 +73,83 @@ function build_test_index(content: string) {
 const file = "src/a.ts" as FilePath;
 
 describe("can_use_cache", () => {
+  const cached: CacheManifestEntry = {
+    content_hash: compute_content_hash("x"),
+    git_blob_hash: "blob-1",
+  };
+
   it("returns false without git state (caller must content-hash)", () => {
-    const entry: CacheManifestEntry = { content_hash: compute_content_hash("x") };
-    expect(can_use_cache(file, entry, null, false)).toBe(false);
+    expect(can_use_cache(file, cached, null)).toEqual(false);
   });
 
-  it("returns false for a dirty file even when the tree is unchanged", () => {
-    const entry: CacheManifestEntry = { content_hash: compute_content_hash("x") };
+  it("returns true for a tracked file whose blob matches the cached entry", () => {
+    const state = git_state({ tracked_hashes: new Map([[file, "blob-1"]]) });
+    expect(can_use_cache(file, cached, state)).toEqual(true);
+  });
+
+  it("returns false for a dirty file even when its blob matches", () => {
     const state = git_state({
       dirty_files: new Set([file]),
       tracked_hashes: new Map([[file, "blob-1"]]),
     });
-    expect(can_use_cache(file, entry, state, true)).toBe(false);
+    expect(can_use_cache(file, cached, state)).toEqual(false);
   });
 
   it("returns false for an untracked file", () => {
-    const entry: CacheManifestEntry = { content_hash: compute_content_hash("x") };
     const state = git_state({ untracked_files: new Set([file]) });
-    expect(can_use_cache(file, entry, state, true)).toBe(false);
+    expect(can_use_cache(file, cached, state)).toEqual(false);
   });
 
-  it("returns true for a tracked clean file when the tree hash matches", () => {
+  it("returns false when the entry has no blob hash", () => {
     const entry: CacheManifestEntry = { content_hash: compute_content_hash("x") };
     const state = git_state({ tracked_hashes: new Map([[file, "blob-1"]]) });
-    expect(can_use_cache(file, entry, state, true)).toBe(true);
+    expect(can_use_cache(file, entry, state)).toEqual(false);
   });
 
-  it("compares per-file blob hashes when the tree hash differs", () => {
-    const matching: CacheManifestEntry = {
-      content_hash: compute_content_hash("x"),
-      git_blob_hash: "blob-1",
-    };
-    const stale: CacheManifestEntry = {
-      content_hash: compute_content_hash("x"),
-      git_blob_hash: "blob-0",
-    };
-    const state = git_state({ tracked_hashes: new Map([[file, "blob-1"]]) });
-    expect(can_use_cache(file, matching, state, false)).toBe(true);
-    expect(can_use_cache(file, stale, state, false)).toBe(false);
+  it("returns false when the file is not in the git index", () => {
+    expect(can_use_cache(file, cached, git_state({}))).toEqual(false);
   });
 
-  it("returns false when the tree differs and the entry has no blob hash", () => {
-    const entry: CacheManifestEntry = { content_hash: compute_content_hash("x") };
+  // Staging an edit moves the index but not HEAD, so the working tree matches
+  // the index and nothing reports dirty. The cached entry still describes the
+  // pre-edit blob and must not be reused.
+  it("returns false for a staged file whose blob no longer matches the entry", () => {
+    const state = git_state({ tracked_hashes: new Map([[file, "blob-after"]]) });
+    expect(can_use_cache(file, cached, state)).toEqual(false);
+  });
+
+  // A committed edit leaves the working tree clean against the new blob, so
+  // only the per-file blob comparison distinguishes it from unchanged content.
+  it("returns false for a committed file whose blob no longer matches the entry", () => {
+    const state = git_state({ tracked_hashes: new Map([[file, "blob-committed"]]) });
+    expect(can_use_cache(file, cached, state)).toEqual(false);
+  });
+});
+
+describe("blob_hash_for_indexed_content", () => {
+  it("names the tracked blob for a clean file", () => {
     const state = git_state({ tracked_hashes: new Map([[file, "blob-1"]]) });
-    expect(can_use_cache(file, entry, state, false)).toBe(false);
+    expect(blob_hash_for_indexed_content(file, state)).toEqual("blob-1");
+  });
+
+  // The index was built from working-tree content that no blob holds, so
+  // stamping the tracked blob would let a later checkout back to it serve
+  // this index for different content.
+  it("names no blob for a dirty file", () => {
+    const state = git_state({
+      dirty_files: new Set([file]),
+      tracked_hashes: new Map([[file, "blob-1"]]),
+    });
+    expect(blob_hash_for_indexed_content(file, state)).toEqual(undefined);
+  });
+
+  it("names no blob for an untracked file", () => {
+    const state = git_state({ untracked_files: new Set([file]) });
+    expect(blob_hash_for_indexed_content(file, state)).toEqual(undefined);
+  });
+
+  it("names no blob without git state", () => {
+    expect(blob_hash_for_indexed_content(file, null)).toEqual(undefined);
   });
 });
 
@@ -165,18 +198,20 @@ describe("write_cache_manifest and read_cache_manifest", () => {
       [file, { content_hash: compute_content_hash("x"), git_blob_hash: "blob-1" }],
     ]);
 
-    await write_cache_manifest(storage, entries, "tree-a");
+    await write_cache_manifest(storage, entries);
 
     const manifest = deserialize_manifest(storage.manifest as string);
     expect(manifest?.schema_version).toBe(CURRENT_SCHEMA_VERSION);
-    expect(manifest?.git_tree_hash).toBe("tree-a");
     expect(manifest?.entries.get(file)).toEqual({
       content_hash: compute_content_hash("x"),
       git_blob_hash: "blob-1",
     });
 
     const read_back = await read_cache_manifest(storage);
-    expect(read_back?.git_tree_hash).toBe("tree-a");
+    expect(read_back?.entries.get(file)).toEqual({
+      content_hash: compute_content_hash("x"),
+      git_blob_hash: "blob-1",
+    });
   });
 
   it("read_cache_manifest returns null on a corrupt manifest", async () => {

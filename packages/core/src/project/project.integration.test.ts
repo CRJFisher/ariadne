@@ -499,7 +499,8 @@ const x = utils.missing();
 
   describe("Output Structure Validation", () => {
     it("should produce well-formed Scope objects", () => {
-      project.update_file("test.ts" as FilePath, `
+      const file_path = "test.ts" as FilePath;
+      project.update_file(file_path, `
 function outer() {
   function inner() {
     return 42;
@@ -507,20 +508,20 @@ function outer() {
 }
       `);
 
-      const all_scopes = project.scopes.get_all_scopes();
+      const root = project.scopes.get_file_root_scope(file_path);
+      expect(root?.type).toEqual("module");
+      expect(root?.parent_id).toEqual(null);
+      expect(root?.location.file_path).toEqual(file_path);
 
-      for (const scope of all_scopes.values()) {
-        // LexicalScope fields: id, parent_id, type, location
-        expect(scope.id).toBeDefined();
-        expect(scope.type).toBeDefined();
-        expect(scope.location).toBeDefined();
+      const outer = project.scopes.get_scope(root!.child_ids[0]);
+      expect(outer?.type).toEqual("function");
+      expect(outer?.name).toEqual("outer" as SymbolName);
+      expect(outer?.parent_id).toEqual(root!.id);
 
-        // Parent scope should exist (except for root)
-        if (scope.parent_id) {
-          const parent = all_scopes.get(scope.parent_id);
-          expect(parent).toBeDefined();
-        }
-      }
+      const inner = project.scopes.get_scope(outer!.child_ids[0]);
+      expect(inner?.type).toEqual("function");
+      expect(inner?.name).toEqual("inner" as SymbolName);
+      expect(inner?.parent_id).toEqual(outer!.id);
     });
 
     it("should produce well-formed Reference objects", () => {

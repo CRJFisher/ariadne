@@ -138,7 +138,6 @@ describe("git_change_detection", () => {
 
       const state = await query_git_file_state(temp_dir);
       expect(state).not.toBeNull();
-      expect(state?.tree_hash).toMatch(/^[0-9a-f]{40}$/);
       expect(state?.tracked_hashes.size).toEqual(2);
       expect(
         state?.tracked_hashes.has(path.join(temp_dir, "a.ts")),
@@ -178,18 +177,40 @@ describe("git_change_detection", () => {
       ).toBe(true);
     });
 
-    it("tree_hash changes after a commit", async () => {
-      await fs.writeFile(path.join(temp_dir, "a.ts"), "v1");
+    it("tracked blob hash changes after a commit", async () => {
+      const file_path = path.join(temp_dir, "a.ts");
+      await fs.writeFile(file_path, "v1");
       git(temp_dir, "add -A");
       git_commit(temp_dir, "v1");
       const state1 = await query_git_file_state(temp_dir);
 
-      await fs.writeFile(path.join(temp_dir, "a.ts"), "v2");
+      await fs.writeFile(file_path, "v2");
       git(temp_dir, "add -A");
       git_commit(temp_dir, "v2");
       const state2 = await query_git_file_state(temp_dir);
 
-      expect(state1?.tree_hash).not.toEqual(state2?.tree_hash);
+      expect(state1?.tracked_hashes.get(file_path)).not.toEqual(
+        state2?.tracked_hashes.get(file_path),
+      );
+    });
+
+    // A staged edit leaves the working tree matching the index, so nothing
+    // reports dirty — only the tracked blob records that the content moved.
+    it("tracked blob hash changes on staging, with nothing reported dirty", async () => {
+      const file_path = path.join(temp_dir, "a.ts");
+      await fs.writeFile(file_path, "v1");
+      git(temp_dir, "add -A");
+      git_commit(temp_dir, "v1");
+      const state1 = await query_git_file_state(temp_dir);
+
+      await fs.writeFile(file_path, "v2");
+      git(temp_dir, "add -A");
+      const state2 = await query_git_file_state(temp_dir);
+
+      expect(state2?.dirty_files.has(file_path)).toEqual(false);
+      expect(state1?.tracked_hashes.get(file_path)).not.toEqual(
+        state2?.tracked_hashes.get(file_path),
+      );
     });
   });
 });

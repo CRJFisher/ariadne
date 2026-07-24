@@ -16,6 +16,7 @@ import { is_git_repo, query_git_file_state } from "../persistence";
 import type { GitFileState } from "../persistence";
 import {
   read_cache_manifest,
+  blob_hash_for_indexed_content,
   can_use_cache,
   content_matches_cache,
   try_restore_from_cache,
@@ -129,21 +130,12 @@ export async function load_project(
 
   // Git-accelerated change detection
   // Query git state whenever storage is provided (even on cold load) so the
-  // manifest written at the end includes git_tree_hash and per-file blob hashes.
+  // manifest written at the end includes per-file blob hashes.
   let git_state: GitFileState | null = null;
-  let git_tree_unchanged = false;
   if (storage) {
     try {
       if (await is_git_repo(project_path)) {
         git_state = await query_git_file_state(project_path);
-        if (
-          manifest &&
-          git_state &&
-          manifest.git_tree_hash &&
-          git_state.tree_hash === manifest.git_tree_hash
-        ) {
-          git_tree_unchanged = true;
-        }
       }
     } catch {
       // Git detection failed — fall back to content-hash path
@@ -171,7 +163,7 @@ export async function load_project(
     if (storage && manifest) {
       const cached_entry = manifest.entries.get(fp);
 
-      if (cached_entry && can_use_cache(fp, cached_entry, git_state, git_tree_unchanged)) {
+      if (cached_entry && can_use_cache(fp, cached_entry, git_state)) {
         // Git fast path — restore from cache without reading file content for hashing
         used_cache = await try_restore_from_cache(
           project,
@@ -223,7 +215,7 @@ export async function load_project(
               fp,
               index,
               content,
-              git_state?.tracked_hashes.get(file_path),
+              blob_hash_for_indexed_content(fp, git_state),
             );
             if (entry) {
               manifest_entries.set(fp, entry);
@@ -246,7 +238,7 @@ export async function load_project(
 
   // Write updated manifest
   if (storage && manifest_entries.size > 0) {
-    await write_cache_manifest(storage, manifest_entries, git_state?.tree_hash);
+    await write_cache_manifest(storage, manifest_entries);
   }
 
   return project;

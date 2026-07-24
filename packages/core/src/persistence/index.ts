@@ -15,7 +15,6 @@ export {
   validate_semantic_index_shape,
 } from "./serialize_index";
 export {
-  type GitTreeHash,
   type GitFileState,
   is_git_repo,
   query_git_file_state,

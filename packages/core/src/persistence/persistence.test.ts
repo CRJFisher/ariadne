@@ -767,12 +767,17 @@ describe("Git-accelerated warm load", { timeout: 30_000 }, () => {
       const cold = await load_project({ project_path: temp_dir, storage });
       const cold_stats = cold.get_stats();
 
-      // Manifest should have git_tree_hash
+      // Every entry should carry the git blob its index was built from
       const manifest_json = await storage.read_manifest();
       expect(manifest_json).not.toBeNull();
       const manifest = JSON.parse(manifest_json!);
-      expect(typeof manifest.git_tree_hash).toEqual("string");
-      expect(manifest.git_tree_hash.length).toEqual(40); // SHA-1
+      const blob_hashes = manifest.entries.map(
+        ([, entry]: [string, { git_blob_hash?: string }]) => entry.git_blob_hash,
+      );
+      expect(blob_hashes.length).toEqual(2);
+      for (const blob_hash of blob_hashes) {
+        expect(blob_hash).toMatch(/^[0-9a-f]{40}$/);
+      }
 
       // Warm load with unchanged tree — all files should use cache
       const warm = await load_project({ project_path: temp_dir, storage });
@@ -908,36 +913,65 @@ describe("Git-accelerated warm load", { timeout: 30_000 }, () => {
     }
   });
 
-  it("manifest git_tree_hash is updated after warm load with changes", async () => {
+  it("manifest blob hash is updated after warm load with changes", async () => {
     await setup_git_repo({
       "a.ts": "export function foo() { return 42; }",
     });
     try {
       const storage = new InMemoryStorage();
 
-      // Cold load
-      await load_project({ project_path: temp_dir, storage });
-      const manifest_v1 = JSON.parse((await storage.read_manifest())!);
-      const tree_hash_v1 = manifest_v1.git_tree_hash;
+      const blob_hash_for_a = async (): Promise<string | undefined> => {
+        const manifest = JSON.parse((await storage.read_manifest())!);
+        const row = manifest.entries.find(([file_path]: [string]) =>
+          file_path.endsWith("a.ts"),
+        );
+        return row?.[1]?.git_blob_hash;
+      };
 
-      // Modify and commit
+      await load_project({ project_path: temp_dir, storage });
+      const blob_v1 = await blob_hash_for_a();
+
       await fs.writeFile(
-        path.join(temp_dir, "b.ts"),
-        "export function bar() {}",
+        path.join(temp_dir, "a.ts"),
+        "export function foo() { return 43; }",
         "utf-8",
       );
-      await git(["add", "b.ts"]);
-      await git(["commit", "-m", "add b"]);
+      await git(["add", "a.ts"]);
+      await git(["commit", "-m", "change a"]);
 
-      // Warm load
       await load_project({ project_path: temp_dir, storage });
-      const manifest_v2 = JSON.parse((await storage.read_manifest())!);
-      const tree_hash_v2 = manifest_v2.git_tree_hash;
+      const blob_v2 = await blob_hash_for_a();
 
-      // Tree hash should be updated
-      expect(tree_hash_v2).not.toEqual(tree_hash_v1);
-      expect(typeof tree_hash_v2).toEqual("string");
-      expect(tree_hash_v2.length).toEqual(40);
+      expect(blob_v1).toMatch(/^[0-9a-f]{40}$/);
+      expect(blob_v2).toMatch(/^[0-9a-f]{40}$/);
+      expect(blob_v2).not.toEqual(blob_v1);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  // The bug this guards: a staged edit leaves the working tree matching the
+  // index and HEAD unmoved, so a coarse "has anything changed?" check reports
+  // no change and the warm load serves the pre-edit index.
+  it("re-indexes a staged edit on warm load", async () => {
+    await setup_git_repo({
+      "a.ts": "export function foo() { return 42; }",
+    });
+    try {
+      const storage = new InMemoryStorage();
+      await load_project({ project_path: temp_dir, storage });
+
+      await fs.writeFile(
+        path.join(temp_dir, "a.ts"),
+        "export function foo() { return 42; }\nexport function added_while_staged() {}",
+        "utf-8",
+      );
+      await git(["add", "a.ts"]);
+
+      const warm = await load_project({ project_path: temp_dir, storage });
+
+      const names = warm.definitions.get_callable_definitions().map((d) => d.name);
+      expect(names).toContain("added_while_staged");
     } finally {
       await cleanup();
     }
@@ -1113,10 +1147,13 @@ describe("load_project + FileSystemStorage", { timeout: 30_000 }, () => {
         storage,
       });
 
-      // Manifest should have git_tree_hash on disk
+      // Entries should carry their git blob hashes on disk
       const manifest_raw = await storage.read_manifest();
       const manifest = JSON.parse(manifest_raw!);
-      expect(typeof manifest.git_tree_hash).toEqual("string");
+      expect(manifest.entries.length).toBeGreaterThan(0);
+      for (const [, entry] of manifest.entries) {
+        expect(entry.git_blob_hash).toMatch(/^[0-9a-f]{40}$/);
+      }
 
       // Warm load — should use git fast path with on-disk storage
       const warm = await load_project({
