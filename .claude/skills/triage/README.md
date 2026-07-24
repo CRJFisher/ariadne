@@ -28,9 +28,9 @@ This skill's internal flow is a top-down four-phase pipeline. Read-only stores s
 
 ## Sub-Agent Summary
 
-| Agent               | Model  | Multiplicity              | Purpose                                                                |
-| ------------------- | ------ | ------------------------- | ---------------------------------------------------------------------- |
-| triage-investigator | Sonnet | 1 per entry (worker pool) | Fetch own context via `get_entry_context.ts`, emit one `TriageVerdict` |
+| Agent               | Model  | Multiplicity                     | Purpose                                                                |
+| ------------------- | ------ | -------------------------------- | ---------------------------------------------------------------------- |
+| triage-investigator | Sonnet | 1 per entry (foreground batches) | Fetch own context via `get_entry_context.ts`, emit one `TriageVerdict` |
 
 ## Key Modules
 

@@ -1,39 +1,35 @@
 #!/usr/bin/env node --import tsx
 /**
- * Hand out the next pending triage entry (or up to --count entries) to the
- * main agent running the continuous worker pool.
+ * Hand out the next batch of pending triage entries (up to --count) to the main
+ * agent running the synchronous foreground batch loop (Phase 3 of SKILL.md).
  *
- * Each call runs one locked read-merge-pick-write transaction
- * (`absorb_and_pick`) under `atomic_update_registry`, so two overlapping
- * invocations cannot lose absorbed verdicts to a last-writer-wins race:
+ * The main agent dispenses a batch, launches one foreground investigator per
+ * returned index, and awaits the whole batch before dispensing again — so a
+ * batch is fully complete and absorbed before the next call, and no entry is
+ * ever handed to two workers. Each call runs one locked read-merge-pick-write
+ * transaction (`absorb_and_pick`) under `atomic_update_registry`, keeping the
+ * state-file write atomic:
  *   1. Absorbs any completed investigator result files from results/ into state.
  *   2. Picks up to `count` entries the LLM pool must still investigate —
- *      `pending`, or `failed` with retry budget left — that are NOT listed in
- *      --active, and returns their indices.
+ *      `pending`, or `failed` with retry budget left — and returns their indices.
  *   3. For each picked `failed` entry, clears its stale (malformed) result file
  *      and flips it back to `pending` with `retry_count` incremented, so the
  *      re-dispatched investigator writes onto a clean slate.
  *
- * The main agent tracks in-flight indices via --active so the script never
- * hands the same index to two workers in a single fill.
- *
  * CLI:
  *   --project <name>    Required. Names the project whose state to read.
  *   --count <n>         Max entries to return in this call (default 1).
- *   --active <indices>  Comma-separated entry indices currently in flight.
- *                       These are excluded from the pick. Omit on the initial
- *                       fill or when a prior run's investigators have all died.
  *
  * Output (JSON to stdout):
  *   { entries: number[] }
  *   Phase transitions to "complete" only when the LLM pool is drained — no
- *   un-classified `pending` entry, no retryable `failed` entry, and nothing
- *   active. A `failed` entry still within its retry budget holds the gate open.
+ *   un-classified `pending` entry and no retryable `failed` entry remain. A
+ *   `failed` entry still within its retry budget holds the gate open.
  *
  * Exit codes:
  *   0 = success
  *   1 = no state file found, invalid state JSON, or a transaction failure
- *   2 = usage error (bad --count/--active, missing --project)
+ *   2 = usage error (bad --count, missing --project)
  */
 
 import * as fs from "node:fs/promises";
@@ -54,19 +50,17 @@ import "@ariadnejs/skill-fs/require-node-import-tsx";
 export const MAX_TRIAGE_RETRIES = 2;
 
 const USAGE =
-  "Usage: get_next_triage_entry.ts --project <name> [--run-id <id>] [--count <n>] [--active <indices>]";
+  "Usage: get_next_triage_entry.ts --project <name> [--run-id <id>] [--count <n>]";
 
 interface CliArgs {
   project: string;
   count: number;
-  active: Set<number>;
 }
 
 function parse_args(argv: string[]): CliArgs {
   const project = parse_project_arg(argv, USAGE);
   const args = argv.slice(2);
   let count = 1;
-  const active = new Set<number>();
 
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--count") {
@@ -76,22 +70,10 @@ function parse_args(argv: string[]): CliArgs {
         process.exit(2);
       }
       count = n;
-    } else if (args[i] === "--active") {
-      const raw = args[++i] ?? "";
-      if (raw.length > 0) {
-        for (const token of raw.split(",")) {
-          const n = parseInt(token.trim(), 10);
-          if (isNaN(n)) {
-            process.stderr.write(`Error: --active contains non-integer value: ${token}\n${USAGE}\n`);
-            process.exit(2);
-          }
-          active.add(n);
-        }
-      }
     }
   }
 
-  return { project, count, active };
+  return { project, count };
 }
 
 /** An entry the LLM pool must still investigate is pending, or a retryable failure. */
@@ -112,20 +94,17 @@ function is_pickable(entry: TriageEntry): boolean {
  *   - `status === "pending"`, OR `status === "failed"` with retry budget left
  *     (a `failed` entry has a malformed result file; the caller clears it and
  *     re-dispatches — see `absorb_and_pick`).
- *   - entry_index is not in `active` (another worker already owns it)
+ *
+ * A batch is fully absorbed before the next dispense, so a just-picked entry is
+ * `completed` (or retried) by the next call and never re-picked mid-flight.
  *
  * Exported for testing; `absorb_and_pick` below calls this with real state.
  */
-export function pick_next_entries(
-  entries: readonly TriageEntry[],
-  count: number,
-  active: ReadonlySet<number>,
-): number[] {
+export function pick_next_entries(entries: readonly TriageEntry[], count: number): number[] {
   const picked: number[] = [];
   for (const entry of entries) {
     if (picked.length >= count) break;
     if (!is_pickable(entry)) continue;
-    if (active.has(entry.entry_index)) continue;
     picked.push(entry.entry_index);
   }
   return picked;
@@ -133,19 +112,18 @@ export function pick_next_entries(
 
 /**
  * The run is complete only when the LLM pool has nothing left to do: no
- * un-classified `pending` entry, no retryable `failed` entry, and nothing in
- * flight. A `failed` entry that has exhausted its retry budget is terminal and
- * does not hold the gate open.
+ * un-classified `pending` entry and no retryable `failed` entry remain. A
+ * `failed` entry that has exhausted its retry budget is terminal and does not
+ * hold the gate open.
  */
-function pool_is_drained(entries: readonly TriageEntry[], active: ReadonlySet<number>): boolean {
-  if (active.size > 0) return false;
+function pool_is_drained(entries: readonly TriageEntry[]): boolean {
   return !entries.some(is_pickable);
 }
 
 /**
- * Locked read → merge results → pick → re-dispatch bookkeeping → write, run as
- * one atomic transaction under `atomic_update_registry`'s `.lock` so two
- * overlapping picks cannot lose absorbed verdicts to a last-writer-wins race.
+ * Read → merge results → pick → re-dispatch bookkeeping → write, run as one
+ * transaction under `atomic_update_registry`'s `.lock` so the state-file write
+ * is atomic (temp + rename) and crash-safe.
  *
  * For each picked entry that was `failed`, the stale (malformed) result file is
  * removed and the entry is flipped back to `pending` with `retry_count`
@@ -156,14 +134,13 @@ export async function absorb_and_pick(
   state_path: string,
   run_dir: string,
   count: number,
-  active: ReadonlySet<number>,
 ): Promise<number[]> {
   return atomic_update_registry<number[]>(state_path, async (raw) => {
     const state = JSON.parse(raw) as TriageState;
 
     await merge_results(state, run_dir);
 
-    const picked = pick_next_entries(state.entries, count, active);
+    const picked = pick_next_entries(state.entries, count);
 
     for (const index of picked) {
       const entry = state.entries.find((e) => e.entry_index === index);
@@ -177,7 +154,7 @@ export async function absorb_and_pick(
       }
     }
 
-    if (pool_is_drained(state.entries, active)) {
+    if (pool_is_drained(state.entries)) {
       state.phase = "complete";
     }
 
@@ -192,13 +169,13 @@ function is_main_module(): boolean {
 }
 
 if (is_main_module()) {
-  const { project, count, active } = parse_args(process.argv);
+  const { project, count } = parse_args(process.argv);
   const run_id_opt = parse_run_id_arg(process.argv);
   const { state_path, run_dir } = require_run(project, run_id_opt);
 
   let picked: number[];
   try {
-    picked = await absorb_and_pick(state_path, run_dir, count, active);
+    picked = await absorb_and_pick(state_path, run_dir, count);
   } catch (err) {
     process.stderr.write(`Error: failed to absorb results and pick next entries: ${err}\n`);
     process.exit(1);

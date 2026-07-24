@@ -154,7 +154,7 @@ Options:
 - `--no-reuse-tp` (optional) — disable the TP cache for this run; every `llm-triage` entry will re-investigate even if a prior run at the same commit confirmed it unreachable
 - `--tp-source-run <run-id>` (optional) — pin a specific source run for the TP cache. Must be at the current HEAD commit; the script throws otherwise.
 
-`--max-count` caps how many `llm-triage` entries are kept (and thus the total number of triage-investigator agents Phase 3 dispatches — distinct from the `N = 5` concurrency setting in Phase 3). The script keeps the top `<n>` residual entries by `tree_size`. Auto-classified entries are always kept in full and do not count toward this cap. Override the default for a smaller probe or larger sweep.
+`--max-count` caps how many `llm-triage` entries are kept (and thus the total number of triage-investigator agents Phase 3 dispatches — distinct from the `N = 5` batch size in Phase 3). The script keeps the top `<n>` residual entries by `tree_size`. Auto-classified entries are always kept in full and do not count toward this cap. Override the default for a smaller probe or larger sweep.
 
 The script captures the target's HEAD short-commit, generates run-id `<short-commit>-<iso-ts>`, and creates `triage_state/<project>/runs/<run-id>/`. It partitions entries into three buckets:
 
@@ -168,17 +168,15 @@ Output: `triage_state/<project>/runs/<run-id>/triage.json` and `manifest.json`.
 
 ## Phase 3: Triage Loop
 
-Run investigators as a **continuous worker pool**: keep `N` triage-investigator agents in flight at all times, launching a replacement the moment any one of them completes. This keeps concurrency close to `N` for the whole phase instead of averaging `N/2` as a batch loop would.
+Run investigators as **synchronous foreground batches**: dispense a batch of up to `N` pending entries, launch one triage-investigator per index in a single message as **foreground** Task calls, and let the turn block until the whole batch has returned. Then dispense the next batch. Repeat until the pool drains. Every Task is awaited within the turn, so the entire loop — and Phase 4 finalize — runs to completion inside one `query()`: no background agents, no waiting on completion notifications, and no scheduler. The agent never yields mid-pipeline, so a headless single-turn run makes zero `ScheduleWakeup` calls and needs zero stop-hook re-continuations.
 
-**Default concurrency:** `N = 5`.
+**Default batch size:** `N = 5`. A batch loop averages `N/2` concurrency; that is the accepted cost of running headless in a single turn. Raise `--count` for wider batches on a fast target.
 
-Every script takes `--project <name>` — use the project captured in Phase 2. The main agent tracks in-flight indices locally and passes them via `--active` so the script never hands the same index to two workers.
+Every script takes `--project <name>` — use the project captured in Phase 2.
 
-**Crash recovery is automatic.** Entries stay `pending` until an investigator writes a result file, which the next `get_next_triage_entry` call absorbs (transitioning the entry to `completed`). If an investigator crashes before writing a result, its entry remains `pending` and is redispensed naturally on a later call. The `--active` set tells the script which `pending` entries are currently assigned to live workers so they are skipped when picking replacements.
+**Crash recovery is automatic.** Entries stay `pending` until an investigator writes a result file, which the next `get_next_triage_entry` call absorbs (transitioning the entry to `completed`). If an investigator in a batch crashes before writing a result, its entry remains `pending` and is re-dispensed on a later batch. A malformed result file flips the entry to `failed`; the dispenser clears the stale file and re-dispenses it up to `MAX_TRIAGE_RETRIES` times before terminalizing the failure.
 
-### Step 1: Initial fill
-
-Run once to pick up to `N` pending entries:
+### Step 1: Dispense a batch
 
 ```bash
 node --import tsx .claude/skills/triage/scripts/get_next_triage_entry.ts \
@@ -187,34 +185,23 @@ node --import tsx .claude/skills/triage/scripts/get_next_triage_entry.ts \
 
 Output: `{ "entries": [N, ...] }`. If the script exits non-zero, stop and report stderr to the user. If `entries` is empty, skip to Phase 4.
 
-Launch one **triage-investigator** agent per returned index in a **single message with multiple Agent calls** (parallel), all `run_in_background: true`. Prompt each with:
+### Step 2: Investigate the batch to completion
 
-```
+Launch one **triage-investigator** agent per returned index in a **single message with multiple Task calls**, all **foreground** (`run_in_background: false`). The turn blocks until every agent in the batch has returned. Prompt each with:
+
+```text
 project: <name>
 entry_index: N
 Write your verdict to results/N.json, then reply with one line only: `done N: <kind>`. Emit no other text.
 ```
 
-The triage-investigator runs `get_entry_context.ts --project <name> --entry <index>` itself to fetch the full investigation context (entry + in-scope registry slice) and writes its verdict to `results/{entry_index}.json`.
+The triage-investigator runs `get_entry_context.ts --project <name> --entry <index>` itself to fetch the full investigation context (entry + in-scope registry slice) and writes its verdict to `results/{entry_index}.json`. Each agent's one-line reply is a completion acknowledgement only — the authoritative verdict is the result file, absorbed by `get_next_triage_entry.ts` on the next dispense and by `finalize_triage.ts` in Phase 4. Do not read, summarize, or act on the replies.
 
-Track the set of in-flight entry indices locally — it seeds `--active` on the next call.
+### Step 3: Loop until drained
 
-### Step 2: Steady-state worker pool
+When the batch completes, return to Step 1 to dispense the next batch. Each dispense reads `results/` fresh, absorbing the just-completed verdicts before picking the next pending entries — a batch is fully complete and absorbed before the next dispense, so no entry is ever handed to two workers. When `get_next_triage_entry` returns an empty `entries` array, the pool is drained (`phase = "complete"`) — proceed to Phase 4.
 
-Whenever a `<task-notification>` arrives signalling an investigator completed, **treat it only as a "slot freed" signal** — the entry index that finished. Ignore its `<result>` body entirely; the authoritative verdict is `results/{entry_index}.json`, absorbed by `get_next_triage_entry.ts` and by `finalize_triage.ts` in Phase 4. Do not read, summarize, or act on the notification's prose. Remove its entry index from the in-flight set, then run the script once with the remaining in-flight indices:
-
-```bash
-node --import tsx .claude/skills/triage/scripts/get_next_triage_entry.ts \
-  --project <name> --active 7,12,18,23
-```
-
-- If `entries` has one index, launch one replacement `triage-investigator` agent (`run_in_background: true`) for that index and add it to the in-flight set.
-- If `entries` is empty and the in-flight set is empty, proceed to Phase 4.
-- If `entries` is empty but the in-flight set is non-empty, wait for the next completion and call the script again.
-
-Call the script **sequentially** (not in parallel) for replacements — each call needs a fresh read of `results/` to see the just-completed entry's verdict file before picking the next pending one. Pass an empty `--active` (omit the flag) if every worker has finished and you're doing a final drain check.
-
-To inspect live counts across in-flight runs at any time, run the on-demand summary in **Current State** (doc tail).
+Emit no interim status report during the loop — the pipeline runs to completion in this turn and produces exactly one terminal report after Phase 4. Reserve a `failed` report for a genuine crash or a finalize error; the pipeline simply not being finished yet is never `failed`. To inspect live counts across runs on demand, run the summary in **Current State** (doc tail).
 
 ### Verdict schema
 

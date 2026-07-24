@@ -67,7 +67,7 @@ describe("pick_next_entries", () => {
       make_entry({ entry_index: 1 }),
       make_entry({ entry_index: 2 }),
     ];
-    expect(pick_next_entries(entries, 1, new Set())).toEqual([1]);
+    expect(pick_next_entries(entries, 1)).toEqual([1]);
   });
 
   it("respects --count", () => {
@@ -76,16 +76,7 @@ describe("pick_next_entries", () => {
       make_entry({ entry_index: 1 }),
       make_entry({ entry_index: 2 }),
     ];
-    expect(pick_next_entries(entries, 2, new Set())).toEqual([0, 1]);
-  });
-
-  it("excludes entries listed in active", () => {
-    const entries: TriageEntry[] = [
-      make_entry({ entry_index: 0 }),
-      make_entry({ entry_index: 1 }),
-      make_entry({ entry_index: 2 }),
-    ];
-    expect(pick_next_entries(entries, 2, new Set([0]))).toEqual([1, 2]);
+    expect(pick_next_entries(entries, 2)).toEqual([0, 1]);
   });
 
   it("skips auto_classified entries even if status is pending", () => {
@@ -93,7 +84,7 @@ describe("pick_next_entries", () => {
       make_entry({ entry_index: 0, status: "pending", auto_classified: true }),
       make_entry({ entry_index: 1 }),
     ];
-    expect(pick_next_entries(entries, 2, new Set())).toEqual([1]);
+    expect(pick_next_entries(entries, 2)).toEqual([1]);
   });
 
   it("returns [] when nothing is pickable", () => {
@@ -101,7 +92,7 @@ describe("pick_next_entries", () => {
       make_entry({ entry_index: 0, status: "completed" }),
       make_entry({ entry_index: 1, status: "pending", auto_classified: true }),
     ];
-    expect(pick_next_entries(entries, 5, new Set())).toEqual([]);
+    expect(pick_next_entries(entries, 5)).toEqual([]);
   });
 
   it("re-picks a failed entry with retry budget left", () => {
@@ -109,14 +100,14 @@ describe("pick_next_entries", () => {
       make_entry({ entry_index: 0, status: "failed", retry_count: 0 }),
       make_entry({ entry_index: 1, status: "failed", retry_count: MAX_TRIAGE_RETRIES - 1 }),
     ];
-    expect(pick_next_entries(entries, 5, new Set())).toEqual([0, 1]);
+    expect(pick_next_entries(entries, 5)).toEqual([0, 1]);
   });
 
   it("does not re-pick a failed entry that exhausted its retry budget", () => {
     const entries: TriageEntry[] = [
       make_entry({ entry_index: 0, status: "failed", retry_count: MAX_TRIAGE_RETRIES }),
     ];
-    expect(pick_next_entries(entries, 5, new Set())).toEqual([]);
+    expect(pick_next_entries(entries, 5)).toEqual([]);
   });
 });
 
@@ -144,7 +135,7 @@ describe("absorb_and_pick", () => {
     return JSON.parse(await fs.readFile(state_path, "utf8")) as TriageState;
   }
 
-  it("absorbs disjoint verdicts under concurrency and releases the lock", async () => {
+  it("absorbs a batch's completed verdicts, drains the pool, and releases the lock", async () => {
     await write_state(
       make_state([
         make_entry({ entry_index: 0 }),
@@ -154,41 +145,12 @@ describe("absorb_and_pick", () => {
     await fs.writeFile(path.join(results_dir, "0.json"), tp_verdict_json());
     await fs.writeFile(path.join(results_dir, "1.json"), tp_verdict_json());
 
-    await Promise.all([
-      absorb_and_pick(state_path, run_dir, 1, new Set([1])),
-      absorb_and_pick(state_path, run_dir, 1, new Set([0])),
-    ]);
+    const picked = await absorb_and_pick(state_path, run_dir, 2);
 
+    expect(picked).toEqual([]);
     const state = await read_state();
     expect(state.entries.map((e) => e.status)).toEqual(["completed", "completed"]);
-    expect(await fs.readdir(run_dir)).not.toContain("triage.json.lock");
-  });
-
-  it("serialises concurrent retry re-dispatches so no failed→pending mutation is clobbered", async () => {
-    // Two failed entries, each with a stale malformed result file. Two fills run
-    // concurrently, each re-dispatching a DIFFERENT failed entry (disjoint active
-    // sets). This is the read-modify-write the lock protects: each fill flips its
-    // entry failed→pending and bumps retry_count off a stale read. Without the
-    // lock, the second writer clobbers the first's mutation and one bump is lost;
-    // with it, both survive.
-    await write_state(
-      make_state([
-        make_entry({ entry_index: 0, status: "failed", retry_count: 0 }),
-        make_entry({ entry_index: 1, status: "failed", retry_count: 0 }),
-      ]),
-    );
-    await fs.writeFile(path.join(results_dir, "0.json"), "malformed{{{");
-    await fs.writeFile(path.join(results_dir, "1.json"), "malformed{{{");
-
-    await Promise.all([
-      absorb_and_pick(state_path, run_dir, 1, new Set([1])),
-      absorb_and_pick(state_path, run_dir, 1, new Set([0])),
-    ]);
-
-    const state = await read_state();
-    expect(state.entries.map((e) => e.status)).toEqual(["pending", "pending"]);
-    expect(state.entries.map((e) => e.retry_count)).toEqual([1, 1]);
-    expect(await fs.readdir(results_dir)).toEqual([]);
+    expect(state.phase).toEqual("complete");
     expect(await fs.readdir(run_dir)).not.toContain("triage.json.lock");
   });
 
@@ -196,7 +158,7 @@ describe("absorb_and_pick", () => {
     await write_state(make_state([make_entry({ entry_index: 0, status: "failed", retry_count: 0 })]));
     await fs.writeFile(path.join(results_dir, "0.json"), "not valid json{{{");
 
-    const picked = await absorb_and_pick(state_path, run_dir, 1, new Set());
+    const picked = await absorb_and_pick(state_path, run_dir, 1);
 
     expect(picked).toEqual([0]);
     const state = await read_state();
@@ -213,13 +175,13 @@ describe("absorb_and_pick", () => {
     await fs.writeFile(path.join(results_dir, "0.json"), "still malformed{{{");
 
     // One retry left: entry is re-picked, so the pool is not drained.
-    await absorb_and_pick(state_path, run_dir, 1, new Set());
+    await absorb_and_pick(state_path, run_dir, 1);
     expect((await read_state()).phase).toEqual("triage");
 
     // The retry investigator writes another malformed file; the budget is now
     // exhausted, so the entry terminalizes as failed and the gate closes.
     await fs.writeFile(path.join(results_dir, "0.json"), "malformed again{{{");
-    const picked = await absorb_and_pick(state_path, run_dir, 1, new Set());
+    const picked = await absorb_and_pick(state_path, run_dir, 1);
     expect(picked).toEqual([]);
     const state = await read_state();
     expect(state.entries[0].status).toEqual("failed");
@@ -227,12 +189,12 @@ describe("absorb_and_pick", () => {
     expect(state.phase).toEqual("complete");
   });
 
-  it("does not complete while an entry is still active", async () => {
+  it("picks a still-running pending entry but holds phase 'triage' until it completes", async () => {
     await write_state(make_state([make_entry({ entry_index: 0, status: "pending" })]));
 
-    const picked = await absorb_and_pick(state_path, run_dir, 1, new Set([0]));
+    const picked = await absorb_and_pick(state_path, run_dir, 1);
 
-    expect(picked).toEqual([]);
+    expect(picked).toEqual([0]);
     expect((await read_state()).phase).toEqual("triage");
   });
 });

@@ -2,7 +2,7 @@
  * State types for the self-repair triage pipeline.
  *
  * The triage state file tracks entry point candidates through two phases:
- * - "triage": investigators running as a continuous worker pool
+ * - "triage": investigators dispatched as synchronous foreground batches
  * - "complete": all entries processed, ready to finalize
  */
 

@@ -156,7 +156,7 @@
       "id": "triage-investigator",
       "model": "sonnet",
       "max_turns": 50,
-      "multiplicity": "one per residual llm-triage entry; the main agent runs a continuous worker pool that bounds concurrency to N=5 and caps total dispatch at --max-count (default 250)",
+      "multiplicity": "one per residual llm-triage entry; the main agent dispatches synchronous foreground batches of N=5 that the turn awaits, and caps total dispatch at --max-count (default 250)",
       "used_in_flows": ["detect-triage-publish"]
     }
   ],

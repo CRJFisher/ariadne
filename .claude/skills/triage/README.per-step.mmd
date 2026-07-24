@@ -28,10 +28,10 @@ flowchart TD
     A2[/"runs/&lt;run-id&gt;/<br/>manifest.json · triage.json · LATEST"/]:::artifact
   end
 
-  subgraph P3["Phase 3 · Triage Loop (worker pool, N=5)"]
+  subgraph P3["Phase 3 · Triage Loop (foreground batches, N=5)"]
     direction TB
     S3("get_next_triage_entry.ts<br/>dispense/absorb cycle"):::step
-    AG3[["triage-investigator<br/>sonnet · parallel"]]:::agent
+    AG3[["triage-investigator<br/>sonnet · foreground batch"]]:::agent
     A3[/"results/&#123;idx&#125;.json<br/>TriageVerdict · self-contained<br/>tp · fp-novel · fp-classifier-regression · uncertain"/]:::artifact
   end
 
