@@ -2,7 +2,7 @@
 /**
  * Claude Code Stop hook: Build modified packages to keep dist/ up to date
  *
- * Detects which packages have modified source files (via get_changed_files),
+ * Detects which packages have modified source files (via get_scoped_changes),
  * then builds them in dependency order. Downstream dependents are
  * included automatically so their dist/ stays consistent.
  *
@@ -10,7 +10,10 @@
  */
 
 import { execSync } from "child_process";
-import { create_logger, parse_stdin, get_project_dir, get_changed_files } from "./utils.js";
+import { create_logger, parse_stdin, get_project_dir, get_scoped_changes } from "./utils.js";
+import { record_scan_cleared } from "./scan_base.js";
+
+const HOOK = "build";
 
 const log = create_logger("build");
 
@@ -63,10 +66,11 @@ function main(): void {
   parse_stdin();
 
   const project_dir = get_project_dir();
-  const changed = get_changed_files(project_dir);
+  const { changed, range } = get_scoped_changes(project_dir, HOOK);
 
   if (changed.modified_packages.length === 0) {
     log("No packages modified, skipping build");
+    record_scan_cleared(project_dir, HOOK, range);
     return;
   }
 
@@ -106,6 +110,7 @@ function main(): void {
     );
   } else {
     log("All packages built successfully");
+    record_scan_cleared(project_dir, HOOK, range);
   }
 
   process.exit(0);

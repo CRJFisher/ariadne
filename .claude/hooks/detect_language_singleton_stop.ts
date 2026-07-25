@@ -19,8 +19,9 @@ import {
   create_logger,
   parse_stdin,
   get_project_dir,
-  get_changed_files,
+  get_scoped_changes,
 } from "./utils.js";
+import { record_scan_cleared } from "./scan_base.js";
 import {
   DefinitionSite,
   find_definition_lines,
@@ -30,6 +31,7 @@ import {
 } from "./detect_language_singleton.js";
 
 const log = create_logger("detect-language-singleton");
+const HOOK = "detect_language_singleton";
 
 function collect_definition_sites(project_dir: string): DefinitionSite[] {
   const sites: DefinitionSite[] = [];
@@ -75,7 +77,7 @@ function main(): void {
   }
 
   const project_dir = get_project_dir();
-  const changed = get_changed_files(project_dir);
+  const { changed, range } = get_scoped_changes(project_dir, HOOK);
 
   // Trigger matches the scan filter rather than reusing has_source_changes /
   // changed_ts_files: those include .claude/skills/triage and keep .d.ts and
@@ -86,12 +88,14 @@ function main(): void {
   const git_detection_failed =
     changed.all_files.length === 0 && !changed.has_no_changes;
   if (!git_detection_failed && !changed.all_files.some(is_scannable_source_path)) {
+    record_scan_cleared(project_dir, HOOK, range);
     return;
   }
 
   const offenders = find_singleton_offenders(collect_definition_sites(project_dir));
   if (offenders.length === 0) {
     log("singleton invariant holds");
+    record_scan_cleared(project_dir, HOOK, range);
     return;
   }
 

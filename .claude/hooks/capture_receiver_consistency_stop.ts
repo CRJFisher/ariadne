@@ -23,8 +23,9 @@ import {
   create_logger,
   parse_stdin,
   get_project_dir,
-  get_changed_files,
+  get_scoped_changes,
 } from "./utils.js";
+import { record_scan_cleared } from "./scan_base.js";
 import {
   check_project,
   is_trigger_file,
@@ -33,18 +34,20 @@ import {
 } from "./capture_receiver_consistency.js";
 
 const log = create_logger("capture-receiver-consistency");
+const HOOK = "capture_receiver_consistency";
 
 function main(): void {
   parse_stdin();
 
   const project_dir = get_project_dir();
-  const changed = get_changed_files(project_dir);
+  const { changed, range } = get_scoped_changes(project_dir, HOOK);
 
-  // On git-detection failure get_changed_files returns all_files empty with
+  // On git-detection failure get_scoped_changes returns all_files empty with
   // has_no_changes false; run the check then rather than skip a real change.
   const git_detection_failed = changed.all_files.length === 0 && !changed.has_no_changes;
   if (!git_detection_failed && !changed.all_files.some(is_trigger_file)) {
     log("No query or receiver file changed, skipping");
+    record_scan_cleared(project_dir, HOOK, range);
     return;
   }
 
@@ -56,6 +59,7 @@ function main(): void {
 
   if (report.dead_handlers.length === 0) {
     log(`consistency holds${report.orphan_captures.length > 0 ? " (orphans warned)" : ""}`);
+    record_scan_cleared(project_dir, HOOK, range);
     return;
   }
 

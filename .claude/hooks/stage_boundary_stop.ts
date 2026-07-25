@@ -15,8 +15,9 @@ import {
   create_logger,
   parse_stdin,
   get_project_dir,
-  get_changed_files,
+  get_scoped_changes,
 } from "./utils.js";
+import { record_scan_cleared } from "./scan_base.js";
 import {
   CORE_SRC,
   check_boundaries,
@@ -25,6 +26,7 @@ import {
 } from "./stage_boundary.js";
 
 const log = create_logger("stage-boundary");
+const HOOK = "stage_boundary";
 
 function to_repo_posix(project_dir: string, abs_path: string): string {
   return path.relative(project_dir, abs_path).split(path.sep).join("/");
@@ -59,7 +61,7 @@ function main(): void {
   parse_stdin();
 
   const project_dir = get_project_dir();
-  const changed = get_changed_files(project_dir);
+  const { changed, range } = get_scoped_changes(project_dir, HOOK);
 
   const changed_core = changed.changed_ts_files
     .map((abs) => to_repo_posix(project_dir, abs))
@@ -68,6 +70,7 @@ function main(): void {
 
   if (changed_core.length === 0) {
     log("No packages/core/src changes, skipping");
+    record_scan_cleared(project_dir, HOOK, range);
     return;
   }
 
@@ -81,6 +84,7 @@ function main(): void {
 
   if (violations.length === 0) {
     log(`No violations across ${changed_core.length} changed file(s)`);
+    record_scan_cleared(project_dir, HOOK, range);
     return;
   }
 

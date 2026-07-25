@@ -22,11 +22,13 @@ import {
   create_logger,
   parse_stdin,
   get_project_dir,
-  get_changed_files,
+  get_scoped_changes,
   type ChangedFiles,
 } from "./utils.js";
+import { record_scan_cleared } from "./scan_base.js";
 
 const log = create_logger("doc-path-truth");
+const HOOK = "doc_path_truth";
 
 export const IGNORE_MARKER = "<!-- doc-path-truth:ignore -->";
 
@@ -149,9 +151,10 @@ function main(): void {
   parse_stdin();
 
   const project_dir = get_project_dir();
-  const changed = get_changed_files(project_dir);
+  const { changed, range } = get_scoped_changes(project_dir, HOOK);
   if (!should_run(changed)) {
     log("No rule or package-source changes, skipping");
+    record_scan_cleared(project_dir, HOOK, range);
     return;
   }
 
@@ -181,6 +184,7 @@ function main(): void {
   }
 
   log(`All ${citations.length} cited paths exist`);
+  record_scan_cleared(project_dir, HOOK, range);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

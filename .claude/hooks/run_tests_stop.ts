@@ -9,9 +9,11 @@
 
 import path from "path";
 import { execSync } from "child_process";
-import { create_logger, parse_stdin, get_project_dir, get_changed_files, find_test_root } from "./utils.js";
+import { create_logger, parse_stdin, get_project_dir, get_scoped_changes, find_test_root } from "./utils.js";
+import { record_scan_cleared } from "./scan_base.js";
 
 const log = create_logger("run-tests");
+const HOOK = "run_tests";
 
 function main(): void {
   log("Test runner hook started");
@@ -24,10 +26,11 @@ function main(): void {
   }
 
   const project_dir = get_project_dir();
-  const changed = get_changed_files(project_dir);
+  const { changed, range } = get_scoped_changes(project_dir, HOOK);
 
   if (!changed.has_source_changes) {
     log("No source changes detected, skipping tests");
+    record_scan_cleared(project_dir, HOOK, range);
     return;
   }
 
@@ -98,6 +101,7 @@ function main(): void {
     }));
   } else {
     log("All tests passed");
+    record_scan_cleared(project_dir, HOOK, range);
   }
 }
 

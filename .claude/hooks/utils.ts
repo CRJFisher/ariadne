@@ -5,8 +5,8 @@
 
 import fs from "fs";
 import path from "path";
-import { execSync } from "child_process";
 import { fileURLToPath } from "url";
+import { changed_paths_since, open_scan_range, type ScanRange } from "./scan_base.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -80,39 +80,43 @@ export interface ChangedFiles {
 
 const SOURCE_EXTENSIONS = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"];
 
+/** Every workspace package, for the fallback that assumes everything changed. */
+const WORKSPACE_PACKAGES = ["types", "core", "mcp", "skill-fs", "skill-protocol"];
+
+export interface ScopedChanges {
+  changed: ChangedFiles;
+  range: ScanRange;
+}
+
 /**
- * Detect changed files by combining git diff (unstaged), git diff --cached (staged),
- * and git ls-files --others (untracked).
- * Returns a summary of what changed for use by stop hooks.
+ * What a hook must look at this session: everything since the commit that hook
+ * last cleared. Pair it with `record_scan_cleared(project_dir, hook, range)` on
+ * the passing path — until some run records a clean pass, the range stays open.
+ * `.claude/hooks/SCAN_SCOPE.md` is the contract.
+ *
+ * With no mark on record the range anchors at HEAD, so a first run covers the
+ * working tree only and a hook that acts per file never touches work the
+ * session did not do.
  */
-export function get_changed_files(project_dir: string): ChangedFiles {
+export function get_scoped_changes(project_dir: string, hook: string): ScopedChanges {
+  let range: ScanRange = { base: null, head: null };
   try {
-    const unstaged = execSync("git diff --name-only HEAD", {
-      cwd: project_dir,
-      encoding: "utf8",
-      stdio: ["pipe", "pipe", "pipe"],
-    }).trim();
+    range = open_scan_range(project_dir, hook);
+  } catch {
+    // Git unreadable — get_changed_files applies its own fail-wide fallback.
+  }
 
-    const staged = execSync("git diff --name-only --cached", {
-      cwd: project_dir,
-      encoding: "utf8",
-      stdio: ["pipe", "pipe", "pipe"],
-    }).trim();
+  return { range, changed: get_changed_files(project_dir, range.base ?? range.head) };
+}
 
-    const untracked = execSync("git ls-files --others --exclude-standard", {
-      cwd: project_dir,
-      encoding: "utf8",
-      stdio: ["pipe", "pipe", "pipe"],
-    }).trim();
-
-    const all_files = [
-      ...unstaged.split("\n"),
-      ...staged.split("\n"),
-      ...untracked.split("\n"),
-    ].filter((f) => f.trim());
-
-    // Deduplicate
-    const unique_files = [...new Set(all_files)];
+/**
+ * Everything that changed since `scan_base` — committed, staged, unstaged, or
+ * untracked — summarized for use by stop hooks. Reached through
+ * `get_scoped_changes`, which supplies the base a hook should anchor at.
+ */
+function get_changed_files(project_dir: string, scan_base: string | null): ChangedFiles {
+  try {
+    const unique_files = changed_paths_since(project_dir, scan_base);
 
     const has_no_changes = unique_files.length === 0;
 
@@ -174,13 +178,18 @@ export function get_changed_files(project_dir: string): ChangedFiles {
       changed_ts_files,
     };
   } catch {
-    // On git failure, assume everything changed (safe fallback)
+    // On git failure, assume everything changed (safe fallback). Consumers
+    // recognise this state by `all_files` being empty while `has_no_changes`
+    // is false, and widen their own scope accordingly.
     return {
       all_files: [],
       has_source_changes: true,
       has_no_changes: false,
-      modified_packages: ["types", "core", "mcp"],
-      modified_areas: ["packages/types", "packages/core", "packages/mcp", ".claude/skills/triage"],
+      modified_packages: [...WORKSPACE_PACKAGES],
+      modified_areas: [
+        ...WORKSPACE_PACKAGES.map((name) => `packages/${name}`),
+        ".claude/skills/triage",
+      ],
       changed_ts_files: [],
     };
   }
