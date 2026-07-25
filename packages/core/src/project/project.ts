@@ -621,7 +621,9 @@ export class Project {
       const content = this.file_contents.get(file_path);
       if (!content) continue;
 
-      const entry = await write_file_index(storage, file_path, index, content);
+      // No git state here: entries this path writes carry no blob hash and are
+      // validated by content hash on the next load.
+      const entry = await write_file_index(storage, file_path, index, content, null);
       if (entry) {
         manifest_entries.set(file_path, entry);
       }

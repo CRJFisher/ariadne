@@ -11,17 +11,27 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const LOG_FILE = path.join(__dirname, "..", "hook_log.txt");
+const DEFAULT_LOG_FILE = path.join(__dirname, "..", "hook_log.txt");
 export const TS_JS_EXTENSIONS = [".ts", ".tsx", ".js", ".jsx"];
 
 /**
- * Log a message with timestamp and hook name
+ * Log a message with timestamp and hook name.
+ *
+ * Writes synchronously: a hook's last act is usually `process.exit`, which
+ * discards pending async writes, and the log is the only record of what a Stop
+ * hook decided. A failed write is swallowed — losing a log line must never turn
+ * a hook's verdict into a crash. `ARIADNE_HOOK_LOG` redirects the file so a
+ * test run does not forge entries in the real record.
  */
 export function create_logger(hook_name: string): (message: string) => void {
   return function log(message: string): void {
     const timestamp = new Date().toISOString();
     const entry = `[${timestamp}] [${hook_name}] ${message}\n`;
-    fs.appendFileSync(LOG_FILE, entry);
+    try {
+      fs.appendFileSync(process.env.ARIADNE_HOOK_LOG || DEFAULT_LOG_FILE, entry);
+    } catch {
+      // Deliberately ignored — see above.
+    }
   };
 }
 

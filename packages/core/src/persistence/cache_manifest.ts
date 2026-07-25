@@ -4,6 +4,11 @@ import type { ContentHash } from "./content_hash";
 /**
  * Increment when the cache format changes in a way that invalidates existing caches.
  * On load, if the version doesn't match, the entire cache is discarded. No migrations.
+ *
+ * v4: a v3 manifest could stamp a tracked blob hash onto an index built from
+ * dirty content, so its `git_blob_hash` values cannot be trusted now that the
+ * blob alone decides cache validity. Those manifests must be discarded, not
+ * migrated — the entries look well-formed but describe the wrong content.
  */
 export const CURRENT_SCHEMA_VERSION = 4;
 

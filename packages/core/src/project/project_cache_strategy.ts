@@ -50,31 +50,23 @@ export async function read_cache_manifest(
 /**
  * Determine if a file can use its cached index based on git state.
  *
- * The cached index is usable only when git can name the exact content it was
- * built from and that content is still what is on disk: the entry carries a
- * blob hash, the file's current blob is that hash, and the working tree does
- * not diverge from it. Without git the caller must content-hash instead.
+ * The read side of the invariant `blob_hash_for_indexed_content` enforces on
+ * write: the cached index is usable exactly when git still names the content it
+ * was built from. Both sides derive that name the same way, so they cannot
+ * drift apart. Without git the caller must content-hash instead.
  *
- * The index blob alone decides this. A staged edit and a committed edit both
- * leave a file undirty while its content differs from what was cached, so
- * anything coarser than a per-file blob comparison — a HEAD tree hash, a
- * working-tree diff — vouches for content it has not actually checked.
+ * The blob alone decides this. A staged edit and a committed edit both leave a
+ * file undirty while its content differs from what was cached, so anything
+ * coarser than a per-file blob comparison — a HEAD tree hash, a working-tree
+ * diff — vouches for content it has not actually checked.
  */
 export function can_use_cache(
   file_path: FilePath,
   cached_entry: CacheManifestEntry,
   git_state: GitFileState | null,
 ): boolean {
-  if (!git_state) {
-    return false;
-  }
-
-  if (git_state.dirty_files.has(file_path)) return false;
-  if (git_state.untracked_files.has(file_path)) return false;
-
-  if (!cached_entry.git_blob_hash) return false;
-
-  return git_state.tracked_hashes.get(file_path) === cached_entry.git_blob_hash;
+  const blob_hash = blob_hash_for_indexed_content(file_path, git_state);
+  return blob_hash !== undefined && blob_hash === cached_entry.git_blob_hash;
 }
 
 /**
@@ -123,10 +115,10 @@ export async function try_restore_from_cache(
 }
 
 /**
- * Git's name for the content just indexed, or undefined when git does not
- * track that exact content. An index built from a dirty or untracked working
- * tree has no blob to name; stamping the tracked blob anyway would let a later
- * checkout back to that blob serve an index built from different content.
+ * Git's name for the content on disk, or undefined when git does not track that
+ * exact content. A dirty or untracked working tree has no blob to name;
+ * stamping the tracked blob anyway would let a later checkout back to that blob
+ * serve an index built from different content.
  */
 export function blob_hash_for_indexed_content(
   file_path: FilePath,
@@ -142,18 +134,23 @@ export function blob_hash_for_indexed_content(
  * Serialize and write one file's index, returning its manifest entry, or
  * null when the write failed (the file then carries no manifest entry, so
  * a later load re-indexes it instead of trusting a phantom cache row).
+ *
+ * The entry's blob hash is derived here rather than supplied, so a caller
+ * cannot stamp an entry with a blob its index did not come from — the defect
+ * that let a staged edit serve a stale index. A caller with no git state passes
+ * null and the entry falls back to content-hash validation.
  */
 export async function write_file_index(
   storage: PersistenceStorage,
   file_path: FilePath,
   index: SemanticIndex,
   content: string,
-  git_blob_hash?: string,
+  git_state: GitFileState | null,
 ): Promise<CacheManifestEntry | null> {
   try {
     const content_hash = compute_content_hash(content);
     await storage.write_index(file_path, serialize_semantic_index(index));
-    return { content_hash, git_blob_hash };
+    return { content_hash, git_blob_hash: blob_hash_for_indexed_content(file_path, git_state) };
   } catch (error) {
     console.warn(
       `[ariadne:persistence] Failed to save index for ${file_path}: ${

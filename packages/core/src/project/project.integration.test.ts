@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { Project } from "./project";
-import type { FilePath, SymbolName } from "@ariadnejs/types";
+import type { FilePath, LexicalScope, SymbolName } from "@ariadnejs/types";
 import type {
   ConstructorCallReference,
   MethodCallReference,
@@ -498,7 +498,7 @@ const x = utils.missing();
   });
 
   describe("Output Structure Validation", () => {
-    it("should produce well-formed Scope objects", () => {
+    it("nests function scopes under the module root", () => {
       const file_path = "test.ts" as FilePath;
       project.update_file(file_path, `
 function outer() {
@@ -508,20 +508,29 @@ function outer() {
 }
       `);
 
+      // Looked up by name rather than by child_ids position — LexicalScope does
+      // not promise children in source order.
+      const child_named = (scope: LexicalScope, name: string): LexicalScope => {
+        const found = scope.child_ids
+          .map((id) => project.scopes.get_scope(id))
+          .find((child) => child?.name === (name as SymbolName));
+        if (!found) throw new Error(`No child scope named ${name} under ${scope.id}`);
+        return found;
+      };
+
       const root = project.scopes.get_file_root_scope(file_path);
-      expect(root?.type).toEqual("module");
-      expect(root?.parent_id).toEqual(null);
-      expect(root?.location.file_path).toEqual(file_path);
+      if (!root) throw new Error("No root scope indexed for test.ts");
+      expect(root.type).toEqual("module");
+      expect(root.parent_id).toEqual(null);
+      expect(root.location.file_path).toEqual(file_path);
 
-      const outer = project.scopes.get_scope(root!.child_ids[0]);
-      expect(outer?.type).toEqual("function");
-      expect(outer?.name).toEqual("outer" as SymbolName);
-      expect(outer?.parent_id).toEqual(root!.id);
+      const outer = child_named(root, "outer");
+      expect(outer.type).toEqual("function");
+      expect(outer.parent_id).toEqual(root.id);
 
-      const inner = project.scopes.get_scope(outer!.child_ids[0]);
-      expect(inner?.type).toEqual("function");
-      expect(inner?.name).toEqual("inner" as SymbolName);
-      expect(inner?.parent_id).toEqual(outer!.id);
+      const inner = child_named(outer, "inner");
+      expect(inner.type).toEqual("function");
+      expect(inner.parent_id).toEqual(outer.id);
     });
 
     it("should produce well-formed Reference objects", () => {

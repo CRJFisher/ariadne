@@ -2,17 +2,25 @@
 /**
  * Stop hook: detects dead code introduced during a coding session.
  *
- * Runs Ariadne against the packages changed since the last commit this hook
- * cleared, and cross-checks flagged entry points against the project's static
+ * Runs Ariadne against every package with a changed `src/**.ts` — committed
+ * since the last commit this hook cleared, staged, unstaged, or untracked —
+ * and cross-checks flagged entry points against the project's static
  * known-entrypoints whitelist at .claude/known_entrypoints/<package>.json
  * (repo-relative, committed to git). Blocks the session if any
  * exported-but-uncalled entry point is not on the whitelist. A package with no
  * whitelist file is skipped (logged); a present whitelist with no entries
  * deliberately blocks every flagged entry point.
  *
- * The whitelist is human-maintained (edit the JSON and commit). This hook only
- * reads it — it never writes. The triage skill's classifier registry is
- * a separate concern and is not consulted here.
+ * The cleared commit is recorded at <git-dir>/ariadne_dead_code_scan_base, the
+ * hook's only write. Git keeps that directory per-worktree, so each worktree
+ * tracks its own cleared point and falls back to the main checkout's when it
+ * has none. With no mark on record every tracked file is in scope, so deleting
+ * the mark — in a worktree, the shared one as well — forces a full rescan.
+ * `.claude/rules/surplus-code.md` carries the command.
+ *
+ * The whitelist is human-maintained (edit the JSON and commit); this hook only
+ * ever reads it. The triage skill's classifier registry is a separate concern
+ * and is not consulted here.
  */
 
 import { load_project, FileSystemStorage, resolve_cache_dir } from "@ariadnejs/core";
@@ -20,7 +28,7 @@ import type { PersistenceStorage } from "@ariadnejs/core";
 import * as fs from "fs/promises";
 import * as fs_sync from "fs";
 import * as path from "path";
-import { execSync } from "child_process";
+import { execFileSync } from "child_process";
 import { pathToFileURL } from "url";
 import { create_logger } from "./utils.js";
 
@@ -47,20 +55,27 @@ const log = create_logger("entrypoint");
  */
 function write_stdout_sync(text: string): void {
   const buffer = Buffer.from(text, "utf8");
+  const idle = new Int32Array(new SharedArrayBuffer(4));
   let written = 0;
   while (written < buffer.length) {
     try {
       written += fs_sync.writeSync(1, buffer, written, buffer.length - written);
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== "EAGAIN") throw error;
+      const code = (error as NodeJS.ErrnoException).code;
+      if (code !== "EAGAIN" && code !== "EINTR") throw error;
+      // A non-blocking pipe whose reader has not drained yet: wait rather than
+      // spin, so a slow harness costs latency instead of a pegged core.
+      Atomics.wait(idle, 0, 0, 1);
     }
   }
 }
 
-function output_result(decision: "block" | "approve", reason?: string): void {
-  if (decision === "block" && reason) {
-    write_stdout_sync(`${JSON.stringify({ decision, reason })}\n`);
-  }
+/**
+ * The hook's one consequential output. Every exit path that has a verdict goes
+ * through here so the verdict is always written by a completed syscall.
+ */
+function block_and_exit(reason: string): never {
+  write_stdout_sync(`${JSON.stringify({ decision: "block", reason })}\n`);
   process.exit(0);
 }
 
@@ -97,16 +112,32 @@ const AMBIENT_GIT_VARS = [
   "GIT_ALTERNATE_OBJECT_DIRECTORIES",
 ];
 
-function git(project_dir: string, args: string): string {
+export function git_env(): NodeJS.ProcessEnv {
   const env = { ...process.env };
   for (const name of AMBIENT_GIT_VARS) delete env[name];
+  return env;
+}
 
-  return execSync(`git ${args}`, {
+function git(project_dir: string, ...args: string[]): string {
+  return execFileSync("git", args, {
     cwd: project_dir,
     encoding: "utf8",
     stdio: ["pipe", "pipe", "pipe"],
-    env,
+    maxBuffer: 10 * 1024 * 1024,
+    env: git_env(),
   }).trim();
+}
+
+/**
+ * Git abbreviates a rename to its destination path alone, which would hide the
+ * package a file moved OUT of — and losing a file is exactly how a package
+ * acquires dead code. `core.quotepath=false` keeps non-ASCII paths literal so
+ * they still match the package pattern.
+ */
+function git_changed_paths(project_dir: string, ...args: string[]): string[] {
+  return git(project_dir, "-c", "core.quotepath=false", ...args)
+    .split("\n")
+    .filter((f) => f.trim());
 }
 
 /**
@@ -114,60 +145,143 @@ function git(project_dir: string, args: string): string {
  * HEAD, because a working-tree diff goes blind the moment a session commits:
  * the edit that killed a caller is already in history, the tree is clean, and
  * the scan finds nothing to do. Anchoring at the last cleared commit also makes
- * the hook self-healing — a run that is killed or crashes never advances the
- * mark, so the next run re-covers the same range.
- *
- * It lives in the git directory, which git keeps per-worktree, so a worktree
- * tracks the commits made inside it independently of the main checkout.
+ * the hook self-healing — the mark advances only after a run that analysed
+ * every package in scope, so a killed or blocked run re-covers its range.
  */
 const SCAN_BASE_FILE = "ariadne_dead_code_scan_base";
 
-function scan_base_path(project_dir: string): string {
-  return path.join(git(project_dir, "rev-parse --absolute-git-dir"), SCAN_BASE_FILE);
+const FULL_SHA = /^[0-9a-f]{40}$/;
+
+/**
+ * `--git-common-dir` answers relative to the repository root, so the result is
+ * resolved against `project_dir` rather than the process working directory.
+ */
+function scan_base_path(project_dir: string, git_dir_flag: string): string {
+  const git_dir = path.resolve(project_dir, git(project_dir, "rev-parse", git_dir_flag));
+  return path.join(git_dir, SCAN_BASE_FILE);
+}
+
+function read_recorded_sha(project_dir: string, git_dir_flag: string): string | null {
+  try {
+    const sha = fs_sync.readFileSync(scan_base_path(project_dir, git_dir_flag), "utf8").trim();
+    return FULL_SHA.test(sha) ? sha : null;
+  } catch {
+    return null;
+  }
+}
+
+function is_ancestor_of_head(project_dir: string, sha: string): boolean {
+  try {
+    git(project_dir, "merge-base", "--is-ancestor", sha, "HEAD");
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /**
- * Returns null when no mark exists yet, or when the marked commit is no longer
- * an ancestor of HEAD — after a branch switch or rebase its range describes
- * work that is not in this history, so the caller re-anchors at HEAD.
+ * The commit to scan from, given a recorded mark that may not be on this
+ * history. A branch switch or rebase leaves the mark describing work HEAD
+ * cannot reach; the fork point is the newest commit that IS shared, so the
+ * range from it covers everything this history has that the mark had not
+ * cleared. Anchoring at HEAD instead would declare that range clean without
+ * ever looking at it.
  */
-export function read_scan_base(project_dir: string): string | null {
-  let sha: string;
+function nearest_cleared_ancestor(project_dir: string, sha: string): string | null {
+  if (is_ancestor_of_head(project_dir, sha)) return sha;
   try {
-    sha = fs_sync.readFileSync(scan_base_path(project_dir), "utf8").trim();
-  } catch {
-    return null;
-  }
-  if (!sha) return null;
-
-  try {
-    git(project_dir, `merge-base --is-ancestor ${sha} HEAD`);
-    return sha;
+    return git(project_dir, "merge-base", sha, "HEAD") || null;
   } catch {
     return null;
   }
 }
 
+/**
+ * A linked worktree starts with no mark of its own. Falling back to the shared
+ * git directory's mark — the main checkout's cleared point — means a worktree's
+ * very first run still scans the commits made inside it, instead of treating
+ * its whole history as already cleared.
+ */
+export function resolve_scan_base(project_dir: string): string | null {
+  const recorded = [
+    read_recorded_sha(project_dir, "--absolute-git-dir"),
+    read_recorded_sha(project_dir, "--git-common-dir"),
+  ];
+
+  for (const sha of recorded) {
+    if (!sha) continue;
+    const base = nearest_cleared_ancestor(project_dir, sha);
+    if (base) return base;
+  }
+  return null;
+}
+
 export function write_scan_base(project_dir: string, sha: string): void {
-  fs_sync.writeFileSync(scan_base_path(project_dir), `${sha}\n`);
+  const target = scan_base_path(project_dir, "--absolute-git-dir");
+  const temp = `${target}.tmp`;
+  fs_sync.writeFileSync(temp, `${sha}\n`);
+  fs_sync.renameSync(temp, target);
 }
 
 /**
  * Every path touched since `scan_base`, whether it landed as a commit or is
  * still sitting in the working tree.
+ *
+ * A null base means nothing has been cleared yet, so every tracked file counts.
+ * Anything narrower would let a run declare history clean that it never looked
+ * at — and it is what makes deleting the mark force a real full rescan.
  */
 export function changed_files_since(project_dir: string, scan_base: string | null): string[] {
-  const outputs = [
-    git(project_dir, "diff --name-only HEAD"),
-    git(project_dir, "ls-files --others --exclude-standard"),
+  const paths = [
+    ...git_changed_paths(project_dir, "diff", "--name-only", "--no-renames", "HEAD"),
+    ...git_changed_paths(project_dir, "ls-files", "--others", "--exclude-standard"),
+    ...(scan_base
+      ? git_changed_paths(project_dir, "diff", "--name-only", "--no-renames", `${scan_base}..HEAD`)
+      : git_changed_paths(project_dir, "ls-files")),
   ];
-  if (scan_base) {
-    outputs.push(git(project_dir, `diff --name-only ${scan_base}..HEAD`));
-  }
 
-  return [
-    ...new Set(outputs.flatMap((output) => output.split("\n")).filter((f) => f.trim())),
-  ];
+  return [...new Set(paths)];
+}
+
+/**
+ * The mark may move only past a range this run actually cleared. A block leaves
+ * findings outstanding and a failed analysis leaves its package unexamined; in
+ * both cases the range must stay in scope for the next session.
+ */
+export function should_advance_scan_base(outcome: {
+  blocked: boolean;
+  all_analyses_succeeded: boolean;
+}): boolean {
+  return !outcome.blocked && outcome.all_analyses_succeeded;
+}
+
+/**
+ * Null only for a repository whose first commit has not landed — there is
+ * genuinely nothing to scan. Every other git failure propagates: a gate that
+ * cannot read the repository has not cleared it, and saying so is the whole
+ * point of this hook.
+ */
+function current_head(project_dir: string): string | null {
+  try {
+    return git(project_dir, "rev-parse", "HEAD");
+  } catch (error) {
+    if (git(project_dir, "rev-list", "--count", "--all") === "0") return null;
+    throw error;
+  }
+}
+
+/**
+ * Recording the mark is bookkeeping, not a verdict: a git directory that cannot
+ * be written costs the next run a repeated scan, which is the safe direction.
+ * Letting it throw would turn a clean result into a blocked session.
+ */
+function advance_scan_base(project_dir: string, head: string): void {
+  try {
+    write_scan_base(project_dir, head);
+    log(`Scan base advanced to ${head}`);
+  } catch (error) {
+    log(`Could not record scan base (${error}); next run re-covers this range`);
+  }
 }
 
 /**
@@ -277,27 +391,34 @@ async function main(): Promise<void> {
   const storage = cache_dir ? new FileSystemStorage(cache_dir) : undefined;
   log(`Cache: ${cache_dir ?? "disabled"}`);
 
-  const scan_base = read_scan_base(project_dir);
-  const head = git(project_dir, "rev-parse HEAD");
-  log(`Scan base: ${scan_base ?? `none, anchoring at HEAD ${head}`}`);
-
-  const modified_packages = packages_from_changed_files(
-    changed_files_since(project_dir, scan_base),
+  const scan_base = resolve_scan_base(project_dir);
+  const head = current_head(project_dir);
+  if (head === null) {
+    log("No commits yet, skipping analysis");
+    process.exit(0);
+  }
+  log(
+    scan_base
+      ? `Scan base: ${scan_base}`
+      : "Scan base: none on record — scanning every tracked file",
   );
-  if (modified_packages.length === 0) {
-    log("No packages modified, skipping analysis");
-    write_scan_base(project_dir, head);
+
+  const changed_files = changed_files_since(project_dir, scan_base);
+  const packages_in_scope = packages_from_changed_files(changed_files);
+  if (packages_in_scope.length === 0) {
+    log(`No packages in scope (${changed_files.length} changed files), skipping analysis`);
+    advance_scan_base(project_dir, head);
     process.exit(0);
   }
 
-  log(`Modified packages: ${modified_packages.join(", ")}`);
+  log(`Packages in scope: ${packages_in_scope.join(", ")} (${changed_files.length} changed files)`);
 
   const start_time = Date.now();
   const all_unexpected: { package: string; entry_points: EntryPoint[] }[] = [];
-  let every_package_analyzed = true;
+  let all_analyses_succeeded = true;
 
   // Analyze each modified package
-  for (const pkg of modified_packages) {
+  for (const pkg of packages_in_scope) {
     // The whitelist loads outside the tolerant catch: a corrupt whitelist
     // must reach the fatal handler and block, while an analysis crash only
     // skips its own package.
@@ -314,7 +435,7 @@ async function main(): Promise<void> {
       }
       log(`  Found ${unexpected.length} unexpected entry points in ${pkg}`);
     } catch (error) {
-      every_package_analyzed = false;
+      all_analyses_succeeded = false;
       log(`  Error analyzing ${pkg}: ${error}`);
     }
   }
@@ -322,8 +443,16 @@ async function main(): Promise<void> {
   const elapsed_s = ((Date.now() - start_time) / 1000).toFixed(1);
   log(`Analysis completed in ${elapsed_s}s`);
 
-  // Report results
-  if (all_unexpected.length > 0) {
+  // The mark is decided before the verdict is emitted, so every outcome passes
+  // through one rule rather than relying on the block path exiting first.
+  const blocked = all_unexpected.length > 0;
+  if (should_advance_scan_base({ blocked, all_analyses_succeeded })) {
+    advance_scan_base(project_dir, head);
+  } else {
+    log(`Scan base held at ${scan_base ?? "none"}`);
+  }
+
+  if (blocked) {
     const total = all_unexpected.reduce((sum, p) => sum + p.entry_points.length, 0);
     const formatted = all_unexpected
       .map((p) => {
@@ -334,34 +463,22 @@ async function main(): Promise<void> {
       })
       .join("\n\n");
 
-    output_result(
-      "block",
+    log(`Blocking on ${total} unexpected entry point(s) (${elapsed_s}s)`);
+    block_and_exit(
       `Found ${total} unexpected entry point(s) [${elapsed_s}s]:\n\n${formatted}\n\n` +
         `These are exported but never called. Either:\n` +
         `  1. Delete the dead code\n` +
         `  2. Add to the flagged package's .claude/known_entrypoints/<package>.json if legitimate API`
     );
-  } else if (every_package_analyzed) {
-    // Only a run that cleared every package may move the mark; otherwise the
-    // unanalyzed range must stay in scope for the next session.
-    write_scan_base(project_dir, head);
-    log(`All entry points are in whitelists (${elapsed_s}s); scan base advanced to ${head}`);
-  } else {
-    log(`No unexpected entry points, but a package failed to analyze; scan base held`);
   }
 
+  log(`All entry points are in whitelists (${elapsed_s}s)`);
   process.exit(0);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   main().catch((error) => {
     log(`Fatal error: ${error}`);
-    console.log(
-      JSON.stringify({
-        decision: "block",
-        reason: `Entry point detection failed: ${error}`,
-      })
-    );
-    process.exit(0);
+    block_and_exit(`Entry point detection failed: ${error}`);
   });
 }

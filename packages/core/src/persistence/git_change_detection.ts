@@ -1,8 +1,11 @@
 /**
- * Git-accelerated file change detection using git plumbing commands.
+ * Snapshots git index state using git plumbing commands: which blob git tracks
+ * for each file, which files diverge from the index, and which are untracked.
  *
- * For git repos, detects which files changed without reading file content,
- * enabling fast cache invalidation on the MCP server's short-lived invocations.
+ * This is the evidence, not the decision — it lets a cache be validated without
+ * reading file content, which is what keeps the MCP server's short-lived
+ * invocations fast. The comparison that decides cache validity lives in
+ * project/project_cache_strategy.ts.
  */
 
 import { execFile } from "child_process";
@@ -110,11 +113,20 @@ export function parse_name_list(
 
 /**
  * Run a git command and return stdout.
- * Clears inherited GIT_DIR / GIT_WORK_TREE / GIT_INDEX_FILE so that git
- * resolves the repo from `cwd` rather than from an inherited hook environment.
+ * Clears every inherited variable git consults before `cwd`, so an inherited
+ * hook environment cannot redirect the query at another repository.
  */
 function exec_git(cwd: string, args: string[]): Promise<string> {
-  const { GIT_DIR: _git_dir, GIT_WORK_TREE: _git_work_tree, GIT_INDEX_FILE: _git_index_file, ...env } = process.env;
+  const {
+    GIT_DIR: _git_dir,
+    GIT_COMMON_DIR: _git_common_dir,
+    GIT_WORK_TREE: _git_work_tree,
+    GIT_INDEX_FILE: _git_index_file,
+    GIT_PREFIX: _git_prefix,
+    GIT_OBJECT_DIRECTORY: _git_object_directory,
+    GIT_ALTERNATE_OBJECT_DIRECTORIES: _git_alternate_object_directories,
+    ...env
+  } = process.env;
   return new Promise((resolve, reject) => {
     execFile(
       "git",

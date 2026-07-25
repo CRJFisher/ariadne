@@ -1150,7 +1150,7 @@ describe("load_project + FileSystemStorage", { timeout: 30_000 }, () => {
       // Entries should carry their git blob hashes on disk
       const manifest_raw = await storage.read_manifest();
       const manifest = JSON.parse(manifest_raw!);
-      expect(manifest.entries.length).toBeGreaterThan(0);
+      expect(manifest.entries.length).toEqual(1);
       for (const [, entry] of manifest.entries) {
         expect(entry.git_blob_hash).toMatch(/^[0-9a-f]{40}$/);
       }

@@ -188,6 +188,15 @@ export async function load_project(
         const cached_entry = manifest.entries.get(fp);
         if (cached_entry && content_matches_cache(content, cached_entry)) {
           used_cache = await try_restore_from_cache(project, fp, storage, content);
+          if (used_cache) {
+            // The content hash just proved the cached index matches what is on
+            // disk, so git may now name it — an entry first written while the
+            // file was dirty would otherwise never rejoin the git path.
+            manifest_entries.set(fp, {
+              ...cached_entry,
+              git_blob_hash: blob_hash_for_indexed_content(fp, git_state),
+            });
+          }
         }
       }
 
@@ -215,7 +224,7 @@ export async function load_project(
               fp,
               index,
               content,
-              blob_hash_for_indexed_content(fp, git_state),
+              git_state,
             );
             if (entry) {
               manifest_entries.set(fp, entry);

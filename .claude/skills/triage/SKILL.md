@@ -310,7 +310,7 @@ The pipeline persists state in three places — two under `~/.ariadne/triage-ent
 
 ## Dead-code guardrail
 
-Orthogonal to this skill. The `detect_dead_code` Stop hook (`.claude/hooks/detect_dead_code.ts`, registered in `.claude/settings.json`) runs Ariadne against git-modified packages after each Claude Code session and cross-checks flagged entry points against a per-package whitelist at `.claude/known_entrypoints/<package>.json` (repo-committed, not in `~/.ariadne`). Exported-but-uncalled entry points not on the whitelist block the session.
+Orthogonal to this skill. The `detect_dead_code` Stop hook (`.claude/hooks/detect_dead_code.ts`, registered in `.claude/settings.json`) runs Ariadne after each Claude Code session against every package whose `src/**.ts` changed since the last commit the hook cleared — committed, staged, unstaged, or untracked — and cross-checks flagged entry points against a per-package whitelist at `.claude/known_entrypoints/<package>.json` (repo-committed, not in `~/.ariadne`). Exported-but-uncalled entry points not on the whitelist block the session.
 
 The whitelist is **human-owned**. Add a legitimate entry point by editing the package's JSON file and committing:
 

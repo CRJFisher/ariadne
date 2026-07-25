@@ -96,7 +96,10 @@ describe("can_use_cache", () => {
   });
 
   it("returns false for an untracked file", () => {
-    const state = git_state({ untracked_files: new Set([file]) });
+    const state = git_state({
+      untracked_files: new Set([file]),
+      tracked_hashes: new Map([[file, "blob-1"]]),
+    });
     expect(can_use_cache(file, cached, state)).toEqual(false);
   });
 
@@ -104,6 +107,14 @@ describe("can_use_cache", () => {
     const entry: CacheManifestEntry = { content_hash: compute_content_hash("x") };
     const state = git_state({ tracked_hashes: new Map([[file, "blob-1"]]) });
     expect(can_use_cache(file, entry, state)).toEqual(false);
+  });
+
+  // Both sides undefined must not read as agreement: an entry with no blob and
+  // a file git does not track would otherwise compare equal and serve a stale
+  // index.
+  it("returns false when neither the entry nor the git index names a blob", () => {
+    const entry: CacheManifestEntry = { content_hash: compute_content_hash("x") };
+    expect(can_use_cache(file, entry, git_state({}))).toEqual(false);
   });
 
   it("returns false when the file is not in the git index", () => {
@@ -144,7 +155,10 @@ describe("blob_hash_for_indexed_content", () => {
   });
 
   it("names no blob for an untracked file", () => {
-    const state = git_state({ untracked_files: new Set([file]) });
+    const state = git_state({
+      untracked_files: new Set([file]),
+      tracked_hashes: new Map([[file, "blob-1"]]),
+    });
     expect(blob_hash_for_indexed_content(file, state)).toEqual(undefined);
   });
 
@@ -164,17 +178,48 @@ describe("content_matches_cache", () => {
 describe("write_file_index", () => {
   const content = "export function foo() { return 1; }";
 
-  it("writes the index and returns a manifest entry carrying the content hash", async () => {
+  it("writes the index and stamps the blob git names for a clean file", async () => {
     const storage = memory_storage();
     const index = build_test_index(content);
+    const state = git_state({ tracked_hashes: new Map([[file, "blob-1"]]) });
 
-    const entry = await write_file_index(storage, file, index, content, "blob-1");
+    const entry = await write_file_index(storage, file, index, content, state);
 
     expect(entry).toEqual({
       content_hash: compute_content_hash(content),
       git_blob_hash: "blob-1",
     });
     expect(storage.indexes.has(file)).toBe(true);
+  });
+
+  // The index came from working-tree content no blob holds; naming the tracked
+  // blob would let a later checkout back to it serve this index.
+  it("stamps no blob when the indexed file is dirty", async () => {
+    const storage = memory_storage();
+    const index = build_test_index(content);
+    const state = git_state({
+      dirty_files: new Set([file]),
+      tracked_hashes: new Map([[file, "blob-1"]]),
+    });
+
+    const entry = await write_file_index(storage, file, index, content, state);
+
+    expect(entry).toEqual({
+      content_hash: compute_content_hash(content),
+      git_blob_hash: undefined,
+    });
+  });
+
+  it("stamps no blob without git state", async () => {
+    const storage = memory_storage();
+    const index = build_test_index(content);
+
+    const entry = await write_file_index(storage, file, index, content, null);
+
+    expect(entry).toEqual({
+      content_hash: compute_content_hash(content),
+      git_blob_hash: undefined,
+    });
   });
 
   it("returns null and records no entry when the index write fails", async () => {
@@ -184,7 +229,7 @@ describe("write_file_index", () => {
     };
     const index = build_test_index(content);
 
-    const entry = await write_file_index(storage, file, index, content);
+    const entry = await write_file_index(storage, file, index, content, null);
 
     expect(entry).toBe(null);
     expect(storage.indexes.size).toBe(0);
