@@ -1,0 +1,10 @@
+# Out-of-tree host state the n8n-claude runtime must bind into the container
+# (read by provision.sh gen-override). Ariadne's pipelines keep every artifact
+# they produce — detect_entrypoints output, triage state and its run results,
+# the index cache — under ~/.ariadne, outside the repo. Unbound, that state
+# lands in the container's writable layer and is destroyed by any recreate,
+# which silently resets the workflow step markers that make a re-run a no-op.
+#
+# Not path parity: the container's HOME is /home/node, so the host path and the
+# container path are genuinely different and both must be named.
+~/.ariadne:/home/node/.ariadne
