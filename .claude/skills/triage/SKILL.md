@@ -3,12 +3,14 @@ name: triage
 description: Triage stage for entry-point candidates. Detects entry points in Ariadne packages or external codebases and triages false positives via per-entry investigators, publishing each false positive raw and self-contained.
 argument-hint: "[config-name | /path/to/repo | owner/repo (GitHub)]"
 disable-model-invocation: true
-allowed-tools: Bash(node --import tsx:*), Read, Write, Glob, AskUserQuestion, Task(triage-investigator)
+allowed-tools: Bash(node --import tsx:*), Read, Write, Glob, Task(triage-investigator)
 ---
 
 # Triage Entrypoints
 
 Triage pipeline for entry point analysis: detect false positives and classify root causes. Supports both self-analysis (Ariadne packages) and external codebase analysis.
+
+**This pipeline runs headlessly, end to end, in a single turn.** Every phase — config creation, file-count checks, dispensing, investigating, finalizing — proceeds on sensible defaults without pausing for confirmation. Never call `AskUserQuestion` anywhere in this skill; it is not in this skill's `allowed-tools`. When a step below says "ask" or "confirm," that describes an interactive fallback this skill does not use — resolve it autonomously instead, per the guidance at that step, and log the decision in your reply text rather than pausing for input.
 
 Each invocation produces a self-contained run under `triage_state/<project>/runs/<run-id>/`. Run-id format is `<short-commit>-<iso-ts>` (e.g. `deadbee-2026-04-28T13-42-07.812Z`); `nogit-...` for non-git projects. Re-running at the same target commit reuses prior `confirmed_unreachable` verdicts via the TP cache (skip with `--no-reuse-tp`). A new commit on the target busts the cache: every entry re-investigates.
 
@@ -39,7 +41,7 @@ Resolve the analysis target from the remaining input using this routing table:
 
 | Input pattern                       | Example                                                  | Action                                                                                                                           |
 | ----------------------------------- | -------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| Empty or blank                      | `/triage`                                                | Ask the user what to analyze; if they name a path with no config yet, follow **Creating a New Project Config**                   |
+| Empty or blank                      | `/triage`                                                | Stop and print an error naming a target (path, `owner/repo`, or saved config name) — do not guess and do not ask                 |
 | Config name                         | a name with a saved config                               | Use `--config ~/.ariadne/triage-entrypoints/project_configs/{name}.json`                                                         |
 | Absolute or relative directory path | `/Users/chuck/workspace/some-repo`, `../other-repo`      | If a project config exists for this path, use `--config <config-path>`; otherwise follow **Creating a New Project Config** below |
 | `owner/repo` or GitHub URL          | `anthropics/sdk-python`, `https://github.com/owner/repo` | Use `--github <value>`                                                                                                           |
@@ -61,19 +63,18 @@ When the input is a directory path and a project config already exists for that 
 
    Estimate the post-exclusion count: subtract the `file_count_recursive` of each directory you plan to exclude from `total_source_files`. The **Pre-flight: File Count Check** below owns the ~4,000-file threshold and the action when a project exceeds it.
 
-4. Present the **full** preview list in your message text (relative path + `file_count_recursive` per line), with your pre-selected exclusions marked and a short reason for each pick. Then use AskUserQuestion with three options: "Accept these exclusions", "Modify — I'll describe changes in my reply", "Exclude nothing". If the user chooses Modify, read their follow-up message, apply the changes, and confirm the final list before continuing. The user's final answer is authoritative.
-5. Propose a config with:
+4. Decide the exclusion list yourself from the criteria in step 3 and apply it — no confirmation step. State the **full** preview list in your reply text (relative path + `file_count_recursive` per line) with the excluded directories marked and a short reason for each, purely as a record of the decision.
+5. Build a config with:
    - `project_path`: absolute path (required)
    - `folders`: relevant source directories (omit if analyzing everything)
-   - `exclude`: the list the user confirmed in step 4
+   - `exclude`: the list decided in step 4
    - `project_name` is auto-derived for external projects via `path_to_project_id(project_path)` — do not include it in the config. Only internal projects (`project_path: "."`) require an explicit `project_name`.
-6. Show the proposed config and ask for final confirmation.
-7. Save to `~/.ariadne/triage-entrypoints/project_configs/{name}.json`.
-8. Continue the pipeline with `--config ~/.ariadne/triage-entrypoints/project_configs/{name}.json`.
+6. Save it directly to `~/.ariadne/triage-entrypoints/project_configs/{name}.json` — state the saved config in your reply text as a record, not a request for approval.
+7. Continue the pipeline with `--config ~/.ariadne/triage-entrypoints/project_configs/{name}.json`.
 
 No project configs ship pre-authored — author one with the steps above. A saved config lives at `~/.ariadne/triage-entrypoints/project_configs/<name>.json` and is passed to every phase via `--config <path>`. The file is a JSON object with `project_path` (required), optional `folders` (source directories to index), optional `exclude` (directories to skip), and `project_name` (only for internal `project_path: "."` projects).
 
-If no arguments are provided or the input is ambiguous, **ask the user** before proceeding.
+If no arguments are provided or the input is ambiguous, stop and print an error describing what is missing — do not ask the user and do not guess a target.
 
 ## State and Output Locations
 
@@ -110,7 +111,7 @@ node --import tsx .claude/skills/triage/scripts/preview_folders.ts \
   --path <project_path>
 ```
 
-If the estimated post-exclusion count exceeds ~4,000 files, inform the user before running Phase 1 — indexing at that scale will take significantly longer than a typical run. Offer to revisit the config's `exclude` list if further reduction is feasible.
+If the estimated post-exclusion count exceeds ~4,000 files, note it in your reply text as a record — indexing at that scale takes significantly longer than a typical run — and proceed into Phase 1 regardless. Do not pause for confirmation; revise the config's `exclude` list yourself only if a further reduction is clearly warranted by the criteria in **Creating a New Project Config** step 3.
 
 ## Phase 1: Detect
 
@@ -136,7 +137,7 @@ Output: `analysis_output/<project>/detect_entrypoints/<timestamp>.json`
 
 ## Phase 2: Prepare
 
-Build triage state from the latest analysis output:
+Build triage state from the latest analysis output. Use `$MAX_COUNT` (250 unless the user's arguments set `--max-count`) without checking in — proceed straight through Phase 3's full batch loop over however many `llm-triage` entries that produces, however large. Do not ask whether to run the full count or a smaller sample.
 
 ```bash
 node --import tsx .claude/skills/triage/scripts/prepare_triage.ts \
