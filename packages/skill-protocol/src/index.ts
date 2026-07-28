@@ -21,6 +21,7 @@ export {
   type RunId,
   RUN_ID_REGEX,
   build_run_id,
+  compare_run_ids,
   is_run_id,
   parse_run_id,
 } from "./run_id.js";

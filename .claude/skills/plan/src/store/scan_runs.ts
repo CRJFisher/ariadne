@@ -4,6 +4,7 @@ import * as path from "node:path";
 import { error_code } from "@ariadnejs/skill-fs";
 import {
   analysis_output_dir,
+  compare_run_ids,
   is_run_id,
   parse_triage_results_path,
 } from "@ariadnejs/skill-protocol";
@@ -12,8 +13,8 @@ import type { ScanOptions, ScanResultItem } from "../types.js";
 /**
  * Walk `analysis_output/{project}/triage_results/*.json` under the given root.
  * Files whose name is not a well-formed run-id are skipped (legacy or partial
- * writes never abort the sweep). Returns runs sorted ASC by run_id (ISO
- * timestamps sort lexically within a commit).
+ * writes never abort the sweep). Returns runs oldest-first by the time the run
+ * started, so `--last N` takes the N most recent off the tail.
  */
 export async function discover_runs(
   root_dir: string = analysis_output_dir(),
@@ -48,7 +49,7 @@ export async function discover_runs(
     }
   }
 
-  runs.sort((a, b) => a.run_id.localeCompare(b.run_id));
+  runs.sort((a, b) => compare_run_ids(a.run_id, b.run_id));
   return runs;
 }
 

@@ -4,6 +4,8 @@ import * as path from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
+import type { RunId } from "@ariadnejs/skill-protocol";
+
 import {
   discover_runs,
   apply_scan_filters,
@@ -53,6 +55,21 @@ describe("discover_runs", () => {
     expect(runs.filter((r) => r.project === "projections")).toHaveLength(2);
   });
 
+  it("orders by timestamp across commits, not by the leading commit prefix", async () => {
+    // Newest run carries the lexically-smallest prefix, oldest the largest, so
+    // any ordering that lets the prefix dominate reverses this list.
+    await seed_run("webpack", "fff0000-2026-03-26T21-04-31.070Z");
+    await seed_run("webpack", "nogit-2026-04-16T18-10-16.855Z");
+    await seed_run("webpack", "0001111-2026-05-02T09-15-00.000Z");
+
+    const runs = await discover_runs(analysis_output_dir);
+    expect(runs.map((r) => r.run_id)).toEqual([
+      "fff0000-2026-03-26T21-04-31.070Z",
+      "nogit-2026-04-16T18-10-16.855Z",
+      "0001111-2026-05-02T09-15-00.000Z",
+    ]);
+  });
+
   it("skips files whose name is not a well-formed run-id", async () => {
     await seed_run("webpack", "abc1234-2026-04-16T18-10-16.855Z");
     // Bare-timestamp file (no commit prefix) must be ignored, not crash the sweep.
@@ -72,25 +89,31 @@ describe("discover_runs", () => {
 });
 
 describe("apply_scan_filters", () => {
+  // Ordered as `discover_runs` returns them: oldest first, so `--last` slices
+  // the tail. Prefixes descend as timestamps ascend, so a filter that reordered
+  // on the raw id would be caught here too.
+  const R1 = "fff0000-2026-03-26T21-04-31.070Z" as RunId;
+  const R2 = "aaa1111-2026-03-28T14-41-05.888Z" as RunId;
+  const R3 = "0002222-2026-04-16T18-10-16.855Z" as RunId;
   const discovered: ScanResultItem[] = [
-    { run_id: "r1", project: "p1", run_path: "/p1/r1.json" },
-    { run_id: "r2", project: "p1", run_path: "/p1/r2.json" },
-    { run_id: "r3", project: "p2", run_path: "/p2/r3.json" },
+    { run_id: R1, project: "p1", run_path: "/p1/r1.json" },
+    { run_id: R2, project: "p1", run_path: "/p1/r2.json" },
+    { run_id: R3, project: "p2", run_path: "/p2/r3.json" },
   ];
 
   it("returns every discovered run with no filters", () => {
     const items = apply_scan_filters(discovered, DEFAULT_OPTS);
-    expect(items.map((i) => i.run_id)).toEqual(["r1", "r2", "r3"]);
+    expect(items.map((i) => i.run_id)).toEqual([R1, R2, R3]);
   });
 
   it("honours --project filter", () => {
     const items = apply_scan_filters(discovered, { ...DEFAULT_OPTS, project: "p2" });
-    expect(items.map((i) => i.run_id)).toEqual(["r3"]);
+    expect(items.map((i) => i.run_id)).toEqual([R3]);
   });
 
   it("honours --last N filter (keeps most recent)", () => {
     const items = apply_scan_filters(discovered, { ...DEFAULT_OPTS, last: 2 });
-    expect(items.map((i) => i.run_id)).toEqual(["r2", "r3"]);
+    expect(items.map((i) => i.run_id)).toEqual([R2, R3]);
   });
 });
 

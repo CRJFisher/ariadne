@@ -26,7 +26,7 @@ import * as path from "node:path";
 import { pathToFileURL } from "node:url";
 
 import { atomic_write_file, error_code } from "@ariadnejs/skill-fs";
-import { parse_run_id, read_triage_results_file } from "@ariadnejs/skill-protocol";
+import { read_triage_results_file } from "@ariadnejs/skill-protocol";
 
 import { group_fault_areas, type ParsedRun } from "../src/group/group_fault_areas.js";
 import { JsonMembershipOverrideStore } from "../src/store/membership_override.js";
@@ -139,7 +139,7 @@ async function main(): Promise<void> {
       const triage = await read_triage_results_file(item.run_path);
       return {
         project: item.project,
-        run_id: parse_run_id(item.run_id),
+        run_id: item.run_id,
         novel_issues: triage.novel_issues,
       };
     }),

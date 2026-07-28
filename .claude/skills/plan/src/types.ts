@@ -35,7 +35,7 @@ export interface ScanOptions {
 }
 
 export interface ScanResultItem {
-  run_id: string;
+  run_id: RunId;
   project: string;
   run_path: string;
 }

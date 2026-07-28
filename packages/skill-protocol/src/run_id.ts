@@ -55,3 +55,28 @@ export function parse_run_id(value: string): RunId {
   }
   return value as RunId;
 }
+
+/**
+ * The timestamp component — everything after the commit prefix. Neither prefix
+ * form (`nogit`, 7-hex) contains a hyphen, so the first one delimits them.
+ */
+function run_id_timestamp(value: RunId): string {
+  return value.slice(value.indexOf("-") + 1);
+}
+
+/**
+ * Order two run-ids by when their run started, oldest first.
+ *
+ * A run-id leads with the commit prefix, so comparing the raw string orders by
+ * commit and breaks ties by time — an ordering that is arbitrary with respect
+ * to recency across commits. Callers asking for the newest runs need time to
+ * dominate, so the comparison runs over the timestamp component and keeps the
+ * whole id as a stable tiebreak for two runs stamped the same millisecond.
+ *
+ * The hyphenated-time timestamp is fixed-width and zero-padded, so lexical
+ * comparison of that component is chronological.
+ */
+export function compare_run_ids(a: RunId, b: RunId): number {
+  const by_time = run_id_timestamp(a).localeCompare(run_id_timestamp(b));
+  return by_time !== 0 ? by_time : a.localeCompare(b);
+}

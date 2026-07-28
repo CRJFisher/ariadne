@@ -1,6 +1,12 @@
 import { describe, it, expect } from "vitest";
 
-import { RUN_ID_REGEX, build_run_id, is_run_id, parse_run_id } from "./run_id.js";
+import {
+  RUN_ID_REGEX,
+  build_run_id,
+  compare_run_ids,
+  is_run_id,
+  parse_run_id,
+} from "./run_id.js";
 
 describe("build_run_id", () => {
   it("builds a well-formed id from a short commit and round-trips through validation", () => {
@@ -43,5 +49,40 @@ describe("parse_run_id", () => {
   it("throws on malformed input", () => {
     expect(() => parse_run_id("r1")).toThrow(/Invalid run-id/);
     expect(() => parse_run_id("2026-04-16T18-10-16.855Z")).toThrow(/Invalid run-id/);
+  });
+});
+
+describe("compare_run_ids", () => {
+  it("orders by timestamp when commit prefixes disagree with time", () => {
+    const older = parse_run_id("fff0000-2026-03-26T21-04-31.070Z");
+    const newer = parse_run_id("0001111-2026-05-02T09-15-00.000Z");
+    expect(compare_run_ids(older, newer)).toBeLessThan(0);
+    expect(compare_run_ids(newer, older)).toBeGreaterThan(0);
+  });
+
+  it("orders a nogit run against a hash-prefixed run by time alone", () => {
+    const nogit = parse_run_id("nogit-2026-03-26T21-04-31.070Z");
+    const hashed = parse_run_id("0001111-2026-05-02T09-15-00.000Z");
+    expect(compare_run_ids(nogit, hashed)).toBeLessThan(0);
+  });
+
+  it("breaks a same-millisecond tie on the full id, and is zero for equal ids", () => {
+    const a = parse_run_id("aaa1111-2026-05-02T09-15-00.000Z");
+    const b = parse_run_id("bbb2222-2026-05-02T09-15-00.000Z");
+    expect(compare_run_ids(a, b)).toBeLessThan(0);
+    expect(compare_run_ids(a, a)).toBe(0);
+  });
+
+  it("sorts a run set oldest-first so the tail is the most recent", () => {
+    const ids = [
+      "0001111-2026-05-02T09-15-00.000Z",
+      "fff0000-2026-03-26T21-04-31.070Z",
+      "nogit-2026-04-16T18-10-16.855Z",
+    ].map(parse_run_id);
+    expect([...ids].sort(compare_run_ids)).toEqual([
+      "fff0000-2026-03-26T21-04-31.070Z",
+      "nogit-2026-04-16T18-10-16.855Z",
+      "0001111-2026-05-02T09-15-00.000Z",
+    ]);
   });
 });
