@@ -120,24 +120,41 @@ export interface ResolvedRun {
   manifest_path: string;
 }
 
+/** Name the run under `(project, run_id_opt)`, defaulting to the LATEST pointer, or exit(1). */
+function resolve_run_id(project: string, run_id_opt: string | null): string {
+  if (run_id_opt !== null) return run_id_opt;
+
+  const latest = read_latest_run_id(project);
+  if (latest === null) {
+    const lines = [
+      `Error: no active run for project "${project}".`,
+      `Expected LATEST pointer at ${latest_pointer_for(project)}.`,
+      "Run prepare_triage.ts to start a new run, or pass --run-id <id> to target a specific run.",
+    ];
+    process.stderr.write(lines.join("\n") + "\n");
+    process.exit(1);
+  }
+  return latest;
+}
+
+function resolved_run(project: string, run_id: string): ResolvedRun {
+  return {
+    run_id,
+    run_dir: run_dir_for(project, run_id),
+    state_path: state_path_for(project, run_id),
+    manifest_path: manifest_path_for(project, run_id),
+  };
+}
+
 /**
  * Resolve `(project, run_id_opt)` to concrete paths or exit(1) with an actionable
  * error. `run_id_opt === null` defaults to the project's LATEST pointer.
+ *
+ * For callers that read or write the run's entries. A run without `triage.json`
+ * has no entries to operate on, so its absence is fatal here.
  */
 export function require_run(project: string, run_id_opt: string | null): ResolvedRun {
-  let run_id = run_id_opt;
-  if (run_id === null) {
-    run_id = read_latest_run_id(project);
-    if (run_id === null) {
-      const lines = [
-        `Error: no active run for project "${project}".`,
-        `Expected LATEST pointer at ${latest_pointer_for(project)}.`,
-        "Run prepare_triage.ts to start a new run, or pass --run-id <id> to target a specific run.",
-      ];
-      process.stderr.write(lines.join("\n") + "\n");
-      process.exit(1);
-    }
-  }
+  const run_id = resolve_run_id(project, run_id_opt);
 
   const state_path = state_path_for(project, run_id);
   if (!fs.existsSync(state_path)) {
@@ -147,12 +164,30 @@ export function require_run(project: string, run_id_opt: string | null): Resolve
     process.exit(1);
   }
 
-  return {
-    run_id,
-    run_dir: run_dir_for(project, run_id),
-    state_path,
-    manifest_path: manifest_path_for(project, run_id),
-  };
+  return resolved_run(project, run_id);
+}
+
+/**
+ * Resolve `(project, run_id_opt)` against the run's manifest alone, or exit(1).
+ *
+ * `prepare_triage` stamps the manifest `active` before writing `triage.json`, so
+ * a run interrupted between those two writes owns a live manifest and no state.
+ * That run still has to be abandonable — it is exactly the state a crash leaves
+ * behind, and the active-run guard blocks the project until it is cleared. Any
+ * caller whose whole job is the manifest resolves through here.
+ */
+export function require_run_manifest(project: string, run_id_opt: string | null): ResolvedRun {
+  const run_id = resolve_run_id(project, run_id_opt);
+
+  const manifest_path = manifest_path_for(project, run_id);
+  if (!fs.existsSync(manifest_path)) {
+    process.stderr.write(
+      `Error: manifest not found for run "${run_id}" of project "${project}" at ${manifest_path}.\n`,
+    );
+    process.exit(1);
+  }
+
+  return resolved_run(project, run_id);
 }
 
 // CLI parsers (parse_project_arg, parse_run_id_arg) live in `cli_args.ts` —

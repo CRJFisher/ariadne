@@ -18,10 +18,14 @@
  *
  * CLI:
  *   --project <name>    Required. Names the project whose state to read.
+ *   --run-id <id>       Run to dispense from (default: the project's LATEST).
  *   --count <n>         Max entries to return in this call (default 1).
  *
  * Output (JSON to stdout):
- *   { entries: number[] }
+ *   { run_id: string, entries: number[] }
+ *   `run_id` echoes the run these indices were picked from, so a LATEST
+ *   pointer that moved between calls is visible in the dispense output itself
+ *   rather than only as silently repeating indices.
  *   Phase transitions to "complete" only when the LLM pool is drained — no
  *   un-classified `pending` entry and no retryable `failed` entry remain. A
  *   `failed` entry still within its retry budget holds the gate open.
@@ -163,6 +167,24 @@ export async function absorb_and_pick(
   });
 }
 
+export interface DispensedBatch {
+  run_id: string;
+  entries: number[];
+}
+
+/**
+ * The resolved `run_id` travels back out with the indices: entry indices are
+ * run-local, so an index is only interpretable against the run it came from.
+ */
+export async function dispense_batch(
+  project: string,
+  run_id_opt: string | null,
+  count: number,
+): Promise<DispensedBatch> {
+  const { run_id, state_path, run_dir } = require_run(project, run_id_opt);
+  return { run_id, entries: await absorb_and_pick(state_path, run_dir, count) };
+}
+
 function is_main_module(): boolean {
   const invoked = process.argv[1] ?? "";
   return invoked.endsWith("get_next_triage_entry.ts");
@@ -171,15 +193,14 @@ function is_main_module(): boolean {
 if (is_main_module()) {
   const { project, count } = parse_args(process.argv);
   const run_id_opt = parse_run_id_arg(process.argv);
-  const { state_path, run_dir } = require_run(project, run_id_opt);
 
-  let picked: number[];
+  let batch: DispensedBatch;
   try {
-    picked = await absorb_and_pick(state_path, run_dir, count);
+    batch = await dispense_batch(project, run_id_opt, count);
   } catch (err) {
     process.stderr.write(`Error: failed to absorb results and pick next entries: ${err}\n`);
     process.exit(1);
   }
 
-  process.stdout.write(JSON.stringify({ entries: picked }) + "\n");
+  process.stdout.write(JSON.stringify(batch) + "\n");
 }

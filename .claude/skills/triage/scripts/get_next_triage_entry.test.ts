@@ -1,13 +1,27 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { execFileSync } from "node:child_process";
 import * as fs from "node:fs/promises";
+import * as fsSync from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   pick_next_entries,
   absorb_and_pick,
+  dispense_batch,
   MAX_TRIAGE_RETRIES,
 } from "./get_next_triage_entry.js";
 import type { TriageEntry, TriageState } from "../src/triage_state_types.js";
+
+// vi.hoisted runs before all `import` statements, so the env var is set before
+// `paths.js` (transitively imported by the script) reads it.
+const TMP = vi.hoisted(() => {
+  const tmp_path = `${process.env.TMPDIR ?? "/tmp"}/ariadne-test-dispense-${process.pid}`;
+  process.env.ARIADNE_TRIAGE_ENTRYPOINTS_DIR_OVERRIDE = tmp_path;
+  return tmp_path;
+});
+
+const TRIAGE_STATE = path.join(TMP, "triage_state");
 
 function make_entry(overrides: Partial<TriageEntry> & { entry_index: number }): TriageEntry {
   return {
@@ -196,5 +210,81 @@ describe("absorb_and_pick", () => {
 
     expect(picked).toEqual([0]);
     expect((await read_state()).phase).toEqual("triage");
+  });
+});
+
+describe("dispense_batch", () => {
+  beforeEach(() => {
+    fsSync.rmSync(TMP, { recursive: true, force: true });
+    fsSync.mkdirSync(TMP, { recursive: true });
+  });
+
+  afterEach(() => {
+    fsSync.rmSync(TMP, { recursive: true, force: true });
+  });
+
+  function seed_run(project: string, run_id: string, entries: TriageEntry[]): void {
+    const dir = path.join(TRIAGE_STATE, project, "runs", run_id);
+    fsSync.mkdirSync(path.join(dir, "results"), { recursive: true });
+    fsSync.writeFileSync(
+      path.join(dir, "triage.json"),
+      JSON.stringify(make_state(entries), null, 2) + "\n",
+    );
+  }
+
+  function point_latest_at(project: string, run_id: string): void {
+    fsSync.writeFileSync(path.join(TRIAGE_STATE, project, "LATEST"), run_id + "\n");
+  }
+
+  it("echoes the LATEST run-id alongside the picked indices", async () => {
+    seed_run("proj", "run-one", [make_entry({ entry_index: 7 })]);
+    point_latest_at("proj", "run-one");
+
+    expect(await dispense_batch("proj", null, 1)).toEqual({
+      run_id: "run-one",
+      entries: [7],
+    });
+  });
+
+  it("dispenses from the pinned run and echoes it, ignoring a LATEST that moved on", async () => {
+    seed_run("proj", "run-one", [make_entry({ entry_index: 7 })]);
+    seed_run("proj", "run-two", [make_entry({ entry_index: 42 })]);
+    point_latest_at("proj", "run-two");
+
+    expect(await dispense_batch("proj", "run-one", 1)).toEqual({
+      run_id: "run-one",
+      entries: [7],
+    });
+  });
+
+  it("echoes the run-id even when the pool is drained", async () => {
+    seed_run("proj", "run-one", [make_entry({ entry_index: 7, status: "completed" })]);
+    point_latest_at("proj", "run-one");
+
+    expect(await dispense_batch("proj", null, 5)).toEqual({
+      run_id: "run-one",
+      entries: [],
+    });
+  });
+
+  // The orchestrator reads stdout, not the return value, so the JSON the script
+  // actually prints is the contract worth pinning.
+  it("prints the run-id and entries as one JSON object on stdout", () => {
+    seed_run("proj", "run-one", [make_entry({ entry_index: 7 })]);
+    seed_run("proj", "run-two", [make_entry({ entry_index: 42 })]);
+    point_latest_at("proj", "run-two");
+
+    const script = path.join(path.dirname(fileURLToPath(import.meta.url)), "get_next_triage_entry.ts");
+    const stdout = execFileSync(
+      process.execPath,
+      ["--import", "tsx", script, "--project", "proj", "--run-id", "run-one", "--count", "5"],
+      {
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "pipe"],
+        env: { ...process.env, ARIADNE_TRIAGE_ENTRYPOINTS_DIR_OVERRIDE: TMP },
+      },
+    );
+
+    expect(JSON.parse(stdout)).toEqual({ run_id: "run-one", entries: [7] });
   });
 });

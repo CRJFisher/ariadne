@@ -9,6 +9,12 @@
  * `prune_runs` always sees the active run's tp_cache.source_run_id reference
  * before reading the state), and stamps the project's LATEST pointer last.
  *
+ * Creating a run while another is unfinalized is refused: the LATEST pointer is
+ * a single slot, so a second run repoints it and orphans the first mid-flight.
+ * The refusal is a fail-loud check, not mutual exclusion — it reads the run set
+ * once before the re-index and again immediately before the manifest write,
+ * which leaves a narrow window where two simultaneous launches both pass.
+ *
  * Usage:
  *   node --import tsx prepare_triage.ts --analysis <path> [--project <name>]
  *     [--max-count <n>] [--no-reuse-tp] [--tp-source-run <run-id>]
@@ -20,6 +26,7 @@ import * as childProcess from "node:child_process";
 import * as fs from "node:fs";
 import * as fsp from "node:fs/promises";
 import * as path from "path";
+import { fileURLToPath } from "node:url";
 
 import {
   detect_language,
@@ -32,6 +39,7 @@ import {
 } from "@ariadnejs/core";
 import type { PersistenceStorage } from "@ariadnejs/core";
 
+import { atomic_write_file } from "@ariadnejs/skill-fs";
 import { build_run_id } from "@ariadnejs/skill-protocol";
 import { load_json } from "../src/store/analysis_output.js";
 import { active_rules_for_classification, load_registry } from "../src/known_issues_registry.js";
@@ -42,6 +50,7 @@ import {
   state_path_for,
 } from "../src/store/paths.js";
 import { write_latest_run_id } from "../src/store/latest_pointer.js";
+import { find_active_runs, type ActiveRun } from "../src/store/run_discovery.js";
 import {
   RUN_MANIFEST_SCHEMA_VERSION,
   type RunManifest,
@@ -125,6 +134,63 @@ function load_index_scope(config_path: string | null): IndexScopeFromConfig {
   const folders = Array.isArray(parsed.folders) ? (parsed.folders as string[]) : undefined;
   const exclude = Array.isArray(parsed.exclude) ? (parsed.exclude as string[]) : [];
   return { folders, exclude };
+}
+
+const SCRIPTS_DIR = ".claude/skills/triage/scripts";
+
+/**
+ * Null when the project is free. Each run's commit is printed because that is
+ * what decides between the remedies — a run prepared at a commit that is no
+ * longer HEAD publishes results about code that has moved on. Continuing is
+ * offered only for runs that own a `triage.json`; a run interrupted before its
+ * state was written has no entries to hand out, so pointing at Phase 3 would
+ * send the caller into a "state file not found" dead end.
+ */
+export function active_run_conflict_message(
+  project: string,
+  active_runs: readonly ActiveRun[],
+): string | null {
+  if (active_runs.length === 0) return null;
+
+  const describe = (run: ActiveRun): string => {
+    const commit = `prepared at commit ${run.short_commit ?? "unknown"}`;
+    return run.resumable
+      ? `  ${run.run_id} (${commit})`
+      : `  ${run.run_id} (${commit}; interrupted before its state was written — abandon only)`;
+  };
+  const noun = active_runs.length === 1 ? "an active run" : `${active_runs.length} active runs`;
+  const resumable = active_runs.filter((run) => run.resumable);
+
+  const lines = [
+    `Error: project "${project}" already has ${noun}:`,
+    ...active_runs.map(describe),
+    "",
+    "The LATEST pointer is a single slot, so starting another run repoints it and",
+    "orphans the one in flight — its finished investigations are then reachable only",
+    "by resuming it explicitly, and the TP cache, which reads finalized runs, ignores",
+    "them entirely.",
+    "",
+    ...(resumable.length > 0
+      ? [
+          "Continue a run — pass its id to every Phase 3-4 script, e.g.:",
+          ...resumable.map(
+            (run) =>
+              `  node --import tsx ${SCRIPTS_DIR}/get_next_triage_entry.ts ` +
+              `--project ${project} --run-id ${run.run_id} --count 5`,
+          ),
+          "",
+          "Or discard a run and start fresh:",
+        ]
+      : ["Discard the run and start fresh:"]),
+    ...active_runs.map(
+      (run) =>
+        `  node --import tsx ${SCRIPTS_DIR}/abandon_run.ts ` +
+        `--project ${project} --run-id ${run.run_id}`,
+    ),
+    "",
+    "To triage two targets at once, give them distinct --project names.",
+  ];
+  return lines.join("\n");
 }
 
 /**
@@ -213,6 +279,17 @@ async function main(): Promise<void> {
   const project_name = cli.project ?? analysis.project_name;
   const project_path = analysis.project_path;
 
+  // The refusal must land in seconds, not after minutes of indexing that is
+  // about to be thrown away. Re-checked below, once that indexing is done.
+  const conflict = active_run_conflict_message(
+    project_name,
+    await find_active_runs(project_name),
+  );
+  if (conflict !== null) {
+    process.stderr.write(conflict + "\n");
+    process.exit(1);
+  }
+
   const head = capture_head_commit(project_path);
   warn_if_analysis_stale(analysis, head?.full ?? null);
 
@@ -268,7 +345,6 @@ async function main(): Promise<void> {
   };
 
   const run_dir = run_dir_for(project_name, run_id);
-  await fsp.mkdir(path.join(run_dir, "results"), { recursive: true });
 
   const manifest: RunManifest = {
     schema_version: RUN_MANIFEST_SCHEMA_VERSION,
@@ -292,10 +368,33 @@ async function main(): Promise<void> {
     },
   };
 
+  // Re-checked here because the first check sits minutes upstream, on the far
+  // side of the re-index: a run that started during the re-index is only
+  // visible now. This narrows the fork window to the gap between this read and
+  // the write below — it does not close it. Mutual exclusion is not the
+  // contract; failing loud on the overwhelmingly common case is.
+  const late_conflict = active_run_conflict_message(
+    project_name,
+    await find_active_runs(project_name),
+  );
+  if (late_conflict !== null) {
+    process.stderr.write(late_conflict + "\n");
+    process.exit(1);
+  }
+
+  // Created only once the run is certain to be claimed. A dir minted before
+  // the guard and then refused would carry no manifest, which makes it
+  // invisible to every `--status` filter and ineligible for pruning.
+  await fsp.mkdir(path.join(run_dir, "results"), { recursive: true });
+
   // Write manifest BEFORE state so a concurrent prune_runs always sees the
   // tp_cache.source_run_id protection signal once a run dir exists. State and
-  // LATEST follow.
-  await fsp.writeFile(manifest_path_for(project_name, run_id), JSON.stringify(manifest, null, 2) + "\n");
+  // LATEST follow. The manifest write is atomic because the active-run guard
+  // reads it: a torn read parses as null and would count this run as inactive.
+  await atomic_write_file(
+    manifest_path_for(project_name, run_id),
+    JSON.stringify(manifest, null, 2) + "\n",
+  );
   await fsp.writeFile(state_path_for(project_name, run_id), JSON.stringify(state, null, 2) + "\n");
   write_latest_run_id(project_name, run_id);
 
@@ -328,8 +427,11 @@ async function main(): Promise<void> {
   }) + "\n");
 }
 
-main().catch((error) => {
-  const message = error instanceof Error ? error.message : String(error);
-  console.error(`Error: ${message}`);
-  process.exit(1);
-});
+const THIS_FILE = fileURLToPath(import.meta.url);
+if (process.argv[1] && path.resolve(process.argv[1]) === THIS_FILE) {
+  main().catch((error) => {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error(`Error: ${message}`);
+    process.exit(1);
+  });
+}

@@ -154,7 +154,7 @@
   <text x="289" y="54" text-anchor="middle" fill="#6ea8fe" font-size="11.5" font-family="Menlo, monospace">--count --active</text>
 
   <path d="M338 96 L240 96" stroke="#9aa3b2" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
-  <text x="289" y="116" text-anchor="middle" fill="#9aa3b2" font-size="11.5" font-family="Menlo, monospace">{ entries: [i, …] }</text>
+  <text x="289" y="116" text-anchor="middle" fill="#9aa3b2" font-size="11.5" font-family="Menlo, monospace">{ run_id, entries: [i, …] }</text>
 
   <path d="M620 62 L718 62" stroke="#9aa3b2" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
   <text x="669" y="54" text-anchor="middle" fill="#9aa3b2" font-size="11.5">read + write back</text>
@@ -189,9 +189,11 @@
 
 <h2 id="context">Self-service context: <code>get_entry_context.ts</code></h2>
 
-<p>Each investigator's prompt contains only a <code>project</code> and an <code>entry_index</code>. Its first action is to fetch its own dispense payload:</p>
+<p>Each investigator's prompt contains a <code>project</code>, a <code>run_id</code>, and an <code>entry_index</code>. Its first action is to fetch its own dispense payload:</p>
 
-<pre><code>node --import tsx .claude/skills/triage/scripts/get_entry_context.ts --project &lt;project&gt; --entry &lt;entry_index&gt;</code></pre>
+<pre><code>node --import tsx .claude/skills/triage/scripts/get_entry_context.ts --project &lt;project&gt; --run-id &lt;run_id&gt; --entry &lt;entry_index&gt;</code></pre>
+
+<p>Entry indices are run-local, and the script derives the verdict output path from the run it resolves, so the orchestrator and its investigators pin the same run explicitly rather than each resolving the project's <code>LATEST</code> pointer.</p>
 
 <p>The script loads the entry from triage state, loads the classifier registry, builds the payload via <code>build_dispense_payload</code>, and substitutes everything into a single prompt template. The investigator receives:</p>
 

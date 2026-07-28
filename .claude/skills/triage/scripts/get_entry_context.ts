@@ -8,6 +8,11 @@
  * substitutes placeholders into the single prompt template, and outputs
  * the prompt to stdout.
  *
+ * Pass `--run-id` with either selector. It is structurally required by the
+ * member-symbol mode below; with `--entry` the pipeline passes it too, because
+ * an index means nothing without the run that issued it and this script also
+ * derives the verdict's output path from the run it resolves.
+ *
  * The entry is selected one of two ways:
  * - `--entry <index>` — the run-local positional index, used by
  *   triage-investigator dispatch (the triage orchestrator holds indices).
@@ -20,7 +25,7 @@
  *   fallback would silently resolve against the wrong run.
  *
  * Usage:
- *   node --import tsx .claude/skills/triage/scripts/get_entry_context.ts --project mocha --entry 62
+ *   node --import tsx .claude/skills/triage/scripts/get_entry_context.ts --project mocha --run-id <id> --entry 62
  *   node --import tsx .claude/skills/triage/scripts/get_entry_context.ts --project mocha --run-id <id> \
  *     --file lib/interfaces/bdd.js --name bddInterface --kind function --line 12
  */

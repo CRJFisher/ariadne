@@ -3,7 +3,12 @@ import * as fsSync from "fs";
 import path from "path";
 
 import type { RunManifest } from "../triage_state_types.js";
-import { list_runs, read_manifest, read_manifest_safe } from "./run_discovery.js";
+import {
+  find_active_runs,
+  list_runs,
+  read_manifest,
+  read_manifest_safe,
+} from "./run_discovery.js";
 
 // vi.hoisted runs before all `import` statements, so the env var is set
 // before `paths.js` (transitively imported by `run_discovery.js`) reads it.
@@ -97,5 +102,64 @@ describe("list_runs", () => {
     const runs = await list_runs("p");
     expect(runs).toHaveLength(1);
     expect(runs[0].manifest).toBeNull();
+  });
+});
+
+describe("find_active_runs", () => {
+  it("returns empty when the project has no runs at all", async () => {
+    expect(await find_active_runs("nope")).toEqual([]);
+  });
+
+  function seed_state(project: string, run_id: string): void {
+    fsSync.writeFileSync(
+      path.join(TRIAGE_STATE, project, "runs", run_id, "triage.json"),
+      "{}",
+    );
+  }
+
+  it("returns every active run with the commit it was prepared at", async () => {
+    seed_manifest("p", "run-early", { commit_hash: "aaaaaaabbbbbb" });
+    seed_state("p", "run-early");
+    seed_manifest("p", "run-late", { commit_hash: "cccccccdddddd" });
+    seed_state("p", "run-late");
+
+    expect(await find_active_runs("p")).toEqual([
+      { run_id: "run-early", short_commit: "aaaaaaa", resumable: true },
+      { run_id: "run-late", short_commit: "ccccccc", resumable: true },
+    ]);
+  });
+
+  it("marks a run interrupted before its state write as not resumable", async () => {
+    seed_manifest("p", "run-torn", { commit_hash: "aaaaaaabbbbbb" });
+
+    expect(await find_active_runs("p")).toEqual([
+      { run_id: "run-torn", short_commit: "aaaaaaa", resumable: false },
+    ]);
+  });
+
+  it("reports a null commit for a non-git target", async () => {
+    seed_manifest("p", "nogit-run", { commit_hash: null });
+    seed_state("p", "nogit-run");
+
+    expect(await find_active_runs("p")).toEqual([
+      { run_id: "nogit-run", short_commit: null, resumable: true },
+    ]);
+  });
+
+  it("excludes finalized and abandoned runs", async () => {
+    seed_manifest("p", "run-finalized", { status: "finalized" });
+    seed_manifest("p", "run-abandoned", { status: "abandoned" });
+    seed_manifest("p", "run-live", { commit_hash: "eeeeeeeffffff" });
+    seed_state("p", "run-live");
+
+    expect(await find_active_runs("p")).toEqual([
+      { run_id: "run-live", short_commit: "eeeeeee", resumable: true },
+    ]);
+  });
+
+  it("excludes a run whose manifest is unreadable", async () => {
+    fsSync.mkdirSync(path.join(TRIAGE_STATE, "p", "runs", "broken-run"), { recursive: true });
+
+    expect(await find_active_runs("p")).toEqual([]);
   });
 });

@@ -9,7 +9,7 @@
 import * as fs from "node:fs/promises";
 
 import { runs_dir_for } from "./paths.js";
-import { manifest_path_for, run_dir_for } from "./paths.js";
+import { manifest_path_for, run_dir_for, state_path_for } from "./paths.js";
 import { RUN_MANIFEST_SCHEMA_VERSION, type RunManifest } from "../triage_state_types.js";
 
 /**
@@ -76,4 +76,44 @@ export async function list_runs(project: string): Promise<RunSummary[]> {
     });
   }
   return out;
+}
+
+export interface ActiveRun {
+  run_id: string;
+  /** Short commit the run was prepared at; null for a non-git target. */
+  short_commit: string | null;
+  /**
+   * Whether the run owns a `triage.json`. False for a run interrupted between
+   * its manifest write and its state write: it holds the project but has no
+   * entries, so abandoning is its only exit.
+   */
+  resumable: boolean;
+}
+
+/**
+ * Runs for `project` whose manifest still reads `status: "active"` — neither
+ * finalized nor abandoned, and so still owning the project's LATEST pointer.
+ *
+ * The commit travels with each run because it is what makes the caller's
+ * choice decidable: continuing a run prepared at a commit that is no longer
+ * HEAD publishes results describing code that has moved on.
+ *
+ * A run whose manifest is unreadable counts as inactive: its status is
+ * unknowable, and treating corruption as a live run would refuse the project
+ * on the strength of a file nothing can interpret.
+ */
+export async function find_active_runs(project: string): Promise<ActiveRun[]> {
+  const summaries = await list_runs(project);
+  const active = summaries.filter((s) => s.manifest?.status === "active");
+
+  return Promise.all(
+    active.map(async (s) => ({
+      run_id: s.run_id,
+      short_commit: s.manifest?.commit_hash?.slice(0, 7) ?? null,
+      resumable: await fs
+        .access(state_path_for(project, s.run_id))
+        .then(() => true)
+        .catch(() => false),
+    })),
+  );
 }

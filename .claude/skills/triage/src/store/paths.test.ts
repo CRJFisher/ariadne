@@ -9,6 +9,7 @@ import {
   run_dir_for,
   state_path_for,
   require_run,
+  require_run_manifest,
 } from "./paths.js";
 import {
   clear_latest,
@@ -132,6 +133,43 @@ describe("require_run", () => {
     const stderr_spy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
     try {
       expect(() => require_run("express", "missing-run")).toThrow("__exit__:1");
+    } finally {
+      exit_spy.mockRestore();
+      stderr_spy.mockRestore();
+    }
+  });
+});
+
+describe("require_run_manifest", () => {
+  function seed_manifest_only(project: string, run_id: string): void {
+    const run_dir = path.join(triage_dir, project, "runs", run_id);
+    fsSync.mkdirSync(run_dir, { recursive: true });
+    fsSync.writeFileSync(path.join(run_dir, "manifest.json"), "{}");
+  }
+
+  it("resolves a run that owns a manifest but no state file", () => {
+    seed_manifest_only("express", "abc-1");
+
+    const resolved = require_run_manifest("express", "abc-1");
+
+    expect(resolved.run_id).toBe("abc-1");
+    expect(resolved.manifest_path).toBe(manifest_path_for("express", "abc-1"));
+  });
+
+  it("falls back to LATEST when run_id is null", () => {
+    seed_manifest_only("express", "abc-1");
+    write_latest_run_id("express", "abc-1");
+
+    expect(require_run_manifest("express", null).run_id).toBe("abc-1");
+  });
+
+  it("exits when the run has no manifest either", () => {
+    const exit_spy = vi.spyOn(process, "exit").mockImplementation(((code?: number) => {
+      throw new Error(`__exit__:${code ?? 0}`);
+    }) as never);
+    const stderr_spy = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
+    try {
+      expect(() => require_run_manifest("express", "missing-run")).toThrow("__exit__:1");
     } finally {
       exit_spy.mockRestore();
       stderr_spy.mockRestore();

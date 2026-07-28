@@ -80,21 +80,25 @@ If no arguments are provided or the input is ambiguous, stop and print an error 
 
 Scripts that operate on existing triage state take `--project <name>` (`prepare_triage` uses `--project` at creation time; `get_triage_summary` enumerates every project and takes no flags). Each pipeline invocation operates on exactly one project, and different projects can run in parallel against the same `triage_state/` dir — the project name is the isolation boundary.
 
-| File                                                              | Purpose                                                                                                                                        |
-| ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `project_configs/{name}.json`                                     | Per-project detection config (folders, excludes)                                                                                               |
-| `triage_state/{project}/LATEST`                                   | Pointer to the active run-id; absent when no run is in progress                                                                                |
-| `triage_state/{project}/runs/{run-id}/manifest.json`              | Per-run metadata (status, commit_hash, tp_cache record)                                                                                        |
-| `triage_state/{project}/runs/{run-id}/triage.json`                | Per-run triage state (entries, per-entry results)                                                                                              |
-| `triage_state/{project}/runs/{run-id}/results/{entry_index}.json` | Per-entry investigator verdict files (one `TriageVerdict` JSON per entry)                                                                      |
-| `analysis_output/{project}/detect_entrypoints/{ts}.json`          | Detection output (kept project-scoped; one detection feeds many triage runs)                                                                   |
-| `analysis_output/{project}/triage_results/{run-id}.json`          | Published triage results (schema v5: `novel_issues`, `classifier_regressions`, `confirmed_unreachable`, `uncertain`, with relative file paths) |
+A project runs **one triage at a time**. `prepare_triage` refuses while another run for the project is `status: "active"`, naming each live run, the commit it was prepared at, and both remedies: continue it by passing its id to the Phase 3-4 scripts, or `abandon_run.ts` to discard it. To triage two targets concurrently, give them distinct `--project` names.
+
+The refusal is a fail-loud check, not a lock. It reads the run set before the re-index and again immediately before claiming the run, which leaves a narrow window where two launches started at the same moment both pass. The dispense output echoes its run-id so a fork that slips through that window surfaces on the next call rather than as silently repeating entry indices.
+
+| File                                                              | Purpose                                                                                                                                          |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `project_configs/{name}.json`                                     | Per-project detection config (folders, excludes)                                                                                                 |
+| `triage_state/{project}/LATEST`                                   | Convenience pointer to the current run-id, written by `prepare_triage` and cleared by `finalize_triage`; run liveness lives in `manifest.status` |
+| `triage_state/{project}/runs/{run-id}/manifest.json`              | Per-run metadata (status, commit_hash, tp_cache record)                                                                                          |
+| `triage_state/{project}/runs/{run-id}/triage.json`                | Per-run triage state (entries, per-entry results)                                                                                                |
+| `triage_state/{project}/runs/{run-id}/results/{entry_index}.json` | Per-entry investigator verdict files (one `TriageVerdict` JSON per entry)                                                                        |
+| `analysis_output/{project}/detect_entrypoints/{ts}.json`          | Detection output (kept project-scoped; one detection feeds many triage runs)                                                                     |
+| `analysis_output/{project}/triage_results/{run-id}.json`          | Published triage results (schema v5: `novel_issues`, `classifier_regressions`, `confirmed_unreachable`, `uncertain`, with relative file paths)   |
 
 All paths above are relative to `~/.ariadne/triage-entrypoints/`. Run-ids have the form `<short-commit>-<iso-ts>` (e.g. `deadbee-2026-04-28T13-42-07.812Z`); `nogit-<iso-ts>` when the target is not a git repo.
 
 **Classifier registry write boundary**: this skill reads `known_issues/registry.json` but **never writes to it**. The registry is human-maintained — every status transition (`wip`, `permanent`, `fixed`) is a human decision through `atomic_update_registry`, applied via the `reconcile-registry` skill (`.claude/skills/reconcile-registry/SKILL.md`), which reads this skill's published `classifier_regressions[]` and the repo's git log to propose the mechanical flips. See `.claude/rules/classifier-lifecycle.md` for the canonical writer matrix.
 
-Phase 3-4 scripts default to the run pointed at by `LATEST`; pass `--run-id <id>` to operate on a specific run. `prepare_triage` writes `LATEST` and `finalize_triage` clears it.
+Every run-scoped script takes `--run-id <id>`; this pipeline passes the run-id Phase 2 prints on every call, from the first dispense through finalize. Omitted, a script resolves the project's `LATEST` pointer, which `prepare_triage` writes and `finalize_triage` clears.
 
 The dead-code whitelist at `known_entrypoints/<package>.json` (also under `~/.ariadne/triage-entrypoints/`) is owned by the `detect_dead_code` Stop hook and is never read or written by this pipeline. See **Dead-code guardrail** below.
 
@@ -163,7 +167,9 @@ The script captures the target's HEAD short-commit, generates run-id `<short-com
 - **known-unreachable (previously-confirmed-tp)**: Reused from prior finalized runs at the same commit (accumulated across all runs, newest first). Skipped via `--no-reuse-tp`. Distinguished by `known_source: "previously-confirmed-tp"` and `tp_source_run_id`.
 - **llm-triage**: No classifier matched — marked pending for investigation.
 
-`prepare_triage` prints `{ "run_id": "...", "stats": { ... } }` to stdout. Capture the `run_id` if you need to pin Phase 3-4 to a specific run; otherwise the project's `LATEST` pointer makes that automatic.
+`prepare_triage` prints `{ "run_id": "...", "stats": { ... } }` to stdout. **Capture the `run_id`; every Phase 3 and Phase 4 call below passes it as `--run-id <run-id>`.**
+
+If `prepare_triage` exits non-zero reporting that the project already has an active run, report its message to the user verbatim and stop. Choosing between continuing that run and abandoning it is theirs to make — it turns on whether the run's commit is still the one they care about.
 
 Output: `triage_state/<project>/runs/<run-id>/triage.json` and `manifest.json`.
 
@@ -173,7 +179,7 @@ Run investigators as **synchronous foreground batches**: dispense a batch of up 
 
 **Default batch size:** `N = 5`. A batch loop averages `N/2` concurrency; that is the accepted cost of running headless in a single turn. Raise `--count` for wider batches on a fast target.
 
-Every script takes `--project <name>` — use the project captured in Phase 2.
+Every script takes `--project <name>` and `--run-id <run-id>` — the project and run-id captured in Phase 2, on every call, for the whole loop. Entry indices are run-local, so an index is meaningful only against the run that issued it.
 
 **Crash recovery is automatic.** Entries stay `pending` until an investigator writes a result file, which the next `get_next_triage_entry` call absorbs (transitioning the entry to `completed`). If an investigator in a batch crashes before writing a result, its entry remains `pending` and is re-dispensed on a later batch. A malformed result file flips the entry to `failed`; the dispenser clears the stale file and re-dispenses it up to `MAX_TRIAGE_RETRIES` times before terminalizing the failure.
 
@@ -181,10 +187,12 @@ Every script takes `--project <name>` — use the project captured in Phase 2.
 
 ```bash
 node --import tsx .claude/skills/triage/scripts/get_next_triage_entry.ts \
-  --project <name> --count 5
+  --project <name> --run-id <run-id> --count 5
 ```
 
-Output: `{ "entries": [N, ...] }`. If the script exits non-zero, stop and report stderr to the user. If `entries` is empty, skip to Phase 4.
+Output: `{ "run_id": "...", "entries": [N, ...] }`. If the script exits non-zero, stop and report stderr to the user. If `entries` is empty, skip to Phase 4.
+
+The echoed `run_id` names the run these indices came from. Check it against the one captured in Phase 2; if they differ, stop and report rather than investigating entries belonging to a run you are not tracking.
 
 ### Step 2: Investigate the batch to completion
 
@@ -192,11 +200,14 @@ Launch one **triage-investigator** agent per returned index in a **single messag
 
 ```text
 project: <name>
+run_id: <run-id>
 entry_index: N
 Write your verdict to results/N.json, then reply with one line only: `done N: <kind>`. Emit no other text.
 ```
 
-The triage-investigator runs `get_entry_context.ts --project <name> --entry <index>` itself to fetch the full investigation context (entry + in-scope registry slice) and writes its verdict to `results/{entry_index}.json`. Each agent's one-line reply is a completion acknowledgement only — the authoritative verdict is the result file, absorbed by `get_next_triage_entry.ts` on the next dispense and by `finalize_triage.ts` in Phase 4. Do not read, summarize, or act on the replies.
+Every prompt carries the `run_id`; the investigator derives both its entry and its verdict output path from the run it resolves.
+
+The triage-investigator runs `get_entry_context.ts --project <name> --run-id <run-id> --entry <index>` itself to fetch the full investigation context (entry + in-scope registry slice) and writes its verdict to `results/{entry_index}.json`. Each agent's one-line reply is a completion acknowledgement only — the authoritative verdict is the result file, absorbed by `get_next_triage_entry.ts` on the next dispense and by `finalize_triage.ts` in Phase 4. Do not read, summarize, or act on the replies.
 
 ### Step 3: Loop until drained
 
@@ -214,7 +225,7 @@ Run after Phase 3 sets `phase = "complete"`.
 
 ```bash
 node --import tsx .claude/skills/triage/scripts/finalize_triage.ts \
-  --project <name>
+  --project <name> --run-id <run-id>
 ```
 
 Finalization builds the v5 `triage_results/<run-id>.json` entirely from the per-entry verdict files in `results/` and the triage state:
@@ -293,6 +304,8 @@ node --import tsx scripts/prepare_triage.ts --analysis <analysis.json> --project
 node --import tsx scripts/diff_runs.ts --project <name> --from <run-1> --to <run-2>
 ```
 
+Step 4 requires step 2's run to be finalized or abandoned — see **State and Output Locations**.
+
 The two known cache leaks apply during this loop — uncommitted target-repo edits and Ariadne core changes don't bust the cache; the escape hatch is `--no-reuse-tp`. See **Reusing Prior TP Verdicts** above for the full statement.
 
 ## Persisted-State Preservation Policy
@@ -305,7 +318,7 @@ The pipeline persists state in three places — two under `~/.ariadne/triage-ent
 | `triage_state/<project>/runs/`                                     | **Preserve**         | Active and abandoned runs never auto-prune. `prune_runs.ts` keeps the last `--keep <n>` finalized runs and protects any run referenced as another run's `tp_cache.source_run_id`.                                                                                                                               |
 | `~/.ariadne/cache/<slug>/manifest.json` (core's persistence cache) | **Auto-invalidates** | The cache schema version is checked on load; mismatched manifests are dropped via `deserialize_manifest` and the cache rebuilds on next run. No user action required.                                                                                                                                           |
 
-**Stale-LATEST handling.** If a `LATEST` pointer remains from an in-flight run at upgrade time, clear it via `abandon_run.ts --project <name>` or by deleting the file. The run dir stays visible to `list_runs.ts`. `abandon_run.ts` also marks the manifest abandoned.
+**Clearing a run left in flight.** `abandon_run.ts --project <name> [--run-id <id>]` marks the manifest abandoned and drops the `LATEST` pointer; the run dir stays visible to `list_runs.ts`. Run liveness lives in `manifest.status`, so this is the only way to release a project — deleting the `LATEST` file alone leaves the manifest `active` and the next `prepare_triage` refuses. `list_runs.ts --project <name> --status active` names what is holding a project, and `abandon_run.ts` resolves on the manifest alone, so it also clears a run interrupted before its `triage.json` was written.
 
 **Published schema:** `TRIAGE_RESULTS_SCHEMA_VERSION` is `5`. Readers (`triage_results_store`, `confirmed_unreachable_reuse`, `diff_runs`) hard-reject any `triage_results/<run-id>.json` whose `schema_version` does not match — there are no migration shims. Pre-v5 files age out naturally as new runs land; the persisted-state policy still forbids `rm -rf` of the whole `analysis_output/` tree.
 
@@ -345,10 +358,11 @@ The skill is a thin caller of `@ariadnejs/core`. Classification (`enrich_call_gr
 | `finalize/classifier_regressions.ts`          | `aggregate_classifier_regressions` — finalize-time per-rule rollup of `fp-classifier-regression` verdicts (used only by triage's finalize)                              |
 | `dispense/dispense_payload.ts`                | Build the per-entry dispense payload (entry context + in-scope registry slice)                                                                                          |
 | `triage_state_types.ts`                       | Triage state types (`TriageState`, `TriageEntry`, `TriageEntryResult`)                                                                                                  |
-| `store/paths.ts`                              | Triage state file locations                                                                                                                                             |
+| `store/paths.ts`                              | Triage state file locations; run resolution against the state file (`require_run`) or the manifest alone (`require_run_manifest`)                                       |
+| `store/latest_pointer.ts`                     | Single-slot LATEST pointer I/O naming the project's current run                                                                                                         |
 | `cli_args.ts`                                 | Required-flag CLI helpers (`parse_project_arg`, `parse_run_id_arg`)                                                                                                     |
 | `finalize/confirmed_unreachable_reuse.ts`     | TP cache derivation — short-circuits the LLM investigator across runs at the same commit                                                                                |
-| `store/run_discovery.ts`                      | Run-id enumeration, manifest reading, prune protection                                                                                                                  |
+| `store/run_discovery.ts`                      | Run enumeration, manifest reading, active-run detection (`find_active_runs`), prune protection                                                                          |
 | `store/analysis_output.ts`                    | Timestamped analysis output JSON I/O                                                                                                                                    |
 | `project_id.ts`                               | Project-identifier derivation (`path_to_project_id`, `project_id_from_config`)                                                                                          |
 | `@ariadnejs/skill-fs/require-node-import-tsx` | Side-effect guard shared with `plan`: aborts if invoked via `tsx` CLI instead of `node --import tsx`                                                                    |

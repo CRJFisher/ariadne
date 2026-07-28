@@ -21,11 +21,15 @@ The verdict is parsed by `parse_triage_verdict` at finalize. Any shape violation
 
 ## Context
 
-Your prompt contains a `project` and an `entry_index`. Run `get_entry_context.ts` to fetch the dispense payload:
+Your prompt contains a `project`, a `run_id`, and an `entry_index`. Run `get_entry_context.ts` to fetch the dispense payload:
 
 ```bash
-node --import tsx .claude/skills/triage/scripts/get_entry_context.ts --project <project> --entry <entry_index>
+node --import tsx .claude/skills/triage/scripts/get_entry_context.ts --project <project> --run-id <run_id> --entry <entry_index>
 ```
+
+Pass `--run-id` exactly as given. Entry indices are run-local, and the script derives your verdict's output path from the run it resolves.
+
+The output path in the payload contains the run-id it resolved. Confirm it matches the `run_id` in your prompt before investigating; if it does not, stop and report that instead of writing a verdict.
 
 The script outputs the full payload:
 

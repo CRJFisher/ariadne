@@ -5,17 +5,21 @@
  *
  * Useful for "this run hung / errored mid-pipeline; I'm starting fresh."
  *
+ * This is the recovery tool for a project the active-run guard is holding, so
+ * it resolves on the manifest alone: a run interrupted between its manifest
+ * write and its state write must still be abandonable.
+ *
  * Usage:
  *   node --import tsx abandon_run.ts --project <name> [--run-id <id>]
  *
  * If --run-id is omitted, the LATEST run is abandoned.
  */
 
-import * as fs from "node:fs/promises";
+import { atomic_write_file } from "@ariadnejs/skill-fs";
 
 import { read_manifest } from "../src/store/run_discovery.js";
 import { parse_project_arg, parse_run_id_arg } from "../src/cli_args.js";
-import { require_run } from "../src/store/paths.js";
+import { require_run_manifest } from "../src/store/paths.js";
 import { clear_latest, read_latest_run_id } from "../src/store/latest_pointer.js";
 import "@ariadnejs/skill-fs/require-node-import-tsx";
 
@@ -24,7 +28,7 @@ const USAGE = "Usage: abandon_run.ts --project <name> [--run-id <id>]";
 async function main(): Promise<void> {
   const project = parse_project_arg(process.argv, USAGE);
   const run_id_opt = parse_run_id_arg(process.argv);
-  const { run_id, manifest_path } = require_run(project, run_id_opt);
+  const { run_id, manifest_path } = require_run_manifest(project, run_id_opt);
 
   const manifest = await read_manifest(project, run_id);
 
@@ -34,7 +38,10 @@ async function main(): Promise<void> {
   }
 
   manifest.status = "abandoned";
-  await fs.writeFile(manifest_path, JSON.stringify(manifest, null, 2) + "\n");
+  // Atomic because the active-run guard reads this file: a torn write parses
+  // as null, which would make the run unlistable, unprunable, and beyond the
+  // reach of this script on a retry.
+  await atomic_write_file(manifest_path, JSON.stringify(manifest, null, 2) + "\n");
 
   if (read_latest_run_id(project) === run_id) {
     clear_latest(project);
