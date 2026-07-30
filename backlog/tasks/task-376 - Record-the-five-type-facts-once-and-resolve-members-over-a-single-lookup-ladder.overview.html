@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>type-model-completion — comprehension</title>
+</head>
+<body style="margin:0;padding:0;background:#f4f5f7;color:#1c2024;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;line-height:1.55;">
+<div style="max-width:1080px;margin:0 auto;padding:32px 28px 72px 28px;">
+
+<!-- ══════════ HEADER ══════════ -->
+<div style="border-bottom:3px solid #1c2024;padding-bottom:18px;margin-bottom:26px;">
+  <div style="font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#6b7280;font-weight:700;">Merged cluster &middot; comprehension doc</div>
+  <h1 style="margin:6px 0 4px 0;font-size:32px;line-height:1.15;letter-spacing:-.02em;">type-model-completion</h1>
+  <div style="font-size:17px;color:#374151;">Record the type facts once, resolve members over one ladder.</div>
+  <div style="margin-top:14px;">
+    <span style="display:inline-block;background:#1c2024;color:#fff;border-radius:3px;padding:3px 9px;font-size:12px;font-weight:700;margin:0 6px 6px 0;">46 plan rows &middot; largest cluster</span>
+    <span style="display:inline-block;background:#e5e7eb;color:#1c2024;border-radius:3px;padding:3px 9px;font-size:12px;font-weight:700;margin:0 6px 6px 0;">5 fault areas merged</span>
+    <span style="display:inline-block;background:#e5e7eb;color:#1c2024;border-radius:3px;padding:3px 9px;font-size:12px;font-weight:700;margin:0 6px 6px 0;">17 ordered sub-tasks</span>
+    <span style="display:inline-block;background:#fde8e8;color:#8a1c1c;border-radius:3px;padding:3px 9px;font-size:12px;font-weight:700;margin:0 6px 6px 0;">LAST in recommended cross-cluster order</span>
+  </div>
+</div>
+
+<!-- ══════════ VERDICT ══════════ -->
+<table style="width:100%;border-collapse:separate;border-spacing:14px 0;margin:0 -14px 30px -14px;">
+<tr>
+<td style="width:50%;vertical-align:top;background:#eef7ee;border:1px solid #bcd8bc;border-left:5px solid #3f7d3f;border-radius:5px;padding:16px 18px;">
+  <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#3f7d3f;font-weight:800;">Benefit</div>
+  <div style="font-size:30px;font-weight:800;line-height:1.1;margin:6px 0 4px 0;">~1,300</div>
+  <div style="font-size:14px;color:#2f4f2f;">false unresolved-call / unreachable-function rows removed, across <strong>10 corpora</strong> (angular, rustc, tokio, sqlx, TypeScript, django, pandas, celery, express, mocha) and <strong>4 languages</strong>.</div>
+  <div style="font-size:13px;color:#456045;margin-top:8px;">The single largest recovery available anywhere in the backlog. One sub-task (#6) alone addresses <strong>1,049</strong> of them.</div>
+</td>
+<td style="width:50%;vertical-align:top;background:#fdf2ec;border:1px solid #e6c4ac;border-left:5px solid #b45309;border-radius:5px;padding:16px 18px;">
+  <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#b45309;font-weight:800;">Cost</div>
+  <div style="font-size:30px;font-weight:800;line-height:1.1;margin:6px 0 4px 0;">Highest</div>
+  <div style="font-size:14px;color:#7a3d06;">Touches both pipeline halves — <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">index_single_file/</code> recording and <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">resolve_references/</code> resolution. 12 functions deleted outright; ~100 existing assertions rewritten.</div>
+  <div style="font-size:13px;color:#8a5320;margin-top:8px;">Not divisible into small independent wins after sub-task 7 — the middle of the epic is one gated chain.</div>
+</td>
+</tr>
+</table>
+
+<div style="background:#fff;border:1px solid #d8dbe0;border-radius:5px;padding:16px 20px;margin-bottom:34px;">
+  <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#6b7280;font-weight:800;margin-bottom:6px;">Where it ranks</div>
+  <div style="font-size:15px;">Highest benefit <em>and</em> highest cost. It is placed last not because it is optional but because
+  <strong>its first five sub-tasks are small, independent and de-noise every other cluster's measurement</strong> — while its
+  gated middle (6 &rarr; 8 &rarr; 14/15) is the longest single chain in the run. Fund it when you can commit a whole
+  run to it; otherwise take sub-tasks 1&ndash;4 and 7 as cheap, standalone credit and defer the chain.</div>
+</div>
+
+<!-- ══════════ THE CHANGE ══════════ -->
+<h2 style="font-size:21px;margin:0 0 6px 0;border-top:2px solid #1c2024;padding-top:14px;">What changes</h2>
+<p style="margin:0 0 18px 0;color:#374151;">A receiver-directed call needs five facts. Ariadne records none of them — each is re-derived at the
+point of use, by two or three drifting builders, from raw source text. The five member fault areas <em>are</em> those five facts.</p>
+
+<!-- BEFORE -->
+<div style="background:#fff;border:1px solid #d8dbe0;border-radius:5px;padding:18px 20px;margin-bottom:16px;">
+<div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:800;color:#8a1c1c;margin-bottom:12px;">Before &mdash; five facts, re-derived at the point of use</div>
+
+<table style="width:100%;border-collapse:collapse;font-size:13.5px;">
+<tr style="background:#f7f8fa;">
+  <th style="text-align:left;padding:7px 10px;border-bottom:1px solid #d8dbe0;width:20%;">Fact needed</th>
+  <th style="text-align:left;padding:7px 10px;border-bottom:1px solid #d8dbe0;width:44%;">Derived by (competing builders)</th>
+  <th style="text-align:left;padding:7px 10px;border-bottom:1px solid #d8dbe0;width:36%;">How it fails</th>
+</tr>
+<tr>
+  <td style="padding:8px 10px;border-bottom:1px solid #eceef1;vertical-align:top;"><strong>1. The annotation</strong><br><span style="color:#6b7280;">what a name denotes</span></td>
+  <td style="padding:8px 10px;border-bottom:1px solid #eceef1;vertical-align:top;">6 sites hand raw annotation text to a bare <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">Map</code> lookup, unparsed</td>
+  <td style="padding:8px 10px;border-bottom:1px solid #eceef1;vertical-align:top;color:#8a1c1c;">Resolves only if the text is <em>byte-identical</em> to a declared name. <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">&amp;mut S</code>, <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">Option&lt;T&gt;</code>, <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">F | null</code>, <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">Optional[C]</code> all miss</td>
+</tr>
+<tr>
+  <td style="padding:8px 10px;border-bottom:1px solid #eceef1;vertical-align:top;"><strong>2. The scope's self</strong><br><span style="color:#6b7280;">what <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">self</code>/<code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">this</code> binds to</span></td>
+  <td style="padding:8px 10px;border-bottom:1px solid #eceef1;vertical-align:top;">Not stored. <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">find_class_from_scope</code> runs the member index <em>backwards</em> from the first method it finds</td>
+  <td style="padding:8px 10px;border-bottom:1px solid #eceef1;vertical-align:top;color:#8a1c1c;">Five independently reproduced failure modes; the scan breaks on the first candidate, so each is fatal</td>
+</tr>
+<tr>
+  <td style="padding:8px 10px;border-bottom:1px solid #eceef1;vertical-align:top;"><strong>3. The value</strong><br><span style="color:#6b7280;">what a binding holds</span></td>
+  <td style="padding:8px 10px;border-bottom:1px solid #eceef1;vertical-align:top;">No channel exists — only a type channel and a call-target channel</td>
+  <td style="padding:8px 10px;border-bottom:1px solid #eceef1;vertical-align:top;color:#8a1c1c;"><code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">cls = Parser; cls()</code> &rarr; <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">receiver_type_unknown</code></td>
+</tr>
+<tr>
+  <td style="padding:8px 10px;border-bottom:1px solid #eceef1;vertical-align:top;"><strong>4. The member set</strong></td>
+  <td style="padding:8px 10px;border-bottom:1px solid #eceef1;vertical-align:top;"><strong>3 builders</strong> — one live, one whose maps are dead, one reachable only from tests</td>
+  <td style="padding:8px 10px;border-bottom:1px solid #eceef1;vertical-align:top;color:#8a1c1c;">Live one is per-file <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">set</code>, so a Rust type with impls in several files keeps only the last; enums get no index at all</td>
+</tr>
+<tr>
+  <td style="padding:8px 10px;vertical-align:top;"><strong>5. The subtype graph</strong></td>
+  <td style="padding:8px 10px;vertical-align:top;"><strong>3 builders</strong> — two forward, one inverse, each with a different source of truth</td>
+  <td style="padding:8px 10px;vertical-align:top;color:#8a1c1c;">Drops qualified TS heritage, <em>every</em> Rust trait edge, every base past the first, and every edge whose caller was resolved before the implementer was ingested</td>
+</tr>
+</table>
+
+<div style="margin-top:14px;background:#fdf0f0;border:1px solid #e8bcbc;border-radius:4px;padding:11px 14px;font-size:13.5px;">
+  <strong>All five gaps arrive at one sink:</strong> the member probe in <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">method_lookup.ts:132-138</code>, which reports
+  <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">method_not_on_type</code>. Each builder's gaps are a <em>different population</em> of false positives, which is why the
+  same defect surfaced as five separate fault areas.
+</div>
+</div>
+
+<div style="text-align:center;font-size:26px;color:#6b7280;margin:6px 0 10px 0;">&darr;</div>
+
+<!-- AFTER -->
+<div style="background:#fff;border:1px solid #d8dbe0;border-radius:5px;padding:18px 20px;margin-bottom:30px;">
+<div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:800;color:#3f7d3f;margin-bottom:14px;">After &mdash; five recorded stores, one ladder</div>
+
+<table style="width:100%;border-collapse:separate;border-spacing:8px 0;margin:0 -8px 14px -8px;">
+<tr>
+  <td style="width:20%;vertical-align:top;background:#f3f8f3;border:1px solid #c3ddc3;border-radius:4px;padding:10px 11px;font-size:12.5px;">
+    <div style="font-weight:800;font-size:12px;">1 &middot; Parsed annotations</div>
+    <div style="color:#41603f;margin-top:4px;">One parser + 4 language leaves; one <code style="font-family:ui-monospace,Menlo,monospace;font-size:11px;">resolve_annotation</code>. All 6 raw sites route through it.</div>
+  </td>
+  <td style="width:20%;vertical-align:top;background:#f3f8f3;border:1px solid #c3ddc3;border-radius:4px;padding:10px 11px;font-size:12.5px;">
+    <div style="font-weight:800;font-size:12px;">2 &middot; Scope self type</div>
+    <div style="color:#41603f;margin-top:4px;">One field on <code style="font-family:ui-monospace,Menlo,monospace;font-size:11px;">LexicalScope</code>, set by the 4 boundary extractors. Backward scan deleted.</div>
+  </td>
+  <td style="width:20%;vertical-align:top;background:#f3f8f3;border:1px solid #c3ddc3;border-radius:4px;padding:10px 11px;font-size:12.5px;">
+    <div style="font-weight:800;font-size:12px;">3 &middot; Value channel</div>
+    <div style="color:#41603f;margin-top:4px;">One <code style="font-family:ui-monospace,Menlo,monospace;font-size:11px;">ValueSource</code> union, 4 producers, 4 consumers.</div>
+  </td>
+  <td style="width:20%;vertical-align:top;background:#f3f8f3;border:1px solid #c3ddc3;border-radius:4px;padding:10px 11px;font-size:12.5px;">
+    <div style="font-weight:800;font-size:12px;">4 &middot; Member index</div>
+    <div style="color:#41603f;margin-top:4px;">One index, merged across files with per-file provenance, extended to enums, plus a reverse name index.</div>
+  </td>
+  <td style="width:20%;vertical-align:top;background:#f3f8f3;border:1px solid #c3ddc3;border-radius:4px;padding:10px 11px;font-size:12.5px;">
+    <div style="font-weight:800;font-size:12px;">5 &middot; Heritage graph</div>
+    <div style="color:#41603f;margin-top:4px;">One builder, multi-valued <code style="font-family:ui-monospace,Menlo,monospace;font-size:11px;">parent_types</code>, edges tagged declared/structural, order-independent.</div>
+  </td>
+</tr>
+</table>
+
+<div style="text-align:center;font-size:22px;color:#6b7280;margin:2px 0 10px 0;">&darr;</div>
+
+<div style="background:#f7f8fa;border:1px solid #d8dbe0;border-radius:4px;padding:12px 14px;">
+  <div style="font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#374151;margin-bottom:8px;">The one ladder in <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">method_lookup.ts</code></div>
+  <div style="font-size:13px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;">
+    <span style="background:#e5e7eb;border-radius:3px;padding:2px 7px;">1 import receiver &rarr; module surface</span>
+    <span style="color:#9ca3af;">&rarr;</span>
+    <span style="background:#e5e7eb;border-radius:3px;padding:2px 7px;">2 collection receiver &rarr; collection dispatch</span>
+    <span style="color:#9ca3af;">&rarr;</span>
+    <span style="background:#e5e7eb;border-radius:3px;padding:2px 7px;">3 member probe over the full MRO</span>
+    <span style="color:#9ca3af;">&rarr;</span>
+    <span style="background:#e5e7eb;border-radius:3px;padding:2px 7px;">4 raw member index</span>
+    <span style="color:#9ca3af;">&rarr;</span>
+    <span style="background:#e5e7eb;border-radius:3px;padding:2px 7px;">5 subtype-closure fan-out</span>
+    <span style="color:#9ca3af;">&rarr;</span>
+    <span style="background:#e5e7eb;border-radius:3px;padding:2px 7px;">6 structural conformance</span>
+    <span style="color:#9ca3af;">&rarr;</span>
+    <span style="background:#fde8e8;border-radius:3px;padding:2px 7px;">method_not_on_type</span>
+  </div>
+  <div style="font-size:13px;color:#374151;margin-top:9px;">After the change, that final rung means <strong>genuinely not statically reachable</strong> — which is what makes it usable as an entry-point signal.</div>
+</div>
+</div>
+
+<!-- ══════════ IMPACT ══════════ -->
+<h2 style="font-size:21px;margin:0 0 6px 0;border-top:2px solid #1c2024;padding-top:14px;">Impact, by fault area</h2>
+<p style="margin:0 0 14px 0;color:#374151;">Evidence rows are real failing call sites in the corpora, not estimates.</p>
+
+<table style="width:100%;border-collapse:collapse;font-size:13.5px;background:#fff;border:1px solid #d8dbe0;border-radius:5px;margin-bottom:16px;">
+<tr style="background:#f7f8fa;">
+  <th style="text-align:left;padding:9px 12px;border-bottom:1px solid #d8dbe0;">Member fault area</th>
+  <th style="text-align:right;padding:9px 12px;border-bottom:1px solid #d8dbe0;">Rows</th>
+  <th style="text-align:left;padding:9px 12px;border-bottom:1px solid #d8dbe0;width:52%;">What the merge does to it</th>
+</tr>
+<tr>
+  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;"><code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">receiver_type_inference</code></td>
+  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;text-align:right;font-weight:800;font-size:16px;">1,149</td>
+  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;"><strong>1,049 of them are one defect</strong> — the unparsed annotation string. Six leaves collapse into sub-task 6.</td>
+</tr>
+<tr>
+  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;"><code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">method_lookup</code></td>
+  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;text-align:right;font-weight:800;font-size:16px;">108</td>
+  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;">MRO half merges into the heritage builder; two leaves' premises falsified and replaced by cheaper root causes; 30 rows wait on the <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">module-surface-resolution</code> epic.</td>
+</tr>
+<tr>
+  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;"><code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">polymorphic_dispatch</code></td>
+  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;text-align:right;font-weight:800;font-size:16px;">25</td>
+  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;">Three of four leaf premises refuted by the merge. 20 of the 25 rows land on structural conformance — a 2-row leaf promoted to the group's main mechanism.</td>
+</tr>
+<tr>
+  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;"><code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">scope_construction</code></td>
+  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;text-align:right;font-weight:800;font-size:16px;">22</td>
+  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;">Four leaves collapse into the single <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">self_type_name</code> field; its proposed grammar recapture is rejected as unnecessary.</td>
+</tr>
+<tr>
+  <td style="padding:9px 12px;"><code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">collection_dispatch</code></td>
+  <td style="padding:9px 12px;text-align:right;font-weight:800;font-size:16px;">9</td>
+  <td style="padding:9px 12px;">Becomes one shared producer (element types) rather than its own subsystem; it is <em>narrowed</em>, gaining a guard that removes a wrong edge.</td>
+</tr>
+</table>
+
+<table style="width:100%;border-collapse:separate;border-spacing:12px 0;margin:0 -12px 30px -12px;">
+<tr>
+<td style="width:33.33%;vertical-align:top;background:#fff;border:1px solid #d8dbe0;border-radius:5px;padding:13px 15px;">
+  <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#6b7280;font-weight:800;">Secondary payoff</div>
+  <div style="font-size:13.5px;margin-top:5px;">Sub-task 1 also closes <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">entry_point_classification</code>'s five-row leaf, and sub-task 7 (diagnostic completeness) makes sub-tasks 8&ndash;15 <em>measurable</em> for the first time.</div>
+</td>
+<td style="width:33.33%;vertical-align:top;background:#fff;border:1px solid #d8dbe0;border-radius:5px;padding:13px 15px;">
+  <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#6b7280;font-weight:800;">Honestly excluded</div>
+  <div style="font-size:13.5px;margin-top:5px;">Permanent limits stay: WASM instance exports, DI containers keyed on runtime tokens, compiler-injected Rust <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">Drop</code> calls. Success criteria must not target 100%.</div>
+</td>
+<td style="width:33.33%;vertical-align:top;background:#fff;border:1px solid #d8dbe0;border-radius:5px;padding:13px 15px;">
+  <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#6b7280;font-weight:800;">Rows sent elsewhere</div>
+  <div style="font-size:13.5px;margin-top:5px;">11 rows re-homed to <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">module-surface-resolution</code> (loop-head bindings, Rust path resolution) rather than double-counted here.</div>
+</td>
+</tr>
+</table>
+
+<!-- ══════════ WHY ONE EPIC ══════════ -->
+<h2 style="font-size:21px;margin:0 0 6px 0;border-top:2px solid #1c2024;padding-top:14px;">Why this stays one epic</h2>
+<p style="margin:0 0 14px 0;color:#374151;">The five groups were not merged for convenience. Read together they were designing <strong>one type model in five
+places</strong>, and in four places they designed the <em>same</em> mechanism twice with incompatible shapes. The merge settles each conflict.</p>
+
+<table style="width:100%;border-collapse:collapse;font-size:13.5px;background:#fff;border:1px solid #d8dbe0;border-radius:5px;margin-bottom:16px;">
+<tr style="background:#f7f8fa;">
+  <th style="text-align:left;padding:9px 12px;border-bottom:1px solid #d8dbe0;width:24%;">Collision</th>
+  <th style="text-align:left;padding:9px 12px;border-bottom:1px solid #d8dbe0;width:40%;">Competing designs</th>
+  <th style="text-align:left;padding:9px 12px;border-bottom:1px solid #d8dbe0;">Settlement</th>
+</tr>
+<tr>
+  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;vertical-align:top;">Where Rust annotations are normalised</td>
+  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;vertical-align:top;">Destructively at index time <span style="color:#6b7280;">(method_lookup)</span> vs. parsed at resolve time <span style="color:#6b7280;">(receiver_type_inference)</span></td>
+  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;vertical-align:top;"><strong>Resolve time.</strong> The index-time strip discards exactly the type arguments two other members need, and unwrapping is a policy decision.</td>
+</tr>
+<tr>
+  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;vertical-align:top;">How a scope names its self type</td>
+  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;vertical-align:top;">Field on the method definition vs. field on the scope</td>
+  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;vertical-align:top;"><strong>The scope field.</strong> A cross-file Rust <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">impl</code> contributes zero definitions, so a definition-carried field cannot exist to be read.</td>
+</tr>
+<tr>
+  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;vertical-align:top;"><code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">registries/type.ts</code> STEP 3</td>
+  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;vertical-align:top;"><span style="color:#8a1c1c;font-weight:700;">Three groups want three different things:</span> delete it, rewrite it, or reshape the maps it writes</td>
+  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;vertical-align:top;"><strong>Delete it.</strong> Heritage resolves once, in the single builder, publishing both directions.</td>
+</tr>
+<tr>
+  <td style="padding:9px 12px;vertical-align:top;">The value channel</td>
+  <td style="padding:9px 12px;vertical-align:top;"><span style="color:#8a1c1c;font-weight:700;">Three designs</span> for one channel — same two consumers, overlapping producers</td>
+  <td style="padding:9px 12px;vertical-align:top;"><strong>One union</strong> in <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">call_resolution/value_source.ts</code>, with the union of all three producer sets.</td>
+</tr>
+</table>
+
+<div style="background:#fff7e6;border:1px solid #e5cf9e;border-left:5px solid #b45309;border-radius:5px;padding:15px 18px;margin-bottom:30px;">
+  <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#b45309;font-weight:800;">The tradeoff, stated plainly</div>
+  <div style="font-size:14.5px;margin-top:6px;">Splitting this into two smaller epics would give you two fundable units instead of one — but it would leave
+  <strong>two epics racing on the same two edits</strong>:
+  <code style="font-family:ui-monospace,Menlo,monospace;font-size:12.5px;background:#f3e6cd;border-radius:3px;padding:1px 5px;">registries/type.ts</code> STEP 3
+  (one epic deletes it while the other rewrites it) and
+  <code style="font-family:ui-monospace,Menlo,monospace;font-size:12.5px;background:#f3e6cd;border-radius:3px;padding:1px 5px;">find_class_from_scope</code>
+  (one deletes it while the other still depends on its behaviour). Whichever landed second would be rebasing onto a
+  type model it did not design. The consolidator kept it as one epic to avoid that — the size is the price of not
+  having a merge conflict on the core of the resolver.</div>
+</div>
+
+<!-- ══════════ WORK ORDER ══════════ -->
+<h2 style="font-size:21px;margin:0 0 6px 0;border-top:2px solid #1c2024;padding-top:14px;">Work order &mdash; 17 strictly-ordered sub-tasks</h2>
+<p style="margin:0 0 14px 0;color:#374151;">Each step is independently verifiable, and each de-noises the measurement of the next.</p>
+
+<div style="background:#eef7ee;border:1px solid #bcd8bc;border-radius:5px;padding:14px 18px;margin-bottom:14px;">
+  <div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#3f7d3f;font-weight:800;margin-bottom:8px;">Phase A &mdash; five small, mutually independent starters (1, 2, 3, 4, 7)</div>
+  <div style="font-size:13.5px;color:#2f4f2f;margin-bottom:10px;">Each is standalone, testable at a single tier, and lands value on its own. <strong>These can be funded without funding the rest of the epic.</strong></div>
+  <table style="width:100%;border-collapse:collapse;font-size:13.5px;">
+    <tr><td style="padding:5px 8px;width:34px;vertical-align:top;"><span style="display:inline-block;background:#3f7d3f;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;font-weight:800;font-size:12px;">1</span></td><td style="padding:5px 8px;"><strong>Collection member ids name real definitions.</strong> Un-poisons every existing collection consumer; also closes an <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">entry_point_classification</code> leaf.</td></tr>
+    <tr><td style="padding:5px 8px;vertical-align:top;"><span style="display:inline-block;background:#3f7d3f;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;font-weight:800;font-size:12px;">2</span></td><td style="padding:5px 8px;"><strong>Delete the Python heuristic constructor capture</strong> + STEP 1 type-kind guard + merge order. Makes every later Python measurement honest.</td></tr>
+    <tr><td style="padding:5px 8px;vertical-align:top;"><span style="display:inline-block;background:#3f7d3f;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;font-weight:800;font-size:12px;">3</span></td><td style="padding:5px 8px;"><strong>Record <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">LexicalScope.self_type_name</code></strong> — field, extractor method, four overrides. Nothing reads it yet; pure recording change.</td></tr>
+    <tr><td style="padding:5px 8px;vertical-align:top;"><span style="display:inline-block;background:#3f7d3f;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;font-weight:800;font-size:12px;">4</span></td><td style="padding:5px 8px;"><strong>Member-index completeness</strong> — enums indexed, cross-file union with per-file provenance, reverse name index.</td></tr>
+    <tr><td style="padding:5px 8px;vertical-align:top;"><span style="display:inline-block;background:#3f7d3f;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;font-weight:800;font-size:12px;">7</span></td><td style="padding:5px 8px;"><strong>Diagnostic completeness</strong> — emit a failure on every dropped call reference. Cheap, and it is what makes 8&ndash;15 measurable at all.</td></tr>
+  </table>
+</div>
+
+<div style="background:#fff;border:1px solid #d8dbe0;border-radius:5px;padding:14px 18px;margin-bottom:14px;">
+  <div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#374151;font-weight:800;margin-bottom:8px;">Phase B &mdash; the gated chain</div>
+  <table style="width:100%;border-collapse:collapse;font-size:13.5px;">
+    <tr><td style="padding:5px 8px;width:34px;vertical-align:top;"><span style="display:inline-block;background:#4b5563;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;font-weight:800;font-size:12px;">5</span></td><td style="padding:5px 8px;border-bottom:1px solid #f0f1f3;"><strong><code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">find_self_type</code></strong> — the step that flips the <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">self</code>/<code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">this</code> rows. Deletes the backward scan and its Rust escape hatch. <span style="color:#6b7280;">needs 3</span></td></tr>
+    <tr><td style="padding:5px 8px;vertical-align:top;"><span style="display:inline-block;background:#8a1c1c;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;font-weight:800;font-size:12px;">6</span></td><td style="padding:5px 8px;border-bottom:1px solid #f0f1f3;background:#fdf6f6;"><strong>The annotation resolver</strong> — parser + four language leaves, all six raw call sites re-aimed, the <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">symbol_types</code> split with every read site. <strong style="color:#8a1c1c;">The largest single recovery, the largest single commit, and the gate on 8&ndash;16.</strong></td></tr>
+    <tr><td style="padding:5px 8px;vertical-align:top;"><span style="display:inline-block;background:#4b5563;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;font-weight:800;font-size:12px;">8</span></td><td style="padding:5px 8px;border-bottom:1px solid #f0f1f3;"><strong>Heritage, single-sourced</strong> — TS qualified capture, Rust trait edges, one builder, BFS chain; deletes STEP 3 and four other functions. <span style="color:#6b7280;">gates 14 and 15</span></td></tr>
+    <tr><td style="padding:5px 8px;vertical-align:top;"><span style="display:inline-block;background:#4b5563;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;font-weight:800;font-size:12px;">9</span></td><td style="padding:5px 8px;border-bottom:1px solid #f0f1f3;"><strong>Rust impl-block ownership</strong> — project-level pass attaching cross-file impl methods to their type.</td></tr>
+    <tr><td style="padding:5px 8px;vertical-align:top;"><span style="display:inline-block;background:#4b5563;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;font-weight:800;font-size:12px;">10</span></td><td style="padding:5px 8px;border-bottom:1px solid #f0f1f3;"><strong>Construction &amp; initialiser capture</strong> — construct-target widening, the nested-<code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">new</code> abort, Python's first initialiser extractor, JSDoc <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">@type</code>.</td></tr>
+    <tr><td style="padding:5px 8px;vertical-align:top;"><span style="display:inline-block;background:#4b5563;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;font-weight:800;font-size:12px;">11</span></td><td style="padding:5px 8px;border-bottom:1px solid #f0f1f3;"><strong>Element types</strong> — type arguments consumed for loop/index targets. <span style="color:#8a1c1c;">The container-mistyping removal must land in this same commit or green resolutions regress.</span></td></tr>
+    <tr><td style="padding:5px 8px;vertical-align:top;"><span style="display:inline-block;background:#4b5563;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;font-weight:800;font-size:12px;">12</span></td><td style="padding:5px 8px;border-bottom:1px solid #f0f1f3;"><strong>The value channel</strong> — <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">value_source.ts</code> and its four consumers.</td></tr>
+    <tr><td style="padding:5px 8px;vertical-align:top;"><span style="display:inline-block;background:#4b5563;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;font-weight:800;font-size:12px;">13</span></td><td style="padding:5px 8px;border-bottom:1px solid #f0f1f3;"><strong>Module-surface consumers</strong> — the lookup collapse and guarded-import scope fix. <span style="color:#b45309;">Consumes the <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">module-surface-resolution</code> epic's star edge — sequencing only, the seam is stable.</span></td></tr>
+    <tr><td style="padding:5px 8px;vertical-align:top;"><span style="display:inline-block;background:#4b5563;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;font-weight:800;font-size:12px;">14</span></td><td style="padding:5px 8px;border-bottom:1px solid #f0f1f3;"><strong>The member ladder</strong> — rung 5 subtype-closure fan-out, plus the pending-failure index that makes the graph ingestion-order-independent.</td></tr>
+    <tr><td style="padding:5px 8px;vertical-align:top;"><span style="display:inline-block;background:#4b5563;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;font-weight:800;font-size:12px;">15</span></td><td style="padding:5px 8px;border-bottom:1px solid #f0f1f3;"><strong>Structural conformance</strong> — lazily inferred implements-edges. Carries 20 of <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">polymorphic_dispatch</code>'s 25 rows.</td></tr>
+    <tr><td style="padding:5px 8px;vertical-align:top;"><span style="display:inline-block;background:#4b5563;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;font-weight:800;font-size:12px;">16</span></td><td style="padding:5px 8px;border-bottom:1px solid #f0f1f3;"><strong>Type-parameter binding environment</strong> — a genuine new capability, deliberately last.</td></tr>
+    <tr><td style="padding:5px 8px;vertical-align:top;"><span style="display:inline-block;background:#1c2024;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;font-weight:800;font-size:12px;">17</span></td><td style="padding:5px 8px;"><strong>Corpus validation</strong> — full re-run over all ten projects, checking recovery <em>and</em> new false negatives, re-attributing the residue.</td></tr>
+  </table>
+</div>
+
+<div style="background:#f7f8fa;border:1px solid #d8dbe0;border-radius:5px;padding:12px 16px;margin-bottom:30px;font-size:13.5px;">
+  <strong>Dependency summary:</strong>
+  <span style="font-family:ui-monospace,Menlo,monospace;font-size:12.5px;">1, 2, 3, 4, 7 independent</span> &nbsp;&middot;&nbsp;
+  <span style="font-family:ui-monospace,Menlo,monospace;font-size:12.5px;">6 gates 8&ndash;16</span> &nbsp;&middot;&nbsp;
+  <span style="font-family:ui-monospace,Menlo,monospace;font-size:12.5px;">8 gates 14 and 15</span> &nbsp;&middot;&nbsp;
+  <span style="font-family:ui-monospace,Menlo,monospace;font-size:12.5px;">13 waits on module-surface-resolution</span>
+</div>
+
+<!-- ══════════ COST ══════════ -->
+<h2 style="font-size:21px;margin:0 0 6px 0;border-top:2px solid #1c2024;padding-top:14px;">Cost and blast radius</h2>
+
+<table style="width:100%;border-collapse:separate;border-spacing:12px 0;margin:0 -12px 16px -12px;">
+<tr>
+<td style="width:25%;vertical-align:top;background:#fff;border:1px solid #d8dbe0;border-radius:5px;padding:13px 15px;">
+  <div style="font-size:26px;font-weight:800;">2</div>
+  <div style="font-size:12.5px;color:#4b5563;">pipeline stages touched — recording (<code style="font-family:ui-monospace,Menlo,monospace;font-size:11px;">index_single_file/</code>) and resolution (<code style="font-family:ui-monospace,Menlo,monospace;font-size:11px;">resolve_references/</code>)</div>
+</td>
+<td style="width:25%;vertical-align:top;background:#fff;border:1px solid #d8dbe0;border-radius:5px;padding:13px 15px;">
+  <div style="font-size:26px;font-weight:800;">12</div>
+  <div style="font-size:12.5px;color:#4b5563;">functions, passes and query captures <strong>deleted outright</strong> — the epic is net-subtractive on resolver surface area</div>
+</td>
+<td style="width:25%;vertical-align:top;background:#fff;border:1px solid #d8dbe0;border-radius:5px;padding:13px 15px;">
+  <div style="font-size:26px;font-weight:800;">3</div>
+  <div style="font-size:12.5px;color:#4b5563;">new files: the annotation parser (+4 language leaves), <code style="font-family:ui-monospace,Menlo,monospace;font-size:11px;">value_source.ts</code>, <code style="font-family:ui-monospace,Menlo,monospace;font-size:11px;">structural_conformance.ts</code></div>
+</td>
+<td style="width:25%;vertical-align:top;background:#fff;border:1px solid #d8dbe0;border-radius:5px;padding:13px 15px;">
+  <div style="font-size:26px;font-weight:800;">~100</div>
+  <div style="font-size:12.5px;color:#4b5563;">existing assertions rewritten (60 from one deleted accessor, 20+ deleted with a dead builder) across 15+ insulated suites</div>
+</td>
+</tr>
+</table>
+
+<table style="width:100%;border-collapse:collapse;font-size:13.5px;background:#fff;border:1px solid #d8dbe0;border-radius:5px;margin-bottom:16px;">
+<tr style="background:#f7f8fa;">
+  <th style="text-align:left;padding:9px 12px;border-bottom:1px solid #d8dbe0;width:30%;">Risk</th>
+  <th style="text-align:left;padding:9px 12px;border-bottom:1px solid #d8dbe0;">Shape and mitigation</th>
+</tr>
+<tr>
+  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;vertical-align:top;"><span style="display:inline-block;background:#8a1c1c;color:#fff;border-radius:3px;padding:1px 6px;font-size:11px;font-weight:800;">HIGHEST</span><br>Splitting <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">symbol_types</code></td>
+  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;">The conflation of value type and return type is <em>what makes chained receivers resolve today</em>. Every read site must be re-aimed in the same change or chains regress silently. Existing chain tests are the gate.</td>
+</tr>
+<tr>
+  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;vertical-align:top;">Fan-out precision</td>
+  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;">Making interface annotations resolve hands the resolver far more receivers; rung 5 fans a common name (<code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">save</code>, <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">run</code>) to every subtype. Trades false positives for false negatives — measure edge-count deltas after 6 and again after 14 before assuming pure gain.</td>
+</tr>
+<tr>
+  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;vertical-align:top;">Structural-match floor</td>
+  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;">A one-member interface would match every class with that member. Measure the false-edge rate before fixing the constant; consider requiring &ge;2 methods.</td>
+</tr>
+<tr>
+  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;vertical-align:top;">Incremental correctness</td>
+  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;">The member-index union changes eviction semantics (needs per-file provenance), and the pending-failure index leaks across an incremental session unless evicted on successful re-resolution.</td>
+</tr>
+<tr>
+  <td style="padding:9px 12px;vertical-align:top;">Rust unwrap list</td>
+  <td style="padding:9px 12px;"><code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">Option&lt;T&gt;</code>/<code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">Box&lt;T&gt;</code> unwrap, <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">Vec&lt;T&gt;</code> must not. Fixed short list, but the one place a wrong entry produces a false <em>positive</em> rather than a miss.</td>
+</tr>
+</table>
+
+<!-- ══════════ CLOSING ══════════ -->
+<div style="background:#1c2024;color:#f4f5f7;border-radius:5px;padding:18px 22px;">
+  <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:800;color:#9ca3af;">Decision summary</div>
+  <div style="font-size:15px;margin-top:8px;line-height:1.6;">
+  This cluster owns the single defect responsible for more false positives than any other in the run, and fixing it
+  makes <code style="font-family:ui-monospace,Menlo,monospace;font-size:13px;background:#333940;border-radius:3px;padding:1px 5px;">method_not_on_type</code> mean what it claims to mean.
+  It is also the only cluster that cannot be part-funded through its middle: sub-task 6 is one indivisible commit
+  that gates nine others.<br><br>
+  <strong>If you fund one thing here, fund sub-tasks 1, 2, 3, 4 and 7</strong> — small, independent, no dependency on
+  the chain, and they make every other cluster's measurements honest. <strong>If you fund the epic, fund it whole</strong>,
+  because splitting it re-creates the two-epic race on <code style="font-family:ui-monospace,Menlo,monospace;font-size:13px;background:#333940;border-radius:3px;padding:1px 5px;">registries/type.ts</code> STEP 3 and
+  <code style="font-family:ui-monospace,Menlo,monospace;font-size:13px;background:#333940;border-radius:3px;padding:1px 5px;">find_class_from_scope</code> that the consolidation exists to prevent.
+  </div>
+</div>
+
+<div style="margin-top:22px;font-size:12px;color:#9ca3af;">Source plan: <code style="font-family:ui-monospace,Menlo,monospace;">clusters/type-model-completion/consolidated_plan.md</code> &middot; members: <code style="font-family:ui-monospace,Menlo,monospace;">receiver_type_inference</code>, <code style="font-family:ui-monospace,Menlo,monospace;">method_lookup</code>, <code style="font-family:ui-monospace,Menlo,monospace;">polymorphic_dispatch</code>, <code style="font-family:ui-monospace,Menlo,monospace;">scope_construction</code>, <code style="font-family:ui-monospace,Menlo,monospace;">collection_dispatch</code></div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>syntactic_extraction — comprehension</title>
+</head>
+<body style="margin:0;padding:0;background:#f6f7f9;color:#14181f;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;line-height:1.55;">
+<div style="max-width:1080px;margin:0 auto;padding:32px 28px 72px 28px;">
+
+  <!-- ==================== HEADER ==================== -->
+  <div style="border:1px solid #d8dce3;border-radius:10px;background:#ffffff;padding:22px 24px;margin-bottom:26px;">
+    <div style="font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:#6b7280;font-weight:700;">Refactor cluster &middot; singleton &middot; recommended order #2</div>
+    <h1 style="margin:6px 0 10px 0;font-size:30px;line-height:1.15;letter-spacing:-.4px;">syntactic_extraction</h1>
+    <div style="font-size:15px;color:#3d4653;max-width:820px;">
+      The tree-sitter <code style="background:#eef1f5;padding:1px 5px;border-radius:4px;font-size:13px;">.scm</code> queries in
+      <code style="background:#eef1f5;padding:1px 5px;border-radius:4px;font-size:13px;">packages/core/src/index_single_file/query_code_tree</code>
+      enumerate <strong>one node shape per grammatical position</strong> where the grammar admits several.
+      Any other filling of the position matches nothing, so tree-sitter emits <strong>no capture at all</strong> and the
+      definition or reference silently ceases to exist. The failure mode is whole-symbol erasure, not a degraded record.
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;">
+      <span style="background:#e8f3ec;color:#0a6b3d;border:1px solid #bfe0cd;border-radius:999px;padding:4px 12px;font-size:13px;font-weight:600;">~26 of 44 cluster rows close</span>
+      <span style="background:#eef1f5;color:#3d4653;border:1px solid #d8dce3;border-radius:999px;padding:4px 12px;font-size:13px;font-weight:600;">8 sub-tasks</span>
+      <span style="background:#eef1f5;color:#3d4653;border:1px solid #d8dce3;border-radius:999px;padding:4px 12px;font-size:13px;font-weight:600;">7 files touched, 7 patterns deleted</span>
+      <span style="background:#fdf0e6;color:#8a4b12;border:1px solid #f0d2b4;border-radius:999px;padding:4px 12px;font-size:13px;font-weight:600;">1 hand-off to name_resolution</span>
+      <span style="background:#fdf0e6;color:#8a4b12;border:1px solid #f0d2b4;border-radius:999px;padding:4px 12px;font-size:13px;font-weight:600;">index-volume risk on TS/JS</span>
+    </div>
+  </div>
+
+  <!-- ==================== BEFORE ==================== -->
+  <h2 style="font-size:13px;letter-spacing:.09em;text-transform:uppercase;color:#6b7280;font-weight:700;margin:0 0 10px 0;">Today &mdash; the query gate erases symbols</h2>
+  <div style="border:1px solid #e6c9c5;border-radius:10px;background:#fffaf9;padding:18px 20px 8px 20px;margin-bottom:8px;">
+    <div style="display:grid;grid-template-columns:1fr 22px 1.05fr 22px 1fr 22px 1fr;align-items:center;gap:0 6px;">
+
+      <div style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#8a8f98;font-weight:700;padding-bottom:6px;">Real source shape</div>
+      <div></div>
+      <div style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#8a8f98;font-weight:700;padding-bottom:6px;">Query pattern</div>
+      <div></div>
+      <div style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#8a8f98;font-weight:700;padding-bottom:6px;">Capture</div>
+      <div></div>
+      <div style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#8a8f98;font-weight:700;padding-bottom:6px;">Call graph</div>
+
+      <!-- lane 1 -->
+      <div style="border:1px solid #d8dce3;background:#fff;border-radius:7px;padding:9px 11px;margin:5px 0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;">class PGDDLCompiler(<span style="color:#b42318;font-weight:700;">compiler.DDLCompiler</span>):</div>
+      <div style="text-align:center;color:#98a0ab;">&rarr;</div>
+      <div style="border:1px solid #d8dce3;background:#fff;border-radius:7px;padding:9px 11px;margin:5px 0;font-size:12.5px;">6 shape-specific patterns; superclass must be <code style="font-size:12px;">(identifier)</code><div style="color:#8a8f98;font-size:11px;">python.scm:163-215</div></div>
+      <div style="text-align:center;color:#98a0ab;">&rarr;</div>
+      <div style="border:1px solid #e6c9c5;background:#fdeceb;border-radius:7px;padding:9px 11px;margin:5px 0;font-size:12.5px;color:#b42318;font-weight:600;">no <code style="font-size:12px;">@definition.class</code></div>
+      <div style="text-align:center;color:#98a0ab;">&rarr;</div>
+      <div style="border:1px solid #e6c9c5;background:#fdeceb;border-radius:7px;padding:9px 11px;margin:5px 0;font-size:12.5px;color:#b42318;">class <em>and every method on it</em> absent &rarr; false unreachable</div>
+
+      <!-- lane 2 -->
+      <div style="border:1px solid #d8dce3;background:#fff;border-radius:7px;padding:9px 11px;margin:5px 0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;"><span style="color:#b42318;font-weight:700;">@functools.lru_cache()</span><br>def probe(self): ...</div>
+      <div style="text-align:center;color:#98a0ab;">&rarr;</div>
+      <div style="border:1px solid #d8dce3;background:#fff;border-radius:7px;padding:9px 11px;margin:5px 0;font-size:12.5px;">decorator must be <code style="font-size:12px;">(decorator (identifier))</code>; plain-method pattern cannot rescue it (wrapped in <code style="font-size:12px;">decorated_definition</code>)<div style="color:#8a8f98;font-size:11px;">python.scm:314-325</div></div>
+      <div style="text-align:center;color:#98a0ab;">&rarr;</div>
+      <div style="border:1px solid #e6c9c5;background:#fdeceb;border-radius:7px;padding:9px 11px;margin:5px 0;font-size:12.5px;color:#b42318;font-weight:600;">no <code style="font-size:12px;">@definition.method</code></div>
+      <div style="text-align:center;color:#98a0ab;">&rarr;</div>
+      <div style="border:1px solid #e6c9c5;background:#fdeceb;border-radius:7px;padding:9px 11px;margin:5px 0;font-size:12.5px;color:#b42318;">method absent; <code style="font-size:12px;">@classmethod</code> also lost to a duplicate <code style="font-size:12px;">@scope.method</code></div>
+
+      <!-- lane 3 -->
+      <div style="border:1px solid #d8dce3;background:#fff;border-radius:7px;padding:9px 11px;margin:5px 0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;"><span style="color:#b42318;font-weight:700;">this.</span>argsTypes<br><span style="color:#b42318;font-weight:700;">this.dmmf.</span>rootFieldMap</div>
+      <div style="text-align:center;color:#98a0ab;">&rarr;</div>
+      <div style="border:1px solid #d8dce3;background:#fff;border-radius:7px;padding:9px 11px;margin:5px 0;font-size:12.5px;">member read must have <code style="font-size:12px;">object: (identifier)</code><div style="color:#8a8f98;font-size:11px;">typescript.scm:667-670 &middot; javascript.scm:455-458</div></div>
+      <div style="text-align:center;color:#98a0ab;">&rarr;</div>
+      <div style="border:1px solid #e6c9c5;background:#fdeceb;border-radius:7px;padding:9px 11px;margin:5px 0;font-size:12.5px;color:#b42318;font-weight:600;">no reference of any kind</div>
+      <div style="text-align:center;color:#98a0ab;">&rarr;</div>
+      <div style="border:1px solid #e6c9c5;background:#fdeceb;border-radius:7px;padding:9px 11px;margin:5px 0;font-size:12.5px;color:#b42318;">getter never reached &rarr; flagged as an entry point</div>
+
+      <!-- lane 4 -->
+      <div style="border:1px solid #d8dce3;background:#fff;border-radius:7px;padding:9px 11px;margin:5px 0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;">var res = ...&nbsp;&nbsp;<span style="color:#8a8f98;">// module</span><br>var res = this;&nbsp;<span style="color:#8a8f98;">// in method</span></div>
+      <div style="text-align:center;color:#98a0ab;">&rarr;</div>
+      <div style="border:1px solid #d8dce3;background:#fff;border-radius:7px;padding:9px 11px;margin:5px 0;font-size:12.5px;"><strong>second root cause:</strong> CommonJS export status looked up by <em>name alone</em><div style="color:#8a8f98;font-size:11px;">exports.javascript.ts:342-361</div></div>
+      <div style="text-align:center;color:#98a0ab;">&rarr;</div>
+      <div style="border:1px solid #e6c9c5;background:#fdeceb;border-radius:7px;padding:9px 11px;margin:5px 0;font-size:12.5px;color:#b42318;font-weight:600;">throws <code style="font-size:12px;">Duplicate export name "res"</code></div>
+      <div style="text-align:center;color:#98a0ab;">&rarr;</div>
+      <div style="border:1px solid #e6c9c5;background:#fdeceb;border-radius:7px;padding:9px 11px;margin:5px 0;font-size:12.5px;color:#b42318;"><strong>whole file</strong> loses resolution (real: express <code style="font-size:12px;">lib/response.js</code>)</div>
+
+    </div>
+  </div>
+  <div style="font-size:13px;color:#6b7280;margin:0 0 26px 2px;">Every lane above is reproduced read-only against <code>packages/core/src</code> with a temp-dir <code>Project</code> + <code>update_file</code>.</div>
+
+  <!-- ==================== AFTER ==================== -->
+  <h2 style="font-size:13px;letter-spacing:.09em;text-transform:uppercase;color:#6b7280;font-weight:700;margin:0 0 10px 0;">After &mdash; the pattern matches the position, the builder decides the shape</h2>
+  <div style="border:1px solid #c3ddcd;border-radius:10px;background:#f8fdfa;padding:18px 20px 8px 20px;margin-bottom:8px;">
+    <div style="display:grid;grid-template-columns:1fr 22px 1.05fr 22px 1fr 22px 1fr;align-items:center;gap:0 6px;">
+
+      <div style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#8a8f98;font-weight:700;padding-bottom:6px;">Real source shape</div>
+      <div></div>
+      <div style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#8a8f98;font-weight:700;padding-bottom:6px;">Query pattern (position-complete)</div>
+      <div></div>
+      <div style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#8a8f98;font-weight:700;padding-bottom:6px;">Builder derives semantics</div>
+      <div></div>
+      <div style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#8a8f98;font-weight:700;padding-bottom:6px;">Call graph</div>
+
+      <!-- lane 1 -->
+      <div style="border:1px solid #d8dce3;background:#fff;border-radius:7px;padding:9px 11px;margin:5px 0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;">class PG(<span style="color:#067647;font-weight:700;">Base</span> | <span style="color:#067647;font-weight:700;">mod.Base</span> | <span style="color:#067647;font-weight:700;">Base[T]</span>):</div>
+      <div style="text-align:center;color:#98a0ab;">&rarr;</div>
+      <div style="border:1px solid #c3ddcd;background:#eef8f2;border-radius:7px;padding:9px 11px;margin:5px 0;font-size:12.5px;">one unconditioned <code style="font-size:12px;">(class_definition name: (identifier)) @definition.class</code>; 6 patterns &rarr; 2</div>
+      <div style="text-align:center;color:#98a0ab;">&rarr;</div>
+      <div style="border:1px solid #d8dce3;background:#fff;border-radius:7px;padding:9px 11px;margin:5px 0;font-size:12.5px;"><code style="font-size:12px;">extract_extends</code> already handles identifier / attribute / subscript bases<div style="color:#8a8f98;font-size:11px;">symbol_factories.python.ts:509-531</div></div>
+      <div style="text-align:center;color:#98a0ab;">&rarr;</div>
+      <div style="border:1px solid #c3ddcd;background:#eef8f2;border-radius:7px;padding:9px 11px;margin:5px 0;font-size:12.5px;color:#0a6b3d;">class <em>and all its methods</em> restored</div>
+
+      <!-- lane 2 -->
+      <div style="border:1px solid #d8dce3;background:#fff;border-radius:7px;padding:9px 11px;margin:5px 0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;"><span style="color:#067647;font-weight:700;">@property</span> / <span style="color:#067647;font-weight:700;">@classmethod</span><br><span style="color:#067647;font-weight:700;">@mod.dec</span> / <span style="color:#067647;font-weight:700;">@dec(arg)</span></div>
+      <div style="text-align:center;color:#98a0ab;">&rarr;</div>
+      <div style="border:1px solid #c3ddcd;background:#eef8f2;border-radius:7px;padding:9px 11px;margin:5px 0;font-size:12.5px;">one <code style="font-size:12px;">@definition.method</code> pattern, no decorator-shape gate; single owner of <code style="font-size:12px;">@scope.method</code></div>
+      <div style="text-align:center;color:#98a0ab;">&rarr;</div>
+      <div style="border:1px solid #d8dce3;background:#fff;border-radius:7px;padding:9px 11px;margin:5px 0;font-size:12.5px;"><code style="font-size:12px;">determine_method_type</code> reads the decorator list off the node; handler sets <code style="font-size:12px;">accessor_kind</code></div>
+      <div style="text-align:center;color:#98a0ab;">&rarr;</div>
+      <div style="border:1px solid #c3ddcd;background:#eef8f2;border-radius:7px;padding:9px 11px;margin:5px 0;font-size:12.5px;color:#0a6b3d;">decorated + classmethod methods in the graph; Python getter reads become edges</div>
+
+      <!-- lane 3 -->
+      <div style="border:1px solid #d8dce3;background:#fff;border-radius:7px;padding:9px 11px;margin:5px 0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;"><span style="color:#067647;font-weight:700;">this.</span>argsTypes<br><span style="color:#067647;font-weight:700;">ctx.dmmf.</span>typeAndModelMap</div>
+      <div style="text-align:center;color:#98a0ab;">&rarr;</div>
+      <div style="border:1px solid #c3ddcd;background:#eef8f2;border-radius:7px;padding:9px 11px;margin:5px 0;font-size:12.5px;"><code style="font-size:12px;">object: (_)</code>; the <code style="font-size:12px;">.optional</code> and static-call duplicates deleted</div>
+      <div style="text-align:center;color:#98a0ab;">&rarr;</div>
+      <div style="border:1px solid #d8dce3;background:#fff;border-radius:7px;padding:9px 11px;margin:5px 0;font-size:12.5px;"><code style="font-size:12px;">extract_receiver_info</code> already walks <code style="font-size:12px;">this</code>, <code style="font-size:12px;">super</code> and nested chains &mdash; unchanged<div style="color:#8a8f98;font-size:11px;">short chains (&lt;2) skipped so no bare name fabricates edges</div></div>
+      <div style="text-align:center;color:#98a0ab;">&rarr;</div>
+      <div style="border:1px solid #c3ddcd;background:#eef8f2;border-radius:7px;padding:9px 11px;margin:5px 0;font-size:12.5px;color:#0a6b3d;">existing <code style="font-size:12px;">property_access</code> resolver finally sees the reads; getter-only filter unchanged</div>
+
+      <!-- lane 4 -->
+      <div style="border:1px solid #d8dce3;background:#fff;border-radius:7px;padding:9px 11px;margin:5px 0;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;">var res = ...&nbsp;&nbsp;<span style="color:#8a8f98;">// module</span><br>var res = this;&nbsp;<span style="color:#8a8f98;">// in method</span></div>
+      <div style="text-align:center;color:#98a0ab;">&rarr;</div>
+      <div style="border:1px solid #c3ddcd;background:#eef8f2;border-radius:7px;padding:9px 11px;margin:5px 0;font-size:12.5px;">walk that stops at a function-body boundary returns <code style="font-size:12px;">is_exported: false</code> instead of falling through to the name cache</div>
+      <div style="text-align:center;color:#98a0ab;">&rarr;</div>
+      <div style="border:1px solid #d8dce3;background:#fff;border-radius:7px;padding:9px 11px;margin:5px 0;font-size:12.5px;">export status becomes scope-correct; no name collision to raise</div>
+      <div style="text-align:center;color:#98a0ab;">&rarr;</div>
+      <div style="border:1px solid #c3ddcd;background:#eef8f2;border-radius:7px;padding:9px 11px;margin:5px 0;font-size:12.5px;color:#0a6b3d;">file indexes and resolves; 5 express rows close at once</div>
+
+    </div>
+  </div>
+  <div style="font-size:13px;color:#6b7280;margin:0 0 26px 2px;">
+    The contract this restores is already written down: <code>queries/CAPTURE-SCHEMA.md:43-53</code> &mdash; a query captures the complete syntactic unit and the builder derives the semantics. Every gap here is a place where a query took on a discrimination job the builder already performs.
+  </div>
+
+  <!-- ==================== IMPACT ==================== -->
+  <h2 style="font-size:13px;letter-spacing:.09em;text-transform:uppercase;color:#6b7280;font-weight:700;margin:0 0 10px 0;">Benefit &mdash; what stops being a false positive</h2>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:10px;">
+
+    <div style="border:1px solid #d8dce3;border-radius:10px;background:#fff;padding:18px 20px;">
+      <div style="font-size:34px;font-weight:700;letter-spacing:-1px;line-height:1;">~26 <span style="font-size:17px;font-weight:600;color:#6b7280;">of 44 cluster rows</span></div>
+      <div style="font-size:13.5px;color:#3d4653;margin-top:10px;">false unreachable-function flags removed, across <strong>prisma, nest, angular, sqlalchemy and express</strong>:</div>
+      <table style="width:100%;border-collapse:collapse;margin-top:12px;font-size:13.5px;">
+        <tr><td style="padding:5px 0;border-bottom:1px solid #eef1f5;"><strong>~17</strong> accessor reads with a <code style="font-size:12px;">this</code>/chain receiver</td><td style="padding:5px 0;border-bottom:1px solid #eef1f5;text-align:right;color:#6b7280;">TS/JS widening</td></tr>
+        <tr><td style="padding:5px 0;border-bottom:1px solid #eef1f5;"><strong>5</strong> express <code style="font-size:12px;">lib/response.js</code> symbols</td><td style="padding:5px 0;border-bottom:1px solid #eef1f5;text-align:right;color:#6b7280;">CommonJS export fix</td></tr>
+        <tr><td style="padding:5px 0;border-bottom:1px solid #eef1f5;"><strong>3</strong> express route handlers passed by name</td><td style="padding:5px 0;border-bottom:1px solid #eef1f5;text-align:right;color:#6b7280;">new callable-value capture</td></tr>
+        <tr><td style="padding:5px 0;border-bottom:1px solid #eef1f5;"><strong>1</strong> sqlalchemy dotted decorator</td><td style="padding:5px 0;border-bottom:1px solid #eef1f5;text-align:right;color:#6b7280;">Python decorator widening</td></tr>
+        <tr><td style="padding:5px 0;"><strong>2</strong> sqlalchemy <code style="font-size:12px;">super()</code> rows</td><td style="padding:5px 0;text-align:right;color:#8a4b12;">needs the hand-off (step 8)</td></tr>
+      </table>
+    </div>
+
+    <div style="border:1px solid #d8dce3;border-radius:10px;background:#fff;padding:18px 20px;">
+      <div style="font-size:13px;letter-spacing:.07em;text-transform:uppercase;color:#6b7280;font-weight:700;">Leverage beyond the counted rows</div>
+      <ul style="margin:10px 0 0 0;padding-left:18px;font-size:13.5px;color:#3d4653;">
+        <li style="margin-bottom:8px;"><strong>Erasure multiplies.</strong> One uncaptured class removes every method it owns; one duplicate-export throw blanks an entire file's resolution. The row counts are the visible floor, not the ceiling.</li>
+        <li style="margin-bottom:8px;"><strong>Whole shape families are restored, not single evidence rows</strong> &mdash; call-shaped decorators (<code style="font-size:12px;">@lru_cache(maxsize=1)</code>, <code style="font-size:12px;">@app.route(...)</code>), every <code style="font-size:12px;">@classmethod</code>, every qualified or generic base class, every <code style="font-size:12px;">this.</code>-rooted read in every TS/JS project indexed.</li>
+        <li style="margin-bottom:8px;"><strong>Correctness beyond reachability.</strong> Inert predicates at <code style="font-size:12px;">python.scm:838-844</code> currently capture <em>every</em> Python identifier as <code style="font-size:12px;">@reference.this</code>, three times over; deleting 7 duplicate patterns removes doubled references and doubled edges throughout.</li>
+        <li><strong>An invariant lands with the fix</strong> &mdash; a definition-node coverage audit plus a duplicate-capture assertion over the fixture corpus, so this class of erasure cannot silently return.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div style="border:1px solid #d8dce3;border-radius:10px;background:#fff;padding:16px 20px;margin-bottom:26px;">
+    <div style="font-size:13px;letter-spacing:.07em;text-transform:uppercase;color:#6b7280;font-weight:700;margin-bottom:8px;">Honest limits &mdash; the other ~18 rows do not close here</div>
+    <div style="font-size:13.5px;color:#3d4653;">
+      ~10 accessor rows with a bare identifier receiver already mint their reference today; their residual failure is <strong>receiver typing</strong> and they re-triage after this lands.
+      2 typeorm tagged-template rows are a <strong>proven no-op</strong> &mdash; the grammar models a tagged template as a <code style="font-size:12px;">call_expression</code>, so it is already captured.
+      <code style="font-size:12px;">webpack unpack</code> and <code style="font-size:12px;">lodash updateLogRow</code> are receiver typing and anonymous-scope construction; <code style="font-size:12px;">boot.js obj[key]</code> is runtime-computed dispatch and belongs to the permanent-limitation leaf.
+      The verification also <strong>falsified the original framing</strong> ("add a reference kind per invocation form"): plain calls, tagged templates and accessor resolution all already work &mdash; only the capture never fires.
+    </div>
+  </div>
+
+  <!-- ==================== COST ==================== -->
+  <h2 style="font-size:13px;letter-spacing:.09em;text-transform:uppercase;color:#6b7280;font-weight:700;margin:0 0 10px 0;">Cost and blast radius</h2>
+  <div style="display:grid;grid-template-columns:1.35fr 1fr;gap:16px;margin-bottom:26px;">
+
+    <div style="border:1px solid #d8dce3;border-radius:10px;background:#fff;padding:6px 20px 14px 20px;">
+      <table style="width:100%;border-collapse:collapse;font-size:13.5px;">
+        <tr style="text-align:left;color:#6b7280;font-size:11px;letter-spacing:.07em;text-transform:uppercase;">
+          <th style="padding:12px 0 8px 0;font-weight:700;">Surface</th><th style="padding:12px 0 8px 0;font-weight:700;">Change</th><th style="padding:12px 0 8px 0;font-weight:700;text-align:right;">Radius</th>
+        </tr>
+        <tr><td style="padding:8px 8px 8px 0;border-top:1px solid #eef1f5;"><code style="font-size:12px;">queries/python.scm</code></td><td style="padding:8px 8px 8px 0;border-top:1px solid #eef1f5;">6 class patterns &rarr; 2; one method pattern; 4 deletions; predicates moved inside patterns</td><td style="padding:8px 0;border-top:1px solid #eef1f5;text-align:right;color:#b42318;font-weight:600;">every Python file</td></tr>
+        <tr><td style="padding:8px 8px 8px 0;border-top:1px solid #eef1f5;"><code style="font-size:12px;">queries/typescript.scm</code>, <code style="font-size:12px;">javascript.scm</code></td><td style="padding:8px 8px 8px 0;border-top:1px solid #eef1f5;">member read widened to <code style="font-size:12px;">object: (_)</code>; 3 duplicate patterns deleted; callable-value capture added</td><td style="padding:8px 0;border-top:1px solid #eef1f5;text-align:right;color:#b42318;font-weight:600;">every TS/JS file</td></tr>
+        <tr><td style="padding:8px 8px 8px 0;border-top:1px solid #eef1f5;"><code style="font-size:12px;">capture_handlers.python.ts</code></td><td style="padding:8px 8px 8px 0;border-top:1px solid #eef1f5;">set <code style="font-size:12px;">accessor_kind</code> from the decorator list (one handler)</td><td style="padding:8px 0;border-top:1px solid #eef1f5;text-align:right;color:#0a6b3d;">local</td></tr>
+        <tr><td style="padding:8px 8px 8px 0;border-top:1px solid #eef1f5;"><code style="font-size:12px;">exports.javascript.ts</code></td><td style="padding:8px 8px 8px 0;border-top:1px solid #eef1f5;">honour the function-body boundary instead of the name-keyed cache</td><td style="padding:8px 0;border-top:1px solid #eef1f5;text-align:right;color:#8a4b12;">CommonJS export status</td></tr>
+        <tr><td style="padding:8px 8px 8px 0;border-top:1px solid #eef1f5;"><code style="font-size:12px;">references.ts</code> + <code style="font-size:12px;">factories.ts</code></td><td style="padding:8px 8px 8px 0;border-top:1px solid #eef1f5;">short-chain guard; one new <code style="font-size:12px;">CallableValueReference</code></td><td style="padding:8px 0;border-top:1px solid #eef1f5;text-align:right;color:#0a6b3d;">additive</td></tr>
+        <tr><td style="padding:8px 8px 8px 0;border-top:1px solid #eef1f5;"><code style="font-size:12px;">call_resolver.ts</code></td><td style="padding:8px 8px 8px 0;border-top:1px solid #eef1f5;">one new <code style="font-size:12px;">case "callable_value"</code> recording a weak edge; <code style="font-size:12px;">property_access</code> branch untouched</td><td style="padding:8px 0;border-top:1px solid #eef1f5;text-align:right;color:#0a6b3d;">additive</td></tr>
+        <tr><td style="padding:8px 8px 8px 0;border-top:1px solid #eef1f5;"><strong>Data model</strong></td><td style="padding:8px 8px 8px 0;border-top:1px solid #eef1f5;">one new reference kind. No change to <code style="font-size:12px;">CallReference</code>, <code style="font-size:12px;">SemanticIndex</code>, <code style="font-size:12px;">CaptureNode</code>, fault-area map</td><td style="padding:8px 0;border-top:1px solid #eef1f5;text-align:right;color:#0a6b3d;">near-zero</td></tr>
+      </table>
+    </div>
+
+    <div style="border:1px solid #f0d2b4;border-radius:10px;background:#fffcf8;padding:16px 20px;">
+      <div style="font-size:13px;letter-spacing:.07em;text-transform:uppercase;color:#8a4b12;font-weight:700;">Risks to price in</div>
+      <ul style="margin:10px 0 0 0;padding-left:18px;font-size:13.5px;color:#3d4653;">
+        <li style="margin-bottom:8px;"><strong>Index volume (the real cost).</strong> Widening the member read multiplies <code style="font-size:12px;">property_access</code> references on TS/JS-heavy repos, and each one runs the full method-call machinery. Measure index size and wall-clock on angular and prisma before/after; fallback is to exclude reads in a call's <code style="font-size:12px;">function</code> position.</li>
+        <li style="margin-bottom:8px;"><strong>Over-capture, not collision.</strong> No new key is minted; over-capture is filtered by machinery that already exists (getter-only filter, setter shadowing guard). Getter over-approximation widens with the receiver set &mdash; watch <code style="font-size:12px;">polymorphic_dispatch</code> rows.</li>
+        <li style="margin-bottom:8px;"><strong>Snapshots move deliberately.</strong> JSON index snapshots change; regenerate and review the diff for fabricated edges. The capture/receiver-consistency Stop hook must pass &mdash; every deleted pattern's handler is checked for orphanhood.</li>
+        <li><strong>One external dependency.</strong> The dotted-<code style="font-size:12px;">extends</code> parent link lives in <code style="font-size:12px;">registries/type.ts:245</code> and is <code style="font-size:12px;">name_resolution</code> work; the 2 sqlalchemy <code style="font-size:12px;">super()</code> rows close only after it.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ==================== WORK ORDER ==================== -->
+  <h2 style="font-size:13px;letter-spacing:.09em;text-transform:uppercase;color:#6b7280;font-weight:700;margin:0 0 10px 0;">Sub-task work order (8)</h2>
+  <div style="border:1px solid #d8dce3;border-radius:10px;background:#fff;padding:6px 20px 14px 20px;margin-bottom:26px;">
+    <table style="width:100%;border-collapse:collapse;font-size:13.5px;">
+      <tr style="text-align:left;color:#6b7280;font-size:11px;letter-spacing:.07em;text-transform:uppercase;">
+        <th style="padding:12px 8px 8px 0;font-weight:700;width:26px;">#</th><th style="padding:12px 8px 8px 0;font-weight:700;">Step</th><th style="padding:12px 0 8px 0;font-weight:700;text-align:right;width:210px;">Why here</th>
+      </tr>
+      <tr><td style="padding:9px 8px 9px 0;border-top:1px solid #eef1f5;font-weight:700;">1</td><td style="padding:9px 8px 9px 0;border-top:1px solid #eef1f5;">Scope-correct CommonJS exports (<code style="font-size:12px;">exports.javascript.ts</code>)</td><td style="padding:9px 0;border-top:1px solid #eef1f5;text-align:right;color:#6b7280;">smallest, highest yield; later measurements must not run through a crashed file</td></tr>
+      <tr><td style="padding:9px 8px 9px 0;border-top:1px solid #eef1f5;font-weight:700;">2</td><td style="padding:9px 8px 9px 0;border-top:1px solid #eef1f5;">Python class-definition shape completeness</td><td style="padding:9px 0;border-top:1px solid #eef1f5;text-align:right;color:#6b7280;">restores classes <em>and</em> their methods &mdash; largest single win</td></tr>
+      <tr><td style="padding:9px 8px 9px 0;border-top:1px solid #eef1f5;font-weight:700;">3</td><td style="padding:9px 8px 9px 0;border-top:1px solid #eef1f5;">Python decorated-method completeness + <code style="font-size:12px;">@scope.method</code> de-duplication</td><td style="padding:9px 0;border-top:1px solid #eef1f5;text-align:right;color:#6b7280;">builds on the class capture</td></tr>
+      <tr><td style="padding:9px 8px 9px 0;border-top:1px solid #eef1f5;font-weight:700;">4</td><td style="padding:9px 8px 9px 0;border-top:1px solid #eef1f5;">Python <code style="font-size:12px;">accessor_kind</code> in the capture handler</td><td style="padding:9px 0;border-top:1px solid #eef1f5;text-align:right;color:#6b7280;">Python getter reads can only become edges after this</td></tr>
+      <tr><td style="padding:9px 8px 9px 0;border-top:1px solid #eef1f5;font-weight:700;">5</td><td style="padding:9px 8px 9px 0;border-top:1px solid #eef1f5;">TS/JS member-read widening + duplicate deletion + short-chain guard</td><td style="padding:9px 0;border-top:1px solid #eef1f5;text-align:right;color:#8a4b12;">the one step with a real volume cost &mdash; measure before/after</td></tr>
+      <tr><td style="padding:9px 8px 9px 0;border-top:1px solid #eef1f5;font-weight:700;">6</td><td style="padding:9px 8px 9px 0;border-top:1px solid #eef1f5;">Definition-coverage audit + duplicate-capture assertion</td><td style="padding:9px 0;border-top:1px solid #eef1f5;text-align:right;color:#6b7280;">after 2-5, so it locks invariants rather than reporting pre-existing failures</td></tr>
+      <tr><td style="padding:9px 8px 9px 0;border-top:1px solid #eef1f5;font-weight:700;">7</td><td style="padding:9px 8px 9px 0;border-top:1px solid #eef1f5;">Value-position callable capture + resolver case (weak edge)</td><td style="padding:9px 0;border-top:1px solid #eef1f5;text-align:right;color:#6b7280;">the only genuinely new capture; independent of 2-5</td></tr>
+      <tr><td style="padding:9px 8px 9px 0;border-top:1px solid #eef1f5;font-weight:700;">8</td><td style="padding:9px 8px 9px 0;border-top:1px solid #eef1f5;">Hand off dotted-<code style="font-size:12px;">extends</code> parent linking to <code style="font-size:12px;">name_resolution</code></td><td style="padding:9px 0;border-top:1px solid #eef1f5;text-align:right;color:#8a4b12;">outside this folder; gates the 2 sqlalchemy rows</td></tr>
+    </table>
+  </div>
+
+  <!-- ==================== VERDICT ==================== -->
+  <div style="border:1px solid #d8dce3;border-radius:10px;background:#fff;padding:20px 24px;">
+    <div style="font-size:13px;letter-spacing:.09em;text-transform:uppercase;color:#6b7280;font-weight:700;margin-bottom:10px;">Ranking this cluster</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:14px;">
+      <div style="border:1px solid #bfe0cd;background:#f2faf5;border-radius:8px;padding:12px 14px;"><div style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#0a6b3d;font-weight:700;">Benefit</div><div style="font-size:19px;font-weight:700;margin-top:3px;">High</div><div style="font-size:12.5px;color:#3d4653;margin-top:4px;">~26 rows plus uncounted erasure multipliers, in 5 projects and 3 languages</div></div>
+      <div style="border:1px solid #f0d2b4;background:#fffcf8;border-radius:8px;padding:12px 14px;"><div style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#8a4b12;font-weight:700;">Cost</div><div style="font-size:19px;font-weight:700;margin-top:3px;">Medium</div><div style="font-size:12.5px;color:#3d4653;margin-top:4px;">7 files; mostly pattern edits and deletions; no data-model churn</div></div>
+      <div style="border:1px solid #f0d2b4;background:#fffcf8;border-radius:8px;padding:12px 14px;"><div style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#8a4b12;font-weight:700;">Blast radius</div><div style="font-size:19px;font-weight:700;margin-top:3px;">Wide but shallow</div><div style="font-size:12.5px;color:#3d4653;margin-top:4px;">every indexed file passes through these queries; existing filters absorb over-capture</div></div>
+      <div style="border:1px solid #d8dce3;background:#f8f9fb;border-radius:8px;padding:12px 14px;"><div style="font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#6b7280;font-weight:700;">Dependency</div><div style="font-size:19px;font-weight:700;margin-top:3px;">One</div><div style="font-size:12.5px;color:#3d4653;margin-top:4px;">2 rows wait on <code style="font-size:12px;">name_resolution</code>; steps 1-7 land independently</div></div>
+    </div>
+    <div style="font-size:14px;color:#3d4653;">
+      Fund this when you want <strong>breadth per unit of design risk</strong>. The mechanism is subtractive &mdash; delete shape-specific patterns and let builders that already handle every shape do the discriminating &mdash; so most of the diff removes code rather than adding it, and the only genuinely new construct (the callable-value reference) is isolated in step 7.
+      The counter-argument is that step 5 alone can grow the index on large TS/JS repos, and that ~18 rows in the bucket are receiver-typing or scope-construction problems this cluster will not touch. Steps 1-4 carry most of the yield at almost none of that cost and can be funded on their own.
+    </div>
+  </div>
+
+  <div style="font-size:12px;color:#98a0ab;margin-top:22px;">Grounded in the verified plan for <code>packages/core/src/index_single_file/query_code_tree</code>; every claim reproduced read-only against the source.</div>
+
+</div>
+</body>
+</html>
