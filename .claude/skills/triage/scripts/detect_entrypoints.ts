@@ -25,9 +25,7 @@
  */
 
 import {
-  detect_language,
   load_project,
-  is_test_file,
   find_source_files,
   IGNORED_DIRECTORIES,
   parse_gitignore,
@@ -345,12 +343,6 @@ async function analyze_directory(
   const start_time = Date.now();
 
   const exclude = [...IGNORED_DIRECTORIES, ...(options.exclude || [])];
-  const test_file_filter = options.include_tests
-    ? undefined
-    : (file: string) => {
-        const language = detect_language(file);
-        return !language || !is_test_file(file, language);
-      };
 
   console.error(`Initializing project at: ${project_path}`);
   console.error(`Excluded folders: ${exclude.join(", ")}`);
@@ -360,11 +352,10 @@ async function analyze_directory(
 
   // Load project using shared pipeline
   const load_start = Date.now();
-  const project = await load_project({
+  const { project } = await load_project({
     project_path,
     folders: options.folders,
     exclude,
-    file_filter: test_file_filter,
     storage: options.storage,
   });
   console.error(`Project loaded in ${Date.now() - load_start}ms`);
@@ -398,10 +389,6 @@ async function analyze_directory(
   log_info(
     `find_source_files: done ${search_paths.length}/${search_paths.length} in ${Date.now() - scan_start}ms (${all_files.length} files total)`,
   );
-  if (test_file_filter) {
-    all_files = all_files.filter(test_file_filter);
-  }
-
   // Gate: indexed vs discovered ratio. A big gap suggests indexing dropped files
   // (parse errors, unsupported languages, filter mismatch) and downstream work
   // will be blind to those files.

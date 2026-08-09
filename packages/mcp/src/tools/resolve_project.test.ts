@@ -46,7 +46,10 @@ describe("resolve_project", () => {
 
   it("should create scoped project when files filter is provided", async () => {
     const scoped_project = {} as Project;
-    vi.mocked(load_project).mockResolvedValue(scoped_project);
+    vi.mocked(load_project).mockResolvedValue({
+      project: scoped_project,
+      dropped_files: new Set(),
+    });
 
     const result = await resolve_project(
       { files: ["src/main.ts"] },
@@ -65,7 +68,10 @@ describe("resolve_project", () => {
 
   it("should create scoped project when folders filter is provided", async () => {
     const scoped_project = {} as Project;
-    vi.mocked(load_project).mockResolvedValue(scoped_project);
+    vi.mocked(load_project).mockResolvedValue({
+      project: scoped_project,
+      dropped_files: new Set(),
+    });
 
     const result = await resolve_project(
       { folders: ["src/"] },
@@ -138,7 +144,10 @@ describe("resolve_project", () => {
 
   it("accepts an absolute files entry inside the project root", async () => {
     const scoped_project = {} as Project;
-    vi.mocked(load_project).mockResolvedValue(scoped_project);
+    vi.mocked(load_project).mockResolvedValue({
+      project: scoped_project,
+      dropped_files: new Set(),
+    });
 
     const result = await resolve_project(
       { files: ["/project/src/main.ts"] },

@@ -411,7 +411,7 @@ describe("Corruption/Recovery", () => {
       const storage = new InMemoryStorage();
 
       // First load to populate cache
-      const first = await load_project({
+      const { project: first } = await load_project({
         project_path: dir,
         storage,
       });
@@ -422,7 +422,7 @@ describe("Corruption/Recovery", () => {
       storage.set_manifest(raw.slice(0, 20));
 
       // Second load should fall back gracefully
-      const second = await load_project({
+      const { project: second } = await load_project({
         project_path: dir,
         storage,
       });
@@ -443,14 +443,14 @@ describe("Corruption/Recovery", () => {
     try {
       const storage = new InMemoryStorage();
 
-      const first = await load_project({ project_path: dir, storage });
+      const { project: first } = await load_project({ project_path: dir, storage });
       const first_stats = first.get_stats();
 
       // Corrupt one file's index
       const a_path = path.join(dir, "a.ts");
       storage.set_index(a_path, "{invalid json");
 
-      const second = await load_project({ project_path: dir, storage });
+      const { project: second } = await load_project({ project_path: dir, storage });
       expect(second.get_stats()).toEqual(first_stats);
     } finally {
       await cleanup();
@@ -465,7 +465,7 @@ describe("Corruption/Recovery", () => {
       const storage = new InMemoryStorage();
 
       // Load with empty storage (no prior cache)
-      const project = await load_project({ project_path: dir, storage });
+      const { project } = await load_project({ project_path: dir, storage });
       expect(project.get_stats().file_count).toEqual(1);
       expect(project.get_stats().definition_count).toBeGreaterThan(0);
     } finally {
@@ -482,7 +482,7 @@ describe("Corruption/Recovery", () => {
       const storage = new InMemoryStorage();
 
       // Cold load populates cache with both files
-      const cold = await load_project({ project_path: dir, storage });
+      const { project: cold } = await load_project({ project_path: dir, storage });
       expect(cold.get_stats().file_count).toEqual(2);
 
       const manifest_v1 = JSON.parse((await storage.read_manifest())!);
@@ -492,7 +492,7 @@ describe("Corruption/Recovery", () => {
       await fs.unlink(path.join(dir, "b.ts"));
 
       // Warm load — b.ts is gone, its manifest entry should be pruned
-      const warm = await load_project({ project_path: dir, storage });
+      const { project: warm } = await load_project({ project_path: dir, storage });
       expect(warm.get_stats().file_count).toEqual(1);
 
       const manifest_v2 = JSON.parse((await storage.read_manifest())!);
@@ -515,14 +515,14 @@ describe("Corruption/Recovery", () => {
       const storage = new InMemoryStorage();
 
       // First load
-      const first = await load_project({ project_path: dir, storage });
+      const { project: first } = await load_project({ project_path: dir, storage });
       const first_stats = first.get_stats();
 
       // Delete index for a.ts but keep manifest
       const a_path = path.join(dir, "a.ts");
       storage.delete_index(a_path);
 
-      const second = await load_project({ project_path: dir, storage });
+      const { project: second } = await load_project({ project_path: dir, storage });
       expect(second.get_stats()).toEqual(first_stats);
     } finally {
       await cleanup();
@@ -572,10 +572,10 @@ describe("Incremental Consistency", () => {
       );
 
       // Warm load (a.ts has changed, b.ts from cache)
-      const warm = await load_project({ project_path: dir, storage });
+      const { project: warm } = await load_project({ project_path: dir, storage });
 
       // Cold rebuild
-      const cold = await load_project({ project_path: dir });
+      const { project: cold } = await load_project({ project_path: dir });
 
       assert_projects_equivalent(cold, warm);
     } finally {
@@ -600,8 +600,8 @@ describe("Incremental Consistency", () => {
         "utf-8",
       );
 
-      const warm = await load_project({ project_path: dir, storage });
-      const cold = await load_project({ project_path: dir });
+      const { project: warm } = await load_project({ project_path: dir, storage });
+      const { project: cold } = await load_project({ project_path: dir });
 
       assert_projects_equivalent(cold, warm);
     } finally {
@@ -696,7 +696,7 @@ describe("Schema version mismatch", () => {
       const storage = new InMemoryStorage();
 
       // First load to populate cache
-      const first = await load_project({ project_path: temp_dir, storage });
+      const { project: first } = await load_project({ project_path: temp_dir, storage });
       const first_stats = first.get_stats();
 
       // Corrupt manifest with wrong schema version
@@ -706,7 +706,7 @@ describe("Schema version mismatch", () => {
       storage.set_manifest(JSON.stringify(parsed_manifest));
 
       // Second load should discard cache and re-index
-      const second = await load_project({ project_path: temp_dir, storage });
+      const { project: second } = await load_project({ project_path: temp_dir, storage });
       expect(second.get_stats()).toEqual(first_stats);
     } finally {
       await cleanup();
@@ -764,7 +764,7 @@ describe("Git-accelerated warm load", { timeout: 30_000 }, () => {
       const storage = new InMemoryStorage();
 
       // Cold load populates cache
-      const cold = await load_project({ project_path: temp_dir, storage });
+      const { project: cold } = await load_project({ project_path: temp_dir, storage });
       const cold_stats = cold.get_stats();
 
       // Every entry should carry the git blob its index was built from
@@ -780,7 +780,7 @@ describe("Git-accelerated warm load", { timeout: 30_000 }, () => {
       }
 
       // Warm load with unchanged tree — all files should use cache
-      const warm = await load_project({ project_path: temp_dir, storage });
+      const { project: warm } = await load_project({ project_path: temp_dir, storage });
 
       assert_projects_equivalent(cold, warm);
     } finally {
@@ -809,14 +809,14 @@ describe("Git-accelerated warm load", { timeout: 30_000 }, () => {
       await git(["commit", "-m", "add c.ts"]);
 
       // Warm load — a.ts and b.ts should use cached blob hashes, c.ts is new
-      const warm = await load_project({ project_path: temp_dir, storage });
+      const { project: warm } = await load_project({ project_path: temp_dir, storage });
 
       // All three files should be present
       const files = warm.get_all_files();
       expect(files.length).toEqual(3);
 
       // Full rebuild should match
-      const fresh = await load_project({ project_path: temp_dir });
+      const { project: fresh } = await load_project({ project_path: temp_dir });
       assert_projects_equivalent(fresh, warm);
     } finally {
       await cleanup();
@@ -842,10 +842,10 @@ describe("Git-accelerated warm load", { timeout: 30_000 }, () => {
       );
 
       // Warm load — a.ts is dirty so must be re-indexed
-      const warm = await load_project({ project_path: temp_dir, storage });
+      const { project: warm } = await load_project({ project_path: temp_dir, storage });
 
       // Fresh build for comparison
-      const fresh = await load_project({ project_path: temp_dir });
+      const { project: fresh } = await load_project({ project_path: temp_dir });
       assert_projects_equivalent(fresh, warm);
     } finally {
       await cleanup();
@@ -870,10 +870,10 @@ describe("Git-accelerated warm load", { timeout: 30_000 }, () => {
       );
 
       // Warm load — untracked file should be discovered and indexed
-      const warm = await load_project({ project_path: temp_dir, storage });
+      const { project: warm } = await load_project({ project_path: temp_dir, storage });
       expect(warm.get_all_files().length).toEqual(2);
 
-      const fresh = await load_project({ project_path: temp_dir });
+      const { project: fresh } = await load_project({ project_path: temp_dir });
       assert_projects_equivalent(fresh, warm);
     } finally {
       await cleanup();
@@ -888,7 +888,7 @@ describe("Git-accelerated warm load", { timeout: 30_000 }, () => {
       const storage = new InMemoryStorage();
 
       // Cold load
-      const cold = await load_project({ project_path: temp_dir, storage });
+      const { project: cold } = await load_project({ project_path: temp_dir, storage });
 
       // Modify and commit — blob hash changes
       const new_content =
@@ -898,10 +898,10 @@ describe("Git-accelerated warm load", { timeout: 30_000 }, () => {
       await git(["commit", "-m", "add bar"]);
 
       // Warm load — blob hash differs from cache, so a.ts is re-indexed
-      const warm = await load_project({ project_path: temp_dir, storage });
+      const { project: warm } = await load_project({ project_path: temp_dir, storage });
 
       // Should have bar now
-      const fresh = await load_project({ project_path: temp_dir });
+      const { project: fresh } = await load_project({ project_path: temp_dir });
       assert_projects_equivalent(fresh, warm);
 
       // Verify more definitions than cold load
@@ -968,7 +968,7 @@ describe("Git-accelerated warm load", { timeout: 30_000 }, () => {
       );
       await git(["add", "a.ts"]);
 
-      const warm = await load_project({ project_path: temp_dir, storage });
+      const { project: warm } = await load_project({ project_path: temp_dir, storage });
 
       const names = warm.definitions.get_callable_definitions().map((d) => d.name);
       expect(names).toContain("added_while_staged");
@@ -1015,7 +1015,7 @@ describe("load_project + FileSystemStorage", { timeout: 30_000 }, () => {
       );
 
       const storage = new FileSystemStorage(cache_dir);
-      const project = await load_project({
+      const { project } = await load_project({
         project_path: project_dir,
         storage,
       });
@@ -1062,13 +1062,13 @@ describe("load_project + FileSystemStorage", { timeout: 30_000 }, () => {
       const storage = new FileSystemStorage(cache_dir);
 
       // Cold load — populates cache
-      const cold = await load_project({
+      const { project: cold } = await load_project({
         project_path: project_dir,
         storage,
       });
 
       // Warm load — files unchanged, should use content-hash match
-      const warm = await load_project({
+      const { project: warm } = await load_project({
         project_path: project_dir,
         storage,
       });
@@ -1095,7 +1095,7 @@ describe("load_project + FileSystemStorage", { timeout: 30_000 }, () => {
 
       // Cold load with first storage instance
       const storage_v1 = new FileSystemStorage(cache_dir);
-      const cold = await load_project({
+      const { project: cold } = await load_project({
         project_path: project_dir,
         storage: storage_v1,
       });
@@ -1104,7 +1104,7 @@ describe("load_project + FileSystemStorage", { timeout: 30_000 }, () => {
       const storage_v2 = new FileSystemStorage(cache_dir);
 
       // Warm load with new instance — should read cached data from disk
-      const warm = await load_project({
+      const { project: warm } = await load_project({
         project_path: project_dir,
         storage: storage_v2,
       });
@@ -1142,7 +1142,7 @@ describe("load_project + FileSystemStorage", { timeout: 30_000 }, () => {
       const storage = new FileSystemStorage(cache_dir);
 
       // Cold load
-      const cold = await load_project({
+      const { project: cold } = await load_project({
         project_path: project_dir,
         storage,
       });
@@ -1156,7 +1156,7 @@ describe("load_project + FileSystemStorage", { timeout: 30_000 }, () => {
       }
 
       // Warm load — should use git fast path with on-disk storage
-      const warm = await load_project({
+      const { project: warm } = await load_project({
         project_path: project_dir,
         storage,
       });

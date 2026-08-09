@@ -67,10 +67,11 @@ export class ProjectManager {
     log_info(`Loading project files from: ${this.project_path}`);
     const start_time = Date.now();
 
-    this.project = await load_project({
+    const { project } = await load_project({
       project_path: this.project_path,
       storage: this.storage ?? undefined,
     });
+    this.project = project;
 
     const duration = Date.now() - start_time;
     const stats = this.project.get_stats();

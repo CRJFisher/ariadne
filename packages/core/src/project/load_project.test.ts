@@ -2,7 +2,10 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import * as fs from "fs/promises";
 import * as path from "path";
 import * as os from "os";
+import type { FilePath } from "@ariadnejs/types";
 import { load_project } from "./load_project";
+import type { Project } from "./project";
+import { trace_call_graph } from "../trace_call_graph/trace_call_graph";
 
 describe("load_project", () => {
   let temp_dir: string;
@@ -24,7 +27,7 @@ describe("load_project", () => {
     await fs.writeFile(path.join(temp_dir, "utils.ts"), "export function helper() {}");
     await fs.writeFile(path.join(temp_dir, "readme.md"), "# readme");
 
-    const project = await load_project({ project_path: temp_dir });
+    const { project } = await load_project({ project_path: temp_dir });
 
     const call_graph = project.get_call_graph();
     // Should find the two TS functions as entry points
@@ -35,7 +38,7 @@ describe("load_project", () => {
     await fs.writeFile(path.join(temp_dir, "included.ts"), "export function included() {}");
     await fs.writeFile(path.join(temp_dir, "excluded.ts"), "export function excluded() {}");
 
-    const project = await load_project({
+    const { project } = await load_project({
       project_path: temp_dir,
       files: ["included.ts"],
     });
@@ -52,7 +55,7 @@ describe("load_project", () => {
     await fs.writeFile(path.join(sub_dir, "app.ts"), "export function app() {}");
     await fs.writeFile(path.join(temp_dir, "root.ts"), "export function root() {}");
 
-    const project = await load_project({
+    const { project } = await load_project({
       project_path: temp_dir,
       folders: ["src"],
     });
@@ -67,7 +70,7 @@ describe("load_project", () => {
     await fs.writeFile(path.join(temp_dir, "data.json"), "{\"key\": \"value\"}");
     await fs.writeFile(path.join(temp_dir, "code.ts"), "export function code() {}");
 
-    const project = await load_project({
+    const { project } = await load_project({
       project_path: temp_dir,
       files: ["data.json", "code.ts"],
     });
@@ -80,7 +83,7 @@ describe("load_project", () => {
   it("should handle absolute file paths", async () => {
     await fs.writeFile(path.join(temp_dir, "abs.ts"), "export function abs_func() {}");
 
-    const project = await load_project({
+    const { project } = await load_project({
       project_path: temp_dir,
       files: [path.join(temp_dir, "abs.ts")],
     });
@@ -93,7 +96,7 @@ describe("load_project", () => {
   it("should skip unreadable files gracefully", async () => {
     await fs.writeFile(path.join(temp_dir, "good.ts"), "export function good() {}");
     // Reference a file that doesn't exist
-    const project = await load_project({
+    const { project } = await load_project({
       project_path: temp_dir,
       files: ["nonexistent.ts", "good.ts"],
     });
@@ -109,7 +112,7 @@ describe("load_project", () => {
     it("flags an unused exported component as an entry point", async () => {
       await fs.writeFile(path.join(temp_dir, "button.jsx"), BUTTON);
 
-      const project = await load_project({ project_path: temp_dir });
+      const { project } = await load_project({ project_path: temp_dir });
 
       const call_graph = project.get_call_graph();
       const entry_names = call_graph.entry_points.map(
@@ -128,7 +131,7 @@ describe("load_project", () => {
         "---\ntitle: Demo\n---\n\nimport { Button } from \"./button\";\n\n# Heading\n\nBody copy before the component.\n\n<Button label=\"Click\" />\n",
       );
 
-      const project = await load_project({ project_path: temp_dir });
+      const { project } = await load_project({ project_path: temp_dir });
 
       const call_graph = project.get_call_graph();
       const names = [...call_graph.nodes.values()].map((n) => n.name);
@@ -153,7 +156,7 @@ describe("load_project", () => {
         "import { Button } from \"./button\";\n\n# Heading\n\n<Button label=\"Click\" />\n",
       );
 
-      const project = await load_project({ project_path: temp_dir });
+      const { project } = await load_project({ project_path: temp_dir });
 
       const call_graph = project.get_call_graph();
       const names = [...call_graph.nodes.values()].map((n) => n.name);
@@ -175,7 +178,7 @@ describe("load_project", () => {
         "import Button from \"./button\";\n\n# Heading\n\n<Button label=\"Click\" />\n",
       );
 
-      const project = await load_project({ project_path: temp_dir });
+      const { project } = await load_project({ project_path: temp_dir });
 
       const call_graph = project.get_call_graph();
       const names = [...call_graph.nodes.values()].map((n) => n.name);
@@ -199,13 +202,177 @@ describe("load_project", () => {
         "import { Button } from \"./button\";\n\n# Heading\n\n<Button label=\"Click\" />\n",
       );
 
-      const project = await load_project({ project_path: temp_dir });
+      const { project } = await load_project({ project_path: temp_dir });
 
       const call_graph = project.get_call_graph();
       const entry_names = call_graph.entry_points.map(
         (id) => call_graph.nodes.get(id)?.name,
       );
       expect(entry_names).toContain("Button");
+    });
+  });
+
+  describe("every discovered caller file is in the corpus", () => {
+    function raw_entry_point_names(project: Project): string[] {
+      const call_graph = trace_call_graph(
+        project.definitions,
+        project.resolutions,
+        project.get_languages(),
+        { include_tests: false },
+      );
+      return call_graph.entry_points
+        .map((id) => call_graph.nodes.get(id)?.name as string)
+        .sort();
+    }
+
+    async function write_file(relative_path: string, content: string): Promise<void> {
+      const absolute_path = path.join(temp_dir, relative_path);
+      await fs.mkdir(path.dirname(absolute_path), { recursive: true });
+      await fs.writeFile(absolute_path, content, "utf-8");
+    }
+
+    it("resolves a callee whose only caller lives under __tests__ (prisma compileFile shape)", async () => {
+      await write_file(
+        "src/compile.ts",
+        "export function compileFile(source: string): string {\n  return source;\n}\n",
+      );
+      await write_file(
+        "src/__tests__/compile.test.ts",
+        [
+          "import { compileFile } from \"../compile\";",
+          "",
+          "export function compiles_a_file(): string {",
+          "  return compileFile(\"x\");",
+          "}",
+          "",
+        ].join("\n"),
+      );
+
+      const { project } = await load_project({ project_path: temp_dir });
+
+      expect(raw_entry_point_names(project)).toEqual([]);
+    });
+
+    it("resolves a callee whose only callers are filename-marked test modules (celery long_running_task shape)", async () => {
+      for (const package_dir of ["t", "t/smoke", "t/smoke/tests", "t/unit", "t/unit/app"]) {
+        await write_file(`${package_dir}/__init__.py`, "");
+      }
+      await write_file(
+        "t/smoke/tasks.py",
+        "def long_running_task(seconds):\n    return seconds\n",
+      );
+      await write_file(
+        "t/smoke/tests/test_worker.py",
+        [
+          "from t.smoke.tasks import long_running_task",
+          "",
+          "",
+          "def test_worker():",
+          "    return long_running_task.si(5)",
+          "",
+        ].join("\n"),
+      );
+      // Marked as a test by filename alone — `t/unit/app` matches no test-directory rule.
+      await write_file(
+        "t/unit/app/test_control.py",
+        [
+          "from t.smoke.tasks import long_running_task",
+          "",
+          "",
+          "def test_control():",
+          "    return long_running_task(1)",
+          "",
+        ].join("\n"),
+      );
+
+      const { project } = await load_project({ project_path: temp_dir });
+
+      expect(raw_entry_point_names(project)).toEqual([]);
+    });
+
+    it("indexes caller files whose path merely contains an ignored directory name", async () => {
+      await write_file(
+        "src/outputs.ts",
+        "export function getAllProjectOutputs(): string[] {\n  return [];\n}\n",
+      );
+      await write_file(
+        "src/compiler/tsbuildPublic.ts",
+        [
+          "import { getAllProjectOutputs } from \"../outputs\";",
+          "",
+          "export function build_all(): string[] {",
+          "  return getAllProjectOutputs();",
+          "}",
+          "",
+        ].join("\n"),
+      );
+      await write_file(
+        "packages/compiler/src/template/pipeline/emit.ts",
+        [
+          "import { build_all } from \"../../../../../src/compiler/tsbuildPublic\";",
+          "",
+          "export function emit_template(): string[] {",
+          "  return build_all();",
+          "}",
+          "",
+        ].join("\n"),
+      );
+      await write_file(
+        "tools/write-locale-files-to-dist.ts",
+        [
+          "import { emit_template } from \"../packages/compiler/src/template/pipeline/emit\";",
+          "",
+          "export function write_locales(): string[] {",
+          "  return emit_template();",
+          "}",
+          "",
+        ].join("\n"),
+      );
+
+      const { project } = await load_project({ project_path: temp_dir });
+
+      const indexed = [...project.get_file_contents().keys()].map((f) =>
+        path.relative(temp_dir, f),
+      );
+      expect(indexed.sort()).toEqual([
+        "packages/compiler/src/template/pipeline/emit.ts",
+        "src/compiler/tsbuildPublic.ts",
+        "src/outputs.ts",
+        "tools/write-locale-files-to-dist.ts",
+      ]);
+      expect(raw_entry_point_names(project)).toEqual(["write_locales"]);
+    });
+
+    it("reports a file dropped by an indexing error (express lib/response.js shape)", async () => {
+      await write_file(
+        "lib/response.js",
+        "exports.res = function res() {};\nexports.res = function res() {};\n",
+      );
+      await write_file("lib/app.js", "export function app() {}\n");
+
+      const { project, dropped_files } = await load_project({
+        project_path: temp_dir,
+      });
+
+      expect([...dropped_files]).toEqual([path.join(temp_dir, "lib/response.js")]);
+      // A dropped file keeps the content `update_file` stored before indexing
+      // threw, so membership of `get_file_contents()` does not mean a file was
+      // indexed — anything computing "discovered minus indexed" has to add the
+      // dropped set back after subtracting the contents map.
+      expect(project.get_file_contents().has(
+        path.join(temp_dir, "lib/response.js") as FilePath,
+      )).toBe(true);
+      expect(project.get_file_contents().has(
+        path.join(temp_dir, "lib/app.js") as FilePath,
+      )).toBe(true);
+    });
+
+    it("reports no dropped files when every discovered file indexes", async () => {
+      await write_file("lib/app.js", "export function app() {}\n");
+
+      const { dropped_files } = await load_project({ project_path: temp_dir });
+
+      expect([...dropped_files]).toEqual([]);
     });
   });
 });

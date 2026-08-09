@@ -31,12 +31,13 @@ export async function resolve_project(
     for (const folder of args.folders ?? []) {
       assert_within_project(folder, project_path, "folders");
     }
-    return load_project({
+    const { project } = await load_project({
       project_path,
       files: args.files,
       folders: args.folders,
       storage,
     });
+    return project;
   }
 
   return project_manager.get_project();

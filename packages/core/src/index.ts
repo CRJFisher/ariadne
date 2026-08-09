@@ -9,7 +9,7 @@
 export { Project } from "./project";
 export type { ClassifyOptions } from "./project";
 export { load_project } from "./project";
-export type { LoadProjectOptions } from "./project";
+export type { LoadProjectOptions, LoadedProject } from "./project";
 export { is_test_file } from "./project";
 export {
   SUPPORTED_EXTENSIONS,

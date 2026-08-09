@@ -25,12 +25,14 @@
 
 import type {
   CallGraph,
+  CallableDefinition,
   CallableNode,
   CallReference,
   ClassDefinition,
   FunctionDefinition,
   MethodDefinition,
   ConstructorDefinition,
+  Language,
   SymbolId,
   SymbolName,
   FilePath,
@@ -66,10 +68,43 @@ const CAPTURE_NAMES_BY_CALL_TYPE: Record<"function" | "method" | "constructor", 
 
 const SLOW_ITEM_MS = 50;
 
+/**
+ * Line prefixes that make a trimmed source line a comment rather than code.
+ * A grep hit inside a comment is a mention, never a call site — Rust doc
+ * comments (`/// let unfilled = buf.initialize_unfilled();`) are the loudest
+ * case, and every language here has at least one continuation form.
+ */
+const COMMENT_PREFIXES: Record<Language, readonly string[]> = {
+  javascript: ["//", "/*", "*"],
+  typescript: ["//", "/*", "*"],
+  python: ["#"],
+  rust: ["//", "/*", "*"],
+};
+
 function should_log(i: number, total: number): boolean {
   if (total <= 50) return false;
   const step = Math.max(1, Math.floor(total / 20));
   return i % step === 0;
+}
+
+/**
+ * Positions at which a callable of a given name is declared, keyed
+ * `file_path:start_line:name`.
+ *
+ * A `name(` grep hit at one of these positions is the declaration itself — a
+ * sibling class's override, an abstract signature, a TypeScript overload, the
+ * entry's own `def` line — and never a call to the entry. Keying on the name
+ * as well as the position keeps genuine calls that share a line with an
+ * unrelated declaration (`const f = () => g();`).
+ */
+function build_declaration_positions(
+  callable_definitions: readonly CallableDefinition[],
+): ReadonlySet<string> {
+  const positions = new Set<string>();
+  for (const def of callable_definitions) {
+    positions.add(`${def.location.file_path}:${def.location.start_line}:${def.name as string}`);
+  }
+  return positions;
 }
 
 /**
@@ -109,6 +144,10 @@ export function extract_entry_point_diagnostics(
   const call_refs_by_file_line = build_call_refs_by_file_line(call_graph);
   const grep_index = build_grep_index(lines_by_file, call_refs_by_file_line);
 
+  const declaration_positions = build_declaration_positions(
+    project.definitions.get_callable_definitions(),
+  );
+
   const class_definitions = project.definitions.get_class_definitions();
   const class_name_by_constructor_id = build_constructor_to_class_name_map(class_definitions);
   const class_method_symbol_ids = new Set<SymbolId>();
@@ -144,6 +183,8 @@ export function extract_entry_point_diagnostics(
       call_refs_by_name,
       grep_index,
       lines_by_file,
+      declaration_positions,
+      languages,
       class_name_by_constructor_id,
     );
 
@@ -370,21 +411,21 @@ function gather_diagnostics(
   call_refs_by_name: Map<string, { caller_node: CallableNode; call_ref: CallReference }[]>,
   grep_index: Map<string, GrepHit[]>,
   lines_by_file: ReadonlyMap<FilePath, string[]>,
+  declaration_positions: ReadonlySet<string>,
+  languages: ReadonlyMap<FilePath, Language>,
   class_name_by_constructor_id?: ReadonlyMap<SymbolId, SymbolName>,
 ): EntryPointDiagnostics {
   // For constructors, grep for class name (e.g. ClassName() instead of __init__())
   const grep_name = (node.definition.kind === "constructor" && class_name_by_constructor_id)
     ? (class_name_by_constructor_id.get(node.symbol_id) as string ?? node.name as string)
     : node.name as string;
-  const def_file = node.location.file_path;
-  const def_line = node.location.start_line;
   const is_constructor = node.definition.kind === "constructor";
 
   const grep_call_sites = grep_for_calls(
     grep_name,
-    def_file,
-    def_line,
     grep_index,
+    declaration_positions,
+    languages,
     is_constructor,
   );
 
@@ -417,14 +458,15 @@ function gather_diagnostics(
 
 /**
  * Look up textual call sites for a given name in the precomputed inverted
- * index, filtering out the definition itself and (for constructors) class
- * definition lines like `class Name(object):`.
+ * index, keeping only hits that can be calls: a hit on a line that declares a
+ * callable of the same name is a declaration, a hit inside a comment is prose,
+ * and (for constructors) a `class Name(object):` line is the class header.
  */
 function grep_for_calls(
   name: string,
-  def_file: string,
-  def_line: number,
   grep_index: Map<string, GrepHit[]>,
+  declaration_positions: ReadonlySet<string>,
+  languages: ReadonlyMap<FilePath, Language>,
   is_constructor: boolean,
 ): GrepHit[] {
   if (name === "<anonymous>") return [];
@@ -438,12 +480,22 @@ function grep_for_calls(
 
   const hits: GrepHit[] = [];
   for (const hit of all) {
-    if (hit.file_path === def_file && hit.line === def_line) continue;
+    if (declaration_positions.has(`${hit.file_path}:${hit.line}:${name}`)) continue;
+    if (is_comment_line(hit.content, languages.get(hit.file_path))) continue;
     if (class_def_pattern && class_def_pattern.test(hit.content)) continue;
     hits.push(hit);
     if (hits.length >= MAX_GREP_HITS) break;
   }
   return hits;
+}
+
+/**
+ * A grep hit whose trimmed line opens a comment — or continues a block one —
+ * mentions the name; it never calls it.
+ */
+function is_comment_line(content: string, language: Language | undefined): boolean {
+  if (language === undefined) return false;
+  return COMMENT_PREFIXES[language].some((prefix) => content.startsWith(prefix));
 }
 
 /**

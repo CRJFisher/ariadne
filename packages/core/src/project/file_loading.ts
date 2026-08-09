@@ -29,6 +29,8 @@ export const IGNORED_DIRECTORIES = [
  */
 export const IGNORED_GLOBS = IGNORED_DIRECTORIES.map((d) => `**/${d}/**`);
 
+const IGNORED_DIRECTORY_SET = new Set(IGNORED_DIRECTORIES);
+
 /**
  * Check if a file has a supported source extension.
  * Excludes TypeScript declaration files (.d.ts).
@@ -66,6 +68,10 @@ export async function parse_gitignore(project_path: string): Promise<string[]> {
 /**
  * Check if a path should be ignored based on common ignores and gitignore patterns.
  *
+ * An `IGNORED_DIRECTORIES` entry matches a whole path segment, so a directory
+ * named `temp` is excluded while `src/template/x.ts` and `tsbuildPublic.ts`
+ * stay in the corpus — every caller they hold is a real call edge.
+ *
  * @param relative_path - Path relative to project root
  * @param gitignore_patterns - Patterns from .gitignore
  * @returns True if the path should be ignored
@@ -74,9 +80,8 @@ export function should_ignore_path(
   relative_path: string,
   gitignore_patterns: string[] = []
 ): boolean {
-  // Check common ignored directories
-  for (const ignore of IGNORED_DIRECTORIES) {
-    if (relative_path.includes(ignore)) return true;
+  for (const segment of relative_path.split(/[\\/]/)) {
+    if (IGNORED_DIRECTORY_SET.has(segment)) return true;
   }
 
   // Also check .DS_Store explicitly

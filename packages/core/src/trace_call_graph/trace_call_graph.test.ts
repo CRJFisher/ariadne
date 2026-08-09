@@ -1,5 +1,9 @@
 import { describe, it, expect, beforeEach } from "vitest";
+import { mkdtemp, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { trace_call_graph } from "./trace_call_graph";
+import { Project } from "../project/project";
 import { DefinitionRegistry } from "../resolve_references/registries/definition";
 import { ResolutionRegistry } from "../resolve_references/resolution_registry";
 import {
@@ -10,6 +14,7 @@ import {
   anonymous_function_symbol,
 } from "@ariadnejs/types";
 import type {
+  CallGraph,
   Language,
   FunctionDefinition,
   ClassDefinition,
@@ -518,6 +523,71 @@ describe("trace_call_graph", () => {
 
       expect(call_graph.entry_points).toContain(def.symbol_id);
       expect(call_graph.entry_points.length).toBe(1);
+    });
+  });
+
+  describe("candidate-set invariance over a complete corpus", () => {
+    // Indexing a test file contributes its call edges and zero candidates. That
+    // invariance is why scope belongs at candidacy (`include_tests`) and never
+    // at discovery: dropping the file at discovery would delete the edge too.
+    let temp_dir: string;
+
+    beforeEach(async () => {
+      temp_dir = await mkdtemp(join(tmpdir(), "ariadne-candidate-set-"));
+    });
+
+    async function project_with_test_caller(): Promise<Project> {
+      const widget = join(temp_dir, "widget.ts");
+      const widget_test = join(temp_dir, "widget.test.ts");
+      const widget_source = "export function render_widget() {\n  return 1;\n}\n";
+      const test_source = [
+        "import { render_widget } from \"./widget\";",
+        "",
+        "export function test_fn() {",
+        "  return render_widget();",
+        "}",
+        "",
+      ].join("\n");
+      await writeFile(widget, widget_source, "utf8");
+      await writeFile(widget_test, test_source, "utf8");
+
+      const project = new Project();
+      await project.initialize(temp_dir as FilePath);
+      project.update_file(widget as FilePath, widget_source);
+      project.update_file(widget_test as FilePath, test_source);
+      return project;
+    }
+
+    function entry_point_names(call_graph: CallGraph): string[] {
+      return call_graph.entry_points
+        .map((id) => call_graph.nodes.get(id)?.name as string)
+        .sort();
+    }
+
+    it("yields no entry points when a test file is the only caller", async () => {
+      const project = await project_with_test_caller();
+
+      const call_graph = trace_call_graph(
+        project.definitions,
+        project.resolutions,
+        project.get_languages(),
+        { include_tests: false },
+      );
+
+      expect(entry_point_names(call_graph)).toEqual([]);
+    });
+
+    it("yields only the test callable itself when include_tests is set", async () => {
+      const project = await project_with_test_caller();
+
+      const call_graph = trace_call_graph(
+        project.definitions,
+        project.resolutions,
+        project.get_languages(),
+        { include_tests: true },
+      );
+
+      expect(entry_point_names(call_graph)).toEqual(["test_fn"]);
     });
   });
 

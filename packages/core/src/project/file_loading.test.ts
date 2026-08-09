@@ -143,6 +143,25 @@ describe("file_loading", () => {
       expect(should_ignore_path("packages/core/src/main.ts")).toBe(false);
     });
 
+    it("keeps source paths whose name merely contains an ignored directory name", () => {
+      expect(should_ignore_path("src/compiler/tsbuildPublic.ts")).toBe(false);
+      expect(
+        should_ignore_path("packages/compiler/src/render3/r3_template_transform.ts"),
+      ).toBe(false);
+      expect(should_ignore_path("packages/compiler/src/template/pipeline/x.ts")).toBe(
+        false,
+      );
+      expect(should_ignore_path("tools/write-locale-files-to-dist.ts")).toBe(false);
+    });
+
+    it("ignores paths whose whole segment is an ignored directory", () => {
+      expect(should_ignore_path("node_modules/x/y.ts")).toBe(true);
+      expect(should_ignore_path("dist/main.js")).toBe(true);
+      expect(should_ignore_path("build/out.js")).toBe(true);
+      expect(should_ignore_path("temp/a.ts")).toBe(true);
+      expect(should_ignore_path("packages/x/fixtures/y.ts")).toBe(true);
+    });
+
     it("should respect gitignore patterns with prefix wildcards", () => {
       // The simple gitignore implementation supports trailing wildcards (prefix*)
       const gitignore_patterns = ["temp*", "debug*"];

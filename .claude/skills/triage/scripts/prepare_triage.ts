@@ -29,9 +29,7 @@ import * as path from "path";
 import { fileURLToPath } from "node:url";
 
 import {
-  detect_language,
   IGNORED_DIRECTORIES,
-  is_test_file,
   load_project,
   trace_call_graph,
   FileSystemStorage,
@@ -253,14 +251,10 @@ async function load_project_for_classification(
   const storage: PersistenceStorage | undefined = cache_dir
     ? new FileSystemStorage(cache_dir)
     : undefined;
-  const project = await load_project({
+  const { project } = await load_project({
     project_path,
     folders: scope.folders,
     exclude: [...IGNORED_DIRECTORIES, ...scope.exclude],
-    file_filter: (file: string) => {
-      const language = detect_language(file);
-      return !language || !is_test_file(file, language);
-    },
     storage,
   });
   // Raw call graph: every uncalled callable. The triage classifier needs the

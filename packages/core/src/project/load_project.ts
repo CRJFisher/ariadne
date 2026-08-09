@@ -30,10 +30,21 @@ export interface LoadProjectOptions {
   folders?: string[];
   /** Additional folder/pattern exclusions (appended to gitignore patterns for file discovery, passed to Project.initialize). */
   exclude?: string[];
-  /** Optional per-file filter applied after discovery, before loading. Return true to include. */
-  file_filter?: (file_path: string) => boolean;
   /** Optional persistence storage. When provided, unchanged files skip tree-sitter parsing. */
   storage?: PersistenceStorage;
+}
+
+/**
+ * A loaded project plus the discovery residue the load could not index.
+ *
+ * `dropped_files` names files that were discovered and read but whose indexing
+ * threw, so none of their definitions or references reached any registry. They
+ * are invisible to the call graph while still existing on disk — a caller
+ * measuring coverage has to count them as unindexed, not as absent.
+ */
+export interface LoadedProject {
+  readonly project: Project;
+  readonly dropped_files: ReadonlySet<FilePath>;
 }
 
 /**
@@ -58,16 +69,18 @@ function resolve_to_absolute(
  * When `storage` is provided, per-file SemanticIndex data is cached. On subsequent loads,
  * files whose content has not changed skip tree-sitter parsing entirely.
  * In git repos, git plumbing commands accelerate change detection.
+ *
+ * Returns the project alongside the files indexing dropped, so the corpus a
+ * caller believes it loaded and the corpus it actually got are both visible.
  */
 export async function load_project(
   options: LoadProjectOptions,
-): Promise<Project> {
+): Promise<LoadedProject> {
   const {
     project_path,
     files = [],
     folders = [],
     exclude = [],
-    file_filter,
     storage,
   } = options;
 
@@ -118,11 +131,6 @@ export async function load_project(
     }
   }
 
-  // Apply file_filter if provided
-  const final_files = file_filter
-    ? [...files_to_load].filter(file_filter)
-    : files_to_load;
-
   // Load manifest if storage is provided
   const manifest: CacheManifest | null = storage
     ? await read_cache_manifest(storage)
@@ -143,11 +151,10 @@ export async function load_project(
   }
 
   // Build manifest_entries from existing manifest, pruning entries for files no longer on disk
-  const final_files_set = new Set(final_files);
   const manifest_entries = new Map<FilePath, CacheManifestEntry>();
   if (manifest) {
     for (const [fp, entry] of manifest.entries) {
-      if (final_files_set.has(fp)) {
+      if (files_to_load.has(fp)) {
         manifest_entries.set(fp, entry);
       }
     }
@@ -155,8 +162,9 @@ export async function load_project(
 
   let cache_hits = 0;
   let cache_misses = 0;
+  const dropped_files = new Set<FilePath>();
 
-  for (const file_path of final_files) {
+  for (const file_path of files_to_load) {
     const fp = file_path as FilePath;
     let used_cache = false;
 
@@ -207,6 +215,7 @@ export async function load_project(
         try {
           project.update_file(fp, content);
         } catch (error) {
+          dropped_files.add(fp);
           console.warn(
             `[ariadne] Skipping ${file_path}: ${
               error instanceof Error ? error.message : error
@@ -250,5 +259,5 @@ export async function load_project(
     await write_cache_manifest(storage, manifest_entries);
   }
 
-  return project;
+  return { project, dropped_files };
 }
