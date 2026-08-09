@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { mkdtemp, writeFile } from "node:fs/promises";
+import { describe, it, expect, afterEach, beforeEach } from "vitest";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { trace_call_graph } from "./trace_call_graph";
@@ -536,6 +536,10 @@ describe("trace_call_graph", () => {
       temp_dir = await mkdtemp(join(tmpdir(), "ariadne-candidate-set-"));
     });
 
+    afterEach(async () => {
+      await rm(temp_dir, { recursive: true, force: true });
+    });
+
     async function project_with_test_caller(): Promise<Project> {
       const widget = join(temp_dir, "widget.ts");
       const widget_test = join(temp_dir, "widget.test.ts");
@@ -564,6 +568,26 @@ describe("trace_call_graph", () => {
         .sort();
     }
 
+    /**
+     * The names `caller_name`'s calls resolve to. A bare import is enough to
+     * keep a symbol out of the entry-point set, so the entry-point assertions
+     * below cannot by themselves tell an edge from an import — this reads the
+     * edge.
+     */
+    function resolved_call_targets(call_graph: CallGraph, caller_name: string): string[] {
+      const caller = [...call_graph.nodes.values()].find((n) => n.name === caller_name);
+      if (caller === undefined) {
+        throw new Error(`expected a call-graph node named ${caller_name}`);
+      }
+      const targets = new Set(
+        caller.enclosed_calls
+          .flatMap((c) => c.resolutions.map((r) => r.symbol_id))
+          .map((symbol_id) => call_graph.nodes.get(symbol_id)?.name as string)
+          .filter((n) => n !== undefined),
+      );
+      return [...targets].sort();
+    }
+
     it("yields no entry points when a test file is the only caller", async () => {
       const project = await project_with_test_caller();
 
@@ -588,6 +612,19 @@ describe("trace_call_graph", () => {
       );
 
       expect(entry_point_names(call_graph)).toEqual(["test_fn"]);
+    });
+
+    it("carries the test file's call edge into the graph", async () => {
+      const project = await project_with_test_caller();
+
+      const call_graph = trace_call_graph(
+        project.definitions,
+        project.resolutions,
+        project.get_languages(),
+        { include_tests: true },
+      );
+
+      expect(resolved_call_targets(call_graph, "test_fn")).toEqual(["render_widget"]);
     });
   });
 

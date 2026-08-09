@@ -9,7 +9,7 @@ export const SUPPORTED_EXTENSIONS = /\.(ts|tsx|js|jsx|mdx|py|rs|go|java|cpp|c|hp
 /**
  * Directories to always ignore during file loading and watching
  */
-export const IGNORED_DIRECTORIES = [
+export const IGNORED_DIRECTORIES: readonly string[] = [
   "node_modules",
   ".git",
   "dist",
@@ -78,29 +78,44 @@ export async function parse_gitignore(project_path: string): Promise<string[]> {
  */
 export function should_ignore_path(
   relative_path: string,
-  gitignore_patterns: string[] = []
+  gitignore_patterns: readonly string[] = []
 ): boolean {
-  for (const segment of relative_path.split(/[\\/]/)) {
-    if (IGNORED_DIRECTORY_SET.has(segment)) return true;
+  const posix_path = relative_path.replace(/\\/g, "/");
+
+  for (const segment of posix_path.split("/")) {
+    if (IGNORED_DIRECTORY_SET.has(segment) || segment === ".DS_Store") return true;
   }
 
-  // Also check .DS_Store explicitly
-  if (relative_path.includes(".DS_Store")) return true;
-
-  // Check gitignore patterns (simple implementation)
   for (const pattern of gitignore_patterns) {
     if (pattern.endsWith("*")) {
       const prefix = pattern.slice(0, -1);
-      if (relative_path.startsWith(prefix)) return true;
-    } else if (
-      relative_path === pattern ||
-      relative_path.includes("/" + pattern)
-    ) {
+      if (posix_path.startsWith(prefix)) return true;
+    } else if (matches_path_segments(posix_path, pattern)) {
       return true;
     }
   }
 
   return false;
+}
+
+/**
+ * Whether a plain (non-wildcard) ignore pattern names a whole segment run of
+ * the path, which is what a bare gitignore entry means.
+ *
+ * The callers of `load_project` pass `IGNORED_DIRECTORIES` through `exclude`,
+ * so this branch decides the corpus just as much as the segment scan above: a
+ * substring test here would exclude `src/template/**` for the pattern `temp`
+ * and delete every call edge those files hold.
+ */
+function matches_path_segments(posix_path: string, pattern: string): boolean {
+  const normalized = pattern.replace(/^\/+|\/+$/g, "");
+  if (normalized === "") return false;
+  return (
+    posix_path === normalized ||
+    posix_path.startsWith(`${normalized}/`) ||
+    posix_path.includes(`/${normalized}/`) ||
+    posix_path.endsWith(`/${normalized}`)
+  );
 }
 
 /**

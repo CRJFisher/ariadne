@@ -68,13 +68,20 @@ export type EntryPointDiagnosis =
   | "callers-in-registry-wrong-target";
 
 export interface EntryPointDiagnostics {
-  /** Textual grep results for calls to this function across source files */
+  /**
+   * Textual call sites for this function in the indexed corpus, qualified: an
+   * occurrence inside a comment or a string never counts, and a line declaring
+   * a callable of the same name (a sibling override, an abstract signature,
+   * this function's own definition) is that declaration, not a call.
+   */
   grep_call_sites: GrepHit[];
   /**
-   * Grep hits located in directories excluded from Ariadne's indexing (e.g.
-   * `/test/`, `/tests/`, `/__tests__/`, `/spec/`). Populated by a second grep
-   * pass run outside the indexed scope so classifiers can distinguish
-   * "callers-exist-in-test-dir" from the broader callers-not-in-registry bucket.
+   * Grep hits in files that were discovered but not indexed — held out by a
+   * project-config `exclude` or a folder scope, or dropped by an indexing
+   * error. Populated by a second grep pass outside the indexed set, qualified
+   * by the same rules as `grep_call_sites`, so classifiers can distinguish a
+   * caller Ariadne never looked at from the broader callers-not-in-registry
+   * bucket.
    */
   grep_call_sites_unindexed_tests: GrepHit[];
   /** CallReferences in the call graph where name matches this entry point */
@@ -92,9 +99,9 @@ export interface EntryPointDiagnostics {
   has_uncaptured_indexed_grep_hit: boolean;
   /**
    * True when `grep_call_sites_unindexed_tests` is non-empty AND
-   * `grep_call_sites` is empty — every textual caller lives in a directory
-   * excluded from indexing. Drives the `coverage_config` fault area. Can only
-   * become true after the optional unindexed-test grep pass runs; defaults to
+   * `grep_call_sites` is empty — every textual caller sits in a discovered file
+   * outside the indexed set. Drives the `coverage_config` fault area. Can only
+   * become true after the optional out-of-index grep pass runs; defaults to
    * `false` when that pass is skipped.
    */
   callers_only_in_unindexed_tests: boolean;

@@ -37,10 +37,16 @@ export interface LoadProjectOptions {
 /**
  * A loaded project plus the discovery residue the load could not index.
  *
- * `dropped_files` names files that were discovered and read but whose indexing
- * threw, so none of their definitions or references reached any registry. They
- * are invisible to the call graph while still existing on disk — a caller
- * measuring coverage has to count them as unindexed, not as absent.
+ * `dropped_files` names files that were read but whose indexing threw. Indexing
+ * writes registries in stages, so a throw leaves partial state behind; the load
+ * rolls that state back, which puts a dropped file in exactly the position of a
+ * file that was never discovered — absent from `get_file_contents()`, holding no
+ * definitions, contributing no call edges. Only this set records that it exists
+ * on disk at all, so a caller measuring coverage counts it as unindexed rather
+ * than absent.
+ *
+ * A file that could not be READ is not here: it never entered the contents map,
+ * so "discovered minus indexed" already accounts for it.
  */
 export interface LoadedProject {
   readonly project: Project;
@@ -215,7 +221,13 @@ export async function load_project(
         try {
           project.update_file(fp, content);
         } catch (error) {
+          // `update_file` writes content, language, definitions and scopes
+          // before a later phase can throw. Left in place, that partial state
+          // makes the file's callables phantom entry points and every grep hit
+          // inside it uncapturable — the file's text is in the corpus while its
+          // references are not. Roll it back so the file is cleanly unindexed.
           dropped_files.add(fp);
+          project.remove_file(fp);
           console.warn(
             `[ariadne] Skipping ${file_path}: ${
               error instanceof Error ? error.message : error

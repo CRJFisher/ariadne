@@ -9,6 +9,8 @@
 import type { EnrichedEntryPoint, FilePath } from "@ariadnejs/types";
 import type { Project } from "../project/project";
 import { find_source_files } from "../project/file_loading";
+import { detect_language } from "../detect_language";
+import { build_code_ranges, is_code_column } from "./qualify_grep_hits";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
 
@@ -80,17 +82,26 @@ export async function attach_unindexed_test_grep_hits(
   );
   if (test_files.size === 0) return;
 
-  // Per-identifier inverted index over the test files.
+  // Per-identifier inverted index over the out-of-index files. Comment and
+  // string occurrences are skipped by the same rule the indexed channel uses —
+  // otherwise a bare `# TODO: cover pool_shrink() one day` in an unindexed file
+  // reads as the entry's only caller and routes it to `coverage_config`.
   const grep_index = new Map<string, { file_path: string; line: number; content: string }[]>();
   const pattern = /(?<![A-Za-z0-9_$])([A-Za-z_$][\w$]*)\s*\(/g;
   for (const [file_path, content] of test_files) {
+    const language = detect_language(file_path);
+    if (language === null) continue;
     const lines = content.split("\n");
+    const code_ranges = build_code_ranges(lines, language);
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
+      const line_code_ranges = code_ranges[i];
+      if (line_code_ranges.length === 0) continue;
       pattern.lastIndex = 0;
       let m: RegExpExecArray | null;
       let trimmed: string | null = null;
       while ((m = pattern.exec(line)) !== null) {
+        if (!is_code_column(line_code_ranges, m.index)) continue;
         const name = m[1];
         let hits = grep_index.get(name);
         if (!hits) {

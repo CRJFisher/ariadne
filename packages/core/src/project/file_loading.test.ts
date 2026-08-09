@@ -162,6 +162,32 @@ describe("file_loading", () => {
       expect(should_ignore_path("packages/x/fixtures/y.ts")).toBe(true);
     });
 
+    // The triage harness passes `IGNORED_DIRECTORIES` through `load_project`'s
+    // `exclude`, which lands in the pattern list — so this is the configuration
+    // the pipeline actually runs, and the one that decides the real corpus.
+    it("anchors pattern matches on segments too, not just the built-in list", () => {
+      const patterns = [...IGNORED_DIRECTORIES];
+
+      expect(should_ignore_path("packages/compiler/src/template/pipeline/x.ts", patterns)).toBe(
+        false,
+      );
+      expect(should_ignore_path("src/compiler/tsbuildPublic.ts", patterns)).toBe(false);
+      expect(
+        should_ignore_path("packages/compiler/src/render3/r3_template_transform.ts", patterns),
+      ).toBe(false);
+      expect(should_ignore_path("tools/write-locale-files-to-dist.ts", patterns)).toBe(false);
+
+      expect(should_ignore_path("node_modules/x/y.ts", patterns)).toBe(true);
+      expect(should_ignore_path("a/dist/main.js", patterns)).toBe(true);
+      expect(should_ignore_path("a/temp", patterns)).toBe(true);
+    });
+
+    it("matches a config exclude naming a whole directory", () => {
+      expect(should_ignore_path("django/tests/test_x.py", ["tests"])).toBe(true);
+      expect(should_ignore_path("tests/test_x.py", ["tests"])).toBe(true);
+      expect(should_ignore_path("lib/sqlalchemy/testing/plugin.py", ["test"])).toBe(false);
+    });
+
     it("should respect gitignore patterns with prefix wildcards", () => {
       // The simple gitignore implementation supports trailing wildcards (prefix*)
       const gitignore_patterns = ["temp*", "debug*"];

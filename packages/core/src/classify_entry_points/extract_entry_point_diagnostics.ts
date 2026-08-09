@@ -10,9 +10,13 @@
  *   - Each indexed source file's content is split into lines exactly once
  *     (into `lines_by_file`).
  *   - The grep index is built in a single pass over `lines_by_file`: every
- *     `identifier\s*\(` occurrence maps from `identifier` → `GrepHit[]`.
+ *     `identifier\s*\(` occurrence in code maps from `identifier` → `GrepHit[]`.
  *     Per-entry grep becomes an O(1) `Map.get` plus a small filter — no
  *     quadratic regression on large repos.
+ *   - A hit counts as a call site only when it can be one: occurrences inside
+ *     comments and strings never enter the index, and a hit landing where a
+ *     callable of the same name is declared is dropped at lookup. Both rules
+ *     live in `qualify_grep_hits.ts` and bind the out-of-index channel too.
  *   - File contents come from `Project.get_file_contents()` rather than the
  *     filesystem so diagnostics see exactly what the resolver saw (no TOCTOU
  *     drift, supports in-memory edits via `Project.update_file`).
@@ -25,7 +29,6 @@
 
 import type {
   CallGraph,
-  CallableDefinition,
   CallableNode,
   CallReference,
   ClassDefinition,
@@ -45,6 +48,12 @@ import type {
 } from "@ariadnejs/types";
 
 import { log_info, log_warn } from "../logging";
+import {
+  build_callable_declaration_keys,
+  build_code_ranges,
+  declaration_key,
+  is_code_column,
+} from "./qualify_grep_hits";
 import type { Project } from "../project/project";
 import { build_signature } from "../trace_call_graph/build_signature";
 import { count_tree_size } from "../trace_call_graph/count_tree_size";
@@ -68,43 +77,10 @@ const CAPTURE_NAMES_BY_CALL_TYPE: Record<"function" | "method" | "constructor", 
 
 const SLOW_ITEM_MS = 50;
 
-/**
- * Line prefixes that make a trimmed source line a comment rather than code.
- * A grep hit inside a comment is a mention, never a call site — Rust doc
- * comments (`/// let unfilled = buf.initialize_unfilled();`) are the loudest
- * case, and every language here has at least one continuation form.
- */
-const COMMENT_PREFIXES: Record<Language, readonly string[]> = {
-  javascript: ["//", "/*", "*"],
-  typescript: ["//", "/*", "*"],
-  python: ["#"],
-  rust: ["//", "/*", "*"],
-};
-
 function should_log(i: number, total: number): boolean {
   if (total <= 50) return false;
   const step = Math.max(1, Math.floor(total / 20));
   return i % step === 0;
-}
-
-/**
- * Positions at which a callable of a given name is declared, keyed
- * `file_path:start_line:name`.
- *
- * A `name(` grep hit at one of these positions is the declaration itself — a
- * sibling class's override, an abstract signature, a TypeScript overload, the
- * entry's own `def` line — and never a call to the entry. Keying on the name
- * as well as the position keeps genuine calls that share a line with an
- * unrelated declaration (`const f = () => g();`).
- */
-function build_declaration_positions(
-  callable_definitions: readonly CallableDefinition[],
-): ReadonlySet<string> {
-  const positions = new Set<string>();
-  for (const def of callable_definitions) {
-    positions.add(`${def.location.file_path}:${def.location.start_line}:${def.name as string}`);
-  }
-  return positions;
 }
 
 /**
@@ -142,9 +118,9 @@ export function extract_entry_point_diagnostics(
   const lines_by_file = build_lines_by_file(source_files);
   const call_refs_by_name = build_call_refs_by_name(call_graph);
   const call_refs_by_file_line = build_call_refs_by_file_line(call_graph);
-  const grep_index = build_grep_index(lines_by_file, call_refs_by_file_line);
+  const grep_index = build_grep_index(lines_by_file, call_refs_by_file_line, languages);
 
-  const declaration_positions = build_declaration_positions(
+  const declaration_keys = build_callable_declaration_keys(
     project.definitions.get_callable_definitions(),
   );
 
@@ -183,8 +159,7 @@ export function extract_entry_point_diagnostics(
       call_refs_by_name,
       grep_index,
       lines_by_file,
-      declaration_positions,
-      languages,
+      declaration_keys,
       class_name_by_constructor_id,
     );
 
@@ -341,15 +316,24 @@ function build_call_refs_by_file_line(
 
 /**
  * One-pass inverted grep index over all source files. For every occurrence of
- * `identifier\s*\(` on any line, record a `GrepHit` keyed by the identifier.
+ * `identifier\s*\(` in the CODE of any line, record a `GrepHit` keyed by the
+ * identifier.
  *
  * The identifier pattern `[A-Za-z_$][\w$]*` is the common superset for
  * JavaScript/TypeScript/Python identifiers — language-agnostic enough for the
  * diagnostic pass without requiring per-language lexing.
+ *
+ * Occurrences inside comments and string literals are skipped: a doc comment,
+ * a docstring and a `# TODO` mention the name, they never call it, and a hit
+ * that is not a call fabricates a caller. Comment extent comes from
+ * `build_code_ranges`, which carries block-comment and docstring state across
+ * lines, so a call after `/* … *\/` on one line survives while the interior of
+ * a multi-line comment does not.
  */
 export function build_grep_index(
   lines_by_file: ReadonlyMap<FilePath, string[]>,
   call_refs_by_file_line: Map<FilePath, Map<number, CallReference[]>>,
+  languages: ReadonlyMap<FilePath, Language>,
 ): Map<string, GrepHit[]> {
   const index = new Map<string, GrepHit[]>();
   // Lookbehind form of word-boundary that also respects `$` as an identifier
@@ -358,9 +342,20 @@ export function build_grep_index(
 
   for (const [file_path, lines] of lines_by_file) {
     const by_line = call_refs_by_file_line.get(file_path);
+    const language = languages.get(file_path);
+    if (language === undefined) {
+      throw new Error(
+        `No language recorded for ${file_path} — every indexed file must come from a parsed file`,
+      );
+    }
+    const code_ranges = build_code_ranges(lines, language);
+
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       const line_num = i + 1;
+      const line_code_ranges = code_ranges[i];
+      if (line_code_ranges.length === 0) continue;
+
       const refs = by_line?.get(line_num);
       const line_captures = refs && refs.length > 0 ? captures_from_refs(refs) : [];
       let trimmed: string | null = null;
@@ -368,6 +363,7 @@ export function build_grep_index(
       pattern.lastIndex = 0;
       let m: RegExpExecArray | null;
       while ((m = pattern.exec(line)) !== null) {
+        if (!is_code_column(line_code_ranges, m.index)) continue;
         const name = m[1];
         let hits = index.get(name);
         if (!hits) {
@@ -411,8 +407,7 @@ function gather_diagnostics(
   call_refs_by_name: Map<string, { caller_node: CallableNode; call_ref: CallReference }[]>,
   grep_index: Map<string, GrepHit[]>,
   lines_by_file: ReadonlyMap<FilePath, string[]>,
-  declaration_positions: ReadonlySet<string>,
-  languages: ReadonlyMap<FilePath, Language>,
+  declaration_keys: ReadonlySet<string>,
   class_name_by_constructor_id?: ReadonlyMap<SymbolId, SymbolName>,
 ): EntryPointDiagnostics {
   // For constructors, grep for class name (e.g. ClassName() instead of __init__())
@@ -424,8 +419,7 @@ function gather_diagnostics(
   const grep_call_sites = grep_for_calls(
     grep_name,
     grep_index,
-    declaration_positions,
-    languages,
+    declaration_keys,
     is_constructor,
   );
 
@@ -458,15 +452,15 @@ function gather_diagnostics(
 
 /**
  * Look up textual call sites for a given name in the precomputed inverted
- * index, keeping only hits that can be calls: a hit on a line that declares a
- * callable of the same name is a declaration, a hit inside a comment is prose,
- * and (for constructors) a `class Name(object):` line is the class header.
+ * index, dropping hits that cannot be calls to it: a line declaring a callable
+ * of the same name is that declaration, and (for constructors) a
+ * `class Name(object):` line is the class header. Comment and string content
+ * never reaches the index.
  */
 function grep_for_calls(
   name: string,
   grep_index: Map<string, GrepHit[]>,
-  declaration_positions: ReadonlySet<string>,
-  languages: ReadonlyMap<FilePath, Language>,
+  declaration_keys: ReadonlySet<string>,
   is_constructor: boolean,
 ): GrepHit[] {
   if (name === "<anonymous>") return [];
@@ -480,22 +474,12 @@ function grep_for_calls(
 
   const hits: GrepHit[] = [];
   for (const hit of all) {
-    if (declaration_positions.has(`${hit.file_path}:${hit.line}:${name}`)) continue;
-    if (is_comment_line(hit.content, languages.get(hit.file_path))) continue;
+    if (declaration_keys.has(declaration_key(hit.file_path, hit.line, name))) continue;
     if (class_def_pattern && class_def_pattern.test(hit.content)) continue;
     hits.push(hit);
     if (hits.length >= MAX_GREP_HITS) break;
   }
   return hits;
-}
-
-/**
- * A grep hit whose trimmed line opens a comment — or continues a block one —
- * mentions the name; it never calls it.
- */
-function is_comment_line(content: string, language: Language | undefined): boolean {
-  if (language === undefined) return false;
-  return COMMENT_PREFIXES[language].some((prefix) => content.startsWith(prefix));
 }
 
 /**

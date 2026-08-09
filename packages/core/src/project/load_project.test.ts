@@ -2,10 +2,11 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import * as fs from "fs/promises";
 import * as path from "path";
 import * as os from "os";
-import type { FilePath } from "@ariadnejs/types";
+import type { CallGraph, FilePath, SymbolId } from "@ariadnejs/types";
 import { load_project } from "./load_project";
 import type { Project } from "./project";
 import { trace_call_graph } from "../trace_call_graph/trace_call_graph";
+import { IGNORED_DIRECTORIES } from "./file_loading";
 
 describe("load_project", () => {
   let temp_dir: string;
@@ -213,16 +214,47 @@ describe("load_project", () => {
   });
 
   describe("every discovered caller file is in the corpus", () => {
-    function raw_entry_point_names(project: Project): string[] {
-      const call_graph = trace_call_graph(
+    function raw_call_graph(project: Project, include_tests: boolean): CallGraph {
+      return trace_call_graph(
         project.definitions,
         project.resolutions,
         project.get_languages(),
-        { include_tests: false },
+        { include_tests },
       );
+    }
+
+    function entry_point_names(call_graph: CallGraph): string[] {
       return call_graph.entry_points
         .map((id) => call_graph.nodes.get(id)?.name as string)
         .sort();
+    }
+
+    function node_names(call_graph: CallGraph): string[] {
+      return [...call_graph.nodes.values()].map((n) => n.name as string).sort();
+    }
+
+    /**
+     * Names the callable at `caller_name` resolves its calls to.
+     *
+     * `detect_entry_points` skips any symbol that appears as a resolution
+     * target, and a bare import is enough to do that — so asserting only the
+     * entry-point set cannot tell a real call edge from an import. This reads
+     * the edge itself.
+     */
+    function resolved_call_targets(call_graph: CallGraph, caller_name: string): string[] {
+      const caller = [...call_graph.nodes.values()].find((n) => n.name === caller_name);
+      if (caller === undefined) {
+        throw new Error(
+          `expected a call-graph node named ${caller_name}, got ${node_names(call_graph).join(", ")}`,
+        );
+      }
+      const targets = new Set(
+        caller.enclosed_calls
+          .flatMap((c) => c.resolutions.map((r) => r.symbol_id as SymbolId))
+          .map((symbol_id) => call_graph.nodes.get(symbol_id)?.name as string)
+          .filter((n) => n !== undefined),
+      );
+      return [...targets].sort();
     }
 
     async function write_file(relative_path: string, content: string): Promise<void> {
@@ -250,7 +282,13 @@ describe("load_project", () => {
 
       const { project } = await load_project({ project_path: temp_dir });
 
-      expect(raw_entry_point_names(project)).toEqual([]);
+      const production_only = raw_call_graph(project, false);
+      const with_tests = raw_call_graph(project, true);
+
+      expect(node_names(production_only)).toEqual(["compileFile", "compiles_a_file"]);
+      expect(resolved_call_targets(with_tests, "compiles_a_file")).toEqual(["compileFile"]);
+      expect(entry_point_names(production_only)).toEqual([]);
+      expect(entry_point_names(with_tests)).toEqual(["compiles_a_file"]);
     });
 
     it("resolves a callee whose only callers are filename-marked test modules (celery long_running_task shape)", async () => {
@@ -287,7 +325,19 @@ describe("load_project", () => {
 
       const { project } = await load_project({ project_path: temp_dir });
 
-      expect(raw_entry_point_names(project)).toEqual([]);
+      const production_only = raw_call_graph(project, false);
+      const with_tests = raw_call_graph(project, true);
+
+      expect(node_names(production_only)).toEqual([
+        "long_running_task",
+        "test_control",
+        "test_worker",
+      ]);
+      // `t/unit/app` matches no test-directory rule, so this file is in the
+      // corpus purely on its filename — and it is the one carrying the edge.
+      expect(resolved_call_targets(with_tests, "test_control")).toEqual(["long_running_task"]);
+      expect(entry_point_names(production_only)).toEqual([]);
+      expect(entry_point_names(with_tests)).toEqual(["test_control", "test_worker"]);
     });
 
     it("indexes caller files whose path merely contains an ignored directory name", async () => {
@@ -318,12 +368,23 @@ describe("load_project", () => {
         ].join("\n"),
       );
       await write_file(
+        "packages/compiler/src/render3/r3_template_transform.ts",
+        [
+          "import { emit_template } from \"../template/pipeline/emit\";",
+          "",
+          "export function transform_template(): string[] {",
+          "  return emit_template();",
+          "}",
+          "",
+        ].join("\n"),
+      );
+      await write_file(
         "tools/write-locale-files-to-dist.ts",
         [
-          "import { emit_template } from \"../packages/compiler/src/template/pipeline/emit\";",
+          "import { transform_template } from \"../packages/compiler/src/render3/r3_template_transform\";",
           "",
           "export function write_locales(): string[] {",
-          "  return emit_template();",
+          "  return transform_template();",
           "}",
           "",
         ].join("\n"),
@@ -335,12 +396,21 @@ describe("load_project", () => {
         path.relative(temp_dir, f),
       );
       expect(indexed.sort()).toEqual([
+        "packages/compiler/src/render3/r3_template_transform.ts",
         "packages/compiler/src/template/pipeline/emit.ts",
         "src/compiler/tsbuildPublic.ts",
         "src/outputs.ts",
         "tools/write-locale-files-to-dist.ts",
       ]);
-      expect(raw_entry_point_names(project)).toEqual(["write_locales"]);
+      const call_graph = raw_call_graph(project, false);
+      expect(resolved_call_targets(call_graph, "build_all")).toEqual([
+        "getAllProjectOutputs",
+      ]);
+      expect(resolved_call_targets(call_graph, "emit_template")).toEqual(["build_all"]);
+      expect(resolved_call_targets(call_graph, "transform_template")).toEqual([
+        "emit_template",
+      ]);
+      expect(entry_point_names(call_graph)).toEqual(["write_locales"]);
     });
 
     it("reports a file dropped by an indexing error (express lib/response.js shape)", async () => {
@@ -355,16 +425,18 @@ describe("load_project", () => {
       });
 
       expect([...dropped_files]).toEqual([path.join(temp_dir, "lib/response.js")]);
-      // A dropped file keeps the content `update_file` stored before indexing
-      // threw, so membership of `get_file_contents()` does not mean a file was
-      // indexed — anything computing "discovered minus indexed" has to add the
-      // dropped set back after subtracting the contents map.
+      // Indexing writes registries in stages, so the throw left content,
+      // language and definitions behind. Rolling that back is what keeps the
+      // dropped file from minting phantom entry points and phantom uncaptured
+      // grep hits — its text must not be in the corpus while its references
+      // are missing.
       expect(project.get_file_contents().has(
         path.join(temp_dir, "lib/response.js") as FilePath,
-      )).toBe(true);
+      )).toBe(false);
       expect(project.get_file_contents().has(
         path.join(temp_dir, "lib/app.js") as FilePath,
       )).toBe(true);
+      expect(node_names(raw_call_graph(project, false))).toEqual(["app"]);
     });
 
     it("reports no dropped files when every discovered file indexes", async () => {
@@ -373,6 +445,43 @@ describe("load_project", () => {
       const { dropped_files } = await load_project({ project_path: temp_dir });
 
       expect([...dropped_files]).toEqual([]);
+    });
+
+    it("indexes the same corpus when the harness passes IGNORED_DIRECTORIES as exclude", async () => {
+      await write_file(
+        "src/outputs.ts",
+        "export function getAllProjectOutputs(): string[] {\n  return [];\n}\n",
+      );
+      await write_file(
+        "packages/compiler/src/template/pipeline/emit.ts",
+        [
+          "import { getAllProjectOutputs } from \"../../../../../src/outputs\";",
+          "",
+          "export function emit_template(): string[] {",
+          "  return getAllProjectOutputs();",
+          "}",
+          "",
+        ].join("\n"),
+      );
+
+      const { project } = await load_project({
+        project_path: temp_dir,
+        exclude: [...IGNORED_DIRECTORIES],
+      });
+
+      const indexed = [...project.get_file_contents().keys()]
+        .map((f) => path.relative(temp_dir, f))
+        .sort();
+      expect(indexed).toEqual([
+        "packages/compiler/src/template/pipeline/emit.ts",
+        "src/outputs.ts",
+      ]);
+
+      const call_graph = raw_call_graph(project, false);
+      expect(resolved_call_targets(call_graph, "emit_template")).toEqual([
+        "getAllProjectOutputs",
+      ]);
+      expect(entry_point_names(call_graph)).toEqual(["emit_template"]);
     });
   });
 });

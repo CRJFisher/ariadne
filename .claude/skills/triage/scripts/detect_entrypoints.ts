@@ -352,7 +352,7 @@ async function analyze_directory(
 
   // Load project using shared pipeline
   const load_start = Date.now();
-  const { project } = await load_project({
+  const { project, dropped_files } = await load_project({
     project_path,
     folders: options.folders,
     exclude,
@@ -389,9 +389,18 @@ async function analyze_directory(
   log_info(
     `find_source_files: done ${search_paths.length}/${search_paths.length} in ${Date.now() - scan_start}ms (${all_files.length} files total)`,
   );
+  // Gate: files indexing dropped outright. Their call edges are absent from the
+  // graph while the files exist on disk, so every entry they call reads as
+  // uncalled.
+  if (dropped_files.size > 0) {
+    log_warn(
+      `${dropped_files.size} discovered file(s) failed to index and contribute no call edges`,
+    );
+  }
+
   // Gate: indexed vs discovered ratio. A big gap suggests indexing dropped files
-  // (parse errors, unsupported languages, filter mismatch) and downstream work
-  // will be blind to those files.
+  // (parse errors, unsupported languages) and downstream work will be blind to
+  // those files.
   if (all_files.length > 0 && stats.file_count / all_files.length < 0.5) {
     log_warn(
       `indexed ${stats.file_count}/${all_files.length} files (ratio ${(stats.file_count / all_files.length).toFixed(2)}) — indexing may be dropping files`,

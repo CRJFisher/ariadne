@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
+import { describe, it, expect, afterEach } from "vitest";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { Project } from "../project";
@@ -7,9 +7,13 @@ import {
   build_grep_index,
   extract_entry_point_diagnostics,
 } from "./extract_entry_point_diagnostics";
+import { trace_call_graph } from "../trace_call_graph/trace_call_graph";
+import { derive_fault_area } from "@ariadnejs/types";
 import type {
+  DeriveFaultAreaInput,
   EnrichedEntryPoint,
   EntryPointDiagnostics,
+  Language,
   SymbolName,
   ScopeId,
   FilePath,
@@ -41,12 +45,22 @@ describe("build_grep_index", () => {
     return source.split("\n");
   }
 
+  function languages_for(
+    lines_by_file: ReadonlyMap<FilePath, string[]>,
+  ): Map<FilePath, Language> {
+    const out = new Map<FilePath, Language>();
+    for (const file_path of lines_by_file.keys()) {
+      out.set(file_path, file_path.endsWith(".js") ? "javascript" : "typescript");
+    }
+    return out;
+  }
+
   it("indexes simple identifier-followed-by-paren calls", () => {
     const lines_by_file = new Map<FilePath, string[]>([
       [fp("a.ts"), as_lines("const x = foo();\nconst y = bar();")],
     ]);
 
-    const index = build_grep_index(lines_by_file, new Map());
+    const index = build_grep_index(lines_by_file, new Map(), languages_for(lines_by_file));
 
     expect(index.get("foo")).toEqual([
       { file_path: "a.ts", line: 1, content: "const x = foo();", captures: [] },
@@ -62,7 +76,7 @@ describe("build_grep_index", () => {
       [fp("b.ts"), as_lines("foo();")],
     ]);
 
-    const index = build_grep_index(lines_by_file, new Map());
+    const index = build_grep_index(lines_by_file, new Map(), languages_for(lines_by_file));
 
     const foo_hits = index.get("foo") ?? [];
     expect(foo_hits).toHaveLength(3);
@@ -78,7 +92,7 @@ describe("build_grep_index", () => {
       [fp("a.ts"), as_lines("const foo = 1;\nfoo.bar;\nfoo[0];")],
     ]);
 
-    const index = build_grep_index(lines_by_file, new Map());
+    const index = build_grep_index(lines_by_file, new Map(), languages_for(lines_by_file));
 
     expect(index.get("foo")).toBeUndefined();
     expect(index.get("bar")).toBeUndefined();
@@ -89,7 +103,7 @@ describe("build_grep_index", () => {
       [fp("a.ts"), as_lines("foo  ();\n  bar (x);")],
     ]);
 
-    const index = build_grep_index(lines_by_file, new Map());
+    const index = build_grep_index(lines_by_file, new Map(), languages_for(lines_by_file));
 
     expect(index.get("foo")).toHaveLength(1);
     expect(index.get("bar")).toHaveLength(1);
@@ -100,7 +114,7 @@ describe("build_grep_index", () => {
       [fp("a.js"), as_lines("$(selector); _private();")],
     ]);
 
-    const index = build_grep_index(lines_by_file, new Map());
+    const index = build_grep_index(lines_by_file, new Map(), languages_for(lines_by_file));
 
     expect(index.get("$")).toHaveLength(1);
     expect(index.get("_private")).toHaveLength(1);
@@ -124,13 +138,13 @@ describe("build_grep_index", () => {
       [fp("a.ts"), new Map([[1, refs_at_line]])],
     ]);
 
-    const index = build_grep_index(lines_by_file, call_refs_by_file_line);
+    const index = build_grep_index(lines_by_file, call_refs_by_file_line, languages_for(lines_by_file));
 
     expect(index.get("foo")?.[0].captures).toEqual(["@reference.call"]);
   });
 
   it("returns empty index for no source files", () => {
-    const index = build_grep_index(new Map(), new Map());
+    const index = build_grep_index(new Map(), new Map(), new Map());
     expect(index.size).toBe(0);
   });
 });
@@ -162,15 +176,21 @@ describe("extract_entry_point_diagnostics populates the fault-area disambiguator
 
 // ===== Grep-hit qualification =====
 
+const temp_roots: string[] = [];
+
+afterEach(async () => {
+  await Promise.all(temp_roots.splice(0).map((root) => rm(root, { recursive: true, force: true })));
+});
+
 /**
- * Index a set of on-disk files as one `Project`. The files are real because
- * import resolution reads the filesystem; a pair of in-memory `update_file`
- * calls resolves nothing and would make every case below pass vacuously.
+ * Index a set of on-disk files as one `Project`, matching how `load_project`
+ * builds one so import resolution reads the same filesystem the pipeline does.
  */
 async function project_from_files(
   files: Record<string, string>,
 ): Promise<Project> {
   const root = await mkdtemp(join(tmpdir(), "ariadne-grep-qual-"));
+  temp_roots.push(root);
   const project = new Project();
   await project.initialize(root as FilePath);
   for (const [relative_path, content] of Object.entries(files)) {
@@ -199,9 +219,35 @@ function diagnostics_for(
   return found[0].diagnostics;
 }
 
+/**
+ * Diagnostics over the RAW call graph, as `detect_entrypoints` computes them.
+ * `Project.get_call_graph()` has already dropped entries the builtin
+ * classifiers claim (a `@property` accessor among them), and those are exactly
+ * the rows whose evidence this qualification has to get right.
+ */
 async function enriched_for(files: Record<string, string>): Promise<EnrichedEntryPoint[]> {
   const project = await project_from_files(files);
-  return extract_entry_point_diagnostics(project.get_call_graph(), project);
+  const call_graph = trace_call_graph(
+    project.definitions,
+    project.resolutions,
+    project.get_languages(),
+    { include_tests: false },
+  );
+  return extract_entry_point_diagnostics(call_graph, project);
+}
+
+/**
+ * The fault-area derivation reads only these fields off the diagnostics, so a
+ * qualification change is only proven once the route it produces is asserted —
+ * a phantom hit used to force `syntactic_extraction`.
+ */
+function fault_area_input(diagnostics: EntryPointDiagnostics): DeriveFaultAreaInput {
+  return {
+    resolution_failure: null,
+    diagnosis: diagnostics.diagnosis,
+    has_uncaptured_indexed_grep_hit: diagnostics.has_uncaptured_indexed_grep_hit,
+    callers_only_in_unindexed_tests: diagnostics.callers_only_in_unindexed_tests,
+  };
 }
 
 describe("a grep hit on a declaration line is not a call site", () => {
@@ -279,6 +325,103 @@ describe("a grep hit on a declaration line is not a call site", () => {
   });
 });
 
+describe("a grep hit on a declaration line is not a call site, across driver families", () => {
+  // typeorm's six QueryRunner overrides: an abstract base plus two concrete
+  // drivers, so every name has three declaration lines and no call.
+  const TYPEORM_METHODS = [
+    "dropSchema",
+    "hasSchema",
+    "createDatabase",
+    "dropPrimaryKey",
+    "dropTable",
+    "renameTable",
+  ] as const;
+
+  function query_runner(class_name: string, abstract_class: boolean): string {
+    const keyword = abstract_class ? "abstract class" : "class";
+    const body = abstract_class
+      ? TYPEORM_METHODS.map((m) => `  abstract ${m}(name: string): Promise<void>;`)
+      : TYPEORM_METHODS.flatMap((m) => [
+          `  async ${m}(name: string): Promise<void> {`,
+          "    return;",
+          "  }",
+        ]);
+    return [`export ${keyword} ${class_name} {`, ...body, "}", ""].join("\n");
+  }
+
+  it("rejects every override declaration of the six typeorm driver methods", async () => {
+    const enriched = await enriched_for({
+      "driver/QueryRunner.ts": query_runner("BaseQueryRunner", true),
+      "driver/mysql/MysqlQueryRunner.ts": query_runner("MysqlQueryRunner", false),
+      "driver/postgres/PostgresQueryRunner.ts": query_runner("PostgresQueryRunner", false),
+    });
+
+    for (const method of TYPEORM_METHODS) {
+      const mysql = diagnostics_for(enriched, method, "/mysql/MysqlQueryRunner.ts");
+      expect(mysql.grep_call_sites).toEqual([]);
+      expect(mysql.diagnosis).toEqual("no-textual-callers");
+      expect(mysql.has_uncaptured_indexed_grep_hit).toEqual(false);
+      expect(derive_fault_area(fault_area_input(mysql)).area).not.toEqual(
+        "syntactic_extraction",
+      );
+    }
+  });
+
+  it("rejects decorated Python declarations (celery control-command shape)", async () => {
+    const commands = ["pool_grow", "autoscale", "add_consumer"];
+    const module_source = (decorator: string): string =>
+      [
+        "class Panel:",
+        ...commands.flatMap((c) => [
+          `    @${decorator}`,
+          `    def ${c}(state, n=1):`,
+          "        return state",
+        ]),
+        "",
+      ].join("\n");
+
+    const enriched = await enriched_for({
+      "celery/worker/control.py": module_source("control_command"),
+      "celery/app/control.py": module_source("inspect_command"),
+    });
+
+    for (const command of commands) {
+      const worker = diagnostics_for(enriched, command, "worker/control.py");
+      expect(worker.grep_call_sites).toEqual([]);
+      expect(worker.diagnosis).toEqual("no-textual-callers");
+      expect(derive_fault_area(fault_area_input(worker)).area).not.toEqual(
+        "syntactic_extraction",
+      );
+    }
+  });
+
+  it("rejects a @property declaration on a sibling class (django as_text shape)", async () => {
+    const enriched = await enriched_for({
+      "django/forms/boundfield.py": [
+        "class BoundField:",
+        "    @property",
+        "    def as_text(self):",
+        "        return 1",
+        "",
+      ].join("\n"),
+      "django/forms/widgets.py": [
+        "class Widget:",
+        "    @property",
+        "    def as_text(self):",
+        "        return 2",
+        "",
+      ].join("\n"),
+    });
+
+    const bound = diagnostics_for(enriched, "as_text", "boundfield.py");
+    expect(bound.grep_call_sites).toEqual([]);
+    expect(bound.diagnosis).toEqual("no-textual-callers");
+    expect(derive_fault_area(fault_area_input(bound)).area).not.toEqual(
+      "syntactic_extraction",
+    );
+  });
+});
+
 describe("a grep hit inside a comment is not a call site", () => {
   it("rejects a Rust doc comment (tokio initialize_unfilled shape)", async () => {
     const enriched = await enriched_for({
@@ -339,10 +482,60 @@ describe("a grep hit inside a comment is not a call site", () => {
     expect(target.grep_call_sites).toEqual([]);
     expect(target.diagnosis).toEqual("no-textual-callers");
   });
+
+  it("rejects a doctest line inside a Python docstring (celery add_consumer shape)", async () => {
+    const enriched = await enriched_for({
+      "celery/worker/control.py": [
+        "def add_consumer(state, queue):",
+        "    return queue",
+        "",
+      ].join("\n"),
+      "celery/app/defaults.py": [
+        "def panel():",
+        "    \"\"\"Control panel.",
+        "",
+        "    Example:",
+        "        >>> add_consumer('queue-name')",
+        "    \"\"\"",
+        "    return 1",
+        "",
+      ].join("\n"),
+    });
+
+    const target = diagnostics_for(enriched, "add_consumer", "worker/control.py");
+    expect(target.grep_call_sites).toEqual([]);
+    expect(target.diagnosis).toEqual("no-textual-callers");
+    expect(derive_fault_area(fault_area_input(target)).area).not.toEqual(
+      "syntactic_extraction",
+    );
+  });
 });
 
 describe("qualification keeps genuine call sites", () => {
-  it("keeps an unresolved call on the same name and flags it uncaptured", async () => {
+  it("keeps a Rust deref that opens the line", async () => {
+    const enriched = await enriched_for({
+      "src/counter.rs": [
+        "pub struct Counter;",
+        "impl Counter {",
+        "    pub fn borrow_mut(&self) -> u32 {",
+        "        1",
+        "    }",
+        "}",
+        "",
+      ].join("\n"),
+      "src/user.rs": [
+        "pub fn bump(c: &mut u32) {",
+        "    *c.borrow_mut();",
+        "}",
+        "",
+      ].join("\n"),
+    });
+
+    const target = diagnostics_for(enriched, "borrow_mut", "counter.rs");
+    expect(target.grep_call_sites.map((h) => h.content)).toEqual(["*c.borrow_mut();"]);
+  });
+
+  it("keeps a module-level call the resolver never captured", async () => {
     const enriched = await enriched_for({
       "celery/worker/control.py": [
         "class Panel:",
@@ -360,9 +553,12 @@ describe("qualification keeps genuine call sites", () => {
     });
 
     const target = diagnostics_for(enriched, "pool_shrink", "control.py");
-    expect(target.grep_call_sites.map((h) => h.content)).toEqual([
-      "panel.pool_shrink(1)",
+    expect(target.grep_call_sites.map((h) => ({ line: h.line, content: h.content, captures: h.captures }))).toEqual([
+      { line: 4, content: "panel.pool_shrink(1)", captures: [] },
     ]);
+    // Module-level code belongs to no callable body, so the resolver produced
+    // no `CallReference` at that line — the hit is genuinely uncaptured.
+    expect(target.ariadne_call_refs).toEqual([]);
     expect(target.has_uncaptured_indexed_grep_hit).toEqual(true);
     expect(target.diagnosis).toEqual("callers-not-in-registry");
   });
