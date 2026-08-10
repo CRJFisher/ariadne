@@ -22,7 +22,7 @@
  *     drift, supports in-memory edits via `Project.update_file`).
  *
  * This pass is synchronous and free of FS I/O. The out-of-index grep
- * (`attach_out_of_index_grep_hits`, the one FS-touching diagnostic) lives in
+ * (`complete_caller_evidence`, the one FS-touching diagnostic) lives in
  * its own module; callers chain it after extraction when they need
  * `grep_call_sites_outside_index` populated.
  */
@@ -47,7 +47,6 @@ import type {
   GrepHit,
   CallRefDiagnostic,
   ReferenceSiteDiagnostic,
-  SymbolReference,
 } from "@ariadnejs/types";
 
 import { log_info, log_warn } from "../logging";
@@ -110,7 +109,7 @@ export function build_constructor_to_class_name_map(
  * bytes — diagnostics never re-read these files from disk.
  *
  * Synchronous and free of FS I/O. The out-of-index grep is a
- * separate async pass (`attach_out_of_index_grep_hits`) — chain it after
+ * separate async pass (`complete_caller_evidence`) — chain it after
  * this function when classifiers need `grep_call_sites_outside_index`.
  */
 export function extract_entry_point_diagnostics(
@@ -343,11 +342,6 @@ const IDENTIFIER_KEY = /^[A-Za-z_$][\w$]*$/;
  * these and nothing on the call channel. The call-shaped kinds are deliberately
  * absent: those already arrive as `ariadne_call_refs`.
  */
-const NON_CALL_REFERENCE_KINDS: ReadonlySet<string> = new Set([
-  "variable_reference",
-  "property_access",
-]);
-
 const SELF_KEYWORDS: ReadonlySet<string> = new Set(["this", "self", "super", "cls"]);
 
 /**
@@ -379,10 +373,23 @@ export function build_reference_index(
       if (ref.kind === "variable_reference" && ref.access_type === "write") {
         written_positions.add(`${ref.location.start_line}:${ref.location.start_column}`);
       }
+      // `self.errors = []` is recorded as an assignment whose target is the
+      // attribute; the property access at that same position is the write, not
+      // a mention that reaches a method of that name.
+      if (ref.kind === "assignment") {
+        written_positions.add(
+          `${ref.target_location.start_line}:${ref.target_location.start_column}`,
+        );
+      }
     }
 
     for (const ref of file_references) {
-      if (!NON_CALL_REFERENCE_KINDS.has(ref.kind)) continue;
+      // The two kinds that mention a name without calling it. Written as a
+      // discriminated check rather than a set membership so the arms below
+      // carry each kind's own `access_type` vocabulary.
+      if (ref.kind !== "variable_reference" && ref.kind !== "property_access") {
+        continue;
+      }
 
       const segments = (ref.name as string).split(".");
       const key = segments[segments.length - 1];
@@ -403,13 +410,13 @@ export function build_reference_index(
       // registration site that came after them.
       if (declaration_keys.has(declaration_key(file_path, line, key))) continue;
 
-      // A write is not a caller. `errors = []` assigns a local; it does not
-      // reach a method named `errors` — nor does the read the indexer records
-      // beside the write at the same position.
-      if (
-        ref.kind === "variable_reference" &&
-        written_positions.has(`${ref.location.start_line}:${ref.location.start_column}`)
-      ) {
+      // A write is not a caller. `errors = []` assigns a local and
+      // `self.errors = []` assigns an attribute; neither reaches a method named
+      // `errors`. The exclusion is position-keyed rather than kind-keyed
+      // because the indexer records the same assignment several times over —
+      // the write plus one or more reads at the same position — so filtering
+      // the write alone would let its own reads through.
+      if (written_positions.has(`${ref.location.start_line}:${ref.location.start_column}`)) {
         continue;
       }
 
@@ -437,14 +444,26 @@ export function build_reference_index(
         continue;
       }
 
-      sites.set(position, {
+      const location = {
         file_path,
         line,
         content: read_source_line(lines_by_file, file_path, line).trim(),
-        reference_kind: ref.kind,
-        access_type: reference_access_type(ref),
-        receiver_kind: reference_receiver_kind(ref),
-      });
+      };
+      sites.set(
+        position,
+        ref.kind === "property_access"
+          ? {
+              ...location,
+              reference_kind: "property_access",
+              access_type: ref.access_type,
+              receiver_kind: receiver_kind_of(ref.property_chain),
+            }
+          : {
+              ...location,
+              reference_kind: "variable_reference",
+              access_type: ref.access_type,
+            },
+      );
     }
   }
 
@@ -453,17 +472,15 @@ export function build_reference_index(
   );
 }
 
-function reference_access_type(ref: SymbolReference): string | null {
-  if (ref.kind === "variable_reference") return ref.access_type;
-  if (ref.kind === "property_access") return ref.access_type;
-  return null;
-}
-
-function reference_receiver_kind(ref: SymbolReference): string | null {
-  if (ref.kind !== "property_access") return null;
-  const head = ref.property_chain[0] as string | undefined;
-  if (head === undefined) return null;
-  return SELF_KEYWORDS.has(head) ? "self" : "identifier";
+/**
+ * An empty chain reads as `identifier`: the reference is not on the enclosing
+ * instance, which is the only distinction this field is consulted for.
+ */
+function receiver_kind_of(
+  property_chain: readonly SymbolName[],
+): "self" | "identifier" {
+  const head = property_chain[0] as string | undefined;
+  return head !== undefined && SELF_KEYWORDS.has(head) ? "self" : "identifier";
 }
 
 /**
@@ -585,7 +602,7 @@ function gather_diagnostics(
 
   const diagnostics: EntryPointDiagnostics = {
     grep_call_sites,
-    // Populated by `attach_out_of_index_grep_hits`, which owns the residue.
+    // Populated by `complete_caller_evidence`, which owns the residue.
     grep_call_sites_outside_index: [],
     // Keyed by `grep_name`, so a constructor's references are found under the
     // class name — the same name the grep channel searches for.

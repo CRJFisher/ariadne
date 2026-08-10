@@ -39,7 +39,7 @@ const PACKAGE_ENTRY_BARREL = `${CORE_SRC}/index.ts`;
 // when the lift lands.
 export const GRANDFATHERED_EDGES: ReadonlySet<string> = new Set([
   `${CORE_SRC}/trace_call_graph/trace_call_graph.ts → ../project/detect_test_file`,
-  `${CORE_SRC}/classify_entry_points/attach_out_of_index_grep_hits.ts → ../project/file_loading`,
+  `${CORE_SRC}/classify_entry_points/complete_caller_evidence.ts → ../project/file_loading`,
 ]);
 
 export interface SourceFile {

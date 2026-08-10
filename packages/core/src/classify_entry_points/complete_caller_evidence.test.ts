@@ -7,10 +7,10 @@ import { load_project } from "../project/load_project";
 import { trace_call_graph } from "../trace_call_graph/trace_call_graph";
 import { extract_entry_point_diagnostics } from "./extract_entry_point_diagnostics";
 import {
-  attach_out_of_index_grep_hits,
+  complete_caller_evidence,
   build_class_name_by_constructor_position,
   collect_files_outside_index,
-} from "./attach_out_of_index_grep_hits";
+} from "./complete_caller_evidence";
 
 const temp_roots: string[] = [];
 
@@ -57,7 +57,7 @@ async function analyse(
     dropped_files,
     [],
   );
-  await attach_out_of_index_grep_hits({
+  await complete_caller_evidence({
     entry_points,
     project_path: root,
     indexed_source_files: project.get_file_contents(),

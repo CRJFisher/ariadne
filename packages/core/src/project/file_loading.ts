@@ -1,5 +1,6 @@
 import * as fs from "fs/promises";
 import * as path from "path";
+import type { FilePath } from "@ariadnejs/types";
 
 /**
  * Supported source file extensions regex
@@ -132,8 +133,8 @@ export async function find_source_files(
   folder_path: string,
   project_path: string,
   gitignore_patterns?: string[]
-): Promise<string[]> {
-  const files: string[] = [];
+): Promise<FilePath[]> {
+  const files: FilePath[] = [];
 
   // Load gitignore if not provided
   const patterns = gitignore_patterns ?? (await parse_gitignore(project_path));
@@ -177,7 +178,7 @@ export async function find_source_files(
       if (entry.isDirectory()) {
         await walk(full_path);
       } else if (entry.isFile() && is_supported_file(entry.name)) {
-        files.push(full_path);
+        files.push(full_path as FilePath);
       }
     }
   }

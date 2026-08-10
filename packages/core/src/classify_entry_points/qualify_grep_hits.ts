@@ -45,15 +45,27 @@ interface CommentSyntax {
    */
   readonly quotes: readonly string[];
   /**
-   * Quote characters opening a literal that may still hold code, so its
-   * contents stay eligible: a JS template literal interpolates real calls
-   * (`${render(x)}`). Scanning still skips the literal so a `//` inside a URL
-   * does not read as a comment.
+   * Quote characters whose literal always interpolates — a JS template
+   * literal. Its text is prose like any other literal; only the interpolated
+   * spans hold code.
    */
-  readonly code_quotes: readonly string[];
+  readonly interpolated_quotes: readonly string[];
+  /**
+   * Letters that mark an otherwise-plain literal as interpolating when written
+   * immediately before the quote: Python's `f"…"`, `rf'…'`, `F"""…"""`.
+   */
+  readonly interpolation_prefixes: readonly string[];
+  /** Sequence opening an interpolated span inside such a literal. */
+  readonly interpolation_open: string;
   /** Python's `"""` / `'''`, which span lines. */
   readonly triple_quotes: readonly string[];
 }
+
+/**
+ * Letters that may precede a Python string quote as part of its prefix. Bounded
+ * so an ordinary identifier abutting a quote cannot read as one.
+ */
+const PYTHON_STRING_PREFIX_LETTERS = /^[rbuf]{1,3}$/i;
 
 const COMMENT_SYNTAX: Record<Language, CommentSyntax> = {
   javascript: {
@@ -61,7 +73,9 @@ const COMMENT_SYNTAX: Record<Language, CommentSyntax> = {
     block_comment: true,
     nested_block_comment: false,
     quotes: ["\"", "'"],
-    code_quotes: ["`"],
+    interpolated_quotes: ["`"],
+    interpolation_prefixes: [],
+    interpolation_open: "${",
     triple_quotes: [],
   },
   typescript: {
@@ -69,7 +83,9 @@ const COMMENT_SYNTAX: Record<Language, CommentSyntax> = {
     block_comment: true,
     nested_block_comment: false,
     quotes: ["\"", "'"],
-    code_quotes: ["`"],
+    interpolated_quotes: ["`"],
+    interpolation_prefixes: [],
+    interpolation_open: "${",
     triple_quotes: [],
   },
   python: {
@@ -77,7 +93,9 @@ const COMMENT_SYNTAX: Record<Language, CommentSyntax> = {
     block_comment: false,
     nested_block_comment: false,
     quotes: ["\"", "'"],
-    code_quotes: [],
+    interpolated_quotes: [],
+    interpolation_prefixes: ["f"],
+    interpolation_open: "{",
     triple_quotes: ["\"\"\"", "'''"],
   },
   rust: {
@@ -87,7 +105,11 @@ const COMMENT_SYNTAX: Record<Language, CommentSyntax> = {
     // `'` opens a lifetime far more often than a char literal, and treating it
     // as a string delimiter would swallow the rest of the line.
     quotes: ["\""],
-    code_quotes: [],
+    interpolated_quotes: [],
+    // `format!("{}", x)` interpolates by position, not by expression, so a
+    // braced span in a Rust literal holds no call syntax.
+    interpolation_prefixes: [],
+    interpolation_open: "{",
     triple_quotes: [],
   },
 };
@@ -106,7 +128,7 @@ export function build_code_ranges(
   const ranges_by_line: CodeRange[][] = [];
 
   let block_depth = 0;
-  let open_triple: string | null = null;
+  let open_triple: { quote: string; interpolates: boolean } | null = null;
 
   for (const line of lines) {
     const ranges: CodeRange[] = [];
@@ -114,6 +136,17 @@ export function build_code_ranges(
     // that construct closes on it.
     let code_start = block_depth > 0 || open_triple !== null ? line.length : 0;
     let i = 0;
+
+    if (open_triple !== null && open_triple.interpolates) {
+      const closing = line.indexOf(open_triple.quote);
+      scan_interpolations(
+        line,
+        0,
+        closing === -1 ? line.length : closing,
+        syntax,
+        ranges,
+      );
+    }
 
     const close_code_at = (end: number): void => {
       if (end > code_start) ranges.push([code_start, end]);
@@ -137,8 +170,8 @@ export function build_code_ranges(
       }
 
       if (open_triple !== null) {
-        if (line.startsWith(open_triple, i)) {
-          i += open_triple.length;
+        if (line.startsWith(open_triple.quote, i)) {
+          i += open_triple.quote.length;
           open_triple = null;
           code_start = i;
           continue;
@@ -149,11 +182,16 @@ export function build_code_ranges(
 
       const triple = syntax.triple_quotes.find((q) => line.startsWith(q, i));
       if (triple !== undefined) {
+        const interpolates = has_interpolation_prefix(line, i, syntax);
         close_code_at(i);
         i += triple.length;
         const closing = line.indexOf(triple, i);
+        const body_end = closing === -1 ? line.length : closing;
+        if (interpolates) {
+          scan_interpolations(line, i, body_end, syntax, ranges);
+        }
         if (closing === -1) {
-          open_triple = triple;
+          open_triple = { quote: triple, interpolates };
           code_start = line.length;
           i = line.length;
         } else {
@@ -179,15 +217,20 @@ export function build_code_ranges(
         continue;
       }
 
-      if (syntax.quotes.includes(line[i])) {
+      const interpolated_quote = syntax.interpolated_quotes.includes(line[i]);
+      if (interpolated_quote || syntax.quotes.includes(line[i])) {
+        const interpolates =
+          interpolated_quote || has_interpolation_prefix(line, i, syntax);
         close_code_at(i);
-        i = skip_string_literal(line, i);
+        const after = skip_string_literal(line, i);
+        if (interpolates) {
+          // The closing quote is excluded when the literal terminated, so an
+          // interpolation cannot be read out of the delimiter itself.
+          const body_end = after > i + 1 && line[after - 1] === line[i] ? after - 1 : after;
+          scan_interpolations(line, i + 1, body_end, syntax, ranges);
+        }
+        i = after;
         code_start = i;
-        continue;
-      }
-
-      if (syntax.code_quotes.includes(line[i])) {
-        i = skip_string_literal(line, i);
         continue;
       }
 
@@ -199,6 +242,66 @@ export function build_code_ranges(
   }
 
   return ranges_by_line;
+}
+
+/**
+ * Whether the literal opening at `quote_index` carries a prefix marking it as
+ * interpolating — Python's `f`, alone or combined with `r`/`b`/`u`.
+ */
+function has_interpolation_prefix(
+  line: string,
+  quote_index: number,
+  syntax: CommentSyntax,
+): boolean {
+  if (syntax.interpolation_prefixes.length === 0) return false;
+  let start = quote_index;
+  while (start > 0 && /[A-Za-z]/.test(line[start - 1])) start--;
+  const prefix = line.slice(start, quote_index);
+  if (prefix.length === 0 || !PYTHON_STRING_PREFIX_LETTERS.test(prefix)) return false;
+  const lower = prefix.toLowerCase();
+  return syntax.interpolation_prefixes.some((p) => lower.includes(p));
+}
+
+/**
+ * Record the interpolated spans of a literal body as code.
+ *
+ * The literal's own text is prose, so only what sits between the interpolation
+ * delimiters is eligible. Brace depth is tracked so a nested object or
+ * subscript inside the span does not close it early, and a doubled opener is
+ * the language's escape for a literal brace.
+ */
+function scan_interpolations(
+  line: string,
+  body_start: number,
+  body_end: number,
+  syntax: CommentSyntax,
+  ranges: CodeRange[],
+): void {
+  const open = syntax.interpolation_open;
+  let i = body_start;
+  while (i < body_end) {
+    if (!line.startsWith(open, i)) {
+      i++;
+      continue;
+    }
+    // `{{` in an f-string, `${$` never — a doubled single-char opener is the
+    // escape for a literal brace and interpolates nothing.
+    if (open.length === 1 && line.startsWith(open + open, i)) {
+      i += 2;
+      continue;
+    }
+    const span_start = i + open.length;
+    let depth = 1;
+    let j = span_start;
+    while (j < body_end && depth > 0) {
+      if (line[j] === "{") depth++;
+      else if (line[j] === "}") depth--;
+      if (depth === 0) break;
+      j++;
+    }
+    if (j > span_start) ranges.push([span_start, j]);
+    i = j + 1;
+  }
 }
 
 /**

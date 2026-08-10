@@ -4,7 +4,7 @@ import * as path from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { collect_files_outside_index, IGNORED_DIRECTORIES, load_project } from "@ariadnejs/core";
+import { find_source_files, IGNORED_DIRECTORIES, load_project } from "@ariadnejs/core";
 import type { EnrichedEntryPoint } from "@ariadnejs/types";
 
 import { analyze_directory, load_project_config } from "./detect_entrypoints.js";
@@ -53,16 +53,18 @@ async function analyze(options: {
     folders: options.folders,
     exclude,
   });
-  const residue = await collect_files_outside_index(
-    tmpdir,
-    project.get_file_contents(),
-    dropped_files,
-    [],
-  );
+  // Discovered minus indexed, over the same public surfaces the pass itself
+  // keys on, so the expectation cannot drift from a private helper's shape.
+  const indexed_files = project.get_file_contents();
+  const discovered = await find_source_files(tmpdir, tmpdir, []);
+  const residue = new Set([
+    ...discovered.filter((f) => !indexed_files.has(f)),
+    ...dropped_files,
+  ]);
   return {
     indexed: result.indexed_files.map((f) => path.relative(tmpdir, f)).sort(),
     entry_points: result.entry_points,
-    out_of_index: [...residue.keys()].map((f) => path.relative(tmpdir, f)).sort(),
+    out_of_index: [...residue].map((f) => path.relative(tmpdir, f)).sort(),
   };
 }
 
@@ -265,7 +267,7 @@ describe("a config exclude is a corpus exclusion, and it costs call edges", () =
   });
 });
 
-describe("attach_out_of_index_grep_hits", () => {
+describe("complete_caller_evidence", () => {
   it("attaches a caller that a folder scope held out of the corpus", async () => {
     await write("src/foo.ts", "export function foo() {}\n");
     await write("tests/foo.test.ts", "import { foo } from '../src/foo.js';\nfoo();\n");

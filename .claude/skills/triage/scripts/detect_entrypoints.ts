@@ -35,7 +35,7 @@ import {
   log_warn,
   trace_call_graph,
   extract_entry_point_diagnostics,
-  attach_out_of_index_grep_hits,
+  complete_caller_evidence,
   build_class_name_by_constructor_position,
 } from "@ariadnejs/core";
 import type { PersistenceStorage } from "@ariadnejs/core";
@@ -469,7 +469,7 @@ export async function analyze_directory(
   // Build per-entry diagnostics. Classification is intentionally NOT run
   // here — the triage pipeline re-classifies in `prepare_triage` so it can
   // incorporate `tp_cache` decisions. Running classifier rules now would
-  // also fire before `attach_out_of_index_grep_hits` completes the evidence
+  // also fire before `complete_caller_evidence` completes the evidence
   // and settles each diagnosis, producing wrong verdicts.
   const entry_points: EnrichedEntryPoint[] = extract_entry_point_diagnostics(
     call_graph,
@@ -484,7 +484,7 @@ export async function analyze_directory(
   // walk carries gitignore patterns only: a config `exclude` must not narrow
   // it, because those files ARE the residue it exists to find. `include_tests`
   // plays no part either; it decides candidacy, never the corpus.
-  await attach_out_of_index_grep_hits({
+  await complete_caller_evidence({
     entry_points,
     project_path,
     indexed_source_files: project.get_file_contents(),

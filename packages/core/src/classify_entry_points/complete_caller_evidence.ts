@@ -1,9 +1,9 @@
 /**
- * The out-of-index grep pass — the only diagnostic that touches the filesystem
- * outside the indexed source set. It lives apart from
- * `extract_entry_point_diagnostics` so that pass stays synchronous and free of
- * FS I/O; callers chain this one after extraction to populate
- * `grep_call_sites_outside_index` and settle each entry's diagnosis.
+ * Completes each entry's caller evidence and settles its diagnosis — the only
+ * diagnostic that touches the filesystem outside the indexed source set. It
+ * lives apart from `extract_entry_point_diagnostics` so that pass stays
+ * synchronous and free of FS I/O; callers chain this one after extraction to
+ * populate `grep_call_sites_outside_index` and decide the final diagnosis.
  *
  * The file set is exactly *discovered minus indexed*: everything the walker
  * finds that never reached a registry, whether held out by a project-config
@@ -40,20 +40,20 @@ export function build_class_name_by_constructor_position(
   return out;
 }
 
-export interface OutOfIndexGrepInput {
+export interface OutsideIndexGrepInput {
   readonly entry_points: EnrichedEntryPoint[];
   readonly project_path: string;
   /** The indexed corpus — `Project.get_file_contents()`. */
-  readonly indexed_source_files: ReadonlyMap<string, string>;
+  readonly indexed_source_files: ReadonlyMap<FilePath, string>;
   /** Files read but dropped by an indexing error, from `load_project`. */
-  readonly dropped_files: ReadonlySet<string>;
+  readonly dropped_files: ReadonlySet<FilePath>;
   readonly class_name_by_constructor_position: ReadonlyMap<string, string>;
   /** Gitignore patterns only — a config `exclude` must NOT narrow this walk. */
   readonly gitignore_patterns: readonly string[];
 }
 
-export async function attach_out_of_index_grep_hits(
-  input: OutOfIndexGrepInput,
+export async function complete_caller_evidence(
+  input: OutsideIndexGrepInput,
 ): Promise<void> {
   const {
     entry_points,
@@ -71,7 +71,7 @@ export async function attach_out_of_index_grep_hits(
     gitignore_patterns,
   );
 
-  const grep_index = build_out_of_index_grep_index(out_of_index);
+  const grep_index = build_outside_index_grep_index(out_of_index);
 
   for (const entry of entry_points) {
     // Constructors are grepped by class name, not __init__/constructor —
@@ -85,7 +85,7 @@ export async function attach_out_of_index_grep_hits(
 
     const hits = (grep_index.get(grep_name) ?? []).slice(0, MAX_GREP_HITS);
     entry.diagnostics.grep_call_sites_outside_index = hits.map((h) => ({
-      file_path: h.file_path as FilePath,
+      file_path: h.file_path,
       line: h.line,
       content: h.content,
       captures: [],
@@ -98,8 +98,8 @@ export async function attach_out_of_index_grep_hits(
   }
 }
 
-interface OutOfIndexHit {
-  readonly file_path: string;
+interface OutsideIndexHit {
+  readonly file_path: FilePath;
   readonly line: number;
   readonly content: string;
 }
@@ -123,10 +123,10 @@ const GENERATED_LINE_LENGTH = 2_000;
  * `# cover pool_shrink() one day` in a held-out file reads as the entry's only
  * caller and routes it to `coverage_config`.
  */
-function build_out_of_index_grep_index(
-  files: ReadonlyMap<string, string>,
-): Map<string, OutOfIndexHit[]> {
-  const grep_index = new Map<string, OutOfIndexHit[]>();
+function build_outside_index_grep_index(
+  files: ReadonlyMap<FilePath, string>,
+): Map<string, OutsideIndexHit[]> {
+  const grep_index = new Map<string, OutsideIndexHit[]>();
   const pattern = /(?<![A-Za-z0-9_$])([A-Za-z_$][\w$]*)\s*\(/g;
 
   let skipped_lines = 0;
@@ -187,12 +187,12 @@ function build_out_of_index_grep_index(
  */
 export async function collect_files_outside_index(
   project_path: string,
-  indexed_source_files: ReadonlyMap<string, string>,
-  dropped_files: ReadonlySet<string>,
+  indexed_source_files: ReadonlyMap<FilePath, string>,
+  dropped_files: ReadonlySet<FilePath>,
   gitignore_patterns: readonly string[],
-): Promise<Map<string, string>> {
-  const out = new Map<string, string>();
-  let candidates: string[];
+): Promise<Map<FilePath, string>> {
+  const out = new Map<FilePath, string>();
+  let candidates: FilePath[];
   try {
     candidates = await find_source_files(project_path, project_path, [
       ...gitignore_patterns,

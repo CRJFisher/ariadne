@@ -29,7 +29,7 @@ import { fileURLToPath } from "node:url";
 
 import {
   IGNORED_DIRECTORIES,
-  attach_out_of_index_grep_hits,
+  complete_caller_evidence,
   build_class_name_by_constructor_position,
   extract_entry_point_diagnostics,
   load_project,
@@ -261,7 +261,7 @@ async function load_project_for_classification(
   // `callers-outside-indexed-corpus` exists, which would make that diagnosis
   // and its `coverage_config` route unreachable in the live pipeline.
   const entry_points = extract_entry_point_diagnostics(call_graph, project);
-  await attach_out_of_index_grep_hits({
+  await complete_caller_evidence({
     entry_points,
     project_path,
     indexed_source_files: project.get_file_contents(),

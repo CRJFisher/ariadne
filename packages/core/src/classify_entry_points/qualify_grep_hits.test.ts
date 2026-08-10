@@ -110,6 +110,57 @@ describe("build_code_ranges keeps code and drops comments", () => {
     ]);
   });
 
+  it("keeps a call interpolated into a Python f-string", () => {
+    const source = ["msg = f\"result: {compute_total(x)}\""].join("\n");
+
+    expect(code_occurrences(source, "python", "compute_total")).toEqual([
+      { line: 1, column: 17 },
+    ]);
+  });
+
+  it("keeps a call interpolated into an f-string carrying an r prefix", () => {
+    const source = ["pattern = rf\"{build_regex(name)}\\d+\""].join("\n");
+
+    expect(code_occurrences(source, "python", "build_regex")).toEqual([
+      { line: 1, column: 14 },
+    ]);
+  });
+
+  it("drops a mention in a plain Python string beside an f-string call", () => {
+    const source = ["log(\"call compute_total(x)\")", "v = f\"{compute_total(x)}\""].join("\n");
+
+    expect(code_occurrences(source, "python", "compute_total")).toEqual([
+      { line: 2, column: 7 },
+    ]);
+  });
+
+  it("drops an escaped brace in a Python f-string", () => {
+    const source = ["msg = f\"{{render_widget(1)}} literal\""].join("\n");
+
+    expect(code_occurrences(source, "python", "render_widget")).toEqual([]);
+  });
+
+  it("drops a mention in JS template-literal text but keeps its interpolation", () => {
+    const source = [
+      "const q = sql`SELECT * FROM t WHERE f = drop_schema(1)`;",
+      "const r = `value: ${render_widget(1)}`;",
+    ].join("\n");
+
+    expect(code_occurrences(source, "typescript", "drop_schema")).toEqual([]);
+    expect(code_occurrences(source, "typescript", "render_widget")).toEqual([
+      { line: 2, column: 20 },
+    ]);
+  });
+
+  it("keeps a call after a template literal closes on the same line", () => {
+    const source = ["const q = tag`SELECT drop_schema(1)`.then(run_it);"].join("\n");
+
+    expect(code_occurrences(source, "typescript", "drop_schema")).toEqual([]);
+    expect(code_occurrences(source, "typescript", "then")).toEqual([
+      { line: 1, column: 37 },
+    ]);
+  });
+
   it("drops a single-line Python docstring", () => {
     const source = ["def beat():", "    \"\"\"Schedules run_task() from the beat.\"\"\"", "    return 1"].join(
       "\n",

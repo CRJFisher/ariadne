@@ -114,16 +114,30 @@ export interface EntryPointDiagnostics {
  * records rather than from text — structured, language-agnostic, and keyed on
  * the reference's resolved name rather than on a regex match.
  */
-export interface ReferenceSiteDiagnostic {
+export type ReferenceSiteDiagnostic = ReferenceSiteLocation &
+  (
+    | {
+        reference_kind: "variable_reference";
+        /** Mirrors `VariableReference.access_type`. */
+        access_type: "read" | "write";
+      }
+    | {
+        reference_kind: "property_access";
+        /** Mirrors `PropertyAccess.access_type`. */
+        access_type: "property" | "index";
+        /**
+         * Whether the receiver is the enclosing instance (`self`/`this`) or
+         * some other identifier. Only a property access has a receiver, so
+         * only this arm carries the field.
+         */
+        receiver_kind: "self" | "identifier";
+      }
+  );
+
+interface ReferenceSiteLocation {
   file_path: FilePath;
   line: number;
   content: string;
-  /** The indexer's reference kind, e.g. `property_access`, `variable_reference`. */
-  reference_kind: string;
-  /** How the name was reached, when the indexer recorded it. */
-  access_type: string | null;
-  /** The receiver's syntactic form, when the reference had one. */
-  receiver_kind: string | null;
 }
 
 export interface GrepHit {

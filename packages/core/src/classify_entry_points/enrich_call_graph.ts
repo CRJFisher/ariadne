@@ -14,7 +14,7 @@
  *
  * Reads only indexed source bytes via `Project.get_file_contents` — no
  * filesystem I/O. A caller that needs the out-of-index channel runs
- * `attach_out_of_index_grep_hits` itself and passes the finished entries in
+ * `complete_caller_evidence` itself and passes the finished entries in
  * through `options.entry_points`, because that pass is async and this one is
  * not.
  */
@@ -69,7 +69,7 @@ export interface EnrichCallGraphOptions {
   /**
    * Entries whose diagnostics are already complete.
    *
-   * `attach_out_of_index_grep_hits` touches the filesystem, so it cannot run
+   * `complete_caller_evidence` touches the filesystem, so it cannot run
    * inside this synchronous function — a caller that needs the out-of-index
    * channel (and the diagnoses that depend on it) extracts, chains that pass,
    * and hands the finished entries in. Without this, classification would run
