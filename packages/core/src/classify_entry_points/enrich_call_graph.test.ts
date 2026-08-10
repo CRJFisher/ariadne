@@ -5,6 +5,7 @@ import { join } from "node:path";
 import type { FilePath, KnownIssuesRegistry } from "@ariadnejs/types";
 import { Project } from "../project";
 import { enrich_call_graph } from "./enrich_call_graph";
+import { extract_entry_point_diagnostics } from "./extract_entry_point_diagnostics";
 import { trace_call_graph } from "../trace_call_graph/trace_call_graph";
 
 async function make_project_with(files: Record<string, string>): Promise<{
@@ -583,5 +584,44 @@ describe("method-as-value indirect reachability (task-348)", () => {
     const names = entry_point_names(project);
     expect(names).toContain("orphan");
     expect(names).toEqual(["orphan", "used"]);
+  });
+
+  it("classifies the entry points it is handed rather than re-extracting them", async () => {
+    // The seam that makes `callers-outside-indexed-corpus` reachable at all.
+    // Completing caller evidence touches the filesystem, so it cannot run inside
+    // this synchronous pass; the caller runs it and hands the finished entries
+    // in. Re-extracting here would silently discard that channel and restore the
+    // bug the epic fixed — every out-of-corpus caller reading as no caller.
+    const { project } = await make_project_with({
+      "service.py": ["def orphan():", "    return 2", ""].join("\n"),
+    });
+    const call_graph = trace_call_graph(
+      project.definitions,
+      project.resolutions,
+      project.get_languages(),
+      { include_tests: false },
+    );
+
+    const settled = extract_entry_point_diagnostics(call_graph, project);
+    expect(settled).toHaveLength(1);
+    settled[0].diagnostics.grep_call_sites_outside_index = [
+      {
+        file_path: "held_out/caller.py" as FilePath,
+        line: 3,
+        content: "orphan()",
+        captures: [],
+      },
+    ];
+    settled[0].diagnostics.diagnosis = "callers-outside-indexed-corpus";
+
+    const enriched = enrich_call_graph(call_graph, project, { entry_points: settled });
+
+    const orphan = [...enriched.entry_points_by_id.values()].find(
+      (e) => e.name === "orphan",
+    );
+    expect(orphan?.diagnostics.diagnosis).toEqual("callers-outside-indexed-corpus");
+    expect(orphan?.diagnostics.grep_call_sites_outside_index.map((h) => h.content)).toEqual([
+      "orphan()",
+    ]);
   });
 });
