@@ -62,6 +62,19 @@ export interface LoadProjectOptions {
 export interface LoadedProject {
   readonly project: Project;
   readonly dropped_files: ReadonlySet<FilePath>;
+  /**
+   * Every file discovery selected, before any of them was indexed. This is the
+   * denominator for coverage: a caller comparing it against
+   * `project.get_file_contents()` learns what the load could not take in
+   * without walking the tree a second time and risking a different answer.
+   */
+  readonly discovered_files: ReadonlySet<FilePath>;
+  /**
+   * The project's gitignore patterns, parsed once here. A pass that must walk
+   * the tree again to find what the corpus excluded needs these and only these
+   * — a config `exclude` would narrow it to the very files it is looking for.
+   */
+  readonly gitignore_patterns: readonly string[];
 }
 
 /**
@@ -117,13 +130,13 @@ export async function load_project(
 
   const has_filters = files.length > 0 || folders.length > 0;
 
-  const files_to_load = new Set<string>();
+  const files_to_load = new Set<FilePath>();
 
   if (has_filters) {
     for (const file_path of files) {
       const abs_path = resolve_to_absolute(file_path, project_path);
       if (is_supported_file(abs_path)) {
-        files_to_load.add(abs_path);
+        files_to_load.add(abs_path as FilePath);
       }
     }
 
@@ -248,7 +261,18 @@ export async function load_project(
           // inside it uncapturable — the file's text is in the corpus while its
           // references are not. Roll it back so the file is cleanly unindexed.
           dropped_files.add(fp);
-          project.remove_file(fp);
+          try {
+            project.remove_file(fp);
+          } catch (rollback_error) {
+            // A rollback that throws would abort the whole load over one bad
+            // file, losing every file after it. Degrade to the per-file skip
+            // the drop already recorded.
+            console.warn(
+              `[ariadne] Could not roll back partial index of ${file_path}: ${
+                rollback_error instanceof Error ? rollback_error.message : rollback_error
+              }`,
+            );
+          }
           console.warn(
             `[ariadne] Skipping ${file_path}: ${
               error instanceof Error ? error.message : error
@@ -292,5 +316,10 @@ export async function load_project(
     await write_cache_manifest(storage, manifest_entries);
   }
 
-  return { project, dropped_files };
+  return {
+    project,
+    dropped_files,
+    discovered_files: files_to_load as ReadonlySet<FilePath>,
+    gitignore_patterns,
+  };
 }

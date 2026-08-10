@@ -11,6 +11,7 @@ import {
   find_source_files,
   parse_gitignore,
 } from "./file_loading";
+import { detect_language } from "../detect_language";
 
 describe("file_loading", () => {
   describe("SUPPORTED_EXTENSIONS", () => {
@@ -32,19 +33,9 @@ describe("file_loading", () => {
       expect(SUPPORTED_EXTENSIONS.test("file.rs")).toBe(true);
     });
 
-    it("should match Go files", () => {
-      expect(SUPPORTED_EXTENSIONS.test("file.go")).toBe(true);
-    });
-
-    it("should match C/C++ files", () => {
-      expect(SUPPORTED_EXTENSIONS.test("file.c")).toBe(true);
-      expect(SUPPORTED_EXTENSIONS.test("file.cpp")).toBe(true);
-      expect(SUPPORTED_EXTENSIONS.test("file.h")).toBe(true);
-      expect(SUPPORTED_EXTENSIONS.test("file.hpp")).toBe(true);
-    });
-
-    it("should match Java files", () => {
-      expect(SUPPORTED_EXTENSIONS.test("file.java")).toBe(true);
+    it("matches the ESM and CommonJS JavaScript extensions", () => {
+      expect(SUPPORTED_EXTENSIONS.test("file.mjs")).toBe(true);
+      expect(SUPPORTED_EXTENSIONS.test("file.cjs")).toBe(true);
     });
 
     it("should not match unsupported extensions", () => {
@@ -52,6 +43,22 @@ describe("file_loading", () => {
       expect(SUPPORTED_EXTENSIONS.test("file.json")).toBe(false);
       expect(SUPPORTED_EXTENSIONS.test("file.yaml")).toBe(false);
       expect(SUPPORTED_EXTENSIONS.test("file.txt")).toBe(false);
+    });
+
+    it("admits exactly the extensions detect_language maps to a grammar", () => {
+      // Discovery finding a file no grammar can parse would put it in the
+      // dropped-file set, where it reads as an indexing failure and inflates
+      // the coverage warning; a grammar the walk never reaches would hide a
+      // caller from both the index and the compensation for it.
+      const admitted = [
+        "ts", "tsx", "js", "jsx", "mjs", "cjs", "mdx", "py", "rs",
+        "go", "java", "cpp", "c", "hpp", "h", "md", "json", "txt", "rb", "kt",
+      ].filter((ext) => SUPPORTED_EXTENSIONS.test(`file.${ext}`));
+      const detected = admitted.filter(
+        (ext) => detect_language(`file.${ext}`) !== null,
+      );
+
+      expect(admitted).toEqual(detected);
     });
   });
 
@@ -93,8 +100,14 @@ describe("file_loading", () => {
     it("should accept other supported languages", () => {
       expect(is_supported_file("file.py")).toBe(true);
       expect(is_supported_file("file.rs")).toBe(true);
-      expect(is_supported_file("file.go")).toBe(true);
-      expect(is_supported_file("file.java")).toBe(true);
+      expect(is_supported_file("file.mjs")).toBe(true);
+      expect(is_supported_file("file.cjs")).toBe(true);
+    });
+
+    it("rejects a language no grammar parses", () => {
+      expect(is_supported_file("file.go")).toBe(false);
+      expect(is_supported_file("file.java")).toBe(false);
+      expect(is_supported_file("file.cpp")).toBe(false);
     });
 
     it("should reject .d.ts declaration files", () => {

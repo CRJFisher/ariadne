@@ -3,9 +3,13 @@ import * as path from "path";
 import type { FilePath } from "@ariadnejs/types";
 
 /**
- * Supported source file extensions regex
+ * Extensions discovery admits, exactly the set `detect_language` maps to a
+ * grammar. Discovery and parse agree by construction, so a file that reaches
+ * the loader and fails is a genuine indexing failure rather than a language
+ * Ariadne never supported — which is what makes the dropped-file set, and the
+ * coverage warning read off it, mean anything.
  */
-export const SUPPORTED_EXTENSIONS = /\.(ts|tsx|js|jsx|mdx|py|rs|go|java|cpp|c|hpp|h)$/;
+export const SUPPORTED_EXTENSIONS = /\.(ts|tsx|js|jsx|mjs|cjs|mdx|py|rs)$/;
 
 /**
  * Directories to always ignore during file loading and watching

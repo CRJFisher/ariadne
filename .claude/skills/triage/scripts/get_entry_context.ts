@@ -469,17 +469,18 @@ export function format_grep_hits(hits: GrepHit[]): string {
 }
 
 /**
- * Non-call reference sites. The three extra fields are the whole reason this
- * channel is richer than a grep hit: they say HOW the name was reached, which
- * is what decides whether the reference is an invocation route.
+ * Non-call reference sites. The extra fields are the whole reason this channel
+ * is richer than a grep hit: they say HOW the name was reached, which is what
+ * decides whether the reference is an invocation route. Only a property access
+ * has a receiver, so only it reports one.
  */
-export function format_reference_sites(sites: ReferenceSiteDiagnostic[]): string {
+function format_reference_sites(sites: ReferenceSiteDiagnostic[]): string {
   if (sites.length === 0) return "(none found)";
   return sites
     .map((s) => {
-      const receiver = s.receiver_kind === null ? "" : `, receiver: ${s.receiver_kind}`;
-      const access = s.access_type === null ? "" : `, access: ${s.access_type}`;
-      return `  ${s.file_path}:${s.line}  [${s.reference_kind}${access}${receiver}]  ${s.content.trim()}`;
+      const receiver =
+        s.reference_kind === "property_access" ? `, receiver: ${s.receiver_kind}` : "";
+      return `  ${s.file_path}:${s.line}  [${s.reference_kind}, access: ${s.access_type}${receiver}]  ${s.content.trim()}`;
     })
     .join("\n");
 }

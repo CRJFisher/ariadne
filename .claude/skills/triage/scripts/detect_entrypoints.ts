@@ -26,12 +26,9 @@
 
 import {
   load_project,
-  find_source_files,
   IGNORED_DIRECTORIES,
-  parse_gitignore,
   FileSystemStorage,
   resolve_cache_dir,
-  log_info,
   log_warn,
   trace_call_graph,
   extract_entry_point_diagnostics,
@@ -375,7 +372,7 @@ export async function analyze_directory(
 
   // Load project using shared pipeline
   const load_start = Date.now();
-  const { project, dropped_files } = await load_project({
+  const { project, dropped_files, discovered_files, gitignore_patterns } = await load_project({
     project_path,
     folders: options.folders,
     exclude,
@@ -388,33 +385,6 @@ export async function analyze_directory(
   const stats = project.get_stats();
   console.error(`Found ${stats.file_count} indexed files`);
 
-  // The discovered set: the denominator for the indexed/discovered ratio gate.
-  // Sub-task 1.2 keys the out-of-index grep on discovered-minus-indexed and
-  // will consume this set directly; today that pass walks for itself.
-  const gitignore_patterns = await parse_gitignore(project_path);
-  const combined_patterns = [...gitignore_patterns, ...(options.exclude || [])];
-  const search_paths = options.folders
-    ? options.folders.map((f) => path.join(project_path, f))
-    : [project_path];
-
-  let all_files: string[] = [];
-  log_info(`find_source_files: N=${search_paths.length}`);
-  const scan_start = Date.now();
-  for (const search_path of search_paths) {
-    const path_start = Date.now();
-    try {
-      const files = await find_source_files(search_path, project_path, combined_patterns);
-      all_files = all_files.concat(files);
-      log_info(
-        `scanned ${path.relative(project_path, search_path) || "."}: +${files.length} files in ${Date.now() - path_start}ms`,
-      );
-    } catch (error) {
-      log_warn(`Could not read ${search_path}: ${error}`);
-    }
-  }
-  log_info(
-    `find_source_files: done ${search_paths.length}/${search_paths.length} in ${Date.now() - scan_start}ms (${all_files.length} files total)`,
-  );
   // Gate: files indexing dropped outright. Their call edges are absent from the
   // graph while the files exist on disk, so every entry they call reads as
   // uncalled.
@@ -431,11 +401,13 @@ export async function analyze_directory(
   }
 
   // Gate: indexed vs discovered ratio. A big gap suggests indexing dropped files
-  // (parse errors, unsupported languages) and downstream work will be blind to
-  // those files.
-  if (all_files.length > 0 && stats.file_count / all_files.length < 0.5) {
+  // (parse errors, unreadable sources) and downstream work will be blind to
+  // those files. The denominator is the set the load itself selected, so the
+  // ratio cannot drift against a second walk that filtered differently.
+  const discovered_count = discovered_files.size;
+  if (discovered_count > 0 && stats.file_count / discovered_count < 0.5) {
     log_warn(
-      `indexed ${stats.file_count}/${all_files.length} files (ratio ${(stats.file_count / all_files.length).toFixed(2)}) — indexing may be dropping files`,
+      `indexed ${stats.file_count}/${discovered_count} files (ratio ${(stats.file_count / discovered_count).toFixed(2)}) — indexing may be dropping files`,
     );
   }
 
