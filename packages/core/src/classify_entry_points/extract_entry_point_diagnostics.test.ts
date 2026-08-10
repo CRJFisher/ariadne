@@ -565,10 +565,12 @@ describe("a non-call reference is carried as evidence", () => {
     ]);
     expect(deserialize.reference_sites[0].reference_kind).toEqual("property_access");
     expect(deserialize.diagnosis).toEqual("references-without-call-syntax");
+    // The area is determinate; the identity of the sites is not, because the
+    // index keys on the name's final segment rather than a resolved symbol.
     expect(derive_fault_area(fault_area_input(deserialize))).toEqual({
       area: "entry_point_classification",
       language: undefined,
-      needs_judgement: false,
+      needs_judgement: true,
     });
 
     const on_event = diagnostics_for(enriched, "on_event", "dumper.py");
@@ -613,6 +615,63 @@ describe("a non-call reference is carried as evidence", () => {
     expect(check_callback_passed_to_invoker(on_node_status, EMPTY_READER, "python")).toBe(
       true,
     );
+  });
+
+  it("keeps the one real registration site when many siblings declare the name", async () => {
+    // The per-name cap is spent while filling the index. If declaration lines
+    // were filtered afterwards, twelve sibling `def render` declarations would
+    // consume the whole budget and the genuine registration — indexed later —
+    // would never have been admitted at all.
+    const files: Record<string, string> = {};
+    for (let i = 0; i < 12; i++) {
+      files[`widgets/w${i}.py`] = [
+        `class Widget${i}:`,
+        "    def render(self):",
+        "        return 1",
+        "",
+      ].join("\n");
+    }
+    files["app/registry.py"] = [
+      "from widgets.w0 import Widget0",
+      "",
+      "",
+      "def install(sink, w: Widget0):",
+      "    sink.append(w.render)",
+      "    return sink",
+      "",
+    ].join("\n");
+
+    const enriched = await enriched_for(files);
+
+    const render = diagnostics_for(enriched, "render", "widgets/w0.py");
+    expect(render.reference_sites.map((s) => s.content)).toEqual([
+      "sink.append(w.render)",
+    ]);
+    expect(render.diagnosis).toEqual("references-without-call-syntax");
+  });
+
+  it("does not read a bare same-named local as a caller of a method", async () => {
+    // The index keys on a name, not a resolved symbol, so a local `errors = []`
+    // would otherwise be published as evidence that a method `errors` is
+    // reached — determinate, and wrong.
+    const enriched = await enriched_for({
+      "django/forms/formsets.py": [
+        "class BaseFormSet:",
+        "    def errors(self):",
+        "        return 1",
+        "",
+      ].join("\n"),
+      "django/forms/models.py": [
+        "def collect():",
+        "    errors = []",
+        "    return errors",
+        "",
+      ].join("\n"),
+    });
+
+    const errors = diagnostics_for(enriched, "errors", "formsets.py");
+    expect(errors.reference_sites).toEqual([]);
+    expect(errors.diagnosis).toEqual("no-textual-callers");
   });
 
   it("does not flood reference_sites with whole-expression records", async () => {

@@ -35,7 +35,7 @@ from — so it routes to `entry_point_classification`, also without judgement.
 
 ## Investigation Prompt
 
-All `llm-triage` entries render a single template — `templates/prompt.md` — which is parameterized by the entry's `diagnosis`. `scripts/get_entry_context.ts` substitutes diagnosis-specific hints (title, summary, investigation guide) for three diagnoses — `callers-not-in-registry`, `callers-in-registry-unresolved`, and `callers-in-registry-wrong-target`. Every other diagnosis, including `no-textual-callers`, `callers-outside-indexed-corpus` and `references-without-call-syntax`, falls back to a generic broad-investigation guide (`GENERIC_HINTS`); the latter two route deterministically and rarely reach an investigator at all. The template itself uses `{{entry.*}}` placeholders filled from the triage state entry.
+All `llm-triage` entries render a single template — `templates/prompt.md` — which is parameterized by the entry's `diagnosis`. `scripts/get_entry_context.ts` substitutes diagnosis-specific hints (title, summary, investigation guide) for three diagnoses — `callers-not-in-registry`, `callers-in-registry-unresolved`, and `callers-in-registry-wrong-target`. `callers-outside-indexed-corpus` and `references-without-call-syntax` carry their own hints too, and their evidence renders in the same block — the out-of-index hits and the reference sites respectively. `no-textual-callers`, and any value this table does not list, falls back to a generic broad-investigation guide (`GENERIC_HINTS`). The residual bucket is dispensed by tree size with no diagnosis filter, so any of these can reach an investigator. The template itself uses `{{entry.*}}` placeholders filled from the triage state entry.
 
 ## Verdict Output
 

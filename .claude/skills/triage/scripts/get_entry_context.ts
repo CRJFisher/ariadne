@@ -44,6 +44,7 @@ import type {
   AnalysisResult,
   EnrichedEntryPoint,
   GrepHit,
+  ReferenceSiteDiagnostic,
   CallRefDiagnostic,
   ClassifierHint,
   KnownIssuesRegistry,
@@ -467,6 +468,22 @@ export function format_grep_hits(hits: GrepHit[]): string {
     .join("\n");
 }
 
+/**
+ * Non-call reference sites. The three extra fields are the whole reason this
+ * channel is richer than a grep hit: they say HOW the name was reached, which
+ * is what decides whether the reference is an invocation route.
+ */
+export function format_reference_sites(sites: ReferenceSiteDiagnostic[]): string {
+  if (sites.length === 0) return "(none found)";
+  return sites
+    .map((s) => {
+      const receiver = s.receiver_kind === null ? "" : `, receiver: ${s.receiver_kind}`;
+      const access = s.access_type === null ? "" : `, access: ${s.access_type}`;
+      return `  ${s.file_path}:${s.line}  [${s.reference_kind}${access}${receiver}]  ${s.content.trim()}`;
+    })
+    .join("\n");
+}
+
 export function format_call_refs(refs: CallRefDiagnostic[]): string {
   if (refs.length === 0) return "(none found)";
   return refs
@@ -527,6 +544,12 @@ export function substitute_template(input: SubstituteTemplateInput): string {
     ),
     "{{entry.diagnostics.ariadne_call_refs_formatted}}": format_call_refs(
       entry.diagnostics.ariadne_call_refs,
+    ),
+    "{{entry.diagnostics.grep_call_sites_outside_index_formatted}}": format_grep_hits(
+      entry.diagnostics.grep_call_sites_outside_index,
+    ),
+    "{{entry.diagnostics.reference_sites_formatted}}": format_reference_sites(
+      entry.diagnostics.reference_sites,
     ),
     "{{classifier_hints}}": format_classifier_hints(entry.classifier_hints),
     "{{diagnosis.title}}": hints.title,

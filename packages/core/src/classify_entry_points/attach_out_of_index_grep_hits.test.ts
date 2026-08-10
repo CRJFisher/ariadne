@@ -237,7 +237,11 @@ describe("the out-of-index set is discovered minus indexed", () => {
     // residue; one enormous line matches every identifier in it and attributes
     // each as a caller. The LINE is skipped, not the file — hand-written
     // sources carry the odd generated line beside real code.
-    const generated_line = `const TABLE = "${"a".repeat(2100)};send_status(1)";`;
+    // The identifier must sit in CODE position past the threshold — inside a
+    // string literal the string rule would reject it anyway, and the test
+    // would pass with the length guard deleted.
+    const padding = Array.from({ length: 420 }, (_, i) => `v${i}`).join(",");
+    const generated_line = `const TABLE = [${padding}]; send_status(1);`;
     const root = await write_fixture({
       "lib/utils.js": [
         "export function send_status(code) {",

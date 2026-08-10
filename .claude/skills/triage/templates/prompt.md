@@ -22,6 +22,12 @@ Write your result JSON to: {{output_path}}
 
 **Ariadne call references:**
 {{entry.diagnostics.ariadne_call_refs_formatted}}
+
+**Call sites outside the indexed corpus** (files discovered but never indexed — a config `exclude`, a folder scope, or an indexing error):
+{{entry.diagnostics.grep_call_sites_outside_index_formatted}}
+
+**Non-call references** (the name reached without call parens — a read, a callback handed to an invoker, a registration value):
+{{entry.diagnostics.reference_sites_formatted}}
 {{classifier_hints}}
 
 ### In-scope classifier rules

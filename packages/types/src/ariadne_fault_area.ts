@@ -268,9 +268,13 @@ export function derive_fault_area(input: DeriveFaultAreaInput): AriadneFaultLoca
       // chose not to, or failed to, index.
       return { area: "coverage_config", language, needs_judgement: false };
     case "references-without-call-syntax":
-      // The only mentions are non-call references — exactly the surface a
-      // classifier author works from.
-      return { area: "entry_point_classification", language, needs_judgement: false };
+      // Residual case 5: the only mentions are non-call references, which is
+      // the classifier-author surface — but the reference index keys on the
+      // name's final segment, not on a resolved symbol, so a same-named member
+      // elsewhere can supply the evidence. The AREA is right; whether these
+      // particular sites reach THIS member still needs a look. Drops to
+      // `needs_judgement: false` once the sites carry symbol identity.
+      return { area: "entry_point_classification", language, needs_judgement: true };
     case "callers-in-registry-wrong-target":
       return { area: "entry_point_classification", language, needs_judgement: false };
     case "callers-in-registry-unresolved":

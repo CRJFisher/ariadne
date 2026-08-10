@@ -246,11 +246,14 @@ describe("derive_fault_area — diagnosis fallback", () => {
     });
   });
 
-  test("references-without-call-syntax → entry_point_classification, determinate", () => {
+  test("references-without-call-syntax → entry_point_classification, needs judgement on identity", () => {
+    // The area is determinate — non-call mentions are the classifier-author
+    // surface — but the reference index keys on a name, not a resolved symbol,
+    // so whether these sites reach THIS member still needs a look.
     expect(derive_fault_area(input({ diagnosis: "references-without-call-syntax" }))).toEqual({
       area: "entry_point_classification",
       language: undefined,
-      needs_judgement: false,
+      needs_judgement: true,
     });
   });
 

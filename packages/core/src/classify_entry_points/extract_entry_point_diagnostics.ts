@@ -123,17 +123,20 @@ export function extract_entry_point_diagnostics(
   const call_refs_by_name = build_call_refs_by_name(call_graph);
   const call_refs_by_file_line = build_call_refs_by_file_line(call_graph);
   const grep_index = build_grep_index(lines_by_file, call_refs_by_file_line, languages);
-  const reference_index = build_reference_index(
-    project.references,
-    lines_by_file,
-    call_refs_by_file_line,
-  );
 
   const class_definitions = project.definitions.get_class_definitions();
   const declaration_keys = build_callable_declaration_keys(
     project.definitions.get_callable_definitions(),
     class_definitions,
   );
+
+  const reference_index = build_reference_index(
+    project.references,
+    lines_by_file,
+    call_refs_by_file_line,
+    declaration_keys,
+  );
+
   const class_name_by_constructor_id = build_constructor_to_class_name_map(class_definitions);
   const class_method_symbol_ids = new Set<SymbolId>();
   for (const class_def of class_definitions) {
@@ -359,12 +362,26 @@ export function build_reference_index(
   references: ReferenceRegistry,
   lines_by_file: ReadonlyMap<FilePath, string[]>,
   call_refs_by_file_line: ReadonlyMap<FilePath, Map<number, CallReference[]>>,
+  declaration_keys: ReadonlySet<string>,
 ): Map<string, ReferenceSiteDiagnostic[]> {
   const index = new Map<string, Map<string, ReferenceSiteDiagnostic>>();
 
   for (const file_path of lines_by_file.keys()) {
     const by_line = call_refs_by_file_line.get(file_path);
-    for (const ref of references.get_file_references(file_path)) {
+    const file_references = references.get_file_references(file_path);
+
+    // An assignment is recorded twice over: once as a write, and again as one
+    // or more reads at the same position. Filtering the write alone would let
+    // its own reads through, so `querystring = QueryDict(...)` would still read
+    // as evidence that a function `querystring` is reached.
+    const written_positions = new Set<string>();
+    for (const ref of file_references) {
+      if (ref.kind === "variable_reference" && ref.access_type === "write") {
+        written_positions.add(`${ref.location.start_line}:${ref.location.start_column}`);
+      }
+    }
+
+    for (const ref of file_references) {
       if (!NON_CALL_REFERENCE_KINDS.has(ref.kind)) continue;
 
       const segments = (ref.name as string).split(".");
@@ -379,6 +396,22 @@ export function build_reference_index(
       // `p.shrink(1)`.
       const line = ref.location.start_line;
       if (by_line?.get(line)?.some((c) => (c.name as string) === key)) continue;
+
+      // Before the cap, not after: a widely-overridden method has more
+      // declaration lines than the cap allows, and filtering them later would
+      // spend the whole budget on declarations and discard the one real
+      // registration site that came after them.
+      if (declaration_keys.has(declaration_key(file_path, line, key))) continue;
+
+      // A write is not a caller. `errors = []` assigns a local; it does not
+      // reach a method named `errors` — nor does the read the indexer records
+      // beside the write at the same position.
+      if (
+        ref.kind === "variable_reference" &&
+        written_positions.has(`${ref.location.start_line}:${ref.location.start_column}`)
+      ) {
+        continue;
+      }
 
       let sites = index.get(key);
       if (!sites) {
@@ -556,7 +589,7 @@ function gather_diagnostics(
     grep_call_sites_outside_index: [],
     // Keyed by `grep_name`, so a constructor's references are found under the
     // class name — the same name the grep channel searches for.
-    reference_sites: reference_sites_for(grep_name, reference_index, declaration_keys),
+    reference_sites: reference_sites_for(grep_name, node.definition.kind as EnrichedEntryPoint["kind"], reference_index),
     ariadne_call_refs,
     diagnosis: "no-textual-callers",
     // Disambiguator for the fault-area derivation, stamped without re-grepping.
@@ -582,14 +615,19 @@ function gather_diagnostics(
  */
 function reference_sites_for(
   name: string,
+  kind: EnrichedEntryPoint["kind"],
   reference_index: Map<string, ReferenceSiteDiagnostic[]>,
-  declaration_keys: ReadonlySet<string>,
 ): ReferenceSiteDiagnostic[] {
   const all = reference_index.get(name);
   if (!all) return [];
-  return all.filter(
-    (site) => !declaration_keys.has(declaration_key(site.file_path, site.line, name)),
-  );
+  if (kind === "function") return all;
+
+  // A method or constructor cannot be reached by a bare name — only through a
+  // receiver. Without this, any local of the same name is read as evidence:
+  // `errors = []` for a method `errors`, an import line for a property `urls`.
+  // The index keys on the name alone, so it cannot tell those apart; requiring
+  // a receiver is the part of identity it CAN check.
+  return all.filter((site) => site.reference_kind === "property_access");
 }
 
 /**

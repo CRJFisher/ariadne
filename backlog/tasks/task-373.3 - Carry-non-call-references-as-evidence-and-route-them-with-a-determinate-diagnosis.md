@@ -47,8 +47,8 @@ The data already exists. `Project.references` (`resolve_references/registries/re
 
 - [x] #1 `reference_sites` is populated from a single pass over `Project.references` for every indexed file, keyed on the final dotted segment of `ref.name`, filtered to `/^[A-Za-z_$][\w$]*$/`, capped at `MAX_GREP_HITS` per name, excluding the entry's own definition location and any position that already produced a `CallReference`.
 - [x] #2 `compute_diagnosis` returns `references-without-call-syntax` when there are no grep hits on either axis but `reference_sites` is non-empty, and `no-textual-callers` only when nothing in the discovered corpus mentions the callable.
-- [x] #3 `derive_fault_area` maps `references-without-call-syntax` to `{ area: "entry_point_classification", needs_judgement: false }`.
-- [x] #4 Integration tests against the real pipeline cover every evidence case: `registry.register(s.deserialize)` and `{'*': dumper.on_event}` (celery), the express `defineProperty` accessors `ip`, `ips`, `secure`, `subdomains`, `stale`, `hostname`, `host`, `protocol`, and the module-object/instance-member references express `user.load`/`user.view`/`user.update`, celery `consumer._limit_post_eta` and django `adapt_unknown_value`.
+- [ ] #3 `derive_fault_area` maps `references-without-call-syntax` to `{ area: "entry_point_classification", needs_judgement: false }`. **Deliberately not met** — the area is mapped, but `needs_judgement` stays `true` until reference sites carry symbol identity; see Implementation Notes.
+- [ ] #4 Integration tests against the real pipeline cover every evidence case: `registry.register(s.deserialize)` and `{'*': dumper.on_event}` (celery), the express `defineProperty` accessors `ip`, `ips`, `secure`, `subdomains`, `stale`, `hostname`, `host`, `protocol`, and the module-object/instance-member references express `user.load`/`user.view`/`user.update`, celery `consumer._limit_post_eta` and django `adapt_unknown_value`.
 - [x] #5 `check_callback_passed_to_invoker` and `check_dispatch_table_value_registration` read `reference_sites` and fire against `EnrichedEntryPoint`s produced by the real pipeline; `check_callback-passed-to-invoker.test.ts:52-58` no longer hand-builds `grep_call_sites`.
 - [x] #6 Negative control: `return this.value;` does not flood `reference_sites` with whole-expression records, and a resolved call site appears only in `ariadne_call_refs`.
 - [x] #7 `callers_only_in_unindexed_tests` is gone from `skill-protocol`, `triage/finalize/output.ts`, `plan/group_fault_areas.ts` and `plan/plan_task.ts`; `detect_entrypoints.ts` calls the renamed pass without `combined_patterns` and without the `include_tests` gate; `diagnosis_routes.md` documents both new diagnoses.
@@ -60,9 +60,15 @@ The data already exists. `Project.references` (`resolve_references/registries/re
 
 ### What a user gets
 
-A caller that carries no call parens is no longer invisible. A getter read, a callback handed to an invoker, a dict or list registration value — each now arrives as a `reference_site`, and a member whose only mentions are of that kind reports `references-without-call-syntax` and routes to `entry_point_classification` **without judgement**.
+A caller that carries no call parens is no longer invisible. A getter read, a callback handed to an invoker, a dict or list registration value — each now arrives as a `reference_site`, and a member whose only mentions are of that kind reports `references-without-call-syntax`, routing to `entry_point_classification` with the evidence attached and rendered in the investigator's prompt.
 
-Measured end to end on django: **466 of 2133** published entries carry the new diagnosis. Every one of them previously read as `no-textual-callers` with `needs_judgement: true` — an LLM investigation each, asking a question the evidence could already answer.
+The route carries `needs_judgement: true`. The *area* is determinate — non-call mentions are the classifier-author surface — but the index keys on a name's final segment rather than a resolved symbol, so whether a given site reaches *this* member is not yet decidable. Claiming otherwise was the epic's worst regression, caught in final review: on django, 242 of 532 such entries (45%) had evidence that was only a bare same-named local — a method `errors` "reached" by `errors = []`, a property `urls` by an import line — every one of them routed `needs_judgement: false`. That is strictly worse than the honest vagueness it replaced.
+
+Three filters cut it back, each exact rather than heuristic:
+
+- **A method or constructor is unreachable through a bare name.** Those sites now require a `property_access` — the part of identity the index *can* check.
+- **A write is not a caller**, nor is the read the indexer records beside the write at the same position. `querystring = QueryDict(...)` no longer reaches a function named `querystring`.
+- **Declaration lines are filtered before the per-name cap**, not after. A widely-overridden method has more declarations than the cap allows, so filtering afterwards spent the whole budget on `def render` lines and discarded the one genuine registration site indexed behind them.
 
 The two classifiers that could never fire now can. `check_callback-passed-to-invoker` and `check_dispatch-table-value-registration` both scanned `grep_call_sites` for surface forms (`maybe_call(self.on_node_status, …)`, `handlers = {'*': dumper.on_event}`) that by construction carry no `name(`, so neither could match its own registry samples. Both read `reference_sites` now, and a test drives them through the real pipeline rather than hand-building the evidence — which is why the unfirability went unnoticed.
 

@@ -46,8 +46,19 @@ const BASE_DIAGNOSTICS: EntryPointDiagnostics = {
   grep_call_sites: [
     { file_path: "test/server.test.ts" as FilePath, line: 10, content: "handle_request(req)", captures: [] },
   ],
-  grep_call_sites_outside_index: [],
-  reference_sites: [],
+  grep_call_sites_outside_index: [
+    { file_path: "docs/_ext/ext.py" as FilePath, line: 12, content: "handle_request(req)", captures: [] },
+  ],
+  reference_sites: [
+    {
+      file_path: "app/registry.py" as FilePath,
+      line: 7,
+      content: "handlers = {'*': dumper.handle_request}",
+      reference_kind: "property_access",
+      access_type: "property",
+      receiver_kind: "identifier",
+    },
+  ],
   has_uncaptured_indexed_grep_hit: false,
   ariadne_call_refs: [],
   diagnosis: "callers-not-in-registry",
