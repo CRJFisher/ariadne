@@ -72,6 +72,27 @@ Three filters cut it back, each exact rather than heuristic:
 
 The two classifiers that could never fire now can. `check_callback-passed-to-invoker` and `check_dispatch-table-value-registration` both scanned `grep_call_sites` for surface forms (`maybe_call(self.on_node_status, …)`, `handlers = {'*': dumper.on_event}`) that by construction carry no `name(`, so neither could match its own registry samples. Both read `reference_sites` now, and a test drives them through the real pipeline rather than hand-building the evidence — which is why the unfirability went unnoticed.
 
+### Measured
+
+django, 2750 entry points, before and after the filters:
+
+| | before | after |
+| --- | --- | --- |
+| entries carrying `references-without-call-syntax` | 532 | 328 |
+| of those, evidence is only a bare same-named local | 242 (45%) | 38 (11%) |
+| of those, methods and constructors | 149 + 55 | 0 |
+
+The remaining 38 are all functions, and they are genuinely mixed — which is why
+the route needs judgement rather than claiming certainty. Two are real
+registrations that no other channel would have found:
+`@override_system_checks([checks.model_checks.check_all_models])` reaches
+`check_all_models` through a decorator list, and
+`AttachBody.prototype.bind = …` reaches `AttachBody`. Two are phantoms a name
+key cannot tell apart: `safe` "reached" by the keyword argument in
+`querystring.urlencode(safe="/")`, and `csrf_token` by a local `if csrf_token:`.
+Separating them needs the site's resolved target, which the index does not yet
+carry.
+
 ### The evidence is structured, not a second regex
 
 The index is one pass over `Project.references`, which the indexer already filled. Keyed on the reference's own resolved name, so it is collision-safe; language-agnostic, so it needs no per-language surface patterns; and free, since it needs no new parse.
