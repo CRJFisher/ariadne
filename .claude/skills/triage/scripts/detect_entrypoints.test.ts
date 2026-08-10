@@ -4,7 +4,12 @@ import * as path from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { find_source_files, IGNORED_DIRECTORIES, load_project } from "@ariadnejs/core";
+import {
+  find_source_files,
+  IGNORED_DIRECTORIES,
+  load_project,
+  trace_call_graph,
+} from "@ariadnejs/core";
 import type { EnrichedEntryPoint } from "@ariadnejs/types";
 
 import { analyze_directory, load_project_config } from "./detect_entrypoints.js";
@@ -44,9 +49,10 @@ async function analyze(options: {
 }> {
   const exclude = [...IGNORED_DIRECTORIES, ...(options.exclude ?? [])];
   const result = await analyze_directory(tmpdir, {
+    ...load_analysis_scope(null),
     include_tests: options.include_tests ?? false,
     folders: options.folders,
-    exclude: options.exclude,
+    exclude: options.exclude ?? [],
   });
   const { project, dropped_files } = await load_project({
     project_path: tmpdir,
@@ -95,17 +101,7 @@ describe("both harness phases read one scope from the project config", () => {
     const detect_side = await load_project_config(config_path);
     const prepare_side = load_analysis_scope(config_path);
 
-    expect({
-      folders: detect_side.folders,
-      exclude: detect_side.exclude,
-      include_tests: detect_side.include_tests,
-      max_files: detect_side.max_files,
-    }).toEqual({
-      folders: prepare_side.folders,
-      exclude: prepare_side.exclude,
-      include_tests: prepare_side.include_tests,
-      max_files: prepare_side.max_files,
-    });
+    expect(detect_side.scope).toEqual(prepare_side);
     expect(prepare_side.include_tests).toEqual(true);
   });
 
@@ -120,8 +116,70 @@ describe("both harness phases read one scope from the project config", () => {
     const detect_side = await load_project_config(config_path);
     const prepare_side = load_analysis_scope(config_path);
 
-    expect(detect_side.max_files).toEqual(DEFAULT_MAX_FILES);
+    expect(detect_side.scope.max_files).toEqual(DEFAULT_MAX_FILES);
     expect(prepare_side.max_files).toEqual(DEFAULT_MAX_FILES);
+  });
+
+  it("reaches the same corpus and the same candidate gate from one config", async () => {
+    // Reader agreement is not corpus agreement: two phases can parse the same
+    // config and still index different files if either applies it differently.
+    // This asserts the thing that matters — same file set, same entry points —
+    // over a config that exercises both axes at once.
+    await write("src/app.py", "def handler():\n    return 1\n");
+    await write("src/helper.py", "def helper():\n    return 2\n");
+    // The test file defines a callable of its own, so `include_tests` changes
+    // the entry-point set and not merely the file set — without it the
+    // candidate-gate half of this assertion would hold vacuously.
+    await write(
+      "tests/test_app.py",
+      "from src.app import handler\n\ndef test_handler():\n    return handler()\n",
+    );
+    await write("docs/conf.py", "def build_docs():\n    return 3\n");
+
+    const config_path = path.join(tmpdir, "both-axes.json");
+    await fs.writeFile(
+      config_path,
+      JSON.stringify({
+        project_path: tmpdir,
+        project_name: "fixture",
+        exclude: ["docs"],
+        include_tests: true,
+      }),
+      "utf8",
+    );
+
+    const config = await load_project_config(config_path);
+    const detect_side = await analyze_directory(tmpdir, config.scope);
+
+    const prepare_scope = load_analysis_scope(config_path);
+    const { project } = await load_project({
+      project_path: tmpdir,
+      folders: prepare_scope.folders,
+      exclude: [...IGNORED_DIRECTORIES, ...prepare_scope.exclude],
+      max_files: prepare_scope.max_files,
+    });
+    const prepare_call_graph = trace_call_graph(
+      project.definitions,
+      project.resolutions,
+      project.get_languages(),
+      { include_tests: prepare_scope.include_tests },
+    );
+
+    expect(detect_side.indexed_files.map((f) => path.relative(tmpdir, f)).sort()).toEqual(
+      [...project.get_file_contents().keys()].map((f) => path.relative(tmpdir, f)).sort(),
+    );
+    expect(entry_point_names(detect_side.entry_points)).toEqual(
+      prepare_call_graph.entry_points
+        .map((id) => prepare_call_graph.nodes.get(id)?.name as string)
+        .sort(),
+    );
+    // Non-vacuous: the excluded tree is genuinely out and the test tree is
+    // genuinely in, so this would fail if either phase indexed nothing.
+    expect(detect_side.indexed_files.map((f) => path.relative(tmpdir, f)).sort()).toEqual([
+      "src/app.py",
+      "src/helper.py",
+      "tests/test_app.py",
+    ]);
   });
 });
 

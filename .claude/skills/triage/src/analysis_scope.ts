@@ -70,6 +70,8 @@ const TEST_TREE_DIRECTORY_NAMES: readonly string[] = [
   "test",
   "__tests__",
   "benches",
+  "fixtures",
+  "__fixtures__",
 ];
 
 /**

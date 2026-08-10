@@ -43,7 +43,8 @@ import type {
 } from "@ariadnejs/types";
 import { save_json, OutputType } from "../src/store/analysis_output.js";
 import {
-  DEFAULT_MAX_FILES,
+  type AnalysisScope,
+  load_analysis_scope,
   read_analysis_scope,
   test_tree_excludes,
 } from "../src/analysis_scope.js";
@@ -79,10 +80,7 @@ interface CLIArgs {
 interface ProjectConfig {
   project_name: string;
   project_path: string;
-  folders?: string[];
-  exclude?: string[];
-  include_tests?: boolean;
-  max_files?: number;
+  scope: AnalysisScope;
 }
 
 interface CloneResult {
@@ -94,10 +92,12 @@ interface ResolvedMode {
   project_path: string;
   project_name: string;
   source_info: AnalysisSourceInfo;
-  include_tests: boolean;
-  folders?: string[];
-  exclude?: string[];
-  max_files?: number;
+  /**
+   * The whole scope decision as one value. Carried rather than unpacked so a
+   * mode cannot supply three of its four fields and silently take a default for
+   * the fourth.
+   */
+  scope: AnalysisScope;
 }
 
 // ===== CLI Argument Parsing =====
@@ -204,10 +204,7 @@ export async function load_project_config(config_path: string): Promise<ProjectC
   return {
     project_name,
     project_path: path.resolve(raw_project_path),
-    folders: scope.folders,
-    exclude: scope.exclude,
-    include_tests: scope.include_tests,
-    max_files: scope.max_files,
+    scope,
   };
 }
 
@@ -348,13 +345,8 @@ function get_local_commit_hash(repo_path: string): string | undefined {
 
 export async function analyze_directory(
   project_path: string,
-  options: {
-    include_tests: boolean;
-    folders?: string[];
-    exclude?: string[];
-    max_files?: number;
-    storage?: PersistenceStorage;
-  }
+  scope: AnalysisScope,
+  storage?: PersistenceStorage,
 ): Promise<{
   files_analyzed: number;
   indexed_files: string[];
@@ -362,25 +354,25 @@ export async function analyze_directory(
 }> {
   const start_time = Date.now();
 
-  const exclude = [...IGNORED_DIRECTORIES, ...(options.exclude || [])];
+  const exclude = [...IGNORED_DIRECTORIES, ...scope.exclude];
 
   console.error(`Initializing project at: ${project_path}`);
   console.error(`Excluded folders: ${exclude.join(", ")}`);
-  if (options.folders) {
-    console.error(`Analyzing folders: ${options.folders.join(", ")}`);
+  if (scope.folders) {
+    console.error(`Analyzing folders: ${scope.folders.join(", ")}`);
   }
 
   // Load project using shared pipeline
   const load_start = Date.now();
   const { project, dropped_files, discovered_files, gitignore_patterns } = await load_project({
     project_path,
-    folders: options.folders,
+    folders: scope.folders,
     exclude,
-    max_files: options.max_files,
-    storage: options.storage,
+    max_files: scope.max_files,
+    storage,
   });
   console.error(`Project loaded in ${Date.now() - load_start}ms`);
-  console.error(`Cache: ${options.storage ? "enabled" : "disabled"}`);
+  console.error(`Cache: ${storage ? "enabled" : "disabled"}`);
 
   const stats = project.get_stats();
   console.error(`Found ${stats.file_count} indexed files`);
@@ -432,7 +424,7 @@ export async function analyze_directory(
   console.error("Building call graph...");
   const callgraph_start = Date.now();
   const call_graph = trace_call_graph(project.definitions, project.resolutions, project.get_languages(), {
-    include_tests: options.include_tests,
+    include_tests: scope.include_tests,
   });
   console.error(
     `Found ${call_graph.entry_points.length} entry points in ${Date.now() - callgraph_start}ms`
@@ -491,13 +483,11 @@ async function main() {
     }
   }
 
-  const { files_analyzed, entry_points } = await analyze_directory(resolved.project_path, {
-    include_tests: resolved.include_tests,
-    max_files: resolved.max_files,
-    folders: resolved.folders,
-    exclude: resolved.exclude,
+  const { files_analyzed, entry_points } = await analyze_directory(
+    resolved.project_path,
+    resolved.scope,
     storage,
-  });
+  );
 
   const result: AnalysisResult = {
     project_name: resolved.project_name,
@@ -555,10 +545,7 @@ async function resolve_config_mode(config_path: string): Promise<ResolvedMode> {
   return {
     project_path: config.project_path,
     project_name: config.project_name,
-    include_tests: config.include_tests ?? false,
-    folders: config.folders,
-    exclude: config.exclude,
-    max_files: config.max_files,
+    scope: config.scope,
     source_info: {
       type: "local",
       commit_hash: get_local_commit_hash(config.project_path),
@@ -575,8 +562,7 @@ async function resolve_github_mode(
   return {
     project_path: clone_result.local_path,
     project_name: github_repo_to_ids(github).project_id,
-    include_tests: false,
-    max_files: DEFAULT_MAX_FILES,
+    scope: load_analysis_scope(null),
     source_info: {
       type: "github",
       github_url: parse_github_url(github),
@@ -592,8 +578,7 @@ async function resolve_local_mode(input_path: string): Promise<ResolvedMode> {
   return {
     project_path,
     project_name: path_to_project_id(project_path),
-    include_tests: false,
-    max_files: DEFAULT_MAX_FILES,
+    scope: load_analysis_scope(null),
     source_info: {
       type: "local",
       commit_hash: get_local_commit_hash(project_path),
