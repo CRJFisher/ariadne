@@ -319,9 +319,9 @@ export function extract_export_info(
       };
     }
 
-    // A definition nested inside a function is scoped to that function and never
-    // inherits the enclosing statement's export status, so stop at the function
-    // body boundary rather than walking up into an outer export_statement.
+    // A binding that lives inside a function body is never a module export,
+    // whatever a same-named module-scope binding did — so return before the
+    // name-keyed caches below, which hold module-scope facts only.
     const is_inside_function_body =
       current.type === "statement_block" &&
       parent &&
@@ -333,7 +333,7 @@ export function extract_export_info(
         parent.type === "generator_function");
 
     if (is_inside_function_body) {
-      break;
+      return { is_exported: false };
     }
 
     current = parent;

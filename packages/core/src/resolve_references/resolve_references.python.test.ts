@@ -7,7 +7,11 @@
 
 import { describe, it, expect, afterAll } from "vitest";
 import { Project } from "../project/project";
-import type { CallGraph, FilePath, SymbolName } from "@ariadnejs/types";
+import {
+  find_caller_node,
+  is_entry_point,
+} from "../trace_call_graph/trace_call_graph.test";
+import type { FilePath, SymbolName } from "@ariadnejs/types";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
@@ -52,34 +56,6 @@ afterAll(() => {
     }
   }
 });
-
-/** Locate the CallableNode for a caller function defined in a given file. */
-function find_caller_node(
-  call_graph: CallGraph,
-  caller_name: string,
-  file_path: FilePath
-) {
-  return [...call_graph.nodes.values()].find(
-    (node) =>
-      node.name === (caller_name as SymbolName) &&
-      node.location.file_path === file_path
-  );
-}
-
-/** True when `name` (defined in `file_path`) is reported as an entry point. */
-function is_entry_point(
-  call_graph: CallGraph,
-  name: string,
-  file_path: FilePath
-): boolean {
-  return call_graph.entry_points.some((ep) => {
-    const node = call_graph.nodes.get(ep);
-    return (
-      node?.name === (name as SymbolName) &&
-      node.location.file_path === file_path
-    );
-  });
-}
 
 describe("Python Multi-File Resolve References Integration", () => {
   describe("namespace-qualified class instantiation", () => {

@@ -5,9 +5,13 @@
  * pipeline using real files in temp directories.
  */
 
-import { describe, it, expect, afterAll } from "vitest";
+import { describe, it, expect, afterAll, beforeAll } from "vitest";
 import { Project } from "../project/project";
-import type { FilePath, SymbolName } from "@ariadnejs/types";
+import {
+  find_caller_node,
+  is_entry_point,
+} from "../trace_call_graph/trace_call_graph.test";
+import type { CallGraph, FilePath, SymbolName } from "@ariadnejs/types";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
@@ -580,6 +584,80 @@ export function build(fields) {
         .get_call_graph()
         .entry_points.find((ep) => ep === imported_fn!.symbol_id);
       expect(entry).toBeUndefined();
+    });
+  });
+
+  describe("CommonJS response-object methods (expressjs lib/response.js shape)", () => {
+    const FIXTURE = path.join(
+      __dirname,
+      "../../tests/fixtures/javascript/code/integration/commonjs_response_object/response.js"
+    );
+    let call_graph: CallGraph;
+    let file: FilePath;
+
+    beforeAll(async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "response.js": fs.readFileSync(FIXTURE, "utf-8"),
+      });
+      temp_dirs.push(temp_dir);
+      file = file_paths["response.js"];
+      call_graph = project.get_call_graph();
+    });
+
+    it("marks sendFile reachable through the module.exports read of the res collection", () => {
+      const node = find_caller_node(call_graph, "sendFile", file);
+      expect(
+        call_graph.indirect_reachability?.get(node!.symbol_id)?.reason.type
+      ).toEqual("collection_read");
+      expect(is_entry_point(call_graph, "sendFile", file)).toEqual(false);
+    });
+
+    it("marks append reachable through the module.exports read of the res collection", () => {
+      const node = find_caller_node(call_graph, "append", file);
+      expect(
+        call_graph.indirect_reachability?.get(node!.symbol_id)?.reason.type
+      ).toEqual("collection_read");
+      expect(is_entry_point(call_graph, "append", file)).toEqual(false);
+    });
+
+    it("marks location reachable through the module.exports read of the res collection", () => {
+      const node = find_caller_node(call_graph, "location", file);
+      expect(
+        call_graph.indirect_reachability?.get(node!.symbol_id)?.reason.type
+      ).toEqual("collection_read");
+      expect(is_entry_point(call_graph, "location", file)).toEqual(false);
+    });
+
+    it("resolves the sendfile helper from sendFile and keeps both sendfile callables off the entry-point list", () => {
+      const send_file = find_caller_node(call_graph, "sendFile", file);
+      const helper = [...call_graph.nodes.values()].find(
+        (n) =>
+          n.name === ("sendfile" as SymbolName) &&
+          n.location.file_path === file &&
+          n.location.start_line === 36
+      );
+      const helper_call = send_file?.enclosed_calls.find(
+        (c) => c.name === ("sendfile" as SymbolName)
+      );
+      expect(helper_call?.resolutions.map((r) => r.symbol_id)).toEqual([
+        helper?.symbol_id,
+      ]);
+      expect(is_entry_point(call_graph, "sendfile", file)).toEqual(false);
+    });
+
+    it("resolves the stringify call inside json to the module-scope stringify", () => {
+      const json = find_caller_node(call_graph, "json", file);
+      const module_stringify = [...call_graph.nodes.values()].find(
+        (n) =>
+          n.name === ("stringify" as SymbolName) && n.location.file_path === file
+      );
+      const stringify_call = json?.enclosed_calls.find(
+        (c) => c.name === ("stringify" as SymbolName)
+      );
+      expect(stringify_call?.resolutions.map((r) => r.symbol_id)).toEqual([
+        module_stringify?.symbol_id,
+      ]);
+      expect(is_entry_point(call_graph, "stringify", file)).toEqual(false);
     });
   });
 });
