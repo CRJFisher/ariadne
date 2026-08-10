@@ -12,7 +12,12 @@ import type { FilePath } from "@ariadnejs/types";
 export const SUPPORTED_EXTENSIONS = /\.(ts|tsx|js|jsx|mjs|cjs|mdx|py|rs)$/;
 
 /**
- * Directories to always ignore during file loading and watching
+ * Directories to always ignore during file loading and watching.
+ *
+ * Every entry is machine output or foreign code — nothing here holds a call
+ * edge into the project's own sources. A directory whose files DO call
+ * production code belongs in `TEST_DIR_PATTERNS` instead, which suppresses its
+ * callables as candidates while keeping the edges they contribute.
  */
 export const IGNORED_DIRECTORIES: readonly string[] = [
   "node_modules",
@@ -25,7 +30,6 @@ export const IGNORED_DIRECTORIES: readonly string[] = [
   ".cache",
   "tmp",
   "temp",
-  "fixtures",
   ".ariadne-cache",
 ];
 

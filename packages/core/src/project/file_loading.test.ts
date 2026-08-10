@@ -12,6 +12,7 @@ import {
   parse_gitignore,
 } from "./file_loading";
 import { detect_language } from "../detect_language";
+import { is_in_test_dir } from "./test_dir_patterns";
 
 describe("file_loading", () => {
   describe("SUPPORTED_EXTENSIONS", () => {
@@ -172,7 +173,16 @@ describe("file_loading", () => {
       expect(should_ignore_path("dist/main.js")).toBe(true);
       expect(should_ignore_path("build/out.js")).toBe(true);
       expect(should_ignore_path("temp/a.ts")).toBe(true);
-      expect(should_ignore_path("packages/x/fixtures/y.ts")).toBe(true);
+    });
+
+    it("keeps a fixture tree in the corpus so its call edges survive", () => {
+      // A fixture that calls production code carries a real edge. Dropping the
+      // file would delete the edge with it and leave the callee reading as
+      // uncalled; `is_in_test_dir` suppresses the fixture's own callables from
+      // candidacy instead.
+      expect(should_ignore_path("packages/x/fixtures/y.ts")).toBe(false);
+      expect(is_in_test_dir("packages/x/fixtures")).toBe(true);
+      expect(is_in_test_dir("packages/x/__fixtures__")).toBe(true);
     });
 
     // The triage harness passes `IGNORED_DIRECTORIES` through `load_project`'s
