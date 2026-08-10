@@ -12,9 +12,12 @@
  *     declaration — a sibling class's override, an abstract signature, the
  *     entry's own `def` line.
  *
- * Both channels of grep evidence (the indexed corpus and the out-of-index
- * fallback) qualify hits through this module, so neither can report a mention
- * as a caller.
+ * Both channels of grep evidence qualify through this module, but they are not
+ * protected equally. The indexed corpus keys the declaration rule on the
+ * indexer's own definition records, which is exact. The residue outside it has
+ * no such records, so only the textual declaration-header rule applies there —
+ * strong enough for the ordinary `def`/`function`/`class`/`fn` shapes, and
+ * blind to a declaration those patterns do not describe.
  */
 
 import type {
@@ -328,6 +331,133 @@ export function is_code_column(ranges: readonly CodeRange[], column: number): bo
     if (column >= start && column < end) return true;
   }
   return false;
+}
+
+/**
+ * A line this long is generated, not written — a minified bundle, a Unicode
+ * range table, a serialized protobuf descriptor. Every identifier in it
+ * matches, and each match would be reported as a caller of whatever it happens
+ * to name: django's bundled `jquery.min.js` alone attributed thousands. The hit
+ * would be useless as evidence anyway, since a hit's content is its line.
+ *
+ * The line is skipped, not the file: hand-written sources carry the odd
+ * generated line (a word list, a long regex) beside ordinary code that may hold
+ * the only real caller.
+ */
+const GENERATED_LINE_LENGTH = 2_000;
+
+/**
+ * Lookbehind form of word-boundary that also respects `$` as an identifier
+ * character — `\b` alone rejects `$(…)` because `$` is non-word. The identifier
+ * class is the common superset across the four languages, which is enough for a
+ * textual pass that a resolved reference always outranks.
+ */
+const CALL_OCCURRENCE = /(?<![A-Za-z0-9_$])([A-Za-z_$][\w$]*)\s*\(/g;
+
+/**
+ * Declaration headers per language, as text. Applied where the indexer's own
+ * definition records cannot be: a file outside the indexed corpus has no
+ * `CallableDefinition` to key on, yet a held-out stub redeclaring a name is a
+ * declaration there exactly as it would be inside the corpus.
+ *
+ * @language javascript,typescript,python,rust
+ */
+const DECLARATION_HEADERS: Record<Language, readonly ((name: string) => RegExp)[]> = {
+  javascript: [
+    (n) => new RegExp(`^\\s*(?:export\\s+)?(?:default\\s+)?(?:async\\s+)?function\\s*\\*?\\s+${n}\\b`),
+    (n) => new RegExp(`^\\s*(?:export\\s+)?(?:abstract\\s+)?class\\s+${n}\\b`),
+  ],
+  typescript: [
+    (n) => new RegExp(`^\\s*(?:export\\s+)?(?:default\\s+)?(?:async\\s+)?function\\s*\\*?\\s+${n}\\b`),
+    (n) => new RegExp(`^\\s*(?:export\\s+)?(?:abstract\\s+)?class\\s+${n}\\b`),
+  ],
+  python: [
+    (n) => new RegExp(`^\\s*(?:async\\s+)?def\\s+${n}\\b`),
+    (n) => new RegExp(`^\\s*class\\s+${n}\\b`),
+  ],
+  rust: [
+    (n) => new RegExp(`^\\s*(?:pub(?:\\([^)]*\\))?\\s+)?(?:const\\s+|async\\s+|unsafe\\s+|extern\\s+"[^"]*"\\s+)*fn\\s+${n}\\b`),
+  ],
+};
+
+/**
+ * Whether `line` declares `name` rather than calling it.
+ *
+ * Text-only, so it holds for a file the indexer never loaded. Inside the
+ * indexed corpus the definition-keyed rule is exact and this is the weaker
+ * second opinion that also covers shapes the indexer records no definition for
+ * — a TypeScript overload signature, a `declare function`.
+ */
+export function is_declaration_header(
+  line: string,
+  name: string,
+  language: Language,
+): boolean {
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return DECLARATION_HEADERS[language].some((build) => build(escaped).test(line));
+}
+
+/** One textual `name(` occurrence that survived qualification. */
+export interface CallOccurrence {
+  readonly name: string;
+  /** 1-based, matching `GrepHit.line`. */
+  readonly line: number;
+  readonly column: number;
+  /** The occurrence's whole line, already trimmed. */
+  readonly content: string;
+}
+
+/**
+ * Visit every textual occurrence in `lines` that can be a call site.
+ *
+ * The single owner of what "a call occurrence" means, so the indexed corpus and
+ * the residue outside it cannot drift apart on the question. An occurrence is
+ * withheld when it sits in a comment or in literal text, when a callable of
+ * that name is declared at that exact line, or when the line reads as a
+ * declaration header for it.
+ *
+ * `declaration_keys` is required rather than optional: a caller with no
+ * definition records must say so by passing an empty set, which is also the
+ * statement that only the textual rule protects it.
+ *
+ * Returns the number of generated lines skipped, which a caller reporting
+ * coverage needs — a caller on one of those lines is invisible to this pass.
+ */
+export function for_each_call_occurrence(
+  file_path: FilePath,
+  lines: readonly string[],
+  language: Language,
+  declaration_keys: ReadonlySet<string>,
+  visit: (occurrence: CallOccurrence) => void,
+): number {
+  const code_ranges = build_code_ranges(lines, language);
+  let skipped_lines = 0;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (line.length > GENERATED_LINE_LENGTH) {
+      skipped_lines++;
+      continue;
+    }
+    const line_code_ranges = code_ranges[i];
+    if (line_code_ranges.length === 0) continue;
+
+    const line_number = i + 1;
+    let trimmed: string | null = null;
+
+    CALL_OCCURRENCE.lastIndex = 0;
+    let match: RegExpExecArray | null;
+    while ((match = CALL_OCCURRENCE.exec(line)) !== null) {
+      if (!is_code_column(line_code_ranges, match.index)) continue;
+      const name = match[1];
+      if (declaration_keys.has(declaration_key(file_path, line_number, name))) continue;
+      if (is_declaration_header(line, name, language)) continue;
+      if (trimmed === null) trimmed = line.trim();
+      visit({ name, line: line_number, column: match.index, content: trimmed });
+    }
+  }
+
+  return skipped_lines;
 }
 
 /**

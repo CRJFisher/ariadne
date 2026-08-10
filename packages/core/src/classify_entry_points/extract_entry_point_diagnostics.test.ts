@@ -62,7 +62,7 @@ describe("build_grep_index", () => {
       [fp("a.ts"), as_lines("const x = foo();\nconst y = bar();")],
     ]);
 
-    const index = build_grep_index(lines_by_file, new Map(), languages_for(lines_by_file));
+    const index = build_grep_index(lines_by_file, new Map(), languages_for(lines_by_file), new Set());
 
     expect(index.get("foo")).toEqual([
       { file_path: "a.ts", line: 1, content: "const x = foo();", captures: [] },
@@ -78,7 +78,7 @@ describe("build_grep_index", () => {
       [fp("b.ts"), as_lines("foo();")],
     ]);
 
-    const index = build_grep_index(lines_by_file, new Map(), languages_for(lines_by_file));
+    const index = build_grep_index(lines_by_file, new Map(), languages_for(lines_by_file), new Set());
 
     const foo_hits = index.get("foo") ?? [];
     expect(foo_hits).toHaveLength(3);
@@ -94,7 +94,7 @@ describe("build_grep_index", () => {
       [fp("a.ts"), as_lines("const foo = 1;\nfoo.bar;\nfoo[0];")],
     ]);
 
-    const index = build_grep_index(lines_by_file, new Map(), languages_for(lines_by_file));
+    const index = build_grep_index(lines_by_file, new Map(), languages_for(lines_by_file), new Set());
 
     expect(index.get("foo")).toBeUndefined();
     expect(index.get("bar")).toBeUndefined();
@@ -105,7 +105,7 @@ describe("build_grep_index", () => {
       [fp("a.ts"), as_lines("foo  ();\n  bar (x);")],
     ]);
 
-    const index = build_grep_index(lines_by_file, new Map(), languages_for(lines_by_file));
+    const index = build_grep_index(lines_by_file, new Map(), languages_for(lines_by_file), new Set());
 
     expect(index.get("foo")).toHaveLength(1);
     expect(index.get("bar")).toHaveLength(1);
@@ -116,7 +116,7 @@ describe("build_grep_index", () => {
       [fp("a.js"), as_lines("$(selector); _private();")],
     ]);
 
-    const index = build_grep_index(lines_by_file, new Map(), languages_for(lines_by_file));
+    const index = build_grep_index(lines_by_file, new Map(), languages_for(lines_by_file), new Set());
 
     expect(index.get("$")).toHaveLength(1);
     expect(index.get("_private")).toHaveLength(1);
@@ -140,14 +140,36 @@ describe("build_grep_index", () => {
       [fp("a.ts"), new Map([[1, refs_at_line]])],
     ]);
 
-    const index = build_grep_index(lines_by_file, call_refs_by_file_line, languages_for(lines_by_file));
+    const index = build_grep_index(
+      lines_by_file,
+      call_refs_by_file_line,
+      languages_for(lines_by_file),
+      new Set(),
+    );
 
     expect(index.get("foo")?.[0].captures).toEqual(["@reference.call"]);
   });
 
   it("returns empty index for no source files", () => {
-    const index = build_grep_index(new Map(), new Map(), new Map());
+    const index = build_grep_index(new Map(), new Map(), new Map(), new Set());
     expect(index.size).toBe(0);
+  });
+
+  it("withholds a declaration header even with no definition records", () => {
+    const lines_by_file = new Map<FilePath, string[]>([
+      [fp("a.ts"), as_lines("export function make_id() {\n  return make_id();\n}")],
+    ]);
+
+    const index = build_grep_index(
+      lines_by_file,
+      new Map(),
+      languages_for(lines_by_file),
+      new Set(),
+    );
+
+    expect(index.get("make_id")).toEqual([
+      { file_path: "a.ts", line: 2, content: "return make_id();", captures: [] },
+    ]);
   });
 });
 

@@ -207,14 +207,11 @@ describe("the out-of-index set is discovered minus indexed", () => {
     expect(pool_shrink.diagnostics.diagnosis).toEqual("no-textual-callers");
   });
 
-  it("cannot tell a declaration in a held-out file from a call to it", async () => {
-    // The declaration rule keys on `Project.definitions`, and a file that was
-    // never indexed contributes none — so a held-out module that redeclares the
-    // name reads as a caller. Comment and string qualification still apply
-    // (they need only the text), which is why the case above passes. Closing
-    // this needs the residue parsed, which is precisely what not indexing it
-    // avoided; recorded as a known limit rather than papered over with a
-    // `def `/`function ` regex.
+  it("reads a redeclaration in a held-out file as a declaration, not a call", async () => {
+    // A held-out stub carries no definition records, so the exact rule cannot
+    // key on it; the textual declaration-header rule is what keeps the stub
+    // from being asserted as this callable's only caller — with the judgement
+    // flag off, which would route it confidently and wrongly.
     const root = await write_fixture({
       "src/control.py": "def pool_shrink(state):\n    return state\n",
       "tests/stub.py": "def pool_shrink(state):\n    return None\n",
@@ -226,9 +223,27 @@ describe("the out-of-index set is discovered minus indexed", () => {
       entry_points.filter((e) => e.file_path.endsWith("control.py")),
       "pool_shrink",
     );
+    expect(pool_shrink.diagnostics.grep_call_sites_outside_index).toEqual([]);
+    expect(pool_shrink.diagnostics.diagnosis).toEqual("no-textual-callers");
+  });
+
+  it("still reads a genuine call in a held-out file as a caller", async () => {
+    // The negative control for the rule above: qualification must remove
+    // declarations without removing the evidence the channel exists to find.
+    const root = await write_fixture({
+      "src/control.py": "def pool_shrink(state):\n    return state\n",
+      "tests/test_control.py": "from src.control import pool_shrink\n\npool_shrink(1)\n",
+    });
+
+    const { entry_points } = await analyse(root, { exclude: ["tests"] });
+
+    const pool_shrink = entry(
+      entry_points.filter((e) => e.file_path.endsWith("control.py")),
+      "pool_shrink",
+    );
     expect(
       pool_shrink.diagnostics.grep_call_sites_outside_index.map((h) => h.content),
-    ).toEqual(["def pool_shrink(state):"]);
+    ).toEqual(["pool_shrink(1)"]);
     expect(pool_shrink.diagnostics.diagnosis).toEqual("callers-outside-indexed-corpus");
   });
 

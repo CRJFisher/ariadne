@@ -18,7 +18,7 @@ import type { Project } from "../project/project";
 import { log_warn } from "../logging";
 import { find_source_files } from "../project/file_loading";
 import { detect_language } from "../detect_language";
-import { build_code_ranges, is_code_column } from "./qualify_grep_hits";
+import { for_each_call_occurrence } from "./qualify_grep_hits";
 import { compute_diagnosis, MAX_GREP_HITS } from "./extract_entry_point_diagnostics";
 import * as fs from "node:fs/promises";
 
@@ -105,65 +105,46 @@ interface OutsideIndexHit {
 }
 
 /**
- * A line this long is generated, not written — a minified bundle, a Unicode
- * range table, a serialized protobuf descriptor. Every identifier in it
- * matches, and each match is reported as a caller of whatever it happens to
- * name: django's bundled `jquery.min.js` alone attributed thousands. The hit
- * would be useless as evidence anyway, since a hit's content is its line.
- *
- * The line is skipped, not the file: hand-written sources carry the odd
- * generated line (a word list, a long regex) beside ordinary code that may
- * hold the only real caller.
- */
-const GENERATED_LINE_LENGTH = 2_000;
-
-/**
- * Per-identifier inverted index over the out-of-index files, qualified by the
- * same comment and string rules the indexed channel uses — otherwise a bare
+ * Per-identifier inverted index over the files outside the index, qualified by
+ * the same rules the indexed channel uses — otherwise a bare
  * `# cover pool_shrink() one day` in a held-out file reads as the entry's only
  * caller and routes it to `coverage_config`.
+ *
+ * These files carry no definition records, so the empty declaration-key set is
+ * the honest input: only the textual declaration-header rule protects this
+ * channel, and a held-out stub redeclaring a name is caught by that rather than
+ * by the exact rule the indexed corpus enjoys.
  */
 function build_outside_index_grep_index(
   files: ReadonlyMap<FilePath, string>,
 ): Map<string, OutsideIndexHit[]> {
   const grep_index = new Map<string, OutsideIndexHit[]>();
-  const pattern = /(?<![A-Za-z0-9_$])([A-Za-z_$][\w$]*)\s*\(/g;
+  const no_declaration_records: ReadonlySet<string> = new Set();
 
   let skipped_lines = 0;
   for (const [file_path, content] of files) {
     const language = detect_language(file_path);
     if (language === null) continue;
-    const lines = content.split("\n");
-    const code_ranges = build_code_ranges(lines, language);
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      if (line.length > GENERATED_LINE_LENGTH) {
-        skipped_lines++;
-        continue;
-      }
-      const line_code_ranges = code_ranges[i];
-      if (line_code_ranges.length === 0) continue;
-      pattern.lastIndex = 0;
-      let m: RegExpExecArray | null;
-      let trimmed: string | null = null;
-      while ((m = pattern.exec(line)) !== null) {
-        if (!is_code_column(line_code_ranges, m.index)) continue;
-        const name = m[1];
+    skipped_lines += for_each_call_occurrence(
+      file_path,
+      content.split("\n"),
+      language,
+      no_declaration_records,
+      ({ name, line, content: hit_content }) => {
         let hits = grep_index.get(name);
         if (!hits) {
           hits = [];
           grep_index.set(name, hits);
         }
-        if (trimmed === null) trimmed = line.trim();
-        hits.push({ file_path, line: i + 1, content: trimmed });
-      }
-    }
+        hits.push({ file_path, line, content: hit_content });
+      },
+    );
   }
   if (skipped_lines > 0) {
     // Loud, not silent: a caller on one of these lines is outside the index and
     // now outside the compensation too, so it is invisible to both.
     log_warn(
-      `out-of-index grep skipped ${skipped_lines} generated line(s) over ${GENERATED_LINE_LENGTH} chars`,
+      `grep outside the index skipped ${skipped_lines} generated line(s)`,
     );
   }
   return grep_index;
