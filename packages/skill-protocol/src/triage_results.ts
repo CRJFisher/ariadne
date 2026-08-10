@@ -73,8 +73,7 @@ export interface MemberSymbol {
  * on its diagnosis-fallback path: without it the deterministic
  * `syntactic_extraction` branch collapses. It is required (the producer always
  * has it from `EntryPointDiagnostics`), so the `plan` engine never has to
- * invent `false`. Coverage now states itself as a diagnosis
- * (`callers-outside-indexed-corpus`) and needs no separate boolean.
+ * invent `false`.
  */
 export interface NovelIssue {
   id: string;

@@ -39,6 +39,13 @@ export interface PrepareTriageInput {
   registry: KnownIssuesRegistry;
   /** When set, truncate the ordered residual bucket to this many entries. */
   max_count: number | null;
+  /**
+   * Entries whose diagnostics already carry the out-of-index channel. The pass
+   * that fills it touches the filesystem, so the caller runs it and hands the
+   * finished entries in; classification and every published diagnosis then
+   * read complete evidence rather than a provisional reading.
+   */
+  entry_points?: readonly EnrichedEntryPoint[];
 }
 
 export interface PrepareTriageReport {
@@ -68,6 +75,7 @@ export function sort_residual_entry_points(entries: ResidualEntryPoint[]): Resid
 export function prepare_triage(input: PrepareTriageInput): PrepareTriageReport {
   const enriched = enrich_call_graph(input.call_graph, input.project, {
     registry: input.registry,
+    entry_points: input.entry_points,
   });
 
   const auto_hits = collect_auto_hits(enriched);

@@ -21,8 +21,8 @@
  *     filesystem so diagnostics see exactly what the resolver saw (no TOCTOU
  *     drift, supports in-memory edits via `Project.update_file`).
  *
- * This pass is synchronous and free of FS I/O. The opt-in unindexed-test grep
- * (`attach_unindexed_test_grep_hits`, the one FS-touching diagnostic) lives in
+ * This pass is synchronous and free of FS I/O. The out-of-index grep
+ * (`attach_out_of_index_grep_hits`, the one FS-touching diagnostic) lives in
  * its own module; callers chain it after extraction when they need
  * `grep_call_sites_outside_index` populated.
  */
@@ -46,6 +46,8 @@ import type {
   EntryPointDiagnostics,
   GrepHit,
   CallRefDiagnostic,
+  ReferenceSiteDiagnostic,
+  SymbolReference,
 } from "@ariadnejs/types";
 
 import { log_info, log_warn } from "../logging";
@@ -56,6 +58,7 @@ import {
   is_code_column,
 } from "./qualify_grep_hits";
 import type { Project } from "../project/project";
+import type { ReferenceRegistry } from "../resolve_references/registries/reference";
 import { build_signature } from "../trace_call_graph/build_signature";
 import { count_tree_size } from "../trace_call_graph/count_tree_size";
 import { derive_syntactic_features } from "./derive_syntactic_features";
@@ -106,8 +109,8 @@ export function build_constructor_to_class_name_map(
  * `Project.get_file_contents()` is the source of truth for indexed source
  * bytes — diagnostics never re-read these files from disk.
  *
- * Synchronous and free of FS I/O. The opt-in unindexed-test grep is a
- * separate async pass (`attach_unindexed_test_grep_hits`) — chain it after
+ * Synchronous and free of FS I/O. The out-of-index grep is a
+ * separate async pass (`attach_out_of_index_grep_hits`) — chain it after
  * this function when classifiers need `grep_call_sites_outside_index`.
  */
 export function extract_entry_point_diagnostics(
@@ -120,12 +123,17 @@ export function extract_entry_point_diagnostics(
   const call_refs_by_name = build_call_refs_by_name(call_graph);
   const call_refs_by_file_line = build_call_refs_by_file_line(call_graph);
   const grep_index = build_grep_index(lines_by_file, call_refs_by_file_line, languages);
-
-  const declaration_keys = build_callable_declaration_keys(
-    project.definitions.get_callable_definitions(),
+  const reference_index = build_reference_index(
+    project.references,
+    lines_by_file,
+    call_refs_by_file_line,
   );
 
   const class_definitions = project.definitions.get_class_definitions();
+  const declaration_keys = build_callable_declaration_keys(
+    project.definitions.get_callable_definitions(),
+    class_definitions,
+  );
   const class_name_by_constructor_id = build_constructor_to_class_name_map(class_definitions);
   const class_method_symbol_ids = new Set<SymbolId>();
   for (const class_def of class_definitions) {
@@ -159,6 +167,7 @@ export function extract_entry_point_diagnostics(
       entry_point_id as string,
       call_refs_by_name,
       grep_index,
+      reference_index,
       lines_by_file,
       declaration_keys,
       class_name_by_constructor_id,
@@ -316,6 +325,115 @@ function build_call_refs_by_file_line(
 }
 
 /**
+ * Names that may key a reference. The indexer records composite names — a
+ * whole-expression text, a `this.value` chain — so a key is admitted only when
+ * the final dotted segment is a bare identifier. Without it a single
+ * `return this.value;` contributes several whole-expression records.
+ */
+const IDENTIFIER_KEY = /^[A-Za-z_$][\w$]*$/;
+
+/**
+ * Reference kinds that are mentions rather than calls.
+ *
+ * A caller that carries no call-paren syntax — a getter read, a bare-name
+ * callback registration, a dict or list registration value — produces one of
+ * these and nothing on the call channel. The call-shaped kinds are deliberately
+ * absent: those already arrive as `ariadne_call_refs`.
+ */
+const NON_CALL_REFERENCE_KINDS: ReadonlySet<string> = new Set([
+  "variable_reference",
+  "property_access",
+]);
+
+const SELF_KEYWORDS: ReadonlySet<string> = new Set(["this", "self", "super", "cls"]);
+
+/**
+ * Index every non-call reference in the indexed corpus by the name it reaches.
+ *
+ * One pass over the registry the indexer already filled — structured, keyed on
+ * the reference's own resolved name rather than on text, and needing no second
+ * parse. Positions that already produced a `CallReference` are skipped: those
+ * are calls, and they belong to `ariadne_call_refs`.
+ */
+export function build_reference_index(
+  references: ReferenceRegistry,
+  lines_by_file: ReadonlyMap<FilePath, string[]>,
+  call_refs_by_file_line: ReadonlyMap<FilePath, Map<number, CallReference[]>>,
+): Map<string, ReferenceSiteDiagnostic[]> {
+  const index = new Map<string, Map<string, ReferenceSiteDiagnostic>>();
+
+  for (const file_path of lines_by_file.keys()) {
+    const by_line = call_refs_by_file_line.get(file_path);
+    for (const ref of references.get_file_references(file_path)) {
+      if (!NON_CALL_REFERENCE_KINDS.has(ref.kind)) continue;
+
+      const segments = (ref.name as string).split(".");
+      const key = segments[segments.length - 1];
+      if (!IDENTIFIER_KEY.test(key)) continue;
+
+      // A mention that IS a call on this line already arrives as an
+      // `ariadne_call_ref`; the indexer records the same syntax as a reference
+      // too. Keying on the call's own name keeps the callback in
+      // `registry.register(s.deserialize)` — `register` is the call, so
+      // `deserialize` survives — while dropping the `p.shrink` in
+      // `p.shrink(1)`.
+      const line = ref.location.start_line;
+      if (by_line?.get(line)?.some((c) => (c.name as string) === key)) continue;
+
+      let sites = index.get(key);
+      if (!sites) {
+        sites = new Map();
+        index.set(key, sites);
+      }
+
+      // One site per (file, line), matching the grep channel's granularity.
+      // The indexer records the same mention several times over — `s.deserialize`
+      // arrives as a `property_access` and a `variable_reference`, each repeated —
+      // so without this a single line reports as five callers.
+      const position = `${file_path}:${line}`;
+      const existing = sites.get(position);
+      if (existing !== undefined) {
+        // A property access carries the receiver, so it is the better witness.
+        if (existing.reference_kind === "property_access" || ref.kind !== "property_access") {
+          continue;
+        }
+        sites.delete(position);
+      } else if (sites.size >= MAX_GREP_HITS) {
+        // The cap is load-bearing for memory, not just readability: a
+        // ubiquitous property name reaches tens of thousands of references.
+        continue;
+      }
+
+      sites.set(position, {
+        file_path,
+        line,
+        content: read_source_line(lines_by_file, file_path, line).trim(),
+        reference_kind: ref.kind,
+        access_type: reference_access_type(ref),
+        receiver_kind: reference_receiver_kind(ref),
+      });
+    }
+  }
+
+  return new Map(
+    [...index].map(([key, sites]) => [key, [...sites.values()]]),
+  );
+}
+
+function reference_access_type(ref: SymbolReference): string | null {
+  if (ref.kind === "variable_reference") return ref.access_type;
+  if (ref.kind === "property_access") return ref.access_type;
+  return null;
+}
+
+function reference_receiver_kind(ref: SymbolReference): string | null {
+  if (ref.kind !== "property_access") return null;
+  const head = ref.property_chain[0] as string | undefined;
+  if (head === undefined) return null;
+  return SELF_KEYWORDS.has(head) ? "self" : "identifier";
+}
+
+/**
  * One-pass inverted grep index over all source files. For every occurrence of
  * `identifier\s*\(` in the CODE of any line, record a `GrepHit` keyed by the
  * identifier.
@@ -407,6 +525,7 @@ function gather_diagnostics(
   entry_point_id: string,
   call_refs_by_name: Map<string, { caller_node: CallableNode; call_ref: CallReference }[]>,
   grep_index: Map<string, GrepHit[]>,
+  reference_index: Map<string, ReferenceSiteDiagnostic[]>,
   lines_by_file: ReadonlyMap<FilePath, string[]>,
   declaration_keys: ReadonlySet<string>,
   class_name_by_constructor_id?: ReadonlyMap<SymbolId, SymbolName>,
@@ -435,8 +554,9 @@ function gather_diagnostics(
     grep_call_sites,
     // Populated by `attach_out_of_index_grep_hits`, which owns the residue.
     grep_call_sites_outside_index: [],
-    // Populated by the reference index over `Project.references`.
-    reference_sites: [],
+    // Keyed by `grep_name`, so a constructor's references are found under the
+    // class name — the same name the grep channel searches for.
+    reference_sites: reference_sites_for(grep_name, reference_index, declaration_keys),
     ariadne_call_refs,
     diagnosis: "no-textual-callers",
     // Disambiguator for the fault-area derivation, stamped without re-grepping.
@@ -449,6 +569,27 @@ function gather_diagnostics(
   // answer over the evidence extraction can see.
   diagnostics.diagnosis = compute_diagnosis(diagnostics, entry_point_id);
   return diagnostics;
+}
+
+/**
+ * Non-call references to a name, minus any landing where a callable of that
+ * name is declared.
+ *
+ * The indexer records a reference for the declaration itself, so without this
+ * a sibling class's `def pool_shrink(...)` would read as a mention of the
+ * entry — the same phantom the grep channel rejects, arriving through the
+ * structured channel.
+ */
+function reference_sites_for(
+  name: string,
+  reference_index: Map<string, ReferenceSiteDiagnostic[]>,
+  declaration_keys: ReadonlySet<string>,
+): ReferenceSiteDiagnostic[] {
+  const all = reference_index.get(name);
+  if (!all) return [];
+  return all.filter(
+    (site) => !declaration_keys.has(declaration_key(site.file_path, site.line, name)),
+  );
 }
 
 /**

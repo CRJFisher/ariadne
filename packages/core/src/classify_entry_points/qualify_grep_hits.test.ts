@@ -183,16 +183,16 @@ describe("build_callable_declaration_keys", () => {
   }
 
   it("keys every declaration by file, line and name", () => {
-    const keys = build_callable_declaration_keys([
-      callable("dropSchema", "a.ts", 12),
-      callable("dropSchema", "b.ts", 12),
-    ]);
+    const keys = build_callable_declaration_keys(
+      [callable("dropSchema", "a.ts", 12), callable("dropSchema", "b.ts", 12)],
+      [],
+    );
 
     expect([...keys].sort()).toEqual(["a.ts:12:dropSchema", "b.ts:12:dropSchema"]);
   });
 
   it("does not claim a line for a name declared elsewhere on it", () => {
-    const keys = build_callable_declaration_keys([callable("wrap", "caller.ts", 1)]);
+    const keys = build_callable_declaration_keys([callable("wrap", "caller.ts", 1)], []);
 
     expect(keys.has(declaration_key("caller.ts", 1, "wrap"))).toBe(true);
     expect(keys.has(declaration_key("caller.ts", 1, "make_id"))).toBe(false);

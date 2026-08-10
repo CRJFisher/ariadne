@@ -232,21 +232,43 @@ describe("the out-of-index set is discovered minus indexed", () => {
     expect(pool_shrink.diagnostics.diagnosis).toEqual("callers-outside-indexed-corpus");
   });
 
-  it("does not read a minified bundle as a caller", async () => {
+  it("does not read a generated line as a caller, but keeps the rest of its file", async () => {
     // django's bundled `jquery.min.js` fails to index, so it lands in the
-    // residue; one enormous line then matches every identifier in it and
-    // attributes each as a caller. Skipping it is loud, not silent.
-    const minified = `!function(){${"a".repeat(2100)};send_status(1)}();`;
+    // residue; one enormous line matches every identifier in it and attributes
+    // each as a caller. The LINE is skipped, not the file — hand-written
+    // sources carry the odd generated line beside real code.
+    const generated_line = `const TABLE = "${"a".repeat(2100)};send_status(1)";`;
     const root = await write_fixture({
-      "lib/utils.js": "export function send_status(code) {\n  return code;\n}\n",
-      "vendor/jquery.min.js": minified,
+      "lib/utils.js": [
+        "export function send_status(code) {",
+        "  return code;",
+        "}",
+        "export function other_fn() {",
+        "  return 2;",
+        "}",
+        "",
+      ].join("\n"),
+      "vendor/bundle.js": [
+        generated_line,
+        "function boot() {",
+        "  return other_fn();",
+        "}",
+        "",
+      ].join("\n"),
     });
 
     const { entry_points } = await analyse(root, { exclude: ["vendor"] });
 
+    // `send_status` is named only inside the generated line — no hit.
     const send_status = entry(entry_points, "send_status");
     expect(send_status.diagnostics.grep_call_sites_outside_index).toEqual([]);
     expect(send_status.diagnostics.diagnosis).toEqual("no-textual-callers");
+
+    // `other_fn` is called on an ordinary line of the same file — still found.
+    const other_fn = entry(entry_points, "other_fn");
+    expect(
+      other_fn.diagnostics.grep_call_sites_outside_index.map((h) => h.content),
+    ).toEqual(["return other_fn();"]);
   });
 
   it("caps out-of-index hits per name", async () => {

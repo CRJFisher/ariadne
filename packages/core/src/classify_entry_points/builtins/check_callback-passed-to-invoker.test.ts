@@ -4,12 +4,24 @@ import type {
   EnrichedEntryPoint,
   FilePath,
   GrepHit,
+  ReferenceSiteDiagnostic,
   Language,
 } from "@ariadnejs/types";
 import { check_callback_passed_to_invoker } from "./check_callback-passed-to-invoker";
 
 const CALLER_FILE = "/repo/src/dispatch.ts" as FilePath;
 const EMPTY_READER = (_: string) => [] as readonly string[];
+
+function reference_site(content: string): ReferenceSiteDiagnostic {
+  return {
+    file_path: "src/x.py" as FilePath,
+    line: 1,
+    content,
+    reference_kind: "property_access",
+    access_type: "property",
+    receiver_kind: "self",
+  };
+}
 
 function grep_hit(content: string): GrepHit {
   return { file_path: CALLER_FILE, line: 1, content, captures: [] };
@@ -34,9 +46,9 @@ function make_entry(
       accessor_kind: null,
     },
     diagnostics: {
-      grep_call_sites: (overrides.grep_lines ?? []).map(grep_hit),
+      grep_call_sites: [],
       grep_call_sites_outside_index: [],
-      reference_sites: [],
+      reference_sites: (overrides.grep_lines ?? []).map(reference_site),
       ariadne_call_refs: [],
       diagnosis: "callers-in-registry-unresolved",
       has_uncaptured_indexed_grep_hit: false,

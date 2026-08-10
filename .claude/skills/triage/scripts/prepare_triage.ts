@@ -29,7 +29,11 @@ import { fileURLToPath } from "node:url";
 
 import {
   IGNORED_DIRECTORIES,
+  attach_out_of_index_grep_hits,
+  build_class_name_by_constructor_position,
+  extract_entry_point_diagnostics,
   load_project,
+  parse_gitignore,
   trace_call_graph,
   FileSystemStorage,
   resolve_cache_dir,
@@ -236,7 +240,7 @@ async function load_project_for_classification(
   const storage: PersistenceStorage | undefined = cache_dir
     ? new FileSystemStorage(cache_dir)
     : undefined;
-  const { project } = await load_project({
+  const { project, dropped_files } = await load_project({
     project_path,
     folders: scope.folders,
     exclude: [...IGNORED_DIRECTORIES, ...scope.exclude],
@@ -249,7 +253,24 @@ async function load_project_for_classification(
   const call_graph = trace_call_graph(project.definitions, project.resolutions, project.get_languages(), {
     include_tests: scope.include_tests,
   });
-  return { project, call_graph };
+
+  // Complete the evidence before anything classifies or publishes it. This
+  // phase re-indexes rather than reading detection's output, so without the
+  // out-of-index pass here every diagnosis it publishes is the provisional
+  // one — computed before the channel that produces
+  // `callers-outside-indexed-corpus` exists, which would make that diagnosis
+  // and its `coverage_config` route unreachable in the live pipeline.
+  const entry_points = extract_entry_point_diagnostics(call_graph, project);
+  await attach_out_of_index_grep_hits({
+    entry_points,
+    project_path,
+    indexed_source_files: project.get_file_contents(),
+    dropped_files,
+    class_name_by_constructor_position: build_class_name_by_constructor_position(project),
+    gitignore_patterns: await parse_gitignore(project_path),
+  });
+
+  return { project, call_graph, entry_points };
 }
 
 async function main(): Promise<void> {
@@ -299,12 +320,16 @@ async function main(): Promise<void> {
     );
   }
   const scope = load_analysis_scope(cli.config_path);
-  const { project, call_graph } = await load_project_for_classification(project_path, scope);
+  const { project, call_graph, entry_points } = await load_project_for_classification(
+    project_path,
+    scope,
+  );
   const { entries, stats } = prepare_triage({
     call_graph,
     project,
     registry,
     max_count: cli.max_count,
+    entry_points,
   });
 
   // Apply TP cache (entries confirmed unreachable by a prior run at the same commit).

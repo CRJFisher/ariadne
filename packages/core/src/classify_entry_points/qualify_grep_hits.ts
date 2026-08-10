@@ -17,7 +17,12 @@
  * as a caller.
  */
 
-import type { CallableDefinition, FilePath, Language } from "@ariadnejs/types";
+import type {
+  CallableDefinition,
+  ClassDefinition,
+  FilePath,
+  Language,
+} from "@ariadnejs/types";
 
 /** Half-open `[start, end)` column range of a line that holds code. */
 export type CodeRange = readonly [number, number];
@@ -249,9 +254,17 @@ export function declaration_key(
  */
 export function build_callable_declaration_keys(
   callable_definitions: readonly CallableDefinition[],
+  class_definitions: readonly ClassDefinition[],
 ): ReadonlySet<string> {
   const keys = new Set<string>();
   for (const def of callable_definitions) {
+    keys.add(
+      declaration_key(def.location.file_path, def.location.start_line, def.name as string),
+    );
+  }
+  // Class headers too, because a constructor is looked up by its class name:
+  // `class Reporter {` declares `Reporter`, it does not mention it.
+  for (const def of class_definitions) {
     keys.add(
       declaration_key(def.location.file_path, def.location.start_line, def.name as string),
     );

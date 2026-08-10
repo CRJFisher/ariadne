@@ -91,6 +91,12 @@ Two fixes, both of which the work plan already asked for and the measurement mad
 - **The per-name `MAX_GREP_HITS` cap now applies to this channel too.** It was absent; 3,546 raw hits across the corpus were being attached unbounded.
 - **A minified file is not evidence.** Any file with a line over 2,000 characters is skipped, with a loud warning naming the count — those files are now outside the index *and* outside the compensation, so a caller inside one is invisible to both, and that has to be said out loud rather than assumed away.
 
+### The route had to be connected, not just declared
+
+Review caught that `prepare_triage` re-indexes the project rather than reading detection's output, and never chained the out-of-index pass — so every diagnosis it published was the provisional one, computed before the channel existed. `callers-outside-indexed-corpus` was correct in the analysis JSON and then discarded, leaving `coverage_config` unreachable in the live pipeline: the route existed and nothing could reach it.
+
+The pass is async and `enrich_call_graph` is synchronous, so the fix is a seam rather than a call: a caller that can do FS work completes the evidence and hands the finished entries in through `EnrichCallGraphOptions.entry_points`. Verified end to end on django — the published triage state now carries the new diagnoses.
+
 ### A limit worth naming
 
 The declaration filter cannot reach out-of-index files. It keys on `Project.definitions`, and a file that was never indexed contributes none — so a held-out module that redeclares a name reads as a caller of it. Comment and string qualification still apply there, since those need only the text.

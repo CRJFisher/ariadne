@@ -265,7 +265,7 @@ describe("a config exclude is a corpus exclusion, and it costs call edges", () =
   });
 });
 
-describe("attach_unindexed_test_grep_hits", () => {
+describe("attach_out_of_index_grep_hits", () => {
   it("attaches a caller that a folder scope held out of the corpus", async () => {
     await write("src/foo.ts", "export function foo() {}\n");
     await write("tests/foo.test.ts", "import { foo } from '../src/foo.js';\nfoo();\n");

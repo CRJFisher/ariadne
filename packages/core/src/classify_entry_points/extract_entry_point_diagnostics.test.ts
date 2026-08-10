@@ -8,6 +8,8 @@ import {
   extract_entry_point_diagnostics,
 } from "./extract_entry_point_diagnostics";
 import { trace_call_graph } from "../trace_call_graph/trace_call_graph";
+import { check_callback_passed_to_invoker } from "./builtins/check_callback-passed-to-invoker";
+import { check_dispatch_table_value_registration } from "./builtins/check_dispatch-table-value-registration";
 import { derive_fault_area } from "@ariadnejs/types";
 import type {
   DeriveFaultAreaInput,
@@ -199,6 +201,25 @@ async function project_from_files(
     project.update_file(absolute_path as FilePath, content);
   }
   return project;
+}
+
+const EMPTY_READER = (_: string) => [] as readonly string[];
+
+function entry_for(
+  entry_points: EnrichedEntryPoint[],
+  name: string,
+  file_suffix: string,
+): EnrichedEntryPoint {
+  const found = entry_points.filter(
+    (e) => e.name === name && e.file_path.endsWith(file_suffix),
+  );
+  if (found.length !== 1) {
+    throw new Error(
+      `expected exactly one entry point ${name} in *${file_suffix}, got ${found.length} ` +
+        `(entry points: ${entry_points.map((e) => `${e.name}@${e.file_path}`).join(", ")})`,
+    );
+  }
+  return found[0];
 }
 
 function diagnostics_for(
@@ -506,6 +527,135 @@ describe("a grep hit inside a comment is not a call site", () => {
     expect(derive_fault_area(fault_area_input(target)).area).not.toEqual(
       "syntactic_extraction",
     );
+  });
+});
+
+describe("a non-call reference is carried as evidence", () => {
+  it("records a dict registration and a bare-name argument (celery shape)", async () => {
+    const enriched = await enriched_for({
+      "celery/serialization.py": [
+        "class Serializer:",
+        "    def deserialize(self, data):",
+        "        return data",
+        "",
+      ].join("\n"),
+      "celery/events/dumper.py": [
+        "class Dumper:",
+        "    def on_event(self, event):",
+        "        return event",
+        "",
+      ].join("\n"),
+      "celery/app/registry.py": [
+        "from celery.serialization import Serializer",
+        "from celery.events.dumper import Dumper",
+        "",
+        "",
+        "def install(registry, s: Serializer, dumper: Dumper):",
+        "    registry.register(s.deserialize)",
+        "    handlers = {'*': dumper.on_event}",
+        "    return handlers",
+        "",
+      ].join("\n"),
+    });
+
+    const deserialize = diagnostics_for(enriched, "deserialize", "serialization.py");
+    expect(deserialize.grep_call_sites).toEqual([]);
+    expect(deserialize.reference_sites.map((s) => s.content)).toEqual([
+      "registry.register(s.deserialize)",
+    ]);
+    expect(deserialize.reference_sites[0].reference_kind).toEqual("property_access");
+    expect(deserialize.diagnosis).toEqual("references-without-call-syntax");
+    expect(derive_fault_area(fault_area_input(deserialize))).toEqual({
+      area: "entry_point_classification",
+      language: undefined,
+      needs_judgement: false,
+    });
+
+    const on_event = diagnostics_for(enriched, "on_event", "dumper.py");
+    expect(on_event.grep_call_sites).toEqual([]);
+    expect(on_event.reference_sites.map((s) => s.content)).toEqual([
+      "handlers = {'*': dumper.on_event}",
+    ]);
+    expect(on_event.diagnosis).toEqual("references-without-call-syntax");
+  });
+
+  it("fires the two classifiers that could not see their own registry samples", async () => {
+    const enriched = await enriched_for({
+      "celery/serialization.py": [
+        "class Serializer:",
+        "    def as_task_v1(self, data):",
+        "        return data",
+        "",
+        "    def on_node_status(self, node, retcode):",
+        "        return node",
+        "",
+      ].join("\n"),
+      "celery/worker/consumer.py": [
+        "from celery.serialization import Serializer",
+        "",
+        "",
+        "class Consumer:",
+        "    def __init__(self, s: Serializer):",
+        "        self.task_protocols = {1: s.as_task_v1}",
+        "",
+        "    def on_node(self, node, retcode, maybe_call):",
+        "        return maybe_call(self.on_node_status, node, retcode)",
+        "",
+      ].join("\n"),
+    });
+
+    const as_task_v1 = entry_for(enriched, "as_task_v1", "serialization.py");
+    expect(check_dispatch_table_value_registration(as_task_v1, EMPTY_READER, "python")).toBe(
+      true,
+    );
+
+    const on_node_status = entry_for(enriched, "on_node_status", "serialization.py");
+    expect(check_callback_passed_to_invoker(on_node_status, EMPTY_READER, "python")).toBe(
+      true,
+    );
+  });
+
+  it("does not flood reference_sites with whole-expression records", async () => {
+    const enriched = await enriched_for({
+      "src/holder.py": [
+        "class Holder:",
+        "    def __init__(self):",
+        "        self.value = 1",
+        "",
+        "    def read(self):",
+        "        return self.value",
+        "",
+      ].join("\n"),
+    });
+
+    const read = diagnostics_for(enriched, "read", "holder.py");
+    // `return self.value` produces several reference records, including
+    // whole-expression text. None of them keys on `read`.
+    expect(read.reference_sites).toEqual([]);
+    expect(read.diagnosis).toEqual("no-textual-callers");
+  });
+
+  it("keeps a resolved call out of reference_sites — it is already a call ref", async () => {
+    const enriched = await enriched_for({
+      "src/panel.py": [
+        "class Panel:",
+        "    def shrink(self, n):",
+        "        return n",
+        "",
+      ].join("\n"),
+      "src/caller.py": [
+        "def go(p):",
+        "    return p.shrink(1)",
+        "",
+      ].join("\n"),
+    });
+
+    // The receiver is untyped, so the call never resolves and `shrink` stays a
+    // candidate — but the mention is still a CALL, so it belongs to the grep
+    // channel and must not be duplicated into the reference channel.
+    const shrink = diagnostics_for(enriched, "shrink", "panel.py");
+    expect(shrink.grep_call_sites.map((h) => h.content)).toEqual(["return p.shrink(1)"]);
+    expect(shrink.reference_sites).toEqual([]);
   });
 });
 

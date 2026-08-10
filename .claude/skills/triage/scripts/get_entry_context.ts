@@ -109,6 +109,40 @@ const GENERIC_HINTS: DiagnosisHints = {
 };
 
 const DIAGNOSIS_HINTS: Record<string, DiagnosisHints> = {
+  "callers-outside-indexed-corpus": {
+    title: "Callers Outside the Indexed Corpus",
+    summary:
+      "The caller exists, in a file that was discovered but never indexed — held out by a project-config `exclude`, left outside a `--folders` scope, or dropped by an indexing error. This is a statement about coverage, not about the member.",
+    investigation_guide: [
+      "1. **Read the out-of-index hits** in the evidence block. Each names a file the walk found and the index did not.",
+      "",
+      "2. **Decide which kind of gap it is**:",
+      "",
+      "   - A config `exclude` naming that directory — the exclude is deleting real call edges, and detection warns about this at startup when the directory is a test tree",
+      "   - A `--folders` scope that does not reach it",
+      "   - An indexing error — detection logs `failed to index` with the file name",
+      "",
+      "3. **Emit a verdict**: a real caller in an unindexed file is `fp-novel` with the coverage gap as the root cause. Fix the corpus, not the member.",
+    ].join("\n"),
+  },
+  "references-without-call-syntax": {
+    title: "Reached Without Call Syntax",
+    summary:
+      "Nothing calls this member with parens, but the indexed corpus does reference it — a getter read, a callback handed to an invoker, a dict or list registration value. The reference sites are in the evidence block; `grep_call_sites` is empty by construction, because these forms carry no `name(`.",
+    investigation_guide: [
+      "1. **Read the reference sites** above. Each carries the reference kind, the access type and the receiver form.",
+      "",
+      "2. **Decide whether the reference is an invocation route**:",
+      "",
+      "   - A callback passed to an invoker that later calls it ⇒ the member IS reached",
+      "   - A registration value in a table dispatched through a computed key ⇒ reached",
+      "   - A property read that never invokes ⇒ genuinely unreached",
+      "",
+      "3. **This is the classifier-author surface.** If the shape is a permanent limitation of static analysis, say so — the route is deterministic and a rule can be written for it.",
+      "",
+      "4. **Emit a verdict**: reached-by-reference ⇒ `fp-novel` naming the invocation route; never invoked ⇒ `tp`.",
+    ].join("\n"),
+  },
   "callers-not-in-registry": {
     title: "Callers Not in Registry",
     summary:

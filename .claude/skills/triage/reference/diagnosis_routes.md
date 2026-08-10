@@ -15,25 +15,38 @@ Each entry has a `diagnosis` field from pre-gathered diagnostics during detectio
 
 | Diagnosis                          | Meaning                                                                         |
 | ---------------------------------- | ------------------------------------------------------------------------------- |
-| `no-textual-callers`               | Grep found no call sites for this function anywhere in the codebase             |
-| `callers-not-in-registry`          | Grep found call sites but the calling files are not in Ariadne's file registry  |
+| `no-textual-callers`               | Nothing in the discovered corpus mentions this callable, in any form            |
+| `callers-not-in-registry`          | Indexed call sites exist but produced no `CallReference`                        |
 | `callers-in-registry-unresolved`   | Calling files are indexed but resolution failed to link them to this definition |
 | `callers-in-registry-wrong-target` | Calls were resolved but linked to a different symbol                            |
+| `callers-outside-indexed-corpus`   | The caller sits in a file that was discovered but never indexed                 |
+| `references-without-call-syntax`   | The only mentions are non-call references — a read, a registration, a bare name |
+
+`callers-outside-indexed-corpus` is a statement about coverage: a project-config
+`exclude`, a `--folders` scope, or an indexing error kept the caller's file out
+of the corpus. Investigating the member is pointless until the corpus question
+is answered, so it routes to `coverage_config` without judgement.
+
+`references-without-call-syntax` is a statement about syntax: the member is
+reached by a getter read, a callback handed to an invoker, or a dispatch-table
+value, none of which carry call parens. Its evidence lives in `reference_sites`,
+not `grep_call_sites`, and it is exactly the surface a classifier author works
+from — so it routes to `entry_point_classification`, also without judgement.
 
 ## Investigation Prompt
 
-All `llm-triage` entries render a single template — `templates/prompt.md` — which is parameterized by the entry's `diagnosis`. `scripts/get_entry_context.ts` substitutes diagnosis-specific hints (title, summary, investigation guide) for three diagnoses — `callers-not-in-registry`, `callers-in-registry-unresolved`, and `callers-in-registry-wrong-target`. The fourth diagnosis, `no-textual-callers`, and any other value fall back to a generic broad-investigation guide (`GENERIC_HINTS`). The template itself uses `{{entry.*}}` placeholders filled from the triage state entry.
+All `llm-triage` entries render a single template — `templates/prompt.md` — which is parameterized by the entry's `diagnosis`. `scripts/get_entry_context.ts` substitutes diagnosis-specific hints (title, summary, investigation guide) for three diagnoses — `callers-not-in-registry`, `callers-in-registry-unresolved`, and `callers-in-registry-wrong-target`. Every other diagnosis, including `no-textual-callers`, `callers-outside-indexed-corpus` and `references-without-call-syntax`, falls back to a generic broad-investigation guide (`GENERIC_HINTS`); the latter two route deterministically and rarely reach an investigator at all. The template itself uses `{{entry.*}}` placeholders filled from the triage state entry.
 
 ## Verdict Output
 
 Each investigated entry produces exactly one `TriageVerdict` (`src/verdict/triage_verdict.ts`), written as raw JSON to `results/<entry_index>.json` under the run directory. The union has four arms, discriminated by `kind`:
 
-| `kind`                     | Meaning                                                         | Arm-specific fields                                  |
-| -------------------------- | --------------------------------------------------------------- | ---------------------------------------------------- |
-| `tp`                       | Genuinely unreachable — the call graph is correct               | —                                                    |
-| `fp-novel`                 | Real caller exists that no in-scope rule should have caught      | `proposed_root_cause`, `evidence_excerpt`            |
-| `fp-classifier-regression` | Real caller an in-scope wip/permanent rule should have matched   | `should_have_matched_rule_id`, `evidence_excerpt`    |
-| `uncertain`                | Cannot be reduced to a single verdict                           | `reason`                                             |
+| `kind`                     | Meaning                                                        | Arm-specific fields                               |
+| -------------------------- | -------------------------------------------------------------- | ------------------------------------------------- |
+| `tp`                       | Genuinely unreachable — the call graph is correct              | —                                                 |
+| `fp-novel`                 | Real caller exists that no in-scope rule should have caught    | `proposed_root_cause`, `evidence_excerpt`         |
+| `fp-classifier-regression` | Real caller an in-scope wip/permanent rule should have matched | `should_have_matched_rule_id`, `evidence_excerpt` |
+| `uncertain`                | Cannot be reduced to a single verdict                          | `reason`                                          |
 
 Every arm also carries `member_evidence` (`file`, `line`, `why`).
 

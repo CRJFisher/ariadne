@@ -65,7 +65,11 @@ export function check_callback_passed_to_invoker(
     `[(,=]\\s*(?:self|this)\\.${esc}(?![\\w(.\\[])`,
   );
 
-  return entry_point.diagnostics.grep_call_sites.some(
-    (h) => bind_ref.test(h.content) || bound_method_arg.test(h.content),
+  // Read the reference channel, not the grep channel: these surface forms
+  // carry no `name(` by construction, so they never produce a grep hit. Every
+  // sample in this rule's registry entry was unmatchable until this channel
+  // existed.
+  return entry_point.diagnostics.reference_sites.some(
+    (site) => bind_ref.test(site.content) || bound_method_arg.test(site.content),
   );
 }

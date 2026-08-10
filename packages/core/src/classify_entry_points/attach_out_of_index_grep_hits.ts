@@ -105,18 +105,17 @@ interface OutOfIndexHit {
 }
 
 /**
- * A line this long is minified or generated, not written. Such a file is one
- * enormous line, so every identifier in it matches and each match is reported
- * as a caller of whatever it happens to name — django's bundled
- * `jquery.min.js` alone attributed thousands of them. The hits are also
- * useless as evidence: a `GrepHit`'s content is its line, and that line is the
- * whole file.
+ * A line this long is generated, not written — a minified bundle, a Unicode
+ * range table, a serialized protobuf descriptor. Every identifier in it
+ * matches, and each match is reported as a caller of whatever it happens to
+ * name: django's bundled `jquery.min.js` alone attributed thousands. The hit
+ * would be useless as evidence anyway, since a hit's content is its line.
+ *
+ * The line is skipped, not the file: hand-written sources carry the odd
+ * generated line (a word list, a long regex) beside ordinary code that may
+ * hold the only real caller.
  */
-const MINIFIED_LINE_LENGTH = 2_000;
-
-function is_minified(lines: readonly string[]): boolean {
-  return lines.some((line) => line.length > MINIFIED_LINE_LENGTH);
-}
+const GENERATED_LINE_LENGTH = 2_000;
 
 /**
  * Per-identifier inverted index over the out-of-index files, qualified by the
@@ -130,18 +129,18 @@ function build_out_of_index_grep_index(
   const grep_index = new Map<string, OutOfIndexHit[]>();
   const pattern = /(?<![A-Za-z0-9_$])([A-Za-z_$][\w$]*)\s*\(/g;
 
-  const minified: string[] = [];
+  let skipped_lines = 0;
   for (const [file_path, content] of files) {
     const language = detect_language(file_path);
     if (language === null) continue;
     const lines = content.split("\n");
-    if (is_minified(lines)) {
-      minified.push(file_path);
-      continue;
-    }
     const code_ranges = build_code_ranges(lines, language);
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
+      if (line.length > GENERATED_LINE_LENGTH) {
+        skipped_lines++;
+        continue;
+      }
       const line_code_ranges = code_ranges[i];
       if (line_code_ranges.length === 0) continue;
       pattern.lastIndex = 0;
@@ -160,13 +159,11 @@ function build_out_of_index_grep_index(
       }
     }
   }
-  if (minified.length > 0) {
-    // Loud, not silent: these files are outside the index and now outside the
-    // compensation too, so a caller inside one is invisible to both.
+  if (skipped_lines > 0) {
+    // Loud, not silent: a caller on one of these lines is outside the index and
+    // now outside the compensation too, so it is invisible to both.
     log_warn(
-      `out-of-index grep skipped ${minified.length} minified file(s): ${minified
-        .slice(0, 5)
-        .join(", ")}`,
+      `out-of-index grep skipped ${skipped_lines} generated line(s) over ${GENERATED_LINE_LENGTH} chars`,
     );
   }
   return grep_index;
@@ -177,11 +174,16 @@ function build_out_of_index_grep_index(
  *
  * The walk is rooted at the project and carries only gitignore patterns, so a
  * `--folders`-scoped-out directory is still discovered; `IGNORED_DIRECTORIES`
- * bounds it internally so `node_modules` and `dist` never enter the grep. A
- * config `exclude` is deliberately NOT threaded in: those files are exactly
- * the residue this pass exists to find. Files the loader dropped are added
- * back, because rolling their partial state out removed them from the indexed
- * map without putting them back on the walker's list.
+ * bounds it internally, which keeps `node_modules`, `dist`, `build`, `tmp`,
+ * `temp` and `fixtures` out of the grep — a caller under one of those is
+ * invisible to both the index and this compensation. A config `exclude` is
+ * deliberately NOT threaded in: those files are exactly the residue this pass
+ * exists to find.
+ *
+ * Files the loader dropped are unioned back. The walk usually rediscovers them
+ * on its own, since it filters more loosely than discovery did; the union is
+ * load-bearing only when `load_project` was given explicit `files` (that branch
+ * skips `should_ignore_path`) or an out-of-tree `folders` entry.
  */
 export async function collect_files_outside_index(
   project_path: string,
@@ -195,7 +197,15 @@ export async function collect_files_outside_index(
     candidates = await find_source_files(project_path, project_path, [
       ...gitignore_patterns,
     ]);
-  } catch {
+  } catch (error) {
+    // A walk that cannot run yields no compensation at all, and every entry
+    // then reads as having no callers anywhere. Say so rather than looking
+    // healthy.
+    log_warn(
+      `out-of-index walk of ${project_path} failed, so no compensation was computed: ${
+        error instanceof Error ? error.message : error
+      }`,
+    );
     return out;
   }
 

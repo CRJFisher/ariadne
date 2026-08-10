@@ -77,7 +77,10 @@ export function check_dispatch_table_value_registration(
   if (!SUPPORTED.has(language)) return false;
 
   const matchers = registration_matchers(entry_point.name);
-  return entry_point.diagnostics.grep_call_sites.some((hit) =>
-    matchers.some((re) => re.test(hit.content)),
+  // Read the reference channel, not the grep channel: a name enrolled as a
+  // dict or list value carries no call parens, so it never produces a grep
+  // hit. The rule could not fire on its own registry samples before this.
+  return entry_point.diagnostics.reference_sites.some((site) =>
+    matchers.some((re) => re.test(site.content)),
   );
 }
