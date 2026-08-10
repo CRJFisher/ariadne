@@ -9,7 +9,7 @@ import { extract_entry_point_diagnostics } from "./extract_entry_point_diagnosti
 import {
   complete_caller_evidence,
   build_class_name_by_constructor_position,
-  collect_files_outside_index,
+  collect_paths_outside_index,
 } from "./complete_caller_evidence";
 
 const temp_roots: string[] = [];
@@ -51,7 +51,7 @@ async function analyse(
     { include_tests: false },
   );
   const entry_points = extract_entry_point_diagnostics(call_graph, project);
-  const residue = await collect_files_outside_index(
+  const residue = await collect_paths_outside_index(
     root,
     project.get_file_contents(),
     dropped_files,
@@ -68,7 +68,7 @@ async function analyse(
   });
   return {
     entry_points,
-    residue: [...residue.keys()].map((f) => f.slice(root.length + 1)).sort(),
+    residue: residue.map((f) => f.slice(root.length + 1)).sort(),
   };
 }
 

@@ -64,14 +64,14 @@ export async function complete_caller_evidence(
     gitignore_patterns,
   } = input;
 
-  const out_of_index = await collect_files_outside_index(
+  const outside_index = await collect_paths_outside_index(
     project_path,
     indexed_source_files,
     dropped_files,
     gitignore_patterns,
   );
 
-  const grep_index = build_outside_index_grep_index(out_of_index);
+  const grep_index = await build_outside_index_grep_index(outside_index);
 
   for (const entry of entry_points) {
     // Constructors are grepped by class name, not __init__/constructor —
@@ -83,7 +83,7 @@ export async function complete_caller_evidence(
           ) ?? entry.name
         : entry.name;
 
-    const hits = (grep_index.get(grep_name) ?? []).slice(0, MAX_GREP_HITS);
+    const hits = grep_index.get(grep_name) ?? [];
     entry.diagnostics.grep_call_sites_outside_index = hits.map((h) => ({
       file_path: h.file_path,
       line: h.line,
@@ -115,16 +115,23 @@ interface OutsideIndexHit {
  * channel, and a held-out stub redeclaring a name is caught by that rather than
  * by the exact rule the indexed corpus enjoys.
  */
-function build_outside_index_grep_index(
-  files: ReadonlyMap<FilePath, string>,
-): Map<string, OutsideIndexHit[]> {
+async function build_outside_index_grep_index(
+  paths: readonly FilePath[],
+): Promise<Map<string, OutsideIndexHit[]>> {
   const grep_index = new Map<string, OutsideIndexHit[]>();
   const no_declaration_records: ReadonlySet<string> = new Set();
 
   let skipped_lines = 0;
-  for (const [file_path, content] of files) {
+  for (const file_path of paths) {
     const language = detect_language(file_path);
     if (language === null) continue;
+    let content: string;
+    try {
+      content = await fs.readFile(file_path, "utf-8");
+    } catch {
+      // A file that cannot be read holds no evidence either way.
+      continue;
+    }
     skipped_lines += for_each_call_occurrence(
       file_path,
       content.split("\n"),
@@ -136,7 +143,12 @@ function build_outside_index_grep_index(
           hits = [];
           grep_index.set(name, hits);
         }
-        hits.push({ file_path, line, content: hit_content });
+        // Capped as hits arrive, not when they are read: a ubiquitous name in a
+        // large residue would otherwise hold tens of thousands of records to
+        // serve the ten an investigator reads.
+        if (hits.length < MAX_GREP_HITS) {
+          hits.push({ file_path, line, content: hit_content });
+        }
       },
     );
   }
@@ -166,13 +178,12 @@ function build_outside_index_grep_index(
  * load-bearing only when `load_project` was given explicit `files` (that branch
  * skips `should_ignore_path`) or an out-of-tree `folders` entry.
  */
-export async function collect_files_outside_index(
+export async function collect_paths_outside_index(
   project_path: string,
   indexed_source_files: ReadonlyMap<FilePath, string>,
   dropped_files: ReadonlySet<FilePath>,
   gitignore_patterns: readonly string[],
-): Promise<Map<FilePath, string>> {
-  const out = new Map<FilePath, string>();
+): Promise<FilePath[]> {
   let candidates: FilePath[];
   try {
     candidates = await find_source_files(project_path, project_path, [
@@ -183,11 +194,11 @@ export async function collect_files_outside_index(
     // then reads as having no callers anywhere. Say so rather than looking
     // healthy.
     log_warn(
-      `out-of-index walk of ${project_path} failed, so no compensation was computed: ${
+      `walk outside the index of ${project_path} failed, so no compensation was computed: ${
         error instanceof Error ? error.message : error
       }`,
     );
-    return out;
+    return [];
   }
 
   const residue = new Set(candidates.filter((f) => !indexed_source_files.has(f)));
@@ -195,13 +206,9 @@ export async function collect_files_outside_index(
     residue.add(dropped);
   }
 
-  for (const full of residue) {
-    if (detect_language(full) === null) continue;
-    try {
-      out.set(full, await fs.readFile(full, "utf-8"));
-    } catch {
-      // A file that cannot be read holds no evidence either way.
-    }
-  }
-  return out;
+  // Paths only. The contents are read one file at a time while indexing and
+  // discarded, so the residue of a large repository never sits in memory whole
+  // — it is exactly the corpus the loader refused, and the cap that protects
+  // the loader does not apply here.
+  return [...residue];
 }
