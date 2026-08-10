@@ -23,7 +23,6 @@
  */
 
 import * as childProcess from "node:child_process";
-import * as fs from "node:fs";
 import * as fsp from "node:fs/promises";
 import * as path from "path";
 import { fileURLToPath } from "node:url";
@@ -40,6 +39,8 @@ import type { PersistenceStorage } from "@ariadnejs/core";
 import { atomic_write_file } from "@ariadnejs/skill-fs";
 import { build_run_id } from "@ariadnejs/skill-protocol";
 import { load_json } from "../src/store/analysis_output.js";
+import { load_analysis_scope } from "../src/analysis_scope.js";
+import type { AnalysisScope } from "../src/analysis_scope.js";
 import { active_rules_for_classification, load_registry } from "../src/known_issues_registry.js";
 import { prepare_triage } from "../src/prepare_triage.js";
 import {
@@ -116,22 +117,6 @@ function parse_args(argv: string[]): CliArgs {
   }
 
   return { analysis_path, project, config_path, max_count, no_reuse_tp, tp_source_run };
-}
-
-interface IndexScopeFromConfig {
-  folders: string[] | undefined;
-  exclude: string[];
-}
-
-function load_index_scope(config_path: string | null): IndexScopeFromConfig {
-  if (config_path === null) {
-    return { folders: undefined, exclude: [] };
-  }
-  const raw = fs.readFileSync(path.resolve(config_path), "utf-8");
-  const parsed = JSON.parse(raw) as Record<string, unknown>;
-  const folders = Array.isArray(parsed.folders) ? (parsed.folders as string[]) : undefined;
-  const exclude = Array.isArray(parsed.exclude) ? (parsed.exclude as string[]) : [];
-  return { folders, exclude };
 }
 
 const SCRIPTS_DIR = ".claude/skills/triage/scripts";
@@ -245,7 +230,7 @@ function warn_if_analysis_stale(
  */
 async function load_project_for_classification(
   project_path: string,
-  scope: IndexScopeFromConfig,
+  scope: AnalysisScope,
 ) {
   const cache_dir = resolve_cache_dir(project_path);
   const storage: PersistenceStorage | undefined = cache_dir
@@ -255,13 +240,14 @@ async function load_project_for_classification(
     project_path,
     folders: scope.folders,
     exclude: [...IGNORED_DIRECTORIES, ...scope.exclude],
+    max_files: scope.max_files,
     storage,
   });
   // Raw call graph: every uncalled callable. The triage classifier needs the
   // unfiltered set so it can route both permanent and wip registry rules
   // against every candidate.
   const call_graph = trace_call_graph(project.definitions, project.resolutions, project.get_languages(), {
-    include_tests: false,
+    include_tests: scope.include_tests,
   });
   return { project, call_graph };
 }
@@ -303,7 +289,16 @@ async function main(): Promise<void> {
         "(status=fixed or wip+drift_detected)\n",
     );
   }
-  const scope = load_index_scope(cli.config_path);
+  if (cli.config_path === null) {
+    // This phase re-indexes the project, so without the config it re-indexes a
+    // different corpus than detection did — and reverts `include_tests` and
+    // `max_files` to their defaults while doing it.
+    process.stderr.write(
+      "[prepare_triage] no --config: re-indexing with default scope, which may not match " +
+        "the corpus detection analysed. Pass the same --config detection used.\n",
+    );
+  }
+  const scope = load_analysis_scope(cli.config_path);
   const { project, call_graph } = await load_project_for_classification(project_path, scope);
   const { entries, stats } = prepare_triage({
     call_graph,

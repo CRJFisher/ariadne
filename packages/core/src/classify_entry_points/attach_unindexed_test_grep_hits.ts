@@ -1,9 +1,9 @@
 /**
- * The opt-in unindexed-test grep pass — the only diagnostic that touches the
+ * The unindexed-test grep pass — the only diagnostic that touches the
  * filesystem outside the indexed source set. It lives apart from
  * `extract_entry_point_diagnostics` so that pass stays synchronous and free of
- * FS I/O; callers chain this one after extraction when they need
- * `grep_call_sites_unindexed_tests` populated.
+ * FS I/O; callers chain this one after extraction to populate
+ * `grep_call_sites_unindexed_tests`.
  */
 
 import type { EnrichedEntryPoint, FilePath } from "@ariadnejs/types";
@@ -13,21 +13,6 @@ import { detect_language } from "../detect_language";
 import { build_code_ranges, is_code_column } from "./qualify_grep_hits";
 import * as path from "node:path";
 import * as fs from "node:fs/promises";
-
-/**
- * Options for the optional unindexed-test grep pass.
- */
-export interface UnindexedTestGrepOptions {
-  /**
-   * Project root used to discover unindexed-test files.
-   */
-  readonly project_path: string;
-  /**
-   * Additional ignore patterns passed through to `find_source_files` so the
-   * unindexed-test walk honours the same exclusions as primary indexing.
-   */
-  readonly ignore_patterns?: readonly string[];
-}
 
 /**
  * Build the constructor → class name map keyed by `file_path:start_line`. The

@@ -30,6 +30,17 @@ export interface LoadProjectOptions {
   folders?: string[];
   /** Additional folder/pattern exclusions (appended to gitignore patterns for file discovery, passed to Project.initialize). */
   exclude?: string[];
+  /**
+   * Refuse to index more than this many discovered files.
+   *
+   * A corpus can be too large to hold: microsoft/TypeScript discovers 39k
+   * source files, 19k of them generated compiler baselines, and indexing them
+   * exhausts the V8 heap after an hour. Truncating silently would be worse than
+   * failing — a corpus missing arbitrary files reports callees whose callers
+   * were simply left out, which is the false-entry-point failure this pipeline
+   * exists to remove. So the cap refuses and names the remedies instead.
+   */
+  max_files?: number;
   /** Optional persistence storage. When provided, unchanged files skip tree-sitter parsing. */
   storage?: PersistenceStorage;
 }
@@ -87,6 +98,7 @@ export async function load_project(
     files = [],
     folders = [],
     exclude = [],
+    max_files,
     storage,
   } = options;
 
@@ -135,6 +147,15 @@ export async function load_project(
     for (const file of all_files) {
       files_to_load.add(file);
     }
+  }
+
+  if (max_files !== undefined && files_to_load.size > max_files) {
+    throw new Error(
+      `Discovered ${files_to_load.size} source files, over the ${max_files}-file cap. ` +
+        "Indexing them all would exhaust memory, and indexing an arbitrary subset would " +
+        "report callees whose callers were left out. Narrow the corpus with `folders`, " +
+        "exclude generated trees with `exclude`, or raise `max_files` deliberately.",
+    );
   }
 
   // Load manifest if storage is provided

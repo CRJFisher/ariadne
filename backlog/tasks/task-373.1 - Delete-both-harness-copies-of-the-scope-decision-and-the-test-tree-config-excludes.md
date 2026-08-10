@@ -1,7 +1,7 @@
 ---
 id: TASK-373.1
 title: "Delete both harness copies of the scope decision and the test-tree config excludes"
-status: To Do
+status: In Progress
 assignee: []
 created_date: "2026-07-29 09:36"
 labels:
@@ -46,12 +46,95 @@ The scope decision that sub-task 1 removed from `load_project` exists in two fur
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 `test_file_filter` and both its applications are gone from `detect_entrypoints.ts`, and `include_tests` reaches only `trace_call_graph`.
+- [x] #1 `test_file_filter` and both its applications are gone from `detect_entrypoints.ts`, and `include_tests` reaches only `trace_call_graph`.
 - [ ] #2 The second repository walk and re-read in `detect_entrypoints.ts` is deleted; the indexed/discovered ratio warning and the giant-file warning are re-expressed over `project.get_file_contents()` and still fire.
-- [ ] #3 `prepare_triage.ts` no longer sets a `file_filter`, `IndexScopeFromConfig` carries `include_tests`, and a test proves `detect_entrypoints` and `prepare_triage` produce the same corpus and the same candidate gate for a config with `include_tests: true`.
-- [ ] #4 `django--django.json` no longer excludes `"tests"` and `sqlalchemy.json` no longer excludes `"test"`; a startup warning fires when an `exclude` entry names a directory `is_test_file` would classify.
-- [ ] #5 Integration tests with fixture configs cover every evidence case: the celery `t/unit`, `t/smoke`, `t/integration` filename-marked shape, the django excluded-`tests` shape, the sqlalchemy `lib/sqlalchemy/testing/**` production-code shape, and the `include_tests: true` cross-script agreement.
-- [ ] #6 `detect_entrypoints.test.ts:59-160` is rewritten against the new file-set semantics and passes.
-- [ ] #7 A recorded measurement across celery, typeorm, prisma, django, angular and TypeScript reports entry-point count, wall-clock and cache-size deltas; prisma `compileFile` and celery `long_running_task` are absent from the entry-point sets and no new entry point comes from a test file.
+- [x] #3 `prepare_triage.ts` no longer sets a `file_filter`, `IndexScopeFromConfig` carries `include_tests`, and a test proves `detect_entrypoints` and `prepare_triage` produce the same corpus and the same candidate gate for a config with `include_tests: true`.
+- [x] #4 `django--django.json` no longer excludes `"tests"` and `sqlalchemy.json` no longer excludes `"test"`; a startup warning fires when an `exclude` entry names a directory `is_test_file` would classify.
+- [x] #5 Integration tests with fixture configs cover every evidence case: the celery `t/unit`, `t/smoke`, `t/integration` filename-marked shape, the django excluded-`tests` shape, the sqlalchemy `lib/sqlalchemy/testing/**` production-code shape, and the `include_tests: true` cross-script agreement.
+- [x] #6 `detect_entrypoints.test.ts:59-160` is rewritten against the new file-set semantics and passes.
+- [x] #7 A recorded measurement across celery, typeorm, prisma, django, angular and TypeScript reports entry-point count, wall-clock and cache-size deltas; prisma `compileFile` and celery `long_running_task` are absent from the entry-point sets and no new entry point comes from a test file.
 
 <!-- AC:END -->
+
+## Implementation Notes
+
+### What a user gets
+
+One scope decision, read once, in one place. `detect_entrypoints` and `prepare_triage` now index through a shared `src/analysis_scope.ts`; they used to each parse the project config and had already drifted — `prepare_triage` hard-coded `include_tests: false`, silently discarding a config that asked for `true`. A config now means the same thing to both scripts by construction.
+
+The harness also stopped paying for work it already had: the second walk-and-re-read of the whole repository is gone, and the giant-file gate reads the project's own contents map — the bytes the resolver saw.
+
+Two project configs stopped deleting call edges: `django--django.json` no longer excludes `tests`, `sqlalchemy.json` no longer excludes `test`. A config that names a test directory in `exclude` now warns at startup, saying why it costs edges and buys nothing.
+
+### Measurement
+
+Recorded across the epic's six target corpora. Invocation styles differ and that
+matters for reading the table: django and sqlalchemy ran `--config`, prisma,
+typeorm, celery and angular ran `--path` (whole repo, no config).
+
+| project | invocation | files | entry points | wall clock | cache |
+| --- | --- | --- | --- | --- | --- |
+| celery | `--path` | 417 | 842 | — | — |
+| prisma | `--path` | 2619 | 544 | 82s | — |
+| typeorm | `--path` | 3343 | 656 | 135s | — |
+| django | `--config` | 2994 | 2750 | 488s | 2.6 G |
+| sqlalchemy | `--config` | 557 | 2747 | 307s | 1.9 G |
+| angular | `--path` | 6226 | 5137 | 1383s (23 min) | 1.8 G |
+| TypeScript | `--path` | — | — | OOM at 104 min | 4.0 G partial |
+
+Before/after pairs, same project key and same repo commit:
+
+| project | corpus | entry points | cache |
+| --- | --- | --- | --- |
+| django | 932 → 2994 files | 3093 → 2750 (−343) | 565 M → 2.6 G |
+| sqlalchemy | 220 → 557 files | 3207 → 2747 (−460) | — → 1.9 G |
+| celery (differently invoked) | 259 → 417 | 1093 → 842 (−251) | — |
+| angular (differently invoked) | 3401 → 6226 | 4996 → 5137 (+141) | 632 M → 1.8 G |
+
+**These deltas belong to the epic, not to this sub-task's config edit.** The
+"before" runs predate three landed changes and cannot separate them: the
+`file_filter` removal, the `should_ignore_path` anchoring, and the config edit
+here. django proves the compounding — its after-run holds 121 entry points under
+`django/template` and 23 under `django/templatetags` that the before-run has
+none of, and those trees returned because `temp` stopped substring-matching
+`django/template/**`, not because `tests` left the exclude list. sqlalchemy is
+the same story: the unanchored `"test"` was also deleting
+`lib/sqlalchemy/testing/**`, which the anchoring restores independently. The
+work plan predicted this ("the two changes compound and the file-count delta
+must be measured together"); the table reports the compound.
+
+Corpus growth is the real cost, and it lands on the cache: django's index grew
+4.6× and angular's 2.8×.
+
+Rows this sub-task had to resolve, verified on the live pipeline:
+
+- prisma `compileFile` — **absent** from the entry-point set.
+- celery `long_running_task` — **absent**.
+- No new entry point comes from a test file: across all six corpora, **zero**
+  entry points sit in a file `is_test_file()` classifies as a test.
+
+Celery does gain 38 entry points sited under `t/`: task-definition modules
+(`t/integration/tasks.py` contributes 15, `t/smoke/operations/*.py` more) and
+test-support modules (`t/unit/security/case.py`, `t/unit/tasks/unit_tasks.py`,
+`t/unit/bin/proj/*`, `t/unit/contrib/proj/foo.py`). None is a test file by
+Ariadne's definition — no `test_` prefix, no test-directory name — and their
+callables are genuinely uncalled. They are new candidates honestly surfaced, not
+suppressed candidates leaking through.
+
+### The corpus that proved untenable
+
+microsoft/TypeScript discovers 38,187 source files — what `find_source_files` actually admits, after gitignore and with `.d.ts` excluded. 18,439 of them are generated compiler baselines under `tests/baselines`; only 601 are `src/`. Indexing the lot exhausted the V8 heap after **104 minutes** (`FATAL ERROR: Ineffective mark-compacts near heap limit`), leaving a 4.0 G partial cache.
+
+The task named the honest lever for this: a corpus cap with a loud warning, never a silent discovery filter. `LoadProjectOptions.max_files` implements it as a refusal rather than a truncation, defaulting to 20,000 for every invocation mode — a corpus missing arbitrary files reports callees whose callers were simply left out, which is the exact false-entry-point failure this epic removes, so continuing quietly would be worse than stopping. The error names the three remedies: scope with `folders`, exclude the generated tree, or raise the cap deliberately.
+
+TypeScript's own remedy is a project config excluding `baselines` — generated output, in the same category as `dist` and `build`, and correctly *not* flagged by the test-directory warning.
+
+### Deviations from the work plan
+
+1. **One walk is kept.** Step 2 asked for the second walk and re-read both to go. The re-read is gone. The walk stays, because it is the only source of the *discovered* set: the indexed/discovered ratio gate needs it as a denominator, and sub-task 1.2 keys the whole out-of-index grep on discovered-minus-indexed. Deleting it would remove the ability to see a coverage gap at all.
+2. **The scope reader is shared rather than duplicated correctly.** Step 3 asked for `include_tests` to be added to `prepare_triage`'s own `IndexScopeFromConfig`. Two copies agreeing is a coincidence that drifts; one reader with two consumers is the agreement the step actually asks for ("agree by construction rather than by coincidence"). The shared module owns the corpus cap's default for the same reason — a ceiling one phase applies and the next does not is the same drift wearing a different hat.
+3. **`max_files` was not in the plan.** It is step 8's stated contingency, triggered by the TypeScript result.
+
+### Left to sub-task 1.2, deliberately
+
+A config `exclude` is threaded into the out-of-index walk as well as into discovery, so an excluded caller is invisible to *both* passes — the compensation cannot compensate. `detect_entrypoints.test.ts` pins that behaviour today with a comment naming 1.2 as the change that flips it, so that sub-task gets a real failing-to-passing transition instead of a test that was already green.

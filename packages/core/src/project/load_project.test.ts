@@ -439,6 +439,25 @@ describe("load_project", () => {
       expect(node_names(raw_call_graph(project, false))).toEqual(["app"]);
     });
 
+    it("refuses a corpus over max_files rather than indexing an arbitrary subset", async () => {
+      await write_file("a.ts", "export function a() {}\n");
+      await write_file("b.ts", "export function b() {}\n");
+      await write_file("c.ts", "export function c() {}\n");
+
+      await expect(
+        load_project({ project_path: temp_dir, max_files: 2 }),
+      ).rejects.toThrow(/Discovered 3 source files, over the 2-file cap/);
+    });
+
+    it("indexes a corpus that sits on the cap", async () => {
+      await write_file("a.ts", "export function a() {}\n");
+      await write_file("b.ts", "export function b() {}\n");
+
+      const { project } = await load_project({ project_path: temp_dir, max_files: 2 });
+
+      expect(project.get_file_contents().size).toEqual(2);
+    });
+
     it("reports no dropped files when every discovered file indexes", async () => {
       await write_file("lib/app.js", "export function app() {}\n");
 

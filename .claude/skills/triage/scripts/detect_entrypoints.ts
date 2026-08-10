@@ -6,7 +6,7 @@
  * Supports multiple languages: TypeScript, JavaScript, Python, Rust, Go, Java, C++, C.
  *
  * Usage:
- *   # From project config (preferred; carries folders, exclude, include_tests)
+ *   # From project config (preferred; carries folders, exclude, include_tests, max_files)
  *   node --import tsx detect_entrypoints.ts --config path/to/config.json
  *
  *   # Local repository (analyzes everything under the path with default exclusions)
@@ -45,9 +45,13 @@ import type {
   EnrichedEntryPoint,
 } from "@ariadnejs/types";
 import { save_json, OutputType } from "../src/store/analysis_output.js";
+import {
+  DEFAULT_MAX_FILES,
+  read_analysis_scope,
+  test_tree_excludes,
+} from "../src/analysis_scope.js";
 import { load_registry } from "../src/known_issues_registry.js";
 import { path_to_project_id, project_id_from_config } from "../src/project_id.js";
-import { should_log, SLOW_ITEM_MS } from "../src/progress.js";
 import * as path from "path";
 import * as fs from "fs/promises";
 import * as os from "os";
@@ -81,6 +85,7 @@ interface ProjectConfig {
   folders?: string[];
   exclude?: string[];
   include_tests?: boolean;
+  max_files?: number;
 }
 
 interface CloneResult {
@@ -95,6 +100,7 @@ interface ResolvedMode {
   include_tests: boolean;
   folders?: string[];
   exclude?: string[];
+  max_files?: number;
 }
 
 // ===== CLI Argument Parsing =====
@@ -154,6 +160,7 @@ Config file format (JSON):
     "folders": ["src", "lib"],
     "exclude": ["vendor", "generated"],
     "include_tests": false,
+    "max_files": 20000,
     "project_name": "name"  // required only for project_path="."
   }
 `);
@@ -161,7 +168,7 @@ Config file format (JSON):
 
 // ===== Config Loading =====
 
-async function load_project_config(config_path: string): Promise<ProjectConfig> {
+export async function load_project_config(config_path: string): Promise<ProjectConfig> {
   const resolved = path.resolve(config_path);
   let raw: string;
   try {
@@ -184,12 +191,26 @@ async function load_project_config(config_path: string): Promise<ProjectConfig> 
   const explicit_name = typeof parsed.project_name === "string" ? parsed.project_name : undefined;
   const project_name = project_id_from_config(raw_project_path, explicit_name);
 
+  const scope = read_analysis_scope(parsed);
+  // A test-tree exclude only wastes edges when the candidate gate would have
+  // suppressed those callables anyway; under `include_tests: true` it is a
+  // deliberate narrowing.
+  for (const entry of scope.include_tests ? [] : test_tree_excludes(scope.exclude)) {
+    log_warn(
+      `${resolved}: exclude "${entry}" names a test tree — \`exclude\` drops those files from the ` +
+        "corpus, deleting every call edge they hold. Where this project's language treats them as " +
+        "test files, `include_tests: false` already suppresses their callables and the exclude is " +
+        "pure loss.",
+    );
+  }
+
   return {
     project_name,
     project_path: path.resolve(raw_project_path),
-    folders: Array.isArray(parsed.folders) ? (parsed.folders as string[]) : undefined,
-    exclude: Array.isArray(parsed.exclude) ? (parsed.exclude as string[]) : undefined,
-    include_tests: typeof parsed.include_tests === "boolean" ? parsed.include_tests : undefined,
+    folders: scope.folders,
+    exclude: scope.exclude,
+    include_tests: scope.include_tests,
+    max_files: scope.max_files,
   };
 }
 
@@ -328,16 +349,18 @@ function get_local_commit_hash(repo_path: string): string | undefined {
 
 // ===== Main Analysis =====
 
-async function analyze_directory(
+export async function analyze_directory(
   project_path: string,
   options: {
     include_tests: boolean;
     folders?: string[];
     exclude?: string[];
+    max_files?: number;
     storage?: PersistenceStorage;
   }
 ): Promise<{
   files_analyzed: number;
+  indexed_files: string[];
   entry_points: EnrichedEntryPoint[];
 }> {
   const start_time = Date.now();
@@ -356,6 +379,7 @@ async function analyze_directory(
     project_path,
     folders: options.folders,
     exclude,
+    max_files: options.max_files,
     storage: options.storage,
   });
   console.error(`Project loaded in ${Date.now() - load_start}ms`);
@@ -364,7 +388,9 @@ async function analyze_directory(
   const stats = project.get_stats();
   console.error(`Found ${stats.file_count} indexed files`);
 
-  // Build source_files Map for grep heuristics (re-read discovered files)
+  // The discovered set: the denominator for the indexed/discovered ratio gate.
+  // Sub-task 1.2 keys the out-of-index grep on discovered-minus-indexed and
+  // will consume this set directly; today that pass walks for itself.
   const gitignore_patterns = await parse_gitignore(project_path);
   const combined_patterns = [...gitignore_patterns, ...(options.exclude || [])];
   const search_paths = options.folders
@@ -393,8 +419,14 @@ async function analyze_directory(
   // graph while the files exist on disk, so every entry they call reads as
   // uncalled.
   if (dropped_files.size > 0) {
+    // Named, not just counted: the giant-file gate below reads the indexed map,
+    // so a vendored bundle that throws during indexing is only visible here.
     log_warn(
-      `${dropped_files.size} discovered file(s) failed to index and contribute no call edges`,
+      `${dropped_files.size} discovered file(s) failed to index and contribute no call edges: ` +
+        [...dropped_files]
+          .slice(0, 10)
+          .map((f) => path.relative(project_path, f))
+          .join(", "),
     );
   }
 
@@ -407,46 +439,18 @@ async function analyze_directory(
     );
   }
 
-  const read_total = all_files.length;
-  log_info(`read_source_files: N=${read_total}`);
-  const read_start = Date.now();
-  let total_bytes = 0;
-  let unreadable = 0;
+  // Gate: oversize files (vendor bundles, minified code) dominate grep cost and
+  // rarely hold code worth analysing. Read the project's own map — the bytes
+  // the resolver saw — rather than walking and re-reading the tree a second
+  // time.
   const GIANT_FILE_LINES = 10_000;
-  const source_files = new Map<string, string>();
-  for (let i = 0; i < read_total; i++) {
-    const file_path = all_files[i];
-    const iter_start = Date.now();
-    try {
-      const content = await fs.readFile(file_path, "utf-8");
-      source_files.set(file_path, content);
-      total_bytes += content.length;
-
-      // Gate: flag oversize files (vendor bundles, minified code) — these
-      // dominate grep cost and often represent code we don't actually want to
-      // analyze.
-      const line_count = (content.match(/\n/g)?.length ?? 0) + 1;
-      if (line_count > GIANT_FILE_LINES) {
-        log_warn(
-          `${path.relative(project_path, file_path)}: ${line_count} lines — likely vendored/minified; consider excluding`,
-        );
-      }
-    } catch {
-      unreadable++;
-    }
-
-    const elapsed = Date.now() - iter_start;
-    if (should_log(i, read_total) || elapsed >= SLOW_ITEM_MS) {
-      log_info(
-        `[${i + 1}/${read_total}] read ${path.relative(project_path, file_path)} (${total_bytes} total bytes)`,
+  for (const [file_path, content] of project.get_file_contents()) {
+    const line_count = (content.match(/\n/g)?.length ?? 0) + 1;
+    if (line_count > GIANT_FILE_LINES) {
+      log_warn(
+        `${path.relative(project_path, file_path)}: ${line_count} lines — likely vendored/minified; consider excluding`,
       );
     }
-  }
-  log_info(
-    `read_source_files: done ${source_files.size}/${read_total} in ${Date.now() - read_start}ms (${total_bytes} bytes)`,
-  );
-  if (unreadable > 0) {
-    log_warn(`${unreadable} source file(s) were unreadable and silently dropped`);
   }
 
   // Build the raw call graph (unfiltered: every uncalled callable). The
@@ -476,25 +480,23 @@ async function analyze_directory(
   // no longer drives classification directly.
   load_registry();
 
-  // Second grep pass: scan common test-directory patterns OUTSIDE the indexed
-  // scope. Attaches matching call-site hits to
-  // `diagnostics.grep_call_sites_unindexed_tests` so classifiers can detect
-  // the `unindexed-test-files` root cause. Skipped when `include_tests` is
-  // true (test directories are already part of `source_files`).
-  if (!options.include_tests) {
-    await attach_unindexed_test_grep_hits(
-      entry_points,
-      project_path,
-      source_files,
-      build_class_name_by_constructor_position(project),
-      combined_patterns,
-    );
-  }
+  // Second grep pass over files discovered but not indexed — held out by a
+  // config `exclude` or a `--folders` scope. `include_tests` plays no part: it
+  // decides candidacy, never the corpus, so both settings index the same files
+  // and leave the same residue.
+  await attach_unindexed_test_grep_hits(
+    entry_points,
+    project_path,
+    project.get_file_contents(),
+    build_class_name_by_constructor_position(project),
+    combined_patterns,
+  );
 
   console.error(`Total analysis time: ${Date.now() - start_time}ms`);
 
   return {
     files_analyzed: stats.file_count,
+    indexed_files: [...project.get_file_contents().keys()],
     entry_points,
   };
 }
@@ -518,6 +520,7 @@ async function main() {
 
   const { files_analyzed, entry_points } = await analyze_directory(resolved.project_path, {
     include_tests: resolved.include_tests,
+    max_files: resolved.max_files,
     folders: resolved.folders,
     exclude: resolved.exclude,
     storage,
@@ -582,6 +585,7 @@ async function resolve_config_mode(config_path: string): Promise<ResolvedMode> {
     include_tests: config.include_tests ?? false,
     folders: config.folders,
     exclude: config.exclude,
+    max_files: config.max_files,
     source_info: {
       type: "local",
       commit_hash: get_local_commit_hash(config.project_path),
@@ -599,6 +603,7 @@ async function resolve_github_mode(
     project_path: clone_result.local_path,
     project_name: github_repo_to_ids(github).project_id,
     include_tests: false,
+    max_files: DEFAULT_MAX_FILES,
     source_info: {
       type: "github",
       github_url: parse_github_url(github),
@@ -615,6 +620,7 @@ async function resolve_local_mode(input_path: string): Promise<ResolvedMode> {
     project_path,
     project_name: path_to_project_id(project_path),
     include_tests: false,
+    max_files: DEFAULT_MAX_FILES,
     source_info: {
       type: "local",
       commit_hash: get_local_commit_hash(project_path),
