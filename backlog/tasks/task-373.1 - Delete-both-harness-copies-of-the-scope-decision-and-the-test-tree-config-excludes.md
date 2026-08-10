@@ -80,7 +80,8 @@ typeorm, celery and angular ran `--path` (whole repo, no config).
 | django | `--config` | 2994 | 2750 | 488s | 2.6 G |
 | sqlalchemy | `--config` | 557 | 2747 | 307s | 1.9 G |
 | angular | `--path` | 6226 | 5137 | 1383s (23 min) | 1.8 G |
-| TypeScript | `--path` | — | — | OOM at 104 min | 4.0 G partial |
+| TypeScript | `--path` | — | — | OOM at 104 min | 4.3 G partial |
+| TypeScript | `--config` (baselines excluded) | 19267 | 2324 | 3610s (60 min) | 4.3 G |
 
 Before/after pairs, same project key and same repo commit:
 
@@ -110,7 +111,7 @@ Rows this sub-task had to resolve, verified on the live pipeline:
 
 - prisma `compileFile` — **absent** from the entry-point set.
 - celery `long_running_task` — **absent**.
-- No new entry point comes from a test file: across all six corpora, **zero**
+- No new entry point comes from a test file: across all seven runs, **zero**
   entry points sit in a file `is_test_file()` classifies as a test.
 
 Celery does gain 38 entry points sited under `t/`: task-definition modules
@@ -127,7 +128,7 @@ microsoft/TypeScript discovers 38,187 source files — what `find_source_files` 
 
 The task named the honest lever for this: a corpus cap with a loud warning, never a silent discovery filter. `LoadProjectOptions.max_files` implements it as a refusal rather than a truncation, defaulting to 20,000 for every invocation mode — a corpus missing arbitrary files reports callees whose callers were simply left out, which is the exact false-entry-point failure this epic removes, so continuing quietly would be worse than stopping. The error names the three remedies: scope with `folders`, exclude the generated tree, or raise the cap deliberately.
 
-TypeScript's own remedy is a project config excluding `baselines` — generated output, in the same category as `dist` and `build`, and correctly *not* flagged by the test-directory warning.
+TypeScript's own remedy is a project config excluding `baselines` — generated output, in the same category as `dist` and `build`, and correctly *not* flagged by the test-tree warning. With it the run completes: 19,267 files, 2,324 entry points, 60 minutes. That lands just under the 20,000 default cap, which is the cap doing its job — one more generated tree and the run refuses instead of dying an hour in.
 
 ### Deviations from the work plan
 
