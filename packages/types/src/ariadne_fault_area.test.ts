@@ -19,7 +19,6 @@ function input(over: Partial<DeriveFaultAreaInput>): DeriveFaultAreaInput {
     resolution_failure: null,
     diagnosis: "callers-in-registry-wrong-target",
     has_uncaptured_indexed_grep_hit: false,
-    callers_only_in_unindexed_tests: false,
     ...over,
   };
 }
@@ -236,28 +235,20 @@ describe("derive_fault_area — diagnosis fallback", () => {
     });
   });
 
-  test("no-textual-callers + callers only in unindexed tests → coverage_config (the real coverage-gap shape)", () => {
-    // compute_diagnosis returns no-textual-callers when the indexed grep is
-    // empty, which is exactly the case when every caller is in an excluded dir.
-    // The coverage signal must win over the no-textual-callers default.
-    expect(
-      derive_fault_area(
-        input({ diagnosis: "no-textual-callers", callers_only_in_unindexed_tests: true }),
-      ),
-    ).toEqual({
+  test("callers-outside-indexed-corpus → coverage_config, determinate (the real coverage-gap shape)", () => {
+    // The caller exists in a file we chose not to, or failed to, index. That is
+    // a statement about coverage, so it arrives as its own diagnosis rather
+    // than as `no-textual-callers` plus a side-channel boolean.
+    expect(derive_fault_area(input({ diagnosis: "callers-outside-indexed-corpus" }))).toEqual({
       area: "coverage_config",
       language: undefined,
       needs_judgement: false,
     });
   });
 
-  test("coverage signal wins over the diagnosis regardless of which diagnosis is set", () => {
-    expect(
-      derive_fault_area(
-        input({ diagnosis: "callers-not-in-registry", callers_only_in_unindexed_tests: true }),
-      ),
-    ).toEqual({
-      area: "coverage_config",
+  test("references-without-call-syntax → entry_point_classification, determinate", () => {
+    expect(derive_fault_area(input({ diagnosis: "references-without-call-syntax" }))).toEqual({
+      area: "entry_point_classification",
       language: undefined,
       needs_judgement: false,
     });
@@ -283,12 +274,11 @@ describe("derive_fault_area — diagnosis fallback", () => {
     });
   });
 
-  test("coverage_config wins over the uncaptured-hit signal", () => {
+  test("an out-of-index caller routes on its own diagnosis, whatever the uncaptured-hit flag says", () => {
     expect(
       derive_fault_area(
         input({
-          diagnosis: "callers-not-in-registry",
-          callers_only_in_unindexed_tests: true,
+          diagnosis: "callers-outside-indexed-corpus",
           has_uncaptured_indexed_grep_hit: true,
         }),
       ),
@@ -317,7 +307,6 @@ describe("derive_fault_area — precedence: resolution_failure beats diagnosis",
         resolution_failure: { stage: "import_resolution", reason: "import_unresolved" },
         diagnosis: "no-textual-callers",
         has_uncaptured_indexed_grep_hit: false,
-        callers_only_in_unindexed_tests: false,
       }),
     ).toEqual({
       area: "import_resolution",
@@ -376,7 +365,6 @@ describe("derive_fault_area — language is echoed as a language-specific signal
         resolution_failure: { stage: "name_resolution", reason: "name_not_in_scope" },
         diagnosis: "callers-not-in-registry",
         has_uncaptured_indexed_grep_hit: false,
-        callers_only_in_unindexed_tests: false,
         language: "typescript",
       }),
     ).toEqual({

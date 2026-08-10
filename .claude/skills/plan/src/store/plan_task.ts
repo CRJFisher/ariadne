@@ -110,7 +110,6 @@ export interface PlanTaskEvidence {
   diagnosis: string;
   resolution_failure: { stage: string; reason: string } | null;
   has_uncaptured_indexed_grep_hit: boolean;
-  callers_only_in_unindexed_tests: boolean;
 }
 
 /**

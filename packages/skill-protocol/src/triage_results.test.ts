@@ -22,7 +22,6 @@ function producer_shaped_file(): TriageResultsFile {
         resolution_failure: { stage: "method_lookup", reason: "dynamic_dispatch" },
         receiver_kind: "identifier",
         has_uncaptured_indexed_grep_hit: false,
-        callers_only_in_unindexed_tests: false,
       },
     ],
     classifier_regressions: [],

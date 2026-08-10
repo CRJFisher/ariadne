@@ -15,10 +15,11 @@ export type {
 } from "./auto_classify_types";
 export { extract_entry_point_diagnostics } from "./extract_entry_point_diagnostics";
 export {
-  attach_unindexed_test_grep_hits,
-  collect_unindexed_test_files,
+  attach_out_of_index_grep_hits,
+  collect_files_outside_index,
   build_class_name_by_constructor_position,
-} from "./attach_unindexed_test_grep_hits";
+} from "./attach_out_of_index_grep_hits";
+export type { OutOfIndexGrepInput } from "./attach_out_of_index_grep_hits";
 export { load_permanent_registry, PermanentRegistryError } from "./registry_loader";
 export {
   BUILTIN_CHECKS,

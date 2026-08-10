@@ -33,11 +33,11 @@ function make_entry(overrides: {
     },
     diagnostics: {
       grep_call_sites: (overrides.grep_lines ?? []).map(grep_hit),
-      grep_call_sites_unindexed_tests: [],
+      grep_call_sites_outside_index: [],
+      reference_sites: [],
       ariadne_call_refs: [],
       diagnosis: "callers-in-registry-unresolved",
       has_uncaptured_indexed_grep_hit: false,
-      callers_only_in_unindexed_tests: false,
     },
   };
 }

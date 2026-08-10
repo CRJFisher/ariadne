@@ -59,9 +59,9 @@ function make_entry(over: Partial<TriageEntry>): TriageEntry {
     access_modifier: null,
     diagnostics: {
       grep_call_sites: [],
-      grep_call_sites_unindexed_tests: [],
+      grep_call_sites_outside_index: [],
+      reference_sites: [],
       has_uncaptured_indexed_grep_hit: false,
-      callers_only_in_unindexed_tests: false,
       ariadne_call_refs: [],
       diagnosis: "no-textual-callers",
     },
@@ -76,9 +76,9 @@ function make_entry(over: Partial<TriageEntry>): TriageEntry {
 
 const NOVEL_DIAGNOSTICS: EntryPointDiagnostics = {
   grep_call_sites: [],
-  grep_call_sites_unindexed_tests: [],
+  grep_call_sites_outside_index: [],
+  reference_sites: [],
   has_uncaptured_indexed_grep_hit: false,
-  callers_only_in_unindexed_tests: false,
   ariadne_call_refs: [
     {
       caller_function: "register_routes",
@@ -233,7 +233,6 @@ describe("finalize_triage (fixture integration)", () => {
           resolution_failure: { stage: "method_lookup", reason: "method_not_on_type" },
           receiver_kind: "identifier",
           has_uncaptured_indexed_grep_hit: false,
-          callers_only_in_unindexed_tests: false,
         },
         {
           id: "novel-3",
@@ -244,7 +243,6 @@ describe("finalize_triage (fixture integration)", () => {
           evidence_excerpt: "emitter.on('x', novel_fp_2)",
           diagnosis: "no-textual-callers",
           has_uncaptured_indexed_grep_hit: false,
-          callers_only_in_unindexed_tests: false,
         },
       ],
       classifier_regressions: [

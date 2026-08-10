@@ -170,7 +170,6 @@ describe("extract_entry_point_diagnostics populates the fault-area disambiguator
     expect(orphan.diagnostics.diagnosis).toEqual("no-textual-callers");
     expect(orphan.diagnostics.grep_call_sites).toEqual([]);
     expect(orphan.diagnostics.has_uncaptured_indexed_grep_hit).toEqual(false);
-    expect(orphan.diagnostics.callers_only_in_unindexed_tests).toEqual(false);
   });
 });
 
@@ -246,7 +245,6 @@ function fault_area_input(diagnostics: EntryPointDiagnostics): DeriveFaultAreaIn
     resolution_failure: null,
     diagnosis: diagnostics.diagnosis,
     has_uncaptured_indexed_grep_hit: diagnostics.has_uncaptured_indexed_grep_hit,
-    callers_only_in_unindexed_tests: diagnostics.callers_only_in_unindexed_tests,
   };
 }
 

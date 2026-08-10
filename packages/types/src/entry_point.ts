@@ -65,7 +65,9 @@ export type EntryPointDiagnosis =
   | "no-textual-callers"
   | "callers-not-in-registry"
   | "callers-in-registry-unresolved"
-  | "callers-in-registry-wrong-target";
+  | "callers-in-registry-wrong-target"
+  | "callers-outside-indexed-corpus"
+  | "references-without-call-syntax";
 
 export interface EntryPointDiagnostics {
   /**
@@ -78,12 +80,20 @@ export interface EntryPointDiagnostics {
   /**
    * Grep hits in files that were discovered but not indexed — held out by a
    * project-config `exclude` or a folder scope, or dropped by an indexing
-   * error. Populated by a second grep pass outside the indexed set, qualified
-   * by the same rules as `grep_call_sites`, so classifiers can distinguish a
-   * caller Ariadne never looked at from the broader callers-not-in-registry
-   * bucket.
+   * error. Populated by a second grep pass over exactly that residue, qualified
+   * by the same rules as `grep_call_sites`, so a caller Ariadne never looked at
+   * is distinguishable from one it looked at and missed.
    */
-  grep_call_sites_unindexed_tests: GrepHit[];
+  grep_call_sites_outside_index: GrepHit[];
+  /**
+   * Non-call references to this callable in the indexed corpus: a getter read,
+   * a bare-name callback registration, a dict or list registration value.
+   *
+   * A caller that carries no call-paren syntax is invisible to both grep
+   * channels by construction, so without this channel such a member reports
+   * `no-textual-callers` — indistinguishable from a genuine entry point.
+   */
+  reference_sites: ReferenceSiteDiagnostic[];
   /** CallReferences in the call graph where name matches this entry point */
   ariadne_call_refs: CallRefDiagnostic[];
   /** Summary diagnosis of where in Ariadne's pipeline the detection failed */
@@ -97,14 +107,23 @@ export interface EntryPointDiagnostics {
    * `callers-not-in-registry` fallback; stamped without re-grepping.
    */
   has_uncaptured_indexed_grep_hit: boolean;
-  /**
-   * True when `grep_call_sites_unindexed_tests` is non-empty AND
-   * `grep_call_sites` is empty — every textual caller sits in a discovered file
-   * outside the indexed set. Drives the `coverage_config` fault area. Can only
-   * become true after the optional out-of-index grep pass runs; defaults to
-   * `false` when that pass is skipped.
-   */
-  callers_only_in_unindexed_tests: boolean;
+}
+
+/**
+ * One non-call mention of a callable, taken from the indexer's own reference
+ * records rather than from text — structured, language-agnostic, and keyed on
+ * the reference's resolved name rather than on a regex match.
+ */
+export interface ReferenceSiteDiagnostic {
+  file_path: FilePath;
+  line: number;
+  content: string;
+  /** The indexer's reference kind, e.g. `property_access`, `variable_reference`. */
+  reference_kind: string;
+  /** How the name was reached, when the indexer recorded it. */
+  access_type: string | null;
+  /** The receiver's syntactic form, when the reference had one. */
+  receiver_kind: string | null;
 }
 
 export interface GrepHit {

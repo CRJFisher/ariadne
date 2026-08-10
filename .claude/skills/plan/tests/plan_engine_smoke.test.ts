@@ -77,7 +77,6 @@ function novel(overrides: Partial<NovelIssue>): NovelIssue {
     diagnosis: overrides.diagnosis ?? "callers-in-registry-unresolved",
     resolution_failure: "resolution_failure" in overrides ? overrides.resolution_failure : undefined,
     has_uncaptured_indexed_grep_hit: overrides.has_uncaptured_indexed_grep_hit ?? false,
-    callers_only_in_unindexed_tests: overrides.callers_only_in_unindexed_tests ?? false,
   };
 }
 

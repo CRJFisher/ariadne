@@ -312,7 +312,7 @@ describe("check_stage", () => {
         `import { is_test_file } from "../project/detect_test_file";\n`
       ),
       file(
-        `${CORE}/classify_entry_points/attach_unindexed_test_grep_hits.ts`,
+        `${CORE}/classify_entry_points/attach_out_of_index_grep_hits.ts`,
         `import { find_source_files } from "../project/file_loading";\n`
       ),
     ]);

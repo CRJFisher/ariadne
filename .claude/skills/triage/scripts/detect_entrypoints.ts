@@ -35,7 +35,7 @@ import {
   log_warn,
   trace_call_graph,
   extract_entry_point_diagnostics,
-  attach_unindexed_test_grep_hits,
+  attach_out_of_index_grep_hits,
   build_class_name_by_constructor_position,
 } from "@ariadnejs/core";
 import type { PersistenceStorage } from "@ariadnejs/core";
@@ -469,8 +469,8 @@ export async function analyze_directory(
   // Build per-entry diagnostics. Classification is intentionally NOT run
   // here — the triage pipeline re-classifies in `prepare_triage` so it can
   // incorporate `tp_cache` decisions. Running classifier rules now would
-  // also fire before `attach_unindexed_test_grep_hits` populates the
-  // unindexed-test grep diagnostics, producing wrong verdicts.
+  // also fire before `attach_out_of_index_grep_hits` completes the evidence
+  // and settles each diagnosis, producing wrong verdicts.
   const entry_points: EnrichedEntryPoint[] = extract_entry_point_diagnostics(
     call_graph,
     project,
@@ -480,17 +480,18 @@ export async function analyze_directory(
   // no longer drives classification directly.
   load_registry();
 
-  // Second grep pass over files discovered but not indexed — held out by a
-  // config `exclude` or a `--folders` scope. `include_tests` plays no part: it
-  // decides candidacy, never the corpus, so both settings index the same files
-  // and leave the same residue.
-  await attach_unindexed_test_grep_hits(
+  // Second grep pass over exactly the residue — discovered minus indexed. The
+  // walk carries gitignore patterns only: a config `exclude` must not narrow
+  // it, because those files ARE the residue it exists to find. `include_tests`
+  // plays no part either; it decides candidacy, never the corpus.
+  await attach_out_of_index_grep_hits({
     entry_points,
     project_path,
-    project.get_file_contents(),
-    build_class_name_by_constructor_position(project),
-    combined_patterns,
-  );
+    indexed_source_files: project.get_file_contents(),
+    dropped_files,
+    class_name_by_constructor_position: build_class_name_by_constructor_position(project),
+    gitignore_patterns,
+  });
 
   console.error(`Total analysis time: ${Date.now() - start_time}ms`);
 

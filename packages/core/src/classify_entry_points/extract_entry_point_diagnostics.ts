@@ -24,7 +24,7 @@
  * This pass is synchronous and free of FS I/O. The opt-in unindexed-test grep
  * (`attach_unindexed_test_grep_hits`, the one FS-touching diagnostic) lives in
  * its own module; callers chain it after extraction when they need
- * `grep_call_sites_unindexed_tests` populated.
+ * `grep_call_sites_outside_index` populated.
  */
 
 import type {
@@ -42,6 +42,7 @@ import type {
 } from "@ariadnejs/types";
 import type {
   EnrichedEntryPoint,
+  EntryPointDiagnosis,
   EntryPointDiagnostics,
   GrepHit,
   CallRefDiagnostic,
@@ -107,7 +108,7 @@ export function build_constructor_to_class_name_map(
  *
  * Synchronous and free of FS I/O. The opt-in unindexed-test grep is a
  * separate async pass (`attach_unindexed_test_grep_hits`) — chain it after
- * this function when classifiers need `grep_call_sites_unindexed_tests`.
+ * this function when classifiers need `grep_call_sites_outside_index`.
  */
 export function extract_entry_point_diagnostics(
   call_graph: CallGraph,
@@ -383,7 +384,7 @@ export function build_grep_index(
   return index;
 }
 
-const MAX_GREP_HITS = 10;
+export const MAX_GREP_HITS = 10;
 
 /**
  * Per-entry cap on CallRefDiagnostic records. Names like `<anonymous>` or
@@ -430,24 +431,24 @@ function gather_diagnostics(
     lines_by_file,
   );
 
-  const diagnosis = compute_diagnosis(grep_call_sites, ariadne_call_refs, entry_point_id);
-
-  return {
+  const diagnostics: EntryPointDiagnostics = {
     grep_call_sites,
-    // Populated by the optional unindexed-test grep pass when
-    // `include_unindexed_tests` is set; defaults to empty so builtin
-    // classifiers reading this field degrade gracefully.
-    grep_call_sites_unindexed_tests: [],
+    // Populated by `attach_out_of_index_grep_hits`, which owns the residue.
+    grep_call_sites_outside_index: [],
+    // Populated by the reference index over `Project.references`.
+    reference_sites: [],
     ariadne_call_refs,
-    diagnosis,
-    // Disambiguators for the fault-area derivation, stamped without re-grepping.
+    diagnosis: "no-textual-callers",
+    // Disambiguator for the fault-area derivation, stamped without re-grepping.
     has_uncaptured_indexed_grep_hit: grep_call_sites.some(
       (hit) => hit.captures.length === 0,
     ),
-    // Recomputed by `attach_unindexed_test_grep_hits` once the unindexed-test
-    // pass populates `grep_call_sites_unindexed_tests`; false until then.
-    callers_only_in_unindexed_tests: false,
   };
+  // Provisional: settled again at the end of the chain, once the out-of-index
+  // channel exists. A caller that only runs extraction still gets a correct
+  // answer over the evidence extraction can see.
+  diagnostics.diagnosis = compute_diagnosis(diagnostics, entry_point_id);
+  return diagnostics;
 }
 
 /**
@@ -463,8 +464,6 @@ function grep_for_calls(
   declaration_keys: ReadonlySet<string>,
   is_constructor: boolean,
 ): GrepHit[] {
-  if (name === "<anonymous>") return [];
-
   const all = grep_index.get(name);
   if (!all) return [];
 
@@ -543,41 +542,59 @@ function read_source_line(
 }
 
 /**
- * Diagnose the failure mode based on grep results and Ariadne call references.
+ * Diagnose the failure mode over the entry's completed evidence.
+ *
+ * Ordered by how much the evidence pins down. An indexed textual call site is
+ * the strongest signal, so the three registry branches come first. Failing
+ * that, a caller in a discovered-but-unindexed file is a determinate statement
+ * about coverage, and a non-call reference is a determinate statement about
+ * syntax. `no-textual-callers` keeps its literal meaning: nothing anywhere in
+ * the discovered corpus mentions this callable.
+ *
+ * `entry_point_id` is optional because the out-of-index pass re-runs this over
+ * an `EnrichedEntryPoint`, which carries diagnostics but not the symbol id. It
+ * only separates two branches that route to the same area.
  */
-function compute_diagnosis(
-  grep_hits: GrepHit[],
-  call_refs: CallRefDiagnostic[],
-  entry_point_id: string,
-): EntryPointDiagnostics["diagnosis"] {
-  // No textual callers found — likely a true entry point
-  if (grep_hits.length === 0) {
-    return "no-textual-callers";
-  }
+export function compute_diagnosis(
+  diagnostics: Pick<
+    EntryPointDiagnostics,
+    | "grep_call_sites"
+    | "grep_call_sites_outside_index"
+    | "reference_sites"
+    | "ariadne_call_refs"
+  >,
+  entry_point_id?: string,
+): EntryPointDiagnosis {
+  const { grep_call_sites, ariadne_call_refs } = diagnostics;
 
-  // Textual callers exist but Ariadne has no matching call references
-  if (call_refs.length === 0) {
-    return "callers-not-in-registry";
-  }
-
-  // Ariadne has call references — check resolutions
-  const has_unresolved = call_refs.some((r) => r.resolution_count === 0);
-  const resolved_to_this = call_refs.some((r) =>
-    r.resolved_to.includes(entry_point_id),
-  );
-
-  if (resolved_to_this) {
-    // Shouldn't happen — if resolved correctly, it wouldn't be an entry point.
-    // Indicates a bug in call graph construction.
+  if (grep_call_sites.length > 0) {
+    if (ariadne_call_refs.length === 0) {
+      return "callers-not-in-registry";
+    }
+    const resolved_to_this =
+      entry_point_id !== undefined &&
+      ariadne_call_refs.some((r) => r.resolved_to.includes(entry_point_id));
+    if (resolved_to_this) {
+      // Shouldn't happen — if resolved correctly it would not be an entry
+      // point. Indicates a bug in call graph construction.
+      return "callers-in-registry-wrong-target";
+    }
+    if (ariadne_call_refs.some((r) => r.resolution_count === 0)) {
+      return "callers-in-registry-unresolved";
+    }
+    // All call refs resolved, but to different symbols.
     return "callers-in-registry-wrong-target";
   }
 
-  if (has_unresolved) {
-    return "callers-in-registry-unresolved";
+  if (diagnostics.grep_call_sites_outside_index.length > 0) {
+    return "callers-outside-indexed-corpus";
   }
 
-  // All call refs resolved but to different symbols
-  return "callers-in-registry-wrong-target";
+  if (diagnostics.reference_sites.length > 0) {
+    return "references-without-call-syntax";
+  }
+
+  return "no-textual-callers";
 }
 
 // ===== Shared Utilities =====

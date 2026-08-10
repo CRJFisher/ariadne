@@ -51,7 +51,6 @@ export function novel_issue_to_evidence(
     diagnosis: issue.diagnosis,
     resolution_failure: issue.resolution_failure ?? null,
     has_uncaptured_indexed_grep_hit: issue.has_uncaptured_indexed_grep_hit,
-    callers_only_in_unindexed_tests: issue.callers_only_in_unindexed_tests,
   };
 }
 

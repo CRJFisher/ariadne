@@ -4,7 +4,7 @@ import * as path from "node:path";
 
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { collect_unindexed_test_files, IGNORED_DIRECTORIES, load_project } from "@ariadnejs/core";
+import { collect_files_outside_index, IGNORED_DIRECTORIES, load_project } from "@ariadnejs/core";
 import type { EnrichedEntryPoint } from "@ariadnejs/types";
 
 import { analyze_directory, load_project_config } from "./detect_entrypoints.js";
@@ -48,15 +48,16 @@ async function analyze(options: {
     folders: options.folders,
     exclude: options.exclude,
   });
-  const { project } = await load_project({
+  const { project, dropped_files } = await load_project({
     project_path: tmpdir,
     folders: options.folders,
     exclude,
   });
-  const residue = await collect_unindexed_test_files(
+  const residue = await collect_files_outside_index(
     tmpdir,
     project.get_file_contents(),
-    exclude,
+    dropped_files,
+    [],
   );
   return {
     indexed: result.indexed_files.map((f) => path.relative(tmpdir, f)).sort(),
@@ -225,11 +226,13 @@ describe("a config exclude is a corpus exclusion, and it costs call edges", () =
 
     expect(analysis.indexed).toEqual(["django/db/models/query.py"]);
     expect(entry_point_names(analysis.entry_points)).toEqual(["adapt_value"]);
-    // The compensation cannot reach it either: `exclude` is threaded into the
-    // out-of-index walk as well, so an excluded caller is invisible to both
-    // passes. Sub-task 1.2 stops that threading and re-keys the set to
-    // discovered-minus-indexed, at which point this becomes the held-out file.
-    expect(analysis.out_of_index).toEqual([]);
+    // The compensation reaches it: the out-of-index walk carries gitignore
+    // patterns only, so the very files a config `exclude` held out are the
+    // residue it greps. The entry says so rather than reading as uncalled.
+    expect(analysis.out_of_index).toEqual(["tests/queries/test_query.py"]);
+    const adapt_value = analysis.entry_points.find((e) => e.name === "adapt_value");
+    if (adapt_value === undefined) throw new Error("expected adapt_value");
+    expect(adapt_value.diagnostics.diagnosis).toEqual("callers-outside-indexed-corpus");
   });
 
   it("keeps sqlalchemy's production `testing` package in the corpus", async () => {
@@ -271,10 +274,10 @@ describe("attach_unindexed_test_grep_hits", () => {
     const entry = analysis.entry_points.find((e) => e.name === "foo");
     if (entry === undefined) throw new Error("expected an entry point named foo");
 
-    expect(entry.diagnostics.grep_call_sites_unindexed_tests.map((h) => h.content)).toEqual([
+    expect(entry.diagnostics.grep_call_sites_outside_index.map((h) => h.content)).toEqual([
       "foo();",
     ]);
-    expect(entry.diagnostics.callers_only_in_unindexed_tests).toEqual(true);
+    expect(entry.diagnostics.diagnosis).toEqual("callers-outside-indexed-corpus");
   });
 
   it("does not read a comment in a held-out file as a caller", async () => {
@@ -285,8 +288,8 @@ describe("attach_unindexed_test_grep_hits", () => {
     const entry = analysis.entry_points.find((e) => e.name === "foo");
     if (entry === undefined) throw new Error("expected an entry point named foo");
 
-    expect(entry.diagnostics.grep_call_sites_unindexed_tests).toEqual([]);
-    expect(entry.diagnostics.callers_only_in_unindexed_tests).toEqual(false);
+    expect(entry.diagnostics.grep_call_sites_outside_index).toEqual([]);
+    expect(entry.diagnostics.diagnosis).toEqual("no-textual-callers");
   });
 
   it("greps constructors by class name, not by the constructor symbol's own name", async () => {
@@ -297,7 +300,7 @@ describe("attach_unindexed_test_grep_hits", () => {
     const entry = analysis.entry_points.find((e) => e.kind === "constructor");
     if (entry === undefined) throw new Error("expected a constructor entry point");
 
-    expect(entry.diagnostics.grep_call_sites_unindexed_tests.map((h) => h.content)).toEqual([
+    expect(entry.diagnostics.grep_call_sites_outside_index.map((h) => h.content)).toEqual([
       "new Foo();",
     ]);
   });

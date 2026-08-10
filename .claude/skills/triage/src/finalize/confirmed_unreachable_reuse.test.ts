@@ -359,7 +359,7 @@ function entry(over: Partial<TriageEntry> = {}): TriageEntry {
     error: null,
     is_exported: true,
     access_modifier: null,
-    diagnostics: { grep_call_sites: [], grep_call_sites_unindexed_tests: [], ariadne_call_refs: [], diagnosis: "no-textual-callers", has_uncaptured_indexed_grep_hit: false, callers_only_in_unindexed_tests: false },
+    diagnostics: { grep_call_sites: [], grep_call_sites_outside_index: [], reference_sites: [], ariadne_call_refs: [], diagnosis: "no-textual-callers", has_uncaptured_indexed_grep_hit: false },
     auto_classified: false,
     classifier_hints: [],
     tp_source_run_id: null,
