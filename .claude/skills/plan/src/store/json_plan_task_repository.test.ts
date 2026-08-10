@@ -53,7 +53,6 @@ function make_task(overrides: Partial<PlanTask>): PlanTask {
         diagnosis: "unresolved_method",
         resolution_failure: null,
         has_uncaptured_indexed_grep_hit: false,
-        callers_only_in_unindexed_tests: false,
       },
     ],
     observed_count: 1,

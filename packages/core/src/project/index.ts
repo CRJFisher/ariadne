@@ -1,7 +1,7 @@
 export { Project } from "./project";
 export type { ClassifyOptions } from "./project";
 export { load_project } from "./load_project";
-export type { LoadProjectOptions } from "./load_project";
+export type { LoadProjectOptions, LoadedProject } from "./load_project";
 export { is_test_file } from "./detect_test_file";
 export {
   SUPPORTED_EXTENSIONS,

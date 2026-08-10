@@ -44,6 +44,7 @@ import type {
   AnalysisResult,
   EnrichedEntryPoint,
   GrepHit,
+  ReferenceSiteDiagnostic,
   CallRefDiagnostic,
   ClassifierHint,
   KnownIssuesRegistry,
@@ -109,6 +110,40 @@ const GENERIC_HINTS: DiagnosisHints = {
 };
 
 const DIAGNOSIS_HINTS: Record<string, DiagnosisHints> = {
+  "callers-outside-indexed-corpus": {
+    title: "Callers Outside the Indexed Corpus",
+    summary:
+      "The caller exists, in a file that was discovered but never indexed — held out by a project-config `exclude`, left outside a `--folders` scope, or dropped by an indexing error. This is a statement about coverage, not about the member.",
+    investigation_guide: [
+      "1. **Read the out-of-index hits** in the evidence block. Each names a file the walk found and the index did not.",
+      "",
+      "2. **Decide which kind of gap it is**:",
+      "",
+      "   - A config `exclude` naming that directory — the exclude is deleting real call edges, and detection warns about this at startup when the directory is a test tree",
+      "   - A `--folders` scope that does not reach it",
+      "   - An indexing error — detection logs `failed to index` with the file name",
+      "",
+      "3. **Emit a verdict**: a real caller in an unindexed file is `fp-novel` with the coverage gap as the root cause. Fix the corpus, not the member.",
+    ].join("\n"),
+  },
+  "references-without-call-syntax": {
+    title: "Reached Without Call Syntax",
+    summary:
+      "Nothing calls this member with parens, but the indexed corpus does reference it — a getter read, a callback handed to an invoker, a dict or list registration value. The reference sites are in the evidence block; `grep_call_sites` is empty by construction, because these forms carry no `name(`.",
+    investigation_guide: [
+      "1. **Read the reference sites** above. Each carries the reference kind, the access type and the receiver form.",
+      "",
+      "2. **Decide whether the reference is an invocation route**:",
+      "",
+      "   - A callback passed to an invoker that later calls it ⇒ the member IS reached",
+      "   - A registration value in a table dispatched through a computed key ⇒ reached",
+      "   - A property read that never invokes ⇒ genuinely unreached",
+      "",
+      "3. **This is the classifier-author surface.** If the shape is a permanent limitation of static analysis, say so — the route is deterministic and a rule can be written for it.",
+      "",
+      "4. **Emit a verdict**: reached-by-reference ⇒ `fp-novel` naming the invocation route; never invoked ⇒ `tp`.",
+    ].join("\n"),
+  },
   "callers-not-in-registry": {
     title: "Callers Not in Registry",
     summary:
@@ -433,6 +468,23 @@ export function format_grep_hits(hits: GrepHit[]): string {
     .join("\n");
 }
 
+/**
+ * Non-call reference sites. The extra fields are the whole reason this channel
+ * is richer than a grep hit: they say HOW the name was reached, which is what
+ * decides whether the reference is an invocation route. Only a property access
+ * has a receiver, so only it reports one.
+ */
+function format_reference_sites(sites: ReferenceSiteDiagnostic[]): string {
+  if (sites.length === 0) return "(none found)";
+  return sites
+    .map((s) => {
+      const receiver =
+        s.reference_kind === "property_access" ? `, receiver: ${s.receiver_kind}` : "";
+      return `  ${s.file_path}:${s.line}  [${s.reference_kind}, access: ${s.access_type}${receiver}]  ${s.content.trim()}`;
+    })
+    .join("\n");
+}
+
 export function format_call_refs(refs: CallRefDiagnostic[]): string {
   if (refs.length === 0) return "(none found)";
   return refs
@@ -493,6 +545,12 @@ export function substitute_template(input: SubstituteTemplateInput): string {
     ),
     "{{entry.diagnostics.ariadne_call_refs_formatted}}": format_call_refs(
       entry.diagnostics.ariadne_call_refs,
+    ),
+    "{{entry.diagnostics.grep_call_sites_outside_index_formatted}}": format_grep_hits(
+      entry.diagnostics.grep_call_sites_outside_index,
+    ),
+    "{{entry.diagnostics.reference_sites_formatted}}": format_reference_sites(
+      entry.diagnostics.reference_sites,
     ),
     "{{classifier_hints}}": format_classifier_hints(entry.classifier_hints),
     "{{diagnosis.title}}": hints.title,

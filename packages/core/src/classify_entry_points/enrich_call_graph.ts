@@ -13,9 +13,10 @@
  * bundled permanent slice automatically.
  *
  * Reads only indexed source bytes via `Project.get_file_contents` — no
- * filesystem I/O. The skill's triage pipeline runs an additional
- * `attach_unindexed_test_grep_hits` pass over its own analysis output before
- * classification, populating diagnostics a builtin classifier can read.
+ * filesystem I/O. A caller that needs the out-of-index channel runs
+ * `complete_caller_evidence` itself and passes the finished entries in
+ * through `options.entry_points`, because that pass is async and this one is
+ * not.
  */
 
 import type {
@@ -65,6 +66,16 @@ export interface EnrichCallGraphOptions {
    * without depending on a specific bundled check; production callers omit it.
    */
   readonly builtin_checks?: Readonly<Record<string, BuiltinCheckFn>>;
+  /**
+   * Entries whose diagnostics are already complete.
+   *
+   * `complete_caller_evidence` touches the filesystem, so it cannot run
+   * inside this synchronous function — a caller that needs the out-of-index
+   * channel (and the diagnoses that depend on it) extracts, chains that pass,
+   * and hands the finished entries in. Without this, classification would run
+   * against a provisional diagnosis computed before half the evidence existed.
+   */
+  readonly entry_points?: readonly EnrichedEntryPoint[];
 }
 
 /**
@@ -76,7 +87,10 @@ export function enrich_call_graph(
   project: Project,
   options?: EnrichCallGraphOptions,
 ): EnrichedCallGraph {
-  const enriched_entry_points = extract_entry_point_diagnostics(call_graph, project);
+  const enriched_entry_points =
+    options?.entry_points !== undefined
+      ? [...options.entry_points]
+      : extract_entry_point_diagnostics(call_graph, project);
   const registry = options?.registry ?? load_permanent_registry();
 
   const read_file_lines = build_lazy_line_reader(project);

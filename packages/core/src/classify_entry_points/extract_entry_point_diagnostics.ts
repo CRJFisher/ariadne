@@ -10,17 +10,21 @@
  *   - Each indexed source file's content is split into lines exactly once
  *     (into `lines_by_file`).
  *   - The grep index is built in a single pass over `lines_by_file`: every
- *     `identifier\s*\(` occurrence maps from `identifier` → `GrepHit[]`.
+ *     `identifier\s*\(` occurrence in code maps from `identifier` → `GrepHit[]`.
  *     Per-entry grep becomes an O(1) `Map.get` plus a small filter — no
  *     quadratic regression on large repos.
+ *   - A hit counts as a call site only when it can be one: occurrences inside
+ *     comments and strings never enter the index, and a hit landing where a
+ *     callable of the same name is declared is dropped at lookup. Both rules
+ *     live in `qualify_grep_hits.ts` and bind the out-of-index channel too.
  *   - File contents come from `Project.get_file_contents()` rather than the
  *     filesystem so diagnostics see exactly what the resolver saw (no TOCTOU
  *     drift, supports in-memory edits via `Project.update_file`).
  *
- * This pass is synchronous and free of FS I/O. The opt-in unindexed-test grep
- * (`attach_unindexed_test_grep_hits`, the one FS-touching diagnostic) lives in
+ * This pass is synchronous and free of FS I/O. The out-of-index grep
+ * (`complete_caller_evidence`, the one FS-touching diagnostic) lives in
  * its own module; callers chain it after extraction when they need
- * `grep_call_sites_unindexed_tests` populated.
+ * `grep_call_sites_outside_index` populated.
  */
 
 import type {
@@ -31,19 +35,28 @@ import type {
   FunctionDefinition,
   MethodDefinition,
   ConstructorDefinition,
+  Language,
   SymbolId,
   SymbolName,
   FilePath,
 } from "@ariadnejs/types";
 import type {
   EnrichedEntryPoint,
+  EntryPointDiagnosis,
   EntryPointDiagnostics,
   GrepHit,
   CallRefDiagnostic,
+  ReferenceSiteDiagnostic,
 } from "@ariadnejs/types";
 
 import { log_info, log_warn } from "../logging";
+import {
+  build_callable_declaration_keys,
+  declaration_key,
+  for_each_call_occurrence,
+} from "./qualify_grep_hits";
 import type { Project } from "../project/project";
+import type { ReferenceRegistry } from "../resolve_references/registries/reference";
 import { build_signature } from "../trace_call_graph/build_signature";
 import { count_tree_size } from "../trace_call_graph/count_tree_size";
 import { derive_syntactic_features } from "./derive_syntactic_features";
@@ -94,9 +107,9 @@ export function build_constructor_to_class_name_map(
  * `Project.get_file_contents()` is the source of truth for indexed source
  * bytes — diagnostics never re-read these files from disk.
  *
- * Synchronous and free of FS I/O. The opt-in unindexed-test grep is a
- * separate async pass (`attach_unindexed_test_grep_hits`) — chain it after
- * this function when classifiers need `grep_call_sites_unindexed_tests`.
+ * Synchronous and free of FS I/O. The out-of-index grep is a
+ * separate async pass (`complete_caller_evidence`) — chain it after
+ * this function when classifiers need `grep_call_sites_outside_index`.
  */
 export function extract_entry_point_diagnostics(
   call_graph: CallGraph,
@@ -107,9 +120,27 @@ export function extract_entry_point_diagnostics(
   const lines_by_file = build_lines_by_file(source_files);
   const call_refs_by_name = build_call_refs_by_name(call_graph);
   const call_refs_by_file_line = build_call_refs_by_file_line(call_graph);
-  const grep_index = build_grep_index(lines_by_file, call_refs_by_file_line);
 
   const class_definitions = project.definitions.get_class_definitions();
+  const declaration_keys = build_callable_declaration_keys(
+    project.definitions.get_callable_definitions(),
+    class_definitions,
+  );
+
+  const grep_index = build_grep_index(
+    lines_by_file,
+    call_refs_by_file_line,
+    languages,
+    declaration_keys,
+  );
+
+  const reference_index = build_reference_index(
+    project.references,
+    lines_by_file,
+    call_refs_by_file_line,
+    declaration_keys,
+  );
+
   const class_name_by_constructor_id = build_constructor_to_class_name_map(class_definitions);
   const class_method_symbol_ids = new Set<SymbolId>();
   for (const class_def of class_definitions) {
@@ -140,10 +171,11 @@ export function extract_entry_point_diagnostics(
 
     const diagnostics = gather_diagnostics(
       node,
-      entry_point_id as string,
       call_refs_by_name,
       grep_index,
+      reference_index,
       lines_by_file,
+      declaration_keys,
       class_name_by_constructor_id,
     );
 
@@ -299,54 +331,220 @@ function build_call_refs_by_file_line(
 }
 
 /**
+ * Names that may key a reference. The indexer records composite names — a
+ * whole-expression text, a `this.value` chain — so a key is admitted only when
+ * the final dotted segment is a bare identifier. Without it a single
+ * `return this.value;` contributes several whole-expression records.
+ */
+const IDENTIFIER_KEY = /^[A-Za-z_$][\w$]*$/;
+
+/**
+ * Reference kinds that are mentions rather than calls.
+ *
+ * A caller that carries no call-paren syntax — a getter read, a bare-name
+ * callback registration, a dict or list registration value — produces one of
+ * these and nothing on the call channel. The call-shaped kinds are deliberately
+ * absent: those already arrive as `ariadne_call_refs`.
+ */
+const SELF_KEYWORDS: ReadonlySet<string> = new Set(["this", "self", "super", "cls"]);
+
+/**
+ * Index every non-call reference in the indexed corpus by the name it reaches.
+ *
+ * One pass over the registry the indexer already filled — structured, keyed on
+ * the reference's own resolved name rather than on text, and needing no second
+ * parse. Positions that already produced a `CallReference` are skipped: those
+ * are calls, and they belong to `ariadne_call_refs`.
+ */
+function build_reference_index(
+  references: ReferenceRegistry,
+  lines_by_file: ReadonlyMap<FilePath, string[]>,
+  call_refs_by_file_line: ReadonlyMap<FilePath, Map<number, CallReference[]>>,
+  declaration_keys: ReadonlySet<string>,
+): Map<string, ReferenceSiteDiagnostic[]> {
+  const index = new Map<string, Map<string, ReferenceSiteDiagnostic>>();
+
+  for (const file_path of lines_by_file.keys()) {
+    const by_line = call_refs_by_file_line.get(file_path);
+    const file_references = references.get_file_references(file_path);
+
+    // An assignment is recorded twice over: once as a write, and again as one
+    // or more reads at the same position. Filtering the write alone would let
+    // its own reads through, so `querystring = QueryDict(...)` would still read
+    // as evidence that a function `querystring` is reached.
+    const written_positions = new Set<string>();
+    for (const ref of file_references) {
+      if (ref.kind === "variable_reference" && ref.access_type === "write") {
+        written_positions.add(`${ref.location.start_line}:${ref.location.start_column}`);
+      }
+      // `self.errors = []` is recorded as an assignment whose target is the
+      // attribute; the property access at that same position is the write, not
+      // a mention that reaches a method of that name.
+      if (ref.kind === "assignment") {
+        written_positions.add(
+          `${ref.target_location.start_line}:${ref.target_location.start_column}`,
+        );
+      }
+    }
+
+    for (const ref of file_references) {
+      // The two kinds that mention a name without calling it. Written as a
+      // discriminated check rather than a set membership so the arms below
+      // carry each kind's own `access_type` vocabulary.
+      if (ref.kind !== "variable_reference" && ref.kind !== "property_access") {
+        continue;
+      }
+
+      const segments = (ref.name as string).split(".");
+      const key = segments[segments.length - 1];
+      if (!IDENTIFIER_KEY.test(key)) continue;
+
+      // A mention that IS a call on this line already arrives as an
+      // `ariadne_call_ref`; the indexer records the same syntax as a reference
+      // too. Keying on the call's own name keeps the callback in
+      // `registry.register(s.deserialize)` — `register` is the call, so
+      // `deserialize` survives — while dropping the `p.shrink` in
+      // `p.shrink(1)`.
+      const line = ref.location.start_line;
+      if (by_line?.get(line)?.some((c) => (c.name as string) === key)) continue;
+
+      // Before the cap, not after: a widely-overridden method has more
+      // declaration lines than the cap allows, and filtering them later would
+      // spend the whole budget on declarations and discard the one real
+      // registration site that came after them.
+      if (declaration_keys.has(declaration_key(file_path, line, key))) continue;
+
+      // A write is not a caller. `errors = []` assigns a local and
+      // `self.errors = []` assigns an attribute; neither reaches a method named
+      // `errors`. The exclusion is position-keyed rather than kind-keyed
+      // because the indexer records the same assignment several times over —
+      // the write plus one or more reads at the same position — so filtering
+      // the write alone would let its own reads through.
+      if (written_positions.has(`${ref.location.start_line}:${ref.location.start_column}`)) {
+        continue;
+      }
+
+      let sites = index.get(key);
+      if (!sites) {
+        sites = new Map();
+        index.set(key, sites);
+      }
+
+      // One site per (file, line), matching the grep channel's granularity.
+      // The indexer records the same mention several times over — `s.deserialize`
+      // arrives as a `property_access` and a `variable_reference`, each repeated —
+      // so without this a single line reports as five callers.
+      const position = `${file_path}:${line}`;
+      const existing = sites.get(position);
+      if (existing !== undefined) {
+        // A property access carries the receiver, so it is the better witness.
+        if (existing.reference_kind === "property_access" || ref.kind !== "property_access") {
+          continue;
+        }
+        sites.delete(position);
+      } else if (sites.size >= MAX_GREP_HITS) {
+        // The cap is load-bearing for memory, not just readability: a
+        // ubiquitous property name reaches tens of thousands of references.
+        continue;
+      }
+
+      const location = {
+        file_path,
+        line,
+        content: read_source_line(lines_by_file, file_path, line).trim(),
+      };
+      sites.set(
+        position,
+        ref.kind === "property_access"
+          ? {
+              ...location,
+              reference_kind: "property_access",
+              access_type: ref.access_type,
+              receiver_kind: receiver_kind_of(ref.property_chain),
+            }
+          : {
+              ...location,
+              reference_kind: "variable_reference",
+              access_type: ref.access_type,
+            },
+      );
+    }
+  }
+
+  return new Map(
+    [...index].map(([key, sites]) => [key, [...sites.values()]]),
+  );
+}
+
+/**
+ * An empty chain reads as `identifier`: the reference is not on the enclosing
+ * instance, which is the only distinction this field is consulted for.
+ */
+function receiver_kind_of(
+  property_chain: readonly SymbolName[],
+): "self" | "identifier" {
+  const head = property_chain[0] as string | undefined;
+  return head !== undefined && SELF_KEYWORDS.has(head) ? "self" : "identifier";
+}
+
+/**
  * One-pass inverted grep index over all source files. For every occurrence of
- * `identifier\s*\(` on any line, record a `GrepHit` keyed by the identifier.
+ * `identifier\s*\(` in the CODE of any line, record a `GrepHit` keyed by the
+ * identifier.
  *
  * The identifier pattern `[A-Za-z_$][\w$]*` is the common superset for
  * JavaScript/TypeScript/Python identifiers — language-agnostic enough for the
  * diagnostic pass without requiring per-language lexing.
+ *
+ * Occurrences inside comments and string literals are skipped: a doc comment,
+ * a docstring and a `# TODO` mention the name, they never call it, and a hit
+ * that is not a call fabricates a caller. Comment extent comes from
+ * `build_code_ranges`, which carries block-comment and docstring state across
+ * lines, so a call after `/* … *\/` on one line survives while the interior of
+ * a multi-line comment does not.
  */
 export function build_grep_index(
   lines_by_file: ReadonlyMap<FilePath, string[]>,
   call_refs_by_file_line: Map<FilePath, Map<number, CallReference[]>>,
+  languages: ReadonlyMap<FilePath, Language>,
+  declaration_keys: ReadonlySet<string>,
 ): Map<string, GrepHit[]> {
   const index = new Map<string, GrepHit[]>();
-  // Lookbehind form of word-boundary that also respects `$` as an identifier
-  // character — `\b` alone rejects `$(…)` because `$` is non-word.
-  const pattern = /(?<![A-Za-z0-9_$])([A-Za-z_$][\w$]*)\s*\(/g;
 
   for (const [file_path, lines] of lines_by_file) {
     const by_line = call_refs_by_file_line.get(file_path);
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      const line_num = i + 1;
-      const refs = by_line?.get(line_num);
-      const line_captures = refs && refs.length > 0 ? captures_from_refs(refs) : [];
-      let trimmed: string | null = null;
+    const language = languages.get(file_path);
+    if (language === undefined) {
+      throw new Error(
+        `No language recorded for ${file_path} — every indexed file must come from a parsed file`,
+      );
+    }
 
-      pattern.lastIndex = 0;
-      let m: RegExpExecArray | null;
-      while ((m = pattern.exec(line)) !== null) {
-        const name = m[1];
+    for_each_call_occurrence(
+      file_path,
+      lines,
+      language,
+      declaration_keys,
+      ({ name, line, content }) => {
         let hits = index.get(name);
         if (!hits) {
           hits = [];
           index.set(name, hits);
         }
-        if (trimmed === null) trimmed = line.trim();
+        const refs = by_line?.get(line);
         hits.push({
           file_path,
-          line: line_num,
-          content: trimmed,
-          captures: line_captures,
+          line,
+          content,
+          captures: refs && refs.length > 0 ? captures_from_refs(refs) : [],
         });
-      }
-    }
+      },
+    );
   }
   return index;
 }
 
-const MAX_GREP_HITS = 10;
+export const MAX_GREP_HITS = 10;
 
 /**
  * Per-entry cap on CallRefDiagnostic records. Names like `<anonymous>` or
@@ -366,84 +564,86 @@ const MAX_DIAGNOSTICS_PER_ENTRY = 50;
  */
 function gather_diagnostics(
   node: CallableNode,
-  entry_point_id: string,
   call_refs_by_name: Map<string, { caller_node: CallableNode; call_ref: CallReference }[]>,
   grep_index: Map<string, GrepHit[]>,
+  reference_index: Map<string, ReferenceSiteDiagnostic[]>,
   lines_by_file: ReadonlyMap<FilePath, string[]>,
+  declaration_keys: ReadonlySet<string>,
   class_name_by_constructor_id?: ReadonlyMap<SymbolId, SymbolName>,
 ): EntryPointDiagnostics {
   // For constructors, grep for class name (e.g. ClassName() instead of __init__())
   const grep_name = (node.definition.kind === "constructor" && class_name_by_constructor_id)
     ? (class_name_by_constructor_id.get(node.symbol_id) as string ?? node.name as string)
     : node.name as string;
-  const def_file = node.location.file_path;
-  const def_line = node.location.start_line;
-  const is_constructor = node.definition.kind === "constructor";
 
-  const grep_call_sites = grep_for_calls(
-    grep_name,
-    def_file,
-    def_line,
-    grep_index,
-    is_constructor,
-  );
+  const grep_call_sites = grep_for_calls(grep_name, grep_index);
 
   const ariadne_call_refs = find_matching_call_refs(
     node.name as string,
-    entry_point_id,
     call_refs_by_name,
     lines_by_file,
   );
 
-  const diagnosis = compute_diagnosis(grep_call_sites, ariadne_call_refs, entry_point_id);
-
-  return {
+  const diagnostics: EntryPointDiagnostics = {
     grep_call_sites,
-    // Populated by the optional unindexed-test grep pass when
-    // `include_unindexed_tests` is set; defaults to empty so builtin
-    // classifiers reading this field degrade gracefully.
-    grep_call_sites_unindexed_tests: [],
+    // Populated by `complete_caller_evidence`, which owns the residue.
+    grep_call_sites_outside_index: [],
+    // Keyed by `grep_name`, so a constructor's references are found under the
+    // class name — the same name the grep channel searches for.
+    reference_sites: reference_sites_for(grep_name, node.definition.kind as EnrichedEntryPoint["kind"], reference_index),
     ariadne_call_refs,
-    diagnosis,
-    // Disambiguators for the fault-area derivation, stamped without re-grepping.
+    diagnosis: "no-textual-callers",
+    // Disambiguator for the fault-area derivation, stamped without re-grepping.
     has_uncaptured_indexed_grep_hit: grep_call_sites.some(
       (hit) => hit.captures.length === 0,
     ),
-    // Recomputed by `attach_unindexed_test_grep_hits` once the unindexed-test
-    // pass populates `grep_call_sites_unindexed_tests`; false until then.
-    callers_only_in_unindexed_tests: false,
   };
+  // Provisional: settled again at the end of the chain, once the out-of-index
+  // channel exists. A caller that only runs extraction still gets a correct
+  // answer over the evidence extraction can see.
+  diagnostics.diagnosis = compute_diagnosis(diagnostics);
+  return diagnostics;
+}
+
+/**
+ * Non-call references to a name, minus any landing where a callable of that
+ * name is declared.
+ *
+ * The indexer records a reference for the declaration itself, so without this
+ * a sibling class's `def pool_shrink(...)` would read as a mention of the
+ * entry — the same phantom the grep channel rejects, arriving through the
+ * structured channel.
+ */
+function reference_sites_for(
+  name: string,
+  kind: EnrichedEntryPoint["kind"],
+  reference_index: Map<string, ReferenceSiteDiagnostic[]>,
+): ReferenceSiteDiagnostic[] {
+  const all = reference_index.get(name);
+  if (!all) return [];
+  if (kind === "function") return all;
+
+  // A method or constructor cannot be reached by a bare name — only through a
+  // receiver. Without this, any local of the same name is read as evidence:
+  // `errors = []` for a method `errors`, an import line for a property `urls`.
+  // The index keys on the name alone, so it cannot tell those apart; requiring
+  // a receiver is the part of identity it CAN check.
+  return all.filter((site) => site.reference_kind === "property_access");
 }
 
 /**
  * Look up textual call sites for a given name in the precomputed inverted
- * index, filtering out the definition itself and (for constructors) class
- * definition lines like `class Name(object):`.
+ * index, capped for the investigator who reads them.
+ *
+ * The index holds only occurrences that can be calls — `for_each_call_occurrence`
+ * withheld comment and literal text, every line a callable of that name is
+ * declared on, and every declaration header — so nothing is re-filtered here.
  */
 function grep_for_calls(
   name: string,
-  def_file: string,
-  def_line: number,
   grep_index: Map<string, GrepHit[]>,
-  is_constructor: boolean,
 ): GrepHit[] {
-  if (name === "<anonymous>") return [];
-
-  const all = grep_index.get(name);
-  if (!all) return [];
-
-  const class_def_pattern = is_constructor
-    ? new RegExp(`^\\s*class\\s+${escape_regex(name)}\\b`)
-    : null;
-
-  const hits: GrepHit[] = [];
-  for (const hit of all) {
-    if (hit.file_path === def_file && hit.line === def_line) continue;
-    if (class_def_pattern && class_def_pattern.test(hit.content)) continue;
-    hits.push(hit);
-    if (hits.length >= MAX_GREP_HITS) break;
-  }
-  return hits;
+  return (grep_index.get(name) ?? []).slice(0, MAX_GREP_HITS);
 }
 
 /**
@@ -469,7 +669,6 @@ function captures_from_refs(refs: CallReference[]): string[] {
  */
 function find_matching_call_refs(
   name: string,
-  _entry_point_id: string,
   call_refs_by_name: Map<string, { caller_node: CallableNode; call_ref: CallReference }[]>,
   lines_by_file: ReadonlyMap<FilePath, string[]>,
 ): CallRefDiagnostic[] {
@@ -507,48 +706,44 @@ function read_source_line(
 }
 
 /**
- * Diagnose the failure mode based on grep results and Ariadne call references.
+ * Diagnose the failure mode over the entry's completed evidence.
+ *
+ * Ordered by how much the evidence pins down. An indexed textual call site is
+ * the strongest signal, so the registry branches come first. Failing
+ * that, a caller in a discovered-but-unindexed file is a determinate statement
+ * about coverage, and a non-call reference is a determinate statement about
+ * syntax. `no-textual-callers` keeps its literal meaning: nothing anywhere in
+ * the discovered corpus mentions this callable.
  */
-function compute_diagnosis(
-  grep_hits: GrepHit[],
-  call_refs: CallRefDiagnostic[],
-  entry_point_id: string,
-): EntryPointDiagnostics["diagnosis"] {
-  // No textual callers found — likely a true entry point
-  if (grep_hits.length === 0) {
-    return "no-textual-callers";
-  }
+export function compute_diagnosis(
+  diagnostics: Pick<
+    EntryPointDiagnostics,
+    | "grep_call_sites"
+    | "grep_call_sites_outside_index"
+    | "reference_sites"
+    | "ariadne_call_refs"
+  >,
+): EntryPointDiagnosis {
+  const { grep_call_sites, ariadne_call_refs } = diagnostics;
 
-  // Textual callers exist but Ariadne has no matching call references
-  if (call_refs.length === 0) {
-    return "callers-not-in-registry";
-  }
-
-  // Ariadne has call references — check resolutions
-  const has_unresolved = call_refs.some((r) => r.resolution_count === 0);
-  const resolved_to_this = call_refs.some((r) =>
-    r.resolved_to.includes(entry_point_id),
-  );
-
-  if (resolved_to_this) {
-    // Shouldn't happen — if resolved correctly, it wouldn't be an entry point.
-    // Indicates a bug in call graph construction.
+  if (grep_call_sites.length > 0) {
+    if (ariadne_call_refs.length === 0) {
+      return "callers-not-in-registry";
+    }
+    if (ariadne_call_refs.some((r) => r.resolution_count === 0)) {
+      return "callers-in-registry-unresolved";
+    }
+    // All call refs resolved, but to different symbols.
     return "callers-in-registry-wrong-target";
   }
 
-  if (has_unresolved) {
-    return "callers-in-registry-unresolved";
+  if (diagnostics.grep_call_sites_outside_index.length > 0) {
+    return "callers-outside-indexed-corpus";
   }
 
-  // All call refs resolved but to different symbols
-  return "callers-in-registry-wrong-target";
-}
+  if (diagnostics.reference_sites.length > 0) {
+    return "references-without-call-syntax";
+  }
 
-// ===== Shared Utilities =====
-
-/**
- * Escape special regex characters in a string.
- */
-function escape_regex(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return "no-textual-callers";
 }

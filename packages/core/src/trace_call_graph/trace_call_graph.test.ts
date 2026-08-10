@@ -1,5 +1,9 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, afterEach, beforeEach } from "vitest";
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { trace_call_graph } from "./trace_call_graph";
+import { Project } from "../project/project";
 import { DefinitionRegistry } from "../resolve_references/registries/definition";
 import { ResolutionRegistry } from "../resolve_references/resolution_registry";
 import {
@@ -10,6 +14,7 @@ import {
   anonymous_function_symbol,
 } from "@ariadnejs/types";
 import type {
+  CallGraph,
   Language,
   FunctionDefinition,
   ClassDefinition,
@@ -518,6 +523,108 @@ describe("trace_call_graph", () => {
 
       expect(call_graph.entry_points).toContain(def.symbol_id);
       expect(call_graph.entry_points.length).toBe(1);
+    });
+  });
+
+  describe("candidate-set invariance over a complete corpus", () => {
+    // Indexing a test file contributes its call edges and zero candidates. That
+    // invariance is why scope belongs at candidacy (`include_tests`) and never
+    // at discovery: dropping the file at discovery would delete the edge too.
+    let temp_dir: string;
+
+    beforeEach(async () => {
+      temp_dir = await mkdtemp(join(tmpdir(), "ariadne-candidate-set-"));
+    });
+
+    afterEach(async () => {
+      await rm(temp_dir, { recursive: true, force: true });
+    });
+
+    async function project_with_test_caller(): Promise<Project> {
+      const widget = join(temp_dir, "widget.ts");
+      const widget_test = join(temp_dir, "widget.test.ts");
+      const widget_source = "export function render_widget() {\n  return 1;\n}\n";
+      const test_source = [
+        "import { render_widget } from \"./widget\";",
+        "",
+        "export function test_fn() {",
+        "  return render_widget();",
+        "}",
+        "",
+      ].join("\n");
+      await writeFile(widget, widget_source, "utf8");
+      await writeFile(widget_test, test_source, "utf8");
+
+      const project = new Project();
+      await project.initialize(temp_dir as FilePath);
+      project.update_file(widget as FilePath, widget_source);
+      project.update_file(widget_test as FilePath, test_source);
+      return project;
+    }
+
+    function entry_point_names(call_graph: CallGraph): string[] {
+      return call_graph.entry_points
+        .map((id) => call_graph.nodes.get(id)?.name as string)
+        .sort();
+    }
+
+    /**
+     * The names `caller_name`'s calls resolve to. A bare import is enough to
+     * keep a symbol out of the entry-point set, so the entry-point assertions
+     * below cannot by themselves tell an edge from an import — this reads the
+     * edge.
+     */
+    function resolved_call_targets(call_graph: CallGraph, caller_name: string): string[] {
+      const caller = [...call_graph.nodes.values()].find((n) => n.name === caller_name);
+      if (caller === undefined) {
+        throw new Error(`expected a call-graph node named ${caller_name}`);
+      }
+      const targets = new Set(
+        caller.enclosed_calls
+          .flatMap((c) => c.resolutions.map((r) => r.symbol_id))
+          .map((symbol_id) => call_graph.nodes.get(symbol_id)?.name as string)
+          .filter((n) => n !== undefined),
+      );
+      return [...targets].sort();
+    }
+
+    it("yields no entry points when a test file is the only caller", async () => {
+      const project = await project_with_test_caller();
+
+      const call_graph = trace_call_graph(
+        project.definitions,
+        project.resolutions,
+        project.get_languages(),
+        { include_tests: false },
+      );
+
+      expect(entry_point_names(call_graph)).toEqual([]);
+    });
+
+    it("yields only the test callable itself when include_tests is set", async () => {
+      const project = await project_with_test_caller();
+
+      const call_graph = trace_call_graph(
+        project.definitions,
+        project.resolutions,
+        project.get_languages(),
+        { include_tests: true },
+      );
+
+      expect(entry_point_names(call_graph)).toEqual(["test_fn"]);
+    });
+
+    it("carries the test file's call edge into the graph", async () => {
+      const project = await project_with_test_caller();
+
+      const call_graph = trace_call_graph(
+        project.definitions,
+        project.resolutions,
+        project.get_languages(),
+        { include_tests: true },
+      );
+
+      expect(resolved_call_targets(call_graph, "test_fn")).toEqual(["render_widget"]);
     });
   });
 

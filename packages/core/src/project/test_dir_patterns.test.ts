@@ -4,7 +4,13 @@ import { TEST_DIR_PATTERNS, is_in_test_dir } from "./test_dir_patterns";
 
 describe("TEST_DIR_PATTERNS", () => {
   it("holds the exact shared pattern set", () => {
-    expect(TEST_DIR_PATTERNS).toEqual(["__tests__", "/tests", "/test"]);
+    expect(TEST_DIR_PATTERNS).toEqual([
+      "__tests__",
+      "/tests",
+      "/test",
+      "__fixtures__",
+      "/fixtures",
+    ]);
   });
 });
 

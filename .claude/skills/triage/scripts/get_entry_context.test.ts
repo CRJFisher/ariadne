@@ -1,3 +1,6 @@
+import * as fs from "node:fs";
+import * as path from "node:path";
+
 import { describe, it, expect } from "vitest";
 import {
   format_grep_hits,
@@ -46,9 +49,20 @@ const BASE_DIAGNOSTICS: EntryPointDiagnostics = {
   grep_call_sites: [
     { file_path: "test/server.test.ts" as FilePath, line: 10, content: "handle_request(req)", captures: [] },
   ],
-  grep_call_sites_unindexed_tests: [],
+  grep_call_sites_outside_index: [
+    { file_path: "docs/_ext/ext.py" as FilePath, line: 12, content: "handle_request(req)", captures: [] },
+  ],
+  reference_sites: [
+    {
+      file_path: "app/registry.py" as FilePath,
+      line: 7,
+      content: "handlers = {'*': dumper.handle_request}",
+      reference_kind: "property_access",
+      access_type: "property",
+      receiver_kind: "identifier",
+    },
+  ],
   has_uncaptured_indexed_grep_hit: false,
-  callers_only_in_unindexed_tests: false,
   ariadne_call_refs: [],
   diagnosis: "callers-not-in-registry",
 };
@@ -160,6 +174,8 @@ describe("substitute_template", () => {
       "Output: {{output_path}}",
       "Grep: {{entry.diagnostics.grep_call_sites_formatted}}",
       "Refs: {{entry.diagnostics.ariadne_call_refs_formatted}}",
+      "Outside: {{entry.diagnostics.grep_call_sites_outside_index_formatted}}",
+      "Reference sites: {{entry.diagnostics.reference_sites_formatted}}",
       "Slice: {{relevant_registry_slice}}",
     ].join("\n");
 
@@ -180,6 +196,47 @@ describe("substitute_template", () => {
     expect(result).toContain("test/server.test.ts:10");
     expect(result).toContain("(none found)"); // ariadne_call_refs is empty
     expect(result).toContain("Slice: []");
+    // Every slot the real template carries is filled: an unrendered `{{` reaches
+    // the investigator as literal template source and silently withholds the
+    // evidence that slot exists to show.
+    expect(result).not.toContain("{{");
+  });
+
+  it("renders every slot the shipped prompt template declares", () => {
+    // The template on disk is the investigator's actual surface; a slot added
+    // there and never wired here renders as literal `{{…}}` in production while
+    // a hand-built template in this file stays green.
+    const template = fs.readFileSync(
+      path.join(import.meta.dirname, "..", "templates", "prompt.md"),
+      "utf8",
+    );
+
+    const result = substitute_template({
+      template,
+      payload: payload_for(
+        make_entry({
+          diagnosis: "references-without-call-syntax",
+          diagnostics: {
+            ...BASE_DIAGNOSTICS,
+            reference_sites: [
+              {
+                file_path: "src/registry.ts" as FilePath,
+                line: 12,
+                content: "registry.register(handle_request)",
+                reference_kind: "property_access",
+                access_type: "property",
+                receiver_kind: "identifier",
+              },
+            ],
+          },
+        }),
+      ),
+      output_path: "/tmp/results/5.json",
+    });
+
+    expect(result).not.toContain("{{");
+    expect(result).toContain("src/registry.ts:12");
+    expect(result).toContain("receiver: identifier");
   });
 
   it("handles null signature", () => {

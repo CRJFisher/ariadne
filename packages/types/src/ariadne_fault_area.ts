@@ -124,7 +124,6 @@ export interface DeriveFaultAreaInput {
   readonly resolution_failure: { readonly stage: string; readonly reason: string } | null;
   readonly diagnosis: string;
   readonly has_uncaptured_indexed_grep_hit: boolean;
-  readonly callers_only_in_unindexed_tests: boolean;
   /** Set by the caller when the fault is known to be language-specific. */
   readonly language?: Language;
 }
@@ -182,6 +181,8 @@ const ENTRY_POINT_DIAGNOSIS_SET: Record<EntryPointDiagnosis, true> = {
   "callers-not-in-registry": true,
   "callers-in-registry-unresolved": true,
   "callers-in-registry-wrong-target": true,
+  "callers-outside-indexed-corpus": true,
+  "references-without-call-syntax": true,
 };
 
 function is_entry_point_diagnosis(s: string): s is EntryPointDiagnosis {
@@ -197,10 +198,10 @@ function other_location(description: string, language?: Language): AriadneFaultL
  *
  * Precedence: the per-call `ResolutionFailure` is the most specific signal and
  * is consulted first; the `diagnosis` is the fallback when no failure was
- * emitted. Within the fallback, the coverage-gap signal
- * (`callers_only_in_unindexed_tests`) wins over the diagnosis, because callers
- * confined to excluded dirs surface as `no-textual-callers`. Unknown raw values
- * route to the `other` escape hatch.
+ * emitted. The coverage gap needs no precedence hack any more — a caller in a
+ * discovered-but-unindexed file states itself as `callers-outside-indexed-corpus`
+ * rather than masquerading as `no-textual-callers`. Unknown raw values route to
+ * the `other` escape hatch.
  *
  * Residual-judgement cases return a deterministic default with
  * `needs_judgement: true` (the `plan` strategist decides):
@@ -258,18 +259,21 @@ export function derive_fault_area(input: DeriveFaultAreaInput): AriadneFaultLoca
     return other_location(`unrecognized diagnosis "${diagnosis}"`, language);
   }
 
-  // Coverage gap takes precedence over the diagnosis. When every caller lives in
-  // a directory excluded from indexing, the indexed grep finds nothing, so the
-  // diagnosis is `no-textual-callers` even though real callers exist. Routing on
-  // the diagnosis alone would misread this as a genuine entry point, so the
-  // unindexed-test signal is consulted first.
-  if (input.callers_only_in_unindexed_tests) {
-    return { area: "coverage_config", language, needs_judgement: false };
-  }
-
   switch (diagnosis) {
     case "no-textual-callers":
       // Residual case 3: genuine entry point vs true-positive classification miss.
+      return { area: "entry_point_classification", language, needs_judgement: true };
+    case "callers-outside-indexed-corpus":
+      // A determinate statement, not a judgement: the caller exists in a file we
+      // chose not to, or failed to, index.
+      return { area: "coverage_config", language, needs_judgement: false };
+    case "references-without-call-syntax":
+      // Residual case 5: the only mentions are non-call references, which is
+      // the classifier-author surface — but the reference index keys on the
+      // name's final segment, not on a resolved symbol, so a same-named member
+      // elsewhere can supply the evidence. The AREA is right; whether these
+      // particular sites reach THIS member still needs a look. Drops to
+      // `needs_judgement: false` once the sites carry symbol identity.
       return { area: "entry_point_classification", language, needs_judgement: true };
     case "callers-in-registry-wrong-target":
       return { area: "entry_point_classification", language, needs_judgement: false };

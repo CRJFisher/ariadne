@@ -9,7 +9,7 @@
 export { Project } from "./project";
 export type { ClassifyOptions } from "./project";
 export { load_project } from "./project";
-export type { LoadProjectOptions } from "./project";
+export type { LoadProjectOptions, LoadedProject } from "./project";
 export { is_test_file } from "./project";
 export {
   SUPPORTED_EXTENSIONS,
@@ -62,8 +62,7 @@ export {
   type ClassifiedEntryPointResult,
   type FileLinesReader,
   extract_entry_point_diagnostics,
-  attach_unindexed_test_grep_hits,
-  collect_unindexed_test_files,
+  complete_caller_evidence,
   build_class_name_by_constructor_position,
   load_permanent_registry,
   PermanentRegistryError,

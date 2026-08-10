@@ -68,12 +68,12 @@ export interface MemberSymbol {
  * site's `ResolutionFailure`; `receiver_kind` is present only when that call
  * site is a method call.
  *
- * `has_uncaptured_indexed_grep_hit` and `callers_only_in_unindexed_tests` are
- * copied verbatim from the entry's `EntryPointDiagnostics`. They are the two
- * disambiguators `derive_fault_area` consults on its diagnosis-fallback path:
- * without them the `coverage_config` and deterministic-`syntactic_extraction`
- * branches collapse. They are required (the producer always has them from
- * `EntryPointDiagnostics`), so the `plan` engine never has to invent `false`.
+ * `has_uncaptured_indexed_grep_hit` is copied verbatim from the entry's
+ * `EntryPointDiagnostics`. It is the disambiguator `derive_fault_area` consults
+ * on its diagnosis-fallback path: without it the deterministic
+ * `syntactic_extraction` branch collapses. It is required (the producer always
+ * has it from `EntryPointDiagnostics`), so the `plan` engine never has to
+ * invent `false`.
  */
 export interface NovelIssue {
   id: string;
@@ -95,7 +95,6 @@ export interface NovelIssue {
   };
   receiver_kind?: ReceiverKind;
   has_uncaptured_indexed_grep_hit: boolean;
-  callers_only_in_unindexed_tests: boolean;
 }
 
 /**

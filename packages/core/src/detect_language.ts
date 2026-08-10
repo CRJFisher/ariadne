@@ -29,8 +29,6 @@ export function detect_language(file_path: string): Language | null {
   if (file_path.endsWith(".rs")) {
     return "rust";
   }
-  // go, java, cpp are recognized by find_source_files but not supported by
-  // the Language type, so they detect as null.
   return null;
 }
 

@@ -175,7 +175,7 @@ async function analyze_package(
 ): Promise<EntryPoint[]> {
   const src_folder = path.join("packages", package_name, "src");
 
-  const project = await load_project({
+  const { project } = await load_project({
     project_path: project_dir,
     folders: [src_folder],
     storage,

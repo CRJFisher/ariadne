@@ -64,11 +64,11 @@ function make_entry(overrides: {
     },
     diagnostics: {
       grep_call_sites: [],
-      grep_call_sites_unindexed_tests: [],
+      grep_call_sites_outside_index: [],
+      reference_sites: [],
       ariadne_call_refs: overrides.refs ?? [make_ref()],
       diagnosis: "callers-in-registry-unresolved",
       has_uncaptured_indexed_grep_hit: false,
-      callers_only_in_unindexed_tests: false,
     },
   };
 }

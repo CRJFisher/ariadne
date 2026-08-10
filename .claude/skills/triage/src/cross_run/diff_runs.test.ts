@@ -19,7 +19,6 @@ function ni(id: string, entry_index: number): NovelIssue {
     evidence_excerpt: `call-${entry_index}`,
     diagnosis: "callers-not-in-registry",
     has_uncaptured_indexed_grep_hit: false,
-    callers_only_in_unindexed_tests: false,
   };
 }
 

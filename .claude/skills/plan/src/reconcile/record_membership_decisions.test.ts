@@ -43,7 +43,6 @@ function ev(file: string, line: number, name: string): PlanTaskEvidence {
     diagnosis: "callers-not-in-registry",
     resolution_failure: null,
     has_uncaptured_indexed_grep_hit: false,
-    callers_only_in_unindexed_tests: false,
   };
 }
 
@@ -197,7 +196,6 @@ describe("membership feedback loop (record -> store -> next sweep's Pass A re-ro
       diagnosis: "callers-in-registry-unresolved",
       resolution_failure: { stage: "name_resolution", reason: "name_not_in_scope" },
       has_uncaptured_indexed_grep_hit: false,
-      callers_only_in_unindexed_tests: false,
     };
     return { project: "p", run_id: parse_run_id("aaaaaaa-2026-04-16T18-10-16.855Z"), novel_issues: [issue] };
   }

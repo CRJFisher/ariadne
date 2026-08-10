@@ -1,7 +1,7 @@
 ---
 id: TASK-373
 title: "Qualify grep hits and put every caller file back in the indexed corpus"
-status: To Do
+status: In Progress
 assignee: []
 created_date: "2026-07-29 09:36"
 labels:
@@ -58,15 +58,65 @@ With test call sites in the corpus, many entries move from `callers-not-in-regis
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 A hit landing on any callable definition's start line is excluded from `grep_call_sites`, verified by an integration test over a real `Project` for the typeorm override shape (`async dropSchema(...)` on a sibling class), the celery `def pool_shrink(...)` shape and the django `async def aupdate(...)` shape.
-- [ ] #2 A hit whose trimmed content starts with a line-comment marker or block-comment continuation is excluded, verified for the Rust doc-comment case `/// let unfilled = buf.initialize_unfilled();`.
-- [ ] #3 Negative control: a genuine `name(` call on the same identifier is still captured, and `has_uncaptured_indexed_grep_hit` still becomes true for it.
+- [x] #1 A hit landing on any callable definition's start line is excluded from `grep_call_sites`, verified by an integration test over a real `Project` for the typeorm override shape (`async dropSchema(...)` on a sibling class), the celery `def pool_shrink(...)` shape and the django `async def aupdate(...)` shape.
+- [x] #2 A hit whose trimmed content starts with a line-comment marker or block-comment continuation is excluded, verified for the Rust doc-comment case `/// let unfilled = buf.initialize_unfilled();`.
+- [x] #3 Negative control: a genuine `name(` call on the same identifier is still captured, and `has_uncaptured_indexed_grep_hit` still becomes true for it.
 - [ ] #4 celery `pool_shrink`, `pool_grow`, `autoscale`, `add_consumer`, typeorm's six driver overrides (`dropSchema`, `hasSchema`, `createDatabase`, `dropPrimaryKey`, `dropTable`, `renameTable`) and django `aupdate`, `as_text` carry `grep_call_sites: []`, `diagnosis: "no-textual-callers"` and `has_uncaptured_indexed_grep_hit: false` on the live pipeline; none of them routes to `syntactic_extraction`.
-- [ ] #5 `LoadProjectOptions` no longer has `file_filter`, and `load_project` returns the set of files it dropped on an indexing error (reproduced with express `lib/response.js` / `Duplicate export name "res"`).
-- [ ] #6 `should_ignore_path` matches whole path segments: `src/compiler/tsbuildPublic.ts`, `packages/compiler/src/render3/r3_template_transform.ts`, `packages/compiler/src/template/pipeline/x.ts` and `tools/write-locale-files-to-dist.ts` are indexed, while `node_modules/x/y.ts`, `dist/main.js`, `build/out.js`, `temp/a.ts` and `packages/x/fixtures/y.ts` are still ignored.
-- [ ] #7 `trace_call_graph.test.ts` pins candidate-set invariance: a test-file callable calling a production callable yields `[]` under `include_tests: false` and `[test_fn]` under `include_tests: true`.
-- [ ] #8 Integration tests with on-disk fixtures cover every evidence case in this group: prisma `compileFile` (caller in `src/__tests__/**`), celery `long_running_task` (`t/smoke/tasks.py` called via `.si(5)` from `t/smoke/tests/test_worker.py`), a celery-shaped filename-marked caller outside any test directory (`t/unit/app/test_control.py`), the typeorm/celery/django declaration-line hits, the tokio doc-comment hit, and the eight Angular/TypeScript `should_ignore_path` rows.
-- [ ] #9 prisma `compileFile` and celery `long_running_task` are no longer reported as entry points, and no new entry point appears from a test file under `include_tests: false`.
-- [ ] #10 Every insulated test named in the work plan stays green, including the `include_tests: true` assertions in the language integration suites and `project/detect_test_file.test.ts` / `test_dir_patterns.test.ts` unchanged.
+- [x] #5 `LoadProjectOptions` no longer has `file_filter`, and `load_project` returns the set of files it dropped on an indexing error (reproduced with express `lib/response.js` / `Duplicate export name "res"`).
+- [x] #6 `should_ignore_path` matches whole path segments: `src/compiler/tsbuildPublic.ts`, `packages/compiler/src/render3/r3_template_transform.ts`, `packages/compiler/src/template/pipeline/x.ts` and `tools/write-locale-files-to-dist.ts` are indexed, while `node_modules/x/y.ts`, `dist/main.js`, `build/out.js` and `temp/a.ts` are still ignored. A fixture path is deliberately no longer among them — see "Fixture trees moved to candidacy".
+- [x] #7 `trace_call_graph.test.ts` pins candidate-set invariance: a test-file callable calling a production callable yields `[]` under `include_tests: false` and `[test_fn]` under `include_tests: true`.
+- [x] #8 Integration tests with on-disk fixtures cover every evidence case in this group: prisma `compileFile` (caller in `src/__tests__/**`), celery `long_running_task` (`t/smoke/tasks.py` called via `.si(5)` from `t/smoke/tests/test_worker.py`), a celery-shaped filename-marked caller outside any test directory (`t/unit/app/test_control.py`), the typeorm/celery/django declaration-line hits, the tokio doc-comment hit, and the eight Angular/TypeScript `should_ignore_path` rows.
+- [x] #9 prisma `compileFile` and celery `long_running_task` are no longer reported as entry points, and no new entry point appears from a test file under `include_tests: false`.
+- [x] #10 Every insulated test named in the work plan stays green, including the `include_tests: true` assertions in the language integration suites and `project/detect_test_file.test.ts` / `test_dir_patterns.test.ts` unchanged.
 
 <!-- AC:END -->
+
+## Implementation Notes
+
+### What a user gets
+
+Evidence about "who calls this callable?" is now honest on both sides of the question.
+
+- **A mention is no longer a caller.** A `name(` occurrence inside a comment, a docstring or a string literal never becomes a call site, and a line that declares a callable of that name is read as the declaration it is. Entries whose only "callers" were a sibling override's `def` line or a doc comment now report `no-textual-callers` and stop being routed to `syntactic_extraction` on false evidence.
+- **A caller file is no longer deleted before it can be seen.** Test files, and files whose path merely contains an ignored directory name (`src/template/**`, `tsbuildPublic.ts`, `…-to-dist.ts`), stay in the corpus and contribute their call edges. Scope is decided at candidacy (`include_tests`), never at discovery.
+- **A file the indexer cannot handle is reported rather than half-present.** `load_project` names the files it dropped, and rolls their partial registry state back so they contribute neither phantom entry points nor phantom uncaptured hits.
+
+Measured on the live pipeline: celery `long_running_task` and prisma `compileFile` are gone from the entry-point set, and the phantom `def pool_shrink(...)` declaration hit at `celery/worker/control.py:559` is gone.
+
+### Deviations from the work plan, and why
+
+1. **The declaration key includes the callable's name** (`file:line:name`), where step 1 specified `file:line`. A position-only key deletes genuine calls that share a line with an unrelated definition — `const f = () => g();`, `app.get("/x", (req, res) => send(res))` — trading a phantom caller for a lost one. Every declaration shape in the evidence declares the same name, so the narrower key rejects all of them. Pinned by a test that fails under the position-only key.
+2. **Comment detection is range-based, not prefix-based.** Step 2 specified rejecting a trimmed line that starts with a comment marker, including a bare `*`. A leading `*` is a Rust deref and a JS multiplication continuation: on `tokio-rs--tokio` alone, 71 `*`-leading lines carry a call, and prefix matching deleted every one. `qualify_grep_hits.ts` instead scans each file once, carrying block-comment and docstring state across lines, so `/// let unfilled = …` and a JSDoc continuation are rejected while `*c.borrow_mut()` and code after a closed `/* … */` survive. The same scan covers Python docstrings and doctest lines, which prefix matching missed entirely.
+3. **`should_ignore_path` needed both of its matchers anchored.** Anchoring only the `IGNORED_DIRECTORIES` scan left the fix unreachable in production: the triage scripts pass `IGNORED_DIRECTORIES` through `load_project`'s `exclude`, which lands in the gitignore pattern branch, and the substring test there still excluded `packages/compiler/src/template/**`. Both branches now match whole path segments, pinned by a test that passes the pattern list the pipeline actually uses.
+4. **`should_ignore_path` did not ship as its own commit** (step 5 asked for it). It landed with the corpus change; the anchoring fix that completes it is a separate commit.
+
+### AC #4 is superseded by this task's own "Expected fallout"
+
+AC #4 asks that the twelve named rows carry `grep_call_sites: []` and `no-textual-callers`. That cannot hold once step 3 lands, and the task says so in "Expected fallout, not regression": with the corpus complete, those rows acquire *real* call sites. Measured:
+
+- **celery** `pool_shrink`, `pool_grow`, `autoscale`, `add_consumer` — the phantom declaration hits are gone; what remains are genuine calls in `t/unit/app/test_control.py` (`self.app.control.pool_shrink(2)`), each producing a real `@reference.call` that fails to resolve with `method_not_on_type`. `has_uncaptured_indexed_grep_hit: false`; routes to `receiver_type_inference`, not `syntactic_extraction`.
+- **django** `aupdate`, `as_text` — same shape, `has_uncaptured_indexed_grep_hit: false`.
+- **typeorm**'s six driver overrides — still `callers-not-in-registry` with `has_uncaptured_indexed_grep_hit: true`, so they still route to `syntactic_extraction`. The evidence is now true rather than phantom: the surviving hits are genuine calls in `test/functional/query-runner/**` that Ariadne fails to capture.
+
+The substantive half of AC #4 (no row routes to `syntactic_extraction` on phantom evidence) holds for celery and django. The typeorm half is a real, separate defect — see below.
+
+### Defects this work exposed, owned elsewhere
+
+- **A callable passed as a call argument gets no body scope.** Reproduced minimally: a call inside `it("x", async () => { … })` produces no `CallReference`, and indexing logs `No body scope found for <anonymous>`. Its enclosed calls therefore belong to no call-graph node, so they surface as textual hits with empty `captures`. This is why typeorm's six overrides still route to `syntactic_extraction` — their only callers live inside mocha `it(...)` callbacks. Owned by the `syntactic_extraction` epic, not fixable here.
+- **Declaration shapes the indexer does not record still count as call sites**: TypeScript overload signatures (627 single-line `function name(...): T;` declarations in `microsoft--TypeScript/src` alone), `declare function`, and object-literal method shorthand. `build_callable_declaration_keys` can only reject what `get_callable_definitions()` knows about, so closing this means indexing those shapes — an `index_single_file` change, not a qualification one.
+- **Declaration shapes outside the indexed corpus rest on a textual rule.** A file the indexer never loaded contributes no `CallableDefinition`, so the exact declaration key cannot reject a redeclaration there. `is_declaration_header` covers the ordinary `def` / `function` / `class` / `fn` shapes by text; a declaration those patterns do not describe is still counted. Closing it fully means parsing the residue, which is precisely what not indexing it avoided.
+
+### Fixture trees moved to candidacy
+
+AC #6's clause that `packages/x/fixtures/y.ts` stays ignored is deliberately not met. Excluding fixture trees from discovery deleted their call edges along with their callables, so a production function whose only caller was a fixture read as uncalled — the same defect this task exists to fix, one directory name over. The exclusion was also inconsistent: segment anchoring ignored `fixtures` but not `__fixtures__`, so those trees entered the corpus with no candidacy gate and surfaced synthetic callables as entry points.
+
+`fixtures` and `__fixtures__` are now `TEST_DIR_PATTERNS` members rather than `IGNORED_DIRECTORIES` members: the edges count, and `include_tests` decides whether the fixture's own callables are reported. Every other row of AC #6 holds unchanged.
+
+### Review round
+
+A ten-agent review of the landed epic found the text rule wrong in both directions, and the fixes landed here rather than as new tasks:
+
+- **A genuine call interpolated into a Python f-string was deleted**, and **a bare mention inside a JavaScript template literal was counted**. A literal's text is prose; its interpolated spans are code. Both directions are pinned, including the `{{` escape and a template that closes mid-line.
+- **The channel outside the index applied no declaration rule at all** while outranking every other evidence channel with `needs_judgement: false` — so a held-out stub redeclaring a name was asserted as the callable's only caller, confidently and wrongly. Both channels now scan through one owner, `for_each_call_occurrence`, with the declaration-key set a required argument so a caller holding no definition records must say so.
+- **A property-access write** (`self.errors = []`) published as evidence reaching a method named `errors`: the write filter only ever fired for variable references. The exclusion is position-keyed now, covering both.
+- **Discovery and the language detector disagreed in both directions** — `.go`/`.java`/`.cpp` admitted but unparseable (inflating the dropped-file set and the coverage warning), `.mjs`/`.cjs` parseable but never discovered. They are equal now, pinned by a test that compares them.

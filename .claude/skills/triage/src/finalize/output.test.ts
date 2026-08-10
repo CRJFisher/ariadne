@@ -64,9 +64,9 @@ function make_entry(overrides: Partial<TriageEntry> = {}): TriageEntry {
       access_modifier: null,
       diagnostics: {
         grep_call_sites: [],
-        grep_call_sites_unindexed_tests: [],
+        grep_call_sites_outside_index: [],
+        reference_sites: [],
         has_uncaptured_indexed_grep_hit: false,
-        callers_only_in_unindexed_tests: false,
         ariadne_call_refs: [],
         diagnosis: "no-textual-callers",
       },
@@ -93,9 +93,9 @@ function diagnostics_with_failure(
 ): EntryPointDiagnostics {
   return {
     grep_call_sites: [],
-    grep_call_sites_unindexed_tests: [],
+    grep_call_sites_outside_index: [],
+    reference_sites: [],
     has_uncaptured_indexed_grep_hit: false,
-    callers_only_in_unindexed_tests: false,
     ariadne_call_refs: [
       {
         caller_function: "caller",
@@ -368,7 +368,6 @@ describe("build_finalization_output", () => {
         resolution_failure: { stage: "method_lookup", reason: "method_not_on_type" },
         receiver_kind: "identifier",
         has_uncaptured_indexed_grep_hit: false,
-        callers_only_in_unindexed_tests: false,
       },
       {
         id: "novel-6",
@@ -379,7 +378,6 @@ describe("build_finalization_output", () => {
         evidence_excerpt: "no_failure()",
         diagnosis: "no-textual-callers",
         has_uncaptured_indexed_grep_hit: false,
-        callers_only_in_unindexed_tests: false,
       },
     ];
     expect(output.novel_issues).toEqual(expected);
@@ -423,7 +421,6 @@ describe("build_finalization_output", () => {
         diagnosis: "callers-in-registry-unresolved",
         resolution_failure: { stage: "name_resolution", reason: "name_not_in_scope" },
         has_uncaptured_indexed_grep_hit: false,
-        callers_only_in_unindexed_tests: false,
       },
     ]);
   });
@@ -438,9 +435,9 @@ describe("build_finalization_output", () => {
           route: "llm-triage",
           diagnostics: {
             grep_call_sites: [],
-            grep_call_sites_unindexed_tests: [],
+            grep_call_sites_outside_index: [],
+            reference_sites: [],
             has_uncaptured_indexed_grep_hit: true,
-            callers_only_in_unindexed_tests: true,
             ariadne_call_refs: [],
             diagnosis: "no-textual-callers",
           },
@@ -469,7 +466,6 @@ describe("build_finalization_output", () => {
         evidence_excerpt: "caller_in_tests()",
         diagnosis: "no-textual-callers",
         has_uncaptured_indexed_grep_hit: true,
-        callers_only_in_unindexed_tests: true,
       },
     ];
     expect(output.novel_issues).toEqual(expected);

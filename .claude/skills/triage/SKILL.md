@@ -59,7 +59,7 @@ When the input is a directory path and a project config already exists for that 
      --path <abs_path>
    ```
 
-3. Pick directories to exclude from indexing, with the goal of keeping the total indexed file count at **≤ ~4,000 files**. Common candidates: vendored / third-party / generated trees, directories whose contents are not first-party source, or any single directory whose file count dominates the rest of the project. A high `file_count_recursive` with a low `file_count_direct` means the directory is a container for sub-packages, not a leaf vendor blob — do not exclude it on count alone.
+3. Pick directories to exclude from indexing, with the goal of keeping the total indexed file count at **≤ ~4,000 files**. Common candidates: vendored / third-party / generated trees, directories whose contents are not first-party source, or any single directory whose file count dominates the rest of the project. **Never exclude a test directory.** `exclude` is a corpus exclusion — it deletes every call edge those files hold, so their callees surface as false entry points — while `include_tests: false` already suppresses test callables as candidates. Detection warns at startup when an `exclude` entry names a test tree. A high `file_count_recursive` with a low `file_count_direct` means the directory is a container for sub-packages, not a leaf vendor blob — do not exclude it on count alone.
 
    Estimate the post-exclusion count: subtract the `file_count_recursive` of each directory you plan to exclude from `total_source_files`. The **Pre-flight: File Count Check** below owns the ~4,000-file threshold and the action when a project exceeds it.
 
@@ -68,11 +68,13 @@ When the input is a directory path and a project config already exists for that 
    - `project_path`: absolute path (required)
    - `folders`: relevant source directories (omit if analyzing everything)
    - `exclude`: the list decided in step 4
+   - `include_tests`: optional, default `false`. Admits test callables as entry-point *candidates*; it never changes which files are indexed.
+   - `max_files`: optional, default 20,000. Detection refuses a corpus larger than this rather than indexing part of one.
    - `project_name` is auto-derived for external projects via `path_to_project_id(project_path)` — do not include it in the config. Only internal projects (`project_path: "."`) require an explicit `project_name`.
 6. Save it directly to `~/.ariadne/triage-entrypoints/project_configs/{name}.json` — state the saved config in your reply text as a record, not a request for approval.
 7. Continue the pipeline with `--config ~/.ariadne/triage-entrypoints/project_configs/{name}.json`.
 
-No project configs ship pre-authored — author one with the steps above. A saved config lives at `~/.ariadne/triage-entrypoints/project_configs/<name>.json` and is passed to every phase via `--config <path>`. The file is a JSON object with `project_path` (required), optional `folders` (source directories to index), optional `exclude` (directories to skip), and `project_name` (only for internal `project_path: "."` projects).
+No project configs ship pre-authored — author one with the steps above. A saved config lives at `~/.ariadne/triage-entrypoints/project_configs/<name>.json` and is passed to every phase via `--config <path>`. The file is a JSON object with `project_path` (required), optional `folders` (source directories to index), optional `exclude` (directories to skip), optional `include_tests` (default `false`; a candidate-side gate that never changes the corpus), optional `max_files` (default 20,000; detection refuses a larger corpus), and `project_name` (only for internal `project_path: "."` projects). Pass the same `--config` to every phase: `prepare_triage` re-indexes, and without it that phase indexes a different corpus than detection analysed.
 
 If no arguments are provided or the input is ambiguous, stop and print an error describing what is missing — do not ask the user and do not guess a target.
 

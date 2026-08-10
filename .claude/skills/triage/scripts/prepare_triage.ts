@@ -23,16 +23,17 @@
  */
 
 import * as childProcess from "node:child_process";
-import * as fs from "node:fs";
 import * as fsp from "node:fs/promises";
 import * as path from "path";
 import { fileURLToPath } from "node:url";
 
 import {
-  detect_language,
   IGNORED_DIRECTORIES,
-  is_test_file,
+  complete_caller_evidence,
+  build_class_name_by_constructor_position,
+  extract_entry_point_diagnostics,
   load_project,
+  parse_gitignore,
   trace_call_graph,
   FileSystemStorage,
   resolve_cache_dir,
@@ -42,6 +43,8 @@ import type { PersistenceStorage } from "@ariadnejs/core";
 import { atomic_write_file } from "@ariadnejs/skill-fs";
 import { build_run_id } from "@ariadnejs/skill-protocol";
 import { load_json } from "../src/store/analysis_output.js";
+import { load_analysis_scope } from "../src/analysis_scope.js";
+import type { AnalysisScope } from "../src/analysis_scope.js";
 import { active_rules_for_classification, load_registry } from "../src/known_issues_registry.js";
 import { prepare_triage } from "../src/prepare_triage.js";
 import {
@@ -118,22 +121,6 @@ function parse_args(argv: string[]): CliArgs {
   }
 
   return { analysis_path, project, config_path, max_count, no_reuse_tp, tp_source_run };
-}
-
-interface IndexScopeFromConfig {
-  folders: string[] | undefined;
-  exclude: string[];
-}
-
-function load_index_scope(config_path: string | null): IndexScopeFromConfig {
-  if (config_path === null) {
-    return { folders: undefined, exclude: [] };
-  }
-  const raw = fs.readFileSync(path.resolve(config_path), "utf-8");
-  const parsed = JSON.parse(raw) as Record<string, unknown>;
-  const folders = Array.isArray(parsed.folders) ? (parsed.folders as string[]) : undefined;
-  const exclude = Array.isArray(parsed.exclude) ? (parsed.exclude as string[]) : [];
-  return { folders, exclude };
 }
 
 const SCRIPTS_DIR = ".claude/skills/triage/scripts";
@@ -247,29 +234,43 @@ function warn_if_analysis_stale(
  */
 async function load_project_for_classification(
   project_path: string,
-  scope: IndexScopeFromConfig,
+  scope: AnalysisScope,
 ) {
   const cache_dir = resolve_cache_dir(project_path);
   const storage: PersistenceStorage | undefined = cache_dir
     ? new FileSystemStorage(cache_dir)
     : undefined;
-  const project = await load_project({
+  const { project, dropped_files } = await load_project({
     project_path,
     folders: scope.folders,
     exclude: [...IGNORED_DIRECTORIES, ...scope.exclude],
-    file_filter: (file: string) => {
-      const language = detect_language(file);
-      return !language || !is_test_file(file, language);
-    },
+    max_files: scope.max_files,
     storage,
   });
   // Raw call graph: every uncalled callable. The triage classifier needs the
   // unfiltered set so it can route both permanent and wip registry rules
   // against every candidate.
   const call_graph = trace_call_graph(project.definitions, project.resolutions, project.get_languages(), {
-    include_tests: false,
+    include_tests: scope.include_tests,
   });
-  return { project, call_graph };
+
+  // Complete the evidence before anything classifies or publishes it. This
+  // phase re-indexes rather than reading detection's output, so without the
+  // out-of-index pass here every diagnosis it publishes is the provisional
+  // one — computed before the channel that produces
+  // `callers-outside-indexed-corpus` exists, which would make that diagnosis
+  // and its `coverage_config` route unreachable in the live pipeline.
+  const entry_points = extract_entry_point_diagnostics(call_graph, project);
+  await complete_caller_evidence({
+    entry_points,
+    project_path,
+    indexed_source_files: project.get_file_contents(),
+    dropped_files,
+    class_name_by_constructor_position: build_class_name_by_constructor_position(project),
+    gitignore_patterns: await parse_gitignore(project_path),
+  });
+
+  return { project, call_graph, entry_points };
 }
 
 async function main(): Promise<void> {
@@ -309,13 +310,26 @@ async function main(): Promise<void> {
         "(status=fixed or wip+drift_detected)\n",
     );
   }
-  const scope = load_index_scope(cli.config_path);
-  const { project, call_graph } = await load_project_for_classification(project_path, scope);
+  if (cli.config_path === null) {
+    // This phase re-indexes the project, so without the config it re-indexes a
+    // different corpus than detection did — and reverts `include_tests` and
+    // `max_files` to their defaults while doing it.
+    process.stderr.write(
+      "[prepare_triage] no --config: re-indexing with default scope, which may not match " +
+        "the corpus detection analysed. Pass the same --config detection used.\n",
+    );
+  }
+  const scope = load_analysis_scope(cli.config_path);
+  const { project, call_graph, entry_points } = await load_project_for_classification(
+    project_path,
+    scope,
+  );
   const { entries, stats } = prepare_triage({
     call_graph,
     project,
     registry,
     max_count: cli.max_count,
+    entry_points,
   });
 
   // Apply TP cache (entries confirmed unreachable by a prior run at the same commit).

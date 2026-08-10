@@ -65,18 +65,35 @@ export type EntryPointDiagnosis =
   | "no-textual-callers"
   | "callers-not-in-registry"
   | "callers-in-registry-unresolved"
-  | "callers-in-registry-wrong-target";
+  | "callers-in-registry-wrong-target"
+  | "callers-outside-indexed-corpus"
+  | "references-without-call-syntax";
 
 export interface EntryPointDiagnostics {
-  /** Textual grep results for calls to this function across source files */
+  /**
+   * Textual call sites for this function in the indexed corpus, qualified: an
+   * occurrence inside a comment or a string never counts, and a line declaring
+   * a callable of the same name (a sibling override, an abstract signature,
+   * this function's own definition) is that declaration, not a call.
+   */
   grep_call_sites: GrepHit[];
   /**
-   * Grep hits located in directories excluded from Ariadne's indexing (e.g.
-   * `/test/`, `/tests/`, `/__tests__/`, `/spec/`). Populated by a second grep
-   * pass run outside the indexed scope so classifiers can distinguish
-   * "callers-exist-in-test-dir" from the broader callers-not-in-registry bucket.
+   * Grep hits in files that were discovered but not indexed — held out by a
+   * project-config `exclude` or a folder scope, or dropped by an indexing
+   * error. Populated by a second grep pass over exactly that residue, qualified
+   * by the same rules as `grep_call_sites`, so a caller Ariadne never looked at
+   * is distinguishable from one it looked at and missed.
    */
-  grep_call_sites_unindexed_tests: GrepHit[];
+  grep_call_sites_outside_index: GrepHit[];
+  /**
+   * Non-call references to this callable in the indexed corpus: a getter read,
+   * a bare-name callback registration, a dict or list registration value.
+   *
+   * A caller that carries no call-paren syntax is invisible to both grep
+   * channels by construction, so without this channel such a member reports
+   * `no-textual-callers` — indistinguishable from a genuine entry point.
+   */
+  reference_sites: ReferenceSiteDiagnostic[];
   /** CallReferences in the call graph where name matches this entry point */
   ariadne_call_refs: CallRefDiagnostic[];
   /** Summary diagnosis of where in Ariadne's pipeline the detection failed */
@@ -90,14 +107,37 @@ export interface EntryPointDiagnostics {
    * `callers-not-in-registry` fallback; stamped without re-grepping.
    */
   has_uncaptured_indexed_grep_hit: boolean;
-  /**
-   * True when `grep_call_sites_unindexed_tests` is non-empty AND
-   * `grep_call_sites` is empty — every textual caller lives in a directory
-   * excluded from indexing. Drives the `coverage_config` fault area. Can only
-   * become true after the optional unindexed-test grep pass runs; defaults to
-   * `false` when that pass is skipped.
-   */
-  callers_only_in_unindexed_tests: boolean;
+}
+
+/**
+ * One non-call mention of a callable, taken from the indexer's own reference
+ * records rather than from text — structured, language-agnostic, and keyed on
+ * the reference's resolved name rather than on a regex match.
+ */
+export type ReferenceSiteDiagnostic = ReferenceSiteLocation &
+  (
+    | {
+        reference_kind: "variable_reference";
+        /** Mirrors `VariableReference.access_type`. */
+        access_type: "read" | "write";
+      }
+    | {
+        reference_kind: "property_access";
+        /** Mirrors `PropertyAccess.access_type`. */
+        access_type: "property" | "index";
+        /**
+         * Whether the receiver is the enclosing instance (`self`/`this`) or
+         * some other identifier. Only a property access has a receiver, so
+         * only this arm carries the field.
+         */
+        receiver_kind: "self" | "identifier";
+      }
+  );
+
+interface ReferenceSiteLocation {
+  file_path: FilePath;
+  line: number;
+  content: string;
 }
 
 export interface GrepHit {

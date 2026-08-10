@@ -31,7 +31,6 @@ function ev(
     diagnosis: "callers-not-in-registry",
     resolution_failure: null,
     has_uncaptured_indexed_grep_hit: false,
-    callers_only_in_unindexed_tests: false,
   };
 }
 

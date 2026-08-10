@@ -40,7 +40,6 @@ function novel(overrides: Partial<NovelIssue> = {}): NovelIssue {
         : { stage: "name_resolution", reason: "name_not_in_scope" },
     receiver_kind: overrides.receiver_kind,
     has_uncaptured_indexed_grep_hit: overrides.has_uncaptured_indexed_grep_hit ?? false,
-    callers_only_in_unindexed_tests: overrides.callers_only_in_unindexed_tests ?? false,
   };
 }
 
@@ -52,7 +51,6 @@ describe("novel_issue_to_evidence", () => {
       diagnosis: "callers-not-in-registry",
       resolution_failure: undefined,
       has_uncaptured_indexed_grep_hit: true,
-      callers_only_in_unindexed_tests: false,
     });
     const expected: PlanTaskEvidence = {
       member_evidence: { file: "src/x.ts", line: 9, why: "only caller is dead" },
@@ -62,7 +60,6 @@ describe("novel_issue_to_evidence", () => {
       diagnosis: "callers-not-in-registry",
       resolution_failure: null,
       has_uncaptured_indexed_grep_hit: true,
-      callers_only_in_unindexed_tests: false,
     };
     expect(novel_issue_to_evidence(issue, "express", RUN_A)).toEqual(expected);
   });
@@ -95,7 +92,6 @@ describe("group_fault_areas", () => {
             diagnosis: "callers-in-registry-unresolved",
             resolution_failure: { stage: "name_resolution", reason: "name_not_in_scope" },
             has_uncaptured_indexed_grep_hit: false,
-            callers_only_in_unindexed_tests: false,
           },
         ],
         observed_count: 1,
@@ -210,7 +206,10 @@ describe("group_fault_areas", () => {
     expect(bucket.needs_judgement).toEqual(true);
   });
 
-  it("uses the two disambiguators to split coverage_config from entry_point_classification", () => {
+  it("splits coverage_config from entry_point_classification on the diagnosis alone", () => {
+    // A caller in a discovered-but-unindexed file states itself, so the split
+    // needs no side-channel boolean: `no-textual-callers` means nothing in the
+    // discovered corpus mentions the member.
     const coverage = group_fault_areas([
       {
         project: "p",
@@ -218,14 +217,14 @@ describe("group_fault_areas", () => {
         novel_issues: [
           novel({
             entry_index: 0,
-            diagnosis: "no-textual-callers",
+            diagnosis: "callers-outside-indexed-corpus",
             resolution_failure: undefined,
-            callers_only_in_unindexed_tests: true,
           }),
         ],
       },
     ]);
     expect(coverage.map((b) => b.fault_area)).toEqual(["coverage_config"]);
+    expect(coverage.map((b) => b.needs_judgement)).toEqual([false]);
 
     const entry_point = group_fault_areas([
       {
@@ -236,7 +235,6 @@ describe("group_fault_areas", () => {
             entry_index: 0,
             diagnosis: "no-textual-callers",
             resolution_failure: undefined,
-            callers_only_in_unindexed_tests: false,
           }),
         ],
       },

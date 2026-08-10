@@ -32,7 +32,6 @@ function ev(file: string, line: number, project: string): PlanTaskEvidence {
     diagnosis: "callers-in-registry-unresolved",
     resolution_failure: { stage: "name_resolution", reason: "name_not_in_scope" },
     has_uncaptured_indexed_grep_hit: false,
-    callers_only_in_unindexed_tests: false,
   };
 }
 

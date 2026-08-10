@@ -1,15 +1,25 @@
 import * as fs from "fs/promises";
 import * as path from "path";
+import type { FilePath } from "@ariadnejs/types";
 
 /**
- * Supported source file extensions regex
+ * Extensions discovery admits, exactly the set `detect_language` maps to a
+ * grammar. Discovery and parse agree by construction, so a file that reaches
+ * the loader and fails is a genuine indexing failure rather than a language
+ * Ariadne never supported — which is what makes the dropped-file set, and the
+ * coverage warning read off it, mean anything.
  */
-export const SUPPORTED_EXTENSIONS = /\.(ts|tsx|js|jsx|mdx|py|rs|go|java|cpp|c|hpp|h)$/;
+export const SUPPORTED_EXTENSIONS = /\.(ts|tsx|js|jsx|mjs|cjs|mdx|py|rs)$/;
 
 /**
- * Directories to always ignore during file loading and watching
+ * Directories to always ignore during file loading and watching.
+ *
+ * Every entry is machine output or foreign code — nothing here holds a call
+ * edge into the project's own sources. A directory whose files DO call
+ * production code belongs in `TEST_DIR_PATTERNS` instead, which suppresses its
+ * callables as candidates while keeping the edges they contribute.
  */
-export const IGNORED_DIRECTORIES = [
+export const IGNORED_DIRECTORIES: readonly string[] = [
   "node_modules",
   ".git",
   "dist",
@@ -20,7 +30,6 @@ export const IGNORED_DIRECTORIES = [
   ".cache",
   "tmp",
   "temp",
-  "fixtures",
   ".ariadne-cache",
 ];
 
@@ -28,6 +37,8 @@ export const IGNORED_DIRECTORIES = [
  * Glob patterns for chokidar file watching
  */
 export const IGNORED_GLOBS = IGNORED_DIRECTORIES.map((d) => `**/${d}/**`);
+
+const IGNORED_DIRECTORY_SET = new Set(IGNORED_DIRECTORIES);
 
 /**
  * Check if a file has a supported source extension.
@@ -66,36 +77,54 @@ export async function parse_gitignore(project_path: string): Promise<string[]> {
 /**
  * Check if a path should be ignored based on common ignores and gitignore patterns.
  *
+ * An `IGNORED_DIRECTORIES` entry matches a whole path segment, so a directory
+ * named `temp` is excluded while `src/template/x.ts` and `tsbuildPublic.ts`
+ * stay in the corpus — every caller they hold is a real call edge.
+ *
  * @param relative_path - Path relative to project root
  * @param gitignore_patterns - Patterns from .gitignore
  * @returns True if the path should be ignored
  */
 export function should_ignore_path(
   relative_path: string,
-  gitignore_patterns: string[] = []
+  gitignore_patterns: readonly string[] = []
 ): boolean {
-  // Check common ignored directories
-  for (const ignore of IGNORED_DIRECTORIES) {
-    if (relative_path.includes(ignore)) return true;
+  const posix_path = relative_path.replace(/\\/g, "/");
+
+  for (const segment of posix_path.split("/")) {
+    if (IGNORED_DIRECTORY_SET.has(segment) || segment === ".DS_Store") return true;
   }
 
-  // Also check .DS_Store explicitly
-  if (relative_path.includes(".DS_Store")) return true;
-
-  // Check gitignore patterns (simple implementation)
   for (const pattern of gitignore_patterns) {
     if (pattern.endsWith("*")) {
       const prefix = pattern.slice(0, -1);
-      if (relative_path.startsWith(prefix)) return true;
-    } else if (
-      relative_path === pattern ||
-      relative_path.includes("/" + pattern)
-    ) {
+      if (posix_path.startsWith(prefix)) return true;
+    } else if (matches_path_segments(posix_path, pattern)) {
       return true;
     }
   }
 
   return false;
+}
+
+/**
+ * Whether a plain (non-wildcard) ignore pattern names a whole segment run of
+ * the path, which is what a bare gitignore entry means.
+ *
+ * The callers of `load_project` pass `IGNORED_DIRECTORIES` through `exclude`,
+ * so this branch decides the corpus just as much as the segment scan above: a
+ * substring test here would exclude `src/template/**` for the pattern `temp`
+ * and delete every call edge those files hold.
+ */
+function matches_path_segments(posix_path: string, pattern: string): boolean {
+  const normalized = pattern.replace(/^\/+|\/+$/g, "");
+  if (normalized === "") return false;
+  return (
+    posix_path === normalized ||
+    posix_path.startsWith(`${normalized}/`) ||
+    posix_path.includes(`/${normalized}/`) ||
+    posix_path.endsWith(`/${normalized}`)
+  );
 }
 
 /**
@@ -112,8 +141,8 @@ export async function find_source_files(
   folder_path: string,
   project_path: string,
   gitignore_patterns?: string[]
-): Promise<string[]> {
-  const files: string[] = [];
+): Promise<FilePath[]> {
+  const files: FilePath[] = [];
 
   // Load gitignore if not provided
   const patterns = gitignore_patterns ?? (await parse_gitignore(project_path));
@@ -157,7 +186,7 @@ export async function find_source_files(
       if (entry.isDirectory()) {
         await walk(full_path);
       } else if (entry.isFile() && is_supported_file(entry.name)) {
-        files.push(full_path);
+        files.push(full_path as FilePath);
       }
     }
   }

@@ -6,7 +6,7 @@
  * Supports multiple languages: TypeScript, JavaScript, Python, Rust, Go, Java, C++, C.
  *
  * Usage:
- *   # From project config (preferred; carries folders, exclude, include_tests)
+ *   # From project config (preferred; carries folders, exclude, include_tests, max_files)
  *   node --import tsx detect_entrypoints.ts --config path/to/config.json
  *
  *   # Local repository (analyzes everything under the path with default exclusions)
@@ -25,19 +25,14 @@
  */
 
 import {
-  detect_language,
   load_project,
-  is_test_file,
-  find_source_files,
   IGNORED_DIRECTORIES,
-  parse_gitignore,
   FileSystemStorage,
   resolve_cache_dir,
-  log_info,
   log_warn,
   trace_call_graph,
   extract_entry_point_diagnostics,
-  attach_unindexed_test_grep_hits,
+  complete_caller_evidence,
   build_class_name_by_constructor_position,
 } from "@ariadnejs/core";
 import type { PersistenceStorage } from "@ariadnejs/core";
@@ -47,9 +42,14 @@ import type {
   EnrichedEntryPoint,
 } from "@ariadnejs/types";
 import { save_json, OutputType } from "../src/store/analysis_output.js";
+import {
+  type AnalysisScope,
+  load_analysis_scope,
+  read_analysis_scope,
+  test_tree_excludes,
+} from "../src/analysis_scope.js";
 import { load_registry } from "../src/known_issues_registry.js";
 import { path_to_project_id, project_id_from_config } from "../src/project_id.js";
-import { should_log, SLOW_ITEM_MS } from "../src/progress.js";
 import * as path from "path";
 import * as fs from "fs/promises";
 import * as os from "os";
@@ -80,9 +80,7 @@ interface CLIArgs {
 interface ProjectConfig {
   project_name: string;
   project_path: string;
-  folders?: string[];
-  exclude?: string[];
-  include_tests?: boolean;
+  scope: AnalysisScope;
 }
 
 interface CloneResult {
@@ -94,9 +92,12 @@ interface ResolvedMode {
   project_path: string;
   project_name: string;
   source_info: AnalysisSourceInfo;
-  include_tests: boolean;
-  folders?: string[];
-  exclude?: string[];
+  /**
+   * The whole scope decision as one value. Carried rather than unpacked so a
+   * mode cannot supply three of its four fields and silently take a default for
+   * the fourth.
+   */
+  scope: AnalysisScope;
 }
 
 // ===== CLI Argument Parsing =====
@@ -156,6 +157,7 @@ Config file format (JSON):
     "folders": ["src", "lib"],
     "exclude": ["vendor", "generated"],
     "include_tests": false,
+    "max_files": 20000,
     "project_name": "name"  // required only for project_path="."
   }
 `);
@@ -163,7 +165,7 @@ Config file format (JSON):
 
 // ===== Config Loading =====
 
-async function load_project_config(config_path: string): Promise<ProjectConfig> {
+export async function load_project_config(config_path: string): Promise<ProjectConfig> {
   const resolved = path.resolve(config_path);
   let raw: string;
   try {
@@ -186,12 +188,23 @@ async function load_project_config(config_path: string): Promise<ProjectConfig> 
   const explicit_name = typeof parsed.project_name === "string" ? parsed.project_name : undefined;
   const project_name = project_id_from_config(raw_project_path, explicit_name);
 
+  const scope = read_analysis_scope(parsed);
+  // A test-tree exclude only wastes edges when the candidate gate would have
+  // suppressed those callables anyway; under `include_tests: true` it is a
+  // deliberate narrowing.
+  for (const entry of scope.include_tests ? [] : test_tree_excludes(scope.exclude)) {
+    log_warn(
+      `${resolved}: exclude "${entry}" names a test tree — \`exclude\` drops those files from the ` +
+        "corpus, deleting every call edge they hold. Where this project's language treats them as " +
+        "test files, `include_tests: false` already suppresses their callables and the exclude is " +
+        "pure loss.",
+    );
+  }
+
   return {
     project_name,
     project_path: path.resolve(raw_project_path),
-    folders: Array.isArray(parsed.folders) ? (parsed.folders as string[]) : undefined,
-    exclude: Array.isArray(parsed.exclude) ? (parsed.exclude as string[]) : undefined,
-    include_tests: typeof parsed.include_tests === "boolean" ? parsed.include_tests : undefined,
+    scope,
   };
 }
 
@@ -330,127 +343,78 @@ function get_local_commit_hash(repo_path: string): string | undefined {
 
 // ===== Main Analysis =====
 
-async function analyze_directory(
+export async function analyze_directory(
   project_path: string,
-  options: {
-    include_tests: boolean;
-    folders?: string[];
-    exclude?: string[];
-    storage?: PersistenceStorage;
-  }
+  scope: AnalysisScope,
+  storage?: PersistenceStorage,
 ): Promise<{
   files_analyzed: number;
+  indexed_files: string[];
   entry_points: EnrichedEntryPoint[];
 }> {
   const start_time = Date.now();
 
-  const exclude = [...IGNORED_DIRECTORIES, ...(options.exclude || [])];
-  const test_file_filter = options.include_tests
-    ? undefined
-    : (file: string) => {
-        const language = detect_language(file);
-        return !language || !is_test_file(file, language);
-      };
+  const exclude = [...IGNORED_DIRECTORIES, ...scope.exclude];
 
   console.error(`Initializing project at: ${project_path}`);
   console.error(`Excluded folders: ${exclude.join(", ")}`);
-  if (options.folders) {
-    console.error(`Analyzing folders: ${options.folders.join(", ")}`);
+  if (scope.folders) {
+    console.error(`Analyzing folders: ${scope.folders.join(", ")}`);
   }
 
   // Load project using shared pipeline
   const load_start = Date.now();
-  const project = await load_project({
+  const { project, dropped_files, discovered_files, gitignore_patterns } = await load_project({
     project_path,
-    folders: options.folders,
+    folders: scope.folders,
     exclude,
-    file_filter: test_file_filter,
-    storage: options.storage,
+    max_files: scope.max_files,
+    storage,
   });
   console.error(`Project loaded in ${Date.now() - load_start}ms`);
-  console.error(`Cache: ${options.storage ? "enabled" : "disabled"}`);
+  console.error(`Cache: ${storage ? "enabled" : "disabled"}`);
 
   const stats = project.get_stats();
   console.error(`Found ${stats.file_count} indexed files`);
 
-  // Build source_files Map for grep heuristics (re-read discovered files)
-  const gitignore_patterns = await parse_gitignore(project_path);
-  const combined_patterns = [...gitignore_patterns, ...(options.exclude || [])];
-  const search_paths = options.folders
-    ? options.folders.map((f) => path.join(project_path, f))
-    : [project_path];
-
-  let all_files: string[] = [];
-  log_info(`find_source_files: N=${search_paths.length}`);
-  const scan_start = Date.now();
-  for (const search_path of search_paths) {
-    const path_start = Date.now();
-    try {
-      const files = await find_source_files(search_path, project_path, combined_patterns);
-      all_files = all_files.concat(files);
-      log_info(
-        `scanned ${path.relative(project_path, search_path) || "."}: +${files.length} files in ${Date.now() - path_start}ms`,
-      );
-    } catch (error) {
-      log_warn(`Could not read ${search_path}: ${error}`);
-    }
-  }
-  log_info(
-    `find_source_files: done ${search_paths.length}/${search_paths.length} in ${Date.now() - scan_start}ms (${all_files.length} files total)`,
-  );
-  if (test_file_filter) {
-    all_files = all_files.filter(test_file_filter);
-  }
-
-  // Gate: indexed vs discovered ratio. A big gap suggests indexing dropped files
-  // (parse errors, unsupported languages, filter mismatch) and downstream work
-  // will be blind to those files.
-  if (all_files.length > 0 && stats.file_count / all_files.length < 0.5) {
+  // Gate: files indexing dropped outright. Their call edges are absent from the
+  // graph while the files exist on disk, so every entry they call reads as
+  // uncalled.
+  if (dropped_files.size > 0) {
+    // Named, not just counted: the giant-file gate below reads the indexed map,
+    // so a vendored bundle that throws during indexing is only visible here.
     log_warn(
-      `indexed ${stats.file_count}/${all_files.length} files (ratio ${(stats.file_count / all_files.length).toFixed(2)}) — indexing may be dropping files`,
+      `${dropped_files.size} discovered file(s) failed to index and contribute no call edges: ` +
+        [...dropped_files]
+          .slice(0, 10)
+          .map((f) => path.relative(project_path, f))
+          .join(", "),
     );
   }
 
-  const read_total = all_files.length;
-  log_info(`read_source_files: N=${read_total}`);
-  const read_start = Date.now();
-  let total_bytes = 0;
-  let unreadable = 0;
+  // Gate: indexed vs discovered ratio. A big gap suggests indexing dropped files
+  // (parse errors, unreadable sources) and downstream work will be blind to
+  // those files. The denominator is the set the load itself selected, so the
+  // ratio cannot drift against a second walk that filtered differently.
+  const discovered_count = discovered_files.size;
+  if (discovered_count > 0 && stats.file_count / discovered_count < 0.5) {
+    log_warn(
+      `indexed ${stats.file_count}/${discovered_count} files (ratio ${(stats.file_count / discovered_count).toFixed(2)}) — indexing may be dropping files`,
+    );
+  }
+
+  // Gate: oversize files (vendor bundles, minified code) dominate grep cost and
+  // rarely hold code worth analysing. Read the project's own map — the bytes
+  // the resolver saw — rather than walking and re-reading the tree a second
+  // time.
   const GIANT_FILE_LINES = 10_000;
-  const source_files = new Map<string, string>();
-  for (let i = 0; i < read_total; i++) {
-    const file_path = all_files[i];
-    const iter_start = Date.now();
-    try {
-      const content = await fs.readFile(file_path, "utf-8");
-      source_files.set(file_path, content);
-      total_bytes += content.length;
-
-      // Gate: flag oversize files (vendor bundles, minified code) — these
-      // dominate grep cost and often represent code we don't actually want to
-      // analyze.
-      const line_count = (content.match(/\n/g)?.length ?? 0) + 1;
-      if (line_count > GIANT_FILE_LINES) {
-        log_warn(
-          `${path.relative(project_path, file_path)}: ${line_count} lines — likely vendored/minified; consider excluding`,
-        );
-      }
-    } catch {
-      unreadable++;
-    }
-
-    const elapsed = Date.now() - iter_start;
-    if (should_log(i, read_total) || elapsed >= SLOW_ITEM_MS) {
-      log_info(
-        `[${i + 1}/${read_total}] read ${path.relative(project_path, file_path)} (${total_bytes} total bytes)`,
+  for (const [file_path, content] of project.get_file_contents()) {
+    const line_count = (content.match(/\n/g)?.length ?? 0) + 1;
+    if (line_count > GIANT_FILE_LINES) {
+      log_warn(
+        `${path.relative(project_path, file_path)}: ${line_count} lines — likely vendored/minified; consider excluding`,
       );
     }
-  }
-  log_info(
-    `read_source_files: done ${source_files.size}/${read_total} in ${Date.now() - read_start}ms (${total_bytes} bytes)`,
-  );
-  if (unreadable > 0) {
-    log_warn(`${unreadable} source file(s) were unreadable and silently dropped`);
   }
 
   // Build the raw call graph (unfiltered: every uncalled callable). The
@@ -460,7 +424,7 @@ async function analyze_directory(
   console.error("Building call graph...");
   const callgraph_start = Date.now();
   const call_graph = trace_call_graph(project.definitions, project.resolutions, project.get_languages(), {
-    include_tests: options.include_tests,
+    include_tests: scope.include_tests,
   });
   console.error(
     `Found ${call_graph.entry_points.length} entry points in ${Date.now() - callgraph_start}ms`
@@ -469,8 +433,8 @@ async function analyze_directory(
   // Build per-entry diagnostics. Classification is intentionally NOT run
   // here — the triage pipeline re-classifies in `prepare_triage` so it can
   // incorporate `tp_cache` decisions. Running classifier rules now would
-  // also fire before `attach_unindexed_test_grep_hits` populates the
-  // unindexed-test grep diagnostics, producing wrong verdicts.
+  // also fire before `complete_caller_evidence` completes the evidence
+  // and settles each diagnosis, producing wrong verdicts.
   const entry_points: EnrichedEntryPoint[] = extract_entry_point_diagnostics(
     call_graph,
     project,
@@ -480,25 +444,24 @@ async function analyze_directory(
   // no longer drives classification directly.
   load_registry();
 
-  // Second grep pass: scan common test-directory patterns OUTSIDE the indexed
-  // scope. Attaches matching call-site hits to
-  // `diagnostics.grep_call_sites_unindexed_tests` so classifiers can detect
-  // the `unindexed-test-files` root cause. Skipped when `include_tests` is
-  // true (test directories are already part of `source_files`).
-  if (!options.include_tests) {
-    await attach_unindexed_test_grep_hits(
-      entry_points,
-      project_path,
-      source_files,
-      build_class_name_by_constructor_position(project),
-      combined_patterns,
-    );
-  }
+  // Second grep pass over exactly the residue — discovered minus indexed. The
+  // walk carries gitignore patterns only: a config `exclude` must not narrow
+  // it, because those files ARE the residue it exists to find. `include_tests`
+  // plays no part either; it decides candidacy, never the corpus.
+  await complete_caller_evidence({
+    entry_points,
+    project_path,
+    indexed_source_files: project.get_file_contents(),
+    dropped_files,
+    class_name_by_constructor_position: build_class_name_by_constructor_position(project),
+    gitignore_patterns,
+  });
 
   console.error(`Total analysis time: ${Date.now() - start_time}ms`);
 
   return {
     files_analyzed: stats.file_count,
+    indexed_files: [...project.get_file_contents().keys()],
     entry_points,
   };
 }
@@ -520,12 +483,11 @@ async function main() {
     }
   }
 
-  const { files_analyzed, entry_points } = await analyze_directory(resolved.project_path, {
-    include_tests: resolved.include_tests,
-    folders: resolved.folders,
-    exclude: resolved.exclude,
+  const { files_analyzed, entry_points } = await analyze_directory(
+    resolved.project_path,
+    resolved.scope,
     storage,
-  });
+  );
 
   const result: AnalysisResult = {
     project_name: resolved.project_name,
@@ -583,9 +545,7 @@ async function resolve_config_mode(config_path: string): Promise<ResolvedMode> {
   return {
     project_path: config.project_path,
     project_name: config.project_name,
-    include_tests: config.include_tests ?? false,
-    folders: config.folders,
-    exclude: config.exclude,
+    scope: config.scope,
     source_info: {
       type: "local",
       commit_hash: get_local_commit_hash(config.project_path),
@@ -602,7 +562,7 @@ async function resolve_github_mode(
   return {
     project_path: clone_result.local_path,
     project_name: github_repo_to_ids(github).project_id,
-    include_tests: false,
+    scope: load_analysis_scope(null),
     source_info: {
       type: "github",
       github_url: parse_github_url(github),
@@ -618,7 +578,7 @@ async function resolve_local_mode(input_path: string): Promise<ResolvedMode> {
   return {
     project_path,
     project_name: path_to_project_id(project_path),
-    include_tests: false,
+    scope: load_analysis_scope(null),
     source_info: {
       type: "local",
       commit_hash: get_local_commit_hash(project_path),

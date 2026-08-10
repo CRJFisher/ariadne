@@ -115,7 +115,6 @@
       <li><code>diagnosis</code> — plain string</li>
       <li><code>resolution_failure</code> — <code>{ stage, reason }</code> as plain strings, or <code>null</code></li>
       <li><code>has_uncaptured_indexed_grep_hit</code> — boolean</li>
-      <li><code>callers_only_in_unindexed_tests</code> — boolean</li>
     </ul>
   </div>
   <div class="card">
@@ -171,45 +170,33 @@
 
   <!-- Step 2 -->
   <rect x="30" y="150" width="360" height="72" rx="10" fill="#1d212b" stroke="#6ea8fe" stroke-width="1.5"/>
-  <text x="48" y="180" fill="#e6e9ef" font-size="15" font-weight="600">2 · callers_only_in_unindexed_tests</text>
-  <text x="48" y="204" fill="#9aa3b2" font-size="13">excluded-dir callers mask the diagnosis</text>
+  <text x="48" y="180" fill="#e6e9ef" font-size="15" font-weight="600">2 · diagnosis (summary fallback)</text>
+  <text x="48" y="204" fill="#9aa3b2" font-size="13">switch over EntryPointDiagnosis</text>
   <line x1="390" y1="186" x2="528" y2="186" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr)"/>
-  <text x="404" y="176" fill="#9aa3b2" font-size="12">true</text>
-  <rect x="530" y="150" width="380" height="72" rx="10" fill="#171a21" stroke="#7ee787" stroke-width="1.5"/>
-  <text x="548" y="180" fill="#7ee787" font-size="14" font-weight="600">coverage_config</text>
-  <text x="548" y="204" fill="#9aa3b2" font-size="12.5">real callers exist, but only in unindexed dirs</text>
-
-  <!-- down: false -->
-  <line x1="210" y1="222" x2="210" y2="274" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr)"/>
-  <text x="222" y="254" fill="#9aa3b2" font-size="12">false</text>
-
-  <!-- Step 3 -->
-  <rect x="30" y="276" width="360" height="72" rx="10" fill="#1d212b" stroke="#6ea8fe" stroke-width="1.5"/>
-  <text x="48" y="306" fill="#e6e9ef" font-size="15" font-weight="600">3 · diagnosis (summary fallback)</text>
-  <text x="48" y="330" fill="#9aa3b2" font-size="13">switch over EntryPointDiagnosis</text>
-  <line x1="390" y1="312" x2="528" y2="312" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr)"/>
-  <text x="404" y="302" fill="#9aa3b2" font-size="12">recognized</text>
-  <rect x="530" y="276" width="380" height="72" rx="10" fill="#171a21" stroke="#7ee787" stroke-width="1.5"/>
-  <text x="548" y="306" fill="#7ee787" font-size="14" font-weight="600">entry_point_classification ·</text>
-  <text x="548" y="326" fill="#7ee787" font-size="14" font-weight="600">syntactic_extraction · other</text>
+  <text x="404" y="176" fill="#9aa3b2" font-size="12">recognized</text>
+  <rect x="530" y="150" width="380" height="92" rx="10" fill="#171a21" stroke="#7ee787" stroke-width="1.5"/>
+  <text x="548" y="180" fill="#7ee787" font-size="14" font-weight="600">coverage_config ·</text>
+  <text x="548" y="200" fill="#7ee787" font-size="14" font-weight="600">entry_point_classification ·</text>
+  <text x="548" y="220" fill="#7ee787" font-size="14" font-weight="600">syntactic_extraction · other</text>
 
   <!-- escape hatch -->
   <rect x="30" y="392" width="880" height="58" rx="10" fill="#171a21" stroke="#ff7b72" stroke-width="1.5"/>
   <text x="48" y="416" fill="#ff7b72" font-size="14" font-weight="600">other — escape hatch</text>
   <text x="48" y="438" fill="#9aa3b2" font-size="12.5">any unrecognized raw stage / reason / diagnosis routes here with a free-text description and needs_judgement: true</text>
   <line x1="330" y1="96" x2="430" y2="390" stroke="#ff7b72" stroke-width="1.2" stroke-dasharray="5 4" marker-end="url(#arrw)"/>
-  <line x1="330" y1="348" x2="380" y2="390" stroke="#ff7b72" stroke-width="1.2" stroke-dasharray="5 4" marker-end="url(#arrw)"/>
+  <line x1="330" y1="222" x2="380" y2="390" stroke="#ff7b72" stroke-width="1.2" stroke-dasharray="5 4" marker-end="url(#arrw)"/>
   <text x="440" y="372" fill="#ff7b72" font-size="12">unrecognized value</text>
 </svg>
-<figcaption>The derivation waterfall: per-call failure first, coverage-gap boolean second, diagnosis switch last; unknown raw values fall out to <code>other</code> at every step.</figcaption>
+<figcaption>The derivation waterfall: per-call failure first, diagnosis switch second; unknown raw values fall out to <code>other</code> at either step.</figcaption>
 </figure>
 
 <h3>Precedence rules in detail</h3>
 <ol>
   <li><strong>Per-call <code>resolution_failure</code>.</strong> When present, <code>REASON_TO_AREA</code> maps the reason to its area. <code>method_not_on_type</code> is the sole stage-ambiguous reason: stage <code>method_lookup</code> → <code>method_lookup</code>; any other known stage → <code>receiver_type_inference</code>; an unrecognized stage cannot break the tie and routes to <code>other</code>. An unrecognized reason routes to <code>other</code> immediately.</li>
-  <li><strong>Coverage gap before diagnosis.</strong> When every caller lives in a directory excluded from indexing, the indexed grep finds nothing and the diagnosis reads <code>no-textual-callers</code> even though real callers exist. Routing on the diagnosis alone would misread this as a genuine entry point, so <code>callers_only_in_unindexed_tests</code> is consulted first and wins → <code>coverage_config</code>.</li>
-  <li><strong>Diagnosis switch.</strong> <code>no-textual-callers</code> → <code>entry_point_classification</code>; <code>callers-in-registry-wrong-target</code> → <code>entry_point_classification</code>; <code>callers-in-registry-unresolved</code> (with no failure emitted) → <code>other</code>; <code>callers-not-in-registry</code> → <code>syntactic_extraction</code>, deterministic when <code>has_uncaptured_indexed_grep_hit</code> is true.</li>
+  <li><strong>Diagnosis switch.</strong> A closed switch over <code>EntryPointDiagnosis</code>, exhaustive on <code>never</code>. <code>callers-outside-indexed-corpus</code> → <code>coverage_config</code>; <code>references-without-call-syntax</code> → <code>entry_point_classification</code>; <code>no-textual-callers</code> → <code>entry_point_classification</code>; <code>callers-in-registry-wrong-target</code> → <code>entry_point_classification</code>; <code>callers-in-registry-unresolved</code> (with no failure emitted) → <code>other</code>; <code>callers-not-in-registry</code> → <code>syntactic_extraction</code>, deterministic when <code>has_uncaptured_indexed_grep_hit</code> is true.</li>
 </ol>
+
+<p>A caller outside the indexed corpus is a member of the diagnosis vocabulary rather than a boolean consulted ahead of it. The evidence channels are ordered where the diagnosis is decided, so the derivation reads one closed switch and nothing precedes it but a per-call resolution failure.</p>
 
 <h3>Residual-judgement cases</h3>
 <p>Four inputs are ambiguous by nature. Each returns a deterministic default with <code>needs_judgement: true</code>; the plan strategist adjudicates.</p>
