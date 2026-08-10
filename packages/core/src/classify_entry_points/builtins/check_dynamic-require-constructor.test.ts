@@ -4,16 +4,20 @@ import type {
   EnrichedEntryPoint,
   EntryPointDiagnosis,
   FilePath,
+  GrepHit,
   Language,
 } from "@ariadnejs/types";
 import { check_dynamic_require_constructor } from "./check_dynamic-require-constructor";
 
 const EMPTY_READER = (_: string) => [] as readonly string[];
 
+const fp = (p: string): FilePath => p as FilePath;
+
 function make_entry(overrides: {
   name?: string;
   diagnosis?: EntryPointDiagnosis;
   call_ref_count?: number;
+  grep_call_sites?: GrepHit[];
 }): EnrichedEntryPoint {
   return {
     name: overrides.name ?? "constructor",
@@ -27,7 +31,7 @@ function make_entry(overrides: {
       accessor_kind: null,
     },
     diagnostics: {
-      grep_call_sites: [],
+      grep_call_sites: overrides.grep_call_sites ?? [],
       grep_call_sites_outside_index: [],
       reference_sites: [],
       ariadne_call_refs: Array.from({ length: overrides.call_ref_count ?? 0 }, () => ({
@@ -70,8 +74,28 @@ describe("check_dynamic_require_constructor", () => {
     expect(run(make_entry({ diagnosis: "references-without-call-syntax" }))).toBe(true);
   });
 
+  it("matches when the only caller sits outside the indexed corpus", () => {
+    expect(run(make_entry({ diagnosis: "callers-outside-indexed-corpus" }))).toBe(true);
+  });
+
   it("does not match when the resolver produced a call reference", () => {
     expect(run(make_entry({ call_ref_count: 1 }))).toBe(false);
+  });
+
+  it("does not match when the prefilter found a call site for the literal name", () => {
+    // The gate is the evidence condition, not the diagnosis label: a rule keyed
+    // on the enum would fire here whenever a new diagnosis value appeared with
+    // grep hits present.
+    expect(
+      run(
+        make_entry({
+          diagnosis: "no-textual-callers",
+          grep_call_sites: [
+            { file_path: fp("other.js"), line: 3, content: "constructor(x)", captures: [] },
+          ],
+        }),
+      ),
+    ).toBe(false);
   });
 
   it("does not match a named callable or another language", () => {

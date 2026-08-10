@@ -47,7 +47,7 @@ The scope decision that sub-task 1 removed from `load_project` exists in two fur
 <!-- AC:BEGIN -->
 
 - [x] #1 `test_file_filter` and both its applications are gone from `detect_entrypoints.ts`, and `include_tests` reaches only `trace_call_graph`.
-- [ ] #2 The second repository walk and re-read in `detect_entrypoints.ts` is deleted; the indexed/discovered ratio warning and the giant-file warning are re-expressed over `project.get_file_contents()` and still fire.
+- [x] #2 The second repository walk and re-read in `detect_entrypoints.ts` is deleted; the indexed/discovered ratio warning reads its denominator from `load_project`'s returned discovered set and the giant-file warning reads `project.get_file_contents()`, and both still fire.
 - [x] #3 `prepare_triage.ts` no longer sets a `file_filter`, `IndexScopeFromConfig` carries `include_tests`, and a test proves `detect_entrypoints` and `prepare_triage` produce the same corpus and the same candidate gate for a config with `include_tests: true`.
 - [x] #4 `django--django.json` no longer excludes `"tests"` and `sqlalchemy.json` no longer excludes `"test"`; a startup warning fires when an `exclude` entry names a directory `is_test_file` would classify.
 - [x] #5 Integration tests with fixture configs cover every evidence case: the celery `t/unit`, `t/smoke`, `t/integration` filename-marked shape, the django excluded-`tests` shape, the sqlalchemy `lib/sqlalchemy/testing/**` production-code shape, and the `include_tests: true` cross-script agreement.

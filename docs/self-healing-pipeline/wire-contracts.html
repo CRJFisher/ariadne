@@ -195,7 +195,7 @@
 <li><code>member_symbol</code> + <code>member_evidence</code> — the flagged member and the call site that proves a caller exists</li>
 <li><code>proposed_root_cause</code> and <code>evidence_excerpt</code> — the investigator's prose, grounding the strategist</li>
 <li>the deterministic core fault diagnostics: <code>diagnosis</code>, optional <code>resolution_failure { stage, reason }</code>, optional <code>receiver_kind</code> (method calls only) — enums reused from <code>@ariadnejs/types</code>, no new taxonomy</li>
-<li>two <em>required</em> disambiguator booleans, <code>has_uncaptured_indexed_grep_hit</code> and <code>callers_only_in_unindexed_tests</code>, copied verbatim from <code>EntryPointDiagnostics</code> so <code>derive_fault_area</code>'s diagnosis-fallback path re-derives the fault area with real values rather than collapsed <code>false/false</code></li>
+<li>one <em>required</em> disambiguator boolean, <code>has_uncaptured_indexed_grep_hit</code>, copied verbatim from <code>EntryPointDiagnostics</code> so <code>derive_fault_area</code>'s diagnosis-fallback path re-derives the fault area with a real value rather than a collapsed <code>false</code></li>
 </ul>
 </div>
 

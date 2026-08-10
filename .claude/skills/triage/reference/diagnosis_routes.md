@@ -31,7 +31,11 @@ is answered, so it routes to `coverage_config` without judgement.
 reached by a getter read, a callback handed to an invoker, or a dispatch-table
 value, none of which carry call parens. Its evidence lives in `reference_sites`,
 not `grep_call_sites`, and it is exactly the surface a classifier author works
-from — so it routes to `entry_point_classification`, also without judgement.
+from — so it routes to `entry_point_classification`, and it carries
+`needs_judgement: true`. The reference index keys on a name's final dotted
+segment rather than on a resolved symbol, so a same-named member elsewhere can
+supply the evidence: the area is certain, whether these particular sites reach
+this member is not.
 
 ## Investigation Prompt
 

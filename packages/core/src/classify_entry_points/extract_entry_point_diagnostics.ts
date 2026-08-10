@@ -356,7 +356,7 @@ const SELF_KEYWORDS: ReadonlySet<string> = new Set(["this", "self", "super", "cl
  * parse. Positions that already produced a `CallReference` are skipped: those
  * are calls, and they belong to `ariadne_call_refs`.
  */
-export function build_reference_index(
+function build_reference_index(
   references: ReferenceRegistry,
   lines_by_file: ReadonlyMap<FilePath, string[]>,
   call_refs_by_file_line: ReadonlyMap<FilePath, Map<number, CallReference[]>>,
