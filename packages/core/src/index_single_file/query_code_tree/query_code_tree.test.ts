@@ -501,6 +501,31 @@ fn main() {
   });
 });
 
+describe("Python base-class references", () => {
+  it("emits one type reference per base, whatever the class body holds", () => {
+    // Carrying the base inside the Enum/Protocol member patterns re-emits it
+    // once per class-body member, which is how a Django-shaped model came to
+    // publish dozens of identical references to one base.
+    const cases: [string, string[]][] = [
+      ["class Sub(Base): pass", ["Base"]],
+      ["class Sub(Base):\n    x = 1\n    y = 2", ["Base"]],
+      ["class Article(models.Model):\n    a = 1\n    b = 2\n    c = 3", ["Model"]],
+      ["class C(Base[T]): pass", ["Base"]],
+      ["class C(mod.Base[T]): pass", ["Base"]],
+      ["class F(Mammal, Flyable): pass", ["Mammal", "Flyable"]],
+      ["class C: pass", []],
+      ["class Color(Enum):\n    RED = 1\n    BLUE = 2", ["Enum"]],
+      // A type annotation is a type reference too, so the Protocol's members
+      // contribute theirs alongside the single reference to the base.
+      ["class P(Protocol):\n    x: int\n    y: str", ["Protocol", "int", "str"]],
+    ];
+
+    expect(
+      cases.map(([code]) => capture_texts("python", Python, code, "reference.type"))
+    ).toEqual(cases.map(([, expected]) => expected));
+  });
+});
+
 describe("Python class definitions over every superclass shape", () => {
   it("captures one class definition for bare, dotted, generic, dotted-generic, absent and multiple superclasses", () => {
     const code = [

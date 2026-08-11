@@ -327,6 +327,24 @@ describe("ExportRegistry", () => {
       );
     });
 
+    it("registers every wildcard re-export surface in a package init", () => {
+      // `from .a import *` beside `from .b import *` are not competing bindings
+      // of one name; throwing here blanked the whole __init__ and every import
+      // that arrived through it.
+      const first = create_reexport_definition("*", "pkg/__init__.py" as FilePath, "./a", 1);
+      const second = create_reexport_definition("*", "pkg/__init__.py" as FilePath, "./b", 2);
+      const registry = new ExportRegistry();
+
+      registry.update_file(
+        "pkg/__init__.py" as FilePath,
+        create_definition_registry({ "pkg/__init__.py": [first, second] })
+      );
+
+      expect(registry.get_exports("pkg/__init__.py" as FilePath)).toEqual(
+        new Set([first.symbol_id, second.symbol_id])
+      );
+    });
+
     it("still throws when one Python definition is captured twice at one location", () => {
       // Same name, same location, is not a rebinding — it is the indexing bug
       // the duplicate-export error exists to surface.
