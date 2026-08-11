@@ -351,46 +351,37 @@ result = data['key'].attribute
       }
     });
 
-    it("should handle self and cls in property chains", () => {
+    it("reads self and cls chains and mints nothing for a write target", () => {
       const code = `
 class MyClass:
     def method(self):
         self.instance_var = 42
         self.prop.nested.value = 10
+        return self.readable
 
     @classmethod
     def class_method(cls):
         cls.class_var = "test"
-        cls.prop.value = 20
+        return cls.readable
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
       const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const result = build_index_single_file(parsed_file, tree, "python");
 
-      const member_accesses = result.references.filter(
-        (ref): ref is PropertyAccessReference => ref.kind === "property_access"
-      );
+      const member_reads = result.references
+        .filter(
+          (ref): ref is PropertyAccessReference => ref.kind === "property_access"
+        )
+        .map((ref) => ({ name: ref.name, chain: ref.property_chain }));
 
-      // Check self.instance_var
-      const self_access = member_accesses.find(
-        (ref) => ref.name === "instance_var"
-      );
-      expect(self_access).toBeDefined();
-      if (self_access?.property_chain) {
-        expect(self_access.property_chain).toContain("self");
-        expect(self_access.property_chain).toContain("instance_var");
-      }
-
-      // Check cls.class_var
-      const cls_access = member_accesses.find(
-        (ref) => ref.name === "class_var"
-      );
-      expect(cls_access).toBeDefined();
-      if (cls_access?.property_chain) {
-        expect(cls_access.property_chain).toContain("cls");
-        expect(cls_access.property_chain).toContain("class_var");
-      }
+      // A write invokes the setter, so `instance_var` and `class_var` mint no
+      // read; `self.prop` is read on the way to writing its member.
+      expect(member_reads).toEqual([
+        { name: "prop", chain: ["self", "prop"] },
+        { name: "readable", chain: ["self", "readable"] },
+        { name: "readable", chain: ["cls", "readable"] },
+      ]);
     });
   });
 

@@ -479,11 +479,14 @@
   right: (_) @reference.variable.source
 ) @assignment.variable
 
+; A write to a member invokes the setter, never the getter, so the target
+; carries no member read — the general member pattern above is suppressed at
+; write positions by the same rule.
 (assignment_expression
   left: (member_expression
     object: (identifier) @reference.variable.object
     property: (property_identifier) @reference.property.assign
-  ) @reference.member_access.assign
+  )
   right: (_) @reference.variable.source
 ) @assignment.property
 

@@ -115,6 +115,14 @@ function peel_receiver_object(
       continue;
     }
 
+    // `x!` keeps x's own type, so it is transparent.
+    if (current.type === "non_null_expression") {
+      const inner = current.namedChild(0);
+      if (!inner) return { node: current };
+      current = inner;
+      continue;
+    }
+
     // `x satisfies T` keeps x's own (often narrower) type, so it is transparent.
     if (current.type === "satisfies_expression") {
       const expr = current.namedChild(0);

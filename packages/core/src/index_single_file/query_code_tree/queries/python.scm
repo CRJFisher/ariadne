@@ -173,51 +173,32 @@
   name: (identifier) @definition.class
 )
 
-; Protocol property signatures (annotated assignments without values)
+; Base-class references — one per base, whatever shape the base takes and
+; whatever the class body holds. Carrying the base inside the member patterns
+; below instead would re-emit it once per class-body assignment.
 (class_definition
   superclasses: (argument_list
-    (identifier) @reference.type
-    (#eq? @reference.type "Protocol")
-  )
-  body: (block
-    (expression_statement
-      (assignment
-        left: (identifier) @definition.property.interface
-      )
-    )
+    [
+      (identifier) @reference.type
+      (attribute attribute: (identifier) @reference.type)
+      (subscript value: (identifier) @reference.type)
+      (subscript value: (attribute attribute: (identifier) @reference.type))
+    ]
   )
 )
 
-; Protocol property signatures (from typing.Protocol)
+; Protocol property signatures (annotated assignments without values). The base
+; is matched through an underscore capture, filtered before any reference is
+; built, so gating here costs no second reference to the base.
 (class_definition
   superclasses: (argument_list
-    (attribute
-      attribute: (identifier) @reference.type
-      (#eq? @reference.type "Protocol")
-    )
-  )
-  body: (block
-    (expression_statement
-      (assignment
-        left: (identifier) @definition.property.interface
-      )
-    )
-  )
-)
-
-; Protocol property signatures (generic Protocol[T], bare or dotted). The base
-; is matched through an underscore capture, which is filtered before any
-; reference is built, so the class's base yields one type reference rather than
-; one per property signature.
-(class_definition
-  superclasses: (argument_list
-    (subscript
-      value: [
-        (identifier) @_protocol_base
-        (attribute attribute: (identifier) @_protocol_base)
-      ]
-      (#eq? @_protocol_base "Protocol")
-    )
+    [
+      (identifier) @_protocol_base
+      (attribute attribute: (identifier) @_protocol_base)
+      (subscript value: (identifier) @_protocol_base)
+      (subscript value: (attribute attribute: (identifier) @_protocol_base))
+    ]
+    (#eq? @_protocol_base "Protocol")
   )
   body: (block
     (expression_statement
@@ -299,28 +280,18 @@
   )
 )
 
-; Enum members (class attributes in Enum classes)
+; Enum members (class attributes in Enum classes). The base list mirrors
+; ENUM_BASES in symbol_factories.python.ts, which is the authority; a test pins
+; the two equal so a base added to one cannot go missing from the other.
 (class_definition
   superclasses: (argument_list
-    (identifier) @reference.type
-    (#match? @reference.type "^(Enum|IntEnum|Flag|IntFlag|StrEnum)$")
-  )
-  body: (block
-    (expression_statement
-      (assignment
-        left: (identifier) @definition.enum_member
-      )
-    )
-  )
-)
-
-; Enum members (from module.Enum)
-(class_definition
-  superclasses: (argument_list
-    (attribute
-      attribute: (identifier) @reference.type
-      (#match? @reference.type "^(Enum|IntEnum|Flag|IntFlag|StrEnum)$")
-    )
+    [
+      (identifier) @_enum_base
+      (attribute attribute: (identifier) @_enum_base)
+      (subscript value: (identifier) @_enum_base)
+      (subscript value: (attribute attribute: (identifier) @_enum_base))
+    ]
+    (#match? @_enum_base "^(Enum|IntEnum|Flag|IntFlag|StrEnum)$")
   )
   body: (block
     (expression_statement
@@ -734,11 +705,14 @@
   right: (_) @reference.variable.source
 ) @assignment.variable
 
+; A write to an attribute invokes the setter, never the getter, so the target
+; carries no member read — the general attribute pattern above is suppressed
+; at write positions by the same rule.
 (assignment
   left: (attribute
     object: (identifier) @reference.variable
     attribute: (identifier) @reference.property
-  ) @reference.member_access
+  )
   right: (_)
 ) @assignment.property
 

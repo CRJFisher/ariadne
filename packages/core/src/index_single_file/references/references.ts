@@ -41,6 +41,8 @@ import {
   create_assignment_reference,
 } from "./factories";
 
+import type { SyntaxNode } from "tree-sitter";
+
 import type { CaptureNode } from "../capture_types";
 import type { ProcessingContext } from "../scopes/processing_context";
 import type { MetadataExtractors } from "../query_code_tree/metadata_extractors/metadata_extractor_types";
@@ -476,10 +478,22 @@ export class ReferenceBuilder {
         // nothing — this keeps the resolver off every method call's callee.
         const parent = capture.node.parent;
         if (
-          parent?.type === "call_expression" &&
+          (parent?.type === "call_expression" || parent?.type === "call") &&
           parent.childForFieldName?.("function")?.id === capture.node.id
         ) {
           return this;
+        }
+
+        if (is_member_node(capture.node)) {
+          // An ungrounded chain (`getHelper().jsDoc`, `foo().bar.baz`) would
+          // resolve its trailing name lexically and fabricate an edge.
+          if (!is_grounded_member_read(capture.node)) {
+            return this;
+          }
+          // A write invokes the setter, never the getter.
+          if (is_assignment_target(capture.node)) {
+            return this;
+          }
         }
 
         const receiver_info = this.extractors
@@ -487,12 +501,6 @@ export class ReferenceBuilder {
           : undefined;
 
         if (receiver_info) {
-          // A chain with no base (`getHelper().jsDoc` extracts ["jsDoc"])
-          // would resolve as a bare name and fabricate edges — mint nothing.
-          if (receiver_info.property_chain.length < 2) {
-            return this;
-          }
-
           const is_optional_chain = this.extractors
             ? this.extractors.extract_is_optional_chain(capture.node)
             : false;
@@ -506,6 +514,10 @@ export class ReferenceBuilder {
             "property",
             is_optional_chain
           );
+        } else if (is_member_node(capture.node)) {
+          // A member read the extractor cannot ground must not degrade to a
+          // bare variable read — the property name would resolve lexically.
+          return this;
         } else {
           // Fallback: create variable read if no receiver info
           reference = create_variable_reference(reference_name, location, scope_id, "read");
@@ -593,4 +605,108 @@ export function process_references(
       new ReferenceBuilder(context, extractors, file_path, language)
     )
     .references;
+}
+// ============================================================================
+// Member-read grounding
+// ============================================================================
+
+/** A member-read node: `a.b` in JS/TS, `a.b` in Python. */
+function is_member_node(node: SyntaxNode): boolean {
+  return node.type === "member_expression" || node.type === "attribute";
+}
+
+/**
+ * A member read is grounded when its receiver chain bottoms out at a name the
+ * resolver can bind — an identifier, `this`, `self` or `super`. An ungrounded
+ * chain (`getHelper().jsDoc`) leaves only the trailing property name, which
+ * would resolve lexically against an unrelated definition of that name.
+ *
+ * Peels exactly the wrappers the chain extractor peels, so guard and extractor
+ * cannot disagree about what a receiver is.
+ *
+ * @language javascript,typescript,python
+ */
+function is_grounded_member_read(node: SyntaxNode): boolean {
+  let current = node;
+  for (;;) {
+    const object = current.childForFieldName("object");
+    if (!object) return true;
+    const receiver = peel_transparent_wrappers(object);
+    if (!receiver) return false;
+    if (
+      receiver.type === "member_expression" ||
+      receiver.type === "subscript_expression" ||
+      receiver.type === "attribute" ||
+      receiver.type === "subscript"
+    ) {
+      current = receiver;
+      continue;
+    }
+    return (
+      receiver.type === "identifier" ||
+      receiver.type === "this" ||
+      receiver.type === "super"
+    );
+  }
+}
+
+/** Wrappers that keep the wrapped expression's own type, so a chain reads through them. */
+function peel_transparent_wrappers(node: SyntaxNode): SyntaxNode | undefined {
+  let current: SyntaxNode = node;
+  for (;;) {
+    if (
+      current.type === "parenthesized_expression" ||
+      current.type === "non_null_expression" ||
+      current.type === "as_expression" ||
+      current.type === "satisfies_expression"
+    ) {
+      const inner = current.namedChild(0);
+      if (!inner) return undefined;
+      current = inner;
+      continue;
+    }
+    if (current.type === "type_assertion") {
+      const inner = current.namedChild(1);
+      if (!inner) return undefined;
+      current = inner;
+      continue;
+    }
+    return current;
+  }
+}
+
+/**
+ * True when the node sits in a write position — the left side of an
+ * assignment, a destructuring target, or a for-in/for-of loop target. A write
+ * to a member invokes the setter, so it must not mint a read of the getter.
+ *
+ * @language javascript,typescript,python
+ */
+function is_assignment_target(node: SyntaxNode): boolean {
+  let current: SyntaxNode = node;
+  let parent: SyntaxNode | null = current.parent;
+  while (
+    parent &&
+    (parent.type === "array_pattern" ||
+      parent.type === "object_pattern" ||
+      parent.type === "pair_pattern" ||
+      parent.type === "rest_pattern" ||
+      parent.type === "assignment_pattern" ||
+      parent.type === "pattern_list" ||
+      parent.type === "tuple_pattern" ||
+      parent.type === "list_pattern")
+  ) {
+    current = parent;
+    parent = current.parent;
+  }
+  if (
+    (parent?.type === "assignment_expression" || parent?.type === "assignment") &&
+    parent.childForFieldName("left")?.id === current.id
+  ) {
+    return true;
+  }
+  return (
+    parent?.type === "for_in_statement" &&
+    parent.childForFieldName("left")?.id === current.id
+  );
 }

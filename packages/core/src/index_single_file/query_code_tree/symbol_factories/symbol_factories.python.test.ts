@@ -4,6 +4,8 @@
 
 import { describe, it, expect } from "vitest";
 import { parse_python, make_capture, find_string_node } from "./test_utils";
+import * as fs from "node:fs";
+import * as path from "node:path";
 import type { SyntaxNode } from "tree-sitter";
 import {
   create_class_id,
@@ -1201,3 +1203,31 @@ describe("extract_collection_source", () => {
   });
 });
 
+
+describe("Enum base list agreement between the query gate and the builder", () => {
+  // `classify_class_bases` decides whether a class is an enum; the
+  // `@_enum_base` gate in python.scm decides whether its class-body
+  // assignments are captured as members. A name in one list but not the other
+  // yields an enum with no members, or members with no enum.
+  it("states the same enum bases in python.scm and symbol_factories.python.ts", () => {
+    const here = __dirname;
+    const query = fs.readFileSync(
+      path.join(here, "../queries/python.scm"),
+      "utf-8"
+    );
+    const factory = fs.readFileSync(
+      path.join(here, "symbol_factories.python.ts"),
+      "utf-8"
+    );
+
+    const query_bases = query.match(
+      /#match\? @_enum_base "\^\(([^)]*)\)\$"/
+    )?.[1];
+    const factory_bases = factory.match(
+      /const ENUM_BASES = \/\^\(([^)]*)\)\$\//
+    )?.[1];
+
+    expect(query_bases).toEqual("Enum|IntEnum|Flag|IntFlag|StrEnum");
+    expect(factory_bases).toEqual(query_bases);
+  });
+});
