@@ -500,7 +500,7 @@ export class ReferenceBuilder {
             return this;
           }
           // A write invokes the setter, never the getter.
-          if (is_assignment_target(capture.node)) {
+          if (is_write_target(capture.node)) {
             return this;
           }
         }
@@ -685,13 +685,18 @@ function peel_transparent_wrappers(node: SyntaxNode): SyntaxNode | undefined {
 }
 
 /**
- * True when the node sits in a write position — the left side of an
- * assignment, a destructuring target, or a for-in/for-of loop target. A write
- * to a member invokes the setter, so it must not mint a read of the getter.
+ * True when the node is written or deleted rather than read — an assignment
+ * target, a destructuring target, a loop target, a `with … as` target, or the
+ * operand of `del` / `delete`. Binding a member invokes its setter and
+ * unbinding it invokes its deleter; neither reads the getter, so neither may
+ * mint a member read.
+ *
+ * An augmented assignment (`x.n += 1`) is deliberately absent: it reads the
+ * member before writing it back.
  *
  * @language javascript,typescript,python
  */
-function is_assignment_target(node: SyntaxNode): boolean {
+function is_write_target(node: SyntaxNode): boolean {
   let current: SyntaxNode = node;
   let parent: SyntaxNode | null = current.parent;
   while (
@@ -708,14 +713,28 @@ function is_assignment_target(node: SyntaxNode): boolean {
     current = parent;
     parent = current.parent;
   }
+  if (!parent) {
+    return false;
+  }
   if (
-    (parent?.type === "assignment_expression" || parent?.type === "assignment") &&
+    (parent.type === "assignment_expression" || parent.type === "assignment") &&
     parent.childForFieldName("left")?.id === current.id
   ) {
     return true;
   }
-  return (
-    parent?.type === "for_in_statement" &&
+  if (
+    (parent.type === "for_in_statement" || parent.type === "for_statement") &&
     parent.childForFieldName("left")?.id === current.id
-  );
+  ) {
+    return true;
+  }
+  // `del x.n` (Python) and `delete x.n` (JS/TS) unbind the member.
+  if (parent.type === "delete_statement") {
+    return true;
+  }
+  if (parent.type === "unary_expression" && parent.child(0)?.type === "delete") {
+    return true;
+  }
+  // `with cm as x.n:` binds the member.
+  return parent.type === "as_pattern_target" || parent.type === "as_pattern";
 }

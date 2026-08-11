@@ -37,8 +37,9 @@ export interface EnrichedEntryPoint {
 }
 
 /**
- * Definition-time flags captured at entry extraction. All fields are populated
- * for JS/TS; for Python/Rust the defaults (`false` / `null`) are used.
+ * Definition-time flags captured at entry extraction. Each field states which
+ * languages populate it; a language that carries no such flag uses the default
+ * (`false` / `null`).
  */
 export interface DefinitionFeatures {
   /**
@@ -52,6 +53,7 @@ export interface DefinitionFeatures {
    * The accessor role the definition plays for its name — from the `get` /
    * `set` keyword in JS/TS, from the decorator in Python. `null` for an
    * ordinary method.
+   * @language javascript,typescript,python
    */
   accessor_kind: "getter" | "setter" | "deleter" | null;
 }

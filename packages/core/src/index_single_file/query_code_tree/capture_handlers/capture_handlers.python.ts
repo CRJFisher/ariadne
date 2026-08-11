@@ -158,6 +158,26 @@ export function handle_definition_method(
     }
   }
 
+  // An Enum class is built as an enum, so its methods attach to the enum. The
+  // class branch below mints a class symbol, which no enum state answers to,
+  // and the method would be dropped.
+  if (owning_class && classify_class_bases(owning_class) === "enum") {
+    const enum_id = find_containing_enum(capture);
+    if (enum_id) {
+      builder.add_method_to_enum(enum_id, {
+        symbol_id: method_id,
+        name: name,
+        location: capture.location,
+        scope_id: context.get_scope_id(capture.location),
+        return_type: extract_return_type(capture.node.parent || capture.node),
+        ...determine_method_type(capture.node.parent || capture.node),
+        async: is_async_function(capture.node.parent || capture.node),
+        docstring,
+      });
+      return;
+    }
+  }
+
   // Regular class method
   const class_id = find_containing_class(capture);
   if (class_id) {

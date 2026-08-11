@@ -35,10 +35,6 @@ export function should_replace_python_variable(
   return current_start_line > extract_line_from_symbol_id(existing_symbol_id);
 }
 
-export function is_variable_or_constant_symbol(symbol_id: SymbolId): boolean {
-  return symbol_id.includes("variable:") || symbol_id.includes("constant:");
-}
-
 /**
  * The location fields of a SymbolId (`start_line:start_col:end_line:end_col`),
  * which identify the syntactic site the symbol was built from.

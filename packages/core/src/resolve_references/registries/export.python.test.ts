@@ -3,7 +3,6 @@ import type { FilePath, SymbolId } from "@ariadnejs/types";
 import {
   is_python_file,
   should_replace_python_variable,
-  is_variable_or_constant_symbol,
 } from "./export.python";
 
 describe("is_python_file", () => {
@@ -68,29 +67,3 @@ describe("should_replace_python_variable", () => {
   });
 });
 
-describe("is_variable_or_constant_symbol", () => {
-  it("returns true for variable symbols", () => {
-    const symbol_id = "variable:test.py:10:0:10:5:x" as SymbolId;
-    expect(is_variable_or_constant_symbol(symbol_id)).toBe(true);
-  });
-
-  it("returns true for constant symbols", () => {
-    const symbol_id = "constant:test.py:10:0:10:10:MAX_SIZE" as SymbolId;
-    expect(is_variable_or_constant_symbol(symbol_id)).toBe(true);
-  });
-
-  it("returns false for function symbols", () => {
-    const symbol_id = "function:test.py:10:0:15:5:do_something" as SymbolId;
-    expect(is_variable_or_constant_symbol(symbol_id)).toBe(false);
-  });
-
-  it("returns false for class symbols", () => {
-    const symbol_id = "class:test.py:10:0:50:5:MyClass" as SymbolId;
-    expect(is_variable_or_constant_symbol(symbol_id)).toBe(false);
-  });
-
-  it("returns false for method symbols", () => {
-    const symbol_id = "method:test.py:10:0:15:5:get_value" as SymbolId;
-    expect(is_variable_or_constant_symbol(symbol_id)).toBe(false);
-  });
-});

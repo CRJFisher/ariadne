@@ -1272,7 +1272,7 @@ class User:
         const getter = user_class.methods.find((m) => m.name === "name")!;
         expect(getter.kind).toBe("method");
         expect(getter.accessor_kind).toBe("getter");
-        expect(getter.decorators!.map((d) => d.name)).toContain("property");
+        expect(getter.decorators!.map((d) => d.name)).toEqual(["property"]);
 
         // Verify @staticmethod decorated method
         const static_method = user_class.methods.find(
@@ -2804,6 +2804,55 @@ class Factory:
         { name: "data", accessor_kind: "getter" },
         { name: "data", accessor_kind: "deleter" },
       ]);
+    });
+
+    it("mints no member read where a member is written or deleted", () => {
+      // Binding a member invokes its setter and unbinding it invokes its
+      // deleter; neither reads the getter, so neither may mint a read that
+      // call resolution would turn into an edge to the getter.
+      const cases: [string, string[]][] = [
+        ["def f(w):\n    del w.cache", []],
+        ["def f(w, xs):\n    for w.item in xs:\n        pass", []],
+        ["def f(w, cm):\n    with cm as w.handle:\n        pass", []],
+        ["def f(w):\n    w.cache = 1", []],
+        // An augmented assignment reads the member before writing it back.
+        ["def f(w):\n    w.count += 1", ["count"]],
+        ["def f(w):\n    return w.cache", ["cache"]],
+      ];
+
+      const actual = cases.map(([code]) => {
+        const tree = parser.parse(code);
+        const parsed = create_parsed_file(code, "test.py" as FilePath, tree, "python");
+        return build_index_single_file(parsed, tree, "python")
+          .references.filter((r) => r.kind === "property_access")
+          .map((r) => r.name);
+      });
+
+      expect(actual).toEqual(cases.map(([, expected]) => expected));
+    });
+
+    it("keeps a method declared on an Enum class", () => {
+      // The class builds as an enum, so a method attached through the class
+      // path would address a symbol no enum state answers to and be dropped.
+      const code = [
+        "from enum import Enum",
+        "",
+        "class Color(str, Enum):",
+        "    RED = \"red\"",
+        "",
+        "    def describe(self):",
+        "        return self.value",
+      ].join("\n");
+      const tree = parser.parse(code);
+      const parsed = create_parsed_file(code, "test.py" as FilePath, tree, "python");
+      const index = build_index_single_file(parsed, tree, "python");
+      const color = Array.from(index.enums.values())[0]!;
+      expect({
+        name: color.name,
+        members: (color.members ?? []).map((m) => m.name),
+        methods: (color.methods ?? []).map((m) => m.name),
+      }).toEqual({ name: "Color", members: ["RED"], methods: ["describe"] });
+      expect(Array.from(index.classes.values()).map((c) => c.name)).toEqual([]);
     });
 
     it("records the property-descriptor decorator family as getters", () => {
