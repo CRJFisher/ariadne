@@ -13,6 +13,7 @@ import type {
   SymbolName,
   FunctionCallReference,
   MethodCallReference,
+  CallableValueReference,
   ConstructorCallReference,
   SelfReferenceCall,
   TypeReference,
@@ -3513,6 +3514,28 @@ const result = items.map((x) =>
           )
           .map((r) => r.property_chain)
       ).toEqual([["this", "write"]]);
+    });
+
+    it("indexes a member-expression argument as a callable value", () => {
+      const code = "app.get('/users', user.list);";
+      const index = build_index(code);
+      expect(
+        index.references
+          .filter(
+            (r): r is CallableValueReference => r.kind === "callable_value"
+          )
+          .map((r) => ({ name: r.name, property_chain: r.property_chain }))
+      ).toEqual([
+        { name: "list" as SymbolName, property_chain: ["user", "list"] },
+      ]);
+    });
+
+    it("indexes no callable value for bare identifier or literal arguments", () => {
+      const code = "run(plain, 1, 's');";
+      const index = build_index(code);
+      expect(
+        index.references.filter((r) => r.kind === "callable_value")
+      ).toEqual([]);
     });
   });
 

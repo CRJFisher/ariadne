@@ -1770,6 +1770,29 @@
       "access_type": "read"
     },
     {
+      "kind": "callable_value",
+      "name": "prototype",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 31,
+        "end_line": 35,
+        "end_column": 47
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "property_chain": [
+        "Vehicle",
+        "prototype"
+      ],
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 31,
+        "end_line": 35,
+        "end_column": 37
+      }
+    },
+    {
       "kind": "variable_reference",
       "name": "Vehicle",
       "location": {

@@ -13,6 +13,7 @@ import type {
   SymbolName,
   FunctionCallReference,
   MethodCallReference,
+  CallableValueReference,
   ConstructorCallReference,
   PropertyAccessReference,
   SelfReferenceCall,
@@ -2417,6 +2418,41 @@ const names = items.map(({id, name}) => name);`;
           .filter((r): r is MethodCallReference => r.kind === "method_call")
           .map((r) => r.name)
       ).toEqual(["run"]);
+    });
+
+    function callable_values(code: string) {
+      return build_index(code)
+        .references.filter(
+          (r): r is CallableValueReference => r.kind === "callable_value"
+        )
+        .map((r) => ({ name: r.name, property_chain: r.property_chain }));
+    }
+
+    it("indexes a member-expression argument as a callable value", () => {
+      expect(callable_values("app.get('/users', user.list);")).toEqual([
+        { name: "list" as SymbolName, property_chain: ["user", "list"] },
+      ]);
+    });
+
+    it("indexes an object-literal value-position callable", () => {
+      expect(
+        callable_values("register({ handler: user.list, name: makeName });")
+      ).toEqual([
+        { name: "list" as SymbolName, property_chain: ["user", "list"] },
+        { name: "makeName" as SymbolName, property_chain: ["makeName"] },
+      ]);
+    });
+
+    it("indexes a named function expression argument as a callable value at its own name", () => {
+      expect(
+        callable_values(
+          "defineGetter(req, 'query', function query() { return 1; });"
+        )
+      ).toEqual([{ name: "query" as SymbolName, property_chain: ["query"] }]);
+    });
+
+    it("indexes no callable value for bare identifier or literal arguments", () => {
+      expect(callable_values("run(plain, 1, 's');")).toEqual([]);
     });
   });
 });

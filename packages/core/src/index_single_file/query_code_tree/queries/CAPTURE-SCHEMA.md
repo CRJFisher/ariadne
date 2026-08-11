@@ -170,6 +170,7 @@ Language-specific features explicitly allowed:
 - `@assignment.constructor.qualified` - Namespace-qualified constructor with assignment target
 - `@reference.property` - Property-name read of an identifier-receiver member access
 - `@reference.member_access` - Member access, one capture per member expression whatever the receiver shape (optional chaining is derived from the node)
+- `@reference.callable_value` - Callable read in value position (a member-expression argument, an object-literal value, or a named function expression's own name); resolves to indirect reachability, never a call edge
 - `@reference.call.jsx` - JSX elements
 
 ### Python

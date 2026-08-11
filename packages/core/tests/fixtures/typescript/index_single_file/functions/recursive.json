@@ -1666,6 +1666,29 @@
       "access_type": "read"
     },
     {
+      "kind": "callable_value",
+      "name": "left",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/recursive.ts",
+        "start_line": 54,
+        "start_column": 32,
+        "end_line": 54,
+        "end_column": 40
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/recursive.ts:50:18:55:1",
+      "property_chain": [
+        "node",
+        "left"
+      ],
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/functions/recursive.ts",
+        "start_line": 54,
+        "start_column": 32,
+        "end_line": 54,
+        "end_column": 35
+      }
+    },
+    {
       "kind": "variable_reference",
       "name": "node",
       "location": {
@@ -1753,6 +1776,29 @@
       },
       "scope_id": "function:<fixtures>/typescript/code/functions/recursive.ts:50:18:55:1",
       "access_type": "read"
+    },
+    {
+      "kind": "callable_value",
+      "name": "right",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/recursive.ts",
+        "start_line": 54,
+        "start_column": 54,
+        "end_line": 54,
+        "end_column": 63
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/recursive.ts:50:18:55:1",
+      "property_chain": [
+        "node",
+        "right"
+      ],
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/functions/recursive.ts",
+        "start_line": 54,
+        "start_column": 54,
+        "end_line": 54,
+        "end_column": 57
+      }
     },
     {
       "kind": "variable_reference",

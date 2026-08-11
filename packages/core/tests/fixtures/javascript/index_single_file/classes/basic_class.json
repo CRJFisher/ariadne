@@ -861,6 +861,29 @@
       "access_type": "read"
     },
     {
+      "kind": "callable_value",
+      "name": "name",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 19,
+        "start_column": 13,
+        "end_line": 19,
+        "end_column": 21
+      },
+      "scope_id": "method:<fixtures>/javascript/code/classes/basic_class.js:17:10:23:3",
+      "property_chain": [
+        "this",
+        "name"
+      ],
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 19,
+        "start_column": 13,
+        "end_line": 19,
+        "end_column": 16
+      }
+    },
+    {
       "kind": "property_access",
       "name": "email",
       "location": {
@@ -899,6 +922,29 @@
       "access_type": "read"
     },
     {
+      "kind": "callable_value",
+      "name": "email",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 20,
+        "start_column": 14,
+        "end_line": 20,
+        "end_column": 23
+      },
+      "scope_id": "method:<fixtures>/javascript/code/classes/basic_class.js:17:10:23:3",
+      "property_chain": [
+        "this",
+        "email"
+      ],
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 20,
+        "start_column": 14,
+        "end_line": 20,
+        "end_column": 17
+      }
+    },
+    {
       "kind": "property_access",
       "name": "active",
       "location": {
@@ -935,6 +981,29 @@
       },
       "scope_id": "method:<fixtures>/javascript/code/classes/basic_class.js:17:10:23:3",
       "access_type": "read"
+    },
+    {
+      "kind": "callable_value",
+      "name": "active",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 21,
+        "start_column": 15,
+        "end_line": 21,
+        "end_column": 25
+      },
+      "scope_id": "method:<fixtures>/javascript/code/classes/basic_class.js:17:10:23:3",
+      "property_chain": [
+        "this",
+        "active"
+      ],
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 21,
+        "start_column": 15,
+        "end_line": 21,
+        "end_column": 18
+      }
     },
     {
       "kind": "property_access",

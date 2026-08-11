@@ -700,6 +700,21 @@
       "access_type": "read"
     },
     {
+      "kind": "callable_value",
+      "name": "name",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/factory_patterns.js",
+        "start_line": 9,
+        "start_column": 11,
+        "end_line": 9,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/factory_patterns.js:7:20:23:1",
+      "property_chain": [
+        "name"
+      ]
+    },
+    {
       "kind": "variable_reference",
       "name": "name",
       "location": {
@@ -711,6 +726,21 @@
       },
       "scope_id": "function:<fixtures>/javascript/code/functions/factory_patterns.js:7:20:23:1",
       "access_type": "read"
+    },
+    {
+      "kind": "callable_value",
+      "name": "email",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/factory_patterns.js",
+        "start_line": 10,
+        "start_column": 12,
+        "end_line": 10,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/factory_patterns.js:7:20:23:1",
+      "property_chain": [
+        "email"
+      ]
     },
     {
       "kind": "variable_reference",
@@ -1650,6 +1680,21 @@
       "access_type": "read"
     },
     {
+      "kind": "callable_value",
+      "name": "add",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/factory_patterns.js",
+        "start_line": 59,
+        "start_column": 10,
+        "end_line": 59,
+        "end_column": 12
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/factory_patterns.js:49:26:70:1",
+      "property_chain": [
+        "add"
+      ]
+    },
+    {
       "kind": "variable_reference",
       "name": "add",
       "location": {
@@ -1661,6 +1706,21 @@
       },
       "scope_id": "function:<fixtures>/javascript/code/functions/factory_patterns.js:49:26:70:1",
       "access_type": "read"
+    },
+    {
+      "kind": "callable_value",
+      "name": "multiply",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/factory_patterns.js",
+        "start_line": 60,
+        "start_column": 15,
+        "end_line": 60,
+        "end_column": 22
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/factory_patterns.js:49:26:70:1",
+      "property_chain": [
+        "multiply"
+      ]
     },
     {
       "kind": "variable_reference",

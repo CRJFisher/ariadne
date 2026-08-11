@@ -1486,6 +1486,29 @@
       "access_type": "read"
     },
     {
+      "kind": "callable_value",
+      "name": "value",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 33,
+        "start_column": 25,
+        "end_line": 33,
+        "end_column": 32
+      },
+      "scope_id": "block:<fixtures>/javascript/code/classes/object_literals.js:32:7:36:7",
+      "property_chain": [
+        "op",
+        "value"
+      ],
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 33,
+        "start_column": 25,
+        "end_line": 33,
+        "end_column": 26
+      }
+    },
+    {
       "kind": "variable_reference",
       "name": "op",
       "location": {
@@ -1681,6 +1704,29 @@
       },
       "scope_id": "block:<fixtures>/javascript/code/classes/object_literals.js:34:14:36:7",
       "access_type": "read"
+    },
+    {
+      "kind": "callable_value",
+      "name": "value",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 35,
+        "start_column": 30,
+        "end_line": 35,
+        "end_column": 37
+      },
+      "scope_id": "block:<fixtures>/javascript/code/classes/object_literals.js:34:14:36:7",
+      "property_chain": [
+        "op",
+        "value"
+      ],
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 35,
+        "start_column": 30,
+        "end_line": 35,
+        "end_column": 31
+      }
     },
     {
       "kind": "variable_reference",
@@ -2463,6 +2509,21 @@
       },
       "scope_id": "block:<fixtures>/javascript/code/classes/object_literals.js:61:7:63:7",
       "access_type": "read"
+    },
+    {
+      "kind": "callable_value",
+      "name": "userData",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 62,
+        "start_column": 39,
+        "end_line": 62,
+        "end_column": 46
+      },
+      "scope_id": "block:<fixtures>/javascript/code/classes/object_literals.js:61:7:63:7",
+      "property_chain": [
+        "userData"
+      ]
     },
     {
       "kind": "variable_reference",

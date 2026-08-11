@@ -36,6 +36,7 @@ import {
   create_constructor_call_reference,
   create_variable_reference,
   create_property_access_reference,
+  create_callable_value_reference,
   create_type_reference,
   create_assignment_reference,
 } from "./factories";
@@ -55,6 +56,7 @@ export enum ReferenceKind {
   FUNCTION_CALL,
   METHOD_CALL,
   PROPERTY_ACCESS,
+  CALLABLE_VALUE,
   VARIABLE_REFERENCE,
   VARIABLE_WRITE,
   TYPE_REFERENCE,
@@ -120,6 +122,9 @@ function determine_reference_kind(
     case "field":
     case "member_access":
       return ReferenceKind.PROPERTY_ACCESS;
+
+    case "callable_value":
+      return ReferenceKind.CALLABLE_VALUE;
 
     case "variable":
       return ReferenceKind.VARIABLE_REFERENCE;
@@ -434,6 +439,25 @@ export class ReferenceBuilder {
           construct_target,
           property_chain,
           path_prefix
+        );
+        break;
+      }
+
+      case ReferenceKind.CALLABLE_VALUE: {
+        // Member form (`user.list`) carries its chain and receiver; a bare
+        // identifier or a named function expression's own name is a
+        // single-element chain resolved by name or exact location. The
+        // reference is named after the chain's terminal — the callable itself.
+        const receiver_info = this.extractors
+          ? this.extractors.extract_receiver_info(capture.node, this.file_path)
+          : undefined;
+        const property_chain = receiver_info?.property_chain ?? [reference_name];
+        reference = create_callable_value_reference(
+          property_chain[property_chain.length - 1] ?? reference_name,
+          location,
+          scope_id,
+          property_chain,
+          receiver_info?.receiver_location
         );
         break;
       }

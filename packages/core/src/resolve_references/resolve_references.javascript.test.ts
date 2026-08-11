@@ -660,4 +660,124 @@ export function build(fields) {
       expect(is_entry_point(call_graph, "stringify", file)).toEqual(false);
     });
   });
+
+  describe("Value-position callables", () => {
+    const ROUTE_FILES = {
+      "user.js": [
+        "exports.list = function list(req, res) { return res; };",
+        "exports.edit = function edit(req, res) { return res; };",
+      ].join("\n"),
+      "post.js": ["exports.list = function list(req, res) { return res; };"].join(
+        "\n"
+      ),
+      "app.js": [
+        "var user = require('./user');",
+        "var post = require('./post');",
+        "app.get('/users', user.list);",
+        "app.get('/user/:id/edit', user.edit);",
+        "app.get('/posts', post.list);",
+      ].join("\n"),
+    };
+
+    it("records a weak edge from a route registration to user.list", async () => {
+      const { project, temp_dir, file_paths } = await setup_project(ROUTE_FILES);
+      temp_dirs.push(temp_dir);
+      const cg = project.get_call_graph();
+      const list = find_caller_node(cg, "list", file_paths["user.js"]);
+      expect(
+        cg.indirect_reachability?.get(list!.symbol_id)?.reason.type
+      ).toEqual("function_reference");
+      expect(is_entry_point(cg, "list", file_paths["user.js"])).toEqual(false);
+    });
+
+    it("records a weak edge from a route registration to user.edit", async () => {
+      const { project, temp_dir, file_paths } = await setup_project(ROUTE_FILES);
+      temp_dirs.push(temp_dir);
+      const cg = project.get_call_graph();
+      expect(is_entry_point(cg, "edit", file_paths["user.js"])).toEqual(false);
+    });
+
+    it("records a weak edge from a route registration to post.list", async () => {
+      const { project, temp_dir, file_paths } = await setup_project(ROUTE_FILES);
+      temp_dirs.push(temp_dir);
+      const cg = project.get_call_graph();
+      expect(is_entry_point(cg, "list", file_paths["post.js"])).toEqual(false);
+    });
+
+    it("records no call edge for a route handler", async () => {
+      const { project, temp_dir, file_paths } = await setup_project(ROUTE_FILES);
+      temp_dirs.push(temp_dir);
+      const resolved = project.resolutions.get_calls_for_file(
+        file_paths["app.js"]
+      );
+      expect(
+        resolved.map((c) => c.name).filter((n) => n !== "require")
+      ).toEqual(["get", "get", "get"]);
+    });
+
+    it("records a weak edge to a named function expression passed as an argument", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "getter.js": [
+          "function defineGetter(obj, name, getter) { return getter; }",
+          "defineGetter(req, 'query', function query() { return 1; });",
+        ].join("\n"),
+      });
+      temp_dirs.push(temp_dir);
+      const cg = project.get_call_graph();
+      const file = file_paths["getter.js"];
+      const query = find_caller_node(cg, "query", file);
+      expect(
+        cg.indirect_reachability?.get(query!.symbol_id)?.reason.type
+      ).toEqual("function_reference");
+      expect(is_entry_point(cg, "query", file)).toEqual(false);
+    });
+
+    it("records a weak edge for an object-literal member callable", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "user.js": "exports.list = function list(req, res) { return res; };",
+        "routes.js": [
+          "var user = require('./user');",
+          "register({ handler: user.list });",
+        ].join("\n"),
+      });
+      temp_dirs.push(temp_dir);
+      const cg = project.get_call_graph();
+      expect(is_entry_point(cg, "list", file_paths["user.js"])).toEqual(false);
+    });
+
+    it("records no weak edge for a non-callable member argument", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "config.js": "exports.timeout = 30;",
+        "app.js": [
+          "var config = require('./config');",
+          "app.use(config.timeout);",
+        ].join("\n"),
+      });
+      temp_dirs.push(temp_dir);
+      const cg = project.get_call_graph();
+      const reachable = [...(cg.indirect_reachability?.keys() ?? [])].filter(
+        (id) => String(id).includes("config.js")
+      );
+      expect(reachable).toEqual([]);
+    });
+
+    it("keeps a bare identifier callback reachable through exactly one entry", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "cb.js": [
+          "function apply(fn, x) { return fn(x); }",
+          "function doubler(n) { return n * 2; }",
+          "apply(doubler, 21);",
+        ].join("\n"),
+      });
+      temp_dirs.push(temp_dir);
+      const cg = project.get_call_graph();
+      const file = file_paths["cb.js"];
+      const doubler = find_caller_node(cg, "doubler", file);
+      const entries = [...(cg.indirect_reachability?.keys() ?? [])].filter(
+        (id) => id === doubler!.symbol_id
+      );
+      expect(entries).toEqual([doubler!.symbol_id]);
+      expect(is_entry_point(cg, "doubler", file)).toEqual(false);
+    });
+  });
 });

@@ -1,0 +1,660 @@
+{
+  "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+  "language": "javascript",
+  "root_scope_id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
+  "scopes": {
+    "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0": {
+      "id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 8,
+        "end_column": 0
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {},
+  "classes": {},
+  "variables": {
+    "variable:<fixtures>/javascript/code/integration/route_handlers/app.js:3:5:3:8:user": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/javascript/code/integration/route_handlers/app.js:3:5:3:8:user",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 3,
+        "start_column": 5,
+        "end_line": 3,
+        "end_column": 8
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
+      "is_exported": false,
+      "initial_value": "require(\"./user\")",
+      "docstring": "// by name and never invoked at a syntactic call site.",
+      "initialized_from_call": "require"
+    }
+  },
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {
+    "variable:<fixtures>/javascript/code/integration/route_handlers/app.js:3:5:3:8:user": {
+      "kind": "import",
+      "symbol_id": "variable:<fixtures>/javascript/code/integration/route_handlers/app.js:3:5:3:8:user",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 3,
+        "start_column": 5,
+        "end_line": 3,
+        "end_column": 8
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
+      "import_path": "./user",
+      "import_kind": "namespace",
+      "is_commonjs_require": true
+    }
+  },
+  "references": [
+    {
+      "kind": "assignment",
+      "name": "user = require(\"./user\")",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 3,
+        "start_column": 5,
+        "end_line": 3,
+        "end_column": 28
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 3,
+        "start_column": 5,
+        "end_line": 3,
+        "end_column": 28
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 3,
+        "start_column": 5,
+        "end_line": 3,
+        "end_column": 8
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 3,
+        "start_column": 5,
+        "end_line": 3,
+        "end_column": 8
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 3,
+        "start_column": 5,
+        "end_line": 3,
+        "end_column": 8
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "require",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 3,
+        "start_column": 12,
+        "end_line": 3,
+        "end_column": 28
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "require",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 3,
+        "start_column": 12,
+        "end_line": 3,
+        "end_column": 18
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 3,
+        "start_column": 5,
+        "end_line": 3,
+        "end_column": 8
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "require",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 3,
+        "start_column": 12,
+        "end_line": 3,
+        "end_column": 18
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "get",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 5,
+        "start_column": 1,
+        "end_line": 5,
+        "end_column": 28
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 5,
+        "start_column": 1,
+        "end_line": 5,
+        "end_column": 3
+      },
+      "property_chain": [
+        "app",
+        "get"
+      ],
+      "is_optional_chain": false,
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "app",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 5,
+        "start_column": 1,
+        "end_line": 5,
+        "end_column": 3
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "app",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 5,
+        "start_column": 1,
+        "end_line": 5,
+        "end_column": 3
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "app",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 5,
+        "start_column": 1,
+        "end_line": 5,
+        "end_column": 3
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "get",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 5,
+        "start_column": 5,
+        "end_line": 5,
+        "end_column": 7
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "list",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 5,
+        "start_column": 19,
+        "end_line": 5,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 5,
+        "start_column": 19,
+        "end_line": 5,
+        "end_column": 22
+      },
+      "property_chain": [
+        "user",
+        "list"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 5,
+        "start_column": 19,
+        "end_line": 5,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "callable_value",
+      "name": "list",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 5,
+        "start_column": 19,
+        "end_line": 5,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
+      "property_chain": [
+        "user",
+        "list"
+      ],
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 5,
+        "start_column": 19,
+        "end_line": 5,
+        "end_column": 22
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 5,
+        "start_column": 19,
+        "end_line": 5,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "list",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 5,
+        "start_column": 24,
+        "end_line": 5,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "get",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 6,
+        "start_column": 1,
+        "end_line": 6,
+        "end_column": 36
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 6,
+        "start_column": 1,
+        "end_line": 6,
+        "end_column": 3
+      },
+      "property_chain": [
+        "app",
+        "get"
+      ],
+      "is_optional_chain": false,
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "app",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 6,
+        "start_column": 1,
+        "end_line": 6,
+        "end_column": 3
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "app",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 6,
+        "start_column": 1,
+        "end_line": 6,
+        "end_column": 3
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "app",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 6,
+        "start_column": 1,
+        "end_line": 6,
+        "end_column": 3
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "get",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 6,
+        "start_column": 5,
+        "end_line": 6,
+        "end_column": 7
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "edit",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 6,
+        "start_column": 27,
+        "end_line": 6,
+        "end_column": 35
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 6,
+        "start_column": 27,
+        "end_line": 6,
+        "end_column": 30
+      },
+      "property_chain": [
+        "user",
+        "edit"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 6,
+        "start_column": 27,
+        "end_line": 6,
+        "end_column": 30
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "callable_value",
+      "name": "edit",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 6,
+        "start_column": 27,
+        "end_line": 6,
+        "end_column": 35
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
+      "property_chain": [
+        "user",
+        "edit"
+      ],
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 6,
+        "start_column": 27,
+        "end_line": 6,
+        "end_column": 30
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 6,
+        "start_column": 27,
+        "end_line": 6,
+        "end_column": 30
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "edit",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 6,
+        "start_column": 32,
+        "end_line": 6,
+        "end_column": 35
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "post",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 7,
+        "start_column": 1,
+        "end_line": 7,
+        "end_column": 45
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 7,
+        "start_column": 1,
+        "end_line": 7,
+        "end_column": 3
+      },
+      "property_chain": [
+        "app",
+        "post"
+      ],
+      "is_optional_chain": false,
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "app",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 7,
+        "start_column": 1,
+        "end_line": 7,
+        "end_column": 3
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "app",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 7,
+        "start_column": 1,
+        "end_line": 7,
+        "end_column": 3
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "app",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 7,
+        "start_column": 1,
+        "end_line": 7,
+        "end_column": 3
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "post",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 7,
+        "start_column": 5,
+        "end_line": 7,
+        "end_column": 8
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "edit",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 7,
+        "start_column": 34,
+        "end_line": 7,
+        "end_column": 42
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 7,
+        "start_column": 34,
+        "end_line": 7,
+        "end_column": 37
+      },
+      "property_chain": [
+        "user",
+        "edit"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 7,
+        "start_column": 34,
+        "end_line": 7,
+        "end_column": 37
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "callable_value",
+      "name": "edit",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 7,
+        "start_column": 34,
+        "end_line": 7,
+        "end_column": 42
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
+      "property_chain": [
+        "user",
+        "edit"
+      ],
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 7,
+        "start_column": 34,
+        "end_line": 7,
+        "end_column": 37
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 7,
+        "start_column": 34,
+        "end_line": 7,
+        "end_column": 37
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "edit",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
+        "start_line": 7,
+        "start_column": 39,
+        "end_line": 7,
+        "end_column": 42
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
+      "access_type": "read"
+    }
+  ]
+}

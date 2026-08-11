@@ -844,6 +844,29 @@
       "access_type": "read"
     },
     {
+      "kind": "callable_value",
+      "name": "name",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/user_class.js",
+        "start_line": 29,
+        "start_column": 13,
+        "end_line": 29,
+        "end_column": 21
+      },
+      "scope_id": "method:<fixtures>/javascript/code/modules/user_class.js:27:10:33:3",
+      "property_chain": [
+        "this",
+        "name"
+      ],
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/modules/user_class.js",
+        "start_line": 29,
+        "start_column": 13,
+        "end_line": 29,
+        "end_column": 16
+      }
+    },
+    {
       "kind": "property_access",
       "name": "email",
       "location": {
@@ -882,6 +905,29 @@
       "access_type": "read"
     },
     {
+      "kind": "callable_value",
+      "name": "email",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/user_class.js",
+        "start_line": 30,
+        "start_column": 14,
+        "end_line": 30,
+        "end_column": 23
+      },
+      "scope_id": "method:<fixtures>/javascript/code/modules/user_class.js:27:10:33:3",
+      "property_chain": [
+        "this",
+        "email"
+      ],
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/modules/user_class.js",
+        "start_line": 30,
+        "start_column": 14,
+        "end_line": 30,
+        "end_column": 17
+      }
+    },
+    {
       "kind": "property_access",
       "name": "createdAt",
       "location": {
@@ -918,6 +964,29 @@
       },
       "scope_id": "method:<fixtures>/javascript/code/modules/user_class.js:27:10:33:3",
       "access_type": "read"
+    },
+    {
+      "kind": "callable_value",
+      "name": "createdAt",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/user_class.js",
+        "start_line": 31,
+        "start_column": 18,
+        "end_line": 31,
+        "end_column": 31
+      },
+      "scope_id": "method:<fixtures>/javascript/code/modules/user_class.js:27:10:33:3",
+      "property_chain": [
+        "this",
+        "createdAt"
+      ],
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/modules/user_class.js",
+        "start_line": 31,
+        "start_column": 18,
+        "end_line": 31,
+        "end_column": 21
+      }
     }
   ]
 }

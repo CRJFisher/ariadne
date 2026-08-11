@@ -6,6 +6,7 @@ import {
   create_constructor_call_reference,
   create_variable_reference,
   create_property_access_reference,
+  create_callable_value_reference,
   create_type_reference,
   create_assignment_reference,
 } from "./factories";
@@ -279,6 +280,27 @@ describe("Reference Factories", () => {
 
       expect(ref.kind).toBe("property_access");
       expect(ref.is_optional_chain).toBe(true);
+    });
+  });
+
+  describe("create_callable_value_reference", () => {
+    test("builds a callable value reference carrying its property chain", () => {
+      const ref = create_callable_value_reference(
+        "list" as SymbolName,
+        mock_location,
+        mock_scope_id,
+        ["user" as SymbolName, "list" as SymbolName],
+        mock_receiver_location
+      );
+
+      expect(ref).toEqual({
+        kind: "callable_value",
+        name: "list" as SymbolName,
+        location: mock_location,
+        scope_id: mock_scope_id,
+        property_chain: ["user" as SymbolName, "list" as SymbolName],
+        receiver_location: mock_receiver_location,
+      });
     });
   });
 

@@ -3533,6 +3533,29 @@
       "access_type": "read"
     },
     {
+      "kind": "callable_value",
+      "name": "data",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
+        "start_line": 87,
+        "start_column": 35,
+        "end_line": 87,
+        "end_column": 45
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/callbacks.js:86:24:88:3",
+      "property_chain": [
+        "result",
+        "data"
+      ],
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
+        "start_line": 87,
+        "start_column": 35,
+        "end_line": 87,
+        "end_column": 40
+      }
+    },
+    {
       "kind": "variable_reference",
       "name": "result",
       "location": {

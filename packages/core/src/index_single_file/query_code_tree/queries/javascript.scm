@@ -541,5 +541,24 @@
   (shorthand_property_identifier) @reference.variable
 )
 
+; Value-position callables — a function handed to a framework by name is never
+; invoked at a syntactic call site, so this read is the only evidence it is
+; reachable. Bare identifier arguments are covered by the catch-all identifier
+; read plus indirect reachability; the member form, the object-literal value,
+; and a named function expression's own name need their own capture.
+(arguments
+  (member_expression) @reference.callable_value
+)
+
+(pair
+  value: [(identifier) (member_expression)] @reference.callable_value
+)
+
+(arguments
+  (function_expression
+    name: (identifier) @reference.callable_value
+  )
+)
+
 ; General identifier references (catch-all)
 (identifier) @reference.variable

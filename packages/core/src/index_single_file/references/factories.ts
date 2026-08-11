@@ -5,6 +5,7 @@ import type {
   ConstructorCallReference,
   VariableReference,
   PropertyAccessReference,
+  CallableValueReference,
   TypeReference,
   AssignmentReference,
   CallSiteSyntax,
@@ -231,6 +232,30 @@ export function create_property_access_reference(
     property_chain,
     access_type,
     is_optional_chain,
+  };
+}
+
+/**
+ * Factory for callable-value references: a callable read in value position
+ *
+ * @example
+ * // app.get('/users', user.list)
+ * create_callable_value_reference('list', location, scope_id, ['user', 'list'], receiver_location)
+ */
+export function create_callable_value_reference(
+  name: SymbolName,
+  location: Location,
+  scope_id: ScopeId,
+  property_chain: readonly SymbolName[],
+  receiver_location?: Location
+): CallableValueReference {
+  return {
+    kind: "callable_value",
+    name,
+    location,
+    scope_id,
+    property_chain,
+    receiver_location,
   };
 }
 

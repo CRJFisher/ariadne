@@ -20,6 +20,7 @@ export type SymbolReference =
   | ConstructorCallReference
   | VariableReference
   | PropertyAccessReference
+  | CallableValueReference
   | TypeReference
   | AssignmentReference;
 
@@ -246,6 +247,28 @@ export interface PropertyAccessReference extends BaseReference {
   readonly access_type: "property" | "index";
   /** Whether this uses optional chaining (obj?.field) */
   readonly is_optional_chain: boolean;
+}
+
+/**
+ * Callable read in value position: a function or method handed somewhere by
+ * name rather than invoked — a framework registration argument
+ * (`app.get('/users', user.list)`), an object-literal value
+ * (`{ handler: user.list }`), or a named function expression passed as an
+ * argument. No call site ever references the callable, so this reference is
+ * the only evidence it is reachable; call resolution records it as indirect
+ * reachability, never as a call edge.
+ *
+ * @language javascript,typescript
+ */
+export interface CallableValueReference extends BaseReference {
+  readonly kind: "callable_value";
+  /**
+   * Chain from receiver to the named callable (`["user", "list"]`); length 1
+   * for a bare name, including a named function expression's own name.
+   */
+  readonly property_chain: readonly SymbolName[];
+  /** Present when the chain has a receiver the resolver can type. */
+  readonly receiver_location?: Location;
 }
 
 /**
