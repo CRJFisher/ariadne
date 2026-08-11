@@ -1,7 +1,7 @@
 ---
 id: TASK-375.1
 title: "Bind the grammatical positions the binder silently drops"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-07-29 09:37"
 labels:
@@ -61,3 +61,27 @@ For untyped JS parameters the failure moves **forward** from `name_resolution/na
 - [ ] #9 Triage is re-run on the four affected JS/TS/Python projects and the per-row split of the 39 qualified-callee rows is recorded as measured bucket movement, with rows that move to `type_inference/receiver_type_unknown` re-routed to `type-model-completion` rather than counted as failures.
 
 <!-- AC:END -->
+
+## Implementation Notes
+
+## High-level summary
+
+Names the source clearly binds now reach the scope map. Three mechanisms were at work, and all three are closed.
+
+The first was an id disagreement, not a missing capture. `const f = (p) => …` mints its function under the declarator's name while the parameter walk minted a location-keyed anonymous id, so the owner lookup missed and `add_parameter_to_callable` silently returned. That silence is now a throw: a parameter naming a callable the builder never created is an internal inconsistency, and the throw is what turned the rest of this task into a measured worklist rather than a guess. `find_containing_callable` (JavaScript and TypeScript) mints the id the definition actually carries — the declarator name, the CommonJS property name for `exports.f = function …`, a plain function id for an object-literal shorthand method — and falls back to an anonymous symbol only where the source genuinely binds no name.
+
+The second was callables that no handler indexed at all, so their parameters had nowhere to attach: a returned function expression, `module.exports = function (…) {}`, an object-literal shorthand method, a `function`-expression IIFE, every Rust closure outside argument position, and `extern "C" fn` (whose definition the general Rust handler skipped because it carries a `function_modifiers` node that no specialised handler claims). Each now produces the definition its parameters need. Anonymous functions are excluded from entry points, so indexing closures adds no false positives.
+
+The third was query gaps: `for (const a of xs)` matched nothing because the loop-head pattern required a *nested* identifier; destructuring bound one name spelled `{ c }` instead of one per identifier; Rust `if let` / `match` / `while let` bound either nothing or a name spelled `Some(c)`; the Python walrus bound nothing. Each is now a per-identifier capture. Two bindings were also mis-modelled rather than missing: a catch clause name is a block variable, not a callable parameter, and a Rust const generic is a type parameter, not a value parameter.
+
+Front door for readers: `symbol_factories.{javascript,typescript}.ts`'s `find_containing_callable` owns id agreement; the `.scm` files own which positions bind; `definition_builder.ts`'s throw is the tripwire that keeps them honest.
+
+### Deferred and recorded
+
+- A top-level `try { … } catch (e) { … }` in some formattings makes the scope tree report two block scopes at the same depth containing the catch binding, and indexing throws `Malformed scope tree`. Pre-existing (the catch binding always resolved its scope this way) and independent of this task's change, but it drops the whole file from the corpus when it fires — worth its own task.
+- A destructured `require` binding stays owned by the require handlers; the generic destructuring capture skips it so the import is not shadowed by a same-id local.
+- Re-running triage on the four affected JS/TS/Python projects (AC #9) is the epic-level verification pass, not this task.
+
+### Verification
+
+`packages/core` 3605/3605 green; typecheck and lint clean. The whole suite runs against the throwing `add_parameter_to_callable`, so every parameter in the fixture corpus now has an owning callable — that is the standing guard for this task. The two reproduced corpus rows (webpack `IdHelpers.js` declarator arrow, mocha `common.js` whole-module export) are pinned as Project-level tests asserting the call no longer fails with `name_not_in_scope`, alongside the loop-head row.

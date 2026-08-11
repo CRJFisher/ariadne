@@ -28,7 +28,7 @@ import {
 } from "@ariadnejs/types";
 import type { CaptureNode } from "../../capture_types";
 import { node_to_location } from "../../node_to_location";
-import { declarator_name_node } from "./symbol_factories.javascript";
+import { bound_callable_name_node } from "./symbol_factories.javascript";
 
 // Re-export detect_function_collection from JavaScript to avoid duplication
 export { detect_function_collection } from "./symbol_factories.javascript";
@@ -687,13 +687,15 @@ export function find_containing_callable(capture: CaptureNode): SymbolId {
       node.type === "function_expression" ||
       node.type === "arrow_function" ||
       node.type === "method_definition" ||
-      node.type === "method_signature"
+      node.type === "method_signature" ||
+      node.type === "abstract_method_signature"
     ) {
       const name_node = node.childForFieldName?.("name");
 
       if (
         node.type === "method_definition" ||
-        node.type === "method_signature"
+        node.type === "method_signature" ||
+        node.type === "abstract_method_signature"
       ) {
         const method_name = name_node ? name_node.text : "anonymous";
         // Reconstruct location with proper file_path
@@ -701,6 +703,11 @@ export function find_containing_callable(capture: CaptureNode): SymbolId {
           name_node || node,
           file_path
         );
+        // An object-literal shorthand method has no owning class, so it is
+        // indexed as a plain function; match that id rather than a method's.
+        if (node.parent?.type === "object" && name_node) {
+          return function_symbol(name_node.text as SymbolName, location);
+        }
         return method_symbol(method_name as SymbolName, location);
       } else if (name_node) {
         // Named function
@@ -710,7 +717,7 @@ export function find_containing_callable(capture: CaptureNode): SymbolId {
         // A nameless arrow/function expression in declarator position was
         // minted as a function under the declarator's name; the parameter's
         // owner id must agree with that, not with a location-keyed anonymous.
-        const declarator_name = declarator_name_node(node);
+        const declarator_name = bound_callable_name_node(node);
         if (declarator_name) {
           return function_symbol(
             declarator_name.text as SymbolName,

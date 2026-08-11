@@ -2850,4 +2850,53 @@ impl Counter {
       expect(fn_def!.docstring).toBeUndefined();
     });
   });
+
+  describe("pattern bindings", () => {
+    function variable_names(code: string): string[] {
+      const tree = parser.parse(code);
+      const parsed_file = create_parsed_file(
+        code,
+        "test.rs" as FilePath,
+        tree,
+        "rust"
+      );
+      const index = build_index_single_file(parsed_file, tree, "rust");
+      return Array.from(index.variables.values()).map((v) => v.name as string);
+    }
+
+    it("binds the inner name of an if-let pattern, not the type path", () => {
+      const names = variable_names(`fn f(o: Option<i32>) {
+    if let Some(b) = o {
+        use_it(b);
+    }
+}
+`);
+      expect(names).toContain("b");
+      expect(names).not.toContain("Some(b)");
+      expect(names).not.toContain("Some");
+    });
+
+    it("binds the inner name of a match arm pattern", () => {
+      const names = variable_names(`fn f(o: Option<i32>) {
+    match o {
+        Some(d) => use_it(d),
+        None => {}
+    }
+}
+`);
+      expect(names).toContain("d");
+      expect(names).not.toContain("Some(d)");
+    });
+
+    it("binds the inner name of a while-let pattern", () => {
+      const names = variable_names(`fn f(mut it: Iter) {
+    while let Some(c) = it.next() {
+        use_it(c);
+    }
+}
+`);
+      expect(names).toContain("c");
+      expect(names).not.toContain("Some(c)");
+    });
+  });
 });

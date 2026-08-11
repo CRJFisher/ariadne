@@ -99,10 +99,14 @@ describe("Project Integration - Rust", () => {
       const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
-      // nested_scopes.rs defines: helper, main, outer_function, inner_function, deeper_function, complex_nesting
+      // nested_scopes.rs defines: helper, main, outer_function, inner_function,
+      // deeper_function, complex_nesting, plus the closure bound in
+      // outer_function — every closure owns an anonymous function definition so
+      // its parameters and body calls have somewhere to attach.
       const functions = Array.from(index!.functions.values());
       const function_names = functions.map((f) => f.name).sort();
       expect(function_names).toEqual([
+        "<anonymous>",
         "complex_nesting",
         "deeper_function",
         "helper",
@@ -138,9 +142,10 @@ describe("Project Integration - Rust", () => {
       const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
-      // variable_shadowing.rs has many variables across scopes
+      // variable_shadowing.rs has many variables across scopes, including the
+      // names its `match` and `if let` patterns bind.
       const variables = Array.from(index!.variables.values());
-      expect(variables.length).toBe(48);
+      expect(variables.length).toBe(49);
 
       // Verify variable references exist (read or write)
       const var_refs = index!.references.filter(
@@ -1171,7 +1176,8 @@ fn main() {
       project.update_file(file, source);
 
       const call_graph = project.get_call_graph();
-      expect(call_graph.nodes.size).toBe(6);
+      // Six named functions plus the closure's anonymous node.
+      expect(call_graph.nodes.size).toBe(7);
 
       const nodes = Array.from(call_graph.nodes.values());
 

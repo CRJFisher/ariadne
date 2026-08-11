@@ -780,4 +780,75 @@ export function build(fields) {
       expect(is_entry_point(cg, "doubler", file)).toEqual(false);
     });
   });
+
+  describe("parameters of positionally-bound callables reach the receiver", () => {
+    function method_call_failure(
+      project: Project,
+      file: FilePath,
+      call_name: string
+    ): string | undefined {
+      const call = project.resolutions
+        .get_calls_for_file(file)
+        .find((c) => c.name === (call_name as SymbolName));
+      expect(call).toBeDefined();
+      return call!.resolution_failure?.reason;
+    }
+
+    it("binds a declarator arrow's parameter so a call on it leaves name resolution", async () => {
+      // webpack lib/ids/IdHelpers.js:148 — chunkGraph.getChunkRootModules(chunk)
+      // inside `const getShortChunkName = (chunk, chunkGraph, …) => {…}`.
+      const { project, temp_dir, file_paths } = await setup_project({
+        "IdHelpers.js": `const getShortChunkName = (chunk, chunkGraph) => {
+  const modules = chunkGraph.getChunkRootModules(chunk);
+  return modules;
+};
+
+export { getShortChunkName };
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      expect(
+        method_call_failure(project, file_paths["IdHelpers.js"], "getChunkRootModules")
+      ).not.toEqual("name_not_in_scope");
+    });
+
+    it("binds a whole-module CommonJS export's parameter so a call on it leaves name resolution", async () => {
+      // mocha lib/interfaces/common.js:75 — suites[0].beforeEach(name, fn)
+      // inside `module.exports = function (suites, context) {…}`.
+      const { project, temp_dir, file_paths } = await setup_project({
+        "common.js": `module.exports = function (suites, context) {
+  suites[0].beforeEach(context);
+};
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      expect(
+        method_call_failure(project, file_paths["common.js"], "beforeEach")
+      ).not.toEqual("name_not_in_scope");
+    });
+
+    it("binds a loop-head name so a call on it resolves", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "loop.js": `export class Handle {
+  close() {
+    return 1;
+  }
+}
+
+export function close_all(ps) {
+  for (const p of ps) {
+    p.close();
+  }
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      expect(
+        method_call_failure(project, file_paths["loop.js"], "close")
+      ).not.toEqual("name_not_in_scope");
+    });
+  });
 });

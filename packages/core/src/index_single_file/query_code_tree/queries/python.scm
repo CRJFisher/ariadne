@@ -334,6 +334,11 @@
   )
 )
 
+; Walrus assignment: `if (d := xs[0]):` binds d in the enclosing scope.
+(named_expression
+  name: (identifier) @definition.variable
+)
+
 ; Variable assignments
 (assignment
   left: (identifier) @definition.variable @assignment.variable

@@ -573,7 +573,22 @@ export class DefinitionBuilder {
       }
     }
 
-    return this;
+    // Check methods in enums (Rust impl blocks targeting enums)
+    for (const enum_state of this.enums.values()) {
+      const method_state = enum_state.methods?.get(callable_id);
+      if (method_state) {
+        method_state.parameters.set(definition.symbol_id, param_def);
+        return this;
+      }
+    }
+
+    // A parameter with no owning callable is an internal inconsistency: the
+    // capture handler minted an owner id the definition pass never created.
+    // Silence here is what let dropped parameters go unnoticed pipeline-wide.
+    throw new Error(
+      `Parameter "${definition.name}" has no owning callable ${callable_id} ` +
+        `(at ${definition.location.file_path}:${definition.location.start_line})`
+    );
   }
 
   /**

@@ -464,6 +464,15 @@ export function is_associated_function(node: SyntaxNode): boolean {
   return true;
 }
 
+function has_ancestor_of_type(node: SyntaxNode, type: string): boolean {
+  let ancestor = node.parent;
+  while (ancestor) {
+    if (ancestor.type === type) return true;
+    ancestor = ancestor.parent;
+  }
+  return false;
+}
+
 export function find_containing_callable(
   capture: CaptureNode
 ): SymbolId | undefined {
@@ -533,10 +542,13 @@ export function find_containing_callable(
       }
     }
 
-    // Trait method signatures (function_signature_item in traits)
+    // Trait method signatures (function_signature_item in traits). A signature
+    // outside a trait — an `extern "C"` block declaration — is indexed by no
+    // handler, so it owns nothing its parameters could attach to.
     if (node.type === "function_signature_item") {
       const name_node = node.childForFieldName?.("name");
       if (!name_node) return undefined;
+      if (!has_ancestor_of_type(node, "trait_item")) return undefined;
 
       // Use full function_signature_item node location to match create_method_id
       return method_symbol(name_node.text as SymbolName, {

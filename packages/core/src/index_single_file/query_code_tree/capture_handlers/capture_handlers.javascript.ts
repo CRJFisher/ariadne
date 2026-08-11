@@ -288,6 +288,31 @@ export function handle_definition_parameter(
   });
 }
 
+/**
+ * True when `node` is an identifier inside a destructuring pattern whose
+ * declarator initializes from `require(...)`.
+ */
+function is_destructured_require_binding(node: SyntaxNode): boolean {
+  let current: SyntaxNode | null = node.parent;
+  while (
+    current &&
+    (current.type === "object_pattern" ||
+      current.type === "array_pattern" ||
+      current.type === "pair_pattern" ||
+      current.type === "rest_pattern")
+  ) {
+    current = current.parent;
+  }
+  if (current?.type !== "variable_declarator") {
+    return false;
+  }
+  const value = current.childForFieldName("value");
+  if (value?.type !== "call_expression") {
+    return false;
+  }
+  return value.childForFieldName("function")?.text === "require";
+}
+
 export function handle_definition_variable(
   capture: CaptureNode,
   builder: DefinitionBuilder,
@@ -302,6 +327,13 @@ export function handle_definition_variable(
     if (value_node && (value_node.type === "arrow_function" || value_node.type === "function_expression")) {
       return;
     }
+  }
+
+  // A destructured `require` binding is owned by the require handlers: they
+  // record it as an import, and a same-id variable here would shadow that
+  // import in the scope map and strand the name at the destructuring site.
+  if (is_destructured_require_binding(capture.node)) {
+    return;
   }
 
   const var_id = create_variable_id(capture);

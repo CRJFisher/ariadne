@@ -38,9 +38,18 @@ export function handle_definition_function(
     return;
   }
 
-  // Skip functions with modifiers (async, const, unsafe) - handled by specialized handlers
+  // Skip functions whose modifier has a specialized handler. `extern "C" fn`
+  // carries a function_modifiers node too, and no specialized capture claims
+  // it, so skipping on the node's mere presence dropped the definition — and
+  // with it any owner for its parameters.
   const fn_node = capture.node.parent || capture.node;
-  if (fn_node.children?.some((c) => c.type === "function_modifiers")) {
+  const modifiers = fn_node.children?.find(
+    (c) => c.type === "function_modifiers"
+  );
+  const has_specialized_modifier = (modifiers?.children ?? []).some(
+    (c) => c.type === "async" || c.type === "const" || c.type === "unsafe"
+  );
+  if (has_specialized_modifier) {
     return;
   }
 

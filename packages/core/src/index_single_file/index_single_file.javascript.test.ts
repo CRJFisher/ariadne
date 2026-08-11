@@ -986,18 +986,20 @@ describe("Semantic Index - JavaScript", () => {
         "javascript" as Language,
       );
 
-      // Note: Current implementation captures destructuring patterns as whole variables,
-      // not individual identifiers within the pattern
-      const variable_names = Array.from(result.variables.values()).map(
-        (v) => v.name,
-      );
+      // Each identifier in the pattern binds its own name; no binding is
+      // spelled with the pattern's own punctuation.
+      const variable_names = Array.from(result.variables.values())
+        .map((v) => v.name as string)
+        .sort();
 
-      // Verify that destructuring patterns are captured (as patterns, not individual names)
-      // This is a known limitation - individual destructured names aren't extracted
-      expect(variable_names.length).toBeGreaterThan(0);
-      expect(
-        variable_names.some((v) => v.includes("{") || v.includes("[")),
-      ).toBe(true);
+      expect(variable_names).toEqual([
+        "age",
+        "first",
+        "name",
+        "rest",
+        "second",
+        "value",
+      ]);
     });
 
     it("should correctly parse default and rest parameters", () => {
@@ -2461,6 +2463,133 @@ const names = items.map(({id, name}) => name);`;
 
     it("indexes no callable value for bare identifier or literal arguments", () => {
       expect(callable_values("run(plain, 1, 's');")).toEqual([]);
+    });
+  });
+
+  describe("Parameters of callables the source binds by position", () => {
+    function index_js(code: string) {
+      const tree = parser.parse(code);
+      const parsed_file = create_parsed_file(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language,
+      );
+      return build_index_single_file(parsed_file, tree, "javascript" as Language);
+    }
+
+    function parameter_names(code: string, function_name: string): string[] {
+      const result = index_js(code);
+      const fn = Array.from(result.functions.values()).find(
+        (f) => f.name === (function_name as SymbolName),
+      );
+      expect(fn).toBeDefined();
+      return fn!.signature.parameters.map((p) => p.name as string);
+    }
+
+    it("binds the parameters of a declarator-assigned arrow", () => {
+      expect(parameter_names("const f = (p) => p;", "f")).toEqual(["p"]);
+    });
+
+    it("binds the parameters of a declarator-assigned function expression", () => {
+      expect(parameter_names("const f = function (p) { return p; };", "f")).toEqual([
+        "p",
+      ]);
+    });
+
+    it("binds the parameters of a returned function expression", () => {
+      const result = index_js(
+        "function outer() {\n  return function (p) { return p; };\n}",
+      );
+      const returned = Array.from(result.functions.values()).find(
+        (f) => f.name === ("<anonymous>" as SymbolName),
+      );
+      expect(returned).toBeDefined();
+      expect(returned!.signature.parameters.map((p) => p.name as string)).toEqual([
+        "p",
+      ]);
+    });
+
+    it("binds the parameters of a whole-module CommonJS export", () => {
+      const result = index_js("module.exports = function (suites, context) {};");
+      const exported = Array.from(result.functions.values()).find(
+        (f) => f.name === ("<anonymous>" as SymbolName),
+      );
+      expect(exported).toBeDefined();
+      expect(exported!.signature.parameters.map((p) => p.name as string)).toEqual([
+        "suites",
+        "context",
+      ]);
+    });
+
+    it("binds the parameters of a property-assigned CommonJS export", () => {
+      expect(
+        parameter_names("exports.escape = function (html) { return html; };", "escape"),
+      ).toEqual(["html"]);
+    });
+
+    it("binds the parameters of an object-literal shorthand method", () => {
+      expect(
+        parameter_names("const obj = { updateProfile(name, email) {} };", "updateProfile"),
+      ).toEqual(["name", "email"]);
+    });
+
+    it("binds a for-of and a for-in loop head by name", () => {
+      const of_names = Array.from(
+        index_js("for (const a of xs) { a.m(); }").variables.values(),
+      ).map((v) => v.name as string);
+      expect(of_names).toContain("a");
+
+      const in_names = Array.from(
+        index_js("for (const k in o) { use(k); }").variables.values(),
+      ).map((v) => v.name as string);
+      expect(in_names).toContain("k");
+    });
+
+    it("binds each identifier of a destructured declarator by name", () => {
+      const names = Array.from(
+        index_js("const { c } = o;\nconst [d] = xs;\nconst { ...r } = o;").variables.values(),
+      )
+        .map((v) => v.name as string)
+        .sort();
+      expect(names).toEqual(["c", "d", "r"]);
+    });
+
+    it("binds each identifier of a destructured parameter by name", () => {
+      const names = Array.from(
+        index_js("function f({ g }, [h]) { return g + h; }").variables.values(),
+      )
+        .map((v) => v.name as string)
+        .sort();
+      expect(names).toEqual(["g", "h"]);
+    });
+
+    it("keeps the anonymous fallback for a genuinely anonymous IIFE", () => {
+      const result = index_js("(function (p) { return p; })(1);");
+      const iife = Array.from(result.functions.values()).find(
+        (f) => f.name === ("<anonymous>" as SymbolName),
+      );
+      expect(iife).toBeDefined();
+      expect(iife!.signature.parameters.map((p) => p.name as string)).toEqual(["p"]);
+    });
+
+    it("binds a catch clause name as a block variable, not a callable parameter", () => {
+      const result = index_js(`
+        function guarded() {
+          try {
+            risky();
+          } catch (error) {
+            log(error);
+          }
+        }
+      `);
+      const names = Array.from(result.variables.values()).map((v) => v.name as string);
+      expect(names).toContain("error");
+
+      const guarded = Array.from(result.functions.values()).find(
+        (f) => f.name === ("guarded" as SymbolName),
+      );
+      expect(guarded!.signature.parameters).toEqual([]);
     });
   });
 });

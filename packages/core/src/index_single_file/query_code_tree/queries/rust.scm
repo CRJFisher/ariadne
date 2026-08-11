@@ -417,16 +417,67 @@
   )
 )
 
-; Loop variables in while-let patterns
-(while_expression
-  condition: (let_condition
-    pattern: (_) @definition.variable
+; Variables bound by a `let` condition (`if let` / `while let`). The bare
+; identifier form binds directly; the destructuring forms bind the identifiers
+; *inside* the pattern, never the type path that leads them — capturing the
+; whole pattern would bind a name spelled "Some(c)".
+(let_condition
+  pattern: (identifier) @definition.variable
+)
+
+(let_condition
+  pattern: (tuple_struct_pattern
+    type: (_)
+    (identifier) @definition.variable
   )
 )
 
-; Variables in while-let conditions
 (let_condition
-  pattern: (identifier) @definition.variable
+  pattern: (tuple_pattern
+    (identifier) @definition.variable
+  )
+)
+
+(let_condition
+  pattern: (struct_pattern
+    (field_pattern
+      (identifier) @definition.variable
+    )
+  )
+)
+
+; Variables bound by a match arm's pattern, in the same forms.
+(match_arm
+  pattern: (match_pattern
+    (identifier) @definition.variable
+  )
+)
+
+(match_arm
+  pattern: (match_pattern
+    (tuple_struct_pattern
+      type: (_)
+      (identifier) @definition.variable
+    )
+  )
+)
+
+(match_arm
+  pattern: (match_pattern
+    (tuple_pattern
+      (identifier) @definition.variable
+    )
+  )
+)
+
+(match_arm
+  pattern: (match_pattern
+    (struct_pattern
+      (field_pattern
+        (identifier) @definition.variable
+      )
+    )
+  )
 )
 
 ; Module definitions with body
@@ -468,9 +519,10 @@
   )
 )
 
-; Const parameters
+; Const generic parameters — type-level, like (type_parameter), never a value
+; parameter of the callable that declares them.
 (const_parameter
-  name: (identifier) @definition.parameter
+  name: (identifier) @definition.type_parameter
 )
 
 ;; ==============================================================================

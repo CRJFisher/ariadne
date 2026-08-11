@@ -200,6 +200,11 @@ export function find_containing_callable(capture: CaptureNode): SymbolId {
         const location = name_node
           ? node_to_location(name_node, capture.location.file_path)
           : node_to_location(node, capture.location.file_path);
+        // An object-literal shorthand method has no owning class, so it is
+        // indexed as a plain function; match that id rather than a method's.
+        if (node.parent?.type === "object" && name_node) {
+          return function_symbol(name_node.text as SymbolName, location);
+        }
         return method_symbol(method_name as SymbolName, location);
       } else if (name_node) {
         // Named function
@@ -209,7 +214,7 @@ export function find_containing_callable(capture: CaptureNode): SymbolId {
         // A nameless arrow/function expression in declarator position was
         // minted as a function under the declarator's name; the parameter's
         // owner id must agree with that, not with a location-keyed anonymous.
-        const declarator_name = declarator_name_node(node);
+        const declarator_name = bound_callable_name_node(node);
         if (declarator_name) {
           return function_symbol(
             declarator_name.text as SymbolName,
@@ -231,16 +236,57 @@ export function find_containing_callable(capture: CaptureNode): SymbolId {
 }
 
 /**
- * The identifier a `const f = (…) => …` / `const f = function (…) {}` binds,
- * when `fn_node` sits directly in declarator-value position.
+ * The identifier a nameless callable is bound to, when its position gives it
+ * one: `const f = (…) => …` (the declarator name) or
+ * `exports.f = function (…) {}` / `module.exports.f = …` (the property name
+ * the CommonJS-export capture indexes it under). The whole-module
+ * `module.exports = function (…) {}` binds no name and returns null, so the
+ * caller falls back to an anonymous symbol.
  */
-export function declarator_name_node(fn_node: SyntaxNode): SyntaxNode | null {
+export function bound_callable_name_node(fn_node: SyntaxNode): SyntaxNode | null {
   const parent = fn_node.parent;
-  if (parent?.type !== "variable_declarator") {
-    return null;
+
+  if (parent?.type === "variable_declarator") {
+    const name = parent.childForFieldName("name");
+    return name?.type === "identifier" ? name : null;
   }
-  const name = parent.childForFieldName("name");
-  return name?.type === "identifier" ? name : null;
+
+  if (
+    parent?.type === "assignment_expression" &&
+    parent.childForFieldName("right")?.id === fn_node.id
+  ) {
+    const left = parent.childForFieldName("left");
+    if (left?.type !== "member_expression") {
+      return null;
+    }
+    const property = left.childForFieldName("property");
+    const object = left.childForFieldName("object");
+    if (property?.type !== "property_identifier") {
+      return null;
+    }
+    if (object?.text === "module" && property.text === "exports") {
+      return null;
+    }
+    return is_commonjs_exports_base(object) ? property : null;
+  }
+
+  return null;
+}
+
+/**
+ * The CommonJS exports bag as an assignment base: the bare `exports`
+ * identifier or the `module.exports` member expression.
+ */
+function is_commonjs_exports_base(node: SyntaxNode | null): boolean {
+  if (!node) return false;
+  if (node.type === "identifier") return node.text === "exports";
+  if (node.type === "member_expression") {
+    return (
+      node.childForFieldName("object")?.text === "module" &&
+      node.childForFieldName("property")?.text === "exports"
+    );
+  }
+  return false;
 }
 
 // ============================================================================

@@ -324,9 +324,55 @@
   )
 )
 
+; IIFEs whose callable is a traditional function expression
+(call_expression
+  function: (parenthesized_expression
+    (function_expression !name) @definition.anonymous_function
+  )
+)
+
 ; Traditional function expressions in object properties
 (pair
   value: (function_expression) @definition.anonymous_function
+)
+
+; Callables returned from a function. The returned callable owns its
+; parameters, and no named definition claims it (a named function expression
+; is captured above and keeps its own name).
+(return_statement
+  (function_expression !name) @definition.anonymous_function
+)
+
+(return_statement
+  (arrow_function) @definition.anonymous_function
+)
+
+; Whole-module CommonJS export of an inline callable:
+; module.exports = function (p) {} / (p) => {}.
+(assignment_expression
+  left: (member_expression
+    object: (identifier) @_module_obj
+    property: (property_identifier) @_exports_prop)
+  right: (function_expression !name) @definition.anonymous_function
+  (#eq? @_module_obj "module")
+  (#eq? @_exports_prop "exports")
+)
+
+(assignment_expression
+  left: (member_expression
+    object: (identifier) @_module_obj_arrow
+    property: (property_identifier) @_exports_prop_arrow)
+  right: (arrow_function) @definition.anonymous_function
+  (#eq? @_module_obj_arrow "module")
+  (#eq? @_exports_prop_arrow "exports")
+)
+
+; Object-literal shorthand methods: { m(p) {} }. Anchored to (object) so class
+; bodies keep their method handling.
+(object
+  (method_definition
+    name: (property_identifier) @definition.function
+  )
 )
 
 ; Variable declarations with assignments (tracking only — definition created by generic pattern above)
@@ -352,13 +398,24 @@
   )
 ) @assignment.constructor.qualified
 
-; Destructuring
-(variable_declarator
-  name: (object_pattern) @definition.variable
+; Destructuring binds one name per identifier in the pattern; capturing the
+; whole pattern would bind a single name spelled "{ c }".
+(object_pattern
+  (shorthand_property_identifier_pattern) @definition.variable
 )
 
-(variable_declarator
-  name: (array_pattern) @definition.variable
+(object_pattern
+  (pair_pattern
+    value: (identifier) @definition.variable
+  )
+)
+
+(array_pattern
+  (identifier) @definition.variable
+)
+
+(rest_pattern
+  (identifier) @definition.variable
 )
 
 ; Class definitions with inheritance and implements
@@ -480,11 +537,18 @@
 )
 
 ; Catch clause parameter
+; A catch binding is scoped to the catch block, not a parameter of any
+; callable — it owns no signature slot.
 (catch_clause
-  parameter: (identifier) @definition.parameter
+  parameter: (identifier) @definition.variable
 )
 
-; Loop variables
+; Loop variables. `for (const a of xs)` puts the identifier directly under
+; `left`; the nested form covers `for (const { a } of xs)`.
+(for_in_statement
+  left: (identifier) @definition.variable
+)
+
 (for_in_statement
   left: (_
     (identifier) @definition.variable
