@@ -31,8 +31,7 @@ export function resolve_module_path_rust(
   } else if (parts[0] === "self") {
     return resolve_from_current(parts.slice(1), importing_file, root_folder);
   } else {
-    const current_dir = path.dirname(importing_file);
-    const resolved = resolve_rust_module_path(current_dir, parts, root_folder);
+    const resolved = resolve_local_module(parts, importing_file, root_folder);
 
     if (has_file_in_tree(resolved, root_folder)) {
       return resolved;
@@ -42,13 +41,70 @@ export function resolve_module_path_rust(
   }
 }
 
+/**
+ * The directory a module file's children live in. A `mod.rs` and a crate root
+ * own the directory they sit in; any other module file owns the sibling
+ * directory named after it (`src/deep.rs` owns `src/deep/`), which is how a
+ * 2018-style crate lays its tree out.
+ */
+function module_child_dir(module_file: FilePath): string {
+  const dir = path.dirname(module_file);
+  const base = path.basename(module_file);
+  if (base === "mod.rs" || base === "lib.rs" || base === "main.rs") {
+    return dir;
+  }
+  return path.join(dir, base.replace(/\.rs$/, ""));
+}
+
+/**
+ * Resolve a module path against the importing file's own module, preferring
+ * its 2018-style child directory and falling back to its own directory so a
+ * crate that keeps siblings flat still resolves.
+ */
+function resolve_local_module(
+  module_parts: string[],
+  base_file: FilePath,
+  root_folder: FileSystemFolder
+): FilePath {
+  const child_dir = module_child_dir(base_file);
+  const from_child = resolve_rust_module_path(child_dir, module_parts, root_folder);
+  if (has_file_in_tree(from_child, root_folder)) {
+    return from_child;
+  }
+  return resolve_rust_module_path(
+    path.dirname(base_file),
+    module_parts,
+    root_folder
+  );
+}
+
 function resolve_from_crate_root(
   module_parts: string[],
   base_file: FilePath,
   root_folder: FileSystemFolder
 ): FilePath {
   const crate_root = find_rust_crate_root(base_file, root_folder);
+  // `use crate::S` names an item of the crate root itself, not a module under
+  // it; resolve to the root file so the item is looked up in its exports.
+  if (module_parts.length === 0) {
+    return crate_root_file(crate_root, root_folder);
+  }
   return resolve_rust_module_path(crate_root, module_parts, root_folder);
+}
+
+/**
+ * The crate root's own file. `lib.rs` wins over `main.rs` for a crate that has
+ * both, matching the library-first convention.
+ */
+function crate_root_file(
+  crate_root_dir: string,
+  root_folder: FileSystemFolder
+): FilePath {
+  const lib = path.join(crate_root_dir, "lib.rs") as FilePath;
+  if (has_file_in_tree(lib, root_folder)) {
+    return lib;
+  }
+  return path.join(crate_root_dir, "main.rs") as FilePath;
 }
 
 /**
@@ -76,7 +132,28 @@ function resolve_from_parent(
     remaining = remaining.slice(1);
   }
 
+  // `use super::Item` names an item of the parent module itself; resolve to
+  // that module's own file rather than a module beneath it.
+  if (remaining.length === 0) {
+    return parent_module_file(parent_dir, root_folder);
+  }
+
   return resolve_rust_module_path(parent_dir, remaining, root_folder);
+}
+
+/**
+ * The file backing the module that owns `module_dir`: its `mod.rs`, or the
+ * sibling `<module_dir>.rs` a 2018-style crate uses instead.
+ */
+function parent_module_file(
+  module_dir: string,
+  root_folder: FileSystemFolder
+): FilePath {
+  const mod_rs = path.join(module_dir, "mod.rs") as FilePath;
+  if (has_file_in_tree(mod_rs, root_folder)) {
+    return mod_rs;
+  }
+  return `${module_dir}.rs` as FilePath;
 }
 
 function resolve_from_current(
@@ -84,8 +161,11 @@ function resolve_from_current(
   base_file: FilePath,
   root_folder: FileSystemFolder
 ): FilePath {
-  const current_dir = path.dirname(base_file);
-  return resolve_rust_module_path(current_dir, module_parts, root_folder);
+  // `use self::Item` names an item of this module.
+  if (module_parts.length === 0) {
+    return base_file;
+  }
+  return resolve_local_module(module_parts, base_file, root_folder);
 }
 
 /**

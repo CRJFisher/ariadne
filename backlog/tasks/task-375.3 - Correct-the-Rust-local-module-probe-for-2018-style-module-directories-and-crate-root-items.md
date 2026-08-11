@@ -1,7 +1,7 @@
 ---
 id: TASK-375.3
 title: "Correct the Rust local module probe for 2018-style module directories and crate-root items"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-07-29 09:37"
 labels:
@@ -59,3 +59,23 @@ This task and sub-task 1.4 rewrite the same ten-line `else` arm of `resolve_modu
 - [ ] #8 This task is merged before sub-task 1.4.
 
 <!-- AC:END -->
+
+## Implementation Notes
+
+## High-level summary
+
+The Rust module probe now models where a module keeps its children. A `mod.rs` and a crate root own the directory they sit in; every other module file owns the sibling directory named after it, so `src/deep.rs` owns `src/deep/`. Both the bare-path branch and the `self::` branch resolve against that directory, with a fallback to the file's own directory so a crate that keeps its modules flat still resolves. The three rows that were already correct — `config` from `src/lib.rs`, `crate::deep::inner` from `src/lib.rs`, `super::config` from `src/deep/inner.rs` — take the same paths they did before.
+
+An anchor with nothing after it names an item of the anchored module itself, not a module beneath it. `use crate::S` resolves to the crate root's own file (`lib.rs`, else `main.rs`) so `S` is looked up in its exports; `use self::Item` resolves to the importing file; `use super::Item` resolves to the parent module's file, `mod.rs` or the 2018-style sibling. Previously each of these joined an empty segment list and produced a path like `src/.rs`, which matched nothing.
+
+No crate index is introduced here: an unmatched leading segment is still returned opaquely, which is what keeps a genuinely external crate from fabricating an edge. That lookup belongs to TASK-375.4, and must sit after this probe in the same arm.
+
+Front door for readers: `import_resolution.rust.ts` — `module_child_dir` states the ownership rule, `resolve_local_module` applies it, and the three anchor branches each handle their empty-path case.
+
+### Deferred and recorded
+
+This task's AC #6 lists path-qualified *call* rows (`crate::a::b::f()`, `self::x::f()`, `super::x::f()`). Those exercise the call-site resolver, not the module-path function: a `mod x;` declaration carries no link to its file, so the qualifier is not bound in scope and the call fails at name resolution regardless of how well the path resolves. That link and the unified path resolver are TASK-375.5, which is where those integration rows land. What this task owns — the module-path function itself — is pinned directly.
+
+### Verification
+
+`packages/core` green; typecheck and lint clean. `import_resolution.rust.test.ts` asserts `resolve_module_path_rust` for every row of the measured table plus the three empty-anchor cases, the flat-layout fallback and the opaque external-crate return. Two Project-level rows pin the crate-root fix end to end: `use crate::S;` + `S::assoc()` resolves alongside the sibling control `use crate::inner::T;`, and the braced `use crate::{Item}` group resolves — the shape the `scope_construction` epic handed off.

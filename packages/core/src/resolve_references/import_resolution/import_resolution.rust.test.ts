@@ -448,4 +448,125 @@ describe("resolve_module_path_rust", () => {
       expect(result).toBe("/project/src/a/b/c.rs");
     });
   });
+
+  describe("2018-style module directories and crate-root items", () => {
+    // The measured table: every row, not only the wrong ones.
+    const tree = create_file_tree("/project", [
+      "Cargo.toml",
+      "src/lib.rs",
+      "src/config.rs",
+      "src/other.rs",
+      "src/deep.rs",
+      "src/deep/inner.rs",
+      "src/deep/config.rs",
+    ]);
+
+    it("resolves a bare module from the crate root", () => {
+      expect(
+        resolve_module_path_rust("config", "/project/src/lib.rs" as FilePath, tree)
+      ).toBe("/project/src/config.rs");
+    });
+
+    it("resolves a crate-anchored nested module from the crate root", () => {
+      expect(
+        resolve_module_path_rust(
+          "crate::deep::inner",
+          "/project/src/lib.rs" as FilePath,
+          tree
+        )
+      ).toBe("/project/src/deep/inner.rs");
+    });
+
+    it("resolves a super-anchored sibling from a nested module", () => {
+      expect(
+        resolve_module_path_rust(
+          "super::config",
+          "/project/src/deep/inner.rs" as FilePath,
+          tree
+        )
+      ).toBe("/project/src/deep/config.rs");
+    });
+
+    it("resolves a bare child of a 2018-style module file into its own directory", () => {
+      expect(
+        resolve_module_path_rust("inner", "/project/src/deep.rs" as FilePath, tree)
+      ).toBe("/project/src/deep/inner.rs");
+    });
+
+    it("resolves a self-anchored child of a 2018-style module file into its own directory", () => {
+      expect(
+        resolve_module_path_rust(
+          "self::inner",
+          "/project/src/deep.rs" as FilePath,
+          tree
+        )
+      ).toBe("/project/src/deep/inner.rs");
+    });
+
+    it("resolves a crate-root item to the crate root file, never to a dotfile path", () => {
+      const result = resolve_module_path_rust(
+        "crate",
+        "/project/src/other.rs" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/lib.rs");
+      expect(result.endsWith("/.rs")).toBe(false);
+    });
+
+    it("resolves a self-anchored item to the importing module's own file", () => {
+      expect(
+        resolve_module_path_rust("self", "/project/src/deep.rs" as FilePath, tree)
+      ).toBe("/project/src/deep.rs");
+    });
+
+    it("resolves a super-anchored item to the parent module's own file", () => {
+      expect(
+        resolve_module_path_rust(
+          "super",
+          "/project/src/deep/inner.rs" as FilePath,
+          tree
+        )
+      ).toBe("/project/src/deep.rs");
+    });
+
+    it("resolves a super-anchored item to the parent's mod.rs when that is the layout", () => {
+      const mod_tree = create_file_tree("/project", [
+        "src/lib.rs",
+        "src/deep/mod.rs",
+        "src/deep/inner.rs",
+      ]);
+      expect(
+        resolve_module_path_rust(
+          "super",
+          "/project/src/deep/inner.rs" as FilePath,
+          mod_tree
+        )
+      ).toBe("/project/src/deep/mod.rs");
+    });
+
+    it("keeps a flat sibling layout resolving when no 2018-style directory exists", () => {
+      const flat_tree = create_file_tree("/project", [
+        "src/lib.rs",
+        "src/deep.rs",
+        "src/sibling.rs",
+      ]);
+      expect(
+        resolve_module_path_rust(
+          "self::sibling",
+          "/project/src/deep.rs" as FilePath,
+          flat_tree
+        )
+      ).toBe("/project/src/sibling.rs");
+    });
+
+    it("leaves an unmatched leading segment opaque", () => {
+      expect(
+        resolve_module_path_rust(
+          "serde::de",
+          "/project/src/deep.rs" as FilePath,
+          tree
+        )
+      ).toBe("serde::de");
+    });
+  });
 });

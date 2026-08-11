@@ -836,6 +836,81 @@ pub fn run4() -> i32 {
       ).toBeNull();
     });
 
+    it("resolves a crate-root item imported with use crate::Item", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "src/lib.rs": `pub mod other;
+pub mod inner;
+
+pub struct S;
+
+impl S {
+    pub fn assoc() -> i32 {
+        4
+    }
+}
+`,
+        "src/inner.rs": `pub struct T;
+
+impl T {
+    pub fn make() -> i32 {
+        5
+    }
+}
+`,
+        "src/other.rs": `use crate::S;
+use crate::inner::T;
+
+pub fn run() -> i32 {
+    S::assoc() + T::make()
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      // The crate-root item and the sibling control both resolve.
+      expect_rust_call_resolves_to(
+        project,
+        file_paths["src/other.rs"],
+        "assoc",
+        file_paths["src/lib.rs"]
+      );
+      expect_rust_call_resolves_to(
+        project,
+        file_paths["src/other.rs"],
+        "make",
+        file_paths["src/inner.rs"]
+      );
+    });
+
+    it("resolves a braced crate-root group import", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "src/lib.rs": `pub mod path;
+
+pub struct Item;
+
+impl Item {
+    pub fn build() -> i32 {
+        6
+    }
+}
+`,
+        "src/path.rs": `use crate::{Item};
+
+pub fn run() -> i32 {
+    Item::build()
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      expect_rust_call_resolves_to(
+        project,
+        file_paths["src/path.rs"],
+        "build",
+        file_paths["src/lib.rs"]
+      );
+    });
+
     it("binds a name reached through a pub use glob re-export", async () => {
       const { project, temp_dir, file_paths } = await setup_project({
         "src/lib.rs": `pub mod inner;
