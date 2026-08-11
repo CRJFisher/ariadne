@@ -9,6 +9,7 @@ import { DefinitionRegistry } from "../registries/definition";
 import { resolve_namespace_export, resolve_named_import } from "../export_chain_lookup";
 import { resolve_named_member } from "./collection_dispatch";
 import type { ReceiverResolutionContext } from "./receiver_resolution";
+import { resolve_namespace_scope_member } from "./receiver_resolution";
 
 /**
  * Look up a method on a resolved receiver type, dispatching on receiver kind
@@ -53,6 +54,24 @@ export function resolve_method_on_type(
       });
     }
     return ok([sym]);
+  }
+
+  // A TypeScript `namespace` block holds its members in its own body scope,
+  // which neither the type registry nor the member index covers.
+  if (receiver_def?.kind === "namespace") {
+    const member = resolve_namespace_scope_member(
+      receiver_def,
+      method_name,
+      context
+    );
+    if (member) {
+      return ok([member]);
+    }
+    return err({
+      stage: "method_lookup",
+      reason: "method_not_on_type",
+      partial_info: { resolved_receiver_type: receiver_type },
+    });
   }
 
   // A named/default import is a stand-in for the class it points at; follow it

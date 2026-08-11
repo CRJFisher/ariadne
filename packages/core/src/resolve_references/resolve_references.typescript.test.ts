@@ -911,6 +911,122 @@ export function tryIt(): number {
     expect(call!.resolution_failure?.reason).toEqual("name_not_in_scope");
   });
 
+  it("resolves a namespace member reached directly, with no barrel in the chain", async () => {
+    // The FindAllReferences.Core.getReferencesForFileName shape.
+    const { project, temp_dir, file_paths } = await setup_project({
+      "src/findAllReferences.ts": `export namespace FindAllReferences {
+  export namespace Core {
+    export function getReferencesForFileName(fileName: string): number {
+      return fileName.length;
+    }
+  }
+}
+`,
+      "src/consumer.ts": `import { FindAllReferences } from "./findAllReferences";
+
+export function drive(): number {
+  return FindAllReferences.Core.getReferencesForFileName("x");
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect_call_resolves_to(
+      project,
+      file_paths["src/consumer.ts"],
+      "getReferencesForFileName",
+      file_paths["src/findAllReferences.ts"]
+    );
+  });
+
+  it("resolves a namespace member through a barrel's namespace object", async () => {
+    // import { formatting } from './_namespaces/ts.js' where the barrel does
+    // `import * as formatting …; export { formatting }` and the leaf exports *.
+    const { project, temp_dir, file_paths } = await setup_project({
+      "src/services/formatting/rules.ts": `export function formatOnSemicolon(pos: number): number {
+  return pos;
+}
+`,
+      "src/services/_namespaces/ts.formatting.ts": `export * from "../formatting/rules";
+`,
+      "src/services/_namespaces/ts.ts": `import * as formatting from "./ts.formatting";
+export { formatting };
+`,
+      "src/services/formatting.ts": `import { formatting } from "./_namespaces/ts";
+
+export function applyFormatting(): number {
+  return formatting.formatOnSemicolon(1);
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect_call_resolves_to(
+      project,
+      file_paths["src/services/formatting.ts"],
+      "formatOnSemicolon",
+      file_paths["src/services/formatting/rules.ts"]
+    );
+  });
+
+  it("resolves a namespace member through a barrel whose leaf re-exports by name", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "src/services/formatting/rules.ts": `export function formatOnSemicolon(pos: number): number {
+  return pos;
+}
+`,
+      "src/services/_namespaces/ts.formatting.ts": `export { formatOnSemicolon } from "../formatting/rules";
+`,
+      "src/services/_namespaces/ts.ts": `import * as formatting from "./ts.formatting";
+export { formatting };
+`,
+      "src/services/formatting.ts": `import { formatting } from "./_namespaces/ts";
+
+export function applyFormatting(): number {
+  return formatting.formatOnSemicolon(1);
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect_call_resolves_to(
+      project,
+      file_paths["src/services/formatting.ts"],
+      "formatOnSemicolon",
+      file_paths["src/services/formatting/rules.ts"]
+    );
+  });
+
+  it("resolves a member through a namespace import of a chained barrel", async () => {
+    // ts.JsTyping.discoverTypings(): a namespace import, a namespace-object hop
+    // and a wildcard hop.
+    const { project, temp_dir, file_paths } = await setup_project({
+      "src/jsTyping/jsTyping.ts": `export function discoverTypings(fileNames: string[]): number {
+  return fileNames.length;
+}
+`,
+      "src/jsTyping/_namespaces/ts.JsTyping.ts": `export * from "../jsTyping";
+`,
+      "src/jsTyping/_namespaces/ts.ts": `import * as JsTyping from "./ts.JsTyping";
+export { JsTyping };
+`,
+      "src/typingsInstallerCore/typingsInstaller.ts": `import * as ts from "../jsTyping/_namespaces/ts";
+
+export function installTypings(fileNames: string[]): number {
+  return ts.JsTyping.discoverTypings(fileNames);
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect_call_resolves_to(
+      project,
+      file_paths["src/typingsInstallerCore/typingsInstaller.ts"],
+      "discoverTypings",
+      file_paths["src/jsTyping/jsTyping.ts"]
+    );
+  });
+
   it("resolves a two-statement named re-export through to the origin definition", async () => {
     const { project, temp_dir, file_paths } = await setup_project({
       "src/leaf.ts": `export function origin_fn(): number {

@@ -30,10 +30,12 @@ import type {
   SelfReferenceKeyword,
   ChainCallArguments,
   MethodDefinition,
+  AnyDefinition,
   Result,
   ResolutionFailure,
 } from "@ariadnejs/types";
 import { err, ok } from "@ariadnejs/types";
+import { resolve_namespace_export } from "../export_chain_lookup";
 import { ScopeRegistry } from "../registries/scope";
 import { DefinitionRegistry } from "../registries/definition";
 import type { TypeRegistry } from "../registries/type";
@@ -265,7 +267,10 @@ function resolve_identifier_base(
       def.kind === "interface" ||
       def.kind === "enum" ||
       def.kind === "type" ||
-      def.kind === "type_alias"
+      def.kind === "type_alias" ||
+      // A namespace is its own receiver: `Core.f()` walks into its body scope
+      // rather than through a type.
+      def.kind === "namespace"
     ) {
       type_id = symbol_id;
     } else if (
@@ -288,6 +293,115 @@ function resolve_identifier_base(
   }
 
   return ok(type_id);
+}
+
+/**
+ * Resolve `property_name` against a hop that is a namespace rather than a type:
+ * a TypeScript `namespace` block, whose members live in its own body scope, or
+ * a namespace import, whose members are the exports of the module it names.
+ * Returns null for any other hop kind, leaving the caller's failure intact.
+ */
+function resolve_namespace_member(
+  current: SymbolId,
+  property_name: SymbolName,
+  context: ReceiverResolutionContext
+): SymbolId | null {
+  const def = context.definitions.get(dereference_named_import(current, context));
+
+  if (def?.kind === "namespace") {
+    return resolve_namespace_scope_member(def, property_name, context);
+  }
+
+  if (def?.kind === "import" && def.import_kind === "namespace") {
+    const source_file = context.imports.get_resolved_import_path(current);
+    if (!source_file) {
+      return null;
+    }
+    return resolve_namespace_export(
+      source_file,
+      property_name,
+      context.exports,
+      context.languages,
+      context.root_folder
+    );
+  }
+
+  return null;
+}
+
+/**
+ * Follow a named or default import to the definition it names, so a hop
+ * written as `import { Ns } from …; Ns.Inner.f()` descends into the namespace
+ * itself rather than stopping at the import record. A namespace import is left
+ * alone: it denotes the module, which the caller resolves against its exports.
+ */
+function dereference_named_import(
+  symbol_id: SymbolId,
+  context: ReceiverResolutionContext
+): SymbolId {
+  let current = symbol_id;
+  // Bounded: an import chain longer than this is a cycle, not a real surface.
+  for (let hop = 0; hop < 8; hop++) {
+    const def = context.definitions.get(current);
+    if (def?.kind !== "import" || def.import_kind === "namespace") {
+      return current;
+    }
+    const source_file = context.imports.get_resolved_import_path(current);
+    if (!source_file) {
+      return current;
+    }
+    const imported_name = (def.original_name ?? def.name) as SymbolName;
+    const resolved = context.exports.resolve_export_chain(
+      source_file,
+      imported_name,
+      def.import_kind === "default" ? "default" : "named",
+      context.languages,
+      context.root_folder
+    );
+    if (!resolved || resolved === current) {
+      return current;
+    }
+    current = resolved;
+  }
+  return current;
+}
+
+/**
+ * Look a name up in a `namespace` block's own body scope — the members neither
+ * the type registry nor the member index records. Shared with the terminal
+ * lookup in method_lookup, so a chain hop and a call target descend alike.
+ */
+export function resolve_namespace_scope_member(
+  namespace_def: AnyDefinition,
+  member_name: SymbolName,
+  context: ReceiverResolutionContext
+): SymbolId | null {
+  const body_scope_id = find_namespace_body_scope(namespace_def, context);
+  if (!body_scope_id) {
+    return null;
+  }
+  return (
+    context.definitions.get_scope_definitions(body_scope_id).get(member_name) ?? null
+  );
+}
+
+/**
+ * The scope a namespace declaration opens: the declaring scope's module-typed
+ * child carrying the same name. A `@scope.namespace` capture is stored with
+ * ScopeType "module" and keeps the namespace's declared name.
+ */
+function find_namespace_body_scope(
+  namespace_def: AnyDefinition,
+  context: ReceiverResolutionContext
+): ScopeId | null {
+  const declaring_scope = context.scopes.get_scope(namespace_def.defining_scope_id);
+  for (const child_id of declaring_scope?.child_ids ?? []) {
+    const child = context.scopes.get_scope(child_id);
+    if (child?.type === "module" && child.name === namespace_def.name) {
+      return child_id;
+    }
+  }
+  return null;
 }
 
 /**
@@ -316,6 +430,13 @@ function walk_property_chain(
       }
     }
 
+    // A namespace hop resolves through neither: a TypeScript `namespace` block
+    // holds its members in its own scope, and a namespace import holds them in
+    // the module it points at.
+    if (!member_symbol) {
+      member_symbol = resolve_namespace_member(current_type, property_name, context);
+    }
+
     if (!member_symbol) {
       return err({
         stage: "receiver_resolution",
@@ -334,7 +455,11 @@ function walk_property_chain(
           member_def.kind === "interface" ||
           member_def.kind === "enum" ||
           member_def.kind === "type" ||
-          member_def.kind === "type_alias"
+          member_def.kind === "type_alias" ||
+          // A namespace or a namespace import is its own receiver for the next
+          // hop, which descends into it the same way this one did.
+          member_def.kind === "namespace" ||
+          member_def.kind === "import"
         ) {
           member_type = member_symbol;
         } else if (

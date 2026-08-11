@@ -1,7 +1,7 @@
 ---
 id: TASK-375.2
 title: "Descend into a namespace definition when walking a property chain"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-07-29 09:37"
 labels:
@@ -48,3 +48,19 @@ The second half of this leaf's evidence — a re-exported namespace import losin
 - [ ] #6 The existing `resolve_references.*.test.ts` namespace-import suites stay green and no hop that previously resolved through `get_type_member` / `get_member_index()` changes target.
 
 <!-- AC:END -->
+
+## Implementation Notes
+
+## High-level summary
+
+A property chain can now cross a namespace. `walk_property_chain` resolved each hop through the type registry and the member index; a TypeScript `namespace` block appears in neither, because its members live in its own body scope, and a namespace *import* appears in neither either, because its members are the exports of the module it names. Both hops now resolve, and both are tried only where the existing two attempts miss, so no hop that previously resolved changes target.
+
+Three pieces make the descent whole. A namespace is its own receiver, so `resolve_identifier_base` returns it as its type rather than failing with `receiver_type_unknown`. A hop that lands on a namespace or a namespace import descends into it, and a hop that lands on a named import is first dereferenced to what it names — the shape `import { FindAllReferences } from …; FindAllReferences.Core.f()` needs both. A namespace or import member is carried forward as the next hop's receiver, so chains of any depth walk. The terminal call resolves the same way: `method_lookup` gained the matching arm, sharing one helper with the chain walk so a hop and a call target descend alike.
+
+A namespace's body scope is found by name — a `@scope.namespace` capture is stored with ScopeType `module` and keeps the declared name — rather than by comparing locations, which the boundary extractor is free to narrow.
+
+Front door for readers: `receiver_resolution.ts` owns the descent (`resolve_namespace_member`, `resolve_namespace_scope_member`, `dereference_named_import`); `method_lookup.ts` calls the same helper for the terminal.
+
+### Verification
+
+`packages/core` 3609/3609 green; typecheck and lint clean. Four integration tests pin the evidence shapes individually, each asserting one resolution and the terminal definition's identity: a nested `export namespace` reached directly with no barrel; a barrel's namespace object over an `export *` leaf; the same over a named leaf re-export; and `ts.JsTyping.discoverTypings()` across a namespace import, a namespace-object hop and a wildcard hop. The existing `resolve_references.*.test.ts` namespace-import suites stay green.
