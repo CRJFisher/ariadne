@@ -2434,13 +2434,21 @@ const names = items.map(({id, name}) => name);`;
       ]);
     });
 
-    it("indexes an object-literal value-position callable", () => {
+    it("indexes an object-literal member value and leaves a bare name to the identifier read", () => {
+      // A bare identifier already mints a variable read that indirect
+      // reachability resolves, so capturing it again as a callable value adds
+      // a second row for one reachability fact.
       expect(
         callable_values("register({ handler: user.list, name: makeName });")
       ).toEqual([
         { name: "list" as SymbolName, property_chain: ["user", "list"] },
-        { name: "makeName" as SymbolName, property_chain: ["makeName"] },
       ]);
+    });
+
+    it("mints no callable value for an ungrounded member chain", () => {
+      // `getHelper().handler` leaves only `handler`, which would resolve
+      // lexically against an unrelated function of that name.
+      expect(callable_values("register(getHelper().handler);")).toEqual([]);
     });
 
     it("indexes a named function expression argument as a callable value at its own name", () => {

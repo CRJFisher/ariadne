@@ -2802,7 +2802,41 @@ class Factory:
         box.methods.map((m) => ({ name: m.name, accessor_kind: m.accessor_kind }))
       ).toEqual([
         { name: "data", accessor_kind: "getter" },
-        { name: "data", accessor_kind: "setter" },
+        { name: "data", accessor_kind: "deleter" },
+      ]);
+    });
+
+    it("records the property-descriptor decorator family as getters", () => {
+      const code = [
+        "class Box:",
+        "    @functools.cached_property",
+        "    def cached(self):",
+        "        return 1",
+        "",
+        "    @util.memoized_property",
+        "    def memoized(self):",
+        "        return 2",
+        "",
+        "    @cache_readonly",
+        "    def readonly(self):",
+        "        return 3",
+        "",
+        "    @lru_cache(maxsize=1)",
+        "    def still_called(self):",
+        "        return 4",
+      ].join("\n");
+      const tree = parser.parse(code);
+      const parsed = create_parsed_file(code, "test.py" as FilePath, tree, "python");
+      const index = build_index_single_file(parsed, tree, "python");
+      const box = Array.from(index.classes.values())[0]!;
+      expect(
+        box.methods.map((m) => ({ name: m.name, accessor_kind: m.accessor_kind }))
+      ).toEqual([
+        { name: "cached", accessor_kind: "getter" },
+        { name: "memoized", accessor_kind: "getter" },
+        { name: "readonly", accessor_kind: "getter" },
+        // A memoizing decorator that keeps call syntax is not an accessor.
+        { name: "still_called", accessor_kind: undefined },
       ]);
     });
   });

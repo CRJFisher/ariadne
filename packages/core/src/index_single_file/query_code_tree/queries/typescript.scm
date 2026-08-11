@@ -765,7 +765,7 @@
 )
 
 (pair
-  value: [(identifier) (member_expression)] @reference.callable_value
+  value: (member_expression) @reference.callable_value
 )
 
 (arguments

@@ -115,10 +115,12 @@ export interface MethodDefinition extends Definition {
   readonly async?: boolean;
   readonly body_scope_id?: ScopeId; // The scope ID of this method's body - undefined in interfaces
   readonly access_modifier?: AccessModifier;
-  // Set for class accessors (`get x()` / `set x()`); absent for ordinary methods.
-  // A getter is invoked by a bare property read, so call resolution consults this
-  // to turn `obj.x` reads into call edges to the getter.
-  readonly accessor_kind?: "getter" | "setter";
+  // Set for class accessors (`get x()` / `set x()`, `@property` / `@x.setter` /
+  // `@x.deleter`); absent for ordinary methods. A getter is invoked by a bare
+  // property read, so call resolution consults this to turn `obj.x` reads into
+  // call edges to the getter, and only a getter may hold the member slot for
+  // its name.
+  readonly accessor_kind?: "getter" | "setter" | "deleter";
 }
 
 export interface ConstructorDefinition extends Definition {

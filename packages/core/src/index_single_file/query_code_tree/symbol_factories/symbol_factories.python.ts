@@ -695,26 +695,38 @@ export function determine_method_type(node: SyntaxNode): {
   return {};
 }
 
+/**
+ * Decorators whose descriptor `__get__` runs on a bare attribute read, making
+ * the decorated method the getter for its name: the builtin `property`,
+ * `functools`/Django `cached_property`, pandas' `cache_readonly`, sqlalchemy's
+ * `memoized_property`, and class-level `classproperty`. A module prefix
+ * (`functools.cached_property`) is part of the decorator name and tolerated.
+ *
+ * Memoizing decorators that keep call syntax (`cache`, `lru_cache`) are not
+ * here — their methods are still invoked with parentheses.
+ */
+export const PROPERTY_DESCRIPTOR_DECORATORS: readonly string[] = [
+  "property",
+  "cached_property",
+  "cache_readonly",
+  "classproperty",
+  "memoized_property",
+];
+
 export function determine_accessor_kind(
   node: SyntaxNode
-): "getter" | "setter" | undefined {
-  const decorators = extract_decorators(node);
+): "getter" | "setter" | "deleter" | undefined {
+  for (const decorator of extract_decorators(node)) {
+    // `@value.setter` / `@value.deleter` / `@value.getter` name the accessor
+    // they define on an existing property.
+    if (decorator.endsWith(".setter")) return "setter";
+    if (decorator.endsWith(".deleter")) return "deleter";
+    if (decorator.endsWith(".getter")) return "getter";
 
-  if (
-    decorators.includes("property" as SymbolName) ||
-    decorators.some((name) => name.endsWith(".getter"))
-  ) {
-    return "getter";
-  }
-  // A deleter is reported as "setter": both are non-getter accessors that must
-  // never claim the member slot a getter holds, and no consumer distinguishes
-  // the two.
-  if (
-    decorators.some(
-      (name) => name.endsWith(".setter") || name.endsWith(".deleter")
-    )
-  ) {
-    return "setter";
+    const trailing = decorator.split(".").pop();
+    if (trailing && PROPERTY_DESCRIPTOR_DECORATORS.includes(trailing)) {
+      return "getter";
+    }
   }
   return undefined;
 }

@@ -8,10 +8,8 @@ import {
 } from "@ariadnejs/types";
 import { is_ok } from "@ariadnejs/types";
 import {
-  create_function_call_reference,
   create_method_call_reference,
 } from "../../index_single_file/references/factories";
-import { resolve_function_call } from "./function_call";
 import { resolve_method_call } from "./method_call";
 import type { CallResolutionContext } from "./call_resolver";
 
@@ -87,10 +85,8 @@ function resolve_callable_value(
     return is_ok(method_result) ? method_result.value : [];
   }
 
-  const function_result = resolve_function_call(
-    create_function_call_reference(ref.name, ref.location, ref.scope_id),
-    context,
-    context.resolutions
-  );
-  return is_ok(function_result) ? function_result.value : [];
+  // A single-element chain that is not a definition's own name node carries no
+  // receiver to bind. Resolving it by name would reach any function sharing
+  // that name and silently mark it reachable.
+  return [];
 }

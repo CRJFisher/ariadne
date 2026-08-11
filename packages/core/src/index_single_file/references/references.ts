@@ -446,10 +446,19 @@ export class ReferenceBuilder {
       }
 
       case ReferenceKind.CALLABLE_VALUE: {
-        // Member form (`user.list`) carries its chain and receiver; a bare
-        // identifier or a named function expression's own name is a
-        // single-element chain resolved by name or exact location. The
-        // reference is named after the chain's terminal — the callable itself.
+        // Member form (`user.list`) carries its chain and receiver; a named
+        // function expression's own name is a single-element chain resolved by
+        // its exact location. The reference is named after the chain's
+        // terminal — the callable itself.
+        if (
+          is_member_node(capture.node) &&
+          !is_grounded_member_read(capture.node)
+        ) {
+          // `register(getHelper().handler)` leaves only `handler`, which would
+          // resolve lexically against an unrelated function of that name.
+          return this;
+        }
+
         const receiver_info = this.extractors
           ? this.extractors.extract_receiver_info(capture.node, this.file_path)
           : undefined;
