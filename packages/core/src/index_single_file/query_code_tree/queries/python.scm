@@ -55,11 +55,15 @@
   )
 )
 
-; Decorated method scopes (property getters, setters, staticmethod, classmethod)
+; Decorated method scopes (property getters, setters, staticmethod, classmethod),
+; excluding __init__ which is captured as a constructor scope
 (class_definition
   body: (block
     (decorated_definition
-      definition: (function_definition) @scope.method
+      definition: (function_definition
+        name: (identifier) @_scope_decorated_method_name
+        (#not-eq? @_scope_decorated_method_name "__init__")
+      ) @scope.method
     )
   )
 )

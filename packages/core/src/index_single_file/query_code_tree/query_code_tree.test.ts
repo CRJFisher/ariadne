@@ -267,6 +267,7 @@ arrow = lambda a: a + 1
 `;
       const names = unique_capture_names("python", Python, code);
       expect(names).toEqual([
+        "_scope_decorated_method_name",
         "_scope_method_name",
         "assignment.property",
         "assignment.variable",

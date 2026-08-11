@@ -2694,6 +2694,22 @@ class Factory:
       const boxed = Array.from(index.classes.values())[0]!;
       expect(boxed.constructors?.map((c) => c.name)).toEqual(["__init__"]);
     });
+
+    it("opens exactly one scope for a decorated __init__ so a nested block still nests", () => {
+      const code = [
+        "class Boxed:",
+        "    @log_calls",
+        "    def __init__(self, v):",
+        "        if v:",
+        "            self.v = v",
+      ].join("\n");
+      const tree = parser.parse(code);
+      const parsed = create_parsed_file(code, "test.py" as FilePath, tree, "python");
+      const index = build_index_single_file(parsed, tree, "python");
+      expect(
+        Array.from(index.scopes.values()).map((s) => s.type)
+      ).toEqual(["module", "class", "constructor", "block"]);
+    });
   });
 
   describe("Accessor kinds", () => {
