@@ -916,7 +916,10 @@
         "end_line": 15,
         "end_column": 15
       },
-      "scope_id": "function:<fixtures>/rust/code/structs/constructor_workflow.rs:14:11:21:5"
+      "scope_id": "function:<fixtures>/rust/code/structs/constructor_workflow.rs:14:11:21:5",
+      "path_prefix": [
+        "Product"
+      ]
     },
     {
       "kind": "type_reference",
@@ -1018,7 +1021,10 @@
         "end_line": 25,
         "end_column": 15
       },
-      "scope_id": "function:<fixtures>/rust/code/structs/constructor_workflow.rs:24:15:31:5"
+      "scope_id": "function:<fixtures>/rust/code/structs/constructor_workflow.rs:24:15:31:5",
+      "path_prefix": [
+        "Product"
+      ]
     },
     {
       "kind": "type_reference",
@@ -1041,7 +1047,7 @@
     },
     {
       "kind": "function_call",
-      "name": "String::from",
+      "name": "from",
       "location": {
         "file_path": "<fixtures>/rust/code/structs/constructor_workflow.rs",
         "start_line": 26,
@@ -1049,7 +1055,10 @@
         "end_line": 26,
         "end_column": 30
       },
-      "scope_id": "function:<fixtures>/rust/code/structs/constructor_workflow.rs:24:15:31:5"
+      "scope_id": "function:<fixtures>/rust/code/structs/constructor_workflow.rs:24:15:31:5",
+      "path_prefix": [
+        "String"
+      ]
     },
     {
       "kind": "variable_reference",
@@ -1079,7 +1088,7 @@
     },
     {
       "kind": "function_call",
-      "name": "String::from",
+      "name": "from",
       "location": {
         "file_path": "<fixtures>/rust/code/structs/constructor_workflow.rs",
         "start_line": 28,
@@ -1087,7 +1096,10 @@
         "end_line": 28,
         "end_column": 34
       },
-      "scope_id": "function:<fixtures>/rust/code/structs/constructor_workflow.rs:24:15:31:5"
+      "scope_id": "function:<fixtures>/rust/code/structs/constructor_workflow.rs:24:15:31:5",
+      "path_prefix": [
+        "String"
+      ]
     },
     {
       "kind": "variable_reference",
@@ -1576,23 +1588,26 @@
       "access_type": "read"
     },
     {
-      "kind": "function_call",
-      "name": "Product::new",
+      "kind": "constructor_call",
+      "name": "Product",
       "location": {
         "file_path": "<fixtures>/rust/code/structs/constructor_workflow.rs",
         "start_line": 68,
         "start_column": 23,
         "end_line": 68,
-        "end_column": 34
+        "end_column": 29
       },
       "scope_id": "function:<fixtures>/rust/code/structs/constructor_workflow.rs:66:8:87:1",
-      "potential_construct_target": {
+      "construct_target": {
         "file_path": "<fixtures>/rust/code/structs/constructor_workflow.rs",
         "start_line": 68,
         "start_column": 13,
         "end_line": 68,
         "end_column": 19
-      }
+      },
+      "path_prefix": [
+        "Product"
+      ]
     },
     {
       "kind": "variable_reference",
@@ -1622,7 +1637,7 @@
     },
     {
       "kind": "function_call",
-      "name": "String::from",
+      "name": "from",
       "location": {
         "file_path": "<fixtures>/rust/code/structs/constructor_workflow.rs",
         "start_line": 69,
@@ -1631,13 +1646,9 @@
         "end_column": 20
       },
       "scope_id": "function:<fixtures>/rust/code/structs/constructor_workflow.rs:66:8:87:1",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/rust/code/structs/constructor_workflow.rs",
-        "start_line": 68,
-        "start_column": 13,
-        "end_line": 68,
-        "end_column": 19
-      }
+      "path_prefix": [
+        "String"
+      ]
     },
     {
       "kind": "variable_reference",
@@ -1667,7 +1678,7 @@
     },
     {
       "kind": "function_call",
-      "name": "String::from",
+      "name": "from",
       "location": {
         "file_path": "<fixtures>/rust/code/structs/constructor_workflow.rs",
         "start_line": 71,
@@ -1676,13 +1687,9 @@
         "end_column": 20
       },
       "scope_id": "function:<fixtures>/rust/code/structs/constructor_workflow.rs:66:8:87:1",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/rust/code/structs/constructor_workflow.rs",
-        "start_line": 68,
-        "start_column": 13,
-        "end_line": 68,
-        "end_column": 19
-      }
+      "path_prefix": [
+        "String"
+      ]
     },
     {
       "kind": "variable_reference",
@@ -1745,7 +1752,14 @@
         "product",
         "get_name"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "potential_construct_target": {
+        "file_path": "<fixtures>/rust/code/structs/constructor_workflow.rs",
+        "start_line": 75,
+        "start_column": 9,
+        "end_line": 75,
+        "end_column": 20
+      }
     },
     {
       "kind": "variable_reference",
@@ -1821,7 +1835,14 @@
         "product",
         "get_price"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "potential_construct_target": {
+        "file_path": "<fixtures>/rust/code/structs/constructor_workflow.rs",
+        "start_line": 76,
+        "start_column": 9,
+        "end_line": 76,
+        "end_column": 22
+      }
     },
     {
       "kind": "variable_reference",
@@ -1894,10 +1915,18 @@
         "end_column": 55
       },
       "property_chain": [
-        "product.apply_discount(10.0)",
+        "product",
+        "apply_discount",
         "mark_out_of_stock"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "potential_construct_target": {
+        "file_path": "<fixtures>/rust/code/structs/constructor_workflow.rs",
+        "start_line": 79,
+        "start_column": 9,
+        "end_line": 79,
+        "end_column": 24
+      }
     },
     {
       "kind": "method_call",
@@ -1921,7 +1950,14 @@
         "product",
         "apply_discount"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "potential_construct_target": {
+        "file_path": "<fixtures>/rust/code/structs/constructor_workflow.rs",
+        "start_line": 79,
+        "start_column": 9,
+        "end_line": 79,
+        "end_column": 24
+      }
     },
     {
       "kind": "variable_reference",
@@ -1997,7 +2033,14 @@
         "product",
         "get_price"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "potential_construct_target": {
+        "file_path": "<fixtures>/rust/code/structs/constructor_workflow.rs",
+        "start_line": 80,
+        "start_column": 9,
+        "end_line": 80,
+        "end_column": 19
+      }
     },
     {
       "kind": "variable_reference",
@@ -2073,7 +2116,14 @@
         "product",
         "get_info"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "potential_construct_target": {
+        "file_path": "<fixtures>/rust/code/structs/constructor_workflow.rs",
+        "start_line": 81,
+        "start_column": 9,
+        "end_line": 81,
+        "end_column": 20
+      }
     },
     {
       "kind": "variable_reference",
@@ -2316,23 +2366,26 @@
       "access_type": "read"
     },
     {
-      "kind": "function_call",
-      "name": "Product::new",
+      "kind": "constructor_call",
+      "name": "Product",
       "location": {
         "file_path": "<fixtures>/rust/code/structs/constructor_workflow.rs",
         "start_line": 91,
         "start_column": 23,
         "end_line": 91,
-        "end_column": 34
+        "end_column": 29
       },
       "scope_id": "function:<fixtures>/rust/code/structs/constructor_workflow.rs:90:30:102:1",
-      "potential_construct_target": {
+      "construct_target": {
         "file_path": "<fixtures>/rust/code/structs/constructor_workflow.rs",
         "start_line": 91,
         "start_column": 13,
         "end_line": 91,
         "end_column": 19
-      }
+      },
+      "path_prefix": [
+        "Product"
+      ]
     },
     {
       "kind": "variable_reference",
@@ -2362,7 +2415,7 @@
     },
     {
       "kind": "function_call",
-      "name": "String::from",
+      "name": "from",
       "location": {
         "file_path": "<fixtures>/rust/code/structs/constructor_workflow.rs",
         "start_line": 92,
@@ -2371,13 +2424,9 @@
         "end_column": 20
       },
       "scope_id": "function:<fixtures>/rust/code/structs/constructor_workflow.rs:90:30:102:1",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/rust/code/structs/constructor_workflow.rs",
-        "start_line": 91,
-        "start_column": 13,
-        "end_line": 91,
-        "end_column": 19
-      }
+      "path_prefix": [
+        "String"
+      ]
     },
     {
       "kind": "variable_reference",
@@ -2407,7 +2456,7 @@
     },
     {
       "kind": "function_call",
-      "name": "String::from",
+      "name": "from",
       "location": {
         "file_path": "<fixtures>/rust/code/structs/constructor_workflow.rs",
         "start_line": 94,
@@ -2416,13 +2465,9 @@
         "end_column": 20
       },
       "scope_id": "function:<fixtures>/rust/code/structs/constructor_workflow.rs:90:30:102:1",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/rust/code/structs/constructor_workflow.rs",
-        "start_line": 91,
-        "start_column": 13,
-        "end_line": 91,
-        "end_column": 19
-      }
+      "path_prefix": [
+        "String"
+      ]
     },
     {
       "kind": "variable_reference",
@@ -2485,7 +2530,14 @@
         "product",
         "get_name"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "potential_construct_target": {
+        "file_path": "<fixtures>/rust/code/structs/constructor_workflow.rs",
+        "start_line": 98,
+        "start_column": 9,
+        "end_line": 98,
+        "end_column": 13
+      }
     },
     {
       "kind": "variable_reference",
@@ -2548,7 +2600,7 @@
         "product",
         "apply_discount"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",

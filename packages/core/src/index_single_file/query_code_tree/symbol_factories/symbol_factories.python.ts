@@ -126,6 +126,60 @@ export function find_containing_class(
   return undefined;
 }
 
+/**
+ * Terminal name of a superclass entry, whatever shape it takes: `Base`,
+ * `mod.Base`, `Base[T]`, `mod.Base[T]`.
+ */
+function base_name_of(child: SyntaxNode): string | undefined {
+  if (child.type === "identifier") {
+    return child.text;
+  }
+  if (child.type === "attribute") {
+    return child.childForFieldName?.("attribute")?.text;
+  }
+  if (child.type === "subscript") {
+    const value = child.childForFieldName?.("value");
+    if (value) return base_name_of(value);
+  }
+  return undefined;
+}
+
+const ENUM_BASES = /^(Enum|IntEnum|Flag|IntFlag|StrEnum)$/;
+
+/**
+ * Discriminate a class_definition node by its own bases: an Enum subclass, a
+ * Protocol, or a plain class. Reads only the given node — never ancestors — so
+ * a plain class nested inside an Enum/Protocol body stays a plain class.
+ */
+export function classify_class_bases(
+  class_def: SyntaxNode | null | undefined
+): "enum" | "interface" | undefined {
+  if (class_def?.type !== "class_definition") return undefined;
+  const superclasses = class_def.childForFieldName?.("superclasses");
+  for (const child of superclasses?.children ?? []) {
+    const name = base_name_of(child);
+    if (!name) continue;
+    if (ENUM_BASES.test(name)) return "enum";
+    if (name === "Protocol") return "interface";
+  }
+  return undefined;
+}
+
+/**
+ * The class_definition that owns a capture — the nearest one, so a member of a
+ * class nested inside an Enum or Protocol body belongs to the inner class.
+ */
+export function find_owning_class_node(
+  capture: CaptureNode
+): SyntaxNode | undefined {
+  let node: SyntaxNode | null = capture.node;
+  while (node) {
+    if (node.type === "class_definition") return node;
+    node = node.parent;
+  }
+  return undefined;
+}
+
 export function find_containing_enum(
   capture: CaptureNode
 ): SymbolId | undefined {
@@ -134,28 +188,12 @@ export function find_containing_enum(
   // Traverse up until we find a class_definition
   while (node) {
     if (node.type === "class_definition") {
-      // Check if it inherits from Enum
-      const superclasses = node.childForFieldName?.("superclasses");
-      if (superclasses) {
-        const has_enum_base = superclasses.children?.some((child) => {
-          if (child.type === "identifier") {
-            return /^(Enum|IntEnum|Flag|IntFlag|StrEnum)$/.test(child.text);
-          } else if (child.type === "attribute") {
-            const attr = child.childForFieldName?.("attribute");
-            return (
-              attr && /^(Enum|IntEnum|Flag|IntFlag|StrEnum)$/.test(attr.text)
-            );
-          }
-          return false;
-        });
-
-        if (has_enum_base) {
-          const name_node = node.childForFieldName?.("name");
-          if (name_node) {
-            const file_path = capture.location.file_path;
-            const enum_name = name_node.text as SymbolName;
-            return enum_symbol(enum_name, node_to_location(name_node, file_path));
-          }
+      if (classify_class_bases(node) === "enum") {
+        const name_node = node.childForFieldName?.("name");
+        if (name_node) {
+          const file_path = capture.location.file_path;
+          const enum_name = name_node.text as SymbolName;
+          return enum_symbol(enum_name, node_to_location(name_node, file_path));
         }
       }
     }
@@ -176,29 +214,15 @@ export function find_containing_protocol(
   // Traverse up until we find a class_definition
   while (node) {
     if (node.type === "class_definition") {
-      // Check if it inherits from Protocol
-      const superclasses = node.childForFieldName?.("superclasses");
-      if (superclasses) {
-        const has_protocol_base = superclasses.children?.some((child) => {
-          if (child.type === "identifier") {
-            return child.text === "Protocol";
-          } else if (child.type === "attribute") {
-            const attr = child.childForFieldName?.("attribute");
-            return attr && attr.text === "Protocol";
-          }
-          return false;
-        });
-
-        if (has_protocol_base) {
-          const name_node = node.childForFieldName?.("name");
-          if (name_node) {
-            const file_path = capture.location.file_path;
-            const protocol_name = name_node.text as SymbolName;
-            return interface_symbol(
-              protocol_name,
-              node_to_location(name_node, file_path)
-            );
-          }
+      if (classify_class_bases(node) === "interface") {
+        const name_node = node.childForFieldName?.("name");
+        if (name_node) {
+          const file_path = capture.location.file_path;
+          const protocol_name = name_node.text as SymbolName;
+          return interface_symbol(
+            protocol_name,
+            node_to_location(name_node, file_path)
+          );
         }
       }
     }
@@ -255,24 +279,6 @@ export function find_containing_callable(capture: CaptureNode): SymbolId {
   return anonymous_function_symbol(capture.location);
 }
 
-function has_property_decorator(decorated_def: SyntaxNode): boolean {
-  for (let i = 0; i < decorated_def.childCount; i++) {
-    const child = decorated_def.child(i);
-    if (child === null) continue;
-    if (child.type === "decorator") {
-      // The decorator identifier is typically the second child (after "@")
-      for (let j = 0; j < child.childCount; j++) {
-        const dec_child = child.child(j);
-        if (dec_child === null) continue;
-        if (dec_child.type === "identifier" && dec_child.text === "property") {
-          return true;
-        }
-      }
-    }
-  }
-  return false;
-}
-
 export function find_decorator_target(
   capture: CaptureNode
 ): SymbolId | undefined {
@@ -307,11 +313,6 @@ export function find_decorator_target(
                 end_column: name_node.endPosition.column,
               };
               const sym_name = name_node.text as SymbolName;
-
-              // Check if decorated with @property
-              if (has_property_decorator(node)) {
-                return property_symbol(sym_name, location);
-              }
 
               return method_symbol(sym_name, location);
             } else {
@@ -642,21 +643,34 @@ export function is_async_function(node: SyntaxNode): boolean {
   );
 }
 
+/**
+ * Decorator names on a decorated definition, one entry per decorator: the bare
+ * name for `@property`, the dotted text for `@cython.cfunc` or `@data.setter`,
+ * and the callee's name for call-shaped decorators like `@lru_cache(1)`.
+ */
 function extract_decorators(node: SyntaxNode): SymbolName[] {
   const decorators: SymbolName[] = [];
 
-  // Check if parent is decorated_definition
   const parent = node.parent;
   if (parent && parent.type === "decorated_definition") {
     const decorator_nodes = parent.children.filter(
       (child) => child.type === "decorator"
     );
     for (const decorator of decorator_nodes) {
-      const identifier = decorator.children.find(
-        (child) => child.type === "identifier"
+      const expression = decorator.children.find(
+        (child) =>
+          child.type === "identifier" ||
+          child.type === "attribute" ||
+          child.type === "call"
       );
-      if (identifier) {
-        decorators.push(identifier.text as SymbolName);
+      if (!expression) continue;
+      if (expression.type === "call") {
+        const callee = expression.childForFieldName?.("function");
+        if (callee) {
+          decorators.push(callee.text as SymbolName);
+        }
+      } else {
+        decorators.push(expression.text as SymbolName);
       }
     }
   }
@@ -666,20 +680,55 @@ function extract_decorators(node: SyntaxNode): SymbolName[] {
 
 export function determine_method_type(node: SyntaxNode): {
   static?: boolean;
-  abstract?: boolean;
 } {
   const decorators = extract_decorators(node);
 
-  if (decorators.includes("staticmethod" as SymbolName)) {
+  // A classmethod is class-bound like a staticmethod; marking it abstract
+  // would suppress its body scope and drop it from the call graph.
+  if (
+    decorators.includes("staticmethod" as SymbolName) ||
+    decorators.includes("classmethod" as SymbolName)
+  ) {
     return { static: true };
   }
 
-  if (decorators.includes("classmethod" as SymbolName)) {
-    // Use abstract flag to indicate class method (as per original pattern)
-    return { abstract: true };
-  }
-
   return {};
+}
+
+/**
+ * Decorators whose descriptor `__get__` runs on a bare attribute read, making
+ * the decorated method the getter for its name: the builtin `property`,
+ * `functools`/Django `cached_property`, pandas' `cache_readonly`, sqlalchemy's
+ * `memoized_property`, and class-level `classproperty`. A module prefix
+ * (`functools.cached_property`) is part of the decorator name and tolerated.
+ *
+ * Memoizing decorators that keep call syntax (`cache`, `lru_cache`) are not
+ * here — their methods are still invoked with parentheses.
+ */
+export const PROPERTY_DESCRIPTOR_DECORATORS: readonly string[] = [
+  "property",
+  "cached_property",
+  "cache_readonly",
+  "classproperty",
+  "memoized_property",
+];
+
+export function determine_accessor_kind(
+  node: SyntaxNode
+): "getter" | "setter" | "deleter" | undefined {
+  for (const decorator of extract_decorators(node)) {
+    // `@value.setter` / `@value.deleter` / `@value.getter` name the accessor
+    // they define on an existing property.
+    if (decorator.endsWith(".setter")) return "setter";
+    if (decorator.endsWith(".deleter")) return "deleter";
+    if (decorator.endsWith(".getter")) return "getter";
+
+    const trailing = decorator.split(".").pop();
+    if (trailing && PROPERTY_DESCRIPTOR_DECORATORS.includes(trailing)) {
+      return "getter";
+    }
+  }
+  return undefined;
 }
 
 // ============================================================================

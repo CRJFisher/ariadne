@@ -94,6 +94,7 @@
       },
       "defining_scope_id": "module:<fixtures>/javascript/code/modules/utils_aliased.js:1:1:19:0",
       "is_exported": true,
+      "docstring": "/**\n * Utilities module with aliased imports\n * Tests: Aliased import resolution\n */",
       "signature": {
         "parameters": []
       },

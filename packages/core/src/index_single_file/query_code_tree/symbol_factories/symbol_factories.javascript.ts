@@ -703,8 +703,18 @@ export function detect_member_assignment(
     return null;
   }
 
+  // A named function expression already has its own function definition at the
+  // name node; the member must carry that identity, or reachability through the
+  // collection lands on the location-keyed anonymous twin and the named
+  // definition dangles as a false entry point.
+  const name_node = right.childForFieldName?.("name");
   const member_location = node_to_location(right, file_path);
-  const member_id = anonymous_function_symbol(member_location);
+  const member_id = name_node
+    ? function_symbol(
+        name_node.text as SymbolName,
+        node_to_location(name_node, file_path)
+      )
+    : anonymous_function_symbol(member_location);
   return {
     holder_name: holder_name as SymbolName,
     member: {

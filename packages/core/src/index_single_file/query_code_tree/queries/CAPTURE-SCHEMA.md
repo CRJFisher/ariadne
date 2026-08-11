@@ -146,7 +146,26 @@ Every language MUST implement these captures (from common analysis):
 
 ### Modifiers
 
-- `@modifier.visibility` - Visibility modifiers
+- `@modifier.visibility` - Visibility modifiers (JavaScript, TypeScript, Rust)
+
+### Predicate-Binding Captures
+
+A capture whose name starts with `_` binds a node so a predicate can test it,
+and is dropped before definitions and references are built. Use it wherever a
+pattern must match on a node it should not record — a Protocol or Enum base
+gating its members, a method name excluded by `#not-eq?`:
+
+```scheme
+(class_definition
+  superclasses: (argument_list
+    [(identifier) @_enum_base (attribute attribute: (identifier) @_enum_base)]
+    (#match? @_enum_base "^(Enum|IntEnum|Flag|IntFlag|StrEnum)$"))
+  body: (block (expression_statement (assignment
+    left: (identifier) @definition.enum_member))))
+```
+
+Capturing the gate under a real name instead would emit one reference to the
+base per member the pattern matches.
 
 ---
 
@@ -162,24 +181,28 @@ Language-specific features explicitly allowed:
 - `@definition.enum.member` - Enum members
 - `@definition.namespace` - Namespaces
 - `@definition.type_parameter` - Generic type parameters (emitted; no handler currently consumes it — see Validation)
-- `@definition.property` - Class properties
 - `@reference.call.generic` - Generic calls
 - `@reference.constructor` - Constructor calls
 - `@reference.constructor.generic` - Generic constructor calls (involves type parameters)
 - `@reference.constructor.qualified` - Namespace-qualified constructor calls (`new ns.Foo()`)
 - `@assignment.constructor.qualified` - Namespace-qualified constructor with assignment target
-- `@reference.property` - Property access
-- `@reference.property.optional` - Optional chaining
-- `@reference.member_access` - Member access patterns
+- `@reference.property` - Property-name read of an identifier-receiver member access
+- `@reference.member_access` - Member access, one capture per member expression whatever the receiver shape (optional chaining is derived from the node)
+- `@reference.callable_value` - Callable read in value position (a member-expression argument, an object-literal value, or a named function expression's own name); resolves to indirect reachability, never a call edge
 - `@reference.call.jsx` - JSX elements
 
 ### Python
 
-- `@decorator.function` - Function decorators
-- `@decorator.class` - Class decorators
-- `@decorator.method` - Method decorators
-- `@decorator.property` - Property decorators
+- `@decorator.method` - Method decorators, any decorator shape (bare, dotted, call-shaped)
+- `@definition.property.interface` - Attribute signature declared in a Protocol body
+- `@definition.enum_member` - Member declared in an Enum body
 - `@reference.constructor` - Class instantiation (function call that is a class)
+- `@reference.this` - `self` and `cls` identifiers
+
+Python emits one `@definition.class` per `class_definition` whatever shape its
+bases take; the class capture handler discriminates Enum and Protocol classes
+and builds the enum/interface definition, and a `@property`-decorated def
+builds a method carrying `accessor_kind`.
 
 ### Rust
 

@@ -451,11 +451,21 @@
   constructor: (member_expression) @reference.constructor.qualified
 )
 
-; Property access
+; Property access — any receiver shape (obj.x, this.x, a.b.c, getX().y), one
+; capture per member_expression node
+(member_expression
+  object: (_)
+  property: (property_identifier)
+) @reference.member_access
+
+; Base object and property name of an identifier-receiver member read. The base
+; stays pinned to an identifier — a wider base would mint a variable reference
+; whose name is a whole sub-expression — and the property-name read feeds
+; indirect reachability for methods read as values.
 (member_expression
   object: (identifier) @reference.variable.base
   property: (property_identifier) @reference.property
-) @reference.member_access
+)
 
 ; Computed member access (bracket notation)
 (subscript_expression
@@ -463,23 +473,20 @@
   index: (_) @reference.property.computed
 ) @reference.member_access.computed
 
-; Optional chaining member access
-(member_expression
-  object: (identifier) @reference.variable
-  property: (property_identifier) @reference.property.optional
-) @reference.member_access.optional
-
 ; Assignments (capture both sides)
 (assignment_expression
   left: (identifier) @reference.variable.target
   right: (_) @reference.variable.source
 ) @assignment.variable
 
+; A write to a member invokes the setter, never the getter, so the target
+; carries no member read — the general member pattern above is suppressed at
+; write positions by the same rule.
 (assignment_expression
   left: (member_expression
     object: (identifier) @reference.variable.object
     property: (property_identifier) @reference.property.assign
-  ) @reference.member_access.assign
+  )
   right: (_) @reference.variable.source
 ) @assignment.property
 
@@ -535,6 +542,25 @@
 ; definition-site node, so this supplies the use-site read.
 (object
   (shorthand_property_identifier) @reference.variable
+)
+
+; Value-position callables — a function handed to a framework by name is never
+; invoked at a syntactic call site, so this read is the only evidence it is
+; reachable. Bare identifier arguments are covered by the catch-all identifier
+; read plus indirect reachability; the member form, the object-literal value,
+; and a named function expression's own name need their own capture.
+(arguments
+  (member_expression) @reference.callable_value
+)
+
+(pair
+  value: (member_expression) @reference.callable_value
+)
+
+(arguments
+  (function_expression
+    name: (identifier) @reference.callable_value
+  )
 )
 
 ; General identifier references (catch-all)

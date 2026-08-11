@@ -264,7 +264,7 @@
         "end_column": 34
       },
       "defining_scope_id": "module:<fixtures>/rust/code/modules/uses_user.rs:1:1:53:1",
-      "import_path": "user_mod::User",
+      "import_path": "user_mod",
       "import_kind": "named"
     },
     "import:<fixtures>/rust/code/modules/uses_user.rs:6:UserManager": {
@@ -279,7 +279,7 @@
         "end_column": 34
       },
       "defining_scope_id": "module:<fixtures>/rust/code/modules/uses_user.rs:1:1:53:1",
-      "import_path": "user_mod::UserManager",
+      "import_path": "user_mod",
       "import_kind": "named"
     }
   },
@@ -363,23 +363,26 @@
       "access_type": "read"
     },
     {
-      "kind": "function_call",
-      "name": "User::new",
+      "kind": "constructor_call",
+      "name": "User",
       "location": {
         "file_path": "<fixtures>/rust/code/modules/uses_user.rs",
         "start_line": 10,
         "start_column": 20,
         "end_line": 10,
-        "end_column": 28
+        "end_column": 23
       },
       "scope_id": "function:<fixtures>/rust/code/modules/uses_user.rs:8:8:39:1",
-      "potential_construct_target": {
+      "construct_target": {
         "file_path": "<fixtures>/rust/code/modules/uses_user.rs",
         "start_line": 10,
         "start_column": 13,
         "end_line": 10,
         "end_column": 16
-      }
+      },
+      "path_prefix": [
+        "User"
+      ]
     },
     {
       "kind": "variable_reference",
@@ -409,7 +412,7 @@
     },
     {
       "kind": "function_call",
-      "name": "String::from",
+      "name": "from",
       "location": {
         "file_path": "<fixtures>/rust/code/modules/uses_user.rs",
         "start_line": 11,
@@ -418,13 +421,9 @@
         "end_column": 20
       },
       "scope_id": "function:<fixtures>/rust/code/modules/uses_user.rs:8:8:39:1",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/rust/code/modules/uses_user.rs",
-        "start_line": 10,
-        "start_column": 13,
-        "end_line": 10,
-        "end_column": 16
-      }
+      "path_prefix": [
+        "String"
+      ]
     },
     {
       "kind": "variable_reference",
@@ -454,7 +453,7 @@
     },
     {
       "kind": "function_call",
-      "name": "String::from",
+      "name": "from",
       "location": {
         "file_path": "<fixtures>/rust/code/modules/uses_user.rs",
         "start_line": 12,
@@ -463,13 +462,9 @@
         "end_column": 20
       },
       "scope_id": "function:<fixtures>/rust/code/modules/uses_user.rs:8:8:39:1",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/rust/code/modules/uses_user.rs",
-        "start_line": 10,
-        "start_column": 13,
-        "end_line": 10,
-        "end_column": 16
-      }
+      "path_prefix": [
+        "String"
+      ]
     },
     {
       "kind": "variable_reference",
@@ -532,7 +527,14 @@
         "user",
         "get_name"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "potential_construct_target": {
+        "file_path": "<fixtures>/rust/code/modules/uses_user.rs",
+        "start_line": 16,
+        "start_column": 9,
+        "end_line": 16,
+        "end_column": 17
+      }
     },
     {
       "kind": "variable_reference",
@@ -608,7 +610,14 @@
         "user",
         "get_email"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "potential_construct_target": {
+        "file_path": "<fixtures>/rust/code/modules/uses_user.rs",
+        "start_line": 17,
+        "start_column": 9,
+        "end_line": 17,
+        "end_column": 18
+      }
     },
     {
       "kind": "variable_reference",
@@ -684,7 +693,14 @@
         "user",
         "is_active"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "potential_construct_target": {
+        "file_path": "<fixtures>/rust/code/modules/uses_user.rs",
+        "start_line": 18,
+        "start_column": 9,
+        "end_line": 18,
+        "end_column": 17
+      }
     },
     {
       "kind": "variable_reference",
@@ -747,7 +763,7 @@
         "user",
         "update_name"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -790,7 +806,7 @@
     },
     {
       "kind": "function_call",
-      "name": "String::from",
+      "name": "from",
       "location": {
         "file_path": "<fixtures>/rust/code/modules/uses_user.rs",
         "start_line": 21,
@@ -798,7 +814,10 @@
         "end_line": 21,
         "end_column": 33
       },
-      "scope_id": "function:<fixtures>/rust/code/modules/uses_user.rs:8:8:39:1"
+      "scope_id": "function:<fixtures>/rust/code/modules/uses_user.rs:8:8:39:1",
+      "path_prefix": [
+        "String"
+      ]
     },
     {
       "kind": "variable_reference",
@@ -858,10 +877,18 @@
         "end_column": 39
       },
       "property_chain": [
-        "user.activate()",
+        "user",
+        "activate",
         "deactivate"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "potential_construct_target": {
+        "file_path": "<fixtures>/rust/code/modules/uses_user.rs",
+        "start_line": 24,
+        "start_column": 9,
+        "end_line": 24,
+        "end_column": 21
+      }
     },
     {
       "kind": "method_call",
@@ -885,7 +912,14 @@
         "user",
         "activate"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "potential_construct_target": {
+        "file_path": "<fixtures>/rust/code/modules/uses_user.rs",
+        "start_line": 24,
+        "start_column": 9,
+        "end_line": 24,
+        "end_column": 21
+      }
     },
     {
       "kind": "variable_reference",
@@ -961,7 +995,14 @@
         "user",
         "format_info"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "potential_construct_target": {
+        "file_path": "<fixtures>/rust/code/modules/uses_user.rs",
+        "start_line": 27,
+        "start_column": 9,
+        "end_line": 27,
+        "end_column": 17
+      }
     },
     {
       "kind": "variable_reference",
@@ -1016,23 +1057,26 @@
       "access_type": "read"
     },
     {
-      "kind": "function_call",
-      "name": "UserManager::new",
+      "kind": "constructor_call",
+      "name": "UserManager",
       "location": {
         "file_path": "<fixtures>/rust/code/modules/uses_user.rs",
         "start_line": 30,
         "start_column": 23,
         "end_line": 30,
-        "end_column": 38
+        "end_column": 33
       },
       "scope_id": "function:<fixtures>/rust/code/modules/uses_user.rs:8:8:39:1",
-      "potential_construct_target": {
+      "construct_target": {
         "file_path": "<fixtures>/rust/code/modules/uses_user.rs",
         "start_line": 30,
         "start_column": 13,
         "end_line": 30,
         "end_column": 19
-      }
+      },
+      "path_prefix": [
+        "UserManager"
+      ]
     },
     {
       "kind": "variable_reference",
@@ -1082,7 +1126,7 @@
         "manager",
         "add_user"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -1145,7 +1189,7 @@
         "user",
         "clone"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -1221,7 +1265,14 @@
         "manager",
         "get_user_count"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "potential_construct_target": {
+        "file_path": "<fixtures>/rust/code/modules/uses_user.rs",
+        "start_line": 32,
+        "start_column": 9,
+        "end_line": 32,
+        "end_column": 18
+      }
     },
     {
       "kind": "variable_reference",
@@ -1503,23 +1554,26 @@
       "access_type": "read"
     },
     {
-      "kind": "function_call",
-      "name": "User::new",
+      "kind": "constructor_call",
+      "name": "User",
       "location": {
         "file_path": "<fixtures>/rust/code/modules/uses_user.rs",
         "start_line": 43,
         "start_column": 20,
         "end_line": 43,
-        "end_column": 28
+        "end_column": 23
       },
       "scope_id": "function:<fixtures>/rust/code/modules/uses_user.rs:42:20:53:1",
-      "potential_construct_target": {
+      "construct_target": {
         "file_path": "<fixtures>/rust/code/modules/uses_user.rs",
         "start_line": 43,
         "start_column": 13,
         "end_line": 43,
         "end_column": 16
-      }
+      },
+      "path_prefix": [
+        "User"
+      ]
     },
     {
       "kind": "variable_reference",
@@ -1549,7 +1603,7 @@
     },
     {
       "kind": "function_call",
-      "name": "String::from",
+      "name": "from",
       "location": {
         "file_path": "<fixtures>/rust/code/modules/uses_user.rs",
         "start_line": 44,
@@ -1558,13 +1612,9 @@
         "end_column": 20
       },
       "scope_id": "function:<fixtures>/rust/code/modules/uses_user.rs:42:20:53:1",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/rust/code/modules/uses_user.rs",
-        "start_line": 43,
-        "start_column": 13,
-        "end_line": 43,
-        "end_column": 16
-      }
+      "path_prefix": [
+        "String"
+      ]
     },
     {
       "kind": "variable_reference",
@@ -1594,7 +1644,7 @@
     },
     {
       "kind": "function_call",
-      "name": "String::from",
+      "name": "from",
       "location": {
         "file_path": "<fixtures>/rust/code/modules/uses_user.rs",
         "start_line": 45,
@@ -1603,13 +1653,9 @@
         "end_column": 20
       },
       "scope_id": "function:<fixtures>/rust/code/modules/uses_user.rs:42:20:53:1",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/rust/code/modules/uses_user.rs",
-        "start_line": 43,
-        "start_column": 13,
-        "end_line": 43,
-        "end_column": 16
-      }
+      "path_prefix": [
+        "String"
+      ]
     },
     {
       "kind": "variable_reference",
@@ -1672,7 +1718,14 @@
         "user",
         "get_name"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "potential_construct_target": {
+        "file_path": "<fixtures>/rust/code/modules/uses_user.rs",
+        "start_line": 49,
+        "start_column": 9,
+        "end_line": 49,
+        "end_column": 13
+      }
     },
     {
       "kind": "variable_reference",
@@ -1735,7 +1788,7 @@
         "user",
         "activate"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",

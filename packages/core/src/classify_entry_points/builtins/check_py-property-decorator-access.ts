@@ -2,18 +2,12 @@
 // Hand-authored; keep in sync with the registry entry that names it.
 //
 // A Python property-descriptor method is invoked implicitly by attribute
-// access (`obj.value`), not by an explicit `obj.value()`. Tree-sitter captures
-// only emit `@reference.call` on call expressions, so these entry points look
-// unreachable — a permanent capture-model limitation. The discriminator is a
-// property-descriptor decorator in the block immediately above the definition,
-// in a Python file.
-//
-// The family covers every bare decorator whose descriptor `__get__` runs on
-// attribute read: the builtin `@property`, `functools`/Django `@cached_property`,
-// pandas' `@cache_readonly`, and class-level `@classproperty`. A module prefix
-// (`@functools.cached_property`) is tolerated. Memoization decorators that keep
-// call syntax (`@cache`, `@lru_cache`) are deliberately excluded — their methods
-// are still invoked with parentheses, so an uncalled one is a real finding.
+// access (`obj.value`), not by an explicit `obj.value()`. A read whose receiver
+// resolves to a type becomes a real edge to the getter; this rule covers the
+// reads that carry no resolvable receiver — an untyped parameter, a chained
+// receiver, a read in another file whose type never resolves. The discriminator
+// is a property-descriptor decorator in the block immediately above the
+// definition, in a Python file.
 //
 // The functional form `x = property(_get_x)` is out of scope here: its accessor
 // function carries no decorator, so the decorator-block mechanism cannot see it.
@@ -21,9 +15,13 @@
 import type { EnrichedEntryPoint, Language } from "@ariadnejs/types";
 import type { FileLinesReader } from "../auto_classify_types";
 import { extract_decorator_block } from "./extract_decorator_block";
+import { PROPERTY_DESCRIPTOR_DECORATORS } from "../../index_single_file/query_code_tree/symbol_factories/symbol_factories.python";
 
-const PROPERTY_DESCRIPTOR_DECORATOR =
-  /@(?:\w+\.)*(?:property|cached_property|cache_readonly|classproperty)\b/;
+// Built from the same family the indexer derives `accessor_kind` from, so a
+// decorator recognised as a getter there can never be missed here.
+const PROPERTY_DESCRIPTOR_DECORATOR = new RegExp(
+  `@(?:\\w+\\.)*(?:${PROPERTY_DESCRIPTOR_DECORATORS.join("|")})\\b`
+);
 
 export function check_py_property_decorator_access(
   entry_point: EnrichedEntryPoint,

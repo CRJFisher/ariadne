@@ -7,6 +7,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { Project } from "../project/project";
 import type {
+  CallGraph,
   FilePath,
   Result,
   ScopeId,
@@ -46,6 +47,34 @@ export function set_test_resolutions(
     internal.state.resolutions_by_scope = new Map();
   }
   internal.state.resolutions_by_scope.set(scope_id, resolutions);
+}
+
+/** Locate the CallableNode for a caller function defined in a given file. */
+export function find_caller_node(
+  call_graph: CallGraph,
+  caller_name: string,
+  file_path: FilePath
+) {
+  return [...call_graph.nodes.values()].find(
+    (node) =>
+      node.name === (caller_name as SymbolName) &&
+      node.location.file_path === file_path
+  );
+}
+
+/** True when `name` (defined in `file_path`) is reported as an entry point. */
+export function is_entry_point(
+  call_graph: CallGraph,
+  name: string,
+  file_path: FilePath
+): boolean {
+  return call_graph.entry_points.some((ep) => {
+    const node = call_graph.nodes.get(ep);
+    return (
+      node?.name === (name as SymbolName) &&
+      node.location.file_path === file_path
+    );
+  });
 }
 
 function is_call_reference(ref: SymbolReference): boolean {

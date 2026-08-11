@@ -16,15 +16,31 @@
         "end_column": 1
       },
       "child_ids": [
-        "function:<fixtures>/rust/code/modules/inline_modules.rs:5:18:7:5",
-        "function:<fixtures>/rust/code/modules/inline_modules.rs:9:24:11:5",
+        "module:<fixtures>/rust/code/modules/inline_modules.rs:4:11:12:1",
         "function:<fixtures>/rust/code/modules/inline_modules.rs:16:8:23:1",
         "function:<fixtures>/rust/code/modules/inline_modules.rs:25:23:29:1"
       ]
     },
+    "module:<fixtures>/rust/code/modules/inline_modules.rs:4:11:12:1": {
+      "id": "module:<fixtures>/rust/code/modules/inline_modules.rs:4:11:12:1",
+      "parent_id": "module:<fixtures>/rust/code/modules/inline_modules.rs:1:1:29:1",
+      "name": "utils",
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/inline_modules.rs",
+        "start_line": 4,
+        "start_column": 11,
+        "end_line": 12,
+        "end_column": 1
+      },
+      "child_ids": [
+        "function:<fixtures>/rust/code/modules/inline_modules.rs:5:18:7:5",
+        "function:<fixtures>/rust/code/modules/inline_modules.rs:9:24:11:5"
+      ]
+    },
     "function:<fixtures>/rust/code/modules/inline_modules.rs:5:18:7:5": {
       "id": "function:<fixtures>/rust/code/modules/inline_modules.rs:5:18:7:5",
-      "parent_id": "module:<fixtures>/rust/code/modules/inline_modules.rs:1:1:29:1",
+      "parent_id": "module:<fixtures>/rust/code/modules/inline_modules.rs:4:11:12:1",
       "name": "helper",
       "type": "function",
       "location": {
@@ -38,7 +54,7 @@
     },
     "function:<fixtures>/rust/code/modules/inline_modules.rs:9:24:11:5": {
       "id": "function:<fixtures>/rust/code/modules/inline_modules.rs:9:24:11:5",
-      "parent_id": "module:<fixtures>/rust/code/modules/inline_modules.rs:1:1:29:1",
+      "parent_id": "module:<fixtures>/rust/code/modules/inline_modules.rs:4:11:12:1",
       "name": "process_data",
       "type": "function",
       "location": {
@@ -91,7 +107,7 @@
         "end_line": 5,
         "end_column": 17
       },
-      "defining_scope_id": "module:<fixtures>/rust/code/modules/inline_modules.rs:1:1:29:1",
+      "defining_scope_id": "module:<fixtures>/rust/code/modules/inline_modules.rs:4:11:12:1",
       "is_exported": true,
       "signature": {
         "parameters": [],
@@ -111,7 +127,7 @@
         "end_line": 9,
         "end_column": 23
       },
-      "defining_scope_id": "module:<fixtures>/rust/code/modules/inline_modules.rs:1:1:29:1",
+      "defining_scope_id": "module:<fixtures>/rust/code/modules/inline_modules.rs:4:11:12:1",
       "is_exported": true,
       "signature": {
         "parameters": [
@@ -189,7 +205,8 @@
         "end_column": 16
       },
       "defining_scope_id": "function:<fixtures>/rust/code/modules/inline_modules.rs:16:8:23:1",
-      "is_exported": false
+      "is_exported": false,
+      "initialized_from_call": "helper"
     },
     "variable:<fixtures>/rust/code/modules/inline_modules.rs:19:9:19:17:processed": {
       "kind": "variable",
@@ -203,7 +220,8 @@
         "end_column": 17
       },
       "defining_scope_id": "function:<fixtures>/rust/code/modules/inline_modules.rs:16:8:23:1",
-      "is_exported": false
+      "is_exported": false,
+      "initialized_from_call": "process_data"
     },
     "variable:<fixtures>/rust/code/modules/inline_modules.rs:26:9:26:15:result1": {
       "kind": "variable",
@@ -231,7 +249,8 @@
         "end_column": 15
       },
       "defining_scope_id": "function:<fixtures>/rust/code/modules/inline_modules.rs:25:23:29:1",
-      "is_exported": false
+      "is_exported": false,
+      "initialized_from_call": "process_data"
     }
   },
   "interfaces": {},
@@ -266,7 +285,7 @@
         "end_column": 34
       },
       "defining_scope_id": "module:<fixtures>/rust/code/modules/inline_modules.rs:1:1:29:1",
-      "import_path": "utils::helper",
+      "import_path": "utils",
       "import_kind": "named"
     },
     "import:<fixtures>/rust/code/modules/inline_modules.rs:14:process_data": {
@@ -281,7 +300,7 @@
         "end_column": 34
       },
       "defining_scope_id": "module:<fixtures>/rust/code/modules/inline_modules.rs:1:1:29:1",
-      "import_path": "utils::process_data",
+      "import_path": "utils",
       "import_kind": "named"
     }
   },
@@ -309,7 +328,7 @@
         "end_line": 5,
         "end_column": 17
       },
-      "scope_id": "module:<fixtures>/rust/code/modules/inline_modules.rs:1:1:29:1",
+      "scope_id": "module:<fixtures>/rust/code/modules/inline_modules.rs:4:11:12:1",
       "access_type": "read"
     },
     {
@@ -335,7 +354,7 @@
         "end_line": 9,
         "end_column": 23
       },
-      "scope_id": "module:<fixtures>/rust/code/modules/inline_modules.rs:1:1:29:1",
+      "scope_id": "module:<fixtures>/rust/code/modules/inline_modules.rs:4:11:12:1",
       "access_type": "read"
     },
     {
@@ -392,7 +411,7 @@
         "input",
         "to_uppercase"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -755,10 +774,16 @@
         "end_column": 26
       },
       "property_chain": [
-        "helper()",
         "to_string"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "potential_construct_target": {
+        "file_path": "<fixtures>/rust/code/modules/inline_modules.rs",
+        "start_line": 26,
+        "start_column": 9,
+        "end_line": 26,
+        "end_column": 15
+      }
     },
     {
       "kind": "variable_reference",

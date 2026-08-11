@@ -9,8 +9,13 @@ import type { ContentHash } from "./content_hash";
  * dirty content, so its `git_blob_hash` values cannot be trusted now that the
  * blob alone decides cache validity. Those manifests must be discarded, not
  * migrated — the entries look well-formed but describe the wrong content.
+ *
+ * v5: the query patterns and reference model changed what an index contains
+ * (shape-complete Python definitions, deduplicated TS/JS member reads,
+ * callable-value references); cached v4 indexes describe captures that no
+ * longer exist and are missing ones that now do.
  */
-export const CURRENT_SCHEMA_VERSION = 4;
+export const CURRENT_SCHEMA_VERSION = 5;
 
 export interface CacheManifestEntry {
   readonly content_hash: ContentHash;

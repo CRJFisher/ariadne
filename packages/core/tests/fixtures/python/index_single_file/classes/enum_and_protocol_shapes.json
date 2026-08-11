@@ -1,0 +1,3302 @@
+{
+  "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+  "language": "python",
+  "root_scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+  "scopes": {
+    "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0": {
+      "id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 59,
+        "end_column": 0
+      },
+      "child_ids": [
+        "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:51:26:58:20",
+        "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:13:22:18:24",
+        "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:26:28:30:25",
+        "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:37:30:40:32",
+        "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:21:32:23:12",
+        "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:47:39:48:18",
+        "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:33:35:34:13",
+        "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:43:39:44:13"
+      ]
+    },
+    "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:51:26:58:20": {
+      "id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:51:26:58:20",
+      "parent_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "name": null,
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 51,
+        "start_column": 26,
+        "end_line": 58,
+        "end_column": 20
+      },
+      "child_ids": [
+        "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:54:17:58:20"
+      ]
+    },
+    "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:13:22:18:24": {
+      "id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:13:22:18:24",
+      "parent_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "name": null,
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 13,
+        "start_column": 22,
+        "end_line": 18,
+        "end_column": 24
+      },
+      "child_ids": [
+        "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:17:17:18:24"
+      ]
+    },
+    "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:26:28:30:25": {
+      "id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:26:28:30:25",
+      "parent_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "name": null,
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 26,
+        "start_column": 28,
+        "end_line": 30,
+        "end_column": 25
+      },
+      "child_ids": [
+        "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:29:15:30:25"
+      ]
+    },
+    "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:54:17:58:20": {
+      "id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:54:17:58:20",
+      "parent_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:51:26:58:20",
+      "name": null,
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 54,
+        "start_column": 17,
+        "end_line": 58,
+        "end_column": 20
+      },
+      "child_ids": [
+        "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:57:25:58:20"
+      ]
+    },
+    "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:37:30:40:32": {
+      "id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:37:30:40:32",
+      "parent_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "name": null,
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 37,
+        "start_column": 30,
+        "end_line": 40,
+        "end_column": 32
+      },
+      "child_ids": [
+        "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:40:15:40:32"
+      ]
+    },
+    "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:29:15:30:25": {
+      "id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:29:15:30:25",
+      "parent_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:26:28:30:25",
+      "name": "shared",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 29,
+        "start_column": 15,
+        "end_line": 30,
+        "end_column": 25
+      },
+      "child_ids": []
+    },
+    "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:17:17:18:24": {
+      "id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:17:17:18:24",
+      "parent_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:13:22:18:24",
+      "name": "describe",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 17,
+        "start_column": 17,
+        "end_line": 18,
+        "end_column": 24
+      },
+      "child_ids": []
+    },
+    "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:57:25:58:20": {
+      "id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:57:25:58:20",
+      "parent_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:54:17:58:20",
+      "name": "inner_method",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 57,
+        "start_column": 25,
+        "end_line": 58,
+        "end_column": 20
+      },
+      "child_ids": []
+    },
+    "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:21:32:23:12": {
+      "id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:21:32:23:12",
+      "parent_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "name": null,
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 21,
+        "start_column": 32,
+        "end_line": 23,
+        "end_column": 12
+      },
+      "child_ids": []
+    },
+    "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:40:15:40:32": {
+      "id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:40:15:40:32",
+      "parent_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:37:30:40:32",
+      "name": "render",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 40,
+        "start_column": 15,
+        "end_line": 40,
+        "end_column": 32
+      },
+      "child_ids": []
+    },
+    "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:47:39:48:18": {
+      "id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:47:39:48:18",
+      "parent_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "name": null,
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 47,
+        "start_column": 39,
+        "end_line": 48,
+        "end_column": 18
+      },
+      "child_ids": []
+    },
+    "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:33:35:34:13": {
+      "id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:33:35:34:13",
+      "parent_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "name": null,
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 33,
+        "start_column": 35,
+        "end_line": 34,
+        "end_column": 13
+      },
+      "child_ids": []
+    },
+    "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:43:39:44:13": {
+      "id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:43:39:44:13",
+      "parent_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "name": null,
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 43,
+        "start_column": 39,
+        "end_line": 44,
+        "end_column": 13
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {},
+  "classes": {
+    "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:33:7:33:17:DerivedEnum": {
+      "kind": "class",
+      "symbol_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:33:7:33:17:DerivedEnum",
+      "name": "DerivedEnum",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 33,
+        "start_column": 7,
+        "end_line": 33,
+        "end_column": 17
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "extends": [
+        "MemberlessEnum"
+      ],
+      "is_exported": true,
+      "methods": [],
+      "properties": [
+        {
+          "kind": "property",
+          "defining_scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:33:35:34:13",
+          "symbol_id": "property:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:34:5:34:9:EXTRA",
+          "name": "EXTRA",
+          "location": {
+            "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+            "start_line": 34,
+            "start_column": 5,
+            "end_line": 34,
+            "end_column": 9
+          },
+          "initial_value": "3",
+          "decorators": []
+        }
+      ],
+      "decorators": []
+    },
+    "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:54:11:54:15:Inner": {
+      "kind": "class",
+      "symbol_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:54:11:54:15:Inner",
+      "name": "Inner",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 54,
+        "start_column": 11,
+        "end_line": 54,
+        "end_column": 15
+      },
+      "defining_scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:51:26:58:20",
+      "extends": [],
+      "is_exported": false,
+      "docstring": [
+        "A plain class nested in an enum body stays a plain class."
+      ],
+      "methods": [
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:54:17:58:20",
+          "symbol_id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:57:13:57:24:inner_method",
+          "name": "inner_method",
+          "location": {
+            "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+            "start_line": 57,
+            "start_column": 13,
+            "end_line": 57,
+            "end_column": 24
+          },
+          "async": false,
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:57:25:58:20",
+              "symbol_id": "parameter:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:57:26:57:29:self",
+              "name": "self",
+              "location": {
+                "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+                "start_line": 57,
+                "start_column": 26,
+                "end_line": 57,
+                "end_column": 29
+              }
+            }
+          ],
+          "body_scope_id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:57:25:58:20"
+        }
+      ],
+      "properties": [],
+      "decorators": []
+    }
+  },
+  "variables": {
+    "variable:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:10:1:10:4:T_co": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:10:1:10:4:T_co",
+      "name": "T_co",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 10,
+        "start_column": 1,
+        "end_line": 10,
+        "end_column": 4
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "is_exported": true,
+      "initial_value": "TypeVar(\"T_co\", covariant=True)"
+    },
+    "variable:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:14:5:14:7:RED": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:14:5:14:7:RED",
+      "name": "RED",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 14,
+        "start_column": 5,
+        "end_line": 14,
+        "end_column": 7
+      },
+      "defining_scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:13:22:18:24",
+      "is_exported": false,
+      "initial_value": "1"
+    },
+    "variable:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:15:5:15:8:BLUE": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:15:5:15:8:BLUE",
+      "name": "BLUE",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 15,
+        "start_column": 5,
+        "end_line": 15,
+        "end_column": 8
+      },
+      "defining_scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:13:22:18:24",
+      "is_exported": false,
+      "initial_value": "2"
+    },
+    "variable:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:22:5:22:7:LOW": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:22:5:22:7:LOW",
+      "name": "LOW",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 22,
+        "start_column": 5,
+        "end_line": 22,
+        "end_column": 7
+      },
+      "defining_scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:21:32:23:12",
+      "is_exported": false,
+      "initial_value": "1"
+    },
+    "variable:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:23:5:23:8:HIGH": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:23:5:23:8:HIGH",
+      "name": "HIGH",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 23,
+        "start_column": 5,
+        "end_line": 23,
+        "end_column": 8
+      },
+      "defining_scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:21:32:23:12",
+      "is_exported": false,
+      "initial_value": "2"
+    },
+    "variable:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:34:5:34:9:EXTRA": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:34:5:34:9:EXTRA",
+      "name": "EXTRA",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 34,
+        "start_column": 5,
+        "end_line": 34,
+        "end_column": 9
+      },
+      "defining_scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:33:35:34:13",
+      "is_exported": false,
+      "initial_value": "3"
+    },
+    "variable:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:38:5:38:9:label": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:38:5:38:9:label",
+      "name": "label",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 38,
+        "start_column": 5,
+        "end_line": 38,
+        "end_column": 9
+      },
+      "defining_scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:37:30:40:32",
+      "is_exported": false,
+      "type": "str"
+    },
+    "variable:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:44:5:44:8:size": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:44:5:44:8:size",
+      "name": "size",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 44,
+        "start_column": 5,
+        "end_line": 44,
+        "end_column": 8
+      },
+      "defining_scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:43:39:44:13",
+      "is_exported": false,
+      "type": "int"
+    },
+    "variable:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:48:5:48:11:payload": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:48:5:48:11:payload",
+      "name": "payload",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 48,
+        "start_column": 5,
+        "end_line": 48,
+        "end_column": 11
+      },
+      "defining_scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:47:39:48:18",
+      "is_exported": false,
+      "type": "bytes"
+    },
+    "variable:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:52:5:52:7:ONE": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:52:5:52:7:ONE",
+      "name": "ONE",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 52,
+        "start_column": 5,
+        "end_line": 52,
+        "end_column": 7
+      },
+      "defining_scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:51:26:58:20",
+      "is_exported": false,
+      "initial_value": "1"
+    }
+  },
+  "interfaces": {
+    "interface:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:37:7:37:18:BareProtocol": {
+      "kind": "interface",
+      "symbol_id": "interface:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:37:7:37:18:BareProtocol",
+      "name": "BareProtocol",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 37,
+        "start_column": 7,
+        "end_line": 37,
+        "end_column": 18
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "is_exported": true,
+      "extends": [],
+      "methods": [
+        {
+          "kind": "method",
+          "symbol_id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:40:9:40:14:render",
+          "name": "render",
+          "location": {
+            "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+            "start_line": 40,
+            "start_column": 9,
+            "end_line": 40,
+            "end_column": 14
+          },
+          "defining_scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:37:30:40:32",
+          "return_type": "str",
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:40:15:40:32",
+              "symbol_id": "parameter:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:40:16:40:19:self",
+              "name": "self",
+              "location": {
+                "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+                "start_line": 40,
+                "start_column": 16,
+                "end_line": 40,
+                "end_column": 19
+              }
+            }
+          ]
+        }
+      ],
+      "properties": [
+        {
+          "kind": "property",
+          "symbol_id": "property:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:38:5:38:9:label",
+          "name": "label",
+          "type": "str",
+          "defining_scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:37:30:40:32",
+          "location": {
+            "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+            "start_line": 38,
+            "start_column": 5,
+            "end_line": 38,
+            "end_column": 9
+          },
+          "decorators": []
+        }
+      ]
+    },
+    "interface:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:43:7:43:20:DottedProtocol": {
+      "kind": "interface",
+      "symbol_id": "interface:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:43:7:43:20:DottedProtocol",
+      "name": "DottedProtocol",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 43,
+        "start_column": 7,
+        "end_line": 43,
+        "end_column": 20
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "is_exported": true,
+      "extends": [],
+      "methods": [],
+      "properties": [
+        {
+          "kind": "property",
+          "symbol_id": "property:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:44:5:44:8:size",
+          "name": "size",
+          "type": "int",
+          "defining_scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:43:39:44:13",
+          "location": {
+            "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+            "start_line": 44,
+            "start_column": 5,
+            "end_line": 44,
+            "end_column": 8
+          },
+          "decorators": []
+        }
+      ]
+    },
+    "interface:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:47:7:47:21:GenericProtocol": {
+      "kind": "interface",
+      "symbol_id": "interface:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:47:7:47:21:GenericProtocol",
+      "name": "GenericProtocol",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 47,
+        "start_column": 7,
+        "end_line": 47,
+        "end_column": 21
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "is_exported": true,
+      "extends": [],
+      "methods": [],
+      "properties": [
+        {
+          "kind": "property",
+          "symbol_id": "property:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:48:5:48:11:payload",
+          "name": "payload",
+          "type": "bytes",
+          "defining_scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:47:39:48:18",
+          "location": {
+            "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+            "start_line": 48,
+            "start_column": 5,
+            "end_line": 48,
+            "end_column": 11
+          },
+          "decorators": []
+        }
+      ]
+    }
+  },
+  "enums": {
+    "enum:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:13:7:13:14:BareEnum": {
+      "kind": "enum",
+      "symbol_id": "enum:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:13:7:13:14:BareEnum",
+      "name": "BareEnum",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 13,
+        "start_column": 7,
+        "end_line": 13,
+        "end_column": 14
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "is_exported": true,
+      "is_const": false,
+      "members": [
+        {
+          "symbol_id": "enum:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:13:7:13:14:BareEnum:RED",
+          "name": "RED",
+          "value": "1",
+          "location": {
+            "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+            "start_line": 14,
+            "start_column": 5,
+            "end_line": 14,
+            "end_column": 7
+          }
+        },
+        {
+          "symbol_id": "enum:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:13:7:13:14:BareEnum:BLUE",
+          "name": "BLUE",
+          "value": "2",
+          "location": {
+            "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+            "start_line": 15,
+            "start_column": 5,
+            "end_line": 15,
+            "end_column": 8
+          }
+        }
+      ]
+    },
+    "enum:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:21:7:21:16:DottedEnum": {
+      "kind": "enum",
+      "symbol_id": "enum:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:21:7:21:16:DottedEnum",
+      "name": "DottedEnum",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 21,
+        "start_column": 7,
+        "end_line": 21,
+        "end_column": 16
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "is_exported": true,
+      "is_const": false,
+      "members": [
+        {
+          "symbol_id": "enum:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:21:7:21:16:DottedEnum:LOW",
+          "name": "LOW",
+          "value": "1",
+          "location": {
+            "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+            "start_line": 22,
+            "start_column": 5,
+            "end_line": 22,
+            "end_column": 7
+          }
+        },
+        {
+          "symbol_id": "enum:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:21:7:21:16:DottedEnum:HIGH",
+          "name": "HIGH",
+          "value": "2",
+          "location": {
+            "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+            "start_line": 23,
+            "start_column": 5,
+            "end_line": 23,
+            "end_column": 8
+          }
+        }
+      ]
+    },
+    "enum:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:26:7:26:20:MemberlessEnum": {
+      "kind": "enum",
+      "symbol_id": "enum:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:26:7:26:20:MemberlessEnum",
+      "name": "MemberlessEnum",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 26,
+        "start_column": 7,
+        "end_line": 26,
+        "end_column": 20
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "is_exported": true,
+      "is_const": false,
+      "members": []
+    },
+    "enum:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:51:7:51:18:NestedHolder": {
+      "kind": "enum",
+      "symbol_id": "enum:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:51:7:51:18:NestedHolder",
+      "name": "NestedHolder",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 51,
+        "start_column": 7,
+        "end_line": 51,
+        "end_column": 18
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "is_exported": true,
+      "is_const": false,
+      "members": [
+        {
+          "symbol_id": "enum:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:51:7:51:18:NestedHolder:ONE",
+          "name": "ONE",
+          "value": "1",
+          "location": {
+            "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+            "start_line": 52,
+            "start_column": 5,
+            "end_line": 52,
+            "end_column": 7
+          }
+        }
+      ]
+    }
+  },
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {
+    "variable:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:5:8:5:11:enum": {
+      "kind": "import",
+      "symbol_id": "variable:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:5:8:5:11:enum",
+      "name": "enum",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 5,
+        "start_column": 8,
+        "end_line": 5,
+        "end_column": 11
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "export": {
+        "is_reexport": true
+      },
+      "import_path": "enum",
+      "import_kind": "namespace"
+    },
+    "variable:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:6:8:6:13:typing": {
+      "kind": "import",
+      "symbol_id": "variable:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:6:8:6:13:typing",
+      "name": "typing",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 6,
+        "start_column": 8,
+        "end_line": 6,
+        "end_column": 13
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "export": {
+        "is_reexport": true
+      },
+      "import_path": "typing",
+      "import_kind": "namespace"
+    },
+    "variable:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:7:18:7:21:Enum": {
+      "kind": "import",
+      "symbol_id": "variable:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:7:18:7:21:Enum",
+      "name": "Enum",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 7,
+        "start_column": 18,
+        "end_line": 7,
+        "end_column": 21
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "export": {
+        "is_reexport": true
+      },
+      "import_path": "enum",
+      "import_kind": "named"
+    },
+    "variable:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:8:20:8:27:Protocol": {
+      "kind": "import",
+      "symbol_id": "variable:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:8:20:8:27:Protocol",
+      "name": "Protocol",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 8,
+        "start_column": 20,
+        "end_line": 8,
+        "end_column": 27
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "export": {
+        "is_reexport": true
+      },
+      "import_path": "typing",
+      "import_kind": "named"
+    },
+    "variable:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:8:30:8:36:TypeVar": {
+      "kind": "import",
+      "symbol_id": "variable:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:8:30:8:36:TypeVar",
+      "name": "TypeVar",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 8,
+        "start_column": 30,
+        "end_line": 8,
+        "end_column": 36
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "export": {
+        "is_reexport": true
+      },
+      "import_path": "typing",
+      "import_kind": "named"
+    }
+  },
+  "references": [
+    {
+      "kind": "variable_reference",
+      "name": "enum",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 5,
+        "start_column": 8,
+        "end_line": 5,
+        "end_column": 11
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "typing",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 6,
+        "start_column": 8,
+        "end_line": 6,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "enum",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 7,
+        "start_column": 6,
+        "end_line": 7,
+        "end_column": 9
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Enum",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 7,
+        "start_column": 18,
+        "end_line": 7,
+        "end_column": 21
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "typing",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 8,
+        "start_column": 6,
+        "end_line": 8,
+        "end_column": 11
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Protocol",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 8,
+        "start_column": 20,
+        "end_line": 8,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "TypeVar",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 8,
+        "start_column": 30,
+        "end_line": 8,
+        "end_column": 36
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "T_co = TypeVar(\"T_co\", covariant=True)",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 10,
+        "start_column": 1,
+        "end_line": 10,
+        "end_column": 38
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 10,
+        "start_column": 1,
+        "end_line": 10,
+        "end_column": 38
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "T_co",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 10,
+        "start_column": 1,
+        "end_line": 10,
+        "end_column": 4
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 10,
+        "start_column": 1,
+        "end_line": 10,
+        "end_column": 4
+      },
+      "assignment_type": {
+        "type_id": "type:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:10:1:10:4:T_co",
+        "type_name": "T_co",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "T_co",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 10,
+        "start_column": 1,
+        "end_line": 10,
+        "end_column": 4
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "access_type": "write"
+    },
+    {
+      "kind": "assignment",
+      "name": "T_co = TypeVar(\"T_co\", covariant=True)",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 10,
+        "start_column": 1,
+        "end_line": 10,
+        "end_column": 38
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 10,
+        "start_column": 1,
+        "end_line": 10,
+        "end_column": 38
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "T_co",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 10,
+        "start_column": 1,
+        "end_line": 10,
+        "end_column": 4
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "T_co",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 10,
+        "start_column": 1,
+        "end_line": 10,
+        "end_column": 4
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "TypeVar(\"T_co\", covariant=True)",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 10,
+        "start_column": 8,
+        "end_line": 10,
+        "end_column": 38
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 10,
+        "start_column": 1,
+        "end_line": 10,
+        "end_column": 4
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "TypeVar",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 10,
+        "start_column": 8,
+        "end_line": 10,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 10,
+        "start_column": 1,
+        "end_line": 10,
+        "end_column": 4
+      }
+    },
+    {
+      "kind": "constructor_call",
+      "name": "TypeVar",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 10,
+        "start_column": 8,
+        "end_line": 10,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "construct_target": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 10,
+        "start_column": 1,
+        "end_line": 10,
+        "end_column": 4
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "TypeVar(\"T_co\", covariant=True)",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 10,
+        "start_column": 8,
+        "end_line": 10,
+        "end_column": 38
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "TypeVar",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 10,
+        "start_column": 8,
+        "end_line": 10,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "covariant",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 10,
+        "start_column": 24,
+        "end_line": 10,
+        "end_column": 32
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "BareEnum",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 13,
+        "start_column": 7,
+        "end_line": 13,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Enum",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 13,
+        "start_column": 16,
+        "end_line": 13,
+        "end_column": 19
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:13:16:13:19:Enum",
+        "type_name": "Enum",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Enum",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 13,
+        "start_column": 16,
+        "end_line": 13,
+        "end_column": 19
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "RED = 1",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 14,
+        "start_column": 5,
+        "end_line": 14,
+        "end_column": 11
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:13:22:18:24",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 14,
+        "start_column": 5,
+        "end_line": 14,
+        "end_column": 11
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "RED",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 14,
+        "start_column": 5,
+        "end_line": 14,
+        "end_column": 7
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:13:22:18:24",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 14,
+        "start_column": 5,
+        "end_line": 14,
+        "end_column": 7
+      },
+      "assignment_type": {
+        "type_id": "type:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:14:5:14:7:RED",
+        "type_name": "RED",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "RED",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 14,
+        "start_column": 5,
+        "end_line": 14,
+        "end_column": 7
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:13:22:18:24",
+      "access_type": "write"
+    },
+    {
+      "kind": "assignment",
+      "name": "RED = 1",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 14,
+        "start_column": 5,
+        "end_line": 14,
+        "end_column": 11
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:13:22:18:24",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 14,
+        "start_column": 5,
+        "end_line": 14,
+        "end_column": 11
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "RED",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 14,
+        "start_column": 5,
+        "end_line": 14,
+        "end_column": 7
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:13:22:18:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "RED",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 14,
+        "start_column": 5,
+        "end_line": 14,
+        "end_column": 7
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:13:22:18:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "1",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 14,
+        "start_column": 11,
+        "end_line": 14,
+        "end_column": 11
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:13:22:18:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "1",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 14,
+        "start_column": 11,
+        "end_line": 14,
+        "end_column": 11
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:13:22:18:24",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 14,
+        "start_column": 5,
+        "end_line": 14,
+        "end_column": 7
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "1",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 14,
+        "start_column": 11,
+        "end_line": 14,
+        "end_column": 11
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:13:22:18:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "BLUE = 2",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 15,
+        "start_column": 5,
+        "end_line": 15,
+        "end_column": 12
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:13:22:18:24",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 15,
+        "start_column": 5,
+        "end_line": 15,
+        "end_column": 12
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "BLUE",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 15,
+        "start_column": 5,
+        "end_line": 15,
+        "end_column": 8
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:13:22:18:24",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 15,
+        "start_column": 5,
+        "end_line": 15,
+        "end_column": 8
+      },
+      "assignment_type": {
+        "type_id": "type:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:15:5:15:8:BLUE",
+        "type_name": "BLUE",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "BLUE",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 15,
+        "start_column": 5,
+        "end_line": 15,
+        "end_column": 8
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:13:22:18:24",
+      "access_type": "write"
+    },
+    {
+      "kind": "assignment",
+      "name": "BLUE = 2",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 15,
+        "start_column": 5,
+        "end_line": 15,
+        "end_column": 12
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:13:22:18:24",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 15,
+        "start_column": 5,
+        "end_line": 15,
+        "end_column": 12
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "BLUE",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 15,
+        "start_column": 5,
+        "end_line": 15,
+        "end_column": 8
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:13:22:18:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "BLUE",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 15,
+        "start_column": 5,
+        "end_line": 15,
+        "end_column": 8
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:13:22:18:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "2",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 15,
+        "start_column": 12,
+        "end_line": 15,
+        "end_column": 12
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:13:22:18:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "2",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 15,
+        "start_column": 12,
+        "end_line": 15,
+        "end_column": 12
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:13:22:18:24",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 15,
+        "start_column": 5,
+        "end_line": 15,
+        "end_column": 8
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "2",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 15,
+        "start_column": 12,
+        "end_line": 15,
+        "end_column": 12
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:13:22:18:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "describe",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 17,
+        "start_column": 9,
+        "end_line": 17,
+        "end_column": 16
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:13:22:18:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 17,
+        "start_column": 18,
+        "end_line": 17,
+        "end_column": 21
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:17:17:18:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 17,
+        "start_column": 18,
+        "end_line": 17,
+        "end_column": 21
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:17:17:18:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return self.name",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 18,
+        "start_column": 9,
+        "end_line": 18,
+        "end_column": 24
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:17:17:18:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "name",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 18,
+        "start_column": 16,
+        "end_line": 18,
+        "end_column": 24
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:17:17:18:24",
+      "receiver_location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 18,
+        "start_column": 16,
+        "end_line": 18,
+        "end_column": 19
+      },
+      "property_chain": [
+        "self",
+        "name"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 18,
+        "start_column": 16,
+        "end_line": 18,
+        "end_column": 19
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:17:17:18:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self.name",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 18,
+        "start_column": 16,
+        "end_line": 18,
+        "end_column": 24
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:17:17:18:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 18,
+        "start_column": 16,
+        "end_line": 18,
+        "end_column": 19
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:17:17:18:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 18,
+        "start_column": 16,
+        "end_line": 18,
+        "end_column": 19
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:17:17:18:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "name",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 18,
+        "start_column": 21,
+        "end_line": 18,
+        "end_column": 24
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:17:17:18:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "name",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 18,
+        "start_column": 21,
+        "end_line": 18,
+        "end_column": 24
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:17:17:18:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "DottedEnum",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 21,
+        "start_column": 7,
+        "end_line": 21,
+        "end_column": 16
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "IntEnum",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 21,
+        "start_column": 18,
+        "end_line": 21,
+        "end_column": 29
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 21,
+        "start_column": 18,
+        "end_line": 21,
+        "end_column": 21
+      },
+      "property_chain": [
+        "enum",
+        "IntEnum"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "enum",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 21,
+        "start_column": 18,
+        "end_line": 21,
+        "end_column": 21
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "enum",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 21,
+        "start_column": 18,
+        "end_line": 21,
+        "end_column": 21
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "IntEnum",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 21,
+        "start_column": 23,
+        "end_line": 21,
+        "end_column": 29
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:21:23:21:29:IntEnum",
+        "type_name": "IntEnum",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "IntEnum",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 21,
+        "start_column": 23,
+        "end_line": 21,
+        "end_column": 29
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "IntEnum",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 21,
+        "start_column": 23,
+        "end_line": 21,
+        "end_column": 29
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "LOW = 1",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 22,
+        "start_column": 5,
+        "end_line": 22,
+        "end_column": 11
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:21:32:23:12",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 22,
+        "start_column": 5,
+        "end_line": 22,
+        "end_column": 11
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "LOW",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 22,
+        "start_column": 5,
+        "end_line": 22,
+        "end_column": 7
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:21:32:23:12",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 22,
+        "start_column": 5,
+        "end_line": 22,
+        "end_column": 7
+      },
+      "assignment_type": {
+        "type_id": "type:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:22:5:22:7:LOW",
+        "type_name": "LOW",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "LOW",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 22,
+        "start_column": 5,
+        "end_line": 22,
+        "end_column": 7
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:21:32:23:12",
+      "access_type": "write"
+    },
+    {
+      "kind": "assignment",
+      "name": "LOW = 1",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 22,
+        "start_column": 5,
+        "end_line": 22,
+        "end_column": 11
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:21:32:23:12",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 22,
+        "start_column": 5,
+        "end_line": 22,
+        "end_column": 11
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "LOW",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 22,
+        "start_column": 5,
+        "end_line": 22,
+        "end_column": 7
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:21:32:23:12",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "LOW",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 22,
+        "start_column": 5,
+        "end_line": 22,
+        "end_column": 7
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:21:32:23:12",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "1",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 22,
+        "start_column": 11,
+        "end_line": 22,
+        "end_column": 11
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:21:32:23:12",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "1",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 22,
+        "start_column": 11,
+        "end_line": 22,
+        "end_column": 11
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:21:32:23:12",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 22,
+        "start_column": 5,
+        "end_line": 22,
+        "end_column": 7
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "1",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 22,
+        "start_column": 11,
+        "end_line": 22,
+        "end_column": 11
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:21:32:23:12",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "HIGH = 2",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 23,
+        "start_column": 5,
+        "end_line": 23,
+        "end_column": 12
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:21:32:23:12",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 23,
+        "start_column": 5,
+        "end_line": 23,
+        "end_column": 12
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "HIGH",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 23,
+        "start_column": 5,
+        "end_line": 23,
+        "end_column": 8
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:21:32:23:12",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 23,
+        "start_column": 5,
+        "end_line": 23,
+        "end_column": 8
+      },
+      "assignment_type": {
+        "type_id": "type:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:23:5:23:8:HIGH",
+        "type_name": "HIGH",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "HIGH",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 23,
+        "start_column": 5,
+        "end_line": 23,
+        "end_column": 8
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:21:32:23:12",
+      "access_type": "write"
+    },
+    {
+      "kind": "assignment",
+      "name": "HIGH = 2",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 23,
+        "start_column": 5,
+        "end_line": 23,
+        "end_column": 12
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:21:32:23:12",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 23,
+        "start_column": 5,
+        "end_line": 23,
+        "end_column": 12
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "HIGH",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 23,
+        "start_column": 5,
+        "end_line": 23,
+        "end_column": 8
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:21:32:23:12",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "HIGH",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 23,
+        "start_column": 5,
+        "end_line": 23,
+        "end_column": 8
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:21:32:23:12",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "2",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 23,
+        "start_column": 12,
+        "end_line": 23,
+        "end_column": 12
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:21:32:23:12",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "2",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 23,
+        "start_column": 12,
+        "end_line": 23,
+        "end_column": 12
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:21:32:23:12",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 23,
+        "start_column": 5,
+        "end_line": 23,
+        "end_column": 8
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "2",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 23,
+        "start_column": 12,
+        "end_line": 23,
+        "end_column": 12
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:21:32:23:12",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "MemberlessEnum",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 26,
+        "start_column": 7,
+        "end_line": 26,
+        "end_column": 20
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Enum",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 26,
+        "start_column": 22,
+        "end_line": 26,
+        "end_column": 25
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:26:22:26:25:Enum",
+        "type_name": "Enum",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Enum",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 26,
+        "start_column": 22,
+        "end_line": 26,
+        "end_column": 25
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "shared",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 29,
+        "start_column": 9,
+        "end_line": 29,
+        "end_column": 14
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:26:28:30:25",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 29,
+        "start_column": 16,
+        "end_line": 29,
+        "end_column": 19
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:29:15:30:25",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 29,
+        "start_column": 16,
+        "end_line": 29,
+        "end_column": 19
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:29:15:30:25",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return self.value",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 30,
+        "start_column": 9,
+        "end_line": 30,
+        "end_column": 25
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:29:15:30:25",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "value",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 30,
+        "start_column": 16,
+        "end_line": 30,
+        "end_column": 25
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:29:15:30:25",
+      "receiver_location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 30,
+        "start_column": 16,
+        "end_line": 30,
+        "end_column": 19
+      },
+      "property_chain": [
+        "self",
+        "value"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 30,
+        "start_column": 16,
+        "end_line": 30,
+        "end_column": 19
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:29:15:30:25",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self.value",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 30,
+        "start_column": 16,
+        "end_line": 30,
+        "end_column": 25
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:29:15:30:25",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 30,
+        "start_column": 16,
+        "end_line": 30,
+        "end_column": 19
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:29:15:30:25",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 30,
+        "start_column": 16,
+        "end_line": 30,
+        "end_column": 19
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:29:15:30:25",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "value",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 30,
+        "start_column": 21,
+        "end_line": 30,
+        "end_column": 25
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:29:15:30:25",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "value",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 30,
+        "start_column": 21,
+        "end_line": 30,
+        "end_column": 25
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:29:15:30:25",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "DerivedEnum",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 33,
+        "start_column": 7,
+        "end_line": 33,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "MemberlessEnum",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 33,
+        "start_column": 19,
+        "end_line": 33,
+        "end_column": 32
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:33:19:33:32:MemberlessEnum",
+        "type_name": "MemberlessEnum",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "MemberlessEnum",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 33,
+        "start_column": 19,
+        "end_line": 33,
+        "end_column": 32
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "EXTRA = 3",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 34,
+        "start_column": 5,
+        "end_line": 34,
+        "end_column": 13
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:33:35:34:13",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 34,
+        "start_column": 5,
+        "end_line": 34,
+        "end_column": 13
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "EXTRA",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 34,
+        "start_column": 5,
+        "end_line": 34,
+        "end_column": 9
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:33:35:34:13",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 34,
+        "start_column": 5,
+        "end_line": 34,
+        "end_column": 9
+      },
+      "assignment_type": {
+        "type_id": "type:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:34:5:34:9:EXTRA",
+        "type_name": "EXTRA",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "EXTRA",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 34,
+        "start_column": 5,
+        "end_line": 34,
+        "end_column": 9
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:33:35:34:13",
+      "access_type": "write"
+    },
+    {
+      "kind": "assignment",
+      "name": "EXTRA = 3",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 34,
+        "start_column": 5,
+        "end_line": 34,
+        "end_column": 13
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:33:35:34:13",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 34,
+        "start_column": 5,
+        "end_line": 34,
+        "end_column": 13
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "EXTRA",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 34,
+        "start_column": 5,
+        "end_line": 34,
+        "end_column": 9
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:33:35:34:13",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "EXTRA",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 34,
+        "start_column": 5,
+        "end_line": 34,
+        "end_column": 9
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:33:35:34:13",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "3",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 34,
+        "start_column": 13,
+        "end_line": 34,
+        "end_column": 13
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:33:35:34:13",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "3",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 34,
+        "start_column": 13,
+        "end_line": 34,
+        "end_column": 13
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:33:35:34:13",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 34,
+        "start_column": 5,
+        "end_line": 34,
+        "end_column": 9
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "3",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 34,
+        "start_column": 13,
+        "end_line": 34,
+        "end_column": 13
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:33:35:34:13",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "BareProtocol",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 37,
+        "start_column": 7,
+        "end_line": 37,
+        "end_column": 18
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Protocol",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 37,
+        "start_column": 20,
+        "end_line": 37,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:37:20:37:27:Protocol",
+        "type_name": "Protocol",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Protocol",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 37,
+        "start_column": 20,
+        "end_line": 37,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "label: str",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 38,
+        "start_column": 5,
+        "end_line": 38,
+        "end_column": 14
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:37:30:40:32",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 38,
+        "start_column": 5,
+        "end_line": 38,
+        "end_column": 14
+      },
+      "assignment_type": {
+        "type_id": "type:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:38:5:38:14:str",
+        "type_name": "str",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "label",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 38,
+        "start_column": 5,
+        "end_line": 38,
+        "end_column": 9
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:37:30:40:32",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 38,
+        "start_column": 5,
+        "end_line": 38,
+        "end_column": 9
+      },
+      "assignment_type": {
+        "type_id": "type:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:38:5:38:9:label",
+        "type_name": "label",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "label",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 38,
+        "start_column": 5,
+        "end_line": 38,
+        "end_column": 9
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:37:30:40:32",
+      "access_type": "write"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "label",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 38,
+        "start_column": 5,
+        "end_line": 38,
+        "end_column": 9
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:37:30:40:32",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 38,
+        "start_column": 12,
+        "end_line": 38,
+        "end_column": 14
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:37:30:40:32",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:38:12:38:14:str",
+        "type_name": "str",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 38,
+        "start_column": 12,
+        "end_line": 38,
+        "end_column": 14
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:37:30:40:32",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "render",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 40,
+        "start_column": 9,
+        "end_line": 40,
+        "end_column": 14
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:37:30:40:32",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 40,
+        "start_column": 16,
+        "end_line": 40,
+        "end_column": 19
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:40:15:40:32",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 40,
+        "start_column": 16,
+        "end_line": 40,
+        "end_column": 19
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:40:15:40:32",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 40,
+        "start_column": 25,
+        "end_line": 40,
+        "end_column": 27
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:40:15:40:32",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:40:25:40:27:str",
+        "type_name": "str",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 40,
+        "start_column": 25,
+        "end_line": 40,
+        "end_column": 27
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:40:15:40:32",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "DottedProtocol",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 43,
+        "start_column": 7,
+        "end_line": 43,
+        "end_column": 20
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "Protocol",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 43,
+        "start_column": 22,
+        "end_line": 43,
+        "end_column": 36
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 43,
+        "start_column": 22,
+        "end_line": 43,
+        "end_column": 27
+      },
+      "property_chain": [
+        "typing",
+        "Protocol"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "typing",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 43,
+        "start_column": 22,
+        "end_line": 43,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "typing",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 43,
+        "start_column": 22,
+        "end_line": 43,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Protocol",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 43,
+        "start_column": 29,
+        "end_line": 43,
+        "end_column": 36
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:43:29:43:36:Protocol",
+        "type_name": "Protocol",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Protocol",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 43,
+        "start_column": 29,
+        "end_line": 43,
+        "end_column": 36
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Protocol",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 43,
+        "start_column": 29,
+        "end_line": 43,
+        "end_column": 36
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "size: int",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 44,
+        "start_column": 5,
+        "end_line": 44,
+        "end_column": 13
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:43:39:44:13",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 44,
+        "start_column": 5,
+        "end_line": 44,
+        "end_column": 13
+      },
+      "assignment_type": {
+        "type_id": "type:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:44:5:44:13:int",
+        "type_name": "int",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "size",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 44,
+        "start_column": 5,
+        "end_line": 44,
+        "end_column": 8
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:43:39:44:13",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 44,
+        "start_column": 5,
+        "end_line": 44,
+        "end_column": 8
+      },
+      "assignment_type": {
+        "type_id": "type:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:44:5:44:8:size",
+        "type_name": "size",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "size",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 44,
+        "start_column": 5,
+        "end_line": 44,
+        "end_column": 8
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:43:39:44:13",
+      "access_type": "write"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "size",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 44,
+        "start_column": 5,
+        "end_line": 44,
+        "end_column": 8
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:43:39:44:13",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "int",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 44,
+        "start_column": 11,
+        "end_line": 44,
+        "end_column": 13
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:43:39:44:13",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:44:11:44:13:int",
+        "type_name": "int",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "int",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 44,
+        "start_column": 11,
+        "end_line": 44,
+        "end_column": 13
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:43:39:44:13",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "GenericProtocol",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 47,
+        "start_column": 7,
+        "end_line": 47,
+        "end_column": 21
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Protocol",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 47,
+        "start_column": 23,
+        "end_line": 47,
+        "end_column": 30
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:47:23:47:30:Protocol",
+        "type_name": "Protocol",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Protocol[T_co]",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 47,
+        "start_column": 23,
+        "end_line": 47,
+        "end_column": 36
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Protocol",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 47,
+        "start_column": 23,
+        "end_line": 47,
+        "end_column": 30
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Protocol",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 47,
+        "start_column": 23,
+        "end_line": 47,
+        "end_column": 30
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "T_co",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 47,
+        "start_column": 32,
+        "end_line": 47,
+        "end_column": 35
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "payload: bytes",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 48,
+        "start_column": 5,
+        "end_line": 48,
+        "end_column": 18
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:47:39:48:18",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 48,
+        "start_column": 5,
+        "end_line": 48,
+        "end_column": 18
+      },
+      "assignment_type": {
+        "type_id": "type:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:48:5:48:18:bytes",
+        "type_name": "bytes",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "payload",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 48,
+        "start_column": 5,
+        "end_line": 48,
+        "end_column": 11
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:47:39:48:18",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 48,
+        "start_column": 5,
+        "end_line": 48,
+        "end_column": 11
+      },
+      "assignment_type": {
+        "type_id": "type:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:48:5:48:11:payload",
+        "type_name": "payload",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "payload",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 48,
+        "start_column": 5,
+        "end_line": 48,
+        "end_column": 11
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:47:39:48:18",
+      "access_type": "write"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "payload",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 48,
+        "start_column": 5,
+        "end_line": 48,
+        "end_column": 11
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:47:39:48:18",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "bytes",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 48,
+        "start_column": 14,
+        "end_line": 48,
+        "end_column": 18
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:47:39:48:18",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:48:14:48:18:bytes",
+        "type_name": "bytes",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "bytes",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 48,
+        "start_column": 14,
+        "end_line": 48,
+        "end_column": 18
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:47:39:48:18",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "NestedHolder",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 51,
+        "start_column": 7,
+        "end_line": 51,
+        "end_column": 18
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Enum",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 51,
+        "start_column": 20,
+        "end_line": 51,
+        "end_column": 23
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:51:20:51:23:Enum",
+        "type_name": "Enum",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Enum",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 51,
+        "start_column": 20,
+        "end_line": 51,
+        "end_column": 23
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "ONE = 1",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 52,
+        "start_column": 5,
+        "end_line": 52,
+        "end_column": 11
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:51:26:58:20",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 52,
+        "start_column": 5,
+        "end_line": 52,
+        "end_column": 11
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "ONE",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 52,
+        "start_column": 5,
+        "end_line": 52,
+        "end_column": 7
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:51:26:58:20",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 52,
+        "start_column": 5,
+        "end_line": 52,
+        "end_column": 7
+      },
+      "assignment_type": {
+        "type_id": "type:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:52:5:52:7:ONE",
+        "type_name": "ONE",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "ONE",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 52,
+        "start_column": 5,
+        "end_line": 52,
+        "end_column": 7
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:51:26:58:20",
+      "access_type": "write"
+    },
+    {
+      "kind": "assignment",
+      "name": "ONE = 1",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 52,
+        "start_column": 5,
+        "end_line": 52,
+        "end_column": 11
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:51:26:58:20",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 52,
+        "start_column": 5,
+        "end_line": 52,
+        "end_column": 11
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "ONE",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 52,
+        "start_column": 5,
+        "end_line": 52,
+        "end_column": 7
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:51:26:58:20",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "ONE",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 52,
+        "start_column": 5,
+        "end_line": 52,
+        "end_column": 7
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:51:26:58:20",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "1",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 52,
+        "start_column": 11,
+        "end_line": 52,
+        "end_column": 11
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:51:26:58:20",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "1",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 52,
+        "start_column": 11,
+        "end_line": 52,
+        "end_column": 11
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:51:26:58:20",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 52,
+        "start_column": 5,
+        "end_line": 52,
+        "end_column": 7
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "1",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 52,
+        "start_column": 11,
+        "end_line": 52,
+        "end_column": 11
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:51:26:58:20",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Inner",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 54,
+        "start_column": 11,
+        "end_line": 54,
+        "end_column": 15
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:51:26:58:20",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "inner_method",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 57,
+        "start_column": 13,
+        "end_line": 57,
+        "end_column": 24
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:54:17:58:20",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 57,
+        "start_column": 26,
+        "end_line": 57,
+        "end_column": 29
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:57:25:58:20",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 57,
+        "start_column": 26,
+        "end_line": 57,
+        "end_column": 29
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:57:25:58:20",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return 1",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 58,
+        "start_column": 13,
+        "end_line": 58,
+        "end_column": 20
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:57:25:58:20",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "1",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+        "start_line": 58,
+        "start_column": 20,
+        "end_line": 58,
+        "end_column": 20
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:57:25:58:20",
+      "access_type": "read"
+    }
+  ]
+}

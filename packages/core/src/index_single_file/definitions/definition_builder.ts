@@ -227,7 +227,7 @@ export class DefinitionBuilder {
       async?: boolean;
       generics?: SymbolName[];
       docstring?: string;
-      accessor_kind?: "getter" | "setter";
+      accessor_kind?: "getter" | "setter" | "deleter";
     },
   ): DefinitionBuilder {
     const class_state = this.classes.get(class_id);

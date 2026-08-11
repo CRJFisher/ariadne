@@ -1,0 +1,179 @@
+{
+  "file_path": "<fixtures>/python/code/aliased_imports/generate.py",
+  "language": "python",
+  "root_scope_id": "module:<fixtures>/python/code/aliased_imports/generate.py:1:1:15:0",
+  "scopes": {
+    "module:<fixtures>/python/code/aliased_imports/generate.py:1:1:15:0": {
+      "id": "module:<fixtures>/python/code/aliased_imports/generate.py:1:1:15:0",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/python/code/aliased_imports/generate.py",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 15,
+        "end_column": 0
+      },
+      "child_ids": [
+        "function:<fixtures>/python/code/aliased_imports/generate.py:7:33:9:24",
+        "function:<fixtures>/python/code/aliased_imports/generate.py:12:17:14:17"
+      ]
+    },
+    "function:<fixtures>/python/code/aliased_imports/generate.py:7:33:9:24": {
+      "id": "function:<fixtures>/python/code/aliased_imports/generate.py:7:33:9:24",
+      "parent_id": "module:<fixtures>/python/code/aliased_imports/generate.py:1:1:15:0",
+      "name": "generate_batched_predictions",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/python/code/aliased_imports/generate.py",
+        "start_line": 7,
+        "start_column": 33,
+        "end_line": 9,
+        "end_column": 24
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/python/code/aliased_imports/generate.py:12:17:14:17": {
+      "id": "function:<fixtures>/python/code/aliased_imports/generate.py:12:17:14:17",
+      "parent_id": "module:<fixtures>/python/code/aliased_imports/generate.py:1:1:15:0",
+      "name": "prepare_data",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/python/code/aliased_imports/generate.py",
+        "start_line": 12,
+        "start_column": 17,
+        "end_line": 14,
+        "end_column": 17
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {
+    "function:<fixtures>/python/code/aliased_imports/generate.py:7:5:7:32:generate_batched_predictions": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/python/code/aliased_imports/generate.py:7:5:7:32:generate_batched_predictions",
+      "name": "generate_batched_predictions",
+      "location": {
+        "file_path": "<fixtures>/python/code/aliased_imports/generate.py",
+        "start_line": 7,
+        "start_column": 5,
+        "end_line": 7,
+        "end_column": 32
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/aliased_imports/generate.py:1:1:15:0",
+      "is_exported": true,
+      "docstring": "Generate predictions in batches.",
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:<fixtures>/python/code/aliased_imports/generate.py:7:33:9:24"
+    },
+    "function:<fixtures>/python/code/aliased_imports/generate.py:12:5:12:16:prepare_data": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/python/code/aliased_imports/generate.py:12:5:12:16:prepare_data",
+      "name": "prepare_data",
+      "location": {
+        "file_path": "<fixtures>/python/code/aliased_imports/generate.py",
+        "start_line": 12,
+        "start_column": 5,
+        "end_line": 12,
+        "end_column": 16
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/aliased_imports/generate.py:1:1:15:0",
+      "is_exported": true,
+      "docstring": "Prepare data for processing.",
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:<fixtures>/python/code/aliased_imports/generate.py:12:17:14:17"
+    }
+  },
+  "classes": {},
+  "variables": {},
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {},
+  "references": [
+    {
+      "kind": "variable_reference",
+      "name": "generate_batched_predictions",
+      "location": {
+        "file_path": "<fixtures>/python/code/aliased_imports/generate.py",
+        "start_line": 7,
+        "start_column": 5,
+        "end_line": 7,
+        "end_column": 32
+      },
+      "scope_id": "module:<fixtures>/python/code/aliased_imports/generate.py:1:1:15:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return \"predictions\"",
+      "location": {
+        "file_path": "<fixtures>/python/code/aliased_imports/generate.py",
+        "start_line": 9,
+        "start_column": 5,
+        "end_line": 9,
+        "end_column": 24
+      },
+      "scope_id": "function:<fixtures>/python/code/aliased_imports/generate.py:7:33:9:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "\"predictions\"",
+      "location": {
+        "file_path": "<fixtures>/python/code/aliased_imports/generate.py",
+        "start_line": 9,
+        "start_column": 12,
+        "end_line": 9,
+        "end_column": 24
+      },
+      "scope_id": "function:<fixtures>/python/code/aliased_imports/generate.py:7:33:9:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "prepare_data",
+      "location": {
+        "file_path": "<fixtures>/python/code/aliased_imports/generate.py",
+        "start_line": 12,
+        "start_column": 5,
+        "end_line": 12,
+        "end_column": 16
+      },
+      "scope_id": "module:<fixtures>/python/code/aliased_imports/generate.py:1:1:15:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return \"data\"",
+      "location": {
+        "file_path": "<fixtures>/python/code/aliased_imports/generate.py",
+        "start_line": 14,
+        "start_column": 5,
+        "end_line": 14,
+        "end_column": 17
+      },
+      "scope_id": "function:<fixtures>/python/code/aliased_imports/generate.py:12:17:14:17",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "\"data\"",
+      "location": {
+        "file_path": "<fixtures>/python/code/aliased_imports/generate.py",
+        "start_line": 14,
+        "start_column": 12,
+        "end_line": 14,
+        "end_column": 17
+      },
+      "scope_id": "function:<fixtures>/python/code/aliased_imports/generate.py:12:17:14:17",
+      "access_type": "read"
+    }
+  ]
+}

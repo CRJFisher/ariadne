@@ -125,11 +125,9 @@ export class PythonScopeBoundaryExtractor implements ScopeBoundaryExtractor {
       return this.extract_regular_function_boundaries(node, file_path);
     } else if (node.type === "lambda") {
       return this.extract_lambda_boundaries(node, file_path);
-    } else if (node.type === "decorated_definition") {
-      return this.extract_decorated_function_boundaries(node, file_path);
     } else {
       throw new Error(
-        `Expected function_definition, lambda, or decorated_definition node, got ${node.type}`
+        `Expected function_definition or lambda node, got ${node.type}`
       );
     }
   }
@@ -213,20 +211,6 @@ export class PythonScopeBoundaryExtractor implements ScopeBoundaryExtractor {
       row: name_node.endPosition.row,
       column: name_node.endPosition.column + 1,
     };
-  }
-
-  // Decorated defs (e.g. @classmethod) are captured as the outer decorated_definition;
-  // the boundaries come from the function_definition nested inside.
-  private extract_decorated_function_boundaries(
-    node: Parser.SyntaxNode,
-    file_path: FilePath
-  ): ScopeBoundaries {
-    const definition_node = node.childForFieldName("definition");
-    if (!definition_node) {
-      throw new Error("Decorated definition has no definition field");
-    }
-
-    return this.extract_function_boundaries(definition_node, file_path);
   }
 
   // Lambdas are anonymous, so there is no separate name declaration to split out;

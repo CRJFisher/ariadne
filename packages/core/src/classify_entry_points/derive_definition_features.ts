@@ -28,6 +28,14 @@ export function derive_definition_features(
     case "javascript":
       return derive_definition_features_jsts(node, class_methods, lines_by_file);
     default:
-      return { definition_is_object_literal_method: false, accessor_kind: null };
+      // Languages whose indexer records the accessor role on the definition
+      // need no source-line reading to recover it.
+      return {
+        definition_is_object_literal_method: false,
+        accessor_kind:
+          node.definition.kind === "method"
+            ? (node.definition.accessor_kind ?? null)
+            : null,
+      };
   }
 }

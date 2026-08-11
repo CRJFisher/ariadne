@@ -1,0 +1,192 @@
+{
+  "file_path": "<fixtures>/rust/code/modules/uses_worker.rs",
+  "language": "rust",
+  "root_scope_id": "module:<fixtures>/rust/code/modules/uses_worker.rs:1:1:12:0",
+  "scopes": {
+    "module:<fixtures>/rust/code/modules/uses_worker.rs:1:1:12:0": {
+      "id": "module:<fixtures>/rust/code/modules/uses_worker.rs:1:1:12:0",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/uses_worker.rs",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 12,
+        "end_column": 0
+      },
+      "child_ids": [
+        "function:<fixtures>/rust/code/modules/uses_worker.rs:8:7:11:1"
+      ]
+    },
+    "function:<fixtures>/rust/code/modules/uses_worker.rs:8:7:11:1": {
+      "id": "function:<fixtures>/rust/code/modules/uses_worker.rs:8:7:11:1",
+      "parent_id": "module:<fixtures>/rust/code/modules/uses_worker.rs:1:1:12:0",
+      "name": "run",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/uses_worker.rs",
+        "start_line": 8,
+        "start_column": 7,
+        "end_line": 11,
+        "end_column": 1
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {
+    "function:<fixtures>/rust/code/modules/uses_worker.rs:8:1:11:1:run": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/rust/code/modules/uses_worker.rs:8:1:11:1:run",
+      "name": "run",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/uses_worker.rs",
+        "start_line": 8,
+        "start_column": 4,
+        "end_line": 8,
+        "end_column": 6
+      },
+      "defining_scope_id": "module:<fixtures>/rust/code/modules/uses_worker.rs:1:1:12:0",
+      "is_exported": false,
+      "signature": {
+        "parameters": [],
+        "return_type": "u32"
+      },
+      "return_type": "u32",
+      "body_scope_id": "function:<fixtures>/rust/code/modules/uses_worker.rs:8:7:11:1"
+    }
+  },
+  "classes": {},
+  "variables": {},
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {
+    "module:<fixtures>/rust/code/modules/uses_worker.rs:4:5:4:10:<module>": {
+      "kind": "namespace",
+      "symbol_id": "module:<fixtures>/rust/code/modules/uses_worker.rs:4:5:4:10:<module>",
+      "name": "worker",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/uses_worker.rs",
+        "start_line": 4,
+        "start_column": 5,
+        "end_line": 4,
+        "end_column": 10
+      },
+      "defining_scope_id": "module:<fixtures>/rust/code/modules/uses_worker.rs:1:1:12:0",
+      "is_exported": false
+    }
+  },
+  "types": {},
+  "imported_symbols": {
+    "import:<fixtures>/rust/code/modules/uses_worker.rs:6:create": {
+      "kind": "import",
+      "symbol_id": "import:<fixtures>/rust/code/modules/uses_worker.rs:6:create",
+      "name": "create",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/uses_worker.rs",
+        "start_line": 6,
+        "start_column": 1,
+        "end_line": 6,
+        "end_column": 19
+      },
+      "defining_scope_id": "module:<fixtures>/rust/code/modules/uses_worker.rs:1:1:12:0",
+      "import_path": "worker",
+      "import_kind": "named"
+    }
+  },
+  "references": [
+    {
+      "kind": "variable_reference",
+      "name": "worker",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/uses_worker.rs",
+        "start_line": 4,
+        "start_column": 5,
+        "end_line": 4,
+        "end_column": 10
+      },
+      "scope_id": "module:<fixtures>/rust/code/modules/uses_worker.rs:1:1:12:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "worker",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/uses_worker.rs",
+        "start_line": 6,
+        "start_column": 5,
+        "end_line": 6,
+        "end_column": 10
+      },
+      "scope_id": "module:<fixtures>/rust/code/modules/uses_worker.rs:1:1:12:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "create",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/uses_worker.rs",
+        "start_line": 6,
+        "start_column": 13,
+        "end_line": 6,
+        "end_column": 18
+      },
+      "scope_id": "module:<fixtures>/rust/code/modules/uses_worker.rs:1:1:12:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "run",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/uses_worker.rs",
+        "start_line": 8,
+        "start_column": 4,
+        "end_line": 8,
+        "end_column": 6
+      },
+      "scope_id": "module:<fixtures>/rust/code/modules/uses_worker.rs:1:1:12:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "create",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/uses_worker.rs",
+        "start_line": 10,
+        "start_column": 5,
+        "end_line": 10,
+        "end_column": 18
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/uses_worker.rs:8:7:11:1",
+      "path_prefix": [
+        "worker"
+      ]
+    },
+    {
+      "kind": "variable_reference",
+      "name": "worker",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/uses_worker.rs",
+        "start_line": 10,
+        "start_column": 5,
+        "end_line": 10,
+        "end_column": 10
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/uses_worker.rs:8:7:11:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "create",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/uses_worker.rs",
+        "start_line": 10,
+        "start_column": 13,
+        "end_line": 10,
+        "end_column": 18
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/uses_worker.rs:8:7:11:1",
+      "access_type": "read"
+    }
+  ]
+}

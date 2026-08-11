@@ -12,7 +12,7 @@ import type { FileSystemFolder } from "../file_folders";
 import {
   is_python_file,
   should_replace_python_variable,
-  is_variable_or_constant_symbol,
+  is_python_redefinition,
 } from "./export.python";
 import { resolve_arrow_function_export } from "./export.typescript";
 
@@ -33,6 +33,9 @@ interface EnhancedExportMetadata {
   /** Source info carried on re-exports so the chain can be followed. */
   import_def?: ImportDefinition;
 }
+
+/** Export name a wildcard re-export (`from .a import *`) registers under. */
+const WILDCARD_EXPORT_NAME = "*";
 
 /**
  * Registry tracking what symbols each file exports, keyed for the two lookups
@@ -82,6 +85,15 @@ export class ExportRegistry {
           : undefined;
 
       const existing = metadata_map.get(export_name);
+
+      // A module may re-export several wildcards (`from .a import *` beside
+      // `from .b import *`). They are not competing bindings of one name, so
+      // each surface registers and the first keeps the metadata slot.
+      if (existing && export_name === WILDCARD_EXPORT_NAME) {
+        symbol_ids.add(def.symbol_id);
+        return;
+      }
+
       if (existing && !is_default) {
         const arrow_decision = resolve_arrow_function_export(
           existing.symbol_id,
@@ -102,12 +114,14 @@ export class ExportRegistry {
           return;
         }
 
-        // Python module-level reassignment (`x = 1; x = 2`) yields one
-        // definition per assignment; only the last in source order is exported.
+        // Python rebinds a module-level name freely — `x = 1; x = 2`, an
+        // `@overload` group, a version-guarded redefinition — and the last
+        // declaration in source order is the exported one. A second definition
+        // at the same location is not a rebinding but a double capture, and
+        // falls through to the throw below.
         if (
           is_python_file(file_id) &&
-          is_variable_or_constant_symbol(existing.symbol_id) &&
-          (def.kind === "variable" || def.kind === "constant")
+          is_python_redefinition(existing.symbol_id, def.symbol_id)
         ) {
           if (
             should_replace_python_variable(

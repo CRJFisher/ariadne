@@ -423,7 +423,8 @@
         "end_column": 12
       },
       "defining_scope_id": "function:<fixtures>/rust/code/functions/basic_functions.rs:20:14:23:1",
-      "is_exported": false
+      "is_exported": false,
+      "initialized_from_call": "fetch_data"
     },
     "variable:<fixtures>/rust/code/functions/basic_functions.rs:34:9:34:14:result": {
       "kind": "variable",
@@ -437,7 +438,8 @@
         "end_column": 14
       },
       "defining_scope_id": "function:<fixtures>/rust/code/functions/basic_functions.rs:33:12:36:1",
-      "is_exported": false
+      "is_exported": false,
+      "initialized_from_call": "add"
     }
   },
   "interfaces": {},

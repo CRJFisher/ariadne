@@ -173,7 +173,8 @@
         "end_column": 14
       },
       "defining_scope_id": "function:<fixtures>/rust/code/modules/shadowing.rs:13:8:22:1",
-      "is_exported": false
+      "is_exported": false,
+      "initialized_from_call": "helper"
     },
     "variable:<fixtures>/rust/code/modules/shadowing.rs:18:9:18:17:processed": {
       "kind": "variable",
@@ -187,7 +188,8 @@
         "end_column": 17
       },
       "defining_scope_id": "function:<fixtures>/rust/code/modules/shadowing.rs:13:8:22:1",
-      "is_exported": false
+      "is_exported": false,
+      "initialized_from_call": "process_data"
     }
   },
   "interfaces": {},
@@ -222,7 +224,7 @@
         "end_column": 34
       },
       "defining_scope_id": "module:<fixtures>/rust/code/modules/shadowing.rs:1:1:33:1",
-      "import_path": "utils::helper",
+      "import_path": "utils",
       "import_kind": "named"
     },
     "import:<fixtures>/rust/code/modules/shadowing.rs:6:process_data": {
@@ -237,7 +239,7 @@
         "end_column": 34
       },
       "defining_scope_id": "module:<fixtures>/rust/code/modules/shadowing.rs:1:1:33:1",
-      "import_path": "utils::process_data",
+      "import_path": "utils",
       "import_kind": "named"
     }
   },
@@ -580,7 +582,7 @@
     },
     {
       "kind": "function_call",
-      "name": "utils::helper",
+      "name": "helper",
       "location": {
         "file_path": "<fixtures>/rust/code/modules/shadowing.rs",
         "start_line": 32,
@@ -588,7 +590,10 @@
         "end_line": 32,
         "end_column": 17
       },
-      "scope_id": "function:<fixtures>/rust/code/modules/shadowing.rs:31:23:33:1"
+      "scope_id": "function:<fixtures>/rust/code/modules/shadowing.rs:31:23:33:1",
+      "path_prefix": [
+        "utils"
+      ]
     },
     {
       "kind": "variable_reference",

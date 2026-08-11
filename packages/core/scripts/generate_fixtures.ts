@@ -23,7 +23,7 @@ import {
 import type { Language, FilePath } from "@ariadnejs/types";
 import { build_index_single_file } from "../src/index_single_file/index_single_file";
 import { write_index_single_file_fixture } from "../tests/fixtures/index_single_file_json";
-import type { ParsedFile } from "../src/index_single_file/file_utils";
+import type { ParsedFile } from "../src/index_single_file/parsed_file";
 
 // Language parsers
 const parsers = {

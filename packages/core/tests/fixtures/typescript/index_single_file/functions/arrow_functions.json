@@ -158,6 +158,7 @@
       "export": {
         "is_reexport": false
       },
+      "docstring": "// Simple arrow function",
       "signature": {
         "parameters": []
       },
@@ -179,6 +180,7 @@
       "export": {
         "is_reexport": false
       },
+      "docstring": "// Arrow function with block",
       "signature": {
         "parameters": []
       },
@@ -200,6 +202,7 @@
       "export": {
         "is_reexport": false
       },
+      "docstring": "// Arrow function returning object",
       "signature": {
         "parameters": []
       },
@@ -221,6 +224,7 @@
       "export": {
         "is_reexport": false
       },
+      "docstring": "// Arrow function with multiple parameters",
       "signature": {
         "parameters": []
       },
@@ -242,6 +246,7 @@
       "export": {
         "is_reexport": false
       },
+      "docstring": "// Closure with arrow function",
       "signature": {
         "parameters": []
       },
@@ -263,6 +268,7 @@
       "export": {
         "is_reexport": false
       },
+      "docstring": "// Higher-order function",
       "signature": {
         "parameters": []
       },
@@ -737,114 +743,27 @@
       "access_type": "read"
     },
     {
-      "kind": "method_call",
-      "name": "now",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/functions/arrow_functions.ts",
-        "start_line": 18,
-        "start_column": 14,
-        "end_line": 18,
-        "end_column": 23
-      },
-      "scope_id": "function:<fixtures>/typescript/code/functions/arrow_functions.ts:15:21:19:2",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/functions/arrow_functions.ts",
-        "start_line": 18,
-        "start_column": 14,
-        "end_line": 18,
-        "end_column": 17
-      },
-      "property_chain": [
-        "Date",
-        "now"
-      ],
-      "optional_chaining": false
-    },
-    {
       "kind": "variable_reference",
-      "name": "Date",
+      "name": "name",
       "location": {
         "file_path": "<fixtures>/typescript/code/functions/arrow_functions.ts",
-        "start_line": 18,
-        "start_column": 14,
-        "end_line": 18,
-        "end_column": 17
+        "start_line": 16,
+        "start_column": 3,
+        "end_line": 16,
+        "end_column": 6
       },
       "scope_id": "function:<fixtures>/typescript/code/functions/arrow_functions.ts:15:21:19:2",
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "now",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/functions/arrow_functions.ts",
-        "start_line": 18,
-        "start_column": 14,
-        "end_line": 18,
-        "end_column": 21
-      },
-      "scope_id": "function:<fixtures>/typescript/code/functions/arrow_functions.ts:15:21:19:2",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/functions/arrow_functions.ts",
-        "start_line": 18,
-        "start_column": 14,
-        "end_line": 18,
-        "end_column": 17
-      },
-      "property_chain": [
-        "Date",
-        "now"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
-      "name": "Date",
+      "name": "age",
       "location": {
         "file_path": "<fixtures>/typescript/code/functions/arrow_functions.ts",
-        "start_line": 18,
-        "start_column": 14,
-        "end_line": 18,
-        "end_column": 17
-      },
-      "scope_id": "function:<fixtures>/typescript/code/functions/arrow_functions.ts:15:21:19:2",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "now",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/functions/arrow_functions.ts",
-        "start_line": 18,
-        "start_column": 14,
-        "end_line": 18,
-        "end_column": 21
-      },
-      "scope_id": "function:<fixtures>/typescript/code/functions/arrow_functions.ts:15:21:19:2",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/functions/arrow_functions.ts",
-        "start_line": 18,
-        "start_column": 14,
-        "end_line": 18,
-        "end_column": 17
-      },
-      "property_chain": [
-        "Date",
-        "now"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "Date",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/functions/arrow_functions.ts",
-        "start_line": 18,
-        "start_column": 14,
-        "end_line": 18,
-        "end_column": 17
+        "start_line": 17,
+        "start_column": 3,
+        "end_line": 17,
+        "end_column": 5
       },
       "scope_id": "function:<fixtures>/typescript/code/functions/arrow_functions.ts:15:21:19:2",
       "access_type": "read"
@@ -871,7 +790,17 @@
         "Date",
         "now"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "potential_construct_target": {
+        "file_path": "<fixtures>/typescript/code/functions/arrow_functions.ts",
+        "start_line": 15,
+        "start_column": 7,
+        "end_line": 15,
+        "end_column": 17
+      },
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -901,13 +830,13 @@
     },
     {
       "kind": "variable_reference",
-      "name": "now",
+      "name": "Date",
       "location": {
         "file_path": "<fixtures>/typescript/code/functions/arrow_functions.ts",
         "start_line": 18,
-        "start_column": 19,
+        "start_column": 14,
         "end_line": 18,
-        "end_column": 21
+        "end_column": 17
       },
       "scope_id": "function:<fixtures>/typescript/code/functions/arrow_functions.ts:15:21:19:2",
       "access_type": "read"
@@ -1771,120 +1700,17 @@
         "result",
         "push"
       ],
-      "optional_chaining": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "result",
-      "location": {
+      "is_optional_chain": false,
+      "potential_construct_target": {
         "file_path": "<fixtures>/typescript/code/functions/arrow_functions.ts",
-        "start_line": 36,
-        "start_column": 5,
-        "end_line": 36,
-        "end_column": 10
+        "start_line": 33,
+        "start_column": 7,
+        "end_line": 33,
+        "end_column": 9
       },
-      "scope_id": "block:<fixtures>/typescript/code/functions/arrow_functions.ts:35:3:37:3",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "push",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/functions/arrow_functions.ts",
-        "start_line": 36,
-        "start_column": 5,
-        "end_line": 36,
-        "end_column": 15
-      },
-      "scope_id": "block:<fixtures>/typescript/code/functions/arrow_functions.ts:35:3:37:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/functions/arrow_functions.ts",
-        "start_line": 36,
-        "start_column": 5,
-        "end_line": 36,
-        "end_column": 10
-      },
-      "property_chain": [
-        "result",
-        "push"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "result",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/functions/arrow_functions.ts",
-        "start_line": 36,
-        "start_column": 5,
-        "end_line": 36,
-        "end_column": 10
-      },
-      "scope_id": "block:<fixtures>/typescript/code/functions/arrow_functions.ts:35:3:37:3",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "push",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/functions/arrow_functions.ts",
-        "start_line": 36,
-        "start_column": 5,
-        "end_line": 36,
-        "end_column": 15
-      },
-      "scope_id": "block:<fixtures>/typescript/code/functions/arrow_functions.ts:35:3:37:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/functions/arrow_functions.ts",
-        "start_line": 36,
-        "start_column": 5,
-        "end_line": 36,
-        "end_column": 10
-      },
-      "property_chain": [
-        "result",
-        "push"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "result",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/functions/arrow_functions.ts",
-        "start_line": 36,
-        "start_column": 5,
-        "end_line": 36,
-        "end_column": 10
-      },
-      "scope_id": "block:<fixtures>/typescript/code/functions/arrow_functions.ts:35:3:37:3",
-      "access_type": "read"
-    },
-    {
-      "kind": "method_call",
-      "name": "push",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/functions/arrow_functions.ts",
-        "start_line": 36,
-        "start_column": 5,
-        "end_line": 36,
-        "end_column": 25
-      },
-      "scope_id": "block:<fixtures>/typescript/code/functions/arrow_functions.ts:35:3:37:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/functions/arrow_functions.ts",
-        "start_line": 36,
-        "start_column": 5,
-        "end_line": 36,
-        "end_column": 10
-      },
-      "property_chain": [
-        "result",
-        "push"
-      ],
-      "optional_chaining": false
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -1914,13 +1740,13 @@
     },
     {
       "kind": "variable_reference",
-      "name": "push",
+      "name": "result",
       "location": {
         "file_path": "<fixtures>/typescript/code/functions/arrow_functions.ts",
         "start_line": 36,
-        "start_column": 12,
+        "start_column": 5,
         "end_line": 36,
-        "end_column": 15
+        "end_column": 10
       },
       "scope_id": "block:<fixtures>/typescript/code/functions/arrow_functions.ts:35:3:37:3",
       "access_type": "read"

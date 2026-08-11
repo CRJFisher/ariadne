@@ -62,6 +62,7 @@ export enum SemanticEntity {
   // References
   CALL = "call",
   MEMBER_ACCESS = "member_access",
+  CALLABLE_VALUE = "callable_value",
   TYPE_REFERENCE = "type_reference",
   TYPEOF = "typeof",
   WRITE = "write", // Variable write/assignment

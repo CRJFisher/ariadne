@@ -20,6 +20,7 @@
         "function:<fixtures>/python/code/functions/closures.py:43:27:58:20",
         "function:<fixtures>/python/code/functions/closures.py:15:19:27:20",
         "function:<fixtures>/python/code/functions/closures.py:30:22:40:19",
+        "function:<fixtures>/python/code/functions/closures.py:62:10:64:27",
         "function:<fixtures>/python/code/functions/closures.py:10:11:12:26",
         "function:<fixtures>/python/code/functions/closures.py:138:18:138:45"
       ]
@@ -116,7 +117,9 @@
         "end_line": 57,
         "end_column": 22
       },
-      "child_ids": []
+      "child_ids": [
+        "function:<fixtures>/python/code/functions/closures.py:50:20:55:49"
+      ]
     },
     "function:<fixtures>/python/code/functions/closures.py:30:22:40:19": {
       "id": "function:<fixtures>/python/code/functions/closures.py:30:22:40:19",
@@ -162,6 +165,20 @@
       },
       "child_ids": []
     },
+    "function:<fixtures>/python/code/functions/closures.py:50:20:55:49": {
+      "id": "function:<fixtures>/python/code/functions/closures.py:50:20:55:49",
+      "parent_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
+      "name": "wrapper",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/closures.py",
+        "start_line": 50,
+        "start_column": 20,
+        "end_line": 55,
+        "end_column": 49
+      },
+      "child_ids": []
+    },
     "function:<fixtures>/python/code/functions/closures.py:33:17:38:21": {
       "id": "function:<fixtures>/python/code/functions/closures.py:33:17:38:21",
       "parent_id": "function:<fixtures>/python/code/functions/closures.py:30:22:40:19",
@@ -173,6 +190,20 @@
         "start_column": 17,
         "end_line": 38,
         "end_column": 21
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/python/code/functions/closures.py:62:10:64:27": {
+      "id": "function:<fixtures>/python/code/functions/closures.py:62:10:64:27",
+      "parent_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
+      "name": "greet",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/closures.py",
+        "start_line": 62,
+        "start_column": 10,
+        "end_line": 64,
+        "end_column": 27
       },
       "child_ids": []
     },
@@ -219,6 +250,7 @@
       },
       "defining_scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
       "is_exported": true,
+      "docstring": "Helper function for closure testing.",
       "signature": {
         "parameters": [],
         "return_type": "str"
@@ -239,6 +271,7 @@
       },
       "defining_scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
       "is_exported": true,
+      "docstring": "Factory function that creates a counter closure.",
       "signature": {
         "parameters": [
           {
@@ -253,7 +286,8 @@
               "end_line": 15,
               "end_column": 24
             },
-            "type": "int"
+            "type": "int",
+            "default_value": "0"
           }
         ],
         "return_type": "Callable[[], int]"
@@ -274,6 +308,7 @@
       },
       "defining_scope_id": "function:<fixtures>/python/code/functions/closures.py:15:19:27:20",
       "is_exported": false,
+      "docstring": "Inner function that captures and modifies outer variable.",
       "signature": {
         "parameters": [],
         "return_type": "int"
@@ -294,6 +329,7 @@
       },
       "defining_scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
       "is_exported": true,
+      "docstring": "Factory function that creates a multiplier closure.",
       "signature": {
         "parameters": [
           {
@@ -329,6 +365,7 @@
       },
       "defining_scope_id": "function:<fixtures>/python/code/functions/closures.py:30:22:40:19",
       "is_exported": false,
+      "docstring": "Inner function that captures factor from outer scope.",
       "signature": {
         "parameters": [
           {
@@ -364,6 +401,7 @@
       },
       "defining_scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
       "is_exported": true,
+      "docstring": "Decorator factory that creates closures.",
       "signature": {
         "parameters": [
           {
@@ -399,6 +437,7 @@
       },
       "defining_scope_id": "function:<fixtures>/python/code/functions/closures.py:43:27:58:20",
       "is_exported": false,
+      "docstring": "Actual decorator that captures prefix.",
       "signature": {
         "parameters": [
           {
@@ -434,11 +473,12 @@
       },
       "defining_scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
       "is_exported": false,
+      "docstring": "Wrapper function with variable capture.",
       "signature": {
         "parameters": [
           {
             "kind": "parameter",
-            "defining_scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
+            "defining_scope_id": "function:<fixtures>/python/code/functions/closures.py:50:20:55:49",
             "symbol_id": "parameter:<fixtures>/python/code/functions/closures.py:50:22:50:25:args",
             "name": "args",
             "location": {
@@ -451,7 +491,7 @@
           },
           {
             "kind": "parameter",
-            "defining_scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
+            "defining_scope_id": "function:<fixtures>/python/code/functions/closures.py:50:20:55:49",
             "symbol_id": "parameter:<fixtures>/python/code/functions/closures.py:50:30:50:35:kwargs",
             "name": "kwargs",
             "location": {
@@ -465,7 +505,8 @@
         ],
         "return_type": "str"
       },
-      "return_type": "str"
+      "return_type": "str",
+      "body_scope_id": "function:<fixtures>/python/code/functions/closures.py:50:20:55:49"
     },
     "function:<fixtures>/python/code/functions/closures.py:62:5:62:9:greet": {
       "kind": "function",
@@ -480,11 +521,12 @@
       },
       "defining_scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
       "is_exported": true,
+      "docstring": "Function with decorator that uses closures.",
       "signature": {
         "parameters": [
           {
             "kind": "parameter",
-            "defining_scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
+            "defining_scope_id": "function:<fixtures>/python/code/functions/closures.py:62:10:64:27",
             "symbol_id": "parameter:<fixtures>/python/code/functions/closures.py:62:11:62:14:name",
             "name": "name",
             "location": {
@@ -499,7 +541,8 @@
         ],
         "return_type": "str"
       },
-      "return_type": "str"
+      "return_type": "str",
+      "body_scope_id": "function:<fixtures>/python/code/functions/closures.py:62:10:64:27"
     },
     "function:<fixtures>/python/code/functions/closures.py:67:5:67:25:complex_nested_scopes": {
       "kind": "function",
@@ -514,6 +557,7 @@
       },
       "defining_scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
       "is_exported": true,
+      "docstring": "Function with multiple levels of nesting and variable capture.",
       "signature": {
         "parameters": [],
         "return_type": "dict"
@@ -534,6 +578,7 @@
       },
       "defining_scope_id": "function:<fixtures>/python/code/functions/closures.py:67:26:115:5",
       "is_exported": false,
+      "docstring": "First level of nesting.",
       "signature": {
         "parameters": [],
         "return_type": "dict"
@@ -554,6 +599,7 @@
       },
       "defining_scope_id": "function:<fixtures>/python/code/functions/closures.py:71:18:105:9",
       "is_exported": false,
+      "docstring": "Second level of nesting.",
       "signature": {
         "parameters": [],
         "return_type": "dict"
@@ -574,6 +620,7 @@
       },
       "defining_scope_id": "function:<fixtures>/python/code/functions/closures.py:75:22:95:13",
       "is_exported": false,
+      "docstring": "Third level of nesting with variable capture.",
       "signature": {
         "parameters": [],
         "return_type": "str"
@@ -655,7 +702,7 @@
         "end_line": 53,
         "end_column": 25
       },
-      "defining_scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
+      "defining_scope_id": "function:<fixtures>/python/code/functions/closures.py:50:20:55:49",
       "is_exported": false,
       "initial_value": "helper()"
     },
@@ -670,7 +717,7 @@
         "end_line": 54,
         "end_column": 27
       },
-      "defining_scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
+      "defining_scope_id": "function:<fixtures>/python/code/functions/closures.py:50:20:55:49",
       "is_exported": false,
       "initial_value": "func(*args, **kwargs)"
     },
@@ -1076,6 +1123,9 @@
         "end_column": 27
       },
       "defining_scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
+      "export": {
+        "is_reexport": true
+      },
       "import_path": "typing",
       "import_kind": "named"
     },
@@ -1091,6 +1141,9 @@
         "end_column": 32
       },
       "defining_scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
+      "export": {
+        "is_reexport": true
+      },
       "import_path": "typing",
       "import_kind": "named"
     },
@@ -1106,6 +1159,9 @@
         "end_column": 38
       },
       "defining_scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
+      "export": {
+        "is_reexport": true
+      },
       "import_path": "typing",
       "import_kind": "named"
     },
@@ -1121,6 +1177,9 @@
         "end_column": 27
       },
       "defining_scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
+      "export": {
+        "is_reexport": true
+      },
       "import_path": "functools",
       "import_kind": "named"
     }
@@ -1141,32 +1200,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "typing",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 6,
-        "start_column": 6,
-        "end_line": 6,
-        "end_column": 11
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "typing",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 6,
-        "start_column": 6,
-        "end_line": 6,
-        "end_column": 11
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "Callable",
       "location": {
         "file_path": "<fixtures>/python/code/functions/closures.py",
@@ -1174,58 +1207,6 @@
         "start_column": 20,
         "end_line": 6,
         "end_column": 27
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "Callable",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 6,
-        "start_column": 20,
-        "end_line": 6,
-        "end_column": 27
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "Callable",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 6,
-        "start_column": 20,
-        "end_line": 6,
-        "end_column": 27
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "Any",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 6,
-        "start_column": 30,
-        "end_line": 6,
-        "end_column": 32
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "Any",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 6,
-        "start_column": 30,
-        "end_line": 6,
-        "end_column": 32
       },
       "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
       "access_type": "read"
@@ -1258,32 +1239,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "List",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 6,
-        "start_column": 35,
-        "end_line": 6,
-        "end_column": 38
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "List",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 6,
-        "start_column": 35,
-        "end_line": 6,
-        "end_column": 38
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "functools",
       "location": {
         "file_path": "<fixtures>/python/code/functions/closures.py",
@@ -1291,58 +1246,6 @@
         "start_column": 6,
         "end_line": 7,
         "end_column": 14
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "functools",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 7,
-        "start_column": 6,
-        "end_line": 7,
-        "end_column": 14
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "functools",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 7,
-        "start_column": 6,
-        "end_line": 7,
-        "end_column": 14
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "wraps",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 7,
-        "start_column": 23,
-        "end_line": 7,
-        "end_column": 27
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "wraps",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 7,
-        "start_column": 23,
-        "end_line": 7,
-        "end_column": 27
       },
       "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
       "access_type": "read"
@@ -1371,58 +1274,6 @@
         "end_column": 10
       },
       "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 10,
-        "start_column": 5,
-        "end_line": 10,
-        "end_column": 10
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 10,
-        "start_column": 5,
-        "end_line": 10,
-        "end_column": 10
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "str",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 10,
-        "start_column": 17,
-        "end_line": 10,
-        "end_column": 19
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:10:11:12:26",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "str",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 10,
-        "start_column": 17,
-        "end_line": 10,
-        "end_column": 19
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:10:11:12:26",
       "access_type": "read"
     },
     {
@@ -1498,32 +1349,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "create_counter",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 15,
-        "start_column": 5,
-        "end_line": 15,
-        "end_column": 18
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "create_counter",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 15,
-        "start_column": 5,
-        "end_line": 15,
-        "end_column": 18
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "start",
       "location": {
         "file_path": "<fixtures>/python/code/functions/closures.py",
@@ -1531,58 +1356,6 @@
         "start_column": 20,
         "end_line": 15,
         "end_column": 24
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:15:19:27:20",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "start",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 15,
-        "start_column": 20,
-        "end_line": 15,
-        "end_column": 24
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:15:19:27:20",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "start",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 15,
-        "start_column": 20,
-        "end_line": 15,
-        "end_column": 24
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:15:19:27:20",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "int",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 15,
-        "start_column": 27,
-        "end_line": 15,
-        "end_column": 29
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:15:19:27:20",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "int",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 15,
-        "start_column": 27,
-        "end_line": 15,
-        "end_column": 29
       },
       "scope_id": "function:<fixtures>/python/code/functions/closures.py:15:19:27:20",
       "access_type": "read"
@@ -1620,32 +1393,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "Callable",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 15,
-        "start_column": 39,
-        "end_line": 15,
-        "end_column": 46
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:15:19:27:20",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "Callable",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 15,
-        "start_column": 39,
-        "end_line": 15,
-        "end_column": 46
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:15:19:27:20",
-      "access_type": "read"
-    },
-    {
       "kind": "type_reference",
       "name": "Callable",
       "location": {
@@ -1673,32 +1420,6 @@
         "start_column": 39,
         "end_line": 15,
         "end_column": 46
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:15:19:27:20",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "int",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 15,
-        "start_column": 52,
-        "end_line": 15,
-        "end_column": 54
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:15:19:27:20",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "int",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 15,
-        "start_column": 52,
-        "end_line": 15,
-        "end_column": 54
       },
       "scope_id": "function:<fixtures>/python/code/functions/closures.py:15:19:27:20",
       "access_type": "read"
@@ -1838,32 +1559,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "count",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 17,
-        "start_column": 5,
-        "end_line": 17,
-        "end_column": 9
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:15:19:27:20",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "count",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 17,
-        "start_column": 5,
-        "end_line": 17,
-        "end_column": 9
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:15:19:27:20",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "start",
       "location": {
@@ -1916,32 +1611,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "start",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 17,
-        "start_column": 13,
-        "end_line": 17,
-        "end_column": 17
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:15:19:27:20",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "start",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 17,
-        "start_column": 13,
-        "end_line": 17,
-        "end_column": 17
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:15:19:27:20",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "increment",
       "location": {
         "file_path": "<fixtures>/python/code/functions/closures.py",
@@ -1951,58 +1620,6 @@
         "end_column": 17
       },
       "scope_id": "function:<fixtures>/python/code/functions/closures.py:15:19:27:20",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "increment",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 19,
-        "start_column": 9,
-        "end_line": 19,
-        "end_column": 17
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:15:19:27:20",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "increment",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 19,
-        "start_column": 9,
-        "end_line": 19,
-        "end_column": 17
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:15:19:27:20",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "int",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 19,
-        "start_column": 24,
-        "end_line": 19,
-        "end_column": 26
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:19:18:25:20",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "int",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 19,
-        "start_column": 24,
-        "end_line": 19,
-        "end_column": 26
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:19:18:25:20",
       "access_type": "read"
     },
     {
@@ -2055,32 +1672,6 @@
       "name": "count",
       "location": {
         "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 21,
-        "start_column": 18,
-        "end_line": 21,
-        "end_column": 22
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:19:18:25:20",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "count",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 21,
-        "start_column": 18,
-        "end_line": 21,
-        "end_column": 22
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:19:18:25:20",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "count",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
         "start_line": 22,
         "start_column": 9,
         "end_line": 22,
@@ -2107,32 +1698,6 @@
         "end_line": 22,
         "end_column": 18
       }
-    },
-    {
-      "kind": "variable_reference",
-      "name": "count",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 22,
-        "start_column": 9,
-        "end_line": 22,
-        "end_column": 13
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:19:18:25:20",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "count",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 22,
-        "start_column": 9,
-        "end_line": 22,
-        "end_column": 13
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:19:18:25:20",
-      "access_type": "read"
     },
     {
       "kind": "variable_reference",
@@ -2276,32 +1841,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "helper_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 24,
-        "start_column": 9,
-        "end_line": 24,
-        "end_column": 21
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:19:18:25:20",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 24,
-        "start_column": 9,
-        "end_line": 24,
-        "end_column": 21
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:19:18:25:20",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "helper()",
       "location": {
@@ -2329,25 +1868,6 @@
         "start_column": 25,
         "end_line": 24,
         "end_column": 30
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:19:18:25:20",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 24,
-        "start_column": 9,
-        "end_line": 24,
-        "end_column": 21
-      }
-    },
-    {
-      "kind": "function_call",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 24,
-        "start_column": 25,
-        "end_line": 24,
-        "end_column": 32
       },
       "scope_id": "function:<fixtures>/python/code/functions/closures.py:19:18:25:20",
       "potential_construct_target": {
@@ -2405,63 +1925,11 @@
     },
     {
       "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 24,
-        "start_column": 25,
-        "end_line": 24,
-        "end_column": 30
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:19:18:25:20",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 24,
-        "start_column": 25,
-        "end_line": 24,
-        "end_column": 30
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:19:18:25:20",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "return count",
       "location": {
         "file_path": "<fixtures>/python/code/functions/closures.py",
         "start_line": 25,
         "start_column": 9,
-        "end_line": 25,
-        "end_column": 20
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:19:18:25:20",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "count",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 25,
-        "start_column": 16,
-        "end_line": 25,
-        "end_column": 20
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:19:18:25:20",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "count",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 25,
-        "start_column": 16,
         "end_line": 25,
         "end_column": 20
       },
@@ -2535,58 +2003,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "increment",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 27,
-        "start_column": 12,
-        "end_line": 27,
-        "end_column": 20
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:15:19:27:20",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "increment",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 27,
-        "start_column": 12,
-        "end_line": 27,
-        "end_column": 20
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:15:19:27:20",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "create_multiplier",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 30,
-        "start_column": 5,
-        "end_line": 30,
-        "end_column": 21
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "create_multiplier",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 30,
-        "start_column": 5,
-        "end_line": 30,
-        "end_column": 21
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "create_multiplier",
       "location": {
         "file_path": "<fixtures>/python/code/functions/closures.py",
@@ -2607,58 +2023,6 @@
         "start_column": 23,
         "end_line": 30,
         "end_column": 28
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:30:22:40:19",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "factor",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 30,
-        "start_column": 23,
-        "end_line": 30,
-        "end_column": 28
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:30:22:40:19",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "factor",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 30,
-        "start_column": 23,
-        "end_line": 30,
-        "end_column": 28
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:30:22:40:19",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "int",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 30,
-        "start_column": 31,
-        "end_line": 30,
-        "end_column": 33
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:30:22:40:19",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "int",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 30,
-        "start_column": 31,
-        "end_line": 30,
-        "end_column": 33
       },
       "scope_id": "function:<fixtures>/python/code/functions/closures.py:30:22:40:19",
       "access_type": "read"
@@ -2691,32 +2055,6 @@
         "start_column": 31,
         "end_line": 30,
         "end_column": 33
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:30:22:40:19",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "Callable",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 30,
-        "start_column": 39,
-        "end_line": 30,
-        "end_column": 46
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:30:22:40:19",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "Callable",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 30,
-        "start_column": 39,
-        "end_line": 30,
-        "end_column": 46
       },
       "scope_id": "function:<fixtures>/python/code/functions/closures.py:30:22:40:19",
       "access_type": "read"
@@ -2762,58 +2100,6 @@
         "start_column": 49,
         "end_line": 30,
         "end_column": 51
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:30:22:40:19",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "int",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 30,
-        "start_column": 49,
-        "end_line": 30,
-        "end_column": 51
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:30:22:40:19",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "int",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 30,
-        "start_column": 49,
-        "end_line": 30,
-        "end_column": 51
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:30:22:40:19",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "int",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 30,
-        "start_column": 55,
-        "end_line": 30,
-        "end_column": 57
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:30:22:40:19",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "int",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 30,
-        "start_column": 55,
-        "end_line": 30,
-        "end_column": 57
       },
       "scope_id": "function:<fixtures>/python/code/functions/closures.py:30:22:40:19",
       "access_type": "read"
@@ -2865,32 +2151,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "multiply",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 33,
-        "start_column": 9,
-        "end_line": 33,
-        "end_column": 16
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:30:22:40:19",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "multiply",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 33,
-        "start_column": 9,
-        "end_line": 33,
-        "end_column": 16
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:30:22:40:19",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "value",
       "location": {
         "file_path": "<fixtures>/python/code/functions/closures.py",
@@ -2898,58 +2158,6 @@
         "start_column": 18,
         "end_line": 33,
         "end_column": 22
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:33:17:38:21",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "value",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 33,
-        "start_column": 18,
-        "end_line": 33,
-        "end_column": 22
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:33:17:38:21",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "value",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 33,
-        "start_column": 18,
-        "end_line": 33,
-        "end_column": 22
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:33:17:38:21",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "int",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 33,
-        "start_column": 25,
-        "end_line": 33,
-        "end_column": 27
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:33:17:38:21",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "int",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 33,
-        "start_column": 25,
-        "end_line": 33,
-        "end_column": 27
       },
       "scope_id": "function:<fixtures>/python/code/functions/closures.py:33:17:38:21",
       "access_type": "read"
@@ -2982,32 +2190,6 @@
         "start_column": 25,
         "end_line": 33,
         "end_column": 27
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:33:17:38:21",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "int",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 33,
-        "start_column": 33,
-        "end_line": 33,
-        "end_column": 35
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:33:17:38:21",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "int",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 33,
-        "start_column": 33,
-        "end_line": 33,
-        "end_column": 35
       },
       "scope_id": "function:<fixtures>/python/code/functions/closures.py:33:17:38:21",
       "access_type": "read"
@@ -3147,32 +2329,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "intermediate",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 36,
-        "start_column": 9,
-        "end_line": 36,
-        "end_column": 20
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:33:17:38:21",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "intermediate",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 36,
-        "start_column": 9,
-        "end_line": 36,
-        "end_column": 20
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:33:17:38:21",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "helper()",
       "location": {
@@ -3211,25 +2367,6 @@
       }
     },
     {
-      "kind": "function_call",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 36,
-        "start_column": 24,
-        "end_line": 36,
-        "end_column": 31
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:33:17:38:21",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 36,
-        "start_column": 9,
-        "end_line": 36,
-        "end_column": 20
-      }
-    },
-    {
       "kind": "constructor_call",
       "name": "helper",
       "location": {
@@ -3257,32 +2394,6 @@
         "start_column": 24,
         "end_line": 36,
         "end_column": 31
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:33:17:38:21",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 36,
-        "start_column": 24,
-        "end_line": 36,
-        "end_column": 29
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:33:17:38:21",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 36,
-        "start_column": 24,
-        "end_line": 36,
-        "end_column": 29
       },
       "scope_id": "function:<fixtures>/python/code/functions/closures.py:33:17:38:21",
       "access_type": "read"
@@ -3403,32 +2514,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 37,
-        "start_column": 9,
-        "end_line": 37,
-        "end_column": 14
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:33:17:38:21",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 37,
-        "start_column": 9,
-        "end_line": 37,
-        "end_column": 14
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:33:17:38:21",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "value * factor",
       "location": {
@@ -3475,58 +2560,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "value",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 37,
-        "start_column": 18,
-        "end_line": 37,
-        "end_column": 22
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:33:17:38:21",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "value",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 37,
-        "start_column": 18,
-        "end_line": 37,
-        "end_column": 22
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:33:17:38:21",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "factor",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 37,
-        "start_column": 26,
-        "end_line": 37,
-        "end_column": 31
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:33:17:38:21",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "factor",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 37,
-        "start_column": 26,
-        "end_line": 37,
-        "end_column": 31
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:33:17:38:21",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "factor",
       "location": {
         "file_path": "<fixtures>/python/code/functions/closures.py",
@@ -3545,32 +2578,6 @@
         "file_path": "<fixtures>/python/code/functions/closures.py",
         "start_line": 38,
         "start_column": 9,
-        "end_line": 38,
-        "end_column": 21
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:33:17:38:21",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 38,
-        "start_column": 16,
-        "end_line": 38,
-        "end_column": 21
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:33:17:38:21",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 38,
-        "start_column": 16,
         "end_line": 38,
         "end_column": 21
       },
@@ -3644,58 +2651,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "multiply",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 40,
-        "start_column": 12,
-        "end_line": 40,
-        "end_column": 19
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:30:22:40:19",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "multiply",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 40,
-        "start_column": 12,
-        "end_line": 40,
-        "end_column": 19
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:30:22:40:19",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "decorator_with_closure",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 43,
-        "start_column": 5,
-        "end_line": 43,
-        "end_column": 26
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "decorator_with_closure",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 43,
-        "start_column": 5,
-        "end_line": 43,
-        "end_column": 26
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "decorator_with_closure",
       "location": {
         "file_path": "<fixtures>/python/code/functions/closures.py",
@@ -3716,58 +2671,6 @@
         "start_column": 28,
         "end_line": 43,
         "end_column": 33
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:43:27:58:20",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "prefix",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 43,
-        "start_column": 28,
-        "end_line": 43,
-        "end_column": 33
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:43:27:58:20",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "prefix",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 43,
-        "start_column": 28,
-        "end_line": 43,
-        "end_column": 33
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:43:27:58:20",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "str",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 43,
-        "start_column": 36,
-        "end_line": 43,
-        "end_column": 38
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:43:27:58:20",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "str",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 43,
-        "start_column": 36,
-        "end_line": 43,
-        "end_column": 38
       },
       "scope_id": "function:<fixtures>/python/code/functions/closures.py:43:27:58:20",
       "access_type": "read"
@@ -3800,32 +2703,6 @@
         "start_column": 36,
         "end_line": 43,
         "end_column": 38
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:43:27:58:20",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "Callable",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 43,
-        "start_column": 44,
-        "end_line": 43,
-        "end_column": 51
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:43:27:58:20",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "Callable",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 43,
-        "start_column": 44,
-        "end_line": 43,
-        "end_column": 51
       },
       "scope_id": "function:<fixtures>/python/code/functions/closures.py:43:27:58:20",
       "access_type": "read"
@@ -3877,32 +2754,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "decorator",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 46,
-        "start_column": 9,
-        "end_line": 46,
-        "end_column": 17
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:43:27:58:20",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "decorator",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 46,
-        "start_column": 9,
-        "end_line": 46,
-        "end_column": 17
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:43:27:58:20",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "func",
       "location": {
         "file_path": "<fixtures>/python/code/functions/closures.py",
@@ -3910,58 +2761,6 @@
         "start_column": 19,
         "end_line": 46,
         "end_column": 22
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "func",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 46,
-        "start_column": 19,
-        "end_line": 46,
-        "end_column": 22
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "func",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 46,
-        "start_column": 19,
-        "end_line": 46,
-        "end_column": 22
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "Callable",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 46,
-        "start_column": 25,
-        "end_line": 46,
-        "end_column": 32
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "Callable",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 46,
-        "start_column": 25,
-        "end_line": 46,
-        "end_column": 32
       },
       "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
       "access_type": "read"
@@ -3994,32 +2793,6 @@
         "start_column": 25,
         "end_line": 46,
         "end_column": 32
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "Callable",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 46,
-        "start_column": 38,
-        "end_line": 46,
-        "end_column": 45
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "Callable",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 46,
-        "start_column": 38,
-        "end_line": 46,
-        "end_column": 45
       },
       "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
       "access_type": "read"
@@ -4069,18 +2842,6 @@
       "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22"
     },
     {
-      "kind": "function_call",
-      "name": "wraps",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 49,
-        "start_column": 10,
-        "end_line": 49,
-        "end_column": 20
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22"
-    },
-    {
       "kind": "constructor_call",
       "name": "wraps",
       "location": {
@@ -4093,30 +2854,6 @@
       "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22"
     },
     {
-      "kind": "function_call",
-      "name": "wraps",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 49,
-        "start_column": 10,
-        "end_line": 49,
-        "end_column": 14
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22"
-    },
-    {
-      "kind": "function_call",
-      "name": "wraps",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 49,
-        "start_column": 10,
-        "end_line": 49,
-        "end_column": 14
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22"
-    },
-    {
       "kind": "variable_reference",
       "name": "wraps",
       "location": {
@@ -4125,58 +2862,6 @@
         "start_column": 10,
         "end_line": 49,
         "end_column": 14
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "wraps",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 49,
-        "start_column": 10,
-        "end_line": 49,
-        "end_column": 14
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "wraps",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 49,
-        "start_column": 10,
-        "end_line": 49,
-        "end_column": 14
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "func",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 49,
-        "start_column": 16,
-        "end_line": 49,
-        "end_column": 19
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "func",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 49,
-        "start_column": 16,
-        "end_line": 49,
-        "end_column": 19
       },
       "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
       "access_type": "read"
@@ -4209,32 +2894,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "wrapper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 50,
-        "start_column": 13,
-        "end_line": 50,
-        "end_column": 19
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "wrapper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 50,
-        "start_column": 13,
-        "end_line": 50,
-        "end_column": 19
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "args",
       "location": {
         "file_path": "<fixtures>/python/code/functions/closures.py",
@@ -4243,33 +2902,7 @@
         "end_line": 50,
         "end_column": 25
       },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "args",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 50,
-        "start_column": 22,
-        "end_line": 50,
-        "end_column": 25
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "args",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 50,
-        "start_column": 22,
-        "end_line": 50,
-        "end_column": 25
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
+      "scope_id": "function:<fixtures>/python/code/functions/closures.py:50:20:55:49",
       "access_type": "read"
     },
     {
@@ -4282,59 +2915,7 @@
         "end_line": 50,
         "end_column": 35
       },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "kwargs",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 50,
-        "start_column": 30,
-        "end_line": 50,
-        "end_column": 35
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "kwargs",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 50,
-        "start_column": 30,
-        "end_line": 50,
-        "end_column": 35
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "str",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 50,
-        "start_column": 41,
-        "end_line": 50,
-        "end_column": 43
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "str",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 50,
-        "start_column": 41,
-        "end_line": 50,
-        "end_column": 43
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
+      "scope_id": "function:<fixtures>/python/code/functions/closures.py:50:20:55:49",
       "access_type": "read"
     },
     {
@@ -4347,7 +2928,7 @@
         "end_line": 50,
         "end_column": 43
       },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
+      "scope_id": "function:<fixtures>/python/code/functions/closures.py:50:20:55:49",
       "type_context": "annotation",
       "type_info": {
         "type_id": "type:<fixtures>/python/code/functions/closures.py:50:41:50:43:str",
@@ -4366,7 +2947,7 @@
         "end_line": 50,
         "end_column": 43
       },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
+      "scope_id": "function:<fixtures>/python/code/functions/closures.py:50:20:55:49",
       "access_type": "read"
     },
     {
@@ -4379,7 +2960,7 @@
         "end_line": 53,
         "end_column": 36
       },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
+      "scope_id": "function:<fixtures>/python/code/functions/closures.py:50:20:55:49",
       "target_location": {
         "file_path": "<fixtures>/python/code/functions/closures.py",
         "start_line": 53,
@@ -4398,7 +2979,7 @@
         "end_line": 53,
         "end_column": 25
       },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
+      "scope_id": "function:<fixtures>/python/code/functions/closures.py:50:20:55:49",
       "target_location": {
         "file_path": "<fixtures>/python/code/functions/closures.py",
         "start_line": 53,
@@ -4423,7 +3004,7 @@
         "end_line": 53,
         "end_column": 25
       },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
+      "scope_id": "function:<fixtures>/python/code/functions/closures.py:50:20:55:49",
       "access_type": "write"
     },
     {
@@ -4436,7 +3017,7 @@
         "end_line": 53,
         "end_column": 36
       },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
+      "scope_id": "function:<fixtures>/python/code/functions/closures.py:50:20:55:49",
       "target_location": {
         "file_path": "<fixtures>/python/code/functions/closures.py",
         "start_line": 53,
@@ -4455,7 +3036,7 @@
         "end_line": 53,
         "end_column": 25
       },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
+      "scope_id": "function:<fixtures>/python/code/functions/closures.py:50:20:55:49",
       "access_type": "read"
     },
     {
@@ -4468,33 +3049,7 @@
         "end_line": 53,
         "end_column": 25
       },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 53,
-        "start_column": 13,
-        "end_line": 53,
-        "end_column": 25
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 53,
-        "start_column": 13,
-        "end_line": 53,
-        "end_column": 25
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
+      "scope_id": "function:<fixtures>/python/code/functions/closures.py:50:20:55:49",
       "access_type": "read"
     },
     {
@@ -4507,7 +3062,7 @@
         "end_line": 53,
         "end_column": 36
       },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
+      "scope_id": "function:<fixtures>/python/code/functions/closures.py:50:20:55:49",
       "target_location": {
         "file_path": "<fixtures>/python/code/functions/closures.py",
         "start_line": 53,
@@ -4526,26 +3081,7 @@
         "end_line": 53,
         "end_column": 34
       },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 53,
-        "start_column": 13,
-        "end_line": 53,
-        "end_column": 25
-      }
-    },
-    {
-      "kind": "function_call",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 53,
-        "start_column": 29,
-        "end_line": 53,
-        "end_column": 36
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
+      "scope_id": "function:<fixtures>/python/code/functions/closures.py:50:20:55:49",
       "potential_construct_target": {
         "file_path": "<fixtures>/python/code/functions/closures.py",
         "start_line": 53,
@@ -4564,7 +3100,7 @@
         "end_line": 53,
         "end_column": 34
       },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
+      "scope_id": "function:<fixtures>/python/code/functions/closures.py:50:20:55:49",
       "construct_target": {
         "file_path": "<fixtures>/python/code/functions/closures.py",
         "start_line": 53,
@@ -4583,7 +3119,7 @@
         "end_line": 53,
         "end_column": 36
       },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
+      "scope_id": "function:<fixtures>/python/code/functions/closures.py:50:20:55:49",
       "access_type": "read"
     },
     {
@@ -4596,33 +3132,7 @@
         "end_line": 53,
         "end_column": 34
       },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 53,
-        "start_column": 29,
-        "end_line": 53,
-        "end_column": 34
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 53,
-        "start_column": 29,
-        "end_line": 53,
-        "end_column": 34
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
+      "scope_id": "function:<fixtures>/python/code/functions/closures.py:50:20:55:49",
       "access_type": "read"
     },
     {
@@ -4635,7 +3145,7 @@
         "end_line": 54,
         "end_column": 51
       },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
+      "scope_id": "function:<fixtures>/python/code/functions/closures.py:50:20:55:49",
       "target_location": {
         "file_path": "<fixtures>/python/code/functions/closures.py",
         "start_line": 54,
@@ -4654,7 +3164,7 @@
         "end_line": 54,
         "end_column": 27
       },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
+      "scope_id": "function:<fixtures>/python/code/functions/closures.py:50:20:55:49",
       "target_location": {
         "file_path": "<fixtures>/python/code/functions/closures.py",
         "start_line": 54,
@@ -4679,7 +3189,7 @@
         "end_line": 54,
         "end_column": 27
       },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
+      "scope_id": "function:<fixtures>/python/code/functions/closures.py:50:20:55:49",
       "access_type": "write"
     },
     {
@@ -4692,7 +3202,7 @@
         "end_line": 54,
         "end_column": 51
       },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
+      "scope_id": "function:<fixtures>/python/code/functions/closures.py:50:20:55:49",
       "target_location": {
         "file_path": "<fixtures>/python/code/functions/closures.py",
         "start_line": 54,
@@ -4711,7 +3221,7 @@
         "end_line": 54,
         "end_column": 27
       },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
+      "scope_id": "function:<fixtures>/python/code/functions/closures.py:50:20:55:49",
       "access_type": "read"
     },
     {
@@ -4724,33 +3234,7 @@
         "end_line": 54,
         "end_column": 27
       },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "original_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 54,
-        "start_column": 13,
-        "end_line": 54,
-        "end_column": 27
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "original_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 54,
-        "start_column": 13,
-        "end_line": 54,
-        "end_column": 27
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
+      "scope_id": "function:<fixtures>/python/code/functions/closures.py:50:20:55:49",
       "access_type": "read"
     },
     {
@@ -4763,7 +3247,7 @@
         "end_line": 54,
         "end_column": 51
       },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
+      "scope_id": "function:<fixtures>/python/code/functions/closures.py:50:20:55:49",
       "target_location": {
         "file_path": "<fixtures>/python/code/functions/closures.py",
         "start_line": 54,
@@ -4782,26 +3266,7 @@
         "end_line": 54,
         "end_column": 34
       },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 54,
-        "start_column": 13,
-        "end_line": 54,
-        "end_column": 27
-      }
-    },
-    {
-      "kind": "function_call",
-      "name": "func",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 54,
-        "start_column": 31,
-        "end_line": 54,
-        "end_column": 51
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
+      "scope_id": "function:<fixtures>/python/code/functions/closures.py:50:20:55:49",
       "potential_construct_target": {
         "file_path": "<fixtures>/python/code/functions/closures.py",
         "start_line": 54,
@@ -4820,7 +3285,7 @@
         "end_line": 54,
         "end_column": 34
       },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
+      "scope_id": "function:<fixtures>/python/code/functions/closures.py:50:20:55:49",
       "construct_target": {
         "file_path": "<fixtures>/python/code/functions/closures.py",
         "start_line": 54,
@@ -4839,7 +3304,7 @@
         "end_line": 54,
         "end_column": 51
       },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
+      "scope_id": "function:<fixtures>/python/code/functions/closures.py:50:20:55:49",
       "access_type": "read"
     },
     {
@@ -4852,33 +3317,7 @@
         "end_line": 54,
         "end_column": 34
       },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "func",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 54,
-        "start_column": 31,
-        "end_line": 54,
-        "end_column": 34
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "func",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 54,
-        "start_column": 31,
-        "end_line": 54,
-        "end_column": 34
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
+      "scope_id": "function:<fixtures>/python/code/functions/closures.py:50:20:55:49",
       "access_type": "read"
     },
     {
@@ -4891,33 +3330,7 @@
         "end_line": 54,
         "end_column": 40
       },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "args",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 54,
-        "start_column": 37,
-        "end_line": 54,
-        "end_column": 40
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "args",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 54,
-        "start_column": 37,
-        "end_line": 54,
-        "end_column": 40
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
+      "scope_id": "function:<fixtures>/python/code/functions/closures.py:50:20:55:49",
       "access_type": "read"
     },
     {
@@ -4930,33 +3343,7 @@
         "end_line": 54,
         "end_column": 50
       },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "kwargs",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 54,
-        "start_column": 45,
-        "end_line": 54,
-        "end_column": 50
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "kwargs",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 54,
-        "start_column": 45,
-        "end_line": 54,
-        "end_column": 50
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
+      "scope_id": "function:<fixtures>/python/code/functions/closures.py:50:20:55:49",
       "access_type": "read"
     },
     {
@@ -4969,7 +3356,7 @@
         "end_line": 55,
         "end_column": 49
       },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
+      "scope_id": "function:<fixtures>/python/code/functions/closures.py:50:20:55:49",
       "access_type": "read"
     },
     {
@@ -4982,7 +3369,7 @@
         "end_line": 55,
         "end_column": 49
       },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
+      "scope_id": "function:<fixtures>/python/code/functions/closures.py:50:20:55:49",
       "access_type": "read"
     },
     {
@@ -4995,33 +3382,7 @@
         "end_line": 55,
         "end_column": 28
       },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "prefix",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 55,
-        "start_column": 23,
-        "end_line": 55,
-        "end_column": 28
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "prefix",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 55,
-        "start_column": 23,
-        "end_line": 55,
-        "end_column": 28
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
+      "scope_id": "function:<fixtures>/python/code/functions/closures.py:50:20:55:49",
       "access_type": "read"
     },
     {
@@ -5034,33 +3395,7 @@
         "end_line": 55,
         "end_column": 47
       },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "original_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 55,
-        "start_column": 33,
-        "end_line": 55,
-        "end_column": 47
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "original_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 55,
-        "start_column": 33,
-        "end_line": 55,
-        "end_column": 47
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
+      "scope_id": "function:<fixtures>/python/code/functions/closures.py:50:20:55:49",
       "access_type": "read"
     },
     {
@@ -5070,32 +3405,6 @@
         "file_path": "<fixtures>/python/code/functions/closures.py",
         "start_line": 57,
         "start_column": 9,
-        "end_line": 57,
-        "end_column": 22
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "wrapper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 57,
-        "start_column": 16,
-        "end_line": 57,
-        "end_column": 22
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "wrapper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 57,
-        "start_column": 16,
         "end_line": 57,
         "end_column": 22
       },
@@ -5168,32 +3477,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "decorator",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 58,
-        "start_column": 12,
-        "end_line": 58,
-        "end_column": 20
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:43:27:58:20",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "decorator",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 58,
-        "start_column": 12,
-        "end_line": 58,
-        "end_column": 20
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:43:27:58:20",
-      "access_type": "read"
-    },
-    {
       "kind": "function_call",
       "name": "decorator_with_closure",
       "location": {
@@ -5202,18 +3485,6 @@
         "start_column": 2,
         "end_line": 61,
         "end_column": 23
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1"
-    },
-    {
-      "kind": "function_call",
-      "name": "decorator_with_closure",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 61,
-        "start_column": 2,
-        "end_line": 61,
-        "end_column": 33
       },
       "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1"
     },
@@ -5230,56 +3501,6 @@
       "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1"
     },
     {
-      "kind": "function_call",
-      "name": "decorator_with_closure",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 61,
-        "start_column": 2,
-        "end_line": 61,
-        "end_column": 23
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1"
-    },
-    {
-      "kind": "function_call",
-      "name": "decorator_with_closure",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 61,
-        "start_column": 2,
-        "end_line": 61,
-        "end_column": 23
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "decorator_with_closure",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 61,
-        "start_column": 2,
-        "end_line": 61,
-        "end_column": 23
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "decorator_with_closure",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 61,
-        "start_column": 2,
-        "end_line": 61,
-        "end_column": 23
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
       "kind": "variable_reference",
       "name": "decorator_with_closure",
       "location": {
@@ -5307,32 +3528,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "greet",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 62,
-        "start_column": 5,
-        "end_line": 62,
-        "end_column": 9
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "greet",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 62,
-        "start_column": 5,
-        "end_line": 62,
-        "end_column": 9
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "name",
       "location": {
         "file_path": "<fixtures>/python/code/functions/closures.py",
@@ -5341,59 +3536,7 @@
         "end_line": 62,
         "end_column": 14
       },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "name",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 62,
-        "start_column": 11,
-        "end_line": 62,
-        "end_column": 14
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "name",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 62,
-        "start_column": 11,
-        "end_line": 62,
-        "end_column": 14
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "str",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 62,
-        "start_column": 17,
-        "end_line": 62,
-        "end_column": 19
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "str",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 62,
-        "start_column": 17,
-        "end_line": 62,
-        "end_column": 19
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
+      "scope_id": "function:<fixtures>/python/code/functions/closures.py:62:10:64:27",
       "access_type": "read"
     },
     {
@@ -5406,7 +3549,7 @@
         "end_line": 62,
         "end_column": 19
       },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
+      "scope_id": "function:<fixtures>/python/code/functions/closures.py:62:10:64:27",
       "type_context": "annotation",
       "type_info": {
         "type_id": "type:<fixtures>/python/code/functions/closures.py:62:17:62:19:str",
@@ -5425,33 +3568,7 @@
         "end_line": 62,
         "end_column": 19
       },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "str",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 62,
-        "start_column": 25,
-        "end_line": 62,
-        "end_column": 27
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "str",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 62,
-        "start_column": 25,
-        "end_line": 62,
-        "end_column": 27
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
+      "scope_id": "function:<fixtures>/python/code/functions/closures.py:62:10:64:27",
       "access_type": "read"
     },
     {
@@ -5464,7 +3581,7 @@
         "end_line": 62,
         "end_column": 27
       },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
+      "scope_id": "function:<fixtures>/python/code/functions/closures.py:62:10:64:27",
       "type_context": "annotation",
       "type_info": {
         "type_id": "type:<fixtures>/python/code/functions/closures.py:62:25:62:27:str",
@@ -5483,7 +3600,7 @@
         "end_line": 62,
         "end_column": 27
       },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
+      "scope_id": "function:<fixtures>/python/code/functions/closures.py:62:10:64:27",
       "access_type": "read"
     },
     {
@@ -5496,7 +3613,7 @@
         "end_line": 64,
         "end_column": 27
       },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
+      "scope_id": "function:<fixtures>/python/code/functions/closures.py:62:10:64:27",
       "access_type": "read"
     },
     {
@@ -5509,7 +3626,7 @@
         "end_line": 64,
         "end_column": 27
       },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
+      "scope_id": "function:<fixtures>/python/code/functions/closures.py:62:10:64:27",
       "access_type": "read"
     },
     {
@@ -5522,33 +3639,7 @@
         "end_line": 64,
         "end_column": 25
       },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "name",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 64,
-        "start_column": 22,
-        "end_line": 64,
-        "end_column": 25
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "name",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 64,
-        "start_column": 22,
-        "end_line": 64,
-        "end_column": 25
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
+      "scope_id": "function:<fixtures>/python/code/functions/closures.py:62:10:64:27",
       "access_type": "read"
     },
     {
@@ -5562,58 +3653,6 @@
         "end_column": 25
       },
       "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "complex_nested_scopes",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 67,
-        "start_column": 5,
-        "end_line": 67,
-        "end_column": 25
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "complex_nested_scopes",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 67,
-        "start_column": 5,
-        "end_line": 67,
-        "end_column": 25
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "dict",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 67,
-        "start_column": 32,
-        "end_line": 67,
-        "end_column": 35
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:67:26:115:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "dict",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 67,
-        "start_column": 32,
-        "end_line": 67,
-        "end_column": 35
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:67:26:115:5",
       "access_type": "read"
     },
     {
@@ -5751,32 +3790,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "outer_var",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 69,
-        "start_column": 5,
-        "end_line": 69,
-        "end_column": 13
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:67:26:115:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "outer_var",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 69,
-        "start_column": 5,
-        "end_line": 69,
-        "end_column": 13
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:67:26:115:5",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "\"outer\"",
       "location": {
@@ -5819,58 +3832,6 @@
         "end_column": 17
       },
       "scope_id": "function:<fixtures>/python/code/functions/closures.py:67:26:115:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "level_one",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 71,
-        "start_column": 9,
-        "end_line": 71,
-        "end_column": 17
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:67:26:115:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "level_one",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 71,
-        "start_column": 9,
-        "end_line": 71,
-        "end_column": 17
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:67:26:115:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "dict",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 71,
-        "start_column": 24,
-        "end_line": 71,
-        "end_column": 27
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:71:18:105:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "dict",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 71,
-        "start_column": 24,
-        "end_line": 71,
-        "end_column": 27
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:71:18:105:9",
       "access_type": "read"
     },
     {
@@ -6008,32 +3969,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "level_one_var",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 73,
-        "start_column": 9,
-        "end_line": 73,
-        "end_column": 21
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:71:18:105:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "level_one_var",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 73,
-        "start_column": 9,
-        "end_line": 73,
-        "end_column": 21
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:71:18:105:9",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "\"level_one\"",
       "location": {
@@ -6076,58 +4011,6 @@
         "end_column": 21
       },
       "scope_id": "function:<fixtures>/python/code/functions/closures.py:71:18:105:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "level_two",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 75,
-        "start_column": 13,
-        "end_line": 75,
-        "end_column": 21
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:71:18:105:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "level_two",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 75,
-        "start_column": 13,
-        "end_line": 75,
-        "end_column": 21
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:71:18:105:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "dict",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 75,
-        "start_column": 28,
-        "end_line": 75,
-        "end_column": 31
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:75:22:95:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "dict",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 75,
-        "start_column": 28,
-        "end_line": 75,
-        "end_column": 31
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:75:22:95:13",
       "access_type": "read"
     },
     {
@@ -6265,32 +4148,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "level_two_var",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 77,
-        "start_column": 13,
-        "end_line": 77,
-        "end_column": 25
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:75:22:95:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "level_two_var",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 77,
-        "start_column": 13,
-        "end_line": 77,
-        "end_column": 25
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:75:22:95:13",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "\"level_two\"",
       "location": {
@@ -6333,58 +4190,6 @@
         "end_column": 27
       },
       "scope_id": "function:<fixtures>/python/code/functions/closures.py:75:22:95:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "level_three",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 79,
-        "start_column": 17,
-        "end_line": 79,
-        "end_column": 27
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:75:22:95:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "level_three",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 79,
-        "start_column": 17,
-        "end_line": 79,
-        "end_column": 27
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:75:22:95:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "str",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 79,
-        "start_column": 34,
-        "end_line": 79,
-        "end_column": 36
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:79:28:85:31",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "str",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 79,
-        "start_column": 34,
-        "end_line": 79,
-        "end_column": 36
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:79:28:85:31",
       "access_type": "read"
     },
     {
@@ -6522,32 +4327,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "combined",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 82,
-        "start_column": 17,
-        "end_line": 82,
-        "end_column": 24
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:79:28:85:31",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "combined",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 82,
-        "start_column": 17,
-        "end_line": 82,
-        "end_column": 24
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:79:28:85:31",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "f\"{outer_var}-{level_one_var}-{level_two_var}\"",
       "location": {
@@ -6594,32 +4373,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "outer_var",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 82,
-        "start_column": 31,
-        "end_line": 82,
-        "end_column": 39
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:79:28:85:31",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "outer_var",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 82,
-        "start_column": 31,
-        "end_line": 82,
-        "end_column": 39
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:79:28:85:31",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "level_one_var",
       "location": {
         "file_path": "<fixtures>/python/code/functions/closures.py",
@@ -6627,58 +4380,6 @@
         "start_column": 43,
         "end_line": 82,
         "end_column": 55
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:79:28:85:31",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "level_one_var",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 82,
-        "start_column": 43,
-        "end_line": 82,
-        "end_column": 55
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:79:28:85:31",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "level_one_var",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 82,
-        "start_column": 43,
-        "end_line": 82,
-        "end_column": 55
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:79:28:85:31",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "level_two_var",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 82,
-        "start_column": 59,
-        "end_line": 82,
-        "end_column": 71
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:79:28:85:31",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "level_two_var",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 82,
-        "start_column": 59,
-        "end_line": 82,
-        "end_column": 71
       },
       "scope_id": "function:<fixtures>/python/code/functions/closures.py:79:28:85:31",
       "access_type": "read"
@@ -6799,32 +4500,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "helper_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 84,
-        "start_column": 17,
-        "end_line": 84,
-        "end_column": 29
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:79:28:85:31",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 84,
-        "start_column": 17,
-        "end_line": 84,
-        "end_column": 29
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:79:28:85:31",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "helper()",
       "location": {
@@ -6852,25 +4527,6 @@
         "start_column": 33,
         "end_line": 84,
         "end_column": 38
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:79:28:85:31",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 84,
-        "start_column": 17,
-        "end_line": 84,
-        "end_column": 29
-      }
-    },
-    {
-      "kind": "function_call",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 84,
-        "start_column": 33,
-        "end_line": 84,
-        "end_column": 40
       },
       "scope_id": "function:<fixtures>/python/code/functions/closures.py:79:28:85:31",
       "potential_construct_target": {
@@ -6928,63 +4584,11 @@
     },
     {
       "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 84,
-        "start_column": 33,
-        "end_line": 84,
-        "end_column": 38
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:79:28:85:31",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 84,
-        "start_column": 33,
-        "end_line": 84,
-        "end_column": 38
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:79:28:85:31",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "return combined",
       "location": {
         "file_path": "<fixtures>/python/code/functions/closures.py",
         "start_line": 85,
         "start_column": 17,
-        "end_line": 85,
-        "end_column": 31
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:79:28:85:31",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "combined",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 85,
-        "start_column": 24,
-        "end_line": 85,
-        "end_column": 31
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:79:28:85:31",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "combined",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 85,
-        "start_column": 24,
         "end_line": 85,
         "end_column": 31
       },
@@ -7120,32 +4724,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "nested_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 88,
-        "start_column": 13,
-        "end_line": 88,
-        "end_column": 25
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:75:22:95:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "nested_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 88,
-        "start_column": 13,
-        "end_line": 88,
-        "end_column": 25
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:75:22:95:13",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "level_three()",
       "location": {
@@ -7184,25 +4762,6 @@
       }
     },
     {
-      "kind": "function_call",
-      "name": "level_three",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 88,
-        "start_column": 29,
-        "end_line": 88,
-        "end_column": 41
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:75:22:95:13",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 88,
-        "start_column": 13,
-        "end_line": 88,
-        "end_column": 25
-      }
-    },
-    {
       "kind": "constructor_call",
       "name": "level_three",
       "location": {
@@ -7230,32 +4789,6 @@
         "start_column": 29,
         "end_line": 88,
         "end_column": 41
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:75:22:95:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "level_three",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 88,
-        "start_column": 29,
-        "end_line": 88,
-        "end_column": 39
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:75:22:95:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "level_three",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 88,
-        "start_column": 29,
-        "end_line": 88,
-        "end_column": 39
       },
       "scope_id": "function:<fixtures>/python/code/functions/closures.py:75:22:95:13",
       "access_type": "read"
@@ -7376,32 +4909,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "helper_in_two",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 89,
-        "start_column": 13,
-        "end_line": 89,
-        "end_column": 25
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:75:22:95:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper_in_two",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 89,
-        "start_column": 13,
-        "end_line": 89,
-        "end_column": 25
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:75:22:95:13",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "helper()",
       "location": {
@@ -7440,25 +4947,6 @@
       }
     },
     {
-      "kind": "function_call",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 89,
-        "start_column": 29,
-        "end_line": 89,
-        "end_column": 36
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:75:22:95:13",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 89,
-        "start_column": 13,
-        "end_line": 89,
-        "end_column": 25
-      }
-    },
-    {
       "kind": "constructor_call",
       "name": "helper",
       "location": {
@@ -7486,32 +4974,6 @@
         "start_column": 29,
         "end_line": 89,
         "end_column": 36
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:75:22:95:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 89,
-        "start_column": 29,
-        "end_line": 89,
-        "end_column": 34
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:75:22:95:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 89,
-        "start_column": 29,
-        "end_line": 89,
-        "end_column": 34
       },
       "scope_id": "function:<fixtures>/python/code/functions/closures.py:75:22:95:13",
       "access_type": "read"
@@ -7570,90 +5032,12 @@
     },
     {
       "kind": "variable_reference",
-      "name": "level_two_var",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 92,
-        "start_column": 34,
-        "end_line": 92,
-        "end_column": 46
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:75:22:95:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "level_two_var",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 92,
-        "start_column": 34,
-        "end_line": 92,
-        "end_column": 46
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:75:22:95:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "nested_result",
       "location": {
         "file_path": "<fixtures>/python/code/functions/closures.py",
         "start_line": 93,
         "start_column": 34,
         "end_line": 93,
-        "end_column": 46
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:75:22:95:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "nested_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 93,
-        "start_column": 34,
-        "end_line": 93,
-        "end_column": 46
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:75:22:95:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "nested_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 93,
-        "start_column": 34,
-        "end_line": 93,
-        "end_column": 46
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:75:22:95:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper_in_two",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 94,
-        "start_column": 34,
-        "end_line": 94,
-        "end_column": 46
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:75:22:95:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper_in_two",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 94,
-        "start_column": 34,
-        "end_line": 94,
         "end_column": 46
       },
       "scope_id": "function:<fixtures>/python/code/functions/closures.py:75:22:95:13",
@@ -7775,32 +5159,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "two_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 98,
-        "start_column": 9,
-        "end_line": 98,
-        "end_column": 18
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:71:18:105:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "two_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 98,
-        "start_column": 9,
-        "end_line": 98,
-        "end_column": 18
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:71:18:105:9",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "level_two()",
       "location": {
@@ -7839,25 +5197,6 @@
       }
     },
     {
-      "kind": "function_call",
-      "name": "level_two",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 98,
-        "start_column": 22,
-        "end_line": 98,
-        "end_column": 32
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:71:18:105:9",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 98,
-        "start_column": 9,
-        "end_line": 98,
-        "end_column": 18
-      }
-    },
-    {
       "kind": "constructor_call",
       "name": "level_two",
       "location": {
@@ -7885,32 +5224,6 @@
         "start_column": 22,
         "end_line": 98,
         "end_column": 32
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:71:18:105:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "level_two",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 98,
-        "start_column": 22,
-        "end_line": 98,
-        "end_column": 30
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:71:18:105:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "level_two",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 98,
-        "start_column": 22,
-        "end_line": 98,
-        "end_column": 30
       },
       "scope_id": "function:<fixtures>/python/code/functions/closures.py:71:18:105:9",
       "access_type": "read"
@@ -8031,32 +5344,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "helper_in_one",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 99,
-        "start_column": 9,
-        "end_line": 99,
-        "end_column": 21
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:71:18:105:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper_in_one",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 99,
-        "start_column": 9,
-        "end_line": 99,
-        "end_column": 21
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:71:18:105:9",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "helper()",
       "location": {
@@ -8095,25 +5382,6 @@
       }
     },
     {
-      "kind": "function_call",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 99,
-        "start_column": 25,
-        "end_line": 99,
-        "end_column": 32
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:71:18:105:9",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 99,
-        "start_column": 9,
-        "end_line": 99,
-        "end_column": 21
-      }
-    },
-    {
       "kind": "constructor_call",
       "name": "helper",
       "location": {
@@ -8141,32 +5409,6 @@
         "start_column": 25,
         "end_line": 99,
         "end_column": 32
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:71:18:105:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 99,
-        "start_column": 25,
-        "end_line": 99,
-        "end_column": 30
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:71:18:105:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 99,
-        "start_column": 25,
-        "end_line": 99,
-        "end_column": 30
       },
       "scope_id": "function:<fixtures>/python/code/functions/closures.py:71:18:105:9",
       "access_type": "read"
@@ -8225,32 +5467,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "level_one_var",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 102,
-        "start_column": 30,
-        "end_line": 102,
-        "end_column": 42
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:71:18:105:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "level_one_var",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 102,
-        "start_column": 30,
-        "end_line": 102,
-        "end_column": 42
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:71:18:105:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "two_result",
       "location": {
         "file_path": "<fixtures>/python/code/functions/closures.py",
@@ -8258,58 +5474,6 @@
         "start_column": 27,
         "end_line": 103,
         "end_column": 36
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:71:18:105:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "two_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 103,
-        "start_column": 27,
-        "end_line": 103,
-        "end_column": 36
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:71:18:105:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "two_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 103,
-        "start_column": 27,
-        "end_line": 103,
-        "end_column": 36
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:71:18:105:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper_in_one",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 104,
-        "start_column": 30,
-        "end_line": 104,
-        "end_column": 42
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:71:18:105:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper_in_one",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 104,
-        "start_column": 30,
-        "end_line": 104,
-        "end_column": 42
       },
       "scope_id": "function:<fixtures>/python/code/functions/closures.py:71:18:105:9",
       "access_type": "read"
@@ -8430,32 +5594,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "one_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 108,
-        "start_column": 5,
-        "end_line": 108,
-        "end_column": 14
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:67:26:115:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "one_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 108,
-        "start_column": 5,
-        "end_line": 108,
-        "end_column": 14
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:67:26:115:5",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "level_one()",
       "location": {
@@ -8494,25 +5632,6 @@
       }
     },
     {
-      "kind": "function_call",
-      "name": "level_one",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 108,
-        "start_column": 18,
-        "end_line": 108,
-        "end_column": 28
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:67:26:115:5",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 108,
-        "start_column": 5,
-        "end_line": 108,
-        "end_column": 14
-      }
-    },
-    {
       "kind": "constructor_call",
       "name": "level_one",
       "location": {
@@ -8540,32 +5659,6 @@
         "start_column": 18,
         "end_line": 108,
         "end_column": 28
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:67:26:115:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "level_one",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 108,
-        "start_column": 18,
-        "end_line": 108,
-        "end_column": 26
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:67:26:115:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "level_one",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 108,
-        "start_column": 18,
-        "end_line": 108,
-        "end_column": 26
       },
       "scope_id": "function:<fixtures>/python/code/functions/closures.py:67:26:115:5",
       "access_type": "read"
@@ -8686,32 +5779,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "helper_in_outer",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 109,
-        "start_column": 5,
-        "end_line": 109,
-        "end_column": 19
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:67:26:115:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper_in_outer",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 109,
-        "start_column": 5,
-        "end_line": 109,
-        "end_column": 19
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:67:26:115:5",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "helper()",
       "location": {
@@ -8750,25 +5817,6 @@
       }
     },
     {
-      "kind": "function_call",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 109,
-        "start_column": 23,
-        "end_line": 109,
-        "end_column": 30
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:67:26:115:5",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 109,
-        "start_column": 5,
-        "end_line": 109,
-        "end_column": 19
-      }
-    },
-    {
       "kind": "constructor_call",
       "name": "helper",
       "location": {
@@ -8796,32 +5844,6 @@
         "start_column": 23,
         "end_line": 109,
         "end_column": 30
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:67:26:115:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 109,
-        "start_column": 23,
-        "end_line": 109,
-        "end_column": 28
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:67:26:115:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 109,
-        "start_column": 23,
-        "end_line": 109,
-        "end_column": 28
       },
       "scope_id": "function:<fixtures>/python/code/functions/closures.py:67:26:115:5",
       "access_type": "read"
@@ -8880,32 +5902,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "outer_var",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 112,
-        "start_column": 22,
-        "end_line": 112,
-        "end_column": 30
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:67:26:115:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "outer_var",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 112,
-        "start_column": 22,
-        "end_line": 112,
-        "end_column": 30
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:67:26:115:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "one_result",
       "location": {
         "file_path": "<fixtures>/python/code/functions/closures.py",
@@ -8913,58 +5909,6 @@
         "start_column": 23,
         "end_line": 113,
         "end_column": 32
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:67:26:115:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "one_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 113,
-        "start_column": 23,
-        "end_line": 113,
-        "end_column": 32
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:67:26:115:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "one_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 113,
-        "start_column": 23,
-        "end_line": 113,
-        "end_column": 32
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:67:26:115:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper_in_outer",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 114,
-        "start_column": 28,
-        "end_line": 114,
-        "end_column": 42
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:67:26:115:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper_in_outer",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 114,
-        "start_column": 28,
-        "end_line": 114,
-        "end_column": 42
       },
       "scope_id": "function:<fixtures>/python/code/functions/closures.py:67:26:115:5",
       "access_type": "read"
@@ -9085,32 +6029,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "counter",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 119,
-        "start_column": 1,
-        "end_line": 119,
-        "end_column": 7
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "counter",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 119,
-        "start_column": 1,
-        "end_line": 119,
-        "end_column": 7
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "create_counter(10)",
       "location": {
@@ -9149,25 +6067,6 @@
       }
     },
     {
-      "kind": "function_call",
-      "name": "create_counter",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 119,
-        "start_column": 11,
-        "end_line": 119,
-        "end_column": 28
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 119,
-        "start_column": 1,
-        "end_line": 119,
-        "end_column": 7
-      }
-    },
-    {
       "kind": "constructor_call",
       "name": "create_counter",
       "location": {
@@ -9195,32 +6094,6 @@
         "start_column": 11,
         "end_line": 119,
         "end_column": 28
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "create_counter",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 119,
-        "start_column": 11,
-        "end_line": 119,
-        "end_column": 24
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "create_counter",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 119,
-        "start_column": 11,
-        "end_line": 119,
-        "end_column": 24
       },
       "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
       "access_type": "read"
@@ -9341,32 +6214,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "multiplier",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 120,
-        "start_column": 1,
-        "end_line": 120,
-        "end_column": 10
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "multiplier",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 120,
-        "start_column": 1,
-        "end_line": 120,
-        "end_column": 10
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "create_multiplier(5)",
       "location": {
@@ -9405,25 +6252,6 @@
       }
     },
     {
-      "kind": "function_call",
-      "name": "create_multiplier",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 120,
-        "start_column": 14,
-        "end_line": 120,
-        "end_column": 33
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 120,
-        "start_column": 1,
-        "end_line": 120,
-        "end_column": 10
-      }
-    },
-    {
       "kind": "constructor_call",
       "name": "create_multiplier",
       "location": {
@@ -9451,32 +6279,6 @@
         "start_column": 14,
         "end_line": 120,
         "end_column": 33
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "create_multiplier",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 120,
-        "start_column": 14,
-        "end_line": 120,
-        "end_column": 30
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "create_multiplier",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 120,
-        "start_column": 14,
-        "end_line": 120,
-        "end_column": 30
       },
       "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
       "access_type": "read"
@@ -9597,32 +6399,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "count1",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 123,
-        "start_column": 1,
-        "end_line": 123,
-        "end_column": 6
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "count1",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 123,
-        "start_column": 1,
-        "end_line": 123,
-        "end_column": 6
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "counter()",
       "location": {
@@ -9661,25 +6437,6 @@
       }
     },
     {
-      "kind": "function_call",
-      "name": "counter",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 123,
-        "start_column": 10,
-        "end_line": 123,
-        "end_column": 18
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 123,
-        "start_column": 1,
-        "end_line": 123,
-        "end_column": 6
-      }
-    },
-    {
       "kind": "constructor_call",
       "name": "counter",
       "location": {
@@ -9707,32 +6464,6 @@
         "start_column": 10,
         "end_line": 123,
         "end_column": 18
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "counter",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 123,
-        "start_column": 10,
-        "end_line": 123,
-        "end_column": 16
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "counter",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 123,
-        "start_column": 10,
-        "end_line": 123,
-        "end_column": 16
       },
       "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
       "access_type": "read"
@@ -9853,32 +6584,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "count2",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 124,
-        "start_column": 1,
-        "end_line": 124,
-        "end_column": 6
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "count2",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 124,
-        "start_column": 1,
-        "end_line": 124,
-        "end_column": 6
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "counter()",
       "location": {
@@ -9917,25 +6622,6 @@
       }
     },
     {
-      "kind": "function_call",
-      "name": "counter",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 124,
-        "start_column": 10,
-        "end_line": 124,
-        "end_column": 18
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 124,
-        "start_column": 1,
-        "end_line": 124,
-        "end_column": 6
-      }
-    },
-    {
       "kind": "constructor_call",
       "name": "counter",
       "location": {
@@ -9963,32 +6649,6 @@
         "start_column": 10,
         "end_line": 124,
         "end_column": 18
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "counter",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 124,
-        "start_column": 10,
-        "end_line": 124,
-        "end_column": 16
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "counter",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 124,
-        "start_column": 10,
-        "end_line": 124,
-        "end_column": 16
       },
       "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
       "access_type": "read"
@@ -10109,32 +6769,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "count3",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 125,
-        "start_column": 1,
-        "end_line": 125,
-        "end_column": 6
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "count3",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 125,
-        "start_column": 1,
-        "end_line": 125,
-        "end_column": 6
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "counter()",
       "location": {
@@ -10173,25 +6807,6 @@
       }
     },
     {
-      "kind": "function_call",
-      "name": "counter",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 125,
-        "start_column": 10,
-        "end_line": 125,
-        "end_column": 18
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 125,
-        "start_column": 1,
-        "end_line": 125,
-        "end_column": 6
-      }
-    },
-    {
       "kind": "constructor_call",
       "name": "counter",
       "location": {
@@ -10219,32 +6834,6 @@
         "start_column": 10,
         "end_line": 125,
         "end_column": 18
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "counter",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 125,
-        "start_column": 10,
-        "end_line": 125,
-        "end_column": 16
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "counter",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 125,
-        "start_column": 10,
-        "end_line": 125,
-        "end_column": 16
       },
       "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
       "access_type": "read"
@@ -10365,32 +6954,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "product1",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 127,
-        "start_column": 1,
-        "end_line": 127,
-        "end_column": 8
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "product1",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 127,
-        "start_column": 1,
-        "end_line": 127,
-        "end_column": 8
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "multiplier(3)",
       "location": {
@@ -10429,25 +6992,6 @@
       }
     },
     {
-      "kind": "function_call",
-      "name": "multiplier",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 127,
-        "start_column": 12,
-        "end_line": 127,
-        "end_column": 24
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 127,
-        "start_column": 1,
-        "end_line": 127,
-        "end_column": 8
-      }
-    },
-    {
       "kind": "constructor_call",
       "name": "multiplier",
       "location": {
@@ -10475,32 +7019,6 @@
         "start_column": 12,
         "end_line": 127,
         "end_column": 24
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "multiplier",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 127,
-        "start_column": 12,
-        "end_line": 127,
-        "end_column": 21
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "multiplier",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 127,
-        "start_column": 12,
-        "end_line": 127,
-        "end_column": 21
       },
       "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
       "access_type": "read"
@@ -10621,32 +7139,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "product2",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 128,
-        "start_column": 1,
-        "end_line": 128,
-        "end_column": 8
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "product2",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 128,
-        "start_column": 1,
-        "end_line": 128,
-        "end_column": 8
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "multiplier(7)",
       "location": {
@@ -10685,25 +7177,6 @@
       }
     },
     {
-      "kind": "function_call",
-      "name": "multiplier",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 128,
-        "start_column": 12,
-        "end_line": 128,
-        "end_column": 24
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 128,
-        "start_column": 1,
-        "end_line": 128,
-        "end_column": 8
-      }
-    },
-    {
       "kind": "constructor_call",
       "name": "multiplier",
       "location": {
@@ -10731,32 +7204,6 @@
         "start_column": 12,
         "end_line": 128,
         "end_column": 24
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "multiplier",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 128,
-        "start_column": 12,
-        "end_line": 128,
-        "end_column": 21
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "multiplier",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 128,
-        "start_column": 12,
-        "end_line": 128,
-        "end_column": 21
       },
       "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
       "access_type": "read"
@@ -10877,32 +7324,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "greeting",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 131,
-        "start_column": 1,
-        "end_line": 131,
-        "end_column": 8
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "greeting",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 131,
-        "start_column": 1,
-        "end_line": 131,
-        "end_column": 8
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "greet(\"Alice\")",
       "location": {
@@ -10941,25 +7362,6 @@
       }
     },
     {
-      "kind": "function_call",
-      "name": "greet",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 131,
-        "start_column": 12,
-        "end_line": 131,
-        "end_column": 25
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 131,
-        "start_column": 1,
-        "end_line": 131,
-        "end_column": 8
-      }
-    },
-    {
       "kind": "constructor_call",
       "name": "greet",
       "location": {
@@ -10987,32 +7389,6 @@
         "start_column": 12,
         "end_line": 131,
         "end_column": 25
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "greet",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 131,
-        "start_column": 12,
-        "end_line": 131,
-        "end_column": 16
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "greet",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 131,
-        "start_column": 12,
-        "end_line": 131,
-        "end_column": 16
       },
       "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
       "access_type": "read"
@@ -11133,32 +7509,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "nested_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 134,
-        "start_column": 1,
-        "end_line": 134,
-        "end_column": 13
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "nested_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 134,
-        "start_column": 1,
-        "end_line": 134,
-        "end_column": 13
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "complex_nested_scopes()",
       "location": {
@@ -11197,25 +7547,6 @@
       }
     },
     {
-      "kind": "function_call",
-      "name": "complex_nested_scopes",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 134,
-        "start_column": 17,
-        "end_line": 134,
-        "end_column": 39
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 134,
-        "start_column": 1,
-        "end_line": 134,
-        "end_column": 13
-      }
-    },
-    {
       "kind": "constructor_call",
       "name": "complex_nested_scopes",
       "location": {
@@ -11243,32 +7574,6 @@
         "start_column": 17,
         "end_line": 134,
         "end_column": 39
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "complex_nested_scopes",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 134,
-        "start_column": 17,
-        "end_line": 134,
-        "end_column": 37
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "complex_nested_scopes",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 134,
-        "start_column": 17,
-        "end_line": 134,
-        "end_column": 37
       },
       "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
       "access_type": "read"
@@ -11389,32 +7694,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "captured_value",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 137,
-        "start_column": 1,
-        "end_line": 137,
-        "end_column": 14
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "captured_value",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 137,
-        "start_column": 1,
-        "end_line": 137,
-        "end_column": 14
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "42",
       "location": {
@@ -11593,32 +7872,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "lambda_closure",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 138,
-        "start_column": 1,
-        "end_line": 138,
-        "end_column": 14
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "lambda_closure",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 138,
-        "start_column": 1,
-        "end_line": 138,
-        "end_column": 14
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "lambda x: x + captured_value",
       "location": {
@@ -11669,87 +7922,9 @@
       "location": {
         "file_path": "<fixtures>/python/code/functions/closures.py",
         "start_line": 138,
-        "start_column": 25,
-        "end_line": 138,
-        "end_column": 25
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:138:18:138:45",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "x",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 138,
-        "start_column": 25,
-        "end_line": 138,
-        "end_column": 25
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:138:18:138:45",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "x",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 138,
         "start_column": 28,
         "end_line": 138,
         "end_column": 28
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:138:18:138:45",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "x",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 138,
-        "start_column": 28,
-        "end_line": 138,
-        "end_column": 28
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:138:18:138:45",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "x",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 138,
-        "start_column": 28,
-        "end_line": 138,
-        "end_column": 28
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:138:18:138:45",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "captured_value",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 138,
-        "start_column": 32,
-        "end_line": 138,
-        "end_column": 45
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/closures.py:138:18:138:45",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "captured_value",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 138,
-        "start_column": 32,
-        "end_line": 138,
-        "end_column": 45
       },
       "scope_id": "function:<fixtures>/python/code/functions/closures.py:138:18:138:45",
       "access_type": "read"
@@ -11870,32 +8045,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "lambda_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 139,
-        "start_column": 1,
-        "end_line": 139,
-        "end_column": 13
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "lambda_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 139,
-        "start_column": 1,
-        "end_line": 139,
-        "end_column": 13
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "lambda_closure(8)",
       "location": {
@@ -11934,25 +8083,6 @@
       }
     },
     {
-      "kind": "function_call",
-      "name": "lambda_closure",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 139,
-        "start_column": 17,
-        "end_line": 139,
-        "end_column": 33
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 139,
-        "start_column": 1,
-        "end_line": 139,
-        "end_column": 13
-      }
-    },
-    {
       "kind": "constructor_call",
       "name": "lambda_closure",
       "location": {
@@ -11980,32 +8110,6 @@
         "start_column": 17,
         "end_line": 139,
         "end_column": 33
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "lambda_closure",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 139,
-        "start_column": 17,
-        "end_line": 139,
-        "end_column": 30
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "lambda_closure",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 139,
-        "start_column": 17,
-        "end_line": 139,
-        "end_column": 30
       },
       "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
       "access_type": "read"
@@ -12126,32 +8230,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "results",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 142,
-        "start_column": 1,
-        "end_line": 142,
-        "end_column": 7
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "results",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 142,
-        "start_column": 1,
-        "end_line": 142,
-        "end_column": 7
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "{\n    \"counter\": counter,\n    \"multiplier\": multiplier,\n    \"count1\": count1,\n    \"count2\": count2,\n    \"count3\": count3,\n    \"product1\": product1,\n    \"product2\": product2,\n    \"greeting\": greeting,\n    \"nested_result\": nested_result,\n    \"lambda_result\": lambda_result,\n}",
       "location": {
@@ -12198,58 +8276,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "counter",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 143,
-        "start_column": 16,
-        "end_line": 143,
-        "end_column": 22
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "counter",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 143,
-        "start_column": 16,
-        "end_line": 143,
-        "end_column": 22
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "multiplier",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 144,
-        "start_column": 19,
-        "end_line": 144,
-        "end_column": 28
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "multiplier",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 144,
-        "start_column": 19,
-        "end_line": 144,
-        "end_column": 28
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "multiplier",
       "location": {
         "file_path": "<fixtures>/python/code/functions/closures.py",
@@ -12269,58 +8295,6 @@
         "start_line": 145,
         "start_column": 15,
         "end_line": 145,
-        "end_column": 20
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "count1",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 145,
-        "start_column": 15,
-        "end_line": 145,
-        "end_column": 20
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "count1",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 145,
-        "start_column": 15,
-        "end_line": 145,
-        "end_column": 20
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "count2",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 146,
-        "start_column": 15,
-        "end_line": 146,
-        "end_column": 20
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "count2",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 146,
-        "start_column": 15,
-        "end_line": 146,
         "end_column": 20
       },
       "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
@@ -12354,90 +8328,12 @@
     },
     {
       "kind": "variable_reference",
-      "name": "count3",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 147,
-        "start_column": 15,
-        "end_line": 147,
-        "end_column": 20
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "count3",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 147,
-        "start_column": 15,
-        "end_line": 147,
-        "end_column": 20
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "product1",
       "location": {
         "file_path": "<fixtures>/python/code/functions/closures.py",
         "start_line": 148,
         "start_column": 17,
         "end_line": 148,
-        "end_column": 24
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "product1",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 148,
-        "start_column": 17,
-        "end_line": 148,
-        "end_column": 24
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "product1",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 148,
-        "start_column": 17,
-        "end_line": 148,
-        "end_column": 24
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "product2",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 149,
-        "start_column": 17,
-        "end_line": 149,
-        "end_column": 24
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "product2",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 149,
-        "start_column": 17,
-        "end_line": 149,
         "end_column": 24
       },
       "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
@@ -12471,90 +8367,12 @@
     },
     {
       "kind": "variable_reference",
-      "name": "greeting",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 150,
-        "start_column": 17,
-        "end_line": 150,
-        "end_column": 24
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "greeting",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 150,
-        "start_column": 17,
-        "end_line": 150,
-        "end_column": 24
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "nested_result",
       "location": {
         "file_path": "<fixtures>/python/code/functions/closures.py",
         "start_line": 151,
         "start_column": 22,
         "end_line": 151,
-        "end_column": 34
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "nested_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 151,
-        "start_column": 22,
-        "end_line": 151,
-        "end_column": 34
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "nested_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 151,
-        "start_column": 22,
-        "end_line": 151,
-        "end_column": 34
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "lambda_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 152,
-        "start_column": 22,
-        "end_line": 152,
-        "end_column": 34
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "lambda_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/closures.py",
-        "start_line": 152,
-        "start_column": 22,
-        "end_line": 152,
         "end_column": 34
       },
       "scope_id": "module:<fixtures>/python/code/functions/closures.py:1:1:153:1",

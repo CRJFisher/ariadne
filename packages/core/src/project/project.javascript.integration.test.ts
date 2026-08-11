@@ -1556,3 +1556,40 @@ export { create_class_id as create_py_class_id } from "./sf_py";
   });
 
 });
+
+describe("CommonJS export status by scope", () => {
+  it("indexes a file whose method-local var shadows the exported module-scope var", async () => {
+    const project = new Project();
+    await project.initialize(FIXTURE_ROOT as FilePath);
+    const file = file_path("modules/shadowed_commonjs_local.js");
+    project.update_file(
+      file,
+      [
+        "var res = {};",
+        "module.exports = res;",
+        "res.send = function send(body) {",
+        "  var res = this;",
+        "  return res;",
+        "};",
+      ].join("\n")
+    );
+    const exported_names = [...project.exports.get_exports(file)].map((id) =>
+      id.split(":").pop()
+    );
+    expect(exported_names).toEqual(["res"]);
+  });
+
+  it("rejects two module-scope function declarations exported under one name", async () => {
+    const project = new Project();
+    await project.initialize(FIXTURE_ROOT as FilePath);
+    const file = file_path("modules/genuine_duplicate_export.js");
+    const code = [
+      "function run() {}",
+      "function run() {}",
+      "module.exports.run = run;",
+    ].join("\n");
+    expect(() => project.update_file(file, code)).toThrow(
+      /Duplicate export name "run"/
+    );
+  });
+});

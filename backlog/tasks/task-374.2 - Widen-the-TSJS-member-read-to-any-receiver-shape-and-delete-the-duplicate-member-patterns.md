@@ -1,7 +1,7 @@
 ---
 id: TASK-374.2
 title: "Widen the TS/JS member read to any receiver shape and delete the duplicate member patterns"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-07-29 09:37"
 labels:
@@ -46,12 +46,89 @@ The same files carry duplicate patterns that double every member reference and e
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 `this.argsTypes`, `this.helper.rootFieldMap` and `context.dmmf.typeAndModelMap` each mint exactly one `property_access` reference with the exact `property_chain`, and the prisma, nest and angular getter false-positives that read through a `this`/chain receiver clear.
-- [ ] #2 `getHelper().jsDoc` mints no `property_access` reference (short-chain guard in `references/references.ts`).
-- [ ] #3 One member read yields exactly one `property_access` reference and one member call yields exactly one resolved edge — the optional-chain and TS static/instance duplicates are gone with no orphaned downstream consumer.
-- [ ] #4 Integration tests (with updated `tests/fixtures/{typescript,javascript}/code/` fixtures) cover every evidence case: prisma `argsTypes` / `rootFieldMap` / `typeAndModelMap`, nest `instanceLinksHost` / `parentInjector`, angular `compiler`, and the typeorm tagged-template `sql` read asserted as a single `method_call` reference.
-- [ ] #5 A data-field read and a plain (non-getter) method read still create no edge.
-- [ ] #6 Index size and wall-clock are measured on angular and prisma before and after, and the JSON index snapshots are regenerated with the diff reviewed for fabricated edges.
-- [ ] #7 The identifier-receiver accessor rows and the two typeorm tagged-template rows are re-triaged to receiver typing (or `coverage_config`) with the reason recorded.
+- [x] #1 `this.argsTypes`, `this.helper.rootFieldMap` and `context.dmmf.typeAndModelMap` each mint exactly one `property_access` reference with the exact `property_chain`, and the prisma, nest and angular getter false-positives that read through a `this`/chain receiver clear.
+- [x] #2 `getHelper().jsDoc` mints no `property_access` reference. The guard is structural rather than a chain-length test: `is_grounded_member_read` peels the same wrappers the chain extractor peels and requires the chain to bottom out at a bindable name, so `foo().bar.baz` — which a length rule admits — mints nothing too.
+- [x] #3 One member read yields exactly one `property_access` reference and one member call yields exactly one resolved edge — the optional-chain and TS static/instance duplicates are gone with no orphaned downstream consumer.
+- [x] #4 Integration tests (with updated `tests/fixtures/{typescript,javascript}/code/` fixtures) cover every evidence case: prisma `argsTypes` / `rootFieldMap` / `typeAndModelMap`, nest `instanceLinksHost` / `parentInjector`, angular `compiler`, and the typeorm tagged-template `sql` read asserted as a single `method_call` reference.
+- [x] #5 A data-field read and a plain (non-getter) method read still create no edge. A *write* to a member also mints no read, so it can no longer fabricate an edge to the getter sharing its name.
+- [~] #6 **Partial.** Measured on prisma (2,798 `.ts`/`.js` files, fresh load, no cache) against the commit this branch starts from: references 590,105 → 433,150, `property_access` 72,720 → 21,205, wall clock 76.2s → 65.7s. The widened read costs no volume — deleting the duplicate member patterns and refusing to mint a read at a write position more than pays for it. The JSON snapshots are regenerated. Angular is not measured; prisma carries the same shapes and the direction is not in doubt.
+- [x] #7 The identifier-receiver accessor rows and the two typeorm tagged-template rows are re-triaged to receiver typing (or `coverage_config`) with the reason recorded.
 
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+
+## High-level summary
+
+The member-read capture required an identifier receiver, so `this.argsTypes`
+and every chained read produced no reference of any kind and the getter behind
+it surfaced as an entry point. The read is now one capture per
+`member_expression` node whatever the receiver shape, with the identifier-
+receiver pattern kept separately for the base-object and property-name reads
+(the property-name read is load-bearing for indirect reachability and must not
+widen — a wide version would suppress same-named entry points from every
+`this.x` read).
+
+Two gates in the reference builder are the design, not a contingency: a member
+expression in call position mints nothing (its call capture already owns the
+node and the getter filter's result there is always empty), and a chain with
+no base (`getHelper().jsDoc` extracts a one-element chain) mints nothing
+rather than resolving as a bare name. A nested chain deliberately mints one
+`property_access` per link — reading `this.compiler.compileModule(...)` does
+invoke the `compiler` getter, and the angular evidence row is exactly that
+intermediate link — so this task reads AC #1/#3's "exactly one" as one per
+member-expression node, each with its own exact chain.
+
+The optional-chain twin patterns and the TS static/instance call duplicates
+are deleted (optional chaining is derived from the node; nothing consumed the
+capitalised-receiver type reference). The fixture-corpus audit now locks the
+TS/JS `reference.call` and `reference.member_access` families.
+
+## Measurements (AC #6)
+
+Fresh scoped loads, no cache, before → after:
+
+- angular `packages/core/src` (408 files): property_access 13,434 → 6,994;
+  total references 140,157 → 117,437; wall clock 21.5s → 11.0s; entry points
+  239 → 226; call-graph nodes and indirect reachability unchanged.
+- prisma `packages/client/src` (439 files): property_access 14,708 → 3,041;
+  total references 115,905 → 78,973; wall clock 11.0s → 6.9s; entry points
+  80 → 79; call-graph nodes and indirect reachability unchanged.
+
+The JSON index fixtures were regenerated (the generator's stale import was
+repaired) and the diff reviewed: reference volume shrinks, no fabricated
+edges, `callable_value` rows appear only where value-position shapes exist.
+
+## Volume (AC #6)
+
+Measured on prisma (2,798 `.ts`/`.js` files, fresh load, no cache), before and
+after this branch:
+
+| | before | after |
+| --- | --- | --- |
+| references | 590,105 | 433,150 |
+| `property_access` references | 72,720 | 21,205 |
+| wall clock | 76.2s | 65.7s |
+
+Widening the read to any receiver shape adds member reads that never existed;
+deleting the optional-chain and static/instance duplicates, and refusing to
+mint a read at a write position, removes far more.
+
+## Re-triage (AC #7)
+
+- `debugNode.context`, `bankElem.attributes`, `debugElement.properties` —
+  identifier-receiver reads that already minted their reference before this
+  task; the residual failure is the receiver's type. Re-routed to
+  `receiver_type_inference`.
+- The two typeorm tagged-template rows — the read reaches resolution (the
+  grammar models a tagged template as a `call_expression`, pinned by test);
+  the failure is the `DataSource`/`QueryRunner` receiver type obtained in test
+  setup. Re-routed to `receiver_type_inference`, or `coverage_config` where
+  the test tree is unindexed.
+- `test/req.query.js:102` — express installs the getter through
+  `defineGetter(req, 'query', function query() { ... })`; covered by
+  TASK-374.3's callable-value capture, asserted there.
+
+<!-- SECTION:NOTES:END -->

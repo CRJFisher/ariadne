@@ -48,6 +48,7 @@
       },
       "defining_scope_id": "module:<fixtures>/javascript/code/modules/shadowing.js:1:1:23:2",
       "is_exported": false,
+      "docstring": "// Local function with same name as imported function - shadows the import",
       "signature": {
         "parameters": []
       },
@@ -70,6 +71,7 @@
       "defining_scope_id": "module:<fixtures>/javascript/code/modules/shadowing.js:1:1:23:2",
       "is_exported": true,
       "initial_value": "helper()",
+      "docstring": "// This call should resolve to LOCAL helper, not imported one",
       "initialized_from_call": "helper"
     },
     "variable:<fixtures>/javascript/code/modules/shadowing.js:18:7:18:15:processed": {
@@ -86,6 +88,7 @@
       "defining_scope_id": "module:<fixtures>/javascript/code/modules/shadowing.js:1:1:23:2",
       "is_exported": true,
       "initial_value": "processData(\"TEST\")",
+      "docstring": "// Use a different imported function to verify imports still work",
       "initialized_from_call": "processData"
     }
   },

@@ -48,6 +48,7 @@
       },
       "defining_scope_id": "module:<fixtures>/typescript/code/integration/main_shadowing.ts:1:1:19:25",
       "is_exported": false,
+      "docstring": "// Local function with same name as imported function",
       "signature": {
         "parameters": [],
         "return_type": "string"
@@ -72,6 +73,7 @@
       "defining_scope_id": "module:<fixtures>/typescript/code/integration/main_shadowing.ts:1:1:19:25",
       "is_exported": true,
       "initial_value": "helper()",
+      "docstring": "// This call should resolve to LOCAL helper, not imported one",
       "initialized_from_call": "helper"
     },
     "variable:<fixtures>/typescript/code/integration/main_shadowing.ts:17:7:17:11:other": {
@@ -88,6 +90,7 @@
       "defining_scope_id": "module:<fixtures>/typescript/code/integration/main_shadowing.ts:1:1:19:25",
       "is_exported": true,
       "initial_value": "other_function()",
+      "docstring": "// This call should resolve to imported function (no shadowing)",
       "initialized_from_call": "other_function"
     }
   },
@@ -96,31 +99,32 @@
   "namespaces": {},
   "types": {},
   "imported_symbols": {
-    "variable:<fixtures>/typescript/code/integration/main_shadowing.ts:6:10:6:15:helper": {
+    "variable:<fixtures>/typescript/code/integration/main_shadowing.ts:6:20:6:34:imported_helper": {
       "kind": "import",
-      "symbol_id": "variable:<fixtures>/typescript/code/integration/main_shadowing.ts:6:10:6:15:helper",
-      "name": "helper",
+      "symbol_id": "variable:<fixtures>/typescript/code/integration/main_shadowing.ts:6:20:6:34:imported_helper",
+      "name": "imported_helper",
       "location": {
         "file_path": "<fixtures>/typescript/code/integration/main_shadowing.ts",
         "start_line": 6,
-        "start_column": 10,
+        "start_column": 20,
         "end_line": 6,
-        "end_column": 15
+        "end_column": 34
       },
       "defining_scope_id": "module:<fixtures>/typescript/code/integration/main_shadowing.ts:1:1:19:25",
       "import_path": "./utils",
+      "original_name": "helper",
       "import_kind": "named"
     },
-    "variable:<fixtures>/typescript/code/integration/main_shadowing.ts:6:18:6:31:other_function": {
+    "variable:<fixtures>/typescript/code/integration/main_shadowing.ts:6:37:6:50:other_function": {
       "kind": "import",
-      "symbol_id": "variable:<fixtures>/typescript/code/integration/main_shadowing.ts:6:18:6:31:other_function",
+      "symbol_id": "variable:<fixtures>/typescript/code/integration/main_shadowing.ts:6:37:6:50:other_function",
       "name": "other_function",
       "location": {
         "file_path": "<fixtures>/typescript/code/integration/main_shadowing.ts",
         "start_line": 6,
-        "start_column": 18,
+        "start_column": 37,
         "end_line": 6,
-        "end_column": 31
+        "end_column": 50
       },
       "defining_scope_id": "module:<fixtures>/typescript/code/integration/main_shadowing.ts:1:1:19:25",
       "import_path": "./utils",
@@ -143,13 +147,26 @@
     },
     {
       "kind": "variable_reference",
+      "name": "imported_helper",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_shadowing.ts",
+        "start_line": 6,
+        "start_column": 20,
+        "end_line": 6,
+        "end_column": 34
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_shadowing.ts:1:1:19:25",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
       "name": "other_function",
       "location": {
         "file_path": "<fixtures>/typescript/code/integration/main_shadowing.ts",
         "start_line": 6,
-        "start_column": 18,
+        "start_column": 37,
         "end_line": 6,
-        "end_column": 31
+        "end_column": 50
       },
       "scope_id": "module:<fixtures>/typescript/code/integration/main_shadowing.ts:1:1:19:25",
       "access_type": "read"

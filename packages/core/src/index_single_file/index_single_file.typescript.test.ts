@@ -13,6 +13,7 @@ import type {
   SymbolName,
   FunctionCallReference,
   MethodCallReference,
+  CallableValueReference,
   ConstructorCallReference,
   SelfReferenceCall,
   TypeReference,
@@ -3390,6 +3391,151 @@ const result = items.map((x) =>
       expect(setter).toBeDefined();
       expect(plain).toBeDefined();
       expect(plain!.accessor_kind).toBeUndefined();
+    });
+
+    function property_accesses(code: string) {
+      return build_index(code)
+        .references.filter(
+          (r): r is PropertyAccessReference => r.kind === "property_access"
+        )
+        .map((r) => ({
+          name: r.name,
+          property_chain: r.property_chain,
+          access_type: r.access_type,
+          is_optional_chain: r.is_optional_chain,
+        }));
+    }
+
+    it("mints one property access for a this-rooted member read", () => {
+      const code = "class A { argsTypes = 1; m() { const a = this.argsTypes; return a; } }";
+      expect(property_accesses(code)).toEqual([
+        {
+          name: "argsTypes" as SymbolName,
+          property_chain: ["this", "argsTypes"],
+          access_type: "property",
+          is_optional_chain: false,
+        },
+      ]);
+    });
+
+    it("mints one property access per member expression in a nested this-rooted chain", () => {
+      const code = "class A { m() { const b = this.helper.rootFieldMap; return b; } }";
+      expect(property_accesses(code)).toEqual([
+        {
+          name: "helper" as SymbolName,
+          property_chain: ["this", "helper"],
+          access_type: "property",
+          is_optional_chain: false,
+        },
+        {
+          name: "rootFieldMap" as SymbolName,
+          property_chain: ["this", "helper", "rootFieldMap"],
+          access_type: "property",
+          is_optional_chain: false,
+        },
+      ]);
+    });
+
+    it("mints one property access per member expression in an identifier-rooted chain", () => {
+      const code = "function m(ctx: Ctx) { return ctx.dmmf.typeAndModelMap; }";
+      expect(property_accesses(code)).toEqual([
+        {
+          name: "dmmf" as SymbolName,
+          property_chain: ["ctx", "dmmf"],
+          access_type: "property",
+          is_optional_chain: false,
+        },
+        {
+          name: "typeAndModelMap" as SymbolName,
+          property_chain: ["ctx", "dmmf", "typeAndModelMap"],
+          access_type: "property",
+          is_optional_chain: false,
+        },
+      ]);
+    });
+
+    it("mints one property access for a plain identifier receiver", () => {
+      const code = "function m(obj: Obj) { return obj.x; }";
+      expect(property_accesses(code)).toEqual([
+        {
+          name: "x" as SymbolName,
+          property_chain: ["obj", "x"],
+          access_type: "property",
+          is_optional_chain: false,
+        },
+      ]);
+    });
+
+    it("mints no property access for a call-rooted member read", () => {
+      const code = "function m() { return getHelper().jsDoc; }";
+      expect(property_accesses(code)).toEqual([]);
+    });
+
+    it("mints no property access for the callee of a member call", () => {
+      const code = "class A { run() {} m() { this.run(); } }";
+      const index = build_index(code);
+      expect(
+        index.references.filter((r) => r.kind === "property_access")
+      ).toEqual([]);
+      expect(
+        index.references
+          .filter(
+            (r): r is SelfReferenceCall => r.kind === "self_reference_call"
+          )
+          .map((r) => r.name)
+      ).toEqual(["run"]);
+    });
+
+    it("mints one method call reference for a tagged template call", () => {
+      const code = "function m(qr: QueryRunner) { return qr.sql`SELECT 1`; }";
+      const index = build_index(code);
+      expect(
+        index.references
+          .filter((r): r is MethodCallReference => r.kind === "method_call")
+          .map((r) => ({ name: r.name, property_chain: r.property_chain }))
+      ).toEqual([
+        {
+          name: "sql" as SymbolName,
+          property_chain: ["qr", "sql"],
+        },
+      ]);
+      expect(
+        index.references.filter((r) => r.kind === "property_access")
+      ).toEqual([]);
+    });
+
+    it("keeps the member read of a bind receiver as a property access without a callee read", () => {
+      const code = "class A { write() {} out = this.write.bind(this); }";
+      const index = build_index(code);
+      expect(
+        index.references
+          .filter(
+            (r): r is PropertyAccessReference => r.kind === "property_access"
+          )
+          .map((r) => r.property_chain)
+      ).toEqual([["this", "write"]]);
+    });
+
+    it("indexes a member-expression argument as a callable value", () => {
+      const code = "app.get('/users', user.list);";
+      const index = build_index(code);
+      expect(
+        index.references
+          .filter(
+            (r): r is CallableValueReference => r.kind === "callable_value"
+          )
+          .map((r) => ({ name: r.name, property_chain: r.property_chain }))
+      ).toEqual([
+        { name: "list" as SymbolName, property_chain: ["user", "list"] },
+      ]);
+    });
+
+    it("indexes no callable value for bare identifier or literal arguments", () => {
+      const code = "run(plain, 1, 's');";
+      const index = build_index(code);
+      expect(
+        index.references.filter((r) => r.kind === "callable_value")
+      ).toEqual([]);
     });
   });
 

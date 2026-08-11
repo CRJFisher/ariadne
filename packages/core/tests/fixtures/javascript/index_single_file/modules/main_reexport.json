@@ -35,6 +35,7 @@
       "defining_scope_id": "module:<fixtures>/javascript/code/modules/main_reexport.js:1:1:18:0",
       "is_exported": true,
       "initial_value": "coreFunction()",
+      "docstring": "// Call the re-exported function (should resolve to base.js)",
       "initialized_from_call": "coreFunction"
     },
     "variable:<fixtures>/javascript/code/modules/main_reexport.js:12:7:12:13:result2": {
@@ -51,6 +52,7 @@
       "defining_scope_id": "module:<fixtures>/javascript/code/modules/main_reexport.js:1:1:18:0",
       "is_exported": true,
       "initial_value": "anotherFunction()",
+      "docstring": "// Call another re-exported function (should resolve to base.js)",
       "initialized_from_call": "anotherFunction"
     },
     "variable:<fixtures>/javascript/code/modules/main_reexport.js:15:7:15:13:result3": {
@@ -67,6 +69,7 @@
       "defining_scope_id": "module:<fixtures>/javascript/code/modules/main_reexport.js:1:1:18:0",
       "is_exported": true,
       "initial_value": "middleFunction()",
+      "docstring": "// Call the middle function (should resolve to middle.js)",
       "initialized_from_call": "middleFunction"
     }
   },

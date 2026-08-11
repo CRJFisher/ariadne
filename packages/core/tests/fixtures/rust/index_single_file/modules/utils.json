@@ -345,7 +345,7 @@
         "input",
         "to_uppercase"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -431,10 +431,11 @@
         "end_column": 17
       },
       "property_chain": [
-        "prices.iter()",
+        "prices",
+        "iter",
         "sum"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false
     },
     {
       "kind": "method_call",
@@ -458,7 +459,7 @@
         "prices",
         "iter"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -547,7 +548,7 @@
         "email",
         "contains"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -610,7 +611,7 @@
         "email",
         "contains"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",

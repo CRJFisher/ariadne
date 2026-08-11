@@ -53,6 +53,10 @@ const DECLARATION_PARENTS = new Set([
   "class",
   "variable_declarator",
   "method_definition",
+  // A destructured loop head binds through a pattern, which is the node the
+  // for-head definition capture reaches the handler with.
+  "array_pattern",
+  "object_pattern",
 ]);
 
 /**
@@ -61,7 +65,8 @@ const DECLARATION_PARENTS = new Set([
  * Identifiers appearing in export specifiers or object literals are skipped so
  * the cache-lookup path is exercised rather than the direct parent walk.
  */
-function def_name_node(root: SyntaxNode, name: string): SyntaxNode {
+function def_name_node(root: SyntaxNode, name: string, occurrence = 0): SyntaxNode {
+  let seen = 0;
   function search(node: SyntaxNode): SyntaxNode | undefined {
     if (
       node.type === "identifier" &&
@@ -69,7 +74,8 @@ function def_name_node(root: SyntaxNode, name: string): SyntaxNode {
       node.parent &&
       DECLARATION_PARENTS.has(node.parent.type)
     ) {
-      return node;
+      if (seen === occurrence) return node;
+      seen++;
     }
     for (let i = 0; i < node.childCount; i++) {
       const child = node.child(i);
@@ -85,8 +91,11 @@ function def_name_node(root: SyntaxNode, name: string): SyntaxNode {
   return found;
 }
 
-function info(code: string, name: string) {
-  return extract_export_info(def_name_node(parse(code), name), name as SymbolName);
+function info(code: string, name: string, occurrence = 0) {
+  return extract_export_info(
+    def_name_node(parse(code), name, occurrence),
+    name as SymbolName
+  );
 }
 
 /**
@@ -354,6 +363,99 @@ describe("extract_export_info nested-scope boundary", () => {
       is_exported: true,
       export: undefined,
     });
+  });
+
+  const SHADOWED_COMMONJS = [
+    "var res = {};",
+    "module.exports = res;",
+    "res.send = function send() {",
+    "  var res = this;",
+    "  return res;",
+    "};",
+  ].join("\n");
+
+  it("keeps a function-local binding unexported when a module-scope binding of the same name is exported", () => {
+    expect(info(SHADOWED_COMMONJS, "res", 1)).toEqual({ is_exported: false });
+  });
+
+  it("keeps the module-scope binding of a shadowed name exported", () => {
+    expect(info(SHADOWED_COMMONJS, "res", 0)).toEqual({
+      is_exported: true,
+      export: { is_default: true },
+    });
+  });
+
+  const BLOCK_SHADOWED_COMMONJS = [
+    "var res = {};",
+    "module.exports = res;",
+    "if (process.env.X) {",
+    "  let res = 1;",
+    "  res += 1;",
+    "}",
+  ].join("\n");
+
+  it("keeps a block-scoped binding unexported when a module-scope binding of the same name is exported", () => {
+    expect(info(BLOCK_SHADOWED_COMMONJS, "res", 1)).toEqual({
+      is_exported: false,
+    });
+  });
+
+  it("keeps a hoisted var declared inside a block exported", () => {
+    const code = [
+      "if (process.env.X) {",
+      "  var res = {};",
+      "}",
+      "module.exports = res;",
+    ].join("\n");
+    expect(info(code, "res", 0)).toEqual({
+      is_exported: true,
+      export: { is_default: true },
+    });
+  });
+
+  it("keeps a loop-head lexical binding unexported when a module-scope binding of the same name is exported", () => {
+    const code = [
+      "var res = {};",
+      "module.exports = res;",
+      "for (let res = 0; res < 3; res++) {}",
+    ].join("\n");
+    expect(info(code, "res", 1)).toEqual({ is_exported: false });
+  });
+
+  it("keeps a switch-case lexical binding unexported when a module-scope binding of the same name is exported", () => {
+    const code = [
+      "var res = {};",
+      "module.exports = res;",
+      "switch (k) { case 1: let res = 1; }",
+    ].join("\n");
+    expect(info(code, "res", 1)).toEqual({ is_exported: false });
+  });
+
+  it("keeps a loop-head var exported", () => {
+    const code = ["for (var res = 0; res < 3; res++) {}", "module.exports = res;"].join(
+      "\n"
+    );
+    expect(info(code, "res", 0)).toEqual({
+      is_exported: true,
+      export: { is_default: true },
+    });
+  });
+
+  it("keeps a destructured loop-head var exported", () => {
+    const code = ["for (var [res] of pairs) {}", "module.exports = res;"].join("\n");
+    expect(info(code, "res", 0)).toEqual({
+      is_exported: true,
+      export: { is_default: true },
+    });
+  });
+
+  it("keeps a class static block var unexported", () => {
+    const code = [
+      "var res = {};",
+      "module.exports = res;",
+      "class C { static { var res = 1; } }",
+    ].join("\n");
+    expect(info(code, "res", 1)).toEqual({ is_exported: false });
   });
 });
 

@@ -103,7 +103,8 @@
         "end_column": 16
       },
       "defining_scope_id": "function:<fixtures>/rust/code/modules/main.rs:8:8:24:1",
-      "is_exported": false
+      "is_exported": false,
+      "initialized_from_call": "helper"
     },
     "variable:<fixtures>/rust/code/modules/main.rs:11:9:11:17:processed": {
       "kind": "variable",
@@ -117,7 +118,8 @@
         "end_column": 17
       },
       "defining_scope_id": "function:<fixtures>/rust/code/modules/main.rs:8:8:24:1",
-      "is_exported": false
+      "is_exported": false,
+      "initialized_from_call": "process_data"
     },
     "variable:<fixtures>/rust/code/modules/main.rs:14:9:14:14:prices": {
       "kind": "variable",
@@ -145,7 +147,8 @@
         "end_column": 13
       },
       "defining_scope_id": "function:<fixtures>/rust/code/modules/main.rs:8:8:24:1",
-      "is_exported": false
+      "is_exported": false,
+      "initialized_from_call": "calculate_total"
     },
     "variable:<fixtures>/rust/code/modules/main.rs:18:9:18:16:is_valid": {
       "kind": "variable",
@@ -159,7 +162,8 @@
         "end_column": 16
       },
       "defining_scope_id": "function:<fixtures>/rust/code/modules/main.rs:8:8:24:1",
-      "is_exported": false
+      "is_exported": false,
+      "initialized_from_call": "validate_email"
     },
     "variable:<fixtures>/rust/code/modules/main.rs:28:9:28:12:name": {
       "kind": "variable",
@@ -173,7 +177,8 @@
         "end_column": 12
       },
       "defining_scope_id": "function:<fixtures>/rust/code/modules/main.rs:27:21:33:1",
-      "is_exported": false
+      "is_exported": false,
+      "initialized_from_call": "process_data"
     },
     "variable:<fixtures>/rust/code/modules/main.rs:29:9:29:15:balance": {
       "kind": "variable",
@@ -187,7 +192,8 @@
         "end_column": 15
       },
       "defining_scope_id": "function:<fixtures>/rust/code/modules/main.rs:27:21:33:1",
-      "is_exported": false
+      "is_exported": false,
+      "initialized_from_call": "calculate_total"
     },
     "variable:<fixtures>/rust/code/modules/main.rs:30:9:30:19:email_valid": {
       "kind": "variable",
@@ -201,7 +207,8 @@
         "end_column": 19
       },
       "defining_scope_id": "function:<fixtures>/rust/code/modules/main.rs:27:21:33:1",
-      "is_exported": false
+      "is_exported": false,
+      "initialized_from_call": "validate_email"
     }
   },
   "interfaces": {},
@@ -236,7 +243,7 @@
         "end_column": 67
       },
       "defining_scope_id": "module:<fixtures>/rust/code/modules/main.rs:1:1:33:1",
-      "import_path": "utils::helper",
+      "import_path": "utils",
       "import_kind": "named"
     },
     "import:<fixtures>/rust/code/modules/main.rs:6:process_data": {
@@ -251,7 +258,7 @@
         "end_column": 67
       },
       "defining_scope_id": "module:<fixtures>/rust/code/modules/main.rs:1:1:33:1",
-      "import_path": "utils::process_data",
+      "import_path": "utils",
       "import_kind": "named"
     },
     "import:<fixtures>/rust/code/modules/main.rs:6:calculate_total": {
@@ -266,7 +273,7 @@
         "end_column": 67
       },
       "defining_scope_id": "module:<fixtures>/rust/code/modules/main.rs:1:1:33:1",
-      "import_path": "utils::calculate_total",
+      "import_path": "utils",
       "import_kind": "named"
     },
     "import:<fixtures>/rust/code/modules/main.rs:6:validate_email": {
@@ -281,7 +288,7 @@
         "end_column": 67
       },
       "defining_scope_id": "module:<fixtures>/rust/code/modules/main.rs:1:1:33:1",
-      "import_path": "utils::validate_email",
+      "import_path": "utils",
       "import_kind": "named"
     }
   },

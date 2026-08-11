@@ -1,7 +1,7 @@
 ---
 id: TASK-374.3
 title: "Capture value-position callables and record them as weak edges"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-07-29 09:37"
 labels:
@@ -41,11 +41,50 @@ A function handed to a framework by name — `app.get('/users', user.list)` — 
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 `ReferenceKind.CALLABLE_VALUE` and `CallableValueReference` exist in `packages/types` and `references/factories.ts`, and `build_call_reference` remains exhaustive over call kinds only.
-- [ ] #2 `app.get('/users', user.list)` records a weak callable-value edge to `list`, and the express `user.list`, `user.edit` and `post.list` false-positives each clear.
-- [ ] #3 `defineGetter(req, 'query', function query(){ … })` records a callable-value edge to the named function expression, clearing `test/req.query.js:102`.
-- [ ] #4 Integration tests (with updated `tests/fixtures/{javascript,typescript}/code/` fixtures) cover all of the leaf's evidence cases individually, including the object-literal value position, and assert no edge is minted for non-callable arguments.
-- [ ] #5 The weak edge is consumed as reachability evidence only — `classify_entry_points` and the triage evidence writer do not treat it as a call edge.
-- [ ] #6 `examples/mvc/lib/boot.js:67` (`obj[key]` dynamic dispatch) is re-routed to `pt-68bc4a8d3d965a2f` with the reason recorded.
+- [x] #1 `ReferenceKind.CALLABLE_VALUE` and `CallableValueReference` exist in `packages/types` and `references/factories.ts`, and `build_call_reference` remains exhaustive over call kinds only.
+- [x] #2 `app.get('/users', user.list)` records a weak callable-value edge to `list`, and the express `user.list`, `user.edit` and `post.list` false-positives each clear.
+- [x] #3 `defineGetter(req, 'query', function query(){ … })` records a callable-value edge to the named function expression, clearing `test/req.query.js:102`.
+- [~] #4 **Partial.** The member value position, the named-function-expression position and the non-callable-argument negative are each covered, and `callable_value.test.ts` pins the resolution branches directly. A *bare identifier* in object-literal value position deliberately mints no callable value: it already mints an identifier read that indirect reachability resolves, and a second capture recorded one reachability fact twice — verified equivalent at `Project` level. An ungrounded member chain mints nothing rather than resolving its trailing name lexically.
+- [x] #5 The weak edge is consumed as reachability evidence only — `classify_entry_points` and the triage evidence writer do not treat it as a call edge.
+- [x] #6 `examples/mvc/lib/boot.js:67` (`obj[key]` dynamic dispatch) is re-routed to `pt-68bc4a8d3d965a2f` with the reason recorded.
 
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+
+## High-level summary
+
+A function handed to a framework by name — `app.get('/users', user.list)` —
+is never invoked at any syntactic call site, so nothing referenced it and it
+surfaced as an entry point. A `callable_value` reference now captures the
+positions where that happens: member-expression arguments, object-literal
+values, and a named function expression's own name node in argument position.
+Bare identifier arguments deliberately have no new capture — the catch-all
+identifier read plus `detect_indirect_reachability` already cover them, and a
+capture there would double every identifier argument in every codebase.
+
+The weak edge is the existing indirect-reachability channel, not a new edge
+kind: `resolve_callable_values` (`call_resolution/callable_value.ts`) resolves
+each reference — by exact location for a named function expression (its name
+binds only inside its own body, so no name lookup can reach it), through the
+method-call machinery for receiver chains, by name for the rest — keeps only
+function/method targets, and merges the survivors into the resolution result's
+`indirect_reachability` under the existing `function_reference` reason. Entry-
+point detection already unions that map into its referenced set, so the false
+positives clear with zero changes to `trace_call_graph`, `classify_entry_points`
+or the triage evidence writer, and AC #5's "reachability evidence only, never a
+call edge" holds by construction — `build_call_reference` remains exhaustive
+over call kinds and a callable value never becomes a `CallReference`.
+
+Because this family changes what an index contains, the persisted-cache schema
+version advanced to 5; stale caches are discarded, not migrated.
+
+## Re-route (AC #6)
+
+`examples/mvc/lib/boot.js:67` reads `obj[key]` from a `for…in` loop —
+runtime-computed dispatch no static capture can express. Re-routed to the
+permanent-limitation leaf `pt-68bc4a8d3d965a2f`.
+
+<!-- SECTION:NOTES:END -->

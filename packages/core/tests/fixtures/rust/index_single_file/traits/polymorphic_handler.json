@@ -27,7 +27,7 @@
         "block:<fixtures>/rust/code/traits/polymorphic_handler.rs:57:15:63:1",
         "block:<fixtures>/rust/code/traits/polymorphic_handler.rs:65:27:73:1",
         "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:77:23:81:1",
-        "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:88:33:96:5"
+        "module:<fixtures>/rust/code/traits/polymorphic_handler.rs:84:11:97:1"
       ]
     },
     "class:<fixtures>/rust/code/traits/polymorphic_handler.rs:4:19:7:1": {
@@ -325,9 +325,25 @@
       },
       "child_ids": []
     },
+    "module:<fixtures>/rust/code/traits/polymorphic_handler.rs:84:11:97:1": {
+      "id": "module:<fixtures>/rust/code/traits/polymorphic_handler.rs:84:11:97:1",
+      "parent_id": "module:<fixtures>/rust/code/traits/polymorphic_handler.rs:1:1:98:0",
+      "name": "tests",
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/rust/code/traits/polymorphic_handler.rs",
+        "start_line": 84,
+        "start_column": 11,
+        "end_line": 97,
+        "end_column": 1
+      },
+      "child_ids": [
+        "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:88:33:96:5"
+      ]
+    },
     "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:88:33:96:5": {
       "id": "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:88:33:96:5",
-      "parent_id": "module:<fixtures>/rust/code/traits/polymorphic_handler.rs:1:1:98:0",
+      "parent_id": "module:<fixtures>/rust/code/traits/polymorphic_handler.rs:84:11:97:1",
       "name": "test_polymorphic_handlers",
       "type": "function",
       "location": {
@@ -354,6 +370,7 @@
       },
       "defining_scope_id": "module:<fixtures>/rust/code/traits/polymorphic_handler.rs:1:1:98:0",
       "is_exported": true,
+      "docstring": "/// Polymorphic function that calls trait methods\n/// These calls should resolve to ALL three implementations",
       "signature": {
         "parameters": [
           {
@@ -386,11 +403,39 @@
         "end_line": 88,
         "end_column": 32
       },
-      "defining_scope_id": "module:<fixtures>/rust/code/traits/polymorphic_handler.rs:1:1:98:0",
+      "defining_scope_id": "module:<fixtures>/rust/code/traits/polymorphic_handler.rs:84:11:97:1",
       "is_exported": false,
       "signature": {
         "parameters": []
       },
+      "decorators": [
+        {
+          "symbol_id": "decorator:<fixtures>/rust/code/traits/polymorphic_handler.rs:88:8:88:32:test",
+          "defining_scope_id": "module:<fixtures>/rust/code/traits/polymorphic_handler.rs:84:11:97:1",
+          "kind": "decorator",
+          "name": "test",
+          "location": {
+            "file_path": "<fixtures>/rust/code/traits/polymorphic_handler.rs",
+            "start_line": 88,
+            "start_column": 8,
+            "end_line": 88,
+            "end_column": 32
+          }
+        },
+        {
+          "symbol_id": "decorator:<fixtures>/rust/code/traits/polymorphic_handler.rs:88:8:88:32:cfg",
+          "defining_scope_id": "module:<fixtures>/rust/code/traits/polymorphic_handler.rs:84:11:97:1",
+          "kind": "decorator",
+          "name": "cfg",
+          "location": {
+            "file_path": "<fixtures>/rust/code/traits/polymorphic_handler.rs",
+            "start_line": 88,
+            "start_column": 8,
+            "end_line": 88,
+            "end_column": 32
+          }
+        }
+      ],
       "body_scope_id": "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:88:33:96:5"
     }
   },
@@ -898,7 +943,23 @@
     }
   },
   "types": {},
-  "imported_symbols": {},
+  "imported_symbols": {
+    "import:<fixtures>/rust/code/traits/polymorphic_handler.rs:85:*": {
+      "kind": "import",
+      "symbol_id": "import:<fixtures>/rust/code/traits/polymorphic_handler.rs:85:*",
+      "name": "*",
+      "location": {
+        "file_path": "<fixtures>/rust/code/traits/polymorphic_handler.rs",
+        "start_line": 85,
+        "start_column": 5,
+        "end_line": 85,
+        "end_column": 17
+      },
+      "defining_scope_id": "module:<fixtures>/rust/code/traits/polymorphic_handler.rs:84:11:97:1",
+      "import_path": "super",
+      "import_kind": "namespace"
+    }
+  },
   "references": [
     {
       "kind": "type_reference",
@@ -1070,7 +1131,10 @@
         "end_line": 15,
         "end_column": 16
       },
-      "scope_id": "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:14:15:18:5"
+      "scope_id": "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:14:15:18:5",
+      "path_prefix": [
+        "HandlerA"
+      ]
     },
     {
       "kind": "type_reference",
@@ -1093,7 +1157,7 @@
     },
     {
       "kind": "function_call",
-      "name": "String::from",
+      "name": "from",
       "location": {
         "file_path": "<fixtures>/rust/code/traits/polymorphic_handler.rs",
         "start_line": 16,
@@ -1101,7 +1165,10 @@
         "end_line": 16,
         "end_column": 30
       },
-      "scope_id": "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:14:15:18:5"
+      "scope_id": "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:14:15:18:5",
+      "path_prefix": [
+        "String"
+      ]
     },
     {
       "kind": "variable_reference",
@@ -1383,7 +1450,10 @@
         "end_line": 37,
         "end_column": 16
       },
-      "scope_id": "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:36:15:40:5"
+      "scope_id": "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:36:15:40:5",
+      "path_prefix": [
+        "HandlerB"
+      ]
     },
     {
       "kind": "type_reference",
@@ -1406,7 +1476,7 @@
     },
     {
       "kind": "function_call",
-      "name": "String::from",
+      "name": "from",
       "location": {
         "file_path": "<fixtures>/rust/code/traits/polymorphic_handler.rs",
         "start_line": 38,
@@ -1414,7 +1484,10 @@
         "end_line": 38,
         "end_column": 30
       },
-      "scope_id": "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:36:15:40:5"
+      "scope_id": "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:36:15:40:5",
+      "path_prefix": [
+        "String"
+      ]
     },
     {
       "kind": "variable_reference",
@@ -1696,7 +1769,10 @@
         "end_line": 59,
         "end_column": 16
       },
-      "scope_id": "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:58:15:62:5"
+      "scope_id": "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:58:15:62:5",
+      "path_prefix": [
+        "HandlerC"
+      ]
     },
     {
       "kind": "type_reference",
@@ -1719,7 +1795,7 @@
     },
     {
       "kind": "function_call",
-      "name": "String::from",
+      "name": "from",
       "location": {
         "file_path": "<fixtures>/rust/code/traits/polymorphic_handler.rs",
         "start_line": 60,
@@ -1727,7 +1803,10 @@
         "end_line": 60,
         "end_column": 30
       },
-      "scope_id": "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:58:15:62:5"
+      "scope_id": "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:58:15:62:5",
+      "path_prefix": [
+        "String"
+      ]
     },
     {
       "kind": "variable_reference",
@@ -1977,7 +2056,7 @@
         "handler",
         "process"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -2053,7 +2132,14 @@
         "handler",
         "get_name"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "potential_construct_target": {
+        "file_path": "<fixtures>/rust/code/traits/polymorphic_handler.rs",
+        "start_line": 79,
+        "start_column": 9,
+        "end_line": 79,
+        "end_column": 12
+      }
     },
     {
       "kind": "variable_reference",
@@ -2182,7 +2268,7 @@
         "end_line": 85,
         "end_column": 13
       },
-      "scope_id": "module:<fixtures>/rust/code/traits/polymorphic_handler.rs:1:1:98:0",
+      "scope_id": "module:<fixtures>/rust/code/traits/polymorphic_handler.rs:84:11:97:1",
       "keyword": "super",
       "property_chain": [
         "super",
@@ -2199,7 +2285,7 @@
         "end_line": 87,
         "end_column": 10
       },
-      "scope_id": "module:<fixtures>/rust/code/traits/polymorphic_handler.rs:1:1:98:0",
+      "scope_id": "module:<fixtures>/rust/code/traits/polymorphic_handler.rs:84:11:97:1",
       "access_type": "read"
     },
     {
@@ -2212,7 +2298,7 @@
         "end_line": 88,
         "end_column": 32
       },
-      "scope_id": "module:<fixtures>/rust/code/traits/polymorphic_handler.rs:1:1:98:0",
+      "scope_id": "module:<fixtures>/rust/code/traits/polymorphic_handler.rs:84:11:97:1",
       "access_type": "read"
     },
     {
@@ -2229,23 +2315,26 @@
       "access_type": "read"
     },
     {
-      "kind": "function_call",
-      "name": "HandlerA::new",
+      "kind": "constructor_call",
+      "name": "HandlerA",
       "location": {
         "file_path": "<fixtures>/rust/code/traits/polymorphic_handler.rs",
         "start_line": 89,
         "start_column": 17,
         "end_line": 89,
-        "end_column": 29
+        "end_column": 24
       },
       "scope_id": "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:88:33:96:5",
-      "potential_construct_target": {
+      "construct_target": {
         "file_path": "<fixtures>/rust/code/traits/polymorphic_handler.rs",
         "start_line": 89,
         "start_column": 13,
         "end_line": 89,
         "end_column": 13
-      }
+      },
+      "path_prefix": [
+        "HandlerA"
+      ]
     },
     {
       "kind": "variable_reference",
@@ -2287,23 +2376,26 @@
       "access_type": "read"
     },
     {
-      "kind": "function_call",
-      "name": "HandlerB::new",
+      "kind": "constructor_call",
+      "name": "HandlerB",
       "location": {
         "file_path": "<fixtures>/rust/code/traits/polymorphic_handler.rs",
         "start_line": 90,
         "start_column": 17,
         "end_line": 90,
-        "end_column": 29
+        "end_column": 24
       },
       "scope_id": "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:88:33:96:5",
-      "potential_construct_target": {
+      "construct_target": {
         "file_path": "<fixtures>/rust/code/traits/polymorphic_handler.rs",
         "start_line": 90,
         "start_column": 13,
         "end_line": 90,
         "end_column": 13
-      }
+      },
+      "path_prefix": [
+        "HandlerB"
+      ]
     },
     {
       "kind": "variable_reference",
@@ -2345,23 +2437,26 @@
       "access_type": "read"
     },
     {
-      "kind": "function_call",
-      "name": "HandlerC::new",
+      "kind": "constructor_call",
+      "name": "HandlerC",
       "location": {
         "file_path": "<fixtures>/rust/code/traits/polymorphic_handler.rs",
         "start_line": 91,
         "start_column": 17,
         "end_line": 91,
-        "end_column": 29
+        "end_column": 24
       },
       "scope_id": "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:88:33:96:5",
-      "potential_construct_target": {
+      "construct_target": {
         "file_path": "<fixtures>/rust/code/traits/polymorphic_handler.rs",
         "start_line": 91,
         "start_column": 13,
         "end_line": 91,
         "end_column": 13
-      }
+      },
+      "path_prefix": [
+        "HandlerC"
+      ]
     },
     {
       "kind": "variable_reference",

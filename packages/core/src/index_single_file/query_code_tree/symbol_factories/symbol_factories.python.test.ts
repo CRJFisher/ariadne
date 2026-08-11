@@ -4,6 +4,8 @@
 
 import { describe, it, expect } from "vitest";
 import { parse_python, make_capture, find_string_node } from "./test_utils";
+import * as fs from "node:fs";
+import * as path from "node:path";
 import type { SyntaxNode } from "tree-sitter";
 import {
   create_class_id,
@@ -499,7 +501,7 @@ describe("find_decorator_target", () => {
     expect(result).toMatch(/^class:\/test\.py:\d+:\d+:\d+:\d+:Foo$/);
   });
 
-  it("should return property SymbolId for @property decorator on method", () => {
+  it("returns the method SymbolId for a @property decorator on a method", () => {
     const code = "class Foo:\n  @property\n  def name(self):\n    return self._name";
     const root = parse_python(code);
     const dec = find_decorator(root, "property")!;
@@ -512,7 +514,7 @@ describe("find_decorator_target", () => {
 
     const result = find_decorator_target(capture);
     expect(result).toBeDefined();
-    expect(result).toMatch(/^property:\/test\.py:\d+:\d+:\d+:\d+:name$/);
+    expect(result).toMatch(/^method:\/test\.py:\d+:\d+:\d+:\d+:name$/);
   });
 
   it("should return method SymbolId for non-property decorator on class method", () => {
@@ -726,13 +728,13 @@ describe("determine_method_type", () => {
     expect(result).toEqual({ static: true });
   });
 
-  it("should detect @classmethod", () => {
+  it("detects @classmethod as class-bound, keeping its body scope", () => {
     const code = "class Foo:\n  @classmethod\n  def create(cls):\n    pass";
     const root = parse_python(code);
     const func_def = find_function_def(root, "create")!;
 
     const result = determine_method_type(func_def);
-    expect(result).toEqual({ abstract: true });
+    expect(result).toEqual({ static: true });
   });
 
   it("should return empty object for regular method", () => {
@@ -1201,3 +1203,31 @@ describe("extract_collection_source", () => {
   });
 });
 
+
+describe("Enum base list agreement between the query gate and the builder", () => {
+  // `classify_class_bases` decides whether a class is an enum; the
+  // `@_enum_base` gate in python.scm decides whether its class-body
+  // assignments are captured as members. A name in one list but not the other
+  // yields an enum with no members, or members with no enum.
+  it("states the same enum bases in python.scm and symbol_factories.python.ts", () => {
+    const here = __dirname;
+    const query = fs.readFileSync(
+      path.join(here, "../queries/python.scm"),
+      "utf-8"
+    );
+    const factory = fs.readFileSync(
+      path.join(here, "symbol_factories.python.ts"),
+      "utf-8"
+    );
+
+    const query_bases = query.match(
+      /#match\? @_enum_base "\^\(([^)]*)\)\$"/
+    )?.[1];
+    const factory_bases = factory.match(
+      /const ENUM_BASES = \/\^\(([^)]*)\)\$\//
+    )?.[1];
+
+    expect(query_bases).toEqual("Enum|IntEnum|Flag|IntFlag|StrEnum");
+    expect(factory_bases).toEqual(query_bases);
+  });
+});

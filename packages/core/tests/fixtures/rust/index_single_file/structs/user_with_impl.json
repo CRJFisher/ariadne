@@ -698,7 +698,10 @@
         "end_line": 13,
         "end_column": 12
       },
-      "scope_id": "function:<fixtures>/rust/code/structs/user_with_impl.rs:12:15:18:5"
+      "scope_id": "function:<fixtures>/rust/code/structs/user_with_impl.rs:12:15:18:5",
+      "path_prefix": [
+        "User"
+      ]
     },
     {
       "kind": "type_reference",
@@ -787,7 +790,10 @@
         "end_line": 22,
         "end_column": 12
       },
-      "scope_id": "function:<fixtures>/rust/code/structs/user_with_impl.rs:21:19:27:5"
+      "scope_id": "function:<fixtures>/rust/code/structs/user_with_impl.rs:21:19:27:5",
+      "path_prefix": [
+        "User"
+      ]
     },
     {
       "kind": "type_reference",
@@ -810,7 +816,7 @@
     },
     {
       "kind": "function_call",
-      "name": "String::from",
+      "name": "from",
       "location": {
         "file_path": "<fixtures>/rust/code/structs/user_with_impl.rs",
         "start_line": 23,
@@ -818,7 +824,10 @@
         "end_line": 23,
         "end_column": 30
       },
-      "scope_id": "function:<fixtures>/rust/code/structs/user_with_impl.rs:21:19:27:5"
+      "scope_id": "function:<fixtures>/rust/code/structs/user_with_impl.rs:21:19:27:5",
+      "path_prefix": [
+        "String"
+      ]
     },
     {
       "kind": "variable_reference",
@@ -848,7 +857,7 @@
     },
     {
       "kind": "function_call",
-      "name": "String::from",
+      "name": "from",
       "location": {
         "file_path": "<fixtures>/rust/code/structs/user_with_impl.rs",
         "start_line": 24,
@@ -856,7 +865,10 @@
         "end_line": 24,
         "end_column": 31
       },
-      "scope_id": "function:<fixtures>/rust/code/structs/user_with_impl.rs:21:19:27:5"
+      "scope_id": "function:<fixtures>/rust/code/structs/user_with_impl.rs:21:19:27:5",
+      "path_prefix": [
+        "String"
+      ]
     },
     {
       "kind": "variable_reference",

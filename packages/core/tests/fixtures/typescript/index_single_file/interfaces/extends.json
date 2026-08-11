@@ -128,23 +128,6 @@
   "classes": {},
   "variables": {},
   "interfaces": {
-    "interface:<fixtures>/typescript/code/interfaces/extends.ts:6:1:8:1:interface Named {\n  name: string;\n}": {
-      "kind": "interface",
-      "symbol_id": "interface:<fixtures>/typescript/code/interfaces/extends.ts:6:1:8:1:interface Named {\n  name: string;\n}",
-      "name": "interface Named {\n  name: string;\n}",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/interfaces/extends.ts",
-        "start_line": 6,
-        "start_column": 1,
-        "end_line": 8,
-        "end_column": 1
-      },
-      "defining_scope_id": "module:<fixtures>/typescript/code/interfaces/extends.ts:1:1:42:0",
-      "is_exported": false,
-      "extends": [],
-      "methods": [],
-      "properties": []
-    },
     "interface:<fixtures>/typescript/code/interfaces/extends.ts:6:11:6:15:Named": {
       "kind": "interface",
       "symbol_id": "interface:<fixtures>/typescript/code/interfaces/extends.ts:6:11:6:15:Named",
@@ -181,23 +164,6 @@
         }
       ]
     },
-    "interface:<fixtures>/typescript/code/interfaces/extends.ts:10:1:12:1:interface Identifiable {\n  id: number;\n}": {
-      "kind": "interface",
-      "symbol_id": "interface:<fixtures>/typescript/code/interfaces/extends.ts:10:1:12:1:interface Identifiable {\n  id: number;\n}",
-      "name": "interface Identifiable {\n  id: number;\n}",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/interfaces/extends.ts",
-        "start_line": 10,
-        "start_column": 1,
-        "end_line": 12,
-        "end_column": 1
-      },
-      "defining_scope_id": "module:<fixtures>/typescript/code/interfaces/extends.ts:1:1:42:0",
-      "is_exported": false,
-      "extends": [],
-      "methods": [],
-      "properties": []
-    },
     "interface:<fixtures>/typescript/code/interfaces/extends.ts:10:11:10:22:Identifiable": {
       "kind": "interface",
       "symbol_id": "interface:<fixtures>/typescript/code/interfaces/extends.ts:10:11:10:22:Identifiable",
@@ -233,23 +199,6 @@
           "decorators": []
         }
       ]
-    },
-    "interface:<fixtures>/typescript/code/interfaces/extends.ts:14:1:17:1:interface Timestamped {\n  created_at: Date;\n  updated_at: Date;\n}": {
-      "kind": "interface",
-      "symbol_id": "interface:<fixtures>/typescript/code/interfaces/extends.ts:14:1:17:1:interface Timestamped {\n  created_at: Date;\n  updated_at: Date;\n}",
-      "name": "interface Timestamped {\n  created_at: Date;\n  updated_at: Date;\n}",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/interfaces/extends.ts",
-        "start_line": 14,
-        "start_column": 1,
-        "end_line": 17,
-        "end_column": 1
-      },
-      "defining_scope_id": "module:<fixtures>/typescript/code/interfaces/extends.ts:1:1:42:0",
-      "is_exported": false,
-      "extends": [],
-      "methods": [],
-      "properties": []
     },
     "interface:<fixtures>/typescript/code/interfaces/extends.ts:14:11:14:21:Timestamped": {
       "kind": "interface",
@@ -302,23 +251,6 @@
         }
       ]
     },
-    "interface:<fixtures>/typescript/code/interfaces/extends.ts:20:1:23:1:interface Person extends Named {\n  age: number;\n  email: string;\n}": {
-      "kind": "interface",
-      "symbol_id": "interface:<fixtures>/typescript/code/interfaces/extends.ts:20:1:23:1:interface Person extends Named {\n  age: number;\n  email: string;\n}",
-      "name": "interface Person extends Named {\n  age: number;\n  email: string;\n}",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/interfaces/extends.ts",
-        "start_line": 20,
-        "start_column": 1,
-        "end_line": 23,
-        "end_column": 1
-      },
-      "defining_scope_id": "module:<fixtures>/typescript/code/interfaces/extends.ts:1:1:42:0",
-      "is_exported": false,
-      "extends": [],
-      "methods": [],
-      "properties": []
-    },
     "interface:<fixtures>/typescript/code/interfaces/extends.ts:20:11:20:16:Person": {
       "kind": "interface",
       "symbol_id": "interface:<fixtures>/typescript/code/interfaces/extends.ts:20:11:20:16:Person",
@@ -335,7 +267,9 @@
       "export": {
         "is_reexport": false
       },
-      "extends": [],
+      "extends": [
+        "Named"
+      ],
       "methods": [],
       "properties": [
         {
@@ -370,23 +304,6 @@
         }
       ]
     },
-    "interface:<fixtures>/typescript/code/interfaces/extends.ts:26:1:29:1:interface Employee extends Named, Identifiable {\n  department: string;\n  salary: number;\n}": {
-      "kind": "interface",
-      "symbol_id": "interface:<fixtures>/typescript/code/interfaces/extends.ts:26:1:29:1:interface Employee extends Named, Identifiable {\n  department: string;\n  salary: number;\n}",
-      "name": "interface Employee extends Named, Identifiable {\n  department: string;\n  salary: number;\n}",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/interfaces/extends.ts",
-        "start_line": 26,
-        "start_column": 1,
-        "end_line": 29,
-        "end_column": 1
-      },
-      "defining_scope_id": "module:<fixtures>/typescript/code/interfaces/extends.ts:1:1:42:0",
-      "is_exported": false,
-      "extends": [],
-      "methods": [],
-      "properties": []
-    },
     "interface:<fixtures>/typescript/code/interfaces/extends.ts:26:11:26:18:Employee": {
       "kind": "interface",
       "symbol_id": "interface:<fixtures>/typescript/code/interfaces/extends.ts:26:11:26:18:Employee",
@@ -403,7 +320,10 @@
       "export": {
         "is_reexport": false
       },
-      "extends": [],
+      "extends": [
+        "Named",
+        "Identifiable"
+      ],
       "methods": [],
       "properties": [
         {
@@ -438,23 +358,6 @@
         }
       ]
     },
-    "interface:<fixtures>/typescript/code/interfaces/extends.ts:32:1:34:1:interface Entity extends Identifiable, Timestamped {\n  version: number;\n}": {
-      "kind": "interface",
-      "symbol_id": "interface:<fixtures>/typescript/code/interfaces/extends.ts:32:1:34:1:interface Entity extends Identifiable, Timestamped {\n  version: number;\n}",
-      "name": "interface Entity extends Identifiable, Timestamped {\n  version: number;\n}",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/interfaces/extends.ts",
-        "start_line": 32,
-        "start_column": 1,
-        "end_line": 34,
-        "end_column": 1
-      },
-      "defining_scope_id": "module:<fixtures>/typescript/code/interfaces/extends.ts:1:1:42:0",
-      "is_exported": false,
-      "extends": [],
-      "methods": [],
-      "properties": []
-    },
     "interface:<fixtures>/typescript/code/interfaces/extends.ts:32:11:32:16:Entity": {
       "kind": "interface",
       "symbol_id": "interface:<fixtures>/typescript/code/interfaces/extends.ts:32:11:32:16:Entity",
@@ -471,7 +374,10 @@
       "export": {
         "is_reexport": false
       },
-      "extends": [],
+      "extends": [
+        "Identifiable",
+        "Timestamped"
+      ],
       "methods": [],
       "properties": [
         {
@@ -491,23 +397,6 @@
         }
       ]
     },
-    "interface:<fixtures>/typescript/code/interfaces/extends.ts:36:1:39:1:interface User extends Entity, Named {\n  email: string;\n  active: boolean;\n}": {
-      "kind": "interface",
-      "symbol_id": "interface:<fixtures>/typescript/code/interfaces/extends.ts:36:1:39:1:interface User extends Entity, Named {\n  email: string;\n  active: boolean;\n}",
-      "name": "interface User extends Entity, Named {\n  email: string;\n  active: boolean;\n}",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/interfaces/extends.ts",
-        "start_line": 36,
-        "start_column": 1,
-        "end_line": 39,
-        "end_column": 1
-      },
-      "defining_scope_id": "module:<fixtures>/typescript/code/interfaces/extends.ts:1:1:42:0",
-      "is_exported": false,
-      "extends": [],
-      "methods": [],
-      "properties": []
-    },
     "interface:<fixtures>/typescript/code/interfaces/extends.ts:36:11:36:14:User": {
       "kind": "interface",
       "symbol_id": "interface:<fixtures>/typescript/code/interfaces/extends.ts:36:11:36:14:User",
@@ -524,7 +413,10 @@
       "export": {
         "is_reexport": false
       },
-      "extends": [],
+      "extends": [
+        "Entity",
+        "Named"
+      ],
       "methods": [],
       "properties": [
         {

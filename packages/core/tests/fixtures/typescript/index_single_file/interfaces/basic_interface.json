@@ -220,23 +220,6 @@
   "classes": {},
   "variables": {},
   "interfaces": {
-    "interface:<fixtures>/typescript/code/interfaces/basic_interface.ts:6:1:11:1:interface User {\n  id: number;\n  name: string;\n  email: string;\n  age?: number;\n}": {
-      "kind": "interface",
-      "symbol_id": "interface:<fixtures>/typescript/code/interfaces/basic_interface.ts:6:1:11:1:interface User {\n  id: number;\n  name: string;\n  email: string;\n  age?: number;\n}",
-      "name": "interface User {\n  id: number;\n  name: string;\n  email: string;\n  age?: number;\n}",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
-        "start_line": 6,
-        "start_column": 1,
-        "end_line": 11,
-        "end_column": 1
-      },
-      "defining_scope_id": "module:<fixtures>/typescript/code/interfaces/basic_interface.ts:1:1:41:0",
-      "is_exported": false,
-      "extends": [],
-      "methods": [],
-      "properties": []
-    },
     "interface:<fixtures>/typescript/code/interfaces/basic_interface.ts:6:11:6:14:User": {
       "kind": "interface",
       "symbol_id": "interface:<fixtures>/typescript/code/interfaces/basic_interface.ts:6:11:6:14:User",
@@ -318,23 +301,6 @@
         }
       ]
     },
-    "interface:<fixtures>/typescript/code/interfaces/basic_interface.ts:13:1:18:1:interface Product {\n  readonly id: string;\n  name: string;\n  price: number;\n  in_stock: boolean;\n}": {
-      "kind": "interface",
-      "symbol_id": "interface:<fixtures>/typescript/code/interfaces/basic_interface.ts:13:1:18:1:interface Product {\n  readonly id: string;\n  name: string;\n  price: number;\n  in_stock: boolean;\n}",
-      "name": "interface Product {\n  readonly id: string;\n  name: string;\n  price: number;\n  in_stock: boolean;\n}",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
-        "start_line": 13,
-        "start_column": 1,
-        "end_line": 18,
-        "end_column": 1
-      },
-      "defining_scope_id": "module:<fixtures>/typescript/code/interfaces/basic_interface.ts:1:1:41:0",
-      "is_exported": false,
-      "extends": [],
-      "methods": [],
-      "properties": []
-    },
     "interface:<fixtures>/typescript/code/interfaces/basic_interface.ts:13:11:13:17:Product": {
       "kind": "interface",
       "symbol_id": "interface:<fixtures>/typescript/code/interfaces/basic_interface.ts:13:11:13:17:Product",
@@ -415,23 +381,6 @@
           "decorators": []
         }
       ]
-    },
-    "interface:<fixtures>/typescript/code/interfaces/basic_interface.ts:20:1:25:1:interface Repository<T> {\n  find_by_id(id: string): T | null;\n  find_all(): T[];\n  save(item: T): void;\n  delete(id: string): boolean;\n}": {
-      "kind": "interface",
-      "symbol_id": "interface:<fixtures>/typescript/code/interfaces/basic_interface.ts:20:1:25:1:interface Repository<T> {\n  find_by_id(id: string): T | null;\n  find_all(): T[];\n  save(item: T): void;\n  delete(id: string): boolean;\n}",
-      "name": "interface Repository<T> {\n  find_by_id(id: string): T | null;\n  find_all(): T[];\n  save(item: T): void;\n  delete(id: string): boolean;\n}",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
-        "start_line": 20,
-        "start_column": 1,
-        "end_line": 25,
-        "end_column": 1
-      },
-      "defining_scope_id": "module:<fixtures>/typescript/code/interfaces/basic_interface.ts:1:1:41:0",
-      "is_exported": false,
-      "extends": [],
-      "methods": [],
-      "properties": []
     },
     "interface:<fixtures>/typescript/code/interfaces/basic_interface.ts:20:11:20:20:Repository": {
       "kind": "interface",
@@ -564,23 +513,6 @@
           ]
         }
       ],
-      "properties": []
-    },
-    "interface:<fixtures>/typescript/code/interfaces/basic_interface.ts:28:1:33:1:interface Calculator {\n  add(a: number, b: number): number;\n  subtract(a: number, b: number): number;\n  multiply(a: number, b: number): number;\n  divide(a: number, b: number): number;\n}": {
-      "kind": "interface",
-      "symbol_id": "interface:<fixtures>/typescript/code/interfaces/basic_interface.ts:28:1:33:1:interface Calculator {\n  add(a: number, b: number): number;\n  subtract(a: number, b: number): number;\n  multiply(a: number, b: number): number;\n  divide(a: number, b: number): number;\n}",
-      "name": "interface Calculator {\n  add(a: number, b: number): number;\n  subtract(a: number, b: number): number;\n  multiply(a: number, b: number): number;\n  divide(a: number, b: number): number;\n}",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
-        "start_line": 28,
-        "start_column": 1,
-        "end_line": 33,
-        "end_column": 1
-      },
-      "defining_scope_id": "module:<fixtures>/typescript/code/interfaces/basic_interface.ts:1:1:41:0",
-      "is_exported": false,
-      "extends": [],
-      "methods": [],
       "properties": []
     },
     "interface:<fixtures>/typescript/code/interfaces/basic_interface.ts:28:11:28:20:Calculator": {
@@ -790,23 +722,6 @@
           ]
         }
       ],
-      "properties": []
-    },
-    "interface:<fixtures>/typescript/code/interfaces/basic_interface.ts:36:1:38:1:interface Dictionary {\n  [key: string]: string;\n}": {
-      "kind": "interface",
-      "symbol_id": "interface:<fixtures>/typescript/code/interfaces/basic_interface.ts:36:1:38:1:interface Dictionary {\n  [key: string]: string;\n}",
-      "name": "interface Dictionary {\n  [key: string]: string;\n}",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
-        "start_line": 36,
-        "start_column": 1,
-        "end_line": 38,
-        "end_column": 1
-      },
-      "defining_scope_id": "module:<fixtures>/typescript/code/interfaces/basic_interface.ts:1:1:41:0",
-      "is_exported": false,
-      "extends": [],
-      "methods": [],
       "properties": []
     },
     "interface:<fixtures>/typescript/code/interfaces/basic_interface.ts:36:11:36:20:Dictionary": {

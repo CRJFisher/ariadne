@@ -33,7 +33,8 @@
         "end_column": 45
       },
       "defining_scope_id": "module:<fixtures>/javascript/code/modules/main_commonjs.js:1:1:26:0",
-      "is_exported": false
+      "is_exported": false,
+      "docstring": "// CommonJS require"
     },
     "variable:<fixtures>/javascript/code/modules/main_commonjs.js:10:7:10:14:greeting": {
       "kind": "constant",
@@ -49,6 +50,7 @@
       "defining_scope_id": "module:<fixtures>/javascript/code/modules/main_commonjs.js:1:1:26:0",
       "is_exported": true,
       "initial_value": "helper()",
+      "docstring": "// Cross-module function calls",
       "initialized_from_call": "helper"
     },
     "variable:<fixtures>/javascript/code/modules/main_commonjs.js:11:7:11:15:processed": {
@@ -80,7 +82,8 @@
       },
       "defining_scope_id": "module:<fixtures>/javascript/code/modules/main_commonjs.js:1:1:26:0",
       "is_exported": false,
-      "initial_value": "[\n  { name: \"item1\", price: 10 },\n  { name: \"item2\", price: 20 }\n]"
+      "initial_value": "[\n  { name: \"item1\", price: 10 },\n  { name: \"item2\", price: 20 }\n]",
+      "docstring": "// Using imported function with data"
     },
     "variable:<fixtures>/javascript/code/modules/main_commonjs.js:18:7:18:11:total": {
       "kind": "constant",
@@ -117,7 +120,8 @@
       },
       "defining_scope_id": "module:<fixtures>/javascript/code/modules/main_commonjs.js:1:1:26:0",
       "import_path": "./utils_commonjs",
-      "import_kind": "named"
+      "import_kind": "named",
+      "is_commonjs_require": true
     },
     "variable:<fixtures>/javascript/code/modules/main_commonjs.js:7:17:7:27:processData": {
       "kind": "import",
@@ -132,7 +136,8 @@
       },
       "defining_scope_id": "module:<fixtures>/javascript/code/modules/main_commonjs.js:1:1:26:0",
       "import_path": "./utils_commonjs",
-      "import_kind": "named"
+      "import_kind": "named",
+      "is_commonjs_require": true
     },
     "variable:<fixtures>/javascript/code/modules/main_commonjs.js:7:30:7:43:calculateTotal": {
       "kind": "import",
@@ -147,7 +152,8 @@
       },
       "defining_scope_id": "module:<fixtures>/javascript/code/modules/main_commonjs.js:1:1:26:0",
       "import_path": "./utils_commonjs",
-      "import_kind": "named"
+      "import_kind": "named",
+      "is_commonjs_require": true
     }
   },
   "references": [
@@ -549,69 +555,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "exports",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/main_commonjs.js",
-        "start_line": 21,
-        "start_column": 1,
-        "end_line": 21,
-        "end_column": 14
-      },
-      "scope_id": "module:<fixtures>/javascript/code/modules/main_commonjs.js:1:1:26:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/modules/main_commonjs.js",
-        "start_line": 21,
-        "start_column": 1,
-        "end_line": 21,
-        "end_column": 6
-      },
-      "property_chain": [
-        "module",
-        "exports"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "module",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/main_commonjs.js",
-        "start_line": 21,
-        "start_column": 1,
-        "end_line": 21,
-        "end_column": 6
-      },
-      "scope_id": "module:<fixtures>/javascript/code/modules/main_commonjs.js:1:1:26:0",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "exports",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/main_commonjs.js",
-        "start_line": 21,
-        "start_column": 1,
-        "end_line": 21,
-        "end_column": 14
-      },
-      "scope_id": "module:<fixtures>/javascript/code/modules/main_commonjs.js:1:1:26:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/modules/main_commonjs.js",
-        "start_line": 21,
-        "start_column": 1,
-        "end_line": 21,
-        "end_column": 6
-      },
-      "property_chain": [
-        "module",
-        "exports"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "module",
       "location": {
@@ -644,31 +587,6 @@
       }
     },
     {
-      "kind": "property_access",
-      "name": "exports",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/main_commonjs.js",
-        "start_line": 21,
-        "start_column": 1,
-        "end_line": 21,
-        "end_column": 14
-      },
-      "scope_id": "module:<fixtures>/javascript/code/modules/main_commonjs.js:1:1:26:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/modules/main_commonjs.js",
-        "start_line": 21,
-        "start_column": 1,
-        "end_line": 21,
-        "end_column": 6
-      },
-      "property_chain": [
-        "module",
-        "exports"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "module",
       "location": {
@@ -690,19 +608,6 @@
         "start_column": 1,
         "end_line": 21,
         "end_column": 6
-      },
-      "scope_id": "module:<fixtures>/javascript/code/modules/main_commonjs.js:1:1:26:0",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "exports",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/main_commonjs.js",
-        "start_line": 21,
-        "start_column": 8,
-        "end_line": 21,
-        "end_column": 14
       },
       "scope_id": "module:<fixtures>/javascript/code/modules/main_commonjs.js:1:1:26:0",
       "access_type": "read"
@@ -742,6 +647,45 @@
         "start_column": 18,
         "end_line": 25,
         "end_column": 1
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_commonjs.js:1:1:26:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "greeting",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_commonjs.js",
+        "start_line": 22,
+        "start_column": 3,
+        "end_line": 22,
+        "end_column": 10
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_commonjs.js:1:1:26:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "processed",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_commonjs.js",
+        "start_line": 23,
+        "start_column": 3,
+        "end_line": 23,
+        "end_column": 11
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_commonjs.js:1:1:26:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "total",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_commonjs.js",
+        "start_line": 24,
+        "start_column": 3,
+        "end_line": 24,
+        "end_column": 7
       },
       "scope_id": "module:<fixtures>/javascript/code/modules/main_commonjs.js:1:1:26:0",
       "access_type": "read"

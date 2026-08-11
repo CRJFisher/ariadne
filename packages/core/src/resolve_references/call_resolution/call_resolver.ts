@@ -35,6 +35,7 @@ import type { FileSystemFolder } from "../file_folders";
 import type { CallResolutionResult } from "../resolution_state";
 import type { ResolutionRegistry } from "../resolution_registry";
 import { detect_indirect_reachability } from "../indirect_reachability";
+import { resolve_callable_values } from "./callable_value";
 import { resolve_method_call } from "./method_call";
 import { create_method_call_reference } from "../../index_single_file/references/factories";
 import { resolve_constructor_call, include_constructors_for_class_symbols } from "./constructor";
@@ -139,6 +140,14 @@ export function resolve_calls_for_files(
     context.definitions,
     (scope_id, name) => context.resolutions.resolve(scope_id as ScopeId, name)
   );
+  for (const [symbol_id, entry] of resolve_callable_values(
+    file_references,
+    context
+  )) {
+    if (!indirect_reachability.has(symbol_id)) {
+      indirect_reachability.set(symbol_id, entry);
+    }
+  }
 
   return {
     resolved_calls_by_file,
@@ -266,6 +275,10 @@ function resolve_calls(
           continue;
         }
 
+        // A callable value never becomes a CallReference — it resolves to an
+        // indirect-reachability entry in resolve_callable_values, keeping
+        // build_call_reference exhaustive over call kinds only.
+        case "callable_value":
         case "variable_reference":
         case "type_reference":
         case "assignment":

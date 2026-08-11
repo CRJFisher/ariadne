@@ -17,22 +17,27 @@ import type {
 } from "@ariadnejs/types";
 
 /**
- * Record a member in a name→symbol member map, giving a getter precedence over a
- * same-named setter. A `get value()` and `set value()` are distinct definitions
- * sharing one name; a bare read (`obj.value`) resolves through this map to invoke
- * the getter, so the getter must win the slot regardless of declaration order. A
- * setter therefore never shadows an existing member. `accessor_kind` is JS/TS-only,
- * so other languages keep plain last-write-wins semantics.
+ * Record a member in a name→symbol member map, giving a getter precedence over
+ * the other accessors for its name. A getter, setter and deleter (JS/TS
+ * `get value()`/`set value()`, Python `@property`/`@value.setter`/
+ * `@value.deleter`) are distinct definitions sharing one name; a bare read
+ * (`obj.value`) resolves through this map to invoke the getter, so the getter
+ * must win the slot regardless of declaration order. A non-getter accessor
+ * therefore never shadows an existing member.
  */
 export function set_member_symbol(
   members: Map<SymbolName, SymbolId>,
   member: {
     readonly name: SymbolName;
     readonly symbol_id: SymbolId;
-    readonly accessor_kind?: "getter" | "setter";
+    readonly accessor_kind?: "getter" | "setter" | "deleter";
   }
 ): void {
-  if (member.accessor_kind === "setter" && members.has(member.name)) return;
+  // A read of the name reaches the getter, so no other accessor for that name
+  // may take the slot once something holds it.
+  const is_non_getter_accessor =
+    member.accessor_kind !== undefined && member.accessor_kind !== "getter";
+  if (is_non_getter_accessor && members.has(member.name)) return;
   members.set(member.name, member.symbol_id);
 }
 

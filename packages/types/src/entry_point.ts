@@ -49,11 +49,11 @@ export interface DefinitionFeatures {
    */
   definition_is_object_literal_method: boolean;
   /**
-   * `"getter"` / `"setter"` when the definition carries the `get` / `set`
-   * keyword (class accessor). `null` otherwise.
-   * @language javascript,typescript
+   * The accessor role the definition plays for its name — from the `get` /
+   * `set` keyword in JS/TS, from the decorator in Python. `null` for an
+   * ordinary method.
    */
-  accessor_kind: "getter" | "setter" | null;
+  accessor_kind: "getter" | "setter" | "deleter" | null;
 }
 
 /**

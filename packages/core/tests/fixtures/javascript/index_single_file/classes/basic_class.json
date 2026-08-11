@@ -1,10 +1,10 @@
 {
   "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
   "language": "javascript",
-  "root_scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:55:0",
+  "root_scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:67:0",
   "scopes": {
-    "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:55:0": {
-      "id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:55:0",
+    "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:67:0": {
+      "id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:67:0",
       "parent_id": null,
       "name": null,
       "type": "module",
@@ -12,18 +12,19 @@
         "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
         "start_line": 1,
         "start_column": 1,
-        "end_line": 55,
+        "end_line": 67,
         "end_column": 0
       },
       "child_ids": [
         "class:<fixtures>/javascript/code/classes/basic_class.js:6:12:32:1",
         "class:<fixtures>/javascript/code/classes/basic_class.js:34:14:42:1",
-        "class:<fixtures>/javascript/code/classes/basic_class.js:44:26:52:1"
+        "class:<fixtures>/javascript/code/classes/basic_class.js:44:26:56:1",
+        "function:<fixtures>/javascript/code/classes/basic_class.js:59:14:64:1"
       ]
     },
     "class:<fixtures>/javascript/code/classes/basic_class.js:6:12:32:1": {
       "id": "class:<fixtures>/javascript/code/classes/basic_class.js:6:12:32:1",
-      "parent_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:55:0",
+      "parent_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:67:0",
       "name": "User",
       "type": "class",
       "location": {
@@ -34,32 +35,16 @@
         "end_column": 1
       },
       "child_ids": [
-        "method:<fixtures>/javascript/code/classes/basic_class.js:7:14:11:3",
+        "constructor:<fixtures>/javascript/code/classes/basic_class.js:7:14:11:3",
         "method:<fixtures>/javascript/code/classes/basic_class.js:13:8:15:3",
         "method:<fixtures>/javascript/code/classes/basic_class.js:17:10:23:3",
         "method:<fixtures>/javascript/code/classes/basic_class.js:25:11:27:3",
         "method:<fixtures>/javascript/code/classes/basic_class.js:29:13:31:3"
       ]
     },
-    "method:<fixtures>/javascript/code/classes/basic_class.js:7:14:11:3": {
-      "id": "method:<fixtures>/javascript/code/classes/basic_class.js:7:14:11:3",
-      "parent_id": "class:<fixtures>/javascript/code/classes/basic_class.js:6:12:32:1",
-      "name": "constructor",
-      "type": "method",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
-        "start_line": 7,
-        "start_column": 14,
-        "end_line": 11,
-        "end_column": 3
-      },
-      "child_ids": [
-        "constructor:<fixtures>/javascript/code/classes/basic_class.js:7:14:11:3"
-      ]
-    },
     "constructor:<fixtures>/javascript/code/classes/basic_class.js:7:14:11:3": {
       "id": "constructor:<fixtures>/javascript/code/classes/basic_class.js:7:14:11:3",
-      "parent_id": "method:<fixtures>/javascript/code/classes/basic_class.js:7:14:11:3",
+      "parent_id": "class:<fixtures>/javascript/code/classes/basic_class.js:6:12:32:1",
       "name": "constructor",
       "type": "constructor",
       "location": {
@@ -129,7 +114,7 @@
     },
     "class:<fixtures>/javascript/code/classes/basic_class.js:34:14:42:1": {
       "id": "class:<fixtures>/javascript/code/classes/basic_class.js:34:14:42:1",
-      "parent_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:55:0",
+      "parent_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:67:0",
       "name": "Animal",
       "type": "class",
       "location": {
@@ -140,29 +125,13 @@
         "end_column": 1
       },
       "child_ids": [
-        "method:<fixtures>/javascript/code/classes/basic_class.js:35:14:37:3",
+        "constructor:<fixtures>/javascript/code/classes/basic_class.js:35:14:37:3",
         "method:<fixtures>/javascript/code/classes/basic_class.js:39:8:41:3"
-      ]
-    },
-    "method:<fixtures>/javascript/code/classes/basic_class.js:35:14:37:3": {
-      "id": "method:<fixtures>/javascript/code/classes/basic_class.js:35:14:37:3",
-      "parent_id": "class:<fixtures>/javascript/code/classes/basic_class.js:34:14:42:1",
-      "name": "constructor",
-      "type": "method",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
-        "start_line": 35,
-        "start_column": 14,
-        "end_line": 37,
-        "end_column": 3
-      },
-      "child_ids": [
-        "constructor:<fixtures>/javascript/code/classes/basic_class.js:35:14:37:3"
       ]
     },
     "constructor:<fixtures>/javascript/code/classes/basic_class.js:35:14:37:3": {
       "id": "constructor:<fixtures>/javascript/code/classes/basic_class.js:35:14:37:3",
-      "parent_id": "method:<fixtures>/javascript/code/classes/basic_class.js:35:14:37:3",
+      "parent_id": "class:<fixtures>/javascript/code/classes/basic_class.js:34:14:42:1",
       "name": "constructor",
       "type": "constructor",
       "location": {
@@ -188,32 +157,33 @@
       },
       "child_ids": []
     },
-    "class:<fixtures>/javascript/code/classes/basic_class.js:44:26:52:1": {
-      "id": "class:<fixtures>/javascript/code/classes/basic_class.js:44:26:52:1",
-      "parent_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:55:0",
+    "class:<fixtures>/javascript/code/classes/basic_class.js:44:26:56:1": {
+      "id": "class:<fixtures>/javascript/code/classes/basic_class.js:44:26:56:1",
+      "parent_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:67:0",
       "name": "Dog",
       "type": "class",
       "location": {
         "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
         "start_line": 44,
         "start_column": 26,
-        "end_line": 52,
+        "end_line": 56,
         "end_column": 1
       },
       "child_ids": [
-        "method:<fixtures>/javascript/code/classes/basic_class.js:45:8:47:3",
-        "method:<fixtures>/javascript/code/classes/basic_class.js:49:8:51:3"
+        "method:<fixtures>/javascript/code/classes/basic_class.js:45:20:47:3",
+        "method:<fixtures>/javascript/code/classes/basic_class.js:49:8:51:3",
+        "method:<fixtures>/javascript/code/classes/basic_class.js:53:8:55:3"
       ]
     },
-    "method:<fixtures>/javascript/code/classes/basic_class.js:45:8:47:3": {
-      "id": "method:<fixtures>/javascript/code/classes/basic_class.js:45:8:47:3",
-      "parent_id": "class:<fixtures>/javascript/code/classes/basic_class.js:44:26:52:1",
-      "name": "speak",
+    "method:<fixtures>/javascript/code/classes/basic_class.js:45:20:47:3": {
+      "id": "method:<fixtures>/javascript/code/classes/basic_class.js:45:20:47:3",
+      "parent_id": "class:<fixtures>/javascript/code/classes/basic_class.js:44:26:56:1",
+      "name": "getSpecies",
       "type": "method",
       "location": {
         "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
         "start_line": 45,
-        "start_column": 8,
+        "start_column": 20,
         "end_line": 47,
         "end_column": 3
       },
@@ -221,8 +191,8 @@
     },
     "method:<fixtures>/javascript/code/classes/basic_class.js:49:8:51:3": {
       "id": "method:<fixtures>/javascript/code/classes/basic_class.js:49:8:51:3",
-      "parent_id": "class:<fixtures>/javascript/code/classes/basic_class.js:44:26:52:1",
-      "name": "fetch",
+      "parent_id": "class:<fixtures>/javascript/code/classes/basic_class.js:44:26:56:1",
+      "name": "speak",
       "type": "method",
       "location": {
         "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
@@ -232,9 +202,58 @@
         "end_column": 3
       },
       "child_ids": []
+    },
+    "method:<fixtures>/javascript/code/classes/basic_class.js:53:8:55:3": {
+      "id": "method:<fixtures>/javascript/code/classes/basic_class.js:53:8:55:3",
+      "parent_id": "class:<fixtures>/javascript/code/classes/basic_class.js:44:26:56:1",
+      "name": "fetch",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 53,
+        "start_column": 8,
+        "end_line": 55,
+        "end_column": 3
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/javascript/code/classes/basic_class.js:59:14:64:1": {
+      "id": "function:<fixtures>/javascript/code/classes/basic_class.js:59:14:64:1",
+      "parent_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:67:0",
+      "name": "main",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 59,
+        "start_column": 14,
+        "end_line": 64,
+        "end_column": 1
+      },
+      "child_ids": []
     }
   },
-  "functions": {},
+  "functions": {
+    "function:<fixtures>/javascript/code/classes/basic_class.js:59:10:59:13:main": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/javascript/code/classes/basic_class.js:59:10:59:13:main",
+      "name": "main",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 59,
+        "start_column": 10,
+        "end_line": 59,
+        "end_column": 13
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:67:0",
+      "is_exported": true,
+      "export": {},
+      "docstring": "// Example usage demonstrating constructor calls, method calls, and static methods",
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:<fixtures>/javascript/code/classes/basic_class.js:59:14:64:1"
+    }
+  },
   "classes": {
     "class:<fixtures>/javascript/code/classes/basic_class.js:6:7:6:10:User": {
       "kind": "class",
@@ -247,10 +266,13 @@
         "end_line": 6,
         "end_column": 10
       },
-      "defining_scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:55:0",
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:67:0",
       "extends": [],
       "is_exported": true,
       "export": {},
+      "docstring": [
+        "/**\n * ES6 class definitions\n * Tests: class declarations, constructors, methods\n */"
+      ],
       "methods": [
         {
           "kind": "method",
@@ -355,7 +377,7 @@
               }
             }
           ],
-          "body_scope_id": "method:<fixtures>/javascript/code/classes/basic_class.js:7:14:11:3"
+          "body_scope_id": "constructor:<fixtures>/javascript/code/classes/basic_class.js:7:14:11:3"
         }
       ],
       "decorators": []
@@ -371,7 +393,7 @@
         "end_line": 34,
         "end_column": 12
       },
-      "defining_scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:55:0",
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:67:0",
       "extends": [],
       "is_exported": true,
       "export": {},
@@ -421,7 +443,7 @@
               }
             }
           ],
-          "body_scope_id": "method:<fixtures>/javascript/code/classes/basic_class.js:35:14:37:3"
+          "body_scope_id": "constructor:<fixtures>/javascript/code/classes/basic_class.js:35:14:37:3"
         }
       ],
       "decorators": []
@@ -437,31 +459,33 @@
         "end_line": 44,
         "end_column": 9
       },
-      "defining_scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:55:0",
-      "extends": [],
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:67:0",
+      "extends": [
+        "Animal"
+      ],
       "is_exported": true,
       "export": {},
       "methods": [
         {
           "kind": "method",
-          "defining_scope_id": "class:<fixtures>/javascript/code/classes/basic_class.js:44:26:52:1",
-          "symbol_id": "method:<fixtures>/javascript/code/classes/basic_class.js:45:3:45:7:speak",
-          "name": "speak",
+          "defining_scope_id": "class:<fixtures>/javascript/code/classes/basic_class.js:44:26:56:1",
+          "symbol_id": "method:<fixtures>/javascript/code/classes/basic_class.js:45:10:45:19:getSpecies",
+          "name": "getSpecies",
           "location": {
             "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
             "start_line": 45,
-            "start_column": 3,
+            "start_column": 10,
             "end_line": 45,
-            "end_column": 7
+            "end_column": 19
           },
           "parameters": [],
-          "body_scope_id": "method:<fixtures>/javascript/code/classes/basic_class.js:45:8:47:3"
+          "body_scope_id": "method:<fixtures>/javascript/code/classes/basic_class.js:45:20:47:3"
         },
         {
           "kind": "method",
-          "defining_scope_id": "class:<fixtures>/javascript/code/classes/basic_class.js:44:26:52:1",
-          "symbol_id": "method:<fixtures>/javascript/code/classes/basic_class.js:49:3:49:7:fetch",
-          "name": "fetch",
+          "defining_scope_id": "class:<fixtures>/javascript/code/classes/basic_class.js:44:26:56:1",
+          "symbol_id": "method:<fixtures>/javascript/code/classes/basic_class.js:49:3:49:7:speak",
+          "name": "speak",
           "location": {
             "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
             "start_line": 49,
@@ -469,29 +493,60 @@
             "end_line": 49,
             "end_column": 7
           },
+          "parameters": [],
+          "body_scope_id": "method:<fixtures>/javascript/code/classes/basic_class.js:49:8:51:3"
+        },
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/javascript/code/classes/basic_class.js:44:26:56:1",
+          "symbol_id": "method:<fixtures>/javascript/code/classes/basic_class.js:53:3:53:7:fetch",
+          "name": "fetch",
+          "location": {
+            "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+            "start_line": 53,
+            "start_column": 3,
+            "end_line": 53,
+            "end_column": 7
+          },
           "parameters": [
             {
               "kind": "parameter",
-              "defining_scope_id": "method:<fixtures>/javascript/code/classes/basic_class.js:49:8:51:3",
-              "symbol_id": "parameter:<fixtures>/javascript/code/classes/basic_class.js:49:9:49:12:item",
+              "defining_scope_id": "method:<fixtures>/javascript/code/classes/basic_class.js:53:8:55:3",
+              "symbol_id": "parameter:<fixtures>/javascript/code/classes/basic_class.js:53:9:53:12:item",
               "name": "item",
               "location": {
                 "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
-                "start_line": 49,
+                "start_line": 53,
                 "start_column": 9,
-                "end_line": 49,
+                "end_line": 53,
                 "end_column": 12
               }
             }
           ],
-          "body_scope_id": "method:<fixtures>/javascript/code/classes/basic_class.js:49:8:51:3"
+          "body_scope_id": "method:<fixtures>/javascript/code/classes/basic_class.js:53:8:55:3"
         }
       ],
       "properties": [],
       "decorators": []
     }
   },
-  "variables": {},
+  "variables": {
+    "variable:<fixtures>/javascript/code/classes/basic_class.js:60:9:60:13:myDog": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/javascript/code/classes/basic_class.js:60:9:60:13:myDog",
+      "name": "myDog",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 60,
+        "start_column": 9,
+        "end_line": 60,
+        "end_column": 13
+      },
+      "defining_scope_id": "function:<fixtures>/javascript/code/classes/basic_class.js:59:14:64:1",
+      "is_exported": false,
+      "initial_value": "new Dog(\"Buddy\")"
+    }
+  },
   "interfaces": {},
   "enums": {},
   "namespaces": {},
@@ -508,7 +563,7 @@
         "end_line": 6,
         "end_column": 10
       },
-      "scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:55:0",
+      "scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:67:0",
       "access_type": "read"
     },
     {
@@ -629,6 +684,31 @@
       "access_type": "read"
     },
     {
+      "kind": "property_access",
+      "name": "name",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 14,
+        "start_column": 22,
+        "end_line": 14,
+        "end_column": 30
+      },
+      "scope_id": "method:<fixtures>/javascript/code/classes/basic_class.js:13:8:15:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 14,
+        "start_column": 22,
+        "end_line": 14,
+        "end_column": 25
+      },
+      "property_chain": [
+        "this",
+        "name"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
       "kind": "variable_reference",
       "name": "this",
       "location": {
@@ -668,6 +748,31 @@
       "access_type": "read"
     },
     {
+      "kind": "property_access",
+      "name": "name",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 19,
+        "start_column": 13,
+        "end_line": 19,
+        "end_column": 21
+      },
+      "scope_id": "method:<fixtures>/javascript/code/classes/basic_class.js:17:10:23:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 19,
+        "start_column": 13,
+        "end_line": 19,
+        "end_column": 16
+      },
+      "property_chain": [
+        "this",
+        "name"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
       "kind": "variable_reference",
       "name": "this",
       "location": {
@@ -679,6 +784,54 @@
       },
       "scope_id": "method:<fixtures>/javascript/code/classes/basic_class.js:17:10:23:3",
       "access_type": "read"
+    },
+    {
+      "kind": "callable_value",
+      "name": "name",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 19,
+        "start_column": 13,
+        "end_line": 19,
+        "end_column": 21
+      },
+      "scope_id": "method:<fixtures>/javascript/code/classes/basic_class.js:17:10:23:3",
+      "property_chain": [
+        "this",
+        "name"
+      ],
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 19,
+        "start_column": 13,
+        "end_line": 19,
+        "end_column": 16
+      }
+    },
+    {
+      "kind": "property_access",
+      "name": "email",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 20,
+        "start_column": 14,
+        "end_line": 20,
+        "end_column": 23
+      },
+      "scope_id": "method:<fixtures>/javascript/code/classes/basic_class.js:17:10:23:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 20,
+        "start_column": 14,
+        "end_line": 20,
+        "end_column": 17
+      },
+      "property_chain": [
+        "this",
+        "email"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -694,6 +847,54 @@
       "access_type": "read"
     },
     {
+      "kind": "callable_value",
+      "name": "email",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 20,
+        "start_column": 14,
+        "end_line": 20,
+        "end_column": 23
+      },
+      "scope_id": "method:<fixtures>/javascript/code/classes/basic_class.js:17:10:23:3",
+      "property_chain": [
+        "this",
+        "email"
+      ],
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 20,
+        "start_column": 14,
+        "end_line": 20,
+        "end_column": 17
+      }
+    },
+    {
+      "kind": "property_access",
+      "name": "active",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 21,
+        "start_column": 15,
+        "end_line": 21,
+        "end_column": 25
+      },
+      "scope_id": "method:<fixtures>/javascript/code/classes/basic_class.js:17:10:23:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 21,
+        "start_column": 15,
+        "end_line": 21,
+        "end_column": 18
+      },
+      "property_chain": [
+        "this",
+        "active"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
       "kind": "variable_reference",
       "name": "this",
       "location": {
@@ -705,6 +906,29 @@
       },
       "scope_id": "method:<fixtures>/javascript/code/classes/basic_class.js:17:10:23:3",
       "access_type": "read"
+    },
+    {
+      "kind": "callable_value",
+      "name": "active",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 21,
+        "start_column": 15,
+        "end_line": 21,
+        "end_column": 25
+      },
+      "scope_id": "method:<fixtures>/javascript/code/classes/basic_class.js:17:10:23:3",
+      "property_chain": [
+        "this",
+        "active"
+      ],
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 21,
+        "start_column": 15,
+        "end_line": 21,
+        "end_column": 18
+      }
     },
     {
       "kind": "variable_reference",
@@ -742,7 +966,7 @@
         "end_line": 34,
         "end_column": 12
       },
-      "scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:55:0",
+      "scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:67:0",
       "access_type": "read"
     },
     {
@@ -785,18 +1009,6 @@
       "access_type": "read"
     },
     {
-      "kind": "function_call",
-      "name": "Error",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
-        "start_line": 40,
-        "start_column": 11,
-        "end_line": 40,
-        "end_column": 54
-      },
-      "scope_id": "method:<fixtures>/javascript/code/classes/basic_class.js:39:8:41:3"
-    },
-    {
       "kind": "constructor_call",
       "name": "Error",
       "location": {
@@ -831,7 +1043,7 @@
         "end_line": 44,
         "end_column": 9
       },
-      "scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:55:0",
+      "scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:67:0",
       "access_type": "read"
     },
     {
@@ -844,7 +1056,7 @@
         "end_line": 44,
         "end_column": 24
       },
-      "scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:55:0",
+      "scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:67:0",
       "access_type": "read"
     },
     {
@@ -857,7 +1069,33 @@
         "end_line": 44,
         "end_column": 24
       },
-      "scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:55:0",
+      "scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:67:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return \"Canis familiaris\";",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 46,
+        "start_column": 5,
+        "end_line": 46,
+        "end_column": 30
+      },
+      "scope_id": "method:<fixtures>/javascript/code/classes/basic_class.js:45:20:47:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "\"Canis familiaris\"",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 46,
+        "start_column": 12,
+        "end_line": 46,
+        "end_column": 29
+      },
+      "scope_id": "method:<fixtures>/javascript/code/classes/basic_class.js:45:20:47:3",
       "access_type": "read"
     },
     {
@@ -865,12 +1103,12 @@
       "name": "return \"Woof!\";",
       "location": {
         "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
-        "start_line": 46,
+        "start_line": 50,
         "start_column": 5,
-        "end_line": 46,
+        "end_line": 50,
         "end_column": 19
       },
-      "scope_id": "method:<fixtures>/javascript/code/classes/basic_class.js:45:8:47:3",
+      "scope_id": "method:<fixtures>/javascript/code/classes/basic_class.js:49:8:51:3",
       "access_type": "read"
     },
     {
@@ -878,12 +1116,12 @@
       "name": "\"Woof!\"",
       "location": {
         "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
-        "start_line": 46,
+        "start_line": 50,
         "start_column": 12,
-        "end_line": 46,
+        "end_line": 50,
         "end_column": 18
       },
-      "scope_id": "method:<fixtures>/javascript/code/classes/basic_class.js:45:8:47:3",
+      "scope_id": "method:<fixtures>/javascript/code/classes/basic_class.js:49:8:51:3",
       "access_type": "read"
     },
     {
@@ -891,12 +1129,12 @@
       "name": "item",
       "location": {
         "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
-        "start_line": 49,
+        "start_line": 53,
         "start_column": 9,
-        "end_line": 49,
+        "end_line": 53,
         "end_column": 12
       },
-      "scope_id": "method:<fixtures>/javascript/code/classes/basic_class.js:49:8:51:3",
+      "scope_id": "method:<fixtures>/javascript/code/classes/basic_class.js:53:8:55:3",
       "access_type": "read"
     },
     {
@@ -904,12 +1142,12 @@
       "name": "return `${this.name} fetched ${item}`;",
       "location": {
         "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
-        "start_line": 50,
+        "start_line": 54,
         "start_column": 5,
-        "end_line": 50,
+        "end_line": 54,
         "end_column": 42
       },
-      "scope_id": "method:<fixtures>/javascript/code/classes/basic_class.js:49:8:51:3",
+      "scope_id": "method:<fixtures>/javascript/code/classes/basic_class.js:53:8:55:3",
       "access_type": "read"
     },
     {
@@ -917,25 +1155,50 @@
       "name": "`${this.name} fetched ${item}`",
       "location": {
         "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
-        "start_line": 50,
+        "start_line": 54,
         "start_column": 12,
-        "end_line": 50,
+        "end_line": 54,
         "end_column": 41
       },
-      "scope_id": "method:<fixtures>/javascript/code/classes/basic_class.js:49:8:51:3",
+      "scope_id": "method:<fixtures>/javascript/code/classes/basic_class.js:53:8:55:3",
       "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "name",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 54,
+        "start_column": 15,
+        "end_line": 54,
+        "end_column": 23
+      },
+      "scope_id": "method:<fixtures>/javascript/code/classes/basic_class.js:53:8:55:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 54,
+        "start_column": 15,
+        "end_line": 54,
+        "end_column": 18
+      },
+      "property_chain": [
+        "this",
+        "name"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
       "name": "this",
       "location": {
         "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
-        "start_line": 50,
+        "start_line": 54,
         "start_column": 15,
-        "end_line": 50,
+        "end_line": 54,
         "end_column": 18
       },
-      "scope_id": "method:<fixtures>/javascript/code/classes/basic_class.js:49:8:51:3",
+      "scope_id": "method:<fixtures>/javascript/code/classes/basic_class.js:53:8:55:3",
       "access_type": "read"
     },
     {
@@ -943,145 +1206,437 @@
       "name": "item",
       "location": {
         "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
-        "start_line": 50,
+        "start_line": 54,
         "start_column": 36,
-        "end_line": 50,
+        "end_line": 54,
         "end_column": 39
       },
-      "scope_id": "method:<fixtures>/javascript/code/classes/basic_class.js:49:8:51:3",
+      "scope_id": "method:<fixtures>/javascript/code/classes/basic_class.js:53:8:55:3",
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "exports",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
-        "start_line": 54,
-        "start_column": 1,
-        "end_line": 54,
-        "end_column": 14
-      },
-      "scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:55:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
-        "start_line": 54,
-        "start_column": 1,
-        "end_line": 54,
-        "end_column": 6
-      },
-      "property_chain": [
-        "module",
-        "exports"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
-      "name": "module",
+      "name": "main",
       "location": {
         "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
-        "start_line": 54,
-        "start_column": 1,
-        "end_line": 54,
-        "end_column": 6
+        "start_line": 59,
+        "start_column": 10,
+        "end_line": 59,
+        "end_column": 13
       },
-      "scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:55:0",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "exports",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
-        "start_line": 54,
-        "start_column": 1,
-        "end_line": 54,
-        "end_column": 14
-      },
-      "scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:55:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
-        "start_line": 54,
-        "start_column": 1,
-        "end_line": 54,
-        "end_column": 6
-      },
-      "property_chain": [
-        "module",
-        "exports"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "module",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
-        "start_line": 54,
-        "start_column": 1,
-        "end_line": 54,
-        "end_column": 6
-      },
-      "scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:55:0",
+      "scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:67:0",
       "access_type": "read"
     },
     {
       "kind": "assignment",
-      "name": "module.exports = { User, Animal, Dog }",
+      "name": "myDog = new Dog(\"Buddy\")",
       "location": {
         "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
-        "start_line": 54,
-        "start_column": 1,
-        "end_line": 54,
-        "end_column": 38
+        "start_line": 60,
+        "start_column": 9,
+        "end_line": 60,
+        "end_column": 32
       },
-      "scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:55:0",
+      "scope_id": "function:<fixtures>/javascript/code/classes/basic_class.js:59:14:64:1",
       "target_location": {
         "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
-        "start_line": 54,
-        "start_column": 1,
-        "end_line": 54,
-        "end_column": 38
+        "start_line": 60,
+        "start_column": 9,
+        "end_line": 60,
+        "end_column": 32
       }
     },
     {
-      "kind": "property_access",
-      "name": "exports",
+      "kind": "assignment",
+      "name": "myDog",
       "location": {
         "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
-        "start_line": 54,
-        "start_column": 1,
-        "end_line": 54,
-        "end_column": 14
+        "start_line": 60,
+        "start_column": 9,
+        "end_line": 60,
+        "end_column": 13
       },
-      "scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:55:0",
+      "scope_id": "function:<fixtures>/javascript/code/classes/basic_class.js:59:14:64:1",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 60,
+        "start_column": 9,
+        "end_line": 60,
+        "end_column": 13
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "myDog",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 60,
+        "start_column": 9,
+        "end_line": 60,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/basic_class.js:59:14:64:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Dog",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 60,
+        "start_column": 17,
+        "end_line": 60,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/basic_class.js:59:14:64:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "constructor_call",
+      "name": "Dog",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 60,
+        "start_column": 21,
+        "end_line": 60,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/basic_class.js:59:14:64:1",
+      "construct_target": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 60,
+        "start_column": 9,
+        "end_line": 60,
+        "end_column": 13
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Dog",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 60,
+        "start_column": 21,
+        "end_line": 60,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/basic_class.js:59:14:64:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "speak",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 61,
+        "start_column": 3,
+        "end_line": 61,
+        "end_column": 15
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/basic_class.js:59:14:64:1",
       "receiver_location": {
         "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
-        "start_line": 54,
-        "start_column": 1,
-        "end_line": 54,
-        "end_column": 6
+        "start_line": 61,
+        "start_column": 3,
+        "end_line": 61,
+        "end_column": 7
       },
       "property_chain": [
-        "module",
-        "exports"
+        "myDog",
+        "speak"
       ],
-      "access_type": "property",
-      "is_optional_chain": false
+      "is_optional_chain": false,
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
-      "name": "module",
+      "name": "myDog",
       "location": {
         "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
-        "start_line": 54,
-        "start_column": 1,
-        "end_line": 54,
-        "end_column": 6
+        "start_line": 61,
+        "start_column": 3,
+        "end_line": 61,
+        "end_column": 7
       },
-      "scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:55:0",
+      "scope_id": "function:<fixtures>/javascript/code/classes/basic_class.js:59:14:64:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "myDog",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 61,
+        "start_column": 3,
+        "end_line": 61,
+        "end_column": 7
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/basic_class.js:59:14:64:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "myDog",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 61,
+        "start_column": 3,
+        "end_line": 61,
+        "end_column": 7
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/basic_class.js:59:14:64:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "speak",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 61,
+        "start_column": 9,
+        "end_line": 61,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/basic_class.js:59:14:64:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "getSpecies",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 62,
+        "start_column": 3,
+        "end_line": 62,
+        "end_column": 18
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/basic_class.js:59:14:64:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 62,
+        "start_column": 3,
+        "end_line": 62,
+        "end_column": 5
+      },
+      "property_chain": [
+        "Dog",
+        "getSpecies"
+      ],
+      "is_optional_chain": false,
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Dog",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 62,
+        "start_column": 3,
+        "end_line": 62,
+        "end_column": 5
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/basic_class.js:59:14:64:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Dog",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 62,
+        "start_column": 3,
+        "end_line": 62,
+        "end_column": 5
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/basic_class.js:59:14:64:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Dog",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 62,
+        "start_column": 3,
+        "end_line": 62,
+        "end_column": 5
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/basic_class.js:59:14:64:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "getSpecies",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 62,
+        "start_column": 7,
+        "end_line": 62,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/basic_class.js:59:14:64:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 63,
+        "start_column": 3,
+        "end_line": 63,
+        "end_column": 34
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/basic_class.js:59:14:64:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 63,
+        "start_column": 3,
+        "end_line": 63,
+        "end_column": 9
+      },
+      "property_chain": [
+        "console",
+        "log"
+      ],
+      "is_optional_chain": false,
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 63,
+        "start_column": 3,
+        "end_line": 63,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/basic_class.js:59:14:64:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 63,
+        "start_column": 3,
+        "end_line": 63,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/basic_class.js:59:14:64:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 63,
+        "start_column": 3,
+        "end_line": 63,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/basic_class.js:59:14:64:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 63,
+        "start_column": 11,
+        "end_line": 63,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/basic_class.js:59:14:64:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "fetch",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 63,
+        "start_column": 15,
+        "end_line": 63,
+        "end_column": 33
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/basic_class.js:59:14:64:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 63,
+        "start_column": 15,
+        "end_line": 63,
+        "end_column": 19
+      },
+      "property_chain": [
+        "myDog",
+        "fetch"
+      ],
+      "is_optional_chain": false,
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "myDog",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 63,
+        "start_column": 15,
+        "end_line": 63,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/basic_class.js:59:14:64:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "myDog",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 63,
+        "start_column": 15,
+        "end_line": 63,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/basic_class.js:59:14:64:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "myDog",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 63,
+        "start_column": 15,
+        "end_line": 63,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/basic_class.js:59:14:64:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "fetch",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 63,
+        "start_column": 21,
+        "end_line": 63,
+        "end_column": 25
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/basic_class.js:59:14:64:1",
       "access_type": "read"
     },
     {
@@ -1089,12 +1644,57 @@
       "name": "module",
       "location": {
         "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
-        "start_line": 54,
+        "start_line": 66,
         "start_column": 1,
-        "end_line": 54,
+        "end_line": 66,
         "end_column": 6
       },
-      "scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:55:0",
+      "scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:67:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "module.exports = { User, Animal, Dog, main }",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 66,
+        "start_column": 1,
+        "end_line": 66,
+        "end_column": 44
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:67:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 66,
+        "start_column": 1,
+        "end_line": 66,
+        "end_column": 44
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "module",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 66,
+        "start_column": 1,
+        "end_line": 66,
+        "end_column": 6
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:67:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "module",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 66,
+        "start_column": 1,
+        "end_line": 66,
+        "end_column": 6
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:67:0",
       "access_type": "read"
     },
     {
@@ -1102,12 +1702,12 @@
       "name": "exports",
       "location": {
         "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
-        "start_line": 54,
+        "start_line": 66,
         "start_column": 8,
-        "end_line": 54,
+        "end_line": 66,
         "end_column": 14
       },
-      "scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:55:0",
+      "scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:67:0",
       "access_type": "read"
     },
     {
@@ -1115,38 +1715,77 @@
       "name": "exports",
       "location": {
         "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
-        "start_line": 54,
+        "start_line": 66,
         "start_column": 8,
-        "end_line": 54,
+        "end_line": 66,
         "end_column": 14
       },
-      "scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:55:0",
+      "scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:67:0",
       "access_type": "read"
     },
     {
       "kind": "variable_reference",
-      "name": "exports",
+      "name": "{ User, Animal, Dog, main }",
       "location": {
         "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
-        "start_line": 54,
-        "start_column": 8,
-        "end_line": 54,
-        "end_column": 14
-      },
-      "scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:55:0",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "{ User, Animal, Dog }",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
-        "start_line": 54,
+        "start_line": 66,
         "start_column": 18,
-        "end_line": 54,
-        "end_column": 38
+        "end_line": 66,
+        "end_column": 44
       },
-      "scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:55:0",
+      "scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:67:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "User",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 66,
+        "start_column": 20,
+        "end_line": 66,
+        "end_column": 23
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:67:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Animal",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 66,
+        "start_column": 26,
+        "end_line": 66,
+        "end_column": 31
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:67:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Dog",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 66,
+        "start_column": 34,
+        "end_line": 66,
+        "end_column": 36
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:67:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "main",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/basic_class.js",
+        "start_line": 66,
+        "start_column": 39,
+        "end_line": 66,
+        "end_column": 42
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/basic_class.js:1:1:67:0",
       "access_type": "read"
     }
   ]

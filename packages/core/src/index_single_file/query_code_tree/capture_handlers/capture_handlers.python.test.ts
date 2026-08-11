@@ -133,7 +133,7 @@ describe("Python Builder Configuration", () => {
 
   describe("PYTHON_HANDLERS", () => {
     it("should export a valid handler registry with all expected keys", () => {
-      expect(Object.keys(PYTHON_HANDLERS).length).toEqual(19);
+      expect(Object.keys(PYTHON_HANDLERS).length).toEqual(15);
     });
 
     it("should contain class definition capture mappings", () => {
@@ -196,7 +196,7 @@ describe("Python Builder Configuration", () => {
     });
 
     it("should contain property definition capture mappings", () => {
-      const property_mappings = ["definition.property", "definition.field"];
+      const property_mappings = ["definition.field"];
 
       for (const mapping of property_mappings) {
         expect((mapping in PYTHON_HANDLERS)).toBe(true);
@@ -302,7 +302,7 @@ describe("Python Builder Configuration", () => {
       expect(import_def.name).toEqual("os");
     });
 
-    it("should handle properties", () => {
+    it("builds a getter method for a property-decorated def", () => {
       const code = `class MyClass:
     @property
     def my_property(self):
@@ -315,22 +315,23 @@ describe("Python Builder Configuration", () => {
 
       const ast = parser.parse(code);
       const func_def = find_node_by_type(ast.rootNode, "function_definition")!;
-      const prop_name_node = func_def.childForFieldName("name")!;
-      const prop_capture: CaptureNode = {
-        name: "definition.property",
+      const method_name_node = func_def.childForFieldName("name")!;
+      const method_capture: CaptureNode = {
+        name: "definition.method",
         category: "definition" as SemanticCategory,
-        entity: "property" as SemanticEntity,
-        node: prop_name_node as any,
-        text: prop_name_node.text as SymbolName,
-        location: node_to_location(prop_name_node, "test.py" as any),
+        entity: "method" as SemanticEntity,
+        node: method_name_node as any,
+        text: method_name_node.text as SymbolName,
+        location: node_to_location(method_name_node, "test.py" as any),
       };
-      PYTHON_HANDLERS["definition.property"]!(prop_capture, builder, context);
+      PYTHON_HANDLERS["definition.method"]!(method_capture, builder, context);
 
       const definitions = builder.build();
       const cls = definitions.classes.values().next().value!;
-      expect(cls.properties.length).toEqual(1);
-      expect(cls.properties[0]!.name).toEqual("my_property");
-      expect(cls.properties[0]!.readonly).toEqual(true);
+      expect(cls.properties.length).toEqual(0);
+      expect(
+        cls.methods.map((m) => ({ name: m.name, accessor_kind: m.accessor_kind }))
+      ).toEqual([{ name: "my_property", accessor_kind: "getter" }]);
     });
 
     it("should handle class inheritance", () => {
@@ -483,21 +484,36 @@ describe("Python Builder Configuration", () => {
     });
 
     describe("Enum handlers", () => {
-      it("should handle enum definition", () => {
+      it("builds an enum from the class capture of an Enum subclass", () => {
         const code = `class Color(Enum):
     RED = 1
     GREEN = 2`;
-        const capture = create_capture(code, "definition.enum", "identifier");
+        const capture = create_capture(code, "definition.class", "identifier");
         const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
-        PYTHON_HANDLERS["definition.enum"]!(capture, builder, context);
+        PYTHON_HANDLERS["definition.class"]!(capture, builder, context);
 
         const definitions = builder.build();
+        expect(definitions.classes.size).toEqual(0);
         expect(definitions.enums.size).toEqual(1);
         const enum_def = definitions.enums.values().next().value!;
         expect(enum_def.name).toEqual("Color");
         expect(enum_def.is_exported).toEqual(true);
+      });
+
+      it("builds exactly one definition for an Enum subclass with a mixin base", () => {
+        const code = `class Color(Enum, Mixin):
+    RED = 1`;
+        const capture = create_capture(code, "definition.class", "identifier");
+        const context = create_test_context();
+        const builder = new DefinitionBuilder(context);
+
+        PYTHON_HANDLERS["definition.class"]!(capture, builder, context);
+
+        const definitions = builder.build();
+        expect(definitions.classes.size).toEqual(0);
+        expect(definitions.enums.size).toEqual(1);
       });
 
       it("should handle enum member definition", () => {
@@ -508,8 +524,8 @@ describe("Python Builder Configuration", () => {
         const builder = new DefinitionBuilder(context);
 
         // Register enum first
-        const enum_capture = create_capture(code, "definition.enum", "identifier");
-        PYTHON_HANDLERS["definition.enum"]!(enum_capture, builder, context);
+        const enum_capture = create_capture(code, "definition.class", "identifier");
+        PYTHON_HANDLERS["definition.class"]!(enum_capture, builder, context);
 
         // Find and register a member — find "RED" identifier inside the class body
         const ast = parser.parse(code);
@@ -598,7 +614,7 @@ describe("Python Builder Configuration", () => {
         expect(cls.methods[0]!.decorators![0]!.name).toEqual("staticmethod");
       });
 
-      it("should handle decorator.property", () => {
+      it("records the property decorator on the getter method it decorates", () => {
         const code = `class MyClass:
     @property
     def value(self):
@@ -620,36 +636,35 @@ describe("Python Builder Configuration", () => {
         PYTHON_HANDLERS["definition.class"]!(class_capture, builder, context);
 
         const func_def = find_node_by_type(ast.rootNode, "function_definition")!;
-        const prop_name_node = func_def.childForFieldName("name")!;
-        const prop_capture: CaptureNode = {
-          name: "definition.property",
+        const method_name_node = func_def.childForFieldName("name")!;
+        const method_capture: CaptureNode = {
+          name: "definition.method",
           category: "definition" as SemanticCategory,
-          entity: "property" as SemanticEntity,
-          node: prop_name_node as any,
-          text: prop_name_node.text as SymbolName,
-          location: node_to_location(prop_name_node, "test.py" as any),
+          entity: "method" as SemanticEntity,
+          node: method_name_node as any,
+          text: method_name_node.text as SymbolName,
+          location: node_to_location(method_name_node, "test.py" as any),
         };
-        PYTHON_HANDLERS["definition.property"]!(prop_capture, builder, context);
+        PYTHON_HANDLERS["definition.method"]!(method_capture, builder, context);
 
         const decorator_node = find_node_by_type(ast.rootNode, "decorator")!;
         const dec_name_node = decorator_node.child(1)!;
         const dec_capture: CaptureNode = {
-          name: "decorator.property",
+          name: "decorator.method",
           category: "decorator" as SemanticCategory,
-          entity: "property" as SemanticEntity,
+          entity: "method" as SemanticEntity,
           node: dec_name_node as any,
           text: dec_name_node.text as SymbolName,
           location: node_to_location(dec_name_node, "test.py" as any),
         };
-        PYTHON_HANDLERS["decorator.property"]!(dec_capture, builder, context);
+        PYTHON_HANDLERS["decorator.method"]!(dec_capture, builder, context);
 
         const definitions = builder.build();
         const cls = definitions.classes.values().next().value!;
-        expect(cls.properties.length).toEqual(1);
-        expect(cls.properties[0]!.name).toEqual("value");
-        expect(cls.properties[0]!.readonly).toEqual(true);
-        expect(cls.properties[0]!.decorators!.length).toEqual(1);
-        expect(cls.properties[0]!.decorators![0]!.name).toEqual("property");
+        expect(cls.properties.length).toEqual(0);
+        expect(cls.methods[0]!.accessor_kind).toEqual("getter");
+        expect(cls.methods[0]!.decorators!.length).toEqual(1);
+        expect(cls.methods[0]!.decorators![0]!.name).toEqual("property");
       });
     });
 
@@ -1293,10 +1308,7 @@ describe("Python Builder Configuration", () => {
 
     describe("Protocol Support", () => {
       it("should contain protocol definition capture mappings", () => {
-        const protocol_mappings = [
-          "definition.interface",
-          "definition.property.interface",
-        ];
+        const protocol_mappings = ["definition.property.interface"];
 
         for (const mapping of protocol_mappings) {
           expect((mapping in PYTHON_HANDLERS)).toBe(true);
@@ -1321,7 +1333,7 @@ class Drawable(Protocol):
         }
 
         const capture: CaptureNode = {
-          name: "definition.interface",
+          name: "definition.class",
           category: "definition" as SemanticCategory,
           entity: "interface" as SemanticEntity,
           node: class_name as any,
@@ -1332,7 +1344,7 @@ class Drawable(Protocol):
         const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
-        PYTHON_HANDLERS["definition.interface"]!(capture, builder, context);
+        PYTHON_HANDLERS["definition.class"]!(capture, builder, context);
 
         const definitions = builder.build();
         expect(definitions.interfaces.size).toEqual(1);
@@ -1360,7 +1372,7 @@ class PublicProtocol(Protocol):
         }
 
         const capture: CaptureNode = {
-          name: "definition.interface",
+          name: "definition.class",
           category: "definition" as SemanticCategory,
           entity: "interface" as SemanticEntity,
           node: class_name as any,
@@ -1368,7 +1380,7 @@ class PublicProtocol(Protocol):
           location: node_to_location(class_name, "test.py" as any),
         };
 
-        PYTHON_HANDLERS["definition.interface"]!(
+        PYTHON_HANDLERS["definition.class"]!(
           capture,
           builder,
           context
@@ -1400,7 +1412,7 @@ class _PrivateProtocol(Protocol):
         }
 
         const capture: CaptureNode = {
-          name: "definition.interface",
+          name: "definition.class",
           category: "definition" as SemanticCategory,
           entity: "interface" as SemanticEntity,
           node: class_name as any,
@@ -1408,7 +1420,7 @@ class _PrivateProtocol(Protocol):
           location: node_to_location(class_name, "test.py" as any),
         };
 
-        PYTHON_HANDLERS["definition.interface"]!(
+        PYTHON_HANDLERS["definition.class"]!(
           capture,
           builder,
           context
@@ -1439,14 +1451,14 @@ class Drawable(Protocol):
 
         if (class_name) {
           const class_capture: CaptureNode = {
-            name: "definition.interface",
+            name: "definition.class",
             node: class_name as any,
             text: class_name.text as SymbolName,
             category: "definition" as SemanticCategory,
             entity: "interface" as SemanticEntity,
             location: node_to_location(class_name, "test.py" as any),
           };
-          PYTHON_HANDLERS["definition.interface"]!(
+          PYTHON_HANDLERS["definition.class"]!(
             class_capture,
             builder,
             context

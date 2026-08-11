@@ -1,0 +1,2406 @@
+{
+  "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+  "language": "python",
+  "root_scope_id": "module:<fixtures>/python/code/classes/decorator_shapes.py:1:1:51:0",
+  "scopes": {
+    "module:<fixtures>/python/code/classes/decorator_shapes.py:1:1:51:0": {
+      "id": "module:<fixtures>/python/code/classes/decorator_shapes.py:1:1:51:0",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 51,
+        "end_column": 0
+      },
+      "child_ids": [
+        "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24"
+      ]
+    },
+    "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24": {
+      "id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "parent_id": "module:<fixtures>/python/code/classes/decorator_shapes.py:1:1:51:0",
+      "name": null,
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 12,
+        "start_column": 23,
+        "end_line": 50,
+        "end_column": 24
+      },
+      "child_ids": [
+        "method:<fixtures>/python/code/classes/decorator_shapes.py:22:14:23:32",
+        "method:<fixtures>/python/code/classes/decorator_shapes.py:18:13:19:26",
+        "method:<fixtures>/python/code/classes/decorator_shapes.py:14:13:15:25",
+        "method:<fixtures>/python/code/classes/decorator_shapes.py:49:14:50:24",
+        "method:<fixtures>/python/code/classes/decorator_shapes.py:26:15:27:20",
+        "method:<fixtures>/python/code/classes/decorator_shapes.py:30:17:31:16",
+        "method:<fixtures>/python/code/classes/decorator_shapes.py:34:17:35:16",
+        "method:<fixtures>/python/code/classes/decorator_shapes.py:38:15:39:16",
+        "method:<fixtures>/python/code/classes/decorator_shapes.py:42:23:43:16",
+        "method:<fixtures>/python/code/classes/decorator_shapes.py:46:20:47:16"
+      ]
+    },
+    "method:<fixtures>/python/code/classes/decorator_shapes.py:22:14:23:32": {
+      "id": "method:<fixtures>/python/code/classes/decorator_shapes.py:22:14:23:32",
+      "parent_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "name": "build",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 22,
+        "start_column": 14,
+        "end_line": 23,
+        "end_column": 32
+      },
+      "child_ids": []
+    },
+    "method:<fixtures>/python/code/classes/decorator_shapes.py:18:13:19:26": {
+      "id": "method:<fixtures>/python/code/classes/decorator_shapes.py:18:13:19:26",
+      "parent_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "name": "data",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 18,
+        "start_column": 13,
+        "end_line": 19,
+        "end_column": 26
+      },
+      "child_ids": []
+    },
+    "method:<fixtures>/python/code/classes/decorator_shapes.py:14:13:15:25": {
+      "id": "method:<fixtures>/python/code/classes/decorator_shapes.py:14:13:15:25",
+      "parent_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "name": "data",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 14,
+        "start_column": 13,
+        "end_line": 15,
+        "end_column": 25
+      },
+      "child_ids": []
+    },
+    "method:<fixtures>/python/code/classes/decorator_shapes.py:49:14:50:24": {
+      "id": "method:<fixtures>/python/code/classes/decorator_shapes.py:49:14:50:24",
+      "parent_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "name": "plain",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 49,
+        "start_column": 14,
+        "end_line": 50,
+        "end_column": 24
+      },
+      "child_ids": []
+    },
+    "method:<fixtures>/python/code/classes/decorator_shapes.py:26:15:27:20": {
+      "id": "method:<fixtures>/python/code/classes/decorator_shapes.py:26:15:27:20",
+      "parent_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "name": "create",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 26,
+        "start_column": 15,
+        "end_line": 27,
+        "end_column": 20
+      },
+      "child_ids": []
+    },
+    "method:<fixtures>/python/code/classes/decorator_shapes.py:30:17:31:16": {
+      "id": "method:<fixtures>/python/code/classes/decorator_shapes.py:30:17:31:16",
+      "parent_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "name": "compiled",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 30,
+        "start_column": 17,
+        "end_line": 31,
+        "end_column": 16
+      },
+      "child_ids": []
+    },
+    "method:<fixtures>/python/code/classes/decorator_shapes.py:34:17:35:16": {
+      "id": "method:<fixtures>/python/code/classes/decorator_shapes.py:34:17:35:16",
+      "parent_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "name": "memoized",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 34,
+        "start_column": 17,
+        "end_line": 35,
+        "end_column": 16
+      },
+      "child_ids": []
+    },
+    "method:<fixtures>/python/code/classes/decorator_shapes.py:38:15:39:16": {
+      "id": "method:<fixtures>/python/code/classes/decorator_shapes.py:38:15:39:16",
+      "parent_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "name": "cached",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 38,
+        "start_column": 15,
+        "end_line": 39,
+        "end_column": 16
+      },
+      "child_ids": []
+    },
+    "method:<fixtures>/python/code/classes/decorator_shapes.py:42:23:43:16": {
+      "id": "method:<fixtures>/python/code/classes/decorator_shapes.py:42:23:43:16",
+      "parent_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "name": "cached_bounded",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 42,
+        "start_column": 23,
+        "end_line": 43,
+        "end_column": 16
+      },
+      "child_ids": []
+    },
+    "method:<fixtures>/python/code/classes/decorator_shapes.py:46:20:47:16": {
+      "id": "method:<fixtures>/python/code/classes/decorator_shapes.py:46:20:47:16",
+      "parent_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "name": "dotted_call",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 46,
+        "start_column": 20,
+        "end_line": 47,
+        "end_column": 16
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {},
+  "classes": {
+    "class:<fixtures>/python/code/classes/decorator_shapes.py:12:7:12:21:DecoratorShapes": {
+      "kind": "class",
+      "symbol_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:7:12:21:DecoratorShapes",
+      "name": "DecoratorShapes",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 12,
+        "start_column": 7,
+        "end_line": 12,
+        "end_column": 21
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/classes/decorator_shapes.py:1:1:51:0",
+      "extends": [],
+      "is_exported": true,
+      "methods": [
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+          "symbol_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:14:9:14:12:data",
+          "name": "data",
+          "location": {
+            "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+            "start_line": 14,
+            "start_column": 9,
+            "end_line": 14,
+            "end_column": 12
+          },
+          "accessor_kind": "getter",
+          "async": false,
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:14:13:15:25",
+              "symbol_id": "parameter:<fixtures>/python/code/classes/decorator_shapes.py:14:14:14:17:self",
+              "name": "self",
+              "location": {
+                "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+                "start_line": 14,
+                "start_column": 14,
+                "end_line": 14,
+                "end_column": 17
+              }
+            }
+          ],
+          "decorators": [
+            {
+              "symbol_id": "decorator:<fixtures>/python/code/classes/decorator_shapes.py:13:6:13:13:property",
+              "defining_scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+              "kind": "decorator",
+              "name": "property",
+              "location": {
+                "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+                "start_line": 13,
+                "start_column": 6,
+                "end_line": 13,
+                "end_column": 13
+              }
+            }
+          ],
+          "body_scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:14:13:15:25"
+        },
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+          "symbol_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:18:9:18:12:data",
+          "name": "data",
+          "location": {
+            "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+            "start_line": 18,
+            "start_column": 9,
+            "end_line": 18,
+            "end_column": 12
+          },
+          "accessor_kind": "setter",
+          "async": false,
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:18:13:19:26",
+              "symbol_id": "parameter:<fixtures>/python/code/classes/decorator_shapes.py:18:14:18:17:self",
+              "name": "self",
+              "location": {
+                "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+                "start_line": 18,
+                "start_column": 14,
+                "end_line": 18,
+                "end_column": 17
+              }
+            },
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:18:13:19:26",
+              "symbol_id": "parameter:<fixtures>/python/code/classes/decorator_shapes.py:18:20:18:24:value",
+              "name": "value",
+              "location": {
+                "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+                "start_line": 18,
+                "start_column": 20,
+                "end_line": 18,
+                "end_column": 24
+              }
+            }
+          ],
+          "decorators": [
+            {
+              "symbol_id": "decorator:<fixtures>/python/code/classes/decorator_shapes.py:17:6:17:16:data.setter",
+              "defining_scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+              "kind": "decorator",
+              "name": "data.setter",
+              "location": {
+                "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+                "start_line": 17,
+                "start_column": 6,
+                "end_line": 17,
+                "end_column": 16
+              }
+            }
+          ],
+          "body_scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:18:13:19:26"
+        },
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+          "symbol_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:22:9:22:13:build",
+          "name": "build",
+          "location": {
+            "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+            "start_line": 22,
+            "start_column": 9,
+            "end_line": 22,
+            "end_column": 13
+          },
+          "static": true,
+          "async": false,
+          "parameters": [],
+          "decorators": [
+            {
+              "symbol_id": "decorator:<fixtures>/python/code/classes/decorator_shapes.py:21:6:21:17:staticmethod",
+              "defining_scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+              "kind": "decorator",
+              "name": "staticmethod",
+              "location": {
+                "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+                "start_line": 21,
+                "start_column": 6,
+                "end_line": 21,
+                "end_column": 17
+              }
+            }
+          ],
+          "body_scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:22:14:23:32"
+        },
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+          "symbol_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:26:9:26:14:create",
+          "name": "create",
+          "location": {
+            "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+            "start_line": 26,
+            "start_column": 9,
+            "end_line": 26,
+            "end_column": 14
+          },
+          "static": true,
+          "async": false,
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:26:15:27:20",
+              "symbol_id": "parameter:<fixtures>/python/code/classes/decorator_shapes.py:26:16:26:18:cls",
+              "name": "cls",
+              "location": {
+                "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+                "start_line": 26,
+                "start_column": 16,
+                "end_line": 26,
+                "end_column": 18
+              }
+            }
+          ],
+          "decorators": [
+            {
+              "symbol_id": "decorator:<fixtures>/python/code/classes/decorator_shapes.py:25:6:25:16:classmethod",
+              "defining_scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+              "kind": "decorator",
+              "name": "classmethod",
+              "location": {
+                "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+                "start_line": 25,
+                "start_column": 6,
+                "end_line": 25,
+                "end_column": 16
+              }
+            }
+          ],
+          "body_scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:26:15:27:20"
+        },
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+          "symbol_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:30:9:30:16:compiled",
+          "name": "compiled",
+          "location": {
+            "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+            "start_line": 30,
+            "start_column": 9,
+            "end_line": 30,
+            "end_column": 16
+          },
+          "async": false,
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:30:17:31:16",
+              "symbol_id": "parameter:<fixtures>/python/code/classes/decorator_shapes.py:30:18:30:21:self",
+              "name": "self",
+              "location": {
+                "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+                "start_line": 30,
+                "start_column": 18,
+                "end_line": 30,
+                "end_column": 21
+              }
+            }
+          ],
+          "decorators": [
+            {
+              "symbol_id": "decorator:<fixtures>/python/code/classes/decorator_shapes.py:29:6:29:17:cython.cfunc",
+              "defining_scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+              "kind": "decorator",
+              "name": "cython.cfunc",
+              "location": {
+                "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+                "start_line": 29,
+                "start_column": 6,
+                "end_line": 29,
+                "end_column": 17
+              }
+            }
+          ],
+          "body_scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:30:17:31:16"
+        },
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+          "symbol_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:34:9:34:16:memoized",
+          "name": "memoized",
+          "location": {
+            "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+            "start_line": 34,
+            "start_column": 9,
+            "end_line": 34,
+            "end_column": 16
+          },
+          "accessor_kind": "getter",
+          "async": false,
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:34:17:35:16",
+              "symbol_id": "parameter:<fixtures>/python/code/classes/decorator_shapes.py:34:18:34:21:self",
+              "name": "self",
+              "location": {
+                "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+                "start_line": 34,
+                "start_column": 18,
+                "end_line": 34,
+                "end_column": 21
+              }
+            }
+          ],
+          "decorators": [
+            {
+              "symbol_id": "decorator:<fixtures>/python/code/classes/decorator_shapes.py:33:6:33:27:util.memoized_property",
+              "defining_scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+              "kind": "decorator",
+              "name": "util.memoized_property",
+              "location": {
+                "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+                "start_line": 33,
+                "start_column": 6,
+                "end_line": 33,
+                "end_column": 27
+              }
+            }
+          ],
+          "body_scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:34:17:35:16"
+        },
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+          "symbol_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:38:9:38:14:cached",
+          "name": "cached",
+          "location": {
+            "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+            "start_line": 38,
+            "start_column": 9,
+            "end_line": 38,
+            "end_column": 14
+          },
+          "async": false,
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:38:15:39:16",
+              "symbol_id": "parameter:<fixtures>/python/code/classes/decorator_shapes.py:38:16:38:19:self",
+              "name": "self",
+              "location": {
+                "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+                "start_line": 38,
+                "start_column": 16,
+                "end_line": 38,
+                "end_column": 19
+              }
+            }
+          ],
+          "decorators": [
+            {
+              "symbol_id": "decorator:<fixtures>/python/code/classes/decorator_shapes.py:37:6:37:24:functools.lru_cache",
+              "defining_scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+              "kind": "decorator",
+              "name": "functools.lru_cache",
+              "location": {
+                "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+                "start_line": 37,
+                "start_column": 6,
+                "end_line": 37,
+                "end_column": 24
+              }
+            }
+          ],
+          "body_scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:38:15:39:16"
+        },
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+          "symbol_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:42:9:42:22:cached_bounded",
+          "name": "cached_bounded",
+          "location": {
+            "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+            "start_line": 42,
+            "start_column": 9,
+            "end_line": 42,
+            "end_column": 22
+          },
+          "async": false,
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:42:23:43:16",
+              "symbol_id": "parameter:<fixtures>/python/code/classes/decorator_shapes.py:42:24:42:27:self",
+              "name": "self",
+              "location": {
+                "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+                "start_line": 42,
+                "start_column": 24,
+                "end_line": 42,
+                "end_column": 27
+              }
+            }
+          ],
+          "decorators": [
+            {
+              "symbol_id": "decorator:<fixtures>/python/code/classes/decorator_shapes.py:41:6:41:14:lru_cache",
+              "defining_scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+              "kind": "decorator",
+              "name": "lru_cache",
+              "location": {
+                "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+                "start_line": 41,
+                "start_column": 6,
+                "end_line": 41,
+                "end_column": 14
+              }
+            }
+          ],
+          "body_scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:42:23:43:16"
+        },
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+          "symbol_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:46:9:46:19:dotted_call",
+          "name": "dotted_call",
+          "location": {
+            "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+            "start_line": 46,
+            "start_column": 9,
+            "end_line": 46,
+            "end_column": 19
+          },
+          "async": false,
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:46:20:47:16",
+              "symbol_id": "parameter:<fixtures>/python/code/classes/decorator_shapes.py:46:21:46:24:self",
+              "name": "self",
+              "location": {
+                "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+                "start_line": 46,
+                "start_column": 21,
+                "end_line": 46,
+                "end_column": 24
+              }
+            }
+          ],
+          "decorators": [
+            {
+              "symbol_id": "decorator:<fixtures>/python/code/classes/decorator_shapes.py:45:6:45:12:mod.dec",
+              "defining_scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+              "kind": "decorator",
+              "name": "mod.dec",
+              "location": {
+                "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+                "start_line": 45,
+                "start_column": 6,
+                "end_line": 45,
+                "end_column": 12
+              }
+            }
+          ],
+          "body_scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:46:20:47:16"
+        },
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+          "symbol_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:49:9:49:13:plain",
+          "name": "plain",
+          "location": {
+            "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+            "start_line": 49,
+            "start_column": 9,
+            "end_line": 49,
+            "end_column": 13
+          },
+          "async": false,
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:49:14:50:24",
+              "symbol_id": "parameter:<fixtures>/python/code/classes/decorator_shapes.py:49:15:49:18:self",
+              "name": "self",
+              "location": {
+                "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+                "start_line": 49,
+                "start_column": 15,
+                "end_line": 49,
+                "end_column": 18
+              }
+            }
+          ],
+          "body_scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:49:14:50:24"
+        }
+      ],
+      "properties": [],
+      "decorators": []
+    }
+  },
+  "variables": {},
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {
+    "variable:<fixtures>/python/code/classes/decorator_shapes.py:4:8:4:16:functools": {
+      "kind": "import",
+      "symbol_id": "variable:<fixtures>/python/code/classes/decorator_shapes.py:4:8:4:16:functools",
+      "name": "functools",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 4,
+        "start_column": 8,
+        "end_line": 4,
+        "end_column": 16
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/classes/decorator_shapes.py:1:1:51:0",
+      "export": {
+        "is_reexport": true
+      },
+      "import_path": "functools",
+      "import_kind": "namespace"
+    },
+    "variable:<fixtures>/python/code/classes/decorator_shapes.py:5:23:5:31:lru_cache": {
+      "kind": "import",
+      "symbol_id": "variable:<fixtures>/python/code/classes/decorator_shapes.py:5:23:5:31:lru_cache",
+      "name": "lru_cache",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 5,
+        "start_column": 23,
+        "end_line": 5,
+        "end_column": 31
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/classes/decorator_shapes.py:1:1:51:0",
+      "export": {
+        "is_reexport": true
+      },
+      "import_path": "functools",
+      "import_kind": "named"
+    },
+    "variable:<fixtures>/python/code/classes/decorator_shapes.py:7:8:7:13:cython": {
+      "kind": "import",
+      "symbol_id": "variable:<fixtures>/python/code/classes/decorator_shapes.py:7:8:7:13:cython",
+      "name": "cython",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 7,
+        "start_column": 8,
+        "end_line": 7,
+        "end_column": 13
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/classes/decorator_shapes.py:1:1:51:0",
+      "export": {
+        "is_reexport": true
+      },
+      "import_path": "cython",
+      "import_kind": "namespace"
+    },
+    "variable:<fixtures>/python/code/classes/decorator_shapes.py:8:8:8:11:util": {
+      "kind": "import",
+      "symbol_id": "variable:<fixtures>/python/code/classes/decorator_shapes.py:8:8:8:11:util",
+      "name": "util",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 8,
+        "start_column": 8,
+        "end_line": 8,
+        "end_column": 11
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/classes/decorator_shapes.py:1:1:51:0",
+      "export": {
+        "is_reexport": true
+      },
+      "import_path": "util",
+      "import_kind": "namespace"
+    },
+    "variable:<fixtures>/python/code/classes/decorator_shapes.py:9:8:9:10:mod": {
+      "kind": "import",
+      "symbol_id": "variable:<fixtures>/python/code/classes/decorator_shapes.py:9:8:9:10:mod",
+      "name": "mod",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 9,
+        "start_column": 8,
+        "end_line": 9,
+        "end_column": 10
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/classes/decorator_shapes.py:1:1:51:0",
+      "export": {
+        "is_reexport": true
+      },
+      "import_path": "mod",
+      "import_kind": "namespace"
+    }
+  },
+  "references": [
+    {
+      "kind": "variable_reference",
+      "name": "functools",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 4,
+        "start_column": 8,
+        "end_line": 4,
+        "end_column": 16
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/decorator_shapes.py:1:1:51:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "functools",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 5,
+        "start_column": 6,
+        "end_line": 5,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/decorator_shapes.py:1:1:51:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "lru_cache",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 5,
+        "start_column": 23,
+        "end_line": 5,
+        "end_column": 31
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/decorator_shapes.py:1:1:51:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "cython",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 7,
+        "start_column": 8,
+        "end_line": 7,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/decorator_shapes.py:1:1:51:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "util",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 8,
+        "start_column": 8,
+        "end_line": 8,
+        "end_column": 11
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/decorator_shapes.py:1:1:51:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "mod",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 9,
+        "start_column": 8,
+        "end_line": 9,
+        "end_column": 10
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/decorator_shapes.py:1:1:51:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "DecoratorShapes",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 12,
+        "start_column": 7,
+        "end_line": 12,
+        "end_column": 21
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/decorator_shapes.py:1:1:51:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "property",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 13,
+        "start_column": 6,
+        "end_line": 13,
+        "end_column": 13
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "property",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 13,
+        "start_column": 6,
+        "end_line": 13,
+        "end_column": 13
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "data",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 14,
+        "start_column": 9,
+        "end_line": 14,
+        "end_column": 12
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 14,
+        "start_column": 14,
+        "end_line": 14,
+        "end_column": 17
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:14:13:15:25",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 14,
+        "start_column": 14,
+        "end_line": 14,
+        "end_column": 17
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:14:13:15:25",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return self._data",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 15,
+        "start_column": 9,
+        "end_line": 15,
+        "end_column": 25
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:14:13:15:25",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "_data",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 15,
+        "start_column": 16,
+        "end_line": 15,
+        "end_column": 25
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:14:13:15:25",
+      "receiver_location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 15,
+        "start_column": 16,
+        "end_line": 15,
+        "end_column": 19
+      },
+      "property_chain": [
+        "self",
+        "_data"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 15,
+        "start_column": 16,
+        "end_line": 15,
+        "end_column": 19
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:14:13:15:25",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self._data",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 15,
+        "start_column": 16,
+        "end_line": 15,
+        "end_column": 25
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:14:13:15:25",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 15,
+        "start_column": 16,
+        "end_line": 15,
+        "end_column": 19
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:14:13:15:25",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 15,
+        "start_column": 16,
+        "end_line": 15,
+        "end_column": 19
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:14:13:15:25",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "_data",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 15,
+        "start_column": 21,
+        "end_line": 15,
+        "end_column": 25
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:14:13:15:25",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "_data",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 15,
+        "start_column": 21,
+        "end_line": 15,
+        "end_column": 25
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:14:13:15:25",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "setter",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 17,
+        "start_column": 6,
+        "end_line": 17,
+        "end_column": 16
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "receiver_location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 17,
+        "start_column": 6,
+        "end_line": 17,
+        "end_column": 9
+      },
+      "property_chain": [
+        "data",
+        "setter"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "data",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 17,
+        "start_column": 6,
+        "end_line": 17,
+        "end_column": 9
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "data",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 17,
+        "start_column": 6,
+        "end_line": 17,
+        "end_column": 9
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "setter",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 17,
+        "start_column": 11,
+        "end_line": 17,
+        "end_column": 16
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "setter",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 17,
+        "start_column": 11,
+        "end_line": 17,
+        "end_column": 16
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "data",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 18,
+        "start_column": 9,
+        "end_line": 18,
+        "end_column": 12
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 18,
+        "start_column": 14,
+        "end_line": 18,
+        "end_column": 17
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:18:13:19:26",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 18,
+        "start_column": 14,
+        "end_line": 18,
+        "end_column": 17
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:18:13:19:26",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "value",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 18,
+        "start_column": 20,
+        "end_line": 18,
+        "end_column": 24
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:18:13:19:26",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 19,
+        "start_column": 9,
+        "end_line": 19,
+        "end_column": 12
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:18:13:19:26",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "self._data = value",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 19,
+        "start_column": 9,
+        "end_line": 19,
+        "end_column": 26
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:18:13:19:26",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 19,
+        "start_column": 9,
+        "end_line": 19,
+        "end_column": 26
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 19,
+        "start_column": 9,
+        "end_line": 19,
+        "end_column": 12
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:18:13:19:26",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 19,
+        "start_column": 9,
+        "end_line": 19,
+        "end_column": 12
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:18:13:19:26",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 19,
+        "start_column": 9,
+        "end_line": 19,
+        "end_column": 12
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:18:13:19:26",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "_data",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 19,
+        "start_column": 14,
+        "end_line": 19,
+        "end_column": 18
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:18:13:19:26",
+      "access_type": "write"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "_data",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 19,
+        "start_column": 14,
+        "end_line": 19,
+        "end_column": 18
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:18:13:19:26",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "_data",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 19,
+        "start_column": 14,
+        "end_line": 19,
+        "end_column": 18
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:18:13:19:26",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "_data",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 19,
+        "start_column": 14,
+        "end_line": 19,
+        "end_column": 18
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:18:13:19:26",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "value",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 19,
+        "start_column": 22,
+        "end_line": 19,
+        "end_column": 26
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:18:13:19:26",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "staticmethod",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 21,
+        "start_column": 6,
+        "end_line": 21,
+        "end_column": 17
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "staticmethod",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 21,
+        "start_column": 6,
+        "end_line": 21,
+        "end_column": 17
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "build",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 22,
+        "start_column": 9,
+        "end_line": 22,
+        "end_column": 13
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return DecoratorShapes()",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 23,
+        "start_column": 9,
+        "end_line": 23,
+        "end_column": 32
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:22:14:23:32",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "DecoratorShapes",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 23,
+        "start_column": 16,
+        "end_line": 23,
+        "end_column": 30
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:22:14:23:32"
+    },
+    {
+      "kind": "constructor_call",
+      "name": "DecoratorShapes",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 23,
+        "start_column": 16,
+        "end_line": 23,
+        "end_column": 30
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:22:14:23:32"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "DecoratorShapes()",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 23,
+        "start_column": 16,
+        "end_line": 23,
+        "end_column": 32
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:22:14:23:32",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "DecoratorShapes",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 23,
+        "start_column": 16,
+        "end_line": 23,
+        "end_column": 30
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:22:14:23:32",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "classmethod",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 25,
+        "start_column": 6,
+        "end_line": 25,
+        "end_column": 16
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "classmethod",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 25,
+        "start_column": 6,
+        "end_line": 25,
+        "end_column": 16
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "create",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 26,
+        "start_column": 9,
+        "end_line": 26,
+        "end_column": 14
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "cls",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 26,
+        "start_column": 16,
+        "end_line": 26,
+        "end_column": 18
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:26:15:27:20",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "cls",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 26,
+        "start_column": 16,
+        "end_line": 26,
+        "end_column": 18
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:26:15:27:20",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return cls()",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 27,
+        "start_column": 9,
+        "end_line": 27,
+        "end_column": 20
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:26:15:27:20",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "cls",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 27,
+        "start_column": 16,
+        "end_line": 27,
+        "end_column": 18
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:26:15:27:20"
+    },
+    {
+      "kind": "constructor_call",
+      "name": "cls",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 27,
+        "start_column": 16,
+        "end_line": 27,
+        "end_column": 18
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:26:15:27:20"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "cls()",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 27,
+        "start_column": 16,
+        "end_line": 27,
+        "end_column": 20
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:26:15:27:20",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "cls",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 27,
+        "start_column": 16,
+        "end_line": 27,
+        "end_column": 18
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:26:15:27:20",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "cls",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 27,
+        "start_column": 16,
+        "end_line": 27,
+        "end_column": 18
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:26:15:27:20",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "cfunc",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 29,
+        "start_column": 6,
+        "end_line": 29,
+        "end_column": 17
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "receiver_location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 29,
+        "start_column": 6,
+        "end_line": 29,
+        "end_column": 11
+      },
+      "property_chain": [
+        "cython",
+        "cfunc"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "cython",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 29,
+        "start_column": 6,
+        "end_line": 29,
+        "end_column": 11
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "cython",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 29,
+        "start_column": 6,
+        "end_line": 29,
+        "end_column": 11
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "cfunc",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 29,
+        "start_column": 13,
+        "end_line": 29,
+        "end_column": 17
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "cfunc",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 29,
+        "start_column": 13,
+        "end_line": 29,
+        "end_column": 17
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "compiled",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 30,
+        "start_column": 9,
+        "end_line": 30,
+        "end_column": 16
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 30,
+        "start_column": 18,
+        "end_line": 30,
+        "end_column": 21
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:30:17:31:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 30,
+        "start_column": 18,
+        "end_line": 30,
+        "end_column": 21
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:30:17:31:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return 1",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 31,
+        "start_column": 9,
+        "end_line": 31,
+        "end_column": 16
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:30:17:31:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "1",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 31,
+        "start_column": 16,
+        "end_line": 31,
+        "end_column": 16
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:30:17:31:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "memoized_property",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 33,
+        "start_column": 6,
+        "end_line": 33,
+        "end_column": 27
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "receiver_location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 33,
+        "start_column": 6,
+        "end_line": 33,
+        "end_column": 9
+      },
+      "property_chain": [
+        "util",
+        "memoized_property"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "util",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 33,
+        "start_column": 6,
+        "end_line": 33,
+        "end_column": 9
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "util",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 33,
+        "start_column": 6,
+        "end_line": 33,
+        "end_column": 9
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "memoized_property",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 33,
+        "start_column": 11,
+        "end_line": 33,
+        "end_column": 27
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "memoized_property",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 33,
+        "start_column": 11,
+        "end_line": 33,
+        "end_column": 27
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "memoized",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 34,
+        "start_column": 9,
+        "end_line": 34,
+        "end_column": 16
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 34,
+        "start_column": 18,
+        "end_line": 34,
+        "end_column": 21
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:34:17:35:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 34,
+        "start_column": 18,
+        "end_line": 34,
+        "end_column": 21
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:34:17:35:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return 2",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 35,
+        "start_column": 9,
+        "end_line": 35,
+        "end_column": 16
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:34:17:35:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "2",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 35,
+        "start_column": 16,
+        "end_line": 35,
+        "end_column": 16
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:34:17:35:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "lru_cache",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 37,
+        "start_column": 6,
+        "end_line": 37,
+        "end_column": 26
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "receiver_location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 37,
+        "start_column": 6,
+        "end_line": 37,
+        "end_column": 14
+      },
+      "property_chain": [
+        "functools",
+        "lru_cache"
+      ],
+      "is_optional_chain": false,
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "functools",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 37,
+        "start_column": 6,
+        "end_line": 37,
+        "end_column": 14
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "functools",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 37,
+        "start_column": 6,
+        "end_line": 37,
+        "end_column": 14
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "functools",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 37,
+        "start_column": 6,
+        "end_line": 37,
+        "end_column": 14
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "lru_cache",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 37,
+        "start_column": 16,
+        "end_line": 37,
+        "end_column": 24
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "lru_cache",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 37,
+        "start_column": 16,
+        "end_line": 37,
+        "end_column": 24
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "cached",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 38,
+        "start_column": 9,
+        "end_line": 38,
+        "end_column": 14
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 38,
+        "start_column": 16,
+        "end_line": 38,
+        "end_column": 19
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:38:15:39:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 38,
+        "start_column": 16,
+        "end_line": 38,
+        "end_column": 19
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:38:15:39:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return 3",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 39,
+        "start_column": 9,
+        "end_line": 39,
+        "end_column": 16
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:38:15:39:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "3",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 39,
+        "start_column": 16,
+        "end_line": 39,
+        "end_column": 16
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:38:15:39:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "lru_cache",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 41,
+        "start_column": 6,
+        "end_line": 41,
+        "end_column": 14
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24"
+    },
+    {
+      "kind": "constructor_call",
+      "name": "lru_cache",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 41,
+        "start_column": 6,
+        "end_line": 41,
+        "end_column": 14
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "lru_cache",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 41,
+        "start_column": 6,
+        "end_line": 41,
+        "end_column": 14
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "maxsize",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 41,
+        "start_column": 16,
+        "end_line": 41,
+        "end_column": 22
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "cached_bounded",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 42,
+        "start_column": 9,
+        "end_line": 42,
+        "end_column": 22
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 42,
+        "start_column": 24,
+        "end_line": 42,
+        "end_column": 27
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:42:23:43:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 42,
+        "start_column": 24,
+        "end_line": 42,
+        "end_column": 27
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:42:23:43:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return 4",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 43,
+        "start_column": 9,
+        "end_line": 43,
+        "end_column": 16
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:42:23:43:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "4",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 43,
+        "start_column": 16,
+        "end_line": 43,
+        "end_column": 16
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:42:23:43:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "dec",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 45,
+        "start_column": 6,
+        "end_line": 45,
+        "end_column": 19
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "receiver_location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 45,
+        "start_column": 6,
+        "end_line": 45,
+        "end_column": 8
+      },
+      "property_chain": [
+        "mod",
+        "dec"
+      ],
+      "is_optional_chain": false,
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "mod",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 45,
+        "start_column": 6,
+        "end_line": 45,
+        "end_column": 8
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "mod",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 45,
+        "start_column": 6,
+        "end_line": 45,
+        "end_column": 8
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "mod",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 45,
+        "start_column": 6,
+        "end_line": 45,
+        "end_column": 8
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "dec",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 45,
+        "start_column": 10,
+        "end_line": 45,
+        "end_column": 12
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "dec",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 45,
+        "start_column": 10,
+        "end_line": 45,
+        "end_column": 12
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "arg",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 45,
+        "start_column": 14,
+        "end_line": 45,
+        "end_column": 16
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "dotted_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 46,
+        "start_column": 9,
+        "end_line": 46,
+        "end_column": 19
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 46,
+        "start_column": 21,
+        "end_line": 46,
+        "end_column": 24
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:46:20:47:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 46,
+        "start_column": 21,
+        "end_line": 46,
+        "end_column": 24
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:46:20:47:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return 5",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 47,
+        "start_column": 9,
+        "end_line": 47,
+        "end_column": 16
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:46:20:47:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "5",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 47,
+        "start_column": 16,
+        "end_line": 47,
+        "end_column": 16
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:46:20:47:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "plain",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 49,
+        "start_column": 9,
+        "end_line": 49,
+        "end_column": 13
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 49,
+        "start_column": 15,
+        "end_line": 49,
+        "end_column": 18
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:49:14:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 49,
+        "start_column": 15,
+        "end_line": 49,
+        "end_column": 18
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:49:14:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return self.data",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 50,
+        "start_column": 9,
+        "end_line": 50,
+        "end_column": 24
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:49:14:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "data",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 50,
+        "start_column": 16,
+        "end_line": 50,
+        "end_column": 24
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:49:14:50:24",
+      "receiver_location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 50,
+        "start_column": 16,
+        "end_line": 50,
+        "end_column": 19
+      },
+      "property_chain": [
+        "self",
+        "data"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 50,
+        "start_column": 16,
+        "end_line": 50,
+        "end_column": 19
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:49:14:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self.data",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 50,
+        "start_column": 16,
+        "end_line": 50,
+        "end_column": 24
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:49:14:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 50,
+        "start_column": 16,
+        "end_line": 50,
+        "end_column": 19
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:49:14:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 50,
+        "start_column": 16,
+        "end_line": 50,
+        "end_column": 19
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:49:14:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "data",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 50,
+        "start_column": 21,
+        "end_line": 50,
+        "end_column": 24
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:49:14:50:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "data",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
+        "start_line": 50,
+        "start_column": 21,
+        "end_line": 50,
+        "end_column": 24
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:49:14:50:24",
+      "access_type": "read"
+    }
+  ]
+}

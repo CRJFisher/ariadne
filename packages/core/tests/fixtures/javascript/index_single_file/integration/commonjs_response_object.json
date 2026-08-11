@@ -1,0 +1,3281 @@
+{
+  "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+  "language": "javascript",
+  "root_scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+  "scopes": {
+    "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0": {
+      "id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 44,
+        "end_column": 0
+      },
+      "child_ids": [
+        "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:24:13:1",
+        "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:15:24:19:1",
+        "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:22:25:1",
+        "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:27:24:29:1",
+        "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:31:20:34:1",
+        "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:36:18:38:1",
+        "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:19:43:1"
+      ]
+    },
+    "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:24:13:1": {
+      "id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:24:13:1",
+      "parent_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "name": "sendFile",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 8,
+        "start_column": 24,
+        "end_line": 13,
+        "end_column": 1
+      },
+      "child_ids": [
+        "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:10:35:10:39"
+      ]
+    },
+    "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:10:35:10:39": {
+      "id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:10:35:10:39",
+      "parent_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:24:13:1",
+      "name": null,
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 10,
+        "start_column": 35,
+        "end_line": 10,
+        "end_column": 39
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:15:24:19:1": {
+      "id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:15:24:19:1",
+      "parent_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "name": "sendfile",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 15,
+        "start_column": 24,
+        "end_line": 19,
+        "end_column": 1
+      },
+      "child_ids": [
+        "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:18:38:18:42"
+      ]
+    },
+    "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:18:38:18:42": {
+      "id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:18:38:18:42",
+      "parent_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:15:24:19:1",
+      "name": null,
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 18,
+        "start_column": 38,
+        "end_line": 18,
+        "end_column": 42
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:22:25:1": {
+      "id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:22:25:1",
+      "parent_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "name": "append",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 21,
+        "start_column": 22,
+        "end_line": 25,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:27:24:29:1": {
+      "id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:27:24:29:1",
+      "parent_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "name": "location",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 27,
+        "start_column": 24,
+        "end_line": 29,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:31:20:34:1": {
+      "id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:31:20:34:1",
+      "parent_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "name": "json",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 31,
+        "start_column": 20,
+        "end_line": 34,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:36:18:38:1": {
+      "id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:36:18:38:1",
+      "parent_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "name": "sendfile",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 36,
+        "start_column": 18,
+        "end_line": 38,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:19:43:1": {
+      "id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:19:43:1",
+      "parent_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "name": "stringify",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 40,
+        "start_column": 19,
+        "end_line": 43,
+        "end_column": 1
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {
+    "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:25:8:32:sendFile": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:25:8:32:sendFile",
+      "name": "sendFile",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 8,
+        "start_column": 25,
+        "end_line": 8,
+        "end_column": 32
+      },
+      "defining_scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:24:13:1",
+      "is_exported": false,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:24:13:1",
+            "symbol_id": "parameter:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:34:8:37:path",
+            "name": "path",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+              "start_line": 8,
+              "start_column": 34,
+              "end_line": 8,
+              "end_column": 37
+            }
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:24:13:1",
+            "symbol_id": "parameter:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:40:8:46:options",
+            "name": "options",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+              "start_line": 8,
+              "start_column": 40,
+              "end_line": 8,
+              "end_column": 46
+            }
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:24:13:1",
+            "symbol_id": "parameter:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:49:8:56:callback",
+            "name": "callback",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+              "start_line": 8,
+              "start_column": 49,
+              "end_line": 8,
+              "end_column": 56
+            }
+          }
+        ]
+      },
+      "body_scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:24:13:1"
+    },
+    "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:15:25:15:32:sendfile": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:15:25:15:32:sendfile",
+      "name": "sendfile",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 15,
+        "start_column": 25,
+        "end_line": 15,
+        "end_column": 32
+      },
+      "defining_scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:15:24:19:1",
+      "is_exported": false,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:15:24:19:1",
+            "symbol_id": "parameter:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:15:34:15:37:path",
+            "name": "path",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+              "start_line": 15,
+              "start_column": 34,
+              "end_line": 15,
+              "end_column": 37
+            }
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:15:24:19:1",
+            "symbol_id": "parameter:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:15:40:15:46:options",
+            "name": "options",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+              "start_line": 15,
+              "start_column": 40,
+              "end_line": 15,
+              "end_column": 46
+            }
+          }
+        ]
+      },
+      "body_scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:15:24:19:1"
+    },
+    "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:18:29:18:42:<anonymous>": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:18:29:18:42:<anonymous>",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 18,
+        "start_column": 29,
+        "end_line": 18,
+        "end_column": 42
+      },
+      "defining_scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:15:24:19:1",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:18:38:18:42",
+      "callback_context": {
+        "is_callback": true,
+        "receiver_is_external": null,
+        "receiver_location": {
+          "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+          "start_line": 18,
+          "start_column": 3,
+          "end_line": 18,
+          "end_column": 43
+        }
+      }
+    },
+    "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:23:21:28:append": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:23:21:28:append",
+      "name": "append",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 21,
+        "start_column": 23,
+        "end_line": 21,
+        "end_column": 28
+      },
+      "defining_scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:22:25:1",
+      "is_exported": false,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:22:25:1",
+            "symbol_id": "parameter:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:30:21:34:field",
+            "name": "field",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+              "start_line": 21,
+              "start_column": 30,
+              "end_line": 21,
+              "end_column": 34
+            }
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:22:25:1",
+            "symbol_id": "parameter:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:37:21:39:val",
+            "name": "val",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+              "start_line": 21,
+              "start_column": 37,
+              "end_line": 21,
+              "end_column": 39
+            }
+          }
+        ]
+      },
+      "body_scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:22:25:1"
+    },
+    "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:27:25:27:32:location": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:27:25:27:32:location",
+      "name": "location",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 27,
+        "start_column": 25,
+        "end_line": 27,
+        "end_column": 32
+      },
+      "defining_scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:27:24:29:1",
+      "is_exported": false,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:27:24:29:1",
+            "symbol_id": "parameter:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:27:34:27:36:url",
+            "name": "url",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+              "start_line": 27,
+              "start_column": 34,
+              "end_line": 27,
+              "end_column": 36
+            }
+          }
+        ]
+      },
+      "body_scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:27:24:29:1"
+    },
+    "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:31:21:31:24:json": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:31:21:31:24:json",
+      "name": "json",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 31,
+        "start_column": 21,
+        "end_line": 31,
+        "end_column": 24
+      },
+      "defining_scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:31:20:34:1",
+      "is_exported": false,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:31:20:34:1",
+            "symbol_id": "parameter:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:31:26:31:28:obj",
+            "name": "obj",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+              "start_line": 31,
+              "start_column": 26,
+              "end_line": 31,
+              "end_column": 28
+            }
+          }
+        ]
+      },
+      "body_scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:31:20:34:1"
+    },
+    "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:36:10:36:17:sendfile": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:36:10:36:17:sendfile",
+      "name": "sendfile",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 36,
+        "start_column": 10,
+        "end_line": 36,
+        "end_column": 17
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "is_exported": false,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:36:18:38:1",
+            "symbol_id": "parameter:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:36:19:36:21:res",
+            "name": "res",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+              "start_line": 36,
+              "start_column": 19,
+              "end_line": 36,
+              "end_column": 21
+            }
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:36:18:38:1",
+            "symbol_id": "parameter:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:36:24:36:27:file",
+            "name": "file",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+              "start_line": 36,
+              "start_column": 24,
+              "end_line": 36,
+              "end_column": 27
+            }
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:36:18:38:1",
+            "symbol_id": "parameter:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:36:30:36:36:options",
+            "name": "options",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+              "start_line": 36,
+              "start_column": 30,
+              "end_line": 36,
+              "end_column": 36
+            }
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:36:18:38:1",
+            "symbol_id": "parameter:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:36:39:36:46:callback",
+            "name": "callback",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+              "start_line": 36,
+              "start_column": 39,
+              "end_line": 36,
+              "end_column": 46
+            }
+          }
+        ]
+      },
+      "body_scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:36:18:38:1"
+    },
+    "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:10:40:18:stringify": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:10:40:18:stringify",
+      "name": "stringify",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 40,
+        "start_column": 10,
+        "end_line": 40,
+        "end_column": 18
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "is_exported": false,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:19:43:1",
+            "symbol_id": "parameter:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:20:40:24:value",
+            "name": "value",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+              "start_line": 40,
+              "start_column": 20,
+              "end_line": 40,
+              "end_column": 24
+            }
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:19:43:1",
+            "symbol_id": "parameter:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:27:40:34:replacer",
+            "name": "replacer",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+              "start_line": 40,
+              "start_column": 27,
+              "end_line": 40,
+              "end_column": 34
+            }
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:19:43:1",
+            "symbol_id": "parameter:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:37:40:42:spaces",
+            "name": "spaces",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+              "start_line": 40,
+              "start_column": 37,
+              "end_line": 40,
+              "end_column": 42
+            }
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:19:43:1",
+            "symbol_id": "parameter:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:45:40:50:escape",
+            "name": "escape",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+              "start_line": 40,
+              "start_column": 45,
+              "end_line": 40,
+              "end_column": 50
+            }
+          }
+        ]
+      },
+      "body_scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:19:43:1"
+    }
+  },
+  "classes": {},
+  "variables": {
+    "variable:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:4:5:4:7:res": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:4:5:4:7:res",
+      "name": "res",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 4,
+        "start_column": 5,
+        "end_line": 4,
+        "end_column": 7
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "is_exported": true,
+      "initial_value": "{}",
+      "docstring": "// the module-scope `res` with a function-local `var res = this;`.",
+      "function_collection": {
+        "collection_id": "variable:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:4:5:4:7:res",
+        "collection_type": "Object",
+        "location": {
+          "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+          "start_line": 4,
+          "start_column": 5,
+          "end_line": 4,
+          "end_column": 7
+        },
+        "stored_functions": [
+          "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:25:8:32:sendFile",
+          "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:15:25:15:32:sendfile",
+          "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:23:21:28:append",
+          "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:27:25:27:32:location",
+          "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:31:21:31:24:json"
+        ],
+        "named_members": [
+          {
+            "name": "sendFile",
+            "symbol_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:25:8:32:sendFile",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+              "start_line": 8,
+              "start_column": 16,
+              "end_line": 13,
+              "end_column": 1
+            }
+          },
+          {
+            "name": "sendfile",
+            "symbol_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:15:25:15:32:sendfile",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+              "start_line": 15,
+              "start_column": 16,
+              "end_line": 19,
+              "end_column": 1
+            }
+          },
+          {
+            "name": "append",
+            "symbol_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:23:21:28:append",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+              "start_line": 21,
+              "start_column": 14,
+              "end_line": 25,
+              "end_column": 1
+            }
+          },
+          {
+            "name": "location",
+            "symbol_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:27:25:27:32:location",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+              "start_line": 27,
+              "start_column": 16,
+              "end_line": 29,
+              "end_column": 1
+            }
+          },
+          {
+            "name": "json",
+            "symbol_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:31:21:31:24:json",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+              "start_line": 31,
+              "start_column": 12,
+              "end_line": 34,
+              "end_column": 1
+            }
+          }
+        ]
+      }
+    },
+    "variable:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:9:7:9:9:res": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:9:7:9:9:res",
+      "name": "res",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 9,
+        "start_column": 7,
+        "end_line": 9,
+        "end_column": 9
+      },
+      "defining_scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:24:13:1",
+      "is_exported": false,
+      "initial_value": "this"
+    },
+    "variable:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:10:7:10:10:done": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:10:7:10:10:done",
+      "name": "done",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 10,
+        "start_column": 7,
+        "end_line": 10,
+        "end_column": 10
+      },
+      "defining_scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:24:13:1",
+      "is_exported": false,
+      "initial_value": "callback || function () {}"
+    },
+    "variable:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:11:7:11:10:opts": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:11:7:11:10:opts",
+      "name": "opts",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 11,
+        "start_column": 7,
+        "end_line": 11,
+        "end_column": 10
+      },
+      "defining_scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:24:13:1",
+      "is_exported": false,
+      "initial_value": "options || {}"
+    },
+    "variable:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:16:7:16:9:res": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:16:7:16:9:res",
+      "name": "res",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 16,
+        "start_column": 7,
+        "end_line": 16,
+        "end_column": 9
+      },
+      "defining_scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:15:24:19:1",
+      "is_exported": false,
+      "initial_value": "this"
+    },
+    "variable:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:17:7:17:10:opts": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:17:7:17:10:opts",
+      "name": "opts",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 17,
+        "start_column": 7,
+        "end_line": 17,
+        "end_column": 10
+      },
+      "defining_scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:15:24:19:1",
+      "is_exported": false,
+      "initial_value": "options || {}"
+    },
+    "variable:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:22:7:22:10:prev": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:22:7:22:10:prev",
+      "name": "prev",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 22,
+        "start_column": 7,
+        "end_line": 22,
+        "end_column": 10
+      },
+      "defining_scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:22:25:1",
+      "is_exported": false,
+      "initial_value": "this.get(field)"
+    },
+    "variable:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:23:7:23:11:value": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:23:7:23:11:value",
+      "name": "value",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 23,
+        "start_column": 7,
+        "end_line": 23,
+        "end_column": 11
+      },
+      "defining_scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:22:25:1",
+      "is_exported": false,
+      "initial_value": "prev ? [prev, val] : val"
+    },
+    "variable:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:32:7:32:10:body": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:32:7:32:10:body",
+      "name": "body",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 32,
+        "start_column": 7,
+        "end_line": 32,
+        "end_column": 10
+      },
+      "defining_scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:31:20:34:1",
+      "is_exported": false,
+      "initial_value": "stringify(obj, null, 2, true)",
+      "initialized_from_call": "stringify"
+    },
+    "variable:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:41:7:41:10:json": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:41:7:41:10:json",
+      "name": "json",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 41,
+        "start_column": 7,
+        "end_line": 41,
+        "end_column": 10
+      },
+      "defining_scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:19:43:1",
+      "is_exported": false,
+      "initial_value": "JSON.stringify(value, replacer, spaces)",
+      "collection_source": "JSON"
+    }
+  },
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {},
+  "references": [
+    {
+      "kind": "assignment",
+      "name": "res = {}",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 4,
+        "start_column": 5,
+        "end_line": 4,
+        "end_column": 12
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 4,
+        "start_column": 5,
+        "end_line": 4,
+        "end_column": 12
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "res",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 4,
+        "start_column": 5,
+        "end_line": 4,
+        "end_column": 7
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 4,
+        "start_column": 5,
+        "end_line": 4,
+        "end_column": 7
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "res",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 4,
+        "start_column": 5,
+        "end_line": 4,
+        "end_column": 7
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "{}",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 4,
+        "start_column": 11,
+        "end_line": 4,
+        "end_column": 12
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "module",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 6,
+        "start_column": 1,
+        "end_line": 6,
+        "end_column": 6
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "module.exports = res",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 6,
+        "start_column": 1,
+        "end_line": 6,
+        "end_column": 20
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 6,
+        "start_column": 1,
+        "end_line": 6,
+        "end_column": 20
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "module",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 6,
+        "start_column": 1,
+        "end_line": 6,
+        "end_column": 6
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "module",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 6,
+        "start_column": 1,
+        "end_line": 6,
+        "end_column": 6
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "exports",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 6,
+        "start_column": 8,
+        "end_line": 6,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "exports",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 6,
+        "start_column": 8,
+        "end_line": 6,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "res",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 6,
+        "start_column": 18,
+        "end_line": 6,
+        "end_column": 20
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "res",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 6,
+        "start_column": 18,
+        "end_line": 6,
+        "end_column": 20
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "res",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 8,
+        "start_column": 1,
+        "end_line": 8,
+        "end_column": 3
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "res.sendFile = function sendFile(path, options, callback) {\n  var res = this;\n  var done = callback || function () {};\n  var opts = options || {};\n  sendfile(res, path, opts, done);\n}",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 8,
+        "start_column": 1,
+        "end_line": 13,
+        "end_column": 1
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 8,
+        "start_column": 1,
+        "end_line": 13,
+        "end_column": 1
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "res",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 8,
+        "start_column": 1,
+        "end_line": 8,
+        "end_column": 3
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "res",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 8,
+        "start_column": 1,
+        "end_line": 8,
+        "end_column": 3
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "sendFile",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 8,
+        "start_column": 5,
+        "end_line": 8,
+        "end_column": 12
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "sendFile",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 8,
+        "start_column": 5,
+        "end_line": 8,
+        "end_column": 12
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "function sendFile(path, options, callback) {\n  var res = this;\n  var done = callback || function () {};\n  var opts = options || {};\n  sendfile(res, path, opts, done);\n}",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 8,
+        "start_column": 16,
+        "end_line": 13,
+        "end_column": 1
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "sendFile",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 8,
+        "start_column": 25,
+        "end_line": 8,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:24:13:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "path",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 8,
+        "start_column": 34,
+        "end_line": 8,
+        "end_column": 37
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:24:13:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "options",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 8,
+        "start_column": 40,
+        "end_line": 8,
+        "end_column": 46
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:24:13:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "callback",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 8,
+        "start_column": 49,
+        "end_line": 8,
+        "end_column": 56
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:24:13:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "res = this",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 9,
+        "start_column": 7,
+        "end_line": 9,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:24:13:1",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 8,
+        "start_column": 1,
+        "end_line": 8,
+        "end_column": 12
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "res",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 9,
+        "start_column": 7,
+        "end_line": 9,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:24:13:1",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 9,
+        "start_column": 7,
+        "end_line": 9,
+        "end_column": 9
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "res",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 9,
+        "start_column": 7,
+        "end_line": 9,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:24:13:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 9,
+        "start_column": 13,
+        "end_line": 9,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:24:13:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 9,
+        "start_column": 13,
+        "end_line": 9,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:24:13:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "done = callback || function () {}",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 10,
+        "start_column": 7,
+        "end_line": 10,
+        "end_column": 39
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:24:13:1",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 8,
+        "start_column": 1,
+        "end_line": 8,
+        "end_column": 12
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "done",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 10,
+        "start_column": 7,
+        "end_line": 10,
+        "end_column": 10
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:24:13:1",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 10,
+        "start_column": 7,
+        "end_line": 10,
+        "end_column": 10
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "done",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 10,
+        "start_column": 7,
+        "end_line": 10,
+        "end_column": 10
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:24:13:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "callback || function () {}",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 10,
+        "start_column": 14,
+        "end_line": 10,
+        "end_column": 39
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:24:13:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "callback",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 10,
+        "start_column": 14,
+        "end_line": 10,
+        "end_column": 21
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:24:13:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "opts = options || {}",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 11,
+        "start_column": 7,
+        "end_line": 11,
+        "end_column": 26
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:24:13:1",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 8,
+        "start_column": 1,
+        "end_line": 8,
+        "end_column": 12
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "opts",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 11,
+        "start_column": 7,
+        "end_line": 11,
+        "end_column": 10
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:24:13:1",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 11,
+        "start_column": 7,
+        "end_line": 11,
+        "end_column": 10
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "opts",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 11,
+        "start_column": 7,
+        "end_line": 11,
+        "end_column": 10
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:24:13:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "options || {}",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 11,
+        "start_column": 14,
+        "end_line": 11,
+        "end_column": 26
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:24:13:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "options",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 11,
+        "start_column": 14,
+        "end_line": 11,
+        "end_column": 20
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:24:13:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "sendfile",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 12,
+        "start_column": 3,
+        "end_line": 12,
+        "end_column": 10
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:24:13:1",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 8,
+        "start_column": 1,
+        "end_line": 8,
+        "end_column": 12
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "sendfile",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 12,
+        "start_column": 3,
+        "end_line": 12,
+        "end_column": 10
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:24:13:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "res",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 12,
+        "start_column": 12,
+        "end_line": 12,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:24:13:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "path",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 12,
+        "start_column": 17,
+        "end_line": 12,
+        "end_column": 20
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:24:13:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "opts",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 12,
+        "start_column": 23,
+        "end_line": 12,
+        "end_column": 26
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:24:13:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "done",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 12,
+        "start_column": 29,
+        "end_line": 12,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:24:13:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "res",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 15,
+        "start_column": 1,
+        "end_line": 15,
+        "end_column": 3
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "res.sendfile = function sendfile(path, options) {\n  var res = this;\n  var opts = options || {};\n  sendfile(res, path, opts, function () {});\n}",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 15,
+        "start_column": 1,
+        "end_line": 19,
+        "end_column": 1
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 15,
+        "start_column": 1,
+        "end_line": 19,
+        "end_column": 1
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "res",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 15,
+        "start_column": 1,
+        "end_line": 15,
+        "end_column": 3
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "res",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 15,
+        "start_column": 1,
+        "end_line": 15,
+        "end_column": 3
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "sendfile",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 15,
+        "start_column": 5,
+        "end_line": 15,
+        "end_column": 12
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "sendfile",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 15,
+        "start_column": 5,
+        "end_line": 15,
+        "end_column": 12
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "function sendfile(path, options) {\n  var res = this;\n  var opts = options || {};\n  sendfile(res, path, opts, function () {});\n}",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 15,
+        "start_column": 16,
+        "end_line": 19,
+        "end_column": 1
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "sendfile",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 15,
+        "start_column": 25,
+        "end_line": 15,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:15:24:19:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "path",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 15,
+        "start_column": 34,
+        "end_line": 15,
+        "end_column": 37
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:15:24:19:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "options",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 15,
+        "start_column": 40,
+        "end_line": 15,
+        "end_column": 46
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:15:24:19:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "res = this",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 16,
+        "start_column": 7,
+        "end_line": 16,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:15:24:19:1",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 15,
+        "start_column": 1,
+        "end_line": 15,
+        "end_column": 12
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "res",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 16,
+        "start_column": 7,
+        "end_line": 16,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:15:24:19:1",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 16,
+        "start_column": 7,
+        "end_line": 16,
+        "end_column": 9
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "res",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 16,
+        "start_column": 7,
+        "end_line": 16,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:15:24:19:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 16,
+        "start_column": 13,
+        "end_line": 16,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:15:24:19:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 16,
+        "start_column": 13,
+        "end_line": 16,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:15:24:19:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "opts = options || {}",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 17,
+        "start_column": 7,
+        "end_line": 17,
+        "end_column": 26
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:15:24:19:1",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 15,
+        "start_column": 1,
+        "end_line": 15,
+        "end_column": 12
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "opts",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 17,
+        "start_column": 7,
+        "end_line": 17,
+        "end_column": 10
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:15:24:19:1",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 17,
+        "start_column": 7,
+        "end_line": 17,
+        "end_column": 10
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "opts",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 17,
+        "start_column": 7,
+        "end_line": 17,
+        "end_column": 10
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:15:24:19:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "options || {}",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 17,
+        "start_column": 14,
+        "end_line": 17,
+        "end_column": 26
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:15:24:19:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "options",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 17,
+        "start_column": 14,
+        "end_line": 17,
+        "end_column": 20
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:15:24:19:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "sendfile",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 18,
+        "start_column": 3,
+        "end_line": 18,
+        "end_column": 10
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:15:24:19:1",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 15,
+        "start_column": 1,
+        "end_line": 15,
+        "end_column": 12
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "sendfile",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 18,
+        "start_column": 3,
+        "end_line": 18,
+        "end_column": 10
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:15:24:19:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "res",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 18,
+        "start_column": 12,
+        "end_line": 18,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:15:24:19:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "path",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 18,
+        "start_column": 17,
+        "end_line": 18,
+        "end_column": 20
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:15:24:19:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "opts",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 18,
+        "start_column": 23,
+        "end_line": 18,
+        "end_column": 26
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:15:24:19:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "res",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 21,
+        "start_column": 1,
+        "end_line": 21,
+        "end_column": 3
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "res.append = function append(field, val) {\n  var prev = this.get(field);\n  var value = prev ? [prev, val] : val;\n  return this.set(field, value);\n}",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 21,
+        "start_column": 1,
+        "end_line": 25,
+        "end_column": 1
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 21,
+        "start_column": 1,
+        "end_line": 25,
+        "end_column": 1
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "res",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 21,
+        "start_column": 1,
+        "end_line": 21,
+        "end_column": 3
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "res",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 21,
+        "start_column": 1,
+        "end_line": 21,
+        "end_column": 3
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "append",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 21,
+        "start_column": 5,
+        "end_line": 21,
+        "end_column": 10
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "append",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 21,
+        "start_column": 5,
+        "end_line": 21,
+        "end_column": 10
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "function append(field, val) {\n  var prev = this.get(field);\n  var value = prev ? [prev, val] : val;\n  return this.set(field, value);\n}",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 21,
+        "start_column": 14,
+        "end_line": 25,
+        "end_column": 1
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "append",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 21,
+        "start_column": 23,
+        "end_line": 21,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:22:25:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "field",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 21,
+        "start_column": 30,
+        "end_line": 21,
+        "end_column": 34
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:22:25:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "val",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 21,
+        "start_column": 37,
+        "end_line": 21,
+        "end_column": 39
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:22:25:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "prev = this.get(field)",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 22,
+        "start_column": 7,
+        "end_line": 22,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:22:25:1",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 21,
+        "start_column": 1,
+        "end_line": 21,
+        "end_column": 10
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "prev",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 22,
+        "start_column": 7,
+        "end_line": 22,
+        "end_column": 10
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:22:25:1",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 22,
+        "start_column": 7,
+        "end_line": 22,
+        "end_column": 10
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "prev",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 22,
+        "start_column": 7,
+        "end_line": 22,
+        "end_column": 10
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:22:25:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this.get(field)",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 22,
+        "start_column": 14,
+        "end_line": 22,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:22:25:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "self_reference_call",
+      "name": "get",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 22,
+        "start_column": 14,
+        "end_line": 22,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:22:25:1",
+      "keyword": "this",
+      "property_chain": [
+        "this",
+        "get"
+      ]
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 22,
+        "start_column": 14,
+        "end_line": 22,
+        "end_column": 17
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:22:25:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 22,
+        "start_column": 14,
+        "end_line": 22,
+        "end_column": 17
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:22:25:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "field",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 22,
+        "start_column": 23,
+        "end_line": 22,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:22:25:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "value = prev ? [prev, val] : val",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 23,
+        "start_column": 7,
+        "end_line": 23,
+        "end_column": 38
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:22:25:1",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 21,
+        "start_column": 1,
+        "end_line": 21,
+        "end_column": 10
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "value",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 23,
+        "start_column": 7,
+        "end_line": 23,
+        "end_column": 11
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:22:25:1",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 23,
+        "start_column": 7,
+        "end_line": 23,
+        "end_column": 11
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "value",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 23,
+        "start_column": 7,
+        "end_line": 23,
+        "end_column": 11
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:22:25:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "prev ? [prev, val] : val",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 23,
+        "start_column": 15,
+        "end_line": 23,
+        "end_column": 38
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:22:25:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "prev",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 23,
+        "start_column": 15,
+        "end_line": 23,
+        "end_column": 18
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:22:25:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "prev",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 23,
+        "start_column": 23,
+        "end_line": 23,
+        "end_column": 26
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:22:25:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "val",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 23,
+        "start_column": 29,
+        "end_line": 23,
+        "end_column": 31
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:22:25:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "val",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 23,
+        "start_column": 36,
+        "end_line": 23,
+        "end_column": 38
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:22:25:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return this.set(field, value);",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 24,
+        "start_column": 3,
+        "end_line": 24,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:22:25:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "self_reference_call",
+      "name": "set",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 24,
+        "start_column": 10,
+        "end_line": 24,
+        "end_column": 31
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:22:25:1",
+      "keyword": "this",
+      "property_chain": [
+        "this",
+        "set"
+      ]
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 24,
+        "start_column": 10,
+        "end_line": 24,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:22:25:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this.set(field, value)",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 24,
+        "start_column": 10,
+        "end_line": 24,
+        "end_column": 31
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:22:25:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 24,
+        "start_column": 10,
+        "end_line": 24,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:22:25:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "field",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 24,
+        "start_column": 19,
+        "end_line": 24,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:22:25:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "value",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 24,
+        "start_column": 26,
+        "end_line": 24,
+        "end_column": 30
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:22:25:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "res",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 27,
+        "start_column": 1,
+        "end_line": 27,
+        "end_column": 3
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "res.location = function location(url) {\n  return this.set(\"Location\", url);\n}",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 27,
+        "start_column": 1,
+        "end_line": 29,
+        "end_column": 1
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 27,
+        "start_column": 1,
+        "end_line": 29,
+        "end_column": 1
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "res",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 27,
+        "start_column": 1,
+        "end_line": 27,
+        "end_column": 3
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "res",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 27,
+        "start_column": 1,
+        "end_line": 27,
+        "end_column": 3
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "location",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 27,
+        "start_column": 5,
+        "end_line": 27,
+        "end_column": 12
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "location",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 27,
+        "start_column": 5,
+        "end_line": 27,
+        "end_column": 12
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "function location(url) {\n  return this.set(\"Location\", url);\n}",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 27,
+        "start_column": 16,
+        "end_line": 29,
+        "end_column": 1
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "location",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 27,
+        "start_column": 25,
+        "end_line": 27,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:27:24:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "url",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 27,
+        "start_column": 34,
+        "end_line": 27,
+        "end_column": 36
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:27:24:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return this.set(\"Location\", url);",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 28,
+        "start_column": 3,
+        "end_line": 28,
+        "end_column": 35
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:27:24:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "self_reference_call",
+      "name": "set",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 34
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:27:24:29:1",
+      "keyword": "this",
+      "property_chain": [
+        "this",
+        "set"
+      ]
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:27:24:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this.set(\"Location\", url)",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 34
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:27:24:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:27:24:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "url",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 28,
+        "start_column": 31,
+        "end_line": 28,
+        "end_column": 33
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:27:24:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "res",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 31,
+        "start_column": 1,
+        "end_line": 31,
+        "end_column": 3
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "res.json = function json(obj) {\n  var body = stringify(obj, null, 2, true);\n  return this.send(body);\n}",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 31,
+        "start_column": 1,
+        "end_line": 34,
+        "end_column": 1
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 31,
+        "start_column": 1,
+        "end_line": 34,
+        "end_column": 1
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "res",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 31,
+        "start_column": 1,
+        "end_line": 31,
+        "end_column": 3
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "res",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 31,
+        "start_column": 1,
+        "end_line": 31,
+        "end_column": 3
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "json",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 31,
+        "start_column": 5,
+        "end_line": 31,
+        "end_column": 8
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "json",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 31,
+        "start_column": 5,
+        "end_line": 31,
+        "end_column": 8
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "function json(obj) {\n  var body = stringify(obj, null, 2, true);\n  return this.send(body);\n}",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 31,
+        "start_column": 12,
+        "end_line": 34,
+        "end_column": 1
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "json",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 31,
+        "start_column": 21,
+        "end_line": 31,
+        "end_column": 24
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:31:20:34:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "obj",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 31,
+        "start_column": 26,
+        "end_line": 31,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:31:20:34:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "body = stringify(obj, null, 2, true)",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 32,
+        "start_column": 7,
+        "end_line": 32,
+        "end_column": 42
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:31:20:34:1",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 31,
+        "start_column": 1,
+        "end_line": 31,
+        "end_column": 8
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "body",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 32,
+        "start_column": 7,
+        "end_line": 32,
+        "end_column": 10
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:31:20:34:1",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 32,
+        "start_column": 7,
+        "end_line": 32,
+        "end_column": 10
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "body",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 32,
+        "start_column": 7,
+        "end_line": 32,
+        "end_column": 10
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:31:20:34:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "stringify",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 32,
+        "start_column": 14,
+        "end_line": 32,
+        "end_column": 42
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:31:20:34:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "stringify",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 32,
+        "start_column": 14,
+        "end_line": 32,
+        "end_column": 22
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:31:20:34:1",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 32,
+        "start_column": 7,
+        "end_line": 32,
+        "end_column": 10
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "stringify",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 32,
+        "start_column": 14,
+        "end_line": 32,
+        "end_column": 22
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:31:20:34:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "obj",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 32,
+        "start_column": 24,
+        "end_line": 32,
+        "end_column": 26
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:31:20:34:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return this.send(body);",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 33,
+        "start_column": 3,
+        "end_line": 33,
+        "end_column": 25
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:31:20:34:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "self_reference_call",
+      "name": "send",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 33,
+        "start_column": 10,
+        "end_line": 33,
+        "end_column": 24
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:31:20:34:1",
+      "keyword": "this",
+      "property_chain": [
+        "this",
+        "send"
+      ]
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 33,
+        "start_column": 10,
+        "end_line": 33,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:31:20:34:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this.send(body)",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 33,
+        "start_column": 10,
+        "end_line": 33,
+        "end_column": 24
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:31:20:34:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 33,
+        "start_column": 10,
+        "end_line": 33,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:31:20:34:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "body",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 33,
+        "start_column": 20,
+        "end_line": 33,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:31:20:34:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "sendfile",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 36,
+        "start_column": 10,
+        "end_line": 36,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "res",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 36,
+        "start_column": 19,
+        "end_line": 36,
+        "end_column": 21
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:36:18:38:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "file",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 36,
+        "start_column": 24,
+        "end_line": 36,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:36:18:38:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "options",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 36,
+        "start_column": 30,
+        "end_line": 36,
+        "end_column": 36
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:36:18:38:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "callback",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 36,
+        "start_column": 39,
+        "end_line": 36,
+        "end_column": 46
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:36:18:38:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "callback",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 37,
+        "start_column": 3,
+        "end_line": 37,
+        "end_column": 10
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:36:18:38:1"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "callback",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 37,
+        "start_column": 3,
+        "end_line": 37,
+        "end_column": 10
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:36:18:38:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "res",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 37,
+        "start_column": 12,
+        "end_line": 37,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:36:18:38:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "file",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 37,
+        "start_column": 17,
+        "end_line": 37,
+        "end_column": 20
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:36:18:38:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "options",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 37,
+        "start_column": 23,
+        "end_line": 37,
+        "end_column": 29
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:36:18:38:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "stringify",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 40,
+        "start_column": 10,
+        "end_line": 40,
+        "end_column": 18
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "value",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 40,
+        "start_column": 20,
+        "end_line": 40,
+        "end_column": 24
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:19:43:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "replacer",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 40,
+        "start_column": 27,
+        "end_line": 40,
+        "end_column": 34
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:19:43:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "spaces",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 40,
+        "start_column": 37,
+        "end_line": 40,
+        "end_column": 42
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:19:43:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "escape",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 40,
+        "start_column": 45,
+        "end_line": 40,
+        "end_column": 50
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:19:43:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "json = JSON.stringify(value, replacer, spaces)",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 41,
+        "start_column": 7,
+        "end_line": 41,
+        "end_column": 52
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:19:43:1",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 41,
+        "start_column": 7,
+        "end_line": 41,
+        "end_column": 52
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "json",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 41,
+        "start_column": 7,
+        "end_line": 41,
+        "end_column": 10
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:19:43:1",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 41,
+        "start_column": 7,
+        "end_line": 41,
+        "end_column": 10
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "json",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 41,
+        "start_column": 7,
+        "end_line": 41,
+        "end_column": 10
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:19:43:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "JSON.stringify(value, replacer, spaces)",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 41,
+        "start_column": 14,
+        "end_line": 41,
+        "end_column": 52
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:19:43:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "stringify",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 41,
+        "start_column": 14,
+        "end_line": 41,
+        "end_column": 52
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:19:43:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 41,
+        "start_column": 14,
+        "end_line": 41,
+        "end_column": 17
+      },
+      "property_chain": [
+        "JSON",
+        "stringify"
+      ],
+      "is_optional_chain": false,
+      "potential_construct_target": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 41,
+        "start_column": 7,
+        "end_line": 41,
+        "end_column": 10
+      },
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "JSON",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 41,
+        "start_column": 14,
+        "end_line": 41,
+        "end_column": 17
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:19:43:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "JSON",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 41,
+        "start_column": 14,
+        "end_line": 41,
+        "end_column": 17
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:19:43:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "JSON",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 41,
+        "start_column": 14,
+        "end_line": 41,
+        "end_column": 17
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:19:43:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "stringify",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 41,
+        "start_column": 19,
+        "end_line": 41,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:19:43:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "value",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 41,
+        "start_column": 29,
+        "end_line": 41,
+        "end_column": 33
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:19:43:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "replacer",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 41,
+        "start_column": 36,
+        "end_line": 41,
+        "end_column": 43
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:19:43:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "spaces",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 41,
+        "start_column": 46,
+        "end_line": 41,
+        "end_column": 51
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:19:43:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return escape ? json.replace(/[<>&]/g, \"-\") : json;",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 42,
+        "start_column": 3,
+        "end_line": 42,
+        "end_column": 53
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:19:43:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "escape ? json.replace(/[<>&]/g, \"-\") : json",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 42,
+        "start_column": 10,
+        "end_line": 42,
+        "end_column": 52
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:19:43:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "escape",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 42,
+        "start_column": 10,
+        "end_line": 42,
+        "end_column": 15
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:19:43:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "replace",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 42,
+        "start_column": 19,
+        "end_line": 42,
+        "end_column": 45
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:19:43:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 42,
+        "start_column": 19,
+        "end_line": 42,
+        "end_column": 22
+      },
+      "property_chain": [
+        "json",
+        "replace"
+      ],
+      "is_optional_chain": false,
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "json",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 42,
+        "start_column": 19,
+        "end_line": 42,
+        "end_column": 22
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:19:43:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "json",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 42,
+        "start_column": 19,
+        "end_line": 42,
+        "end_column": 22
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:19:43:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "json",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 42,
+        "start_column": 19,
+        "end_line": 42,
+        "end_column": 22
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:19:43:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "replace",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 42,
+        "start_column": 24,
+        "end_line": 42,
+        "end_column": 30
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:19:43:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "json",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
+        "start_line": 42,
+        "start_column": 49,
+        "end_line": 42,
+        "end_column": 52
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:19:43:1",
+      "access_type": "read"
+    }
+  ]
+}

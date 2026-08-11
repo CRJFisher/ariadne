@@ -7,7 +7,11 @@
 
 import { describe, it, expect, afterAll } from "vitest";
 import { Project } from "../project/project";
-import type { CallGraph, FilePath, SymbolName } from "@ariadnejs/types";
+import {
+  find_caller_node,
+  is_entry_point,
+} from "./resolve_references.test";
+import type { FilePath, SymbolName } from "@ariadnejs/types";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
@@ -52,34 +56,6 @@ afterAll(() => {
     }
   }
 });
-
-/** Locate the CallableNode for a caller function defined in a given file. */
-function find_caller_node(
-  call_graph: CallGraph,
-  caller_name: string,
-  file_path: FilePath
-) {
-  return [...call_graph.nodes.values()].find(
-    (node) =>
-      node.name === (caller_name as SymbolName) &&
-      node.location.file_path === file_path
-  );
-}
-
-/** True when `name` (defined in `file_path`) is reported as an entry point. */
-function is_entry_point(
-  call_graph: CallGraph,
-  name: string,
-  file_path: FilePath
-): boolean {
-  return call_graph.entry_points.some((ep) => {
-    const node = call_graph.nodes.get(ep);
-    return (
-      node?.name === (name as SymbolName) &&
-      node.location.file_path === file_path
-    );
-  });
-}
 
 describe("Python Multi-File Resolve References Integration", () => {
   describe("namespace-qualified class instantiation", () => {
@@ -421,6 +397,214 @@ def run():
       expect(
         is_entry_point(call_graph, "_make_block", file_paths["pkg/_lib.py"])
       ).toEqual(true);
+    });
+  });
+
+  describe("query-pattern completeness over node shapes", () => {
+    it("resolves a call to a classmethod through the class", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "app.py": [
+          "class C:",
+          "    @classmethod",
+          "    def build(cls):",
+          "        return 1",
+          "",
+          "def run():",
+          "    return C.build()",
+        ].join("\n"),
+      });
+      temp_dirs.push(temp_dir);
+      const cg = project.get_call_graph();
+      const file = file_paths["app.py"];
+
+      const build_node = find_caller_node(cg, "build", file);
+      expect(build_node?.name).toEqual("build");
+      const run_node = find_caller_node(cg, "run", file);
+      expect(
+        run_node?.enclosed_calls.map((c) => [c.name, c.resolutions.length])
+      ).toEqual([["build", 1]]);
+      expect(is_entry_point(cg, "build", file)).toEqual(false);
+    });
+
+    it("creates an edge from a property read to the getter method", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "acc.py": [
+          "class R:",
+          "    @property",
+          "    def data(self):",
+          "        return 1",
+          "",
+          "def run(r: R):",
+          "    return r.data",
+        ].join("\n"),
+      });
+      temp_dirs.push(temp_dir);
+      const cg = project.get_call_graph();
+      const file = file_paths["acc.py"];
+
+      const getter = find_caller_node(cg, "data", file);
+      const run_node = find_caller_node(cg, "run", file);
+      expect(
+        run_node?.enclosed_calls.map((c) => ({
+          name: c.name,
+          call_type: c.call_type,
+          targets: c.resolutions.map((r) => r.symbol_id),
+        }))
+      ).toEqual([
+        { name: "data", call_type: "method", targets: [getter!.symbol_id] },
+      ]);
+      expect(is_entry_point(cg, "data", file)).toEqual(false);
+    });
+
+    it("creates no edge from a plain attribute read", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "attr.py": [
+          "class R:",
+          "    def __init__(self):",
+          "        self.data = 1",
+          "",
+          "def run(r: R):",
+          "    return r.data",
+        ].join("\n"),
+      });
+      temp_dirs.push(temp_dir);
+      const cg = project.get_call_graph();
+      const run_node = find_caller_node(cg, "run", file_paths["attr.py"]);
+      expect(run_node?.enclosed_calls).toEqual([]);
+    });
+
+    it("puts every method of a class with a dotted base in the call graph and resolves super() through the bare base", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "base.py": [
+          "class Base:",
+          "    def visit_create_sequence(self, create):",
+          "        return 0",
+        ].join("\n"),
+        "pg.py": [
+          "from base import Base",
+          "",
+          "class PG(Base):",
+          "    def visit_create_sequence(self, create):",
+          "        return super().visit_create_sequence(create)",
+          "",
+          "class PGDotted(compiler.DDLCompiler):",
+          "    def visit_drop_sequence(self, drop):",
+          "        return self.visit_create_sequence(drop)",
+          "    def visit_create_sequence(self, create):",
+          "        return 1",
+        ].join("\n"),
+      });
+      temp_dirs.push(temp_dir);
+      const cg = project.get_call_graph();
+      const pg = file_paths["pg.py"];
+      const base = file_paths["base.py"];
+
+      const pg_visit = find_caller_node(cg, "visit_create_sequence", pg);
+      const base_visit = find_caller_node(cg, "visit_create_sequence", base);
+      // super() dispatch over-approximates like any polymorphic method call
+      // (call_resolver documents this), so the subclass's own override rides
+      // along with the base method the edge exists for.
+      expect(
+        pg_visit?.enclosed_calls.map((c) => ({
+          name: c.name,
+          targets: c.resolutions.map((r) => r.symbol_id),
+        }))
+      ).toEqual([
+        {
+          name: "visit_create_sequence",
+          targets: [base_visit!.symbol_id, pg_visit!.symbol_id],
+        },
+        { name: "super", targets: [] },
+      ]);
+
+      const dotted_drop = find_caller_node(cg, "visit_drop_sequence", pg);
+      expect(dotted_drop?.name).toEqual("visit_drop_sequence");
+      expect(
+        dotted_drop?.enclosed_calls.map((c) => [c.name, c.resolutions.length])
+      ).toEqual([["visit_create_sequence", 1]]);
+    });
+
+    it("indexes an Enum subclass with a mixin base as a single definition", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "colors.py": [
+          "from enum import Enum",
+          "",
+          "class Color(Enum, Mixin):",
+          "    RED = 1",
+          "",
+          "def pick():",
+          "    return Color.RED",
+        ].join("\n"),
+      });
+      temp_dirs.push(temp_dir);
+      const file = file_paths["colors.py"];
+      const index = project.get_index_single_file(file)!;
+
+      // Two query arms firing on one class built it twice and aborted the file
+      // on the duplicate export, taking every definition in it down.
+      expect([...index.enums.values()].map((e) => e.name)).toEqual(["Color"]);
+      expect([...index.classes.values()].map((c) => c.name)).toEqual([]);
+
+      const cg = project.get_call_graph();
+      expect(is_entry_point(cg, "pick", file)).toEqual(true);
+    });
+
+    it("puts a method behind any decorator shape in the call graph", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "shapes.py": [
+          "import cython",
+          "import functools",
+          "import util",
+          "",
+          "class Box:",
+          "    @cython.cfunc",
+          "    def dotted(self):",
+          "        return 1",
+          "",
+          "    @functools.lru_cache()",
+          "    def call_shaped(self):",
+          "        return 2",
+          "",
+          "    @lru_cache(maxsize=1)",
+          "    def call_shaped_with_args(self):",
+          "        return 3",
+          "",
+          "    @util.memoized_property",
+          "    def descriptor(self):",
+          "        return 4",
+          "",
+          "    @cython.cfunc",
+          "    def never_called(self):",
+          "        return 5",
+          "",
+          "def run(box):",
+          "    box.dotted()",
+          "    box.call_shaped()",
+          "    box.call_shaped_with_args()",
+          "    return box.descriptor",
+        ].join("\n"),
+      });
+      temp_dirs.push(temp_dir);
+      const cg = project.get_call_graph();
+      const file = file_paths["shapes.py"];
+
+      // Each decorated method exists as a graph node — before this family a
+      // dotted or call-shaped decorator erased the method entirely.
+      expect(
+        ["dotted", "call_shaped", "call_shaped_with_args", "descriptor", "never_called"].map(
+          (name) => find_caller_node(cg, name, file)?.name
+        )
+      ).toEqual([
+        "dotted",
+        "call_shaped",
+        "call_shaped_with_args",
+        "descriptor",
+        "never_called",
+      ]);
+
+      // The uncalled sibling is the control: the calls below are what clears
+      // the others, not the mere fact that they are methods.
+      expect(is_entry_point(cg, "never_called", file)).toEqual(true);
     });
   });
 });

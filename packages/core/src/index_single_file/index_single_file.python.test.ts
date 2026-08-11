@@ -351,46 +351,37 @@ result = data['key'].attribute
       }
     });
 
-    it("should handle self and cls in property chains", () => {
+    it("reads self and cls chains and mints nothing for a write target", () => {
       const code = `
 class MyClass:
     def method(self):
         self.instance_var = 42
         self.prop.nested.value = 10
+        return self.readable
 
     @classmethod
     def class_method(cls):
         cls.class_var = "test"
-        cls.prop.value = 20
+        return cls.readable
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
       const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const result = build_index_single_file(parsed_file, tree, "python");
 
-      const member_accesses = result.references.filter(
-        (ref): ref is PropertyAccessReference => ref.kind === "property_access"
-      );
+      const member_reads = result.references
+        .filter(
+          (ref): ref is PropertyAccessReference => ref.kind === "property_access"
+        )
+        .map((ref) => ({ name: ref.name, chain: ref.property_chain }));
 
-      // Check self.instance_var
-      const self_access = member_accesses.find(
-        (ref) => ref.name === "instance_var"
-      );
-      expect(self_access).toBeDefined();
-      if (self_access?.property_chain) {
-        expect(self_access.property_chain).toContain("self");
-        expect(self_access.property_chain).toContain("instance_var");
-      }
-
-      // Check cls.class_var
-      const cls_access = member_accesses.find(
-        (ref) => ref.name === "class_var"
-      );
-      expect(cls_access).toBeDefined();
-      if (cls_access?.property_chain) {
-        expect(cls_access.property_chain).toContain("cls");
-        expect(cls_access.property_chain).toContain("class_var");
-      }
+      // A write invokes the setter, so `instance_var` and `class_var` mint no
+      // read; `self.prop` is read on the way to writing its member.
+      expect(member_reads).toEqual([
+        { name: "prop", chain: ["self", "prop"] },
+        { name: "readable", chain: ["self", "readable"] },
+        { name: "readable", chain: ["cls", "readable"] },
+      ]);
     });
   });
 
@@ -1274,20 +1265,14 @@ class User:
           );
         }
 
-        // Verify @property decorated function is registered as a property (not a method)
-        const property_def = user_class.properties.find(
-          (p) => p.name === "name",
-        );
-        if (property_def) {
-          expect(property_def.kind).toBe("property");
-          expect(property_def.name).toBe("name");
-          expect(property_def.location.file_path).toBe("test.py");
-          expect(property_def.readonly).toBe(true);
-
-          // Verify @property decorator is attached
-          expect(property_def.decorators.length).toBeGreaterThanOrEqual(1);
-          expect(property_def.decorators.some((d: any) => d.name === "property")).toBe(true);
-        }
+        // A @property-decorated def is a getter method, never a data property
+        expect(
+          user_class.properties.find((p) => p.name === "name")
+        ).toBeUndefined();
+        const getter = user_class.methods.find((m) => m.name === "name")!;
+        expect(getter.kind).toBe("method");
+        expect(getter.accessor_kind).toBe("getter");
+        expect(getter.decorators!.map((d) => d.name)).toContain("property");
 
         // Verify @staticmethod decorated method
         const static_method = user_class.methods.find(
@@ -2602,6 +2587,257 @@ class Factory:
       const fn = Array.from(index.functions.values()).find(f => f.name === "no_doc");
       expect(fn).toBeDefined();
       expect(fn!.docstring).toBeUndefined();
+    });
+  });
+
+  describe("Superclass shapes", () => {
+    function class_summary(code: string) {
+      const tree = parser.parse(code);
+      const parsed = create_parsed_file(code, "test.py" as FilePath, tree, "python");
+      const index = build_index_single_file(parsed, tree, "python");
+      return Array.from(index.classes.values()).map((c) => ({
+        name: c.name,
+        extends: c.extends,
+        methods: c.methods.map((m) => m.name),
+      }));
+    }
+
+    it("records the class and every method for a bare superclass", () => {
+      expect(
+        class_summary("class PG(Base):\n    def visit(self, c):\n        return 1\n")
+      ).toEqual([{ name: "PG", extends: ["Base"], methods: ["visit"] }]);
+    });
+
+    it("records the class and every method for a dotted superclass", () => {
+      expect(
+        class_summary(
+          "class PGDDLCompiler(compiler.DDLCompiler):\n    def visit_create_sequence(self, c):\n        return 1\n    def visit_drop_sequence(self, d):\n        return 2\n"
+        )
+      ).toEqual([
+        {
+          name: "PGDDLCompiler",
+          extends: ["compiler.DDLCompiler"],
+          methods: ["visit_create_sequence", "visit_drop_sequence"],
+        },
+      ]);
+    });
+
+    it("records the class and every method for a generic superclass", () => {
+      expect(
+        class_summary("class Gen(Base[T]):\n    def visit(self, c):\n        return 1\n")
+      ).toEqual([{ name: "Gen", extends: ["Base"], methods: ["visit"] }]);
+    });
+
+    it("records the class and every method for a dotted generic superclass", () => {
+      expect(
+        class_summary(
+          "class Gen(mod.Base[T]):\n    def visit(self, c):\n        return 1\n"
+        )
+      ).toEqual([{ name: "Gen", extends: ["mod.Base"], methods: ["visit"] }]);
+    });
+
+    it("records the class and every method with no superclass", () => {
+      expect(
+        class_summary("class Plain:\n    def visit(self, c):\n        return 1\n")
+      ).toEqual([{ name: "Plain", extends: [], methods: ["visit"] }]);
+    });
+
+    it("keeps a plain class nested inside an Enum body a class with its methods", () => {
+      const code = [
+        "from enum import Enum",
+        "class Color(Enum):",
+        "    RED = 1",
+        "    class Meta:",
+        "        def describe(self):",
+        "            return 'meta'",
+      ].join("\n");
+      expect(class_summary(code)).toEqual([
+        { name: "Meta", extends: [], methods: ["describe"] },
+      ]);
+    });
+
+    it("builds an interface for a generic Protocol base, keeping its methods and property signatures", () => {
+      const code = [
+        "from typing import Protocol, TypeVar",
+        "T = TypeVar('T')",
+        "class Repo(Protocol[T]):",
+        "    name: str",
+        "    def get(self, key: T) -> T: ...",
+      ].join("\n");
+      const tree = parser.parse(code);
+      const parsed = create_parsed_file(code, "test.py" as FilePath, tree, "python");
+      const index = build_index_single_file(parsed, tree, "python");
+      expect(Array.from(index.classes.values())).toEqual([]);
+      expect(
+        Array.from(index.interfaces.values()).map((i) => ({
+          name: i.name,
+          methods: i.methods?.map((m) => m.name) ?? [],
+          properties: i.properties?.map((p) => p.name) ?? [],
+        }))
+      ).toEqual([{ name: "Repo", methods: ["get"], properties: ["name"] }]);
+    });
+
+    it("keeps a plain class nested inside a Protocol body a class with its methods", () => {
+      const code = [
+        "from typing import Protocol",
+        "class P(Protocol):",
+        "    class Inner:",
+        "        def m(self):",
+        "            return 1",
+      ].join("\n");
+      const tree = parser.parse(code);
+      const parsed = create_parsed_file(code, "test.py" as FilePath, tree, "python");
+      const index = build_index_single_file(parsed, tree, "python");
+      expect(
+        Array.from(index.classes.values()).map((c) => ({
+          name: c.name,
+          methods: c.methods.map((m) => m.name),
+        }))
+      ).toEqual([{ name: "Inner", methods: ["m"] }]);
+      expect(
+        Array.from(index.interfaces.values()).map((i) => ({
+          name: i.name,
+          methods: i.methods?.map((m) => m.name) ?? [],
+        }))
+      ).toEqual([{ name: "P", methods: [] }]);
+    });
+
+    it("records a constructor for a decorated __init__", () => {
+      const code = [
+        "class Boxed:",
+        "    @log_calls",
+        "    def __init__(self, v):",
+        "        self.v = v",
+      ].join("\n");
+      const tree = parser.parse(code);
+      const parsed = create_parsed_file(code, "test.py" as FilePath, tree, "python");
+      const index = build_index_single_file(parsed, tree, "python");
+      const boxed = Array.from(index.classes.values())[0]!;
+      expect(boxed.constructors?.map((c) => c.name)).toEqual(["__init__"]);
+    });
+
+    it("opens exactly one scope for a decorated __init__ so a nested block still nests", () => {
+      const code = [
+        "class Boxed:",
+        "    @log_calls",
+        "    def __init__(self, v):",
+        "        if v:",
+        "            self.v = v",
+      ].join("\n");
+      const tree = parser.parse(code);
+      const parsed = create_parsed_file(code, "test.py" as FilePath, tree, "python");
+      const index = build_index_single_file(parsed, tree, "python");
+      expect(
+        Array.from(index.scopes.values()).map((s) => s.type)
+      ).toEqual(["module", "class", "constructor", "block"]);
+    });
+  });
+
+  describe("Accessor kinds", () => {
+    it("flags accessor_kind on property getter and setter definitions", () => {
+      const code = [
+        "class Box:",
+        "    @property",
+        "    def data(self):",
+        "        return 1",
+        "",
+        "    @data.setter",
+        "    def data(self, v):",
+        "        pass",
+        "",
+        "    def plain(self):",
+        "        return 2",
+      ].join("\n");
+      const tree = parser.parse(code);
+      const parsed = create_parsed_file(code, "test.py" as FilePath, tree, "python");
+      const index = build_index_single_file(parsed, tree, "python");
+      const box = Array.from(index.classes.values())[0]!;
+      expect(
+        box.methods.map((m) => ({ name: m.name, accessor_kind: m.accessor_kind }))
+      ).toEqual([
+        { name: "data", accessor_kind: "getter" },
+        { name: "data", accessor_kind: "setter" },
+        { name: "plain", accessor_kind: undefined },
+      ]);
+      expect(box.properties).toEqual([]);
+    });
+
+    it("flags a getter redefinition as a getter so it keeps the member slot", () => {
+      const code = [
+        "class Box:",
+        "    @property",
+        "    def data(self):",
+        "        return 1",
+        "",
+        "    @data.getter",
+        "    def data(self):",
+        "        return 2",
+      ].join("\n");
+      const tree = parser.parse(code);
+      const parsed = create_parsed_file(code, "test.py" as FilePath, tree, "python");
+      const index = build_index_single_file(parsed, tree, "python");
+      const box = Array.from(index.classes.values())[0]!;
+      expect(box.methods.map((m) => m.accessor_kind)).toEqual([
+        "getter",
+        "getter",
+      ]);
+    });
+
+    it("keeps a deleter out of the getter's member slot", () => {
+      const code = [
+        "class Box:",
+        "    @property",
+        "    def data(self):",
+        "        return 1",
+        "",
+        "    @data.deleter",
+        "    def data(self):",
+        "        pass",
+      ].join("\n");
+      const tree = parser.parse(code);
+      const parsed = create_parsed_file(code, "test.py" as FilePath, tree, "python");
+      const index = build_index_single_file(parsed, tree, "python");
+      const box = Array.from(index.classes.values())[0]!;
+      expect(
+        box.methods.map((m) => ({ name: m.name, accessor_kind: m.accessor_kind }))
+      ).toEqual([
+        { name: "data", accessor_kind: "getter" },
+        { name: "data", accessor_kind: "deleter" },
+      ]);
+    });
+
+    it("records the property-descriptor decorator family as getters", () => {
+      const code = [
+        "class Box:",
+        "    @functools.cached_property",
+        "    def cached(self):",
+        "        return 1",
+        "",
+        "    @util.memoized_property",
+        "    def memoized(self):",
+        "        return 2",
+        "",
+        "    @cache_readonly",
+        "    def readonly(self):",
+        "        return 3",
+        "",
+        "    @lru_cache(maxsize=1)",
+        "    def still_called(self):",
+        "        return 4",
+      ].join("\n");
+      const tree = parser.parse(code);
+      const parsed = create_parsed_file(code, "test.py" as FilePath, tree, "python");
+      const index = build_index_single_file(parsed, tree, "python");
+      const box = Array.from(index.classes.values())[0]!;
+      expect(
+        box.methods.map((m) => ({ name: m.name, accessor_kind: m.accessor_kind }))
+      ).toEqual([
+        { name: "cached", accessor_kind: "getter" },
+        { name: "memoized", accessor_kind: "getter" },
+        { name: "readonly", accessor_kind: "getter" },
+        // A memoizing decorator that keeps call syntax is not an accessor.
+        { name: "still_called", accessor_kind: undefined },
+      ]);
     });
   });
 });

@@ -32,29 +32,13 @@
         "end_column": 1
       },
       "child_ids": [
-        "method:<fixtures>/typescript/code/classes/basic_class.ts:6:14:9:6",
+        "constructor:<fixtures>/typescript/code/classes/basic_class.ts:6:14:9:6",
         "method:<fixtures>/typescript/code/classes/basic_class.ts:11:8:13:3"
-      ]
-    },
-    "method:<fixtures>/typescript/code/classes/basic_class.ts:6:14:9:6": {
-      "id": "method:<fixtures>/typescript/code/classes/basic_class.ts:6:14:9:6",
-      "parent_id": "class:<fixtures>/typescript/code/classes/basic_class.ts:5:19:14:1",
-      "name": "constructor",
-      "type": "method",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/classes/basic_class.ts",
-        "start_line": 6,
-        "start_column": 14,
-        "end_line": 9,
-        "end_column": 6
-      },
-      "child_ids": [
-        "constructor:<fixtures>/typescript/code/classes/basic_class.ts:6:14:9:6"
       ]
     },
     "constructor:<fixtures>/typescript/code/classes/basic_class.ts:6:14:9:6": {
       "id": "constructor:<fixtures>/typescript/code/classes/basic_class.ts:6:14:9:6",
-      "parent_id": "method:<fixtures>/typescript/code/classes/basic_class.ts:6:14:9:6",
+      "parent_id": "class:<fixtures>/typescript/code/classes/basic_class.ts:5:19:14:1",
       "name": "constructor",
       "type": "constructor",
       "location": {
@@ -98,6 +82,9 @@
       "generics": [],
       "extends": [],
       "is_exported": true,
+      "docstring": [
+        "/**\n * Basic class example for testing\n */"
+      ],
       "methods": [
         {
           "kind": "method",
@@ -205,7 +192,7 @@
               "optional": false
             }
           ],
-          "body_scope_id": "method:<fixtures>/typescript/code/classes/basic_class.ts:6:14:9:6"
+          "body_scope_id": "constructor:<fixtures>/typescript/code/classes/basic_class.ts:6:14:9:6"
         }
       ],
       "decorators": []
@@ -288,6 +275,31 @@
       },
       "scope_id": "method:<fixtures>/typescript/code/classes/basic_class.ts:11:8:13:3",
       "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/basic_class.ts",
+        "start_line": 12,
+        "start_column": 22,
+        "end_line": 12,
+        "end_column": 30
+      },
+      "scope_id": "method:<fixtures>/typescript/code/classes/basic_class.ts:11:8:13:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/classes/basic_class.ts",
+        "start_line": 12,
+        "start_column": 22,
+        "end_line": 12,
+        "end_column": 25
+      },
+      "property_chain": [
+        "this",
+        "name"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",

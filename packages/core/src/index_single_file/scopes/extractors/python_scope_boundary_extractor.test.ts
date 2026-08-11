@@ -19,8 +19,8 @@ describe("PythonScopeBoundaryExtractor", () => {
   });
 
   // Mirrors the pipeline: the scope processor passes the exact node the .scm query
-  // captures (a body `block` for classes, the inner `function_definition` for most
-  // defs, the outer `decorated_definition` for classmethods, the `lambda` node itself).
+  // captures (a body `block` for classes, the inner `function_definition` for
+  // defs — decorated or not — and the `lambda` node itself).
   function boundaries_for(
     code: string,
     scope_type: ScopeType,
@@ -480,7 +480,7 @@ describe("PythonScopeBoundaryExtractor", () => {
       expect(() =>
         extractor.extract_boundaries(statement, "function", FP)
       ).toThrow(
-        "Expected function_definition, lambda, or decorated_definition node, got expression_statement"
+        "Expected function_definition or lambda node, got expression_statement"
       );
     });
   });
@@ -511,30 +511,6 @@ describe("PythonScopeBoundaryExtractor", () => {
       });
     });
 
-    it("unwraps the decorated_definition captured for a classmethod", () => {
-      const boundaries = boundaries_for(
-        "class C:\n    @classmethod\n    def make(cls, x):\n        return x",
-        "method",
-        first_def_in_class
-      );
-
-      expect(boundaries).toEqual({
-        symbol_location: {
-          file_path: "test.py",
-          start_line: 3,
-          start_column: 9,
-          end_line: 3,
-          end_column: 12,
-        },
-        scope_location: {
-          file_path: "test.py",
-          start_line: 3,
-          start_column: 13,
-          end_line: 4,
-          end_column: 16,
-        },
-      });
-    });
   });
 
   describe("constructor scope", () => {
