@@ -1,7 +1,7 @@
 ---
 id: TASK-374
 title: "Make every Python query pattern complete over the node shapes its grammatical position admits"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-07-29 09:37"
 labels:
@@ -61,3 +61,61 @@ The builders already do the shape discrimination the queries are duplicating: `s
 - [ ] #10 `query_code_tree.test.ts`, `query_loader.test.ts`, `capture_handlers.*.test.ts`, `metadata_extractors.*.test.ts`, `references.test.ts` and `call_site_syntax.*.test.ts` stay green and the capture/receiver-consistency Stop hook passes.
 
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+
+## High-level summary
+
+Python's query patterns enumerated one node shape per grammatical position, so
+a position filled by any other shape erased the whole symbol: an
+attribute-superclass class lost itself and every method, a dotted or
+call-shaped decorator erased its method, and duplicate patterns triple-minted
+references. The queries now capture the complete syntactic unit and the
+builders discriminate — the capture-schema contract taken to its conclusion.
+
+One unconditional pattern captures every `class_definition`;
+`handle_definition_class` discriminates Enum and Protocol classes by reading
+the captured class's **own** bases (`classify_class_bases`, which also handles
+`Protocol[T]` subscripts). Discrimination moved out of the query deliberately:
+co-firing query discriminators built duplicate definitions and crashed whole
+files (`class Color(Enum, Mixin)` reproduced the same duplicate-export abort
+374.1 fixed for JavaScript, and sqlalchemy dropped 21 files to this class of
+crash at baseline). One decorated-method pattern accepts any decorator shape;
+`extract_decorators` reads bare, dotted and call-shaped decorators off the
+node; a classmethod maps to a class-bound (`static`) method — the previous
+`abstract` mapping suppressed its body scope and dropped every classmethod
+from the call graph. A `@property` def builds a getter **method** carrying
+`accessor_kind` (setter/deleter mark the non-getter accessor), so property
+reads resolve to the getter through the member index; `handle_definition_property`
+was deleted with its pattern — a deviation from this plan's step 7, forced by
+its own AC #6: the flat member index let the property definition shadow the
+method. The inert `self`/`cls` predicates now bind, and the duplicate scope,
+call, decorator and compatibility captures are gone.
+
+The fixture-corpus audit in `query_code_tree.test.ts` locks the invariants:
+every named definition node yields a definition capture at its name range, no
+audited capture family repeats at one byte range, and a Python byte range
+carries at most one definition-category capture. The audit is scoped to the
+families this family drove to zero; the residual cross-name collisions
+(`definition.field`+`definition.variable` on class-body assignments, the
+Python assignment-side member/property duplicates, and the TS same-name
+definition duplicates) are documented in the audit and deferred to a follow-up.
+
+Measured on the sqlalchemy corpus (fresh load): dropped files 21 → 18 and
+call-graph nodes 16,670 → 30,435 — the recovered symbols are the erased
+classes and methods this task existed to restore.
+
+## Hand-offs
+
+- AC #9: the dotted-`extends` parent link is filed as TASK-374.4
+  (`name_resolution`), naming the sqlalchemy `PGDDLCompiler` `super()` rows as
+  its consumer. The bare-base `super()` edge is asserted green now; the
+  qualified-base twin assertion lands with 374.4.
+- Python `@x.setter` methods now exist as definitions but attribute writes do
+  not resolve to setters, so setters are unreachable by construction — a
+  candidate for either write-reference resolution or a classifier extension,
+  recorded here rather than silently open.
+
+<!-- SECTION:NOTES:END -->
