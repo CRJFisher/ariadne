@@ -15,6 +15,7 @@ import type { ProcessingContext } from "../../scopes/processing_context";
 import { node_to_location } from "../../node_to_location";
 import type { HandlerRegistry } from "./handler_types";
 import {
+  classify_class_bases,
   create_class_id,
   extract_extends,
   extract_export_info,
@@ -77,10 +78,13 @@ export function handle_definition_class(
   // The query emits one capture per class whatever its base shapes; Enum and
   // Protocol classes are discriminated here so a class builds exactly one
   // definition (a co-firing query discriminator would forge duplicate exports).
-  if (find_containing_protocol(capture)) {
+  // Discrimination reads the captured class's own bases only — a walk-up
+  // helper would re-kind a plain class nested inside an Enum/Protocol body.
+  const base_kind = classify_class_bases(capture.node.parent);
+  if (base_kind === "interface") {
     return handle_definition_interface(capture, builder, context);
   }
-  if (find_containing_enum(capture)) {
+  if (base_kind === "enum") {
     return handle_definition_enum(capture, builder, context);
   }
 

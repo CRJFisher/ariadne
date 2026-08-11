@@ -2650,6 +2650,50 @@ class Factory:
         class_summary("class Plain:\n    def visit(self, c):\n        return 1\n")
       ).toEqual([{ name: "Plain", extends: [], methods: ["visit"] }]);
     });
+
+    it("keeps a plain class nested inside an Enum body a class with its methods", () => {
+      const code = [
+        "from enum import Enum",
+        "class Color(Enum):",
+        "    RED = 1",
+        "    class Meta:",
+        "        def describe(self):",
+        "            return 'meta'",
+      ].join("\n");
+      expect(class_summary(code)).toEqual([
+        { name: "Meta", extends: [], methods: ["describe"] },
+      ]);
+    });
+
+    it("builds an interface for a generic Protocol base", () => {
+      const code = [
+        "from typing import Protocol, TypeVar",
+        "T = TypeVar('T')",
+        "class Repo(Protocol[T]):",
+        "    def get(self, key: T) -> T: ...",
+      ].join("\n");
+      const tree = parser.parse(code);
+      const parsed = create_parsed_file(code, "test.py" as FilePath, tree, "python");
+      const index = build_index_single_file(parsed, tree, "python");
+      expect(Array.from(index.classes.values())).toEqual([]);
+      expect(
+        Array.from(index.interfaces.values()).map((i) => i.name)
+      ).toEqual(["Repo"]);
+    });
+
+    it("records a constructor for a decorated __init__", () => {
+      const code = [
+        "class Boxed:",
+        "    @log_calls",
+        "    def __init__(self, v):",
+        "        self.v = v",
+      ].join("\n");
+      const tree = parser.parse(code);
+      const parsed = create_parsed_file(code, "test.py" as FilePath, tree, "python");
+      const index = build_index_single_file(parsed, tree, "python");
+      const boxed = Array.from(index.classes.values())[0]!;
+      expect(boxed.constructors?.map((c) => c.name)).toEqual(["__init__"]);
+    });
   });
 
   describe("Accessor kinds", () => {
@@ -2679,6 +2723,29 @@ class Factory:
         { name: "plain", accessor_kind: undefined },
       ]);
       expect(box.properties).toEqual([]);
+    });
+
+    it("keeps a deleter out of the getter's member slot", () => {
+      const code = [
+        "class Box:",
+        "    @property",
+        "    def data(self):",
+        "        return 1",
+        "",
+        "    @data.deleter",
+        "    def data(self):",
+        "        pass",
+      ].join("\n");
+      const tree = parser.parse(code);
+      const parsed = create_parsed_file(code, "test.py" as FilePath, tree, "python");
+      const index = build_index_single_file(parsed, tree, "python");
+      const box = Array.from(index.classes.values())[0]!;
+      expect(
+        box.methods.map((m) => ({ name: m.name, accessor_kind: m.accessor_kind }))
+      ).toEqual([
+        { name: "data", accessor_kind: "getter" },
+        { name: "data", accessor_kind: "setter" },
+      ]);
     });
   });
 });

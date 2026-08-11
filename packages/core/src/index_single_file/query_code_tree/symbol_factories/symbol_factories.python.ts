@@ -126,6 +126,45 @@ export function find_containing_class(
   return undefined;
 }
 
+/**
+ * Terminal name of a superclass entry, whatever shape it takes: `Base`,
+ * `mod.Base`, `Base[T]`, `mod.Base[T]`.
+ */
+function base_name_of(child: SyntaxNode): string | undefined {
+  if (child.type === "identifier") {
+    return child.text;
+  }
+  if (child.type === "attribute") {
+    return child.childForFieldName?.("attribute")?.text;
+  }
+  if (child.type === "subscript") {
+    const value = child.childForFieldName?.("value");
+    if (value) return base_name_of(value);
+  }
+  return undefined;
+}
+
+const ENUM_BASES = /^(Enum|IntEnum|Flag|IntFlag|StrEnum)$/;
+
+/**
+ * Discriminate a class_definition node by its own bases: an Enum subclass, a
+ * Protocol, or a plain class. Reads only the given node — never ancestors — so
+ * a plain class nested inside an Enum/Protocol body stays a plain class.
+ */
+export function classify_class_bases(
+  class_def: SyntaxNode | null | undefined
+): "enum" | "interface" | undefined {
+  if (class_def?.type !== "class_definition") return undefined;
+  const superclasses = class_def.childForFieldName?.("superclasses");
+  for (const child of superclasses?.children ?? []) {
+    const name = base_name_of(child);
+    if (!name) continue;
+    if (ENUM_BASES.test(name)) return "enum";
+    if (name === "Protocol") return "interface";
+  }
+  return undefined;
+}
+
 export function find_containing_enum(
   capture: CaptureNode
 ): SymbolId | undefined {
@@ -134,28 +173,12 @@ export function find_containing_enum(
   // Traverse up until we find a class_definition
   while (node) {
     if (node.type === "class_definition") {
-      // Check if it inherits from Enum
-      const superclasses = node.childForFieldName?.("superclasses");
-      if (superclasses) {
-        const has_enum_base = superclasses.children?.some((child) => {
-          if (child.type === "identifier") {
-            return /^(Enum|IntEnum|Flag|IntFlag|StrEnum)$/.test(child.text);
-          } else if (child.type === "attribute") {
-            const attr = child.childForFieldName?.("attribute");
-            return (
-              attr && /^(Enum|IntEnum|Flag|IntFlag|StrEnum)$/.test(attr.text)
-            );
-          }
-          return false;
-        });
-
-        if (has_enum_base) {
-          const name_node = node.childForFieldName?.("name");
-          if (name_node) {
-            const file_path = capture.location.file_path;
-            const enum_name = name_node.text as SymbolName;
-            return enum_symbol(enum_name, node_to_location(name_node, file_path));
-          }
+      if (classify_class_bases(node) === "enum") {
+        const name_node = node.childForFieldName?.("name");
+        if (name_node) {
+          const file_path = capture.location.file_path;
+          const enum_name = name_node.text as SymbolName;
+          return enum_symbol(enum_name, node_to_location(name_node, file_path));
         }
       }
     }
@@ -176,29 +199,15 @@ export function find_containing_protocol(
   // Traverse up until we find a class_definition
   while (node) {
     if (node.type === "class_definition") {
-      // Check if it inherits from Protocol
-      const superclasses = node.childForFieldName?.("superclasses");
-      if (superclasses) {
-        const has_protocol_base = superclasses.children?.some((child) => {
-          if (child.type === "identifier") {
-            return child.text === "Protocol";
-          } else if (child.type === "attribute") {
-            const attr = child.childForFieldName?.("attribute");
-            return attr && attr.text === "Protocol";
-          }
-          return false;
-        });
-
-        if (has_protocol_base) {
-          const name_node = node.childForFieldName?.("name");
-          if (name_node) {
-            const file_path = capture.location.file_path;
-            const protocol_name = name_node.text as SymbolName;
-            return interface_symbol(
-              protocol_name,
-              node_to_location(name_node, file_path)
-            );
-          }
+      if (classify_class_bases(node) === "interface") {
+        const name_node = node.childForFieldName?.("name");
+        if (name_node) {
+          const file_path = capture.location.file_path;
+          const protocol_name = name_node.text as SymbolName;
+          return interface_symbol(
+            protocol_name,
+            node_to_location(name_node, file_path)
+          );
         }
       }
     }
@@ -679,7 +688,14 @@ export function determine_accessor_kind(
   if (decorators.includes("property" as SymbolName)) {
     return "getter";
   }
-  if (decorators.some((name) => name.endsWith(".setter"))) {
+  // A deleter is reported as "setter": both are non-getter accessors that must
+  // never claim the member slot a getter holds, and no consumer distinguishes
+  // the two.
+  if (
+    decorators.some(
+      (name) => name.endsWith(".setter") || name.endsWith(".deleter")
+    )
+  ) {
     return "setter";
   }
   return undefined;

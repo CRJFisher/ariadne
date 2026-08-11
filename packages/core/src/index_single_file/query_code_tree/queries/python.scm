@@ -221,6 +221,18 @@
   )
 )
 
+; Decorated constructor
+(class_definition
+  body: (block
+    (decorated_definition
+      definition: (function_definition
+        name: (identifier) @definition.constructor
+        (#eq? @definition.constructor "__init__")
+      ) @scope.constructor
+    )
+  )
+)
+
 ; Decorated methods — any decorator shape (@property, @staticmethod,
 ; @cython.cfunc, @functools.lru_cache(), @mod.dec(arg)). The builder reads the
 ; decorator list off the node (extract_decorators / determine_method_type /
@@ -730,19 +742,12 @@
 )
 
 ; Decorators - capture for decorator tracking. A call-shaped decorator's callee
-; is already captured by the general call patterns; only the bare-identifier and
-; dotted forms need their own reference capture.
+; is already captured by the general call patterns and a dotted decorator by
+; the general attribute pattern; only the bare-identifier form needs its own
+; reference capture.
 (decorated_definition
   (decorator
     (identifier) @reference.call
-  )
-)
-
-(decorated_definition
-  (decorator
-    (attribute
-      attribute: (identifier) @reference.property
-    )
   )
 )
 

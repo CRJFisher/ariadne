@@ -18,11 +18,11 @@ import type {
 
 /**
  * Record a member in a name→symbol member map, giving a getter precedence over a
- * same-named setter. A `get value()` and `set value()` are distinct definitions
- * sharing one name; a bare read (`obj.value`) resolves through this map to invoke
- * the getter, so the getter must win the slot regardless of declaration order. A
- * setter therefore never shadows an existing member. `accessor_kind` is JS/TS-only,
- * so other languages keep plain last-write-wins semantics.
+ * same-named setter. A getter and setter (JS/TS `get value()`/`set value()`,
+ * Python `@property`/`@value.setter`) are distinct definitions sharing one name;
+ * a bare read (`obj.value`) resolves through this map to invoke the getter, so
+ * the getter must win the slot regardless of declaration order. A setter
+ * therefore never shadows an existing member.
  */
 export function set_member_symbol(
   members: Map<SymbolName, SymbolId>,
