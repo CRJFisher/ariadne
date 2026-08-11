@@ -1448,4 +1448,60 @@ const result = obj.getSomething();
       expect(variable.docstring).toContain("@type {Service}");
     });
   });
+
+  describe("Wildcard re-exports", () => {
+    function index_ts_imports(code: string) {
+      const index = build_index_from_code(code);
+      return Array.from(index.imported_symbols.values()).map((i) => ({
+        name: i.name,
+        import_path: i.import_path,
+        import_kind: i.import_kind,
+        original_name: i.original_name,
+        export: i.export,
+      }));
+    }
+
+    it("records a wildcard re-export edge for export * from", () => {
+      expect(index_ts_imports("export * from './m.js';")).toEqual([
+        {
+          name: "m",
+          import_path: "./m.js",
+          import_kind: "wildcard",
+          original_name: undefined,
+          export: { is_reexport: true },
+        },
+      ]);
+    });
+
+    it("derives the same wildcard name with and without a specifier extension", () => {
+      expect(index_ts_imports("export * from './m';")[0].name).toEqual("m");
+      expect(index_ts_imports("export * from './m.js';")[0].name).toEqual("m");
+    });
+
+    it("binds the alias as a namespace object for export * as ns from", () => {
+      expect(index_ts_imports("export * as ns from './m.js';")).toEqual([
+        {
+          name: "ns",
+          import_path: "./m.js",
+          import_kind: "namespace",
+          original_name: undefined,
+          export: {},
+        },
+      ]);
+    });
+
+    it("carries the export metadata onto a namespace import re-exported by name", () => {
+      expect(
+        index_ts_imports("import * as X from './m';\nexport { X };")
+      ).toEqual([
+        {
+          name: "X",
+          import_path: "./m",
+          import_kind: "namespace",
+          original_name: undefined,
+          export: { export_name: undefined, is_reexport: false },
+        },
+      ]);
+    });
+  });
 });

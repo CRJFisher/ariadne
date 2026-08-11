@@ -538,4 +538,214 @@ pub fn run() -> i32 {
       ]);
     });
   });
+
+  describe("glob and pub use re-export edges", () => {
+    function expect_rust_call_resolves_to(
+      project: Project,
+      caller_file: FilePath,
+      call_name: string,
+      target_file: FilePath
+    ): void {
+      const target_def = project.definitions
+        .get_definitions_by_name(call_name as SymbolName)
+        .find(
+          (def) =>
+            def.location.file_path === target_file && def.kind !== "import"
+        );
+      expect(target_def).not.toBeUndefined();
+
+      const call = project.resolutions
+        .get_calls_for_file(caller_file)
+        .find((c) => c.name === (call_name as SymbolName));
+      expect(call).toBeDefined();
+      expect(call!.resolution_failure).toBeUndefined();
+      expect(call!.resolutions.map((r) => r.symbol_id)).toEqual([
+        target_def!.symbol_id,
+      ]);
+    }
+
+    it("binds a name reached through an intra-crate glob import", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "src/lib.rs": `pub mod transaction;
+pub mod postgres;
+`,
+        "src/transaction.rs": `pub fn begin_ansi_transaction_sql(depth: usize) -> String {
+    format!("BEGIN {}", depth)
+}
+`,
+        "src/postgres.rs": `use crate::transaction::*;
+
+pub fn begin(depth: usize) -> String {
+    begin_ansi_transaction_sql(depth)
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      expect_rust_call_resolves_to(
+        project,
+        file_paths["src/postgres.rs"],
+        "begin_ansi_transaction_sql",
+        file_paths["src/transaction.rs"]
+      );
+    });
+
+    it("binds the same glob name in a second module of the crate", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "src/lib.rs": `pub mod transaction;
+pub mod postgres;
+pub mod mysql;
+`,
+        "src/transaction.rs": `pub fn begin_ansi_transaction_sql(depth: usize) -> String {
+    format!("BEGIN {}", depth)
+}
+`,
+        "src/postgres.rs": `use crate::transaction::*;
+
+pub fn begin(depth: usize) -> String {
+    begin_ansi_transaction_sql(depth)
+}
+`,
+        "src/mysql.rs": `use crate::transaction::*;
+
+pub fn begin(depth: usize) -> String {
+    begin_ansi_transaction_sql(depth)
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      expect_rust_call_resolves_to(
+        project,
+        file_paths["src/postgres.rs"],
+        "begin_ansi_transaction_sql",
+        file_paths["src/transaction.rs"]
+      );
+      expect_rust_call_resolves_to(
+        project,
+        file_paths["src/mysql.rs"],
+        "begin_ansi_transaction_sql",
+        file_paths["src/transaction.rs"]
+      );
+    });
+
+    it("does not surface a private item through a glob import", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "src/lib.rs": `pub mod transaction;
+pub mod postgres;
+`,
+        "src/transaction.rs": `pub fn public_helper() -> usize {
+    private_helper()
+}
+
+fn private_helper() -> usize {
+    1
+}
+`,
+        "src/postgres.rs": `use crate::transaction::*;
+
+pub fn run() -> usize {
+    private_helper()
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const call = project.resolutions
+        .get_calls_for_file(file_paths["src/postgres.rs"])
+        .find((c) => c.name === ("private_helper" as SymbolName));
+      expect(call).toBeDefined();
+      expect(call!.resolutions.length).toEqual(0);
+    });
+
+    it("resolves a named import through one pub use hop", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "src/lib.rs": `pub mod api;
+pub mod deep;
+pub mod app;
+`,
+        "src/deep.rs": `pub fn helper(x: i32) -> i32 {
+    x + 1
+}
+`,
+        "src/api.rs": `pub use crate::deep::helper;
+`,
+        "src/app.rs": `use crate::api::helper;
+
+pub fn run() -> i32 {
+    helper(1)
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      expect_rust_call_resolves_to(
+        project,
+        file_paths["src/app.rs"],
+        "helper",
+        file_paths["src/deep.rs"]
+      );
+    });
+
+    it("resolves a named import through two chained pub use hops", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "src/lib.rs": `pub mod api;
+pub mod mid;
+pub mod deep;
+pub mod app;
+`,
+        "src/deep.rs": `pub fn helper2(x: i32) -> i32 {
+    x + 2
+}
+`,
+        "src/mid.rs": `pub use crate::deep::helper2;
+`,
+        "src/api.rs": `pub use crate::mid::helper2;
+`,
+        "src/app.rs": `use crate::api::helper2;
+
+pub fn run2() -> i32 {
+    helper2(1)
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      expect_rust_call_resolves_to(
+        project,
+        file_paths["src/app.rs"],
+        "helper2",
+        file_paths["src/deep.rs"]
+      );
+    });
+
+    it("binds a name reached through a pub use glob re-export", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "src/lib.rs": `pub mod inner;
+pub mod facade;
+pub mod app;
+`,
+        "src/inner.rs": `pub fn facade_fn(x: i32) -> i32 {
+    x * 2
+}
+`,
+        "src/facade.rs": `pub use crate::inner::*;
+`,
+        "src/app.rs": `use crate::facade::facade_fn;
+
+pub fn run3() -> i32 {
+    facade_fn(2)
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      expect_rust_call_resolves_to(
+        project,
+        file_paths["src/app.rs"],
+        "facade_fn",
+        file_paths["src/inner.rs"]
+      );
+    });
+  });
 });

@@ -85,6 +85,26 @@ describe("ImportGraph", () => {
       expect(graph.get_dependents(file3)).toEqual(new Set([file1]));
     });
 
+    it("records a dependent edge for a wildcard import", () => {
+      const barrel = "barrel.ts" as FilePath;
+      const leaf = "leaf.ts" as FilePath;
+
+      graph.update_file(
+        barrel,
+        [
+          {
+            ...create_import_definition(leaf, barrel, "leaf"),
+            import_kind: "wildcard",
+            export: { is_reexport: true },
+          },
+        ],
+        TEST_LANGUAGE,
+        MOCK_ROOT_FOLDER
+      );
+
+      expect(graph.get_dependents(leaf)).toEqual(new Set([barrel]));
+    });
+
     it("drops edges to files no longer imported after an update", () => {
       const file1 = "file1.ts" as FilePath;
       const file2 = "file2.ts" as FilePath;
@@ -495,6 +515,26 @@ describe("ImportGraph", () => {
       ]);
       const caller_file = "/project/caller.py" as FilePath;
       const import_def = create_python_module_import(caller_file, "train_model");
+
+      graph.update_file(caller_file, [import_def], "python", root_folder);
+
+      expect(
+        graph.get_submodule_import_path(import_def.symbol_id)
+      ).toBeUndefined();
+    });
+
+    it("does not probe for a submodule path on a wildcard import", () => {
+      const root_folder = create_python_tree("/project", [
+        "training/__init__.py",
+        "training/pipeline.py",
+        "caller.py",
+      ]);
+      const caller_file = "/project/caller.py" as FilePath;
+      const import_def: ImportDefinition = {
+        ...create_python_module_import(caller_file, "pipeline"),
+        import_kind: "wildcard",
+        export: { is_reexport: true },
+      };
 
       graph.update_file(caller_file, [import_def], "python", root_folder);
 

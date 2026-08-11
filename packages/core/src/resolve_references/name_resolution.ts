@@ -109,12 +109,45 @@ function resolve_scope_recursive(
 
   const import_defs = context.imports.get_scope_imports(scope_id);
 
+  // @language rust,python
+  // A wildcard import (`use m::*`, `from m import *`) binds every public name
+  // of its module into this scope under no name of its own. Layered first so an
+  // explicit import (below) and a local definition both shadow it. JS/TS is
+  // excluded: its only wildcard form, `export * from`, binds nothing locally —
+  // that surface is served by the ExportRegistry fan-out instead.
+  const language = context.languages.get(file_path);
+  if (language === "rust" || language === "python") {
+    for (const imp_def of import_defs) {
+      if (imp_def.import_kind !== "wildcard") {
+        continue;
+      }
+      const source_file = context.imports.get_resolved_import_path(
+        imp_def.symbol_id
+      );
+      if (!source_file) {
+        continue;
+      }
+      for (const [name, symbol_id] of context.exports.resolve_all_exports(
+        source_file,
+        context.languages,
+        context.root_folder
+      )) {
+        scope_resolutions.set(name, symbol_id);
+      }
+    }
+  }
+
   // Names bound to a CommonJS default-export class by the import pass below; the
   // local-definition pass must not revert them to the raw import symbol.
   const require_default_rebinds = new Set<SymbolName>();
 
   for (const imp_def of import_defs) {
     let resolved: SymbolId | null = null;
+
+    // Wildcard surfaces are layered above; the wildcard's own name never binds.
+    if (imp_def.import_kind === "wildcard") {
+      continue;
+    }
 
     if (imp_def.import_kind === "namespace") {
       resolved = imp_def.symbol_id;

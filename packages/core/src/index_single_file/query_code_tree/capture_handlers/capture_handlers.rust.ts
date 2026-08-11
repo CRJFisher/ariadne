@@ -575,32 +575,38 @@ export function handle_definition_import(
     }
   }
 
+  // Any visibility modifier (`pub`, `pub(crate)`, …) makes every name the
+  // statement binds re-importable from this module.
+  const is_reexport =
+    node.type === "use_declaration" &&
+    (node.children ?? []).some((c) => c.type === "visibility_modifier");
+  const export_metadata = is_reexport ? { is_reexport: true } : undefined;
+
   // Create import definitions for each extracted import
   for (const import_info of imports) {
+    const name = import_info.is_wildcard
+      ? wildcard_binding_name(import_info.module_path)
+      : import_info.name;
     builder.add_import({
-      symbol_id: `import:${capture.location.file_path}:${capture.location.start_line}:${import_info.name}` as SymbolId,
-      name: import_info.name,
+      symbol_id: `import:${capture.location.file_path}:${capture.location.start_line}:${name}` as SymbolId,
+      name,
       location: capture.location,
       scope_id: context.get_scope_id(capture.location),
       import_path: import_info.module_path || create_module_path(import_info.name),
       original_name: import_info.original_name,
-      import_kind: import_info.is_wildcard ? "namespace" : "named",
+      import_kind: import_info.is_wildcard ? "wildcard" : "named",
+      export: export_metadata,
     });
   }
 }
 
-export function handle_import_reexport(
-  _capture: CaptureNode,
-  _builder: DefinitionBuilder,
-  _context: ProcessingContext
-): void {
-  // Re-exports are pub use statements
-  // They are also captured by definition.import, which will add them as imports
-  // The presence of visibility_modifier makes them exported
-  // We can mark them as exported imports in definition.import handler
-
-  // For now, we handle re-exports in the definition.import handler
-  // by checking for visibility_modifier on the use_declaration node
+/**
+ * Last `::` segment of a wildcard edge's module path — a display name only,
+ * never matched against a call terminal.
+ */
+function wildcard_binding_name(module_path: string | undefined): SymbolName {
+  const last_segment = module_path?.split("::").filter(Boolean).pop();
+  return (last_segment ?? "*") as SymbolName;
 }
 
 // ============================================================================
@@ -701,7 +707,6 @@ export const RUST_HANDLERS: HandlerRegistry = {
 
   // Imports
   "definition.import": handle_definition_import,
-  "import.reexport": handle_import_reexport,
 
   // Anonymous functions
   "definition.anonymous_function": handle_definition_anonymous_function,

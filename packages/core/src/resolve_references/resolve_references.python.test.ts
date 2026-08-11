@@ -224,7 +224,8 @@ def run():
       );
       expect(app_scope).not.toBeUndefined();
 
-      // The wildcard binds the name "*", not "_make_block".
+      // The wildcard layers only _lib's public surface; _make_block is
+      // is_exported: false and never enters it.
       const resolved = project.resolutions.resolve(
         app_scope!.id,
         "_make_block" as SymbolName
@@ -642,5 +643,187 @@ describe("Accessor pair ahead of other members", () => {
       connect?.enclosed_calls.map((c) => [c.name, c.resolutions.length])
     ).toEqual([["dialect", 1]]);
     expect(is_entry_point(call_graph, "dialect", file)).toEqual(false);
+  });
+});
+
+describe("Python star imports across files", () => {
+  function expect_python_call_resolves_to(
+    project: Project,
+    caller_file: FilePath,
+    caller_name: string,
+    call_name: string,
+    target_file: FilePath
+  ): void {
+    const call_graph = project.get_call_graph();
+    const caller_node = find_caller_node(call_graph, caller_name, caller_file);
+    const call = caller_node!.enclosed_calls.find(
+      (c) => c.name === (call_name as SymbolName)
+    );
+    expect(call).toBeDefined();
+    expect(call!.resolution_failure).toBeUndefined();
+    expect(call!.resolutions.length).toEqual(1);
+    const target = call_graph.nodes.get(call!.resolutions[0].symbol_id);
+    expect(target?.location.file_path).toEqual(target_file);
+    expect(target?.name).toEqual(call_name as SymbolName);
+  }
+
+  it("binds a module-scope star import to the target module's public surface", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "lib.py": `def public_helper(x):
+    return x + 1
+`,
+      "app.py": `from lib import *
+
+def run():
+    return public_helper(1)
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect_python_call_resolves_to(
+      project,
+      file_paths["app.py"],
+      "run",
+      "public_helper",
+      file_paths["lib.py"]
+    );
+
+    const call_graph = project.get_call_graph();
+    expect(is_entry_point(call_graph, "public_helper", file_paths["lib.py"])).toEqual(
+      false
+    );
+  });
+
+  it("indexes six star imports in one file without a duplicate-export error", async () => {
+    const init_content = `from django.forms.boundfield import *
+from django.forms.fields import *
+from django.forms.forms import *
+from django.forms.formsets import *
+from django.forms.models import *
+from django.forms.widgets import *
+`;
+    const { project, temp_dir, file_paths } = await setup_project({
+      "django/forms/boundfield.py": `def bound_field():
+    return 1
+`,
+      "django/forms/fields.py": `def char_field():
+    return 2
+`,
+      "django/forms/forms.py": `def base_form():
+    return 3
+`,
+      "django/forms/formsets.py": `def formset_factory():
+    return 4
+`,
+      "django/forms/models.py": `def model_form():
+    return 5
+`,
+      "django/forms/widgets.py": `def text_input():
+    return 6
+`,
+      "django/forms/__init__.py": init_content,
+      "app.py": `from django.forms import char_field, text_input
+
+def run():
+    return char_field() + text_input()
+`,
+      "star_app.py": `from django.forms import *
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect(() =>
+      project.update_file(file_paths["django/forms/__init__.py"], init_content)
+    ).not.toThrow();
+
+    expect_python_call_resolves_to(
+      project,
+      file_paths["app.py"],
+      "run",
+      "char_field",
+      file_paths["django/forms/fields.py"]
+    );
+    expect_python_call_resolves_to(
+      project,
+      file_paths["app.py"],
+      "run",
+      "text_input",
+      file_paths["django/forms/widgets.py"]
+    );
+
+    // A consumer starring the package sees all six forwarded surfaces, and no
+    // binding for the star edges' own module names.
+    const star_scope = project.scopes.get_file_root_scope(
+      file_paths["star_app.py"]
+    );
+    const surface_files: Record<string, string> = {
+      bound_field: "django/forms/boundfield.py",
+      char_field: "django/forms/fields.py",
+      base_form: "django/forms/forms.py",
+      formset_factory: "django/forms/formsets.py",
+      model_form: "django/forms/models.py",
+      text_input: "django/forms/widgets.py",
+    };
+    for (const [name, file] of Object.entries(surface_files)) {
+      const resolved = project.resolutions.resolve(
+        star_scope!.id,
+        name as SymbolName
+      );
+      expect(resolved).toContain(file_paths[file]);
+    }
+    expect(
+      project.resolutions.resolve(star_scope!.id, "boundfield" as SymbolName)
+    ).toBeNull();
+  });
+
+  it("keeps a local definition shadowing a name the star import also provides", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "lib.py": `def helper():
+    return "lib"
+`,
+      "app.py": `from lib import *
+
+def helper():
+    return "app"
+
+def run():
+    return helper()
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect_python_call_resolves_to(
+      project,
+      file_paths["app.py"],
+      "run",
+      "helper",
+      file_paths["app.py"]
+    );
+  });
+
+  it("keeps an explicit named import shadowing a star import of the same name", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "one.py": `def shared():
+    return 1
+`,
+      "two.py": `def shared():
+    return 2
+`,
+      "app.py": `from one import *
+from two import shared
+
+def run():
+    return shared()
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect_python_call_resolves_to(
+      project,
+      file_paths["app.py"],
+      "run",
+      "shared",
+      file_paths["two.py"]
+    );
   });
 });

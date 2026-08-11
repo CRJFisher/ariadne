@@ -730,3 +730,183 @@ describe("Namespace member exports", () => {
     ]);
   });
 });
+
+describe("TypeScript export-* barrel resolution", () => {
+  function expect_call_resolves_to(
+    project: Project,
+    caller_file: FilePath,
+    call_name: string,
+    target_file: FilePath
+  ): void {
+    const call = project.resolutions
+      .get_calls_for_file(caller_file)
+      .find((c) => c.name === (call_name as SymbolName));
+    expect(call).toBeDefined();
+    expect(call!.resolution_failure).toBeUndefined();
+    expect(call!.resolutions.length).toEqual(1);
+
+    const target_ids = project.definitions
+      .get_definitions_by_name(call_name as SymbolName)
+      .filter((def) => def.location.file_path === target_file)
+      .filter((def) => def.kind !== "import")
+      .map((def) => def.symbol_id);
+    expect(target_ids).toContain(call!.resolutions[0].symbol_id);
+  }
+
+  it("resolves a named import through one export-* hop to its leaf definition", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "src/compiler/moduleNameResolver.ts": `export function loadModuleFromGlobalCache(moduleName: string): number {
+  return moduleName.length;
+}
+`,
+      "src/compiler/utilities.ts": `export function emitDetachedComments(text: string): number {
+  return text.length;
+}
+`,
+      "src/compiler/_namespaces/ts.ts": `export * from "../moduleNameResolver";
+export * from "../utilities";
+`,
+      "src/compiler/resolutionCache.ts": `import { loadModuleFromGlobalCache } from "./_namespaces/ts";
+
+export function createResolutionCache(): number {
+  return loadModuleFromGlobalCache("mod");
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect_call_resolves_to(
+      project,
+      file_paths["src/compiler/resolutionCache.ts"],
+      "loadModuleFromGlobalCache",
+      file_paths["src/compiler/moduleNameResolver.ts"]
+    );
+  });
+
+  it("resolves a second name through the same barrel to a different leaf", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "src/compiler/moduleNameResolver.ts": `export function loadModuleFromGlobalCache(moduleName: string): number {
+  return moduleName.length;
+}
+`,
+      "src/compiler/utilities.ts": `export function emitDetachedComments(text: string): number {
+  return text.length;
+}
+`,
+      "src/compiler/_namespaces/ts.ts": `export * from "../moduleNameResolver";
+export * from "../utilities";
+`,
+      "src/compiler/emitter.ts": `import { emitDetachedComments } from "./_namespaces/ts";
+
+export function emitFiles(): number {
+  return emitDetachedComments("x");
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect_call_resolves_to(
+      project,
+      file_paths["src/compiler/emitter.ts"],
+      "emitDetachedComments",
+      file_paths["src/compiler/utilities.ts"]
+    );
+  });
+
+  it("resolves through a barrel that also star-re-exports another barrel", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "src/compiler/moduleNameResolver.ts": `export function loadModuleFromGlobalCache(moduleName: string): number {
+  return moduleName.length;
+}
+`,
+      "src/compiler/_namespaces/ts.ts": `export * from "../moduleNameResolver";
+`,
+      "src/services/utilities.ts": `export function findTokenOnLeftOfPosition(file: string, position: number): number {
+  return file.length + position;
+}
+`,
+      "src/services/_namespaces/ts.ts": `export * from "../../compiler/_namespaces/ts";
+export * from "../utilities";
+`,
+      "src/services/signatureHelp.ts": `import { findTokenOnLeftOfPosition } from "./_namespaces/ts";
+
+export function getSignatureHelpItems(file: string): number {
+  return findTokenOnLeftOfPosition(file, 0);
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect_call_resolves_to(
+      project,
+      file_paths["src/services/signatureHelp.ts"],
+      "findTokenOnLeftOfPosition",
+      file_paths["src/services/utilities.ts"]
+    );
+  });
+
+  it("resolves a namespace member through a wildcard hop, a namespace-object hop and a wildcard hop", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "src/jsTyping/jsTyping.ts": `export function discoverTypings(fileNames: string[]): number {
+  return fileNames.length;
+}
+`,
+      "src/jsTyping/_namespaces/ts.JsTyping.ts": `export * from "../jsTyping";
+`,
+      "src/jsTyping/_namespaces/ts.ts": `import * as JsTyping from "./ts.JsTyping";
+export { JsTyping };
+`,
+      "src/typingsInstallerCore/_namespaces/ts.ts": `export * from "../../jsTyping/_namespaces/ts";
+`,
+      "src/typingsInstallerCore/typingsInstaller.ts": `import { JsTyping } from "./_namespaces/ts";
+
+export function installTypings(fileNames: string[]): number {
+  return JsTyping.discoverTypings(fileNames);
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    const call = project.resolutions
+      .get_calls_for_file(file_paths["src/typingsInstallerCore/typingsInstaller.ts"])
+      .find((c) => c.name === ("discoverTypings" as SymbolName));
+    expect(call).toBeDefined();
+    expect(call!.resolution_failure).toBeUndefined();
+    expect(call!.resolutions.length).toEqual(1);
+
+    const target_ids = project.definitions
+      .get_definitions_by_name("discoverTypings" as SymbolName)
+      .filter(
+        (def) =>
+          def.location.file_path === file_paths["src/jsTyping/jsTyping.ts"]
+      )
+      .filter((def) => def.kind !== "import")
+      .map((def) => def.symbol_id);
+    expect(target_ids).toContain(call!.resolutions[0].symbol_id);
+  });
+
+  it("does not surface a name the barrel's targets do not export", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "src/leaf.ts": `export function realExport(): number {
+  return 1;
+}
+`,
+      "src/barrel.ts": `export * from "./leaf";
+`,
+      "src/consumer.ts": `import { notAName } from "./barrel";
+
+export function tryIt(): number {
+  return notAName();
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    const call = project.resolutions
+      .get_calls_for_file(file_paths["src/consumer.ts"])
+      .find((c) => c.name === ("notAName" as SymbolName));
+    expect(call).toBeDefined();
+    expect(call!.resolutions.length).toEqual(0);
+    expect(call!.resolution_failure).toBeDefined();
+  });
+});

@@ -106,8 +106,10 @@ function resolve_via_import_anchor(
     const matches = new Set<SymbolId>();
 
     for (const imp of context.imports.get_scope_imports(scope_id)) {
-      // Namespace imports bind the module name, not the terminal.
-      if (imp.import_kind === "namespace") continue;
+      // Namespace imports bind the module name, not the terminal; wildcard
+      // imports bind no name at all.
+      if (imp.import_kind === "namespace" || imp.import_kind === "wildcard")
+        continue;
 
       const imported_name = (imp.original_name ?? imp.name) as SymbolName;
       if (imported_name !== terminal) continue;

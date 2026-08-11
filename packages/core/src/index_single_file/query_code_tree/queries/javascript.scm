@@ -397,15 +397,20 @@
   )
 )
 
-; Namespace exports (export * from 'module')
+; export * from 'module' — forwards the module's whole export surface under no
+; name of its own. The bare "*" is a direct child of export_statement; the
+; `export * as ns` form nests its star inside (namespace_export), so the two
+; patterns are disjoint.
 (export_statement
-  source: (string) @export.namespace
-)
+  "*"
+  source: (string)
+) @import.reexport.wildcard
 
-; Namespace exports with alias (export * as ns from 'module')
+; export * as ns from 'module' — a single named namespace object, not a
+; wildcard surface. Capturing the identifier keeps the symbol on the bound name.
 (export_statement
-  (namespace_export (identifier) @export.namespace)
-  source: (string) @export.namespace
+  (namespace_export (identifier) @import.reexport.namespace)
+  source: (string)
 )
 
 ; NOTE: Re-exports (export { foo } from 'module') are now handled by the

@@ -557,6 +557,22 @@
   source: (string)
 ) @import.reexport
 
+; export * from 'module' — forwards the module's whole export surface under no
+; name of its own. The bare "*" is a direct child of export_statement; the
+; `export * as ns` form nests its star inside (namespace_export), so the two
+; patterns are disjoint.
+(export_statement
+  "*"
+  source: (string)
+) @import.reexport.wildcard
+
+; export * as ns from 'module' — a single named namespace object, not a
+; wildcard surface. Capturing the identifier keeps the symbol on the bound name.
+(export_statement
+  (namespace_export (identifier) @import.reexport.namespace)
+  source: (string)
+)
+
 ;; ==============================================================================
 ;; EXPORTS - Standard JavaScript exports
 ;; ==============================================================================

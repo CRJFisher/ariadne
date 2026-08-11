@@ -565,11 +565,6 @@
   name: (identifier) @export.module
 )
 
-; Re-exports (pub use)
-(use_declaration
-  (visibility_modifier)
-) @import.reexport
-
 ;; ==============================================================================
 ;; DOCUMENTATION
 ;; ==============================================================================

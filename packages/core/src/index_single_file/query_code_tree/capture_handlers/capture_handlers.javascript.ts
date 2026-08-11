@@ -423,6 +423,14 @@ export function handle_definition_import(
     ? "default"
     : "named";
 
+  // A later `export { X }` of the imported binding makes it part of the
+  // module's surface. From-clause re-exports are excluded: those are owned by
+  // handle_import_reexport, and carrying them here too would forge a
+  // duplicate export name for `import { a } from './m'; export { a } from './m'`.
+  const export_info = extract_export_info(capture.node, capture.text);
+  const export_metadata =
+    export_info.export?.is_reexport === true ? undefined : export_info.export;
+
   builder.add_import({
     symbol_id: import_id,
     name: capture.text,
@@ -431,6 +439,7 @@ export function handle_definition_import(
     import_path: extract_import_path(import_stmt),
     import_kind,
     original_name: extract_original_name(import_stmt, capture.text),
+    export: export_metadata,
   });
 }
 
@@ -603,6 +612,74 @@ export function handle_import_reexport(
   }
 }
 
+/**
+ * `export * from 'module'` — one wildcard edge forwarding the module's whole
+ * export surface. The capture is the export_statement itself; the emitted
+ * name is the specifier's last path segment, a display name only.
+ */
+export function handle_import_reexport_wildcard(
+  capture: CaptureNode,
+  builder: DefinitionBuilder,
+  context: ProcessingContext
+): void {
+  const import_path = extract_import_path(capture.node);
+  const name = wildcard_binding_name(import_path);
+
+  builder.add_import({
+    symbol_id: create_import_id({ ...capture, text: name }),
+    name,
+    location: capture.location,
+    scope_id: context.get_scope_id(capture.location),
+    import_path,
+    import_kind: "wildcard",
+    original_name: undefined,
+    export: { is_reexport: true },
+  });
+}
+
+/**
+ * `export * as ns from 'module'` — a single named namespace object, exactly
+ * the shape of `import * as ns from 'module'; export { ns }`. Not a wildcard
+ * edge: it publishes one name, so it must never fan a consumer's lookup out
+ * across the source module's surface. The export chain terminates at this
+ * definition (is_reexport stays unset); member access descends through the
+ * resolved import path instead.
+ */
+export function handle_import_reexport_namespace(
+  capture: CaptureNode,
+  builder: DefinitionBuilder,
+  context: ProcessingContext
+): void {
+  let export_stmt = capture.node.parent;
+  while (export_stmt && export_stmt.type !== "export_statement") {
+    export_stmt = export_stmt.parent;
+  }
+  if (!export_stmt) {
+    return;
+  }
+
+  builder.add_import({
+    symbol_id: create_import_id(capture),
+    name: capture.text,
+    location: capture.location,
+    scope_id: context.get_scope_id(capture.location),
+    import_path: extract_import_path(export_stmt),
+    import_kind: "namespace",
+    original_name: undefined,
+    export: {},
+  });
+}
+
+/**
+ * Last path segment of a wildcard edge's module specifier, extension stripped
+ * (`./m.js` → `m`) — a display name only, never matched against a call
+ * terminal.
+ */
+function wildcard_binding_name(import_path: string): SymbolName {
+  const last_segment = import_path.split("/").filter(Boolean).pop() ?? "*";
+  return last_segment.replace(/\.(js|mjs|cjs|jsx|ts|mts|cts|tsx)$/, "") as SymbolName;
+}
+
 // ============================================================================
 // HANDLER REGISTRY
 // ============================================================================
@@ -630,4 +707,6 @@ export const JAVASCRIPT_HANDLERS: HandlerRegistry = {
 
   // Re-exports
   "import.reexport": handle_import_reexport,
+  "import.reexport.wildcard": handle_import_reexport_wildcard,
+  "import.reexport.namespace": handle_import_reexport_namespace,
 } as const;

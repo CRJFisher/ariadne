@@ -624,7 +624,7 @@ export class DefinitionBuilder {
     scope_id: ScopeId;
     import_path: ModulePath;
     original_name?: SymbolName;
-    import_kind: "named" | "default" | "namespace";
+    import_kind: "named" | "default" | "namespace" | "wildcard";
     is_type_only?: boolean;
     is_commonjs_require?: boolean;
     export?: ExportMetadata;

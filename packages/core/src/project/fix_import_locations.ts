@@ -27,6 +27,14 @@ export function fix_import_definition_locations(
       continue;
     }
 
+    // A wildcard edge names no single definition to jump to; falling through
+    // to the name match below would rewrite its location onto whichever export
+    // happens to share the module's last path segment.
+    if (import_def.import_kind === "wildcard") {
+      fixed_definitions.push(import_def);
+      continue;
+    }
+
     // A namespace import (import * as name) binds the whole module, not one
     // export, so it points at the module file rather than a definition inside it.
     if (import_def.import_kind === "namespace") {

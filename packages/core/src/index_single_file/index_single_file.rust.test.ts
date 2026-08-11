@@ -1139,7 +1139,7 @@ use crate::models::User;
 
       // Verify glob import
       const glob_imports = Array.from(index.imported_symbols.values()).filter(
-        (imp) => imp.import_kind === "namespace",
+        (imp) => imp.import_kind === "wildcard",
       );
       expect(glob_imports.length).toBeGreaterThan(0);
 

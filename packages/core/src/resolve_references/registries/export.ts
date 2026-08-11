@@ -54,6 +54,23 @@ export class ExportRegistry {
   private default_exports: Map<FilePath, EnhancedExportMetadata> = new Map();
 
   /**
+   * Wholesale re-export edges out of a file: `export * from`, Rust
+   * `pub use m::*`, Python module-level `from m import *`. Name-less by
+   * construction, so they live outside the name-keyed `export_metadata`;
+   * `resolve_export_chain` fans out across them when a keyed lookup misses.
+   */
+  private wildcard_reexports: Map<FilePath, ImportDefinition[]> = new Map();
+
+  /**
+   * Memo for `resolve_all_exports`, dropped wholesale on any mutation: a file's
+   * surface is embedded in every downstream barrel's entry, so per-file
+   * eviction would leave stale entries. Keyed by FilePath only — the languages
+   * map and root folder are stable for a Project's lifetime.
+   */
+  private all_exports_memo: Map<FilePath, ReadonlyMap<SymbolName, SymbolId>> =
+    new Map();
+
+  /**
    * Replace all export information for a file from its current definitions.
    */
   update_file(file_id: FilePath, definitions: DefinitionRegistry): void {
@@ -61,12 +78,23 @@ export class ExportRegistry {
 
     const symbol_ids = new Set<SymbolId>();
     const metadata_map = new Map<SymbolName, EnhancedExportMetadata>();
+    const wildcard_edges: ImportDefinition[] = [];
 
     const add_to_registry = (def: ExportableDefinition) => {
       // ImportDefinitions carry no is_exported flag; their re-export status
       // lives entirely on the export field.
       if (def.kind === "import") {
         if (!def.export) {
+          return;
+        }
+        // A wildcard edge binds no export name, so it never enters the
+        // name-keyed maps (whose duplicate-name throw is a real signal for
+        // named exports, but would fire on e.g. django's six `from … import *`
+        // lines in one file).
+        if (def.import_kind === "wildcard") {
+          if (def.export.is_reexport === true) {
+            wildcard_edges.push(def);
+          }
           return;
         }
       } else {
@@ -79,10 +107,11 @@ export class ExportRegistry {
       const is_default = def.export?.is_default === true;
       const is_reexport = def.export?.is_reexport === true;
 
-      const import_def =
-        is_reexport && def.kind === "import"
-          ? (def as ImportDefinition)
-          : undefined;
+      // Any exported import forwards to its source — a from-clause re-export
+      // and a plain `import { a } …; export { a }` alike — so the chain data is
+      // carried for both; is_reexport keeps marking only the from-clause form
+      // for the shadowing rules below.
+      const import_def = def.kind === "import" ? def : undefined;
 
       const existing = metadata_map.get(export_name);
 
@@ -208,6 +237,9 @@ export class ExportRegistry {
     if (metadata_map.size > 0) {
       this.export_metadata.set(file_id, metadata_map);
     }
+    if (wildcard_edges.length > 0) {
+      this.wildcard_reexports.set(file_id, wildcard_edges);
+    }
   }
 
   /**
@@ -259,12 +291,16 @@ export class ExportRegistry {
     this.exports.delete(file_id);
     this.export_metadata.delete(file_id);
     this.default_exports.delete(file_id);
+    this.wildcard_reexports.delete(file_id);
+    this.all_exports_memo.clear();
   }
 
   clear(): void {
     this.exports.clear();
     this.export_metadata.clear();
     this.default_exports.clear();
+    this.wildcard_reexports.clear();
+    this.all_exports_memo.clear();
   }
 
   /**
@@ -300,11 +336,34 @@ export class ExportRegistry {
         : this.get_export(source_file, export_name);
 
     if (!export_meta) {
-      return null;
+      // ESM `export *` and Rust `pub use m::*` forward no default, so a
+      // default lookup never fans out.
+      if (import_kind === "default") {
+        return null;
+      }
+      return this.resolve_wildcard_fanout(
+        source_file,
+        export_name,
+        import_kind,
+        languages,
+        root_folder,
+        visited
+      );
     }
 
-    if (export_meta.is_reexport && export_meta.import_def) {
+    if (export_meta.import_def) {
       const imp_def = export_meta.import_def;
+
+      // A re-exported namespace import (Python module-level `import os`) is
+      // itself the value the name denotes; recursing would look the module's
+      // own name up inside it.
+      if (imp_def.import_kind === "namespace") {
+        return export_meta.symbol_id;
+      }
+      // A wildcard record never enters the name-keyed maps.
+      if (imp_def.import_kind === "wildcard") {
+        return null;
+      }
 
       const language = languages.get(source_file);
       if (!language) {
@@ -332,5 +391,158 @@ export class ExportRegistry {
     }
 
     return export_meta.symbol_id;
+  }
+
+  /**
+   * Resolve a name against a file's wildcard re-export edges: recurse into
+   * every edge's target and bind only an unambiguous winner. Distinct targets
+   * for one name are a miss, not a guess (an ESM ambiguous star, a Rust
+   * E0659) — except when every path reaches the same SymbolId, which binds.
+   *
+   * Each branch gets its own copy of `visited`: the set tracks the current
+   * path for cycle cutting, and sharing it across sibling branches would make
+   * diamond-shaped barrel graphs order-dependent.
+   */
+  private resolve_wildcard_fanout(
+    source_file: FilePath,
+    export_name: SymbolName,
+    import_kind: "named" | "namespace",
+    languages: ReadonlyMap<FilePath, Language>,
+    root_folder: FileSystemFolder,
+    visited: Set<string>
+  ): SymbolId | null {
+    const edges = this.wildcard_reexports.get(source_file);
+    if (!edges) {
+      return null;
+    }
+    const language = languages.get(source_file);
+    if (!language) {
+      return null;
+    }
+
+    const matches = new Set<SymbolId>();
+    for (const edge of edges) {
+      const target_file = resolve_module_path(
+        edge.import_path,
+        source_file,
+        language,
+        root_folder
+      );
+      const resolved = this.resolve_export_chain(
+        target_file,
+        export_name,
+        import_kind,
+        languages,
+        root_folder,
+        new Set(visited)
+      );
+      if (resolved) {
+        matches.add(resolved);
+      }
+    }
+
+    return matches.size === 1 ? [...matches][0] : null;
+  }
+
+  /**
+   * Every name a file's public surface offers, with re-export chains followed
+   * and wildcard edges recursed into. A file's own named export shadows a
+   * star-provided name; a name reachable through two wildcard edges with
+   * distinct targets is dropped. Memoised per FilePath until any mutation.
+   */
+  resolve_all_exports(
+    source_file: FilePath,
+    languages: ReadonlyMap<FilePath, Language>,
+    root_folder: FileSystemFolder
+  ): ReadonlyMap<SymbolName, SymbolId> {
+    return this.collect_all_exports(
+      source_file,
+      languages,
+      root_folder,
+      new Set(),
+      { hit: false }
+    );
+  }
+
+  private static readonly empty_exports: ReadonlyMap<SymbolName, SymbolId> =
+    new Map();
+
+  private collect_all_exports(
+    file: FilePath,
+    languages: ReadonlyMap<FilePath, Language>,
+    root_folder: FileSystemFolder,
+    in_progress: Set<FilePath>,
+    cycle_cut: { hit: boolean }
+  ): ReadonlyMap<SymbolName, SymbolId> {
+    if (in_progress.has(file)) {
+      cycle_cut.hit = true;
+      return ExportRegistry.empty_exports;
+    }
+    const memo = this.all_exports_memo.get(file);
+    if (memo) {
+      return memo;
+    }
+    in_progress.add(file);
+    const subtree_cut = { hit: false };
+
+    const result = new Map<SymbolName, SymbolId>();
+    const own_names = new Set<SymbolName>();
+    const poisoned = new Set<SymbolName>();
+
+    for (const export_name of this.export_metadata.get(file)?.keys() ?? []) {
+      const resolved = this.resolve_export_chain(
+        file,
+        export_name,
+        "named",
+        languages,
+        root_folder
+      );
+      if (resolved) {
+        result.set(export_name, resolved);
+        own_names.add(export_name);
+      }
+    }
+
+    const edges = this.wildcard_reexports.get(file);
+    const language = languages.get(file);
+    if (edges && language) {
+      for (const edge of edges) {
+        const target_file = resolve_module_path(
+          edge.import_path,
+          file,
+          language,
+          root_folder
+        );
+        const surface = this.collect_all_exports(
+          target_file,
+          languages,
+          root_folder,
+          in_progress,
+          subtree_cut
+        );
+        for (const [name, symbol_id] of surface) {
+          if (own_names.has(name) || poisoned.has(name)) {
+            continue;
+          }
+          const existing = result.get(name);
+          if (existing && existing !== symbol_id) {
+            poisoned.add(name);
+            result.delete(name);
+            continue;
+          }
+          result.set(name, symbol_id);
+        }
+      }
+    }
+
+    in_progress.delete(file);
+    // A cycle-truncated result is incomplete relative to a fresh top-level
+    // walk of the same file, so it must not be cached.
+    if (subtree_cut.hit) {
+      cycle_cut.hit = true;
+    } else {
+      this.all_exports_memo.set(file, result);
+    }
+    return result;
   }
 }
