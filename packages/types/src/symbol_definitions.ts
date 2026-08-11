@@ -272,13 +272,15 @@ export interface VariableDefinition extends Definition {
 export interface ImportDefinition extends Definition {
   readonly kind: "import";
   readonly import_path: ModulePath; // Module path imported from
-  // @language javascript,typescript,python,rust
-  // "wildcard": the statement binds every public name of `import_path` into
-  // `defining_scope_id` (`use m::*`, `from m import *`) or, with
-  // `export: { is_reexport: true }`, forwards that whole surface
-  // (`export * from`, `pub use m::*`, module-level `from m import *`).
-  // `name` is the module path's last segment and is never matched against a
-  // call terminal.
+  // "wildcard" carries two facts with different language sets:
+  // @language rust,python — the statement binds every public name of
+  // `import_path` into `defining_scope_id` (`use m::*`, `from m import *`).
+  // @language javascript,typescript,python,rust — with
+  // `export: { is_reexport: true }` it forwards that whole surface without
+  // binding it locally (`export * from`, `pub use m::*`, module-level
+  // `from m import *`). `name` is the module path's last segment — or the
+  // path itself when it has none (`from . import *`) — and is never matched
+  // against a call terminal.
   readonly import_kind: "named" | "default" | "namespace" | "wildcard"; // Type of import
   readonly original_name?: SymbolName; // Original name in source module if aliased (for named imports)
   readonly is_type_only?: boolean; // TypeScript type-only import (e.g., import type { Foo })

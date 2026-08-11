@@ -2428,6 +2428,26 @@ export { create_class_id as create_py_class_id } from "./symbol_factories.python
       ]);
     });
 
+    it("keys wildcard and alias symbol ids on their derived names", () => {
+      const tree = parser.parse(
+        "export * from './m.js';\nexport * as ns from './n.js';"
+      );
+      const parsed_file = {
+        file_path: TEST_FILE_PATH,
+        file_lines: 2,
+        file_end_column: 30,
+        tree: tree,
+        lang: "javascript" as const,
+      };
+      const index = build_index_single_file(parsed_file, tree, "javascript");
+      const ids = Array.from(index.imported_symbols.keys()).sort();
+
+      expect(ids).toEqual([
+        "variable:/test/file.js:1:1:1:23:m",
+        "variable:/test/file.js:2:13:2:14:ns",
+      ]);
+    });
+
     it("does not treat a plain named re-export as a wildcard edge", () => {
       expect(index_js_imports("export { foo } from './m.js';")).toEqual([
         {

@@ -911,6 +911,69 @@ describe("ExportRegistry", () => {
       expect(resolve_named(registry, MAIN, "origin")).toBe(origin.symbol_id);
     });
 
+    it("keeps the first record when two import-backed re-exports collide on a name", () => {
+      const origin_a = create_function_definition("Thing", A, 1);
+      const origin_b = create_function_definition("Thing", B, 1);
+      const registry = new ExportRegistry();
+      registry.update_file(A, create_definition_registry({ [A]: [origin_a] }));
+      registry.update_file(B, create_definition_registry({ [B]: [origin_b] }));
+
+      // The cfg-gated shape: #[cfg(unix)] pub use a::Thing; #[cfg(not(unix))] pub use b::Thing;
+      const first = create_reexport_definition("Thing", MAIN, "./a", 1);
+      const second = create_reexport_definition("Thing", MAIN, "./b", 2);
+      expect(() =>
+        registry.update_file(
+          MAIN,
+          create_definition_registry({ [MAIN]: [first, second] })
+        )
+      ).not.toThrow();
+
+      expect(resolve_named(registry, MAIN, "Thing")).toBe(origin_a.symbol_id);
+    });
+
+    it("binds ambiguous-through-one-edge names to the other edge's unambiguous answer", () => {
+      // MAIN stars A and B; A stars C and D which disagree on dup; B stars C.
+      // A's surface drops dup as ambiguous, so B's answer wins from MAIN —
+      // and the answer is the same whichever order MAIN's edges are declared.
+      const C = "c.ts" as FilePath;
+      const dup_c = create_function_definition("dup", C, 1);
+      const dup_d = create_function_definition("dup", HELPER, 5);
+      for (const edge_order of [
+        ["./a", "./b"],
+        ["./b", "./a"],
+      ]) {
+        const registry = new ExportRegistry();
+        registry.update_file(C, create_definition_registry({ [C]: [dup_c] }));
+        registry.update_file(HELPER, create_definition_registry({ [HELPER]: [dup_d] }));
+        registry.update_file(
+          A,
+          create_definition_registry({
+            [A]: [
+              create_wildcard_reexport_definition(A, "./c", 1),
+              create_wildcard_reexport_definition(A, "./helper", 2),
+            ],
+          })
+        );
+        registry.update_file(
+          B,
+          create_definition_registry({
+            [B]: [create_wildcard_reexport_definition(B, "./c", 1)],
+          })
+        );
+        registry.update_file(
+          MAIN,
+          create_definition_registry({
+            [MAIN]: [
+              create_wildcard_reexport_definition(MAIN, edge_order[0], 1),
+              create_wildcard_reexport_definition(MAIN, edge_order[1], 2),
+            ],
+          })
+        );
+
+        expect(resolve_named(registry, MAIN, "dup")).toBe(dup_c.symbol_id);
+      }
+    });
+
     it("still throws for two genuine duplicate non-wildcard names alongside a wildcard edge", () => {
       const first = create_function_definition("dup", MAIN, 1);
       const second = create_function_definition("dup", MAIN, 5);
@@ -1079,6 +1142,62 @@ describe("ExportRegistry", () => {
       registry.clear();
 
       expect(all_export_names(registry, MAIN)).toEqual([]);
+    });
+
+    it("serves a repeated lookup from the memo as the same instance", () => {
+      const fn = create_function_definition("fn_a", MAIN, 1);
+      const registry = new ExportRegistry();
+      registry.update_file(MAIN, create_definition_registry({ [MAIN]: [fn] }));
+
+      const first = registry.resolve_all_exports(MAIN, ALL_TS, ROOT_FOLDER);
+      expect(registry.resolve_all_exports(MAIN, ALL_TS, ROOT_FOLDER)).toBe(first);
+
+      registry.update_file(MAIN, create_definition_registry({ [MAIN]: [fn] }));
+      expect(registry.resolve_all_exports(MAIN, ALL_TS, ROOT_FOLDER)).not.toBe(first);
+    });
+
+    it("withholds a name whose own re-export is declared but unresolvable", () => {
+      // f exports X from a module that lacks it AND stars a module that has it:
+      // the declared claim shadows the star surface, matching the keyed lookup.
+      const good_x = create_function_definition("X", HELPER, 1);
+      const registry = new ExportRegistry();
+      registry.update_file(HELPER, create_definition_registry({ [HELPER]: [good_x] }));
+      registry.update_file(
+        MAIN,
+        create_definition_registry({
+          [MAIN]: [
+            create_reexport_definition("X", MAIN, "./b", 1),
+            create_wildcard_reexport_definition(MAIN, "./helper", 2),
+          ],
+        })
+      );
+
+      expect(all_export_names(registry, MAIN)).toEqual([]);
+      expect(resolve_named(registry, MAIN, "X")).toBeNull();
+    });
+  });
+
+  describe("resolve_sole_default_export", () => {
+    const MAIN = "main.ts" as FilePath;
+    const HELPER = "helper.ts" as FilePath;
+
+    it("returns null for a wildcard barrel that also has a default export", () => {
+      const dflt = create_function_definition("main_fn", MAIN, 1, {
+        is_default: true,
+      });
+      const named = create_function_definition("alpha", HELPER, 1);
+      const registry = new ExportRegistry();
+      registry.update_file(HELPER, create_definition_registry({ [HELPER]: [named] }));
+      registry.update_file(
+        MAIN,
+        create_definition_registry({
+          [MAIN]: [dflt, create_wildcard_reexport_definition(MAIN, "./helper", 2)],
+        })
+      );
+
+      expect(
+        registry.resolve_sole_default_export(MAIN, ALL_TS, ROOT_FOLDER)
+      ).toBeNull();
     });
   });
 });

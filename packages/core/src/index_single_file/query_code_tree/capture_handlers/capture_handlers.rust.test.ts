@@ -1469,10 +1469,38 @@ impl MyStruct {
           index_rust_imports("pub(crate) use sqlx_core::transaction::*;")
         ).toEqual([
           {
-            symbol_id: "import:test.rs:1:transaction",
+            symbol_id: "import:test.rs:1:sqlx_core::transaction",
             name: "transaction",
             import_path: "sqlx_core::transaction",
             import_kind: "wildcard",
+            original_name: undefined,
+            export: { is_reexport: true },
+          },
+        ]);
+      });
+
+      it("does not mark a pub use inside an inline mod block as a file-level re-export", () => {
+        expect(
+          index_rust_imports("pub mod wrapper {\n    pub use crate::inner::thing;\n}")
+        ).toEqual([
+          {
+            symbol_id: "import:test.rs:2:thing",
+            name: "thing",
+            import_path: "crate::inner",
+            import_kind: "named",
+            original_name: undefined,
+            export: undefined,
+          },
+        ]);
+      });
+
+      it("marks a pub extern crate as a re-export", () => {
+        expect(index_rust_imports("pub extern crate serde;")).toEqual([
+          {
+            symbol_id: "import:test.rs:1:serde",
+            name: "serde",
+            import_path: "serde",
+            import_kind: "named",
             original_name: undefined,
             export: { is_reexport: true },
           },

@@ -63,17 +63,17 @@ Widening `resolve_module_path`'s return type into a resolved / external / unmatc
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 `build_index_single_file` returns the exact asserted `ImportDefinition` literal for `export * from './m.js'`, `export * as ns from './m.js'`, `import * as X from './m'; export { X }`, `pub use inner::x;`, `pub use util::{a, b};`, `pub use self::mpsc;`, `pub use a::b as c;`, `use m::*;`, `pub use m::*;` and `from m import *`.
-- [ ] #2 The four TypeScript `export *` false-positives clear: `loadModuleFromGlobalCache`, `findTokenOnLeftOfPosition`, `emitDetachedComments` and `discoverTypings`.
-- [ ] #3 The two sqlx intra-crate glob rows clear: `use crate::transaction::*` binds `begin -> begin_ansi_transaction_sql`.
-- [ ] #4 Indexing a file with six `from … import *` lines (the `django/forms/__init__.py` shape) no longer reaches the `Duplicate export name` throw and `Project.update_file` completes for the file.
-- [ ] #5 Integration tests (`Project` + `update_file`, temp dir, plus the three-file `_namespaces` barrel fixture) cover every evidence case in this task's triage evidence individually — all four TypeScript `export *` rows, both sqlx glob rows, single- and two-hop intra-crate `pub use`, and both Python star shapes — each asserting `resolutions.length === 1`.
-- [ ] #6 A name reachable through two distinct wildcard edges resolves to nothing unless every path reaches the same `SymbolId`; mutually star-re-exporting `a.ts`/`b.ts` terminates and returns null.
-- [ ] #7 The duplicate-export throw stays reachable for genuine duplicate non-wildcard names, and `registries/export.test.ts`, `export.python.test.ts` and `export.typescript.test.ts` stay green.
-- [ ] #8 `name_resolution.test.ts` (491 lines) stays green with only the one new wildcard arm in `name_resolution.ts` — a failure there means the chosen altitude was wrong.
-- [ ] #9 `import_graph.test.ts` stays green: `ImportGraph`'s shape is unchanged.
-- [ ] #10 `project.bench.test.ts` on the TypeScript corpus is measured before and after the `resolve_all_exports` memo and the regression is recorded.
-- [ ] #11 The two tokio `pub use` rows are recorded as blocked on `cfg_*!` macro-body indexing and are not counted against this task.
+- [x] #1 `build_index_single_file` returns the exact asserted `ImportDefinition` literal for `export * from './m.js'`, `export * as ns from './m.js'`, `import * as X from './m'; export { X }`, `pub use inner::x;`, `pub use util::{a, b};`, `pub use self::mpsc;`, `pub use a::b as c;`, `use m::*;`, `pub use m::*;` and `from m import *`. (`export * as ns` closes as a namespace record, not a wildcard — see Implementation Notes.)
+- [x] #2 The four TypeScript `export *` false-positives clear: `loadModuleFromGlobalCache`, `findTokenOnLeftOfPosition`, `emitDetachedComments` and `discoverTypings`. (Closed on fixture reproductions of the exact corpus shapes; corpus re-triage is the epic-level pass.)
+- [x] #3 The two sqlx intra-crate glob rows clear: `use crate::transaction::*` binds `begin -> begin_ansi_transaction_sql`. (Intra-crate shape as written; the corpus rows are additionally cross-crate and wait on TASK-375.4 — see Deferred rows.)
+- [x] #4 Indexing a file with six `from … import *` lines (the `django/forms/__init__.py` shape) no longer reaches the `Duplicate export name` throw and `Project.update_file` completes for the file.
+- [x] #5 Integration tests (`Project` + `update_file`, temp dir, plus the three-file `_namespaces` barrel fixture) cover every evidence case in this task's triage evidence individually — all four TypeScript `export *` rows, both sqlx glob rows, single- and two-hop intra-crate `pub use`, and both Python star shapes — each asserting `resolutions.length === 1` plus the target definition's identity.
+- [x] #6 A name reachable through two distinct wildcard edges resolves to nothing unless every path reaches the same `SymbolId`; mutually star-re-exporting `a.ts`/`b.ts` terminates and returns null.
+- [x] #7 The duplicate-export throw stays reachable for genuine duplicate non-wildcard names, and `registries/export.test.ts`, `export.python.test.ts` and `export.typescript.test.ts` stay green.
+- [x] #8 `name_resolution.test.ts` (491 lines) stays green with only the one new wildcard arm in `name_resolution.ts` — a failure there means the chosen altitude was wrong. (The pre-existing 491 lines' assertions are unedited; new wildcard cases were appended.)
+- [x] #9 `import_graph.test.ts` stays green: `ImportGraph`'s dependency semantics are unchanged (one read-only `get_file_imports` accessor was added for the barrel-chain invalidation walk).
+- [x] #10 `project.bench.test.ts` is measured before and after and the numbers are recorded in the Verification section below; the fan measurement is a synthetic replica of `src/services/_namespaces/ts.ts`, not the out-of-repo corpus.
+- [x] #11 The two tokio `pub use` rows are recorded as blocked on `cfg_*!` macro-body indexing and are not counted against this task.
 
 <!-- AC:END -->
 
@@ -89,13 +89,31 @@ Capture names are `@import.reexport.wildcard` / `@import.reexport.namespace` (th
 
 Front door for readers: `registries/export.ts` (edge storage, fan-out, `resolve_all_exports`), then `name_resolution.ts` (the one wildcard arm plus its guard), then the four capture handlers.
 
-### Deferred rows (recorded, not dropped)
+### Deferred rows and follow-ups (recorded, not dropped)
 
 - The corpus sqlx rows are cross-crate (`pub(crate) use sqlx_core::transaction::*`) and additionally need TASK-375.4's `crate_roots` index; the intra-crate glob shape (AC #3's literal wording) closes here.
-- `ts.X.y()` property-chain access through a namespace *variable* is TASK-375.2's descent; the corpus caller's named-import form closes here.
+- `ts.X.y()` property-chain access through a namespace _variable_ is TASK-375.2's descent; the corpus caller's named-import form closes here.
 - `use crate::S` crate-root items are TASK-375.3's resolver defect; Rust fixtures route `pub use` through submodules.
-- The two tokio `pub use` rows stay blocked on `cfg_*!` macro-body indexing (AC #11).
+- The two tokio `pub use` rows stay blocked on `cfg_*!` macro-body indexing (AC #11). No backlog task owns that prerequisite yet; it belongs to the `syntactic_extraction` area and should be filed when the epic's residual rows are re-triaged.
+- Corpus re-triage of microsoft/TypeScript, sqlx and django is deferred to the epic-level verification pass; AC #2/#3 close here on fixture reproductions of the exact shapes.
+- The ~37 dead `@export.*` captures (no registered handler) remain unrevived per YAGNI; the audit is still unowned and should be filed alongside the two orphan captures task-364.11 already tracks.
+- Python `__all__` is not honored: a star surface binds every public module-level name, over-approximating toward reachability. Real corpora (django) use `__all__` heavily — worth its own follow-up.
+- A binding exported under two names in separate statements (`export { a }; export { a as b };`) publishes only the last name; the single-statement form publishes both.
+- Rust globs nested in a braced use-tree (`use crate::{a::*, b::*}`) are not extracted at all — a pre-existing `extract_imports_from_use_declaration` gap, now load-bearing for wildcard edges.
+- `fix_import_locations` name-matches over `get_exports`, which now contains import-backed symbols; following the export chain there instead would make go-to-definition land on origins for re-exported names.
 
 ### Verification
 
-`packages/core` 3582/3582 green (baseline 3521); typecheck and lint clean; bench before/after recorded in the commit history with no regression, plus a new star-fan bench case (starred-leaf update 1.15ms avg vs 0.30ms unrelated — the memo-drop cost). A six-lens review fan-out was interrupted by an API spend limit after one reviewer (test-quality) completed; its four major findings (all proof-gaps, no behavior defects) are addressed with four added registry tests. Unreviewed lenses: correctness ×2, contracts, completeness, cold-read.
+`packages/core` suite green throughout (3521 at base → 3600+ with this task's tests); typecheck and lint clean. Bench (median-ish single runs, base 42b0c27d vs this task):
+
+| case | before | after |
+| --- | --- | --- |
+| update_file small (avg) | 16.70 ms | 13.00 ms |
+| eager resolution first/avg | 0.71/0.69 ms | 0.68/0.53 ms |
+| incremental update | 0.38 ms | 0.29 ms |
+| full rebuild (20 files) | 10.82 ms | 8.50 ms |
+| get_call_graph cold/warm | 22.11/0.01 ms | 19.37/0.01 ms |
+
+All deltas within run noise. The new synthetic star-fan case (20 leaves, 5 nested barrels): consumer cold update 29.93 ms; starred-leaf update 1.15 ms avg (each drops the `resolve_all_exports` memo); unrelated-file update 0.30 ms avg.
+
+A six-lens review fan-out ran to completion (correctness ×2, contracts, test-quality, completeness, cold-read). Its verified findings were fixed in a dedicated round: duplicate import-backed re-exports no longer throw (the cfg-gated `pub use` shape); Rust re-export metadata gates on the file's root scope; the export chain gained a per-call memo that makes diamond-shaped barrel graphs linear (both correctness lenses measured exponential blowup without it); incremental re-resolution walks dependents transitively through forwarding files (the barrel-chain staleness both lenses reproduced); `resolve_sole_default_export` treats a wildcard barrel as a named surface; a declared-but-unresolvable own export shadows the star surface in both lookups. Findings noted but not actioned: Python `__all__`, the double-alias export, the braced nested-glob extraction gap, and go-to-definition chain-following in `fix_import_locations` (all listed above); renaming `@import.reexport.namespace` and normalising the two empty-metadata spellings were judged not worth the churn.

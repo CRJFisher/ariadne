@@ -230,6 +230,8 @@ builds a method carrying `accessor_kind`.
 - `@modifier.*` - Various modifiers (static, async, etc.)
 - `@export.*` - Export variants
 - `@import.reexport` - Re-export patterns
+- `@import.reexport.wildcard` - `export * from` — a nameless edge forwarding a module's whole surface
+- `@import.reexport.namespace` - `export * as ns from` — one named namespace object
 
 ---
 

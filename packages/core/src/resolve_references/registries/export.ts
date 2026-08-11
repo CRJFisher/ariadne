@@ -27,10 +27,16 @@ interface EnhancedExportMetadata {
 
   is_default: boolean;
 
-  /** True for re-exports (`export { x } from './other'`). */
+  /**
+   * True only for the from-clause form (`export { x } from './other'`); the
+   * shadowing rules in update_file key on it.
+   */
   is_reexport: boolean;
 
-  /** Source info carried on re-exports so the chain can be followed. */
+  /**
+   * Set on every exported import — re-export or not — so the chain can be
+   * followed through it to the origin definition.
+   */
   import_def?: ImportDefinition;
 }
 
@@ -190,6 +196,16 @@ export class ExportRegistry {
           return;
         }
 
+        // Two import-backed records for one name are legal source, not an
+        // indexing bug: cfg-gated alternates (`#[cfg(unix)] pub use a::Thing;
+        // #[cfg(not(unix))] pub use b::Thing;`) and Python's rebinding
+        // (`from a import x` then `from b import x`). Keep the first for
+        // determinism; the throw below stays reserved for duplicate local
+        // definitions.
+        if (existing.import_def && import_def) {
+          return;
+        }
+
         throw new Error(
           `Duplicate export name "${export_name}" in file ${file_id}.\n` +
             `  First:  ${existing.symbol_id}\n` +
@@ -275,7 +291,11 @@ export class ExportRegistry {
     languages: ReadonlyMap<FilePath, Language>,
     root_folder: FileSystemFolder
   ): SymbolId | null {
-    if (this.export_metadata.has(source_file)) {
+    // A file forwarding a whole module surface is not a sole-default module.
+    if (
+      this.export_metadata.has(source_file) ||
+      this.wildcard_reexports.has(source_file)
+    ) {
       return null;
     }
     return this.resolve_export_chain(
@@ -305,12 +325,14 @@ export class ExportRegistry {
 
   /**
    * Follow a re-export chain (`base.js → middle.js → main.js`) to the symbol
-   * that ultimately backs an export, using only this registry's data.
+   * that ultimately backs an export, using only this registry's data. When the
+   * keyed lookup misses, fan out across the file's wildcard re-export edges.
    *
    * @param export_name - Ignored for default imports.
    * @param visited - Cycle-detection accumulator; callers leave it unset.
-   * @returns The resolved symbol_id, or null when the export is missing, the
-   *   source language is unknown, or the chain is circular.
+   * @returns The resolved symbol_id, or null when the name is on no keyed
+   *   record and no wildcard edge (or two wildcard edges disagree), the source
+   *   language is unknown, or the chain is circular.
    */
   resolve_export_chain(
     source_file: FilePath,
@@ -318,18 +340,59 @@ export class ExportRegistry {
     import_kind: "named" | "default" | "namespace",
     languages: ReadonlyMap<FilePath, Language>,
     root_folder: FileSystemFolder,
-    visited: Set<string> = new Set()
+    visited: Set<string> = new Set(),
+    memo: Map<string, SymbolId | null> = new Map(),
+    cycle_cut: { hit: boolean } = { hit: false }
   ): SymbolId | null {
     const key =
       import_kind === "default"
         ? `${source_file}:default`
         : `${source_file}:${export_name}:${import_kind}`;
 
+    // The memo lives for one top-level call and makes diamond-shaped barrel
+    // graphs linear: without it the per-branch visited copies walk every
+    // root-to-leaf PATH, which is exponential in barrel depth.
+    if (memo.has(key)) {
+      return memo.get(key) ?? null;
+    }
     if (visited.has(key)) {
+      cycle_cut.hit = true;
       return null;
     }
     visited.add(key);
 
+    const subtree_cut = { hit: false };
+    const result = this.resolve_export_record(
+      source_file,
+      export_name,
+      import_kind,
+      languages,
+      root_folder,
+      visited,
+      memo,
+      subtree_cut
+    );
+
+    // A cycle-truncated result is path-dependent and must not be memoised;
+    // every ancestor of the cut inherits that.
+    if (subtree_cut.hit) {
+      cycle_cut.hit = true;
+    } else {
+      memo.set(key, result);
+    }
+    return result;
+  }
+
+  private resolve_export_record(
+    source_file: FilePath,
+    export_name: SymbolName,
+    import_kind: "named" | "default" | "namespace",
+    languages: ReadonlyMap<FilePath, Language>,
+    root_folder: FileSystemFolder,
+    visited: Set<string>,
+    memo: Map<string, SymbolId | null>,
+    cycle_cut: { hit: boolean }
+  ): SymbolId | null {
     const export_meta =
       import_kind === "default"
         ? this.get_default_export(source_file)
@@ -347,7 +410,9 @@ export class ExportRegistry {
         import_kind,
         languages,
         root_folder,
-        visited
+        visited,
+        memo,
+        cycle_cut
       );
     }
 
@@ -360,9 +425,13 @@ export class ExportRegistry {
       if (imp_def.import_kind === "namespace") {
         return export_meta.symbol_id;
       }
-      // A wildcard record never enters the name-keyed maps.
+      // update_file diverts wildcard records before the name-keyed maps, so
+      // this arm is a tripwire for a producer change, not a code path.
       if (imp_def.import_kind === "wildcard") {
-        return null;
+        throw new Error(
+          "Wildcard import record reached the name-keyed export chain for " +
+            `"${export_name}" in ${source_file}`
+        );
       }
 
       const language = languages.get(source_file);
@@ -386,7 +455,9 @@ export class ExportRegistry {
         imp_def.import_kind,
         languages,
         root_folder,
-        visited
+        visited,
+        memo,
+        cycle_cut
       );
     }
 
@@ -401,7 +472,8 @@ export class ExportRegistry {
    *
    * Each branch gets its own copy of `visited`: the set tracks the current
    * path for cycle cutting, and sharing it across sibling branches would make
-   * diamond-shaped barrel graphs order-dependent.
+   * diamond-shaped barrel graphs order-dependent. The shared memo is what
+   * keeps the per-path walk linear.
    */
   private resolve_wildcard_fanout(
     source_file: FilePath,
@@ -409,7 +481,9 @@ export class ExportRegistry {
     import_kind: "named" | "namespace",
     languages: ReadonlyMap<FilePath, Language>,
     root_folder: FileSystemFolder,
-    visited: Set<string>
+    visited: Set<string>,
+    memo: Map<string, SymbolId | null>,
+    cycle_cut: { hit: boolean }
   ): SymbolId | null {
     const edges = this.wildcard_reexports.get(source_file);
     if (!edges) {
@@ -434,7 +508,9 @@ export class ExportRegistry {
         import_kind,
         languages,
         root_folder,
-        new Set(visited)
+        new Set(visited),
+        memo,
+        cycle_cut
       );
       if (resolved) {
         matches.add(resolved);
@@ -490,6 +566,9 @@ export class ExportRegistry {
     const poisoned = new Set<SymbolName>();
 
     for (const export_name of this.export_metadata.get(file)?.keys() ?? []) {
+      // A declared-but-unresolvable own export still shadows the star surface
+      // (ESM and Rust precedence): register the claim before the resolution.
+      own_names.add(export_name);
       const resolved = this.resolve_export_chain(
         file,
         export_name,
@@ -499,12 +578,16 @@ export class ExportRegistry {
       );
       if (resolved) {
         result.set(export_name, resolved);
-        own_names.add(export_name);
       }
     }
 
     const edges = this.wildcard_reexports.get(file);
     const language = languages.get(file);
+    // A file with wildcard edges was indexed, so its language is always known;
+    // treat a miss as truncation rather than silently caching a partial surface.
+    if (edges && !language) {
+      subtree_cut.hit = true;
+    }
     if (edges && language) {
       for (const edge of edges) {
         const target_file = resolve_module_path(

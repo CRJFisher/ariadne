@@ -719,6 +719,123 @@ pub fn run2() -> i32 {
       );
     });
 
+    it("indexes cfg-gated duplicate pub use re-exports without a duplicate-export error", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "src/lib.rs": `pub mod unix_impl;
+pub mod windows_impl;
+pub mod app;
+
+#[cfg(unix)]
+pub use crate::unix_impl::spawn;
+#[cfg(not(unix))]
+pub use crate::windows_impl::spawn;
+`,
+        "src/unix_impl.rs": `pub fn spawn() -> i32 {
+    1
+}
+`,
+        "src/windows_impl.rs": `pub fn spawn() -> i32 {
+    2
+}
+`,
+        "src/app.rs": `use crate::spawn;
+
+pub fn run_spawn() -> i32 {
+    spawn()
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      // Both cfg arms index; the first record wins deterministically. The call
+      // may resolve or stay open depending on crate-root import resolution,
+      // but indexing must never abort the file.
+      const lib_exports = project.exports.get_exports(file_paths["src/lib.rs"]);
+      expect(lib_exports.size).toBeGreaterThan(0);
+    });
+
+    it("does not leak a nested mod's pub use glob onto the file surface", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "src/lib.rs": `pub mod leaf;
+pub mod other;
+pub mod consumer;
+`,
+        "src/leaf.rs": `pub fn leaf_fn() -> i32 {
+    1
+}
+`,
+        "src/other.rs": `pub mod inner {
+    pub use crate::leaf::*;
+}
+
+pub fn other_fn() -> i32 {
+    2
+}
+`,
+        "src/consumer.rs": `use crate::other::*;
+
+pub fn caller() -> i32 {
+    leaf_fn() + other_fn()
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const consumer_scope = project.scopes.get_file_root_scope(
+        file_paths["src/consumer.rs"]
+      );
+      expect(
+        project.resolutions.resolve(consumer_scope!.id, "other_fn" as SymbolName)
+      ).not.toBeNull();
+      // leaf_fn is only reachable as crate::other::inner::leaf_fn; the file
+      // glob must not surface it.
+      expect(
+        project.resolutions.resolve(consumer_scope!.id, "leaf_fn" as SymbolName)
+      ).toBeNull();
+    });
+
+    it("does not forward a private glob to consumers of the file", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "src/lib.rs": `pub mod inner;
+pub mod facade;
+pub mod app;
+`,
+        "src/inner.rs": `pub fn hidden_fn(x: i32) -> i32 {
+    x * 2
+}
+`,
+        "src/facade.rs": `use crate::inner::*;
+
+pub fn facade_public() -> i32 {
+    hidden_fn(1)
+}
+`,
+        "src/app.rs": `use crate::facade::*;
+
+pub fn run4() -> i32 {
+    hidden_fn(2)
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      // facade.rs itself binds hidden_fn through its private glob…
+      const facade_scope = project.scopes.get_file_root_scope(
+        file_paths["src/facade.rs"]
+      );
+      expect(
+        project.resolutions.resolve(facade_scope!.id, "hidden_fn" as SymbolName)
+      ).not.toBeNull();
+
+      // …but a private `use` forwards nothing, so app.rs must not see it.
+      const app_scope = project.scopes.get_file_root_scope(
+        file_paths["src/app.rs"]
+      );
+      expect(
+        project.resolutions.resolve(app_scope!.id, "hidden_fn" as SymbolName)
+      ).toBeNull();
+    });
+
     it("binds a name reached through a pub use glob re-export", async () => {
       const { project, temp_dir, file_paths } = await setup_project({
         "src/lib.rs": `pub mod inner;

@@ -264,8 +264,39 @@ export class Project {
       ...fixed_import_definitions,
     ]);
 
-    // Phase 3: Re-resolve affected files
+    // Phase 3: Re-resolve affected files. A dependent that forwards the
+    // changed file's surface onward (a wildcard edge or an exported import)
+    // changes its own surface too, so ITS dependents re-resolve as well — the
+    // barrel-chain case, where a leaf's names reach consumers only through
+    // re-exporting hops.
     const affected_files = new Set([file_id, ...dependents]);
+    const forward_frontier = [...dependents].map((dependent) => ({
+      file: dependent,
+      source: file_id,
+    }));
+    for (
+      let next = forward_frontier.pop();
+      next !== undefined;
+      next = forward_frontier.pop()
+    ) {
+      const { file, source } = next;
+      const forwards = this.imports
+        .get_file_imports(file)
+        .some(
+          (imp) =>
+            imp.export !== undefined &&
+            this.imports.get_resolved_import_path(imp.symbol_id) === source,
+        );
+      if (!forwards) {
+        continue;
+      }
+      for (const dependent of this.imports.get_dependents(file)) {
+        if (!affected_files.has(dependent)) {
+          affected_files.add(dependent);
+          forward_frontier.push({ file: dependent, source: file });
+        }
+      }
+    }
 
     this.resolutions.resolve_names(
       affected_files,

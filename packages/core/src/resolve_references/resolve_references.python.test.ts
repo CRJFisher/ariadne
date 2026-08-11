@@ -801,6 +801,42 @@ def run():
     );
   });
 
+  it("rebinds a two-hop star chain when the leaf gains a name", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "leaf.py": `def alpha():
+    return 1
+`,
+      "mid.py": `from leaf import *
+`,
+      "consumer.py": `from mid import *
+
+def caller():
+    return beta()
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    project.update_file(
+      file_paths["leaf.py"],
+      `def alpha():
+    return 1
+
+def beta():
+    return 2
+`
+    );
+
+    const consumer_scope = project.scopes.get_file_root_scope(
+      file_paths["consumer.py"]
+    );
+    const resolved = project.resolutions.resolve(
+      consumer_scope!.id,
+      "beta" as SymbolName
+    );
+    expect(resolved).toContain(file_paths["leaf.py"]);
+    expect(resolved).toContain("beta");
+  });
+
   it("keeps an explicit named import shadowing a star import of the same name", async () => {
     const { project, temp_dir, file_paths } = await setup_project({
       "one.py": `def shared():

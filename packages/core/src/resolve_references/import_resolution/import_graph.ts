@@ -234,6 +234,14 @@ export class ImportGraph {
   }
 
   /**
+   * All ImportDefinitions a file recorded in its last update, used to decide
+   * whether the file forwards another file's export surface.
+   */
+  get_file_imports(file_path: FilePath): readonly ImportDefinition[] {
+    return this.imports_by_file.get(file_path) ?? [];
+  }
+
+  /**
    * Get the resolved file path for an import symbol.
    * Returns the pre-computed absolute file path that the import points to.
    *

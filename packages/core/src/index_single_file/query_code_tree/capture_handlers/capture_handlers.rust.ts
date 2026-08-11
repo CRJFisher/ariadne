@@ -575,11 +575,15 @@ export function handle_definition_import(
     }
   }
 
-  // Any visibility modifier (`pub`, `pub(crate)`, …) makes every name the
-  // statement binds re-importable from this module.
+  const defining_scope_id = context.get_scope_id(capture.location);
+
+  // Any visibility modifier is treated as re-exporting — including the
+  // pub(self)/pub(super) forms that are not, over-reporting rather than losing
+  // an edge. Gated to the file's root scope: a `pub use` inside an inline
+  // `mod {}` block publishes on that module's surface, not the file's.
   const is_reexport =
-    node.type === "use_declaration" &&
-    (node.children ?? []).some((c) => c.type === "visibility_modifier");
+    (node.children ?? []).some((c) => c.type === "visibility_modifier") &&
+    defining_scope_id === context.root_scope_id;
   const export_metadata = is_reexport ? { is_reexport: true } : undefined;
 
   // Create import definitions for each extracted import
@@ -587,11 +591,16 @@ export function handle_definition_import(
     const name = import_info.is_wildcard
       ? wildcard_binding_name(import_info.module_path)
       : import_info.name;
+    // A wildcard id carries the full module path: `use crate::{a::x::*, b::x::*}`
+    // yields two edges sharing a line and a last segment.
+    const id_key = import_info.is_wildcard
+      ? import_info.module_path ?? name
+      : name;
     builder.add_import({
-      symbol_id: `import:${capture.location.file_path}:${capture.location.start_line}:${name}` as SymbolId,
+      symbol_id: `import:${capture.location.file_path}:${capture.location.start_line}:${id_key}` as SymbolId,
       name,
       location: capture.location,
-      scope_id: context.get_scope_id(capture.location),
+      scope_id: defining_scope_id,
       import_path: import_info.module_path || create_module_path(import_info.name),
       original_name: import_info.original_name,
       import_kind: import_info.is_wildcard ? "wildcard" : "named",

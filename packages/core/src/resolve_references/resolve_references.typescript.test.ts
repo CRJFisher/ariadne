@@ -907,6 +907,33 @@ export function tryIt(): number {
       .find((c) => c.name === ("notAName" as SymbolName));
     expect(call).toBeDefined();
     expect(call!.resolutions.length).toEqual(0);
-    expect(call!.resolution_failure).toBeDefined();
+    expect(call!.resolution_failure?.stage).toEqual("name_resolution");
+    expect(call!.resolution_failure?.reason).toEqual("name_not_in_scope");
+  });
+
+  it("resolves a two-statement named re-export through to the origin definition", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "src/leaf.ts": `export function origin_fn(): number {
+  return 1;
+}
+`,
+      "src/middle.ts": `import { origin_fn } from "./leaf";
+export { origin_fn };
+`,
+      "src/consumer.ts": `import { origin_fn } from "./middle";
+
+export function drive(): number {
+  return origin_fn();
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect_call_resolves_to(
+      project,
+      file_paths["src/consumer.ts"],
+      "origin_fn",
+      file_paths["src/leaf.ts"]
+    );
   });
 });
