@@ -71,7 +71,7 @@ function extract_typescript_type(node: SyntaxNode): string | undefined {
  * `ns.Concrete`, or a missing node. A generic target `Concrete<T>` binds to its
  * erased head `Concrete`, matching how method reachability is keyed by type name.
  */
-function nominal_cast_type_name(
+export function nominal_cast_type_name(
   type_node: SyntaxNode | null | undefined
 ): string | undefined {
   if (!type_node) return undefined;

@@ -46,6 +46,7 @@ import type { SyntaxNode } from "tree-sitter";
 import type { CaptureNode } from "../capture_types";
 import type { ProcessingContext } from "../scopes/processing_context";
 import type { MetadataExtractors } from "../query_code_tree/metadata_extractors/metadata_extractor_types";
+import { nominal_cast_type_name } from "../query_code_tree/metadata_extractors/metadata_extractors.javascript";
 
 // ============================================================================
 // Reference Kind Enum
@@ -654,19 +655,26 @@ function is_grounded_member_read(node: SyntaxNode): boolean {
     return (
       receiver.type === "identifier" ||
       receiver.type === "this" ||
-      receiver.type === "super"
+      receiver.type === "super" ||
+      // A cast to a nominal type names the receiver as surely as an identifier.
+      receiver.type === "as_expression" ||
+      receiver.type === "type_assertion"
     );
   }
 }
 
-/** Wrappers that keep the wrapped expression's own type, so a chain reads through them. */
+/**
+ * Wrappers that keep the wrapped expression's own type, so a chain reads
+ * through them. A cast to a nominal type is NOT one of them: the chain
+ * extractor stops there and uses the cast type as the chain's base, so peeling
+ * past it here would judge a chain the extractor grounds as ungrounded.
+ */
 function peel_transparent_wrappers(node: SyntaxNode): SyntaxNode | undefined {
   let current: SyntaxNode = node;
   for (;;) {
     if (
       current.type === "parenthesized_expression" ||
       current.type === "non_null_expression" ||
-      current.type === "as_expression" ||
       current.type === "satisfies_expression"
     ) {
       const inner = current.namedChild(0);
@@ -674,7 +682,17 @@ function peel_transparent_wrappers(node: SyntaxNode): SyntaxNode | undefined {
       current = inner;
       continue;
     }
+    if (current.type === "as_expression") {
+      if (nominal_cast_type_name(current.namedChild(1))) return current;
+      const inner = current.namedChild(0);
+      if (!inner) return undefined;
+      current = inner;
+      continue;
+    }
     if (current.type === "type_assertion") {
+      if (nominal_cast_type_name(current.namedChild(0)?.namedChild(0))) {
+        return current;
+      }
       const inner = current.namedChild(1);
       if (!inner) return undefined;
       current = inner;

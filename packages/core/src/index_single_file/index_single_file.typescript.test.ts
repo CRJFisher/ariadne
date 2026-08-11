@@ -3471,6 +3471,39 @@ const result = items.map((x) =>
       expect(property_accesses(code)).toEqual([]);
     });
 
+    it("grounds a member read on a nominal cast, whatever the cast wraps", () => {
+      // The chain extractor stops at a cast to a named type and uses that name
+      // as the chain's base, so the read resolves against the cast type even
+      // when the operand is a call the guard could not otherwise ground.
+      expect(
+        property_accesses("function m() { return (lookup('w') as Widget).label; }")
+      ).toEqual([
+        {
+          name: "label" as SymbolName,
+          property_chain: ["Widget", "label"],
+          access_type: "property",
+          is_optional_chain: false,
+        },
+      ]);
+      expect(
+        property_accesses("function m() { return (<Widget>lookup('w')).label; }")
+      ).toEqual([
+        {
+          name: "label" as SymbolName,
+          property_chain: ["Widget", "label"],
+          access_type: "property",
+          is_optional_chain: false,
+        },
+      ]);
+      // A structural cast names no type to bind to, so the call under it
+      // leaves the chain ungrounded.
+      expect(
+        property_accesses(
+          "function m() { return (lookup('w') as { label: string }).label; }"
+        )
+      ).toEqual([]);
+    });
+
     it("mints no property access for the callee of a member call", () => {
       const code = "class A { run() {} m() { this.run(); } }";
       const index = build_index(code);
