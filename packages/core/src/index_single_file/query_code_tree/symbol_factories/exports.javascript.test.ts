@@ -380,6 +380,34 @@ describe("extract_export_info nested-scope boundary", () => {
       export: { is_default: true },
     });
   });
+
+  const BLOCK_SHADOWED_COMMONJS = [
+    "var res = {};",
+    "module.exports = res;",
+    "if (process.env.X) {",
+    "  let res = 1;",
+    "  res += 1;",
+    "}",
+  ].join("\n");
+
+  it("keeps a block-scoped binding unexported when a module-scope binding of the same name is exported", () => {
+    expect(info(BLOCK_SHADOWED_COMMONJS, "res", 1)).toEqual({
+      is_exported: false,
+    });
+  });
+
+  it("keeps a hoisted var declared inside a block exported", () => {
+    const code = [
+      "if (process.env.X) {",
+      "  var res = {};",
+      "}",
+      "module.exports = res;",
+    ].join("\n");
+    expect(info(code, "res", 0)).toEqual({
+      is_exported: true,
+      export: { is_default: true },
+    });
+  });
 });
 
 describe("analyze_export_statement", () => {

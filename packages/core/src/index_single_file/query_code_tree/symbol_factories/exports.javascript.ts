@@ -307,6 +307,7 @@ export function extract_export_info(
   export?: ExportMetadata;
 } {
   let current: SyntaxNode | null = node;
+  let crossed_block = false;
 
   while (current) {
     const parent: SyntaxNode | null = current.parent;
@@ -336,7 +337,18 @@ export function extract_export_info(
       return { is_exported: false };
     }
 
+    if (current.type === "statement_block") {
+      crossed_block = true;
+    }
+
     current = parent;
+  }
+
+  // A block-scoped binding declared inside any block never reaches module
+  // scope; only hoisted bindings (`var`, function declarations) may consult
+  // the module-scope caches from inside a block.
+  if (crossed_block && !is_hoisted_binding(node)) {
+    return { is_exported: false };
   }
 
   if (symbol_name) {
@@ -361,6 +373,26 @@ export function extract_export_info(
   }
 
   return { is_exported: false };
+}
+
+/**
+ * Whether the binding a name node declares hoists to the enclosing function or
+ * module scope. `var` declarators and function declarations hoist; lexical
+ * bindings (`let`/`const`), class declarations, catch parameters, and function
+ * expression names are confined to their enclosing block.
+ */
+function is_hoisted_binding(node: SyntaxNode): boolean {
+  const parent = node.parent;
+  if (
+    parent?.type === "function_declaration" ||
+    parent?.type === "generator_function_declaration"
+  ) {
+    return true;
+  }
+  if (parent?.type === "variable_declarator") {
+    return parent.parent?.type === "variable_declaration";
+  }
+  return false;
 }
 
 function get_root_node(node: SyntaxNode): SyntaxNode {
