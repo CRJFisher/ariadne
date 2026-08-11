@@ -601,21 +601,6 @@
       }
     },
     {
-      "kind": "callable_value",
-      "name": "API_URL",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
-        "start_line": 24,
-        "start_column": 14,
-        "end_line": 24,
-        "end_column": 20
-      },
-      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:22:28:30:1",
-      "property_chain": [
-        "API_URL"
-      ]
-    },
-    {
       "kind": "variable_reference",
       "name": "API_URL",
       "location": {

@@ -342,31 +342,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "globalPipes",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/integration/optional_param_properties/application_config.ts",
-        "start_line": 17,
-        "start_column": 5,
-        "end_line": 17,
-        "end_column": 20
-      },
-      "scope_id": "method:<fixtures>/typescript/code/integration/optional_param_properties/application_config.ts:16:12:18:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/integration/optional_param_properties/application_config.ts",
-        "start_line": 17,
-        "start_column": 5,
-        "end_line": 17,
-        "end_column": 8
-      },
-      "property_chain": [
-        "this",
-        "globalPipes"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "this",
       "location": {

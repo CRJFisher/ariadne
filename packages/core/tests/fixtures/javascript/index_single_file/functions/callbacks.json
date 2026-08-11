@@ -2399,31 +2399,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "listeners",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 51,
-        "start_column": 3,
-        "end_line": 51,
-        "end_column": 16
-      },
-      "scope_id": "function:<fixtures>/javascript/code/functions/callbacks.js:50:22:52:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 51,
-        "start_column": 3,
-        "end_line": 51,
-        "end_column": 6
-      },
-      "property_chain": [
-        "this",
-        "listeners"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "this",
       "location": {
@@ -2457,32 +2432,6 @@
       "property_chain": [
         "EventEmitter",
         "prototype"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "property_access",
-      "name": "on",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 54,
-        "start_column": 1,
-        "end_line": 54,
-        "end_column": 25
-      },
-      "scope_id": "module:<fixtures>/javascript/code/functions/callbacks.js:1:1:136:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 54,
-        "start_column": 1,
-        "end_line": 54,
-        "end_column": 22
-      },
-      "property_chain": [
-        "EventEmitter",
-        "prototype",
-        "on"
       ],
       "access_type": "property",
       "is_optional_chain": false
@@ -2789,32 +2738,6 @@
       "property_chain": [
         "EventEmitter",
         "prototype"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "property_access",
-      "name": "emit",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 61,
-        "start_column": 1,
-        "end_line": 61,
-        "end_column": 27
-      },
-      "scope_id": "module:<fixtures>/javascript/code/functions/callbacks.js:1:1:136:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 61,
-        "start_column": 1,
-        "end_line": 61,
-        "end_column": 22
-      },
-      "property_chain": [
-        "EventEmitter",
-        "prototype",
-        "emit"
       ],
       "access_type": "property",
       "is_optional_chain": false

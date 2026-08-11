@@ -411,31 +411,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "name",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
-        "start_line": 8,
-        "start_column": 5,
-        "end_line": 8,
-        "end_column": 13
-      },
-      "scope_id": "constructor:<fixtures>/javascript/code/classes/constructor_workflow.js:7:14:12:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
-        "start_line": 8,
-        "start_column": 5,
-        "end_line": 8,
-        "end_column": 8
-      },
-      "property_chain": [
-        "this",
-        "name"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "this",
       "location": {
@@ -460,31 +435,6 @@
       },
       "scope_id": "constructor:<fixtures>/javascript/code/classes/constructor_workflow.js:7:14:12:3",
       "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "price",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
-        "start_line": 9,
-        "start_column": 5,
-        "end_line": 9,
-        "end_column": 14
-      },
-      "scope_id": "constructor:<fixtures>/javascript/code/classes/constructor_workflow.js:7:14:12:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
-        "start_line": 9,
-        "start_column": 5,
-        "end_line": 9,
-        "end_column": 8
-      },
-      "property_chain": [
-        "this",
-        "price"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -513,31 +463,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "category",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
-        "start_line": 10,
-        "start_column": 5,
-        "end_line": 10,
-        "end_column": 17
-      },
-      "scope_id": "constructor:<fixtures>/javascript/code/classes/constructor_workflow.js:7:14:12:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
-        "start_line": 10,
-        "start_column": 5,
-        "end_line": 10,
-        "end_column": 8
-      },
-      "property_chain": [
-        "this",
-        "category"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "this",
       "location": {
@@ -562,31 +487,6 @@
       },
       "scope_id": "constructor:<fixtures>/javascript/code/classes/constructor_workflow.js:7:14:12:3",
       "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "inStock",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
-        "start_line": 11,
-        "start_column": 5,
-        "end_line": 11,
-        "end_column": 16
-      },
-      "scope_id": "constructor:<fixtures>/javascript/code/classes/constructor_workflow.js:7:14:12:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
-        "start_line": 11,
-        "start_column": 5,
-        "end_line": 11,
-        "end_column": 8
-      },
-      "property_chain": [
-        "this",
-        "inStock"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -743,31 +643,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "price",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
-        "start_line": 23,
-        "start_column": 5,
-        "end_line": 23,
-        "end_column": 14
-      },
-      "scope_id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:22:16:25:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
-        "start_line": 23,
-        "start_column": 5,
-        "end_line": 23,
-        "end_column": 8
-      },
-      "property_chain": [
-        "this",
-        "price"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "this",
       "location": {
@@ -869,31 +744,6 @@
       },
       "scope_id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:22:16:25:3",
       "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "inStock",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
-        "start_line": 28,
-        "start_column": 5,
-        "end_line": 28,
-        "end_column": 16
-      },
-      "scope_id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:27:17:30:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
-        "start_line": 28,
-        "start_column": 5,
-        "end_line": 28,
-        "end_column": 8
-      },
-      "property_chain": [
-        "this",
-        "inStock"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",

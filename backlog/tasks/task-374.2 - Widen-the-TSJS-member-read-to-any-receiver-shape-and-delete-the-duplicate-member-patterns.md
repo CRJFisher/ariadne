@@ -51,7 +51,7 @@ The same files carry duplicate patterns that double every member reference and e
 - [x] #3 One member read yields exactly one `property_access` reference and one member call yields exactly one resolved edge — the optional-chain and TS static/instance duplicates are gone with no orphaned downstream consumer.
 - [x] #4 Integration tests (with updated `tests/fixtures/{typescript,javascript}/code/` fixtures) cover every evidence case: prisma `argsTypes` / `rootFieldMap` / `typeAndModelMap`, nest `instanceLinksHost` / `parentInjector`, angular `compiler`, and the typeorm tagged-template `sql` read asserted as a single `method_call` reference.
 - [x] #5 A data-field read and a plain (non-getter) method read still create no edge. A *write* to a member also mints no read, so it can no longer fabricate an edge to the getter sharing its name.
-- [~] #6 **Partial.** Whole-corpus effect is measured on sqlalchemy in the parent task (21 aborting files → 0; 6,793 → 10,850 graph nodes; entry-point rate 32.4% → 25.2%) and the JSON snapshots are regenerated. The angular and prisma reference-volume figures this AC names were taken against a superseded implementation and are not carried forward; they need re-taking against this branch.
+- [~] #6 **Partial.** Measured on prisma (2,798 `.ts`/`.js` files, fresh load, no cache) against the commit this branch starts from: references 590,105 → 433,150, `property_access` 72,720 → 21,205, wall clock 76.2s → 65.7s. The widened read costs no volume — deleting the duplicate member patterns and refusing to mint a read at a write position more than pays for it. The JSON snapshots are regenerated. Angular is not measured; prisma carries the same shapes and the direction is not in doubt.
 - [x] #7 The identifier-receiver accessor rows and the two typeorm tagged-template rows are re-triaged to receiver typing (or `coverage_config`) with the reason recorded.
 
 <!-- AC:END -->
@@ -100,6 +100,21 @@ Fresh scoped loads, no cache, before → after:
 The JSON index fixtures were regenerated (the generator's stale import was
 repaired) and the diff reviewed: reference volume shrinks, no fabricated
 edges, `callable_value` rows appear only where value-position shapes exist.
+
+## Volume (AC #6)
+
+Measured on prisma (2,798 `.ts`/`.js` files, fresh load, no cache), before and
+after this branch:
+
+| | before | after |
+| --- | --- | --- |
+| references | 590,105 | 433,150 |
+| `property_access` references | 72,720 | 21,205 |
+| wall clock | 76.2s | 65.7s |
+
+Widening the read to any receiver shape adds member reads that never existed;
+deleting the optional-chain and static/instance duplicates, and refusing to
+mint a read at a write position, removes far more.
 
 ## Re-triage (AC #7)
 

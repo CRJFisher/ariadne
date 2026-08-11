@@ -729,6 +729,25 @@
       "access_type": "read"
     },
     {
+      "kind": "type_reference",
+      "name": "Protocol",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/polymorphic_protocol.py",
+        "start_line": 9,
+        "start_column": 15,
+        "end_line": 9,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/polymorphic_protocol.py:1:1:70:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/python/code/classes/polymorphic_protocol.py:9:15:9:22:Protocol",
+        "type_name": "Protocol",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
       "kind": "variable_reference",
       "name": "Protocol",
       "location": {
@@ -1573,31 +1592,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "process",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/polymorphic_protocol.py",
-        "start_line": 56,
-        "start_column": 5,
-        "end_line": 56,
-        "end_column": 19
-      },
-      "scope_id": "function:<fixtures>/python/code/classes/polymorphic_protocol.py:51:20:58:30",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/polymorphic_protocol.py",
-        "start_line": 56,
-        "start_column": 5,
-        "end_line": 56,
-        "end_column": 11
-      },
-      "property_chain": [
-        "handler",
-        "process"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "handler",
       "location": {
@@ -1816,31 +1810,6 @@
       },
       "scope_id": "function:<fixtures>/python/code/classes/polymorphic_protocol.py:51:20:58:30",
       "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "get_name",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/polymorphic_protocol.py",
-        "start_line": 57,
-        "start_column": 12,
-        "end_line": 57,
-        "end_column": 27
-      },
-      "scope_id": "function:<fixtures>/python/code/classes/polymorphic_protocol.py:51:20:58:30",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/polymorphic_protocol.py",
-        "start_line": 57,
-        "start_column": 12,
-        "end_line": 57,
-        "end_column": 18
-      },
-      "property_chain": [
-        "handler",
-        "get_name"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",

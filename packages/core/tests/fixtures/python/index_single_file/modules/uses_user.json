@@ -567,31 +567,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "get_name",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 12,
-        "start_column": 13,
-        "end_line": 12,
-        "end_column": 25
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 12,
-        "start_column": 13,
-        "end_line": 12,
-        "end_column": 16
-      },
-      "property_chain": [
-        "user",
-        "get_name"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "user",
       "location": {
@@ -825,31 +800,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "get_email",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 13,
-        "start_column": 14,
-        "end_line": 13,
-        "end_column": 27
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 13,
-        "start_column": 14,
-        "end_line": 13,
-        "end_column": 17
-      },
-      "property_chain": [
-        "user",
-        "get_email"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "user",
       "location": {
@@ -1081,31 +1031,6 @@
       },
       "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
       "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "update_profile",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 16,
-        "start_column": 16,
-        "end_line": 16,
-        "end_column": 34
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 16,
-        "start_column": 16,
-        "end_line": 16,
-        "end_column": 19
-      },
-      "property_chain": [
-        "user",
-        "update_profile"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -1367,31 +1292,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "get_name",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 19,
-        "start_column": 14,
-        "end_line": 19,
-        "end_column": 34
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 19,
-        "start_column": 14,
-        "end_line": 19,
-        "end_column": 25
-      },
-      "property_chain": [
-        "updated_user",
-        "get_name"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "updated_user",
       "location": {
@@ -1625,31 +1525,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "get_info",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 20,
-        "start_column": 13,
-        "end_line": 20,
-        "end_column": 25
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 20,
-        "start_column": 13,
-        "end_line": 20,
-        "end_column": 16
-      },
-      "property_chain": [
-        "user",
-        "get_info"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "user",
       "location": {
@@ -1753,31 +1628,6 @@
       },
       "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
       "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "deactivate",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 23,
-        "start_column": 1,
-        "end_line": 23,
-        "end_column": 15
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 23,
-        "start_column": 1,
-        "end_line": 23,
-        "end_column": 4
-      },
-      "property_chain": [
-        "user",
-        "deactivate"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -1998,31 +1848,6 @@
       },
       "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
       "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "get_info",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 24,
-        "start_column": 14,
-        "end_line": 24,
-        "end_column": 26
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 24,
-        "start_column": 14,
-        "end_line": 24,
-        "end_column": 17
-      },
-      "property_chain": [
-        "user",
-        "get_info"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",

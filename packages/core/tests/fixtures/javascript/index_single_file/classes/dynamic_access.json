@@ -1126,31 +1126,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "services",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/dynamic_access.js",
-        "start_line": 8,
-        "start_column": 5,
-        "end_line": 8,
-        "end_column": 17
-      },
-      "scope_id": "constructor:<fixtures>/javascript/code/classes/dynamic_access.js:7:14:9:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/dynamic_access.js",
-        "start_line": 8,
-        "start_column": 5,
-        "end_line": 8,
-        "end_column": 8
-      },
-      "property_chain": [
-        "this",
-        "services"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "this",
       "location": {
@@ -2559,32 +2534,6 @@
       "property_chain": [
         "this",
         "data"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "property_access",
-      "name": "value",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/dynamic_access.js",
-        "start_line": 64,
-        "start_column": 5,
-        "end_line": 64,
-        "end_column": 19
-      },
-      "scope_id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:63:11:65:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/dynamic_access.js",
-        "start_line": 64,
-        "start_column": 5,
-        "end_line": 64,
-        "end_column": 13
-      },
-      "property_chain": [
-        "this",
-        "data",
-        "value"
       ],
       "access_type": "property",
       "is_optional_chain": false

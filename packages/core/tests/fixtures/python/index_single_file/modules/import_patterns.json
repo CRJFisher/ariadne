@@ -676,31 +676,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/import_patterns.py",
-        "start_line": 17,
-        "start_column": 12,
-        "end_line": 17,
-        "end_column": 27
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/import_patterns.py:1:1:43:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/modules/import_patterns.py",
-        "start_line": 17,
-        "start_column": 12,
-        "end_line": 17,
-        "end_column": 20
-      },
-      "property_chain": [
-        "utils_mod",
-        "helper"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "utils_mod",
       "location": {
@@ -932,31 +907,6 @@
       },
       "scope_id": "module:<fixtures>/python/code/modules/import_patterns.py:1:1:43:1",
       "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "process_data",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/import_patterns.py",
-        "start_line": 18,
-        "start_column": 18,
-        "end_line": 18,
-        "end_column": 39
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/import_patterns.py:1:1:43:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/modules/import_patterns.py",
-        "start_line": 18,
-        "start_column": 18,
-        "end_line": 18,
-        "end_column": 26
-      },
-      "property_chain": [
-        "utils_mod",
-        "process_data"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -1747,31 +1697,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "now",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/import_patterns.py",
-        "start_line": 26,
-        "start_column": 16,
-        "end_line": 26,
-        "end_column": 27
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/import_patterns.py:1:1:43:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/modules/import_patterns.py",
-        "start_line": 26,
-        "start_column": 16,
-        "end_line": 26,
-        "end_column": 23
-      },
-      "property_chain": [
-        "datetime",
-        "now"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "datetime",
       "location": {
@@ -2348,31 +2273,6 @@
       },
       "scope_id": "module:<fixtures>/python/code/modules/import_patterns.py:1:1:43:1",
       "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "calculate_total",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/import_patterns.py",
-        "start_line": 31,
-        "start_column": 15,
-        "end_line": 31,
-        "end_column": 39
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/import_patterns.py:1:1:43:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/modules/import_patterns.py",
-        "start_line": 31,
-        "start_column": 15,
-        "end_line": 31,
-        "end_column": 23
-      },
-      "property_chain": [
-        "utils_mod",
-        "calculate_total"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",

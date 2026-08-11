@@ -843,31 +843,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "exports",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
-        "start_line": 6,
-        "start_column": 1,
-        "end_line": 6,
-        "end_column": 14
-      },
-      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
-        "start_line": 6,
-        "start_column": 1,
-        "end_line": 6,
-        "end_column": 6
-      },
-      "property_chain": [
-        "module",
-        "exports"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "module",
       "location": {
@@ -900,31 +875,6 @@
       }
     },
     {
-      "kind": "property_access",
-      "name": "exports",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
-        "start_line": 6,
-        "start_column": 1,
-        "end_line": 6,
-        "end_column": 14
-      },
-      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
-        "start_line": 6,
-        "start_column": 1,
-        "end_line": 6,
-        "end_column": 6
-      },
-      "property_chain": [
-        "module",
-        "exports"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "module",
       "location": {
@@ -1001,31 +951,6 @@
       },
       "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
       "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "sendFile",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
-        "start_line": 8,
-        "start_column": 1,
-        "end_line": 8,
-        "end_column": 12
-      },
-      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
-        "start_line": 8,
-        "start_column": 1,
-        "end_line": 8,
-        "end_column": 3
-      },
-      "property_chain": [
-        "res",
-        "sendFile"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -1058,31 +983,6 @@
         "end_line": 13,
         "end_column": 1
       }
-    },
-    {
-      "kind": "property_access",
-      "name": "sendFile",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
-        "start_line": 8,
-        "start_column": 1,
-        "end_line": 8,
-        "end_column": 12
-      },
-      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
-        "start_line": 8,
-        "start_column": 1,
-        "end_line": 8,
-        "end_column": 3
-      },
-      "property_chain": [
-        "res",
-        "sendFile"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -1517,31 +1417,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "sendfile",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
-        "start_line": 15,
-        "start_column": 1,
-        "end_line": 15,
-        "end_column": 12
-      },
-      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
-        "start_line": 15,
-        "start_column": 1,
-        "end_line": 15,
-        "end_column": 3
-      },
-      "property_chain": [
-        "res",
-        "sendfile"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "res",
       "location": {
@@ -1572,31 +1447,6 @@
         "end_line": 19,
         "end_column": 1
       }
-    },
-    {
-      "kind": "property_access",
-      "name": "sendfile",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
-        "start_line": 15,
-        "start_column": 1,
-        "end_line": 15,
-        "end_column": 12
-      },
-      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
-        "start_line": 15,
-        "start_column": 1,
-        "end_line": 15,
-        "end_column": 3
-      },
-      "property_chain": [
-        "res",
-        "sendfile"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -1928,31 +1778,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "append",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
-        "start_line": 21,
-        "start_column": 1,
-        "end_line": 21,
-        "end_column": 10
-      },
-      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
-        "start_line": 21,
-        "start_column": 1,
-        "end_line": 21,
-        "end_column": 3
-      },
-      "property_chain": [
-        "res",
-        "append"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "res",
       "location": {
@@ -1983,31 +1808,6 @@
         "end_line": 25,
         "end_column": 1
       }
-    },
-    {
-      "kind": "property_access",
-      "name": "append",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
-        "start_line": 21,
-        "start_column": 1,
-        "end_line": 21,
-        "end_column": 10
-      },
-      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
-        "start_line": 21,
-        "start_column": 1,
-        "end_line": 21,
-        "end_column": 3
-      },
-      "property_chain": [
-        "res",
-        "append"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -2445,31 +2245,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "location",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
-        "start_line": 27,
-        "start_column": 1,
-        "end_line": 27,
-        "end_column": 12
-      },
-      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
-        "start_line": 27,
-        "start_column": 1,
-        "end_line": 27,
-        "end_column": 3
-      },
-      "property_chain": [
-        "res",
-        "location"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "res",
       "location": {
@@ -2500,31 +2275,6 @@
         "end_line": 29,
         "end_column": 1
       }
-    },
-    {
-      "kind": "property_access",
-      "name": "location",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
-        "start_line": 27,
-        "start_column": 1,
-        "end_line": 27,
-        "end_column": 12
-      },
-      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
-        "start_line": 27,
-        "start_column": 1,
-        "end_line": 27,
-        "end_column": 3
-      },
-      "property_chain": [
-        "res",
-        "location"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -2700,31 +2450,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "json",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
-        "start_line": 31,
-        "start_column": 1,
-        "end_line": 31,
-        "end_column": 8
-      },
-      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
-        "start_line": 31,
-        "start_column": 1,
-        "end_line": 31,
-        "end_column": 3
-      },
-      "property_chain": [
-        "res",
-        "json"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "res",
       "location": {
@@ -2755,31 +2480,6 @@
         "end_line": 34,
         "end_column": 1
       }
-    },
-    {
-      "kind": "property_access",
-      "name": "json",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
-        "start_line": 31,
-        "start_column": 1,
-        "end_line": 31,
-        "end_column": 8
-      },
-      "scope_id": "module:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:1:1:44:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/integration/commonjs_response_object/response.js",
-        "start_line": 31,
-        "start_column": 1,
-        "end_line": 31,
-        "end_column": 3
-      },
-      "property_chain": [
-        "res",
-        "json"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",

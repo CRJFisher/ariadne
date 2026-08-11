@@ -1199,31 +1199,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "value",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 25,
-        "start_column": 5,
-        "end_line": 25,
-        "end_column": 14
-      },
-      "scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:24:8:27:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 25,
-        "start_column": 5,
-        "end_line": 25,
-        "end_column": 8
-      },
-      "property_chain": [
-        "this",
-        "value"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "this",
       "location": {
@@ -2511,21 +2486,6 @@
       "access_type": "read"
     },
     {
-      "kind": "callable_value",
-      "name": "userData",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 62,
-        "start_column": 39,
-        "end_line": 62,
-        "end_column": 46
-      },
-      "scope_id": "block:<fixtures>/javascript/code/classes/object_literals.js:61:7:63:7",
-      "property_chain": [
-        "userData"
-      ]
-    },
-    {
       "kind": "variable_reference",
       "name": "userData",
       "location": {
@@ -3307,32 +3267,6 @@
       "property_chain": [
         "this",
         "data"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "property_access",
-      "name": "count",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 99,
-        "start_column": 7,
-        "end_line": 99,
-        "end_column": 21
-      },
-      "scope_id": "function:<fixtures>/javascript/code/classes/object_literals.js:98:25:100:5",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 99,
-        "start_column": 7,
-        "end_line": 99,
-        "end_column": 15
-      },
-      "property_chain": [
-        "this",
-        "data",
-        "count"
       ],
       "access_type": "property",
       "is_optional_chain": false
@@ -5022,31 +4956,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "exports",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 119,
-        "start_column": 1,
-        "end_line": 119,
-        "end_column": 14
-      },
-      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 119,
-        "start_column": 1,
-        "end_line": 119,
-        "end_column": 6
-      },
-      "property_chain": [
-        "module",
-        "exports"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "module",
       "location": {
@@ -5077,31 +4986,6 @@
         "end_line": 131,
         "end_column": 1
       }
-    },
-    {
-      "kind": "property_access",
-      "name": "exports",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 119,
-        "start_column": 1,
-        "end_line": 119,
-        "end_column": 14
-      },
-      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 119,
-        "start_column": 1,
-        "end_line": 119,
-        "end_column": 6
-      },
-      "property_chain": [
-        "module",
-        "exports"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",

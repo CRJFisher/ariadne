@@ -637,31 +637,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "exports",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/utils_commonjs.js",
-        "start_line": 19,
-        "start_column": 1,
-        "end_line": 19,
-        "end_column": 14
-      },
-      "scope_id": "module:<fixtures>/javascript/code/modules/utils_commonjs.js:1:1:24:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/modules/utils_commonjs.js",
-        "start_line": 19,
-        "start_column": 1,
-        "end_line": 19,
-        "end_column": 6
-      },
-      "property_chain": [
-        "module",
-        "exports"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "module",
       "location": {
@@ -692,31 +667,6 @@
         "end_line": 23,
         "end_column": 1
       }
-    },
-    {
-      "kind": "property_access",
-      "name": "exports",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/utils_commonjs.js",
-        "start_line": 19,
-        "start_column": 1,
-        "end_line": 19,
-        "end_column": 14
-      },
-      "scope_id": "module:<fixtures>/javascript/code/modules/utils_commonjs.js:1:1:24:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/modules/utils_commonjs.js",
-        "start_line": 19,
-        "start_column": 1,
-        "end_line": 19,
-        "end_column": 6
-      },
-      "property_chain": [
-        "module",
-        "exports"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",

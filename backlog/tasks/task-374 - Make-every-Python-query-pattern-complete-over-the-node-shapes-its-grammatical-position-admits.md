@@ -133,6 +133,12 @@ methods the enumerated patterns erased. The entry-point count rises with them
 because a symbol that did not exist cannot have been an entry point; as a share
 of the graph the false-positive rate falls by a fifth.
 
+The JSON index snapshots are regenerated from the corpus. The regeneration
+also flushes drift this family did not cause: 24 Rust snapshots change although
+no Rust query or source is touched, because earlier capture fixes landed
+without regenerating. The snapshots now describe the code; the Rust delta is
+not this family's output and should not be read as such.
+
 ## Hand-offs
 
 - AC #9: the dotted-`extends` parent link is filed as TASK-374.4

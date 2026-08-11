@@ -274,31 +274,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/simple_module_import.py",
-        "start_line": 7,
-        "start_column": 12,
-        "end_line": 7,
-        "end_column": 23
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/simple_module_import.py:1:1:10:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/modules/simple_module_import.py",
-        "start_line": 7,
-        "start_column": 12,
-        "end_line": 7,
-        "end_column": 16
-      },
-      "property_chain": [
-        "utils",
-        "helper"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "utils",
       "location": {
@@ -532,31 +507,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "process_data",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/simple_module_import.py",
-        "start_line": 8,
-        "start_column": 13,
-        "end_line": 8,
-        "end_column": 30
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/simple_module_import.py:1:1:10:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/modules/simple_module_import.py",
-        "start_line": 8,
-        "start_column": 13,
-        "end_line": 8,
-        "end_column": 17
-      },
-      "property_chain": [
-        "utils",
-        "process_data"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "utils",
       "location": {
@@ -788,31 +738,6 @@
       },
       "scope_id": "module:<fixtures>/python/code/modules/simple_module_import.py:1:1:10:0",
       "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "calculate_total",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/simple_module_import.py",
-        "start_line": 9,
-        "start_column": 9,
-        "end_line": 9,
-        "end_column": 29
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/simple_module_import.py:1:1:10:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/modules/simple_module_import.py",
-        "start_line": 9,
-        "start_column": 9,
-        "end_line": 9,
-        "end_column": 13
-      },
-      "property_chain": [
-        "utils",
-        "calculate_total"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",

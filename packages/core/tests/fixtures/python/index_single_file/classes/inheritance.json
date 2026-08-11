@@ -702,31 +702,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "name",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/inheritance.py",
-        "start_line": 8,
-        "start_column": 9,
-        "end_line": 8,
-        "end_column": 17
-      },
-      "scope_id": "constructor:<fixtures>/python/code/classes/inheritance.py:7:17:8:24",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/inheritance.py",
-        "start_line": 8,
-        "start_column": 9,
-        "end_line": 8,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "name"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "self",
       "location": {
@@ -757,31 +732,6 @@
         "end_line": 8,
         "end_column": 24
       }
-    },
-    {
-      "kind": "property_access",
-      "name": "name",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/inheritance.py",
-        "start_line": 8,
-        "start_column": 9,
-        "end_line": 8,
-        "end_column": 17
-      },
-      "scope_id": "constructor:<fixtures>/python/code/classes/inheritance.py:7:17:8:24",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/inheritance.py",
-        "start_line": 8,
-        "start_column": 9,
-        "end_line": 8,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "name"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -1233,6 +1183,25 @@
       "access_type": "read"
     },
     {
+      "kind": "type_reference",
+      "name": "Animal",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/inheritance.py",
+        "start_line": 17,
+        "start_column": 11,
+        "end_line": 17,
+        "end_column": 16
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/inheritance.py:1:1:35:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/python/code/classes/inheritance.py:17:11:17:16:Animal",
+        "type_name": "Animal",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
       "kind": "variable_reference",
       "name": "Animal",
       "location": {
@@ -1461,31 +1430,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "breed",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/inheritance.py",
-        "start_line": 20,
-        "start_column": 9,
-        "end_line": 20,
-        "end_column": 18
-      },
-      "scope_id": "constructor:<fixtures>/python/code/classes/inheritance.py:18:17:20:26",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/inheritance.py",
-        "start_line": 20,
-        "start_column": 9,
-        "end_line": 20,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "breed"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "self",
       "location": {
@@ -1516,31 +1460,6 @@
         "end_line": 20,
         "end_column": 26
       }
-    },
-    {
-      "kind": "property_access",
-      "name": "breed",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/inheritance.py",
-        "start_line": 20,
-        "start_column": 9,
-        "end_line": 20,
-        "end_column": 18
-      },
-      "scope_id": "constructor:<fixtures>/python/code/classes/inheritance.py:18:17:20:26",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/inheritance.py",
-        "start_line": 20,
-        "start_column": 9,
-        "end_line": 20,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "breed"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -1979,6 +1898,25 @@
       },
       "scope_id": "module:<fixtures>/python/code/classes/inheritance.py:1:1:35:0",
       "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Animal",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/inheritance.py",
+        "start_line": 29,
+        "start_column": 11,
+        "end_line": 29,
+        "end_column": 16
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/inheritance.py:1:1:35:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/python/code/classes/inheritance.py:29:11:29:16:Animal",
+        "type_name": "Animal",
+        "certainty": "declared",
+        "is_nullable": false
+      }
     },
     {
       "kind": "variable_reference",

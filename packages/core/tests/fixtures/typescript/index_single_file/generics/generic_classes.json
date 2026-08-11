@@ -1180,31 +1180,6 @@
       }
     },
     {
-      "kind": "property_access",
-      "name": "value",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/generics/generic_classes.ts",
-        "start_line": 15,
-        "start_column": 5,
-        "end_line": 15,
-        "end_column": 14
-      },
-      "scope_id": "method:<fixtures>/typescript/code/generics/generic_classes.ts:14:12:16:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/generics/generic_classes.ts",
-        "start_line": 15,
-        "start_column": 5,
-        "end_line": 15,
-        "end_column": 8
-      },
-      "property_chain": [
-        "this",
-        "value"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "this",
       "location": {

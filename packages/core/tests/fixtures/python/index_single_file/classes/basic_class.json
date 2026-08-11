@@ -729,31 +729,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "name",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/basic_class.py",
-        "start_line": 8,
-        "start_column": 9,
-        "end_line": 8,
-        "end_column": 17
-      },
-      "scope_id": "constructor:<fixtures>/python/code/classes/basic_class.py:7:17:10:26",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/basic_class.py",
-        "start_line": 8,
-        "start_column": 9,
-        "end_line": 8,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "name"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "self",
       "location": {
@@ -784,31 +759,6 @@
         "end_line": 8,
         "end_column": 24
       }
-    },
-    {
-      "kind": "property_access",
-      "name": "name",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/basic_class.py",
-        "start_line": 8,
-        "start_column": 9,
-        "end_line": 8,
-        "end_column": 17
-      },
-      "scope_id": "constructor:<fixtures>/python/code/classes/basic_class.py:7:17:10:26",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/basic_class.py",
-        "start_line": 8,
-        "start_column": 9,
-        "end_line": 8,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "name"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -915,31 +865,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "email",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/basic_class.py",
-        "start_line": 9,
-        "start_column": 9,
-        "end_line": 9,
-        "end_column": 18
-      },
-      "scope_id": "constructor:<fixtures>/python/code/classes/basic_class.py:7:17:10:26",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/basic_class.py",
-        "start_line": 9,
-        "start_column": 9,
-        "end_line": 9,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "email"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "self",
       "location": {
@@ -970,31 +895,6 @@
         "end_line": 9,
         "end_column": 26
       }
-    },
-    {
-      "kind": "property_access",
-      "name": "email",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/basic_class.py",
-        "start_line": 9,
-        "start_column": 9,
-        "end_line": 9,
-        "end_column": 18
-      },
-      "scope_id": "constructor:<fixtures>/python/code/classes/basic_class.py:7:17:10:26",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/basic_class.py",
-        "start_line": 9,
-        "start_column": 9,
-        "end_line": 9,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "email"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -1101,31 +1001,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "active",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/basic_class.py",
-        "start_line": 10,
-        "start_column": 9,
-        "end_line": 10,
-        "end_column": 19
-      },
-      "scope_id": "constructor:<fixtures>/python/code/classes/basic_class.py:7:17:10:26",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/basic_class.py",
-        "start_line": 10,
-        "start_column": 9,
-        "end_line": 10,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "active"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "self",
       "location": {
@@ -1156,31 +1031,6 @@
         "end_line": 10,
         "end_column": 26
       }
-    },
-    {
-      "kind": "property_access",
-      "name": "active",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/basic_class.py",
-        "start_line": 10,
-        "start_column": 9,
-        "end_line": 10,
-        "end_column": 19
-      },
-      "scope_id": "constructor:<fixtures>/python/code/classes/basic_class.py:7:17:10:26",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/basic_class.py",
-        "start_line": 10,
-        "start_column": 9,
-        "end_line": 10,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "active"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -1313,31 +1163,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "active",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/basic_class.py",
-        "start_line": 13,
-        "start_column": 9,
-        "end_line": 13,
-        "end_column": 19
-      },
-      "scope_id": "method:<fixtures>/python/code/classes/basic_class.py:12:17:13:26",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/basic_class.py",
-        "start_line": 13,
-        "start_column": 9,
-        "end_line": 13,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "active"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "self",
       "location": {
@@ -1368,31 +1193,6 @@
         "end_line": 13,
         "end_column": 26
       }
-    },
-    {
-      "kind": "property_access",
-      "name": "active",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/basic_class.py",
-        "start_line": 13,
-        "start_column": 9,
-        "end_line": 13,
-        "end_column": 19
-      },
-      "scope_id": "method:<fixtures>/python/code/classes/basic_class.py:12:17:13:26",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/basic_class.py",
-        "start_line": 13,
-        "start_column": 9,
-        "end_line": 13,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "active"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -1525,31 +1325,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "active",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/basic_class.py",
-        "start_line": 16,
-        "start_column": 9,
-        "end_line": 16,
-        "end_column": 19
-      },
-      "scope_id": "method:<fixtures>/python/code/classes/basic_class.py:15:19:16:27",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/basic_class.py",
-        "start_line": 16,
-        "start_column": 9,
-        "end_line": 16,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "active"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "self",
       "location": {
@@ -1580,31 +1355,6 @@
         "end_line": 16,
         "end_column": 27
       }
-    },
-    {
-      "kind": "property_access",
-      "name": "active",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/basic_class.py",
-        "start_line": 16,
-        "start_column": 9,
-        "end_line": 16,
-        "end_column": 19
-      },
-      "scope_id": "method:<fixtures>/python/code/classes/basic_class.py:15:19:16:27",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/basic_class.py",
-        "start_line": 16,
-        "start_column": 9,
-        "end_line": 16,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "active"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -2130,31 +1880,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "id",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/basic_class.py",
-        "start_line": 24,
-        "start_column": 9,
-        "end_line": 24,
-        "end_column": 15
-      },
-      "scope_id": "constructor:<fixtures>/python/code/classes/basic_class.py:23:17:26:26",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/basic_class.py",
-        "start_line": 24,
-        "start_column": 9,
-        "end_line": 24,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "id"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "self",
       "location": {
@@ -2185,31 +1910,6 @@
         "end_line": 24,
         "end_column": 20
       }
-    },
-    {
-      "kind": "property_access",
-      "name": "id",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/basic_class.py",
-        "start_line": 24,
-        "start_column": 9,
-        "end_line": 24,
-        "end_column": 15
-      },
-      "scope_id": "constructor:<fixtures>/python/code/classes/basic_class.py:23:17:26:26",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/basic_class.py",
-        "start_line": 24,
-        "start_column": 9,
-        "end_line": 24,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "id"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -2316,31 +2016,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "name",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/basic_class.py",
-        "start_line": 25,
-        "start_column": 9,
-        "end_line": 25,
-        "end_column": 17
-      },
-      "scope_id": "constructor:<fixtures>/python/code/classes/basic_class.py:23:17:26:26",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/basic_class.py",
-        "start_line": 25,
-        "start_column": 9,
-        "end_line": 25,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "name"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "self",
       "location": {
@@ -2371,31 +2046,6 @@
         "end_line": 25,
         "end_column": 24
       }
-    },
-    {
-      "kind": "property_access",
-      "name": "name",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/basic_class.py",
-        "start_line": 25,
-        "start_column": 9,
-        "end_line": 25,
-        "end_column": 17
-      },
-      "scope_id": "constructor:<fixtures>/python/code/classes/basic_class.py:23:17:26:26",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/basic_class.py",
-        "start_line": 25,
-        "start_column": 9,
-        "end_line": 25,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "name"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -2502,31 +2152,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "price",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/basic_class.py",
-        "start_line": 26,
-        "start_column": 9,
-        "end_line": 26,
-        "end_column": 18
-      },
-      "scope_id": "constructor:<fixtures>/python/code/classes/basic_class.py:23:17:26:26",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/basic_class.py",
-        "start_line": 26,
-        "start_column": 9,
-        "end_line": 26,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "price"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "self",
       "location": {
@@ -2557,31 +2182,6 @@
         "end_line": 26,
         "end_column": 26
       }
-    },
-    {
-      "kind": "property_access",
-      "name": "price",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/basic_class.py",
-        "start_line": 26,
-        "start_column": 9,
-        "end_line": 26,
-        "end_column": 18
-      },
-      "scope_id": "constructor:<fixtures>/python/code/classes/basic_class.py:23:17:26:26",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/basic_class.py",
-        "start_line": 26,
-        "start_column": 9,
-        "end_line": 26,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "price"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -2772,31 +2372,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "price",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/basic_class.py",
-        "start_line": 29,
-        "start_column": 9,
-        "end_line": 29,
-        "end_column": 18
-      },
-      "scope_id": "method:<fixtures>/python/code/classes/basic_class.py:28:23:29:48",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/basic_class.py",
-        "start_line": 29,
-        "start_column": 9,
-        "end_line": 29,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "price"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "self",
       "location": {
@@ -2827,31 +2402,6 @@
         "end_line": 29,
         "end_column": 48
       }
-    },
-    {
-      "kind": "property_access",
-      "name": "price",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/basic_class.py",
-        "start_line": 29,
-        "start_column": 9,
-        "end_line": 29,
-        "end_column": 18
-      },
-      "scope_id": "method:<fixtures>/python/code/classes/basic_class.py:28:23:29:48",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/basic_class.py",
-        "start_line": 29,
-        "start_column": 9,
-        "end_line": 29,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "price"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",

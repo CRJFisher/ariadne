@@ -273,31 +273,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "generate_batched_predictions",
-      "location": {
-        "file_path": "<fixtures>/python/code/aliased_imports/forecast.py",
-        "start_line": 9,
-        "start_column": 10,
-        "end_line": 9,
-        "end_column": 54
-      },
-      "scope_id": "module:<fixtures>/python/code/aliased_imports/forecast.py:1:1:11:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/aliased_imports/forecast.py",
-        "start_line": 9,
-        "start_column": 10,
-        "end_line": 9,
-        "end_column": 25
-      },
-      "property_chain": [
-        "predict_generate",
-        "generate_batched_predictions"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "predict_generate",
       "location": {
@@ -529,31 +504,6 @@
       },
       "scope_id": "module:<fixtures>/python/code/aliased_imports/forecast.py:1:1:11:0",
       "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "prepare_data",
-      "location": {
-        "file_path": "<fixtures>/python/code/aliased_imports/forecast.py",
-        "start_line": 10,
-        "start_column": 8,
-        "end_line": 10,
-        "end_column": 36
-      },
-      "scope_id": "module:<fixtures>/python/code/aliased_imports/forecast.py:1:1:11:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/aliased_imports/forecast.py",
-        "start_line": 10,
-        "start_column": 8,
-        "end_line": 10,
-        "end_column": 23
-      },
-      "property_chain": [
-        "predict_generate",
-        "prepare_data"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",

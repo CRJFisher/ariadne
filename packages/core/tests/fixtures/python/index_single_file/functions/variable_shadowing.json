@@ -7548,31 +7548,6 @@
       "type_context": "annotation"
     },
     {
-      "kind": "property_access",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 154,
-        "start_column": 13,
-        "end_line": 154,
-        "end_column": 23
-      },
-      "scope_id": "constructor:<fixtures>/python/code/functions/variable_shadowing.py:152:21:154:76",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 154,
-        "start_column": 13,
-        "end_line": 154,
-        "end_column": 16
-      },
-      "property_chain": [
-        "self",
-        "helper"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "self",
       "location": {
@@ -7603,31 +7578,6 @@
         "end_line": 154,
         "end_column": 32
       }
-    },
-    {
-      "kind": "property_access",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 154,
-        "start_column": 13,
-        "end_line": 154,
-        "end_column": 23
-      },
-      "scope_id": "constructor:<fixtures>/python/code/functions/variable_shadowing.py:152:21:154:76",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 154,
-        "start_column": 13,
-        "end_line": 154,
-        "end_column": 16
-      },
-      "property_chain": [
-        "self",
-        "helper"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -9256,31 +9206,6 @@
       },
       "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:144:32:189:5",
       "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "method_with_shadowing",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 184,
-        "start_column": 21,
-        "end_line": 184,
-        "end_column": 52
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:144:32:189:5",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 184,
-        "start_column": 21,
-        "end_line": 184,
-        "end_column": 30
-      },
-      "property_chain": [
-        "shadow_obj",
-        "method_with_shadowing"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",

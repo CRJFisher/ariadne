@@ -1575,31 +1575,6 @@
       "type_context": "annotation"
     },
     {
-      "kind": "property_access",
-      "name": "name",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/method_types.py",
-        "start_line": 16,
-        "start_column": 9,
-        "end_line": 16,
-        "end_column": 17
-      },
-      "scope_id": "constructor:<fixtures>/python/code/classes/method_types.py:14:17:18:29",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/method_types.py",
-        "start_line": 16,
-        "start_column": 9,
-        "end_line": 16,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "name"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "self",
       "location": {
@@ -1630,31 +1605,6 @@
         "end_line": 16,
         "end_column": 24
       }
-    },
-    {
-      "kind": "property_access",
-      "name": "name",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/method_types.py",
-        "start_line": 16,
-        "start_column": 9,
-        "end_line": 16,
-        "end_column": 17
-      },
-      "scope_id": "constructor:<fixtures>/python/code/classes/method_types.py:14:17:18:29",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/method_types.py",
-        "start_line": 16,
-        "start_column": 9,
-        "end_line": 16,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "name"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -1761,31 +1711,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "history",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/method_types.py",
-        "start_line": 17,
-        "start_column": 9,
-        "end_line": 17,
-        "end_column": 20
-      },
-      "scope_id": "constructor:<fixtures>/python/code/classes/method_types.py:14:17:18:29",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/method_types.py",
-        "start_line": 17,
-        "start_column": 9,
-        "end_line": 17,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "history"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "self",
       "location": {
@@ -1822,31 +1747,6 @@
         "certainty": "declared",
         "is_nullable": false
       }
-    },
-    {
-      "kind": "property_access",
-      "name": "history",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/method_types.py",
-        "start_line": 17,
-        "start_column": 9,
-        "end_line": 17,
-        "end_column": 20
-      },
-      "scope_id": "constructor:<fixtures>/python/code/classes/method_types.py:14:17:18:29",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/method_types.py",
-        "start_line": 17,
-        "start_column": 9,
-        "end_line": 17,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "history"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -5571,31 +5471,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "add",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/method_types.py",
-        "start_line": 71,
-        "start_column": 20,
-        "end_line": 71,
-        "end_column": 27
-      },
-      "scope_id": "block:<fixtures>/python/code/classes/method_types.py:70:9:75:63",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/method_types.py",
-        "start_line": 71,
-        "start_column": 20,
-        "end_line": 71,
-        "end_column": 23
-      },
-      "property_chain": [
-        "self",
-        "add"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "self",
       "location": {
@@ -5754,31 +5629,6 @@
       },
       "scope_id": "block:<fixtures>/python/code/classes/method_types.py:72:9:73:38",
       "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "multiply",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/method_types.py",
-        "start_line": 73,
-        "start_column": 20,
-        "end_line": 73,
-        "end_column": 32
-      },
-      "scope_id": "block:<fixtures>/python/code/classes/method_types.py:72:9:73:38",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/method_types.py",
-        "start_line": 73,
-        "start_column": 20,
-        "end_line": 73,
-        "end_column": 23
-      },
-      "property_chain": [
-        "self",
-        "multiply"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -6473,31 +6323,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "add",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/method_types.py",
-        "start_line": 83,
-        "start_column": 14,
-        "end_line": 83,
-        "end_column": 22
-      },
-      "scope_id": "module:<fixtures>/python/code/classes/method_types.py:1:1:120:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/method_types.py",
-        "start_line": 83,
-        "start_column": 14,
-        "end_line": 83,
-        "end_column": 18
-      },
-      "property_chain": [
-        "calc1",
-        "add"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "calc1",
       "location": {
@@ -6729,31 +6554,6 @@
       },
       "scope_id": "module:<fixtures>/python/code/classes/method_types.py:1:1:120:1",
       "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "multiply",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/method_types.py",
-        "start_line": 84,
-        "start_column": 18,
-        "end_line": 84,
-        "end_column": 31
-      },
-      "scope_id": "module:<fixtures>/python/code/classes/method_types.py:1:1:120:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/method_types.py",
-        "start_line": 84,
-        "start_column": 18,
-        "end_line": 84,
-        "end_column": 22
-      },
-      "property_chain": [
-        "calc1",
-        "multiply"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -6989,31 +6789,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "get_count",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/method_types.py",
-        "start_line": 87,
-        "start_column": 21,
-        "end_line": 87,
-        "end_column": 40
-      },
-      "scope_id": "module:<fixtures>/python/code/classes/method_types.py:1:1:120:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/method_types.py",
-        "start_line": 87,
-        "start_column": 21,
-        "end_line": 87,
-        "end_column": 30
-      },
-      "property_chain": [
-        "Calculator",
-        "get_count"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "Calculator",
       "location": {
@@ -7245,31 +7020,6 @@
       },
       "scope_id": "module:<fixtures>/python/code/classes/method_types.py:1:1:120:1",
       "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "create_scientific",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/method_types.py",
-        "start_line": 88,
-        "start_column": 19,
-        "end_line": 88,
-        "end_column": 46
-      },
-      "scope_id": "module:<fixtures>/python/code/classes/method_types.py:1:1:120:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/method_types.py",
-        "start_line": 88,
-        "start_column": 19,
-        "end_line": 88,
-        "end_column": 28
-      },
-      "property_chain": [
-        "Calculator",
-        "create_scientific"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -7505,31 +7255,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "validate_input",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/method_types.py",
-        "start_line": 91,
-        "start_column": 19,
-        "end_line": 91,
-        "end_column": 43
-      },
-      "scope_id": "module:<fixtures>/python/code/classes/method_types.py:1:1:120:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/method_types.py",
-        "start_line": 91,
-        "start_column": 19,
-        "end_line": 91,
-        "end_column": 28
-      },
-      "property_chain": [
-        "Calculator",
-        "validate_input"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "Calculator",
       "location": {
@@ -7763,31 +7488,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "validate_input",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/method_types.py",
-        "start_line": 92,
-        "start_column": 19,
-        "end_line": 92,
-        "end_column": 43
-      },
-      "scope_id": "module:<fixtures>/python/code/classes/method_types.py:1:1:120:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/method_types.py",
-        "start_line": 92,
-        "start_column": 19,
-        "end_line": 92,
-        "end_column": 28
-      },
-      "property_chain": [
-        "Calculator",
-        "validate_input"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "Calculator",
       "location": {
@@ -8019,31 +7719,6 @@
       },
       "scope_id": "module:<fixtures>/python/code/classes/method_types.py:1:1:120:1",
       "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "convert_to_float",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/method_types.py",
-        "start_line": 93,
-        "start_column": 19,
-        "end_line": 93,
-        "end_column": 45
-      },
-      "scope_id": "module:<fixtures>/python/code/classes/method_types.py:1:1:120:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/method_types.py",
-        "start_line": 93,
-        "start_column": 19,
-        "end_line": 93,
-        "end_column": 28
-      },
-      "property_chain": [
-        "Calculator",
-        "convert_to_float"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",

@@ -478,31 +478,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "name",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/integration/types.ts",
-        "start_line": 21,
-        "start_column": 5,
-        "end_line": 21,
-        "end_column": 13
-      },
-      "scope_id": "method:<fixtures>/typescript/code/integration/types.ts:20:14:22:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/integration/types.ts",
-        "start_line": 21,
-        "start_column": 5,
-        "end_line": 21,
-        "end_column": 8
-      },
-      "property_chain": [
-        "this",
-        "name"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "this",
       "location": {

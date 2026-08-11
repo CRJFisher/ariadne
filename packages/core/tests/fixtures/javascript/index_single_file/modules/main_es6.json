@@ -507,31 +507,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "data",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 17,
-        "start_column": 5,
-        "end_line": 17,
-        "end_column": 13
-      },
-      "scope_id": "constructor:<fixtures>/javascript/code/modules/main_es6.js:16:14:18:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 17,
-        "start_column": 5,
-        "end_line": 17,
-        "end_column": 8
-      },
-      "property_chain": [
-        "this",
-        "data"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "this",
       "location": {

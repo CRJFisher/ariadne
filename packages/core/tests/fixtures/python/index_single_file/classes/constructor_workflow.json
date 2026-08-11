@@ -890,31 +890,6 @@
       "type_context": "annotation"
     },
     {
-      "kind": "property_access",
-      "name": "name",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/constructor_workflow.py",
-        "start_line": 15,
-        "start_column": 9,
-        "end_line": 15,
-        "end_column": 17
-      },
-      "scope_id": "constructor:<fixtures>/python/code/classes/constructor_workflow.py:13:17:19:40",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/constructor_workflow.py",
-        "start_line": 15,
-        "start_column": 9,
-        "end_line": 15,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "name"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "self",
       "location": {
@@ -945,31 +920,6 @@
         "end_line": 15,
         "end_column": 24
       }
-    },
-    {
-      "kind": "property_access",
-      "name": "name",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/constructor_workflow.py",
-        "start_line": 15,
-        "start_column": 9,
-        "end_line": 15,
-        "end_column": 17
-      },
-      "scope_id": "constructor:<fixtures>/python/code/classes/constructor_workflow.py:13:17:19:40",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/constructor_workflow.py",
-        "start_line": 15,
-        "start_column": 9,
-        "end_line": 15,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "name"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -1076,31 +1026,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "price",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/constructor_workflow.py",
-        "start_line": 16,
-        "start_column": 9,
-        "end_line": 16,
-        "end_column": 18
-      },
-      "scope_id": "constructor:<fixtures>/python/code/classes/constructor_workflow.py:13:17:19:40",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/constructor_workflow.py",
-        "start_line": 16,
-        "start_column": 9,
-        "end_line": 16,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "price"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "self",
       "location": {
@@ -1131,31 +1056,6 @@
         "end_line": 16,
         "end_column": 26
       }
-    },
-    {
-      "kind": "property_access",
-      "name": "price",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/constructor_workflow.py",
-        "start_line": 16,
-        "start_column": 9,
-        "end_line": 16,
-        "end_column": 18
-      },
-      "scope_id": "constructor:<fixtures>/python/code/classes/constructor_workflow.py:13:17:19:40",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/constructor_workflow.py",
-        "start_line": 16,
-        "start_column": 9,
-        "end_line": 16,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "price"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -1262,31 +1162,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "category",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/constructor_workflow.py",
-        "start_line": 17,
-        "start_column": 9,
-        "end_line": 17,
-        "end_column": 21
-      },
-      "scope_id": "constructor:<fixtures>/python/code/classes/constructor_workflow.py:13:17:19:40",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/constructor_workflow.py",
-        "start_line": 17,
-        "start_column": 9,
-        "end_line": 17,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "category"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "self",
       "location": {
@@ -1317,31 +1192,6 @@
         "end_line": 17,
         "end_column": 32
       }
-    },
-    {
-      "kind": "property_access",
-      "name": "category",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/constructor_workflow.py",
-        "start_line": 17,
-        "start_column": 9,
-        "end_line": 17,
-        "end_column": 21
-      },
-      "scope_id": "constructor:<fixtures>/python/code/classes/constructor_workflow.py:13:17:19:40",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/constructor_workflow.py",
-        "start_line": 17,
-        "start_column": 9,
-        "end_line": 17,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "category"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -1448,31 +1298,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "in_stock",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/constructor_workflow.py",
-        "start_line": 18,
-        "start_column": 9,
-        "end_line": 18,
-        "end_column": 21
-      },
-      "scope_id": "constructor:<fixtures>/python/code/classes/constructor_workflow.py:13:17:19:40",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/constructor_workflow.py",
-        "start_line": 18,
-        "start_column": 9,
-        "end_line": 18,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "in_stock"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "self",
       "location": {
@@ -1503,31 +1328,6 @@
         "end_line": 18,
         "end_column": 28
       }
-    },
-    {
-      "kind": "property_access",
-      "name": "in_stock",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/constructor_workflow.py",
-        "start_line": 18,
-        "start_column": 9,
-        "end_line": 18,
-        "end_column": 21
-      },
-      "scope_id": "constructor:<fixtures>/python/code/classes/constructor_workflow.py:13:17:19:40",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/constructor_workflow.py",
-        "start_line": 18,
-        "start_column": 9,
-        "end_line": 18,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "in_stock"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -1621,31 +1421,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "created_at",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/constructor_workflow.py",
-        "start_line": 19,
-        "start_column": 9,
-        "end_line": 19,
-        "end_column": 23
-      },
-      "scope_id": "constructor:<fixtures>/python/code/classes/constructor_workflow.py:13:17:19:40",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/constructor_workflow.py",
-        "start_line": 19,
-        "start_column": 9,
-        "end_line": 19,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "created_at"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "self",
       "location": {
@@ -1676,31 +1451,6 @@
         "end_line": 19,
         "end_column": 40
       }
-    },
-    {
-      "kind": "property_access",
-      "name": "created_at",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/constructor_workflow.py",
-        "start_line": 19,
-        "start_column": 9,
-        "end_line": 19,
-        "end_column": 23
-      },
-      "scope_id": "constructor:<fixtures>/python/code/classes/constructor_workflow.py:13:17:19:40",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/constructor_workflow.py",
-        "start_line": 19,
-        "start_column": 9,
-        "end_line": 19,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "created_at"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -1839,31 +1589,6 @@
       },
       "scope_id": "constructor:<fixtures>/python/code/classes/constructor_workflow.py:13:17:19:40",
       "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "now",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/constructor_workflow.py",
-        "start_line": 19,
-        "start_column": 27,
-        "end_line": 19,
-        "end_column": 38
-      },
-      "scope_id": "constructor:<fixtures>/python/code/classes/constructor_workflow.py:13:17:19:40",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/constructor_workflow.py",
-        "start_line": 19,
-        "start_column": 27,
-        "end_line": 19,
-        "end_column": 34
-      },
-      "property_chain": [
-        "datetime",
-        "now"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -2376,31 +2101,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "price",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/constructor_workflow.py",
-        "start_line": 31,
-        "start_column": 9,
-        "end_line": 31,
-        "end_column": 18
-      },
-      "scope_id": "method:<fixtures>/python/code/classes/constructor_workflow.py:29:23:32:19",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/constructor_workflow.py",
-        "start_line": 31,
-        "start_column": 9,
-        "end_line": 31,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "price"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "self",
       "location": {
@@ -2431,31 +2131,6 @@
         "end_line": 31,
         "end_column": 56
       }
-    },
-    {
-      "kind": "property_access",
-      "name": "price",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/constructor_workflow.py",
-        "start_line": 31,
-        "start_column": 9,
-        "end_line": 31,
-        "end_column": 18
-      },
-      "scope_id": "method:<fixtures>/python/code/classes/constructor_workflow.py:29:23:32:19",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/constructor_workflow.py",
-        "start_line": 31,
-        "start_column": 9,
-        "end_line": 31,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "price"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -2743,31 +2418,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "in_stock",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/constructor_workflow.py",
-        "start_line": 36,
-        "start_column": 9,
-        "end_line": 36,
-        "end_column": 21
-      },
-      "scope_id": "method:<fixtures>/python/code/classes/constructor_workflow.py:34:26:37:19",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/constructor_workflow.py",
-        "start_line": 36,
-        "start_column": 9,
-        "end_line": 36,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "in_stock"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "self",
       "location": {
@@ -2798,31 +2448,6 @@
         "end_line": 36,
         "end_column": 29
       }
-    },
-    {
-      "kind": "property_access",
-      "name": "in_stock",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/constructor_workflow.py",
-        "start_line": 36,
-        "start_column": 9,
-        "end_line": 36,
-        "end_column": 21
-      },
-      "scope_id": "method:<fixtures>/python/code/classes/constructor_workflow.py:34:26:37:19",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/constructor_workflow.py",
-        "start_line": 36,
-        "start_column": 9,
-        "end_line": 36,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "in_stock"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -3868,31 +3493,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "get_name",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/constructor_workflow.py",
-        "start_line": 54,
-        "start_column": 16,
-        "end_line": 54,
-        "end_column": 31
-      },
-      "scope_id": "module:<fixtures>/python/code/classes/constructor_workflow.py:1:1:69:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/constructor_workflow.py",
-        "start_line": 54,
-        "start_column": 16,
-        "end_line": 54,
-        "end_column": 22
-      },
-      "property_chain": [
-        "product",
-        "get_name"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "product",
       "location": {
@@ -4124,31 +3724,6 @@
       },
       "scope_id": "module:<fixtures>/python/code/classes/constructor_workflow.py:1:1:69:1",
       "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "get_price",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/constructor_workflow.py",
-        "start_line": 55,
-        "start_column": 18,
-        "end_line": 55,
-        "end_column": 34
-      },
-      "scope_id": "module:<fixtures>/python/code/classes/constructor_workflow.py:1:1:69:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/constructor_workflow.py",
-        "start_line": 55,
-        "start_column": 18,
-        "end_line": 55,
-        "end_column": 24
-      },
-      "property_chain": [
-        "product",
-        "get_price"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -4431,31 +4006,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "apply_discount",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/constructor_workflow.py",
-        "start_line": 58,
-        "start_column": 22,
-        "end_line": 58,
-        "end_column": 43
-      },
-      "scope_id": "module:<fixtures>/python/code/classes/constructor_workflow.py:1:1:69:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/constructor_workflow.py",
-        "start_line": 58,
-        "start_column": 22,
-        "end_line": 58,
-        "end_column": 28
-      },
-      "property_chain": [
-        "product",
-        "apply_discount"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "product",
       "location": {
@@ -4702,31 +4252,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "get_price",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/constructor_workflow.py",
-        "start_line": 59,
-        "start_column": 15,
-        "end_line": 59,
-        "end_column": 42
-      },
-      "scope_id": "module:<fixtures>/python/code/classes/constructor_workflow.py:1:1:69:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/constructor_workflow.py",
-        "start_line": 59,
-        "start_column": 15,
-        "end_line": 59,
-        "end_column": 32
-      },
-      "property_chain": [
-        "discounted_product",
-        "get_price"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "discounted_product",
       "location": {
@@ -4958,31 +4483,6 @@
       },
       "scope_id": "module:<fixtures>/python/code/classes/constructor_workflow.py:1:1:69:1",
       "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "get_info",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/constructor_workflow.py",
-        "start_line": 60,
-        "start_column": 16,
-        "end_line": 60,
-        "end_column": 31
-      },
-      "scope_id": "module:<fixtures>/python/code/classes/constructor_workflow.py:1:1:69:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/constructor_workflow.py",
-        "start_line": 60,
-        "start_column": 16,
-        "end_line": 60,
-        "end_column": 22
-      },
-      "property_chain": [
-        "product",
-        "get_info"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",

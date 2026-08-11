@@ -1625,31 +1625,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "exports",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
-        "start_line": 40,
-        "start_column": 1,
-        "end_line": 40,
-        "end_column": 14
-      },
-      "scope_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:48:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
-        "start_line": 40,
-        "start_column": 1,
-        "end_line": 40,
-        "end_column": 6
-      },
-      "property_chain": [
-        "module",
-        "exports"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "module",
       "location": {
@@ -1680,31 +1655,6 @@
         "end_line": 47,
         "end_column": 1
       }
-    },
-    {
-      "kind": "property_access",
-      "name": "exports",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
-        "start_line": 40,
-        "start_column": 1,
-        "end_line": 40,
-        "end_column": 14
-      },
-      "scope_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:48:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
-        "start_line": 40,
-        "start_column": 1,
-        "end_line": 40,
-        "end_column": 6
-      },
-      "property_chain": [
-        "module",
-        "exports"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",

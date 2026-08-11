@@ -442,6 +442,7 @@
             "end_line": 34,
             "end_column": 16
           },
+          "accessor_kind": "getter",
           "async": false,
           "parameters": [
             {
@@ -1144,31 +1145,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "_data",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
-        "start_line": 19,
-        "start_column": 9,
-        "end_line": 19,
-        "end_column": 18
-      },
-      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:18:13:19:26",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
-        "start_line": 19,
-        "start_column": 9,
-        "end_line": 19,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "_data"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "self",
       "location": {
@@ -1199,31 +1175,6 @@
         "end_line": 19,
         "end_column": 26
       }
-    },
-    {
-      "kind": "property_access",
-      "name": "_data",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
-        "start_line": 19,
-        "start_column": 9,
-        "end_line": 19,
-        "end_column": 18
-      },
-      "scope_id": "method:<fixtures>/python/code/classes/decorator_shapes.py:18:13:19:26",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
-        "start_line": 19,
-        "start_column": 9,
-        "end_line": 19,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "_data"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -1895,31 +1846,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "lru_cache",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
-        "start_line": 37,
-        "start_column": 6,
-        "end_line": 37,
-        "end_column": 24
-      },
-      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
-        "start_line": 37,
-        "start_column": 6,
-        "end_line": 37,
-        "end_column": 14
-      },
-      "property_chain": [
-        "functools",
-        "lru_cache"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "functools",
       "location": {
@@ -2190,31 +2116,6 @@
       },
       "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
       "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "dec",
-      "location": {
-        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
-        "start_line": 45,
-        "start_column": 6,
-        "end_line": 45,
-        "end_column": 12
-      },
-      "scope_id": "class:<fixtures>/python/code/classes/decorator_shapes.py:12:23:50:24",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/classes/decorator_shapes.py",
-        "start_line": 45,
-        "start_column": 6,
-        "end_line": 45,
-        "end_column": 8
-      },
-      "property_chain": [
-        "mod",
-        "dec"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",

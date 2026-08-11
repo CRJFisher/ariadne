@@ -2280,31 +2280,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "upper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/language_features.py",
-        "start_line": 28,
-        "start_column": 12,
-        "end_line": 28,
-        "end_column": 18
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/language_features.py:26:21:28:20",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/functions/language_features.py",
-        "start_line": 28,
-        "start_column": 12,
-        "end_line": 28,
-        "end_column": 12
-      },
-      "property_chain": [
-        "s",
-        "upper"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "s",
       "location": {
@@ -5291,31 +5266,6 @@
       "type_context": "annotation"
     },
     {
-      "kind": "property_access",
-      "name": "name",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/language_features.py",
-        "start_line": 77,
-        "start_column": 9,
-        "end_line": 77,
-        "end_column": 17
-      },
-      "scope_id": "constructor:<fixtures>/python/code/functions/language_features.py:75:17:78:28",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/functions/language_features.py",
-        "start_line": 77,
-        "start_column": 9,
-        "end_line": 77,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "name"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "self",
       "location": {
@@ -5346,31 +5296,6 @@
         "end_line": 77,
         "end_column": 24
       }
-    },
-    {
-      "kind": "property_access",
-      "name": "name",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/language_features.py",
-        "start_line": 77,
-        "start_column": 9,
-        "end_line": 77,
-        "end_column": 17
-      },
-      "scope_id": "constructor:<fixtures>/python/code/functions/language_features.py:75:17:78:28",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/functions/language_features.py",
-        "start_line": 77,
-        "start_column": 9,
-        "end_line": 77,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "name"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -5477,31 +5402,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "resource",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/language_features.py",
-        "start_line": 78,
-        "start_column": 9,
-        "end_line": 78,
-        "end_column": 21
-      },
-      "scope_id": "constructor:<fixtures>/python/code/functions/language_features.py:75:17:78:28",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/functions/language_features.py",
-        "start_line": 78,
-        "start_column": 9,
-        "end_line": 78,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "resource"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "self",
       "location": {
@@ -5532,31 +5432,6 @@
         "end_line": 78,
         "end_column": 28
       }
-    },
-    {
-      "kind": "property_access",
-      "name": "resource",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/language_features.py",
-        "start_line": 78,
-        "start_column": 9,
-        "end_line": 78,
-        "end_column": 21
-      },
-      "scope_id": "constructor:<fixtures>/python/code/functions/language_features.py:75:17:78:28",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/functions/language_features.py",
-        "start_line": 78,
-        "start_column": 9,
-        "end_line": 78,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "resource"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -5874,31 +5749,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "resource",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/language_features.py",
-        "start_line": 84,
-        "start_column": 9,
-        "end_line": 84,
-        "end_column": 21
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/language_features.py:80:18:85:19",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/functions/language_features.py",
-        "start_line": 84,
-        "start_column": 9,
-        "end_line": 84,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "resource"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "self",
       "location": {
@@ -5929,31 +5779,6 @@
         "end_line": 84,
         "end_column": 47
       }
-    },
-    {
-      "kind": "property_access",
-      "name": "resource",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/language_features.py",
-        "start_line": 84,
-        "start_column": 9,
-        "end_line": 84,
-        "end_column": 21
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/language_features.py:80:18:85:19",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/functions/language_features.py",
-        "start_line": 84,
-        "start_column": 9,
-        "end_line": 84,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "resource"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -6465,31 +6290,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "resource",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/language_features.py",
-        "start_line": 91,
-        "start_column": 9,
-        "end_line": 91,
-        "end_column": 21
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/language_features.py:87:17:91:28",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/functions/language_features.py",
-        "start_line": 91,
-        "start_column": 9,
-        "end_line": 91,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "resource"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "self",
       "location": {
@@ -6520,31 +6320,6 @@
         "end_line": 91,
         "end_column": 28
       }
-    },
-    {
-      "kind": "property_access",
-      "name": "resource",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/language_features.py",
-        "start_line": 91,
-        "start_column": 9,
-        "end_line": 91,
-        "end_column": 21
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/language_features.py:87:17:91:28",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/functions/language_features.py",
-        "start_line": 91,
-        "start_column": 9,
-        "end_line": 91,
-        "end_column": 12
-      },
-      "property_chain": [
-        "self",
-        "resource"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -8823,31 +8598,6 @@
       },
       "scope_id": "block:<fixtures>/python/code/functions/language_features.py:119:1:122:37",
       "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "process",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/language_features.py",
-        "start_line": 122,
-        "start_column": 26,
-        "end_line": 122,
-        "end_column": 35
-      },
-      "scope_id": "block:<fixtures>/python/code/functions/language_features.py:119:1:122:37",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/functions/language_features.py",
-        "start_line": 122,
-        "start_column": 26,
-        "end_line": 122,
-        "end_column": 27
-      },
-      "property_chain": [
-        "rm",
-        "process"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",

@@ -392,31 +392,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "name",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/classes/properties.ts",
-        "start_line": 13,
-        "start_column": 5,
-        "end_line": 13,
-        "end_column": 13
-      },
-      "scope_id": "constructor:<fixtures>/typescript/code/classes/properties.ts:12:14:17:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/classes/properties.ts",
-        "start_line": 13,
-        "start_column": 5,
-        "end_line": 13,
-        "end_column": 8
-      },
-      "property_chain": [
-        "this",
-        "name"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "this",
       "location": {
@@ -441,31 +416,6 @@
       },
       "scope_id": "constructor:<fixtures>/typescript/code/classes/properties.ts:12:14:17:3",
       "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "age",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/classes/properties.ts",
-        "start_line": 14,
-        "start_column": 5,
-        "end_line": 14,
-        "end_column": 12
-      },
-      "scope_id": "constructor:<fixtures>/typescript/code/classes/properties.ts:12:14:17:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/classes/properties.ts",
-        "start_line": 14,
-        "start_column": 5,
-        "end_line": 14,
-        "end_column": 8
-      },
-      "property_chain": [
-        "this",
-        "age"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -494,31 +444,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "address",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/classes/properties.ts",
-        "start_line": 15,
-        "start_column": 5,
-        "end_line": 15,
-        "end_column": 16
-      },
-      "scope_id": "constructor:<fixtures>/typescript/code/classes/properties.ts:12:14:17:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/classes/properties.ts",
-        "start_line": 15,
-        "start_column": 5,
-        "end_line": 15,
-        "end_column": 8
-      },
-      "property_chain": [
-        "this",
-        "address"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "this",
       "location": {
@@ -543,31 +468,6 @@
       },
       "scope_id": "constructor:<fixtures>/typescript/code/classes/properties.ts:12:14:17:3",
       "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "id",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/classes/properties.ts",
-        "start_line": 16,
-        "start_column": 5,
-        "end_line": 16,
-        "end_column": 11
-      },
-      "scope_id": "constructor:<fixtures>/typescript/code/classes/properties.ts:12:14:17:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/classes/properties.ts",
-        "start_line": 16,
-        "start_column": 5,
-        "end_line": 16,
-        "end_column": 8
-      },
-      "property_chain": [
-        "this",
-        "id"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
