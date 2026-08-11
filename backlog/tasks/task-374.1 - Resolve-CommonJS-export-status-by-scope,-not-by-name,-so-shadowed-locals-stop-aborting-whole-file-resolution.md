@@ -87,7 +87,8 @@ Verified on the real express corpus: `lib/response.js` indexes (zero dropped
 files, was one), and `sendFile`, `append`, `location`, `sendfile` and
 `stringify` are all off the entry-point list — `sendfile`/`stringify` through
 resolved call edges, the three `this`-bound methods through `collection_read`
-reachability.
+reachability. Across the whole corpus the family takes express from 62
+reported entry points to 21.
 
 ## Re-routes (AC #4)
 

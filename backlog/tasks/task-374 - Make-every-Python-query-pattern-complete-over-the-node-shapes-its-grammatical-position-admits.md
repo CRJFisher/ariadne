@@ -103,9 +103,12 @@ families this family drove to zero; the residual cross-name collisions
 Python assignment-side member/property duplicates, and the TS same-name
 definition duplicates) are documented in the audit and deferred to a follow-up.
 
-Measured on the sqlalchemy corpus (fresh load): dropped files 21 → 18 and
-call-graph nodes 16,670 → 30,435 — the recovered symbols are the erased
-classes and methods this task existed to restore.
+Measured on the sqlalchemy corpus (fresh load, no cache): dropped files 21 → 18
+and call-graph nodes 16,670 → 30,460 — the 13,790 recovered symbols are the
+erased classes and methods this task existed to restore. The entry-point count
+rises with them (1,630 → 2,673) because symbols that did not exist before
+cannot have been entry points; as a share of the graph the rate falls, 9.8% →
+8.8%.
 
 ## Hand-offs
 
