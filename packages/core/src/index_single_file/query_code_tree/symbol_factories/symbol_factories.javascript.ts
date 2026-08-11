@@ -206,7 +206,16 @@ export function find_containing_callable(capture: CaptureNode): SymbolId {
         const location = node_to_location(name_node, capture.location.file_path);
         return function_symbol(name_node.text as SymbolName, location);
       } else {
-        // Anonymous function/arrow function - use location-based anonymous symbol
+        // A nameless arrow/function expression in declarator position was
+        // minted as a function under the declarator's name; the parameter's
+        // owner id must agree with that, not with a location-keyed anonymous.
+        const declarator_name = declarator_name_node(node);
+        if (declarator_name) {
+          return function_symbol(
+            declarator_name.text as SymbolName,
+            node_to_location(declarator_name, capture.location.file_path)
+          );
+        }
         const location = node_to_location(node, capture.location.file_path);
         return anonymous_function_symbol(location);
       }
@@ -219,6 +228,19 @@ export function find_containing_callable(capture: CaptureNode): SymbolId {
   }
   // Default to anonymous function
   return anonymous_function_symbol(capture.location);
+}
+
+/**
+ * The identifier a `const f = (…) => …` / `const f = function (…) {}` binds,
+ * when `fn_node` sits directly in declarator-value position.
+ */
+export function declarator_name_node(fn_node: SyntaxNode): SyntaxNode | null {
+  const parent = fn_node.parent;
+  if (parent?.type !== "variable_declarator") {
+    return null;
+  }
+  const name = parent.childForFieldName("name");
+  return name?.type === "identifier" ? name : null;
 }
 
 // ============================================================================

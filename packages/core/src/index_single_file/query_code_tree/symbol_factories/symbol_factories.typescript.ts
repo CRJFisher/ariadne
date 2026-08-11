@@ -28,6 +28,7 @@ import {
 } from "@ariadnejs/types";
 import type { CaptureNode } from "../../capture_types";
 import { node_to_location } from "../../node_to_location";
+import { declarator_name_node } from "./symbol_factories.javascript";
 
 // Re-export detect_function_collection from JavaScript to avoid duplication
 export { detect_function_collection } from "./symbol_factories.javascript";
@@ -706,7 +707,16 @@ export function find_containing_callable(capture: CaptureNode): SymbolId {
         const location: Location = node_to_location(name_node, file_path);
         return function_symbol(name_node.text as SymbolName, location);
       } else {
-        // Anonymous function/arrow function - use location-based anonymous symbol
+        // A nameless arrow/function expression in declarator position was
+        // minted as a function under the declarator's name; the parameter's
+        // owner id must agree with that, not with a location-keyed anonymous.
+        const declarator_name = declarator_name_node(node);
+        if (declarator_name) {
+          return function_symbol(
+            declarator_name.text as SymbolName,
+            node_to_location(declarator_name, file_path)
+          );
+        }
         const location: Location = node_to_location(node, file_path);
         return anonymous_function_symbol(location);
       }
