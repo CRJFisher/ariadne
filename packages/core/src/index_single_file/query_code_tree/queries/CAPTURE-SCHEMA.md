@@ -177,9 +177,14 @@ Language-specific features explicitly allowed:
 
 - `@decorator.function` - Function decorators
 - `@decorator.class` - Class decorators
-- `@decorator.method` - Method decorators
-- `@decorator.property` - Property decorators
+- `@decorator.method` - Method decorators, any decorator shape (bare, dotted, call-shaped)
 - `@reference.constructor` - Class instantiation (function call that is a class)
+- `@reference.this` - `self` and `cls` identifiers
+
+Python emits one `@definition.class` per `class_definition` whatever shape its
+bases take; the class capture handler discriminates Enum and Protocol classes
+and builds the enum/interface definition, and a `@property`-decorated def
+builds a method carrying `accessor_kind`.
 
 ### Rust
 

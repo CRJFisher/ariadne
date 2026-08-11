@@ -1274,20 +1274,14 @@ class User:
           );
         }
 
-        // Verify @property decorated function is registered as a property (not a method)
-        const property_def = user_class.properties.find(
-          (p) => p.name === "name",
-        );
-        if (property_def) {
-          expect(property_def.kind).toBe("property");
-          expect(property_def.name).toBe("name");
-          expect(property_def.location.file_path).toBe("test.py");
-          expect(property_def.readonly).toBe(true);
-
-          // Verify @property decorator is attached
-          expect(property_def.decorators.length).toBeGreaterThanOrEqual(1);
-          expect(property_def.decorators.some((d: any) => d.name === "property")).toBe(true);
-        }
+        // A @property-decorated def is a getter method, never a data property
+        expect(
+          user_class.properties.find((p) => p.name === "name")
+        ).toBeUndefined();
+        const getter = user_class.methods.find((m) => m.name === "name")!;
+        expect(getter.kind).toBe("method");
+        expect(getter.accessor_kind).toBe("getter");
+        expect(getter.decorators!.map((d) => d.name)).toContain("property");
 
         // Verify @staticmethod decorated method
         const static_method = user_class.methods.find(
@@ -2602,6 +2596,89 @@ class Factory:
       const fn = Array.from(index.functions.values()).find(f => f.name === "no_doc");
       expect(fn).toBeDefined();
       expect(fn!.docstring).toBeUndefined();
+    });
+  });
+
+  describe("Superclass shapes", () => {
+    function class_summary(code: string) {
+      const tree = parser.parse(code);
+      const parsed = create_parsed_file(code, "test.py" as FilePath, tree, "python");
+      const index = build_index_single_file(parsed, tree, "python");
+      return Array.from(index.classes.values()).map((c) => ({
+        name: c.name,
+        extends: c.extends,
+        methods: c.methods.map((m) => m.name),
+      }));
+    }
+
+    it("records the class and every method for a bare superclass", () => {
+      expect(
+        class_summary("class PG(Base):\n    def visit(self, c):\n        return 1\n")
+      ).toEqual([{ name: "PG", extends: ["Base"], methods: ["visit"] }]);
+    });
+
+    it("records the class and every method for a dotted superclass", () => {
+      expect(
+        class_summary(
+          "class PGDDLCompiler(compiler.DDLCompiler):\n    def visit_create_sequence(self, c):\n        return 1\n    def visit_drop_sequence(self, d):\n        return 2\n"
+        )
+      ).toEqual([
+        {
+          name: "PGDDLCompiler",
+          extends: ["compiler.DDLCompiler"],
+          methods: ["visit_create_sequence", "visit_drop_sequence"],
+        },
+      ]);
+    });
+
+    it("records the class and every method for a generic superclass", () => {
+      expect(
+        class_summary("class Gen(Base[T]):\n    def visit(self, c):\n        return 1\n")
+      ).toEqual([{ name: "Gen", extends: ["Base"], methods: ["visit"] }]);
+    });
+
+    it("records the class and every method for a dotted generic superclass", () => {
+      expect(
+        class_summary(
+          "class Gen(mod.Base[T]):\n    def visit(self, c):\n        return 1\n"
+        )
+      ).toEqual([{ name: "Gen", extends: ["mod.Base"], methods: ["visit"] }]);
+    });
+
+    it("records the class and every method with no superclass", () => {
+      expect(
+        class_summary("class Plain:\n    def visit(self, c):\n        return 1\n")
+      ).toEqual([{ name: "Plain", extends: [], methods: ["visit"] }]);
+    });
+  });
+
+  describe("Accessor kinds", () => {
+    it("flags accessor_kind on property getter and setter definitions", () => {
+      const code = [
+        "class Box:",
+        "    @property",
+        "    def data(self):",
+        "        return 1",
+        "",
+        "    @data.setter",
+        "    def data(self, v):",
+        "        pass",
+        "",
+        "    def plain(self):",
+        "        return 2",
+      ].join("\n");
+      const tree = parser.parse(code);
+      const parsed = create_parsed_file(code, "test.py" as FilePath, tree, "python");
+      const index = build_index_single_file(parsed, tree, "python");
+      const box = Array.from(index.classes.values())[0]!;
+      expect(
+        box.methods.map((m) => ({ name: m.name, accessor_kind: m.accessor_kind }))
+      ).toEqual([
+        { name: "data", accessor_kind: "getter" },
+        { name: "data", accessor_kind: "setter" },
+        { name: "plain", accessor_kind: undefined },
+      ]);
+      expect(box.properties).toEqual([]);
     });
   });
 });

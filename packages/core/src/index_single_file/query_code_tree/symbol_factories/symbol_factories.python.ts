@@ -255,24 +255,6 @@ export function find_containing_callable(capture: CaptureNode): SymbolId {
   return anonymous_function_symbol(capture.location);
 }
 
-function has_property_decorator(decorated_def: SyntaxNode): boolean {
-  for (let i = 0; i < decorated_def.childCount; i++) {
-    const child = decorated_def.child(i);
-    if (child === null) continue;
-    if (child.type === "decorator") {
-      // The decorator identifier is typically the second child (after "@")
-      for (let j = 0; j < child.childCount; j++) {
-        const dec_child = child.child(j);
-        if (dec_child === null) continue;
-        if (dec_child.type === "identifier" && dec_child.text === "property") {
-          return true;
-        }
-      }
-    }
-  }
-  return false;
-}
-
 export function find_decorator_target(
   capture: CaptureNode
 ): SymbolId | undefined {
@@ -307,11 +289,6 @@ export function find_decorator_target(
                 end_column: name_node.endPosition.column,
               };
               const sym_name = name_node.text as SymbolName;
-
-              // Check if decorated with @property
-              if (has_property_decorator(node)) {
-                return property_symbol(sym_name, location);
-              }
 
               return method_symbol(sym_name, location);
             } else {
@@ -642,21 +619,34 @@ export function is_async_function(node: SyntaxNode): boolean {
   );
 }
 
+/**
+ * Decorator names on a decorated definition, one entry per decorator: the bare
+ * name for `@property`, the dotted text for `@cython.cfunc` or `@data.setter`,
+ * and the callee's name for call-shaped decorators like `@lru_cache(1)`.
+ */
 function extract_decorators(node: SyntaxNode): SymbolName[] {
   const decorators: SymbolName[] = [];
 
-  // Check if parent is decorated_definition
   const parent = node.parent;
   if (parent && parent.type === "decorated_definition") {
     const decorator_nodes = parent.children.filter(
       (child) => child.type === "decorator"
     );
     for (const decorator of decorator_nodes) {
-      const identifier = decorator.children.find(
-        (child) => child.type === "identifier"
+      const expression = decorator.children.find(
+        (child) =>
+          child.type === "identifier" ||
+          child.type === "attribute" ||
+          child.type === "call"
       );
-      if (identifier) {
-        decorators.push(identifier.text as SymbolName);
+      if (!expression) continue;
+      if (expression.type === "call") {
+        const callee = expression.childForFieldName?.("function");
+        if (callee) {
+          decorators.push(callee.text as SymbolName);
+        }
+      } else {
+        decorators.push(expression.text as SymbolName);
       }
     }
   }
@@ -666,20 +656,33 @@ function extract_decorators(node: SyntaxNode): SymbolName[] {
 
 export function determine_method_type(node: SyntaxNode): {
   static?: boolean;
-  abstract?: boolean;
 } {
   const decorators = extract_decorators(node);
 
-  if (decorators.includes("staticmethod" as SymbolName)) {
+  // A classmethod is class-bound like a staticmethod; marking it abstract
+  // would suppress its body scope and drop it from the call graph.
+  if (
+    decorators.includes("staticmethod" as SymbolName) ||
+    decorators.includes("classmethod" as SymbolName)
+  ) {
     return { static: true };
   }
 
-  if (decorators.includes("classmethod" as SymbolName)) {
-    // Use abstract flag to indicate class method (as per original pattern)
-    return { abstract: true };
-  }
-
   return {};
+}
+
+export function determine_accessor_kind(
+  node: SyntaxNode
+): "getter" | "setter" | undefined {
+  const decorators = extract_decorators(node);
+
+  if (decorators.includes("property" as SymbolName)) {
+    return "getter";
+  }
+  if (decorators.some((name) => name.endsWith(".setter"))) {
+    return "setter";
+  }
+  return undefined;
 }
 
 // ============================================================================

@@ -21,6 +21,7 @@ import {
   create_method_id,
   find_containing_class,
   determine_method_type,
+  determine_accessor_kind,
   is_async_function,
   extract_return_type,
   create_property_id,
@@ -73,6 +74,16 @@ export function handle_definition_class(
   builder: DefinitionBuilder,
   context: ProcessingContext
 ): void {
+  // The query emits one capture per class whatever its base shapes; Enum and
+  // Protocol classes are discriminated here so a class builds exactly one
+  // definition (a co-firing query discriminator would forge duplicate exports).
+  if (find_containing_protocol(capture)) {
+    return handle_definition_interface(capture, builder, context);
+  }
+  if (find_containing_enum(capture)) {
+    return handle_definition_enum(capture, builder, context);
+  }
+
   const class_id = create_class_id(capture);
   const base_classes = extract_extends(capture.node.parent || capture.node);
   const defining_scope_id = context.get_scope_id(capture.location);
@@ -131,6 +142,9 @@ export function handle_definition_method(
   const class_id = find_containing_class(capture);
   if (class_id) {
     const method_type = determine_method_type(capture.node.parent || capture.node);
+    const accessor_kind = determine_accessor_kind(
+      capture.node.parent || capture.node
+    );
     const is_async = is_async_function(capture.node.parent || capture.node);
 
     builder.add_method_to_class(
@@ -142,6 +156,7 @@ export function handle_definition_method(
         scope_id: context.get_scope_id(capture.location),
         return_type: extract_return_type(capture.node.parent || capture.node),
         ...method_type,
+        accessor_kind,
         async: is_async,
         docstring,
       },
@@ -175,27 +190,6 @@ export function handle_definition_constructor(
 // ============================================================================
 // PROPERTY HANDLERS
 // ============================================================================
-
-export function handle_definition_property(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const prop_id = create_property_id(capture);
-  const class_id = find_containing_class(capture);
-
-  if (class_id) {
-    builder.add_property_to_class(class_id, {
-      symbol_id: prop_id,
-      name: capture.text,
-      location: capture.location,
-      scope_id: context.get_scope_id(capture.location),
-      type: extract_type_annotation(capture.node),
-      initial_value: extract_initial_value(capture.node),
-      readonly: true, // Properties decorated with @property are readonly
-    });
-  }
-}
 
 export function handle_definition_field(
   capture: CaptureNode,
@@ -556,23 +550,6 @@ export function handle_definition_enum_member(
 // DECORATOR HANDLERS
 // ============================================================================
 
-export function handle_decorator_property(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const target_id = find_decorator_target(capture);
-  if (!target_id) return;
-
-  const decorator_name = capture.text;
-
-  builder.add_decorator_to_target(target_id, {
-    name: decorator_name,
-    defining_scope_id: context.get_scope_id(capture.location),
-    location: capture.location,
-  });
-}
-
 export function handle_decorator_method(
   capture: CaptureNode,
   builder: DefinitionBuilder,
@@ -636,7 +613,6 @@ export const PYTHON_HANDLERS: HandlerRegistry = {
   "definition.constructor": handle_definition_constructor,
 
   // Properties
-  "definition.property": handle_definition_property,
   "definition.field": handle_definition_field,
   "assignment.property": handle_assignment_property,
 
@@ -653,16 +629,14 @@ export const PYTHON_HANDLERS: HandlerRegistry = {
   // Imports
   "definition.import": handle_definition_import,
 
-  // Protocols
-  "definition.interface": handle_definition_interface,
+  // Protocols (definition.class discriminates and routes to the interface/enum
+  // handlers; only their member captures dispatch directly)
   "definition.property.interface": handle_definition_property_interface,
 
   // Enums
-  "definition.enum": handle_definition_enum,
   "definition.enum_member": handle_definition_enum_member,
 
   // Decorators
-  "decorator.property": handle_decorator_property,
   "decorator.method": handle_decorator_method,
 
   // Type aliases

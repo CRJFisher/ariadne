@@ -499,7 +499,7 @@ describe("find_decorator_target", () => {
     expect(result).toMatch(/^class:\/test\.py:\d+:\d+:\d+:\d+:Foo$/);
   });
 
-  it("should return property SymbolId for @property decorator on method", () => {
+  it("returns the method SymbolId for a @property decorator on a method", () => {
     const code = "class Foo:\n  @property\n  def name(self):\n    return self._name";
     const root = parse_python(code);
     const dec = find_decorator(root, "property")!;
@@ -512,7 +512,7 @@ describe("find_decorator_target", () => {
 
     const result = find_decorator_target(capture);
     expect(result).toBeDefined();
-    expect(result).toMatch(/^property:\/test\.py:\d+:\d+:\d+:\d+:name$/);
+    expect(result).toMatch(/^method:\/test\.py:\d+:\d+:\d+:\d+:name$/);
   });
 
   it("should return method SymbolId for non-property decorator on class method", () => {
@@ -726,13 +726,13 @@ describe("determine_method_type", () => {
     expect(result).toEqual({ static: true });
   });
 
-  it("should detect @classmethod", () => {
+  it("detects @classmethod as class-bound, keeping its body scope", () => {
     const code = "class Foo:\n  @classmethod\n  def create(cls):\n    pass";
     const root = parse_python(code);
     const func_def = find_function_def(root, "create")!;
 
     const result = determine_method_type(func_def);
-    expect(result).toEqual({ abstract: true });
+    expect(result).toEqual({ static: true });
   });
 
   it("should return empty object for regular method", () => {

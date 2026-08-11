@@ -160,59 +160,13 @@
   (lambda) @definition.anonymous_function
 )
 
-; Enum class detection (classes inheriting from Enum)
-(class_definition
-  name: (identifier) @definition.enum
-  superclasses: (argument_list
-    (identifier) @reference.type
-    (#match? @reference.type "^(Enum|IntEnum|Flag|IntFlag|StrEnum)$")
-  )
-)
-
-; Enum class detection (from module.Enum)
-(class_definition
-  name: (identifier) @definition.enum
-  superclasses: (argument_list
-    (attribute
-      attribute: (identifier) @reference.type
-      (#match? @reference.type "^(Enum|IntEnum|Flag|IntFlag|StrEnum)$")
-    )
-  )
-)
-
-; Protocol class detection (classes inheriting from Protocol)
-(class_definition
-  name: (identifier) @definition.interface
-  superclasses: (argument_list
-    (identifier) @reference.type
-    (#eq? @reference.type "Protocol")
-  )
-)
-
-; Protocol class detection (from typing.Protocol)
-(class_definition
-  name: (identifier) @definition.interface
-  superclasses: (argument_list
-    (attribute
-      attribute: (identifier) @reference.type
-      (#eq? @reference.type "Protocol")
-    )
-  )
-)
-
-; Class definitions without inheritance
+; Class definitions — one capture per class, whatever shape its bases take
+; (bare, dotted, subscripted, or absent). The builder discriminates Enum and
+; Protocol classes and reads base names off the node (extract_extends), per the
+; capture-schema contract: the query captures the syntactic unit, the builder
+; derives the semantics.
 (class_definition
   name: (identifier) @definition.class
-  !superclasses
-)
-
-; Class definitions with inheritance (but not Enum or Protocol)
-(class_definition
-  name: (identifier) @definition.class
-  superclasses: (argument_list
-    (identifier) @reference.type
-    (#not-match? @reference.type "^(Enum|IntEnum|Flag|IntFlag|StrEnum|Protocol)$")
-  )
 )
 
 ; Protocol property signatures (annotated assignments without values)
@@ -267,58 +221,40 @@
   )
 )
 
-; Static methods
+; Decorated methods — any decorator shape (@property, @staticmethod,
+; @cython.cfunc, @functools.lru_cache(), @mod.dec(arg)). The builder reads the
+; decorator list off the node (extract_decorators / determine_method_type /
+; determine_accessor_kind); the query only says "this is a method".
 (class_definition
   body: (block
     (decorated_definition
-      (decorator
-        (identifier) @modifier.visibility
-        (#eq? @modifier.visibility "staticmethod")
-      )
       definition: (function_definition
         name: (identifier) @definition.method
+        (#not-eq? @definition.method "__init__")
       )
-    ) @modifier.visibility
+    )
   )
 )
 
-; Class methods — modifier only (@definition.method comes from the general decorated pattern below)
+; Decorator metadata — the decorator's name node, for the decorator record on
+; the decorated method. Call-shaped decorators contribute their callee name.
 (class_definition
   body: (block
     (decorated_definition
       (decorator
-        (identifier) @modifier.visibility
-        (#eq? @modifier.visibility "classmethod")
+        [(identifier) (attribute)] @decorator.method
       )
-      (function_definition)
-    ) @scope.method
+    )
   )
 )
 
-; Property decorators
 (class_definition
   body: (block
     (decorated_definition
       (decorator
-        (identifier) @decorator.property
-        (#eq? @decorator.property "property")
-      )
-      definition: (function_definition
-        name: (identifier) @definition.property
-      )
-    ) @definition.property
-  )
-)
-
-; Method decorators (@staticmethod, @classmethod, etc.)
-(class_definition
-  body: (block
-    (decorated_definition
-      (decorator
-        (identifier) @decorator.method
-      )
-      definition: (function_definition
-        name: (identifier) @definition.method
+        (call
+          function: [(identifier) (attribute)] @decorator.method
+        )
       )
     )
   )
@@ -714,9 +650,11 @@
 ;
 ; ============================================================================
 
-; Function calls
+; Function calls. `super` is excluded: the super() pattern below owns that call
+; node, and a second capture here would mint a duplicate call reference.
 (call
   function: (identifier) @reference.call
+  (#not-eq? @reference.call "super")
 )
 
 ; Method calls with receiver tracking
@@ -730,24 +668,14 @@
 ; Constructor calls (class instantiation) - heuristic capture for construct_target extraction
 ; This captures ALL calls with argument lists as potential constructors.
 ; Actual call type is determined at resolution time based on what the identifier resolves to.
+; The call itself is already captured as @reference.call by the patterns above —
+; this pattern adds only the constructor heuristic, keeping one @reference.call
+; per call node.
 (call
   function: (identifier) @reference.constructor
   arguments: (argument_list)
-) @reference.call
-
-; Static method call - object is a class identifier (capitalized)
-(call
-  function: (attribute
-    object: (identifier) @reference.type_reference
-    attribute: (identifier) @modifier.visibility)
-  (#match? @reference.type_reference "^[A-Z]")) @reference.call
-
-; Instance method call - object is lowercase/instance
-(call
-  function: (attribute
-    object: (identifier) @reference.variable
-    attribute: (identifier))
-  (#not-match? @reference.variable "^[A-Z]")) @reference.call
+  (#not-eq? @reference.constructor "super")
+)
 
 ; Attribute access
 (attribute
@@ -801,18 +729,12 @@
   (identifier) @reference.variable
 )
 
-; Decorators - capture for decorator tracking
+; Decorators - capture for decorator tracking. A call-shaped decorator's callee
+; is already captured by the general call patterns; only the bare-identifier and
+; dotted forms need their own reference capture.
 (decorated_definition
   (decorator
     (identifier) @reference.call
-  )
-)
-
-(decorated_definition
-  (decorator
-    (call
-      function: (identifier) @reference.call
-    )
   )
 )
 
@@ -824,30 +746,19 @@
   )
 )
 
-; Decorators (old reference captures for compatibility)
-(decorator
-  (identifier) @reference.call
-)
-
-(decorator
-  (call
-    function: (identifier) @reference.call
-  )
-)
-
 ; self references (important for method context)
-(identifier) @reference.this
-(#eq? @reference.this "self")
+((identifier) @reference.this
+  (#eq? @reference.this "self"))
 
 ; cls references (for classmethods)
-(identifier) @reference.this
-(#eq? @reference.this "cls")
+((identifier) @reference.this
+  (#eq? @reference.this "cls"))
 
 ; super() calls
 (call
   function: (identifier) @reference.super
   (#eq? @reference.super "super")
-) @reference.call
+)
 
 ; Type annotations in various contexts
 (type
