@@ -122,9 +122,9 @@ comparing this branch against the commit it starts from:
 | | before | after |
 | --- | --- | --- |
 | files that abort whole | 21 | 0 |
-| call-graph nodes | 6,793 | 10,850 |
-| entry points | 2,203 | 2,729 |
-| entry points as a share of the graph | 32.4% | 25.2% |
+| call-graph nodes | 6,793 | 10,862 |
+| entry points | 2,203 | 2,705 |
+| entry points as a share of the graph | 32.4% | 24.9% |
 
 No file aborts any more: an `@overload` group and a second wildcard re-export
 are Python rebinding a module-level name, not one symbol captured twice, and
