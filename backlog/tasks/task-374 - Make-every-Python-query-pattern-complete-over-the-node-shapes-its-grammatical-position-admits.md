@@ -49,16 +49,16 @@ The builders already do the shape discrimination the queries are duplicating: `s
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 `class PGDDLCompiler(compiler.DDLCompiler)` yields one `@definition.class` and every method of the class appears in the call graph.
-- [ ] #2 The sqlalchemy `@cython.cfunc` false-positive clears, and `@util.memoized_property`, `@functools.lru_cache()`, `@lru_cache(maxsize=1)` and `@mod.dec(arg)` each yield exactly one `@definition.method`.
-- [ ] #3 A `@classmethod` method appears in the call graph; exactly one `@scope.method` capture is emitted per method.
-- [ ] #4 A Python identifier is captured as `@reference.this` only when it is `self` or `cls`; no identifier yields three `variable_reference`s any more.
-- [ ] #5 One `@property` decorator yields exactly one `function_call name=property` reference, and one Python call node yields exactly one `@reference.call`.
-- [ ] #6 Python method definitions carry `accessor_kind: "getter"` / `"setter"`, and `@property def data` read as `r.data` creates an edge to the getter (the `property` definition does not shadow the method in `type_preprocessing/member.ts`).
-- [ ] #7 Integration tests (with the updated `tests/fixtures/python/code/` corpus) cover every evidence case in the group: sqlalchemy `@cython.cfunc`, the call-shaped and dotted decorator variants, and both sqlalchemy `super()` rows on `PGDDLCompiler` — the qualified-base `super()` edge asserted once the dotted-`extends` dependency lands.
-- [ ] #8 A definition-coverage audit asserts every `class_definition` / `function_definition` / `method_definition` / `decorated_definition` node in the fixture corpus yields a definition capture at its name range, and a duplicate-capture assertion proves no `(capture name, byte range)` pair occurs twice.
-- [ ] #9 The dotted-`extends` parent-link dependency (`registries/type.ts:245`) is filed against `name_resolution` with the sqlalchemy rows named as its consumer.
-- [ ] #10 `query_code_tree.test.ts`, `query_loader.test.ts`, `capture_handlers.*.test.ts`, `metadata_extractors.*.test.ts`, `references.test.ts` and `call_site_syntax.*.test.ts` stay green and the capture/receiver-consistency Stop hook passes.
+- [x] #1 `class PGDDLCompiler(compiler.DDLCompiler)` yields one `@definition.class` and every method of the class appears in the call graph.
+- [x] #2 The sqlalchemy `@cython.cfunc` false-positive clears, and `@util.memoized_property`, `@functools.lru_cache()`, `@lru_cache(maxsize=1)` and `@mod.dec(arg)` each yield exactly one `@definition.method`.
+- [x] #3 A `@classmethod` method appears in the call graph; exactly one `@scope.method` capture is emitted per method.
+- [~] #4 **Partial.** `@reference.this` fires only on `self` and `cls` — the predicates now bind inside their patterns, and an ordinary identifier drops from three `variable_reference`s to one. An assignment *target* still carries a third from the write patterns; that overlap is owned by TASK-374.5.
+- [~] #5 **Partial.** One `@property` decorator yields exactly one `function_call name=property`, and `super()` no longer double-mints. Not universally true: a call whose callee is a subscript, another call, or a parenthesized expression yields *zero* `@reference.call` — a position this task did not widen, filed as TASK-374.7.
+- [x] #6 Python method definitions carry `accessor_kind`, and `@property def data` read as `r.data` creates an edge to the getter. The `property` definition cannot shadow the method because the Python `@property`→property path is deleted at source; the member slot additionally yields to a getter against any other accessor.
+- [~] #7 **Partial.** The corpus carries every superclass and decorator shape, and `Project`-level tests assert the dotted-base class's methods, each decorator shape's method (with an uncalled control), the getter edge, and the unqualified `super()` edge. The qualified-base `super()` row stays open pending TASK-374.4, which is what AC text allows.
+- [~] #8 **Partial.** The audit asserts a definition capture at the name range of every `class_definition` / `function_definition` / `class_declaration` / `abstract_class_declaration` / `function_declaration` / `method_definition` in all three corpora, and compares the duplicate list against a frozen residue so a new duplicate fails. Two limits: `decorated_definition` carries no name of its own (its inner `function_definition` is the audited node), and the residue is non-empty — 35 TypeScript definition duplicates and three Python cross-name collision sets, enumerated and owned by TASK-374.5.
+- [x] #9 The dotted-`extends` parent-link dependency is filed as TASK-374.4 (`name_resolution`) with the sqlalchemy rows named as its consumer.
+- [x] #10 The insulated suites stay green (`packages/core`: 157 files, 3,640 tests) alongside `pnpm typecheck` and `pnpm lint`.
 
 <!-- AC:END -->
 
@@ -87,28 +87,51 @@ crash at baseline). One decorated-method pattern accepts any decorator shape;
 node; a classmethod maps to a class-bound (`static`) method — the previous
 `abstract` mapping suppressed its body scope and dropped every classmethod
 from the call graph. A `@property` def builds a getter **method** carrying
-`accessor_kind` (setter/deleter mark the non-getter accessor), so property
-reads resolve to the getter through the member index; `handle_definition_property`
-was deleted with its pattern — a deviation from this plan's step 7, forced by
-its own AC #6: the flat member index let the property definition shadow the
-method. The inert `self`/`cls` predicates now bind, and the duplicate scope,
-call, decorator and compatibility captures are gone.
+`accessor_kind`, so property reads resolve to the getter through the member
+index; `handle_definition_property` was deleted with its pattern — a deviation
+from this plan's step 7, forced by its own AC #6: the flat member index let the
+property definition shadow the method. `accessor_kind` names the role the
+definition plays (`getter`, `setter`, `deleter`) and covers the whole
+property-descriptor family — `cached_property`, `memoized_property`,
+`cache_readonly`, `classproperty` — stated once and read by both the indexer
+and the classifier that recognises the same decorators. The inert `self`/`cls`
+predicates now bind, and the duplicate scope, call, decorator and compatibility
+captures are gone.
+
+One pattern owns the base-class reference, over every base shape the grammar
+admits, so a class emits exactly one type reference per base whatever its body
+holds; the Enum and Protocol member gates match their base through a filtered
+`@_`-prefixed capture, which is what keeps them from re-emitting it once per
+member. A write to an attribute mints no member read — a write invokes the
+setter, not the getter — so an assignment target no longer fabricates an edge
+to the getter that shares its name.
 
 The fixture-corpus audit in `query_code_tree.test.ts` locks the invariants:
 every named definition node yields a definition capture at its name range, no
 audited capture family repeats at one byte range, and a Python byte range
-carries at most one definition-category capture. The audit is scoped to the
-families this family drove to zero; the residual cross-name collisions
-(`definition.field`+`definition.variable` on class-body assignments, the
-Python assignment-side member/property duplicates, and the TS same-name
-definition duplicates) are documented in the audit and deferred to a follow-up.
+carries at most one definition-category capture. The audited families are listed per language; the
+residual duplicates are frozen as exact lists (`known_duplicates`,
+`KNOWN_RANGE_COLLISIONS`) rather than switched off, so a new duplicate fails
+the build and the residue can only shrink deliberately. The corpus now carries
+an Enum and Protocol file, which is what makes the Enum/Protocol member
+collisions visible at all; they are owned by TASK-374.5.
 
-Measured on the sqlalchemy corpus (fresh load, no cache): dropped files 21 → 18
-and call-graph nodes 16,670 → 30,460 — the 13,790 recovered symbols are the
-erased classes and methods this task existed to restore. The entry-point count
-rises with them (1,630 → 2,673) because symbols that did not exist before
-cannot have been entry points; as a share of the graph the rate falls, 9.8% →
-8.8%.
+Measured over sqlalchemy `lib/` (255 Python files, fresh load, no cache),
+comparing this branch against the commit it starts from:
+
+| | before | after |
+| --- | --- | --- |
+| files that abort whole | 21 | 0 |
+| call-graph nodes | 6,793 | 10,850 |
+| entry points | 2,203 | 2,729 |
+| entry points as a share of the graph | 32.4% | 25.2% |
+
+No file aborts any more: an `@overload` group and a second wildcard re-export
+are Python rebinding a module-level name, not one symbol captured twice, and
+only the latter still throws. The 4,057 recovered nodes are the classes and
+methods the enumerated patterns erased. The entry-point count rises with them
+because a symbol that did not exist cannot have been an entry point; as a share
+of the graph the false-positive rate falls by a fifth.
 
 ## Hand-offs
 
@@ -116,9 +139,13 @@ cannot have been entry points; as a share of the graph the rate falls, 9.8% →
   (`name_resolution`), naming the sqlalchemy `PGDDLCompiler` `super()` rows as
   its consumer. The bare-base `super()` edge is asserted green now; the
   qualified-base twin assertion lands with 374.4.
-- Python `@x.setter` methods now exist as definitions but attribute writes do
-  not resolve to setters, so setters are unreachable by construction — a
-  candidate for either write-reference resolution or a classifier extension,
-  recorded here rather than silently open.
+- Python `@x.setter` methods exist as definitions but an attribute write does
+  not resolve to the setter it invokes, so a setter written to but never called
+  by name is unreachable by construction. Filed as TASK-374.8.
+- Three Python positions still enumerate one node shape — a definition nested
+  in an `if`/`try` block, a call whose callee is a subscript or another call,
+  and an attribute read through a chained receiver. Filed as TASK-374.7.
+- Receiver typing in constructor bodies and field initializers is filed as
+  TASK-374.6; the residual duplicate captures as TASK-374.5.
 
 <!-- SECTION:NOTES:END -->

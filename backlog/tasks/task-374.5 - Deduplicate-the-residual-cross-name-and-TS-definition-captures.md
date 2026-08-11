@@ -29,32 +29,28 @@ zero. The residual duplicates it documents and excludes are owned here:
    pattern in `queries/python.scm` both fire. A class attribute is not a scope
    variable; the general pattern (or its handler) should exclude direct
    class-body assignments.
-2. **Python assignment-side member captures** — the assignment-left attribute
-   pattern re-captures `@reference.member_access` and `@reference.property` on
-   the same node the general attribute pattern already owns, so `self.x = 1`
-   duplicates both.
+2. **Enum and Protocol member collisions** — inside an Enum body the same
+   assignment adds `definition.enum_member`, and inside a Protocol body
+   `definition.property.interface`, so one member range carries three
+   definition captures. These are the two three-way sets frozen in
+   `KNOWN_RANGE_COLLISIONS`; they resolve with (1), since the member capture is
+   the correct one and the field/variable pair is the surplus.
 3. **Self/cls double read** — `self` mints a `reference.this` capture and the
    catch-all identifier read at one range; both become variable references.
 4. **TS same-name definition duplicates** — modifier-variant patterns in
-   `queries/typescript.scm` re-capture fields, parameters and methods
-   (35 same-(name,range) pairs over the corpus), which is why the audit's
-   `definition.` family is python/javascript-only.
-5. **Protocol base re-captured per property signature** — the bare and dotted
-   Protocol property-signature arms in `queries/python.scm` capture
-   `@reference.type` on the base inside a pattern that repeats per property, so
-   a Protocol with N annotated attributes mints N identical `Protocol` type
-   references. The generic `Protocol[T]` arm matches the base through an
-   underscore capture instead and mints none; the two older arms should adopt
-   the same shape.
+   `queries/typescript.scm` re-capture fields, parameters and methods. The
+   audit now freezes the exact 35 same-(name,range) pairs as
+   `known_duplicates`, so the list shrinks only deliberately and a new
+   duplicate fails the build; the work here is to empty it.
 
 ## Work plan
 
 1. Fix each duplication at the pattern (or handler) that re-captures a node
    another pattern owns, following the one-capture-per-node contract in
    `queries/CAPTURE-SCHEMA.md`.
-2. After each fix, widen the audit's `duplicate_families` (and the Python
-   `single_definition_per_range` exclusion) in `query_code_tree.test.ts` so
-   the invariant locks.
+2. After each fix, shrink the corresponding entry in `known_duplicates` or
+   `KNOWN_RANGE_COLLISIONS` in `query_code_tree.test.ts` — both are compared
+   exactly, so a fix that lands without the list shrinking fails.
 
 <!-- SECTION:DESCRIPTION:END -->
 

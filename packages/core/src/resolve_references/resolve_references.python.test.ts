@@ -537,9 +537,74 @@ def run():
         ].join("\n"),
       });
       temp_dirs.push(temp_dir);
+      const file = file_paths["colors.py"];
+      const index = project.get_index_single_file(file)!;
+
+      // Two query arms firing on one class built it twice and aborted the file
+      // on the duplicate export, taking every definition in it down.
+      expect([...index.enums.values()].map((e) => e.name)).toEqual(["Color"]);
+      expect([...index.classes.values()].map((c) => c.name)).toEqual([]);
+
       const cg = project.get_call_graph();
-      const pick = find_caller_node(cg, "pick", file_paths["colors.py"]);
-      expect(pick?.name).toEqual("pick");
+      expect(is_entry_point(cg, "pick", file)).toEqual(true);
+    });
+
+    it("puts a method behind any decorator shape in the call graph", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "shapes.py": [
+          "import cython",
+          "import functools",
+          "import util",
+          "",
+          "class Box:",
+          "    @cython.cfunc",
+          "    def dotted(self):",
+          "        return 1",
+          "",
+          "    @functools.lru_cache()",
+          "    def call_shaped(self):",
+          "        return 2",
+          "",
+          "    @lru_cache(maxsize=1)",
+          "    def call_shaped_with_args(self):",
+          "        return 3",
+          "",
+          "    @util.memoized_property",
+          "    def descriptor(self):",
+          "        return 4",
+          "",
+          "    @cython.cfunc",
+          "    def never_called(self):",
+          "        return 5",
+          "",
+          "def run(box):",
+          "    box.dotted()",
+          "    box.call_shaped()",
+          "    box.call_shaped_with_args()",
+          "    return box.descriptor",
+        ].join("\n"),
+      });
+      temp_dirs.push(temp_dir);
+      const cg = project.get_call_graph();
+      const file = file_paths["shapes.py"];
+
+      // Each decorated method exists as a graph node — before this family a
+      // dotted or call-shaped decorator erased the method entirely.
+      expect(
+        ["dotted", "call_shaped", "call_shaped_with_args", "descriptor", "never_called"].map(
+          (name) => find_caller_node(cg, name, file)?.name
+        )
+      ).toEqual([
+        "dotted",
+        "call_shaped",
+        "call_shaped_with_args",
+        "descriptor",
+        "never_called",
+      ]);
+
+      // The uncalled sibling is the control: the calls below are what clears
+      // the others, not the mere fact that they are methods.
+      expect(is_entry_point(cg, "never_called", file)).toEqual(true);
     });
   });
 });

@@ -304,6 +304,44 @@ describe("ExportRegistry", () => {
       ).toThrow(/Duplicate export name "dup"/);
     });
 
+    it("exports the last of a Python @overload group rather than aborting the file", () => {
+      // `@overload def f(...)` declares the name once per signature before the
+      // implementation. Throwing here blanked the whole file: every definition,
+      // reference and edge in it was lost.
+      const first = create_function_definition("f", "app.py" as FilePath, 1);
+      const second = create_function_definition("f", "app.py" as FilePath, 5);
+      const implementation = create_function_definition(
+        "f",
+        "app.py" as FilePath,
+        9
+      );
+      const registry = new ExportRegistry();
+
+      registry.update_file(
+        "app.py" as FilePath,
+        create_definition_registry({ "app.py": [first, second, implementation] })
+      );
+
+      expect(resolve_named(registry, "app.py" as FilePath, "f")).toBe(
+        implementation.symbol_id
+      );
+    });
+
+    it("still throws when one Python definition is captured twice at one location", () => {
+      // Same name, same location, is not a rebinding — it is the indexing bug
+      // the duplicate-export error exists to surface.
+      const once = create_function_definition("dup", "app.py" as FilePath, 3);
+      const twice = create_function_definition("dup", "app.py" as FilePath, 3);
+      const registry = new ExportRegistry();
+
+      expect(() =>
+        registry.update_file(
+          "app.py" as FilePath,
+          create_definition_registry({ "app.py": [once, twice] })
+        )
+      ).toThrow(/Duplicate export name "dup"/);
+    });
+
     it("prefers a variable over a function of the same name (function seen first)", () => {
       const fn = create_function_definition("handler", "app.ts" as FilePath, 1);
       const variable = create_variable_definition(

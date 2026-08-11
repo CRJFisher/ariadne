@@ -146,7 +146,26 @@ Every language MUST implement these captures (from common analysis):
 
 ### Modifiers
 
-- `@modifier.visibility` - Visibility modifiers
+- `@modifier.visibility` - Visibility modifiers (JavaScript, TypeScript, Rust)
+
+### Predicate-Binding Captures
+
+A capture whose name starts with `_` binds a node so a predicate can test it,
+and is dropped before definitions and references are built. Use it wherever a
+pattern must match on a node it should not record — a Protocol or Enum base
+gating its members, a method name excluded by `#not-eq?`:
+
+```scheme
+(class_definition
+  superclasses: (argument_list
+    [(identifier) @_enum_base (attribute attribute: (identifier) @_enum_base)]
+    (#match? @_enum_base "^(Enum|IntEnum|Flag|IntFlag|StrEnum)$"))
+  body: (block (expression_statement (assignment
+    left: (identifier) @definition.enum_member))))
+```
+
+Capturing the gate under a real name instead would emit one reference to the
+base per member the pattern matches.
 
 ---
 
@@ -162,7 +181,6 @@ Language-specific features explicitly allowed:
 - `@definition.enum.member` - Enum members
 - `@definition.namespace` - Namespaces
 - `@definition.type_parameter` - Generic type parameters (emitted; no handler currently consumes it — see Validation)
-- `@definition.property` - Class properties
 - `@reference.call.generic` - Generic calls
 - `@reference.constructor` - Constructor calls
 - `@reference.constructor.generic` - Generic constructor calls (involves type parameters)
@@ -175,9 +193,9 @@ Language-specific features explicitly allowed:
 
 ### Python
 
-- `@decorator.function` - Function decorators
-- `@decorator.class` - Class decorators
 - `@decorator.method` - Method decorators, any decorator shape (bare, dotted, call-shaped)
+- `@definition.property.interface` - Attribute signature declared in a Protocol body
+- `@definition.enum_member` - Member declared in an Enum body
 - `@reference.constructor` - Class instantiation (function call that is a class)
 - `@reference.this` - `self` and `cls` identifiers
 

@@ -14,7 +14,10 @@ import { ScopeRegistry } from "../registries/scope";
 import { ReferenceRegistry } from "../registries/reference";
 import { ImportGraph } from "../import_resolution/import_graph";
 import { ResolutionRegistry } from "../resolution_registry";
-import { create_callable_value_reference } from "../../index_single_file/references/factories";
+import {
+  create_callable_value_reference,
+  create_variable_reference,
+} from "../../index_single_file/references/factories";
 import { class_symbol, function_symbol } from "@ariadnejs/types";
 import type {
   SymbolName,
@@ -156,13 +159,12 @@ describe("resolve_callable_values", () => {
 
     const reachable = resolve_callable_values(
       file_references([
-        {
-          kind: "variable_reference",
-          name: "handler" as SymbolName,
-          location: HANDLER_NAME_LOCATION,
-          scope_id: FILE_SCOPE_ID,
-          access: "read",
-        } as SymbolReference,
+        create_variable_reference(
+          "handler" as SymbolName,
+          HANDLER_NAME_LOCATION,
+          FILE_SCOPE_ID,
+          "read"
+        ),
       ]),
       context
     );
@@ -192,7 +194,7 @@ describe("resolve_callable_values", () => {
         methods: [],
         properties: [],
         extends: [],
-        implements: [],
+        decorators: [],
       },
     ]);
 

@@ -42,11 +42,11 @@ This is the smallest, highest-yield item in the cluster and lands **first**, so 
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 A file with a module-scope `var res` and a function-local `var res = this;` indexes without throwing `Duplicate export name "res"`.
-- [ ] #2 `ExportRegistry.update_file` still rejects genuine module-scope duplicate export names.
-- [ ] #3 Integration tests (seven-line repro plus a `tests/fixtures/javascript/code/` fixture in the `expressjs--express/lib/response.js` shape) demonstrate all five evidence rows — `sendFile`, `append`, `location`, `sendfile`, `stringify` — resolve and are no longer entry-point false-positives.
-- [ ] #4 The `webpack unpack` and `lodash updateLogRow` rows are explicitly re-routed (receiver typing; `scope_construction` anonymous-function body scope) rather than left silently open.
-- [ ] #5 Existing JavaScript export and resolution suites stay green.
+- [x] #1 A file with a module-scope `var res` and a function-local `var res = this;` indexes without throwing `Duplicate export name "res"`.
+- [x] #2 `ExportRegistry.update_file` still rejects a genuine duplicate. The rule is now positional: two definitions of one module-level name at *different* locations are Python rebinding the name (an `@overload` group, a version-guarded redefinition) and the last in source order is exported; two at the *same* location are one symbol captured twice and still throw. A second wildcard re-export registers its surface instead of colliding.
+- [x] #3 Integration tests (seven-line repro plus a `tests/fixtures/javascript/code/` fixture in the `expressjs--express/lib/response.js` shape) demonstrate all five evidence rows — `sendFile`, `append`, `location`, `sendfile`, `stringify` — resolve and are no longer entry-point false-positives.
+- [x] #4 The `webpack unpack` and `lodash updateLogRow` rows are explicitly re-routed (receiver typing; `scope_construction` anonymous-function body scope) rather than left silently open.
+- [x] #5 Existing JavaScript export and resolution suites stay green.
 
 <!-- AC:END -->
 

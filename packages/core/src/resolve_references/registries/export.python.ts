@@ -38,3 +38,31 @@ export function should_replace_python_variable(
 export function is_variable_or_constant_symbol(symbol_id: SymbolId): boolean {
   return symbol_id.includes("variable:") || symbol_id.includes("constant:");
 }
+
+/**
+ * The location fields of a SymbolId (`start_line:start_col:end_line:end_col`),
+ * which identify the syntactic site the symbol was built from.
+ */
+function location_of(symbol_id: SymbolId): string {
+  return symbol_id.split(":").slice(2, 6).join(":");
+}
+
+/**
+ * Whether two same-named module-level Python definitions are a legal
+ * redefinition rather than one symbol captured twice.
+ *
+ * Python rebinds a module-level name freely: an `@overload` group declares the
+ * same function several times before its implementation, and a platform- or
+ * version-guarded definition redeclares one. The last declaration in source
+ * order is what the module exports.
+ *
+ * Two definitions at the same location are not a redefinition — that is the
+ * indexing bug the duplicate-export error exists to surface, so it still
+ * throws.
+ */
+export function is_python_redefinition(
+  existing_symbol_id: SymbolId,
+  incoming_symbol_id: SymbolId
+): boolean {
+  return location_of(existing_symbol_id) !== location_of(incoming_symbol_id);
+}

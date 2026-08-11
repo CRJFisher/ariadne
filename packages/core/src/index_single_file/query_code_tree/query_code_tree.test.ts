@@ -649,6 +649,12 @@ describe("Fixture corpus invariants", () => {
       ext: string;
       named_definition_nodes: string[];
       duplicate_families: string[];
+      /**
+       * Duplicates the queries still emit, frozen exactly. A new duplicate and
+       * a silently-fixed one both fail, so the residue can only shrink
+       * deliberately.
+       */
+      known_duplicates: string[];
       single_definition_per_range: boolean;
     }
   > = {
@@ -662,6 +668,7 @@ describe("Fixture corpus invariants", () => {
         "reference.call",
         "reference.this",
       ],
+      known_duplicates: [],
       single_definition_per_range: true,
     },
     javascript: {
@@ -679,6 +686,7 @@ describe("Fixture corpus invariants", () => {
         "reference.call",
         "reference.member_access",
       ],
+      known_duplicates: [],
       single_definition_per_range: false,
     },
     typescript: {
@@ -686,24 +694,73 @@ describe("Fixture corpus invariants", () => {
       ext: ".ts",
       // TypeScript parameter properties deliberately mint definition.parameter
       // and definition.field at one range — two different capture names — so
-      // the single-definition-per-range clause stays python-only. The
-      // definition. duplicate family is also excluded: the TS queries still
-      // carry same-name definition duplicates (modifier-variant patterns
-      // re-capturing fields, parameters and methods), owned by the residual
-      // capture-duplicates follow-up, not by this family.
+      // the single-definition-per-range clause stays python-only.
       named_definition_nodes: [
         "class_declaration",
+        "abstract_class_declaration",
         "function_declaration",
         "method_definition",
       ],
       duplicate_families: [
+        "definition.",
         "scope.",
         "reference.call",
         "reference.member_access",
       ],
+      // Modifier-variant patterns re-capture fields, parameters and methods.
+      // Collapsing them is owned by TASK-374.5; freezing the exact residue
+      // here fails the build on a new one.
+      known_duplicates: [
+        "typescript/code/classes/basic_class.ts definition.parameter@90:94 x2",
+        "typescript/code/classes/basic_class.ts definition.parameter@115:120 x2",
+        "typescript/code/classes/inheritance.ts definition.parameter@149:153 x2",
+        "typescript/code/classes/methods.ts definition.field@206:213 x3",
+        "typescript/code/classes/methods.ts definition.field@235:242 x2",
+        "typescript/code/classes/methods.ts definition.method@507:515 x2",
+        "typescript/code/classes/methods.ts definition.method@599:605 x2",
+        "typescript/code/classes/properties.ts definition.field@132:136 x2",
+        "typescript/code/classes/properties.ts definition.field@156:159 x2",
+        "typescript/code/classes/properties.ts definition.field@181:188 x2",
+        "typescript/code/classes/properties.ts definition.field@209:211 x2",
+        "typescript/code/classes/properties.ts definition.method@392:399 x2",
+        "typescript/code/classes/properties.ts definition.method@448:461 x2",
+        "typescript/code/classes/properties.ts definition.method@505:516 x2",
+        "typescript/code/generics/generic_classes.ts definition.parameter@160:165 x2",
+        "typescript/code/generics/generic_classes.ts definition.parameter@374:377 x2",
+        "typescript/code/generics/generic_classes.ts definition.parameter@393:398 x2",
+        "typescript/code/generics/generic_classes.ts definition.field@591:596 x2",
+        "typescript/code/generics/generic_classes.ts definition.parameter@918:925 x2",
+        "typescript/code/generics/generic_classes.ts definition.parameter.optional@947:951 x2",
+        "typescript/code/generics/generic_classes.ts definition.parameter.optional@968:973 x2",
+        "typescript/code/generics/generic_classes.ts definition.method@995:997 x2",
+        "typescript/code/generics/generic_classes.ts definition.method@1072:1075 x2",
+        "typescript/code/integration/constructor_method_chain.ts definition.parameter@145:149 x2",
+        "typescript/code/integration/constructor_method_chain.ts definition.parameter@170:175 x2",
+        "typescript/code/integration/optional_param_properties/application_config.ts definition.field@329:340 x2",
+        "typescript/code/integration/optional_param_properties/merged_extensions_list.ts definition.parameter.optional@406:414 x3",
+        "typescript/code/integration/optional_param_properties/merged_extensions_list.ts definition.field@406:414 x2",
+        "typescript/code/integration/optional_param_properties/pipes_context_creator.ts definition.parameter.optional@485:502 x3",
+        "typescript/code/integration/optional_param_properties/pipes_context_creator.ts definition.field@485:502 x2",
+        "typescript/code/integration/optional_param_properties/testing_injector.ts definition.parameter.optional@357:374 x2",
+        "typescript/code/integration/types.ts definition.parameter@162:166 x2",
+        "typescript/code/integration/types.ts definition.parameter@187:192 x2",
+        "typescript/code/modules/exports.ts definition.parameter@388:396 x2",
+        "typescript/code/modules/exports.ts definition.parameter@1112:1118 x2",
+      ],
       single_definition_per_range: false,
     },
   };
+
+  /**
+   * Definition-capture sets that already land on one byte range. A class-body
+   * assignment is a field and a variable; in an Enum or Protocol body the
+   * member capture joins them. Collapsing these is TASK-374.5.
+   */
+  const KNOWN_RANGE_COLLISIONS = [
+    "definition.field+definition.variable",
+    "definition.enum_member+definition.field+definition.variable",
+    "definition.field+definition.property.interface+definition.variable",
+  ];
 
   function corpus_files(lang: string, ext: string): string[] {
     const dir = path.join(FIXTURE_ROOT, lang, "code");
@@ -766,12 +823,11 @@ describe("Fixture corpus invariants", () => {
       expect(missing).toEqual([]);
     });
 
-    // The duplicate audit is scoped to the families this task family drove to
-    // zero (listed per language in CORPUS.duplicate_families). Families outside
-    // the scope measurably still carry same-(name,range) duplicates — the
-    // python reference/assignment attribute captures among them — and are
-    // deferred to the follow-up filed for the residual capture duplicates.
-    it(`emits no repeated capture at one byte range in the audited ${lang} families`, () => {
+    // The duplicate audit covers the families listed per language in
+    // CORPUS.duplicate_families. Families outside that scope still carry
+    // same-(name,range) duplicates — the python reference/assignment attribute
+    // captures among them — and are owned by TASK-374.5.
+    it(`repeats a capture at one byte range only where ${lang} already did`, () => {
       const parser = new Parser();
       parser.setLanguage(config.grammar);
       const duplicates: string[] = [];
@@ -793,7 +849,7 @@ describe("Fixture corpus invariants", () => {
         }
       }
 
-      expect(duplicates).toEqual([]);
+      expect(duplicates).toEqual(config.known_duplicates);
     });
 
     if (config.single_definition_per_range) {
@@ -813,11 +869,13 @@ describe("Fixture corpus invariants", () => {
           }
           for (const [range, names] of by_range) {
             if (names.length <= 1) continue;
-            // Known residual: a class-body assignment mints definition.field and
-            // definition.variable at one range — a pre-existing collision tracked
-            // as its own backlog follow-up, outside this invariant's scope.
+            // A class-body assignment mints definition.field and
+            // definition.variable at one range; inside an Enum or a Protocol
+            // the member capture lands on the same range as a third. Both are
+            // pre-existing collisions owned by TASK-374.5. Listing the exact
+            // sets keeps a NEW collision failing.
             const sorted = [...names].sort().join("+");
-            if (sorted === "definition.field+definition.variable") continue;
+            if (KNOWN_RANGE_COLLISIONS.includes(sorted)) continue;
             collisions.push(
               `${path.relative(FIXTURE_ROOT, file)} ${range} ${names.join("+")}`
             );

@@ -46,13 +46,13 @@ The same files carry duplicate patterns that double every member reference and e
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 `this.argsTypes`, `this.helper.rootFieldMap` and `context.dmmf.typeAndModelMap` each mint exactly one `property_access` reference with the exact `property_chain`, and the prisma, nest and angular getter false-positives that read through a `this`/chain receiver clear.
-- [ ] #2 `getHelper().jsDoc` mints no `property_access` reference (short-chain guard in `references/references.ts`).
-- [ ] #3 One member read yields exactly one `property_access` reference and one member call yields exactly one resolved edge — the optional-chain and TS static/instance duplicates are gone with no orphaned downstream consumer.
-- [ ] #4 Integration tests (with updated `tests/fixtures/{typescript,javascript}/code/` fixtures) cover every evidence case: prisma `argsTypes` / `rootFieldMap` / `typeAndModelMap`, nest `instanceLinksHost` / `parentInjector`, angular `compiler`, and the typeorm tagged-template `sql` read asserted as a single `method_call` reference.
-- [ ] #5 A data-field read and a plain (non-getter) method read still create no edge.
-- [ ] #6 Index size and wall-clock are measured on angular and prisma before and after, and the JSON index snapshots are regenerated with the diff reviewed for fabricated edges.
-- [ ] #7 The identifier-receiver accessor rows and the two typeorm tagged-template rows are re-triaged to receiver typing (or `coverage_config`) with the reason recorded.
+- [x] #1 `this.argsTypes`, `this.helper.rootFieldMap` and `context.dmmf.typeAndModelMap` each mint exactly one `property_access` reference with the exact `property_chain`, and the prisma, nest and angular getter false-positives that read through a `this`/chain receiver clear.
+- [x] #2 `getHelper().jsDoc` mints no `property_access` reference. The guard is structural rather than a chain-length test: `is_grounded_member_read` peels the same wrappers the chain extractor peels and requires the chain to bottom out at a bindable name, so `foo().bar.baz` — which a length rule admits — mints nothing too.
+- [x] #3 One member read yields exactly one `property_access` reference and one member call yields exactly one resolved edge — the optional-chain and TS static/instance duplicates are gone with no orphaned downstream consumer.
+- [x] #4 Integration tests (with updated `tests/fixtures/{typescript,javascript}/code/` fixtures) cover every evidence case: prisma `argsTypes` / `rootFieldMap` / `typeAndModelMap`, nest `instanceLinksHost` / `parentInjector`, angular `compiler`, and the typeorm tagged-template `sql` read asserted as a single `method_call` reference.
+- [x] #5 A data-field read and a plain (non-getter) method read still create no edge. A *write* to a member also mints no read, so it can no longer fabricate an edge to the getter sharing its name.
+- [~] #6 **Partial.** Whole-corpus effect is measured on sqlalchemy in the parent task (21 aborting files → 0; 6,793 → 10,850 graph nodes; entry-point rate 32.4% → 25.2%) and the JSON snapshots are regenerated. The angular and prisma reference-volume figures this AC names were taken against a superseded implementation and are not carried forward; they need re-taking against this branch.
+- [x] #7 The identifier-receiver accessor rows and the two typeorm tagged-template rows are re-triaged to receiver typing (or `coverage_config`) with the reason recorded.
 
 <!-- AC:END -->
 
