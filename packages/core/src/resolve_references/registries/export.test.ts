@@ -871,6 +871,46 @@ describe("ExportRegistry", () => {
       ).toBeNull();
     });
 
+    it("stops forwarding when a re-index removes the wildcard edge", () => {
+      const foo = create_function_definition("foo", HELPER, 1);
+      const registry = new ExportRegistry();
+      registry.update_file(HELPER, create_definition_registry({ [HELPER]: [foo] }));
+      registry.update_file(
+        MAIN,
+        create_definition_registry({
+          [MAIN]: [create_wildcard_reexport_definition(MAIN, "./helper", 1)],
+        })
+      );
+      expect(resolve_named(registry, MAIN, "foo")).toBe(foo.symbol_id);
+
+      registry.update_file(MAIN, create_definition_registry({ [MAIN]: [] }));
+
+      expect(resolve_named(registry, MAIN, "foo")).toBeNull();
+    });
+
+    it("resolves a two-statement named re-export through to the origin definition", () => {
+      const origin = create_function_definition("origin", HELPER, 1);
+      const bare_reexport: ImportDefinition = {
+        kind: "import",
+        name: "origin" as SymbolName,
+        symbol_id: `import:${MAIN}:1:0:1:6:origin` as SymbolId,
+        defining_scope_id: `module:${MAIN}` as ScopeId,
+        location: make_location(MAIN, 1, 6),
+        export: { export_name: undefined, is_reexport: false },
+        import_path: "./helper" as ModulePath,
+        import_kind: "named",
+        original_name: undefined,
+      };
+      const registry = new ExportRegistry();
+      registry.update_file(HELPER, create_definition_registry({ [HELPER]: [origin] }));
+      registry.update_file(
+        MAIN,
+        create_definition_registry({ [MAIN]: [bare_reexport] })
+      );
+
+      expect(resolve_named(registry, MAIN, "origin")).toBe(origin.symbol_id);
+    });
+
     it("still throws for two genuine duplicate non-wildcard names alongside a wildcard edge", () => {
       const first = create_function_definition("dup", MAIN, 1);
       const second = create_function_definition("dup", MAIN, 5);
@@ -953,6 +993,46 @@ describe("ExportRegistry", () => {
       );
 
       expect(all_export_names(registry, MAIN)).toEqual(["keep"]);
+    });
+
+    it("keeps a file's own export in the surface when a wildcard edge disputes it", () => {
+      const own = create_function_definition("dup", MAIN, 1);
+      const foreign = create_function_definition("dup", HELPER, 5);
+      const registry = new ExportRegistry();
+      registry.update_file(HELPER, create_definition_registry({ [HELPER]: [foreign] }));
+      registry.update_file(
+        MAIN,
+        create_definition_registry({
+          [MAIN]: [own, create_wildcard_reexport_definition(MAIN, "./helper", 2)],
+        })
+      );
+
+      expect(registry.resolve_all_exports(MAIN, ALL_TS, ROOT_FOLDER)).toEqual(
+        new Map([["dup", own.symbol_id]])
+      );
+    });
+
+    it("returns complete surfaces for both sides of a mutual star pair", () => {
+      const only_in_a = create_function_definition("only_in_a", A, 2);
+      const only_in_b = create_function_definition("only_in_b", B, 2);
+      const registry = new ExportRegistry();
+      registry.update_file(
+        A,
+        create_definition_registry({
+          [A]: [only_in_a, create_wildcard_reexport_definition(A, "./b", 1)],
+        })
+      );
+      registry.update_file(
+        B,
+        create_definition_registry({
+          [B]: [only_in_b, create_wildcard_reexport_definition(B, "./a", 1)],
+        })
+      );
+
+      expect(all_export_names(registry, A)).toEqual(["only_in_a", "only_in_b"]);
+      // The A walk was cycle-truncated at B, so B's surface must be computed
+      // fresh, not served from a cached partial.
+      expect(all_export_names(registry, B)).toEqual(["only_in_a", "only_in_b"]);
     });
 
     it("returns the updated surface after a wildcard target is re-indexed", () => {

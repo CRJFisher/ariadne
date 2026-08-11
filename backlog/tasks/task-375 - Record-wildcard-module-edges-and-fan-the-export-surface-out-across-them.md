@@ -1,7 +1,7 @@
 ---
 id: TASK-375
 title: "Record wildcard module edges and fan the export surface out across them"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-07-29 09:37"
 labels:
@@ -76,3 +76,26 @@ Widening `resolve_module_path`'s return type into a resolved / external / unmatc
 - [ ] #11 The two tokio `pub use` rows are recorded as blocked on `cfg_*!` macro-body indexing and are not counted against this task.
 
 <!-- AC:END -->
+
+## Implementation Notes
+
+## High-level summary
+
+Wholesale module edges exist in the index. `export * from`, `pub use m::*`, `use m::*` and `from m import *` each produce an `ImportDefinition` with `import_kind: "wildcard"`, named for the module path's last segment — a display name that never matches a call terminal. The `ExportRegistry` holds these edges in a dedicated `wildcard_reexports` map, so the name-keyed maps and their duplicate-name throw never see them; a keyed lookup that misses fans out across the file's wildcard edges and binds only an unambiguous winner (distinct targets are a miss; identical targets through every path bind). `resolve_all_exports` walks a file's whole forwarded surface — own names shadow starred ones, disputed names drop — memoised per file until any registry mutation, with mutual-star cycles cut per path and never cached truncated. Name resolution layers that surface into Rust and Python scopes below explicit imports and locals; JS/TS is deliberately excluded there because `export *` binds nothing locally — its consumers resolve through the registry fan-out instead.
+
+Two shapes the plan called wildcard are namespace objects instead: `export * as ns from` and `import * as X …; export { X }` publish one name whose export chain terminates at the import definition itself; member access descends through the resolved path (the `_namespaces` hop). The chain also follows any import-backed export record — a two-statement `import { a } …; export { a }` reaches the origin definition, not the intermediate import symbol.
+
+Capture names are `@import.reexport.wildcard` / `@import.reexport.namespace` (the planned `@import.wildcard_reexport` fails SemanticEntity validation). The persistence schema bumps to v5 so pre-wildcard caches are discarded rather than silently replayed.
+
+Front door for readers: `registries/export.ts` (edge storage, fan-out, `resolve_all_exports`), then `name_resolution.ts` (the one wildcard arm plus its guard), then the four capture handlers.
+
+### Deferred rows (recorded, not dropped)
+
+- The corpus sqlx rows are cross-crate (`pub(crate) use sqlx_core::transaction::*`) and additionally need TASK-375.4's `crate_roots` index; the intra-crate glob shape (AC #3's literal wording) closes here.
+- `ts.X.y()` property-chain access through a namespace *variable* is TASK-375.2's descent; the corpus caller's named-import form closes here.
+- `use crate::S` crate-root items are TASK-375.3's resolver defect; Rust fixtures route `pub use` through submodules.
+- The two tokio `pub use` rows stay blocked on `cfg_*!` macro-body indexing (AC #11).
+
+### Verification
+
+`packages/core` 3582/3582 green (baseline 3521); typecheck and lint clean; bench before/after recorded in the commit history with no regression, plus a new star-fan bench case (starred-leaf update 1.15ms avg vs 0.30ms unrelated — the memo-drop cost). A six-lens review fan-out was interrupted by an API spend limit after one reviewer (test-quality) completed; its four major findings (all proof-gaps, no behavior defects) are addressed with four added registry tests. Unreviewed lenses: correctness ×2, contracts, completeness, cold-read.
