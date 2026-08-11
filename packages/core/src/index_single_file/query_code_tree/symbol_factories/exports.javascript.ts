@@ -313,6 +313,12 @@ export function extract_export_info(
     const parent: SyntaxNode | null = current.parent;
 
     if (parent?.type === "export_statement") {
+      // An export inside a namespace body is a member of that namespace, not
+      // of the file. Registering it as a file export puts two namespaces that
+      // each export the same member into collision, which aborts the file.
+      if (has_namespace_ancestor(parent)) {
+        return { is_exported: false };
+      }
       const export_metadata = analyze_export_statement(parent, symbol_name);
       return {
         is_exported: true,
@@ -435,4 +441,22 @@ function get_root_node(node: SyntaxNode): SyntaxNode {
     current = current.parent;
   }
   return current;
+}
+
+/**
+ * Whether the node sits inside a TypeScript namespace body. A member exported
+ * from a namespace is reached through the namespace, so it is not part of the
+ * file's own export surface.
+ *
+ * @language typescript
+ */
+function has_namespace_ancestor(node: SyntaxNode): boolean {
+  let current: SyntaxNode | null = node.parent;
+  while (current) {
+    if (current.type === "internal_module" || current.type === "module") {
+      return true;
+    }
+    current = current.parent;
+  }
+  return false;
 }

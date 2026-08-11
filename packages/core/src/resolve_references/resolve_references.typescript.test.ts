@@ -695,3 +695,38 @@ describe("Accessor pair ahead of other members", () => {
     expect(is_entry_point(call_graph, "greet", file)).toEqual(false);
   });
 });
+
+describe("Namespace member exports", () => {
+  it("indexes a file where two namespaces export the same member name", async () => {
+    // A member exported from a namespace is reached through the namespace, so
+    // registering it as a file export put the two into collision and aborted
+    // the file — taking every definition and edge in it down.
+    const { project, temp_dir, file_paths } = await setup_project({
+      "n.ts": [
+        "export namespace A {",
+        "  export function helper(): number { return 1; }",
+        "}",
+        "",
+        "export namespace B {",
+        "  export function helper(): number { return 2; }",
+        "}",
+        "",
+        "export function main(): number { return A.helper() + B.helper(); }",
+      ].join("\n"),
+    });
+    temp_dirs.push(temp_dir);
+    const file = file_paths["n.ts"];
+
+    const index = project.get_index_single_file(file)!;
+    expect(
+      [...index.functions.values()].map((f) => f.name).sort()
+    ).toEqual(["helper", "helper", "main"]);
+
+    const call_graph = project.get_call_graph();
+    const main = find_caller_node(call_graph, "main", file);
+    expect(main?.enclosed_calls.map((c) => c.name)).toEqual([
+      "helper",
+      "helper",
+    ]);
+  });
+});
