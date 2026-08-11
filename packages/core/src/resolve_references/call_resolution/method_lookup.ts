@@ -41,7 +41,7 @@ export function resolve_method_on_type(
       method_name,
       context.exports,
       context.languages,
-      context.root_folder
+      context.resolution
     );
     if (!sym) {
       return err({
@@ -98,7 +98,7 @@ export function resolve_method_on_type(
         method_name,
         context.exports,
         context.languages,
-        context.root_folder
+        context.resolution
       );
       if (!sym) {
         return err({

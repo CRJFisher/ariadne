@@ -31,7 +31,6 @@ import type { ScopeRegistry } from "../registries/scope";
 import type { ReferenceRegistry } from "../registries/reference";
 import type { ExportRegistry } from "../registries/export";
 import type { ImportGraph } from "../import_resolution/import_graph";
-import type { FileSystemFolder } from "../file_folders";
 import type { CallResolutionResult } from "../resolution_state";
 import type { ResolutionRegistry } from "../resolution_registry";
 import { detect_indirect_reachability } from "../indirect_reachability";
@@ -41,6 +40,7 @@ import { create_method_call_reference } from "../../index_single_file/references
 import { resolve_constructor_call, include_constructors_for_class_symbols } from "./constructor";
 import { resolve_collection_dispatch } from "./collection_dispatch";
 import { resolve_function_call } from "./function_call";
+import type { ModuleResolutionContext } from "../import_resolution";
 
 type CallSymbolReference =
   | SelfReferenceCall
@@ -57,7 +57,7 @@ export interface CallResolutionContext {
   readonly resolutions: ResolutionRegistry;
   readonly exports: ExportRegistry;
   readonly languages: ReadonlyMap<FilePath, Language>;
-  readonly root_folder: FileSystemFolder;
+  readonly resolution: ModuleResolutionContext;
 }
 
 /**
@@ -183,7 +183,7 @@ function resolve_calls(
             context.imports,
             context.exports,
             context.languages,
-            context.root_folder
+            context.resolution
           );
 
           // If standard resolution failed, try collection dispatch resolution.
@@ -219,7 +219,7 @@ function resolve_calls(
             context.resolutions,
             context.exports,
             context.languages,
-            context.root_folder,
+            context.resolution,
             (import_id) => context.imports.get_resolved_import_path(import_id)
           );
           break;
@@ -259,7 +259,7 @@ function resolve_calls(
             context.imports,
             context.exports,
             context.languages,
-            context.root_folder
+            context.resolution
           );
           const getters = (
             is_ok(getter_result) ? getter_result.value : []

@@ -21,6 +21,8 @@ import type {
   ConstructorDefinition,
   FunctionDefinition,
 } from "@ariadnejs/types";
+import { create_module_resolution_context } from "../import_resolution";
+import type { ModuleResolutionContext } from "../import_resolution";
 
 // Test fixtures
 const TEST_FILE = "test.ts" as FilePath;
@@ -44,13 +46,13 @@ describe("Constructor Call Resolution", () => {
   let resolutions: ResolutionRegistry;
   let exports: ExportRegistry;
   let languages: Map<FilePath, Language>;
-  let root_folder: FileSystemFolder;
+  let resolution: ModuleResolutionContext;
 
   beforeEach(() => {
     definitions = new DefinitionRegistry();
     scopes = new ScopeRegistry();
     resolutions = new ResolutionRegistry();
-    ({ exports, languages, root_folder } = make_export_chain_context());
+    ({ exports, languages, resolution } = make_export_chain_context());
   });
 
   describe("Resolves to constructor symbol", () => {
@@ -109,7 +111,7 @@ describe("Constructor Call Resolution", () => {
         resolutions,
         exports,
         languages,
-        root_folder
+        resolution
       );
 
       expect(unwrap(resolved)).toEqual([constructor_id]);
@@ -181,7 +183,7 @@ describe("Constructor Call Resolution", () => {
         resolutions,
         exports,
         languages,
-        root_folder
+        resolution
       );
 
       expect(unwrap(resolved)).toEqual([constructor_id]);
@@ -224,7 +226,7 @@ describe("Constructor Call Resolution", () => {
         resolutions,
         exports,
         languages,
-        root_folder
+        resolution
       );
 
       expect(unwrap(resolved)).toEqual([class_id]);
@@ -266,7 +268,7 @@ describe("Constructor Call Resolution", () => {
         resolutions,
         exports,
         languages,
-        root_folder
+        resolution
       );
 
       expect(unwrap(resolved)).toEqual([class_id]);
@@ -336,7 +338,7 @@ describe("Constructor Call Resolution", () => {
         resolutions,
         exports,
         languages,
-        root_folder
+        resolution
       );
 
       expect(unwrap(resolved)).toEqual([parent_ctor_id]);
@@ -377,7 +379,7 @@ describe("Constructor Call Resolution", () => {
         resolutions,
         exports,
         languages,
-        root_folder
+        resolution
       );
 
       expect(unwrap(resolved)).toEqual([child_id]);
@@ -433,7 +435,7 @@ describe("Constructor Call Resolution", () => {
         resolutions,
         exports,
         languages,
-        root_folder
+        resolution
       );
 
       expect(unwrap(resolved)).toEqual([class_a_id]);
@@ -457,7 +459,7 @@ describe("Constructor Call Resolution", () => {
         resolutions,
         exports,
         languages,
-        root_folder
+        resolution
       );
 
       expect(resolved.ok).toBe(false);
@@ -502,7 +504,7 @@ describe("Constructor Call Resolution", () => {
         resolutions,
         exports,
         languages,
-        root_folder
+        resolution
       );
 
       expect(resolved.ok).toBe(false);
@@ -532,7 +534,7 @@ describe("Constructor Call Resolution", () => {
         resolutions,
         exports,
         languages,
-        root_folder
+        resolution
       );
 
       expect(resolved.ok).toBe(false);
@@ -589,7 +591,7 @@ describe("Constructor Call Resolution", () => {
         resolutions,
         exports,
         languages,
-        root_folder
+        resolution
       );
 
       expect(unwrap(resolved)).toEqual([class_id]);

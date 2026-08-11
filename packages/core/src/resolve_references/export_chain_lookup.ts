@@ -1,7 +1,7 @@
 import type { SymbolId, SymbolName, FilePath, Language } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "./registries/definition";
 import type { ExportRegistry } from "./registries/export";
-import type { FileSystemFolder } from "./file_folders";
+import type { ModuleResolutionContext } from "./import_resolution";
 
 /**
  * Look up a named export in a source file, following re-export chains.
@@ -16,14 +16,14 @@ export function resolve_namespace_export(
   export_name: SymbolName,
   exports: ExportRegistry,
   languages: ReadonlyMap<FilePath, Language>,
-  root_folder: FileSystemFolder
+  resolution: ModuleResolutionContext
 ): SymbolId | null {
   return exports.resolve_export_chain(
     source_file,
     export_name,
     "namespace",
     languages,
-    root_folder
+    resolution
   );
 }
 

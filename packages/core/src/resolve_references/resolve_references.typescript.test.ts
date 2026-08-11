@@ -1027,6 +1027,56 @@ export function installTypings(fileNames: string[]): number {
     );
   });
 
+  it("resolves a bare specifier through a tsconfig paths alias onto a star-re-exporting barrel", async () => {
+    // nest: `import { mixin } from "@nestjs/common"`, where the alias target's
+    // index.ts is itself a star re-export chain.
+    const temp_dir = fs.mkdtempSync(path.join(os.tmpdir(), "ariadne-ts-alias-"));
+    temp_dirs.push(temp_dir);
+    const files: Record<string, string> = {
+      "tsconfig.json": `{
+  "compilerOptions": {
+    "paths": {
+      "@nestjs/common": ["./packages/common"],
+    },
+  },
+}`,
+      "packages/common/index.ts": `export * from "./utils";
+`,
+      "packages/common/utils.ts": `export function mixin(): number {
+  return 1;
+}
+`,
+      "packages/core/injector.ts": `import { mixin } from "@nestjs/common";
+
+export function inject(): number {
+  return mixin();
+}
+`,
+    };
+    const file_paths: Record<string, FilePath> = {};
+    for (const [relative_path, content] of Object.entries(files)) {
+      const abs = path.join(temp_dir, relative_path);
+      fs.mkdirSync(path.dirname(abs), { recursive: true });
+      fs.writeFileSync(abs, content);
+      file_paths[relative_path] = abs as FilePath;
+    }
+
+    const project = new Project();
+    await project.initialize(temp_dir as FilePath);
+    for (const [relative_path, content] of Object.entries(files)) {
+      if (relative_path.endsWith(".ts")) {
+        project.update_file(file_paths[relative_path], content);
+      }
+    }
+
+    expect_call_resolves_to(
+      project,
+      file_paths["packages/core/injector.ts"],
+      "mixin",
+      file_paths["packages/common/utils.ts"]
+    );
+  });
+
   it("resolves a two-statement named re-export through to the origin definition", async () => {
     const { project, temp_dir, file_paths } = await setup_project({
       "src/leaf.ts": `export function origin_fn(): number {

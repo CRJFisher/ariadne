@@ -26,6 +26,7 @@ import type {
   ScopeType,
 } from "@ariadnejs/types";
 import type { FileSystemFolder } from "./file_folders";
+import { create_module_resolution_context } from "./import_resolution";
 
 const TEST_FILE = "test.ts" as FilePath;
 const FILE_SCOPE_ID = "scope:test.ts:file:0:0" as ScopeId;
@@ -99,7 +100,7 @@ describe("resolve_names", () => {
       scopes,
       exports,
       imports,
-      root_folder: mock_root_folder,
+      resolution: create_module_resolution_context(mock_root_folder),
     };
   });
 
@@ -253,7 +254,7 @@ describe("resolve_names", () => {
         import_path: "./utils" as ModulePath,
         import_kind: "namespace",
       };
-      imports.update_file(TEST_FILE, [ns_import], "typescript", mock_root_folder);
+      imports.update_file(TEST_FILE, [ns_import], "typescript", create_module_resolution_context(mock_root_folder));
 
       const result = resolve_names(new Set([TEST_FILE]), context);
 
@@ -278,7 +279,7 @@ describe("resolve_names", () => {
         import_path: "./unresolved" as ModulePath,
         import_kind: "named",
       };
-      imports.update_file(TEST_FILE, [named_import], "typescript", mock_root_folder);
+      imports.update_file(TEST_FILE, [named_import], "typescript", create_module_resolution_context(mock_root_folder));
 
       const result = resolve_names(new Set([TEST_FILE]), context);
 
@@ -311,7 +312,7 @@ describe("resolve_names", () => {
         scopes,
         exports,
         imports,
-        root_folder: py_root_folder,
+        resolution: create_module_resolution_context(py_root_folder),
       };
     }
 
@@ -367,7 +368,7 @@ describe("resolve_names", () => {
         APP_PY,
         [make_wildcard_import(APP_PY, APP_SCOPE, "lib")],
         "python",
-        py_root_folder
+        create_module_resolution_context(py_root_folder)
       );
 
       const result = resolve_names(new Set([APP_PY]), py_context());
@@ -400,7 +401,7 @@ describe("resolve_names", () => {
         APP_PY,
         [make_wildcard_import(APP_PY, APP_SCOPE, "lib"), named_import],
         "python",
-        py_root_folder
+        create_module_resolution_context(py_root_folder)
       );
 
       const result = resolve_names(new Set([APP_PY]), py_context());
@@ -431,7 +432,7 @@ describe("resolve_names", () => {
         APP_PY,
         [make_wildcard_import(APP_PY, APP_SCOPE, "lib")],
         "python",
-        py_root_folder
+        create_module_resolution_context(py_root_folder)
       );
 
       const result = resolve_names(new Set([APP_PY]), py_context());
@@ -476,7 +477,7 @@ describe("resolve_names", () => {
         import_kind: "wildcard",
         export: { is_reexport: true },
       };
-      imports.update_file(APP_TS, [star_reexport], "typescript", py_root_folder);
+      imports.update_file(APP_TS, [star_reexport], "typescript", create_module_resolution_context(py_root_folder));
 
       const ts_context: NameResolutionContext = {
         languages: new Map<FilePath, Language>([
@@ -487,7 +488,7 @@ describe("resolve_names", () => {
         scopes,
         exports,
         imports,
-        root_folder: py_root_folder,
+        resolution: create_module_resolution_context(py_root_folder),
       };
       const result = resolve_names(new Set([APP_TS]), ts_context);
 

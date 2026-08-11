@@ -42,7 +42,7 @@ import type { TypeRegistry } from "../registries/type";
 import type { ExportRegistry } from "../registries/export";
 import type { ResolutionRegistry } from "../resolution_registry";
 import type { ImportGraph } from "../import_resolution/import_graph";
-import type { FileSystemFolder } from "../file_folders";
+import type { ModuleResolutionContext } from "../import_resolution";
 
 /**
  * Receiver expression - normalized form for both self-reference and method calls
@@ -76,7 +76,7 @@ export interface ReceiverResolutionContext {
   readonly imports: ImportGraph;
   readonly exports: ExportRegistry;
   readonly languages: ReadonlyMap<FilePath, Language>;
-  readonly root_folder: FileSystemFolder;
+  readonly resolution: ModuleResolutionContext;
 }
 
 const SELF_REFERENCE_KEYWORDS = new Set(["this", "self", "super", "cls"]);
@@ -322,7 +322,7 @@ function resolve_namespace_member(
       property_name,
       context.exports,
       context.languages,
-      context.root_folder
+      context.resolution
     );
   }
 
@@ -356,7 +356,7 @@ function dereference_named_import(
       imported_name,
       def.import_kind === "default" ? "default" : "named",
       context.languages,
-      context.root_folder
+      context.resolution
     );
     if (!resolved || resolved === current) {
       return current;

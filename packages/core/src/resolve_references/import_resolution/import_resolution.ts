@@ -5,6 +5,8 @@
 
 import type { FilePath, Language } from "@ariadnejs/types";
 import type { FileSystemFolder } from "../file_folders";
+import type { ModuleSpecifierIndex } from "./module_specifier_index";
+import { EMPTY_MODULE_SPECIFIER_INDEX } from "./module_specifier_index";
 import { resolve_module_path_javascript } from "./import_resolution.javascript";
 import { resolve_module_path_typescript } from "./import_resolution.typescript";
 import {
@@ -14,6 +16,28 @@ import {
 import { resolve_module_path_rust } from "./import_resolution.rust";
 
 /**
+ * Everything module resolution reads about the project: the I/O-free file tree
+ * for probing candidate paths, and the specifier index for the one question the
+ * tree cannot answer — which directory a package or crate name denotes.
+ */
+export interface ModuleResolutionContext {
+  readonly root_folder: FileSystemFolder;
+  readonly specifiers: ModuleSpecifierIndex;
+}
+
+/**
+ * Build a resolution context. A project with no readable manifests has an
+ * empty specifier index, which resolves every bare specifier opaquely — the
+ * behaviour of a tree-only resolver.
+ */
+export function create_module_resolution_context(
+  root_folder: FileSystemFolder,
+  specifiers: ModuleSpecifierIndex = EMPTY_MODULE_SPECIFIER_INDEX
+): ModuleResolutionContext {
+  return { root_folder, specifiers };
+}
+
+/**
  * Resolve an import path to the absolute file path of the imported module,
  * delegating to the resolver for the importing file's language.
  */
@@ -21,29 +45,29 @@ export function resolve_module_path(
   import_path: string,
   importing_file: FilePath,
   language: Language,
-  root_folder: FileSystemFolder
+  resolution: ModuleResolutionContext
 ): FilePath {
   switch (language) {
     case "javascript":
       return resolve_module_path_javascript(
         import_path,
         importing_file,
-        root_folder
+        resolution.root_folder
       );
     case "typescript":
       return resolve_module_path_typescript(
         import_path,
         importing_file,
-        root_folder
+        resolution
       );
     case "python":
       return resolve_module_path_python(
         import_path,
         importing_file,
-        root_folder
+        resolution.root_folder
       );
     case "rust":
-      return resolve_module_path_rust(import_path, importing_file, root_folder);
+      return resolve_module_path_rust(import_path, importing_file, resolution);
     default:
       throw new Error(`Unsupported language: ${language}`);
   }
@@ -59,13 +83,13 @@ export function resolve_submodule_import_path(
   resolved_source_file: FilePath,
   import_name: string,
   language: Language,
-  root_folder: FileSystemFolder
+  resolution: ModuleResolutionContext
 ): FilePath | undefined {
   if (language === "python") {
     return resolve_submodule_path_python(
       resolved_source_file,
       import_name,
-      root_folder
+      resolution.root_folder
     );
   }
   return undefined;

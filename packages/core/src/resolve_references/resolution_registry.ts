@@ -7,7 +7,6 @@ import type {
   Language,
   IndirectReachability,
 } from "@ariadnejs/types";
-import type { FileSystemFolder } from "./file_folders";
 import type { DefinitionRegistry } from "./registries/definition";
 import type { TypeRegistry } from "./registries/type";
 import type { ScopeRegistry } from "./registries/scope";
@@ -37,6 +36,7 @@ import {
   resolve_names as resolve_names_impl,
   type NameResolutionContext,
 } from "./name_resolution";
+import type { ModuleResolutionContext } from "./import_resolution";
 
 /**
  * Coordinates the two resolution phases and owns the immutable `ResolutionState`.
@@ -56,7 +56,7 @@ export class ResolutionRegistry {
     scopes: ScopeRegistry,
     exports: ExportRegistry,
     imports: ImportGraph,
-    root_folder: FileSystemFolder
+    resolution: ModuleResolutionContext
   ): void {
     if (file_ids.size === 0) {
       return;
@@ -74,7 +74,7 @@ export class ResolutionRegistry {
       scopes,
       exports,
       imports,
-      root_folder,
+      resolution,
     };
 
     const result = resolve_names_impl(file_ids, context);
@@ -95,7 +95,7 @@ export class ResolutionRegistry {
     imports: ImportGraph,
     exports: ExportRegistry,
     languages: ReadonlyMap<FilePath, Language>,
-    root_folder: FileSystemFolder
+    resolution: ModuleResolutionContext
   ): void {
     if (file_ids.size === 0) {
       return;
@@ -110,7 +110,7 @@ export class ResolutionRegistry {
       resolutions: this,
       exports,
       languages,
-      root_folder,
+      resolution,
     };
 
     const result = resolve_calls_for_files(file_ids, context);

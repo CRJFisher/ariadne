@@ -12,12 +12,12 @@ import type {
   SymbolName,
   Language,
 } from "@ariadnejs/types";
-import type { FileSystemFolder } from "./file_folders";
 import type { DefinitionRegistry } from "./registries/definition";
 import type { ScopeRegistry } from "./registries/scope";
 import type { ExportRegistry } from "./registries/export";
 import type { ImportGraph } from "./import_resolution/import_graph";
 import type { NameResolutionResult } from "./resolution_state";
+import type { ModuleResolutionContext } from "./import_resolution";
 
 /** Registries and language map consulted while resolving names in a scope tree. */
 export interface NameResolutionContext {
@@ -26,7 +26,7 @@ export interface NameResolutionContext {
   readonly scopes: ScopeRegistry;
   readonly exports: ExportRegistry;
   readonly imports: ImportGraph;
-  readonly root_folder: FileSystemFolder;
+  readonly resolution: ModuleResolutionContext;
 }
 
 /**
@@ -130,7 +130,7 @@ function resolve_scope_recursive(
       for (const [name, symbol_id] of context.exports.resolve_all_exports(
         source_file,
         context.languages,
-        context.root_folder
+        context.resolution
       )) {
         scope_resolutions.set(name, symbol_id);
       }
@@ -169,7 +169,7 @@ function resolve_scope_recursive(
           const sole_default = context.exports.resolve_sole_default_export(
             source_file,
             context.languages,
-            context.root_folder
+            context.resolution
           );
           if (
             sole_default &&
@@ -202,7 +202,7 @@ function resolve_scope_recursive(
         import_name,
         imp_def.import_kind,
         context.languages,
-        context.root_folder
+        context.resolution
       );
 
       // Explicit-named-import fallback: `is_exported` governs only the

@@ -6,6 +6,7 @@ import { describe, it, expect } from "vitest";
 import type { FilePath } from "@ariadnejs/types";
 import { resolve_module_path_typescript } from "./import_resolution.typescript";
 import { create_file_tree } from "./import_resolution.test";
+import { create_module_resolution_context } from "../import_resolution";
 
 describe("resolve_module_path_typescript", () => {
   describe("relative imports", () => {
@@ -17,7 +18,7 @@ describe("resolve_module_path_typescript", () => {
       const result = resolve_module_path_typescript(
         "./utils",
         "/project/src/app.ts" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/utils.ts");
     });
@@ -30,7 +31,7 @@ describe("resolve_module_path_typescript", () => {
       const result = resolve_module_path_typescript(
         "../utils",
         "/project/src/components/button.ts" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/utils.ts");
     });
@@ -43,7 +44,7 @@ describe("resolve_module_path_typescript", () => {
       const result = resolve_module_path_typescript(
         "./Component",
         "/project/src/app.ts" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/Component.tsx");
     });
@@ -57,7 +58,7 @@ describe("resolve_module_path_typescript", () => {
       const result = resolve_module_path_typescript(
         "./utils",
         "/project/src/app.ts" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/utils.ts");
     });
@@ -70,7 +71,7 @@ describe("resolve_module_path_typescript", () => {
       const result = resolve_module_path_typescript(
         "./legacy",
         "/project/src/app.ts" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/legacy.js");
     });
@@ -83,7 +84,7 @@ describe("resolve_module_path_typescript", () => {
       const result = resolve_module_path_typescript(
         "./Widget",
         "/project/src/app.ts" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/Widget.jsx");
     });
@@ -96,7 +97,7 @@ describe("resolve_module_path_typescript", () => {
       const result = resolve_module_path_typescript(
         "../../../shared/utils",
         "/project/src/a/b/c/deep.ts" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/shared/utils.ts");
     });
@@ -111,7 +112,7 @@ describe("resolve_module_path_typescript", () => {
       const result = resolve_module_path_typescript(
         "./utils.js",
         "/project/src/app.ts" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/utils.ts");
     });
@@ -124,7 +125,7 @@ describe("resolve_module_path_typescript", () => {
       const result = resolve_module_path_typescript(
         "./Component.js",
         "/project/src/app.ts" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/Component.tsx");
     });
@@ -137,7 +138,7 @@ describe("resolve_module_path_typescript", () => {
       const result = resolve_module_path_typescript(
         "./utils.mjs",
         "/project/src/app.ts" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/utils.ts");
     });
@@ -150,7 +151,7 @@ describe("resolve_module_path_typescript", () => {
       const result = resolve_module_path_typescript(
         "./Component.jsx",
         "/project/src/app.ts" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/Component.tsx");
     });
@@ -164,7 +165,7 @@ describe("resolve_module_path_typescript", () => {
       const result = resolve_module_path_typescript(
         "./utils.js",
         "/project/src/app.ts" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/utils.ts");
     });
@@ -177,7 +178,7 @@ describe("resolve_module_path_typescript", () => {
       const result = resolve_module_path_typescript(
         "./utils.js",
         "/project/src/app.ts" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/utils.js");
     });
@@ -192,7 +193,7 @@ describe("resolve_module_path_typescript", () => {
       const result = resolve_module_path_typescript(
         "./components",
         "/project/src/app.ts" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/components/index.ts");
     });
@@ -205,7 +206,7 @@ describe("resolve_module_path_typescript", () => {
       const result = resolve_module_path_typescript(
         "./components",
         "/project/src/app.ts" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/components/index.tsx");
     });
@@ -218,7 +219,7 @@ describe("resolve_module_path_typescript", () => {
       const result = resolve_module_path_typescript(
         "./lib",
         "/project/src/app.ts" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/lib/index.js");
     });
@@ -232,7 +233,7 @@ describe("resolve_module_path_typescript", () => {
       const result = resolve_module_path_typescript(
         "./components",
         "/project/src/app.ts" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/components/index.ts");
     });
@@ -245,7 +246,7 @@ describe("resolve_module_path_typescript", () => {
       const result = resolve_module_path_typescript(
         "./lib.js",
         "/project/src/app.ts" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/lib/index.ts");
     });
@@ -260,7 +261,7 @@ describe("resolve_module_path_typescript", () => {
       const result = resolve_module_path_typescript(
         "./utils.ts",
         "/project/src/app.ts" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/utils.ts");
     });
@@ -273,7 +274,7 @@ describe("resolve_module_path_typescript", () => {
       const result = resolve_module_path_typescript(
         "./Component.tsx",
         "/project/src/app.ts" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/Component.tsx");
     });
@@ -286,7 +287,7 @@ describe("resolve_module_path_typescript", () => {
       const result = resolve_module_path_typescript(
         "./Widget.jsx",
         "/project/src/app.ts" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/Widget.jsx");
     });
@@ -298,7 +299,7 @@ describe("resolve_module_path_typescript", () => {
       const result = resolve_module_path_typescript(
         "lodash",
         "/project/src/app.ts" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("lodash");
     });
@@ -308,7 +309,7 @@ describe("resolve_module_path_typescript", () => {
       const result = resolve_module_path_typescript(
         "@types/node",
         "/project/src/app.ts" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("@types/node");
     });
@@ -318,7 +319,7 @@ describe("resolve_module_path_typescript", () => {
       const result = resolve_module_path_typescript(
         "lodash/fp",
         "/project/src/app.ts" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("lodash/fp");
     });
@@ -333,7 +334,7 @@ describe("resolve_module_path_typescript", () => {
       const result = resolve_module_path_typescript(
         "./utils",
         "/project/src/app.ts" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/utils.ts");
     });
@@ -346,7 +347,7 @@ describe("resolve_module_path_typescript", () => {
       const result = resolve_module_path_typescript(
         "./utils",
         "src/app.ts" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("src/utils.ts");
     });
@@ -358,7 +359,7 @@ describe("resolve_module_path_typescript", () => {
       const result = resolve_module_path_typescript(
         "./nonexistent",
         "/project/src/app.ts" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/nonexistent.ts");
     });
@@ -368,7 +369,7 @@ describe("resolve_module_path_typescript", () => {
       const result = resolve_module_path_typescript(
         "./nonexistent.js",
         "/project/src/app.ts" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/nonexistent.ts");
     });
@@ -378,7 +379,7 @@ describe("resolve_module_path_typescript", () => {
       const result = resolve_module_path_typescript(
         "./nonexistent.jsx",
         "/project/src/app.ts" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/nonexistent.tsx");
     });
@@ -388,7 +389,7 @@ describe("resolve_module_path_typescript", () => {
       const result = resolve_module_path_typescript(
         "./nonexistent.mjs",
         "/project/src/app.ts" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/nonexistent.ts");
     });
@@ -398,7 +399,7 @@ describe("resolve_module_path_typescript", () => {
       const result = resolve_module_path_typescript(
         "./nonexistent.ts",
         "/project/src/app.ts" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/nonexistent.ts");
     });
@@ -408,7 +409,7 @@ describe("resolve_module_path_typescript", () => {
       const result = resolve_module_path_typescript(
         "./nonexistent.tsx",
         "/project/src/app.ts" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/nonexistent.tsx");
     });
@@ -418,7 +419,7 @@ describe("resolve_module_path_typescript", () => {
       const result = resolve_module_path_typescript(
         "./nonexistent",
         "src/app.ts" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("src/nonexistent.ts");
     });

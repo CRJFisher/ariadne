@@ -15,6 +15,7 @@ import type {
 } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "./definition";
 import type { FileSystemFolder } from "../file_folders";
+import { create_module_resolution_context } from "../import_resolution";
 
 function make_location(file_path: FilePath, start_line: number, len: number): Location {
   return {
@@ -158,7 +159,7 @@ function resolve_named(
     name as SymbolName,
     "named",
     ALL_TS,
-    ROOT_FOLDER
+    create_module_resolution_context(ROOT_FOLDER)
   );
 }
 
@@ -228,7 +229,7 @@ describe("ExportRegistry", () => {
         "ignored" as SymbolName,
         "default",
         ALL_TS,
-        ROOT_FOLDER
+        create_module_resolution_context(ROOT_FOLDER)
       );
       expect(resolved).toBe(fn.symbol_id);
       expect(registry.get_exports(file_id)).toEqual(new Set([fn.symbol_id]));
@@ -261,7 +262,7 @@ describe("ExportRegistry", () => {
         "named_only" as SymbolName,
         "default",
         ALL_TS,
-        ROOT_FOLDER
+        create_module_resolution_context(ROOT_FOLDER)
       );
       expect(resolved).toBeNull();
     });
@@ -276,7 +277,7 @@ describe("ExportRegistry", () => {
       registry.update_file(file_id, create_definition_registry({ [file_id]: [fn] }));
 
       expect(
-        registry.resolve_sole_default_export(file_id, ALL_TS, ROOT_FOLDER)
+        registry.resolve_sole_default_export(file_id, ALL_TS, create_module_resolution_context(ROOT_FOLDER))
       ).toBe(fn.symbol_id);
     });
 
@@ -290,7 +291,7 @@ describe("ExportRegistry", () => {
       );
 
       expect(
-        registry.resolve_sole_default_export(file_id, ALL_TS, ROOT_FOLDER)
+        registry.resolve_sole_default_export(file_id, ALL_TS, create_module_resolution_context(ROOT_FOLDER))
       ).toBeNull();
     });
 
@@ -306,7 +307,7 @@ describe("ExportRegistry", () => {
       );
 
       expect(
-        registry.resolve_sole_default_export(file_id, ALL_TS, ROOT_FOLDER)
+        registry.resolve_sole_default_export(file_id, ALL_TS, create_module_resolution_context(ROOT_FOLDER))
       ).toBeNull();
     });
   });
@@ -610,7 +611,7 @@ describe("ExportRegistry", () => {
         "foo" as SymbolName,
         "named",
         new Map(),
-        ROOT_FOLDER
+        create_module_resolution_context(ROOT_FOLDER)
       );
       expect(resolved).toBeNull();
     });
@@ -866,7 +867,7 @@ describe("ExportRegistry", () => {
           "" as SymbolName,
           "default",
           ALL_TS,
-          ROOT_FOLDER
+          create_module_resolution_context(ROOT_FOLDER)
         )
       ).toBeNull();
     });
@@ -1001,7 +1002,7 @@ describe("ExportRegistry", () => {
     const B = "b.ts" as FilePath;
 
     function all_export_names(registry: ExportRegistry, file: FilePath): string[] {
-      return [...registry.resolve_all_exports(file, ALL_TS, ROOT_FOLDER).keys()].sort();
+      return [...registry.resolve_all_exports(file, ALL_TS, create_module_resolution_context(ROOT_FOLDER)).keys()].sort();
     }
 
     it("returns every directly exported name resolved to its symbol", () => {
@@ -1010,7 +1011,7 @@ describe("ExportRegistry", () => {
       const registry = new ExportRegistry();
       registry.update_file(MAIN, create_definition_registry({ [MAIN]: [foo, bar] }));
 
-      expect(registry.resolve_all_exports(MAIN, ALL_TS, ROOT_FOLDER)).toEqual(
+      expect(registry.resolve_all_exports(MAIN, ALL_TS, create_module_resolution_context(ROOT_FOLDER))).toEqual(
         new Map([
           ["foo", foo.symbol_id],
           ["bar", bar.symbol_id],
@@ -1030,7 +1031,7 @@ describe("ExportRegistry", () => {
         })
       );
 
-      expect(registry.resolve_all_exports(MAIN, ALL_TS, ROOT_FOLDER)).toEqual(
+      expect(registry.resolve_all_exports(MAIN, ALL_TS, create_module_resolution_context(ROOT_FOLDER))).toEqual(
         new Map([
           ["local_fn", own.symbol_id],
           ["foo", foo.symbol_id],
@@ -1070,7 +1071,7 @@ describe("ExportRegistry", () => {
         })
       );
 
-      expect(registry.resolve_all_exports(MAIN, ALL_TS, ROOT_FOLDER)).toEqual(
+      expect(registry.resolve_all_exports(MAIN, ALL_TS, create_module_resolution_context(ROOT_FOLDER))).toEqual(
         new Map([["dup", own.symbol_id]])
       );
     });
@@ -1149,11 +1150,11 @@ describe("ExportRegistry", () => {
       const registry = new ExportRegistry();
       registry.update_file(MAIN, create_definition_registry({ [MAIN]: [fn] }));
 
-      const first = registry.resolve_all_exports(MAIN, ALL_TS, ROOT_FOLDER);
-      expect(registry.resolve_all_exports(MAIN, ALL_TS, ROOT_FOLDER)).toBe(first);
+      const first = registry.resolve_all_exports(MAIN, ALL_TS, create_module_resolution_context(ROOT_FOLDER));
+      expect(registry.resolve_all_exports(MAIN, ALL_TS, create_module_resolution_context(ROOT_FOLDER))).toBe(first);
 
       registry.update_file(MAIN, create_definition_registry({ [MAIN]: [fn] }));
-      expect(registry.resolve_all_exports(MAIN, ALL_TS, ROOT_FOLDER)).not.toBe(first);
+      expect(registry.resolve_all_exports(MAIN, ALL_TS, create_module_resolution_context(ROOT_FOLDER))).not.toBe(first);
     });
 
     it("withholds a name whose own re-export is declared but unresolvable", () => {
@@ -1196,7 +1197,7 @@ describe("ExportRegistry", () => {
       );
 
       expect(
-        registry.resolve_sole_default_export(MAIN, ALL_TS, ROOT_FOLDER)
+        registry.resolve_sole_default_export(MAIN, ALL_TS, create_module_resolution_context(ROOT_FOLDER))
       ).toBeNull();
     });
   });

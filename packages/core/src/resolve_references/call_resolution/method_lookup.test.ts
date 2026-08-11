@@ -6,6 +6,8 @@ import { DefinitionRegistry } from "../registries/definition";
 import { TypeRegistry } from "../registries/type";
 import { ResolutionRegistry } from "../resolution_registry";
 import { ImportGraph } from "../import_resolution/import_graph";
+import type { ModuleResolutionContext } from "../import_resolution";
+import { create_module_resolution_context } from "../import_resolution";
 import { ExportRegistry } from "../registries/export";
 import type { FileSystemFolder } from "../file_folders";
 import { make_export_chain_context } from "../resolution_test_helpers";
@@ -59,7 +61,7 @@ describe("resolve_method_on_type", () => {
   let imports: ImportGraph;
   let exports: ExportRegistry;
   let languages: Map<FilePath, Language>;
-  let root_folder: FileSystemFolder;
+  let resolution: ModuleResolutionContext;
   let context: ReceiverResolutionContext;
 
   beforeEach(() => {
@@ -68,7 +70,7 @@ describe("resolve_method_on_type", () => {
     types = new TypeRegistry();
     resolutions = new ResolutionRegistry();
     imports = new ImportGraph();
-    ({ exports, languages, root_folder } = make_export_chain_context());
+    ({ exports, languages, resolution } = make_export_chain_context());
     context = {
       scopes,
       definitions,
@@ -77,7 +79,7 @@ describe("resolve_method_on_type", () => {
       imports,
       exports,
       languages,
-      root_folder,
+      resolution,
     };
   });
 

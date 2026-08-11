@@ -35,8 +35,12 @@ async function setup_project(
   const project = new Project();
   await project.initialize(temp_dir as FilePath);
 
+  // Manifests belong on disk for the specifier index to read, but only source
+  // files are indexed — the same split the real loader makes.
   for (const [relative_path, content] of Object.entries(files)) {
-    project.update_file(file_paths[relative_path], content);
+    if (relative_path.endsWith(".rs")) {
+      project.update_file(file_paths[relative_path], content);
+    }
   }
 
   return { project, temp_dir, file_paths };
@@ -834,6 +838,82 @@ pub fn run4() -> i32 {
       expect(
         project.resolutions.resolve(app_scope!.id, "hidden_fn" as SymbolName)
       ).toBeNull();
+    });
+
+    it("resolves a cross-crate item through the workspace crate index", async () => {
+      // sqlx: `use sqlx_core::raw_sql::raw_sql;` from sqlx-postgres, where the
+      // crate directory spells its name with a dash.
+      const { project, temp_dir, file_paths } = await setup_project({
+        "sqlx-core/Cargo.toml": "[package]\nname = \"sqlx-core\"\n",
+        "sqlx-core/src/lib.rs": `pub mod raw_sql;
+`,
+        "sqlx-core/src/raw_sql.rs": `pub fn raw_sql(sql: &str) -> usize {
+    sql.len()
+}
+`,
+        "sqlx-postgres/Cargo.toml": "[package]\nname = \"sqlx-postgres\"\n",
+        "sqlx-postgres/src/lib.rs": `pub mod connection;
+`,
+        "sqlx-postgres/src/connection.rs": `use sqlx_core::raw_sql::raw_sql;
+
+pub fn run() -> usize {
+    raw_sql("SELECT 1")
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      expect_rust_call_resolves_to(
+        project,
+        file_paths["sqlx-postgres/src/connection.rs"],
+        "raw_sql",
+        file_paths["sqlx-core/src/raw_sql.rs"]
+      );
+    });
+
+    it("binds a cross-crate glob through the workspace crate index", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "other-crate/Cargo.toml": "[package]\nname = \"other-crate\"\n",
+        "other-crate/src/lib.rs": `pub mod m;
+`,
+        "other-crate/src/m.rs": `pub fn shared_fn() -> i32 {
+    7
+}
+`,
+        "consumer/Cargo.toml": "[package]\nname = \"consumer\"\n",
+        "consumer/src/lib.rs": `use other_crate::m::*;
+
+pub fn run() -> i32 {
+    shared_fn()
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      expect_rust_call_resolves_to(
+        project,
+        file_paths["consumer/src/lib.rs"],
+        "shared_fn",
+        file_paths["other-crate/src/m.rs"]
+      );
+    });
+
+    it("leaves a genuinely external crate opaque", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "src/lib.rs": `use serde_json::to_string;
+
+pub fn run() -> String {
+    to_string("x")
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const call = project.resolutions
+        .get_calls_for_file(file_paths["src/lib.rs"])
+        .find((c) => c.name === ("to_string" as SymbolName));
+      expect(call).toBeDefined();
+      expect(call!.resolutions.length).toEqual(0);
     });
 
     it("resolves a crate-root item imported with use crate::Item", async () => {

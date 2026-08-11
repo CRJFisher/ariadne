@@ -125,7 +125,7 @@ function resolve_via_import_anchor(
         imported_name,
         imp.import_kind,
         context.languages,
-        context.root_folder
+        context.resolution
       );
       if (resolved) matches.add(resolved);
     }

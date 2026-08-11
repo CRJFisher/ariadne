@@ -40,6 +40,8 @@ import type {
   NamespaceDefinition,
   LexicalScope,
 } from "@ariadnejs/types";
+import { create_module_resolution_context } from "../import_resolution";
+import type { ModuleResolutionContext } from "../import_resolution";
 
 const TEST_FILE = "test.ts" as FilePath;
 const FILE_SCOPE_ID = "scope:test.ts:file:0:0" as ScopeId;
@@ -523,7 +525,7 @@ describe("Function Call Resolution", () => {
         imported_symbols: new Map(),
         references: [],
       };
-      const { exports, languages, root_folder } = make_export_chain_context();
+      const { exports, languages, resolution } = make_export_chain_context();
       types.update_file(
         py_file,
         py_index,
@@ -531,7 +533,7 @@ describe("Function Call Resolution", () => {
         resolutions,
         exports,
         languages,
-        root_folder
+        resolution
       );
 
       const call_ref = create_function_call_reference(

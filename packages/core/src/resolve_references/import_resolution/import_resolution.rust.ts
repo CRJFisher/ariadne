@@ -9,19 +9,22 @@ import * as path from "path";
 import type { FilePath } from "@ariadnejs/types";
 import type { FileSystemFolder } from "../file_folders";
 import { has_file_in_tree } from "../file_folders";
+import type { ModuleResolutionContext } from "./import_resolution";
 
 /**
  * Resolve a Rust `use` module path to an absolute file path. The leading segment
  * selects the base: `crate` is the crate root, `super` the parent module, `self`
- * the current module, and any other segment names a local module relative to the
- * importing file. When a bare path resolves to no local file it is an external
- * crate, whose path is returned opaquely for callers to key on.
+ * the current module, and any other segment names either a local module of the
+ * importing file or, failing that, another crate in the workspace. A leading
+ * segment that names neither is a genuinely external crate, returned opaquely
+ * so no edge is fabricated for it.
  */
 export function resolve_module_path_rust(
   import_path: string,
   importing_file: FilePath,
-  root_folder: FileSystemFolder
+  resolution: ModuleResolutionContext
 ): FilePath {
+  const { root_folder } = resolution;
   const parts = import_path.split("::");
 
   if (parts[0] === "crate") {
@@ -37,8 +40,44 @@ export function resolve_module_path_rust(
       return resolved;
     }
 
+    // Only once the local probe has missed: the leading segment may name
+    // another crate in the workspace.
+    const from_crate = resolve_from_named_crate(parts, resolution);
+    if (from_crate) {
+      return from_crate;
+    }
+
     return import_path as FilePath;
   }
+}
+
+/**
+ * Resolve `other_crate::m::item` against the workspace's crate roots. Crate
+ * names normalise `-` to `_`, which is how a `sqlx-core` directory is spelled
+ * in a `use sqlx_core::…` path.
+ */
+function resolve_from_named_crate(
+  parts: string[],
+  resolution: ModuleResolutionContext
+): FilePath | null {
+  const crate_root = resolution.specifiers.crate_roots.get(
+    parts[0].replace(/-/g, "_")
+  );
+  if (!crate_root) {
+    return null;
+  }
+
+  const remaining = parts.slice(1);
+  if (remaining.length === 0) {
+    return crate_root_file(crate_root, resolution.root_folder);
+  }
+
+  const resolved = resolve_rust_module_path(
+    crate_root,
+    remaining,
+    resolution.root_folder
+  );
+  return has_file_in_tree(resolved, resolution.root_folder) ? resolved : null;
 }
 
 /**

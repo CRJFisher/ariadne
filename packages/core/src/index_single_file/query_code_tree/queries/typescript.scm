@@ -530,10 +530,14 @@
   pattern: (identifier) @definition.parameter.optional
 )
 
-; Rest parameters (...args)
+; Rest parameters (...args). Anchored to the parameter list: an unanchored
+; rest_pattern also matches a destructuring rest (`const { ...r } = o`), which
+; binds a variable, not a parameter of the enclosing callable.
 ; Note: rest_pattern does NOT have a field name for the identifier child
-(rest_pattern
-  (identifier) @definition.parameter
+(required_parameter
+  pattern: (rest_pattern
+    (identifier) @definition.parameter
+  )
 )
 
 ; Catch clause parameter

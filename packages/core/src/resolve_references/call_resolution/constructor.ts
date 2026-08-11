@@ -21,13 +21,13 @@ import type { DefinitionRegistry } from "../registries/definition";
 import type { ExportRegistry } from "../registries/export";
 import type { ScopeRegistry } from "../registries/scope";
 import type { ResolutionRegistry } from "../resolution_registry";
-import type { FileSystemFolder } from "../file_folders";
 import { resolve_namespace_export } from "../export_chain_lookup";
 import {
   resolve_self_type_rust,
   resolve_type_via_module_path_rust,
   find_associated_constructor_rust,
 } from "./constructor.rust";
+import type { ModuleResolutionContext } from "../import_resolution";
 
 /**
  * Resolve a constructor call to its constructor definition, falling back to the
@@ -40,7 +40,7 @@ export function resolve_constructor_call(
   resolutions: ResolutionRegistry,
   exports: ExportRegistry,
   languages: ReadonlyMap<FilePath, Language>,
-  root_folder: FileSystemFolder,
+  resolution: ModuleResolutionContext,
   import_source_resolver?: (import_id: SymbolId) => FilePath | undefined
 ): Result<SymbolId[], ResolutionFailure> {
   let class_symbol: SymbolId | null = null;
@@ -53,7 +53,7 @@ export function resolve_constructor_call(
       if (namespace_def?.kind === "import" && namespace_def.import_kind === "namespace") {
         const source_file = import_source_resolver(namespace_id);
         if (source_file) {
-          class_symbol = resolve_namespace_export(source_file, call_ref.property_chain[1], exports, languages, root_folder);
+          class_symbol = resolve_namespace_export(source_file, call_ref.property_chain[1], exports, languages, resolution);
         }
       }
     }

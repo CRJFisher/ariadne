@@ -2,34 +2,115 @@ import * as path from "path";
 import type { FilePath } from "@ariadnejs/types";
 import type { FileSystemFolder } from "../file_folders";
 import { has_file_in_tree } from "../file_folders";
+import type { ModuleResolutionContext } from "./import_resolution";
 
 /**
  * Resolve a TypeScript import path to a file path.
  *
  * Relative imports (`./`, `../`) are probed against the file tree for `.ts`,
- * `.tsx`, `.js`, `.jsx` extensions and `index.*` files. Bare and package
- * imports are opaque here — they name external modules, not project files —
- * so they are returned unchanged.
+ * `.tsx`, `.js`, `.jsx` extensions and `index.*` files. A bare specifier is
+ * resolved through the project's specifier index — a tsconfig `paths` alias or
+ * a workspace package name — and stays opaque when the index does not name it,
+ * because then it is a genuinely external module.
  *
  * @param import_path - Import path from import statement
- * @param importing_file - Path to file containing the import (absolute or relative to root_folder)
- * @param root_folder - Root of the file system tree
- * @returns Path to the imported file (relative to root_folder if importing_file is relative, absolute otherwise)
+ * @param importing_file - Path to file containing the import (absolute or relative to the root folder)
+ * @param resolution - The project's file tree and specifier index
+ * @returns Path to the imported file (relative to the root folder if importing_file is relative, absolute otherwise)
  */
 export function resolve_module_path_typescript(
   import_path: string,
   importing_file: FilePath,
-  root_folder: FileSystemFolder
+  resolution: ModuleResolutionContext
 ): FilePath {
   if (import_path.startsWith("./") || import_path.startsWith("../")) {
     return resolve_relative_typescript(
       import_path,
       importing_file,
-      root_folder
+      resolution.root_folder
     );
   }
 
-  return import_path as FilePath;
+  return resolve_bare_typescript(import_path, resolution);
+}
+
+/**
+ * Resolve a bare specifier through the specifier index, longest prefix first
+ * so `@scope/pkg/sub` prefers a `@scope/pkg/sub` entry over `@scope/pkg`. The
+ * alias target is probed the same way a relative path is, so a directory
+ * target lands on its `index.*`.
+ */
+function resolve_bare_typescript(
+  import_path: string,
+  resolution: ModuleResolutionContext
+): FilePath {
+  const { package_roots } = resolution.specifiers;
+
+  let matched_key = "";
+  let target: FilePath | null = null;
+  for (const [key, root] of package_roots) {
+    const matches = import_path === key || import_path.startsWith(`${key}/`);
+    if (matches && key.length > matched_key.length) {
+      matched_key = key;
+      target = root;
+    }
+  }
+  if (target === null) {
+    return import_path as FilePath;
+  }
+
+  const remainder = import_path.slice(matched_key.length).replace(/^\//, "");
+  const absolute_target = remainder ? path.join(target, remainder) : target;
+
+  const found = probe_candidates(absolute_target, resolution.root_folder);
+  return (found ?? import_path) as FilePath;
+}
+
+/**
+ * Probe the file tree for the source a specifier target names: the path
+ * itself, each source extension, and the directory's `index.*`. TypeScript's
+ * ESM convention writes `.js` on the specifier while the source on disk is
+ * `.ts`, so an extensioned specifier probes the TypeScript source first.
+ * Returns the absolute path of the first candidate present, else null.
+ */
+function probe_candidates(
+  absolute_base: string,
+  root_folder: FileSystemFolder
+): string | null {
+  const ext = path.extname(absolute_base);
+  const base_path_without_ext =
+    ext === ".js" || ext === ".mjs" || ext === ".jsx"
+      ? absolute_base.slice(0, -ext.length)
+      : absolute_base;
+
+  const candidates = [
+    ...(ext === ".js" || ext === ".mjs"
+      ? [`${base_path_without_ext}.ts`, `${base_path_without_ext}.tsx`]
+      : []),
+    ...(ext === ".jsx" ? [`${base_path_without_ext}.tsx`] : []),
+    absolute_base,
+    `${absolute_base}.ts`,
+    `${absolute_base}.tsx`,
+    `${absolute_base}.js`,
+    `${absolute_base}.jsx`,
+    path.join(absolute_base, "index.ts"),
+    path.join(absolute_base, "index.tsx"),
+    path.join(absolute_base, "index.js"),
+    ...(ext === ".js" || ext === ".mjs"
+      ? [
+          path.join(base_path_without_ext, "index.ts"),
+          path.join(base_path_without_ext, "index.tsx"),
+        ]
+      : []),
+  ];
+
+  for (const candidate of candidates) {
+    const relative_candidate = path.relative(root_folder.path, candidate);
+    if (has_file_in_tree(relative_candidate as FilePath, root_folder)) {
+      return candidate;
+    }
+  }
+  return null;
 }
 
 /**
@@ -64,35 +145,7 @@ function resolve_relative_typescript(
       ? resolved_absolute.slice(0, -ext.length)
       : resolved_absolute;
 
-  const candidates = [
-    ...(ext === ".js" || ext === ".mjs"
-      ? [`${base_path_without_ext}.ts`, `${base_path_without_ext}.tsx`]
-      : []),
-    ...(ext === ".jsx" ? [`${base_path_without_ext}.tsx`] : []),
-    resolved_absolute,
-    `${resolved_absolute}.ts`,
-    `${resolved_absolute}.tsx`,
-    `${resolved_absolute}.js`,
-    `${resolved_absolute}.jsx`,
-    path.join(resolved_absolute, "index.ts"),
-    path.join(resolved_absolute, "index.tsx"),
-    path.join(resolved_absolute, "index.js"),
-    ...(ext === ".js" || ext === ".mjs"
-      ? [
-          path.join(base_path_without_ext, "index.ts"),
-          path.join(base_path_without_ext, "index.tsx"),
-        ]
-      : []),
-  ];
-
-  let found_absolute: string | null = null;
-  for (const candidate of candidates) {
-    const relative_candidate = path.relative(root_folder.path, candidate);
-    if (has_file_in_tree(relative_candidate as FilePath, root_folder)) {
-      found_absolute = candidate;
-      break;
-    }
-  }
+  let found_absolute = probe_candidates(resolved_absolute, root_folder);
 
   // No file matched: infer an extension so downstream stages still get a stable
   // target, preferring the TypeScript source for ESM `.js`/`.jsx` specifiers.

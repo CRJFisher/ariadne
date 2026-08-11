@@ -22,6 +22,7 @@ import type {
   AnyDefinition,
   ClassDefinition,
 } from "@ariadnejs/types";
+import { create_module_resolution_context } from "../import_resolution";
 
 // Helper to create a location object
 function make_location(
@@ -159,7 +160,7 @@ function make_mock_registries() {
 const {
   exports: empty_exports,
   languages: empty_languages,
-  root_folder: empty_root_folder,
+  resolution: empty_resolution,
 } = make_export_chain_context();
 
 describe("TypeRegistry", () => {
@@ -196,7 +197,7 @@ describe("TypeRegistry", () => {
       const { definitions, resolutions } = make_mock_registries();
       definitions.update_file(file1, [class_def]);
 
-      registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_root_folder);
+      registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_resolution);
 
       const retrieved = registry.get_type_members(class_id);
       expect(retrieved?.methods.get("foo" as SymbolName)).toEqual(foo_id);
@@ -238,7 +239,7 @@ describe("TypeRegistry", () => {
       const { definitions, resolutions } = make_mock_registries();
       definitions.update_file(file1, [iface_def]);
 
-      registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_root_folder);
+      registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_resolution);
 
       const retrieved = registry.get_type_members(iface_id);
       expect(retrieved?.methods.get("greet" as SymbolName)).toEqual(greet_id);
@@ -289,7 +290,7 @@ describe("TypeRegistry", () => {
       // Populate definitions registry so get_type_members can look up the class
       definitions.update_file(file1, [class_def]);
 
-      registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_root_folder);
+      registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_resolution);
 
       const members = definitions.get_member_index().get(class_id);
       expect(members?.get("constructor" as SymbolName)).toEqual(constructor_id);
@@ -311,7 +312,7 @@ describe("TypeRegistry", () => {
       // Populate definitions registry so get_type_members can look up the class
       definitions.update_file(file1, [class_def]);
 
-      registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_root_folder);
+      registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_resolution);
 
       const members = definitions.get_member_index().get(class_id);
       expect(members?.get("constructor" as SymbolName)).toBeUndefined();
@@ -369,7 +370,7 @@ describe("TypeRegistry", () => {
       // Populate definitions registry so get_type_members can look up the class
       definitions.update_file(file1, [class_def]);
 
-      registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_root_folder);
+      registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_resolution);
 
       const members = definitions.get_member_index().get(class_id);
       expect(members?.get("__init__" as SymbolName)).toEqual(init_id);
@@ -418,7 +419,7 @@ describe("TypeRegistry", () => {
           new Map([["User" as SymbolName, user_class_id]])
         );
 
-        type_registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_root_folder);
+        type_registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_resolution);
 
         // Test get_symbol_type
         const result = type_registry.get_symbol_type(user_var_id);
@@ -513,7 +514,7 @@ describe("TypeRegistry", () => {
           ])
         );
 
-        type_registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_root_folder);
+        type_registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_resolution);
 
         const result = type_registry.walk_inheritance_chain(dog_id);
         expect(result).toEqual([dog_id, mammal_id, animal_id]);
@@ -546,7 +547,7 @@ describe("TypeRegistry", () => {
           classes: new Map([[animal_id, animal_def]]),
         });
 
-        type_registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_root_folder);
+        type_registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_resolution);
 
         const result = type_registry.walk_inheritance_chain(animal_id);
         expect(result).toEqual([animal_id]);
@@ -594,7 +595,7 @@ describe("TypeRegistry", () => {
           classes: new Map([[class_id, class_def]]),
         });
 
-        type_registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_root_folder);
+        type_registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_resolution);
 
         const result = type_registry.get_type_member(
           class_id,
@@ -668,7 +669,7 @@ describe("TypeRegistry", () => {
           new Map([["Animal" as SymbolName, animal_id]])
         );
 
-        type_registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_root_folder);
+        type_registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_resolution);
 
         // Dog should find speak() from Animal
         const result = type_registry.get_type_member(
@@ -694,7 +695,7 @@ describe("TypeRegistry", () => {
           classes: new Map([[class_id, class_def]]),
         });
 
-        type_registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_root_folder);
+        type_registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_resolution);
 
         const result = type_registry.get_type_member(
           class_id,
@@ -779,7 +780,7 @@ describe("TypeRegistry", () => {
           new Map([["Animal" as SymbolName, animal_id]])
         );
 
-        type_registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_root_folder);
+        type_registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_resolution);
 
         // Should return Dog's speak, not Animal's
         const result = type_registry.get_type_member(
@@ -889,7 +890,7 @@ describe("TypeRegistry", () => {
         ])
       );
 
-      registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_root_folder);
+      registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_resolution);
 
       expect(registry.get_symbol_type(user_id)).toBe(dog_id);
       expect(registry.walk_inheritance_chain(dog_id)).toEqual([dog_id, animal_id]);
@@ -919,7 +920,7 @@ describe("TypeRegistry", () => {
       const index = make_test_index(file1, {
         classes: new Map([[class_id, class_def]]),
       });
-      registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_root_folder);
+      registry.update_file(file1, index, definitions, resolutions, empty_exports, empty_languages, empty_resolution);
 
       registry.clear();
 

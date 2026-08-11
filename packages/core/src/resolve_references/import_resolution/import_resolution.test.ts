@@ -9,6 +9,7 @@ import {
   resolve_submodule_import_path,
 } from "./import_resolution";
 import type { FileSystemFolder } from "../file_folders";
+import { create_module_resolution_context } from "../import_resolution";
 
 /**
  * Create a mock FileSystemFolder tree from a list of file paths.
@@ -69,7 +70,7 @@ describe("resolve_module_path dispatcher", () => {
       "./utils",
       "/project/src/app.ts" as FilePath,
       "typescript",
-      tree
+      create_module_resolution_context(tree)
     );
     expect(result).toBe("/project/src/utils.ts");
   });
@@ -80,7 +81,7 @@ describe("resolve_module_path dispatcher", () => {
       "./utils",
       "/project/src/app.js" as FilePath,
       "javascript",
-      tree
+      create_module_resolution_context(tree)
     );
     expect(result).toBe("/project/src/utils.js");
   });
@@ -94,7 +95,7 @@ describe("resolve_module_path dispatcher", () => {
       "utils",
       "/project/pkg/main.py" as FilePath,
       "python",
-      tree
+      create_module_resolution_context(tree)
     );
     expect(result).toBe("/project/pkg/utils.py");
   });
@@ -108,7 +109,7 @@ describe("resolve_module_path dispatcher", () => {
       "crate::utils",
       "/project/src/lib.rs" as FilePath,
       "rust",
-      tree
+      create_module_resolution_context(tree)
     );
     expect(result).toBe("/project/src/utils.rs");
   });
@@ -120,7 +121,7 @@ describe("resolve_module_path dispatcher", () => {
         "./utils",
         "/project/src/app.rb" as FilePath,
         "ruby" as "typescript",
-        tree
+        create_module_resolution_context(tree)
       )
     ).toThrow("Unsupported language");
   });
@@ -136,7 +137,7 @@ describe("resolve_submodule_import_path dispatcher", () => {
       "/project/pkg/__init__.py" as FilePath,
       "pipeline",
       "python",
-      tree
+      create_module_resolution_context(tree)
     );
     expect(result).toBe("/project/pkg/pipeline.py");
   });
@@ -150,7 +151,7 @@ describe("resolve_submodule_import_path dispatcher", () => {
       "/project/pkg/__init__.py" as FilePath,
       "nested",
       "python",
-      tree
+      create_module_resolution_context(tree)
     );
     expect(result).toBe("/project/pkg/nested/__init__.py");
   });
@@ -161,7 +162,7 @@ describe("resolve_submodule_import_path dispatcher", () => {
       "/project/pkg/__init__.py" as FilePath,
       "some_export",
       "python",
-      tree
+      create_module_resolution_context(tree)
     );
     expect(result).toBeUndefined();
   });
@@ -175,7 +176,7 @@ describe("resolve_submodule_import_path dispatcher", () => {
       "/project/src/index.ts" as FilePath,
       "utils",
       "typescript",
-      tree
+      create_module_resolution_context(tree)
     );
     expect(result).toBeUndefined();
   });

@@ -29,13 +29,13 @@ import type { ResolutionRegistry } from "../resolution_registry";
 import type { TypeRegistry } from "../registries/type";
 import type { ExportRegistry } from "../registries/export";
 import type { ImportGraph } from "../import_resolution/import_graph";
-import type { FileSystemFolder } from "../file_folders";
 import {
   extract_receiver,
   resolve_receiver_type,
   type ReceiverResolutionContext,
 } from "./receiver_resolution";
 import { resolve_method_on_type } from "./method_lookup";
+import type { ModuleResolutionContext } from "../import_resolution";
 
 /**
  * Resolve a method call to zero, one, or more symbols
@@ -59,7 +59,7 @@ export function resolve_method_call(
   imports: ImportGraph,
   exports: ExportRegistry,
   languages: ReadonlyMap<FilePath, Language>,
-  root_folder: FileSystemFolder
+  resolution: ModuleResolutionContext
 ): Result<SymbolId[], ResolutionFailure> {
   const context: ReceiverResolutionContext = {
     scopes,
@@ -69,7 +69,7 @@ export function resolve_method_call(
     imports,
     exports,
     languages,
-    root_folder,
+    resolution,
   };
 
   const receiver = extract_receiver(call_ref);

@@ -6,6 +6,7 @@ import { describe, it, expect } from "vitest";
 import type { FilePath } from "@ariadnejs/types";
 import { resolve_module_path_rust } from "./import_resolution.rust";
 import { create_file_tree } from "./import_resolution.test";
+import { create_module_resolution_context } from "../import_resolution";
 
 describe("resolve_module_path_rust", () => {
   describe("crate:: prefix resolution", () => {
@@ -17,7 +18,7 @@ describe("resolve_module_path_rust", () => {
       const result = resolve_module_path_rust(
         "crate::utils",
         "/project/src/handlers.rs" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/utils.rs");
     });
@@ -30,7 +31,7 @@ describe("resolve_module_path_rust", () => {
       const result = resolve_module_path_rust(
         "crate::utils",
         "/project/src/handlers.rs" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/utils/mod.rs");
     });
@@ -44,7 +45,7 @@ describe("resolve_module_path_rust", () => {
       const result = resolve_module_path_rust(
         "crate::utils",
         "/project/src/handlers.rs" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/utils.rs");
     });
@@ -58,7 +59,7 @@ describe("resolve_module_path_rust", () => {
       const result = resolve_module_path_rust(
         "crate::module::submod",
         "/project/src/lib.rs" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/module/submod.rs");
     });
@@ -72,7 +73,7 @@ describe("resolve_module_path_rust", () => {
       const result = resolve_module_path_rust(
         "crate::module::submod",
         "/project/src/lib.rs" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/module/submod.rs");
     });
@@ -87,7 +88,7 @@ describe("resolve_module_path_rust", () => {
       const result = resolve_module_path_rust(
         "crate::a::b::c",
         "/project/src/lib.rs" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/a/b/c.rs");
     });
@@ -102,7 +103,7 @@ describe("resolve_module_path_rust", () => {
       const result = resolve_module_path_rust(
         "crate::a::b::c",
         "/project/src/lib.rs" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/a/b/c.rs");
     });
@@ -120,7 +121,7 @@ describe("resolve_module_path_rust", () => {
       const result = resolve_module_path_rust(
         "crate::a::b",
         "/project/src/lib.rs" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/a/b.rs");
     });
@@ -135,7 +136,7 @@ describe("resolve_module_path_rust", () => {
       const result = resolve_module_path_rust(
         "crate::a::b::c",
         "/project/src/lib.rs" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/a/b/c.rs");
     });
@@ -151,7 +152,7 @@ describe("resolve_module_path_rust", () => {
       const result = resolve_module_path_rust(
         "super::bar",
         "/project/src/module/foo.rs" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/module/bar.rs");
     });
@@ -165,7 +166,7 @@ describe("resolve_module_path_rust", () => {
       const result = resolve_module_path_rust(
         "super::sibling",
         "/project/src/module/mod.rs" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/sibling.rs");
     });
@@ -180,7 +181,7 @@ describe("resolve_module_path_rust", () => {
       const result = resolve_module_path_rust(
         "super::bar::baz",
         "/project/src/module/foo.rs" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/module/bar/baz.rs");
     });
@@ -194,7 +195,7 @@ describe("resolve_module_path_rust", () => {
       const result = resolve_module_path_rust(
         "super::super::target",
         "/project/src/a/b/foo.rs" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/a/target.rs");
     });
@@ -208,7 +209,7 @@ describe("resolve_module_path_rust", () => {
       const result = resolve_module_path_rust(
         "super::super::target",
         "/project/src/a/b/mod.rs" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/target.rs");
     });
@@ -222,7 +223,7 @@ describe("resolve_module_path_rust", () => {
       const result = resolve_module_path_rust(
         "super::super::super::target",
         "/project/src/a/b/foo.rs" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/target.rs");
     });
@@ -237,7 +238,7 @@ describe("resolve_module_path_rust", () => {
       const result = resolve_module_path_rust(
         "super::super::util::helper",
         "/project/src/a/foo.rs" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/util/helper.rs");
     });
@@ -253,7 +254,7 @@ describe("resolve_module_path_rust", () => {
       const result = resolve_module_path_rust(
         "self::submod",
         "/project/src/module/mod.rs" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/module/submod.rs");
     });
@@ -267,7 +268,7 @@ describe("resolve_module_path_rust", () => {
       const result = resolve_module_path_rust(
         "self::bar",
         "/project/src/module/foo.rs" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/module/bar.rs");
     });
@@ -282,7 +283,7 @@ describe("resolve_module_path_rust", () => {
       const result = resolve_module_path_rust(
         "config",
         "/project/src/main.rs" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/config.rs");
     });
@@ -295,7 +296,7 @@ describe("resolve_module_path_rust", () => {
       const result = resolve_module_path_rust(
         "config",
         "/project/src/main.rs" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/config/mod.rs");
     });
@@ -309,7 +310,7 @@ describe("resolve_module_path_rust", () => {
       const result = resolve_module_path_rust(
         "handlers::auth",
         "/project/src/main.rs" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/handlers/auth.rs");
     });
@@ -319,7 +320,7 @@ describe("resolve_module_path_rust", () => {
       const result = resolve_module_path_rust(
         "serde::Deserialize",
         "/project/src/main.rs" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("serde::Deserialize");
     });
@@ -335,7 +336,7 @@ describe("resolve_module_path_rust", () => {
       const result = resolve_module_path_rust(
         "crate::utils",
         "/project/src/deep/nested/file.rs" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/utils.rs");
     });
@@ -349,7 +350,7 @@ describe("resolve_module_path_rust", () => {
       const result = resolve_module_path_rust(
         "crate::utils",
         "/project/src/deep/nested/file.rs" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/utils.rs");
     });
@@ -364,7 +365,7 @@ describe("resolve_module_path_rust", () => {
       const result = resolve_module_path_rust(
         "crate::utils",
         "/project/src/module/file.rs" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/utils.rs");
     });
@@ -378,7 +379,7 @@ describe("resolve_module_path_rust", () => {
       const result = resolve_module_path_rust(
         "crate::utils",
         "/project/deep/file.rs" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/utils.rs");
     });
@@ -391,7 +392,7 @@ describe("resolve_module_path_rust", () => {
       const result = resolve_module_path_rust(
         "crate::utils",
         "/project/orphan/file.rs" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/orphan/utils.rs");
     });
@@ -407,7 +408,7 @@ describe("resolve_module_path_rust", () => {
       const result = resolve_module_path_rust(
         "self::child",
         "/project/src/module/mod.rs" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/module/child.rs");
     });
@@ -421,7 +422,7 @@ describe("resolve_module_path_rust", () => {
       const result = resolve_module_path_rust(
         "super::b",
         "/project/src/a/mod.rs" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/b.rs");
     });
@@ -433,7 +434,7 @@ describe("resolve_module_path_rust", () => {
       const result = resolve_module_path_rust(
         "crate::nonexistent",
         "/project/src/lib.rs" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/nonexistent.rs");
     });
@@ -443,7 +444,7 @@ describe("resolve_module_path_rust", () => {
       const result = resolve_module_path_rust(
         "crate::a::b::c",
         "/project/src/lib.rs" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/a/b/c.rs");
     });
@@ -463,7 +464,7 @@ describe("resolve_module_path_rust", () => {
 
     it("resolves a bare module from the crate root", () => {
       expect(
-        resolve_module_path_rust("config", "/project/src/lib.rs" as FilePath, tree)
+        resolve_module_path_rust("config", "/project/src/lib.rs" as FilePath, create_module_resolution_context(tree))
       ).toBe("/project/src/config.rs");
     });
 
@@ -472,7 +473,7 @@ describe("resolve_module_path_rust", () => {
         resolve_module_path_rust(
           "crate::deep::inner",
           "/project/src/lib.rs" as FilePath,
-          tree
+          create_module_resolution_context(tree)
         )
       ).toBe("/project/src/deep/inner.rs");
     });
@@ -482,14 +483,14 @@ describe("resolve_module_path_rust", () => {
         resolve_module_path_rust(
           "super::config",
           "/project/src/deep/inner.rs" as FilePath,
-          tree
+          create_module_resolution_context(tree)
         )
       ).toBe("/project/src/deep/config.rs");
     });
 
     it("resolves a bare child of a 2018-style module file into its own directory", () => {
       expect(
-        resolve_module_path_rust("inner", "/project/src/deep.rs" as FilePath, tree)
+        resolve_module_path_rust("inner", "/project/src/deep.rs" as FilePath, create_module_resolution_context(tree))
       ).toBe("/project/src/deep/inner.rs");
     });
 
@@ -498,7 +499,7 @@ describe("resolve_module_path_rust", () => {
         resolve_module_path_rust(
           "self::inner",
           "/project/src/deep.rs" as FilePath,
-          tree
+          create_module_resolution_context(tree)
         )
       ).toBe("/project/src/deep/inner.rs");
     });
@@ -507,7 +508,7 @@ describe("resolve_module_path_rust", () => {
       const result = resolve_module_path_rust(
         "crate",
         "/project/src/other.rs" as FilePath,
-        tree
+        create_module_resolution_context(tree)
       );
       expect(result).toBe("/project/src/lib.rs");
       expect(result.endsWith("/.rs")).toBe(false);
@@ -515,7 +516,7 @@ describe("resolve_module_path_rust", () => {
 
     it("resolves a self-anchored item to the importing module's own file", () => {
       expect(
-        resolve_module_path_rust("self", "/project/src/deep.rs" as FilePath, tree)
+        resolve_module_path_rust("self", "/project/src/deep.rs" as FilePath, create_module_resolution_context(tree))
       ).toBe("/project/src/deep.rs");
     });
 
@@ -524,7 +525,7 @@ describe("resolve_module_path_rust", () => {
         resolve_module_path_rust(
           "super",
           "/project/src/deep/inner.rs" as FilePath,
-          tree
+          create_module_resolution_context(tree)
         )
       ).toBe("/project/src/deep.rs");
     });
@@ -539,7 +540,7 @@ describe("resolve_module_path_rust", () => {
         resolve_module_path_rust(
           "super",
           "/project/src/deep/inner.rs" as FilePath,
-          mod_tree
+          create_module_resolution_context(mod_tree)
         )
       ).toBe("/project/src/deep/mod.rs");
     });
@@ -554,7 +555,7 @@ describe("resolve_module_path_rust", () => {
         resolve_module_path_rust(
           "self::sibling",
           "/project/src/deep.rs" as FilePath,
-          flat_tree
+          create_module_resolution_context(flat_tree)
         )
       ).toBe("/project/src/sibling.rs");
     });
@@ -564,7 +565,7 @@ describe("resolve_module_path_rust", () => {
         resolve_module_path_rust(
           "serde::de",
           "/project/src/deep.rs" as FilePath,
-          tree
+          create_module_resolution_context(tree)
         )
       ).toBe("serde::de");
     });

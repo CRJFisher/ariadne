@@ -8,13 +8,13 @@ import {
 } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "./definition";
 import { resolve_module_path } from "../import_resolution";
-import type { FileSystemFolder } from "../file_folders";
 import {
   is_python_file,
   should_replace_python_variable,
   is_python_redefinition,
 } from "./export.python";
 import { resolve_arrow_function_export } from "./export.typescript";
+import type { ModuleResolutionContext } from "../import_resolution";
 
 /**
  * Everything needed to follow a re-export chain to its ultimate source symbol.
@@ -289,7 +289,7 @@ export class ExportRegistry {
   resolve_sole_default_export(
     source_file: FilePath,
     languages: ReadonlyMap<FilePath, Language>,
-    root_folder: FileSystemFolder
+    resolution: ModuleResolutionContext
   ): SymbolId | null {
     // A file forwarding a whole module surface is not a sole-default module.
     if (
@@ -303,7 +303,7 @@ export class ExportRegistry {
       "" as SymbolName,
       "default",
       languages,
-      root_folder
+      resolution
     );
   }
 
@@ -339,7 +339,7 @@ export class ExportRegistry {
     export_name: SymbolName,
     import_kind: "named" | "default" | "namespace",
     languages: ReadonlyMap<FilePath, Language>,
-    root_folder: FileSystemFolder,
+    resolution: ModuleResolutionContext,
     visited: Set<string> = new Set(),
     memo: Map<string, SymbolId | null> = new Map(),
     cycle_cut: { hit: boolean } = { hit: false }
@@ -367,7 +367,7 @@ export class ExportRegistry {
       export_name,
       import_kind,
       languages,
-      root_folder,
+      resolution,
       visited,
       memo,
       subtree_cut
@@ -388,7 +388,7 @@ export class ExportRegistry {
     export_name: SymbolName,
     import_kind: "named" | "default" | "namespace",
     languages: ReadonlyMap<FilePath, Language>,
-    root_folder: FileSystemFolder,
+    resolution: ModuleResolutionContext,
     visited: Set<string>,
     memo: Map<string, SymbolId | null>,
     cycle_cut: { hit: boolean }
@@ -409,7 +409,7 @@ export class ExportRegistry {
         export_name,
         import_kind,
         languages,
-        root_folder,
+        resolution,
         visited,
         memo,
         cycle_cut
@@ -443,7 +443,7 @@ export class ExportRegistry {
         imp_def.import_path,
         source_file,
         language,
-        root_folder
+        resolution
       );
 
       const original_name = (imp_def.original_name ||
@@ -454,7 +454,7 @@ export class ExportRegistry {
         original_name,
         imp_def.import_kind,
         languages,
-        root_folder,
+        resolution,
         visited,
         memo,
         cycle_cut
@@ -480,7 +480,7 @@ export class ExportRegistry {
     export_name: SymbolName,
     import_kind: "named" | "namespace",
     languages: ReadonlyMap<FilePath, Language>,
-    root_folder: FileSystemFolder,
+    resolution: ModuleResolutionContext,
     visited: Set<string>,
     memo: Map<string, SymbolId | null>,
     cycle_cut: { hit: boolean }
@@ -500,14 +500,14 @@ export class ExportRegistry {
         edge.import_path,
         source_file,
         language,
-        root_folder
+        resolution
       );
       const resolved = this.resolve_export_chain(
         target_file,
         export_name,
         import_kind,
         languages,
-        root_folder,
+        resolution,
         new Set(visited),
         memo,
         cycle_cut
@@ -529,12 +529,12 @@ export class ExportRegistry {
   resolve_all_exports(
     source_file: FilePath,
     languages: ReadonlyMap<FilePath, Language>,
-    root_folder: FileSystemFolder
+    resolution: ModuleResolutionContext
   ): ReadonlyMap<SymbolName, SymbolId> {
     return this.collect_all_exports(
       source_file,
       languages,
-      root_folder,
+      resolution,
       new Set(),
       { hit: false }
     );
@@ -546,7 +546,7 @@ export class ExportRegistry {
   private collect_all_exports(
     file: FilePath,
     languages: ReadonlyMap<FilePath, Language>,
-    root_folder: FileSystemFolder,
+    resolution: ModuleResolutionContext,
     in_progress: Set<FilePath>,
     cycle_cut: { hit: boolean }
   ): ReadonlyMap<SymbolName, SymbolId> {
@@ -574,7 +574,7 @@ export class ExportRegistry {
         export_name,
         "named",
         languages,
-        root_folder
+        resolution
       );
       if (resolved) {
         result.set(export_name, resolved);
@@ -594,12 +594,12 @@ export class ExportRegistry {
           edge.import_path,
           file,
           language,
-          root_folder
+          resolution
         );
         const surface = this.collect_all_exports(
           target_file,
           languages,
-          root_folder,
+          resolution,
           in_progress,
           subtree_cut
         );

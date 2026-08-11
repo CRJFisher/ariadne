@@ -5,11 +5,11 @@ import type {
   Language,
   SymbolId,
 } from "@ariadnejs/types";
-import type { FileSystemFolder } from "../file_folders";
 import {
   resolve_module_path,
   resolve_submodule_import_path,
 } from "./import_resolution";
+import type { ModuleResolutionContext } from "./import_resolution";
 
 /**
  * Bidirectional import dependency graph.
@@ -56,13 +56,13 @@ export class ImportGraph {
    * @param file_path - The file being updated
    * @param imports - ImportDefinitions from the file
    * @param language - Programming language of the file
-   * @param root_folder - Root folder for module resolution
+   * @param resolution - Root folder for module resolution
    */
   update_file(
     file_path: FilePath,
     imports: ImportDefinition[],
     language: Language,
-    root_folder: FileSystemFolder
+    resolution: ModuleResolutionContext
   ): void {
     const old_deps = this.dependencies.get(file_path);
     if (old_deps) {
@@ -115,7 +115,7 @@ export class ImportGraph {
         imp_def.import_path,
         file_path,
         language,
-        root_folder
+        resolution
       );
       this.resolved_import_paths.set(imp_def.symbol_id, resolved_path);
 
@@ -125,7 +125,7 @@ export class ImportGraph {
           resolved_path,
           import_name,
           language,
-          root_folder
+          resolution
         );
         if (submodule_path) {
           this.submodule_import_paths.set(imp_def.symbol_id, submodule_path);

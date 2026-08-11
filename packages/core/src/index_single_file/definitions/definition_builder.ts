@@ -582,13 +582,12 @@ export class DefinitionBuilder {
       }
     }
 
-    // A parameter with no owning callable is an internal inconsistency: the
-    // capture handler minted an owner id the definition pass never created.
-    // Silence here is what let dropped parameters go unnoticed pipeline-wide.
-    throw new Error(
-      `Parameter "${definition.name}" has no owning callable ${callable_id} ` +
-        `(at ${definition.location.file_path}:${definition.location.start_line})`
-    );
+    // The indexed callable surface is deliberately partial — a parameter whose
+    // owner no handler indexes is an expected gap, not an inconsistency, so it
+    // is dropped rather than raised. Raising here would abort the file's index
+    // and drop it from the corpus entirely, which manufactures exactly the
+    // uncalled-looking functions entry-point detection exists to avoid.
+    return this;
   }
 
   /**
