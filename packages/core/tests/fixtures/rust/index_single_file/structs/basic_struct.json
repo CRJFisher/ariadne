@@ -793,7 +793,10 @@
         "end_line": 12,
         "end_column": 12
       },
-      "scope_id": "function:<fixtures>/rust/code/structs/basic_struct.rs:11:11:13:5"
+      "scope_id": "function:<fixtures>/rust/code/structs/basic_struct.rs:11:11:13:5",
+      "path_prefix": [
+        "User"
+      ]
     },
     {
       "kind": "type_reference",
@@ -1160,7 +1163,10 @@
         "end_line": 35,
         "end_column": 13
       },
-      "scope_id": "function:<fixtures>/rust/code/structs/basic_struct.rs:34:11:36:5"
+      "scope_id": "function:<fixtures>/rust/code/structs/basic_struct.rs:34:11:36:5",
+      "path_prefix": [
+        "Point"
+      ]
     },
     {
       "kind": "type_reference",
@@ -1252,10 +1258,9 @@
         "end_column": 43
       },
       "property_chain": [
-        "(self.x * self.x + self.y * self.y)",
         "sqrt"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -1336,23 +1341,26 @@
       "access_type": "read"
     },
     {
-      "kind": "function_call",
-      "name": "User::new",
+      "kind": "constructor_call",
+      "name": "User",
       "location": {
         "file_path": "<fixtures>/rust/code/structs/basic_struct.rs",
         "start_line": 44,
         "start_column": 16,
         "end_line": 44,
-        "end_column": 24
+        "end_column": 19
       },
       "scope_id": "function:<fixtures>/rust/code/structs/basic_struct.rs:43:12:50:1",
-      "potential_construct_target": {
+      "construct_target": {
         "file_path": "<fixtures>/rust/code/structs/basic_struct.rs",
         "start_line": 44,
         "start_column": 9,
         "end_line": 44,
         "end_column": 12
-      }
+      },
+      "path_prefix": [
+        "User"
+      ]
     },
     {
       "kind": "variable_reference",
@@ -1382,7 +1390,7 @@
     },
     {
       "kind": "function_call",
-      "name": "String::from",
+      "name": "from",
       "location": {
         "file_path": "<fixtures>/rust/code/structs/basic_struct.rs",
         "start_line": 45,
@@ -1391,13 +1399,9 @@
         "end_column": 20
       },
       "scope_id": "function:<fixtures>/rust/code/structs/basic_struct.rs:43:12:50:1",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/rust/code/structs/basic_struct.rs",
-        "start_line": 44,
-        "start_column": 9,
-        "end_line": 44,
-        "end_column": 12
-      }
+      "path_prefix": [
+        "String"
+      ]
     },
     {
       "kind": "variable_reference",
@@ -1427,7 +1431,7 @@
     },
     {
       "kind": "function_call",
-      "name": "String::from",
+      "name": "from",
       "location": {
         "file_path": "<fixtures>/rust/code/structs/basic_struct.rs",
         "start_line": 46,
@@ -1436,13 +1440,9 @@
         "end_column": 20
       },
       "scope_id": "function:<fixtures>/rust/code/structs/basic_struct.rs:43:12:50:1",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/rust/code/structs/basic_struct.rs",
-        "start_line": 44,
-        "start_column": 9,
-        "end_line": 44,
-        "end_column": 12
-      }
+      "path_prefix": [
+        "String"
+      ]
     },
     {
       "kind": "variable_reference",

@@ -2364,5 +2364,59 @@ const names = items.map(({id, name}) => name);`;
       expect(plain).toBeDefined();
       expect(plain!.accessor_kind).toBeUndefined();
     });
+
+    function property_accesses(code: string) {
+      return build_index(code)
+        .references.filter(
+          (r): r is PropertyAccessReference => r.kind === "property_access"
+        )
+        .map((r) => ({
+          name: r.name,
+          property_chain: r.property_chain,
+        }));
+    }
+
+    it("mints one property access for a this-rooted member read", () => {
+      const code = "class A { m() { const a = this.argsTypes; return a; } }";
+      expect(property_accesses(code)).toEqual([
+        { name: "argsTypes" as SymbolName, property_chain: ["this", "argsTypes"] },
+      ]);
+    });
+
+    it("mints one property access per member expression in a nested chain", () => {
+      const code = "function m(ctx) { return ctx.dmmf.typeAndModelMap; }";
+      expect(property_accesses(code)).toEqual([
+        { name: "dmmf" as SymbolName, property_chain: ["ctx", "dmmf"] },
+        {
+          name: "typeAndModelMap" as SymbolName,
+          property_chain: ["ctx", "dmmf", "typeAndModelMap"],
+        },
+      ]);
+    });
+
+    it("mints one property access for a plain identifier receiver", () => {
+      const code = "function m(obj) { return obj.x; }";
+      expect(property_accesses(code)).toEqual([
+        { name: "x" as SymbolName, property_chain: ["obj", "x"] },
+      ]);
+    });
+
+    it("mints no property access for a call-rooted member read", () => {
+      const code = "function m() { return getHelper().jsDoc; }";
+      expect(property_accesses(code)).toEqual([]);
+    });
+
+    it("mints no property access for the callee of a member call", () => {
+      const code = "function m(svc) { svc.run(); }";
+      const index = build_index(code);
+      expect(
+        index.references.filter((r) => r.kind === "property_access")
+      ).toEqual([]);
+      expect(
+        index.references
+          .filter((r): r is MethodCallReference => r.kind === "method_call")
+          .map((r) => r.name)
+      ).toEqual(["run"]);
+    });
   });
 });

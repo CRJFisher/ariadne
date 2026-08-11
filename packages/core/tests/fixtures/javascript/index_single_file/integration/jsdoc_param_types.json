@@ -1,0 +1,216 @@
+{
+  "file_path": "<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js",
+  "language": "javascript",
+  "root_scope_id": "module:<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js:1:1:15:0",
+  "scopes": {
+    "module:<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js:1:1:15:0": {
+      "id": "module:<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js:1:1:15:0",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 15,
+        "end_column": 0
+      },
+      "child_ids": [
+        "function:<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js:12:32:14:1"
+      ]
+    },
+    "function:<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js:12:32:14:1": {
+      "id": "function:<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js:12:32:14:1",
+      "parent_id": "module:<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js:1:1:15:0",
+      "name": "buildChunkGraph",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js",
+        "start_line": 12,
+        "start_column": 32,
+        "end_line": 14,
+        "end_column": 1
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {
+    "function:<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js:12:17:12:31:buildChunkGraph": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js:12:17:12:31:buildChunkGraph",
+      "name": "buildChunkGraph",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js",
+        "start_line": 12,
+        "start_column": 17,
+        "end_line": 12,
+        "end_column": 31
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js:1:1:15:0",
+      "is_exported": true,
+      "docstring": "/**\n * @param {ModuleGraph} g the module graph\n */",
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js:12:32:14:1",
+            "symbol_id": "parameter:<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js:12:33:12:33:g",
+            "name": "g",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js",
+              "start_line": 12,
+              "start_column": 33,
+              "end_line": 12,
+              "end_column": 33
+            },
+            "type": "ModuleGraph"
+          }
+        ]
+      },
+      "body_scope_id": "function:<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js:12:32:14:1"
+    }
+  },
+  "classes": {},
+  "variables": {},
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {
+    "variable:<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js:7:10:7:20:ModuleGraph": {
+      "kind": "import",
+      "symbol_id": "variable:<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js:7:10:7:20:ModuleGraph",
+      "name": "ModuleGraph",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js",
+        "start_line": 7,
+        "start_column": 10,
+        "end_line": 7,
+        "end_column": 20
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js:1:1:15:0",
+      "import_path": "./module_graph",
+      "import_kind": "named"
+    }
+  },
+  "references": [
+    {
+      "kind": "variable_reference",
+      "name": "ModuleGraph",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js",
+        "start_line": 7,
+        "start_column": 10,
+        "end_line": 7,
+        "end_column": 20
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js:1:1:15:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "buildChunkGraph",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js",
+        "start_line": 12,
+        "start_column": 17,
+        "end_line": 12,
+        "end_column": 31
+      },
+      "scope_id": "module:<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js:1:1:15:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "g",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js",
+        "start_line": 12,
+        "start_column": 33,
+        "end_line": 12,
+        "end_column": 33
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js:12:32:14:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "getParentBlockIndex",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js",
+        "start_line": 13,
+        "start_column": 3,
+        "end_line": 13,
+        "end_column": 25
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js:12:32:14:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js",
+        "start_line": 13,
+        "start_column": 3,
+        "end_line": 13,
+        "end_column": 3
+      },
+      "property_chain": [
+        "g",
+        "getParentBlockIndex"
+      ],
+      "is_optional_chain": false,
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "g",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js",
+        "start_line": 13,
+        "start_column": 3,
+        "end_line": 13,
+        "end_column": 3
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js:12:32:14:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "g",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js",
+        "start_line": 13,
+        "start_column": 3,
+        "end_line": 13,
+        "end_column": 3
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js:12:32:14:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "g",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js",
+        "start_line": 13,
+        "start_column": 3,
+        "end_line": 13,
+        "end_column": 3
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js:12:32:14:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "getParentBlockIndex",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js",
+        "start_line": 13,
+        "start_column": 5,
+        "end_line": 13,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js:12:32:14:1",
+      "access_type": "read"
+    }
+  ]
+}

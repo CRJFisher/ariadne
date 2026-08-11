@@ -352,7 +352,8 @@
         "end_column": 17
       },
       "defining_scope_id": "function:<fixtures>/rust/code/functions/nested_scopes.rs:12:8:28:1",
-      "is_exported": false
+      "is_exported": false,
+      "initialized_from_call": "helper"
     },
     "variable:<fixtures>/rust/code/functions/nested_scopes.rs:17:9:17:20:block_result": {
       "kind": "variable",
@@ -380,7 +381,8 @@
         "end_column": 22
       },
       "defining_scope_id": "function:<fixtures>/rust/code/functions/nested_scopes.rs:12:8:28:1",
-      "is_exported": false
+      "is_exported": false,
+      "initialized_from_call": "helper"
     },
     "variable:<fixtures>/rust/code/functions/nested_scopes.rs:23:9:23:20:outer_result": {
       "kind": "variable",
@@ -394,7 +396,8 @@
         "end_column": 20
       },
       "defining_scope_id": "function:<fixtures>/rust/code/functions/nested_scopes.rs:12:8:28:1",
-      "is_exported": false
+      "is_exported": false,
+      "initialized_from_call": "outer_function"
     },
     "variable:<fixtures>/rust/code/functions/nested_scopes.rs:32:9:32:18:outer_call": {
       "kind": "variable",
@@ -408,7 +411,8 @@
         "end_column": 18
       },
       "defining_scope_id": "function:<fixtures>/rust/code/functions/nested_scopes.rs:30:18:60:1",
-      "is_exported": false
+      "is_exported": false,
+      "initialized_from_call": "helper"
     },
     "variable:<fixtures>/rust/code/functions/nested_scopes.rs:37:13:37:22:inner_call": {
       "kind": "variable",
@@ -422,7 +426,8 @@
         "end_column": 22
       },
       "defining_scope_id": "function:<fixtures>/rust/code/functions/nested_scopes.rs:35:22:47:5",
-      "is_exported": false
+      "is_exported": false,
+      "initialized_from_call": "helper"
     },
     "variable:<fixtures>/rust/code/functions/nested_scopes.rs:41:17:41:25:deep_call": {
       "kind": "variable",
@@ -436,7 +441,8 @@
         "end_column": 25
       },
       "defining_scope_id": "function:<fixtures>/rust/code/functions/nested_scopes.rs:40:27:43:9",
-      "is_exported": false
+      "is_exported": false,
+      "initialized_from_call": "helper"
     },
     "variable:<fixtures>/rust/code/functions/nested_scopes.rs:45:13:45:23:deep_result": {
       "kind": "variable",
@@ -450,7 +456,8 @@
         "end_column": 23
       },
       "defining_scope_id": "function:<fixtures>/rust/code/functions/nested_scopes.rs:35:22:47:5",
-      "is_exported": false
+      "is_exported": false,
+      "initialized_from_call": "deeper_function"
     },
     "variable:<fixtures>/rust/code/functions/nested_scopes.rs:49:9:49:20:inner_result": {
       "kind": "variable",
@@ -464,7 +471,8 @@
         "end_column": 20
       },
       "defining_scope_id": "function:<fixtures>/rust/code/functions/nested_scopes.rs:30:18:60:1",
-      "is_exported": false
+      "is_exported": false,
+      "initialized_from_call": "inner_function"
     },
     "variable:<fixtures>/rust/code/functions/nested_scopes.rs:52:9:52:15:closure": {
       "kind": "variable",
@@ -492,7 +500,8 @@
         "end_column": 24
       },
       "defining_scope_id": "function:<fixtures>/rust/code/functions/nested_scopes.rs:52:19:55:5",
-      "is_exported": false
+      "is_exported": false,
+      "initialized_from_call": "helper"
     },
     "variable:<fixtures>/rust/code/functions/nested_scopes.rs:57:9:57:22:closure_result": {
       "kind": "variable",
@@ -506,7 +515,8 @@
         "end_column": 22
       },
       "defining_scope_id": "function:<fixtures>/rust/code/functions/nested_scopes.rs:30:18:60:1",
-      "is_exported": false
+      "is_exported": false,
+      "initialized_from_call": "closure"
     },
     "variable:<fixtures>/rust/code/functions/nested_scopes.rs:64:13:64:19:results": {
       "kind": "variable",
@@ -1493,23 +1503,26 @@
       "access_type": "read"
     },
     {
-      "kind": "function_call",
-      "name": "Vec::new",
+      "kind": "constructor_call",
+      "name": "Vec",
       "location": {
         "file_path": "<fixtures>/rust/code/functions/nested_scopes.rs",
         "start_line": 64,
         "start_column": 23,
         "end_line": 64,
-        "end_column": 30
+        "end_column": 25
       },
       "scope_id": "function:<fixtures>/rust/code/functions/nested_scopes.rs:63:19:86:1",
-      "potential_construct_target": {
+      "construct_target": {
         "file_path": "<fixtures>/rust/code/functions/nested_scopes.rs",
         "start_line": 64,
         "start_column": 13,
         "end_line": 64,
         "end_column": 19
-      }
+      },
+      "path_prefix": [
+        "Vec"
+      ]
     },
     {
       "kind": "variable_reference",
@@ -1559,7 +1572,7 @@
         "results",
         "push"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -1647,7 +1660,7 @@
         "results",
         "push"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -1800,7 +1813,7 @@
         "results",
         "push"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -1979,7 +1992,7 @@
         "results",
         "push"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",

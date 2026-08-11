@@ -7,6 +7,10 @@
 
 import { describe, it, expect, afterAll } from "vitest";
 import { Project } from "../project/project";
+import {
+  find_caller_node,
+  is_entry_point,
+} from "./resolve_references.test";
 import type { FilePath, SymbolName } from "@ariadnejs/types";
 import * as fs from "fs";
 import * as path from "path";
@@ -503,5 +507,152 @@ export function run(): number {
       .find((c) => c.name === ("X" as SymbolName));
     expect(call!.resolution_failure).toBeUndefined();
     expect(call!.resolutions.length).toEqual(1);
+  });
+});
+
+describe("Getter reads through non-identifier receivers", () => {
+  it("resolves this.argsTypes to the argsTypes getter", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "dmmf.ts": [
+        "export class Dmmf {",
+        "  get argsTypes() { return 1; }",
+        "  run() { return this.argsTypes; }",
+        "}",
+      ].join("\n"),
+    });
+    temp_dirs.push(temp_dir);
+    const cg = project.get_call_graph();
+    const file = file_paths["dmmf.ts"];
+    const getter = find_caller_node(cg, "argsTypes", file);
+    const run = find_caller_node(cg, "run", file);
+    expect(
+      run?.enclosed_calls.map((c) => ({
+        name: c.name,
+        call_type: c.call_type,
+        targets: c.resolutions.map((r) => r.symbol_id),
+      }))
+    ).toEqual([
+      { name: "argsTypes", call_type: "method", targets: [getter!.symbol_id] },
+    ]);
+    expect(is_entry_point(cg, "argsTypes", file)).toEqual(false);
+  });
+
+  it("resolves this.helper.rootFieldMap to the rootFieldMap getter", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "dmmf.ts": [
+        "export class Helper {",
+        "  get rootFieldMap() { return 1; }",
+        "}",
+        "export class Dmmf {",
+        "  helper: Helper = new Helper();",
+        "  run() { return this.helper.rootFieldMap; }",
+        "}",
+      ].join("\n"),
+    });
+    temp_dirs.push(temp_dir);
+    const cg = project.get_call_graph();
+    const file = file_paths["dmmf.ts"];
+    const getter = find_caller_node(cg, "rootFieldMap", file);
+    const run = find_caller_node(cg, "run", file);
+    expect(
+      run?.enclosed_calls.map((c) => ({
+        name: c.name,
+        targets: c.resolutions.map((r) => r.symbol_id),
+      }))
+    ).toEqual([
+      { name: "rootFieldMap", targets: [getter!.symbol_id] },
+    ]);
+    expect(is_entry_point(cg, "rootFieldMap", file)).toEqual(false);
+  });
+
+  it("resolves context.dmmf.typeAndModelMap to the typeAndModelMap getter", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "ctx.ts": [
+        "export class Dmmf {",
+        "  get typeAndModelMap() { return 1; }",
+        "}",
+        "export class Context {",
+        "  dmmf: Dmmf = new Dmmf();",
+        "}",
+        "export function run(context: Context) {",
+        "  return context.dmmf.typeAndModelMap;",
+        "}",
+      ].join("\n"),
+    });
+    temp_dirs.push(temp_dir);
+    const cg = project.get_call_graph();
+    const file = file_paths["ctx.ts"];
+    const getter = find_caller_node(cg, "typeAndModelMap", file);
+    const run = find_caller_node(cg, "run", file);
+    expect(
+      run?.enclosed_calls.map((c) => ({
+        name: c.name,
+        targets: c.resolutions.map((r) => r.symbol_id),
+      }))
+    ).toEqual([
+      { name: "typeAndModelMap", targets: [getter!.symbol_id] },
+    ]);
+    expect(is_entry_point(cg, "typeAndModelMap", file)).toEqual(false);
+  });
+
+  it("resolves the nest instanceLinksHost and parentInjector getter reads", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "injector.ts": [
+        "export class Injector {",
+        "  get instanceLinksHost() { return 1; }",
+        "  get parentInjector() { return 2; }",
+        "  resolve() {",
+        "    const links = this.instanceLinksHost;",
+        "    const parent = this.parentInjector;",
+        "    return [links, parent];",
+        "  }",
+        "}",
+      ].join("\n"),
+    });
+    temp_dirs.push(temp_dir);
+    const cg = project.get_call_graph();
+    const file = file_paths["injector.ts"];
+    expect(is_entry_point(cg, "instanceLinksHost", file)).toEqual(false);
+    expect(is_entry_point(cg, "parentInjector", file)).toEqual(false);
+  });
+
+  it("resolves the angular compiler getter read through an intermediate chain link", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "boot.ts": [
+        "export class Compiler {",
+        "  compileModule(m: string) { return m; }",
+        "}",
+        "export class Bootstrap {",
+        "  get compiler() { return new Compiler(); }",
+        "  run() { return this.compiler.compileModule('m'); }",
+        "}",
+      ].join("\n"),
+    });
+    temp_dirs.push(temp_dir);
+    const cg = project.get_call_graph();
+    const file = file_paths["boot.ts"];
+    expect(is_entry_point(cg, "compiler", file)).toEqual(false);
+  });
+
+  it("creates no edge from a data-field read or a plain method read", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "box.ts": [
+        "export class Box {",
+        "  field = 1;",
+        "  plain() { return 3; }",
+        "}",
+        "export function run(b: Box) {",
+        "  const f = b.field;",
+        "  const m = b.plain;",
+        "  return [f, m];",
+        "}",
+      ].join("\n"),
+    });
+    temp_dirs.push(temp_dir);
+    const cg = project.get_call_graph();
+    const file = file_paths["box.ts"];
+    const run = find_caller_node(cg, "run", file);
+    expect(run?.enclosed_calls).toEqual([]);
+    expect(is_entry_point(cg, "plain", file)).toEqual(true);
   });
 });

@@ -346,6 +346,7 @@
       "export": {
         "is_reexport": false
       },
+      "docstring": "// Basic closure",
       "signature": {
         "parameters": [
           {
@@ -399,6 +400,7 @@
       "export": {
         "is_reexport": false
       },
+      "docstring": "// Closure with multiple captured variables",
       "signature": {
         "parameters": [
           {
@@ -492,6 +494,7 @@
       "export": {
         "is_reexport": false
       },
+      "docstring": "// Nested closures",
       "signature": {
         "parameters": [
           {
@@ -609,6 +612,7 @@
       "export": {
         "is_reexport": false
       },
+      "docstring": "// Closure in loop (classic closure problem)",
       "signature": {
         "parameters": []
       },
@@ -766,6 +770,7 @@
       "defining_scope_id": "module:<fixtures>/javascript/code/functions/closures.js:1:1:110:2",
       "is_exported": true,
       "initial_value": "createMultiplier(2)",
+      "docstring": "// Using the closures",
       "initialized_from_call": "createMultiplier"
     },
     "variable:<fixtures>/javascript/code/functions/closures.js:83:7:83:13:doubled": {
@@ -1357,7 +1362,10 @@
         "transactions",
         "push"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -1371,69 +1379,6 @@
       },
       "scope_id": "function:<fixtures>/javascript/code/functions/closures.js:21:26:23:3",
       "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "push",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/closures.js",
-        "start_line": 22,
-        "start_column": 5,
-        "end_line": 22,
-        "end_column": 21
-      },
-      "scope_id": "function:<fixtures>/javascript/code/functions/closures.js:21:26:23:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/functions/closures.js",
-        "start_line": 22,
-        "start_column": 5,
-        "end_line": 22,
-        "end_column": 16
-      },
-      "property_chain": [
-        "transactions",
-        "push"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "transactions",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/closures.js",
-        "start_line": 22,
-        "start_column": 5,
-        "end_line": 22,
-        "end_column": 16
-      },
-      "scope_id": "function:<fixtures>/javascript/code/functions/closures.js:21:26:23:3",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "push",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/closures.js",
-        "start_line": 22,
-        "start_column": 5,
-        "end_line": 22,
-        "end_column": 21
-      },
-      "scope_id": "function:<fixtures>/javascript/code/functions/closures.js:21:26:23:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/functions/closures.js",
-        "start_line": 22,
-        "start_column": 5,
-        "end_line": 22,
-        "end_column": 16
-      },
-      "property_chain": [
-        "transactions",
-        "push"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -1476,28 +1421,29 @@
     },
     {
       "kind": "variable_reference",
-      "name": "push",
+      "name": "type",
       "location": {
         "file_path": "<fixtures>/javascript/code/functions/closures.js",
         "start_line": 22,
-        "start_column": 18,
+        "start_column": 25,
         "end_line": 22,
-        "end_column": 21
+        "end_column": 28
       },
       "scope_id": "function:<fixtures>/javascript/code/functions/closures.js:21:26:23:3",
       "access_type": "read"
     },
     {
-      "kind": "function_call",
-      "name": "Date",
+      "kind": "variable_reference",
+      "name": "amount",
       "location": {
         "file_path": "<fixtures>/javascript/code/functions/closures.js",
         "start_line": 22,
-        "start_column": 45,
+        "start_column": 31,
         "end_line": 22,
-        "end_column": 54
+        "end_column": 36
       },
-      "scope_id": "function:<fixtures>/javascript/code/functions/closures.js:21:26:23:3"
+      "scope_id": "function:<fixtures>/javascript/code/functions/closures.js:21:26:23:3",
+      "access_type": "read"
     },
     {
       "kind": "constructor_call",
@@ -1964,44 +1910,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "length",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/closures.js",
-        "start_line": 46,
-        "start_column": 14,
-        "end_line": 46,
-        "end_column": 32
-      },
-      "scope_id": "method:<fixtures>/javascript/code/functions/closures.js:45:24:47:5",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/functions/closures.js",
-        "start_line": 46,
-        "start_column": 14,
-        "end_line": 46,
-        "end_column": 25
-      },
-      "property_chain": [
-        "transactions",
-        "length"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "transactions",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/closures.js",
-        "start_line": 46,
-        "start_column": 14,
-        "end_line": 46,
-        "end_column": 25
-      },
-      "scope_id": "method:<fixtures>/javascript/code/functions/closures.js:45:24:47:5",
-      "access_type": "read"
-    },
-    {
       "kind": "variable_reference",
       "name": "transactions.length",
       "location": {
@@ -2023,19 +1931,6 @@
         "start_column": 14,
         "end_line": 46,
         "end_column": 25
-      },
-      "scope_id": "method:<fixtures>/javascript/code/functions/closures.js:45:24:47:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "length",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/closures.js",
-        "start_line": 46,
-        "start_column": 27,
-        "end_line": 46,
-        "end_column": 32
       },
       "scope_id": "method:<fixtures>/javascript/code/functions/closures.js:45:24:47:5",
       "access_type": "read"
@@ -2540,83 +2435,10 @@
         "functions",
         "push"
       ],
-      "optional_chaining": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "functions",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/closures.js",
-        "start_line": 70,
-        "start_column": 5,
-        "end_line": 70,
-        "end_column": 13
-      },
-      "scope_id": "block:<fixtures>/javascript/code/functions/closures.js:69:3:76:3",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "push",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/closures.js",
-        "start_line": 70,
-        "start_column": 5,
-        "end_line": 70,
-        "end_column": 18
-      },
-      "scope_id": "block:<fixtures>/javascript/code/functions/closures.js:69:3:76:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/functions/closures.js",
-        "start_line": 70,
-        "start_column": 5,
-        "end_line": 70,
-        "end_column": 13
-      },
-      "property_chain": [
-        "functions",
-        "push"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "functions",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/closures.js",
-        "start_line": 70,
-        "start_column": 5,
-        "end_line": 70,
-        "end_column": 13
-      },
-      "scope_id": "block:<fixtures>/javascript/code/functions/closures.js:69:3:76:3",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "push",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/closures.js",
-        "start_line": 70,
-        "start_column": 5,
-        "end_line": 70,
-        "end_column": 18
-      },
-      "scope_id": "block:<fixtures>/javascript/code/functions/closures.js:69:3:76:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/functions/closures.js",
-        "start_line": 70,
-        "start_column": 5,
-        "end_line": 70,
-        "end_column": 13
-      },
-      "property_chain": [
-        "functions",
-        "push"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
+      "is_optional_chain": false,
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -2646,13 +2468,13 @@
     },
     {
       "kind": "variable_reference",
-      "name": "push",
+      "name": "functions",
       "location": {
         "file_path": "<fixtures>/javascript/code/functions/closures.js",
         "start_line": 70,
-        "start_column": 15,
+        "start_column": 5,
         "end_line": 70,
-        "end_column": 18
+        "end_column": 13
       },
       "scope_id": "block:<fixtures>/javascript/code/functions/closures.js:69:3:76:3",
       "access_type": "read"
@@ -3186,83 +3008,17 @@
         "account",
         "deposit"
       ],
-      "optional_chaining": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "account",
-      "location": {
+      "is_optional_chain": false,
+      "potential_construct_target": {
         "file_path": "<fixtures>/javascript/code/functions/closures.js",
         "start_line": 86,
-        "start_column": 23,
+        "start_column": 7,
         "end_line": 86,
-        "end_column": 29
+        "end_column": 19
       },
-      "scope_id": "module:<fixtures>/javascript/code/functions/closures.js:1:1:110:2",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "deposit",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/closures.js",
-        "start_line": 86,
-        "start_column": 23,
-        "end_line": 86,
-        "end_column": 37
-      },
-      "scope_id": "module:<fixtures>/javascript/code/functions/closures.js:1:1:110:2",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/functions/closures.js",
-        "start_line": 86,
-        "start_column": 23,
-        "end_line": 86,
-        "end_column": 29
-      },
-      "property_chain": [
-        "account",
-        "deposit"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "account",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/closures.js",
-        "start_line": 86,
-        "start_column": 23,
-        "end_line": 86,
-        "end_column": 29
-      },
-      "scope_id": "module:<fixtures>/javascript/code/functions/closures.js:1:1:110:2",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "deposit",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/closures.js",
-        "start_line": 86,
-        "start_column": 23,
-        "end_line": 86,
-        "end_column": 37
-      },
-      "scope_id": "module:<fixtures>/javascript/code/functions/closures.js:1:1:110:2",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/functions/closures.js",
-        "start_line": 86,
-        "start_column": 23,
-        "end_line": 86,
-        "end_column": 29
-      },
-      "property_chain": [
-        "account",
-        "deposit"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -3292,13 +3048,13 @@
     },
     {
       "kind": "variable_reference",
-      "name": "deposit",
+      "name": "account",
       "location": {
         "file_path": "<fixtures>/javascript/code/functions/closures.js",
         "start_line": 86,
-        "start_column": 31,
+        "start_column": 23,
         "end_line": 86,
-        "end_column": 37
+        "end_column": 29
       },
       "scope_id": "module:<fixtures>/javascript/code/functions/closures.js:1:1:110:2",
       "access_type": "read"
@@ -3402,83 +3158,17 @@
         "account",
         "getBalance"
       ],
-      "optional_chaining": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "account",
-      "location": {
+      "is_optional_chain": false,
+      "potential_construct_target": {
         "file_path": "<fixtures>/javascript/code/functions/closures.js",
         "start_line": 87,
-        "start_column": 23,
+        "start_column": 7,
         "end_line": 87,
-        "end_column": 29
+        "end_column": 19
       },
-      "scope_id": "module:<fixtures>/javascript/code/functions/closures.js:1:1:110:2",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "getBalance",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/closures.js",
-        "start_line": 87,
-        "start_column": 23,
-        "end_line": 87,
-        "end_column": 40
-      },
-      "scope_id": "module:<fixtures>/javascript/code/functions/closures.js:1:1:110:2",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/functions/closures.js",
-        "start_line": 87,
-        "start_column": 23,
-        "end_line": 87,
-        "end_column": 29
-      },
-      "property_chain": [
-        "account",
-        "getBalance"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "account",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/closures.js",
-        "start_line": 87,
-        "start_column": 23,
-        "end_line": 87,
-        "end_column": 29
-      },
-      "scope_id": "module:<fixtures>/javascript/code/functions/closures.js:1:1:110:2",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "getBalance",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/closures.js",
-        "start_line": 87,
-        "start_column": 23,
-        "end_line": 87,
-        "end_column": 40
-      },
-      "scope_id": "module:<fixtures>/javascript/code/functions/closures.js:1:1:110:2",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/functions/closures.js",
-        "start_line": 87,
-        "start_column": 23,
-        "end_line": 87,
-        "end_column": 29
-      },
-      "property_chain": [
-        "account",
-        "getBalance"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -3508,13 +3198,13 @@
     },
     {
       "kind": "variable_reference",
-      "name": "getBalance",
+      "name": "account",
       "location": {
         "file_path": "<fixtures>/javascript/code/functions/closures.js",
         "start_line": 87,
-        "start_column": 31,
+        "start_column": 23,
         "end_line": 87,
-        "end_column": 40
+        "end_column": 29
       },
       "scope_id": "module:<fixtures>/javascript/code/functions/closures.js:1:1:110:2",
       "access_type": "read"
@@ -3618,83 +3308,17 @@
         "account",
         "getAccountName"
       ],
-      "optional_chaining": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "account",
-      "location": {
+      "is_optional_chain": false,
+      "potential_construct_target": {
         "file_path": "<fixtures>/javascript/code/functions/closures.js",
         "start_line": 88,
-        "start_column": 20,
+        "start_column": 7,
         "end_line": 88,
-        "end_column": 26
+        "end_column": 16
       },
-      "scope_id": "module:<fixtures>/javascript/code/functions/closures.js:1:1:110:2",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "getAccountName",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/closures.js",
-        "start_line": 88,
-        "start_column": 20,
-        "end_line": 88,
-        "end_column": 41
-      },
-      "scope_id": "module:<fixtures>/javascript/code/functions/closures.js:1:1:110:2",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/functions/closures.js",
-        "start_line": 88,
-        "start_column": 20,
-        "end_line": 88,
-        "end_column": 26
-      },
-      "property_chain": [
-        "account",
-        "getAccountName"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "account",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/closures.js",
-        "start_line": 88,
-        "start_column": 20,
-        "end_line": 88,
-        "end_column": 26
-      },
-      "scope_id": "module:<fixtures>/javascript/code/functions/closures.js:1:1:110:2",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "getAccountName",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/closures.js",
-        "start_line": 88,
-        "start_column": 20,
-        "end_line": 88,
-        "end_column": 41
-      },
-      "scope_id": "module:<fixtures>/javascript/code/functions/closures.js:1:1:110:2",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/functions/closures.js",
-        "start_line": 88,
-        "start_column": 20,
-        "end_line": 88,
-        "end_column": 26
-      },
-      "property_chain": [
-        "account",
-        "getAccountName"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -3724,13 +3348,13 @@
     },
     {
       "kind": "variable_reference",
-      "name": "getAccountName",
+      "name": "account",
       "location": {
         "file_path": "<fixtures>/javascript/code/functions/closures.js",
         "start_line": 88,
-        "start_column": 28,
+        "start_column": 20,
         "end_line": 88,
-        "end_column": 41
+        "end_column": 26
       },
       "scope_id": "module:<fixtures>/javascript/code/functions/closures.js:1:1:110:2",
       "access_type": "read"
@@ -4218,83 +3842,17 @@
         "fnArray",
         "map"
       ],
-      "optional_chaining": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "fnArray",
-      "location": {
+      "is_optional_chain": false,
+      "potential_construct_target": {
         "file_path": "<fixtures>/javascript/code/functions/closures.js",
         "start_line": 95,
-        "start_column": 22,
+        "start_column": 7,
         "end_line": 95,
-        "end_column": 28
+        "end_column": 18
       },
-      "scope_id": "module:<fixtures>/javascript/code/functions/closures.js:1:1:110:2",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "map",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/closures.js",
-        "start_line": 95,
-        "start_column": 22,
-        "end_line": 95,
-        "end_column": 32
-      },
-      "scope_id": "module:<fixtures>/javascript/code/functions/closures.js:1:1:110:2",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/functions/closures.js",
-        "start_line": 95,
-        "start_column": 22,
-        "end_line": 95,
-        "end_column": 28
-      },
-      "property_chain": [
-        "fnArray",
-        "map"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "fnArray",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/closures.js",
-        "start_line": 95,
-        "start_column": 22,
-        "end_line": 95,
-        "end_column": 28
-      },
-      "scope_id": "module:<fixtures>/javascript/code/functions/closures.js:1:1:110:2",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "map",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/closures.js",
-        "start_line": 95,
-        "start_column": 22,
-        "end_line": 95,
-        "end_column": 32
-      },
-      "scope_id": "module:<fixtures>/javascript/code/functions/closures.js:1:1:110:2",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/functions/closures.js",
-        "start_line": 95,
-        "start_column": 22,
-        "end_line": 95,
-        "end_column": 28
-      },
-      "property_chain": [
-        "fnArray",
-        "map"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -4324,13 +3882,13 @@
     },
     {
       "kind": "variable_reference",
-      "name": "map",
+      "name": "fnArray",
       "location": {
         "file_path": "<fixtures>/javascript/code/functions/closures.js",
         "start_line": 95,
-        "start_column": 30,
+        "start_column": 22,
         "end_line": 95,
-        "end_column": 32
+        "end_column": 28
       },
       "scope_id": "module:<fixtures>/javascript/code/functions/closures.js:1:1:110:2",
       "access_type": "read"

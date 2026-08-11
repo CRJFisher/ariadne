@@ -328,6 +328,7 @@
       },
       "defining_scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
       "is_exported": true,
+      "docstring": "Outer helper function.",
       "signature": {
         "parameters": [],
         "return_type": "str"
@@ -348,6 +349,7 @@
       },
       "defining_scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
       "is_exported": true,
+      "docstring": "Test variable shadowing at different levels.",
       "signature": {
         "parameters": [],
         "return_type": "dict"
@@ -368,6 +370,7 @@
       },
       "defining_scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:20:28:83:5",
       "is_exported": false,
+      "docstring": "Inner function with parameter shadowing.",
       "signature": {
         "parameters": [
           {
@@ -417,6 +420,7 @@
       },
       "defining_scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
       "is_exported": false,
+      "docstring": "Deeper function with more shadowing.",
       "signature": {
         "parameters": [],
         "return_type": "dict"
@@ -437,6 +441,7 @@
       },
       "defining_scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
       "is_exported": true,
+      "docstring": "Test variable shadowing in comprehensions.",
       "signature": {
         "parameters": [],
         "return_type": "dict"
@@ -457,6 +462,7 @@
       },
       "defining_scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
       "is_exported": true,
+      "docstring": "Test variable shadowing in lambda functions.",
       "signature": {
         "parameters": [],
         "return_type": "dict"
@@ -477,6 +483,7 @@
       },
       "defining_scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
       "is_exported": false,
+      "docstring": "Create nested lambda with parameter shadowing.",
       "signature": {
         "parameters": [
           {
@@ -512,6 +519,7 @@
       },
       "defining_scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
       "is_exported": true,
+      "docstring": "Test variable shadowing in class methods.",
       "signature": {
         "parameters": [],
         "return_type": "dict"
@@ -532,6 +540,7 @@
       },
       "defining_scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
       "is_exported": false,
+      "docstring": "Local function within method.",
       "signature": {
         "parameters": [],
         "return_type": "str"
@@ -555,6 +564,9 @@
       "defining_scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:144:32:189:5",
       "extends": [],
       "is_exported": false,
+      "docstring": [
+        "Class for testing variable shadowing in methods."
+      ],
       "methods": [
         {
           "kind": "method",
@@ -570,6 +582,7 @@
           },
           "return_type": "dict",
           "async": false,
+          "docstring": "Method with parameter shadowing instance variable.",
           "parameters": [
             {
               "kind": "parameter",
@@ -1349,6 +1362,9 @@
         "end_column": 22
       },
       "defining_scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
+      "export": {
+        "is_reexport": true
+      },
       "import_path": "typing",
       "import_kind": "named"
     },
@@ -1364,6 +1380,9 @@
         "end_column": 32
       },
       "defining_scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
+      "export": {
+        "is_reexport": true
+      },
       "import_path": "typing",
       "import_kind": "named"
     },
@@ -1379,6 +1398,9 @@
         "end_column": 51
       },
       "defining_scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
+      "export": {
+        "is_reexport": true
+      },
       "import_path": "modules.utils",
       "original_name": "helper",
       "import_kind": "named"
@@ -1395,6 +1417,9 @@
         "end_column": 65
       },
       "defining_scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
+      "export": {
+        "is_reexport": true
+      },
       "import_path": "modules.utils",
       "import_kind": "named"
     }
@@ -1415,32 +1440,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "typing",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 6,
-        "start_column": 6,
-        "end_line": 6,
-        "end_column": 11
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "typing",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 6,
-        "start_column": 6,
-        "end_line": 6,
-        "end_column": 11
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "Any",
       "location": {
         "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
@@ -1448,58 +1447,6 @@
         "start_column": 20,
         "end_line": 6,
         "end_column": 22
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "Any",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 6,
-        "start_column": 20,
-        "end_line": 6,
-        "end_column": 22
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "Any",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 6,
-        "start_column": 20,
-        "end_line": 6,
-        "end_column": 22
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "Callable",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 6,
-        "start_column": 25,
-        "end_line": 6,
-        "end_column": 32
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "Callable",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 6,
-        "start_column": 25,
-        "end_line": 6,
-        "end_column": 32
       },
       "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
       "access_type": "read"
@@ -1532,32 +1479,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "modules",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 7,
-        "start_column": 6,
-        "end_line": 7,
-        "end_column": 12
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "modules",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 7,
-        "start_column": 6,
-        "end_line": 7,
-        "end_column": 12
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "utils",
       "location": {
         "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
@@ -1565,58 +1486,6 @@
         "start_column": 14,
         "end_line": 7,
         "end_column": 18
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "utils",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 7,
-        "start_column": 14,
-        "end_line": 7,
-        "end_column": 18
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "utils",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 7,
-        "start_column": 14,
-        "end_line": 7,
-        "end_column": 18
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 7,
-        "start_column": 27,
-        "end_line": 7,
-        "end_column": 32
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 7,
-        "start_column": 27,
-        "end_line": 7,
-        "end_column": 32
       },
       "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
       "access_type": "read"
@@ -1649,58 +1518,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "imported_helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 7,
-        "start_column": 37,
-        "end_line": 7,
-        "end_column": 51
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "imported_helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 7,
-        "start_column": 37,
-        "end_line": 7,
-        "end_column": 51
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "process_data",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 7,
-        "start_column": 54,
-        "end_line": 7,
-        "end_column": 65
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "process_data",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 7,
-        "start_column": 54,
-        "end_line": 7,
-        "end_column": 65
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "process_data",
       "location": {
         "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
@@ -1723,58 +1540,6 @@
         "end_column": 16
       },
       "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "outer_helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 10,
-        "start_column": 5,
-        "end_line": 10,
-        "end_column": 16
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "outer_helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 10,
-        "start_column": 5,
-        "end_line": 10,
-        "end_column": 16
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "str",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 10,
-        "start_column": 23,
-        "end_line": 10,
-        "end_column": 25
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:10:17:12:25",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "str",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 10,
-        "start_column": 23,
-        "end_line": 10,
-        "end_column": 25
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:10:17:12:25",
       "access_type": "read"
     },
     {
@@ -1938,32 +1703,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "global_var",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 16,
-        "start_column": 1,
-        "end_line": 16,
-        "end_column": 10
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "global_var",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 16,
-        "start_column": 1,
-        "end_line": 16,
-        "end_column": 10
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "\"global_value\"",
       "location": {
@@ -2098,32 +1837,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 17,
-        "start_column": 1,
-        "end_line": 17,
-        "end_column": 6
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 17,
-        "start_column": 1,
-        "end_line": 17,
-        "end_column": 6
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "\"global_helper_var\"",
       "location": {
@@ -2166,58 +1879,6 @@
         "end_column": 27
       },
       "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "test_variable_shadowing",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 20,
-        "start_column": 5,
-        "end_line": 20,
-        "end_column": 27
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "test_variable_shadowing",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 20,
-        "start_column": 5,
-        "end_line": 20,
-        "end_column": 27
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "dict",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 20,
-        "start_column": 34,
-        "end_line": 20,
-        "end_column": 37
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:20:28:83:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "dict",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 20,
-        "start_column": 34,
-        "end_line": 20,
-        "end_column": 37
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:20:28:83:5",
       "access_type": "read"
     },
     {
@@ -2327,32 +1988,6 @@
         "end_line": 23,
         "end_column": 30
       }
-    },
-    {
-      "kind": "variable_reference",
-      "name": "global_var",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 23,
-        "start_column": 5,
-        "end_line": 23,
-        "end_column": 14
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:20:28:83:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "global_var",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 23,
-        "start_column": 5,
-        "end_line": 23,
-        "end_column": 14
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:20:28:83:5",
-      "access_type": "read"
     },
     {
       "kind": "variable_reference",
@@ -2515,32 +2150,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "imported_helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 26,
-        "start_column": 5,
-        "end_line": 26,
-        "end_column": 19
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:20:28:83:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "imported_helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 26,
-        "start_column": 5,
-        "end_line": 26,
-        "end_column": 19
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:20:28:83:5",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "\"local_imported_helper\"",
       "location": {
@@ -2647,32 +2256,6 @@
         "end_line": 33,
         "end_column": 45
       }
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 33,
-        "start_column": 9,
-        "end_line": 33,
-        "end_column": 21
-      },
-      "scope_id": "block:<fixtures>/python/code/functions/variable_shadowing.py:30:5:35:46",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 33,
-        "start_column": 9,
-        "end_line": 33,
-        "end_column": 21
-      },
-      "scope_id": "block:<fixtures>/python/code/functions/variable_shadowing.py:30:5:35:46",
-      "access_type": "read"
     },
     {
       "kind": "variable_reference",
@@ -2835,32 +2418,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "helper_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 35,
-        "start_column": 9,
-        "end_line": 35,
-        "end_column": 21
-      },
-      "scope_id": "block:<fixtures>/python/code/functions/variable_shadowing.py:34:5:35:46",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 35,
-        "start_column": 9,
-        "end_line": 35,
-        "end_column": 21
-      },
-      "scope_id": "block:<fixtures>/python/code/functions/variable_shadowing.py:34:5:35:46",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "\"error_calling_string\"",
       "location": {
@@ -2995,32 +2552,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "actual_helper_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 38,
-        "start_column": 5,
-        "end_line": 38,
-        "end_column": 24
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:20:28:83:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "actual_helper_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 38,
-        "start_column": 5,
-        "end_line": 38,
-        "end_column": 24
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:20:28:83:5",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "process_data(\"test\")",
       "location": {
@@ -3048,25 +2579,6 @@
         "start_column": 28,
         "end_line": 38,
         "end_column": 39
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:20:28:83:5",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 38,
-        "start_column": 5,
-        "end_line": 38,
-        "end_column": 24
-      }
-    },
-    {
-      "kind": "function_call",
-      "name": "process_data",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 38,
-        "start_column": 28,
-        "end_line": 38,
-        "end_column": 47
       },
       "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:20:28:83:5",
       "potential_construct_target": {
@@ -3124,58 +2636,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "process_data",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 38,
-        "start_column": 28,
-        "end_line": 38,
-        "end_column": 39
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:20:28:83:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "process_data",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 38,
-        "start_column": 28,
-        "end_line": 38,
-        "end_column": 39
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:20:28:83:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "inner_function",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 40,
-        "start_column": 9,
-        "end_line": 40,
-        "end_column": 22
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:20:28:83:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "inner_function",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 40,
-        "start_column": 9,
-        "end_line": 40,
-        "end_column": 22
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:20:28:83:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "inner_function",
       "location": {
         "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
@@ -3196,58 +2656,6 @@
         "start_column": 24,
         "end_line": 40,
         "end_column": 33
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "global_var",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 40,
-        "start_column": 24,
-        "end_line": 40,
-        "end_column": 33
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "global_var",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 40,
-        "start_column": 24,
-        "end_line": 40,
-        "end_column": 33
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "str",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 40,
-        "start_column": 36,
-        "end_line": 40,
-        "end_column": 38
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "str",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 40,
-        "start_column": 36,
-        "end_line": 40,
-        "end_column": 38
       },
       "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
       "access_type": "read"
@@ -3298,58 +2706,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "imported_helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 40,
-        "start_column": 41,
-        "end_line": 40,
-        "end_column": 55
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "imported_helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 40,
-        "start_column": 41,
-        "end_line": 40,
-        "end_column": 55
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "int",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 40,
-        "start_column": 58,
-        "end_line": 40,
-        "end_column": 60
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "int",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 40,
-        "start_column": 58,
-        "end_line": 40,
-        "end_column": 60
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
-      "access_type": "read"
-    },
-    {
       "kind": "type_reference",
       "name": "int",
       "location": {
@@ -3377,32 +2733,6 @@
         "start_column": 58,
         "end_line": 40,
         "end_column": 60
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "dict",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 40,
-        "start_column": 66,
-        "end_line": 40,
-        "end_column": 69
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "dict",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 40,
-        "start_column": 66,
-        "end_line": 40,
-        "end_column": 69
       },
       "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
       "access_type": "read"
@@ -3542,32 +2872,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "outer_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 45,
-        "start_column": 9,
-        "end_line": 45,
-        "end_column": 20
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "outer_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 45,
-        "start_column": 9,
-        "end_line": 45,
-        "end_column": 20
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "outer_helper()",
       "location": {
@@ -3606,25 +2910,6 @@
       }
     },
     {
-      "kind": "function_call",
-      "name": "outer_helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 45,
-        "start_column": 24,
-        "end_line": 45,
-        "end_column": 37
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 45,
-        "start_column": 9,
-        "end_line": 45,
-        "end_column": 20
-      }
-    },
-    {
       "kind": "constructor_call",
       "name": "outer_helper",
       "location": {
@@ -3652,32 +2937,6 @@
         "start_column": 24,
         "end_line": 45,
         "end_column": 37
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "outer_helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 45,
-        "start_column": 24,
-        "end_line": 45,
-        "end_column": 35
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "outer_helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 45,
-        "start_column": 24,
-        "end_line": 45,
-        "end_column": 35
       },
       "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
       "access_type": "read"
@@ -3798,32 +3057,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "param_global",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 48,
-        "start_column": 9,
-        "end_line": 48,
-        "end_column": 20
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "param_global",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 48,
-        "start_column": 9,
-        "end_line": 48,
-        "end_column": 20
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "global_var",
       "location": {
@@ -3847,32 +3080,6 @@
         "certainty": "declared",
         "is_nullable": false
       }
-    },
-    {
-      "kind": "variable_reference",
-      "name": "global_var",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 48,
-        "start_column": 24,
-        "end_line": 48,
-        "end_column": 33
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "global_var",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 48,
-        "start_column": 24,
-        "end_line": 48,
-        "end_column": 33
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
-      "access_type": "read"
     },
     {
       "kind": "variable_reference",
@@ -4003,32 +3210,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "param_imported",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 49,
-        "start_column": 9,
-        "end_line": 49,
-        "end_column": 22
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "param_imported",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 49,
-        "start_column": 9,
-        "end_line": 49,
-        "end_column": 22
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "imported_helper",
       "location": {
@@ -4081,32 +3262,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "imported_helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 49,
-        "start_column": 26,
-        "end_line": 49,
-        "end_column": 40
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "imported_helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 49,
-        "start_column": 26,
-        "end_line": 49,
-        "end_column": 40
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "deeper_function",
       "location": {
         "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
@@ -4116,58 +3271,6 @@
         "end_column": 27
       },
       "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "deeper_function",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 51,
-        "start_column": 13,
-        "end_line": 51,
-        "end_column": 27
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "deeper_function",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 51,
-        "start_column": 13,
-        "end_line": 51,
-        "end_column": 27
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "dict",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 51,
-        "start_column": 34,
-        "end_line": 51,
-        "end_column": 37
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:51:28:64:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "dict",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 51,
-        "start_column": 34,
-        "end_line": 51,
-        "end_column": 37
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:51:28:64:13",
       "access_type": "read"
     },
     {
@@ -4277,32 +3380,6 @@
         "end_line": 54,
         "end_column": 27
       }
-    },
-    {
-      "kind": "variable_reference",
-      "name": "global_var",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 54,
-        "start_column": 13,
-        "end_line": 54,
-        "end_column": 22
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:51:28:64:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "global_var",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 54,
-        "start_column": 13,
-        "end_line": 54,
-        "end_column": 22
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:51:28:64:13",
-      "access_type": "read"
     },
     {
       "kind": "variable_reference",
@@ -4465,32 +3542,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "imported_helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 55,
-        "start_column": 13,
-        "end_line": 55,
-        "end_column": 27
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:51:28:64:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "imported_helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 55,
-        "start_column": 13,
-        "end_line": 55,
-        "end_column": 27
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:51:28:64:13",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "[1, 2, 3]",
       "location": {
@@ -4625,32 +3676,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "deeper_outer",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 58,
-        "start_column": 13,
-        "end_line": 58,
-        "end_column": 24
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:51:28:64:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "deeper_outer",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 58,
-        "start_column": 13,
-        "end_line": 58,
-        "end_column": 24
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:51:28:64:13",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "outer_helper()",
       "location": {
@@ -4689,25 +3714,6 @@
       }
     },
     {
-      "kind": "function_call",
-      "name": "outer_helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 58,
-        "start_column": 28,
-        "end_line": 58,
-        "end_column": 41
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:51:28:64:13",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 58,
-        "start_column": 13,
-        "end_line": 58,
-        "end_column": 24
-      }
-    },
-    {
       "kind": "constructor_call",
       "name": "outer_helper",
       "location": {
@@ -4735,32 +3741,6 @@
         "start_column": 28,
         "end_line": 58,
         "end_column": 41
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:51:28:64:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "outer_helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 58,
-        "start_column": 28,
-        "end_line": 58,
-        "end_column": 39
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:51:28:64:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "outer_helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 58,
-        "start_column": 28,
-        "end_line": 58,
-        "end_column": 39
       },
       "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:51:28:64:13",
       "access_type": "read"
@@ -4819,32 +3799,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "global_var",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 61,
-        "start_column": 36,
-        "end_line": 61,
-        "end_column": 45
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:51:28:64:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "global_var",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 61,
-        "start_column": 36,
-        "end_line": 61,
-        "end_column": 45
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:51:28:64:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "imported_helper",
       "location": {
         "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
@@ -4852,58 +3806,6 @@
         "start_column": 41,
         "end_line": 62,
         "end_column": 55
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:51:28:64:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "imported_helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 62,
-        "start_column": 41,
-        "end_line": 62,
-        "end_column": 55
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:51:28:64:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "imported_helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 62,
-        "start_column": 41,
-        "end_line": 62,
-        "end_column": 55
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:51:28:64:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "deeper_outer",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 63,
-        "start_column": 33,
-        "end_line": 63,
-        "end_column": 44
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:51:28:64:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "deeper_outer",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 63,
-        "start_column": 33,
-        "end_line": 63,
-        "end_column": 44
       },
       "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:51:28:64:13",
       "access_type": "read"
@@ -5024,32 +3926,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "deep_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 66,
-        "start_column": 9,
-        "end_line": 66,
-        "end_column": 19
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "deep_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 66,
-        "start_column": 9,
-        "end_line": 66,
-        "end_column": 19
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "deeper_function()",
       "location": {
@@ -5088,25 +3964,6 @@
       }
     },
     {
-      "kind": "function_call",
-      "name": "deeper_function",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 66,
-        "start_column": 23,
-        "end_line": 66,
-        "end_column": 39
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 66,
-        "start_column": 9,
-        "end_line": 66,
-        "end_column": 19
-      }
-    },
-    {
       "kind": "constructor_call",
       "name": "deeper_function",
       "location": {
@@ -5134,32 +3991,6 @@
         "start_column": 23,
         "end_line": 66,
         "end_column": 39
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "deeper_function",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 66,
-        "start_column": 23,
-        "end_line": 66,
-        "end_column": 37
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "deeper_function",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 66,
-        "start_column": 23,
-        "end_line": 66,
-        "end_column": 37
       },
       "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
       "access_type": "read"
@@ -5218,58 +4049,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "param_global",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 69,
-        "start_column": 29,
-        "end_line": 69,
-        "end_column": 40
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "param_global",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 69,
-        "start_column": 29,
-        "end_line": 69,
-        "end_column": 40
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "param_imported",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 70,
-        "start_column": 31,
-        "end_line": 70,
-        "end_column": 44
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "param_imported",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 70,
-        "start_column": 31,
-        "end_line": 70,
-        "end_column": 44
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "param_imported",
       "location": {
         "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
@@ -5290,58 +4069,6 @@
         "start_column": 29,
         "end_line": 71,
         "end_column": 40
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "outer_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 71,
-        "start_column": 29,
-        "end_line": 71,
-        "end_column": 40
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "outer_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 71,
-        "start_column": 29,
-        "end_line": 71,
-        "end_column": 40
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "deep_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 72,
-        "start_column": 28,
-        "end_line": 72,
-        "end_column": 38
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "deep_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 72,
-        "start_column": 28,
-        "end_line": 72,
-        "end_column": 38
       },
       "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
       "access_type": "read"
@@ -5462,32 +4189,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "inner_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 75,
-        "start_column": 5,
-        "end_line": 75,
-        "end_column": 16
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:20:28:83:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "inner_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 75,
-        "start_column": 5,
-        "end_line": 75,
-        "end_column": 16
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:20:28:83:5",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "inner_function(\"param_value\", 999)",
       "location": {
@@ -5526,25 +4227,6 @@
       }
     },
     {
-      "kind": "function_call",
-      "name": "inner_function",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 75,
-        "start_column": 20,
-        "end_line": 75,
-        "end_column": 53
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:20:28:83:5",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 75,
-        "start_column": 5,
-        "end_line": 75,
-        "end_column": 16
-      }
-    },
-    {
       "kind": "constructor_call",
       "name": "inner_function",
       "location": {
@@ -5572,32 +4254,6 @@
         "start_column": 20,
         "end_line": 75,
         "end_column": 53
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:20:28:83:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "inner_function",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 75,
-        "start_column": 20,
-        "end_line": 75,
-        "end_column": 33
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:20:28:83:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "inner_function",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 75,
-        "start_column": 20,
-        "end_line": 75,
-        "end_column": 33
       },
       "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:20:28:83:5",
       "access_type": "read"
@@ -5656,32 +4312,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "global_var",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 78,
-        "start_column": 29,
-        "end_line": 78,
-        "end_column": 38
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:20:28:83:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "global_var",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 78,
-        "start_column": 29,
-        "end_line": 78,
-        "end_column": 38
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:20:28:83:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "imported_helper",
       "location": {
         "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
@@ -5689,58 +4319,6 @@
         "start_column": 34,
         "end_line": 79,
         "end_column": 48
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:20:28:83:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "imported_helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 79,
-        "start_column": 34,
-        "end_line": 79,
-        "end_column": 48
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:20:28:83:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "imported_helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 79,
-        "start_column": 34,
-        "end_line": 79,
-        "end_column": 48
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:20:28:83:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 80,
-        "start_column": 26,
-        "end_line": 80,
-        "end_column": 38
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:20:28:83:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 80,
-        "start_column": 26,
-        "end_line": 80,
-        "end_column": 38
       },
       "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:20:28:83:5",
       "access_type": "read"
@@ -5773,58 +4351,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "actual_helper_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 81,
-        "start_column": 33,
-        "end_line": 81,
-        "end_column": 52
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:20:28:83:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "actual_helper_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 81,
-        "start_column": 33,
-        "end_line": 81,
-        "end_column": 52
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:20:28:83:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "inner_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 82,
-        "start_column": 25,
-        "end_line": 82,
-        "end_column": 36
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:20:28:83:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "inner_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 82,
-        "start_column": 25,
-        "end_line": 82,
-        "end_column": 36
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:20:28:83:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "inner_result",
       "location": {
         "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
@@ -5847,58 +4373,6 @@
         "end_column": 32
       },
       "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "test_comprehension_shadowing",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 86,
-        "start_column": 5,
-        "end_line": 86,
-        "end_column": 32
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "test_comprehension_shadowing",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 86,
-        "start_column": 5,
-        "end_line": 86,
-        "end_column": 32
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "dict",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 86,
-        "start_column": 39,
-        "end_line": 86,
-        "end_column": 42
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:86:33:111:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "dict",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 86,
-        "start_column": 39,
-        "end_line": 86,
-        "end_column": 42
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:86:33:111:5",
       "access_type": "read"
     },
     {
@@ -6008,32 +4482,6 @@
         "end_line": 88,
         "end_column": 27
       }
-    },
-    {
-      "kind": "variable_reference",
-      "name": "items",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 88,
-        "start_column": 5,
-        "end_line": 88,
-        "end_column": 9
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:86:33:111:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "items",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 88,
-        "start_column": 5,
-        "end_line": 88,
-        "end_column": 9
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:86:33:111:5",
-      "access_type": "read"
     },
     {
       "kind": "variable_reference",
@@ -6196,32 +4644,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 89,
-        "start_column": 5,
-        "end_line": 89,
-        "end_column": 10
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:86:33:111:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 89,
-        "start_column": 5,
-        "end_line": 89,
-        "end_column": 10
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:86:33:111:5",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "\"comprehension_helper\"",
       "location": {
@@ -6328,32 +4750,6 @@
         "end_line": 93,
         "end_column": 23
       }
-    },
-    {
-      "kind": "variable_reference",
-      "name": "item",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 93,
-        "start_column": 5,
-        "end_line": 93,
-        "end_column": 8
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:86:33:111:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "item",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 93,
-        "start_column": 5,
-        "end_line": 93,
-        "end_column": 8
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:86:33:111:5",
-      "access_type": "read"
     },
     {
       "kind": "variable_reference",
@@ -6516,32 +4912,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "comp_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 94,
-        "start_column": 5,
-        "end_line": 94,
-        "end_column": 15
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:86:33:111:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "comp_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 94,
-        "start_column": 5,
-        "end_line": 94,
-        "end_column": 15
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:86:33:111:5",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "[process_data(f\"item_{item}\") for item in items]",
       "location": {
@@ -6593,25 +4963,6 @@
       }
     },
     {
-      "kind": "function_call",
-      "name": "process_data",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 94,
-        "start_column": 20,
-        "end_line": 94,
-        "end_column": 47
-      },
-      "scope_id": "block:<fixtures>/python/code/functions/variable_shadowing.py:94:19:94:66",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 94,
-        "start_column": 5,
-        "end_line": 94,
-        "end_column": 15
-      }
-    },
-    {
       "kind": "constructor_call",
       "name": "process_data",
       "location": {
@@ -6645,58 +4996,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "process_data",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 94,
-        "start_column": 20,
-        "end_line": 94,
-        "end_column": 31
-      },
-      "scope_id": "block:<fixtures>/python/code/functions/variable_shadowing.py:94:19:94:66",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "process_data",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 94,
-        "start_column": 20,
-        "end_line": 94,
-        "end_column": 31
-      },
-      "scope_id": "block:<fixtures>/python/code/functions/variable_shadowing.py:94:19:94:66",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "item",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 94,
-        "start_column": 41,
-        "end_line": 94,
-        "end_column": 44
-      },
-      "scope_id": "block:<fixtures>/python/code/functions/variable_shadowing.py:94:19:94:66",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "item",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 94,
-        "start_column": 41,
-        "end_line": 94,
-        "end_column": 44
-      },
-      "scope_id": "block:<fixtures>/python/code/functions/variable_shadowing.py:94:19:94:66",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "item",
       "location": {
         "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
@@ -6717,58 +5016,6 @@
         "start_column": 53,
         "end_line": 94,
         "end_column": 56
-      },
-      "scope_id": "block:<fixtures>/python/code/functions/variable_shadowing.py:94:19:94:66",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "item",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 94,
-        "start_column": 53,
-        "end_line": 94,
-        "end_column": 56
-      },
-      "scope_id": "block:<fixtures>/python/code/functions/variable_shadowing.py:94:19:94:66",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "item",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 94,
-        "start_column": 53,
-        "end_line": 94,
-        "end_column": 56
-      },
-      "scope_id": "block:<fixtures>/python/code/functions/variable_shadowing.py:94:19:94:66",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "items",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 94,
-        "start_column": 61,
-        "end_line": 94,
-        "end_column": 65
-      },
-      "scope_id": "block:<fixtures>/python/code/functions/variable_shadowing.py:94:19:94:66",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "items",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 94,
-        "start_column": 61,
-        "end_line": 94,
-        "end_column": 65
       },
       "scope_id": "block:<fixtures>/python/code/functions/variable_shadowing.py:94:19:94:66",
       "access_type": "read"
@@ -6889,32 +5136,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "final_item",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 97,
-        "start_column": 5,
-        "end_line": 97,
-        "end_column": 14
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:86:33:111:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "final_item",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 97,
-        "start_column": 5,
-        "end_line": 97,
-        "end_column": 14
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:86:33:111:5",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "item",
       "location": {
@@ -6938,32 +5159,6 @@
         "certainty": "declared",
         "is_nullable": false
       }
-    },
-    {
-      "kind": "variable_reference",
-      "name": "item",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 97,
-        "start_column": 18,
-        "end_line": 97,
-        "end_column": 21
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:86:33:111:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "item",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 97,
-        "start_column": 18,
-        "end_line": 97,
-        "end_column": 21
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:86:33:111:5",
-      "access_type": "read"
     },
     {
       "kind": "variable_reference",
@@ -7094,32 +5289,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "dict_comp",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 100,
-        "start_column": 5,
-        "end_line": 100,
-        "end_column": 13
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:86:33:111:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "dict_comp",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 100,
-        "start_column": 5,
-        "end_line": 100,
-        "end_column": 13
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:86:33:111:5",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "{\n        str(x): process_data(f\"value_{x}\")\n        for x in items\n        if x % 2 == 0\n    }",
       "location": {
@@ -7171,25 +5340,6 @@
       }
     },
     {
-      "kind": "function_call",
-      "name": "str",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 101,
-        "start_column": 9,
-        "end_line": 101,
-        "end_column": 14
-      },
-      "scope_id": "block:<fixtures>/python/code/functions/variable_shadowing.py:100:17:104:5",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 100,
-        "start_column": 5,
-        "end_line": 100,
-        "end_column": 13
-      }
-    },
-    {
       "kind": "constructor_call",
       "name": "str",
       "location": {
@@ -7223,58 +5373,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "str",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 101,
-        "start_column": 9,
-        "end_line": 101,
-        "end_column": 11
-      },
-      "scope_id": "block:<fixtures>/python/code/functions/variable_shadowing.py:100:17:104:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "str",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 101,
-        "start_column": 9,
-        "end_line": 101,
-        "end_column": 11
-      },
-      "scope_id": "block:<fixtures>/python/code/functions/variable_shadowing.py:100:17:104:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "x",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 101,
-        "start_column": 13,
-        "end_line": 101,
-        "end_column": 13
-      },
-      "scope_id": "block:<fixtures>/python/code/functions/variable_shadowing.py:100:17:104:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "x",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 101,
-        "start_column": 13,
-        "end_line": 101,
-        "end_column": 13
-      },
-      "scope_id": "block:<fixtures>/python/code/functions/variable_shadowing.py:100:17:104:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "x",
       "location": {
         "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
@@ -7295,25 +5393,6 @@
         "start_column": 17,
         "end_line": 101,
         "end_column": 28
-      },
-      "scope_id": "block:<fixtures>/python/code/functions/variable_shadowing.py:100:17:104:5",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 100,
-        "start_column": 5,
-        "end_line": 100,
-        "end_column": 13
-      }
-    },
-    {
-      "kind": "function_call",
-      "name": "process_data",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 101,
-        "start_column": 17,
-        "end_line": 101,
-        "end_column": 42
       },
       "scope_id": "block:<fixtures>/python/code/functions/variable_shadowing.py:100:17:104:5",
       "potential_construct_target": {
@@ -7358,58 +5437,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "process_data",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 101,
-        "start_column": 17,
-        "end_line": 101,
-        "end_column": 28
-      },
-      "scope_id": "block:<fixtures>/python/code/functions/variable_shadowing.py:100:17:104:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "process_data",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 101,
-        "start_column": 17,
-        "end_line": 101,
-        "end_column": 28
-      },
-      "scope_id": "block:<fixtures>/python/code/functions/variable_shadowing.py:100:17:104:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "x",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 101,
-        "start_column": 39,
-        "end_line": 101,
-        "end_column": 39
-      },
-      "scope_id": "block:<fixtures>/python/code/functions/variable_shadowing.py:100:17:104:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "x",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 101,
-        "start_column": 39,
-        "end_line": 101,
-        "end_column": 39
-      },
-      "scope_id": "block:<fixtures>/python/code/functions/variable_shadowing.py:100:17:104:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "x",
       "location": {
         "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
@@ -7436,32 +5463,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "x",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 102,
-        "start_column": 13,
-        "end_line": 102,
-        "end_column": 13
-      },
-      "scope_id": "block:<fixtures>/python/code/functions/variable_shadowing.py:100:17:104:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "x",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 102,
-        "start_column": 13,
-        "end_line": 102,
-        "end_column": 13
-      },
-      "scope_id": "block:<fixtures>/python/code/functions/variable_shadowing.py:100:17:104:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "items",
       "location": {
         "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
@@ -7469,58 +5470,6 @@
         "start_column": 18,
         "end_line": 102,
         "end_column": 22
-      },
-      "scope_id": "block:<fixtures>/python/code/functions/variable_shadowing.py:100:17:104:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "items",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 102,
-        "start_column": 18,
-        "end_line": 102,
-        "end_column": 22
-      },
-      "scope_id": "block:<fixtures>/python/code/functions/variable_shadowing.py:100:17:104:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "items",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 102,
-        "start_column": 18,
-        "end_line": 102,
-        "end_column": 22
-      },
-      "scope_id": "block:<fixtures>/python/code/functions/variable_shadowing.py:100:17:104:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "x",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 103,
-        "start_column": 12,
-        "end_line": 103,
-        "end_column": 12
-      },
-      "scope_id": "block:<fixtures>/python/code/functions/variable_shadowing.py:100:17:104:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "x",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 103,
-        "start_column": 12,
-        "end_line": 103,
-        "end_column": 12
       },
       "scope_id": "block:<fixtures>/python/code/functions/variable_shadowing.py:100:17:104:5",
       "access_type": "read"
@@ -7579,32 +5528,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "comp_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 107,
-        "start_column": 24,
-        "end_line": 107,
-        "end_column": 34
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:86:33:111:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "comp_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 107,
-        "start_column": 24,
-        "end_line": 107,
-        "end_column": 34
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:86:33:111:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "final_item",
       "location": {
         "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
@@ -7612,58 +5535,6 @@
         "start_column": 23,
         "end_line": 108,
         "end_column": 32
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:86:33:111:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "final_item",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 108,
-        "start_column": 23,
-        "end_line": 108,
-        "end_column": 32
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:86:33:111:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "final_item",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 108,
-        "start_column": 23,
-        "end_line": 108,
-        "end_column": 32
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:86:33:111:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "dict_comp",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 109,
-        "start_column": 22,
-        "end_line": 109,
-        "end_column": 30
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:86:33:111:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "dict_comp",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 109,
-        "start_column": 22,
-        "end_line": 109,
-        "end_column": 30
       },
       "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:86:33:111:5",
       "access_type": "read"
@@ -7696,32 +5567,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 110,
-        "start_column": 19,
-        "end_line": 110,
-        "end_column": 24
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:86:33:111:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 110,
-        "start_column": 19,
-        "end_line": 110,
-        "end_column": 24
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:86:33:111:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "test_lambda_shadowing",
       "location": {
         "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
@@ -7731,58 +5576,6 @@
         "end_column": 25
       },
       "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "test_lambda_shadowing",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 114,
-        "start_column": 5,
-        "end_line": 114,
-        "end_column": 25
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "test_lambda_shadowing",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 114,
-        "start_column": 5,
-        "end_line": 114,
-        "end_column": 25
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "dict",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 114,
-        "start_column": 32,
-        "end_line": 114,
-        "end_column": 35
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "dict",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 114,
-        "start_column": 32,
-        "end_line": 114,
-        "end_column": 35
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
       "access_type": "read"
     },
     {
@@ -7892,32 +5685,6 @@
         "end_line": 116,
         "end_column": 28
       }
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 116,
-        "start_column": 5,
-        "end_line": 116,
-        "end_column": 10
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 116,
-        "start_column": 5,
-        "end_line": 116,
-        "end_column": 10
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
-      "access_type": "read"
     },
     {
       "kind": "variable_reference",
@@ -8080,32 +5847,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "x",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 119,
-        "start_column": 5,
-        "end_line": 119,
-        "end_column": 5
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "x",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 119,
-        "start_column": 5,
-        "end_line": 119,
-        "end_column": 5
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "\"outer_x\"",
       "location": {
@@ -8284,32 +6025,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "lambda_func",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 120,
-        "start_column": 5,
-        "end_line": 120,
-        "end_column": 15
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "lambda_func",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 120,
-        "start_column": 5,
-        "end_line": 120,
-        "end_column": 15
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "lambda x: process_data(f\"lambda_{x}\")",
       "location": {
@@ -8355,32 +6070,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "x",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 120,
-        "start_column": 26,
-        "end_line": 120,
-        "end_column": 26
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:120:19:120:55",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "x",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 120,
-        "start_column": 26,
-        "end_line": 120,
-        "end_column": 26
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:120:19:120:55",
-      "access_type": "read"
-    },
-    {
       "kind": "function_call",
       "name": "process_data",
       "location": {
@@ -8389,25 +6078,6 @@
         "start_column": 29,
         "end_line": 120,
         "end_column": 40
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:120:19:120:55",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 120,
-        "start_column": 5,
-        "end_line": 120,
-        "end_column": 15
-      }
-    },
-    {
-      "kind": "function_call",
-      "name": "process_data",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 120,
-        "start_column": 29,
-        "end_line": 120,
-        "end_column": 55
       },
       "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:120:19:120:55",
       "potential_construct_target": {
@@ -8446,58 +6116,6 @@
         "start_column": 29,
         "end_line": 120,
         "end_column": 40
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:120:19:120:55",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "process_data",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 120,
-        "start_column": 29,
-        "end_line": 120,
-        "end_column": 40
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:120:19:120:55",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "process_data",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 120,
-        "start_column": 29,
-        "end_line": 120,
-        "end_column": 40
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:120:19:120:55",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "x",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 120,
-        "start_column": 52,
-        "end_line": 120,
-        "end_column": 52
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:120:19:120:55",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "x",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 120,
-        "start_column": 52,
-        "end_line": 120,
-        "end_column": 52
       },
       "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:120:19:120:55",
       "access_type": "read"
@@ -8618,32 +6236,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "lambda_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 121,
-        "start_column": 5,
-        "end_line": 121,
-        "end_column": 17
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "lambda_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 121,
-        "start_column": 5,
-        "end_line": 121,
-        "end_column": 17
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "lambda_func(\"inner_x\")",
       "location": {
@@ -8682,25 +6274,6 @@
       }
     },
     {
-      "kind": "function_call",
-      "name": "lambda_func",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 121,
-        "start_column": 21,
-        "end_line": 121,
-        "end_column": 42
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 121,
-        "start_column": 5,
-        "end_line": 121,
-        "end_column": 17
-      }
-    },
-    {
       "kind": "constructor_call",
       "name": "lambda_func",
       "location": {
@@ -8728,32 +6301,6 @@
         "start_column": 21,
         "end_line": 121,
         "end_column": 42
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "lambda_func",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 121,
-        "start_column": 21,
-        "end_line": 121,
-        "end_column": 31
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "lambda_func",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 121,
-        "start_column": 21,
-        "end_line": 121,
-        "end_column": 31
       },
       "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
       "access_type": "read"
@@ -8874,32 +6421,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "final_x",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 124,
-        "start_column": 5,
-        "end_line": 124,
-        "end_column": 11
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "final_x",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 124,
-        "start_column": 5,
-        "end_line": 124,
-        "end_column": 11
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "x",
       "location": {
@@ -8952,58 +6473,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "x",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 124,
-        "start_column": 15,
-        "end_line": 124,
-        "end_column": 15
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "x",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 124,
-        "start_column": 15,
-        "end_line": 124,
-        "end_column": 15
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "create_nested_lambda",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 127,
-        "start_column": 9,
-        "end_line": 127,
-        "end_column": 28
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "create_nested_lambda",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 127,
-        "start_column": 9,
-        "end_line": 127,
-        "end_column": 28
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "create_nested_lambda",
       "location": {
         "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
@@ -9024,58 +6493,6 @@
         "start_column": 30,
         "end_line": 127,
         "end_column": 34
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:127:29:131:81",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "param",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 127,
-        "start_column": 30,
-        "end_line": 127,
-        "end_column": 34
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:127:29:131:81",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "param",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 127,
-        "start_column": 30,
-        "end_line": 127,
-        "end_column": 34
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:127:29:131:81",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "str",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 127,
-        "start_column": 37,
-        "end_line": 127,
-        "end_column": 39
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:127:29:131:81",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "str",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 127,
-        "start_column": 37,
-        "end_line": 127,
-        "end_column": 39
       },
       "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:127:29:131:81",
       "access_type": "read"
@@ -9108,32 +6525,6 @@
         "start_column": 37,
         "end_line": 127,
         "end_column": 39
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:127:29:131:81",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "Callable",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 127,
-        "start_column": 45,
-        "end_line": 127,
-        "end_column": 52
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:127:29:131:81",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "Callable",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 127,
-        "start_column": 45,
-        "end_line": 127,
-        "end_column": 52
       },
       "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:127:29:131:81",
       "access_type": "read"
@@ -9273,32 +6664,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 129,
-        "start_column": 9,
-        "end_line": 129,
-        "end_column": 14
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:127:29:131:81",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 129,
-        "start_column": 9,
-        "end_line": 129,
-        "end_column": 14
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:127:29:131:81",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "\"nested_lambda_helper\"",
       "location": {
@@ -9375,58 +6740,6 @@
       "location": {
         "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
         "start_line": 131,
-        "start_column": 23,
-        "end_line": 131,
-        "end_column": 27
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:131:16:131:81",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "param",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 131,
-        "start_column": 23,
-        "end_line": 131,
-        "end_column": 27
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:131:16:131:81",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "param",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 131,
-        "start_column": 37,
-        "end_line": 131,
-        "end_column": 41
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:131:30:131:81",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "param",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 131,
-        "start_column": 37,
-        "end_line": 131,
-        "end_column": 41
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:131:30:131:81",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "param",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 131,
         "start_column": 37,
         "end_line": 131,
         "end_column": 41
@@ -9443,18 +6756,6 @@
         "start_column": 44,
         "end_line": 131,
         "end_column": 55
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:131:30:131:81"
-    },
-    {
-      "kind": "function_call",
-      "name": "process_data",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 131,
-        "start_column": 44,
-        "end_line": 131,
-        "end_column": 81
       },
       "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:131:30:131:81"
     },
@@ -9479,58 +6780,6 @@
         "start_column": 44,
         "end_line": 131,
         "end_column": 55
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:131:30:131:81",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "process_data",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 131,
-        "start_column": 44,
-        "end_line": 131,
-        "end_column": 55
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:131:30:131:81",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "process_data",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 131,
-        "start_column": 44,
-        "end_line": 131,
-        "end_column": 55
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:131:30:131:81",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "param",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 131,
-        "start_column": 74,
-        "end_line": 131,
-        "end_column": 78
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:131:30:131:81",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "param",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 131,
-        "start_column": 74,
-        "end_line": 131,
-        "end_column": 78
       },
       "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:131:30:131:81",
       "access_type": "read"
@@ -9651,32 +6900,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "nested_lambda",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 133,
-        "start_column": 5,
-        "end_line": 133,
-        "end_column": 17
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "nested_lambda",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 133,
-        "start_column": 5,
-        "end_line": 133,
-        "end_column": 17
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "create_nested_lambda(\"first\")",
       "location": {
@@ -9715,25 +6938,6 @@
       }
     },
     {
-      "kind": "function_call",
-      "name": "create_nested_lambda",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 133,
-        "start_column": 21,
-        "end_line": 133,
-        "end_column": 49
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 133,
-        "start_column": 5,
-        "end_line": 133,
-        "end_column": 17
-      }
-    },
-    {
       "kind": "constructor_call",
       "name": "create_nested_lambda",
       "location": {
@@ -9761,32 +6965,6 @@
         "start_column": 21,
         "end_line": 133,
         "end_column": 49
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "create_nested_lambda",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 133,
-        "start_column": 21,
-        "end_line": 133,
-        "end_column": 40
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "create_nested_lambda",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 133,
-        "start_column": 21,
-        "end_line": 133,
-        "end_column": 40
       },
       "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
       "access_type": "read"
@@ -9907,32 +7085,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "nested_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 134,
-        "start_column": 5,
-        "end_line": 134,
-        "end_column": 17
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "nested_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 134,
-        "start_column": 5,
-        "end_line": 134,
-        "end_column": 17
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "nested_lambda(\"second\")(\"third\")",
       "location": {
@@ -9971,25 +7123,6 @@
       }
     },
     {
-      "kind": "function_call",
-      "name": "nested_lambda",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 134,
-        "start_column": 21,
-        "end_line": 134,
-        "end_column": 43
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 134,
-        "start_column": 5,
-        "end_line": 134,
-        "end_column": 17
-      }
-    },
-    {
       "kind": "constructor_call",
       "name": "nested_lambda",
       "location": {
@@ -10017,32 +7150,6 @@
         "start_column": 21,
         "end_line": 134,
         "end_column": 52
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "nested_lambda",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 134,
-        "start_column": 21,
-        "end_line": 134,
-        "end_column": 33
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "nested_lambda",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 134,
-        "start_column": 21,
-        "end_line": 134,
-        "end_column": 33
       },
       "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
       "access_type": "read"
@@ -10101,32 +7208,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "lambda_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 137,
-        "start_column": 26,
-        "end_line": 137,
-        "end_column": 38
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "lambda_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 137,
-        "start_column": 26,
-        "end_line": 137,
-        "end_column": 38
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "final_x",
       "location": {
         "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
@@ -10134,58 +7215,6 @@
         "start_column": 20,
         "end_line": 138,
         "end_column": 26
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "final_x",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 138,
-        "start_column": 20,
-        "end_line": 138,
-        "end_column": 26
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "final_x",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 138,
-        "start_column": 20,
-        "end_line": 138,
-        "end_column": 26
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "nested_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 139,
-        "start_column": 26,
-        "end_line": 139,
-        "end_column": 38
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "nested_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 139,
-        "start_column": 26,
-        "end_line": 139,
-        "end_column": 38
       },
       "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
       "access_type": "read"
@@ -10218,32 +7247,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 140,
-        "start_column": 19,
-        "end_line": 140,
-        "end_column": 24
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 140,
-        "start_column": 19,
-        "end_line": 140,
-        "end_column": 24
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "test_class_method_shadowing",
       "location": {
         "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
@@ -10253,58 +7256,6 @@
         "end_column": 31
       },
       "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "test_class_method_shadowing",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 144,
-        "start_column": 5,
-        "end_line": 144,
-        "end_column": 31
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "test_class_method_shadowing",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 144,
-        "start_column": 5,
-        "end_line": 144,
-        "end_column": 31
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "dict",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 144,
-        "start_column": 38,
-        "end_line": 144,
-        "end_column": 41
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:144:32:189:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "dict",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 144,
-        "start_column": 38,
-        "end_line": 144,
-        "end_column": 41
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:144:32:189:5",
       "access_type": "read"
     },
     {
@@ -10335,32 +7286,6 @@
         "start_column": 38,
         "end_line": 144,
         "end_column": 41
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:144:32:189:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "ShadowTest",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 147,
-        "start_column": 11,
-        "end_line": 147,
-        "end_column": 20
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:144:32:189:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "ShadowTest",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 147,
-        "start_column": 11,
-        "end_line": 147,
-        "end_column": 20
       },
       "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:144:32:189:5",
       "access_type": "read"
@@ -10482,32 +7407,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 150,
-        "start_column": 9,
-        "end_line": 150,
-        "end_column": 14
-      },
-      "scope_id": "class:<fixtures>/python/code/functions/variable_shadowing.py:147:22:180:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 150,
-        "start_column": 9,
-        "end_line": 150,
-        "end_column": 14
-      },
-      "scope_id": "class:<fixtures>/python/code/functions/variable_shadowing.py:147:22:180:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "\"class_helper\"",
       "location": {
         "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
@@ -10566,45 +7465,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "__init__",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 152,
-        "start_column": 13,
-        "end_line": 152,
-        "end_column": 20
-      },
-      "scope_id": "class:<fixtures>/python/code/functions/variable_shadowing.py:147:22:180:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "__init__",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 152,
-        "start_column": 13,
-        "end_line": 152,
-        "end_column": 20
-      },
-      "scope_id": "class:<fixtures>/python/code/functions/variable_shadowing.py:147:22:180:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "self",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 152,
-        "start_column": 22,
-        "end_line": 152,
-        "end_column": 25
-      },
-      "scope_id": "constructor:<fixtures>/python/code/functions/variable_shadowing.py:152:21:154:76",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "self",
       "location": {
         "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
@@ -10638,58 +7498,6 @@
         "start_column": 28,
         "end_line": 152,
         "end_column": 33
-      },
-      "scope_id": "constructor:<fixtures>/python/code/functions/variable_shadowing.py:152:21:154:76",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 152,
-        "start_column": 28,
-        "end_line": 152,
-        "end_column": 33
-      },
-      "scope_id": "constructor:<fixtures>/python/code/functions/variable_shadowing.py:152:21:154:76",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 152,
-        "start_column": 28,
-        "end_line": 152,
-        "end_column": 33
-      },
-      "scope_id": "constructor:<fixtures>/python/code/functions/variable_shadowing.py:152:21:154:76",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "str",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 152,
-        "start_column": 36,
-        "end_line": 152,
-        "end_column": 38
-      },
-      "scope_id": "constructor:<fixtures>/python/code/functions/variable_shadowing.py:152:21:154:76",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "str",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 152,
-        "start_column": 36,
-        "end_line": 152,
-        "end_column": 38
       },
       "scope_id": "constructor:<fixtures>/python/code/functions/variable_shadowing.py:152:21:154:76",
       "access_type": "read"
@@ -10862,19 +7670,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "self",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 154,
-        "start_column": 13,
-        "end_line": 154,
-        "end_column": 16
-      },
-      "scope_id": "constructor:<fixtures>/python/code/functions/variable_shadowing.py:152:21:154:76",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "helper",
       "location": {
         "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
@@ -10931,89 +7726,11 @@
       "location": {
         "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
         "start_line": 154,
-        "start_column": 18,
-        "end_line": 154,
-        "end_column": 23
-      },
-      "scope_id": "constructor:<fixtures>/python/code/functions/variable_shadowing.py:152:21:154:76",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 154,
-        "start_column": 18,
-        "end_line": 154,
-        "end_column": 23
-      },
-      "scope_id": "constructor:<fixtures>/python/code/functions/variable_shadowing.py:152:21:154:76",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 154,
         "start_column": 27,
         "end_line": 154,
         "end_column": 32
       },
       "scope_id": "constructor:<fixtures>/python/code/functions/variable_shadowing.py:152:21:154:76",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 154,
-        "start_column": 27,
-        "end_line": 154,
-        "end_column": 32
-      },
-      "scope_id": "constructor:<fixtures>/python/code/functions/variable_shadowing.py:152:21:154:76",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 154,
-        "start_column": 27,
-        "end_line": 154,
-        "end_column": 32
-      },
-      "scope_id": "constructor:<fixtures>/python/code/functions/variable_shadowing.py:152:21:154:76",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "method_with_shadowing",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 156,
-        "start_column": 13,
-        "end_line": 156,
-        "end_column": 33
-      },
-      "scope_id": "class:<fixtures>/python/code/functions/variable_shadowing.py:147:22:180:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "method_with_shadowing",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 156,
-        "start_column": 13,
-        "end_line": 156,
-        "end_column": 33
-      },
-      "scope_id": "class:<fixtures>/python/code/functions/variable_shadowing.py:147:22:180:13",
       "access_type": "read"
     },
     {
@@ -11057,19 +7774,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "self",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 156,
-        "start_column": 35,
-        "end_line": 156,
-        "end_column": 38
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "helper",
       "location": {
         "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
@@ -11077,58 +7781,6 @@
         "start_column": 41,
         "end_line": 156,
         "end_column": 46
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 156,
-        "start_column": 41,
-        "end_line": 156,
-        "end_column": 46
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 156,
-        "start_column": 41,
-        "end_line": 156,
-        "end_column": 46
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "Any",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 156,
-        "start_column": 49,
-        "end_line": 156,
-        "end_column": 51
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "Any",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 156,
-        "start_column": 49,
-        "end_line": 156,
-        "end_column": 51
       },
       "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
       "access_type": "read"
@@ -11161,32 +7813,6 @@
         "start_column": 49,
         "end_line": 156,
         "end_column": 51
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "dict",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 156,
-        "start_column": 57,
-        "end_line": 156,
-        "end_column": 60
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "dict",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 156,
-        "start_column": 57,
-        "end_line": 156,
-        "end_column": 60
       },
       "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
       "access_type": "read"
@@ -11326,32 +7952,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "outer_call",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 161,
-        "start_column": 13,
-        "end_line": 161,
-        "end_column": 22
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "outer_call",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 161,
-        "start_column": 13,
-        "end_line": 161,
-        "end_column": 22
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "outer_helper()",
       "location": {
@@ -11390,25 +7990,6 @@
       }
     },
     {
-      "kind": "function_call",
-      "name": "outer_helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 161,
-        "start_column": 26,
-        "end_line": 161,
-        "end_column": 39
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 161,
-        "start_column": 13,
-        "end_line": 161,
-        "end_column": 22
-      }
-    },
-    {
       "kind": "constructor_call",
       "name": "outer_helper",
       "location": {
@@ -11436,32 +8017,6 @@
         "start_column": 26,
         "end_line": 161,
         "end_column": 39
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "outer_helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 161,
-        "start_column": 26,
-        "end_line": 161,
-        "end_column": 37
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "outer_helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 161,
-        "start_column": 26,
-        "end_line": 161,
-        "end_column": 37
       },
       "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
       "access_type": "read"
@@ -11582,32 +8137,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "processed",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 164,
-        "start_column": 13,
-        "end_line": 164,
-        "end_column": 21
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "processed",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 164,
-        "start_column": 13,
-        "end_line": 164,
-        "end_column": 21
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "process_data(\"method_test\")",
       "location": {
@@ -11635,25 +8164,6 @@
         "start_column": 25,
         "end_line": 164,
         "end_column": 36
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 164,
-        "start_column": 13,
-        "end_line": 164,
-        "end_column": 21
-      }
-    },
-    {
-      "kind": "function_call",
-      "name": "process_data",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 164,
-        "start_column": 25,
-        "end_line": 164,
-        "end_column": 51
       },
       "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
       "potential_construct_target": {
@@ -11711,32 +8221,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "process_data",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 164,
-        "start_column": 25,
-        "end_line": 164,
-        "end_column": 36
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "process_data",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 164,
-        "start_column": 25,
-        "end_line": 164,
-        "end_column": 36
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "local_function",
       "location": {
         "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
@@ -11746,58 +8230,6 @@
         "end_column": 30
       },
       "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "local_function",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 166,
-        "start_column": 17,
-        "end_line": 166,
-        "end_column": 30
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "local_function",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 166,
-        "start_column": 17,
-        "end_line": 166,
-        "end_column": 30
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "str",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 166,
-        "start_column": 37,
-        "end_line": 166,
-        "end_column": 39
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:166:31:169:54",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "str",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 166,
-        "start_column": 37,
-        "end_line": 166,
-        "end_column": 39
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:166:31:169:54",
       "access_type": "read"
     },
     {
@@ -11935,32 +8367,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 168,
-        "start_column": 17,
-        "end_line": 168,
-        "end_column": 22
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:166:31:169:54",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 168,
-        "start_column": 17,
-        "end_line": 168,
-        "end_column": 22
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:166:31:169:54",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "\"local_method_helper\"",
       "location": {
@@ -12018,18 +8424,6 @@
       "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:166:31:169:54"
     },
     {
-      "kind": "function_call",
-      "name": "process_data",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 169,
-        "start_column": 24,
-        "end_line": 169,
-        "end_column": 54
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:166:31:169:54"
-    },
-    {
       "kind": "constructor_call",
       "name": "process_data",
       "location": {
@@ -12063,58 +8457,6 @@
         "start_column": 24,
         "end_line": 169,
         "end_column": 35
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:166:31:169:54",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "process_data",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 169,
-        "start_column": 24,
-        "end_line": 169,
-        "end_column": 35
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:166:31:169:54",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "process_data",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 169,
-        "start_column": 24,
-        "end_line": 169,
-        "end_column": 35
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:166:31:169:54",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 169,
-        "start_column": 46,
-        "end_line": 169,
-        "end_column": 51
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:166:31:169:54",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 169,
-        "start_column": 46,
-        "end_line": 169,
-        "end_column": 51
       },
       "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:166:31:169:54",
       "access_type": "read"
@@ -12235,32 +8577,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "local_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 171,
-        "start_column": 13,
-        "end_line": 171,
-        "end_column": 24
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "local_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 171,
-        "start_column": 13,
-        "end_line": 171,
-        "end_column": 24
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "local_function()",
       "location": {
@@ -12288,25 +8604,6 @@
         "start_column": 28,
         "end_line": 171,
         "end_column": 41
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 171,
-        "start_column": 13,
-        "end_line": 171,
-        "end_column": 24
-      }
-    },
-    {
-      "kind": "function_call",
-      "name": "local_function",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 171,
-        "start_column": 28,
-        "end_line": 171,
-        "end_column": 43
       },
       "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
       "potential_construct_target": {
@@ -12364,32 +8661,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "local_function",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 171,
-        "start_column": 28,
-        "end_line": 171,
-        "end_column": 41
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "local_function",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 171,
-        "start_column": 28,
-        "end_line": 171,
-        "end_column": 41
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "return {\n                \"param_helper\": helper,\n                \"instance_helper\": self.helper,\n                \"class_helper\": ShadowTest.helper,\n                \"outer_call\": outer_call,\n                \"processed\": processed,\n                \"local_result\": local_result,\n            }",
       "location": {
         "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
@@ -12410,32 +8681,6 @@
         "start_column": 20,
         "end_line": 180,
         "end_column": 13
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 174,
-        "start_column": 33,
-        "end_line": 174,
-        "end_column": 38
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 174,
-        "start_column": 33,
-        "end_line": 174,
-        "end_column": 38
       },
       "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
       "access_type": "read"
@@ -12519,45 +8764,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "self",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 175,
-        "start_column": 36,
-        "end_line": 175,
-        "end_column": 39
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 175,
-        "start_column": 41,
-        "end_line": 175,
-        "end_column": 46
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 175,
-        "start_column": 41,
-        "end_line": 175,
-        "end_column": 46
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "helper",
       "location": {
         "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
@@ -12635,58 +8841,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "ShadowTest",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 176,
-        "start_column": 33,
-        "end_line": 176,
-        "end_column": 42
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "ShadowTest",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 176,
-        "start_column": 33,
-        "end_line": 176,
-        "end_column": 42
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 176,
-        "start_column": 44,
-        "end_line": 176,
-        "end_column": 49
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 176,
-        "start_column": 44,
-        "end_line": 176,
-        "end_column": 49
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "helper",
       "location": {
         "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
@@ -12726,32 +8880,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "outer_call",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 177,
-        "start_column": 31,
-        "end_line": 177,
-        "end_column": 40
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "outer_call",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 177,
-        "start_column": 31,
-        "end_line": 177,
-        "end_column": 40
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "processed",
       "location": {
         "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
@@ -12759,58 +8887,6 @@
         "start_column": 30,
         "end_line": 178,
         "end_column": 38
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "processed",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 178,
-        "start_column": 30,
-        "end_line": 178,
-        "end_column": 38
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "processed",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 178,
-        "start_column": 30,
-        "end_line": 178,
-        "end_column": 38
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "local_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 179,
-        "start_column": 33,
-        "end_line": 179,
-        "end_column": 44
-      },
-      "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "local_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 179,
-        "start_column": 33,
-        "end_line": 179,
-        "end_column": 44
       },
       "scope_id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
       "access_type": "read"
@@ -12931,32 +9007,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "shadow_obj",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 183,
-        "start_column": 5,
-        "end_line": 183,
-        "end_column": 14
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:144:32:189:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "shadow_obj",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 183,
-        "start_column": 5,
-        "end_line": 183,
-        "end_column": 14
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:144:32:189:5",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "ShadowTest(\"instance_helper\")",
       "location": {
@@ -12995,25 +9045,6 @@
       }
     },
     {
-      "kind": "function_call",
-      "name": "ShadowTest",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 183,
-        "start_column": 18,
-        "end_line": 183,
-        "end_column": 46
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:144:32:189:5",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 183,
-        "start_column": 5,
-        "end_line": 183,
-        "end_column": 14
-      }
-    },
-    {
       "kind": "constructor_call",
       "name": "ShadowTest",
       "location": {
@@ -13041,32 +9072,6 @@
         "start_column": 18,
         "end_line": 183,
         "end_column": 46
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:144:32:189:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "ShadowTest",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 183,
-        "start_column": 18,
-        "end_line": 183,
-        "end_column": 27
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:144:32:189:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "ShadowTest",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 183,
-        "start_column": 18,
-        "end_line": 183,
-        "end_column": 27
       },
       "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:144:32:189:5",
       "access_type": "read"
@@ -13187,32 +9192,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "method_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 184,
-        "start_column": 5,
-        "end_line": 184,
-        "end_column": 17
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:144:32:189:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "method_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 184,
-        "start_column": 5,
-        "end_line": 184,
-        "end_column": 17
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:144:32:189:5",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "shadow_obj.method_with_shadowing(\"param_helper\")",
       "location": {
@@ -13253,44 +9232,17 @@
         "shadow_obj",
         "method_with_shadowing"
       ],
-      "optional_chaining": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "shadow_obj",
-      "location": {
+      "is_optional_chain": false,
+      "potential_construct_target": {
         "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
         "start_line": 184,
-        "start_column": 21,
+        "start_column": 5,
         "end_line": 184,
-        "end_column": 30
+        "end_column": 17
       },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:144:32:189:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "method_call",
-      "name": "method_with_shadowing",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 184,
-        "start_column": 21,
-        "end_line": 184,
-        "end_column": 68
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:144:32:189:5",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 184,
-        "start_column": 21,
-        "end_line": 184,
-        "end_column": 30
-      },
-      "property_chain": [
-        "shadow_obj",
-        "method_with_shadowing"
-      ],
-      "optional_chaining": false
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -13371,58 +9323,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "shadow_obj",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 184,
-        "start_column": 21,
-        "end_line": 184,
-        "end_column": 30
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:144:32:189:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "shadow_obj",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 184,
-        "start_column": 21,
-        "end_line": 184,
-        "end_column": 30
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:144:32:189:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "method_with_shadowing",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 184,
-        "start_column": 32,
-        "end_line": 184,
-        "end_column": 52
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:144:32:189:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "method_with_shadowing",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 184,
-        "start_column": 32,
-        "end_line": 184,
-        "end_column": 52
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:144:32:189:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "method_with_shadowing",
       "location": {
         "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
@@ -13482,58 +9382,6 @@
         "start_column": 23,
         "end_line": 187,
         "end_column": 32
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:144:32:189:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "shadow_obj",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 187,
-        "start_column": 23,
-        "end_line": 187,
-        "end_column": 32
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:144:32:189:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "shadow_obj",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 187,
-        "start_column": 23,
-        "end_line": 187,
-        "end_column": 32
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:144:32:189:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "method_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 188,
-        "start_column": 26,
-        "end_line": 188,
-        "end_column": 38
-      },
-      "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:144:32:189:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "method_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 188,
-        "start_column": 26,
-        "end_line": 188,
-        "end_column": 38
       },
       "scope_id": "function:<fixtures>/python/code/functions/variable_shadowing.py:144:32:189:5",
       "access_type": "read"
@@ -13654,32 +9502,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "shadowing_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 193,
-        "start_column": 1,
-        "end_line": 193,
-        "end_column": 16
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "shadowing_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 193,
-        "start_column": 1,
-        "end_line": 193,
-        "end_column": 16
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "test_variable_shadowing()",
       "location": {
@@ -13718,25 +9540,6 @@
       }
     },
     {
-      "kind": "function_call",
-      "name": "test_variable_shadowing",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 193,
-        "start_column": 20,
-        "end_line": 193,
-        "end_column": 44
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 193,
-        "start_column": 1,
-        "end_line": 193,
-        "end_column": 16
-      }
-    },
-    {
       "kind": "constructor_call",
       "name": "test_variable_shadowing",
       "location": {
@@ -13764,32 +9567,6 @@
         "start_column": 20,
         "end_line": 193,
         "end_column": 44
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "test_variable_shadowing",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 193,
-        "start_column": 20,
-        "end_line": 193,
-        "end_column": 42
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "test_variable_shadowing",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 193,
-        "start_column": 20,
-        "end_line": 193,
-        "end_column": 42
       },
       "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
       "access_type": "read"
@@ -13910,32 +9687,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "comprehension_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 194,
-        "start_column": 1,
-        "end_line": 194,
-        "end_column": 20
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "comprehension_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 194,
-        "start_column": 1,
-        "end_line": 194,
-        "end_column": 20
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "test_comprehension_shadowing()",
       "location": {
@@ -13974,25 +9725,6 @@
       }
     },
     {
-      "kind": "function_call",
-      "name": "test_comprehension_shadowing",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 194,
-        "start_column": 24,
-        "end_line": 194,
-        "end_column": 53
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 194,
-        "start_column": 1,
-        "end_line": 194,
-        "end_column": 20
-      }
-    },
-    {
       "kind": "constructor_call",
       "name": "test_comprehension_shadowing",
       "location": {
@@ -14020,32 +9752,6 @@
         "start_column": 24,
         "end_line": 194,
         "end_column": 53
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "test_comprehension_shadowing",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 194,
-        "start_column": 24,
-        "end_line": 194,
-        "end_column": 51
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "test_comprehension_shadowing",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 194,
-        "start_column": 24,
-        "end_line": 194,
-        "end_column": 51
       },
       "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
       "access_type": "read"
@@ -14166,32 +9872,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "lambda_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 195,
-        "start_column": 1,
-        "end_line": 195,
-        "end_column": 13
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "lambda_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 195,
-        "start_column": 1,
-        "end_line": 195,
-        "end_column": 13
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "test_lambda_shadowing()",
       "location": {
@@ -14230,25 +9910,6 @@
       }
     },
     {
-      "kind": "function_call",
-      "name": "test_lambda_shadowing",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 195,
-        "start_column": 17,
-        "end_line": 195,
-        "end_column": 39
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 195,
-        "start_column": 1,
-        "end_line": 195,
-        "end_column": 13
-      }
-    },
-    {
       "kind": "constructor_call",
       "name": "test_lambda_shadowing",
       "location": {
@@ -14276,32 +9937,6 @@
         "start_column": 17,
         "end_line": 195,
         "end_column": 39
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "test_lambda_shadowing",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 195,
-        "start_column": 17,
-        "end_line": 195,
-        "end_column": 37
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "test_lambda_shadowing",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 195,
-        "start_column": 17,
-        "end_line": 195,
-        "end_column": 37
       },
       "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
       "access_type": "read"
@@ -14422,32 +10057,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "class_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 196,
-        "start_column": 1,
-        "end_line": 196,
-        "end_column": 12
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "class_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 196,
-        "start_column": 1,
-        "end_line": 196,
-        "end_column": 12
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "test_class_method_shadowing()",
       "location": {
@@ -14486,25 +10095,6 @@
       }
     },
     {
-      "kind": "function_call",
-      "name": "test_class_method_shadowing",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 196,
-        "start_column": 16,
-        "end_line": 196,
-        "end_column": 44
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 196,
-        "start_column": 1,
-        "end_line": 196,
-        "end_column": 12
-      }
-    },
-    {
       "kind": "constructor_call",
       "name": "test_class_method_shadowing",
       "location": {
@@ -14532,32 +10122,6 @@
         "start_column": 16,
         "end_line": 196,
         "end_column": 44
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "test_class_method_shadowing",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 196,
-        "start_column": 16,
-        "end_line": 196,
-        "end_column": 42
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "test_class_method_shadowing",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 196,
-        "start_column": 16,
-        "end_line": 196,
-        "end_column": 42
       },
       "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
       "access_type": "read"
@@ -14678,32 +10242,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "results",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 199,
-        "start_column": 1,
-        "end_line": 199,
-        "end_column": 7
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "results",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 199,
-        "start_column": 1,
-        "end_line": 199,
-        "end_column": 7
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "{\n    \"shadowing_result\": shadowing_result,\n    \"comprehension_result\": comprehension_result,\n    \"lambda_result\": lambda_result,\n    \"class_result\": class_result,\n    \"global_var\": global_var,\n    \"helper\": helper,\n}",
       "location": {
@@ -14750,32 +10288,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "shadowing_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 200,
-        "start_column": 25,
-        "end_line": 200,
-        "end_column": 40
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "shadowing_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 200,
-        "start_column": 25,
-        "end_line": 200,
-        "end_column": 40
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "comprehension_result",
       "location": {
         "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
@@ -14783,58 +10295,6 @@
         "start_column": 29,
         "end_line": 201,
         "end_column": 48
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "comprehension_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 201,
-        "start_column": 29,
-        "end_line": 201,
-        "end_column": 48
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "comprehension_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 201,
-        "start_column": 29,
-        "end_line": 201,
-        "end_column": 48
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "lambda_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 202,
-        "start_column": 22,
-        "end_line": 202,
-        "end_column": 34
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "lambda_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 202,
-        "start_column": 22,
-        "end_line": 202,
-        "end_column": 34
       },
       "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
       "access_type": "read"
@@ -14867,32 +10327,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "class_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 203,
-        "start_column": 21,
-        "end_line": 203,
-        "end_column": 32
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "class_result",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 203,
-        "start_column": 21,
-        "end_line": 203,
-        "end_column": 32
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "global_var",
       "location": {
         "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
@@ -14900,58 +10334,6 @@
         "start_column": 19,
         "end_line": 204,
         "end_column": 28
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "global_var",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 204,
-        "start_column": 19,
-        "end_line": 204,
-        "end_column": 28
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "global_var",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 204,
-        "start_column": 19,
-        "end_line": 204,
-        "end_column": 28
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 205,
-        "start_column": 15,
-        "end_line": 205,
-        "end_column": 20
-      },
-      "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/functions/variable_shadowing.py",
-        "start_line": 205,
-        "start_column": 15,
-        "end_line": 205,
-        "end_column": 20
       },
       "scope_id": "module:<fixtures>/python/code/functions/variable_shadowing.py:1:1:206:1",
       "access_type": "read"

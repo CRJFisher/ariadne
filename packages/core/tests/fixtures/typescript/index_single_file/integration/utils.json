@@ -63,6 +63,7 @@
       },
       "defining_scope_id": "module:<fixtures>/typescript/code/integration/utils.ts:1:1:12:1",
       "is_exported": true,
+      "docstring": "/**\n * Shadowing scenario - utils.ts\n * Tests: exported function that will be shadowed in importing file\n */",
       "signature": {
         "parameters": [],
         "return_type": "string"

@@ -34,7 +34,8 @@
       },
       "defining_scope_id": "module:<fixtures>/javascript/code/modules/uses_user.js:1:1:29:2",
       "is_exported": true,
-      "initial_value": "new User(\"Alice Smith\", \"alice@example.com\")"
+      "initial_value": "new User(\"Alice Smith\", \"alice@example.com\")",
+      "docstring": "// Constructor call and type binding"
     },
     "variable:<fixtures>/javascript/code/modules/uses_user.js:12:7:12:14:userName": {
       "kind": "constant",
@@ -50,6 +51,7 @@
       "defining_scope_id": "module:<fixtures>/javascript/code/modules/uses_user.js:1:1:29:2",
       "is_exported": true,
       "initial_value": "user.getName()",
+      "docstring": "// Method calls on imported class instance",
       "collection_source": "user"
     },
     "variable:<fixtures>/javascript/code/modules/uses_user.js:13:7:13:15:userEmail": {
@@ -82,6 +84,7 @@
       "defining_scope_id": "module:<fixtures>/javascript/code/modules/uses_user.js:1:1:29:2",
       "is_exported": false,
       "initial_value": "user.updateProfile(\"Alice Johnson\", \"alice.johnson@example.com\")",
+      "docstring": "// Method chaining",
       "collection_source": "user"
     },
     "variable:<fixtures>/javascript/code/modules/uses_user.js:19:7:19:15:finalName": {
@@ -98,6 +101,7 @@
       "defining_scope_id": "module:<fixtures>/javascript/code/modules/uses_user.js:1:1:29:2",
       "is_exported": true,
       "initial_value": "updatedUser.getName()",
+      "docstring": "// Additional method call after update",
       "collection_source": "updatedUser"
     },
     "variable:<fixtures>/javascript/code/modules/uses_user.js:20:7:20:14:userInfo": {
@@ -191,44 +195,6 @@
       }
     },
     {
-      "kind": "assignment",
-      "name": "user = new User(\"Alice Smith\", \"alice@example.com\")",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
-        "start_line": 9,
-        "start_column": 7,
-        "end_line": 9,
-        "end_column": 57
-      },
-      "scope_id": "module:<fixtures>/javascript/code/modules/uses_user.js:1:1:29:2",
-      "target_location": {
-        "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
-        "start_line": 9,
-        "start_column": 7,
-        "end_line": 9,
-        "end_column": 57
-      }
-    },
-    {
-      "kind": "assignment",
-      "name": "user",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
-        "start_line": 9,
-        "start_column": 7,
-        "end_line": 9,
-        "end_column": 10
-      },
-      "scope_id": "module:<fixtures>/javascript/code/modules/uses_user.js:1:1:29:2",
-      "target_location": {
-        "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
-        "start_line": 9,
-        "start_column": 7,
-        "end_line": 9,
-        "end_column": 10
-      }
-    },
-    {
       "kind": "variable_reference",
       "name": "user",
       "location": {
@@ -253,57 +219,6 @@
       },
       "scope_id": "module:<fixtures>/javascript/code/modules/uses_user.js:1:1:29:2",
       "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "User",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
-        "start_line": 9,
-        "start_column": 14,
-        "end_line": 9,
-        "end_column": 57
-      },
-      "scope_id": "module:<fixtures>/javascript/code/modules/uses_user.js:1:1:29:2",
-      "access_type": "read"
-    },
-    {
-      "kind": "function_call",
-      "name": "User",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
-        "start_line": 9,
-        "start_column": 14,
-        "end_line": 9,
-        "end_column": 57
-      },
-      "scope_id": "module:<fixtures>/javascript/code/modules/uses_user.js:1:1:29:2",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
-        "start_line": 9,
-        "start_column": 7,
-        "end_line": 9,
-        "end_column": 10
-      }
-    },
-    {
-      "kind": "function_call",
-      "name": "User",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
-        "start_line": 9,
-        "start_column": 18,
-        "end_line": 9,
-        "end_column": 21
-      },
-      "scope_id": "module:<fixtures>/javascript/code/modules/uses_user.js:1:1:29:2",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
-        "start_line": 9,
-        "start_column": 7,
-        "end_line": 9,
-        "end_column": 10
-      }
     },
     {
       "kind": "constructor_call",
@@ -423,83 +338,17 @@
         "user",
         "getName"
       ],
-      "optional_chaining": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "user",
-      "location": {
+      "is_optional_chain": false,
+      "potential_construct_target": {
         "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
         "start_line": 12,
-        "start_column": 18,
+        "start_column": 7,
         "end_line": 12,
-        "end_column": 21
+        "end_column": 14
       },
-      "scope_id": "module:<fixtures>/javascript/code/modules/uses_user.js:1:1:29:2",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "getName",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
-        "start_line": 12,
-        "start_column": 18,
-        "end_line": 12,
-        "end_column": 29
-      },
-      "scope_id": "module:<fixtures>/javascript/code/modules/uses_user.js:1:1:29:2",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
-        "start_line": 12,
-        "start_column": 18,
-        "end_line": 12,
-        "end_column": 21
-      },
-      "property_chain": [
-        "user",
-        "getName"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "user",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
-        "start_line": 12,
-        "start_column": 18,
-        "end_line": 12,
-        "end_column": 21
-      },
-      "scope_id": "module:<fixtures>/javascript/code/modules/uses_user.js:1:1:29:2",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "getName",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
-        "start_line": 12,
-        "start_column": 18,
-        "end_line": 12,
-        "end_column": 29
-      },
-      "scope_id": "module:<fixtures>/javascript/code/modules/uses_user.js:1:1:29:2",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
-        "start_line": 12,
-        "start_column": 18,
-        "end_line": 12,
-        "end_column": 21
-      },
-      "property_chain": [
-        "user",
-        "getName"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -529,13 +378,13 @@
     },
     {
       "kind": "variable_reference",
-      "name": "getName",
+      "name": "user",
       "location": {
         "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
         "start_line": 12,
-        "start_column": 23,
+        "start_column": 18,
         "end_line": 12,
-        "end_column": 29
+        "end_column": 21
       },
       "scope_id": "module:<fixtures>/javascript/code/modules/uses_user.js:1:1:29:2",
       "access_type": "read"
@@ -639,83 +488,17 @@
         "user",
         "getEmail"
       ],
-      "optional_chaining": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "user",
-      "location": {
+      "is_optional_chain": false,
+      "potential_construct_target": {
         "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
         "start_line": 13,
-        "start_column": 19,
+        "start_column": 7,
         "end_line": 13,
-        "end_column": 22
+        "end_column": 15
       },
-      "scope_id": "module:<fixtures>/javascript/code/modules/uses_user.js:1:1:29:2",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "getEmail",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
-        "start_line": 13,
-        "start_column": 19,
-        "end_line": 13,
-        "end_column": 31
-      },
-      "scope_id": "module:<fixtures>/javascript/code/modules/uses_user.js:1:1:29:2",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
-        "start_line": 13,
-        "start_column": 19,
-        "end_line": 13,
-        "end_column": 22
-      },
-      "property_chain": [
-        "user",
-        "getEmail"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "user",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
-        "start_line": 13,
-        "start_column": 19,
-        "end_line": 13,
-        "end_column": 22
-      },
-      "scope_id": "module:<fixtures>/javascript/code/modules/uses_user.js:1:1:29:2",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "getEmail",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
-        "start_line": 13,
-        "start_column": 19,
-        "end_line": 13,
-        "end_column": 31
-      },
-      "scope_id": "module:<fixtures>/javascript/code/modules/uses_user.js:1:1:29:2",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
-        "start_line": 13,
-        "start_column": 19,
-        "end_line": 13,
-        "end_column": 22
-      },
-      "property_chain": [
-        "user",
-        "getEmail"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -745,13 +528,13 @@
     },
     {
       "kind": "variable_reference",
-      "name": "getEmail",
+      "name": "user",
       "location": {
         "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
         "start_line": 13,
-        "start_column": 24,
+        "start_column": 19,
         "end_line": 13,
-        "end_column": 31
+        "end_column": 22
       },
       "scope_id": "module:<fixtures>/javascript/code/modules/uses_user.js:1:1:29:2",
       "access_type": "read"
@@ -855,83 +638,17 @@
         "user",
         "updateProfile"
       ],
-      "optional_chaining": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "user",
-      "location": {
+      "is_optional_chain": false,
+      "potential_construct_target": {
         "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
         "start_line": 16,
-        "start_column": 21,
+        "start_column": 7,
         "end_line": 16,
-        "end_column": 24
+        "end_column": 17
       },
-      "scope_id": "module:<fixtures>/javascript/code/modules/uses_user.js:1:1:29:2",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "updateProfile",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
-        "start_line": 16,
-        "start_column": 21,
-        "end_line": 16,
-        "end_column": 38
-      },
-      "scope_id": "module:<fixtures>/javascript/code/modules/uses_user.js:1:1:29:2",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
-        "start_line": 16,
-        "start_column": 21,
-        "end_line": 16,
-        "end_column": 24
-      },
-      "property_chain": [
-        "user",
-        "updateProfile"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "user",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
-        "start_line": 16,
-        "start_column": 21,
-        "end_line": 16,
-        "end_column": 24
-      },
-      "scope_id": "module:<fixtures>/javascript/code/modules/uses_user.js:1:1:29:2",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "updateProfile",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
-        "start_line": 16,
-        "start_column": 21,
-        "end_line": 16,
-        "end_column": 38
-      },
-      "scope_id": "module:<fixtures>/javascript/code/modules/uses_user.js:1:1:29:2",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
-        "start_line": 16,
-        "start_column": 21,
-        "end_line": 16,
-        "end_column": 24
-      },
-      "property_chain": [
-        "user",
-        "updateProfile"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -961,13 +678,13 @@
     },
     {
       "kind": "variable_reference",
-      "name": "updateProfile",
+      "name": "user",
       "location": {
         "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
         "start_line": 16,
-        "start_column": 26,
+        "start_column": 21,
         "end_line": 16,
-        "end_column": 38
+        "end_column": 24
       },
       "scope_id": "module:<fixtures>/javascript/code/modules/uses_user.js:1:1:29:2",
       "access_type": "read"
@@ -1071,83 +788,17 @@
         "updatedUser",
         "getName"
       ],
-      "optional_chaining": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "updatedUser",
-      "location": {
+      "is_optional_chain": false,
+      "potential_construct_target": {
         "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
         "start_line": 19,
-        "start_column": 19,
+        "start_column": 7,
         "end_line": 19,
-        "end_column": 29
+        "end_column": 15
       },
-      "scope_id": "module:<fixtures>/javascript/code/modules/uses_user.js:1:1:29:2",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "getName",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
-        "start_line": 19,
-        "start_column": 19,
-        "end_line": 19,
-        "end_column": 37
-      },
-      "scope_id": "module:<fixtures>/javascript/code/modules/uses_user.js:1:1:29:2",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
-        "start_line": 19,
-        "start_column": 19,
-        "end_line": 19,
-        "end_column": 29
-      },
-      "property_chain": [
-        "updatedUser",
-        "getName"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "updatedUser",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
-        "start_line": 19,
-        "start_column": 19,
-        "end_line": 19,
-        "end_column": 29
-      },
-      "scope_id": "module:<fixtures>/javascript/code/modules/uses_user.js:1:1:29:2",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "getName",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
-        "start_line": 19,
-        "start_column": 19,
-        "end_line": 19,
-        "end_column": 37
-      },
-      "scope_id": "module:<fixtures>/javascript/code/modules/uses_user.js:1:1:29:2",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
-        "start_line": 19,
-        "start_column": 19,
-        "end_line": 19,
-        "end_column": 29
-      },
-      "property_chain": [
-        "updatedUser",
-        "getName"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -1177,13 +828,13 @@
     },
     {
       "kind": "variable_reference",
-      "name": "getName",
+      "name": "updatedUser",
       "location": {
         "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
         "start_line": 19,
-        "start_column": 31,
+        "start_column": 19,
         "end_line": 19,
-        "end_column": 37
+        "end_column": 29
       },
       "scope_id": "module:<fixtures>/javascript/code/modules/uses_user.js:1:1:29:2",
       "access_type": "read"
@@ -1287,83 +938,17 @@
         "user",
         "getInfo"
       ],
-      "optional_chaining": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "user",
-      "location": {
+      "is_optional_chain": false,
+      "potential_construct_target": {
         "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
         "start_line": 20,
-        "start_column": 18,
+        "start_column": 7,
         "end_line": 20,
-        "end_column": 21
+        "end_column": 14
       },
-      "scope_id": "module:<fixtures>/javascript/code/modules/uses_user.js:1:1:29:2",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "getInfo",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
-        "start_line": 20,
-        "start_column": 18,
-        "end_line": 20,
-        "end_column": 29
-      },
-      "scope_id": "module:<fixtures>/javascript/code/modules/uses_user.js:1:1:29:2",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
-        "start_line": 20,
-        "start_column": 18,
-        "end_line": 20,
-        "end_column": 21
-      },
-      "property_chain": [
-        "user",
-        "getInfo"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "user",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
-        "start_line": 20,
-        "start_column": 18,
-        "end_line": 20,
-        "end_column": 21
-      },
-      "scope_id": "module:<fixtures>/javascript/code/modules/uses_user.js:1:1:29:2",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "getInfo",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
-        "start_line": 20,
-        "start_column": 18,
-        "end_line": 20,
-        "end_column": 29
-      },
-      "scope_id": "module:<fixtures>/javascript/code/modules/uses_user.js:1:1:29:2",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
-        "start_line": 20,
-        "start_column": 18,
-        "end_line": 20,
-        "end_column": 21
-      },
-      "property_chain": [
-        "user",
-        "getInfo"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -1393,13 +978,13 @@
     },
     {
       "kind": "variable_reference",
-      "name": "getInfo",
+      "name": "user",
       "location": {
         "file_path": "<fixtures>/javascript/code/modules/uses_user.js",
         "start_line": 20,
-        "start_column": 23,
+        "start_column": 18,
         "end_line": 20,
-        "end_column": 29
+        "end_column": 21
       },
       "scope_id": "module:<fixtures>/javascript/code/modules/uses_user.js:1:1:29:2",
       "access_type": "read"

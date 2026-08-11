@@ -128,6 +128,7 @@
       "export": {
         "is_reexport": false
       },
+      "docstring": "/**\n * Basic function declarations\n * Tests: function declarations, parameters, return types\n */",
       "signature": {
         "parameters": [
           {
@@ -558,16 +559,43 @@
       "access_type": "read"
     },
     {
-      "kind": "function_call",
-      "name": "Date",
+      "kind": "variable_reference",
+      "name": "name",
       "location": {
         "file_path": "<fixtures>/typescript/code/functions/basic_functions.ts",
-        "start_line": 19,
-        "start_column": 16,
-        "end_line": 19,
-        "end_column": 25
+        "start_line": 16,
+        "start_column": 5,
+        "end_line": 16,
+        "end_column": 8
       },
-      "scope_id": "function:<fixtures>/typescript/code/functions/basic_functions.ts:14:22:21:1"
+      "scope_id": "function:<fixtures>/typescript/code/functions/basic_functions.ts:14:22:21:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "age",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/basic_functions.ts",
+        "start_line": 17,
+        "start_column": 5,
+        "end_line": 17,
+        "end_column": 7
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/basic_functions.ts:14:22:21:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "active",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/basic_functions.ts",
+        "start_line": 18,
+        "start_column": 5,
+        "end_line": 18,
+        "end_column": 10
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/basic_functions.ts:14:22:21:1",
+      "access_type": "read"
     },
     {
       "kind": "constructor_call",

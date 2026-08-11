@@ -423,6 +423,7 @@
       "export": {
         "is_reexport": false
       },
+      "docstring": "// Higher-order function that takes a callback",
       "signature": {
         "parameters": [
           {
@@ -489,6 +490,7 @@
       "export": {
         "is_reexport": false
       },
+      "docstring": "// Callback functions",
       "signature": {
         "parameters": [
           {
@@ -572,6 +574,7 @@
       "export": {
         "is_reexport": false
       },
+      "docstring": "// Function that creates and uses callbacks",
       "signature": {
         "parameters": [
           {
@@ -729,6 +732,46 @@
       "export": {
         "is_reexport": false
       },
+      "docstring": "// Event-like callback system",
+      "function_collection": {
+        "collection_id": "function:<fixtures>/javascript/code/functions/callbacks.js:50:10:50:21:EventEmitter",
+        "collection_type": "Object",
+        "location": {
+          "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
+          "start_line": 50,
+          "start_column": 10,
+          "end_line": 50,
+          "end_column": 21
+        },
+        "stored_functions": [
+          "function:<fixtures>/javascript/code/functions/callbacks.js:54:29:59:1:<anonymous>",
+          "function:<fixtures>/javascript/code/functions/callbacks.js:61:31:69:1:<anonymous>"
+        ],
+        "named_members": [
+          {
+            "name": "on",
+            "symbol_id": "function:<fixtures>/javascript/code/functions/callbacks.js:54:29:59:1:<anonymous>",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
+              "start_line": 54,
+              "start_column": 29,
+              "end_line": 59,
+              "end_column": 1
+            }
+          },
+          {
+            "name": "emit",
+            "symbol_id": "function:<fixtures>/javascript/code/functions/callbacks.js:61:31:69:1:<anonymous>",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
+              "start_line": 61,
+              "start_column": 31,
+              "end_line": 69,
+              "end_column": 1
+            }
+          }
+        ]
+      },
       "signature": {
         "parameters": []
       },
@@ -782,6 +825,7 @@
       "export": {
         "is_reexport": false
       },
+      "docstring": "// Async-style callbacks",
       "signature": {
         "parameters": [
           {
@@ -856,6 +900,7 @@
       },
       "defining_scope_id": "function:<fixtures>/javascript/code/functions/callbacks.js:74:14:79:3",
       "is_exported": false,
+      "docstring": "// Simulate async operation",
       "signature": {
         "parameters": []
       },
@@ -1026,7 +1071,8 @@
       },
       "defining_scope_id": "module:<fixtures>/javascript/code/functions/callbacks.js:1:1:136:0",
       "is_exported": false,
-      "initial_value": "[1, 2, 3, 4]"
+      "initial_value": "[1, 2, 3, 4]",
+      "docstring": "// Using the callback patterns"
     },
     "variable:<fixtures>/javascript/code/functions/callbacks.js:94:7:94:13:doubled": {
       "kind": "constant",
@@ -1381,31 +1427,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "length",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 9,
-        "start_column": 23,
-        "end_line": 9,
-        "end_column": 32
-      },
-      "scope_id": "block:<fixtures>/javascript/code/functions/callbacks.js:9:3:14:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 9,
-        "start_column": 23,
-        "end_line": 9,
-        "end_column": 25
-      },
-      "property_chain": [
-        "arr",
-        "length"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "arr",
       "location": {
@@ -1414,32 +1435,6 @@
         "start_column": 23,
         "end_line": 9,
         "end_column": 25
-      },
-      "scope_id": "block:<fixtures>/javascript/code/functions/callbacks.js:9:3:14:3",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "arr",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 9,
-        "start_column": 23,
-        "end_line": 9,
-        "end_column": 25
-      },
-      "scope_id": "block:<fixtures>/javascript/code/functions/callbacks.js:9:3:14:3",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "length",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 9,
-        "start_column": 27,
-        "end_line": 9,
-        "end_column": 32
       },
       "scope_id": "block:<fixtures>/javascript/code/functions/callbacks.js:9:3:14:3",
       "access_type": "read"
@@ -1647,83 +1642,10 @@
         "results",
         "push"
       ],
-      "optional_chaining": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "results",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 13,
-        "start_column": 5,
-        "end_line": 13,
-        "end_column": 11
-      },
-      "scope_id": "block:<fixtures>/javascript/code/functions/callbacks.js:9:3:14:3",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "push",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 13,
-        "start_column": 5,
-        "end_line": 13,
-        "end_column": 16
-      },
-      "scope_id": "block:<fixtures>/javascript/code/functions/callbacks.js:9:3:14:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 13,
-        "start_column": 5,
-        "end_line": 13,
-        "end_column": 11
-      },
-      "property_chain": [
-        "results",
-        "push"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "results",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 13,
-        "start_column": 5,
-        "end_line": 13,
-        "end_column": 11
-      },
-      "scope_id": "block:<fixtures>/javascript/code/functions/callbacks.js:9:3:14:3",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "push",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 13,
-        "start_column": 5,
-        "end_line": 13,
-        "end_column": 16
-      },
-      "scope_id": "block:<fixtures>/javascript/code/functions/callbacks.js:9:3:14:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 13,
-        "start_column": 5,
-        "end_line": 13,
-        "end_column": 11
-      },
-      "property_chain": [
-        "results",
-        "push"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
+      "is_optional_chain": false,
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -1753,13 +1675,13 @@
     },
     {
       "kind": "variable_reference",
-      "name": "push",
+      "name": "results",
       "location": {
         "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
         "start_line": 13,
-        "start_column": 13,
+        "start_column": 5,
         "end_line": 13,
-        "end_column": 16
+        "end_column": 11
       },
       "scope_id": "block:<fixtures>/javascript/code/functions/callbacks.js:9:3:14:3",
       "access_type": "read"
@@ -2477,6 +2399,31 @@
       "access_type": "read"
     },
     {
+      "kind": "property_access",
+      "name": "listeners",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
+        "start_line": 51,
+        "start_column": 3,
+        "end_line": 51,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/callbacks.js:50:22:52:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
+        "start_line": 51,
+        "start_column": 3,
+        "end_line": 51,
+        "end_column": 6
+      },
+      "property_chain": [
+        "this",
+        "listeners"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
       "kind": "variable_reference",
       "name": "this",
       "location": {
@@ -2515,27 +2462,14 @@
       "is_optional_chain": false
     },
     {
-      "kind": "variable_reference",
-      "name": "EventEmitter",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 54,
-        "start_column": 1,
-        "end_line": 54,
-        "end_column": 12
-      },
-      "scope_id": "module:<fixtures>/javascript/code/functions/callbacks.js:1:1:136:0",
-      "access_type": "read"
-    },
-    {
       "kind": "property_access",
-      "name": "prototype",
+      "name": "on",
       "location": {
         "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
         "start_line": 54,
         "start_column": 1,
         "end_line": 54,
-        "end_column": 22
+        "end_column": 25
       },
       "scope_id": "module:<fixtures>/javascript/code/functions/callbacks.js:1:1:136:0",
       "receiver_location": {
@@ -2543,11 +2477,12 @@
         "start_line": 54,
         "start_column": 1,
         "end_line": 54,
-        "end_column": 12
+        "end_column": 22
       },
       "property_chain": [
         "EventEmitter",
-        "prototype"
+        "prototype",
+        "on"
       ],
       "access_type": "property",
       "is_optional_chain": false
@@ -2566,6 +2501,25 @@
       "access_type": "read"
     },
     {
+      "kind": "assignment",
+      "name": "EventEmitter.prototype.on = function(event, callback) {\n  if (!this.listeners[event]) {\n    this.listeners[event] = [];\n  }\n  this.listeners[event].push(callback);\n}",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
+        "start_line": 54,
+        "start_column": 1,
+        "end_line": 59,
+        "end_column": 1
+      },
+      "scope_id": "module:<fixtures>/javascript/code/functions/callbacks.js:1:1:136:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
+        "start_line": 54,
+        "start_column": 1,
+        "end_line": 59,
+        "end_column": 1
+      }
+    },
+    {
       "kind": "variable_reference",
       "name": "EventEmitter",
       "location": {
@@ -2574,19 +2528,6 @@
         "start_column": 1,
         "end_line": 54,
         "end_column": 12
-      },
-      "scope_id": "module:<fixtures>/javascript/code/functions/callbacks.js:1:1:136:0",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "prototype",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 54,
-        "start_column": 14,
-        "end_line": 54,
-        "end_column": 22
       },
       "scope_id": "module:<fixtures>/javascript/code/functions/callbacks.js:1:1:136:0",
       "access_type": "read"
@@ -2631,6 +2572,31 @@
       "access_type": "read"
     },
     {
+      "kind": "property_access",
+      "name": "listeners",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
+        "start_line": 55,
+        "start_column": 8,
+        "end_line": 55,
+        "end_column": 21
+      },
+      "scope_id": "block:<fixtures>/javascript/code/functions/callbacks.js:55:3:57:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
+        "start_line": 55,
+        "start_column": 8,
+        "end_line": 55,
+        "end_column": 11
+      },
+      "property_chain": [
+        "this",
+        "listeners"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
       "kind": "variable_reference",
       "name": "this",
       "location": {
@@ -2655,6 +2621,31 @@
       },
       "scope_id": "block:<fixtures>/javascript/code/functions/callbacks.js:55:3:57:3",
       "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "listeners",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
+        "start_line": 56,
+        "start_column": 5,
+        "end_line": 56,
+        "end_column": 18
+      },
+      "scope_id": "block:<fixtures>/javascript/code/functions/callbacks.js:55:3:57:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
+        "start_line": 56,
+        "start_column": 5,
+        "end_line": 56,
+        "end_column": 8
+      },
+      "property_chain": [
+        "this",
+        "listeners"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -2683,7 +2674,7 @@
       "access_type": "read"
     },
     {
-      "kind": "method_call",
+      "kind": "self_reference_call",
       "name": "push",
       "location": {
         "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
@@ -2693,19 +2684,12 @@
         "end_column": 38
       },
       "scope_id": "function:<fixtures>/javascript/code/functions/callbacks.js:54:37:59:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 58,
-        "start_column": 3,
-        "end_line": 58,
-        "end_column": 23
-      },
+      "keyword": "this",
       "property_chain": [
         "this",
         "listeners",
         "push"
-      ],
-      "optional_chaining": false
+      ]
     },
     {
       "kind": "variable_reference",
@@ -2719,6 +2703,31 @@
       },
       "scope_id": "function:<fixtures>/javascript/code/functions/callbacks.js:54:37:59:1",
       "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "listeners",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
+        "start_line": 58,
+        "start_column": 3,
+        "end_line": 58,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/callbacks.js:54:37:59:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
+        "start_line": 58,
+        "start_column": 3,
+        "end_line": 58,
+        "end_column": 6
+      },
+      "property_chain": [
+        "this",
+        "listeners"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -2785,27 +2794,14 @@
       "is_optional_chain": false
     },
     {
-      "kind": "variable_reference",
-      "name": "EventEmitter",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 61,
-        "start_column": 1,
-        "end_line": 61,
-        "end_column": 12
-      },
-      "scope_id": "module:<fixtures>/javascript/code/functions/callbacks.js:1:1:136:0",
-      "access_type": "read"
-    },
-    {
       "kind": "property_access",
-      "name": "prototype",
+      "name": "emit",
       "location": {
         "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
         "start_line": 61,
         "start_column": 1,
         "end_line": 61,
-        "end_column": 22
+        "end_column": 27
       },
       "scope_id": "module:<fixtures>/javascript/code/functions/callbacks.js:1:1:136:0",
       "receiver_location": {
@@ -2813,11 +2809,12 @@
         "start_line": 61,
         "start_column": 1,
         "end_line": 61,
-        "end_column": 12
+        "end_column": 22
       },
       "property_chain": [
         "EventEmitter",
-        "prototype"
+        "prototype",
+        "emit"
       ],
       "access_type": "property",
       "is_optional_chain": false
@@ -2836,6 +2833,25 @@
       "access_type": "read"
     },
     {
+      "kind": "assignment",
+      "name": "EventEmitter.prototype.emit = function(event, data) {\n  if (this.listeners[event]) {\n    function callListener(listener) {\n      return listener(data);\n    }\n    return this.listeners[event].map(callListener);\n  }\n  return [];\n}",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
+        "start_line": 61,
+        "start_column": 1,
+        "end_line": 69,
+        "end_column": 1
+      },
+      "scope_id": "module:<fixtures>/javascript/code/functions/callbacks.js:1:1:136:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
+        "start_line": 61,
+        "start_column": 1,
+        "end_line": 69,
+        "end_column": 1
+      }
+    },
+    {
       "kind": "variable_reference",
       "name": "EventEmitter",
       "location": {
@@ -2844,19 +2860,6 @@
         "start_column": 1,
         "end_line": 61,
         "end_column": 12
-      },
-      "scope_id": "module:<fixtures>/javascript/code/functions/callbacks.js:1:1:136:0",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "prototype",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 61,
-        "start_column": 14,
-        "end_line": 61,
-        "end_column": 22
       },
       "scope_id": "module:<fixtures>/javascript/code/functions/callbacks.js:1:1:136:0",
       "access_type": "read"
@@ -2899,6 +2902,31 @@
       },
       "scope_id": "function:<fixtures>/javascript/code/functions/callbacks.js:61:39:69:1",
       "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "listeners",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
+        "start_line": 62,
+        "start_column": 7,
+        "end_line": 62,
+        "end_column": 20
+      },
+      "scope_id": "block:<fixtures>/javascript/code/functions/callbacks.js:62:3:67:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
+        "start_line": 62,
+        "start_column": 7,
+        "end_line": 62,
+        "end_column": 10
+      },
+      "property_chain": [
+        "this",
+        "listeners"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -3037,7 +3065,7 @@
       "access_type": "read"
     },
     {
-      "kind": "method_call",
+      "kind": "self_reference_call",
       "name": "map",
       "location": {
         "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
@@ -3047,19 +3075,12 @@
         "end_column": 50
       },
       "scope_id": "block:<fixtures>/javascript/code/functions/callbacks.js:62:3:67:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 66,
-        "start_column": 12,
-        "end_line": 66,
-        "end_column": 32
-      },
+      "keyword": "this",
       "property_chain": [
         "this",
         "listeners",
         "map"
-      ],
-      "optional_chaining": false
+      ]
     },
     {
       "kind": "variable_reference",
@@ -3073,6 +3094,31 @@
       },
       "scope_id": "block:<fixtures>/javascript/code/functions/callbacks.js:62:3:67:3",
       "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "listeners",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
+        "start_line": 66,
+        "start_column": 12,
+        "end_line": 66,
+        "end_column": 25
+      },
+      "scope_id": "block:<fixtures>/javascript/code/functions/callbacks.js:62:3:67:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
+        "start_line": 66,
+        "start_column": 12,
+        "end_line": 66,
+        "end_column": 15
+      },
+      "property_chain": [
+        "this",
+        "listeners"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -3256,6 +3302,19 @@
       "access_type": "read"
     },
     {
+      "kind": "variable_reference",
+      "name": "url",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
+        "start_line": 76,
+        "start_column": 16,
+        "end_line": 76,
+        "end_column": 18
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/callbacks.js:75:27:77:5",
+      "access_type": "read"
+    },
+    {
       "kind": "function_call",
       "name": "callback",
       "location": {
@@ -3385,6 +3444,19 @@
     },
     {
       "kind": "variable_reference",
+      "name": "error",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
+        "start_line": 84,
+        "start_column": 30,
+        "end_line": 84,
+        "end_column": 34
+      },
+      "scope_id": "block:<fixtures>/javascript/code/functions/callbacks.js:83:3:85:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
       "name": "formatResult",
       "location": {
         "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
@@ -3461,31 +3533,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "data",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 87,
-        "start_column": 35,
-        "end_line": 87,
-        "end_column": 45
-      },
-      "scope_id": "function:<fixtures>/javascript/code/functions/callbacks.js:86:24:88:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 87,
-        "start_column": 35,
-        "end_line": 87,
-        "end_column": 40
-      },
-      "property_chain": [
-        "result",
-        "data"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "result",
       "location": {
@@ -3494,32 +3541,6 @@
         "start_column": 35,
         "end_line": 87,
         "end_column": 40
-      },
-      "scope_id": "function:<fixtures>/javascript/code/functions/callbacks.js:86:24:88:3",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "result",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 87,
-        "start_column": 35,
-        "end_line": 87,
-        "end_column": 40
-      },
-      "scope_id": "function:<fixtures>/javascript/code/functions/callbacks.js:86:24:88:3",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "data",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 87,
-        "start_column": 42,
-        "end_line": 87,
-        "end_column": 45
       },
       "scope_id": "function:<fixtures>/javascript/code/functions/callbacks.js:86:24:88:3",
       "access_type": "read"
@@ -4319,44 +4340,6 @@
       }
     },
     {
-      "kind": "assignment",
-      "name": "emitter = new EventEmitter()",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 103,
-        "start_column": 7,
-        "end_line": 103,
-        "end_column": 34
-      },
-      "scope_id": "module:<fixtures>/javascript/code/functions/callbacks.js:1:1:136:0",
-      "target_location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 103,
-        "start_column": 7,
-        "end_line": 103,
-        "end_column": 34
-      }
-    },
-    {
-      "kind": "assignment",
-      "name": "emitter",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 103,
-        "start_column": 7,
-        "end_line": 103,
-        "end_column": 13
-      },
-      "scope_id": "module:<fixtures>/javascript/code/functions/callbacks.js:1:1:136:0",
-      "target_location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 103,
-        "start_column": 7,
-        "end_line": 103,
-        "end_column": 13
-      }
-    },
-    {
       "kind": "variable_reference",
       "name": "emitter",
       "location": {
@@ -4381,57 +4364,6 @@
       },
       "scope_id": "module:<fixtures>/javascript/code/functions/callbacks.js:1:1:136:0",
       "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "EventEmitter",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 103,
-        "start_column": 17,
-        "end_line": 103,
-        "end_column": 34
-      },
-      "scope_id": "module:<fixtures>/javascript/code/functions/callbacks.js:1:1:136:0",
-      "access_type": "read"
-    },
-    {
-      "kind": "function_call",
-      "name": "EventEmitter",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 103,
-        "start_column": 17,
-        "end_line": 103,
-        "end_column": 34
-      },
-      "scope_id": "module:<fixtures>/javascript/code/functions/callbacks.js:1:1:136:0",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 103,
-        "start_column": 7,
-        "end_line": 103,
-        "end_column": 13
-      }
-    },
-    {
-      "kind": "function_call",
-      "name": "EventEmitter",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 103,
-        "start_column": 21,
-        "end_line": 103,
-        "end_column": 32
-      },
-      "scope_id": "module:<fixtures>/javascript/code/functions/callbacks.js:1:1:136:0",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 103,
-        "start_column": 7,
-        "end_line": 103,
-        "end_column": 13
-      }
     },
     {
       "kind": "constructor_call",
@@ -4616,83 +4548,10 @@
         "emitter",
         "on"
       ],
-      "optional_chaining": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "emitter",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 112,
-        "start_column": 1,
-        "end_line": 112,
-        "end_column": 7
-      },
-      "scope_id": "module:<fixtures>/javascript/code/functions/callbacks.js:1:1:136:0",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "on",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 112,
-        "start_column": 1,
-        "end_line": 112,
-        "end_column": 10
-      },
-      "scope_id": "module:<fixtures>/javascript/code/functions/callbacks.js:1:1:136:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 112,
-        "start_column": 1,
-        "end_line": 112,
-        "end_column": 7
-      },
-      "property_chain": [
-        "emitter",
-        "on"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "emitter",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 112,
-        "start_column": 1,
-        "end_line": 112,
-        "end_column": 7
-      },
-      "scope_id": "module:<fixtures>/javascript/code/functions/callbacks.js:1:1:136:0",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "on",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 112,
-        "start_column": 1,
-        "end_line": 112,
-        "end_column": 10
-      },
-      "scope_id": "module:<fixtures>/javascript/code/functions/callbacks.js:1:1:136:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 112,
-        "start_column": 1,
-        "end_line": 112,
-        "end_column": 7
-      },
-      "property_chain": [
-        "emitter",
-        "on"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
+      "is_optional_chain": false,
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -4722,13 +4581,13 @@
     },
     {
       "kind": "variable_reference",
-      "name": "on",
+      "name": "emitter",
       "location": {
         "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
         "start_line": 112,
-        "start_column": 9,
+        "start_column": 1,
         "end_line": 112,
-        "end_column": 10
+        "end_column": 7
       },
       "scope_id": "module:<fixtures>/javascript/code/functions/callbacks.js:1:1:136:0",
       "access_type": "read"
@@ -4845,83 +4704,17 @@
         "emitter",
         "emit"
       ],
-      "optional_chaining": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "emitter",
-      "location": {
+      "is_optional_chain": false,
+      "potential_construct_target": {
         "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
         "start_line": 113,
-        "start_column": 21,
+        "start_column": 7,
         "end_line": 113,
-        "end_column": 27
+        "end_column": 17
       },
-      "scope_id": "module:<fixtures>/javascript/code/functions/callbacks.js:1:1:136:0",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "emit",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 113,
-        "start_column": 21,
-        "end_line": 113,
-        "end_column": 32
-      },
-      "scope_id": "module:<fixtures>/javascript/code/functions/callbacks.js:1:1:136:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 113,
-        "start_column": 21,
-        "end_line": 113,
-        "end_column": 27
-      },
-      "property_chain": [
-        "emitter",
-        "emit"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "emitter",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 113,
-        "start_column": 21,
-        "end_line": 113,
-        "end_column": 27
-      },
-      "scope_id": "module:<fixtures>/javascript/code/functions/callbacks.js:1:1:136:0",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "emit",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 113,
-        "start_column": 21,
-        "end_line": 113,
-        "end_column": 32
-      },
-      "scope_id": "module:<fixtures>/javascript/code/functions/callbacks.js:1:1:136:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
-        "start_line": 113,
-        "start_column": 21,
-        "end_line": 113,
-        "end_column": 27
-      },
-      "property_chain": [
-        "emitter",
-        "emit"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -4951,13 +4744,13 @@
     },
     {
       "kind": "variable_reference",
-      "name": "emit",
+      "name": "emitter",
       "location": {
         "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
         "start_line": 113,
-        "start_column": 29,
+        "start_column": 21,
         "end_line": 113,
-        "end_column": 32
+        "end_column": 27
       },
       "scope_id": "module:<fixtures>/javascript/code/functions/callbacks.js:1:1:136:0",
       "access_type": "read"

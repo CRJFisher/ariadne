@@ -501,6 +501,7 @@
       "defining_scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
       "is_exported": true,
       "initial_value": "{\n  value: 0,\n\n  add(num) {\n    this.value += num;\n    return this;\n  },\n\n  multiply(num) {\n    this.value *= num;\n    return this;\n  },\n\n  getValue() {\n    return this.value;\n  },\n\n  reset() {\n    this.value = 0;\n    return this;\n  },\n\n  // Method that calls other methods\n  compute(operations) {\n    function processOperation(op) {\n      if (op.type === 'add') {\n        return this.add(op.value);\n      } else if (op.type === 'multiply') {\n        return this.multiply(op.value);\n      }\n    }\n\n    operations.forEach(processOperation.bind(this));\n    return this.getValue();\n  }\n}",
+      "docstring": "// Object literal with methods",
       "function_collection": {
         "collection_type": "Object",
         "location": {
@@ -518,6 +519,63 @@
           "method:<fixtures>/javascript/code/classes/object_literals.js:30:3:41:3:compute"
         ],
         "stored_references": [],
+        "named_members": [
+          {
+            "name": "add",
+            "symbol_id": "method:<fixtures>/javascript/code/classes/object_literals.js:10:3:13:3:add",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+              "start_line": 10,
+              "start_column": 3,
+              "end_line": 13,
+              "end_column": 3
+            }
+          },
+          {
+            "name": "multiply",
+            "symbol_id": "method:<fixtures>/javascript/code/classes/object_literals.js:15:3:18:3:multiply",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+              "start_line": 15,
+              "start_column": 3,
+              "end_line": 18,
+              "end_column": 3
+            }
+          },
+          {
+            "name": "getValue",
+            "symbol_id": "method:<fixtures>/javascript/code/classes/object_literals.js:20:3:22:3:getValue",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+              "start_line": 20,
+              "start_column": 3,
+              "end_line": 22,
+              "end_column": 3
+            }
+          },
+          {
+            "name": "reset",
+            "symbol_id": "method:<fixtures>/javascript/code/classes/object_literals.js:24:3:27:3:reset",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+              "start_line": 24,
+              "start_column": 3,
+              "end_line": 27,
+              "end_column": 3
+            }
+          },
+          {
+            "name": "compute",
+            "symbol_id": "method:<fixtures>/javascript/code/classes/object_literals.js:30:3:41:3:compute",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+              "start_line": 30,
+              "start_column": 3,
+              "end_line": 41,
+              "end_column": 3
+            }
+          }
+        ],
         "collection_id": "variable:<fixtures>/javascript/code/classes/object_literals.js:7:7:7:16:calculator"
       }
     },
@@ -534,7 +592,77 @@
       },
       "defining_scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
       "is_exported": true,
-      "initial_value": "{\n  baseUrl: 'https://api.example.com',\n\n  users: {\n    get(id) {\n      function buildUrl() {\n        return `${apiClient.baseUrl}/users/${id}`;\n      }\n      return buildUrl();\n    },\n\n    create(userData) {\n      function validateData() {\n        return userData && userData.name && userData.email;\n      }\n\n      if (validateData()) {\n        return { success: true, data: userData };\n      }\n      return { success: false };\n    }\n  },\n\n  posts: {\n    list() {\n      function getEndpoint() {\n        return `${apiClient.baseUrl}/posts`;\n      }\n      return getEndpoint();\n    },\n\n    getByUser(userId) {\n      const url = this.list();\n      function addUserFilter() {\n        return `${url}?user=${userId}`;\n      }\n      return addUserFilter();\n    }\n  }\n}"
+      "initial_value": "{\n  baseUrl: 'https://api.example.com',\n\n  users: {\n    get(id) {\n      function buildUrl() {\n        return `${apiClient.baseUrl}/users/${id}`;\n      }\n      return buildUrl();\n    },\n\n    create(userData) {\n      function validateData() {\n        return userData && userData.name && userData.email;\n      }\n\n      if (validateData()) {\n        return { success: true, data: userData };\n      }\n      return { success: false };\n    }\n  },\n\n  posts: {\n    list() {\n      function getEndpoint() {\n        return `${apiClient.baseUrl}/posts`;\n      }\n      return getEndpoint();\n    },\n\n    getByUser(userId) {\n      const url = this.list();\n      function addUserFilter() {\n        return `${url}?user=${userId}`;\n      }\n      return addUserFilter();\n    }\n  }\n}",
+      "docstring": "// Nested object literals",
+      "function_collection": {
+        "collection_type": "Object",
+        "location": {
+          "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+          "start_line": 45,
+          "start_column": 19,
+          "end_line": 84,
+          "end_column": 1
+        },
+        "stored_functions": [],
+        "stored_references": [],
+        "named_members": [
+          {
+            "name": "users",
+            "nested": [
+              {
+                "name": "get",
+                "symbol_id": "method:<fixtures>/javascript/code/classes/object_literals.js:49:5:54:5:get",
+                "location": {
+                  "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+                  "start_line": 49,
+                  "start_column": 5,
+                  "end_line": 54,
+                  "end_column": 5
+                }
+              },
+              {
+                "name": "create",
+                "symbol_id": "method:<fixtures>/javascript/code/classes/object_literals.js:56:5:65:5:create",
+                "location": {
+                  "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+                  "start_line": 56,
+                  "start_column": 5,
+                  "end_line": 65,
+                  "end_column": 5
+                }
+              }
+            ]
+          },
+          {
+            "name": "posts",
+            "nested": [
+              {
+                "name": "list",
+                "symbol_id": "method:<fixtures>/javascript/code/classes/object_literals.js:69:5:74:5:list",
+                "location": {
+                  "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+                  "start_line": 69,
+                  "start_column": 5,
+                  "end_line": 74,
+                  "end_column": 5
+                }
+              },
+              {
+                "name": "getByUser",
+                "symbol_id": "method:<fixtures>/javascript/code/classes/object_literals.js:76:5:82:5:getByUser",
+                "location": {
+                  "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+                  "start_line": 76,
+                  "start_column": 5,
+                  "end_line": 82,
+                  "end_column": 5
+                }
+              }
+            ]
+          }
+        ],
+        "collection_id": "variable:<fixtures>/javascript/code/classes/object_literals.js:45:7:45:15:apiClient"
+      }
     },
     "variable:<fixtures>/javascript/code/classes/object_literals.js:77:13:77:15:url": {
       "kind": "constant",
@@ -565,6 +693,7 @@
       "defining_scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
       "is_exported": true,
       "initial_value": "{\n  data: { count: 0 },\n\n  ['get' + 'Count']() {\n    function getCurrentCount() {\n      return this.data.count;\n    }\n    return getCurrentCount.call(this);\n  },\n\n  ['set' + 'Count'](value) {\n    function updateCount() {\n      this.data.count = value;\n    }\n    updateCount.call(this);\n    return this;\n  }\n}",
+      "docstring": "// Object with computed property methods",
       "function_collection": {
         "collection_type": "Object",
         "location": {
@@ -579,6 +708,30 @@
           "method:<fixtures>/javascript/code/classes/object_literals.js:97:3:103:3:['set' + 'Count']"
         ],
         "stored_references": [],
+        "named_members": [
+          {
+            "name": "['get' + 'Count']",
+            "symbol_id": "method:<fixtures>/javascript/code/classes/object_literals.js:90:3:95:3:['get' + 'Count']",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+              "start_line": 90,
+              "start_column": 3,
+              "end_line": 95,
+              "end_column": 3
+            }
+          },
+          {
+            "name": "['set' + 'Count']",
+            "symbol_id": "method:<fixtures>/javascript/code/classes/object_literals.js:97:3:103:3:['set' + 'Count']",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+              "start_line": 97,
+              "start_column": 3,
+              "end_line": 103,
+              "end_column": 3
+            }
+          }
+        ],
         "collection_id": "variable:<fixtures>/javascript/code/classes/object_literals.js:87:7:87:19:dynamicObject"
       }
     },
@@ -595,7 +748,8 @@
       },
       "defining_scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
       "is_exported": true,
-      "initial_value": "calculator.add(5).multiply(3).getValue()"
+      "initial_value": "calculator.add(5).multiply(3).getValue()",
+      "docstring": "// Using object literal methods"
     },
     "variable:<fixtures>/javascript/code/classes/object_literals.js:108:7:108:17:calcResult2": {
       "kind": "constant",
@@ -788,6 +942,31 @@
       "access_type": "read"
     },
     {
+      "kind": "property_access",
+      "name": "value",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 11,
+        "start_column": 5,
+        "end_line": 11,
+        "end_column": 14
+      },
+      "scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:10:6:13:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 11,
+        "start_column": 5,
+        "end_line": 11,
+        "end_column": 8
+      },
+      "property_chain": [
+        "this",
+        "value"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
       "kind": "variable_reference",
       "name": "this",
       "location": {
@@ -864,6 +1043,31 @@
       },
       "scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:15:11:18:3",
       "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "value",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 16,
+        "start_column": 5,
+        "end_line": 16,
+        "end_column": 14
+      },
+      "scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:15:11:18:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 16,
+        "start_column": 5,
+        "end_line": 16,
+        "end_column": 8
+      },
+      "property_chain": [
+        "this",
+        "value"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -944,6 +1148,31 @@
       "access_type": "read"
     },
     {
+      "kind": "property_access",
+      "name": "value",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 21,
+        "start_column": 12,
+        "end_line": 21,
+        "end_column": 21
+      },
+      "scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:20:11:22:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 21,
+        "start_column": 12,
+        "end_line": 21,
+        "end_column": 15
+      },
+      "property_chain": [
+        "this",
+        "value"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
       "kind": "variable_reference",
       "name": "this.value",
       "location": {
@@ -968,6 +1197,31 @@
       },
       "scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:20:11:22:3",
       "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "value",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 25,
+        "start_column": 5,
+        "end_line": 25,
+        "end_column": 14
+      },
+      "scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:24:8:27:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 25,
+        "start_column": 5,
+        "end_line": 25,
+        "end_column": 8
+      },
+      "property_chain": [
+        "this",
+        "value"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -1099,31 +1353,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "type",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 32,
-        "start_column": 11,
-        "end_line": 32,
-        "end_column": 17
-      },
-      "scope_id": "block:<fixtures>/javascript/code/classes/object_literals.js:32:7:36:7",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 32,
-        "start_column": 11,
-        "end_line": 32,
-        "end_column": 12
-      },
-      "property_chain": [
-        "op",
-        "type"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "op",
       "location": {
@@ -1132,32 +1361,6 @@
         "start_column": 11,
         "end_line": 32,
         "end_column": 12
-      },
-      "scope_id": "block:<fixtures>/javascript/code/classes/object_literals.js:32:7:36:7",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "op",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 32,
-        "start_column": 11,
-        "end_line": 32,
-        "end_column": 12
-      },
-      "scope_id": "block:<fixtures>/javascript/code/classes/object_literals.js:32:7:36:7",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "type",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 32,
-        "start_column": 14,
-        "end_line": 32,
-        "end_column": 17
       },
       "scope_id": "block:<fixtures>/javascript/code/classes/object_literals.js:32:7:36:7",
       "access_type": "read"
@@ -1283,31 +1486,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "value",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 33,
-        "start_column": 25,
-        "end_line": 33,
-        "end_column": 32
-      },
-      "scope_id": "block:<fixtures>/javascript/code/classes/object_literals.js:32:7:36:7",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 33,
-        "start_column": 25,
-        "end_line": 33,
-        "end_column": 26
-      },
-      "property_chain": [
-        "op",
-        "value"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "op",
       "location": {
@@ -1316,32 +1494,6 @@
         "start_column": 25,
         "end_line": 33,
         "end_column": 26
-      },
-      "scope_id": "block:<fixtures>/javascript/code/classes/object_literals.js:32:7:36:7",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "op",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 33,
-        "start_column": 25,
-        "end_line": 33,
-        "end_column": 26
-      },
-      "scope_id": "block:<fixtures>/javascript/code/classes/object_literals.js:32:7:36:7",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "value",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 33,
-        "start_column": 28,
-        "end_line": 33,
-        "end_column": 32
       },
       "scope_id": "block:<fixtures>/javascript/code/classes/object_literals.js:32:7:36:7",
       "access_type": "read"
@@ -1398,31 +1550,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "type",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 34,
-        "start_column": 18,
-        "end_line": 34,
-        "end_column": 24
-      },
-      "scope_id": "block:<fixtures>/javascript/code/classes/object_literals.js:34:14:36:7",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 34,
-        "start_column": 18,
-        "end_line": 34,
-        "end_column": 19
-      },
-      "property_chain": [
-        "op",
-        "type"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "op",
       "location": {
@@ -1431,32 +1558,6 @@
         "start_column": 18,
         "end_line": 34,
         "end_column": 19
-      },
-      "scope_id": "block:<fixtures>/javascript/code/classes/object_literals.js:34:14:36:7",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "op",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 34,
-        "start_column": 18,
-        "end_line": 34,
-        "end_column": 19
-      },
-      "scope_id": "block:<fixtures>/javascript/code/classes/object_literals.js:34:14:36:7",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "type",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 34,
-        "start_column": 21,
-        "end_line": 34,
-        "end_column": 24
       },
       "scope_id": "block:<fixtures>/javascript/code/classes/object_literals.js:34:14:36:7",
       "access_type": "read"
@@ -1582,31 +1683,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "value",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 35,
-        "start_column": 30,
-        "end_line": 35,
-        "end_column": 37
-      },
-      "scope_id": "block:<fixtures>/javascript/code/classes/object_literals.js:34:14:36:7",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 35,
-        "start_column": 30,
-        "end_line": 35,
-        "end_column": 31
-      },
-      "property_chain": [
-        "op",
-        "value"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "op",
       "location": {
@@ -1615,32 +1691,6 @@
         "start_column": 30,
         "end_line": 35,
         "end_column": 31
-      },
-      "scope_id": "block:<fixtures>/javascript/code/classes/object_literals.js:34:14:36:7",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "op",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 35,
-        "start_column": 30,
-        "end_line": 35,
-        "end_column": 31
-      },
-      "scope_id": "block:<fixtures>/javascript/code/classes/object_literals.js:34:14:36:7",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "value",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 35,
-        "start_column": 33,
-        "end_line": 35,
-        "end_column": 37
       },
       "scope_id": "block:<fixtures>/javascript/code/classes/object_literals.js:34:14:36:7",
       "access_type": "read"
@@ -1680,83 +1730,17 @@
         "operations",
         "forEach"
       ],
-      "optional_chaining": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "operations",
-      "location": {
+      "is_optional_chain": false,
+      "potential_construct_target": {
         "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 39,
-        "start_column": 5,
-        "end_line": 39,
-        "end_column": 14
+        "start_line": 7,
+        "start_column": 7,
+        "end_line": 7,
+        "end_column": 16
       },
-      "scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:30:10:41:3",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "forEach",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 39,
-        "start_column": 5,
-        "end_line": 39,
-        "end_column": 22
-      },
-      "scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:30:10:41:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 39,
-        "start_column": 5,
-        "end_line": 39,
-        "end_column": 14
-      },
-      "property_chain": [
-        "operations",
-        "forEach"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "operations",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 39,
-        "start_column": 5,
-        "end_line": 39,
-        "end_column": 14
-      },
-      "scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:30:10:41:3",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "forEach",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 39,
-        "start_column": 5,
-        "end_line": 39,
-        "end_column": 22
-      },
-      "scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:30:10:41:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 39,
-        "start_column": 5,
-        "end_line": 39,
-        "end_column": 14
-      },
-      "property_chain": [
-        "operations",
-        "forEach"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -1786,13 +1770,13 @@
     },
     {
       "kind": "variable_reference",
-      "name": "forEach",
+      "name": "operations",
       "location": {
         "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
         "start_line": 39,
-        "start_column": 16,
+        "start_column": 5,
         "end_line": 39,
-        "end_column": 22
+        "end_column": 14
       },
       "scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:30:10:41:3",
       "access_type": "read"
@@ -1832,83 +1816,17 @@
         "processOperation",
         "bind"
       ],
-      "optional_chaining": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "processOperation",
-      "location": {
+      "is_optional_chain": false,
+      "potential_construct_target": {
         "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 39,
-        "start_column": 24,
-        "end_line": 39,
-        "end_column": 39
+        "start_line": 7,
+        "start_column": 7,
+        "end_line": 7,
+        "end_column": 16
       },
-      "scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:30:10:41:3",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "bind",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 39,
-        "start_column": 24,
-        "end_line": 39,
-        "end_column": 44
-      },
-      "scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:30:10:41:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 39,
-        "start_column": 24,
-        "end_line": 39,
-        "end_column": 39
-      },
-      "property_chain": [
-        "processOperation",
-        "bind"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "processOperation",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 39,
-        "start_column": 24,
-        "end_line": 39,
-        "end_column": 39
-      },
-      "scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:30:10:41:3",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "bind",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 39,
-        "start_column": 24,
-        "end_line": 39,
-        "end_column": 44
-      },
-      "scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:30:10:41:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 39,
-        "start_column": 24,
-        "end_line": 39,
-        "end_column": 39
-      },
-      "property_chain": [
-        "processOperation",
-        "bind"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -1938,13 +1856,13 @@
     },
     {
       "kind": "variable_reference",
-      "name": "bind",
+      "name": "processOperation",
       "location": {
         "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
         "start_line": 39,
-        "start_column": 41,
+        "start_column": 24,
         "end_line": 39,
-        "end_column": 44
+        "end_column": 39
       },
       "scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:30:10:41:3",
       "access_type": "read"
@@ -2199,31 +2117,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "baseUrl",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 51,
-        "start_column": 19,
-        "end_line": 51,
-        "end_column": 35
-      },
-      "scope_id": "function:<fixtures>/javascript/code/classes/object_literals.js:50:24:52:7",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 51,
-        "start_column": 19,
-        "end_line": 51,
-        "end_column": 27
-      },
-      "property_chain": [
-        "apiClient",
-        "baseUrl"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "apiClient",
       "location": {
@@ -2232,32 +2125,6 @@
         "start_column": 19,
         "end_line": 51,
         "end_column": 27
-      },
-      "scope_id": "function:<fixtures>/javascript/code/classes/object_literals.js:50:24:52:7",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "apiClient",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 51,
-        "start_column": 19,
-        "end_line": 51,
-        "end_column": 27
-      },
-      "scope_id": "function:<fixtures>/javascript/code/classes/object_literals.js:50:24:52:7",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "baseUrl",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 51,
-        "start_column": 29,
-        "end_line": 51,
-        "end_column": 35
       },
       "scope_id": "function:<fixtures>/javascript/code/classes/object_literals.js:50:24:52:7",
       "access_type": "read"
@@ -2450,31 +2317,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "name",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 58,
-        "start_column": 28,
-        "end_line": 58,
-        "end_column": 40
-      },
-      "scope_id": "function:<fixtures>/javascript/code/classes/object_literals.js:57:28:59:7",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 58,
-        "start_column": 28,
-        "end_line": 58,
-        "end_column": 35
-      },
-      "property_chain": [
-        "userData",
-        "name"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "userData",
       "location": {
@@ -2483,32 +2325,6 @@
         "start_column": 28,
         "end_line": 58,
         "end_column": 35
-      },
-      "scope_id": "function:<fixtures>/javascript/code/classes/object_literals.js:57:28:59:7",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "userData",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 58,
-        "start_column": 28,
-        "end_line": 58,
-        "end_column": 35
-      },
-      "scope_id": "function:<fixtures>/javascript/code/classes/object_literals.js:57:28:59:7",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "name",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 58,
-        "start_column": 37,
-        "end_line": 58,
-        "end_column": 40
       },
       "scope_id": "function:<fixtures>/javascript/code/classes/object_literals.js:57:28:59:7",
       "access_type": "read"
@@ -2565,31 +2381,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "email",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 58,
-        "start_column": 45,
-        "end_line": 58,
-        "end_column": 58
-      },
-      "scope_id": "function:<fixtures>/javascript/code/classes/object_literals.js:57:28:59:7",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 58,
-        "start_column": 45,
-        "end_line": 58,
-        "end_column": 52
-      },
-      "property_chain": [
-        "userData",
-        "email"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "userData",
       "location": {
@@ -2598,32 +2389,6 @@
         "start_column": 45,
         "end_line": 58,
         "end_column": 52
-      },
-      "scope_id": "function:<fixtures>/javascript/code/classes/object_literals.js:57:28:59:7",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "userData",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 58,
-        "start_column": 45,
-        "end_line": 58,
-        "end_column": 52
-      },
-      "scope_id": "function:<fixtures>/javascript/code/classes/object_literals.js:57:28:59:7",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "email",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 58,
-        "start_column": 54,
-        "end_line": 58,
-        "end_column": 58
       },
       "scope_id": "function:<fixtures>/javascript/code/classes/object_literals.js:57:28:59:7",
       "access_type": "read"
@@ -2816,31 +2581,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "baseUrl",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 71,
-        "start_column": 19,
-        "end_line": 71,
-        "end_column": 35
-      },
-      "scope_id": "function:<fixtures>/javascript/code/classes/object_literals.js:70:27:72:7",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 71,
-        "start_column": 19,
-        "end_line": 71,
-        "end_column": 27
-      },
-      "property_chain": [
-        "apiClient",
-        "baseUrl"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "apiClient",
       "location": {
@@ -2849,32 +2589,6 @@
         "start_column": 19,
         "end_line": 71,
         "end_column": 27
-      },
-      "scope_id": "function:<fixtures>/javascript/code/classes/object_literals.js:70:27:72:7",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "apiClient",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 71,
-        "start_column": 19,
-        "end_line": 71,
-        "end_column": 27
-      },
-      "scope_id": "function:<fixtures>/javascript/code/classes/object_literals.js:70:27:72:7",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "baseUrl",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 71,
-        "start_column": 29,
-        "end_line": 71,
-        "end_column": 35
       },
       "scope_id": "function:<fixtures>/javascript/code/classes/object_literals.js:70:27:72:7",
       "access_type": "read"
@@ -3284,6 +2998,57 @@
       "access_type": "read"
     },
     {
+      "kind": "property_access",
+      "name": "data",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 92,
+        "start_column": 14,
+        "end_line": 92,
+        "end_column": 22
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/object_literals.js:91:29:93:5",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 92,
+        "start_column": 14,
+        "end_line": 92,
+        "end_column": 17
+      },
+      "property_chain": [
+        "this",
+        "data"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "property_access",
+      "name": "count",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 92,
+        "start_column": 14,
+        "end_line": 92,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/object_literals.js:91:29:93:5",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 92,
+        "start_column": 14,
+        "end_line": 92,
+        "end_column": 22
+      },
+      "property_chain": [
+        "this",
+        "data",
+        "count"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
       "kind": "variable_reference",
       "name": "this.data.count",
       "location": {
@@ -3344,7 +3109,17 @@
         "getCurrentCount",
         "call"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "potential_construct_target": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 87,
+        "start_column": 7,
+        "end_line": 87,
+        "end_column": 19
+      },
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -3358,69 +3133,6 @@
       },
       "scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:90:20:95:3",
       "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "call",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 94,
-        "start_column": 12,
-        "end_line": 94,
-        "end_column": 31
-      },
-      "scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:90:20:95:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 94,
-        "start_column": 12,
-        "end_line": 94,
-        "end_column": 26
-      },
-      "property_chain": [
-        "getCurrentCount",
-        "call"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "getCurrentCount",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 94,
-        "start_column": 12,
-        "end_line": 94,
-        "end_column": 26
-      },
-      "scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:90:20:95:3",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "call",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 94,
-        "start_column": 12,
-        "end_line": 94,
-        "end_column": 31
-      },
-      "scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:90:20:95:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 94,
-        "start_column": 12,
-        "end_line": 94,
-        "end_column": 26
-      },
-      "property_chain": [
-        "getCurrentCount",
-        "call"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -3457,19 +3169,6 @@
         "start_column": 12,
         "end_line": 94,
         "end_column": 26
-      },
-      "scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:90:20:95:3",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "call",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 94,
-        "start_column": 28,
-        "end_line": 94,
-        "end_column": 31
       },
       "scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:90:20:95:3",
       "access_type": "read"
@@ -3527,6 +3226,76 @@
       "access_type": "read"
     },
     {
+      "kind": "property_access",
+      "name": "data",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 99,
+        "start_column": 7,
+        "end_line": 99,
+        "end_column": 15
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/object_literals.js:98:25:100:5",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 99,
+        "start_column": 7,
+        "end_line": 99,
+        "end_column": 10
+      },
+      "property_chain": [
+        "this",
+        "data"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "property_access",
+      "name": "count",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 99,
+        "start_column": 7,
+        "end_line": 99,
+        "end_column": 21
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/object_literals.js:98:25:100:5",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 99,
+        "start_column": 7,
+        "end_line": 99,
+        "end_column": 15
+      },
+      "property_chain": [
+        "this",
+        "data",
+        "count"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "assignment",
+      "name": "this.data.count = value",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 99,
+        "start_column": 7,
+        "end_line": 99,
+        "end_column": 29
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/object_literals.js:98:25:100:5",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 87,
+        "start_column": 7,
+        "end_line": 87,
+        "end_column": 19
+      }
+    },
+    {
       "kind": "variable_reference",
       "name": "this",
       "location": {
@@ -3574,83 +3343,17 @@
         "updateCount",
         "call"
       ],
-      "optional_chaining": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "updateCount",
-      "location": {
+      "is_optional_chain": false,
+      "potential_construct_target": {
         "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 101,
-        "start_column": 5,
-        "end_line": 101,
-        "end_column": 15
+        "start_line": 87,
+        "start_column": 7,
+        "end_line": 87,
+        "end_column": 19
       },
-      "scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:97:20:103:3",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "call",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 101,
-        "start_column": 5,
-        "end_line": 101,
-        "end_column": 20
-      },
-      "scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:97:20:103:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 101,
-        "start_column": 5,
-        "end_line": 101,
-        "end_column": 15
-      },
-      "property_chain": [
-        "updateCount",
-        "call"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "updateCount",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 101,
-        "start_column": 5,
-        "end_line": 101,
-        "end_column": 15
-      },
-      "scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:97:20:103:3",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "call",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 101,
-        "start_column": 5,
-        "end_line": 101,
-        "end_column": 20
-      },
-      "scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:97:20:103:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 101,
-        "start_column": 5,
-        "end_line": 101,
-        "end_column": 15
-      },
-      "property_chain": [
-        "updateCount",
-        "call"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -3680,13 +3383,13 @@
     },
     {
       "kind": "variable_reference",
-      "name": "call",
+      "name": "updateCount",
       "location": {
         "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
         "start_line": 101,
-        "start_column": 17,
+        "start_column": 5,
         "end_line": 101,
-        "end_column": 20
+        "end_column": 15
       },
       "scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:97:20:103:3",
       "access_type": "read"
@@ -3842,7 +3545,17 @@
         "calculator",
         "add"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "potential_construct_target": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 107,
+        "start_column": 7,
+        "end_line": 107,
+        "end_column": 17
+      },
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -3876,9 +3589,22 @@
         "end_column": 37
       },
       "property_chain": [
+        "calculator",
+        "add",
         "multiply"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "potential_construct_target": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 107,
+        "start_column": 7,
+        "end_line": 107,
+        "end_column": 17
+      },
+      "call_site_syntax": {
+        "receiver_kind": "call_chain",
+        "receiver_call_target_lexical_shape": "unknown"
+      }
     },
     {
       "kind": "variable_reference",
@@ -3912,9 +3638,23 @@
         "end_column": 49
       },
       "property_chain": [
+        "calculator",
+        "add",
+        "multiply",
         "getValue"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "potential_construct_target": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 107,
+        "start_column": 7,
+        "end_line": 107,
+        "end_column": 17
+      },
+      "call_site_syntax": {
+        "receiver_kind": "call_chain",
+        "receiver_call_target_lexical_shape": "unknown"
+      }
     },
     {
       "kind": "variable_reference",
@@ -3930,69 +3670,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "add",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 107,
-        "start_column": 21,
-        "end_line": 107,
-        "end_column": 34
-      },
-      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 107,
-        "start_column": 21,
-        "end_line": 107,
-        "end_column": 30
-      },
-      "property_chain": [
-        "calculator",
-        "add"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "calculator",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 107,
-        "start_column": 21,
-        "end_line": 107,
-        "end_column": 30
-      },
-      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "add",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 107,
-        "start_column": 21,
-        "end_line": 107,
-        "end_column": 34
-      },
-      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 107,
-        "start_column": 21,
-        "end_line": 107,
-        "end_column": 30
-      },
-      "property_chain": [
-        "calculator",
-        "add"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "calculator",
       "location": {
@@ -4014,19 +3691,6 @@
         "start_column": 21,
         "end_line": 107,
         "end_column": 30
-      },
-      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "add",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 107,
-        "start_column": 32,
-        "end_line": 107,
-        "end_column": 34
       },
       "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
       "access_type": "read"
@@ -4130,7 +3794,17 @@
         "calculator",
         "reset"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "potential_construct_target": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 108,
+        "start_column": 7,
+        "end_line": 108,
+        "end_column": 17
+      },
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -4164,9 +3838,22 @@
         "end_column": 38
       },
       "property_chain": [
+        "calculator",
+        "reset",
         "getValue"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "potential_construct_target": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 108,
+        "start_column": 7,
+        "end_line": 108,
+        "end_column": 17
+      },
+      "call_site_syntax": {
+        "receiver_kind": "call_chain",
+        "receiver_call_target_lexical_shape": "unknown"
+      }
     },
     {
       "kind": "variable_reference",
@@ -4182,69 +3869,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "reset",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 108,
-        "start_column": 21,
-        "end_line": 108,
-        "end_column": 36
-      },
-      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 108,
-        "start_column": 21,
-        "end_line": 108,
-        "end_column": 30
-      },
-      "property_chain": [
-        "calculator",
-        "reset"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "calculator",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 108,
-        "start_column": 21,
-        "end_line": 108,
-        "end_column": 30
-      },
-      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "reset",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 108,
-        "start_column": 21,
-        "end_line": 108,
-        "end_column": 36
-      },
-      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 108,
-        "start_column": 21,
-        "end_line": 108,
-        "end_column": 30
-      },
-      "property_chain": [
-        "calculator",
-        "reset"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "calculator",
       "location": {
@@ -4266,19 +3890,6 @@
         "start_column": 21,
         "end_line": 108,
         "end_column": 30
-      },
-      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "reset",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 108,
-        "start_column": 32,
-        "end_line": 108,
-        "end_column": 36
       },
       "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
       "access_type": "read"
@@ -4383,7 +3994,17 @@
         "users",
         "get"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "potential_construct_target": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 110,
+        "start_column": 7,
+        "end_line": 110,
+        "end_column": 13
+      },
+      "call_site_syntax": {
+        "receiver_kind": "member_expression"
+      }
     },
     {
       "kind": "variable_reference",
@@ -4437,31 +4058,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "users",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 110,
-        "start_column": 17,
-        "end_line": 110,
-        "end_column": 31
-      },
-      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 110,
-        "start_column": 17,
-        "end_line": 110,
-        "end_column": 25
-      },
-      "property_chain": [
-        "apiClient",
-        "users"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "apiClient",
       "location": {
@@ -4470,32 +4066,6 @@
         "start_column": 17,
         "end_line": 110,
         "end_column": 25
-      },
-      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "apiClient",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 110,
-        "start_column": 17,
-        "end_line": 110,
-        "end_column": 25
-      },
-      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "users",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 110,
-        "start_column": 27,
-        "end_line": 110,
-        "end_column": 31
       },
       "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
       "access_type": "read"
@@ -4600,7 +4170,17 @@
         "users",
         "create"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "potential_construct_target": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 111,
+        "start_column": 7,
+        "end_line": 111,
+        "end_column": 18
+      },
+      "call_site_syntax": {
+        "receiver_kind": "member_expression"
+      }
     },
     {
       "kind": "variable_reference",
@@ -4654,31 +4234,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "users",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 111,
-        "start_column": 22,
-        "end_line": 111,
-        "end_column": 36
-      },
-      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 111,
-        "start_column": 22,
-        "end_line": 111,
-        "end_column": 30
-      },
-      "property_chain": [
-        "apiClient",
-        "users"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "apiClient",
       "location": {
@@ -4687,32 +4242,6 @@
         "start_column": 22,
         "end_line": 111,
         "end_column": 30
-      },
-      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "apiClient",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 111,
-        "start_column": 22,
-        "end_line": 111,
-        "end_column": 30
-      },
-      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "users",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 111,
-        "start_column": 32,
-        "end_line": 111,
-        "end_column": 36
       },
       "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
       "access_type": "read"
@@ -4817,7 +4346,17 @@
         "posts",
         "list"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "potential_construct_target": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 113,
+        "start_column": 7,
+        "end_line": 113,
+        "end_column": 14
+      },
+      "call_site_syntax": {
+        "receiver_kind": "member_expression"
+      }
     },
     {
       "kind": "variable_reference",
@@ -4871,31 +4410,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "posts",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 113,
-        "start_column": 18,
-        "end_line": 113,
-        "end_column": 32
-      },
-      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 113,
-        "start_column": 18,
-        "end_line": 113,
-        "end_column": 26
-      },
-      "property_chain": [
-        "apiClient",
-        "posts"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "apiClient",
       "location": {
@@ -4904,32 +4418,6 @@
         "start_column": 18,
         "end_line": 113,
         "end_column": 26
-      },
-      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "apiClient",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 113,
-        "start_column": 18,
-        "end_line": 113,
-        "end_column": 26
-      },
-      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "posts",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 113,
-        "start_column": 28,
-        "end_line": 113,
-        "end_column": 32
       },
       "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
       "access_type": "read"
@@ -5034,7 +4522,17 @@
         "posts",
         "getByUser"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "potential_construct_target": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 114,
+        "start_column": 7,
+        "end_line": 114,
+        "end_column": 18
+      },
+      "call_site_syntax": {
+        "receiver_kind": "member_expression"
+      }
     },
     {
       "kind": "variable_reference",
@@ -5088,31 +4586,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "posts",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 114,
-        "start_column": 22,
-        "end_line": 114,
-        "end_column": 36
-      },
-      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 114,
-        "start_column": 22,
-        "end_line": 114,
-        "end_column": 30
-      },
-      "property_chain": [
-        "apiClient",
-        "posts"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "apiClient",
       "location": {
@@ -5121,32 +4594,6 @@
         "start_column": 22,
         "end_line": 114,
         "end_column": 30
-      },
-      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "apiClient",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 114,
-        "start_column": 22,
-        "end_line": 114,
-        "end_column": 30
-      },
-      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "posts",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 114,
-        "start_column": 32,
-        "end_line": 114,
-        "end_column": 36
       },
       "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
       "access_type": "read"
@@ -5250,83 +4697,17 @@
         "dynamicObject",
         "getCount"
       ],
-      "optional_chaining": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "dynamicObject",
-      "location": {
+      "is_optional_chain": false,
+      "potential_construct_target": {
         "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
         "start_line": 116,
-        "start_column": 22,
+        "start_column": 7,
         "end_line": 116,
-        "end_column": 34
+        "end_column": 18
       },
-      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "getCount",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 116,
-        "start_column": 22,
-        "end_line": 116,
-        "end_column": 43
-      },
-      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 116,
-        "start_column": 22,
-        "end_line": 116,
-        "end_column": 34
-      },
-      "property_chain": [
-        "dynamicObject",
-        "getCount"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "dynamicObject",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 116,
-        "start_column": 22,
-        "end_line": 116,
-        "end_column": 34
-      },
-      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "getCount",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 116,
-        "start_column": 22,
-        "end_line": 116,
-        "end_column": 43
-      },
-      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 116,
-        "start_column": 22,
-        "end_line": 116,
-        "end_column": 34
-      },
-      "property_chain": [
-        "dynamicObject",
-        "getCount"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -5356,13 +4737,13 @@
     },
     {
       "kind": "variable_reference",
-      "name": "getCount",
+      "name": "dynamicObject",
       "location": {
         "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
         "start_line": 116,
-        "start_column": 36,
+        "start_column": 22,
         "end_line": 116,
-        "end_column": 43
+        "end_column": 34
       },
       "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
       "access_type": "read"
@@ -5466,7 +4847,17 @@
         "dynamicObject",
         "setCount"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "potential_construct_target": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 117,
+        "start_column": 7,
+        "end_line": 117,
+        "end_column": 18
+      },
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -5500,9 +4891,22 @@
         "end_column": 47
       },
       "property_chain": [
+        "dynamicObject",
+        "setCount",
         "getCount"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "potential_construct_target": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 117,
+        "start_column": 7,
+        "end_line": 117,
+        "end_column": 18
+      },
+      "call_site_syntax": {
+        "receiver_kind": "call_chain",
+        "receiver_call_target_lexical_shape": "unknown"
+      }
     },
     {
       "kind": "variable_reference",
@@ -5518,69 +4922,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "setCount",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 117,
-        "start_column": 22,
-        "end_line": 117,
-        "end_column": 43
-      },
-      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 117,
-        "start_column": 22,
-        "end_line": 117,
-        "end_column": 34
-      },
-      "property_chain": [
-        "dynamicObject",
-        "setCount"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "dynamicObject",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 117,
-        "start_column": 22,
-        "end_line": 117,
-        "end_column": 34
-      },
-      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "setCount",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 117,
-        "start_column": 22,
-        "end_line": 117,
-        "end_column": 43
-      },
-      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 117,
-        "start_column": 22,
-        "end_line": 117,
-        "end_column": 34
-      },
-      "property_chain": [
-        "dynamicObject",
-        "setCount"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "dynamicObject",
       "location": {
@@ -5615,57 +4956,6 @@
         "start_column": 36,
         "end_line": 117,
         "end_column": 43
-      },
-      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "setCount",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 117,
-        "start_column": 36,
-        "end_line": 117,
-        "end_column": 43
-      },
-      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "exports",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 119,
-        "start_column": 1,
-        "end_line": 119,
-        "end_column": 14
-      },
-      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 119,
-        "start_column": 1,
-        "end_line": 119,
-        "end_column": 6
-      },
-      "property_chain": [
-        "module",
-        "exports"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "module",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 119,
-        "start_column": 1,
-        "end_line": 119,
-        "end_column": 6
       },
       "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
       "access_type": "read"
@@ -5806,19 +5096,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "exports",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
-        "start_line": 119,
-        "start_column": 8,
-        "end_line": 119,
-        "end_column": 14
-      },
-      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "{\n  calculator,\n  apiClient,\n  dynamicObject,\n  calcResult1,\n  calcResult2,\n  userUrl,\n  createResult,\n  postsUrl,\n  userPostsUrl,\n  countResult1,\n  countResult2,\n}",
       "location": {
         "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
@@ -5826,6 +5103,149 @@
         "start_column": 18,
         "end_line": 131,
         "end_column": 1
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "calculator",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 120,
+        "start_column": 3,
+        "end_line": 120,
+        "end_column": 12
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "apiClient",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 121,
+        "start_column": 3,
+        "end_line": 121,
+        "end_column": 11
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "dynamicObject",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 122,
+        "start_column": 3,
+        "end_line": 122,
+        "end_column": 15
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "calcResult1",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 123,
+        "start_column": 3,
+        "end_line": 123,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "calcResult2",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 124,
+        "start_column": 3,
+        "end_line": 124,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "userUrl",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 125,
+        "start_column": 3,
+        "end_line": 125,
+        "end_column": 9
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "createResult",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 126,
+        "start_column": 3,
+        "end_line": 126,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "postsUrl",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 127,
+        "start_column": 3,
+        "end_line": 127,
+        "end_column": 10
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "userPostsUrl",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 128,
+        "start_column": 3,
+        "end_line": 128,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "countResult1",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 129,
+        "start_column": 3,
+        "end_line": 129,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "countResult2",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 130,
+        "start_column": 3,
+        "end_line": 130,
+        "end_column": 14
       },
       "scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
       "access_type": "read"

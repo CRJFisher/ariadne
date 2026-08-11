@@ -1,10 +1,10 @@
 {
   "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
   "language": "javascript",
-  "root_scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
+  "root_scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:51:0",
   "scopes": {
-    "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2": {
-      "id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
+    "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:51:0": {
+      "id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:51:0",
       "parent_id": null,
       "name": null,
       "type": "module",
@@ -12,76 +12,315 @@
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
         "start_line": 1,
         "start_column": 1,
+        "end_line": 51,
+        "end_column": 0
+      },
+      "child_ids": [
+        "class:<fixtures>/javascript/code/modules/main_es6.js:15:21:23:1",
+        "function:<fixtures>/javascript/code/modules/main_es6.js:26:21:29:1",
+        "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1"
+      ]
+    },
+    "class:<fixtures>/javascript/code/modules/main_es6.js:15:21:23:1": {
+      "id": "class:<fixtures>/javascript/code/modules/main_es6.js:15:21:23:1",
+      "parent_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:51:0",
+      "name": "DataProcessor",
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 15,
+        "start_column": 21,
         "end_line": 23,
-        "end_column": 2
+        "end_column": 1
+      },
+      "child_ids": [
+        "constructor:<fixtures>/javascript/code/modules/main_es6.js:16:14:18:3",
+        "method:<fixtures>/javascript/code/modules/main_es6.js:20:10:22:3"
+      ]
+    },
+    "constructor:<fixtures>/javascript/code/modules/main_es6.js:16:14:18:3": {
+      "id": "constructor:<fixtures>/javascript/code/modules/main_es6.js:16:14:18:3",
+      "parent_id": "class:<fixtures>/javascript/code/modules/main_es6.js:15:21:23:1",
+      "name": "constructor",
+      "type": "constructor",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 16,
+        "start_column": 14,
+        "end_line": 18,
+        "end_column": 3
+      },
+      "child_ids": []
+    },
+    "method:<fixtures>/javascript/code/modules/main_es6.js:20:10:22:3": {
+      "id": "method:<fixtures>/javascript/code/modules/main_es6.js:20:10:22:3",
+      "parent_id": "class:<fixtures>/javascript/code/modules/main_es6.js:15:21:23:1",
+      "name": "process",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 20,
+        "start_column": 10,
+        "end_line": 22,
+        "end_column": 3
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/javascript/code/modules/main_es6.js:26:21:29:1": {
+      "id": "function:<fixtures>/javascript/code/modules/main_es6.js:26:21:29:1",
+      "parent_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:51:0",
+      "name": "processData",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 26,
+        "start_column": 21,
+        "end_line": 29,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1": {
+      "id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
+      "parent_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:51:0",
+      "name": "main",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 32,
+        "start_column": 14,
+        "end_line": 42,
+        "end_column": 1
       },
       "child_ids": []
     }
   },
-  "functions": {},
-  "classes": {},
-  "variables": {
-    "variable:<fixtures>/javascript/code/modules/main_es6.js:12:7:12:14:greeting": {
-      "kind": "constant",
-      "symbol_id": "variable:<fixtures>/javascript/code/modules/main_es6.js:12:7:12:14:greeting",
-      "name": "greeting",
+  "functions": {
+    "function:<fixtures>/javascript/code/modules/main_es6.js:26:10:26:20:processData": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/javascript/code/modules/main_es6.js:26:10:26:20:processData",
+      "name": "processData",
       "location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 12,
-        "start_column": 7,
-        "end_line": 12,
-        "end_column": 14
+        "start_line": 26,
+        "start_column": 10,
+        "end_line": 26,
+        "end_column": 20
       },
-      "defining_scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
+      "defining_scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:51:0",
       "is_exported": true,
-      "initial_value": "helper()",
-      "initialized_from_call": "helper"
-    },
-    "variable:<fixtures>/javascript/code/modules/main_es6.js:13:7:13:15:processed": {
-      "kind": "constant",
-      "symbol_id": "variable:<fixtures>/javascript/code/modules/main_es6.js:13:7:13:15:processed",
-      "name": "processed",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 13,
-        "start_column": 7,
-        "end_line": 13,
-        "end_column": 15
+      "export": {
+        "is_reexport": false
       },
-      "defining_scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
-      "is_exported": true,
-      "initial_value": "processData(\"HELLO WORLD\")",
-      "initialized_from_call": "processData"
+      "docstring": "// Process data function",
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:26:21:29:1",
+            "symbol_id": "parameter:<fixtures>/javascript/code/modules/main_es6.js:26:22:26:26:input",
+            "name": "input",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+              "start_line": 26,
+              "start_column": 22,
+              "end_line": 26,
+              "end_column": 26
+            }
+          }
+        ]
+      },
+      "body_scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:26:21:29:1"
     },
-    "variable:<fixtures>/javascript/code/modules/main_es6.js:14:7:14:13:isValid": {
-      "kind": "constant",
-      "symbol_id": "variable:<fixtures>/javascript/code/modules/main_es6.js:14:7:14:13:isValid",
-      "name": "isValid",
+    "function:<fixtures>/javascript/code/modules/main_es6.js:32:10:32:13:main": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:10:32:13:main",
+      "name": "main",
       "location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 14,
-        "start_column": 7,
-        "end_line": 14,
+        "start_line": 32,
+        "start_column": 10,
+        "end_line": 32,
         "end_column": 13
       },
-      "defining_scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
+      "defining_scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:51:0",
       "is_exported": true,
-      "initial_value": "validateEmail(\"test@example.com\")",
-      "initialized_from_call": "validateEmail"
-    },
-    "variable:<fixtures>/javascript/code/modules/main_es6.js:15:7:15:11:today": {
-      "kind": "constant",
-      "symbol_id": "variable:<fixtures>/javascript/code/modules/main_es6.js:15:7:15:11:today",
-      "name": "today",
+      "export": {
+        "is_reexport": false
+      },
+      "docstring": "// Main entry point",
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1"
+    }
+  },
+  "classes": {
+    "class:<fixtures>/javascript/code/modules/main_es6.js:15:7:15:19:DataProcessor": {
+      "kind": "class",
+      "symbol_id": "class:<fixtures>/javascript/code/modules/main_es6.js:15:7:15:19:DataProcessor",
+      "name": "DataProcessor",
       "location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
         "start_line": 15,
         "start_column": 7,
         "end_line": 15,
-        "end_column": 11
+        "end_column": 19
       },
-      "defining_scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
+      "defining_scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:51:0",
+      "extends": [],
       "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "docstring": [
+        "// Data processor class"
+      ],
+      "methods": [
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/javascript/code/modules/main_es6.js:15:21:23:1",
+          "symbol_id": "method:<fixtures>/javascript/code/modules/main_es6.js:20:3:20:9:process",
+          "name": "process",
+          "location": {
+            "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+            "start_line": 20,
+            "start_column": 3,
+            "end_line": 20,
+            "end_column": 9
+          },
+          "parameters": [],
+          "body_scope_id": "method:<fixtures>/javascript/code/modules/main_es6.js:20:10:22:3"
+        }
+      ],
+      "properties": [],
+      "constructors": [
+        {
+          "kind": "constructor",
+          "defining_scope_id": "class:<fixtures>/javascript/code/modules/main_es6.js:15:21:23:1",
+          "symbol_id": "method:<fixtures>/javascript/code/modules/main_es6.js:16:3:16:13:constructor",
+          "name": "constructor",
+          "location": {
+            "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+            "start_line": 16,
+            "start_column": 3,
+            "end_line": 16,
+            "end_column": 13
+          },
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "constructor:<fixtures>/javascript/code/modules/main_es6.js:16:14:18:3",
+              "symbol_id": "parameter:<fixtures>/javascript/code/modules/main_es6.js:16:15:16:18:data",
+              "name": "data",
+              "location": {
+                "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+                "start_line": 16,
+                "start_column": 15,
+                "end_line": 16,
+                "end_column": 18
+              }
+            }
+          ],
+          "body_scope_id": "constructor:<fixtures>/javascript/code/modules/main_es6.js:16:14:18:3"
+        }
+      ],
+      "decorators": []
+    }
+  },
+  "variables": {
+    "variable:<fixtures>/javascript/code/modules/main_es6.js:12:7:12:13:VERSION": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/javascript/code/modules/main_es6.js:12:7:12:13:VERSION",
+      "name": "VERSION",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 12,
+        "start_column": 7,
+        "end_line": 12,
+        "end_column": 13
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:51:0",
+      "is_exported": true,
+      "initial_value": "\"1.0.0\"",
+      "docstring": "// Version constant"
+    },
+    "variable:<fixtures>/javascript/code/modules/main_es6.js:27:9:27:17:processor": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/javascript/code/modules/main_es6.js:27:9:27:17:processor",
+      "name": "processor",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 27,
+        "start_column": 9,
+        "end_line": 27,
+        "end_column": 17
+      },
+      "defining_scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:26:21:29:1",
+      "is_exported": false,
+      "initial_value": "new DataProcessor(input)"
+    },
+    "variable:<fixtures>/javascript/code/modules/main_es6.js:33:9:33:16:greeting": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/javascript/code/modules/main_es6.js:33:9:33:16:greeting",
+      "name": "greeting",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 33,
+        "start_column": 9,
+        "end_line": 33,
+        "end_column": 16
+      },
+      "defining_scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
+      "is_exported": false,
+      "initial_value": "helper()",
+      "initialized_from_call": "helper"
+    },
+    "variable:<fixtures>/javascript/code/modules/main_es6.js:34:9:34:17:processed": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/javascript/code/modules/main_es6.js:34:9:34:17:processed",
+      "name": "processed",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 34,
+        "start_column": 9,
+        "end_line": 34,
+        "end_column": 17
+      },
+      "defining_scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
+      "is_exported": false,
+      "initial_value": "processData(\"hello world\")",
+      "initialized_from_call": "processData"
+    },
+    "variable:<fixtures>/javascript/code/modules/main_es6.js:35:9:35:15:isValid": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/javascript/code/modules/main_es6.js:35:9:35:15:isValid",
+      "name": "isValid",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 35,
+        "start_column": 9,
+        "end_line": 35,
+        "end_column": 15
+      },
+      "defining_scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
+      "is_exported": false,
+      "initial_value": "validateEmail(\"test@example.com\")",
+      "initialized_from_call": "validateEmail"
+    },
+    "variable:<fixtures>/javascript/code/modules/main_es6.js:36:9:36:13:today": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/javascript/code/modules/main_es6.js:36:9:36:13:today",
+      "name": "today",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 36,
+        "start_column": 9,
+        "end_line": 36,
+        "end_column": 13
+      },
+      "defining_scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
+      "is_exported": false,
       "initial_value": "formatDate(new Date())",
       "initialized_from_call": "formatDate"
     }
@@ -102,37 +341,22 @@
         "end_line": 7,
         "end_column": 15
       },
-      "defining_scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
+      "defining_scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:51:0",
       "import_path": "./utils_es6.js",
       "import_kind": "named"
     },
-    "variable:<fixtures>/javascript/code/modules/main_es6.js:7:18:7:28:processData": {
+    "variable:<fixtures>/javascript/code/modules/main_es6.js:7:18:7:30:validateEmail": {
       "kind": "import",
-      "symbol_id": "variable:<fixtures>/javascript/code/modules/main_es6.js:7:18:7:28:processData",
-      "name": "processData",
+      "symbol_id": "variable:<fixtures>/javascript/code/modules/main_es6.js:7:18:7:30:validateEmail",
+      "name": "validateEmail",
       "location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
         "start_line": 7,
         "start_column": 18,
         "end_line": 7,
-        "end_column": 28
+        "end_column": 30
       },
-      "defining_scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
-      "import_path": "./utils_es6.js",
-      "import_kind": "named"
-    },
-    "variable:<fixtures>/javascript/code/modules/main_es6.js:7:31:7:43:validateEmail": {
-      "kind": "import",
-      "symbol_id": "variable:<fixtures>/javascript/code/modules/main_es6.js:7:31:7:43:validateEmail",
-      "name": "validateEmail",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 7,
-        "start_column": 31,
-        "end_line": 7,
-        "end_column": 43
-      },
-      "defining_scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
+      "defining_scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:51:0",
       "import_path": "./utils_es6.js",
       "import_kind": "named"
     },
@@ -147,7 +371,7 @@
         "end_line": 9,
         "end_column": 17
       },
-      "defining_scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
+      "defining_scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:51:0",
       "import_path": "./utils_es6.js",
       "import_kind": "default"
     }
@@ -163,20 +387,7 @@
         "end_line": 7,
         "end_column": 15
       },
-      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "processData",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 7,
-        "start_column": 18,
-        "end_line": 7,
-        "end_column": 28
-      },
-      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:51:0",
       "access_type": "read"
     },
     {
@@ -185,11 +396,11 @@
       "location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
         "start_line": 7,
-        "start_column": 31,
+        "start_column": 18,
         "end_line": 7,
-        "end_column": 43
+        "end_column": 30
       },
-      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:51:0",
       "access_type": "read"
     },
     {
@@ -202,7 +413,496 @@
         "end_line": 9,
         "end_column": 17
       },
-      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:51:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "VERSION = \"1.0.0\"",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 12,
+        "start_column": 7,
+        "end_line": 12,
+        "end_column": 23
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:51:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 12,
+        "start_column": 7,
+        "end_line": 12,
+        "end_column": 23
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "VERSION",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 12,
+        "start_column": 7,
+        "end_line": 12,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:51:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 12,
+        "start_column": 7,
+        "end_line": 12,
+        "end_column": 13
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "VERSION",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 12,
+        "start_column": 7,
+        "end_line": 12,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:51:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "\"1.0.0\"",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 12,
+        "start_column": 17,
+        "end_line": 12,
+        "end_column": 23
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:51:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "DataProcessor",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 15,
+        "start_column": 7,
+        "end_line": 15,
+        "end_column": 19
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:51:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "data",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 16,
+        "start_column": 15,
+        "end_line": 16,
+        "end_column": 18
+      },
+      "scope_id": "constructor:<fixtures>/javascript/code/modules/main_es6.js:16:14:18:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "data",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 17,
+        "start_column": 5,
+        "end_line": 17,
+        "end_column": 13
+      },
+      "scope_id": "constructor:<fixtures>/javascript/code/modules/main_es6.js:16:14:18:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 17,
+        "start_column": 5,
+        "end_line": 17,
+        "end_column": 8
+      },
+      "property_chain": [
+        "this",
+        "data"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 17,
+        "start_column": 5,
+        "end_line": 17,
+        "end_column": 8
+      },
+      "scope_id": "constructor:<fixtures>/javascript/code/modules/main_es6.js:16:14:18:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "data",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 17,
+        "start_column": 17,
+        "end_line": 17,
+        "end_column": 20
+      },
+      "scope_id": "constructor:<fixtures>/javascript/code/modules/main_es6.js:16:14:18:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return this.data.toUpperCase();",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 21,
+        "start_column": 5,
+        "end_line": 21,
+        "end_column": 35
+      },
+      "scope_id": "method:<fixtures>/javascript/code/modules/main_es6.js:20:10:22:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "self_reference_call",
+      "name": "toUpperCase",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 21,
+        "start_column": 12,
+        "end_line": 21,
+        "end_column": 34
+      },
+      "scope_id": "method:<fixtures>/javascript/code/modules/main_es6.js:20:10:22:3",
+      "keyword": "this",
+      "property_chain": [
+        "this",
+        "data",
+        "toUpperCase"
+      ]
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this.data",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 21,
+        "start_column": 12,
+        "end_line": 21,
+        "end_column": 20
+      },
+      "scope_id": "method:<fixtures>/javascript/code/modules/main_es6.js:20:10:22:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "data",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 21,
+        "start_column": 12,
+        "end_line": 21,
+        "end_column": 20
+      },
+      "scope_id": "method:<fixtures>/javascript/code/modules/main_es6.js:20:10:22:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 21,
+        "start_column": 12,
+        "end_line": 21,
+        "end_column": 15
+      },
+      "property_chain": [
+        "this",
+        "data"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this.data.toUpperCase()",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 21,
+        "start_column": 12,
+        "end_line": 21,
+        "end_column": 34
+      },
+      "scope_id": "method:<fixtures>/javascript/code/modules/main_es6.js:20:10:22:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 21,
+        "start_column": 12,
+        "end_line": 21,
+        "end_column": 15
+      },
+      "scope_id": "method:<fixtures>/javascript/code/modules/main_es6.js:20:10:22:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "processData",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 26,
+        "start_column": 10,
+        "end_line": 26,
+        "end_column": 20
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:51:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "input",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 26,
+        "start_column": 22,
+        "end_line": 26,
+        "end_column": 26
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:26:21:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "processor = new DataProcessor(input)",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 27,
+        "start_column": 9,
+        "end_line": 27,
+        "end_column": 44
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:26:21:29:1",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 27,
+        "start_column": 9,
+        "end_line": 27,
+        "end_column": 44
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "processor",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 27,
+        "start_column": 9,
+        "end_line": 27,
+        "end_column": 17
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:26:21:29:1",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 27,
+        "start_column": 9,
+        "end_line": 27,
+        "end_column": 17
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "processor",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 27,
+        "start_column": 9,
+        "end_line": 27,
+        "end_column": 17
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:26:21:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "DataProcessor",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 27,
+        "start_column": 21,
+        "end_line": 27,
+        "end_column": 44
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:26:21:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "constructor_call",
+      "name": "DataProcessor",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 27,
+        "start_column": 25,
+        "end_line": 27,
+        "end_column": 37
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:26:21:29:1",
+      "construct_target": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 27,
+        "start_column": 9,
+        "end_line": 27,
+        "end_column": 17
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "DataProcessor",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 27,
+        "start_column": 25,
+        "end_line": 27,
+        "end_column": 37
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:26:21:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "input",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 27,
+        "start_column": 39,
+        "end_line": 27,
+        "end_column": 43
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:26:21:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return processor.process();",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 28,
+        "start_column": 3,
+        "end_line": 28,
+        "end_column": 29
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:26:21:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "process",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:26:21:29:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 18
+      },
+      "property_chain": [
+        "processor",
+        "process"
+      ],
+      "is_optional_chain": false,
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "processor",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 18
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:26:21:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "processor",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 18
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:26:21:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "processor.process()",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:26:21:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "processor",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 18
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:26:21:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "process",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 28,
+        "start_column": 20,
+        "end_line": 28,
+        "end_column": 26
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:26:21:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "main",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 32,
+        "start_column": 10,
+        "end_line": 32,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:51:0",
       "access_type": "read"
     },
     {
@@ -210,18 +910,18 @@
       "name": "greeting = helper()",
       "location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 12,
-        "start_column": 7,
-        "end_line": 12,
-        "end_column": 25
+        "start_line": 33,
+        "start_column": 9,
+        "end_line": 33,
+        "end_column": 27
       },
-      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
       "target_location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 12,
-        "start_column": 7,
-        "end_line": 12,
-        "end_column": 25
+        "start_line": 33,
+        "start_column": 9,
+        "end_line": 33,
+        "end_column": 27
       }
     },
     {
@@ -229,18 +929,18 @@
       "name": "greeting",
       "location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 12,
-        "start_column": 7,
-        "end_line": 12,
-        "end_column": 14
+        "start_line": 33,
+        "start_column": 9,
+        "end_line": 33,
+        "end_column": 16
       },
-      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
       "target_location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 12,
-        "start_column": 7,
-        "end_line": 12,
-        "end_column": 14
+        "start_line": 33,
+        "start_column": 9,
+        "end_line": 33,
+        "end_column": 16
       }
     },
     {
@@ -248,12 +948,12 @@
       "name": "greeting",
       "location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 12,
-        "start_column": 7,
-        "end_line": 12,
-        "end_column": 14
+        "start_line": 33,
+        "start_column": 9,
+        "end_line": 33,
+        "end_column": 16
       },
-      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
       "access_type": "read"
     },
     {
@@ -261,31 +961,31 @@
       "name": "helper",
       "location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 12,
-        "start_column": 18,
-        "end_line": 12,
+        "start_line": 33,
+        "start_column": 20,
+        "end_line": 33,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 33,
+        "start_column": 20,
+        "end_line": 33,
         "end_column": 25
       },
-      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
-      "access_type": "read"
-    },
-    {
-      "kind": "function_call",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 12,
-        "start_column": 18,
-        "end_line": 12,
-        "end_column": 23
-      },
-      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
       "potential_construct_target": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 12,
-        "start_column": 7,
-        "end_line": 12,
-        "end_column": 14
+        "start_line": 33,
+        "start_column": 9,
+        "end_line": 33,
+        "end_column": 16
       }
     },
     {
@@ -293,31 +993,31 @@
       "name": "helper",
       "location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 12,
-        "start_column": 18,
-        "end_line": 12,
-        "end_column": 23
+        "start_line": 33,
+        "start_column": 20,
+        "end_line": 33,
+        "end_column": 25
       },
-      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
       "access_type": "read"
     },
     {
       "kind": "assignment",
-      "name": "processed = processData(\"HELLO WORLD\")",
+      "name": "processed = processData(\"hello world\")",
       "location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 13,
-        "start_column": 7,
-        "end_line": 13,
-        "end_column": 44
+        "start_line": 34,
+        "start_column": 9,
+        "end_line": 34,
+        "end_column": 46
       },
-      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
       "target_location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 13,
-        "start_column": 7,
-        "end_line": 13,
-        "end_column": 44
+        "start_line": 34,
+        "start_column": 9,
+        "end_line": 34,
+        "end_column": 46
       }
     },
     {
@@ -325,18 +1025,18 @@
       "name": "processed",
       "location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 13,
-        "start_column": 7,
-        "end_line": 13,
-        "end_column": 15
+        "start_line": 34,
+        "start_column": 9,
+        "end_line": 34,
+        "end_column": 17
       },
-      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
       "target_location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 13,
-        "start_column": 7,
-        "end_line": 13,
-        "end_column": 15
+        "start_line": 34,
+        "start_column": 9,
+        "end_line": 34,
+        "end_column": 17
       }
     },
     {
@@ -344,12 +1044,12 @@
       "name": "processed",
       "location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 13,
-        "start_column": 7,
-        "end_line": 13,
-        "end_column": 15
+        "start_line": 34,
+        "start_column": 9,
+        "end_line": 34,
+        "end_column": 17
       },
-      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
       "access_type": "read"
     },
     {
@@ -357,12 +1057,12 @@
       "name": "processData",
       "location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 13,
-        "start_column": 19,
-        "end_line": 13,
-        "end_column": 44
+        "start_line": 34,
+        "start_column": 21,
+        "end_line": 34,
+        "end_column": 46
       },
-      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
       "access_type": "read"
     },
     {
@@ -370,18 +1070,18 @@
       "name": "processData",
       "location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 13,
-        "start_column": 19,
-        "end_line": 13,
-        "end_column": 29
+        "start_line": 34,
+        "start_column": 21,
+        "end_line": 34,
+        "end_column": 31
       },
-      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
       "potential_construct_target": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 13,
-        "start_column": 7,
-        "end_line": 13,
-        "end_column": 15
+        "start_line": 34,
+        "start_column": 9,
+        "end_line": 34,
+        "end_column": 17
       }
     },
     {
@@ -389,12 +1089,12 @@
       "name": "processData",
       "location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 13,
-        "start_column": 19,
-        "end_line": 13,
-        "end_column": 29
+        "start_line": 34,
+        "start_column": 21,
+        "end_line": 34,
+        "end_column": 31
       },
-      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
       "access_type": "read"
     },
     {
@@ -402,18 +1102,18 @@
       "name": "isValid = validateEmail(\"test@example.com\")",
       "location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 14,
-        "start_column": 7,
-        "end_line": 14,
-        "end_column": 49
+        "start_line": 35,
+        "start_column": 9,
+        "end_line": 35,
+        "end_column": 51
       },
-      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
       "target_location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 14,
-        "start_column": 7,
-        "end_line": 14,
-        "end_column": 49
+        "start_line": 35,
+        "start_column": 9,
+        "end_line": 35,
+        "end_column": 51
       }
     },
     {
@@ -421,18 +1121,18 @@
       "name": "isValid",
       "location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 14,
-        "start_column": 7,
-        "end_line": 14,
-        "end_column": 13
+        "start_line": 35,
+        "start_column": 9,
+        "end_line": 35,
+        "end_column": 15
       },
-      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
       "target_location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 14,
-        "start_column": 7,
-        "end_line": 14,
-        "end_column": 13
+        "start_line": 35,
+        "start_column": 9,
+        "end_line": 35,
+        "end_column": 15
       }
     },
     {
@@ -440,12 +1140,12 @@
       "name": "isValid",
       "location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 14,
-        "start_column": 7,
-        "end_line": 14,
-        "end_column": 13
+        "start_line": 35,
+        "start_column": 9,
+        "end_line": 35,
+        "end_column": 15
       },
-      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
       "access_type": "read"
     },
     {
@@ -453,12 +1153,12 @@
       "name": "validateEmail",
       "location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 14,
-        "start_column": 17,
-        "end_line": 14,
-        "end_column": 49
+        "start_line": 35,
+        "start_column": 19,
+        "end_line": 35,
+        "end_column": 51
       },
-      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
       "access_type": "read"
     },
     {
@@ -466,18 +1166,18 @@
       "name": "validateEmail",
       "location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 14,
-        "start_column": 17,
-        "end_line": 14,
-        "end_column": 29
+        "start_line": 35,
+        "start_column": 19,
+        "end_line": 35,
+        "end_column": 31
       },
-      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
       "potential_construct_target": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 14,
-        "start_column": 7,
-        "end_line": 14,
-        "end_column": 13
+        "start_line": 35,
+        "start_column": 9,
+        "end_line": 35,
+        "end_column": 15
       }
     },
     {
@@ -485,12 +1185,12 @@
       "name": "validateEmail",
       "location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 14,
-        "start_column": 17,
-        "end_line": 14,
-        "end_column": 29
+        "start_line": 35,
+        "start_column": 19,
+        "end_line": 35,
+        "end_column": 31
       },
-      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
       "access_type": "read"
     },
     {
@@ -498,18 +1198,18 @@
       "name": "today = formatDate(new Date())",
       "location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 15,
-        "start_column": 7,
-        "end_line": 15,
-        "end_column": 36
+        "start_line": 36,
+        "start_column": 9,
+        "end_line": 36,
+        "end_column": 38
       },
-      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
       "target_location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 15,
-        "start_column": 7,
-        "end_line": 15,
-        "end_column": 36
+        "start_line": 36,
+        "start_column": 9,
+        "end_line": 36,
+        "end_column": 38
       }
     },
     {
@@ -517,18 +1217,18 @@
       "name": "today",
       "location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 15,
-        "start_column": 7,
-        "end_line": 15,
-        "end_column": 11
+        "start_line": 36,
+        "start_column": 9,
+        "end_line": 36,
+        "end_column": 13
       },
-      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
       "target_location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 15,
-        "start_column": 7,
-        "end_line": 15,
-        "end_column": 11
+        "start_line": 36,
+        "start_column": 9,
+        "end_line": 36,
+        "end_column": 13
       }
     },
     {
@@ -536,12 +1236,12 @@
       "name": "today",
       "location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 15,
-        "start_column": 7,
-        "end_line": 15,
-        "end_column": 11
+        "start_line": 36,
+        "start_column": 9,
+        "end_line": 36,
+        "end_column": 13
       },
-      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
       "access_type": "read"
     },
     {
@@ -549,12 +1249,12 @@
       "name": "formatDate",
       "location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 15,
-        "start_column": 15,
-        "end_line": 15,
-        "end_column": 36
+        "start_line": 36,
+        "start_column": 17,
+        "end_line": 36,
+        "end_column": 38
       },
-      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
       "access_type": "read"
     },
     {
@@ -562,18 +1262,18 @@
       "name": "formatDate",
       "location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 15,
-        "start_column": 15,
-        "end_line": 15,
-        "end_column": 24
+        "start_line": 36,
+        "start_column": 17,
+        "end_line": 36,
+        "end_column": 26
       },
-      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
       "potential_construct_target": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 15,
-        "start_column": 7,
-        "end_line": 15,
-        "end_column": 11
+        "start_line": 36,
+        "start_column": 9,
+        "end_line": 36,
+        "end_column": 13
       }
     },
     {
@@ -581,50 +1281,31 @@
       "name": "formatDate",
       "location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 15,
-        "start_column": 15,
-        "end_line": 15,
-        "end_column": 24
+        "start_line": 36,
+        "start_column": 17,
+        "end_line": 36,
+        "end_column": 26
       },
-      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
       "access_type": "read"
-    },
-    {
-      "kind": "function_call",
-      "name": "Date",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 15,
-        "start_column": 26,
-        "end_line": 15,
-        "end_column": 35
-      },
-      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 15,
-        "start_column": 7,
-        "end_line": 15,
-        "end_column": 11
-      }
     },
     {
       "kind": "constructor_call",
       "name": "Date",
       "location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 15,
-        "start_column": 30,
-        "end_line": 15,
-        "end_column": 33
+        "start_line": 36,
+        "start_column": 32,
+        "end_line": 36,
+        "end_column": 35
       },
-      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
       "construct_target": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 15,
-        "start_column": 7,
-        "end_line": 15,
-        "end_column": 11
+        "start_line": 36,
+        "start_column": 9,
+        "end_line": 36,
+        "end_column": 13
       }
     },
     {
@@ -632,12 +1313,91 @@
       "name": "Date",
       "location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 15,
-        "start_column": 30,
-        "end_line": 15,
-        "end_column": 33
+        "start_line": 36,
+        "start_column": 32,
+        "end_line": 36,
+        "end_column": 35
       },
-      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 38,
+        "start_column": 3,
+        "end_line": 38,
+        "end_column": 49
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 38,
+        "start_column": 3,
+        "end_line": 38,
+        "end_column": 9
+      },
+      "property_chain": [
+        "console",
+        "log"
+      ],
+      "is_optional_chain": false,
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 38,
+        "start_column": 3,
+        "end_line": 38,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 38,
+        "start_column": 3,
+        "end_line": 38,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 38,
+        "start_column": 3,
+        "end_line": 38,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 38,
+        "start_column": 11,
+        "end_line": 38,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
       "access_type": "read"
     },
     {
@@ -645,12 +1405,104 @@
       "name": "greeting",
       "location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 19,
-        "start_column": 3,
-        "end_line": 19,
-        "end_column": 10
+        "start_line": 38,
+        "start_column": 18,
+        "end_line": 38,
+        "end_column": 25
       },
-      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "VERSION",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 38,
+        "start_column": 40,
+        "end_line": 38,
+        "end_column": 46
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 39,
+        "start_column": 3,
+        "end_line": 39,
+        "end_column": 40
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 39,
+        "start_column": 3,
+        "end_line": 39,
+        "end_column": 9
+      },
+      "property_chain": [
+        "console",
+        "log"
+      ],
+      "is_optional_chain": false,
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 39,
+        "start_column": 3,
+        "end_line": 39,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 39,
+        "start_column": 3,
+        "end_line": 39,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 39,
+        "start_column": 3,
+        "end_line": 39,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 39,
+        "start_column": 11,
+        "end_line": 39,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
       "access_type": "read"
     },
     {
@@ -658,12 +1510,91 @@
       "name": "processed",
       "location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 20,
-        "start_column": 3,
-        "end_line": 20,
-        "end_column": 11
+        "start_line": 39,
+        "start_column": 29,
+        "end_line": 39,
+        "end_column": 37
       },
-      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 40,
+        "start_column": 3,
+        "end_line": 40,
+        "end_column": 40
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 40,
+        "start_column": 3,
+        "end_line": 40,
+        "end_column": 9
+      },
+      "property_chain": [
+        "console",
+        "log"
+      ],
+      "is_optional_chain": false,
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 40,
+        "start_column": 3,
+        "end_line": 40,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 40,
+        "start_column": 3,
+        "end_line": 40,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 40,
+        "start_column": 3,
+        "end_line": 40,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 40,
+        "start_column": 11,
+        "end_line": 40,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
       "access_type": "read"
     },
     {
@@ -671,12 +1602,91 @@
       "name": "isValid",
       "location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 21,
+        "start_line": 40,
+        "start_column": 31,
+        "end_line": 40,
+        "end_column": 37
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 41,
         "start_column": 3,
-        "end_line": 21,
+        "end_line": 41,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 41,
+        "start_column": 3,
+        "end_line": 41,
         "end_column": 9
       },
-      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
+      "property_chain": [
+        "console",
+        "log"
+      ],
+      "is_optional_chain": false,
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 41,
+        "start_column": 3,
+        "end_line": 41,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 41,
+        "start_column": 3,
+        "end_line": 41,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 41,
+        "start_column": 3,
+        "end_line": 41,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 41,
+        "start_column": 11,
+        "end_line": 41,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
       "access_type": "read"
     },
     {
@@ -684,12 +1694,64 @@
       "name": "today",
       "location": {
         "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
-        "start_line": 22,
-        "start_column": 3,
-        "end_line": 22,
-        "end_column": 7
+        "start_line": 41,
+        "start_column": 25,
+        "end_line": 41,
+        "end_column": 29
       },
-      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:23:2",
+      "scope_id": "function:<fixtures>/javascript/code/modules/main_es6.js:32:14:42:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "VERSION",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 46,
+        "start_column": 3,
+        "end_line": 46,
+        "end_column": 9
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:51:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "DataProcessor",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 47,
+        "start_column": 3,
+        "end_line": 47,
+        "end_column": 15
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:51:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "processData",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 48,
+        "start_column": 3,
+        "end_line": 48,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:51:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "main",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_es6.js",
+        "start_line": 49,
+        "start_column": 3,
+        "end_line": 49,
+        "end_column": 6
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_es6.js:1:1:51:0",
       "access_type": "read"
     }
   ]

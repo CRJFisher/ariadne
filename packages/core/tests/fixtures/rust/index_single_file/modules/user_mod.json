@@ -958,7 +958,10 @@
         "end_line": 14,
         "end_column": 12
       },
-      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:13:15:19:5"
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:13:15:19:5",
+      "path_prefix": [
+        "User"
+      ]
     },
     {
       "kind": "type_reference",
@@ -1615,7 +1618,10 @@
         "end_line": 66,
         "end_column": 19
       },
-      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:65:15:67:5"
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:65:15:67:5",
+      "path_prefix": [
+        "UserManager"
+      ]
     },
     {
       "kind": "type_reference",
@@ -1637,16 +1643,19 @@
       }
     },
     {
-      "kind": "function_call",
-      "name": "Vec::new",
+      "kind": "constructor_call",
+      "name": "Vec",
       "location": {
         "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
         "start_line": 66,
         "start_column": 30,
         "end_line": 66,
-        "end_column": 37
+        "end_column": 32
       },
-      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:65:15:67:5"
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:65:15:67:5",
+      "path_prefix": [
+        "Vec"
+      ]
     },
     {
       "kind": "variable_reference",
@@ -1733,7 +1742,7 @@
       }
     },
     {
-      "kind": "method_call",
+      "kind": "self_reference_call",
       "name": "push",
       "location": {
         "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
@@ -1743,18 +1752,12 @@
         "end_column": 23
       },
       "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:69:20:71:5",
-      "receiver_location": {
-        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
-        "start_line": 70,
-        "start_column": 9,
-        "end_line": 70,
-        "end_column": 18
-      },
+      "keyword": "self",
       "property_chain": [
-        "self.users",
+        "self",
+        "users",
         "push"
-      ],
-      "optional_chaining": false
+      ]
     },
     {
       "kind": "variable_reference",
@@ -1809,7 +1812,7 @@
       "access_type": "read"
     },
     {
-      "kind": "method_call",
+      "kind": "self_reference_call",
       "name": "len",
       "location": {
         "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
@@ -1819,18 +1822,12 @@
         "end_column": 22
       },
       "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:73:26:75:5",
-      "receiver_location": {
-        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
-        "start_line": 74,
-        "start_column": 9,
-        "end_line": 74,
-        "end_column": 18
-      },
+      "keyword": "self",
       "property_chain": [
-        "self.users",
+        "self",
+        "users",
         "len"
-      ],
-      "optional_chaining": false
+      ]
     },
     {
       "kind": "variable_reference",

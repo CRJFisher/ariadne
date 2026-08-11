@@ -215,6 +215,7 @@
       },
       "defining_scope_id": "module:<fixtures>/typescript/code/functions/call_chains.ts:1:1:63:0",
       "is_exported": true,
+      "docstring": "/**\n * Function call chains\n * Tests: function calling other functions, call graph detection\n */",
       "signature": {
         "parameters": []
       },
@@ -373,6 +374,7 @@
       },
       "defining_scope_id": "module:<fixtures>/typescript/code/functions/call_chains.ts:1:1:63:0",
       "is_exported": true,
+      "docstring": "// Branching call chains",
       "signature": {
         "parameters": [
           {
@@ -1175,120 +1177,10 @@
         "Date",
         "now"
       ],
-      "optional_chaining": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "Date",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/functions/call_chains.ts",
-        "start_line": 20,
-        "start_column": 34,
-        "end_line": 20,
-        "end_column": 37
-      },
-      "scope_id": "function:<fixtures>/typescript/code/functions/call_chains.ts:19:20:21:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "now",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/functions/call_chains.ts",
-        "start_line": 20,
-        "start_column": 34,
-        "end_line": 20,
-        "end_column": 41
-      },
-      "scope_id": "function:<fixtures>/typescript/code/functions/call_chains.ts:19:20:21:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/functions/call_chains.ts",
-        "start_line": 20,
-        "start_column": 34,
-        "end_line": 20,
-        "end_column": 37
-      },
-      "property_chain": [
-        "Date",
-        "now"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "Date",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/functions/call_chains.ts",
-        "start_line": 20,
-        "start_column": 34,
-        "end_line": 20,
-        "end_column": 37
-      },
-      "scope_id": "function:<fixtures>/typescript/code/functions/call_chains.ts:19:20:21:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "now",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/functions/call_chains.ts",
-        "start_line": 20,
-        "start_column": 34,
-        "end_line": 20,
-        "end_column": 41
-      },
-      "scope_id": "function:<fixtures>/typescript/code/functions/call_chains.ts:19:20:21:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/functions/call_chains.ts",
-        "start_line": 20,
-        "start_column": 34,
-        "end_line": 20,
-        "end_column": 37
-      },
-      "property_chain": [
-        "Date",
-        "now"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "Date",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/functions/call_chains.ts",
-        "start_line": 20,
-        "start_column": 34,
-        "end_line": 20,
-        "end_column": 37
-      },
-      "scope_id": "function:<fixtures>/typescript/code/functions/call_chains.ts:19:20:21:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "method_call",
-      "name": "now",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/functions/call_chains.ts",
-        "start_line": 20,
-        "start_column": 34,
-        "end_line": 20,
-        "end_column": 43
-      },
-      "scope_id": "function:<fixtures>/typescript/code/functions/call_chains.ts:19:20:21:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/functions/call_chains.ts",
-        "start_line": 20,
-        "start_column": 34,
-        "end_line": 20,
-        "end_column": 37
-      },
-      "property_chain": [
-        "Date",
-        "now"
-      ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -1318,13 +1210,13 @@
     },
     {
       "kind": "variable_reference",
-      "name": "now",
+      "name": "Date",
       "location": {
         "file_path": "<fixtures>/typescript/code/functions/call_chains.ts",
         "start_line": 20,
-        "start_column": 39,
+        "start_column": 34,
         "end_line": 20,
-        "end_column": 41
+        "end_column": 37
       },
       "scope_id": "function:<fixtures>/typescript/code/functions/call_chains.ts:19:20:21:1",
       "access_type": "read"
@@ -1446,31 +1338,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "value",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/functions/call_chains.ts",
-        "start_line": 26,
-        "start_column": 12,
-        "end_line": 26,
-        "end_column": 21
-      },
-      "scope_id": "function:<fixtures>/typescript/code/functions/call_chains.ts:23:24:29:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/functions/call_chains.ts",
-        "start_line": 26,
-        "start_column": 12,
-        "end_line": 26,
-        "end_column": 15
-      },
-      "property_chain": [
-        "data",
-        "value"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "data",
       "location": {
@@ -1479,32 +1346,6 @@
         "start_column": 12,
         "end_line": 26,
         "end_column": 15
-      },
-      "scope_id": "function:<fixtures>/typescript/code/functions/call_chains.ts:23:24:29:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "data",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/functions/call_chains.ts",
-        "start_line": 26,
-        "start_column": 12,
-        "end_line": 26,
-        "end_column": 15
-      },
-      "scope_id": "function:<fixtures>/typescript/code/functions/call_chains.ts:23:24:29:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "value",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/functions/call_chains.ts",
-        "start_line": 26,
-        "start_column": 17,
-        "end_line": 26,
-        "end_column": 21
       },
       "scope_id": "function:<fixtures>/typescript/code/functions/call_chains.ts:23:24:29:1",
       "access_type": "read"
@@ -1587,44 +1428,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "value",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/functions/call_chains.ts",
-        "start_line": 32,
-        "start_column": 7,
-        "end_line": 32,
-        "end_column": 16
-      },
-      "scope_id": "block:<fixtures>/typescript/code/functions/call_chains.ts:32:3:34:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/functions/call_chains.ts",
-        "start_line": 32,
-        "start_column": 7,
-        "end_line": 32,
-        "end_column": 10
-      },
-      "property_chain": [
-        "data",
-        "value"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "data",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/functions/call_chains.ts",
-        "start_line": 32,
-        "start_column": 7,
-        "end_line": 32,
-        "end_column": 10
-      },
-      "scope_id": "block:<fixtures>/typescript/code/functions/call_chains.ts:32:3:34:3",
-      "access_type": "read"
-    },
-    {
       "kind": "variable_reference",
       "name": "data",
       "location": {
@@ -1649,31 +1452,6 @@
       },
       "scope_id": "block:<fixtures>/typescript/code/functions/call_chains.ts:32:3:34:3",
       "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "value",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/functions/call_chains.ts",
-        "start_line": 32,
-        "start_column": 12,
-        "end_line": 32,
-        "end_column": 16
-      },
-      "scope_id": "block:<fixtures>/typescript/code/functions/call_chains.ts:32:3:34:3",
-      "access_type": "read"
-    },
-    {
-      "kind": "function_call",
-      "name": "Error",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/functions/call_chains.ts",
-        "start_line": 33,
-        "start_column": 11,
-        "end_line": 33,
-        "end_column": 36
-      },
-      "scope_id": "block:<fixtures>/typescript/code/functions/call_chains.ts:32:3:34:3"
     },
     {
       "kind": "constructor_call",
@@ -1787,120 +1565,10 @@
         "console",
         "log"
       ],
-      "optional_chaining": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "console",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/functions/call_chains.ts",
-        "start_line": 39,
-        "start_column": 3,
-        "end_line": 39,
-        "end_column": 9
-      },
-      "scope_id": "function:<fixtures>/typescript/code/functions/call_chains.ts:38:20:40:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "log",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/functions/call_chains.ts",
-        "start_line": 39,
-        "start_column": 3,
-        "end_line": 39,
-        "end_column": 13
-      },
-      "scope_id": "function:<fixtures>/typescript/code/functions/call_chains.ts:38:20:40:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/functions/call_chains.ts",
-        "start_line": 39,
-        "start_column": 3,
-        "end_line": 39,
-        "end_column": 9
-      },
-      "property_chain": [
-        "console",
-        "log"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "console",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/functions/call_chains.ts",
-        "start_line": 39,
-        "start_column": 3,
-        "end_line": 39,
-        "end_column": 9
-      },
-      "scope_id": "function:<fixtures>/typescript/code/functions/call_chains.ts:38:20:40:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "log",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/functions/call_chains.ts",
-        "start_line": 39,
-        "start_column": 3,
-        "end_line": 39,
-        "end_column": 13
-      },
-      "scope_id": "function:<fixtures>/typescript/code/functions/call_chains.ts:38:20:40:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/functions/call_chains.ts",
-        "start_line": 39,
-        "start_column": 3,
-        "end_line": 39,
-        "end_column": 9
-      },
-      "property_chain": [
-        "console",
-        "log"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "console",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/functions/call_chains.ts",
-        "start_line": 39,
-        "start_column": 3,
-        "end_line": 39,
-        "end_column": 9
-      },
-      "scope_id": "function:<fixtures>/typescript/code/functions/call_chains.ts:38:20:40:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "method_call",
-      "name": "log",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/functions/call_chains.ts",
-        "start_line": 39,
-        "start_column": 3,
-        "end_line": 39,
-        "end_column": 32
-      },
-      "scope_id": "function:<fixtures>/typescript/code/functions/call_chains.ts:38:20:40:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/functions/call_chains.ts",
-        "start_line": 39,
-        "start_column": 3,
-        "end_line": 39,
-        "end_column": 9
-      },
-      "property_chain": [
-        "console",
-        "log"
-      ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -1930,13 +1598,13 @@
     },
     {
       "kind": "variable_reference",
-      "name": "log",
+      "name": "console",
       "location": {
         "file_path": "<fixtures>/typescript/code/functions/call_chains.ts",
         "start_line": 39,
-        "start_column": 11,
+        "start_column": 3,
         "end_line": 39,
-        "end_column": 13
+        "end_column": 9
       },
       "scope_id": "function:<fixtures>/typescript/code/functions/call_chains.ts:38:20:40:1",
       "access_type": "read"
@@ -2284,6 +1952,19 @@
         "start_column": 10,
         "end_line": 57,
         "end_column": 36
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/call_chains.ts:55:28:58:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "data",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/call_chains.ts",
+        "start_line": 57,
+        "start_column": 31,
+        "end_line": 57,
+        "end_column": 34
       },
       "scope_id": "function:<fixtures>/typescript/code/functions/call_chains.ts:55:28:58:1",
       "access_type": "read"

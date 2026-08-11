@@ -157,6 +157,7 @@
       "defining_scope_id": "module:<fixtures>/typescript/code/integration/nested_scopes.ts:1:1:35:44",
       "is_exported": true,
       "initial_value": "helper()",
+      "docstring": "// Top-level function call (module scope)",
       "initialized_from_call": "helper"
     },
     "variable:<fixtures>/typescript/code/integration/nested_scopes.ts:11:9:11:18:outer_call": {
@@ -173,6 +174,7 @@
       "defining_scope_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:9:24:26:1",
       "is_exported": false,
       "initial_value": "helper()",
+      "docstring": "// Call in outer function scope",
       "initialized_from_call": "helper"
     },
     "variable:<fixtures>/typescript/code/integration/nested_scopes.ts:15:11:15:20:block_call": {
@@ -189,6 +191,7 @@
       "defining_scope_id": "block:<fixtures>/typescript/code/integration/nested_scopes.ts:13:3:16:3",
       "is_exported": false,
       "initial_value": "helper()",
+      "docstring": "// Call in block scope (enclosing function: outerFunction)",
       "initialized_from_call": "helper"
     },
     "variable:<fixtures>/typescript/code/integration/nested_scopes.ts:20:11:20:20:inner_call": {
@@ -205,6 +208,7 @@
       "defining_scope_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:18:26:22:3",
       "is_exported": false,
       "initial_value": "helper()",
+      "docstring": "// Call in inner function scope",
       "initialized_from_call": "helper"
     },
     "variable:<fixtures>/typescript/code/integration/nested_scopes.ts:24:9:24:20:inner_result": {
@@ -237,6 +241,7 @@
       "defining_scope_id": "module:<fixtures>/typescript/code/integration/nested_scopes.ts:1:1:35:44",
       "is_exported": true,
       "initial_value": "outer_function()",
+      "docstring": "// Calls from different scopes",
       "initialized_from_call": "outer_function"
     }
   },
@@ -843,6 +848,32 @@
         "start_column": 10,
         "end_line": 25,
         "end_column": 37
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:9:24:26:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "outer_call",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 25,
+        "start_column": 12,
+        "end_line": 25,
+        "end_column": 21
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:9:24:26:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "inner_result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 25,
+        "start_column": 24,
+        "end_line": 25,
+        "end_column": 35
       },
       "scope_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:9:24:26:1",
       "access_type": "read"

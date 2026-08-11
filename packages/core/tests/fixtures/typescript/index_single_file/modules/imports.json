@@ -96,6 +96,7 @@
       "export": {
         "is_reexport": false
       },
+      "docstring": "// Using imported values",
       "signature": {
         "parameters": [],
         "return_type": "Application"
@@ -165,6 +166,7 @@
       "export": {
         "is_reexport": false
       },
+      "docstring": "// Using namespace import",
       "signature": {
         "parameters": [],
         "return_type": "string"
@@ -188,7 +190,7 @@
       },
       "defining_scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:22:28:30:1",
       "is_exported": false,
-      "initial_value": "{\n    apiUrl: API_URL,\n    timeout: 5000,\n    retries: 3,\n  }",
+      "initial_value": "{\n    api_url: API_URL,\n    timeout: 5000,\n    retries: 3,\n  }",
       "function_collection": {
         "collection_type": "Object",
         "location": {
@@ -201,6 +203,12 @@
         "stored_functions": [],
         "stored_references": [
           "API_URL"
+        ],
+        "named_members": [
+          {
+            "name": "api_url",
+            "reference_name": "API_URL"
+          }
         ],
         "collection_id": "variable:<fixtures>/typescript/code/modules/imports.ts:23:9:23:14:config"
       }
@@ -241,16 +249,16 @@
       "import_path": "./exports",
       "import_kind": "named"
     },
-    "variable:<fixtures>/typescript/code/modules/imports.ts:7:32:7:41:formatDate": {
+    "variable:<fixtures>/typescript/code/modules/imports.ts:7:32:7:42:format_date": {
       "kind": "import",
-      "symbol_id": "variable:<fixtures>/typescript/code/modules/imports.ts:7:32:7:41:formatDate",
-      "name": "formatDate",
+      "symbol_id": "variable:<fixtures>/typescript/code/modules/imports.ts:7:32:7:42:format_date",
+      "name": "format_date",
       "location": {
         "file_path": "<fixtures>/typescript/code/modules/imports.ts",
         "start_line": 7,
         "start_column": 32,
         "end_line": 7,
-        "end_column": 41
+        "end_column": 42
       },
       "defining_scope_id": "module:<fixtures>/typescript/code/modules/imports.ts:1:1:46:0",
       "import_path": "./exports",
@@ -376,13 +384,13 @@
     },
     {
       "kind": "variable_reference",
-      "name": "formatDate",
+      "name": "format_date",
       "location": {
         "file_path": "<fixtures>/typescript/code/modules/imports.ts",
         "start_line": 7,
         "start_column": 32,
         "end_line": 7,
-        "end_column": 41
+        "end_column": 42
       },
       "scope_id": "module:<fixtures>/typescript/code/modules/imports.ts:1:1:46:0",
       "access_type": "read"
@@ -499,7 +507,7 @@
     },
     {
       "kind": "assignment",
-      "name": "config: Config = {\n    apiUrl: API_URL,\n    timeout: 5000,\n    retries: 3,\n  }",
+      "name": "config: Config = {\n    api_url: API_URL,\n    timeout: 5000,\n    retries: 3,\n  }",
       "location": {
         "file_path": "<fixtures>/typescript/code/modules/imports.ts",
         "start_line": 23,
@@ -575,7 +583,7 @@
     },
     {
       "kind": "assignment",
-      "name": "{\n    apiUrl: API_URL,\n    timeout: 5000,\n    retries: 3,\n  }",
+      "name": "{\n    api_url: API_URL,\n    timeout: 5000,\n    retries: 3,\n  }",
       "location": {
         "file_path": "<fixtures>/typescript/code/modules/imports.ts",
         "start_line": 23,
@@ -598,9 +606,9 @@
       "location": {
         "file_path": "<fixtures>/typescript/code/modules/imports.ts",
         "start_line": 24,
-        "start_column": 13,
+        "start_column": 14,
         "end_line": 24,
-        "end_column": 19
+        "end_column": 20
       },
       "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:22:28:30:1",
       "access_type": "read"
@@ -617,18 +625,6 @@
       },
       "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:22:28:30:1",
       "access_type": "read"
-    },
-    {
-      "kind": "function_call",
-      "name": "Application",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
-        "start_line": 29,
-        "start_column": 10,
-        "end_line": 29,
-        "end_column": 32
-      },
-      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:22:28:30:1"
     },
     {
       "kind": "variable_reference",
@@ -696,11 +692,36 @@
     },
     {
       "kind": "variable_reference",
-      "name": "return formatDate(new Date());",
+      "name": "return format_date(new Date());",
       "location": {
         "file_path": "<fixtures>/typescript/code/modules/imports.ts",
         "start_line": 33,
         "start_column": 3,
+        "end_line": 33,
+        "end_column": 33
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:32:31:34:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "format_date",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 33,
+        "start_column": 10,
+        "end_line": 33,
+        "end_column": 20
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:32:31:34:1"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "format_date",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 33,
+        "start_column": 10,
         "end_line": 33,
         "end_column": 32
       },
@@ -708,54 +729,17 @@
       "access_type": "read"
     },
     {
-      "kind": "function_call",
-      "name": "formatDate",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
-        "start_line": 33,
-        "start_column": 10,
-        "end_line": 33,
-        "end_column": 19
-      },
-      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:32:31:34:1"
-    },
-    {
       "kind": "variable_reference",
-      "name": "formatDate",
+      "name": "format_date",
       "location": {
         "file_path": "<fixtures>/typescript/code/modules/imports.ts",
         "start_line": 33,
         "start_column": 10,
         "end_line": 33,
-        "end_column": 31
+        "end_column": 20
       },
       "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:32:31:34:1",
       "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "formatDate",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
-        "start_line": 33,
-        "start_column": 10,
-        "end_line": 33,
-        "end_column": 19
-      },
-      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:32:31:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "function_call",
-      "name": "Date",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
-        "start_line": 33,
-        "start_column": 21,
-        "end_line": 33,
-        "end_column": 30
-      },
-      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:32:31:34:1"
     },
     {
       "kind": "constructor_call",
@@ -763,9 +747,9 @@
       "location": {
         "file_path": "<fixtures>/typescript/code/modules/imports.ts",
         "start_line": 33,
-        "start_column": 25,
+        "start_column": 26,
         "end_line": 33,
-        "end_column": 28
+        "end_column": 29
       },
       "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:32:31:34:1"
     },
@@ -775,9 +759,9 @@
       "location": {
         "file_path": "<fixtures>/typescript/code/modules/imports.ts",
         "start_line": 33,
-        "start_column": 25,
+        "start_column": 26,
         "end_line": 33,
-        "end_column": 28
+        "end_column": 29
       },
       "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:32:31:34:1",
       "access_type": "read"
@@ -826,18 +810,6 @@
       },
       "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:36:21:38:1",
       "access_type": "read"
-    },
-    {
-      "kind": "function_call",
-      "name": "HttpClient",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
-        "start_line": 37,
-        "start_column": 10,
-        "end_line": 37,
-        "end_column": 32
-      },
-      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:36:21:38:1"
     },
     {
       "kind": "variable_reference",
@@ -968,31 +940,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "API_URL",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
-        "start_line": 42,
-        "start_column": 13,
-        "end_line": 42,
-        "end_column": 27
-      },
-      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:41:21:43:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
-        "start_line": 42,
-        "start_column": 13,
-        "end_line": 42,
-        "end_column": 19
-      },
-      "property_chain": [
-        "Exports",
-        "API_URL"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "Exports",
       "location": {
@@ -1001,32 +948,6 @@
         "start_column": 13,
         "end_line": 42,
         "end_column": 19
-      },
-      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:41:21:43:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "Exports",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
-        "start_line": 42,
-        "start_column": 13,
-        "end_line": 42,
-        "end_column": 19
-      },
-      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:41:21:43:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "API_URL",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
-        "start_line": 42,
-        "start_column": 21,
-        "end_line": 42,
-        "end_column": 27
       },
       "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:41:21:43:1",
       "access_type": "read"
@@ -1083,31 +1004,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "API_VERSION",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
-        "start_line": 42,
-        "start_column": 32,
-        "end_line": 42,
-        "end_column": 50
-      },
-      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:41:21:43:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
-        "start_line": 42,
-        "start_column": 32,
-        "end_line": 42,
-        "end_column": 38
-      },
-      "property_chain": [
-        "Exports",
-        "API_VERSION"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "Exports",
       "location": {
@@ -1116,32 +1012,6 @@
         "start_column": 32,
         "end_line": 42,
         "end_column": 38
-      },
-      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:41:21:43:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "Exports",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
-        "start_line": 42,
-        "start_column": 32,
-        "end_line": 42,
-        "end_column": 38
-      },
-      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:41:21:43:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "API_VERSION",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
-        "start_line": 42,
-        "start_column": 40,
-        "end_line": 42,
-        "end_column": 50
       },
       "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:41:21:43:1",
       "access_type": "read"

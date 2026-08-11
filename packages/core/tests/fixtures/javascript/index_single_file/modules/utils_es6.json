@@ -93,6 +93,7 @@
       },
       "defining_scope_id": "module:<fixtures>/javascript/code/modules/utils_es6.js:1:1:22:1",
       "is_exported": true,
+      "docstring": "// Named exports",
       "signature": {
         "parameters": []
       },
@@ -178,6 +179,7 @@
       "export": {
         "is_default": true
       },
+      "docstring": "// Default export",
       "signature": {
         "parameters": [
           {
@@ -306,7 +308,10 @@
         "input",
         "toLowerCase"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -320,69 +325,6 @@
       },
       "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:11:28:13:1",
       "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "toLowerCase",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
-        "start_line": 12,
-        "start_column": 10,
-        "end_line": 12,
-        "end_column": 26
-      },
-      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:11:28:13:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
-        "start_line": 12,
-        "start_column": 10,
-        "end_line": 12,
-        "end_column": 14
-      },
-      "property_chain": [
-        "input",
-        "toLowerCase"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "input",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
-        "start_line": 12,
-        "start_column": 10,
-        "end_line": 12,
-        "end_column": 14
-      },
-      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:11:28:13:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "toLowerCase",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
-        "start_line": 12,
-        "start_column": 10,
-        "end_line": 12,
-        "end_column": 26
-      },
-      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:11:28:13:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
-        "start_line": 12,
-        "start_column": 10,
-        "end_line": 12,
-        "end_column": 14
-      },
-      "property_chain": [
-        "input",
-        "toLowerCase"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -419,19 +361,6 @@
         "start_column": 10,
         "end_line": 12,
         "end_column": 14
-      },
-      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:11:28:13:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "toLowerCase",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
-        "start_line": 12,
-        "start_column": 16,
-        "end_line": 12,
-        "end_column": 26
       },
       "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:11:28:13:1",
       "access_type": "read"
@@ -510,7 +439,10 @@
         "email",
         "includes"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -524,69 +456,6 @@
       },
       "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:15:30:17:1",
       "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "includes",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
-        "start_line": 16,
-        "start_column": 10,
-        "end_line": 16,
-        "end_column": 23
-      },
-      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:15:30:17:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
-        "start_line": 16,
-        "start_column": 10,
-        "end_line": 16,
-        "end_column": 14
-      },
-      "property_chain": [
-        "email",
-        "includes"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "email",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
-        "start_line": 16,
-        "start_column": 10,
-        "end_line": 16,
-        "end_column": 14
-      },
-      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:15:30:17:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "includes",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
-        "start_line": 16,
-        "start_column": 10,
-        "end_line": 16,
-        "end_column": 23
-      },
-      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:15:30:17:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
-        "start_line": 16,
-        "start_column": 10,
-        "end_line": 16,
-        "end_column": 14
-      },
-      "property_chain": [
-        "email",
-        "includes"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -623,19 +492,6 @@
         "start_column": 10,
         "end_line": 16,
         "end_column": 14
-      },
-      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:15:30:17:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "includes",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
-        "start_line": 16,
-        "start_column": 16,
-        "end_line": 16,
-        "end_column": 23
       },
       "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:15:30:17:1",
       "access_type": "read"
@@ -714,7 +570,10 @@
         "date",
         "toISOString"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -748,9 +607,15 @@
         "end_column": 27
       },
       "property_chain": [
+        "date",
+        "toISOString",
         "split"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "call_site_syntax": {
+        "receiver_kind": "call_chain",
+        "receiver_call_target_lexical_shape": "unknown"
+      }
     },
     {
       "kind": "variable_reference",
@@ -764,69 +629,6 @@
       },
       "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:20:35:22:1",
       "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "toISOString",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
-        "start_line": 21,
-        "start_column": 10,
-        "end_line": 21,
-        "end_column": 25
-      },
-      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:20:35:22:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
-        "start_line": 21,
-        "start_column": 10,
-        "end_line": 21,
-        "end_column": 13
-      },
-      "property_chain": [
-        "date",
-        "toISOString"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "date",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
-        "start_line": 21,
-        "start_column": 10,
-        "end_line": 21,
-        "end_column": 13
-      },
-      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:20:35:22:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "toISOString",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
-        "start_line": 21,
-        "start_column": 10,
-        "end_line": 21,
-        "end_column": 25
-      },
-      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:20:35:22:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
-        "start_line": 21,
-        "start_column": 10,
-        "end_line": 21,
-        "end_column": 13
-      },
-      "property_chain": [
-        "date",
-        "toISOString"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -863,19 +665,6 @@
         "start_column": 10,
         "end_line": 21,
         "end_column": 13
-      },
-      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:20:35:22:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "toISOString",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
-        "start_line": 21,
-        "start_column": 15,
-        "end_line": 21,
-        "end_column": 25
       },
       "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:20:35:22:1",
       "access_type": "read"

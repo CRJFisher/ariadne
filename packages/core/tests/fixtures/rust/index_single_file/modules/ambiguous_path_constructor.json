@@ -1,0 +1,647 @@
+{
+  "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+  "language": "rust",
+  "root_scope_id": "module:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:1:1:33:0",
+  "scopes": {
+    "module:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:1:1:33:0": {
+      "id": "module:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:1:1:33:0",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 33,
+        "end_column": 0
+      },
+      "child_ids": [
+        "module:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:9:11:17:1",
+        "module:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:19:10:27:1",
+        "function:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:29:7:32:1"
+      ]
+    },
+    "module:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:9:11:17:1": {
+      "id": "module:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:9:11:17:1",
+      "parent_id": "module:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:1:1:33:0",
+      "name": "alpha",
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+        "start_line": 9,
+        "start_column": 11,
+        "end_line": 17,
+        "end_column": 1
+      },
+      "child_ids": [
+        "block:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:12:17:16:5"
+      ]
+    },
+    "block:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:12:17:16:5": {
+      "id": "block:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:12:17:16:5",
+      "parent_id": "module:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:9:11:17:1",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+        "start_line": 12,
+        "start_column": 17,
+        "end_line": 16,
+        "end_column": 5
+      },
+      "child_ids": [
+        "function:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:13:15:15:9"
+      ]
+    },
+    "function:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:13:15:15:9": {
+      "id": "function:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:13:15:15:9",
+      "parent_id": "block:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:12:17:16:5",
+      "name": "new",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+        "start_line": 13,
+        "start_column": 15,
+        "end_line": 15,
+        "end_column": 9
+      },
+      "child_ids": []
+    },
+    "module:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:19:10:27:1": {
+      "id": "module:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:19:10:27:1",
+      "parent_id": "module:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:1:1:33:0",
+      "name": "beta",
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+        "start_line": 19,
+        "start_column": 10,
+        "end_line": 27,
+        "end_column": 1
+      },
+      "child_ids": [
+        "block:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:22:17:26:5"
+      ]
+    },
+    "block:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:22:17:26:5": {
+      "id": "block:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:22:17:26:5",
+      "parent_id": "module:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:19:10:27:1",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+        "start_line": 22,
+        "start_column": 17,
+        "end_line": 26,
+        "end_column": 5
+      },
+      "child_ids": [
+        "function:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:23:15:25:9"
+      ]
+    },
+    "function:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:23:15:25:9": {
+      "id": "function:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:23:15:25:9",
+      "parent_id": "block:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:22:17:26:5",
+      "name": "new",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+        "start_line": 23,
+        "start_column": 15,
+        "end_line": 25,
+        "end_column": 9
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:29:7:32:1": {
+      "id": "function:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:29:7:32:1",
+      "parent_id": "module:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:1:1:33:0",
+      "name": "run",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+        "start_line": 29,
+        "start_column": 7,
+        "end_line": 32,
+        "end_column": 1
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {
+    "function:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:29:1:32:1:run": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:29:1:32:1:run",
+      "name": "run",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+        "start_line": 29,
+        "start_column": 4,
+        "end_line": 29,
+        "end_column": 6
+      },
+      "defining_scope_id": "module:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:1:1:33:0",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:29:7:32:1"
+    }
+  },
+  "classes": {
+    "class:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:10:5:10:18:Driver": {
+      "kind": "class",
+      "symbol_id": "class:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:10:5:10:18:Driver",
+      "name": "Driver",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+        "start_line": 10,
+        "start_column": 12,
+        "end_line": 10,
+        "end_column": 17
+      },
+      "defining_scope_id": "module:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:9:11:17:1",
+      "extends": [],
+      "is_exported": false,
+      "methods": [
+        {
+          "kind": "method",
+          "defining_scope_id": "block:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:12:17:16:5",
+          "symbol_id": "method:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:13:9:15:9:new",
+          "name": "new",
+          "location": {
+            "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+            "start_line": 13,
+            "start_column": 12,
+            "end_line": 13,
+            "end_column": 14
+          },
+          "return_type": "Self",
+          "static": true,
+          "parameters": [],
+          "body_scope_id": "function:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:13:15:15:9"
+        },
+        {
+          "kind": "method",
+          "defining_scope_id": "block:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:22:17:26:5",
+          "symbol_id": "method:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:23:9:25:9:new",
+          "name": "new",
+          "location": {
+            "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+            "start_line": 23,
+            "start_column": 12,
+            "end_line": 23,
+            "end_column": 14
+          },
+          "return_type": "Self",
+          "static": true,
+          "parameters": [],
+          "body_scope_id": "function:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:23:15:25:9"
+        }
+      ],
+      "properties": [],
+      "decorators": []
+    },
+    "class:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:20:5:20:18:Driver": {
+      "kind": "class",
+      "symbol_id": "class:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:20:5:20:18:Driver",
+      "name": "Driver",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+        "start_line": 20,
+        "start_column": 12,
+        "end_line": 20,
+        "end_column": 17
+      },
+      "defining_scope_id": "module:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:19:10:27:1",
+      "extends": [],
+      "is_exported": false,
+      "methods": [],
+      "properties": [],
+      "decorators": []
+    }
+  },
+  "variables": {
+    "variable:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:30:9:30:10:_a": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:30:9:30:10:_a",
+      "name": "_a",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+        "start_line": 30,
+        "start_column": 9,
+        "end_line": 30,
+        "end_column": 10
+      },
+      "defining_scope_id": "function:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:29:7:32:1",
+      "is_exported": false
+    },
+    "variable:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:31:9:31:10:_b": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:31:9:31:10:_b",
+      "name": "_b",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+        "start_line": 31,
+        "start_column": 9,
+        "end_line": 31,
+        "end_column": 10
+      },
+      "defining_scope_id": "function:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:29:7:32:1",
+      "is_exported": false
+    }
+  },
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {
+    "module:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:9:5:9:9:<module>": {
+      "kind": "namespace",
+      "symbol_id": "module:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:9:5:9:9:<module>",
+      "name": "alpha",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+        "start_line": 9,
+        "start_column": 5,
+        "end_line": 9,
+        "end_column": 9
+      },
+      "defining_scope_id": "module:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:1:1:33:0",
+      "is_exported": false
+    },
+    "module:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:19:5:19:8:<module>": {
+      "kind": "namespace",
+      "symbol_id": "module:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:19:5:19:8:<module>",
+      "name": "beta",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+        "start_line": 19,
+        "start_column": 5,
+        "end_line": 19,
+        "end_column": 8
+      },
+      "defining_scope_id": "module:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:1:1:33:0",
+      "is_exported": false
+    }
+  },
+  "types": {},
+  "imported_symbols": {},
+  "references": [
+    {
+      "kind": "variable_reference",
+      "name": "alpha",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+        "start_line": 9,
+        "start_column": 5,
+        "end_line": 9,
+        "end_column": 9
+      },
+      "scope_id": "module:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:1:1:33:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Driver",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+        "start_line": 10,
+        "start_column": 12,
+        "end_line": 10,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:9:11:17:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:10:12:10:17:Driver",
+        "type_name": "Driver",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "Driver",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+        "start_line": 12,
+        "start_column": 10,
+        "end_line": 12,
+        "end_column": 15
+      },
+      "scope_id": "module:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:9:11:17:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:12:10:12:15:Driver",
+        "type_name": "Driver",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "new",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+        "start_line": 13,
+        "start_column": 12,
+        "end_line": 13,
+        "end_column": 14
+      },
+      "scope_id": "block:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:12:17:16:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Self",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+        "start_line": 13,
+        "start_column": 21,
+        "end_line": 13,
+        "end_column": 24
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:13:15:15:9",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:13:21:13:24:Self",
+        "type_name": "Self",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Driver",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+        "start_line": 14,
+        "start_column": 13,
+        "end_line": 14,
+        "end_column": 18
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:13:15:15:9",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "beta",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+        "start_line": 19,
+        "start_column": 5,
+        "end_line": 19,
+        "end_column": 8
+      },
+      "scope_id": "module:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:1:1:33:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Driver",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+        "start_line": 20,
+        "start_column": 12,
+        "end_line": 20,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:19:10:27:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:20:12:20:17:Driver",
+        "type_name": "Driver",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "Driver",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+        "start_line": 22,
+        "start_column": 10,
+        "end_line": 22,
+        "end_column": 15
+      },
+      "scope_id": "module:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:19:10:27:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:22:10:22:15:Driver",
+        "type_name": "Driver",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "new",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+        "start_line": 23,
+        "start_column": 12,
+        "end_line": 23,
+        "end_column": 14
+      },
+      "scope_id": "block:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:22:17:26:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Self",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+        "start_line": 23,
+        "start_column": 21,
+        "end_line": 23,
+        "end_column": 24
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:23:15:25:9",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:23:21:23:24:Self",
+        "type_name": "Self",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Driver",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+        "start_line": 24,
+        "start_column": 13,
+        "end_line": 24,
+        "end_column": 18
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:23:15:25:9",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "run",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+        "start_line": 29,
+        "start_column": 4,
+        "end_line": 29,
+        "end_column": 6
+      },
+      "scope_id": "module:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:1:1:33:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "_a",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+        "start_line": 30,
+        "start_column": 9,
+        "end_line": 30,
+        "end_column": 10
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:29:7:32:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "constructor_call",
+      "name": "Driver",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+        "start_line": 30,
+        "start_column": 14,
+        "end_line": 30,
+        "end_column": 33
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:29:7:32:1",
+      "construct_target": {
+        "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+        "start_line": 30,
+        "start_column": 9,
+        "end_line": 30,
+        "end_column": 10
+      },
+      "path_prefix": [
+        "crate",
+        "alpha",
+        "Driver"
+      ]
+    },
+    {
+      "kind": "variable_reference",
+      "name": "alpha",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+        "start_line": 30,
+        "start_column": 21,
+        "end_line": 30,
+        "end_column": 25
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:29:7:32:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Driver",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+        "start_line": 30,
+        "start_column": 28,
+        "end_line": 30,
+        "end_column": 33
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:29:7:32:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "new",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+        "start_line": 30,
+        "start_column": 36,
+        "end_line": 30,
+        "end_column": 38
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:29:7:32:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "_b",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+        "start_line": 31,
+        "start_column": 9,
+        "end_line": 31,
+        "end_column": 10
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:29:7:32:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "constructor_call",
+      "name": "Driver",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+        "start_line": 31,
+        "start_column": 14,
+        "end_line": 31,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:29:7:32:1",
+      "construct_target": {
+        "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+        "start_line": 31,
+        "start_column": 9,
+        "end_line": 31,
+        "end_column": 10
+      },
+      "path_prefix": [
+        "crate",
+        "beta",
+        "Driver"
+      ]
+    },
+    {
+      "kind": "variable_reference",
+      "name": "beta",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+        "start_line": 31,
+        "start_column": 21,
+        "end_line": 31,
+        "end_column": 24
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:29:7:32:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Driver",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+        "start_line": 31,
+        "start_column": 27,
+        "end_line": 31,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:29:7:32:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "new",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/ambiguous_path_constructor.rs",
+        "start_line": 31,
+        "start_column": 35,
+        "end_line": 31,
+        "end_column": 37
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/ambiguous_path_constructor.rs:29:7:32:1",
+      "access_type": "read"
+    }
+  ]
+}

@@ -74,6 +74,7 @@ const arrow = (a) => a + 1;
         "export.class",
         "export.function",
         "reference.call",
+        "reference.member_access",
         "reference.super",
         "reference.this",
         "reference.type_reference",
@@ -160,6 +161,7 @@ const arrow = (a: number): number => a + 1;
         "export.interface",
         "modifier.access_modifier",
         "reference.call",
+        "reference.member_access",
         "reference.super",
         "reference.this",
         "reference.type",
@@ -670,21 +672,34 @@ describe("Fixture corpus invariants", () => {
         "generator_function_declaration",
         "method_definition",
       ],
-      duplicate_families: ["definition.", "scope.", "reference.call"],
+      duplicate_families: [
+        "definition.",
+        "scope.",
+        "reference.call",
+        "reference.member_access",
+      ],
       single_definition_per_range: false,
     },
     typescript: {
       grammar: LANGUAGE_TO_TREESITTER_LANG.get("typescript")!,
       ext: ".ts",
       // TypeScript parameter properties deliberately mint definition.parameter
-      // and definition.field at one range, so the single-definition clause and
-      // the definition./scope. duplicate families stay python/javascript-only.
+      // and definition.field at one range — two different capture names — so
+      // the single-definition-per-range clause stays python-only. The
+      // definition. duplicate family is also excluded: the TS queries still
+      // carry same-name definition duplicates (modifier-variant patterns
+      // re-capturing fields, parameters and methods), owned by the residual
+      // capture-duplicates follow-up, not by this family.
       named_definition_nodes: [
         "class_declaration",
         "function_declaration",
         "method_definition",
       ],
-      duplicate_families: ["scope."],
+      duplicate_families: [
+        "scope.",
+        "reference.call",
+        "reference.member_access",
+      ],
       single_definition_per_range: false,
     },
   };
@@ -750,7 +765,12 @@ describe("Fixture corpus invariants", () => {
       expect(missing).toEqual([]);
     });
 
-    it(`emits no repeated capture at one byte range in the ${lang} corpus`, () => {
+    // The duplicate audit is scoped to the families this task family drove to
+    // zero (listed per language in CORPUS.duplicate_families). Families outside
+    // the scope measurably still carry same-(name,range) duplicates — the
+    // python reference/assignment attribute captures among them — and are
+    // deferred to the follow-up filed for the residual capture duplicates.
+    it(`emits no repeated capture at one byte range in the audited ${lang} families`, () => {
       const parser = new Parser();
       parser.setLanguage(config.grammar);
       const duplicates: string[] = [];

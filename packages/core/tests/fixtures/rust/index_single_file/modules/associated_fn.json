@@ -1,0 +1,472 @@
+{
+  "file_path": "<fixtures>/rust/code/modules/associated_fn.rs",
+  "language": "rust",
+  "root_scope_id": "module:<fixtures>/rust/code/modules/associated_fn.rs:1:1:24:0",
+  "scopes": {
+    "module:<fixtures>/rust/code/modules/associated_fn.rs:1:1:24:0": {
+      "id": "module:<fixtures>/rust/code/modules/associated_fn.rs:1:1:24:0",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/associated_fn.rs",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 24,
+        "end_column": 0
+      },
+      "child_ids": [
+        "class:<fixtures>/rust/code/modules/associated_fn.rs:4:19:6:1",
+        "block:<fixtures>/rust/code/modules/associated_fn.rs:8:13:18:1",
+        "function:<fixtures>/rust/code/modules/associated_fn.rs:20:9:23:1"
+      ]
+    },
+    "class:<fixtures>/rust/code/modules/associated_fn.rs:4:19:6:1": {
+      "id": "class:<fixtures>/rust/code/modules/associated_fn.rs:4:19:6:1",
+      "parent_id": "module:<fixtures>/rust/code/modules/associated_fn.rs:1:1:24:0",
+      "name": null,
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/associated_fn.rs",
+        "start_line": 4,
+        "start_column": 19,
+        "end_line": 6,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "block:<fixtures>/rust/code/modules/associated_fn.rs:8:13:18:1": {
+      "id": "block:<fixtures>/rust/code/modules/associated_fn.rs:8:13:18:1",
+      "parent_id": "module:<fixtures>/rust/code/modules/associated_fn.rs:1:1:24:0",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/associated_fn.rs",
+        "start_line": 8,
+        "start_column": 13,
+        "end_line": 18,
+        "end_column": 1
+      },
+      "child_ids": [
+        "function:<fixtures>/rust/code/modules/associated_fn.rs:11:16:13:5",
+        "function:<fixtures>/rust/code/modules/associated_fn.rs:15:14:17:5"
+      ]
+    },
+    "function:<fixtures>/rust/code/modules/associated_fn.rs:11:16:13:5": {
+      "id": "function:<fixtures>/rust/code/modules/associated_fn.rs:11:16:13:5",
+      "parent_id": "block:<fixtures>/rust/code/modules/associated_fn.rs:8:13:18:1",
+      "name": "make",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/associated_fn.rs",
+        "start_line": 11,
+        "start_column": 16,
+        "end_line": 13,
+        "end_column": 5
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/rust/code/modules/associated_fn.rs:15:14:17:5": {
+      "id": "function:<fixtures>/rust/code/modules/associated_fn.rs:15:14:17:5",
+      "parent_id": "block:<fixtures>/rust/code/modules/associated_fn.rs:8:13:18:1",
+      "name": "id",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/associated_fn.rs",
+        "start_line": 15,
+        "start_column": 14,
+        "end_line": 17,
+        "end_column": 5
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/rust/code/modules/associated_fn.rs:20:9:23:1": {
+      "id": "function:<fixtures>/rust/code/modules/associated_fn.rs:20:9:23:1",
+      "parent_id": "module:<fixtures>/rust/code/modules/associated_fn.rs:1:1:24:0",
+      "name": "build",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/associated_fn.rs",
+        "start_line": 20,
+        "start_column": 9,
+        "end_line": 23,
+        "end_column": 1
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {
+    "function:<fixtures>/rust/code/modules/associated_fn.rs:20:1:23:1:build": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/rust/code/modules/associated_fn.rs:20:1:23:1:build",
+      "name": "build",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/associated_fn.rs",
+        "start_line": 20,
+        "start_column": 4,
+        "end_line": 20,
+        "end_column": 8
+      },
+      "defining_scope_id": "module:<fixtures>/rust/code/modules/associated_fn.rs:1:1:24:0",
+      "is_exported": false,
+      "signature": {
+        "parameters": [],
+        "return_type": "Parker"
+      },
+      "return_type": "Parker",
+      "body_scope_id": "function:<fixtures>/rust/code/modules/associated_fn.rs:20:9:23:1"
+    }
+  },
+  "classes": {
+    "class:<fixtures>/rust/code/modules/associated_fn.rs:4:1:6:1:Parker": {
+      "kind": "class",
+      "symbol_id": "class:<fixtures>/rust/code/modules/associated_fn.rs:4:1:6:1:Parker",
+      "name": "Parker",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/associated_fn.rs",
+        "start_line": 4,
+        "start_column": 12,
+        "end_line": 4,
+        "end_column": 17
+      },
+      "defining_scope_id": "module:<fixtures>/rust/code/modules/associated_fn.rs:1:1:24:0",
+      "extends": [],
+      "is_exported": true,
+      "methods": [
+        {
+          "kind": "method",
+          "defining_scope_id": "block:<fixtures>/rust/code/modules/associated_fn.rs:8:13:18:1",
+          "symbol_id": "method:<fixtures>/rust/code/modules/associated_fn.rs:11:5:13:5:make",
+          "name": "make",
+          "location": {
+            "file_path": "<fixtures>/rust/code/modules/associated_fn.rs",
+            "start_line": 11,
+            "start_column": 12,
+            "end_line": 11,
+            "end_column": 15
+          },
+          "return_type": "Parker",
+          "static": true,
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "function:<fixtures>/rust/code/modules/associated_fn.rs:11:16:13:5",
+              "symbol_id": "parameter:<fixtures>/rust/code/modules/associated_fn.rs:11:17:11:18:id",
+              "name": "id",
+              "location": {
+                "file_path": "<fixtures>/rust/code/modules/associated_fn.rs",
+                "start_line": 11,
+                "start_column": 17,
+                "end_line": 11,
+                "end_column": 18
+              },
+              "type": "u32",
+              "optional": false
+            }
+          ],
+          "body_scope_id": "function:<fixtures>/rust/code/modules/associated_fn.rs:11:16:13:5"
+        },
+        {
+          "kind": "method",
+          "defining_scope_id": "block:<fixtures>/rust/code/modules/associated_fn.rs:8:13:18:1",
+          "symbol_id": "method:<fixtures>/rust/code/modules/associated_fn.rs:15:5:17:5:id",
+          "name": "id",
+          "location": {
+            "file_path": "<fixtures>/rust/code/modules/associated_fn.rs",
+            "start_line": 15,
+            "start_column": 12,
+            "end_line": 15,
+            "end_column": 13
+          },
+          "return_type": "u32",
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "function:<fixtures>/rust/code/modules/associated_fn.rs:15:14:17:5",
+              "symbol_id": "parameter:<fixtures>/rust/code/modules/associated_fn.rs:15:15:15:19:&self",
+              "name": "self",
+              "location": {
+                "file_path": "<fixtures>/rust/code/modules/associated_fn.rs",
+                "start_line": 15,
+                "start_column": 15,
+                "end_line": 15,
+                "end_column": 19
+              },
+              "type": "Parker",
+              "optional": false
+            }
+          ],
+          "body_scope_id": "function:<fixtures>/rust/code/modules/associated_fn.rs:15:14:17:5"
+        }
+      ],
+      "properties": [
+        {
+          "kind": "property",
+          "defining_scope_id": "class:<fixtures>/rust/code/modules/associated_fn.rs:4:19:6:1",
+          "symbol_id": "property:<fixtures>/rust/code/modules/associated_fn.rs:5:5:5:6:id",
+          "name": "id",
+          "location": {
+            "file_path": "<fixtures>/rust/code/modules/associated_fn.rs",
+            "start_line": 5,
+            "start_column": 5,
+            "end_line": 5,
+            "end_column": 6
+          },
+          "type": "u32",
+          "decorators": []
+        }
+      ],
+      "decorators": []
+    }
+  },
+  "variables": {},
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {},
+  "references": [
+    {
+      "kind": "type_reference",
+      "name": "Parker",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/associated_fn.rs",
+        "start_line": 4,
+        "start_column": 12,
+        "end_line": 4,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/rust/code/modules/associated_fn.rs:1:1:24:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/rust/code/modules/associated_fn.rs:4:12:4:17:Parker",
+        "type_name": "Parker",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "Parker",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/associated_fn.rs",
+        "start_line": 8,
+        "start_column": 6,
+        "end_line": 8,
+        "end_column": 11
+      },
+      "scope_id": "module:<fixtures>/rust/code/modules/associated_fn.rs:1:1:24:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/rust/code/modules/associated_fn.rs:8:6:8:11:Parker",
+        "type_name": "Parker",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "make",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/associated_fn.rs",
+        "start_line": 11,
+        "start_column": 12,
+        "end_line": 11,
+        "end_column": 15
+      },
+      "scope_id": "block:<fixtures>/rust/code/modules/associated_fn.rs:8:13:18:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "id",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/associated_fn.rs",
+        "start_line": 11,
+        "start_column": 17,
+        "end_line": 11,
+        "end_column": 18
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/associated_fn.rs:11:16:13:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Parker",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/associated_fn.rs",
+        "start_line": 11,
+        "start_column": 29,
+        "end_line": 11,
+        "end_column": 34
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/associated_fn.rs:11:16:13:5",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/rust/code/modules/associated_fn.rs:11:29:11:34:Parker",
+        "type_name": "Parker",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "constructor_call",
+      "name": "Parker",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/associated_fn.rs",
+        "start_line": 12,
+        "start_column": 9,
+        "end_line": 12,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/associated_fn.rs:11:16:13:5",
+      "path_prefix": [
+        "Parker"
+      ]
+    },
+    {
+      "kind": "type_reference",
+      "name": "Parker",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/associated_fn.rs",
+        "start_line": 12,
+        "start_column": 9,
+        "end_line": 12,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/associated_fn.rs:11:16:13:5",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/rust/code/modules/associated_fn.rs:12:9:12:14:Parker",
+        "type_name": "Parker",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "id",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/associated_fn.rs",
+        "start_line": 12,
+        "start_column": 18,
+        "end_line": 12,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/associated_fn.rs:11:16:13:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "id",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/associated_fn.rs",
+        "start_line": 15,
+        "start_column": 12,
+        "end_line": 15,
+        "end_column": 13
+      },
+      "scope_id": "block:<fixtures>/rust/code/modules/associated_fn.rs:8:13:18:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/associated_fn.rs",
+        "start_line": 15,
+        "start_column": 16,
+        "end_line": 15,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/associated_fn.rs:15:14:17:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/associated_fn.rs",
+        "start_line": 16,
+        "start_column": 9,
+        "end_line": 16,
+        "end_column": 12
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/associated_fn.rs:15:14:17:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "build",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/associated_fn.rs",
+        "start_line": 20,
+        "start_column": 4,
+        "end_line": 20,
+        "end_column": 8
+      },
+      "scope_id": "module:<fixtures>/rust/code/modules/associated_fn.rs:1:1:24:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Parker",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/associated_fn.rs",
+        "start_line": 20,
+        "start_column": 15,
+        "end_line": 20,
+        "end_column": 20
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/associated_fn.rs:20:9:23:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/rust/code/modules/associated_fn.rs:20:15:20:20:Parker",
+        "type_name": "Parker",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "make",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/associated_fn.rs",
+        "start_line": 22,
+        "start_column": 5,
+        "end_line": 22,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/associated_fn.rs:20:9:23:1",
+      "path_prefix": [
+        "Parker"
+      ]
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Parker",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/associated_fn.rs",
+        "start_line": 22,
+        "start_column": 5,
+        "end_line": 22,
+        "end_column": 10
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/associated_fn.rs:20:9:23:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "make",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/associated_fn.rs",
+        "start_line": 22,
+        "start_column": 13,
+        "end_line": 22,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/associated_fn.rs:20:9:23:1",
+      "access_type": "read"
+    }
+  ]
+}

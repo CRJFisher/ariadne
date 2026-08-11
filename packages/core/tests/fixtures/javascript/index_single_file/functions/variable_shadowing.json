@@ -312,6 +312,7 @@
       "export": {
         "is_reexport": false
       },
+      "docstring": "// Function parameters shadow outer variables",
       "signature": {
         "parameters": [
           {
@@ -365,6 +366,7 @@
       "export": {
         "is_reexport": false
       },
+      "docstring": "// Multiple levels of variable shadowing",
       "signature": {
         "parameters": []
       },
@@ -476,7 +478,8 @@
       },
       "defining_scope_id": "module:<fixtures>/javascript/code/functions/variable_shadowing.js:1:1:99:2",
       "is_exported": true,
-      "initial_value": "\"global value\""
+      "initial_value": "\"global value\"",
+      "docstring": "// Global variable"
     },
     "variable:<fixtures>/javascript/code/functions/variable_shadowing.js:11:9:11:17:globalVar": {
       "kind": "constant",
@@ -490,8 +493,9 @@
         "end_column": 17
       },
       "defining_scope_id": "function:<fixtures>/javascript/code/functions/variable_shadowing.js:9:23:44:1",
-      "is_exported": true,
-      "initial_value": "\"outer function value\""
+      "is_exported": false,
+      "initial_value": "\"outer function value\"",
+      "docstring": "// Shadows global variable"
     },
     "variable:<fixtures>/javascript/code/functions/variable_shadowing.js:17:9:17:15:result1": {
       "kind": "constant",
@@ -521,8 +525,9 @@
         "end_column": 19
       },
       "defining_scope_id": "block:<fixtures>/javascript/code/functions/variable_shadowing.js:19:3:41:3",
-      "is_exported": true,
-      "initial_value": "\"block scope value\""
+      "is_exported": false,
+      "initial_value": "\"block scope value\"",
+      "docstring": "// Block scope shadows function scope"
     },
     "variable:<fixtures>/javascript/code/functions/variable_shadowing.js:27:11:27:17:result2": {
       "kind": "constant",
@@ -552,8 +557,9 @@
         "end_column": 21
       },
       "defining_scope_id": "block:<fixtures>/javascript/code/functions/variable_shadowing.js:19:3:41:3",
-      "is_exported": true,
-      "initial_value": "\"nested block value\""
+      "is_exported": false,
+      "initial_value": "\"nested block value\"",
+      "docstring": "// Nested block with further shadowing"
     },
     "variable:<fixtures>/javascript/code/functions/variable_shadowing.js:37:13:37:19:result3": {
       "kind": "constant",
@@ -630,6 +636,7 @@
       "defining_scope_id": "module:<fixtures>/javascript/code/functions/variable_shadowing.js:1:1:99:2",
       "is_exported": true,
       "initial_value": "outerFunction()",
+      "docstring": "// Using the shadowing functions",
       "initialized_from_call": "outerFunction"
     },
     "variable:<fixtures>/javascript/code/functions/variable_shadowing.js:88:7:88:17:paramResult": {
@@ -1508,6 +1515,32 @@
         "start_column": 12,
         "end_line": 40,
         "end_column": 31
+      },
+      "scope_id": "block:<fixtures>/javascript/code/functions/variable_shadowing.js:19:3:41:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result1",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/variable_shadowing.js",
+        "start_line": 40,
+        "start_column": 14,
+        "end_line": 40,
+        "end_column": 20
+      },
+      "scope_id": "block:<fixtures>/javascript/code/functions/variable_shadowing.js:19:3:41:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result2",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/variable_shadowing.js",
+        "start_line": 40,
+        "start_column": 23,
+        "end_line": 40,
+        "end_column": 29
       },
       "scope_id": "block:<fixtures>/javascript/code/functions/variable_shadowing.js:19:3:41:3",
       "access_type": "read"

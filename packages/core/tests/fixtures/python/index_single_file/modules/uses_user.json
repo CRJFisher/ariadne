@@ -179,6 +179,9 @@
         "end_column": 28
       },
       "defining_scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
+      "export": {
+        "is_reexport": true
+      },
       "import_path": ".user_class",
       "import_kind": "named"
     }
@@ -193,58 +196,6 @@
         "start_column": 7,
         "end_line": 6,
         "end_column": 16
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "user_class",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 6,
-        "start_column": 7,
-        "end_line": 6,
-        "end_column": 16
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "user_class",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 6,
-        "start_column": 7,
-        "end_line": 6,
-        "end_column": 16
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "User",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 6,
-        "start_column": 25,
-        "end_line": 6,
-        "end_column": 28
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "User",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 6,
-        "start_column": 25,
-        "end_line": 6,
-        "end_column": 28
       },
       "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
       "access_type": "read"
@@ -365,32 +316,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "user",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 9,
-        "start_column": 1,
-        "end_line": 9,
-        "end_column": 4
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "user",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 9,
-        "start_column": 1,
-        "end_line": 9,
-        "end_column": 4
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "User(\"Alice Smith\", \"alice@example.com\")",
       "location": {
@@ -429,25 +354,6 @@
       }
     },
     {
-      "kind": "function_call",
-      "name": "User",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 9,
-        "start_column": 8,
-        "end_line": 9,
-        "end_column": 47
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 9,
-        "start_column": 1,
-        "end_line": 9,
-        "end_column": 4
-      }
-    },
-    {
       "kind": "constructor_call",
       "name": "User",
       "location": {
@@ -475,32 +381,6 @@
         "start_column": 8,
         "end_line": 9,
         "end_column": 47
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "User",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 9,
-        "start_column": 8,
-        "end_line": 9,
-        "end_column": 11
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "User",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 9,
-        "start_column": 8,
-        "end_line": 9,
-        "end_column": 11
       },
       "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
       "access_type": "read"
@@ -621,32 +501,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "user_name",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 12,
-        "start_column": 1,
-        "end_line": 12,
-        "end_column": 9
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "user_name",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 12,
-        "start_column": 1,
-        "end_line": 12,
-        "end_column": 9
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "user.get_name()",
       "location": {
@@ -687,44 +541,17 @@
         "user",
         "get_name"
       ],
-      "optional_chaining": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "user",
-      "location": {
+      "is_optional_chain": false,
+      "potential_construct_target": {
         "file_path": "<fixtures>/python/code/modules/uses_user.py",
         "start_line": 12,
-        "start_column": 13,
+        "start_column": 1,
         "end_line": 12,
-        "end_column": 16
+        "end_column": 9
       },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "method_call",
-      "name": "get_name",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 12,
-        "start_column": 13,
-        "end_line": 12,
-        "end_column": 27
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 12,
-        "start_column": 13,
-        "end_line": 12,
-        "end_column": 16
-      },
-      "property_chain": [
-        "user",
-        "get_name"
-      ],
-      "optional_chaining": false
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -799,58 +626,6 @@
         "start_column": 13,
         "end_line": 12,
         "end_column": 16
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "user",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 12,
-        "start_column": 13,
-        "end_line": 12,
-        "end_column": 16
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "user",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 12,
-        "start_column": 13,
-        "end_line": 12,
-        "end_column": 16
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "get_name",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 12,
-        "start_column": 18,
-        "end_line": 12,
-        "end_column": 25
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "get_name",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 12,
-        "start_column": 18,
-        "end_line": 12,
-        "end_column": 25
       },
       "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
       "access_type": "read"
@@ -984,32 +759,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "user_email",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 13,
-        "start_column": 1,
-        "end_line": 13,
-        "end_column": 10
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "user_email",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 13,
-        "start_column": 1,
-        "end_line": 13,
-        "end_column": 10
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "user.get_email()",
       "location": {
@@ -1050,44 +799,17 @@
         "user",
         "get_email"
       ],
-      "optional_chaining": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "user",
-      "location": {
+      "is_optional_chain": false,
+      "potential_construct_target": {
         "file_path": "<fixtures>/python/code/modules/uses_user.py",
         "start_line": 13,
-        "start_column": 14,
+        "start_column": 1,
         "end_line": 13,
-        "end_column": 17
+        "end_column": 10
       },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "method_call",
-      "name": "get_email",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 13,
-        "start_column": 14,
-        "end_line": 13,
-        "end_column": 29
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 13,
-        "start_column": 14,
-        "end_line": 13,
-        "end_column": 17
-      },
-      "property_chain": [
-        "user",
-        "get_email"
-      ],
-      "optional_chaining": false
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -1162,58 +884,6 @@
         "start_column": 14,
         "end_line": 13,
         "end_column": 17
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "user",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 13,
-        "start_column": 14,
-        "end_line": 13,
-        "end_column": 17
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "user",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 13,
-        "start_column": 14,
-        "end_line": 13,
-        "end_column": 17
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "get_email",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 13,
-        "start_column": 19,
-        "end_line": 13,
-        "end_column": 27
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "get_email",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 13,
-        "start_column": 19,
-        "end_line": 13,
-        "end_column": 27
       },
       "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
       "access_type": "read"
@@ -1347,32 +1017,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "updated_user",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 16,
-        "start_column": 1,
-        "end_line": 16,
-        "end_column": 12
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "updated_user",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 16,
-        "start_column": 1,
-        "end_line": 16,
-        "end_column": 12
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "user.update_profile(name=\"Alice Johnson\", email=\"alice.johnson@example.com\")",
       "location": {
@@ -1413,44 +1057,17 @@
         "user",
         "update_profile"
       ],
-      "optional_chaining": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "user",
-      "location": {
+      "is_optional_chain": false,
+      "potential_construct_target": {
         "file_path": "<fixtures>/python/code/modules/uses_user.py",
         "start_line": 16,
-        "start_column": 16,
+        "start_column": 1,
         "end_line": 16,
-        "end_column": 19
+        "end_column": 12
       },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "method_call",
-      "name": "update_profile",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 16,
-        "start_column": 16,
-        "end_line": 16,
-        "end_column": 91
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 16,
-        "start_column": 16,
-        "end_line": 16,
-        "end_column": 19
-      },
-      "property_chain": [
-        "user",
-        "update_profile"
-      ],
-      "optional_chaining": false
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -1531,58 +1148,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "user",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 16,
-        "start_column": 16,
-        "end_line": 16,
-        "end_column": 19
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "user",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 16,
-        "start_column": 16,
-        "end_line": 16,
-        "end_column": 19
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "update_profile",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 16,
-        "start_column": 21,
-        "end_line": 16,
-        "end_column": 34
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "update_profile",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 16,
-        "start_column": 21,
-        "end_line": 16,
-        "end_column": 34
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "update_profile",
       "location": {
         "file_path": "<fixtures>/python/code/modules/uses_user.py",
@@ -1616,58 +1181,6 @@
         "start_column": 36,
         "end_line": 16,
         "end_column": 39
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "name",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 16,
-        "start_column": 36,
-        "end_line": 16,
-        "end_column": 39
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "name",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 16,
-        "start_column": 36,
-        "end_line": 16,
-        "end_column": 39
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "email",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 16,
-        "start_column": 58,
-        "end_line": 16,
-        "end_column": 62
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "email",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 16,
-        "start_column": 58,
-        "end_line": 16,
-        "end_column": 62
       },
       "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
       "access_type": "read"
@@ -1788,32 +1301,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "final_name",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 19,
-        "start_column": 1,
-        "end_line": 19,
-        "end_column": 10
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "final_name",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 19,
-        "start_column": 1,
-        "end_line": 19,
-        "end_column": 10
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "updated_user.get_name()",
       "location": {
@@ -1854,44 +1341,17 @@
         "updated_user",
         "get_name"
       ],
-      "optional_chaining": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "updated_user",
-      "location": {
+      "is_optional_chain": false,
+      "potential_construct_target": {
         "file_path": "<fixtures>/python/code/modules/uses_user.py",
         "start_line": 19,
-        "start_column": 14,
+        "start_column": 1,
         "end_line": 19,
-        "end_column": 25
+        "end_column": 10
       },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "method_call",
-      "name": "get_name",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 19,
-        "start_column": 14,
-        "end_line": 19,
-        "end_column": 36
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 19,
-        "start_column": 14,
-        "end_line": 19,
-        "end_column": 25
-      },
-      "property_chain": [
-        "updated_user",
-        "get_name"
-      ],
-      "optional_chaining": false
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -1966,58 +1426,6 @@
         "start_column": 14,
         "end_line": 19,
         "end_column": 25
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "updated_user",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 19,
-        "start_column": 14,
-        "end_line": 19,
-        "end_column": 25
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "updated_user",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 19,
-        "start_column": 14,
-        "end_line": 19,
-        "end_column": 25
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "get_name",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 19,
-        "start_column": 27,
-        "end_line": 19,
-        "end_column": 34
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "get_name",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 19,
-        "start_column": 27,
-        "end_line": 19,
-        "end_column": 34
       },
       "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
       "access_type": "read"
@@ -2151,32 +1559,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "user_info",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 20,
-        "start_column": 1,
-        "end_line": 20,
-        "end_column": 9
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "user_info",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 20,
-        "start_column": 1,
-        "end_line": 20,
-        "end_column": 9
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "user.get_info()",
       "location": {
@@ -2217,44 +1599,17 @@
         "user",
         "get_info"
       ],
-      "optional_chaining": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "user",
-      "location": {
+      "is_optional_chain": false,
+      "potential_construct_target": {
         "file_path": "<fixtures>/python/code/modules/uses_user.py",
         "start_line": 20,
-        "start_column": 13,
+        "start_column": 1,
         "end_line": 20,
-        "end_column": 16
+        "end_column": 9
       },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "method_call",
-      "name": "get_info",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 20,
-        "start_column": 13,
-        "end_line": 20,
-        "end_column": 27
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 20,
-        "start_column": 13,
-        "end_line": 20,
-        "end_column": 16
-      },
-      "property_chain": [
-        "user",
-        "get_info"
-      ],
-      "optional_chaining": false
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -2335,58 +1690,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "user",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 20,
-        "start_column": 13,
-        "end_line": 20,
-        "end_column": 16
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "user",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 20,
-        "start_column": 13,
-        "end_line": 20,
-        "end_column": 16
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "get_info",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 20,
-        "start_column": 18,
-        "end_line": 20,
-        "end_column": 25
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "get_info",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 20,
-        "start_column": 18,
-        "end_line": 20,
-        "end_column": 25
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "get_info",
       "location": {
         "file_path": "<fixtures>/python/code/modules/uses_user.py",
@@ -2433,44 +1736,10 @@
         "user",
         "deactivate"
       ],
-      "optional_chaining": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "user",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 23,
-        "start_column": 1,
-        "end_line": 23,
-        "end_column": 4
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "method_call",
-      "name": "deactivate",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 23,
-        "start_column": 1,
-        "end_line": 23,
-        "end_column": 17
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 23,
-        "start_column": 1,
-        "end_line": 23,
-        "end_column": 4
-      },
-      "property_chain": [
-        "user",
-        "deactivate"
-      ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -2532,58 +1801,6 @@
         "start_column": 1,
         "end_line": 23,
         "end_column": 4
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "user",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 23,
-        "start_column": 1,
-        "end_line": 23,
-        "end_column": 4
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "user",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 23,
-        "start_column": 1,
-        "end_line": 23,
-        "end_column": 4
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "deactivate",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 23,
-        "start_column": 6,
-        "end_line": 23,
-        "end_column": 15
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "deactivate",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 23,
-        "start_column": 6,
-        "end_line": 23,
-        "end_column": 15
       },
       "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
       "access_type": "read"
@@ -2717,32 +1934,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "final_info",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 24,
-        "start_column": 1,
-        "end_line": 24,
-        "end_column": 10
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "final_info",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 24,
-        "start_column": 1,
-        "end_line": 24,
-        "end_column": 10
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "user.get_info()",
       "location": {
@@ -2783,44 +1974,17 @@
         "user",
         "get_info"
       ],
-      "optional_chaining": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "user",
-      "location": {
+      "is_optional_chain": false,
+      "potential_construct_target": {
         "file_path": "<fixtures>/python/code/modules/uses_user.py",
         "start_line": 24,
-        "start_column": 14,
+        "start_column": 1,
         "end_line": 24,
-        "end_column": 17
+        "end_column": 10
       },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "method_call",
-      "name": "get_info",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 24,
-        "start_column": 14,
-        "end_line": 24,
-        "end_column": 28
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 24,
-        "start_column": 14,
-        "end_line": 24,
-        "end_column": 17
-      },
-      "property_chain": [
-        "user",
-        "get_info"
-      ],
-      "optional_chaining": false
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -2895,58 +2059,6 @@
         "start_column": 14,
         "end_line": 24,
         "end_column": 17
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "user",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 24,
-        "start_column": 14,
-        "end_line": 24,
-        "end_column": 17
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "user",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 24,
-        "start_column": 14,
-        "end_line": 24,
-        "end_column": 17
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "get_info",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 24,
-        "start_column": 19,
-        "end_line": 24,
-        "end_column": 26
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "get_info",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 24,
-        "start_column": 19,
-        "end_line": 24,
-        "end_column": 26
       },
       "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
       "access_type": "read"
@@ -3080,32 +2192,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "results",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 27,
-        "start_column": 1,
-        "end_line": 27,
-        "end_column": 7
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "results",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 27,
-        "start_column": 1,
-        "end_line": 27,
-        "end_column": 7
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "{\n    \"user\": user,\n    \"user_name\": user_name,\n    \"user_email\": user_email,\n    \"final_name\": final_name,\n    \"user_info\": user_info,\n    \"final_info\": final_info,\n}",
       "location": {
@@ -3152,32 +2238,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "user",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 28,
-        "start_column": 13,
-        "end_line": 28,
-        "end_column": 16
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "user",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 28,
-        "start_column": 13,
-        "end_line": 28,
-        "end_column": 16
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "user_name",
       "location": {
         "file_path": "<fixtures>/python/code/modules/uses_user.py",
@@ -3185,58 +2245,6 @@
         "start_column": 18,
         "end_line": 29,
         "end_column": 26
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "user_name",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 29,
-        "start_column": 18,
-        "end_line": 29,
-        "end_column": 26
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "user_name",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 29,
-        "start_column": 18,
-        "end_line": 29,
-        "end_column": 26
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "user_email",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 30,
-        "start_column": 19,
-        "end_line": 30,
-        "end_column": 28
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "user_email",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 30,
-        "start_column": 19,
-        "end_line": 30,
-        "end_column": 28
       },
       "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
       "access_type": "read"
@@ -3269,32 +2277,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "final_name",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 31,
-        "start_column": 19,
-        "end_line": 31,
-        "end_column": 28
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "final_name",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 31,
-        "start_column": 19,
-        "end_line": 31,
-        "end_column": 28
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "user_info",
       "location": {
         "file_path": "<fixtures>/python/code/modules/uses_user.py",
@@ -3302,58 +2284,6 @@
         "start_column": 18,
         "end_line": 32,
         "end_column": 26
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "user_info",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 32,
-        "start_column": 18,
-        "end_line": 32,
-        "end_column": 26
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "user_info",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 32,
-        "start_column": 18,
-        "end_line": 32,
-        "end_column": 26
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "final_info",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 33,
-        "start_column": 19,
-        "end_line": 33,
-        "end_column": 28
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "final_info",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/uses_user.py",
-        "start_line": 33,
-        "start_column": 19,
-        "end_line": 33,
-        "end_column": 28
       },
       "scope_id": "module:<fixtures>/python/code/modules/uses_user.py:1:1:34:1",
       "access_type": "read"

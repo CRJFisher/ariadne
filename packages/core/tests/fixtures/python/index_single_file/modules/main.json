@@ -147,6 +147,9 @@
         "end_column": 25
       },
       "defining_scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
+      "export": {
+        "is_reexport": true
+      },
       "import_path": ".utils",
       "import_kind": "named"
     },
@@ -162,6 +165,9 @@
         "end_column": 39
       },
       "defining_scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
+      "export": {
+        "is_reexport": true
+      },
       "import_path": ".utils",
       "import_kind": "named"
     },
@@ -177,6 +183,9 @@
         "end_column": 56
       },
       "defining_scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
+      "export": {
+        "is_reexport": true
+      },
       "import_path": ".utils",
       "import_kind": "named"
     },
@@ -192,6 +201,9 @@
         "end_column": 36
       },
       "defining_scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
+      "export": {
+        "is_reexport": true
+      },
       "import_path": "modules.utils",
       "original_name": "modules.utils",
       "import_kind": "namespace"
@@ -213,32 +225,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "utils",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 7,
-        "start_column": 7,
-        "end_line": 7,
-        "end_column": 11
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "utils",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 7,
-        "start_column": 7,
-        "end_line": 7,
-        "end_column": 11
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "helper",
       "location": {
         "file_path": "<fixtures>/python/code/modules/main.py",
@@ -246,58 +232,6 @@
         "start_column": 20,
         "end_line": 7,
         "end_column": 25
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 7,
-        "start_column": 20,
-        "end_line": 7,
-        "end_column": 25
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 7,
-        "start_column": 20,
-        "end_line": 7,
-        "end_column": 25
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "process_data",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 7,
-        "start_column": 28,
-        "end_line": 7,
-        "end_column": 39
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "process_data",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 7,
-        "start_column": 28,
-        "end_line": 7,
-        "end_column": 39
       },
       "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
       "access_type": "read"
@@ -330,58 +264,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "calculate_total",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 7,
-        "start_column": 42,
-        "end_line": 7,
-        "end_column": 56
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "calculate_total",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 7,
-        "start_column": 42,
-        "end_line": 7,
-        "end_column": 56
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "modules",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 8,
-        "start_column": 8,
-        "end_line": 8,
-        "end_column": 14
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "modules",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 8,
-        "start_column": 8,
-        "end_line": 8,
-        "end_column": 14
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "modules",
       "location": {
         "file_path": "<fixtures>/python/code/modules/main.py",
@@ -402,58 +284,6 @@
         "start_column": 16,
         "end_line": 8,
         "end_column": 20
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "utils",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 8,
-        "start_column": 16,
-        "end_line": 8,
-        "end_column": 20
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "utils",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 8,
-        "start_column": 16,
-        "end_line": 8,
-        "end_column": 20
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "utils_module",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 8,
-        "start_column": 25,
-        "end_line": 8,
-        "end_column": 36
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "utils_module",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 8,
-        "start_column": 25,
-        "end_line": 8,
-        "end_column": 36
       },
       "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
       "access_type": "read"
@@ -574,32 +404,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "greeting",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 11,
-        "start_column": 1,
-        "end_line": 11,
-        "end_column": 8
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "greeting",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 11,
-        "start_column": 1,
-        "end_line": 11,
-        "end_column": 8
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "helper()",
       "location": {
@@ -638,25 +442,6 @@
       }
     },
     {
-      "kind": "function_call",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 11,
-        "start_column": 12,
-        "end_line": 11,
-        "end_column": 19
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 11,
-        "start_column": 1,
-        "end_line": 11,
-        "end_column": 8
-      }
-    },
-    {
       "kind": "constructor_call",
       "name": "helper",
       "location": {
@@ -684,32 +469,6 @@
         "start_column": 12,
         "end_line": 11,
         "end_column": 19
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 11,
-        "start_column": 12,
-        "end_line": 11,
-        "end_column": 17
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "helper",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 11,
-        "start_column": 12,
-        "end_line": 11,
-        "end_column": 17
       },
       "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
       "access_type": "read"
@@ -830,32 +589,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "processed",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 12,
-        "start_column": 1,
-        "end_line": 12,
-        "end_column": 9
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "processed",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 12,
-        "start_column": 1,
-        "end_line": 12,
-        "end_column": 9
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "process_data(\"hello world\")",
       "location": {
@@ -894,25 +627,6 @@
       }
     },
     {
-      "kind": "function_call",
-      "name": "process_data",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 12,
-        "start_column": 13,
-        "end_line": 12,
-        "end_column": 39
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 12,
-        "start_column": 1,
-        "end_line": 12,
-        "end_column": 9
-      }
-    },
-    {
       "kind": "constructor_call",
       "name": "process_data",
       "location": {
@@ -940,32 +654,6 @@
         "start_column": 13,
         "end_line": 12,
         "end_column": 39
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "process_data",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 12,
-        "start_column": 13,
-        "end_line": 12,
-        "end_column": 24
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "process_data",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 12,
-        "start_column": 13,
-        "end_line": 12,
-        "end_column": 24
       },
       "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
       "access_type": "read"
@@ -1058,32 +746,6 @@
         "end_line": 18,
         "end_column": 1
       }
-    },
-    {
-      "kind": "variable_reference",
-      "name": "items",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 15,
-        "start_column": 1,
-        "end_line": 15,
-        "end_column": 5
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "items",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 15,
-        "start_column": 1,
-        "end_line": 15,
-        "end_column": 5
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
     },
     {
       "kind": "variable_reference",
@@ -1246,32 +908,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "total",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 19,
-        "start_column": 1,
-        "end_line": 19,
-        "end_column": 5
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "total",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 19,
-        "start_column": 1,
-        "end_line": 19,
-        "end_column": 5
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "calculate_total(items)",
       "location": {
@@ -1299,25 +935,6 @@
         "start_column": 9,
         "end_line": 19,
         "end_column": 23
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "potential_construct_target": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 19,
-        "start_column": 1,
-        "end_line": 19,
-        "end_column": 5
-      }
-    },
-    {
-      "kind": "function_call",
-      "name": "calculate_total",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 19,
-        "start_column": 9,
-        "end_line": 19,
-        "end_column": 30
       },
       "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
       "potential_construct_target": {
@@ -1369,58 +986,6 @@
         "start_column": 9,
         "end_line": 19,
         "end_column": 23
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "calculate_total",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 19,
-        "start_column": 9,
-        "end_line": 19,
-        "end_column": 23
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "calculate_total",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 19,
-        "start_column": 9,
-        "end_line": 19,
-        "end_column": 23
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "items",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 19,
-        "start_column": 25,
-        "end_line": 19,
-        "end_column": 29
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "items",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 19,
-        "start_column": 25,
-        "end_line": 19,
-        "end_column": 29
       },
       "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
       "access_type": "read"
@@ -1541,32 +1106,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "is_valid",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 22,
-        "start_column": 1,
-        "end_line": 22,
-        "end_column": 8
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "is_valid",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 22,
-        "start_column": 1,
-        "end_line": 22,
-        "end_column": 8
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "utils_module.validate_user_data(\"John Doe\", \"john@example.com\")",
       "location": {
@@ -1607,44 +1146,17 @@
         "utils_module",
         "validate_user_data"
       ],
-      "optional_chaining": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "utils_module",
-      "location": {
+      "is_optional_chain": false,
+      "potential_construct_target": {
         "file_path": "<fixtures>/python/code/modules/main.py",
         "start_line": 22,
-        "start_column": 12,
+        "start_column": 1,
         "end_line": 22,
-        "end_column": 23
+        "end_column": 8
       },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "method_call",
-      "name": "validate_user_data",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 22,
-        "start_column": 12,
-        "end_line": 22,
-        "end_column": 74
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 22,
-        "start_column": 12,
-        "end_line": 22,
-        "end_column": 23
-      },
-      "property_chain": [
-        "utils_module",
-        "validate_user_data"
-      ],
-      "optional_chaining": false
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -1719,58 +1231,6 @@
         "start_column": 12,
         "end_line": 22,
         "end_column": 23
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "utils_module",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 22,
-        "start_column": 12,
-        "end_line": 22,
-        "end_column": 23
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "utils_module",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 22,
-        "start_column": 12,
-        "end_line": 22,
-        "end_column": 23
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "validate_user_data",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 22,
-        "start_column": 25,
-        "end_line": 22,
-        "end_column": 42
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "validate_user_data",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 22,
-        "start_column": 25,
-        "end_line": 22,
-        "end_column": 42
       },
       "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
       "access_type": "read"
@@ -1904,32 +1364,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "results",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 25,
-        "start_column": 1,
-        "end_line": 25,
-        "end_column": 7
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "results",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 25,
-        "start_column": 1,
-        "end_line": 25,
-        "end_column": 7
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
       "kind": "assignment",
       "name": "{\n    \"greeting\": greeting,\n    \"processed\": processed,\n    \"total\": total,\n    \"is_valid\": is_valid,\n}",
       "location": {
@@ -1976,58 +1410,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "greeting",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 26,
-        "start_column": 17,
-        "end_line": 26,
-        "end_column": 24
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "greeting",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 26,
-        "start_column": 17,
-        "end_line": 26,
-        "end_column": 24
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "processed",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 27,
-        "start_column": 18,
-        "end_line": 27,
-        "end_column": 26
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "processed",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 27,
-        "start_column": 18,
-        "end_line": 27,
-        "end_column": 26
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "processed",
       "location": {
         "file_path": "<fixtures>/python/code/modules/main.py",
@@ -2048,58 +1430,6 @@
         "start_column": 14,
         "end_line": 28,
         "end_column": 18
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "total",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 28,
-        "start_column": 14,
-        "end_line": 28,
-        "end_column": 18
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "total",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 28,
-        "start_column": 14,
-        "end_line": 28,
-        "end_column": 18
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "is_valid",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 29,
-        "start_column": 17,
-        "end_line": 29,
-        "end_column": 24
-      },
-      "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "is_valid",
-      "location": {
-        "file_path": "<fixtures>/python/code/modules/main.py",
-        "start_line": 29,
-        "start_column": 17,
-        "end_line": 29,
-        "end_column": 24
       },
       "scope_id": "module:<fixtures>/python/code/modules/main.py:1:1:30:1",
       "access_type": "read"

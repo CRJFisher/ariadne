@@ -451,23 +451,27 @@
   constructor: (member_expression) @reference.constructor.qualified
 )
 
-; Property access
+; Property access — any receiver shape (obj.x, this.x, a.b.c, getX().y), one
+; capture per member_expression node
+(member_expression
+  object: (_)
+  property: (property_identifier)
+) @reference.member_access
+
+; Base object and property name of an identifier-receiver member read. The base
+; stays pinned to an identifier — a wider base would mint a variable reference
+; whose name is a whole sub-expression — and the property-name read feeds
+; indirect reachability for methods read as values.
 (member_expression
   object: (identifier) @reference.variable.base
   property: (property_identifier) @reference.property
-) @reference.member_access
+)
 
 ; Computed member access (bracket notation)
 (subscript_expression
   object: (identifier) @reference.variable
   index: (_) @reference.property.computed
 ) @reference.member_access.computed
-
-; Optional chaining member access
-(member_expression
-  object: (identifier) @reference.variable
-  property: (property_identifier) @reference.property.optional
-) @reference.member_access.optional
 
 ; Assignments (capture both sides)
 (assignment_expression

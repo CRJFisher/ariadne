@@ -143,22 +143,6 @@
   "enums": {},
   "namespaces": {},
   "types": {
-    "type:<fixtures>/typescript/code/types/unions.ts:7:1:7:38:type StringOrNumber = string | number;": {
-      "kind": "type_alias",
-      "symbol_id": "type:<fixtures>/typescript/code/types/unions.ts:7:1:7:38:type StringOrNumber = string | number;",
-      "name": "type StringOrNumber = string | number;",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/types/unions.ts",
-        "start_line": 7,
-        "start_column": 1,
-        "end_line": 7,
-        "end_column": 38
-      },
-      "scope_id": "module:<fixtures>/typescript/code/types/unions.ts:1:1:46:0",
-      "is_exported": false,
-      "generics": [],
-      "defining_scope_id": "module:<fixtures>/typescript/code/types/unions.ts:1:1:46:0"
-    },
     "type:<fixtures>/typescript/code/types/unions.ts:7:6:7:19:StringOrNumber": {
       "kind": "type_alias",
       "symbol_id": "type:<fixtures>/typescript/code/types/unions.ts:7:6:7:19:StringOrNumber",
@@ -176,22 +160,6 @@
         "is_reexport": false
       },
       "type_expression": "string | number",
-      "generics": [],
-      "defining_scope_id": "module:<fixtures>/typescript/code/types/unions.ts:1:1:46:0"
-    },
-    "type:<fixtures>/typescript/code/types/unions.ts:8:1:8:60:type Status = \"pending\" | \"active\" | \"completed\" | \"failed\";": {
-      "kind": "type_alias",
-      "symbol_id": "type:<fixtures>/typescript/code/types/unions.ts:8:1:8:60:type Status = \"pending\" | \"active\" | \"completed\" | \"failed\";",
-      "name": "type Status = \"pending\" | \"active\" | \"completed\" | \"failed\";",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/types/unions.ts",
-        "start_line": 8,
-        "start_column": 1,
-        "end_line": 8,
-        "end_column": 60
-      },
-      "scope_id": "module:<fixtures>/typescript/code/types/unions.ts:1:1:46:0",
-      "is_exported": false,
       "generics": [],
       "defining_scope_id": "module:<fixtures>/typescript/code/types/unions.ts:1:1:46:0"
     },
@@ -215,22 +183,6 @@
       "generics": [],
       "defining_scope_id": "module:<fixtures>/typescript/code/types/unions.ts:1:1:46:0"
     },
-    "type:<fixtures>/typescript/code/types/unions.ts:9:1:9:35:type ID = string | number | symbol;": {
-      "kind": "type_alias",
-      "symbol_id": "type:<fixtures>/typescript/code/types/unions.ts:9:1:9:35:type ID = string | number | symbol;",
-      "name": "type ID = string | number | symbol;",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/types/unions.ts",
-        "start_line": 9,
-        "start_column": 1,
-        "end_line": 9,
-        "end_column": 35
-      },
-      "scope_id": "module:<fixtures>/typescript/code/types/unions.ts:1:1:46:0",
-      "is_exported": false,
-      "generics": [],
-      "defining_scope_id": "module:<fixtures>/typescript/code/types/unions.ts:1:1:46:0"
-    },
     "type:<fixtures>/typescript/code/types/unions.ts:9:6:9:7:ID": {
       "kind": "type_alias",
       "symbol_id": "type:<fixtures>/typescript/code/types/unions.ts:9:6:9:7:ID",
@@ -251,22 +203,6 @@
       "generics": [],
       "defining_scope_id": "module:<fixtures>/typescript/code/types/unions.ts:1:1:46:0"
     },
-    "type:<fixtures>/typescript/code/types/unions.ts:12:1:15:2:type Success = {\n  type: \"success\";\n  data: any;\n};": {
-      "kind": "type_alias",
-      "symbol_id": "type:<fixtures>/typescript/code/types/unions.ts:12:1:15:2:type Success = {\n  type: \"success\";\n  data: any;\n};",
-      "name": "type Success = {\n  type: \"success\";\n  data: any;\n};",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/types/unions.ts",
-        "start_line": 12,
-        "start_column": 1,
-        "end_line": 15,
-        "end_column": 2
-      },
-      "scope_id": "module:<fixtures>/typescript/code/types/unions.ts:1:1:46:0",
-      "is_exported": false,
-      "generics": [],
-      "defining_scope_id": "module:<fixtures>/typescript/code/types/unions.ts:1:1:46:0"
-    },
     "type:<fixtures>/typescript/code/types/unions.ts:12:6:12:12:Success": {
       "kind": "type_alias",
       "symbol_id": "type:<fixtures>/typescript/code/types/unions.ts:12:6:12:12:Success",
@@ -284,22 +220,6 @@
       "generics": [],
       "defining_scope_id": "module:<fixtures>/typescript/code/types/unions.ts:1:1:46:0"
     },
-    "type:<fixtures>/typescript/code/types/unions.ts:17:1:20:2:type Failure = {\n  type: \"failure\";\n  error: string;\n};": {
-      "kind": "type_alias",
-      "symbol_id": "type:<fixtures>/typescript/code/types/unions.ts:17:1:20:2:type Failure = {\n  type: \"failure\";\n  error: string;\n};",
-      "name": "type Failure = {\n  type: \"failure\";\n  error: string;\n};",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/types/unions.ts",
-        "start_line": 17,
-        "start_column": 1,
-        "end_line": 20,
-        "end_column": 2
-      },
-      "scope_id": "module:<fixtures>/typescript/code/types/unions.ts:1:1:46:0",
-      "is_exported": false,
-      "generics": [],
-      "defining_scope_id": "module:<fixtures>/typescript/code/types/unions.ts:1:1:46:0"
-    },
     "type:<fixtures>/typescript/code/types/unions.ts:17:6:17:12:Failure": {
       "kind": "type_alias",
       "symbol_id": "type:<fixtures>/typescript/code/types/unions.ts:17:6:17:12:Failure",
@@ -314,22 +234,6 @@
       "scope_id": "module:<fixtures>/typescript/code/types/unions.ts:1:1:46:0",
       "is_exported": false,
       "type_expression": "{\n  type: \"failure\";\n  error: string;\n}",
-      "generics": [],
-      "defining_scope_id": "module:<fixtures>/typescript/code/types/unions.ts:1:1:46:0"
-    },
-    "type:<fixtures>/typescript/code/types/unions.ts:22:1:22:32:type Result = Success | Failure;": {
-      "kind": "type_alias",
-      "symbol_id": "type:<fixtures>/typescript/code/types/unions.ts:22:1:22:32:type Result = Success | Failure;",
-      "name": "type Result = Success | Failure;",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/types/unions.ts",
-        "start_line": 22,
-        "start_column": 1,
-        "end_line": 22,
-        "end_column": 32
-      },
-      "scope_id": "module:<fixtures>/typescript/code/types/unions.ts:1:1:46:0",
-      "is_exported": false,
       "generics": [],
       "defining_scope_id": "module:<fixtures>/typescript/code/types/unions.ts:1:1:46:0"
     },
@@ -353,22 +257,6 @@
       "generics": [],
       "defining_scope_id": "module:<fixtures>/typescript/code/types/unions.ts:1:1:46:0"
     },
-    "type:<fixtures>/typescript/code/types/unions.ts:25:1:28:57:type Shape =\n  | { kind: \"circle\"; radius: number }\n  | { kind: \"square\"; size: number }\n  | { kind: \"rectangle\"; width: number; height: number };": {
-      "kind": "type_alias",
-      "symbol_id": "type:<fixtures>/typescript/code/types/unions.ts:25:1:28:57:type Shape =\n  | { kind: \"circle\"; radius: number }\n  | { kind: \"square\"; size: number }\n  | { kind: \"rectangle\"; width: number; height: number };",
-      "name": "type Shape =\n  | { kind: \"circle\"; radius: number }\n  | { kind: \"square\"; size: number }\n  | { kind: \"rectangle\"; width: number; height: number };",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/types/unions.ts",
-        "start_line": 25,
-        "start_column": 1,
-        "end_line": 28,
-        "end_column": 57
-      },
-      "scope_id": "module:<fixtures>/typescript/code/types/unions.ts:1:1:46:0",
-      "is_exported": false,
-      "generics": [],
-      "defining_scope_id": "module:<fixtures>/typescript/code/types/unions.ts:1:1:46:0"
-    },
     "type:<fixtures>/typescript/code/types/unions.ts:25:6:25:10:Shape": {
       "kind": "type_alias",
       "symbol_id": "type:<fixtures>/typescript/code/types/unions.ts:25:6:25:10:Shape",
@@ -386,22 +274,6 @@
         "is_reexport": false
       },
       "type_expression": "| { kind: \"circle\"; radius: number }\n  | { kind: \"square\"; size: number }\n  | { kind: \"rectangle\"; width: number; height: number }",
-      "generics": [],
-      "defining_scope_id": "module:<fixtures>/typescript/code/types/unions.ts:1:1:46:0"
-    },
-    "type:<fixtures>/typescript/code/types/unions.ts:42:1:42:37:type Maybe<T> = T | null | undefined;": {
-      "kind": "type_alias",
-      "symbol_id": "type:<fixtures>/typescript/code/types/unions.ts:42:1:42:37:type Maybe<T> = T | null | undefined;",
-      "name": "type Maybe<T> = T | null | undefined;",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/types/unions.ts",
-        "start_line": 42,
-        "start_column": 1,
-        "end_line": 42,
-        "end_column": 37
-      },
-      "scope_id": "module:<fixtures>/typescript/code/types/unions.ts:1:1:46:0",
-      "is_exported": false,
       "generics": [],
       "defining_scope_id": "module:<fixtures>/typescript/code/types/unions.ts:1:1:46:0"
     },
@@ -425,22 +297,6 @@
       "generics": [
         "T"
       ],
-      "defining_scope_id": "module:<fixtures>/typescript/code/types/unions.ts:1:1:46:0"
-    },
-    "type:<fixtures>/typescript/code/types/unions.ts:43:1:43:33:type Optional<T> = T | undefined;": {
-      "kind": "type_alias",
-      "symbol_id": "type:<fixtures>/typescript/code/types/unions.ts:43:1:43:33:type Optional<T> = T | undefined;",
-      "name": "type Optional<T> = T | undefined;",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/types/unions.ts",
-        "start_line": 43,
-        "start_column": 1,
-        "end_line": 43,
-        "end_column": 33
-      },
-      "scope_id": "module:<fixtures>/typescript/code/types/unions.ts:1:1:46:0",
-      "is_exported": false,
-      "generics": [],
       "defining_scope_id": "module:<fixtures>/typescript/code/types/unions.ts:1:1:46:0"
     },
     "type:<fixtures>/typescript/code/types/unions.ts:43:6:43:13:Optional": {
@@ -723,31 +579,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "kind",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/types/unions.ts",
-        "start_line": 31,
-        "start_column": 11,
-        "end_line": 31,
-        "end_column": 20
-      },
-      "scope_id": "block:<fixtures>/typescript/code/types/unions.ts:31:3:38:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/types/unions.ts",
-        "start_line": 31,
-        "start_column": 11,
-        "end_line": 31,
-        "end_column": 15
-      },
-      "property_chain": [
-        "shape",
-        "kind"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "shape",
       "location": {
@@ -756,32 +587,6 @@
         "start_column": 11,
         "end_line": 31,
         "end_column": 15
-      },
-      "scope_id": "block:<fixtures>/typescript/code/types/unions.ts:31:3:38:3",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "shape",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/types/unions.ts",
-        "start_line": 31,
-        "start_column": 11,
-        "end_line": 31,
-        "end_column": 15
-      },
-      "scope_id": "block:<fixtures>/typescript/code/types/unions.ts:31:3:38:3",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "kind",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/types/unions.ts",
-        "start_line": 31,
-        "start_column": 17,
-        "end_line": 31,
-        "end_column": 20
       },
       "scope_id": "block:<fixtures>/typescript/code/types/unions.ts:31:3:38:3",
       "access_type": "read"
@@ -808,44 +613,6 @@
         "start_column": 7,
         "end_line": 33,
         "end_column": 41
-      },
-      "scope_id": "block:<fixtures>/typescript/code/types/unions.ts:32:5:33:41",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "PI",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/types/unions.ts",
-        "start_line": 33,
-        "start_column": 14,
-        "end_line": 33,
-        "end_column": 20
-      },
-      "scope_id": "block:<fixtures>/typescript/code/types/unions.ts:32:5:33:41",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/types/unions.ts",
-        "start_line": 33,
-        "start_column": 14,
-        "end_line": 33,
-        "end_column": 17
-      },
-      "property_chain": [
-        "Math",
-        "PI"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "Math",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/types/unions.ts",
-        "start_line": 33,
-        "start_column": 14,
-        "end_line": 33,
-        "end_column": 17
       },
       "scope_id": "block:<fixtures>/typescript/code/types/unions.ts:32:5:33:41",
       "access_type": "read"
@@ -928,57 +695,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "PI",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/types/unions.ts",
-        "start_line": 33,
-        "start_column": 19,
-        "end_line": 33,
-        "end_column": 20
-      },
-      "scope_id": "block:<fixtures>/typescript/code/types/unions.ts:32:5:33:41",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "radius",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/types/unions.ts",
-        "start_line": 33,
-        "start_column": 24,
-        "end_line": 33,
-        "end_column": 35
-      },
-      "scope_id": "block:<fixtures>/typescript/code/types/unions.ts:32:5:33:41",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/types/unions.ts",
-        "start_line": 33,
-        "start_column": 24,
-        "end_line": 33,
-        "end_column": 28
-      },
-      "property_chain": [
-        "shape",
-        "radius"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "shape",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/types/unions.ts",
-        "start_line": 33,
-        "start_column": 24,
-        "end_line": 33,
-        "end_column": 28
-      },
-      "scope_id": "block:<fixtures>/typescript/code/types/unions.ts:32:5:33:41",
-      "access_type": "read"
-    },
-    {
       "kind": "property_access",
       "name": "radius",
       "location": {
@@ -1025,19 +741,6 @@
         "start_column": 24,
         "end_line": 33,
         "end_column": 28
-      },
-      "scope_id": "block:<fixtures>/typescript/code/types/unions.ts:32:5:33:41",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "radius",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/types/unions.ts",
-        "start_line": 33,
-        "start_column": 30,
-        "end_line": 33,
-        "end_column": 35
       },
       "scope_id": "block:<fixtures>/typescript/code/types/unions.ts:32:5:33:41",
       "access_type": "read"
@@ -1064,44 +767,6 @@
         "start_column": 7,
         "end_line": 35,
         "end_column": 29
-      },
-      "scope_id": "block:<fixtures>/typescript/code/types/unions.ts:34:5:35:29",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "size",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/types/unions.ts",
-        "start_line": 35,
-        "start_column": 14,
-        "end_line": 35,
-        "end_column": 23
-      },
-      "scope_id": "block:<fixtures>/typescript/code/types/unions.ts:34:5:35:29",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/types/unions.ts",
-        "start_line": 35,
-        "start_column": 14,
-        "end_line": 35,
-        "end_column": 18
-      },
-      "property_chain": [
-        "shape",
-        "size"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "shape",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/types/unions.ts",
-        "start_line": 35,
-        "start_column": 14,
-        "end_line": 35,
-        "end_column": 18
       },
       "scope_id": "block:<fixtures>/typescript/code/types/unions.ts:34:5:35:29",
       "access_type": "read"
@@ -1185,19 +850,6 @@
     },
     {
       "kind": "variable_reference",
-      "name": "size",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/types/unions.ts",
-        "start_line": 35,
-        "start_column": 20,
-        "end_line": 35,
-        "end_column": 23
-      },
-      "scope_id": "block:<fixtures>/typescript/code/types/unions.ts:34:5:35:29",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
       "name": "return shape.width * shape.height;",
       "location": {
         "file_path": "<fixtures>/typescript/code/types/unions.ts",
@@ -1205,44 +857,6 @@
         "start_column": 7,
         "end_line": 37,
         "end_column": 40
-      },
-      "scope_id": "block:<fixtures>/typescript/code/types/unions.ts:36:5:37:40",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "width",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/types/unions.ts",
-        "start_line": 37,
-        "start_column": 14,
-        "end_line": 37,
-        "end_column": 24
-      },
-      "scope_id": "block:<fixtures>/typescript/code/types/unions.ts:36:5:37:40",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/types/unions.ts",
-        "start_line": 37,
-        "start_column": 14,
-        "end_line": 37,
-        "end_column": 18
-      },
-      "property_chain": [
-        "shape",
-        "width"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "shape",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/types/unions.ts",
-        "start_line": 37,
-        "start_column": 14,
-        "end_line": 37,
-        "end_column": 18
       },
       "scope_id": "block:<fixtures>/typescript/code/types/unions.ts:36:5:37:40",
       "access_type": "read"
@@ -1325,57 +939,6 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "width",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/types/unions.ts",
-        "start_line": 37,
-        "start_column": 20,
-        "end_line": 37,
-        "end_column": 24
-      },
-      "scope_id": "block:<fixtures>/typescript/code/types/unions.ts:36:5:37:40",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "height",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/types/unions.ts",
-        "start_line": 37,
-        "start_column": 28,
-        "end_line": 37,
-        "end_column": 39
-      },
-      "scope_id": "block:<fixtures>/typescript/code/types/unions.ts:36:5:37:40",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/types/unions.ts",
-        "start_line": 37,
-        "start_column": 28,
-        "end_line": 37,
-        "end_column": 32
-      },
-      "property_chain": [
-        "shape",
-        "height"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "shape",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/types/unions.ts",
-        "start_line": 37,
-        "start_column": 28,
-        "end_line": 37,
-        "end_column": 32
-      },
-      "scope_id": "block:<fixtures>/typescript/code/types/unions.ts:36:5:37:40",
-      "access_type": "read"
-    },
-    {
       "kind": "property_access",
       "name": "height",
       "location": {
@@ -1422,19 +985,6 @@
         "start_column": 28,
         "end_line": 37,
         "end_column": 32
-      },
-      "scope_id": "block:<fixtures>/typescript/code/types/unions.ts:36:5:37:40",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "height",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/types/unions.ts",
-        "start_line": 37,
-        "start_column": 34,
-        "end_line": 37,
-        "end_column": 39
       },
       "scope_id": "block:<fixtures>/typescript/code/types/unions.ts:36:5:37:40",
       "access_type": "read"

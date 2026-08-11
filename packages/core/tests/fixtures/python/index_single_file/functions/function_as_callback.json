@@ -1,0 +1,580 @@
+{
+  "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+  "language": "python",
+  "root_scope_id": "module:<fixtures>/python/code/functions/function_as_callback.py:1:1:9:0",
+  "scopes": {
+    "module:<fixtures>/python/code/functions/function_as_callback.py:1:1:9:0": {
+      "id": "module:<fixtures>/python/code/functions/function_as_callback.py:1:1:9:0",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 9,
+        "end_column": 0
+      },
+      "child_ids": [
+        "function:<fixtures>/python/code/functions/function_as_callback.py:7:9:8:34",
+        "function:<fixtures>/python/code/functions/function_as_callback.py:1:13:2:26",
+        "function:<fixtures>/python/code/functions/function_as_callback.py:4:12:5:16"
+      ]
+    },
+    "function:<fixtures>/python/code/functions/function_as_callback.py:7:9:8:34": {
+      "id": "function:<fixtures>/python/code/functions/function_as_callback.py:7:9:8:34",
+      "parent_id": "module:<fixtures>/python/code/functions/function_as_callback.py:1:1:9:0",
+      "name": "main",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 7,
+        "start_column": 9,
+        "end_line": 8,
+        "end_column": 34
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/python/code/functions/function_as_callback.py:1:13:2:26": {
+      "id": "function:<fixtures>/python/code/functions/function_as_callback.py:1:13:2:26",
+      "parent_id": "module:<fixtures>/python/code/functions/function_as_callback.py:1:1:9:0",
+      "name": "apply_fn",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 1,
+        "start_column": 13,
+        "end_line": 2,
+        "end_column": 26
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/python/code/functions/function_as_callback.py:4:12:5:16": {
+      "id": "function:<fixtures>/python/code/functions/function_as_callback.py:4:12:5:16",
+      "parent_id": "module:<fixtures>/python/code/functions/function_as_callback.py:1:1:9:0",
+      "name": "doubler",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 4,
+        "start_column": 12,
+        "end_line": 5,
+        "end_column": 16
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {
+    "function:<fixtures>/python/code/functions/function_as_callback.py:1:5:1:12:apply_fn": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/python/code/functions/function_as_callback.py:1:5:1:12:apply_fn",
+      "name": "apply_fn",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 1,
+        "start_column": 5,
+        "end_line": 1,
+        "end_column": 12
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/functions/function_as_callback.py:1:1:9:0",
+      "is_exported": true,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/python/code/functions/function_as_callback.py:1:13:2:26",
+            "symbol_id": "parameter:<fixtures>/python/code/functions/function_as_callback.py:1:14:1:21:callback",
+            "name": "callback",
+            "location": {
+              "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+              "start_line": 1,
+              "start_column": 14,
+              "end_line": 1,
+              "end_column": 21
+            }
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/python/code/functions/function_as_callback.py:1:13:2:26",
+            "symbol_id": "parameter:<fixtures>/python/code/functions/function_as_callback.py:1:24:1:28:value",
+            "name": "value",
+            "location": {
+              "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+              "start_line": 1,
+              "start_column": 24,
+              "end_line": 1,
+              "end_column": 28
+            }
+          }
+        ]
+      },
+      "body_scope_id": "function:<fixtures>/python/code/functions/function_as_callback.py:1:13:2:26"
+    },
+    "function:<fixtures>/python/code/functions/function_as_callback.py:4:5:4:11:doubler": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/python/code/functions/function_as_callback.py:4:5:4:11:doubler",
+      "name": "doubler",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 4,
+        "start_column": 5,
+        "end_line": 4,
+        "end_column": 11
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/functions/function_as_callback.py:1:1:9:0",
+      "is_exported": true,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/python/code/functions/function_as_callback.py:4:12:5:16",
+            "symbol_id": "parameter:<fixtures>/python/code/functions/function_as_callback.py:4:13:4:13:x",
+            "name": "x",
+            "location": {
+              "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+              "start_line": 4,
+              "start_column": 13,
+              "end_line": 4,
+              "end_column": 13
+            }
+          }
+        ]
+      },
+      "body_scope_id": "function:<fixtures>/python/code/functions/function_as_callback.py:4:12:5:16"
+    },
+    "function:<fixtures>/python/code/functions/function_as_callback.py:7:5:7:8:main": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/python/code/functions/function_as_callback.py:7:5:7:8:main",
+      "name": "main",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 7,
+        "start_column": 5,
+        "end_line": 7,
+        "end_column": 8
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/functions/function_as_callback.py:1:1:9:0",
+      "is_exported": true,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:<fixtures>/python/code/functions/function_as_callback.py:7:9:8:34"
+    }
+  },
+  "classes": {},
+  "variables": {
+    "variable:<fixtures>/python/code/functions/function_as_callback.py:8:5:8:10:result": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/python/code/functions/function_as_callback.py:8:5:8:10:result",
+      "name": "result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 8,
+        "start_column": 5,
+        "end_line": 8,
+        "end_column": 10
+      },
+      "defining_scope_id": "function:<fixtures>/python/code/functions/function_as_callback.py:7:9:8:34",
+      "is_exported": false,
+      "initial_value": "apply_fn(doubler, 21)"
+    }
+  },
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {},
+  "references": [
+    {
+      "kind": "variable_reference",
+      "name": "apply_fn",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 1,
+        "start_column": 5,
+        "end_line": 1,
+        "end_column": 12
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/function_as_callback.py:1:1:9:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "callback",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 1,
+        "start_column": 14,
+        "end_line": 1,
+        "end_column": 21
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/function_as_callback.py:1:13:2:26",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "value",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 1,
+        "start_column": 24,
+        "end_line": 1,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/function_as_callback.py:1:13:2:26",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return callback(value)",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 2,
+        "start_column": 5,
+        "end_line": 2,
+        "end_column": 26
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/function_as_callback.py:1:13:2:26",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "callback",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 2,
+        "start_column": 12,
+        "end_line": 2,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/function_as_callback.py:1:13:2:26"
+    },
+    {
+      "kind": "constructor_call",
+      "name": "callback",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 2,
+        "start_column": 12,
+        "end_line": 2,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/function_as_callback.py:1:13:2:26"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "callback(value)",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 2,
+        "start_column": 12,
+        "end_line": 2,
+        "end_column": 26
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/function_as_callback.py:1:13:2:26",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "callback",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 2,
+        "start_column": 12,
+        "end_line": 2,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/function_as_callback.py:1:13:2:26",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "value",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 2,
+        "start_column": 21,
+        "end_line": 2,
+        "end_column": 25
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/function_as_callback.py:1:13:2:26",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "doubler",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 4,
+        "start_column": 5,
+        "end_line": 4,
+        "end_column": 11
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/function_as_callback.py:1:1:9:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "x",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 4,
+        "start_column": 13,
+        "end_line": 4,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/function_as_callback.py:4:12:5:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return x * 2",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 5,
+        "start_column": 5,
+        "end_line": 5,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/function_as_callback.py:4:12:5:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "x * 2",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 5,
+        "start_column": 12,
+        "end_line": 5,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/function_as_callback.py:4:12:5:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "x",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 5,
+        "start_column": 12,
+        "end_line": 5,
+        "end_column": 12
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/function_as_callback.py:4:12:5:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "main",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 7,
+        "start_column": 5,
+        "end_line": 7,
+        "end_column": 8
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/function_as_callback.py:1:1:9:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "result = apply_fn(doubler, 21)",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 8,
+        "start_column": 5,
+        "end_line": 8,
+        "end_column": 34
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/function_as_callback.py:7:9:8:34",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 8,
+        "start_column": 5,
+        "end_line": 8,
+        "end_column": 34
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 8,
+        "start_column": 5,
+        "end_line": 8,
+        "end_column": 10
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/function_as_callback.py:7:9:8:34",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 8,
+        "start_column": 5,
+        "end_line": 8,
+        "end_column": 10
+      },
+      "assignment_type": {
+        "type_id": "type:<fixtures>/python/code/functions/function_as_callback.py:8:5:8:10:result",
+        "type_name": "result",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 8,
+        "start_column": 5,
+        "end_line": 8,
+        "end_column": 10
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/function_as_callback.py:7:9:8:34",
+      "access_type": "write"
+    },
+    {
+      "kind": "assignment",
+      "name": "result = apply_fn(doubler, 21)",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 8,
+        "start_column": 5,
+        "end_line": 8,
+        "end_column": 34
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/function_as_callback.py:7:9:8:34",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 8,
+        "start_column": 5,
+        "end_line": 8,
+        "end_column": 34
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 8,
+        "start_column": 5,
+        "end_line": 8,
+        "end_column": 10
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/function_as_callback.py:7:9:8:34",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 8,
+        "start_column": 5,
+        "end_line": 8,
+        "end_column": 10
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/function_as_callback.py:7:9:8:34",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "apply_fn(doubler, 21)",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 8,
+        "start_column": 14,
+        "end_line": 8,
+        "end_column": 34
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/function_as_callback.py:7:9:8:34",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 8,
+        "start_column": 5,
+        "end_line": 8,
+        "end_column": 10
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "apply_fn",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 8,
+        "start_column": 14,
+        "end_line": 8,
+        "end_column": 21
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/function_as_callback.py:7:9:8:34",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 8,
+        "start_column": 5,
+        "end_line": 8,
+        "end_column": 10
+      }
+    },
+    {
+      "kind": "constructor_call",
+      "name": "apply_fn",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 8,
+        "start_column": 14,
+        "end_line": 8,
+        "end_column": 21
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/function_as_callback.py:7:9:8:34",
+      "construct_target": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 8,
+        "start_column": 5,
+        "end_line": 8,
+        "end_column": 10
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "apply_fn(doubler, 21)",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 8,
+        "start_column": 14,
+        "end_line": 8,
+        "end_column": 34
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/function_as_callback.py:7:9:8:34",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "apply_fn",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 8,
+        "start_column": 14,
+        "end_line": 8,
+        "end_column": 21
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/function_as_callback.py:7:9:8:34",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "doubler",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/function_as_callback.py",
+        "start_line": 8,
+        "start_column": 23,
+        "end_line": 8,
+        "end_column": 29
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/function_as_callback.py:7:9:8:34",
+      "access_type": "read"
+    }
+  ]
+}

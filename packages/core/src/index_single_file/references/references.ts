@@ -447,11 +447,28 @@ export class ReferenceBuilder {
         break;
 
       case ReferenceKind.PROPERTY_ACCESS: {
+        // A member expression in call position is already captured as a call
+        // reference and a getter can never be its target, so the read mints
+        // nothing — this keeps the resolver off every method call's callee.
+        const parent = capture.node.parent;
+        if (
+          parent?.type === "call_expression" &&
+          parent.childForFieldName?.("function")?.id === capture.node.id
+        ) {
+          return this;
+        }
+
         const receiver_info = this.extractors
           ? this.extractors.extract_receiver_info(capture.node, this.file_path)
           : undefined;
 
         if (receiver_info) {
+          // A chain with no base (`getHelper().jsDoc` extracts ["jsDoc"])
+          // would resolve as a bare name and fabricate edges — mint nothing.
+          if (receiver_info.property_chain.length < 2) {
+            return this;
+          }
+
           const is_optional_chain = this.extractors
             ? this.extractors.extract_is_optional_chain(capture.node)
             : false;

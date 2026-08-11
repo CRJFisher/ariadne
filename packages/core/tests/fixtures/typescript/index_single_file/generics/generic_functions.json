@@ -204,6 +204,7 @@
       "export": {
         "is_reexport": false
       },
+      "docstring": "// Simple generic function",
       "signature": {
         "parameters": [
           {
@@ -243,6 +244,7 @@
       "export": {
         "is_reexport": false
       },
+      "docstring": "// Generic function with multiple type parameters",
       "signature": {
         "parameters": [
           {
@@ -297,6 +299,7 @@
       "export": {
         "is_reexport": false
       },
+      "docstring": "// Generic function with constraint",
       "signature": {
         "parameters": [
           {
@@ -351,6 +354,7 @@
       "export": {
         "is_reexport": false
       },
+      "docstring": "// Generic function with extends constraint",
       "signature": {
         "parameters": [
           {
@@ -405,6 +409,7 @@
       "export": {
         "is_reexport": false
       },
+      "docstring": "// Generic array operations",
       "signature": {
         "parameters": [
           {
@@ -1771,31 +1776,6 @@
       "access_type": "read"
     },
     {
-      "kind": "property_access",
-      "name": "length",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
-        "start_line": 32,
-        "start_column": 14,
-        "end_line": 32,
-        "end_column": 23
-      },
-      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:31:17:33:1",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
-        "start_line": 32,
-        "start_column": 14,
-        "end_line": 32,
-        "end_column": 16
-      },
-      "property_chain": [
-        "arr",
-        "length"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
       "kind": "variable_reference",
       "name": "arr",
       "location": {
@@ -1804,32 +1784,6 @@
         "start_column": 14,
         "end_line": 32,
         "end_column": 16
-      },
-      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:31:17:33:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "arr",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
-        "start_line": 32,
-        "start_column": 14,
-        "end_line": 32,
-        "end_column": 16
-      },
-      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:31:17:33:1",
-      "access_type": "read"
-    },
-    {
-      "kind": "variable_reference",
-      "name": "length",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
-        "start_line": 32,
-        "start_column": 18,
-        "end_line": 32,
-        "end_column": 23
       },
       "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:31:17:33:1",
       "access_type": "read"
@@ -2156,120 +2110,10 @@
         "result",
         "push"
       ],
-      "optional_chaining": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "result",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
-        "start_line": 38,
-        "start_column": 5,
-        "end_line": 38,
-        "end_column": 10
-      },
-      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:37:3:39:3",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "push",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
-        "start_line": 38,
-        "start_column": 5,
-        "end_line": 38,
-        "end_column": 15
-      },
-      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:37:3:39:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
-        "start_line": 38,
-        "start_column": 5,
-        "end_line": 38,
-        "end_column": 10
-      },
-      "property_chain": [
-        "result",
-        "push"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "result",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
-        "start_line": 38,
-        "start_column": 5,
-        "end_line": 38,
-        "end_column": 10
-      },
-      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:37:3:39:3",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "push",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
-        "start_line": 38,
-        "start_column": 5,
-        "end_line": 38,
-        "end_column": 15
-      },
-      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:37:3:39:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
-        "start_line": 38,
-        "start_column": 5,
-        "end_line": 38,
-        "end_column": 10
-      },
-      "property_chain": [
-        "result",
-        "push"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "result",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
-        "start_line": 38,
-        "start_column": 5,
-        "end_line": 38,
-        "end_column": 10
-      },
-      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:37:3:39:3",
-      "access_type": "read"
-    },
-    {
-      "kind": "method_call",
-      "name": "push",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
-        "start_line": 38,
-        "start_column": 5,
-        "end_line": 38,
-        "end_column": 25
-      },
-      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:37:3:39:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
-        "start_line": 38,
-        "start_column": 5,
-        "end_line": 38,
-        "end_column": 10
-      },
-      "property_chain": [
-        "result",
-        "push"
-      ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -2299,13 +2143,13 @@
     },
     {
       "kind": "variable_reference",
-      "name": "push",
+      "name": "result",
       "location": {
         "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
         "start_line": 38,
-        "start_column": 12,
+        "start_column": 5,
         "end_line": 38,
-        "end_column": 15
+        "end_column": 10
       },
       "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:37:3:39:3",
       "access_type": "read"
@@ -2709,120 +2553,10 @@
         "result",
         "push"
       ],
-      "optional_chaining": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "result",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
-        "start_line": 47,
-        "start_column": 7,
-        "end_line": 47,
-        "end_column": 12
-      },
-      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:46:5:48:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "push",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
-        "start_line": 47,
-        "start_column": 7,
-        "end_line": 47,
-        "end_column": 17
-      },
-      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:46:5:48:5",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
-        "start_line": 47,
-        "start_column": 7,
-        "end_line": 47,
-        "end_column": 12
-      },
-      "property_chain": [
-        "result",
-        "push"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "result",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
-        "start_line": 47,
-        "start_column": 7,
-        "end_line": 47,
-        "end_column": 12
-      },
-      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:46:5:48:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "push",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
-        "start_line": 47,
-        "start_column": 7,
-        "end_line": 47,
-        "end_column": 17
-      },
-      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:46:5:48:5",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
-        "start_line": 47,
-        "start_column": 7,
-        "end_line": 47,
-        "end_column": 12
-      },
-      "property_chain": [
-        "result",
-        "push"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "result",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
-        "start_line": 47,
-        "start_column": 7,
-        "end_line": 47,
-        "end_column": 12
-      },
-      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:46:5:48:5",
-      "access_type": "read"
-    },
-    {
-      "kind": "method_call",
-      "name": "push",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
-        "start_line": 47,
-        "start_column": 7,
-        "end_line": 47,
-        "end_column": 23
-      },
-      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:46:5:48:5",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
-        "start_line": 47,
-        "start_column": 7,
-        "end_line": 47,
-        "end_column": 12
-      },
-      "property_chain": [
-        "result",
-        "push"
-      ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -2852,13 +2586,13 @@
     },
     {
       "kind": "variable_reference",
-      "name": "push",
+      "name": "result",
       "location": {
         "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
         "start_line": 47,
-        "start_column": 14,
+        "start_column": 7,
         "end_line": 47,
-        "end_column": 17
+        "end_column": 12
       },
       "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:46:5:48:5",
       "access_type": "read"

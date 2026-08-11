@@ -1,0 +1,699 @@
+{
+  "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+  "language": "rust",
+  "root_scope_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:1:1:43:0",
+  "scopes": {
+    "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:1:1:43:0": {
+      "id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:1:1:43:0",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 43,
+        "end_column": 0
+      },
+      "child_ids": [
+        "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:7:18:9:1",
+        "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:12:10:12:14",
+        "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:16:18:16:22",
+        "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:22:23:22:27",
+        "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:25:11:32:1",
+        "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:37:19:37:23",
+        "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:42:19:42:23"
+      ]
+    },
+    "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:7:18:9:1": {
+      "id": "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:7:18:9:1",
+      "parent_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:1:1:43:0",
+      "name": "run_server",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 7,
+        "start_column": 18,
+        "end_line": 9,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:12:10:12:14": {
+      "id": "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:12:10:12:14",
+      "parent_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:1:1:43:0",
+      "name": "helper",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 12,
+        "start_column": 10,
+        "end_line": 12,
+        "end_column": 14
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:16:18:16:22": {
+      "id": "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:16:18:16:22",
+      "parent_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:1:1:43:0",
+      "name": "top_level_test",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 16,
+        "start_column": 18,
+        "end_line": 16,
+        "end_column": 22
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:22:23:22:27": {
+      "id": "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:22:23:22:27",
+      "parent_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:1:1:43:0",
+      "name": "chrono_feature_test",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 22,
+        "start_column": 23,
+        "end_line": 22,
+        "end_column": 27
+      },
+      "child_ids": []
+    },
+    "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:25:11:32:1": {
+      "id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:25:11:32:1",
+      "parent_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:1:1:43:0",
+      "name": "tests",
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 25,
+        "start_column": 11,
+        "end_line": 32,
+        "end_column": 1
+      },
+      "child_ids": [
+        "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:28:23:28:27",
+        "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:31:21:31:25"
+      ]
+    },
+    "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:28:23:28:27": {
+      "id": "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:28:23:28:27",
+      "parent_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:25:11:32:1",
+      "name": "masks_roundtrip",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 28,
+        "start_column": 23,
+        "end_line": 28,
+        "end_column": 27
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:31:21:31:25": {
+      "id": "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:31:21:31:25",
+      "parent_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:25:11:32:1",
+      "name": "build_fixture",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 31,
+        "start_column": 21,
+        "end_line": 31,
+        "end_column": 25
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:37:19:37:23": {
+      "id": "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:37:19:37:23",
+      "parent_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:1:1:43:0",
+      "name": "unix_only_entry",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 37,
+        "start_column": 19,
+        "end_line": 37,
+        "end_column": 23
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:42:19:42:23": {
+      "id": "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:42:19:42:23",
+      "parent_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:1:1:43:0",
+      "name": "prod_only_entry",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 42,
+        "start_column": 19,
+        "end_line": 42,
+        "end_column": 23
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {
+    "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:7:1:9:1:run_server": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:7:1:9:1:run_server",
+      "name": "run_server",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 7,
+        "start_column": 8,
+        "end_line": 7,
+        "end_column": 17
+      },
+      "defining_scope_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:1:1:43:0",
+      "is_exported": true,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:7:18:9:1"
+    },
+    "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:12:1:12:14:helper": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:12:1:12:14:helper",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 12,
+        "start_column": 4,
+        "end_line": 12,
+        "end_column": 9
+      },
+      "defining_scope_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:1:1:43:0",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:12:10:12:14"
+    },
+    "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:16:1:16:22:top_level_test": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:16:1:16:22:top_level_test",
+      "name": "top_level_test",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 16,
+        "start_column": 4,
+        "end_line": 16,
+        "end_column": 17
+      },
+      "defining_scope_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:1:1:43:0",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "decorators": [
+        {
+          "symbol_id": "decorator:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:16:4:16:17:test",
+          "defining_scope_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:1:1:43:0",
+          "kind": "decorator",
+          "name": "test",
+          "location": {
+            "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+            "start_line": 16,
+            "start_column": 4,
+            "end_line": 16,
+            "end_column": 17
+          }
+        }
+      ],
+      "body_scope_id": "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:16:18:16:22"
+    },
+    "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:22:1:22:27:chrono_feature_test": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:22:1:22:27:chrono_feature_test",
+      "name": "chrono_feature_test",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 22,
+        "start_column": 4,
+        "end_line": 22,
+        "end_column": 22
+      },
+      "defining_scope_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:1:1:43:0",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "decorators": [
+        {
+          "symbol_id": "decorator:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:22:4:22:22:test",
+          "defining_scope_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:1:1:43:0",
+          "kind": "decorator",
+          "name": "test",
+          "location": {
+            "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+            "start_line": 22,
+            "start_column": 4,
+            "end_line": 22,
+            "end_column": 22
+          }
+        }
+      ],
+      "body_scope_id": "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:22:23:22:27"
+    },
+    "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:28:5:28:27:masks_roundtrip": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:28:5:28:27:masks_roundtrip",
+      "name": "masks_roundtrip",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 28,
+        "start_column": 8,
+        "end_line": 28,
+        "end_column": 22
+      },
+      "defining_scope_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:25:11:32:1",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "decorators": [
+        {
+          "symbol_id": "decorator:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:28:8:28:22:test",
+          "defining_scope_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:25:11:32:1",
+          "kind": "decorator",
+          "name": "test",
+          "location": {
+            "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+            "start_line": 28,
+            "start_column": 8,
+            "end_line": 28,
+            "end_column": 22
+          }
+        },
+        {
+          "symbol_id": "decorator:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:28:8:28:22:cfg",
+          "defining_scope_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:25:11:32:1",
+          "kind": "decorator",
+          "name": "cfg",
+          "location": {
+            "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+            "start_line": 28,
+            "start_column": 8,
+            "end_line": 28,
+            "end_column": 22
+          }
+        }
+      ],
+      "body_scope_id": "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:28:23:28:27"
+    },
+    "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:31:5:31:25:build_fixture": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:31:5:31:25:build_fixture",
+      "name": "build_fixture",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 31,
+        "start_column": 8,
+        "end_line": 31,
+        "end_column": 20
+      },
+      "defining_scope_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:25:11:32:1",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "decorators": [
+        {
+          "symbol_id": "decorator:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:31:8:31:20:cfg",
+          "defining_scope_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:25:11:32:1",
+          "kind": "decorator",
+          "name": "cfg",
+          "location": {
+            "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+            "start_line": 31,
+            "start_column": 8,
+            "end_line": 31,
+            "end_column": 20
+          }
+        }
+      ],
+      "body_scope_id": "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:31:21:31:25"
+    },
+    "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:37:1:37:23:unix_only_entry": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:37:1:37:23:unix_only_entry",
+      "name": "unix_only_entry",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 37,
+        "start_column": 4,
+        "end_line": 37,
+        "end_column": 18
+      },
+      "defining_scope_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:1:1:43:0",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:37:19:37:23"
+    },
+    "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:42:1:42:23:prod_only_entry": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:42:1:42:23:prod_only_entry",
+      "name": "prod_only_entry",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 42,
+        "start_column": 4,
+        "end_line": 42,
+        "end_column": 18
+      },
+      "defining_scope_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:1:1:43:0",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:42:19:42:23"
+    }
+  },
+  "classes": {},
+  "variables": {},
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {
+    "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:25:5:25:9:<module>": {
+      "kind": "namespace",
+      "symbol_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:25:5:25:9:<module>",
+      "name": "tests",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 25,
+        "start_column": 5,
+        "end_line": 25,
+        "end_column": 9
+      },
+      "defining_scope_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:1:1:43:0",
+      "is_exported": false
+    }
+  },
+  "types": {},
+  "imported_symbols": {},
+  "references": [
+    {
+      "kind": "variable_reference",
+      "name": "run_server",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 7,
+        "start_column": 8,
+        "end_line": 7,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:1:1:43:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 8,
+        "start_column": 5,
+        "end_line": 8,
+        "end_column": 10
+      },
+      "scope_id": "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:7:18:9:1"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 8,
+        "start_column": 5,
+        "end_line": 8,
+        "end_column": 10
+      },
+      "scope_id": "function:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:7:18:9:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 12,
+        "start_column": 4,
+        "end_line": 12,
+        "end_column": 9
+      },
+      "scope_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:1:1:43:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "test",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 15,
+        "start_column": 3,
+        "end_line": 15,
+        "end_column": 6
+      },
+      "scope_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:1:1:43:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "top_level_test",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 16,
+        "start_column": 4,
+        "end_line": 16,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:1:1:43:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "cfg",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 20,
+        "start_column": 3,
+        "end_line": 20,
+        "end_column": 5
+      },
+      "scope_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:1:1:43:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "feature",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 20,
+        "start_column": 7,
+        "end_line": 20,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:1:1:43:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "test",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 21,
+        "start_column": 3,
+        "end_line": 21,
+        "end_column": 6
+      },
+      "scope_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:1:1:43:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "chrono_feature_test",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 22,
+        "start_column": 4,
+        "end_line": 22,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:1:1:43:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "cfg",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 24,
+        "start_column": 3,
+        "end_line": 24,
+        "end_column": 5
+      },
+      "scope_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:1:1:43:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "test",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 24,
+        "start_column": 7,
+        "end_line": 24,
+        "end_column": 10
+      },
+      "scope_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:1:1:43:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "tests",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 25,
+        "start_column": 5,
+        "end_line": 25,
+        "end_column": 9
+      },
+      "scope_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:1:1:43:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "test",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 27,
+        "start_column": 7,
+        "end_line": 27,
+        "end_column": 10
+      },
+      "scope_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:25:11:32:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "masks_roundtrip",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 28,
+        "start_column": 8,
+        "end_line": 28,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:25:11:32:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "build_fixture",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 31,
+        "start_column": 8,
+        "end_line": 31,
+        "end_column": 20
+      },
+      "scope_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:25:11:32:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "cfg",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 36,
+        "start_column": 3,
+        "end_line": 36,
+        "end_column": 5
+      },
+      "scope_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:1:1:43:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "unix",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 36,
+        "start_column": 7,
+        "end_line": 36,
+        "end_column": 10
+      },
+      "scope_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:1:1:43:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "unix_only_entry",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 37,
+        "start_column": 4,
+        "end_line": 37,
+        "end_column": 18
+      },
+      "scope_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:1:1:43:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "cfg",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 41,
+        "start_column": 3,
+        "end_line": 41,
+        "end_column": 5
+      },
+      "scope_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:1:1:43:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "not",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 41,
+        "start_column": 7,
+        "end_line": 41,
+        "end_column": 9
+      },
+      "scope_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:1:1:43:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "test",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 41,
+        "start_column": 11,
+        "end_line": 41,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:1:1:43:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "prod_only_entry",
+      "location": {
+        "file_path": "<fixtures>/rust/code/entry_points/test_harness_attributes.rs",
+        "start_line": 42,
+        "start_column": 4,
+        "end_line": 42,
+        "end_column": 18
+      },
+      "scope_id": "module:<fixtures>/rust/code/entry_points/test_harness_attributes.rs:1:1:43:0",
+      "access_type": "read"
+    }
+  ]
+}

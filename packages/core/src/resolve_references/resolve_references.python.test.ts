@@ -10,7 +10,7 @@ import { Project } from "../project/project";
 import {
   find_caller_node,
   is_entry_point,
-} from "../trace_call_graph/trace_call_graph.test";
+} from "./resolve_references.test";
 import type { FilePath, SymbolName } from "@ariadnejs/types";
 import * as fs from "fs";
 import * as path from "path";

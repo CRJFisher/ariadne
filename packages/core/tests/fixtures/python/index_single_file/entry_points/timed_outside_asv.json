@@ -1,0 +1,191 @@
+{
+  "file_path": "<fixtures>/python/code/entry_points/timed_outside_asv.py",
+  "language": "python",
+  "root_scope_id": "module:<fixtures>/python/code/entry_points/timed_outside_asv.py:1:1:9:0",
+  "scopes": {
+    "module:<fixtures>/python/code/entry_points/timed_outside_asv.py:1:1:9:0": {
+      "id": "module:<fixtures>/python/code/entry_points/timed_outside_asv.py:1:1:9:0",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/python/code/entry_points/timed_outside_asv.py",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 9,
+        "end_column": 0
+      },
+      "child_ids": [
+        "class:<fixtures>/python/code/entry_points/timed_outside_asv.py:6:17:8:16"
+      ]
+    },
+    "class:<fixtures>/python/code/entry_points/timed_outside_asv.py:6:17:8:16": {
+      "id": "class:<fixtures>/python/code/entry_points/timed_outside_asv.py:6:17:8:16",
+      "parent_id": "module:<fixtures>/python/code/entry_points/timed_outside_asv.py:1:1:9:0",
+      "name": null,
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/python/code/entry_points/timed_outside_asv.py",
+        "start_line": 6,
+        "start_column": 17,
+        "end_line": 8,
+        "end_column": 16
+      },
+      "child_ids": [
+        "method:<fixtures>/python/code/entry_points/timed_outside_asv.py:7:21:8:16"
+      ]
+    },
+    "method:<fixtures>/python/code/entry_points/timed_outside_asv.py:7:21:8:16": {
+      "id": "method:<fixtures>/python/code/entry_points/timed_outside_asv.py:7:21:8:16",
+      "parent_id": "class:<fixtures>/python/code/entry_points/timed_outside_asv.py:6:17:8:16",
+      "name": "time_elapsed",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/python/code/entry_points/timed_outside_asv.py",
+        "start_line": 7,
+        "start_column": 21,
+        "end_line": 8,
+        "end_column": 16
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {},
+  "classes": {
+    "class:<fixtures>/python/code/entry_points/timed_outside_asv.py:6:7:6:15:Stopwatch": {
+      "kind": "class",
+      "symbol_id": "class:<fixtures>/python/code/entry_points/timed_outside_asv.py:6:7:6:15:Stopwatch",
+      "name": "Stopwatch",
+      "location": {
+        "file_path": "<fixtures>/python/code/entry_points/timed_outside_asv.py",
+        "start_line": 6,
+        "start_column": 7,
+        "end_line": 6,
+        "end_column": 15
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/entry_points/timed_outside_asv.py:1:1:9:0",
+      "extends": [],
+      "is_exported": true,
+      "methods": [
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/python/code/entry_points/timed_outside_asv.py:6:17:8:16",
+          "symbol_id": "method:<fixtures>/python/code/entry_points/timed_outside_asv.py:7:9:7:20:time_elapsed",
+          "name": "time_elapsed",
+          "location": {
+            "file_path": "<fixtures>/python/code/entry_points/timed_outside_asv.py",
+            "start_line": 7,
+            "start_column": 9,
+            "end_line": 7,
+            "end_column": 20
+          },
+          "async": false,
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/python/code/entry_points/timed_outside_asv.py:7:21:8:16",
+              "symbol_id": "parameter:<fixtures>/python/code/entry_points/timed_outside_asv.py:7:22:7:25:self",
+              "name": "self",
+              "location": {
+                "file_path": "<fixtures>/python/code/entry_points/timed_outside_asv.py",
+                "start_line": 7,
+                "start_column": 22,
+                "end_line": 7,
+                "end_column": 25
+              }
+            }
+          ],
+          "body_scope_id": "method:<fixtures>/python/code/entry_points/timed_outside_asv.py:7:21:8:16"
+        }
+      ],
+      "properties": [],
+      "decorators": []
+    }
+  },
+  "variables": {},
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {},
+  "references": [
+    {
+      "kind": "variable_reference",
+      "name": "Stopwatch",
+      "location": {
+        "file_path": "<fixtures>/python/code/entry_points/timed_outside_asv.py",
+        "start_line": 6,
+        "start_column": 7,
+        "end_line": 6,
+        "end_column": 15
+      },
+      "scope_id": "module:<fixtures>/python/code/entry_points/timed_outside_asv.py:1:1:9:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "time_elapsed",
+      "location": {
+        "file_path": "<fixtures>/python/code/entry_points/timed_outside_asv.py",
+        "start_line": 7,
+        "start_column": 9,
+        "end_line": 7,
+        "end_column": 20
+      },
+      "scope_id": "class:<fixtures>/python/code/entry_points/timed_outside_asv.py:6:17:8:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/entry_points/timed_outside_asv.py",
+        "start_line": 7,
+        "start_column": 22,
+        "end_line": 7,
+        "end_column": 25
+      },
+      "scope_id": "method:<fixtures>/python/code/entry_points/timed_outside_asv.py:7:21:8:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/entry_points/timed_outside_asv.py",
+        "start_line": 7,
+        "start_column": 22,
+        "end_line": 7,
+        "end_column": 25
+      },
+      "scope_id": "method:<fixtures>/python/code/entry_points/timed_outside_asv.py:7:21:8:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return 0",
+      "location": {
+        "file_path": "<fixtures>/python/code/entry_points/timed_outside_asv.py",
+        "start_line": 8,
+        "start_column": 9,
+        "end_line": 8,
+        "end_column": 16
+      },
+      "scope_id": "method:<fixtures>/python/code/entry_points/timed_outside_asv.py:7:21:8:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "0",
+      "location": {
+        "file_path": "<fixtures>/python/code/entry_points/timed_outside_asv.py",
+        "start_line": 8,
+        "start_column": 16,
+        "end_line": 8,
+        "end_column": 16
+      },
+      "scope_id": "method:<fixtures>/python/code/entry_points/timed_outside_asv.py:7:21:8:16",
+      "access_type": "read"
+    }
+  ]
+}

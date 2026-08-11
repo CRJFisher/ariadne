@@ -168,9 +168,8 @@ Language-specific features explicitly allowed:
 - `@reference.constructor.generic` - Generic constructor calls (involves type parameters)
 - `@reference.constructor.qualified` - Namespace-qualified constructor calls (`new ns.Foo()`)
 - `@assignment.constructor.qualified` - Namespace-qualified constructor with assignment target
-- `@reference.property` - Property access
-- `@reference.property.optional` - Optional chaining
-- `@reference.member_access` - Member access patterns
+- `@reference.property` - Property-name read of an identifier-receiver member access
+- `@reference.member_access` - Member access, one capture per member expression whatever the receiver shape (optional chaining is derived from the node)
 - `@reference.call.jsx` - JSX elements
 
 ### Python

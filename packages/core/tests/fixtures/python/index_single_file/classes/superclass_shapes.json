@@ -1,0 +1,1592 @@
+{
+  "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+  "language": "python",
+  "root_scope_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+  "scopes": {
+    "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0": {
+      "id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 34,
+        "end_column": 0
+      },
+      "child_ids": [
+        "class:<fixtures>/python/code/classes/superclass_shapes.py:13:43:18:47",
+        "class:<fixtures>/python/code/classes/superclass_shapes.py:8:31:10:16",
+        "class:<fixtures>/python/code/classes/superclass_shapes.py:21:43:23:16",
+        "class:<fixtures>/python/code/classes/superclass_shapes.py:26:14:28:16",
+        "class:<fixtures>/python/code/classes/superclass_shapes.py:31:47:33:16"
+      ]
+    },
+    "class:<fixtures>/python/code/classes/superclass_shapes.py:13:43:18:47": {
+      "id": "class:<fixtures>/python/code/classes/superclass_shapes.py:13:43:18:47",
+      "parent_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "name": null,
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 13,
+        "start_column": 43,
+        "end_line": 18,
+        "end_column": 47
+      },
+      "child_ids": [
+        "method:<fixtures>/python/code/classes/superclass_shapes.py:14:30:15:52",
+        "method:<fixtures>/python/code/classes/superclass_shapes.py:17:28:18:47"
+      ]
+    },
+    "method:<fixtures>/python/code/classes/superclass_shapes.py:14:30:15:52": {
+      "id": "method:<fixtures>/python/code/classes/superclass_shapes.py:14:30:15:52",
+      "parent_id": "class:<fixtures>/python/code/classes/superclass_shapes.py:13:43:18:47",
+      "name": "visit_create_sequence",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 14,
+        "start_column": 30,
+        "end_line": 15,
+        "end_column": 52
+      },
+      "child_ids": []
+    },
+    "method:<fixtures>/python/code/classes/superclass_shapes.py:17:28:18:47": {
+      "id": "method:<fixtures>/python/code/classes/superclass_shapes.py:17:28:18:47",
+      "parent_id": "class:<fixtures>/python/code/classes/superclass_shapes.py:13:43:18:47",
+      "name": "visit_drop_sequence",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 17,
+        "start_column": 28,
+        "end_line": 18,
+        "end_column": 47
+      },
+      "child_ids": []
+    },
+    "class:<fixtures>/python/code/classes/superclass_shapes.py:8:31:10:16": {
+      "id": "class:<fixtures>/python/code/classes/superclass_shapes.py:8:31:10:16",
+      "parent_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "name": null,
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 8,
+        "start_column": 31,
+        "end_line": 10,
+        "end_column": 16
+      },
+      "child_ids": [
+        "method:<fixtures>/python/code/classes/superclass_shapes.py:9:13:10:16"
+      ]
+    },
+    "class:<fixtures>/python/code/classes/superclass_shapes.py:21:43:23:16": {
+      "id": "class:<fixtures>/python/code/classes/superclass_shapes.py:21:43:23:16",
+      "parent_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "name": null,
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 21,
+        "start_column": 43,
+        "end_line": 23,
+        "end_column": 16
+      },
+      "child_ids": [
+        "method:<fixtures>/python/code/classes/superclass_shapes.py:22:16:23:16"
+      ]
+    },
+    "class:<fixtures>/python/code/classes/superclass_shapes.py:26:14:28:16": {
+      "id": "class:<fixtures>/python/code/classes/superclass_shapes.py:26:14:28:16",
+      "parent_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "name": null,
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 26,
+        "start_column": 14,
+        "end_line": 28,
+        "end_column": 16
+      },
+      "child_ids": [
+        "method:<fixtures>/python/code/classes/superclass_shapes.py:27:14:28:16"
+      ]
+    },
+    "class:<fixtures>/python/code/classes/superclass_shapes.py:31:47:33:16": {
+      "id": "class:<fixtures>/python/code/classes/superclass_shapes.py:31:47:33:16",
+      "parent_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "name": null,
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 31,
+        "start_column": 47,
+        "end_line": 33,
+        "end_column": 16
+      },
+      "child_ids": [
+        "method:<fixtures>/python/code/classes/superclass_shapes.py:32:14:33:16"
+      ]
+    },
+    "method:<fixtures>/python/code/classes/superclass_shapes.py:9:13:10:16": {
+      "id": "method:<fixtures>/python/code/classes/superclass_shapes.py:9:13:10:16",
+      "parent_id": "class:<fixtures>/python/code/classes/superclass_shapes.py:8:31:10:16",
+      "name": "bare",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 9,
+        "start_column": 13,
+        "end_line": 10,
+        "end_column": 16
+      },
+      "child_ids": []
+    },
+    "method:<fixtures>/python/code/classes/superclass_shapes.py:22:16:23:16": {
+      "id": "method:<fixtures>/python/code/classes/superclass_shapes.py:22:16:23:16",
+      "parent_id": "class:<fixtures>/python/code/classes/superclass_shapes.py:21:43:23:16",
+      "name": "generic",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 22,
+        "start_column": 16,
+        "end_line": 23,
+        "end_column": 16
+      },
+      "child_ids": []
+    },
+    "method:<fixtures>/python/code/classes/superclass_shapes.py:27:14:28:16": {
+      "id": "method:<fixtures>/python/code/classes/superclass_shapes.py:27:14:28:16",
+      "parent_id": "class:<fixtures>/python/code/classes/superclass_shapes.py:26:14:28:16",
+      "name": "plain",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 27,
+        "start_column": 14,
+        "end_line": 28,
+        "end_column": 16
+      },
+      "child_ids": []
+    },
+    "method:<fixtures>/python/code/classes/superclass_shapes.py:32:14:33:16": {
+      "id": "method:<fixtures>/python/code/classes/superclass_shapes.py:32:14:33:16",
+      "parent_id": "class:<fixtures>/python/code/classes/superclass_shapes.py:31:47:33:16",
+      "name": "multi",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 32,
+        "start_column": 14,
+        "end_line": 33,
+        "end_column": 16
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {},
+  "classes": {
+    "class:<fixtures>/python/code/classes/superclass_shapes.py:8:7:8:14:BareBase": {
+      "kind": "class",
+      "symbol_id": "class:<fixtures>/python/code/classes/superclass_shapes.py:8:7:8:14:BareBase",
+      "name": "BareBase",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 8,
+        "start_column": 7,
+        "end_line": 8,
+        "end_column": 14
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "extends": [
+        "compiler.Base"
+      ],
+      "is_exported": true,
+      "methods": [
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/python/code/classes/superclass_shapes.py:8:31:10:16",
+          "symbol_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:9:9:9:12:bare",
+          "name": "bare",
+          "location": {
+            "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+            "start_line": 9,
+            "start_column": 9,
+            "end_line": 9,
+            "end_column": 12
+          },
+          "async": false,
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:9:13:10:16",
+              "symbol_id": "parameter:<fixtures>/python/code/classes/superclass_shapes.py:9:14:9:17:self",
+              "name": "self",
+              "location": {
+                "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+                "start_line": 9,
+                "start_column": 14,
+                "end_line": 9,
+                "end_column": 17
+              }
+            }
+          ],
+          "body_scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:9:13:10:16"
+        }
+      ],
+      "properties": [],
+      "decorators": []
+    },
+    "class:<fixtures>/python/code/classes/superclass_shapes.py:13:7:13:19:PGDDLCompiler": {
+      "kind": "class",
+      "symbol_id": "class:<fixtures>/python/code/classes/superclass_shapes.py:13:7:13:19:PGDDLCompiler",
+      "name": "PGDDLCompiler",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 13,
+        "start_column": 7,
+        "end_line": 13,
+        "end_column": 19
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "extends": [
+        "compiler.DDLCompiler"
+      ],
+      "is_exported": true,
+      "methods": [
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/python/code/classes/superclass_shapes.py:13:43:18:47",
+          "symbol_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:14:9:14:29:visit_create_sequence",
+          "name": "visit_create_sequence",
+          "location": {
+            "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+            "start_line": 14,
+            "start_column": 9,
+            "end_line": 14,
+            "end_column": 29
+          },
+          "async": false,
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:14:30:15:52",
+              "symbol_id": "parameter:<fixtures>/python/code/classes/superclass_shapes.py:14:31:14:34:self",
+              "name": "self",
+              "location": {
+                "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+                "start_line": 14,
+                "start_column": 31,
+                "end_line": 14,
+                "end_column": 34
+              }
+            },
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:14:30:15:52",
+              "symbol_id": "parameter:<fixtures>/python/code/classes/superclass_shapes.py:14:37:14:42:create",
+              "name": "create",
+              "location": {
+                "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+                "start_line": 14,
+                "start_column": 37,
+                "end_line": 14,
+                "end_column": 42
+              }
+            }
+          ],
+          "body_scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:14:30:15:52"
+        },
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/python/code/classes/superclass_shapes.py:13:43:18:47",
+          "symbol_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:17:9:17:27:visit_drop_sequence",
+          "name": "visit_drop_sequence",
+          "location": {
+            "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+            "start_line": 17,
+            "start_column": 9,
+            "end_line": 17,
+            "end_column": 27
+          },
+          "async": false,
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:17:28:18:47",
+              "symbol_id": "parameter:<fixtures>/python/code/classes/superclass_shapes.py:17:29:17:32:self",
+              "name": "self",
+              "location": {
+                "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+                "start_line": 17,
+                "start_column": 29,
+                "end_line": 17,
+                "end_column": 32
+              }
+            },
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:17:28:18:47",
+              "symbol_id": "parameter:<fixtures>/python/code/classes/superclass_shapes.py:17:35:17:38:drop",
+              "name": "drop",
+              "location": {
+                "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+                "start_line": 17,
+                "start_column": 35,
+                "end_line": 17,
+                "end_column": 38
+              }
+            }
+          ],
+          "body_scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:17:28:18:47"
+        }
+      ],
+      "properties": [],
+      "decorators": []
+    },
+    "class:<fixtures>/python/code/classes/superclass_shapes.py:21:7:21:17:GenericBase": {
+      "kind": "class",
+      "symbol_id": "class:<fixtures>/python/code/classes/superclass_shapes.py:21:7:21:17:GenericBase",
+      "name": "GenericBase",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 21,
+        "start_column": 7,
+        "end_line": 21,
+        "end_column": 17
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "extends": [
+        "compiler.Registry"
+      ],
+      "is_exported": true,
+      "methods": [
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/python/code/classes/superclass_shapes.py:21:43:23:16",
+          "symbol_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:22:9:22:15:generic",
+          "name": "generic",
+          "location": {
+            "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+            "start_line": 22,
+            "start_column": 9,
+            "end_line": 22,
+            "end_column": 15
+          },
+          "async": false,
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:22:16:23:16",
+              "symbol_id": "parameter:<fixtures>/python/code/classes/superclass_shapes.py:22:17:22:20:self",
+              "name": "self",
+              "location": {
+                "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+                "start_line": 22,
+                "start_column": 17,
+                "end_line": 22,
+                "end_column": 20
+              }
+            }
+          ],
+          "body_scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:22:16:23:16"
+        }
+      ],
+      "properties": [],
+      "decorators": []
+    },
+    "class:<fixtures>/python/code/classes/superclass_shapes.py:26:7:26:12:NoBase": {
+      "kind": "class",
+      "symbol_id": "class:<fixtures>/python/code/classes/superclass_shapes.py:26:7:26:12:NoBase",
+      "name": "NoBase",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 26,
+        "start_column": 7,
+        "end_line": 26,
+        "end_column": 12
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "extends": [],
+      "is_exported": true,
+      "methods": [
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/python/code/classes/superclass_shapes.py:26:14:28:16",
+          "symbol_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:27:9:27:13:plain",
+          "name": "plain",
+          "location": {
+            "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+            "start_line": 27,
+            "start_column": 9,
+            "end_line": 27,
+            "end_column": 13
+          },
+          "async": false,
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:27:14:28:16",
+              "symbol_id": "parameter:<fixtures>/python/code/classes/superclass_shapes.py:27:15:27:18:self",
+              "name": "self",
+              "location": {
+                "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+                "start_line": 27,
+                "start_column": 15,
+                "end_line": 27,
+                "end_column": 18
+              }
+            }
+          ],
+          "body_scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:27:14:28:16"
+        }
+      ],
+      "properties": [],
+      "decorators": []
+    },
+    "class:<fixtures>/python/code/classes/superclass_shapes.py:31:7:31:15:MultiBase": {
+      "kind": "class",
+      "symbol_id": "class:<fixtures>/python/code/classes/superclass_shapes.py:31:7:31:15:MultiBase",
+      "name": "MultiBase",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 31,
+        "start_column": 7,
+        "end_line": 31,
+        "end_column": 15
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "extends": [
+        "NoBase",
+        "compiler.DDLCompiler"
+      ],
+      "is_exported": true,
+      "methods": [
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/python/code/classes/superclass_shapes.py:31:47:33:16",
+          "symbol_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:32:9:32:13:multi",
+          "name": "multi",
+          "location": {
+            "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+            "start_line": 32,
+            "start_column": 9,
+            "end_line": 32,
+            "end_column": 13
+          },
+          "async": false,
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:32:14:33:16",
+              "symbol_id": "parameter:<fixtures>/python/code/classes/superclass_shapes.py:32:15:32:18:self",
+              "name": "self",
+              "location": {
+                "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+                "start_line": 32,
+                "start_column": 15,
+                "end_line": 32,
+                "end_column": 18
+              }
+            }
+          ],
+          "body_scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:32:14:33:16"
+        }
+      ],
+      "properties": [],
+      "decorators": []
+    }
+  },
+  "variables": {},
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {
+    "variable:<fixtures>/python/code/classes/superclass_shapes.py:5:17:5:24:compiler": {
+      "kind": "import",
+      "symbol_id": "variable:<fixtures>/python/code/classes/superclass_shapes.py:5:17:5:24:compiler",
+      "name": "compiler",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 5,
+        "start_column": 17,
+        "end_line": 5,
+        "end_column": 24
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "export": {
+        "is_reexport": true
+      },
+      "import_path": "sql",
+      "import_kind": "named"
+    }
+  },
+  "references": [
+    {
+      "kind": "variable_reference",
+      "name": "sql",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 5,
+        "start_column": 6,
+        "end_line": 5,
+        "end_column": 8
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "compiler",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 5,
+        "start_column": 17,
+        "end_line": 5,
+        "end_column": 24
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "BareBase",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 8,
+        "start_column": 7,
+        "end_line": 8,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "Base",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 8,
+        "start_column": 16,
+        "end_line": 8,
+        "end_column": 28
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 8,
+        "start_column": 16,
+        "end_line": 8,
+        "end_column": 23
+      },
+      "property_chain": [
+        "compiler",
+        "Base"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "compiler",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 8,
+        "start_column": 16,
+        "end_line": 8,
+        "end_column": 23
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "compiler",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 8,
+        "start_column": 16,
+        "end_line": 8,
+        "end_column": 23
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Base",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 8,
+        "start_column": 25,
+        "end_line": 8,
+        "end_column": 28
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Base",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 8,
+        "start_column": 25,
+        "end_line": 8,
+        "end_column": 28
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "bare",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 9,
+        "start_column": 9,
+        "end_line": 9,
+        "end_column": 12
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/superclass_shapes.py:8:31:10:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 9,
+        "start_column": 14,
+        "end_line": 9,
+        "end_column": 17
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:9:13:10:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 9,
+        "start_column": 14,
+        "end_line": 9,
+        "end_column": 17
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:9:13:10:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return 1",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 10,
+        "start_column": 9,
+        "end_line": 10,
+        "end_column": 16
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:9:13:10:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "1",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 10,
+        "start_column": 16,
+        "end_line": 10,
+        "end_column": 16
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:9:13:10:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "PGDDLCompiler",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 13,
+        "start_column": 7,
+        "end_line": 13,
+        "end_column": 19
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "DDLCompiler",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 13,
+        "start_column": 21,
+        "end_line": 13,
+        "end_column": 40
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 13,
+        "start_column": 21,
+        "end_line": 13,
+        "end_column": 28
+      },
+      "property_chain": [
+        "compiler",
+        "DDLCompiler"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "compiler",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 13,
+        "start_column": 21,
+        "end_line": 13,
+        "end_column": 28
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "compiler",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 13,
+        "start_column": 21,
+        "end_line": 13,
+        "end_column": 28
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "DDLCompiler",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 13,
+        "start_column": 30,
+        "end_line": 13,
+        "end_column": 40
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "DDLCompiler",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 13,
+        "start_column": 30,
+        "end_line": 13,
+        "end_column": 40
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "visit_create_sequence",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 14,
+        "start_column": 9,
+        "end_line": 14,
+        "end_column": 29
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/superclass_shapes.py:13:43:18:47",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 14,
+        "start_column": 31,
+        "end_line": 14,
+        "end_column": 34
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:14:30:15:52",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 14,
+        "start_column": 31,
+        "end_line": 14,
+        "end_column": 34
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:14:30:15:52",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "create",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 14,
+        "start_column": 37,
+        "end_line": 14,
+        "end_column": 42
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:14:30:15:52",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return super().visit_create_sequence(create)",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 15,
+        "start_column": 9,
+        "end_line": 15,
+        "end_column": 52
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:14:30:15:52",
+      "access_type": "read"
+    },
+    {
+      "kind": "self_reference_call",
+      "name": "visit_create_sequence",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 15,
+        "start_column": 16,
+        "end_line": 15,
+        "end_column": 52
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:14:30:15:52",
+      "keyword": "super",
+      "property_chain": [
+        "super",
+        "visit_create_sequence"
+      ]
+    },
+    {
+      "kind": "variable_reference",
+      "name": "super()",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 15,
+        "start_column": 16,
+        "end_line": 15,
+        "end_column": 22
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:14:30:15:52",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "super().visit_create_sequence(create)",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 15,
+        "start_column": 16,
+        "end_line": 15,
+        "end_column": 52
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:14:30:15:52",
+      "access_type": "read"
+    },
+    {
+      "kind": "self_reference_call",
+      "name": "super",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 15,
+        "start_column": 16,
+        "end_line": 15,
+        "end_column": 20
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:14:30:15:52",
+      "keyword": "super",
+      "property_chain": [
+        "super",
+        "super"
+      ]
+    },
+    {
+      "kind": "variable_reference",
+      "name": "super",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 15,
+        "start_column": 16,
+        "end_line": 15,
+        "end_column": 20
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:14:30:15:52",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "visit_create_sequence",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 15,
+        "start_column": 24,
+        "end_line": 15,
+        "end_column": 44
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:14:30:15:52",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "create",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 15,
+        "start_column": 46,
+        "end_line": 15,
+        "end_column": 51
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:14:30:15:52",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "visit_drop_sequence",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 17,
+        "start_column": 9,
+        "end_line": 17,
+        "end_column": 27
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/superclass_shapes.py:13:43:18:47",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 17,
+        "start_column": 29,
+        "end_line": 17,
+        "end_column": 32
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:17:28:18:47",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 17,
+        "start_column": 29,
+        "end_line": 17,
+        "end_column": 32
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:17:28:18:47",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "drop",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 17,
+        "start_column": 35,
+        "end_line": 17,
+        "end_column": 38
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:17:28:18:47",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return self.visit_create_sequence(drop)",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 18,
+        "start_column": 9,
+        "end_line": 18,
+        "end_column": 47
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:17:28:18:47",
+      "access_type": "read"
+    },
+    {
+      "kind": "self_reference_call",
+      "name": "visit_create_sequence",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 18,
+        "start_column": 16,
+        "end_line": 18,
+        "end_column": 47
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:17:28:18:47",
+      "keyword": "self",
+      "property_chain": [
+        "self",
+        "visit_create_sequence"
+      ]
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 18,
+        "start_column": 16,
+        "end_line": 18,
+        "end_column": 19
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:17:28:18:47",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "visit_create_sequence",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 18,
+        "start_column": 16,
+        "end_line": 18,
+        "end_column": 41
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:17:28:18:47",
+      "receiver_location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 18,
+        "start_column": 16,
+        "end_line": 18,
+        "end_column": 19
+      },
+      "property_chain": [
+        "self",
+        "visit_create_sequence"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 18,
+        "start_column": 16,
+        "end_line": 18,
+        "end_column": 19
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:17:28:18:47",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self.visit_create_sequence(drop)",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 18,
+        "start_column": 16,
+        "end_line": 18,
+        "end_column": 47
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:17:28:18:47",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 18,
+        "start_column": 16,
+        "end_line": 18,
+        "end_column": 19
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:17:28:18:47",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 18,
+        "start_column": 16,
+        "end_line": 18,
+        "end_column": 19
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:17:28:18:47",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "visit_create_sequence",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 18,
+        "start_column": 21,
+        "end_line": 18,
+        "end_column": 41
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:17:28:18:47",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "visit_create_sequence",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 18,
+        "start_column": 21,
+        "end_line": 18,
+        "end_column": 41
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:17:28:18:47",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "drop",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 18,
+        "start_column": 43,
+        "end_line": 18,
+        "end_column": 46
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:17:28:18:47",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "GenericBase",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 21,
+        "start_column": 7,
+        "end_line": 21,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "Registry",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 21,
+        "start_column": 19,
+        "end_line": 21,
+        "end_column": 35
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 21,
+        "start_column": 19,
+        "end_line": 21,
+        "end_column": 26
+      },
+      "property_chain": [
+        "compiler",
+        "Registry"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "compiler",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 21,
+        "start_column": 19,
+        "end_line": 21,
+        "end_column": 26
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "compiler",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 21,
+        "start_column": 19,
+        "end_line": 21,
+        "end_column": 26
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Registry",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 21,
+        "start_column": 28,
+        "end_line": 21,
+        "end_column": 35
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Registry",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 21,
+        "start_column": 28,
+        "end_line": 21,
+        "end_column": 35
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "int",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 21,
+        "start_column": 37,
+        "end_line": 21,
+        "end_column": 39
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "generic",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 22,
+        "start_column": 9,
+        "end_line": 22,
+        "end_column": 15
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/superclass_shapes.py:21:43:23:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 22,
+        "start_column": 17,
+        "end_line": 22,
+        "end_column": 20
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:22:16:23:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 22,
+        "start_column": 17,
+        "end_line": 22,
+        "end_column": 20
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:22:16:23:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return 2",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 23,
+        "start_column": 9,
+        "end_line": 23,
+        "end_column": 16
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:22:16:23:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "2",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 23,
+        "start_column": 16,
+        "end_line": 23,
+        "end_column": 16
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:22:16:23:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "NoBase",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 26,
+        "start_column": 7,
+        "end_line": 26,
+        "end_column": 12
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "plain",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 27,
+        "start_column": 9,
+        "end_line": 27,
+        "end_column": 13
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/superclass_shapes.py:26:14:28:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 27,
+        "start_column": 15,
+        "end_line": 27,
+        "end_column": 18
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:27:14:28:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 27,
+        "start_column": 15,
+        "end_line": 27,
+        "end_column": 18
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:27:14:28:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return 3",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 28,
+        "start_column": 9,
+        "end_line": 28,
+        "end_column": 16
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:27:14:28:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "3",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 28,
+        "start_column": 16,
+        "end_line": 28,
+        "end_column": 16
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:27:14:28:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "MultiBase",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 31,
+        "start_column": 7,
+        "end_line": 31,
+        "end_column": 15
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "NoBase",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 31,
+        "start_column": 17,
+        "end_line": 31,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "DDLCompiler",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 31,
+        "start_column": 25,
+        "end_line": 31,
+        "end_column": 44
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 31,
+        "start_column": 25,
+        "end_line": 31,
+        "end_column": 32
+      },
+      "property_chain": [
+        "compiler",
+        "DDLCompiler"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "compiler",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 31,
+        "start_column": 25,
+        "end_line": 31,
+        "end_column": 32
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "compiler",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 31,
+        "start_column": 25,
+        "end_line": 31,
+        "end_column": 32
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "DDLCompiler",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 31,
+        "start_column": 34,
+        "end_line": 31,
+        "end_column": 44
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "DDLCompiler",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 31,
+        "start_column": 34,
+        "end_line": 31,
+        "end_column": 44
+      },
+      "scope_id": "module:<fixtures>/python/code/classes/superclass_shapes.py:1:1:34:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "multi",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 32,
+        "start_column": 9,
+        "end_line": 32,
+        "end_column": 13
+      },
+      "scope_id": "class:<fixtures>/python/code/classes/superclass_shapes.py:31:47:33:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 32,
+        "start_column": 15,
+        "end_line": 32,
+        "end_column": 18
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:32:14:33:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 32,
+        "start_column": 15,
+        "end_line": 32,
+        "end_column": 18
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:32:14:33:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return 4",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 33,
+        "start_column": 9,
+        "end_line": 33,
+        "end_column": 16
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:32:14:33:16",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "4",
+      "location": {
+        "file_path": "<fixtures>/python/code/classes/superclass_shapes.py",
+        "start_line": 33,
+        "start_column": 16,
+        "end_line": 33,
+        "end_column": 16
+      },
+      "scope_id": "method:<fixtures>/python/code/classes/superclass_shapes.py:32:14:33:16",
+      "access_type": "read"
+    }
+  ]
+}
