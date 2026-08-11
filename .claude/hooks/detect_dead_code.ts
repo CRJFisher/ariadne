@@ -29,7 +29,7 @@ import * as fs from "fs/promises";
 import * as fs_sync from "fs";
 import * as path from "path";
 import { pathToFileURL } from "url";
-import { create_logger } from "./utils.js";
+import { create_logger, get_project_dir } from "./utils.js";
 import {
   changed_paths_since,
   open_scan_range,
@@ -222,7 +222,14 @@ async function main(): Promise<void> {
   }
   log(`Stdin: ${stdin_data.substring(0, 100)}...`);
 
-  const project_dir = process.env.CLAUDE_PROJECT_DIR || process.cwd();
+  let input: Record<string, unknown> | null = null;
+  try {
+    input = JSON.parse(stdin_data) as Record<string, unknown>;
+  } catch {
+    // No payload — get_project_dir falls back to the environment.
+  }
+
+  const project_dir = get_project_dir(input);
   log(`Project dir: ${project_dir}`);
 
   // Resolve cache directory and create storage

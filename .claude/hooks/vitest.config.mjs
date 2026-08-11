@@ -9,6 +9,11 @@ export default defineConfig({
   test: {
     environment: "node",
     include: ["**/*.test.ts"],
+    // The scan-base suite builds real repositories and linked worktrees per
+    // case, which costs seconds each on a loaded machine. The 5s default turns
+    // that cost into spurious Stop-hook blocks, so the budget matches the work.
+    testTimeout: 30000,
+    hookTimeout: 30000,
     // Hooks under test log through create_logger; without this every test run
     // would forge entries in the real hook_log.txt, which is the forensic
     // record of what the hooks actually did.

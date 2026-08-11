@@ -353,8 +353,9 @@ export function format_orphan_captures(orphans: OrphanCapture[]): string {
 // when dead handlers exist (the blockable condition); orphan captures print as
 // a warning and do not affect the exit code. `--json` emits the raw report.
 function main(): void {
-  const project_dir = process.env.CLAUDE_PROJECT_DIR || process.cwd();
-  const report = check_project(project_dir);
+  // A CLI acts on the tree it is invoked from; CLAUDE_PROJECT_DIR would point
+  // at the main checkout when run inside a worktree.
+  const report = check_project(process.cwd());
 
   if (process.argv.includes("--json")) {
     console.log(JSON.stringify(report, null, 2));

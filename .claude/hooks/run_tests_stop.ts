@@ -25,7 +25,7 @@ function main(): void {
     return;
   }
 
-  const project_dir = get_project_dir();
+  const project_dir = get_project_dir(input);
   const { changed, range } = get_scoped_changes(project_dir, HOOK);
 
   if (!changed.has_source_changes) {

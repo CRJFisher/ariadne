@@ -37,9 +37,9 @@ const log = create_logger("capture-receiver-consistency");
 const HOOK = "capture_receiver_consistency";
 
 function main(): void {
-  parse_stdin();
+  const input = parse_stdin();
 
-  const project_dir = get_project_dir();
+  const project_dir = get_project_dir(input);
   const { changed, range } = get_scoped_changes(project_dir, HOOK);
 
   // On git-detection failure get_scoped_changes returns all_files empty with

@@ -34,7 +34,7 @@ function main(): void {
   const file_path = tool_input?.file_path as string | undefined;
   if (!file_path) return;
 
-  const project_dir = get_project_dir();
+  const project_dir = get_project_dir(input);
   const relative = path.relative(project_dir, file_path);
   const parts = relative.split(path.sep);
 

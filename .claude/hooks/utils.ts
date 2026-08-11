@@ -5,8 +5,9 @@
 
 import fs from "fs";
 import path from "path";
+import { execSync } from "child_process";
 import { fileURLToPath } from "url";
-import { changed_paths_since, open_scan_range, type ScanRange } from "./scan_base.js";
+import { changed_paths_since, git_env, open_scan_range, type ScanRange } from "./scan_base.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -63,10 +64,41 @@ export function is_ts_js_file(file_path: string): boolean {
 }
 
 /**
- * Get the project directory from environment or cwd
+ * The working tree whose files the session is changing.
+ *
+ * `CLAUDE_PROJECT_DIR` names the main checkout even when the session works
+ * inside a git worktree, and hooks are invoked with that directory as their
+ * cwd, so neither survives as evidence of which tree is being edited. The hook
+ * payload's `cwd` is the session's own directory; its worktree root is the tree
+ * to inspect. Passing the payload is what makes a hook worktree-correct —
+ * without it a Stop hook tests the main checkout, which holds none of the
+ * session's work.
  */
-export function get_project_dir(): string {
+export function get_project_dir(input?: Record<string, unknown> | null): string {
+  const session_cwd = input?.cwd;
+  if (typeof session_cwd === "string" && session_cwd.length > 0) {
+    const root = worktree_root(session_cwd);
+    if (root) return root;
+  }
   return process.env.CLAUDE_PROJECT_DIR || process.cwd();
+}
+
+/** The git working-tree root containing `dir`, or undefined outside a repo. */
+function worktree_root(dir: string): string | undefined {
+  try {
+    const root = execSync("git rev-parse --show-toplevel", {
+      cwd: dir,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+      // A hook invoked by git inherits GIT_DIR, which would answer for the
+      // repository git is working in rather than the one holding `dir` —
+      // the exact substitution this function exists to prevent.
+      env: git_env(),
+    }).trim();
+    return root || undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 export interface ChangedFiles {

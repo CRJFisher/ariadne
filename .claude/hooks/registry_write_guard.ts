@@ -36,7 +36,7 @@ function main(): void {
   const result = evaluate_tool_call({
     tool_name: input.tool_name as string,
     tool_input: input.tool_input as Record<string, unknown> | undefined,
-    project_dir: get_project_dir(),
+    project_dir: get_project_dir(input),
   });
   if (result.decision !== "ask") return;
 

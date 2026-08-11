@@ -150,7 +150,7 @@ function main(): void {
   const file_path = tool_input?.file_path as string | undefined;
   if (!file_path) return;
 
-  const notice = compute_megafile_notice(file_path, get_project_dir());
+  const notice = compute_megafile_notice(file_path, get_project_dir(input));
   if (!notice) return;
 
   console.log(JSON.stringify(megafile_context_output(notice)));

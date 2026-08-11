@@ -58,9 +58,9 @@ function walk_core_files(project_dir: string): SourceFile[] {
 
 function main(): void {
   log("Stage-boundary check started");
-  parse_stdin();
+  const input = parse_stdin();
 
-  const project_dir = get_project_dir();
+  const project_dir = get_project_dir(input);
   const { changed, range } = get_scoped_changes(project_dir, HOOK);
 
   const changed_core = changed.changed_ts_files

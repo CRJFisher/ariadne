@@ -18,9 +18,9 @@ const HOOK = "test_file_enforcement";
 
 function main(): void {
   log("Test file enforcement started");
-  parse_stdin();
+  const input = parse_stdin();
 
-  const project_dir = get_project_dir();
+  const project_dir = get_project_dir(input);
   const { changed, range } = get_scoped_changes(project_dir, HOOK);
 
   if (!changed.has_source_changes) {

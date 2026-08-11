@@ -63,9 +63,9 @@ function resolve_build_order(modified: string[]): PackageInfo[] {
 
 function main(): void {
   log("Hook started");
-  parse_stdin();
+  const input = parse_stdin();
 
-  const project_dir = get_project_dir();
+  const project_dir = get_project_dir(input);
   const { changed, range } = get_scoped_changes(project_dir, HOOK);
 
   if (changed.modified_packages.length === 0) {

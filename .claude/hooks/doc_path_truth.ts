@@ -148,9 +148,9 @@ export function build_block_reason(missing: PathCitation[]): string {
 
 function main(): void {
   log("Hook started");
-  parse_stdin();
+  const input = parse_stdin();
 
-  const project_dir = get_project_dir();
+  const project_dir = get_project_dir(input);
   const { changed, range } = get_scoped_changes(project_dir, HOOK);
   if (!should_run(changed)) {
     log("No rule or package-source changes, skipping");
