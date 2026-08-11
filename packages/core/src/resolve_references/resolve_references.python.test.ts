@@ -608,3 +608,39 @@ def run():
     });
   });
 });
+
+describe("Accessor pair ahead of other members", () => {
+  it("resolves self-rooted calls in a class whose property pair is declared first", async () => {
+    // The class scope index is keyed by name, so the setter lands under the
+    // getter's key. Reverse-looking a method up through the deduplicated member
+    // index then failed to name the owning class, and every self-rooted call in
+    // the class went unresolved.
+    const { project, temp_dir, file_paths } = await setup_project({
+      "engine.py": [
+        "class Engine:",
+        "    @property",
+        "    def name(self):",
+        "        return self._n",
+        "",
+        "    @name.setter",
+        "    def name(self, v):",
+        "        self._n = v",
+        "",
+        "    def dialect(self):",
+        "        return 1",
+        "",
+        "    def connect(self):",
+        "        return self.dialect()",
+      ].join("\n"),
+    });
+    temp_dirs.push(temp_dir);
+    const call_graph = project.get_call_graph();
+    const file = file_paths["engine.py"];
+
+    const connect = find_caller_node(call_graph, "connect", file);
+    expect(
+      connect?.enclosed_calls.map((c) => [c.name, c.resolutions.length])
+    ).toEqual([["dialect", 1]]);
+    expect(is_entry_point(call_graph, "dialect", file)).toEqual(false);
+  });
+});

@@ -548,25 +548,17 @@ export function find_class_from_scope(
     return null;
   }
 
-  let method_symbol_id: SymbolId | null = null;
+  // The scope index is keyed by name, so a getter/setter pair leaves whichever
+  // accessor came last under that name. Asking each candidate for its owner
+  // directly means the answer never depends on which one that was.
   for (const symbol_id of scope_symbols.values()) {
     const definition = definitions.get(symbol_id);
-    if (definition && definition.kind === "method") {
-      method_symbol_id = symbol_id;
-      break;
+    if (definition?.kind !== "method") {
+      continue;
     }
-  }
-
-  if (!method_symbol_id) {
-    return null;
-  }
-
-  const member_index = definitions.get_member_index();
-  for (const [class_symbol_id, members] of member_index) {
-    for (const member_symbol_id of members.values()) {
-      if (member_symbol_id === method_symbol_id) {
-        return class_symbol_id;
-      }
+    const owner = definitions.get_member_owner(symbol_id);
+    if (owner) {
+      return owner;
     }
   }
 

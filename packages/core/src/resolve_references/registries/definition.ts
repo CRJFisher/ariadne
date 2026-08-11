@@ -83,6 +83,13 @@ export class DefinitionRegistry {
   /** Type/class SymbolId → flat (member_name → member_symbol_id) combining methods, properties, and constructors. */
   private member_index: Map<SymbolId, Map<SymbolName, SymbolId>> = new Map();
 
+  /**
+   * Member SymbolId → the type that declares it. Every member is here, including
+   * the accessors `member_index` deduplicates away, so a lookup keyed on a
+   * symbol never depends on which accessor won a name.
+   */
+  private member_owner: Map<SymbolId, SymbolId> = new Map();
+
   private by_scope: Map<ScopeId, Map<SymbolName, SymbolId>> = new Map();
 
   /** Parent type SymbolId → subtypes that extend/implement it, for polymorphic method dispatch. */
@@ -126,6 +133,7 @@ export class DefinitionRegistry {
         for (const method of def.methods) {
           this.by_symbol.set(method.symbol_id, method);
           set_member_symbol(flat_members, method);
+          this.member_owner.set(method.symbol_id, def.symbol_id);
           const method_loc_key = location_key(method.location);
           this.location_to_symbol.set(method_loc_key, method.symbol_id);
         }
@@ -133,6 +141,7 @@ export class DefinitionRegistry {
         for (const prop of def.properties) {
           this.by_symbol.set(prop.symbol_id, prop);
           flat_members.set(prop.name, prop.symbol_id);
+          this.member_owner.set(prop.symbol_id, def.symbol_id);
           const prop_loc_key = location_key(prop.location);
           this.location_to_symbol.set(prop_loc_key, prop.symbol_id);
         }
@@ -150,6 +159,7 @@ export class DefinitionRegistry {
         if (def.kind === "class" && def.constructors) {
           for (const ctor of def.constructors) {
             this.by_symbol.set(ctor.symbol_id, ctor);
+            this.member_owner.set(ctor.symbol_id, def.symbol_id);
             const ctor_loc_key = location_key(ctor.location);
             this.location_to_symbol.set(ctor_loc_key, ctor.symbol_id);
             flat_members.set(ctor.name, ctor.symbol_id);
@@ -256,6 +266,11 @@ export class DefinitionRegistry {
     return exportables;
   }
 
+  /** The type that declares `member_symbol_id`, or undefined for a non-member. */
+  get_member_owner(member_symbol_id: SymbolId): SymbolId | undefined {
+    return this.member_owner.get(member_symbol_id);
+  }
+
   get_member_index(): ReadonlyMap<SymbolId, ReadonlyMap<SymbolName, SymbolId>> {
     return this.member_index;
   }
@@ -327,6 +342,10 @@ export class DefinitionRegistry {
       }
 
       this.by_symbol.delete(symbol_id);
+      for (const [member_id, owner_id] of this.member_owner) {
+        if (owner_id === symbol_id) this.member_owner.delete(member_id);
+      }
+      this.member_owner.delete(symbol_id);
       this.member_index.delete(symbol_id);
 
       // This symbol may be a parent type and/or a subtype, so drop both its
@@ -508,6 +527,7 @@ export class DefinitionRegistry {
     this.by_file.clear();
     this.location_to_symbol.clear();
     this.member_index.clear();
+    this.member_owner.clear();
     this.by_scope.clear();
     this.type_subtypes.clear();
     this.function_collections.clear();

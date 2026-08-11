@@ -656,3 +656,42 @@ describe("Getter reads through non-identifier receivers", () => {
     expect(is_entry_point(cg, "plain", file)).toEqual(true);
   });
 });
+
+describe("Accessor pair ahead of other members", () => {
+  it("resolves this- and super-rooted calls in a class whose getter/setter pair is declared first", async () => {
+    // The class scope index is keyed by name, so the setter lands under the
+    // getter's key. Reverse-looking a method up through the deduplicated member
+    // index then failed to name the owning class, and every this-rooted call in
+    // the class went unresolved.
+    const { project, temp_dir, file_paths } = await setup_project({
+      "engine.ts": [
+        "class Base { greet(): number { return 1; } }",
+        "",
+        "export class Engine extends Base {",
+        "  private q = 0;",
+        "  get v(): number { return this.q; }",
+        "  set v(x: number) { this.q = x; }",
+        "  run(): number { this.step_one(); return super.greet(); }",
+        "  step_one(): number { return 1; }",
+        "}",
+        "",
+        "export function main(): number { return new Engine().run(); }",
+      ].join("\n"),
+    });
+    temp_dirs.push(temp_dir);
+    const call_graph = project.get_call_graph();
+    const file = file_paths["engine.ts"];
+
+    const run = find_caller_node(call_graph, "run", file);
+    expect(
+      run?.enclosed_calls.map((c) => [c.name, c.resolutions.length])
+    ).toEqual([
+      ["step_one", 1],
+      ["greet", 1],
+      // `super` itself is a self-reference with no target of its own.
+      ["super", 0],
+    ]);
+    expect(is_entry_point(call_graph, "step_one", file)).toEqual(false);
+    expect(is_entry_point(call_graph, "greet", file)).toEqual(false);
+  });
+});
