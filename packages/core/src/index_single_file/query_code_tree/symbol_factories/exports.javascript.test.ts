@@ -408,6 +408,34 @@ describe("extract_export_info nested-scope boundary", () => {
       export: { is_default: true },
     });
   });
+
+  it("keeps a loop-head lexical binding unexported when a module-scope binding of the same name is exported", () => {
+    const code = [
+      "var res = {};",
+      "module.exports = res;",
+      "for (let res = 0; res < 3; res++) {}",
+    ].join("\n");
+    expect(info(code, "res", 1)).toEqual({ is_exported: false });
+  });
+
+  it("keeps a switch-case lexical binding unexported when a module-scope binding of the same name is exported", () => {
+    const code = [
+      "var res = {};",
+      "module.exports = res;",
+      "switch (k) { case 1: let res = 1; }",
+    ].join("\n");
+    expect(info(code, "res", 1)).toEqual({ is_exported: false });
+  });
+
+  it("keeps a loop-head var exported", () => {
+    const code = ["for (var res = 0; res < 3; res++) {}", "module.exports = res;"].join(
+      "\n"
+    );
+    expect(info(code, "res", 0)).toEqual({
+      is_exported: true,
+      export: { is_default: true },
+    });
+  });
 });
 
 describe("analyze_export_statement", () => {

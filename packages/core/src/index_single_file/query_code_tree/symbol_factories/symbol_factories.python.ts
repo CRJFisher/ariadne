@@ -165,6 +165,21 @@ export function classify_class_bases(
   return undefined;
 }
 
+/**
+ * The class_definition that owns a capture — the nearest one, so a member of a
+ * class nested inside an Enum or Protocol body belongs to the inner class.
+ */
+export function find_owning_class_node(
+  capture: CaptureNode
+): SyntaxNode | undefined {
+  let node: SyntaxNode | null = capture.node;
+  while (node) {
+    if (node.type === "class_definition") return node;
+    node = node.parent;
+  }
+  return undefined;
+}
+
 export function find_containing_enum(
   capture: CaptureNode
 ): SymbolId | undefined {
@@ -685,7 +700,10 @@ export function determine_accessor_kind(
 ): "getter" | "setter" | undefined {
   const decorators = extract_decorators(node);
 
-  if (decorators.includes("property" as SymbolName)) {
+  if (
+    decorators.includes("property" as SymbolName) ||
+    decorators.some((name) => name.endsWith(".getter"))
+  ) {
     return "getter";
   }
   // A deleter is reported as "setter": both are non-getter accessors that must

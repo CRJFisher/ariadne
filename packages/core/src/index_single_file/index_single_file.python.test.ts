@@ -2665,11 +2665,12 @@ class Factory:
       ]);
     });
 
-    it("builds an interface for a generic Protocol base", () => {
+    it("builds an interface for a generic Protocol base, keeping its methods and property signatures", () => {
       const code = [
         "from typing import Protocol, TypeVar",
         "T = TypeVar('T')",
         "class Repo(Protocol[T]):",
+        "    name: str",
         "    def get(self, key: T) -> T: ...",
       ].join("\n");
       const tree = parser.parse(code);
@@ -2677,8 +2678,37 @@ class Factory:
       const index = build_index_single_file(parsed, tree, "python");
       expect(Array.from(index.classes.values())).toEqual([]);
       expect(
-        Array.from(index.interfaces.values()).map((i) => i.name)
-      ).toEqual(["Repo"]);
+        Array.from(index.interfaces.values()).map((i) => ({
+          name: i.name,
+          methods: i.methods?.map((m) => m.name) ?? [],
+          properties: i.properties?.map((p) => p.name) ?? [],
+        }))
+      ).toEqual([{ name: "Repo", methods: ["get"], properties: ["name"] }]);
+    });
+
+    it("keeps a plain class nested inside a Protocol body a class with its methods", () => {
+      const code = [
+        "from typing import Protocol",
+        "class P(Protocol):",
+        "    class Inner:",
+        "        def m(self):",
+        "            return 1",
+      ].join("\n");
+      const tree = parser.parse(code);
+      const parsed = create_parsed_file(code, "test.py" as FilePath, tree, "python");
+      const index = build_index_single_file(parsed, tree, "python");
+      expect(
+        Array.from(index.classes.values()).map((c) => ({
+          name: c.name,
+          methods: c.methods.map((m) => m.name),
+        }))
+      ).toEqual([{ name: "Inner", methods: ["m"] }]);
+      expect(
+        Array.from(index.interfaces.values()).map((i) => ({
+          name: i.name,
+          methods: i.methods?.map((m) => m.name) ?? [],
+        }))
+      ).toEqual([{ name: "P", methods: [] }]);
     });
 
     it("records a constructor for a decorated __init__", () => {
@@ -2739,6 +2769,27 @@ class Factory:
         { name: "plain", accessor_kind: undefined },
       ]);
       expect(box.properties).toEqual([]);
+    });
+
+    it("flags a getter redefinition as a getter so it keeps the member slot", () => {
+      const code = [
+        "class Box:",
+        "    @property",
+        "    def data(self):",
+        "        return 1",
+        "",
+        "    @data.getter",
+        "    def data(self):",
+        "        return 2",
+      ].join("\n");
+      const tree = parser.parse(code);
+      const parsed = create_parsed_file(code, "test.py" as FilePath, tree, "python");
+      const index = build_index_single_file(parsed, tree, "python");
+      const box = Array.from(index.classes.values())[0]!;
+      expect(box.methods.map((m) => m.accessor_kind)).toEqual([
+        "getter",
+        "getter",
+      ]);
     });
 
     it("keeps a deleter out of the getter's member slot", () => {

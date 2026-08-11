@@ -337,7 +337,7 @@ export function extract_export_info(
       return { is_exported: false };
     }
 
-    if (current.type === "statement_block") {
+    if (BLOCK_SCOPE_NODES.has(current.type)) {
       crossed_block = true;
     }
 
@@ -374,6 +374,19 @@ export function extract_export_info(
 
   return { is_exported: false };
 }
+
+/**
+ * Nodes that open a block scope a lexical binding cannot escape. A loop
+ * statement counts because its head declares into the loop's own scope
+ * (`for (let x = 0; ...)`), and a switch body because its cases share one
+ * block.
+ */
+const BLOCK_SCOPE_NODES = new Set([
+  "statement_block",
+  "switch_body",
+  "for_statement",
+  "for_in_statement",
+]);
 
 /**
  * Whether the binding a name node declares hoists to the enclosing function or

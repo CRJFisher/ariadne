@@ -8,7 +8,11 @@
 
 import type { SyntaxNode } from "tree-sitter";
 import type { SymbolName } from "@ariadnejs/types";
-import { anonymous_function_symbol, property_symbol } from "@ariadnejs/types";
+import {
+  anonymous_function_symbol,
+  interface_symbol,
+  property_symbol,
+} from "@ariadnejs/types";
 import type { DefinitionBuilder } from "../../definitions/definition_builder";
 import type { CaptureNode } from "../../capture_types";
 import type { ProcessingContext } from "../../scopes/processing_context";
@@ -16,6 +20,7 @@ import { node_to_location } from "../../node_to_location";
 import type { HandlerRegistry } from "./handler_types";
 import {
   classify_class_bases,
+  find_owning_class_node,
   create_class_id,
   extract_extends,
   extract_export_info,
@@ -129,17 +134,28 @@ export function handle_definition_method(
 
   const docstring = consume_python_docstring(capture.location.start_line);
 
-  // Check if this is a Protocol method (should be added to interface)
-  const protocol_id = find_containing_protocol(capture);
-  if (protocol_id) {
-    builder.add_method_signature_to_interface(protocol_id, {
-      symbol_id: method_id,
-      name: name,
-      location: capture.location,
-      scope_id: context.get_scope_id(capture.location),
-      return_type: extract_return_type(capture.node.parent || capture.node),
-    });
-    return;
+  // A method belongs to the class that owns it, so the Protocol test reads the
+  // nearest class's own bases — walking up would attribute a nested plain
+  // class's methods to an enclosing Protocol.
+  const owning_class = find_owning_class_node(capture);
+  if (owning_class && classify_class_bases(owning_class) === "interface") {
+    const owning_class_name = owning_class.childForFieldName("name");
+    if (owning_class_name) {
+      builder.add_method_signature_to_interface(
+        interface_symbol(
+          owning_class_name.text as SymbolName,
+          node_to_location(owning_class_name, capture.location.file_path)
+        ),
+        {
+          symbol_id: method_id,
+          name: name,
+          location: capture.location,
+          scope_id: context.get_scope_id(capture.location),
+          return_type: extract_return_type(capture.node.parent || capture.node),
+        }
+      );
+      return;
+    }
   }
 
   // Regular class method

@@ -205,6 +205,26 @@
   )
 )
 
+; Protocol property signatures (generic Protocol[T], bare or dotted)
+(class_definition
+  superclasses: (argument_list
+    (subscript
+      value: [
+        (identifier) @reference.type
+        (attribute attribute: (identifier) @reference.type)
+      ]
+      (#eq? @reference.type "Protocol")
+    )
+  )
+  body: (block
+    (expression_statement
+      (assignment
+        left: (identifier) @definition.property.interface
+      )
+    )
+  )
+)
+
 ; Method definitions (excluding __init__)
 (class_definition
   body: (block
