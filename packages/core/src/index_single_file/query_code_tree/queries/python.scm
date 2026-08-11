@@ -205,15 +205,18 @@
   )
 )
 
-; Protocol property signatures (generic Protocol[T], bare or dotted)
+; Protocol property signatures (generic Protocol[T], bare or dotted). The base
+; is matched through an underscore capture, which is filtered before any
+; reference is built, so the class's base yields one type reference rather than
+; one per property signature.
 (class_definition
   superclasses: (argument_list
     (subscript
       value: [
-        (identifier) @reference.type
-        (attribute attribute: (identifier) @reference.type)
+        (identifier) @_protocol_base
+        (attribute attribute: (identifier) @_protocol_base)
       ]
-      (#eq? @reference.type "Protocol")
+      (#eq? @_protocol_base "Protocol")
     )
   )
   body: (block

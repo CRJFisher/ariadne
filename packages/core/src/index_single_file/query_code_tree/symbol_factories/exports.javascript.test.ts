@@ -53,6 +53,10 @@ const DECLARATION_PARENTS = new Set([
   "class",
   "variable_declarator",
   "method_definition",
+  // A destructured loop head binds through a pattern, which is the node the
+  // for-head definition capture reaches the handler with.
+  "array_pattern",
+  "object_pattern",
 ]);
 
 /**
@@ -435,6 +439,23 @@ describe("extract_export_info nested-scope boundary", () => {
       is_exported: true,
       export: { is_default: true },
     });
+  });
+
+  it("keeps a destructured loop-head var exported", () => {
+    const code = ["for (var [res] of pairs) {}", "module.exports = res;"].join("\n");
+    expect(info(code, "res", 0)).toEqual({
+      is_exported: true,
+      export: { is_default: true },
+    });
+  });
+
+  it("keeps a class static block var unexported", () => {
+    const code = [
+      "var res = {};",
+      "module.exports = res;",
+      "class C { static { var res = 1; } }",
+    ].join("\n");
+    expect(info(code, "res", 1)).toEqual({ is_exported: false });
   });
 });
 

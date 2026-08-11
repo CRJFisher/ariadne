@@ -39,6 +39,13 @@ zero. The residual duplicates it documents and excludes are owned here:
    `queries/typescript.scm` re-capture fields, parameters and methods
    (35 same-(name,range) pairs over the corpus), which is why the audit's
    `definition.` family is python/javascript-only.
+5. **Protocol base re-captured per property signature** — the bare and dotted
+   Protocol property-signature arms in `queries/python.scm` capture
+   `@reference.type` on the base inside a pattern that repeats per property, so
+   a Protocol with N annotated attributes mints N identical `Protocol` type
+   references. The generic `Protocol[T]` arm matches the base through an
+   underscore capture instead and mints none; the two older arms should adopt
+   the same shape.
 
 ## Work plan
 
@@ -58,5 +65,6 @@ zero. The residual duplicates it documents and excludes are owned here:
 - [ ] #1 A Python class-body assignment yields exactly one definition capture, and the audit's Python single-definition clause runs without the field+variable exclusion.
 - [ ] #2 `self.x = 1` yields one `reference.member_access` and one `reference.property` capture.
 - [ ] #3 The audit's `duplicate_families` include `reference.member_access`/`reference.property` for Python and `definition.` for TypeScript, and the corpus passes.
+- [ ] #4 A Protocol with N annotated attributes mints one `Protocol` type reference, not N, for bare and dotted bases alike.
 
 <!-- AC:END -->

@@ -331,7 +331,9 @@ export function extract_export_info(
         parent.type === "arrow_function" ||
         parent.type === "method_definition" ||
         parent.type === "generator_function_declaration" ||
-        parent.type === "generator_function");
+        parent.type === "generator_function" ||
+        // A static block is function-like: even `var` stays inside it.
+        parent.type === "class_static_block");
 
     if (is_inside_function_body) {
       return { is_exported: false };
@@ -405,8 +407,27 @@ function is_hoisted_binding(node: SyntaxNode): boolean {
   if (parent?.type === "variable_declarator") {
     return parent.parent?.type === "variable_declaration";
   }
+
+  // A loop head binds on the loop itself (`for (var [x] of xs)`), carrying
+  // var/let/const as its `kind` field rather than a declaration wrapper.
+  let current: SyntaxNode = node;
+  while (current.parent && DESTRUCTURING_PATTERNS.has(current.parent.type)) {
+    current = current.parent;
+  }
+  const loop = current.parent;
+  if (loop?.type === "for_in_statement" || loop?.type === "for_statement") {
+    return loop.childForFieldName("kind")?.text === "var";
+  }
   return false;
 }
+
+const DESTRUCTURING_PATTERNS = new Set([
+  "array_pattern",
+  "object_pattern",
+  "pair_pattern",
+  "rest_pattern",
+  "assignment_pattern",
+]);
 
 function get_root_node(node: SyntaxNode): SyntaxNode {
   let current = node;
