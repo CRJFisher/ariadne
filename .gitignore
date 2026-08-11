@@ -45,6 +45,7 @@ coverage/
 .claude/settings.local.json
 .claude/worktrees.local.md
 .claude/worktrees/
+.claude/.worktree-hydrated
 .claude/scheduled_tasks.lock
 CLAUDE.local.md
 .cursorrules

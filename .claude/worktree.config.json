@@ -1,0 +1,9 @@
+{
+  "hydration": {
+    "commands": ["pnpm install", "pnpm build"],
+    "sentinel": ".claude/.worktree-hydrated"
+  },
+  "worktrees": {
+    "dir": ".claude/worktrees"
+  }
+}

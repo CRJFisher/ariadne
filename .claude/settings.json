@@ -8,17 +8,6 @@
     "baseRef": "head"
   },
   "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "sh \"$CLAUDE_PROJECT_DIR/.claude/hooks/hydrate_worktree.sh\"",
-            "timeout": 600
-          }
-        ]
-      }
-    ],
     "PreToolUse": [
       {
         "matcher": "Write|Edit",
@@ -46,16 +35,6 @@
           {
             "type": "command",
             "command": "cd \"$CLAUDE_PROJECT_DIR\" && pnpm exec tsx \"$CLAUDE_PROJECT_DIR/.claude/hooks/megafile_notice.ts\""
-          }
-        ]
-      },
-      {
-        "matcher": "EnterWorktree",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "sh \"$CLAUDE_PROJECT_DIR/.claude/hooks/hydrate_worktree.sh\"",
-            "timeout": 600
           }
         ]
       }
