@@ -142,14 +142,6 @@
   (#eq? @_exports_prop_arrow "exports")
 )
 
-; Object-literal shorthand methods: { m(p) {} }. Anchored to (object) so class
-; bodies keep their method handling.
-(object
-  (method_definition
-    name: (property_identifier) @definition.function
-  )
-)
-
 ; === CommonJS property exports of a function value ===
 ; exports.NAME = function () {} / () => {}   and   module.exports.NAME = ...
 ; The `(program (expression_statement ...))` anchor restricts the match to

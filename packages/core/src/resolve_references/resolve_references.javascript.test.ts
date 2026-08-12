@@ -851,4 +851,44 @@ export function close_all(ps) {
       ).not.toEqual("name_not_in_scope");
     });
   });
+
+  describe("object-literal shorthand methods", () => {
+    it("an object-literal method is no callable's own name, so it is not an entry point", async () => {
+      const { project, temp_dir } = await setup_project({
+        "routes.js": `const routes = { index(req) {}, show(req) {} };
+export default routes;
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const graph = await project.get_call_graph();
+      expect(
+        Array.from(graph.nodes.keys())
+          .map(String)
+          .filter((id) => id.startsWith("function:"))
+      ).toEqual([]);
+      expect(graph.entry_points).toHaveLength(0);
+    });
+
+    it("an object-literal method does not take a same-named import's call", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "render.js": `export function render(a) {
+  return a;
+}
+`,
+        "app.js": `import { render } from './render.js';
+const spec = { render(a) { return a; } };
+render(1);
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const call = project.resolutions
+        .get_calls_for_file(file_paths["app.js"])
+        .find((c) => c.name === ("render" as SymbolName));
+      expect(call!.resolution_failure).toBeUndefined();
+      expect(call!.resolutions).toHaveLength(1);
+      expect(String(call!.resolutions[0].symbol_id)).toContain("render.js");
+    });
+  });
 });

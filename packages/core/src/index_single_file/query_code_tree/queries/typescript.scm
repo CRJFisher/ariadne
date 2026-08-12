@@ -367,14 +367,6 @@
   (#eq? @_exports_prop_arrow "exports")
 )
 
-; Object-literal shorthand methods: { m(p) {} }. Anchored to (object) so class
-; bodies keep their method handling.
-(object
-  (method_definition
-    name: (property_identifier) @definition.function
-  )
-)
-
 ; Variable declarations with assignments (tracking only — definition created by generic pattern above)
 (variable_declarator
   name: (identifier) @assignment.variable

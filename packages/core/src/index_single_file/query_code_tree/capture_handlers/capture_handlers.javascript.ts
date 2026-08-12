@@ -111,7 +111,23 @@ export function handle_definition_method(
         docstring,
       },
     );
+    return;
   }
+
+  // An object-literal method (`{ m(p) {} }`) has no owning class. It is reached
+  // through the object's collection dispatch, never by its own name, so a named
+  // node here would surface as an entry point nothing can call. Registering it
+  // anonymously under the id the parameter pass computes still binds its
+  // parameters.
+  builder.add_anonymous_function(
+    {
+      symbol_id: method_id,
+      location: capture.location,
+      scope_id: context.get_scope_id(capture.location),
+      return_type: extract_return_type(capture.node),
+    },
+    capture
+  );
 }
 
 export function handle_definition_constructor(

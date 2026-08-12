@@ -2528,9 +2528,13 @@ const names = items.map(({id, name}) => name);`;
       ).toEqual(["html"]);
     });
 
-    it("binds the parameters of an object-literal shorthand method", () => {
+    it("binds an object-literal method's parameters on an anonymous callable, not a named node", () => {
+      const callables = Array.from(
+        index_js("const obj = { updateProfile(name, email) {} };").functions.values(),
+      );
+      expect(callables.map((f) => f.name as string)).toEqual(["<anonymous>"]);
       expect(
-        parameter_names("const obj = { updateProfile(name, email) {} };", "updateProfile"),
+        Array.from(callables[0].signature.parameters.values()).map((p) => p.name),
       ).toEqual(["name", "email"]);
     });
 

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import * as fs from "fs/promises";
 import * as os from "os";
 import * as path from "path";
@@ -13,6 +13,13 @@ import {
 import { packages_from_changed_files } from "./detect_dead_code.js";
 
 const HOOK = "probe";
+
+// Every case drives a real git repository: the setup alone spawns four
+// processes, and a case exercising worktrees or branch switches spawns a couple
+// of dozen more. That costs seconds, not milliseconds, so the default per-test
+// deadline does not fit the work and expires on whichever cases happen to run
+// while the machine is busy.
+vi.setConfig({ testTimeout: 30_000, hookTimeout: 30_000 });
 
 describe("scan scope", () => {
   let repo: string;

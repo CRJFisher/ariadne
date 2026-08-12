@@ -703,11 +703,6 @@ export function find_containing_callable(capture: CaptureNode): SymbolId {
           name_node || node,
           file_path
         );
-        // An object-literal shorthand method has no owning class, so it is
-        // indexed as a plain function; match that id rather than a method's.
-        if (node.parent?.type === "object" && name_node) {
-          return function_symbol(name_node.text as SymbolName, location);
-        }
         return method_symbol(method_name as SymbolName, location);
       } else if (name_node) {
         // Named function
