@@ -31,6 +31,11 @@ import { readdir, realpath } from "fs/promises";
 import { join } from "path";
 import type { PersistenceStorage, CacheManifestEntry } from "../persistence";
 import { write_file_index, write_cache_manifest } from "./project_cache_strategy";
+import type { ModuleResolutionContext } from "../resolve_references/import_resolution";
+import {
+  build_module_specifier_index,
+  create_module_resolution_context,
+} from "../resolve_references/import_resolution";
 
 /**
  * Options for the classification pipeline. Extends `TraceCallGraphOptions`
@@ -82,7 +87,7 @@ export class Project {
 
   // ===== Resolution layer (always up-to-date) =====
   public resolutions: ResolutionRegistry = new ResolutionRegistry();
-  private root_folder?: FileSystemFolder = undefined;
+  private modules?: ModuleResolutionContext = undefined;
   private excluded_folders: Set<string> = new Set();
 
   // ===== EnrichedCallGraph cache =====
@@ -110,7 +115,14 @@ export class Project {
       this.excluded_folders = new Set(excluded_folders);
     }
 
-    this.root_folder = await this.get_file_tree(resolved_path);
+    // The specifier index is read once, here, because it is the only part of
+    // module resolution that needs real I/O; every later resolution query runs
+    // against this snapshot and the I/O-free file tree.
+    const root_folder = await this.get_file_tree(resolved_path);
+    this.modules = create_module_resolution_context(
+      root_folder,
+      await build_module_specifier_index(root_folder)
+    );
   }
 
   /**
@@ -129,7 +141,7 @@ export class Project {
    * @param content - The file's source code
    */
   update_file(file_id: FilePath, content: string): void {
-    if (!this.root_folder) {
+    if (!this.modules) {
       throw new Error("Project not initialized");
     }
 
@@ -157,7 +169,7 @@ export class Project {
     this.languages.set(file_id, parsed_file.lang);
 
     // Phases 2-5: Registry update + resolution
-    this.apply_index_and_resolve(file_id, index_single_file, dependents, this.root_folder);
+    this.apply_index_and_resolve(file_id, index_single_file, dependents, this.modules);
   }
 
   /**
@@ -175,7 +187,7 @@ export class Project {
     content: string,
     cached_index: SemanticIndex,
   ): void {
-    if (!this.root_folder) {
+    if (!this.modules) {
       throw new Error("Project not initialized");
     }
 
@@ -187,7 +199,7 @@ export class Project {
     this.file_contents.set(file_id, content);
     this.languages.set(file_id, cached_index.language);
 
-    this.apply_index_and_resolve(file_id, cached_index, dependents, this.root_folder);
+    this.apply_index_and_resolve(file_id, cached_index, dependents, this.modules);
   }
 
   /**
@@ -198,7 +210,7 @@ export class Project {
     file_id: FilePath,
     index_single_file: SemanticIndex,
     dependents: Set<FilePath>,
-    root_folder: FileSystemFolder,
+    modules: ModuleResolutionContext,
   ): void {
     const get_import_path = (import_id: SymbolId) => this.imports.get_resolved_import_path(import_id);
 
@@ -245,7 +257,7 @@ export class Project {
       file_id,
       import_definitions,
       index_single_file.language,
-      root_folder,
+      modules,
     );
 
     // Phase 2.5: Fix ImportDefinition locations to point to source files
@@ -264,8 +276,15 @@ export class Project {
       ...fixed_import_definitions,
     ]);
 
-    // Phase 3: Re-resolve affected files
-    const affected_files = new Set([file_id, ...dependents]);
+    // Phase 3: Re-resolve affected files. A dependent that forwards the changed
+    // file's surface onward changes its own surface too, so ITS dependents
+    // re-resolve as well — the barrel-chain case, where a leaf's names reach
+    // consumers only through re-exporting hops, and the Rust `mod` chain, where
+    // `crate::a::b::item` reaches through `a.rs` into `b.rs`. Without the second
+    // hop, editing `b.rs` re-resolves `a.rs` but not the file holding the call,
+    // so the path resolves only when the files happen to be indexed in the right
+    // order.
+    const affected_files = this.files_affected_by(file_id, dependents);
 
     this.resolutions.resolve_names(
       affected_files,
@@ -274,7 +293,7 @@ export class Project {
       this.scopes,
       this.exports,
       this.imports,
-      root_folder,
+      modules,
     );
 
     // Phase 3.5: Cross-file type inheritance resolution
@@ -315,14 +334,14 @@ export class Project {
           this.resolutions,
           this.exports,
           this.languages,
-          root_folder,
+          modules,
           get_import_path,
         );
       }
     }
 
     // Phase 5: Call resolution
-    // Pass the same exports/languages/root_folder instances handed to
+    // Pass the same exports/languages/resolution instances handed to
     // resolve_names above, so namespace re-export following sees the current
     // export graph rather than a stale snapshot.
     const call_resolution_files = new Set([
@@ -338,7 +357,7 @@ export class Project {
       this.imports,
       this.exports,
       this.languages,
-      root_folder,
+      modules,
     );
   }
 
@@ -350,7 +369,7 @@ export class Project {
    * @param file_id - The file to remove
    */
   remove_file(file_id: FilePath): void {
-    if (!this.root_folder) {
+    if (!this.modules) {
       throw new Error("Project not initialized");
     }
 
@@ -375,21 +394,24 @@ export class Project {
     // Remove resolutions for deleted file
     this.resolutions.remove_file(file_id);
 
-    // Re-resolve dependent files (imports may be broken now)
-    if (dependents.size > 0) {
+    // Re-resolve every file the deletion can reach, not just direct dependents:
+    // a file two module hops away can hold a path that read the deleted file.
+    const affected = this.files_affected_by(file_id, dependents);
+    affected.delete(file_id);
+    if (affected.size > 0) {
       // Phase 1: Name resolution
       this.resolutions.resolve_names(
-        dependents,
+        affected,
         this.languages,
         this.definitions,
         this.scopes,
         this.exports,
         this.imports,
-        this.root_folder
+        this.modules
       );
 
       // Phase 2: Type registry (uses name resolutions)
-      for (const dependent_file of dependents) {
+      for (const dependent_file of affected) {
         const dependent_index = this.index_single_filees.get(dependent_file);
         if (dependent_index) {
           this.types.update_file(
@@ -399,7 +421,7 @@ export class Project {
             this.resolutions,
             this.exports,
             this.languages,
-            this.root_folder,
+            this.modules,
             get_import_path
           );
         }
@@ -407,7 +429,7 @@ export class Project {
 
       // Phase 3: Call resolution (uses types)
       this.resolutions.resolve_calls_for_files(
-        dependents,
+        affected,
         this.references,
         this.scopes,
         this.types,
@@ -415,9 +437,47 @@ export class Project {
         this.imports,
         this.exports,
         this.languages,
-        this.root_folder
+        this.modules
       );
     }
+  }
+
+  /**
+   * Every file whose resolutions a change to `file_id` can alter: the file
+   * itself, its direct dependents, and — transitively — the dependents of any
+   * dependent that puts the changed file's surface onward rather than importing
+   * one name out of it. That second hop is the barrel chain, where a leaf's
+   * names reach consumers only through re-exporting files, and the Rust `mod`
+   * chain, where `crate::a::b::item` reaches through `a.rs` into `b.rs`.
+   *
+   * Only importers are carried across that hop: a file that reached the changed
+   * file through a `::` path already holds a direct edge to every module file
+   * its path read, so it is a leaf of this walk rather than another hub.
+   */
+  private files_affected_by(
+    file_id: FilePath,
+    dependents: Set<FilePath>,
+  ): Set<FilePath> {
+    const affected_files = new Set([file_id, ...dependents]);
+    const frontier = [...dependents].map((dependent) => ({
+      file: dependent,
+      source: file_id,
+    }));
+
+    for (let next = frontier.pop(); next !== undefined; next = frontier.pop()) {
+      const { file, source } = next;
+      if (!this.imports.forwards_surface_of(file, source)) {
+        continue;
+      }
+      for (const dependent of this.imports.get_importing_dependents(file)) {
+        if (!affected_files.has(dependent)) {
+          affected_files.add(dependent);
+          frontier.push({ file: dependent, source: file });
+        }
+      }
+    }
+
+    return affected_files;
   }
 
   /**
@@ -549,9 +609,11 @@ export class Project {
   }
 
   /**
-   * Get all files that depend on a given file.
+   * Every file whose resolutions this file's content can change: the files that
+   * import from it, and the files that reached it through a Rust `::` path,
+   * which name it without importing it.
+   *
    * @param file_id - The file to check dependencies for
-   * @returns Set of files that import from this file
    */
   get_dependents(file_id: FilePath): Set<FilePath> {
     return this.imports.get_dependents(file_id);

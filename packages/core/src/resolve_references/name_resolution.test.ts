@@ -4,6 +4,7 @@
  * Tests the pure functions for resolving symbol names in scopes.
  */
 
+import { EMPTY_MODULE_SPECIFIER_INDEX } from "./resolution_test_helpers";
 import { describe, it, expect, beforeEach } from "vitest";
 import { resolve_names, type NameResolutionContext } from "./name_resolution";
 import { DefinitionRegistry } from "./registries/definition";
@@ -26,6 +27,7 @@ import type {
   ScopeType,
 } from "@ariadnejs/types";
 import type { FileSystemFolder } from "./file_folders";
+import { create_module_resolution_context } from "./import_resolution";
 
 const TEST_FILE = "test.ts" as FilePath;
 const FILE_SCOPE_ID = "scope:test.ts:file:0:0" as ScopeId;
@@ -99,7 +101,7 @@ describe("resolve_names", () => {
       scopes,
       exports,
       imports,
-      root_folder: mock_root_folder,
+      modules: create_module_resolution_context(mock_root_folder, EMPTY_MODULE_SPECIFIER_INDEX),
     };
   });
 
@@ -253,7 +255,7 @@ describe("resolve_names", () => {
         import_path: "./utils" as ModulePath,
         import_kind: "namespace",
       };
-      imports.update_file(TEST_FILE, [ns_import], "typescript", mock_root_folder);
+      imports.update_file(TEST_FILE, [ns_import], "typescript", create_module_resolution_context(mock_root_folder, EMPTY_MODULE_SPECIFIER_INDEX));
 
       const result = resolve_names(new Set([TEST_FILE]), context);
 
@@ -278,11 +280,342 @@ describe("resolve_names", () => {
         import_path: "./unresolved" as ModulePath,
         import_kind: "named",
       };
-      imports.update_file(TEST_FILE, [named_import], "typescript", mock_root_folder);
+      imports.update_file(TEST_FILE, [named_import], "typescript", create_module_resolution_context(mock_root_folder, EMPTY_MODULE_SPECIFIER_INDEX));
 
       const result = resolve_names(new Set([TEST_FILE]), context);
 
       expect(result.resolutions_by_scope.get(FILE_SCOPE_ID)).toEqual(
+        new Map<SymbolName, SymbolId>()
+      );
+    });
+  });
+
+  describe("Wildcard import layering", () => {
+    const APP_PY = "app.py" as FilePath;
+    const LIB_PY = "lib.py" as FilePath;
+    const TWO_PY = "two.py" as FilePath;
+    const APP_SCOPE = "scope:app.py:file:0:0" as ScopeId;
+
+    const py_root_folder: FileSystemFolder = {
+      path: "/" as FilePath,
+      folders: new Map(),
+      files: new Set(["app.py", "lib.py", "two.py", "app.ts", "lib.ts"]),
+    };
+
+    function py_context(): NameResolutionContext {
+      return {
+        languages: new Map<FilePath, Language>([
+          [APP_PY, "python"],
+          [LIB_PY, "python"],
+          [TWO_PY, "python"],
+        ]),
+        definitions,
+        scopes,
+        exports,
+        imports,
+        modules: create_module_resolution_context(py_root_folder, EMPTY_MODULE_SPECIFIER_INDEX),
+      };
+    }
+
+    function make_wildcard_import(
+      file: FilePath,
+      scope_id: ScopeId,
+      import_path: string
+    ): ImportDefinition {
+      const name = import_path.replace(/\.py$/, "");
+      return {
+        kind: "import",
+        symbol_id: variable_symbol(name as SymbolName, MOCK_LOCATION),
+        name: name as SymbolName,
+        defining_scope_id: scope_id,
+        location: { ...MOCK_LOCATION, file_path: file },
+        import_path: import_path as ModulePath,
+        import_kind: "wildcard",
+        export: { is_reexport: true },
+      };
+    }
+
+    function export_functions_from(
+      file: FilePath,
+      ...names: string[]
+    ): SymbolId[] {
+      const defs: FunctionDefinition[] = names.map((name, index) => ({
+        kind: "function",
+        symbol_id: function_symbol(name as SymbolName, {
+          ...MOCK_LOCATION,
+          file_path: file,
+          start_line: index + 1,
+        }),
+        name: name as SymbolName,
+        defining_scope_id: `scope:${file}:file:0:0` as ScopeId,
+        location: { ...MOCK_LOCATION, file_path: file, start_line: index + 1 },
+        signature: { parameters: [] },
+        body_scope_id: `scope:${file}:${name}:1:0` as ScopeId,
+        is_exported: true,
+      }));
+      definitions.update_file(file, defs);
+      exports.update_file(file, definitions);
+      return defs.map((def) => def.symbol_id);
+    }
+
+    it("binds a wildcard import's target surface into the importing scope", () => {
+      const [helper_id] = export_functions_from(LIB_PY, "helper");
+      scopes.update_file(
+        APP_PY,
+        new Map([[APP_SCOPE, make_scope(APP_SCOPE, "global", null)]])
+      );
+      imports.update_file(
+        APP_PY,
+        [make_wildcard_import(APP_PY, APP_SCOPE, "lib")],
+        "python",
+        create_module_resolution_context(py_root_folder, EMPTY_MODULE_SPECIFIER_INDEX)
+      );
+
+      const result = resolve_names(new Set([APP_PY]), py_context());
+
+      expect(result.resolutions_by_scope.get(APP_SCOPE)).toEqual(
+        new Map<SymbolName, SymbolId>([["helper" as SymbolName, helper_id]])
+      );
+    });
+
+    it("lets an explicit named import shadow a name the wildcard also provides", () => {
+      export_functions_from(LIB_PY, "shared");
+      const [two_id] = export_functions_from(TWO_PY, "shared");
+      scopes.update_file(
+        APP_PY,
+        new Map([[APP_SCOPE, make_scope(APP_SCOPE, "global", null)]])
+      );
+      const named_import: ImportDefinition = {
+        kind: "import",
+        symbol_id: variable_symbol("shared" as SymbolName, {
+          ...MOCK_LOCATION,
+          start_line: 2,
+        }),
+        name: "shared" as SymbolName,
+        defining_scope_id: APP_SCOPE,
+        location: { ...MOCK_LOCATION, file_path: APP_PY, start_line: 2 },
+        import_path: "two" as ModulePath,
+        import_kind: "named",
+      };
+      imports.update_file(
+        APP_PY,
+        [make_wildcard_import(APP_PY, APP_SCOPE, "lib"), named_import],
+        "python",
+        create_module_resolution_context(py_root_folder, EMPTY_MODULE_SPECIFIER_INDEX)
+      );
+
+      const result = resolve_names(new Set([APP_PY]), py_context());
+
+      expect(
+        result.resolutions_by_scope.get(APP_SCOPE)!.get("shared" as SymbolName)
+      ).toBe(two_id);
+    });
+
+    it("lets a local definition shadow a name the wildcard provides", () => {
+      export_functions_from(LIB_PY, "helper");
+      const local_id = function_symbol("helper" as SymbolName, {
+        ...MOCK_LOCATION,
+        file_path: APP_PY,
+        start_line: 3,
+      });
+      scopes.update_file(
+        APP_PY,
+        new Map([[APP_SCOPE, make_scope(APP_SCOPE, "global", null)]])
+      );
+      definitions.update_file(APP_PY, [
+        {
+          ...make_function("helper", APP_SCOPE, local_id),
+          location: { ...MOCK_LOCATION, file_path: APP_PY, start_line: 3 },
+        },
+      ]);
+      imports.update_file(
+        APP_PY,
+        [make_wildcard_import(APP_PY, APP_SCOPE, "lib")],
+        "python",
+        create_module_resolution_context(py_root_folder, EMPTY_MODULE_SPECIFIER_INDEX)
+      );
+
+      const result = resolve_names(new Set([APP_PY]), py_context());
+
+      expect(
+        result.resolutions_by_scope.get(APP_SCOPE)!.get("helper" as SymbolName)
+      ).toBe(local_id);
+    });
+
+    it("rebinds a Python name to the later of two wildcard imports supplying it", () => {
+      export_functions_from(LIB_PY, "dup");
+      const [two_dup] = export_functions_from(TWO_PY, "dup");
+      scopes.update_file(
+        APP_PY,
+        new Map([[APP_SCOPE, make_scope(APP_SCOPE, "global", null)]])
+      );
+      imports.update_file(
+        APP_PY,
+        [
+          make_wildcard_import(APP_PY, APP_SCOPE, "lib"),
+          make_wildcard_import(APP_PY, APP_SCOPE, "two"),
+        ],
+        "python",
+        create_module_resolution_context(py_root_folder, EMPTY_MODULE_SPECIFIER_INDEX)
+      );
+
+      const result = resolve_names(new Set([APP_PY]), py_context());
+
+      expect(result.resolutions_by_scope.get(APP_SCOPE)).toEqual(
+        new Map<SymbolName, SymbolId>([["dup" as SymbolName, two_dup]])
+      );
+    });
+
+    describe("Rust glob ambiguity", () => {
+      const MAIN_RS = "main.rs" as FilePath;
+      const ONE_RS = "one.rs" as FilePath;
+      const TWO_RS = "two.rs" as FilePath;
+      const SHARED_RS = "shared.rs" as FilePath;
+      const MAIN_RS_SCOPE = "scope:main.rs:file:0:0" as ScopeId;
+
+      const rs_root_folder: FileSystemFolder = {
+        path: "/" as FilePath,
+        folders: new Map(),
+        files: new Set(["main.rs", "one.rs", "two.rs", "shared.rs"]),
+      };
+
+      function rs_context(): NameResolutionContext {
+        return {
+          languages: new Map<FilePath, Language>([
+            [MAIN_RS, "rust"],
+            [ONE_RS, "rust"],
+            [TWO_RS, "rust"],
+            [SHARED_RS, "rust"],
+          ]),
+          definitions,
+          scopes,
+          exports,
+          imports,
+          modules: create_module_resolution_context(rs_root_folder, EMPTY_MODULE_SPECIFIER_INDEX),
+        };
+      }
+
+      function make_glob_import(module_name: string): ImportDefinition {
+        return {
+          kind: "import",
+          symbol_id: variable_symbol(module_name as SymbolName, {
+            ...MOCK_LOCATION,
+            file_path: MAIN_RS,
+          }),
+          name: module_name as SymbolName,
+          defining_scope_id: MAIN_RS_SCOPE,
+          location: { ...MOCK_LOCATION, file_path: MAIN_RS },
+          import_path: `crate::${module_name}` as ModulePath,
+          import_kind: "wildcard",
+        };
+      }
+
+      function reexport_glob_from(file: FilePath, module_name: string): void {
+        definitions.update_file(file, [
+          {
+            kind: "import",
+            symbol_id: variable_symbol(module_name as SymbolName, {
+              ...MOCK_LOCATION,
+              file_path: file,
+            }),
+            name: module_name as SymbolName,
+            defining_scope_id: `scope:${file}:file:0:0` as ScopeId,
+            location: { ...MOCK_LOCATION, file_path: file },
+            import_path: `crate::${module_name}` as ModulePath,
+            import_kind: "wildcard",
+            export: { is_reexport: true },
+          },
+        ]);
+        exports.update_file(file, definitions);
+      }
+
+      function resolve_main_scope(): ReadonlyMap<SymbolName, SymbolId> {
+        scopes.update_file(
+          MAIN_RS,
+          new Map([[MAIN_RS_SCOPE, make_scope(MAIN_RS_SCOPE, "global", null)]])
+        );
+        imports.update_file(
+          MAIN_RS,
+          [make_glob_import("one"), make_glob_import("two")],
+          "rust",
+          create_module_resolution_context(rs_root_folder, EMPTY_MODULE_SPECIFIER_INDEX)
+        );
+        return resolve_names(new Set([MAIN_RS]), rs_context()).resolutions_by_scope.get(
+          MAIN_RS_SCOPE
+        )!;
+      }
+
+      it("binds nothing for a name two globs supply from different modules", () => {
+        const [, only_one] = export_functions_from(ONE_RS, "dup", "only_one");
+        export_functions_from(TWO_RS, "dup");
+
+        expect(resolve_main_scope()).toEqual(
+          new Map<SymbolName, SymbolId>([["only_one" as SymbolName, only_one]])
+        );
+      });
+
+      it("binds a name two globs reach through the same re-exported module", () => {
+        const [dup] = export_functions_from(SHARED_RS, "dup");
+        reexport_glob_from(ONE_RS, "shared");
+        reexport_glob_from(TWO_RS, "shared");
+
+        expect(resolve_main_scope()).toEqual(
+          new Map<SymbolName, SymbolId>([["dup" as SymbolName, dup]])
+        );
+      });
+    });
+
+    it("does not layer a wildcard surface into a JavaScript or TypeScript scope", () => {
+      const APP_TS = "app.ts" as FilePath;
+      const LIB_TS = "lib.ts" as FilePath;
+      const APP_TS_SCOPE = "scope:app.ts:file:0:0" as ScopeId;
+
+      const fn: FunctionDefinition = {
+        kind: "function",
+        symbol_id: function_symbol("helper" as SymbolName, {
+          ...MOCK_LOCATION,
+          file_path: LIB_TS,
+        }),
+        name: "helper" as SymbolName,
+        defining_scope_id: "scope:lib.ts:file:0:0" as ScopeId,
+        location: { ...MOCK_LOCATION, file_path: LIB_TS },
+        signature: { parameters: [] },
+        body_scope_id: "scope:lib.ts:helper:1:0" as ScopeId,
+        is_exported: true,
+      };
+      definitions.update_file(LIB_TS, [fn]);
+      exports.update_file(LIB_TS, definitions);
+
+      scopes.update_file(
+        APP_TS,
+        new Map([[APP_TS_SCOPE, make_scope(APP_TS_SCOPE, "global", null)]])
+      );
+      const star_reexport: ImportDefinition = {
+        kind: "import",
+        symbol_id: variable_symbol("lib" as SymbolName, MOCK_LOCATION),
+        name: "lib" as SymbolName,
+        defining_scope_id: APP_TS_SCOPE,
+        location: { ...MOCK_LOCATION, file_path: APP_TS },
+        import_path: "./lib" as ModulePath,
+        import_kind: "wildcard",
+        export: { is_reexport: true },
+      };
+      imports.update_file(APP_TS, [star_reexport], "typescript", create_module_resolution_context(py_root_folder, EMPTY_MODULE_SPECIFIER_INDEX));
+
+      const ts_context: NameResolutionContext = {
+        languages: new Map<FilePath, Language>([
+          [APP_TS, "typescript"],
+          [LIB_TS, "typescript"],
+        ]),
+        definitions,
+        scopes,
+        exports,
+        imports,
+        modules: create_module_resolution_context(py_root_folder, EMPTY_MODULE_SPECIFIER_INDEX),
+      };
+      const result = resolve_names(new Set([APP_TS]), ts_context);
+
+      expect(result.resolutions_by_scope.get(APP_TS_SCOPE)).toEqual(
         new Map<SymbolName, SymbolId>()
       );
     });

@@ -125,12 +125,22 @@ export class DefinitionRegistry {
         }
       }
 
-      // Class/interface members are registered as first-class definitions and
-      // added to the location index so type-binding resolution can find them.
-      if (def.kind === "class" || def.kind === "interface") {
+      // Class/interface/enum members are registered as first-class definitions
+      // and added to the location index so type-binding resolution can find
+      // them. Enums are here because a Rust `impl E { … }` attaches associated
+      // functions to the enum, and `E::assoc()` — rustc's `MetaVarExpr::parse`
+      // — reaches them through this index. An enum's variants deliberately stay
+      // out of it: this is the callable-member index, and `type_preprocessing/
+      // member.ts` is what carries variants as a type's properties.
+      if (
+        def.kind === "class" ||
+        def.kind === "interface" ||
+        def.kind === "enum"
+      ) {
         const flat_members = new Map<SymbolName, SymbolId>();
 
-        for (const method of def.methods) {
+        // `methods` is optional on an enum and required on the other two.
+        for (const method of def.methods ?? []) {
           this.by_symbol.set(method.symbol_id, method);
           set_member_symbol(flat_members, method);
           this.member_owner.set(method.symbol_id, def.symbol_id);
@@ -138,12 +148,14 @@ export class DefinitionRegistry {
           this.location_to_symbol.set(method_loc_key, method.symbol_id);
         }
 
-        for (const prop of def.properties) {
-          this.by_symbol.set(prop.symbol_id, prop);
-          flat_members.set(prop.name, prop.symbol_id);
-          this.member_owner.set(prop.symbol_id, def.symbol_id);
-          const prop_loc_key = location_key(prop.location);
-          this.location_to_symbol.set(prop_loc_key, prop.symbol_id);
+        if (def.kind !== "enum") {
+          for (const prop of def.properties) {
+            this.by_symbol.set(prop.symbol_id, prop);
+            flat_members.set(prop.name, prop.symbol_id);
+            this.member_owner.set(prop.symbol_id, def.symbol_id);
+            const prop_loc_key = location_key(prop.location);
+            this.location_to_symbol.set(prop_loc_key, prop.symbol_id);
+          }
         }
 
         // Register class constructors for call_type inference, and key each
@@ -317,17 +329,24 @@ export class DefinitionRegistry {
         this.location_to_symbol.delete(loc_key);
 
         // Members are first-class definitions in by_symbol and the location
-        // index, so evict them alongside their owning class/interface.
-        if (def.kind === "class" || def.kind === "interface") {
-          for (const method of def.methods) {
+        // index, so evict them alongside the type that owns them — the same set
+        // of kinds update_file registers.
+        if (
+          def.kind === "class" ||
+          def.kind === "interface" ||
+          def.kind === "enum"
+        ) {
+          for (const method of def.methods ?? []) {
             const method_loc_key = location_key(method.location);
             this.location_to_symbol.delete(method_loc_key);
             this.by_symbol.delete(method.symbol_id);
           }
-          for (const prop of def.properties) {
-            const prop_loc_key = location_key(prop.location);
-            this.location_to_symbol.delete(prop_loc_key);
-            this.by_symbol.delete(prop.symbol_id);
+          if (def.kind !== "enum") {
+            for (const prop of def.properties) {
+              const prop_loc_key = location_key(prop.location);
+              this.location_to_symbol.delete(prop_loc_key);
+              this.by_symbol.delete(prop.symbol_id);
+            }
           }
         }
 

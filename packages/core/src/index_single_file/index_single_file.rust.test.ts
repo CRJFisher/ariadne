@@ -1082,6 +1082,127 @@ mod private_module {
 
     });
 
+    it("carries a file-backed mod declaration as a module import alongside its namespace", () => {
+      const code = `mod config;
+pub mod helpers;
+pub mod inline {
+    pub fn f() {}
+}
+`;
+      const tree = parser.parse(code);
+      const file_path = "lib.rs" as FilePath;
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
+
+      const index = build_index_single_file(parsed_file, tree, "rust");
+
+      expect(
+        Array.from(index.namespaces.values())
+          .map((ns) => ns.name)
+          .sort(),
+      ).toEqual(["config", "helpers", "inline"] as SymbolName[]);
+
+      expect(
+        Array.from(index.imported_symbols.values()).map((imp) => ({
+          name: imp.name,
+          import_kind: imp.import_kind,
+          import_path: imp.import_path,
+        })),
+      ).toEqual([
+        {
+          name: "config" as SymbolName,
+          import_kind: "namespace",
+          import_path: "self::config",
+        },
+        {
+          name: "helpers" as SymbolName,
+          import_kind: "namespace",
+          import_path: "self::helpers",
+        },
+      ]);
+    });
+
+    it("anchors a nested bodyless mod declaration at its enclosing module", () => {
+      const code = `pub mod outer {
+    mod inner;
+}
+`;
+      const tree = parser.parse(code);
+      const file_path = "lib.rs" as FilePath;
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
+
+      const index = build_index_single_file(parsed_file, tree, "rust");
+
+      expect(
+        Array.from(index.imported_symbols.values()).map((imp) => ({
+          name: imp.name,
+          import_path: imp.import_path,
+        })),
+      ).toEqual([
+        { name: "inner" as SymbolName, import_path: "self::outer::inner" },
+      ]);
+    });
+
+    it("reads a #[path] attribute separated from its mod by a comment", () => {
+      const code = `#[path = "sys/unix.rs"]
+// pick the unix backend
+mod imp;
+`;
+      const tree = parser.parse(code);
+      const file_path = "lib.rs" as FilePath;
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
+
+      const index = build_index_single_file(parsed_file, tree, "rust");
+
+      expect(
+        Array.from(index.imported_symbols.values()).map(
+          (imp) => imp.import_path,
+        ),
+      ).toEqual(["sys/unix.rs"]);
+    });
+
+    it("keeps the default target for a mod carrying only non-path attributes", () => {
+      const code = `#[cfg(unix)]
+mod imp;
+`;
+      const tree = parser.parse(code);
+      const file_path = "lib.rs" as FilePath;
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
+
+      const index = build_index_single_file(parsed_file, tree, "rust");
+
+      expect(
+        Array.from(index.imported_symbols.values()).map(
+          (imp) => imp.import_path,
+        ),
+      ).toEqual(["self::imp"]);
+    });
+
+    it("carries a #[path] attribute as the module import's target file", () => {
+      const code = `#[cfg(unix)]
+#[path = "sys/unix.rs"]
+mod imp;
+`;
+      const tree = parser.parse(code);
+      const file_path = "lib.rs" as FilePath;
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
+
+      const index = build_index_single_file(parsed_file, tree, "rust");
+
+      expect(
+        Array.from(index.imported_symbols.values()).map((imp) => ({
+          name: imp.name,
+          import_kind: imp.import_kind,
+          import_path: imp.import_path,
+        })),
+      ).toEqual([
+        {
+          name: "imp" as SymbolName,
+          import_kind: "namespace",
+          import_path: "sys/unix.rs",
+        },
+      ]);
+    });
+
     it("CRITICAL: should extract use statements with complete structure", () => {
       // CRITICAL - Import extraction was completely missing for Rust!
       const code = `
@@ -1139,7 +1260,7 @@ use crate::models::User;
 
       // Verify glob import
       const glob_imports = Array.from(index.imported_symbols.values()).filter(
-        (imp) => imp.import_kind === "namespace",
+        (imp) => imp.import_kind === "wildcard",
       );
       expect(glob_imports.length).toBeGreaterThan(0);
 
@@ -2848,6 +2969,55 @@ impl Counter {
       const fn_def = Array.from(index.functions.values()).find(f => f.name === "no_doc");
       expect(fn_def).toBeDefined();
       expect(fn_def!.docstring).toBeUndefined();
+    });
+  });
+
+  describe("pattern bindings", () => {
+    function variable_names(code: string): string[] {
+      const tree = parser.parse(code);
+      const parsed_file = create_parsed_file(
+        code,
+        "test.rs" as FilePath,
+        tree,
+        "rust"
+      );
+      const index = build_index_single_file(parsed_file, tree, "rust");
+      return Array.from(index.variables.values()).map((v) => v.name as string);
+    }
+
+    it("binds the inner name of an if-let pattern, not the type path", () => {
+      const names = variable_names(`fn f(o: Option<i32>) {
+    if let Some(b) = o {
+        use_it(b);
+    }
+}
+`);
+      expect(names).toContain("b");
+      expect(names).not.toContain("Some(b)");
+      expect(names).not.toContain("Some");
+    });
+
+    it("binds the inner name of a match arm pattern", () => {
+      const names = variable_names(`fn f(o: Option<i32>) {
+    match o {
+        Some(d) => use_it(d),
+        None => {}
+    }
+}
+`);
+      expect(names).toContain("d");
+      expect(names).not.toContain("Some(d)");
+    });
+
+    it("binds the inner name of a while-let pattern", () => {
+      const names = variable_names(`fn f(mut it: Iter) {
+    while let Some(c) = it.next() {
+        use_it(c);
+    }
+}
+`);
+      expect(names).toContain("c");
+      expect(names).not.toContain("Some(c)");
     });
   });
 });

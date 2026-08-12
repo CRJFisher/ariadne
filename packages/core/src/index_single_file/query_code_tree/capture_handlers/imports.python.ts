@@ -60,7 +60,7 @@ export function handle_definition_import(
     return;
   }
 
-  let import_kind: "named" | "namespace" = "named";
+  let import_kind: "named" | "namespace" | "wildcard" = "named";
   let import_path: ModulePath;
   let original_name: SymbolName | undefined;
   let imported_name: SymbolName = capture.text;
@@ -81,8 +81,9 @@ export function handle_definition_import(
     import_path = extract_import_path(import_stmt);
 
     if (capture.node.type === "wildcard_import") {
-      import_kind = "namespace";
-      imported_name = "*" as SymbolName;
+      import_kind = "wildcard";
+      imported_name = wildcard_binding_name(import_path);
+      import_id = variable_symbol(imported_name, definition_location);
     } else {
       import_kind = "named";
 
@@ -99,14 +100,17 @@ export function handle_definition_import(
   }
 
   const defining_scope_id = context.get_scope_id(capture.location);
-  const export_info = extract_export_info(
-    imported_name,
-    defining_scope_id,
-    context.root_scope_id
-  );
 
-  // A module-level import is re-exportable: another module can import it from here.
-  const export_metadata = export_info.is_exported ? { is_reexport: true } : undefined;
+  // A module-level import is re-exportable: another module can import it from
+  // here. A wildcard edge binds no name of its own, so the underscore-privacy
+  // convention never applies to it — only module-scope-ness gates its
+  // re-export (`from ._lib import *` in an __init__.py still forwards).
+  const is_reexportable =
+    import_kind === "wildcard"
+      ? defining_scope_id === context.root_scope_id
+      : extract_export_info(imported_name, defining_scope_id, context.root_scope_id)
+          .is_exported;
+  const export_metadata = is_reexportable ? { is_reexport: true } : undefined;
 
   builder.add_import({
     symbol_id: import_id,
@@ -118,4 +122,14 @@ export function handle_definition_import(
     import_kind,
     original_name,
   });
+}
+
+/**
+ * Last dotted segment of a wildcard edge's module path (`.pkg` → `pkg`) — a
+ * display name only, never matched against a call terminal. A pure-relative
+ * path (`.`, `..`) has no segment and names itself.
+ */
+function wildcard_binding_name(import_path: ModulePath): SymbolName {
+  const last_segment = import_path.split(".").filter(Boolean).pop();
+  return (last_segment ?? import_path) as SymbolName;
 }

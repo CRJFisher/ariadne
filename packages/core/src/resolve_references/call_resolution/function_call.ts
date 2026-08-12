@@ -125,7 +125,7 @@ export function resolve_function_call(
   // path, so honour it. This binds the terminal under its module/type rather
   // than letting a same-name local shadow capture it via the scope map. The
   // leaf self-guards and returns null for unqualified calls.
-  const via_path = resolve_via_path_prefix_rust(ref, context, resolver);
+  const via_path = resolve_via_path_prefix_rust(ref, context);
   if (via_path) {
     return ok([via_path]);
   }

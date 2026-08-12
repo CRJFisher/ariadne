@@ -194,6 +194,86 @@ describe("Project - Performance Benchmarks", () => {
     });
   });
 
+  describe("wildcard fan-out performance", () => {
+    it("baselines resolve_all_exports across a star-re-export fan", { timeout: 60000 }, async () => {
+      const project = new Project();
+      await project.initialize();
+
+      // The src/services/_namespaces/ts.ts shape: one barrel starring 20 leaf
+      // modules, 5 of which are barrels starring 4 further modules each.
+      const leaf_files: FilePath[] = [];
+      const import_names: string[] = [];
+      for (let i = 0; i < 20; i++) {
+        if (i < 5) {
+          const nested: string[] = [];
+          for (let j = 0; j < 4; j++) {
+            const nested_file = `deep${i}_${j}.ts` as FilePath;
+            const fns = Array.from(
+              { length: 10 },
+              (_, k) => `export function fn_d${i}_${j}_${k}() { return ${k}; }`
+            ).join("\n");
+            project.update_file(nested_file, fns);
+            nested.push(`export * from './deep${i}_${j}';`);
+          }
+          project.update_file(`leaf${i}.ts` as FilePath, nested.join("\n"));
+        } else {
+          const fns = Array.from(
+            { length: 10 },
+            (_, k) => `export function fn_${i}_${k}() { return ${k}; }`
+          ).join("\n");
+          project.update_file(`leaf${i}.ts` as FilePath, fns);
+          import_names.push(`fn_${i}_0`);
+        }
+        leaf_files.push(`leaf${i}.ts` as FilePath);
+      }
+      project.update_file(
+        "barrel.ts" as FilePath,
+        leaf_files.map((f) => `export * from './${f.replace(".ts", "")}';`).join("\n")
+      );
+
+      const consumer = "consumer.ts" as FilePath;
+      const consumer_code = `import { fn_d0_0_0, ${import_names.join(", ")} } from './barrel';
+export function drive() { return fn_d0_0_0()${import_names.map((n) => ` + ${n}()`).join("")}; }
+`;
+
+      const cold_start = performance.now();
+      project.update_file(consumer, consumer_code);
+      const cold_time = performance.now() - cold_start;
+
+      // Re-indexing a starred leaf drops the resolve_all_exports memo and
+      // forces a full fan re-walk for the consumer's re-resolution.
+      const leaf_iterations = 50;
+      const leaf_start = performance.now();
+      for (let i = 0; i < leaf_iterations; i++) {
+        project.update_file(
+          "leaf10.ts" as FilePath,
+          Array.from(
+            { length: 10 },
+            (_, k) => `export function fn_10_${k}() { return ${k + i}; }`
+          ).join("\n")
+        );
+      }
+      const leaf_avg = (performance.now() - leaf_start) / leaf_iterations;
+
+      const unrelated = "unrelated.ts" as FilePath;
+      const unrelated_iterations = 50;
+      const unrelated_start = performance.now();
+      for (let i = 0; i < unrelated_iterations; i++) {
+        project.update_file(unrelated, `export function standalone() { return ${i}; }`);
+      }
+      const unrelated_avg = (performance.now() - unrelated_start) / unrelated_iterations;
+
+      console.log(
+        `\nWildcard fan (20 leaves, 5 nested barrels):\n  Consumer cold update: ${cold_time.toFixed(2)}ms\n  Starred-leaf update avg: ${leaf_avg.toFixed(2)}ms\n  Unrelated update avg: ${unrelated_avg.toFixed(2)}ms`
+      );
+
+      const call = project.resolutions
+        .get_calls_for_file(consumer)
+        .find((c) => c.name === ("fn_d0_0_0" as string));
+      expect(call!.resolutions.length).toEqual(1);
+    });
+  });
+
   describe("cache hit rate", () => {
     it("should measure resolution cache behavior", async () => {
       const project = new Project();

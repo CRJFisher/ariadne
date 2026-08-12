@@ -8,7 +8,7 @@ import type { ParsedFile } from "../../parsed_file";
 type ImportShape = {
   name: string;
   import_path: string;
-  import_kind: "named" | "default" | "namespace";
+  import_kind: "named" | "default" | "namespace" | "wildcard";
   original_name: string | undefined;
   export: ExportMetadata | undefined;
 };
@@ -240,40 +240,71 @@ describe("Python relative imports", () => {
 });
 
 describe("Python star imports", () => {
-  it("names the wildcard `*` as a namespace import", () => {
+  it("names a star import for its module and marks it a wildcard edge", () => {
     expect(index_imports("from os import *")).toEqual([
       {
-        name: "*",
+        name: "os",
         import_path: "os",
-        import_kind: "namespace",
+        import_kind: "wildcard",
         original_name: undefined,
         export: { is_reexport: true },
       },
     ]);
   });
 
-  it("keeps the relative module_path for a relative star import", () => {
+  it("names a relative star import for its last segment and keeps the relative module_path", () => {
     expect(index_imports("from .pkg import *")).toEqual([
       {
-        name: "*",
+        name: "pkg",
         import_path: ".pkg",
-        import_kind: "namespace",
+        import_kind: "wildcard",
         original_name: undefined,
         export: { is_reexport: true },
       },
     ]);
   });
 
-  it("keeps a bare dot module_path for a current-package star import", () => {
+  it("keeps a bare dot as both module_path and name for a current-package star import", () => {
     expect(index_imports("from . import *")).toEqual([
       {
-        name: "*",
+        name: ".",
         import_path: ".",
-        import_kind: "namespace",
+        import_kind: "wildcard",
         original_name: undefined,
         export: { is_reexport: true },
       },
     ]);
+  });
+
+  it("keeps the re-export marking on a star import of an underscore-prefixed module", () => {
+    expect(index_imports("from ._lib import *")).toEqual([
+      {
+        name: "_lib",
+        import_path: "._lib",
+        import_kind: "wildcard",
+        original_name: undefined,
+        export: { is_reexport: true },
+      },
+    ]);
+  });
+
+  it("does not mark a star import inside a function as a re-export", () => {
+    expect(index_imports("def f():\n    from os import *")).toEqual([
+      {
+        name: "os",
+        import_path: "os",
+        import_kind: "wildcard",
+        original_name: undefined,
+        export: undefined,
+      },
+    ]);
+  });
+
+  it("keys the wildcard symbol_id on the derived module name", () => {
+    const index = index_from_code("from os import *");
+    const import_def = Array.from(index.imported_symbols.values())[0]!;
+
+    expect(import_def.symbol_id).toBe("variable:test.py:1:16:1:16:os");
   });
 });
 

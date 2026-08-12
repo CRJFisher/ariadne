@@ -103,6 +103,23 @@ describe("fix_import_definition_locations", () => {
     });
   });
 
+  it("keeps a wildcard edge's location at the import site even when the target exports its name", () => {
+    // The derived name ("transaction") collides with an exported definition in
+    // the target; a wildcard names no single definition to jump to.
+    project.update_file(
+      "src/transaction.ts" as FilePath,
+      "export function transaction() { return 1; }"
+    );
+    const barrel = "src/barrel.ts" as FilePath;
+    project.update_file(barrel, "export * from \"./transaction\";");
+
+    const original = get_original_import(project, barrel, "transaction");
+    const import_def = get_fixed_import(project, barrel, "transaction");
+
+    expect(import_def.import_kind).toBe("wildcard");
+    expect(import_def.location).toEqual(original.location);
+  });
+
   it("leaves the import location unchanged when the module path does not resolve", () => {
     const consumer = "src/consumer.ts" as FilePath;
     project.update_file(

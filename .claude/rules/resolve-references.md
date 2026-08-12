@@ -27,6 +27,13 @@ Resolves call references to their target definitions using name resolution resul
 - **Function calls** → Direct name lookup in scope via Phase 1 results
 - **Method calls** → Receiver type → class definition → member lookup (with polymorphic dispatch)
 - **Constructor calls** → Type name → class definition → constructor lookup
+- **Rust `::` paths** → The qualifier the author wrote binds the terminal, ahead of any same-name local. `path_resolution.rust.ts` owns the qualifier hops, in order: `Self` substitutes the enclosing impl type; a qualifier naming a type takes the terminal from its member index; a qualifier naming an in-file `mod` block takes it from that body; otherwise the path resolves to a module **file** and the terminal is looked up inside it. When the path names nothing the project holds, `function_call.rust.ts` falls back to a `use` statement in lexical scope that anchors the terminal — named imports first, then a wildcard edge fanned out across the module's whole surface.
+
+  Two rules stop the file hop fabricating an edge: the leading segment must be something a Rust path root can be (a `crate`/`self`/`super` anchor, a module bound in scope, or a workspace crate), and the file it lands on must be one the project has indexed. A `use` that binds an item rather than a module is never followed as a module.
+
+  Every module file the hop reads — each candidate landing, and each module it hops on to from there — is recorded on `ImportGraph` as a `module_path_read` of the referring file. The path names those files and no import statement does, so the edge exists nowhere else. It is recorded whether or not the project holds the file yet, because a caller indexed before its callee has to re-resolve when the callee arrives; that is what makes resolution independent of the order the corpus is indexed in, with no whole-corpus pass. A path read makes its reader a dependent but never a forwarding hub: because every file the path touched is its own edge, the reader is a leaf of the affected-files walk, which keeps one crate root read by every `crate::` path from turning any module's edit into a whole-corpus re-resolution.
+
+- **Rust `mod` declaration → module file** → A bodyless `mod x;` is captured twice: as the `NamespaceDefinition` that binds the name, and as a namespace `ImportDefinition` carrying the edge to the file. `ImportGraph` resolves that edge's path once and caches it, which is what makes the module file a dependency of its declarer — so editing the module re-resolves the declarer, and anything reaching `crate::declarer::x::item` through it. `#[path = "…"]` puts a file path on the edge instead of a `::` path.
 - **Collection dispatch** → Variable holding function collection → member function lookup
 - **Type-token generic return** → A chained method whose return type is a bare generic bound by a type-token parameter (`get<T>(token: Type<T>): T`) resolves against the class the token argument names. The token is carried on the reference's `property_chain_arguments` (captured in `index_single_file`, aligned to `property_chain`) and inferred in `receiver_resolution.ts`.
 
@@ -55,12 +62,12 @@ resolve_references/
 ├── call_resolution/              # Phase 2: type-aware call resolution
 │   ├── call_resolver.ts          # Main orchestrator
 │   ├── function_call.ts          # Function call resolution
-│   ├── function_call.rust.ts     # Rust ::-qualified call resolution
+│   ├── function_call.rust.ts     # Rust ::-qualified call entry + `use`-anchor fallback
 │   ├── method_call.ts            # Method call resolution
 │   ├── method_lookup.ts          # Polymorphic method lookup
 │   ├── constructor.ts            # Constructor resolution
-│   ├── constructor.rust.ts       # Rust Self/associated-constructor resolution
-│   ├── path_resolution.rust.ts   # Rust module-path walking shared by the leaves
+│   ├── constructor.rust.ts       # Rust associated-constructor resolution
+│   ├── path_resolution.rust.ts   # The single Rust `::`-path resolver (Self, type members, module files)
 │   ├── callable_instance.python.ts  # Python __call__ callable-instance resolution
 │   ├── collection_dispatch.ts    # Collection-stored function dispatch
 │   └── receiver_resolution.ts    # Receiver type inference (unified base + property-chain walk)
@@ -72,6 +79,7 @@ resolve_references/
 └── import_resolution/            # Cross-file import path resolution
     ├── index.ts                  # import_resolution barrel
     ├── import_graph.ts           # ImportGraph (import dependency tracking)
+    ├── module_specifier_index.ts # Package/crate name → its directory or entry file: tsconfig `paths` + `extends` chains, package `exports` maps, Cargo crate roots
     ├── import_resolution.ts      # Marshaller (language switch)
     └── import_resolution.{javascript,python,rust,typescript}.ts  # Language-specific resolvers
 ```

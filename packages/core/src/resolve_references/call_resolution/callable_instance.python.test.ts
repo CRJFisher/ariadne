@@ -25,6 +25,7 @@ import type {
   SymbolId,
   Location,
 } from "@ariadnejs/types";
+import { create_module_resolution_context } from "../import_resolution";
 
 const file_path = "processor.py" as FilePath;
 const module_scope = "module:0:0" as ScopeId;
@@ -32,7 +33,7 @@ const module_scope = "module:0:0" as ScopeId;
 const {
   exports: empty_exports,
   languages: empty_languages,
-  root_folder: empty_root_folder,
+  modules: empty_resolution,
 } = make_export_chain_context();
 
 function location(start_line: number, start_column = 0): Location {
@@ -155,7 +156,7 @@ describe("resolve_callable_instance", () => {
       resolutions,
       empty_exports,
       empty_languages,
-      empty_root_folder
+      empty_resolution
     );
 
     const result = resolve_callable_instance(var_id, definitions, types);
@@ -201,7 +202,7 @@ describe("resolve_callable_instance", () => {
       resolutions,
       empty_exports,
       empty_languages,
-      empty_root_folder
+      empty_resolution
     );
 
     const result = resolve_callable_instance(var_id, definitions, types);
@@ -241,7 +242,7 @@ describe("resolve_callable_instance", () => {
       resolutions,
       empty_exports,
       empty_languages,
-      empty_root_folder
+      empty_resolution
     );
 
     const result = resolve_callable_instance(const_id, definitions, types);
@@ -271,7 +272,7 @@ describe("resolve_callable_instance", () => {
       resolutions,
       empty_exports,
       empty_languages,
-      empty_root_folder
+      empty_resolution
     );
 
     const result = resolve_callable_instance(var_id, definitions, types);

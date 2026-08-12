@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
+import { EMPTY_MODULE_SPECIFIER_INDEX } from "../resolution_test_helpers";
 import { ExportRegistry } from "./export";
 import type {
   FilePath,
@@ -15,6 +16,7 @@ import type {
 } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "./definition";
 import type { FileSystemFolder } from "../file_folders";
+import { create_module_resolution_context,} from "../import_resolution";
 
 function make_location(file_path: FilePath, start_line: number, len: number): Location {
   return {
@@ -116,7 +118,7 @@ function create_definition_registry(
 const ROOT_FOLDER: FileSystemFolder = {
   path: "/" as FilePath,
   folders: new Map(),
-  files: new Set(["main.ts", "middle.ts", "helper.ts", "a.ts", "b.ts"]),
+  files: new Set(["main.ts", "middle.ts", "helper.ts", "a.ts", "b.ts", "c.ts"]),
 };
 
 const ALL_TS: ReadonlyMap<FilePath, Language> = new Map<FilePath, Language>([
@@ -125,7 +127,28 @@ const ALL_TS: ReadonlyMap<FilePath, Language> = new Map<FilePath, Language>([
   ["helper.ts" as FilePath, "typescript"],
   ["a.ts" as FilePath, "typescript"],
   ["b.ts" as FilePath, "typescript"],
+  ["c.ts" as FilePath, "typescript"],
 ]);
+
+function create_wildcard_reexport_definition(
+  file_path: FilePath,
+  import_path: string,
+  start_line: number
+): ImportDefinition {
+  const name = import_path.split("/").pop()!.replace(/\.(js|ts)$/, "");
+  return {
+    kind: "import",
+    name: name as SymbolName,
+    symbol_id:
+      `variable:${file_path}:${start_line}:0:${start_line}:${name.length}:${name}` as SymbolId,
+    defining_scope_id: `module:${file_path}` as ScopeId,
+    location: make_location(file_path, start_line, name.length),
+    export: { is_reexport: true },
+    import_path: import_path as ModulePath,
+    import_kind: "wildcard",
+    original_name: undefined,
+  };
+}
 
 function resolve_named(
   registry: ExportRegistry,
@@ -137,7 +160,7 @@ function resolve_named(
     name as SymbolName,
     "named",
     ALL_TS,
-    ROOT_FOLDER
+    create_module_resolution_context(ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX)
   );
 }
 
@@ -207,7 +230,7 @@ describe("ExportRegistry", () => {
         "ignored" as SymbolName,
         "default",
         ALL_TS,
-        ROOT_FOLDER
+        create_module_resolution_context(ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX)
       );
       expect(resolved).toBe(fn.symbol_id);
       expect(registry.get_exports(file_id)).toEqual(new Set([fn.symbol_id]));
@@ -240,7 +263,7 @@ describe("ExportRegistry", () => {
         "named_only" as SymbolName,
         "default",
         ALL_TS,
-        ROOT_FOLDER
+        create_module_resolution_context(ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX)
       );
       expect(resolved).toBeNull();
     });
@@ -255,7 +278,7 @@ describe("ExportRegistry", () => {
       registry.update_file(file_id, create_definition_registry({ [file_id]: [fn] }));
 
       expect(
-        registry.resolve_sole_default_export(file_id, ALL_TS, ROOT_FOLDER)
+        registry.resolve_sole_default_export(file_id, ALL_TS, create_module_resolution_context(ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX))
       ).toBe(fn.symbol_id);
     });
 
@@ -269,7 +292,7 @@ describe("ExportRegistry", () => {
       );
 
       expect(
-        registry.resolve_sole_default_export(file_id, ALL_TS, ROOT_FOLDER)
+        registry.resolve_sole_default_export(file_id, ALL_TS, create_module_resolution_context(ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX))
       ).toBeNull();
     });
 
@@ -285,7 +308,7 @@ describe("ExportRegistry", () => {
       );
 
       expect(
-        registry.resolve_sole_default_export(file_id, ALL_TS, ROOT_FOLDER)
+        registry.resolve_sole_default_export(file_id, ALL_TS, create_module_resolution_context(ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX))
       ).toBeNull();
     });
   });
@@ -455,6 +478,114 @@ describe("ExportRegistry", () => {
     });
   });
 
+  describe("two import-backed records for one name", () => {
+    const PKG_PY = "pkg.py" as FilePath;
+    const A_PY = "a.py" as FilePath;
+    const B_PY = "b.py" as FilePath;
+    const MAIN_RS = "main.rs" as FilePath;
+    const A_RS = "a.rs" as FilePath;
+    const B_RS = "b.rs" as FilePath;
+
+    const PY_ROOT: FileSystemFolder = {
+      path: "/" as FilePath,
+      folders: new Map(),
+      files: new Set(["pkg.py", "a.py", "b.py"]),
+    };
+    const RS_ROOT: FileSystemFolder = {
+      path: "/" as FilePath,
+      folders: new Map(),
+      files: new Set(["main.rs", "a.rs", "b.rs"]),
+    };
+
+    const ALL_PY: ReadonlyMap<FilePath, Language> = new Map<FilePath, Language>([
+      [PKG_PY, "python"],
+      [A_PY, "python"],
+      [B_PY, "python"],
+    ]);
+    const ALL_RS: ReadonlyMap<FilePath, Language> = new Map<FilePath, Language>([
+      [MAIN_RS, "rust"],
+      [A_RS, "rust"],
+      [B_RS, "rust"],
+    ]);
+
+    function resolve_in(
+      registry: ExportRegistry,
+      file: FilePath,
+      name: string,
+      languages: ReadonlyMap<FilePath, Language>,
+      root: FileSystemFolder
+    ): SymbolId | null {
+      return registry.resolve_export_chain(
+        file,
+        name as SymbolName,
+        "named",
+        languages,
+        create_module_resolution_context(root, EMPTY_MODULE_SPECIFIER_INDEX)
+      );
+    }
+
+    it("keeps the first of two cfg-gated Rust re-exports of one name", () => {
+      // #[cfg(unix)] pub use crate::a::Thing; #[cfg(not(unix))] pub use crate::b::Thing;
+      const origin_a = create_function_definition("Thing", A_RS, 1);
+      const origin_b = create_function_definition("Thing", B_RS, 1);
+      const registry = new ExportRegistry();
+      registry.update_file(A_RS, create_definition_registry({ [A_RS]: [origin_a] }));
+      registry.update_file(B_RS, create_definition_registry({ [B_RS]: [origin_b] }));
+      registry.update_file(
+        MAIN_RS,
+        create_definition_registry({
+          [MAIN_RS]: [
+            create_reexport_definition("Thing", MAIN_RS, "crate::a", 1),
+            create_reexport_definition("Thing", MAIN_RS, "crate::b", 2),
+          ],
+        })
+      );
+
+      expect(resolve_in(registry, MAIN_RS, "Thing", ALL_RS, RS_ROOT)).toBe(
+        origin_a.symbol_id
+      );
+    });
+
+    it("exports the last of two Python imports of one name", () => {
+      // from a import x  →  from b import x: the second binding is the module's x.
+      const origin_a = create_function_definition("x", A_PY, 1);
+      const origin_b = create_function_definition("x", B_PY, 1);
+      const registry = new ExportRegistry();
+      registry.update_file(A_PY, create_definition_registry({ [A_PY]: [origin_a] }));
+      registry.update_file(B_PY, create_definition_registry({ [B_PY]: [origin_b] }));
+      const from_a = create_reexport_definition("x", PKG_PY, "a", 1);
+      const from_b = create_reexport_definition("x", PKG_PY, "b", 2);
+      registry.update_file(
+        PKG_PY,
+        create_definition_registry({ [PKG_PY]: [from_a, from_b] })
+      );
+
+      expect(resolve_in(registry, PKG_PY, "x", ALL_PY, PY_ROOT)).toBe(
+        origin_b.symbol_id
+      );
+      expect(registry.get_exports(PKG_PY)).toEqual(new Set([from_b.symbol_id]));
+    });
+
+    it("exports the later Python import when the two arrive out of source order", () => {
+      const origin_a = create_function_definition("x", A_PY, 1);
+      const origin_b = create_function_definition("x", B_PY, 1);
+      const registry = new ExportRegistry();
+      registry.update_file(A_PY, create_definition_registry({ [A_PY]: [origin_a] }));
+      registry.update_file(B_PY, create_definition_registry({ [B_PY]: [origin_b] }));
+      const from_b = create_reexport_definition("x", PKG_PY, "b", 9);
+      const from_a = create_reexport_definition("x", PKG_PY, "a", 2);
+      registry.update_file(
+        PKG_PY,
+        create_definition_registry({ [PKG_PY]: [from_b, from_a] })
+      );
+
+      expect(resolve_in(registry, PKG_PY, "x", ALL_PY, PY_ROOT)).toBe(
+        origin_b.symbol_id
+      );
+      expect(registry.get_exports(PKG_PY)).toEqual(new Set([from_b.symbol_id]));
+    });
+  });
+
   describe("re-export chains", () => {
     it("follows a single re-export hop to the source symbol", () => {
       const foo = create_function_definition("foo", "helper.ts" as FilePath, 1);
@@ -589,7 +720,7 @@ describe("ExportRegistry", () => {
         "foo" as SymbolName,
         "named",
         new Map(),
-        ROOT_FOLDER
+        create_module_resolution_context(ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX)
       );
       expect(resolved).toBeNull();
     });
@@ -706,6 +837,520 @@ describe("ExportRegistry", () => {
       registry.update_file(file_id, create_definition_registry({ [file_id]: [fn] }));
 
       expect(resolve_named(registry, file_id, "absent")).toBeNull();
+    });
+  });
+
+  describe("wildcard re-export fan-out", () => {
+    const MAIN = "main.ts" as FilePath;
+    const HELPER = "helper.ts" as FilePath;
+    const MIDDLE = "middle.ts" as FilePath;
+    const A = "a.ts" as FilePath;
+    const B = "b.ts" as FilePath;
+
+    it("resolves a name through a single wildcard edge", () => {
+      const foo = create_function_definition("foo", HELPER, 1);
+      const star = create_wildcard_reexport_definition(MAIN, "./helper", 1);
+      const registry = new ExportRegistry();
+      registry.update_file(HELPER, create_definition_registry({ [HELPER]: [foo] }));
+      registry.update_file(MAIN, create_definition_registry({ [MAIN]: [star] }));
+
+      expect(resolve_named(registry, MAIN, "foo")).toBe(foo.symbol_id);
+    });
+
+    it("returns null when two wildcard edges reach different symbols for one name", () => {
+      const dup_a = create_function_definition("dup", A, 1);
+      const dup_b = create_function_definition("dup", B, 5);
+      const registry = new ExportRegistry();
+      registry.update_file(A, create_definition_registry({ [A]: [dup_a] }));
+      registry.update_file(B, create_definition_registry({ [B]: [dup_b] }));
+      registry.update_file(
+        MAIN,
+        create_definition_registry({
+          [MAIN]: [
+            create_wildcard_reexport_definition(MAIN, "./a", 1),
+            create_wildcard_reexport_definition(MAIN, "./b", 2),
+          ],
+        })
+      );
+
+      expect(resolve_named(registry, MAIN, "dup")).toBeNull();
+    });
+
+    it("binds a name when every wildcard path reaches the same symbol", () => {
+      const shared = create_function_definition("shared", HELPER, 1);
+      const registry = new ExportRegistry();
+      registry.update_file(HELPER, create_definition_registry({ [HELPER]: [shared] }));
+      registry.update_file(
+        MIDDLE,
+        create_definition_registry({
+          [MIDDLE]: [create_wildcard_reexport_definition(MIDDLE, "./helper", 1)],
+        })
+      );
+      registry.update_file(
+        A,
+        create_definition_registry({
+          [A]: [create_wildcard_reexport_definition(A, "./helper", 1)],
+        })
+      );
+      registry.update_file(
+        MAIN,
+        create_definition_registry({
+          [MAIN]: [
+            create_wildcard_reexport_definition(MAIN, "./middle", 1),
+            create_wildcard_reexport_definition(MAIN, "./a", 2),
+          ],
+        })
+      );
+
+      expect(resolve_named(registry, MAIN, "shared")).toBe(shared.symbol_id);
+    });
+
+    it("prefers a file's own named export over a name a wildcard edge also provides", () => {
+      const own = create_function_definition("foo", MAIN, 5);
+      const foreign = create_function_definition("foo", HELPER, 1);
+      const registry = new ExportRegistry();
+      registry.update_file(HELPER, create_definition_registry({ [HELPER]: [foreign] }));
+      registry.update_file(
+        MAIN,
+        create_definition_registry({
+          [MAIN]: [own, create_wildcard_reexport_definition(MAIN, "./helper", 1)],
+        })
+      );
+
+      expect(resolve_named(registry, MAIN, "foo")).toBe(own.symbol_id);
+    });
+
+    it("terminates and returns null for mutually star-re-exporting files", () => {
+      const registry = new ExportRegistry();
+      registry.update_file(
+        A,
+        create_definition_registry({
+          [A]: [create_wildcard_reexport_definition(A, "./b", 1)],
+        })
+      );
+      registry.update_file(
+        B,
+        create_definition_registry({
+          [B]: [create_wildcard_reexport_definition(B, "./a", 1)],
+        })
+      );
+
+      expect(resolve_named(registry, A, "x")).toBeNull();
+    });
+
+    it("finds a real definition inside a wildcard cycle", () => {
+      const only_in_b = create_function_definition("only_in_b", B, 5);
+      const registry = new ExportRegistry();
+      registry.update_file(
+        A,
+        create_definition_registry({
+          [A]: [create_wildcard_reexport_definition(A, "./b", 1)],
+        })
+      );
+      registry.update_file(
+        B,
+        create_definition_registry({
+          [B]: [only_in_b, create_wildcard_reexport_definition(B, "./a", 1)],
+        })
+      );
+
+      expect(resolve_named(registry, A, "only_in_b")).toBe(only_in_b.symbol_id);
+    });
+
+    it("does not fan a wildcard edge out for a default import", () => {
+      const dflt = create_function_definition("main_fn", HELPER, 1, {
+        is_default: true,
+      });
+      const registry = new ExportRegistry();
+      registry.update_file(HELPER, create_definition_registry({ [HELPER]: [dflt] }));
+      registry.update_file(
+        MAIN,
+        create_definition_registry({
+          [MAIN]: [create_wildcard_reexport_definition(MAIN, "./helper", 1)],
+        })
+      );
+
+      expect(
+        registry.resolve_export_chain(
+          MAIN,
+          "" as SymbolName,
+          "default",
+          ALL_TS,
+          create_module_resolution_context(ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX)
+        )
+      ).toBeNull();
+    });
+
+    it("stops forwarding when a re-index removes the wildcard edge", () => {
+      const foo = create_function_definition("foo", HELPER, 1);
+      const registry = new ExportRegistry();
+      registry.update_file(HELPER, create_definition_registry({ [HELPER]: [foo] }));
+      registry.update_file(
+        MAIN,
+        create_definition_registry({
+          [MAIN]: [create_wildcard_reexport_definition(MAIN, "./helper", 1)],
+        })
+      );
+      expect(resolve_named(registry, MAIN, "foo")).toBe(foo.symbol_id);
+
+      registry.update_file(MAIN, create_definition_registry({ [MAIN]: [] }));
+
+      expect(resolve_named(registry, MAIN, "foo")).toBeNull();
+    });
+
+    it("resolves a two-statement named re-export through to the origin definition", () => {
+      const origin = create_function_definition("origin", HELPER, 1);
+      const bare_reexport: ImportDefinition = {
+        kind: "import",
+        name: "origin" as SymbolName,
+        symbol_id: `import:${MAIN}:1:0:1:6:origin` as SymbolId,
+        defining_scope_id: `module:${MAIN}` as ScopeId,
+        location: make_location(MAIN, 1, 6),
+        export: { export_name: undefined, is_reexport: false },
+        import_path: "./helper" as ModulePath,
+        import_kind: "named",
+        original_name: undefined,
+      };
+      const registry = new ExportRegistry();
+      registry.update_file(HELPER, create_definition_registry({ [HELPER]: [origin] }));
+      registry.update_file(
+        MAIN,
+        create_definition_registry({ [MAIN]: [bare_reexport] })
+      );
+
+      expect(resolve_named(registry, MAIN, "origin")).toBe(origin.symbol_id);
+    });
+
+    it("binds ambiguous-through-one-edge names to the other edge's unambiguous answer", () => {
+      // MAIN stars A and B; A stars C and D which disagree on dup; B stars C.
+      // A's surface drops dup as ambiguous, so B's answer wins from MAIN —
+      // and the answer is the same whichever order MAIN's edges are declared.
+      const C = "c.ts" as FilePath;
+      const dup_c = create_function_definition("dup", C, 1);
+      const dup_d = create_function_definition("dup", HELPER, 5);
+      for (const edge_order of [
+        ["./a", "./b"],
+        ["./b", "./a"],
+      ]) {
+        const registry = new ExportRegistry();
+        registry.update_file(C, create_definition_registry({ [C]: [dup_c] }));
+        registry.update_file(HELPER, create_definition_registry({ [HELPER]: [dup_d] }));
+        registry.update_file(
+          A,
+          create_definition_registry({
+            [A]: [
+              create_wildcard_reexport_definition(A, "./c", 1),
+              create_wildcard_reexport_definition(A, "./helper", 2),
+            ],
+          })
+        );
+        registry.update_file(
+          B,
+          create_definition_registry({
+            [B]: [create_wildcard_reexport_definition(B, "./c", 1)],
+          })
+        );
+        registry.update_file(
+          MAIN,
+          create_definition_registry({
+            [MAIN]: [
+              create_wildcard_reexport_definition(MAIN, edge_order[0], 1),
+              create_wildcard_reexport_definition(MAIN, edge_order[1], 2),
+            ],
+          })
+        );
+
+        expect(resolve_named(registry, MAIN, "dup")).toBe(dup_c.symbol_id);
+      }
+    });
+
+    it("still throws for two genuine duplicate non-wildcard names alongside a wildcard edge", () => {
+      const first = create_function_definition("dup", MAIN, 1);
+      const second = create_function_definition("dup", MAIN, 5);
+      const registry = new ExportRegistry();
+
+      expect(() =>
+        registry.update_file(
+          MAIN,
+          create_definition_registry({
+            [MAIN]: [
+              first,
+              second,
+              create_wildcard_reexport_definition(MAIN, "./helper", 9),
+            ],
+          })
+        )
+      ).toThrow(/Duplicate export name "dup"/);
+    });
+  });
+
+  describe("resolve_all_exports", () => {
+    const MAIN = "main.ts" as FilePath;
+    const HELPER = "helper.ts" as FilePath;
+    const A = "a.ts" as FilePath;
+    const B = "b.ts" as FilePath;
+
+    function all_export_names(registry: ExportRegistry, file: FilePath): string[] {
+      return [...registry.resolve_all_exports(file, ALL_TS, create_module_resolution_context(ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX)).keys()].sort();
+    }
+
+    it("returns every directly exported name resolved to its symbol", () => {
+      const foo = create_function_definition("foo", MAIN, 1);
+      const bar = create_variable_definition("bar", MAIN, 2);
+      const registry = new ExportRegistry();
+      registry.update_file(MAIN, create_definition_registry({ [MAIN]: [foo, bar] }));
+
+      expect(registry.resolve_all_exports(MAIN, ALL_TS, create_module_resolution_context(ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX))).toEqual(
+        new Map([
+          ["foo", foo.symbol_id],
+          ["bar", bar.symbol_id],
+        ])
+      );
+    });
+
+    it("includes names reached through a wildcard edge", () => {
+      const foo = create_function_definition("foo", HELPER, 1);
+      const own = create_function_definition("local_fn", MAIN, 1);
+      const registry = new ExportRegistry();
+      registry.update_file(HELPER, create_definition_registry({ [HELPER]: [foo] }));
+      registry.update_file(
+        MAIN,
+        create_definition_registry({
+          [MAIN]: [own, create_wildcard_reexport_definition(MAIN, "./helper", 2)],
+        })
+      );
+
+      expect(registry.resolve_all_exports(MAIN, ALL_TS, create_module_resolution_context(ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX))).toEqual(
+        new Map([
+          ["local_fn", own.symbol_id],
+          ["foo", foo.symbol_id],
+        ])
+      );
+    });
+
+    it("drops a name two wildcard edges disagree on and keeps the rest", () => {
+      const dup_a = create_function_definition("dup", A, 1);
+      const keep_a = create_function_definition("keep", A, 2);
+      const dup_b = create_function_definition("dup", B, 5);
+      const registry = new ExportRegistry();
+      registry.update_file(A, create_definition_registry({ [A]: [dup_a, keep_a] }));
+      registry.update_file(B, create_definition_registry({ [B]: [dup_b] }));
+      registry.update_file(
+        MAIN,
+        create_definition_registry({
+          [MAIN]: [
+            create_wildcard_reexport_definition(MAIN, "./a", 1),
+            create_wildcard_reexport_definition(MAIN, "./b", 2),
+          ],
+        })
+      );
+
+      expect(all_export_names(registry, MAIN)).toEqual(["keep"]);
+    });
+
+    it("keeps a file's own export in the surface when a wildcard edge disputes it", () => {
+      const own = create_function_definition("dup", MAIN, 1);
+      const foreign = create_function_definition("dup", HELPER, 5);
+      const registry = new ExportRegistry();
+      registry.update_file(HELPER, create_definition_registry({ [HELPER]: [foreign] }));
+      registry.update_file(
+        MAIN,
+        create_definition_registry({
+          [MAIN]: [own, create_wildcard_reexport_definition(MAIN, "./helper", 2)],
+        })
+      );
+
+      expect(registry.resolve_all_exports(MAIN, ALL_TS, create_module_resolution_context(ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX))).toEqual(
+        new Map([["dup", own.symbol_id]])
+      );
+    });
+
+    it("returns complete surfaces for both sides of a mutual star pair", () => {
+      const only_in_a = create_function_definition("only_in_a", A, 2);
+      const only_in_b = create_function_definition("only_in_b", B, 2);
+      const registry = new ExportRegistry();
+      registry.update_file(
+        A,
+        create_definition_registry({
+          [A]: [only_in_a, create_wildcard_reexport_definition(A, "./b", 1)],
+        })
+      );
+      registry.update_file(
+        B,
+        create_definition_registry({
+          [B]: [only_in_b, create_wildcard_reexport_definition(B, "./a", 1)],
+        })
+      );
+
+      expect(all_export_names(registry, A)).toEqual(["only_in_a", "only_in_b"]);
+      // The A walk was cycle-truncated at B, so B's surface must be computed
+      // fresh, not served from a cached partial.
+      expect(all_export_names(registry, B)).toEqual(["only_in_a", "only_in_b"]);
+    });
+
+    it("returns the updated surface after a wildcard target is re-indexed", () => {
+      const old_fn = create_function_definition("old_fn", HELPER, 1);
+      const registry = new ExportRegistry();
+      registry.update_file(HELPER, create_definition_registry({ [HELPER]: [old_fn] }));
+      registry.update_file(
+        MAIN,
+        create_definition_registry({
+          [MAIN]: [create_wildcard_reexport_definition(MAIN, "./helper", 1)],
+        })
+      );
+      expect(all_export_names(registry, MAIN)).toEqual(["old_fn"]);
+
+      const new_fn = create_function_definition("new_fn", HELPER, 1);
+      registry.update_file(HELPER, create_definition_registry({ [HELPER]: [new_fn] }));
+
+      expect(all_export_names(registry, MAIN)).toEqual(["new_fn"]);
+    });
+
+    it("returns the updated surface when a leaf two wildcard hops away is re-indexed", () => {
+      const MIDDLE = "middle.ts" as FilePath;
+      const old_fn = create_function_definition("old_fn", HELPER, 1);
+      const registry = new ExportRegistry();
+      registry.update_file(HELPER, create_definition_registry({ [HELPER]: [old_fn] }));
+      registry.update_file(
+        MIDDLE,
+        create_definition_registry({
+          [MIDDLE]: [create_wildcard_reexport_definition(MIDDLE, "./helper", 1)],
+        })
+      );
+      registry.update_file(
+        MAIN,
+        create_definition_registry({
+          [MAIN]: [create_wildcard_reexport_definition(MAIN, "./middle", 1)],
+        })
+      );
+      expect(all_export_names(registry, MAIN)).toEqual(["old_fn"]);
+
+      const new_fn = create_function_definition("new_fn", HELPER, 1);
+      registry.update_file(HELPER, create_definition_registry({ [HELPER]: [new_fn] }));
+
+      expect(all_export_names(registry, MAIN)).toEqual(["new_fn"]);
+    });
+
+    it("returns the surface a starred file gains when it is indexed after the file starring it", () => {
+      const registry = new ExportRegistry();
+      registry.update_file(
+        MAIN,
+        create_definition_registry({
+          [MAIN]: [create_wildcard_reexport_definition(MAIN, "./helper", 1)],
+        })
+      );
+      // The empty answer was computed by reading a file the registry did not
+      // hold, so the file's arrival has to invalidate it.
+      expect(all_export_names(registry, MAIN)).toEqual([]);
+
+      const late_fn = create_function_definition("late_fn", HELPER, 1);
+      registry.update_file(HELPER, create_definition_registry({ [HELPER]: [late_fn] }));
+
+      expect(all_export_names(registry, MAIN)).toEqual(["late_fn"]);
+    });
+
+    it("serves a surface from the memo after a file it never read is re-indexed", () => {
+      const foo = create_function_definition("foo", HELPER, 1);
+      const registry = new ExportRegistry();
+      registry.update_file(HELPER, create_definition_registry({ [HELPER]: [foo] }));
+      registry.update_file(
+        MAIN,
+        create_definition_registry({
+          [MAIN]: [create_wildcard_reexport_definition(MAIN, "./helper", 1)],
+        })
+      );
+      const first = registry.resolve_all_exports(MAIN, ALL_TS, create_module_resolution_context(ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX));
+
+      registry.update_file(
+        A,
+        create_definition_registry({ [A]: [create_function_definition("unrelated", A, 1)] })
+      );
+
+      expect(registry.resolve_all_exports(MAIN, ALL_TS, create_module_resolution_context(ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX))).toBe(first);
+    });
+
+    it("returns an empty surface for a wildcard target removed from the registry", () => {
+      const gone = create_function_definition("gone", HELPER, 1);
+      const registry = new ExportRegistry();
+      registry.update_file(HELPER, create_definition_registry({ [HELPER]: [gone] }));
+      registry.update_file(
+        MAIN,
+        create_definition_registry({
+          [MAIN]: [create_wildcard_reexport_definition(MAIN, "./helper", 1)],
+        })
+      );
+      expect(all_export_names(registry, MAIN)).toEqual(["gone"]);
+
+      registry.remove_file(HELPER);
+
+      expect(all_export_names(registry, MAIN)).toEqual([]);
+    });
+
+    it("returns an empty surface after clear", () => {
+      const fn = create_function_definition("fn_a", MAIN, 1);
+      const registry = new ExportRegistry();
+      registry.update_file(MAIN, create_definition_registry({ [MAIN]: [fn] }));
+      expect(all_export_names(registry, MAIN)).toEqual(["fn_a"]);
+
+      registry.clear();
+
+      expect(all_export_names(registry, MAIN)).toEqual([]);
+    });
+
+    it("serves a repeated lookup from the memo as the same instance", () => {
+      const fn = create_function_definition("fn_a", MAIN, 1);
+      const registry = new ExportRegistry();
+      registry.update_file(MAIN, create_definition_registry({ [MAIN]: [fn] }));
+
+      const first = registry.resolve_all_exports(MAIN, ALL_TS, create_module_resolution_context(ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX));
+      expect(registry.resolve_all_exports(MAIN, ALL_TS, create_module_resolution_context(ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX))).toBe(first);
+
+      registry.update_file(MAIN, create_definition_registry({ [MAIN]: [fn] }));
+      expect(registry.resolve_all_exports(MAIN, ALL_TS, create_module_resolution_context(ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX))).not.toBe(first);
+    });
+
+    it("withholds a name whose own re-export is declared but unresolvable", () => {
+      // f exports X from a module that lacks it AND stars a module that has it:
+      // the declared claim shadows the star surface, matching the keyed lookup.
+      const good_x = create_function_definition("X", HELPER, 1);
+      const registry = new ExportRegistry();
+      registry.update_file(HELPER, create_definition_registry({ [HELPER]: [good_x] }));
+      registry.update_file(
+        MAIN,
+        create_definition_registry({
+          [MAIN]: [
+            create_reexport_definition("X", MAIN, "./b", 1),
+            create_wildcard_reexport_definition(MAIN, "./helper", 2),
+          ],
+        })
+      );
+
+      expect(all_export_names(registry, MAIN)).toEqual([]);
+      expect(resolve_named(registry, MAIN, "X")).toBeNull();
+    });
+  });
+
+  describe("resolve_sole_default_export", () => {
+    const MAIN = "main.ts" as FilePath;
+    const HELPER = "helper.ts" as FilePath;
+
+    it("returns null for a wildcard barrel that also has a default export", () => {
+      const dflt = create_function_definition("main_fn", MAIN, 1, {
+        is_default: true,
+      });
+      const named = create_function_definition("alpha", HELPER, 1);
+      const registry = new ExportRegistry();
+      registry.update_file(HELPER, create_definition_registry({ [HELPER]: [named] }));
+      registry.update_file(
+        MAIN,
+        create_definition_registry({
+          [MAIN]: [dflt, create_wildcard_reexport_definition(MAIN, "./helper", 2)],
+        })
+      );
+
+      expect(
+        registry.resolve_sole_default_export(MAIN, ALL_TS, create_module_resolution_context(ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX))
+      ).toBeNull();
     });
   });
 });

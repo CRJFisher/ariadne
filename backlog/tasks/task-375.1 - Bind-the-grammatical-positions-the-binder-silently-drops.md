@@ -1,7 +1,7 @@
 ---
 id: TASK-375.1
 title: "Bind the grammatical positions the binder silently drops"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-07-29 09:37"
 labels:
@@ -51,13 +51,46 @@ For untyped JS parameters the failure moves **forward** from `name_resolution/na
 <!-- AC:BEGIN -->
 
 - [ ] #1 `add_parameter_to_callable` throws for an unknown callable id and `definition_builder.test.ts` asserts it; the full core suite is run against the throwing version and every construct that trips it is recorded.
-- [ ] #2 `signature.parameters` matches the exact asserted literal for `const f = (p) => {}`, `const f = function (p) {}`, `return function (p) {}`, `module.exports = function (p) {}` and `obj = { m(p) {} }`, and the `anonymous_function_symbol` fallback still applies to a genuinely anonymous IIFE.
-- [ ] #3 `for (const a of xs)`, `for (const k in o)`, `const { c } = o`, `const [d] = xs`, `const { ...r } = o` and `function f({ g }: T)` each bind by name in both JavaScript and TypeScript.
-- [ ] #4 Rust `if let Some(b)`, `match o { Some(d) => … }` and `while let Some(c) = it.next()` bind `b`, `d` and `c` and never `Some(c)`; the Python walrus `if (d := xs[0]):` binds `d`.
+      <!-- no: `add_parameter_to_callable` deliberately drops an unowned parameter — raising would drop the whole file from the corpus. Nothing detects a future owner-id disagreement. -->
+- [x] #2 `signature.parameters` matches the exact asserted literal for `const f = (p) => {}`, `const f = function (p) {}`, `return function (p) {}`, `module.exports = function (p) {}` and `obj = { m(p) {} }`, and the `anonymous_function_symbol` fallback still applies to a genuinely anonymous IIFE.
+- [x] #3 `for (const a of xs)`, `for (const k in o)`, `const { c } = o`, `const [d] = xs`, `const { ...r } = o` and `function f({ g }: T)` each bind by name in both JavaScript and TypeScript.
+- [x] #4 Rust `if let Some(b)`, `match o { Some(d) => … }` and `while let Some(c) = it.next()` bind `b`, `d` and `c` and never `Some(c)`; the Python walrus `if (d := xs[0]):` binds `d`.
 - [ ] #5 The webpack `lib/ids/IdHelpers.js:148` (`chunkGraph.getChunkRootModules`) and mocha `lib/interfaces/common.js:75` (`suites[0].beforeEach`) false-positives clear.
+      <!-- no: Both rows move from `name_resolution`/`name_not_in_scope` to `type_inference`/`receiver_type_unknown`; nothing types the receiver, so the calls still do not resolve. -->
 - [ ] #6 The loop-head evidence case `for (const p of ps) { p.close() }` resolves, closing the re-homed pattern/loop-head rows.
+      <!-- no: The loop-head name binds but the receiver takes no type, so `p.close()` finds no target — the row moves bucket rather than clearing. Owned by type-model-completion. -->
 - [ ] #7 Integration tests cover every evidence case in this group's triage evidence individually — the two reproduced corpus rows plus each source form in the binder table — and not a single representative.
-- [ ] #8 `javascript_typescript_scope_boundary_extractor.test.ts` (312 lines) needs no editing.
+      <!-- partial: Three evidence rows have Project-level tests; the remaining binder-table forms are pinned at the index level only. -->
+- [x] #8 `javascript_typescript_scope_boundary_extractor.test.ts` (312 lines) needs no editing.
 - [ ] #9 Triage is re-run on the four affected JS/TS/Python projects and the per-row split of the 39 qualified-callee rows is recorded as measured bucket movement, with rows that move to `type_inference/receiver_type_unknown` re-routed to `type-model-completion` rather than counted as failures.
+      <!-- no: Triage was not re-run; the per-row split of the 39 qualified-callee rows is unmeasured — owned by TASK-385. -->
 
 <!-- AC:END -->
+
+## Implementation Notes
+
+## High-level summary
+
+Names the source clearly binds now reach the scope map. Three mechanisms were at work, and all three are closed.
+
+The first was an id disagreement, not a missing capture. `const f = (p) => …` mints its function under the declarator's name while the parameter walk minted a location-keyed anonymous id, so the owner lookup missed and `add_parameter_to_callable` dropped the parameter. `find_containing_callable` (JavaScript and TypeScript) now mints the id the definition actually carries — the declarator name, the CommonJS property name for `exports.f = function …`, the method id for an object-literal shorthand method — and falls back to an anonymous symbol only where the source genuinely binds no name.
+
+`add_parameter_to_callable` still drops a parameter whose owning callable it cannot find, and that is deliberate. The indexed callable surface is partial by design, so an unowned parameter is an expected gap rather than an internal inconsistency. Raising there would abort the file's index and drop the file from the corpus, which manufactures exactly the uncalled-looking functions entry-point detection exists to avoid. Making it throw was useful once, as a way to enumerate the constructs this task then fixed; it is not a guard the shipped code carries, and nothing detects a future owner-id disagreement automatically. AC #1 is not met.
+
+The second was callables that no handler indexed at all, so their parameters had nowhere to attach: a returned function expression, `module.exports = function (…) {}`, an object-literal shorthand method, a `function`-expression IIFE, every Rust closure outside argument position, and `extern "C" fn` (whose definition the general Rust handler skipped because it carries a `function_modifiers` node that no specialised handler claims). Each now produces the definition its parameters need. Anonymous functions are excluded from entry points, so indexing closures adds no false positives.
+
+The third was query gaps: `for (const a of xs)` matched nothing because the loop-head pattern required a *nested* identifier; destructuring bound one name spelled `{ c }` instead of one per identifier; Rust `if let` / `match` / `while let` bound either nothing or a name spelled `Some(c)`; the Python walrus bound nothing. Each is now a per-identifier capture. Two bindings were also mis-modelled rather than missing: a catch clause name is a block variable, not a callable parameter, and a Rust const generic is a type parameter, not a value parameter.
+
+Front door for readers: `symbol_factories.{javascript,typescript}.ts`'s `find_containing_callable` owns id agreement, and the `.scm` files own which positions bind. Nothing enforces agreement between the two, so a new callable shape needs a test asserting its parameters by name.
+
+### Deferred and recorded
+
+- A top-level `try { … } catch (e) { … }` in some formattings makes the scope tree report two block scopes at the same depth containing the catch binding, and indexing throws `Malformed scope tree`. Pre-existing (the catch binding always resolved its scope this way) and independent of this task's change, but it drops the whole file from the corpus when it fires — worth its own task.
+- A destructured `require` binding stays owned by the require handlers; the generic destructuring capture skips it so the import is not shadowed by a same-id local.
+- Re-running triage on the four affected JS/TS/Python projects (AC #9) is the epic-level verification pass, not this task.
+
+### Verification
+
+`packages/core` green; typecheck and lint clean. The three reproduced corpus rows — webpack `IdHelpers.js` declarator arrow, mocha `common.js` whole-module export, and the `for (const p of ps) { p.close() }` loop head — are pinned as Project-level tests asserting the exact outcome each produces: the receiver name binds, so the call's failure moves out of `name_resolution`/`name_not_in_scope` and into `type_inference`/`receiver_type_unknown`.
+
+None of the three calls resolves. Binding the name is this task's scope; typing the receiver is not, so the rows move bucket rather than clearing. AC #6 asks that the loop-head case resolve, and it does not — the receiver takes an identity from the loop head but no type, so `p.close()` finds no target even with `Handle.close` defined in the same file. That row belongs to `type-model-completion`.

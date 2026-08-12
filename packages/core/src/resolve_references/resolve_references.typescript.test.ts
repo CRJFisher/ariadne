@@ -39,8 +39,12 @@ async function setup_project(
   const project = new Project();
   await project.initialize(temp_dir as FilePath);
 
+  // Manifests belong on disk for the specifier index to read, but only source
+  // files are indexed — the same split the real loader makes.
   for (const [relative_path, content] of Object.entries(files)) {
-    project.update_file(file_paths[relative_path], content);
+    if (/\.(ts|tsx|js|jsx)$/.test(relative_path)) {
+      project.update_file(file_paths[relative_path], content);
+    }
   }
 
   return { project, temp_dir, file_paths };
@@ -728,5 +732,562 @@ describe("Namespace member exports", () => {
       "helper",
       "helper",
     ]);
+  });
+});
+
+describe("TypeScript export-* barrel resolution", () => {
+  function expect_call_resolves_to(
+    project: Project,
+    caller_file: FilePath,
+    call_name: string,
+    target_file: FilePath
+  ): void {
+    const call = project.resolutions
+      .get_calls_for_file(caller_file)
+      .find((c) => c.name === (call_name as SymbolName));
+    expect(call).toBeDefined();
+    expect(call!.resolution_failure).toBeUndefined();
+    expect(call!.resolutions.length).toEqual(1);
+
+    const target_ids = project.definitions
+      .get_definitions_by_name(call_name as SymbolName)
+      .filter((def) => def.location.file_path === target_file)
+      .filter((def) => def.kind !== "import")
+      .map((def) => def.symbol_id);
+    expect(target_ids).toContain(call!.resolutions[0].symbol_id);
+  }
+
+  it("resolves a named import through one export-* hop to its leaf definition", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "src/compiler/moduleNameResolver.ts": `export function loadModuleFromGlobalCache(moduleName: string): number {
+  return moduleName.length;
+}
+`,
+      "src/compiler/utilities.ts": `export function emitDetachedComments(text: string): number {
+  return text.length;
+}
+`,
+      "src/compiler/_namespaces/ts.ts": `export * from "../moduleNameResolver";
+export * from "../utilities";
+`,
+      "src/compiler/resolutionCache.ts": `import { loadModuleFromGlobalCache } from "./_namespaces/ts";
+
+export function createResolutionCache(): number {
+  return loadModuleFromGlobalCache("mod");
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect_call_resolves_to(
+      project,
+      file_paths["src/compiler/resolutionCache.ts"],
+      "loadModuleFromGlobalCache",
+      file_paths["src/compiler/moduleNameResolver.ts"]
+    );
+  });
+
+  it("resolves a second name through the same barrel to a different leaf", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "src/compiler/moduleNameResolver.ts": `export function loadModuleFromGlobalCache(moduleName: string): number {
+  return moduleName.length;
+}
+`,
+      "src/compiler/utilities.ts": `export function emitDetachedComments(text: string): number {
+  return text.length;
+}
+`,
+      "src/compiler/_namespaces/ts.ts": `export * from "../moduleNameResolver";
+export * from "../utilities";
+`,
+      "src/compiler/emitter.ts": `import { emitDetachedComments } from "./_namespaces/ts";
+
+export function emitFiles(): number {
+  return emitDetachedComments("x");
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect_call_resolves_to(
+      project,
+      file_paths["src/compiler/emitter.ts"],
+      "emitDetachedComments",
+      file_paths["src/compiler/utilities.ts"]
+    );
+  });
+
+  it("resolves through a barrel that also star-re-exports another barrel", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "src/compiler/moduleNameResolver.ts": `export function loadModuleFromGlobalCache(moduleName: string): number {
+  return moduleName.length;
+}
+`,
+      "src/compiler/_namespaces/ts.ts": `export * from "../moduleNameResolver";
+`,
+      "src/services/utilities.ts": `export function findTokenOnLeftOfPosition(file: string, position: number): number {
+  return file.length + position;
+}
+`,
+      "src/services/_namespaces/ts.ts": `export * from "../../compiler/_namespaces/ts";
+export * from "../utilities";
+`,
+      "src/services/signatureHelp.ts": `import { findTokenOnLeftOfPosition } from "./_namespaces/ts";
+
+export function getSignatureHelpItems(file: string): number {
+  return findTokenOnLeftOfPosition(file, 0);
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect_call_resolves_to(
+      project,
+      file_paths["src/services/signatureHelp.ts"],
+      "findTokenOnLeftOfPosition",
+      file_paths["src/services/utilities.ts"]
+    );
+  });
+
+  it("resolves a namespace member through a wildcard hop, a namespace-object hop and a wildcard hop", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "src/jsTyping/jsTyping.ts": `export function discoverTypings(fileNames: string[]): number {
+  return fileNames.length;
+}
+`,
+      "src/jsTyping/_namespaces/ts.JsTyping.ts": `export * from "../jsTyping";
+`,
+      "src/jsTyping/_namespaces/ts.ts": `import * as JsTyping from "./ts.JsTyping";
+export { JsTyping };
+`,
+      "src/typingsInstallerCore/_namespaces/ts.ts": `export * from "../../jsTyping/_namespaces/ts";
+`,
+      "src/typingsInstallerCore/typingsInstaller.ts": `import { JsTyping } from "./_namespaces/ts";
+
+export function installTypings(fileNames: string[]): number {
+  return JsTyping.discoverTypings(fileNames);
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    const call = project.resolutions
+      .get_calls_for_file(file_paths["src/typingsInstallerCore/typingsInstaller.ts"])
+      .find((c) => c.name === ("discoverTypings" as SymbolName));
+    expect(call).toBeDefined();
+    expect(call!.resolution_failure).toBeUndefined();
+    expect(call!.resolutions.length).toEqual(1);
+
+    const target_ids = project.definitions
+      .get_definitions_by_name("discoverTypings" as SymbolName)
+      .filter(
+        (def) =>
+          def.location.file_path === file_paths["src/jsTyping/jsTyping.ts"]
+      )
+      .filter((def) => def.kind !== "import")
+      .map((def) => def.symbol_id);
+    expect(target_ids).toContain(call!.resolutions[0].symbol_id);
+  });
+
+  it("does not surface a name the barrel's targets do not export", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "src/leaf.ts": `export function realExport(): number {
+  return 1;
+}
+`,
+      "src/barrel.ts": `export * from "./leaf";
+`,
+      "src/consumer.ts": `import { notAName } from "./barrel";
+
+export function tryIt(): number {
+  return notAName();
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    const call = project.resolutions
+      .get_calls_for_file(file_paths["src/consumer.ts"])
+      .find((c) => c.name === ("notAName" as SymbolName));
+    expect(call).toBeDefined();
+    expect(call!.resolutions.length).toEqual(0);
+    expect(call!.resolution_failure?.stage).toEqual("name_resolution");
+    expect(call!.resolution_failure?.reason).toEqual("name_not_in_scope");
+  });
+
+  it("resolves a namespace member reached directly, with no barrel in the chain", async () => {
+    // The FindAllReferences.Core.getReferencesForFileName shape.
+    const { project, temp_dir, file_paths } = await setup_project({
+      "src/findAllReferences.ts": `export namespace FindAllReferences {
+  export namespace Core {
+    export function getReferencesForFileName(fileName: string): number {
+      return fileName.length;
+    }
+  }
+}
+`,
+      "src/consumer.ts": `import { FindAllReferences } from "./findAllReferences";
+
+export function drive(): number {
+  return FindAllReferences.Core.getReferencesForFileName("x");
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect_call_resolves_to(
+      project,
+      file_paths["src/consumer.ts"],
+      "getReferencesForFileName",
+      file_paths["src/findAllReferences.ts"]
+    );
+  });
+
+  it("resolves a namespace member through a barrel's namespace object", async () => {
+    // import { formatting } from './_namespaces/ts.js' where the barrel does
+    // `import * as formatting …; export { formatting }` and the leaf exports *.
+    const { project, temp_dir, file_paths } = await setup_project({
+      "src/services/formatting/rules.ts": `export function formatOnSemicolon(pos: number): number {
+  return pos;
+}
+`,
+      "src/services/_namespaces/ts.formatting.ts": `export * from "../formatting/rules";
+`,
+      "src/services/_namespaces/ts.ts": `import * as formatting from "./ts.formatting";
+export { formatting };
+`,
+      "src/services/formatting.ts": `import { formatting } from "./_namespaces/ts";
+
+export function applyFormatting(): number {
+  return formatting.formatOnSemicolon(1);
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect_call_resolves_to(
+      project,
+      file_paths["src/services/formatting.ts"],
+      "formatOnSemicolon",
+      file_paths["src/services/formatting/rules.ts"]
+    );
+  });
+
+  it("resolves a namespace member through a barrel whose leaf re-exports by name", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "src/services/formatting/rules.ts": `export function formatOnSemicolon(pos: number): number {
+  return pos;
+}
+`,
+      "src/services/_namespaces/ts.formatting.ts": `export { formatOnSemicolon } from "../formatting/rules";
+`,
+      "src/services/_namespaces/ts.ts": `import * as formatting from "./ts.formatting";
+export { formatting };
+`,
+      "src/services/formatting.ts": `import { formatting } from "./_namespaces/ts";
+
+export function applyFormatting(): number {
+  return formatting.formatOnSemicolon(1);
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect_call_resolves_to(
+      project,
+      file_paths["src/services/formatting.ts"],
+      "formatOnSemicolon",
+      file_paths["src/services/formatting/rules.ts"]
+    );
+  });
+
+  it("resolves a member through a namespace import of a chained barrel", async () => {
+    // ts.JsTyping.discoverTypings(): a namespace import, a namespace-object hop
+    // and a wildcard hop.
+    const { project, temp_dir, file_paths } = await setup_project({
+      "src/jsTyping/jsTyping.ts": `export function discoverTypings(fileNames: string[]): number {
+  return fileNames.length;
+}
+`,
+      "src/jsTyping/_namespaces/ts.JsTyping.ts": `export * from "../jsTyping";
+`,
+      "src/jsTyping/_namespaces/ts.ts": `import * as JsTyping from "./ts.JsTyping";
+export { JsTyping };
+`,
+      "src/typingsInstallerCore/typingsInstaller.ts": `import * as ts from "../jsTyping/_namespaces/ts";
+
+export function installTypings(fileNames: string[]): number {
+  return ts.JsTyping.discoverTypings(fileNames);
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect_call_resolves_to(
+      project,
+      file_paths["src/typingsInstallerCore/typingsInstaller.ts"],
+      "discoverTypings",
+      file_paths["src/jsTyping/jsTyping.ts"]
+    );
+  });
+
+  it("resolves a bare specifier through a tsconfig paths alias onto a star-re-exporting barrel", async () => {
+    // nest: `import { mixin } from "@nestjs/common"`, where the alias target's
+    // index.ts is itself a star re-export chain.
+    const { project, temp_dir, file_paths } = await setup_project({
+      "tsconfig.json": `{
+  "compilerOptions": {
+    "paths": {
+      "@nestjs/common": ["./packages/common"],
+    },
+  },
+}`,
+      "packages/common/index.ts": `export * from "./utils";
+`,
+      "packages/common/utils.ts": `export function mixin(): number {
+  return 1;
+}
+`,
+      "packages/core/injector.ts": `import { mixin } from "@nestjs/common";
+
+export function inject(): number {
+  return mixin();
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect_call_resolves_to(
+      project,
+      file_paths["packages/core/injector.ts"],
+      "mixin",
+      file_paths["packages/common/utils.ts"]
+    );
+  });
+
+  it("resolves an alias a per-package tsconfig inherits through extends", async () => {
+    // The standard monorepo layout: one shared base config declares `paths`,
+    // each package's own config declares none and only extends it.
+    const { project, temp_dir, file_paths } = await setup_project({
+      "tsconfig.base.json": `{
+  "compilerOptions": {
+    "baseUrl": "./libs",
+    "paths": {
+      "@app/shared": ["shared"],
+    },
+  },
+}`,
+      "packages/web/tsconfig.json": "{ \"extends\": \"../../tsconfig.base.json\" }",
+      "libs/shared/index.ts": `export function share(): number {
+  return 1;
+}
+`,
+      "packages/web/app.ts": `import { share } from "@app/shared";
+
+export function run(): number {
+  return share();
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect_call_resolves_to(
+      project,
+      file_paths["packages/web/app.ts"],
+      "share",
+      file_paths["libs/shared/index.ts"]
+    );
+  });
+
+  it("resolves a workspace package through its exports entry point", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "packages/core/package.json": `{
+  "name": "@scope/core",
+  "exports": { ".": { "import": "./src/index.ts" } }
+}`,
+      "packages/core/src/index.ts": `export function core(): number {
+  return 1;
+}
+`,
+      "packages/app/main.ts": `import { core } from "@scope/core";
+
+export function run(): number {
+  return core();
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect_call_resolves_to(
+      project,
+      file_paths["packages/app/main.ts"],
+      "core",
+      file_paths["packages/core/src/index.ts"]
+    );
+  });
+
+  it("resolves a workspace package's subpath export", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "packages/core/package.json": `{
+  "name": "@scope/core",
+  "exports": {
+    ".": "./src/index.ts",
+    "./testing": "./src/testing/harness.ts"
+  }
+}`,
+      "packages/core/src/index.ts": `export function core(): number {
+  return 1;
+}
+`,
+      "packages/core/src/testing/harness.ts": `export function harness(): number {
+  return 2;
+}
+`,
+      "packages/app/main.ts": `import { harness } from "@scope/core/testing";
+
+export function run(): number {
+  return harness();
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect_call_resolves_to(
+      project,
+      file_paths["packages/app/main.ts"],
+      "harness",
+      file_paths["packages/core/src/testing/harness.ts"]
+    );
+  });
+
+  it("resolves a deep import into a package whose exports names its entry point", async () => {
+    // A specifier the `exports` map does not list sits beside the entry point it
+    // does, not under it.
+    const { project, temp_dir, file_paths } = await setup_project({
+      "packages/core/package.json": `{
+  "name": "@scope/core",
+  "exports": { ".": "./src/index.ts" }
+}`,
+      "packages/core/src/index.ts": `export function core(): number {
+  return 1;
+}
+`,
+      "packages/core/src/util/helper.ts": `export function helper(): number {
+  return 2;
+}
+`,
+      "packages/app/main.ts": `import { helper } from "@scope/core/util/helper";
+
+export function run(): number {
+  return helper();
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect_call_resolves_to(
+      project,
+      file_paths["packages/app/main.ts"],
+      "helper",
+      file_paths["packages/core/src/util/helper.ts"]
+    );
+  });
+
+  it("resolves a deep import through an alias naming a file without its extension", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "tsconfig.json": `{
+  "compilerOptions": {
+    "paths": { "@app/lib": ["./src/lib/index"] },
+  },
+}`,
+      "src/lib/index.ts": `export function entry(): number {
+  return 1;
+}
+`,
+      "src/lib/deep.ts": `export function deep(): number {
+  return 2;
+}
+`,
+      "src/app.ts": `import { deep } from "@app/lib/deep";
+
+export function run(): number {
+  return deep();
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect_call_resolves_to(
+      project,
+      file_paths["src/app.ts"],
+      "deep",
+      file_paths["src/lib/deep.ts"]
+    );
+  });
+
+  it("leaves a genuinely external specifier opaque", async () => {
+    // Decoys the resolver must not reach for: a directory whose name looks like
+    // the specifier's scope, and a workspace package whose declared name differs
+    // from its directory.
+    const { project, temp_dir, file_paths } = await setup_project({
+      "vendor/ui/index.ts": `export function render(): number {
+  return 1;
+}
+`,
+      "packages/other/package.json": "{ \"name\": \"@other/pkg\" }",
+      "packages/other/index.ts": `export function render(): number {
+  return 2;
+}
+`,
+      "packages/app/main.ts": `import { render } from "@vendor/ui";
+
+export function run(): number {
+  return render();
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    const import_def = Array.from(
+      project.get_index_single_file(file_paths["packages/app/main.ts"])!
+        .imported_symbols.values()
+    ).find((imp) => imp.name === ("render" as SymbolName));
+    expect(import_def).toBeDefined();
+    expect(
+      project.imports.get_resolved_import_path(import_def!.symbol_id)
+    ).toEqual("@vendor/ui" as FilePath);
+
+    const call = project.resolutions
+      .get_calls_for_file(file_paths["packages/app/main.ts"])
+      .find((c) => c.name === ("render" as SymbolName));
+    expect(call).toBeDefined();
+    expect(call!.resolutions).toEqual([]);
+    expect(call!.resolution_failure?.reason).toEqual("name_not_in_scope");
+  });
+
+  it("resolves a two-statement named re-export through to the origin definition", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "src/leaf.ts": `export function origin_fn(): number {
+  return 1;
+}
+`,
+      "src/middle.ts": `import { origin_fn } from "./leaf";
+export { origin_fn };
+`,
+      "src/consumer.ts": `import { origin_fn } from "./middle";
+
+export function drive(): number {
+  return origin_fn();
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect_call_resolves_to(
+      project,
+      file_paths["src/consumer.ts"],
+      "origin_fn",
+      file_paths["src/leaf.ts"]
+    );
   });
 });

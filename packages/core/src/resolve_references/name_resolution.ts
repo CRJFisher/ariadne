@@ -12,12 +12,12 @@ import type {
   SymbolName,
   Language,
 } from "@ariadnejs/types";
-import type { FileSystemFolder } from "./file_folders";
 import type { DefinitionRegistry } from "./registries/definition";
 import type { ScopeRegistry } from "./registries/scope";
 import type { ExportRegistry } from "./registries/export";
 import type { ImportGraph } from "./import_resolution/import_graph";
 import type { NameResolutionResult } from "./resolution_state";
+import type { ModuleResolutionContext } from "./import_resolution";
 
 /** Registries and language map consulted while resolving names in a scope tree. */
 export interface NameResolutionContext {
@@ -26,7 +26,7 @@ export interface NameResolutionContext {
   readonly scopes: ScopeRegistry;
   readonly exports: ExportRegistry;
   readonly imports: ImportGraph;
-  readonly root_folder: FileSystemFolder;
+  readonly modules: ModuleResolutionContext;
 }
 
 /**
@@ -109,12 +109,66 @@ function resolve_scope_recursive(
 
   const import_defs = context.imports.get_scope_imports(scope_id);
 
+  // @language rust,python
+  // A wildcard import (`use m::*`, `from m import *`) binds every public name
+  // of its module into this scope under no name of its own. Layered first so an
+  // explicit import (below) and a local definition both shadow it. JS/TS is
+  // excluded: its only wildcard form, `export * from`, binds nothing locally —
+  // that surface is served by the ExportRegistry fan-out instead.
+  const language = context.languages.get(file_path);
+  if (language === "rust" || language === "python") {
+    const wildcard_layer = new Map<SymbolName, SymbolId>();
+    // @language rust
+    // Two globs offering one name from different symbols is E0659: rustc binds
+    // neither, so the name leaves this layer entirely — the same one-match rule
+    // the ExportRegistry fan-out applies to `pub use m::*`. Python is the other
+    // way round: a later `from m import *` rebinds, so last write wins.
+    const ambiguous = new Set<SymbolName>();
+    for (const imp_def of import_defs) {
+      if (imp_def.import_kind !== "wildcard") {
+        continue;
+      }
+      const source_file = context.imports.get_resolved_import_path(
+        imp_def.symbol_id
+      );
+      if (!source_file) {
+        continue;
+      }
+      for (const [name, symbol_id] of context.exports.resolve_all_exports(
+        source_file,
+        context.languages,
+        context.modules
+      )) {
+        if (language === "rust") {
+          if (ambiguous.has(name)) {
+            continue;
+          }
+          const claimed = wildcard_layer.get(name);
+          if (claimed && claimed !== symbol_id) {
+            ambiguous.add(name);
+            wildcard_layer.delete(name);
+            continue;
+          }
+        }
+        wildcard_layer.set(name, symbol_id);
+      }
+    }
+    for (const [name, symbol_id] of wildcard_layer) {
+      scope_resolutions.set(name, symbol_id);
+    }
+  }
+
   // Names bound to a CommonJS default-export class by the import pass below; the
   // local-definition pass must not revert them to the raw import symbol.
   const require_default_rebinds = new Set<SymbolName>();
 
   for (const imp_def of import_defs) {
     let resolved: SymbolId | null = null;
+
+    // Wildcard surfaces are layered above; the wildcard's own name never binds.
+    if (imp_def.import_kind === "wildcard") {
+      continue;
+    }
 
     if (imp_def.import_kind === "namespace") {
       resolved = imp_def.symbol_id;
@@ -136,7 +190,7 @@ function resolve_scope_recursive(
           const sole_default = context.exports.resolve_sole_default_export(
             source_file,
             context.languages,
-            context.root_folder
+            context.modules
           );
           if (
             sole_default &&
@@ -169,7 +223,7 @@ function resolve_scope_recursive(
         import_name,
         imp_def.import_kind,
         context.languages,
-        context.root_folder
+        context.modules
       );
 
       // Explicit-named-import fallback: `is_exported` governs only the
@@ -194,7 +248,8 @@ function resolve_scope_recursive(
     }
 
     // When the export chain yields nothing, the imported name may name a
-    // submodule file rather than an exported symbol (Python `from pkg import mod`).
+    // submodule file rather than an exported symbol — Python
+    // `from pkg import mod`, Rust `use crate::parent::child`.
     if (!resolved) {
       const submodule_path = context.imports.get_submodule_import_path(
         imp_def.symbol_id

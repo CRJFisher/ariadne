@@ -417,16 +417,67 @@
   )
 )
 
-; Loop variables in while-let patterns
-(while_expression
-  condition: (let_condition
-    pattern: (_) @definition.variable
+; Variables bound by a `let` condition (`if let` / `while let`). The bare
+; identifier form binds directly; the destructuring forms bind the identifiers
+; *inside* the pattern, never the type path that leads them — capturing the
+; whole pattern would bind a name spelled "Some(c)".
+(let_condition
+  pattern: (identifier) @definition.variable
+)
+
+(let_condition
+  pattern: (tuple_struct_pattern
+    type: (_)
+    (identifier) @definition.variable
   )
 )
 
-; Variables in while-let conditions
 (let_condition
-  pattern: (identifier) @definition.variable
+  pattern: (tuple_pattern
+    (identifier) @definition.variable
+  )
+)
+
+(let_condition
+  pattern: (struct_pattern
+    (field_pattern
+      (identifier) @definition.variable
+    )
+  )
+)
+
+; Variables bound by a match arm's pattern, in the same forms.
+(match_arm
+  pattern: (match_pattern
+    (identifier) @definition.variable
+  )
+)
+
+(match_arm
+  pattern: (match_pattern
+    (tuple_struct_pattern
+      type: (_)
+      (identifier) @definition.variable
+    )
+  )
+)
+
+(match_arm
+  pattern: (match_pattern
+    (tuple_pattern
+      (identifier) @definition.variable
+    )
+  )
+)
+
+(match_arm
+  pattern: (match_pattern
+    (struct_pattern
+      (field_pattern
+        (identifier) @definition.variable
+      )
+    )
+  )
 )
 
 ; Module definitions with body
@@ -441,6 +492,15 @@
   name: (identifier) @definition.module
   !body
 )
+
+; The same bodyless declaration as a module edge to the file that backs it. One
+; pattern covers `mod x;` and `pub mod x;` alike — visibility is an unconstrained
+; child — and the whole item is captured so the handler can read the `#[path]`
+; attribute that precedes it.
+(mod_item
+  name: (identifier)
+  !body
+) @definition.import.module
 
 ; Public module definitions with body
 (mod_item
@@ -468,9 +528,10 @@
   )
 )
 
-; Const parameters
+; Const generic parameters — type-level, like (type_parameter), never a value
+; parameter of the callable that declares them.
 (const_parameter
-  name: (identifier) @definition.parameter
+  name: (identifier) @definition.type_parameter
 )
 
 ;; ==============================================================================
@@ -564,11 +625,6 @@
   (visibility_modifier)
   name: (identifier) @export.module
 )
-
-; Re-exports (pub use)
-(use_declaration
-  (visibility_modifier)
-) @import.reexport
 
 ;; ==============================================================================
 ;; DOCUMENTATION

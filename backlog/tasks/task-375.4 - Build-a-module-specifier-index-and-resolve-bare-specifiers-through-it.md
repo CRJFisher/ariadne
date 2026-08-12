@@ -1,7 +1,7 @@
 ---
 id: TASK-375.4
 title: "Build a module specifier index and resolve bare specifiers through it"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-07-29 09:37"
 labels:
@@ -51,15 +51,37 @@ The third cross-crate row, `compute_debuginfo_type_name`, needs one hop more: a 
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 `ModuleSpecifierIndex` is built once in `Project.initialize` from `tsconfig.json`/`jsconfig.json`, `package.json` and `Cargo.toml`, tolerating JSONC with trailing commas, and falls back to the directory name where a manifest is unreadable.
-- [ ] #2 `root_folder: FileSystemFolder` is replaced by `ModuleResolutionContext { root_folder, specifiers }` across all 33 non-test signatures, including `resolve_module_path_rust`.
-- [ ] #3 The sqlx cross-crate false-positives clear: `sqlx_core::raw_sql::raw_sql` resolves `raw_sql`, and `rollback_ansi_transaction_sql` resolves.
-- [ ] #4 The nest `mixin` false-positive clears: the bare specifier `@nestjs/common` resolves through the tsconfig `paths` alias onto the directory whose `index.ts` star-re-exports.
-- [ ] #5 A cross-crate `use other_crate::m::item` with a `-`/`_` name mismatch and a cross-crate `use other_crate::m::*` both resolve.
-- [ ] #6 An unmatched leading segment (a genuinely external crate) still returns opaquely and fabricates no edge.
-- [ ] #7 Integration tests cover every evidence case listed above individually, including the nest bare-specifier chain end to end.
-- [ ] #8 `import_resolution.{typescript,rust,python,javascript}.test.ts` stay green across the `probe_candidates` extraction, and `import_graph.test.ts` stays green.
-- [ ] #9 Sub-task 1.3 is merged before this task, and the `crate_roots` lookup sits after the local-module probe in the `else` arm.
-- [ ] #10 The `compute_debuginfo_type_name` row is recorded as closing in sub-task 1.6, not here.
+- [x] #1 `ModuleSpecifierIndex` is built once in `Project.initialize` from `tsconfig.json`/`jsconfig.json`, `package.json` and `Cargo.toml`, tolerating JSONC with trailing commas, and falls back to the directory name where a manifest is unreadable.
+- [x] #2 `root_folder: FileSystemFolder` is replaced by `ModuleResolutionContext { root_folder, specifiers }` across all 33 non-test signatures, including `resolve_module_path_rust`.
+- [x] #3 The sqlx cross-crate false-positives clear: `sqlx_core::raw_sql::raw_sql` resolves `raw_sql`, and `rollback_ansi_transaction_sql` resolves.
+- [x] #4 The nest `mixin` false-positive clears: the bare specifier `@nestjs/common` resolves through the tsconfig `paths` alias onto the directory whose `index.ts` star-re-exports.
+- [x] #5 A cross-crate `use other_crate::m::item` with a `-`/`_` name mismatch and a cross-crate `use other_crate::m::*` both resolve.
+- [x] #6 An unmatched leading segment (a genuinely external crate) still returns opaquely and fabricates no edge.
+- [x] #7 Integration tests cover every evidence case listed above individually, including the nest bare-specifier chain end to end.
+- [x] #8 `import_resolution.{typescript,rust,python,javascript}.test.ts` stay green across the `probe_candidates` extraction, and `import_graph.test.ts` stays green.
+- [x] #9 Sub-task 1.3 is merged before this task, and the `crate_roots` lookup sits after the local-module probe in the `else` arm.
+- [x] #10 The `compute_debuginfo_type_name` row is recorded as closing in sub-task 1.6, not here.
 
 <!-- AC:END -->
+
+## Implementation Notes
+
+## High-level summary
+
+A bare specifier now names a place. `ModuleSpecifierIndex` answers the one question the I/O-free file tree cannot — which directory a package or crate *name* denotes — and is read once, during `Project.initialize`, from the `tsconfig.json`/`jsconfig.json`, `package.json` and `Cargo.toml` files already in the tree. Its parse is JSONC-tolerant, because the configs it reads are hand-maintained and carry comments and trailing commas; an unreadable manifest is skipped rather than fatal, leaving its specifiers exactly as opaque as they were before the index existed.
+
+Module resolution now takes a `ModuleResolutionContext` — the file tree plus that index — in place of the bare tree, threaded through every signature that carried the tree. That is the whole seam: `resolve_module_path` is the only function that needs the index, but it sits at the bottom of a call chain that reaches from `Project` through the import graph, the export registry, name resolution and every call-resolution leaf.
+
+Two resolvers consume it. A TypeScript bare specifier matches the longest `paths` key or workspace package name and probes the alias target the same way a relative path is probed, so a directory target lands on its `index.*` — which is how nest's `@nestjs/common` reaches a barrel that star-re-exports its surface. A Rust path whose leading segment is not an anchor and matches no local module is looked up as a crate name, normalised `-` to `_`, so `sqlx_core::raw_sql::raw_sql` from a sibling crate resolves. That lookup deliberately sits *after* the local-module probe TASK-375.3 corrected: a leading segment matching neither stays opaque, so a genuinely external crate still fabricates no edge.
+
+Front door for readers: `module_specifier_index.ts` builds the index; `import_resolution.ts` defines the context and dispatches; the two language leaves each hold one new branch.
+
+### Deferred and recorded
+
+- `tsconfig` `extends` chains and `package.json` `exports` maps are TASK-375.7, which changes only index construction behind this finished seam.
+- The `compute_debuginfo_type_name` row needs the module-alias hop in TASK-375.6, as this task's plan states.
+- Crate names come from the directory name rather than a TOML parse; every crate in the target corpora agrees with its directory modulo `-`/`_`, and adding a TOML dependency for the remainder is not yet warranted.
+
+### Verification
+
+`packages/core` 3633/3633 green; typecheck and lint clean. `module_specifier_index.test.ts` pins the JSONC parse (trailing commas, both comment forms, comment-like text inside strings) and each index source. Integration rows prove the two evidence shapes end to end: a cross-crate `use sqlx_core::raw_sql::raw_sql` from a dash-named crate directory, a cross-crate `use other_crate::m::*` glob, the nest bare-specifier chain through a `paths` alias onto a star-re-exporting `index.ts`, and a control asserting `serde_json::to_string` stays unresolved so no edge is fabricated for an external crate.

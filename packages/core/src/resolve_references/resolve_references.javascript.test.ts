@@ -780,4 +780,136 @@ export function build(fields) {
       expect(is_entry_point(cg, "doubler", file)).toEqual(false);
     });
   });
+
+  describe("names bound at parameter position and in loop heads reach the receiver", () => {
+    function method_call_outcome(
+      project: Project,
+      file: FilePath,
+      call_name: string
+    ) {
+      const call = project.resolutions
+        .get_calls_for_file(file)
+        .find((c) => c.name === (call_name as SymbolName));
+      if (call === undefined) {
+        throw new Error(`no call named ${call_name} indexed in ${file}`);
+      }
+      return {
+        resolution_count: call.resolutions.length,
+        stage: call.resolution_failure?.stage,
+        reason: call.resolution_failure?.reason,
+      };
+    }
+
+    it("a declarator arrow's parameter binds, so a call on it fails at type inference, not name resolution", async () => {
+      // webpack lib/ids/IdHelpers.js:148 — chunkGraph.getChunkRootModules(chunk)
+      // inside `const getShortChunkName = (chunk, chunkGraph, …) => {…}`.
+      const { project, temp_dir, file_paths } = await setup_project({
+        "IdHelpers.js": `const getShortChunkName = (chunk, chunkGraph) => {
+  const modules = chunkGraph.getChunkRootModules(chunk);
+  return modules;
+};
+
+export { getShortChunkName };
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      expect(
+        method_call_outcome(project, file_paths["IdHelpers.js"], "getChunkRootModules")
+      ).toEqual({
+        resolution_count: 0,
+        stage: "type_inference",
+        reason: "receiver_type_unknown",
+      });
+    });
+
+    it("a whole-module CommonJS export's parameter binds, so a call on it fails at type inference, not name resolution", async () => {
+      // mocha lib/interfaces/common.js:75 — suites[0].beforeEach(name, fn)
+      // inside `module.exports = function (suites, context) {…}`.
+      const { project, temp_dir, file_paths } = await setup_project({
+        "common.js": `module.exports = function (suites, context) {
+  suites[0].beforeEach(context);
+};
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      expect(
+        method_call_outcome(project, file_paths["common.js"], "beforeEach")
+      ).toEqual({
+        resolution_count: 0,
+        stage: "type_inference",
+        reason: "receiver_type_unknown",
+      });
+    });
+
+    it("a loop-head name binds, so a call on it fails at type inference, not name resolution", async () => {
+      // `Handle.close` is in the same file and still not chosen: nothing types
+      // the parameter `ps`, so the loop-head binding gives the receiver an
+      // identity but no type.
+      const { project, temp_dir, file_paths } = await setup_project({
+        "loop.js": `export class Handle {
+  close() {
+    return 1;
+  }
+}
+
+export function close_all(ps) {
+  for (const p of ps) {
+    p.close();
+  }
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      expect(
+        method_call_outcome(project, file_paths["loop.js"], "close")
+      ).toEqual({
+        resolution_count: 0,
+        stage: "type_inference",
+        reason: "receiver_type_unknown",
+      });
+    });
+  });
+
+  describe("object-literal shorthand methods", () => {
+    it("an object-literal method is no callable's own name, so it is not an entry point", async () => {
+      const { project, temp_dir } = await setup_project({
+        "routes.js": `const routes = { index(req) {}, show(req) {} };
+export default routes;
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const graph = await project.get_call_graph();
+      expect(
+        Array.from(graph.nodes.keys())
+          .map(String)
+          .filter((id) => id.startsWith("function:"))
+      ).toEqual([]);
+      expect(graph.entry_points).toHaveLength(0);
+    });
+
+    it("an object-literal method does not take a same-named import's call", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "render.js": `export function render(a) {
+  return a;
+}
+`,
+        "app.js": `import { render } from './render.js';
+const spec = { render(a) { return a; } };
+render(1);
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const call = project.resolutions
+        .get_calls_for_file(file_paths["app.js"])
+        .find((c) => c.name === ("render" as SymbolName));
+      expect(call!.resolution_failure).toBeUndefined();
+      expect(call!.resolutions).toHaveLength(1);
+      expect(String(call!.resolutions[0].symbol_id)).toContain("render.js");
+    });
+  });
 });

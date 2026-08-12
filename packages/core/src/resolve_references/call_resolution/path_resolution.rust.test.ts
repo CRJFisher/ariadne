@@ -1,18 +1,25 @@
 import { describe, it, expect } from "vitest";
 import {
   normalize_path_prefix,
-  resolve_in_module_body,
   is_callable_definition,
+  resolve_qualified_path_rust,
+  type RustPathResolutionContext,
 } from "./path_resolution.rust";
 import { DefinitionRegistry } from "../registries/definition";
 import { ScopeRegistry } from "../registries/scope";
+import { ResolutionRegistry } from "../resolution_registry";
+import { ImportGraph } from "../import_resolution/import_graph";
+import { make_export_chain_context } from "../resolution_test_helpers";
+import { set_test_resolutions } from "../resolve_references.test";
 import {
   class_symbol,
   method_symbol,
   function_symbol,
   variable_symbol,
+  namespace_symbol,
 } from "@ariadnejs/types";
 import type {
+  SymbolId,
   SymbolName,
   ScopeId,
   FilePath,
@@ -22,6 +29,7 @@ import type {
   MethodDefinition,
   FunctionDefinition,
   VariableDefinition,
+  NamespaceDefinition,
 } from "@ariadnejs/types";
 
 const FILE = "m.rs" as FilePath;
@@ -61,104 +69,6 @@ describe("normalize_path_prefix", () => {
 
   it("returns an empty prefix when every segment is an anchor", () => {
     expect(normalize_path_prefix(["crate", "self"] as SymbolName[])).toEqual([]);
-  });
-});
-
-describe("resolve_in_module_body", () => {
-  const FILE_SCOPE = "scope:m.rs:file:0:0" as ScopeId;
-  const MODULE_SCOPE = "scope:m.rs:runtime:1:0" as ScopeId;
-
-  function setup(): { definitions: DefinitionRegistry; scopes: ScopeRegistry } {
-    const definitions = new DefinitionRegistry();
-    const scopes = new ScopeRegistry();
-
-    const file_scope: LexicalScope = {
-      id: FILE_SCOPE,
-      parent_id: null,
-      name: null,
-      type: "module",
-      location: LOC,
-      child_ids: [MODULE_SCOPE],
-    };
-    const module_scope: LexicalScope = {
-      id: MODULE_SCOPE,
-      parent_id: FILE_SCOPE,
-      name: "runtime" as SymbolName,
-      type: "module",
-      location: LOC,
-      child_ids: [],
-    };
-    scopes.update_file(
-      FILE,
-      new Map([
-        [FILE_SCOPE, file_scope],
-        [MODULE_SCOPE, module_scope],
-      ])
-    );
-
-    const driver: ClassDefinition = {
-      kind: "class",
-      symbol_id: class_symbol("Driver", LOC),
-      name: "Driver" as SymbolName,
-      defining_scope_id: MODULE_SCOPE,
-      location: LOC,
-      is_exported: false,
-      extends: [],
-      methods: [],
-      properties: [],
-      decorators: [],
-      constructors: [],
-    };
-    definitions.update_file(FILE, [driver]);
-    return { definitions, scopes };
-  }
-
-  it("resolves a terminal defined in the named module's body", () => {
-    const { definitions, scopes } = setup();
-    const result = resolve_in_module_body(
-      "runtime" as SymbolName,
-      FILE_SCOPE,
-      "Driver" as SymbolName,
-      scopes,
-      definitions
-    );
-    expect(result).toEqual(class_symbol("Driver", LOC));
-  });
-
-  it("returns null when the terminal is not in the module body", () => {
-    const { definitions, scopes } = setup();
-    const result = resolve_in_module_body(
-      "runtime" as SymbolName,
-      FILE_SCOPE,
-      "Missing" as SymbolName,
-      scopes,
-      definitions
-    );
-    expect(result).toBeNull();
-  });
-
-  it("returns null when no child module matches the qualifier", () => {
-    const { definitions, scopes } = setup();
-    const result = resolve_in_module_body(
-      "other" as SymbolName,
-      FILE_SCOPE,
-      "Driver" as SymbolName,
-      scopes,
-      definitions
-    );
-    expect(result).toBeNull();
-  });
-
-  it("returns null when the defining scope is not registered", () => {
-    const { definitions, scopes } = setup();
-    const result = resolve_in_module_body(
-      "runtime" as SymbolName,
-      "scope:m.rs:missing:9:0" as ScopeId,
-      "Driver" as SymbolName,
-      scopes,
-      definitions
-    );
-    expect(result).toBeNull();
   });
 });
 
@@ -215,5 +125,225 @@ describe("is_callable_definition", () => {
     expect(
       is_callable_definition(class_symbol("Ghost", LOC), setup())
     ).toBe(false);
+  });
+});
+
+// The two hops that read the scope map, isolated from the file tree: an empty
+// root folder means the module-file hop can never land, so each case pins the
+// hop it names and nothing else.
+describe("resolve_qualified_path_rust", () => {
+  const FILE_SCOPE = "scope:m.rs:file:0:0" as ScopeId;
+  const MODULE_SCOPE = "scope:m.rs:runtime:1:0" as ScopeId;
+
+  function setup(): RustPathResolutionContext {
+    const definitions = new DefinitionRegistry();
+    const scopes = new ScopeRegistry();
+    const resolutions = new ResolutionRegistry();
+    const { exports, languages, modules } = make_export_chain_context();
+
+    const file_scope: LexicalScope = {
+      id: FILE_SCOPE,
+      parent_id: null,
+      name: null,
+      type: "module",
+      location: LOC,
+      child_ids: [MODULE_SCOPE],
+    };
+    const module_scope: LexicalScope = {
+      id: MODULE_SCOPE,
+      parent_id: FILE_SCOPE,
+      name: "runtime" as SymbolName,
+      type: "module",
+      location: LOC,
+      child_ids: [],
+    };
+    scopes.update_file(
+      FILE,
+      new Map([
+        [FILE_SCOPE, file_scope],
+        [MODULE_SCOPE, module_scope],
+      ])
+    );
+
+    const make_start = (line: number): Location => ({ ...LOC, start_line: line });
+
+    // `mod runtime { pub struct Driver { fn make(); field } fn helper() }`
+    const make_method: MethodDefinition = {
+      kind: "method",
+      symbol_id: method_symbol("make", make_start(3)),
+      name: "make" as SymbolName,
+      defining_scope_id: MODULE_SCOPE,
+      location: make_start(3),
+      parameters: [],
+    };
+    const driver: ClassDefinition = {
+      kind: "class",
+      symbol_id: class_symbol("Driver", make_start(2)),
+      name: "Driver" as SymbolName,
+      defining_scope_id: MODULE_SCOPE,
+      location: make_start(2),
+      is_exported: false,
+      extends: [],
+      methods: [make_method],
+      properties: [
+        {
+          kind: "property",
+          symbol_id: "property:m.rs:4:0:4:8:field" as SymbolId,
+          name: "field" as SymbolName,
+          defining_scope_id: MODULE_SCOPE,
+          location: make_start(4),
+          decorators: [],
+        },
+      ],
+      decorators: [],
+      constructors: [],
+    };
+    const helper: FunctionDefinition = {
+      kind: "function",
+      symbol_id: function_symbol("helper" as SymbolName, make_start(5)),
+      name: "helper" as SymbolName,
+      defining_scope_id: MODULE_SCOPE,
+      location: make_start(5),
+      is_exported: false,
+      signature: { parameters: [] },
+      body_scope_id: "scope:m.rs:helper:5:0" as ScopeId,
+    };
+    const runtime: NamespaceDefinition = {
+      kind: "namespace",
+      symbol_id: namespace_symbol("runtime", make_start(1)),
+      name: "runtime" as SymbolName,
+      defining_scope_id: FILE_SCOPE,
+      location: make_start(1),
+      is_exported: false,
+    };
+    definitions.update_file(FILE, [driver, helper, runtime]);
+
+    const scope_resolutions = new Map<SymbolName, SymbolId>([
+      ["Driver" as SymbolName, driver.symbol_id],
+      ["runtime" as SymbolName, runtime.symbol_id],
+    ]);
+    set_test_resolutions(resolutions, FILE_SCOPE, scope_resolutions);
+
+    return {
+      definitions,
+      scopes,
+      resolutions,
+      exports,
+      imports: new ImportGraph(),
+      languages,
+      modules,
+    };
+  }
+
+  it("takes a callable terminal from the member index of an in-scope type", () => {
+    const context = setup();
+    expect(
+      resolve_qualified_path_rust(
+        ["Driver"] as SymbolName[],
+        "make" as SymbolName,
+        "callable",
+        FILE_SCOPE,
+        FILE,
+        context
+      )
+    ).toEqual(method_symbol("make", { ...LOC, start_line: 3 }));
+  });
+
+  it("rejects a non-callable member of an in-scope type", () => {
+    const context = setup();
+    expect(
+      resolve_qualified_path_rust(
+        ["Driver"] as SymbolName[],
+        "field" as SymbolName,
+        "callable",
+        FILE_SCOPE,
+        FILE,
+        context
+      )
+    ).toBeNull();
+  });
+
+  it("takes a terminal from the body of an in-scope module block", () => {
+    const context = setup();
+    expect(
+      resolve_qualified_path_rust(
+        ["runtime"] as SymbolName[],
+        "helper" as SymbolName,
+        "callable",
+        FILE_SCOPE,
+        FILE,
+        context
+      )
+    ).toEqual(function_symbol("helper" as SymbolName, { ...LOC, start_line: 5 }));
+  });
+
+  it("resolves a type terminal in an in-scope module block", () => {
+    const context = setup();
+    expect(
+      resolve_qualified_path_rust(
+        ["runtime"] as SymbolName[],
+        "Driver" as SymbolName,
+        "type",
+        FILE_SCOPE,
+        FILE,
+        context
+      )
+    ).toEqual(class_symbol("Driver", { ...LOC, start_line: 2 }));
+  });
+
+  it("returns null when the module block holds no such terminal", () => {
+    const context = setup();
+    expect(
+      resolve_qualified_path_rust(
+        ["runtime"] as SymbolName[],
+        "missing" as SymbolName,
+        "callable",
+        FILE_SCOPE,
+        FILE,
+        context
+      )
+    ).toBeNull();
+  });
+
+  it("returns null for an empty module path", () => {
+    const context = setup();
+    expect(
+      resolve_qualified_path_rust(
+        [],
+        "helper" as SymbolName,
+        "callable",
+        FILE_SCOPE,
+        FILE,
+        context
+      )
+    ).toBeNull();
+  });
+
+  it("returns null for a bare leading segment that names no module in scope", () => {
+    const context = setup();
+    expect(
+      resolve_qualified_path_rust(
+        ["serde_json"] as SymbolName[],
+        "to_string" as SymbolName,
+        "callable",
+        FILE_SCOPE,
+        FILE,
+        context
+      )
+    ).toBeNull();
+  });
+
+  it("returns null for a Self path deeper than one segment", () => {
+    const context = setup();
+    expect(
+      resolve_qualified_path_rust(
+        ["Self", "Inner"] as SymbolName[],
+        "f" as SymbolName,
+        "callable",
+        FILE_SCOPE,
+        FILE,
+        context
+      )
+    ).toBeNull();
   });
 });

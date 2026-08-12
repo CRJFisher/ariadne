@@ -206,7 +206,16 @@ export function find_containing_callable(capture: CaptureNode): SymbolId {
         const location = node_to_location(name_node, capture.location.file_path);
         return function_symbol(name_node.text as SymbolName, location);
       } else {
-        // Anonymous function/arrow function - use location-based anonymous symbol
+        // A nameless arrow/function expression in declarator position was
+        // minted as a function under the declarator's name; the parameter's
+        // owner id must agree with that, not with a location-keyed anonymous.
+        const declarator_name = bound_callable_name_node(node);
+        if (declarator_name) {
+          return function_symbol(
+            declarator_name.text as SymbolName,
+            node_to_location(declarator_name, capture.location.file_path)
+          );
+        }
         const location = node_to_location(node, capture.location.file_path);
         return anonymous_function_symbol(location);
       }
@@ -219,6 +228,60 @@ export function find_containing_callable(capture: CaptureNode): SymbolId {
   }
   // Default to anonymous function
   return anonymous_function_symbol(capture.location);
+}
+
+/**
+ * The identifier a nameless callable is bound to, when its position gives it
+ * one: `const f = (…) => …` (the declarator name) or
+ * `exports.f = function (…) {}` / `module.exports.f = …` (the property name
+ * the CommonJS-export capture indexes it under). The whole-module
+ * `module.exports = function (…) {}` binds no name and returns null, so the
+ * caller falls back to an anonymous symbol.
+ */
+export function bound_callable_name_node(fn_node: SyntaxNode): SyntaxNode | null {
+  const parent = fn_node.parent;
+
+  if (parent?.type === "variable_declarator") {
+    const name = parent.childForFieldName("name");
+    return name?.type === "identifier" ? name : null;
+  }
+
+  if (
+    parent?.type === "assignment_expression" &&
+    parent.childForFieldName("right")?.id === fn_node.id
+  ) {
+    const left = parent.childForFieldName("left");
+    if (left?.type !== "member_expression") {
+      return null;
+    }
+    const property = left.childForFieldName("property");
+    const object = left.childForFieldName("object");
+    if (property?.type !== "property_identifier") {
+      return null;
+    }
+    if (object?.text === "module" && property.text === "exports") {
+      return null;
+    }
+    return is_commonjs_exports_base(object) ? property : null;
+  }
+
+  return null;
+}
+
+/**
+ * The CommonJS exports bag as an assignment base: the bare `exports`
+ * identifier or the `module.exports` member expression.
+ */
+function is_commonjs_exports_base(node: SyntaxNode | null): boolean {
+  if (!node) return false;
+  if (node.type === "identifier") return node.text === "exports";
+  if (node.type === "member_expression") {
+    return (
+      node.childForFieldName("object")?.text === "module" &&
+      node.childForFieldName("property")?.text === "exports"
+    );
+  }
+  return false;
 }
 
 // ============================================================================

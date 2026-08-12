@@ -6,12 +6,15 @@ import {
   class_symbol,
   method_symbol,
   property_symbol,
+  enum_symbol,
+  enum_member_symbol,
   location_key,
 } from "@ariadnejs/types";
 import type {
   FunctionDefinition,
   VariableDefinition,
   ClassDefinition,
+  EnumDefinition,
   ImportDefinition,
   MethodDefinition,
   PropertyDefinition,
@@ -925,6 +928,106 @@ describe("DefinitionRegistry", () => {
       expect(registry.get(old_prop_id)).toBeUndefined();
       expect(registry.get(new_method_id)).toEqual(new_method);
       expect(registry.get(new_prop_id)).toEqual(new_prop);
+    });
+  });
+
+  // A Rust `impl E { … }` attaches associated functions to the enum, so `E::assoc()`
+  // reaches them through the same flat member index a class uses. Variants are
+  // deliberately absent: this index answers callable-member lookups.
+  describe("enum members", () => {
+    const ENUM_LOC = {
+      file_path: "e.rs" as FilePath,
+      start_line: 1,
+      start_column: 0,
+      end_line: 8,
+      end_column: 1,
+    };
+    const PARSE_LOC = { ...ENUM_LOC, start_line: 5, end_line: 7 };
+
+    function make_enum(): {
+      enum_id: SymbolId;
+      parse_id: SymbolId;
+      variant_id: SymbolId;
+      definition: EnumDefinition;
+    } {
+      const enum_id = enum_symbol("MetaVarExpr", ENUM_LOC);
+      const parse_id = method_symbol("parse", PARSE_LOC);
+      const variant_id = enum_member_symbol("Count", {
+        ...ENUM_LOC,
+        start_line: 2,
+        end_line: 2,
+      });
+      const parse: MethodDefinition = {
+        kind: "method",
+        symbol_id: parse_id,
+        name: "parse" as SymbolName,
+        defining_scope_id: "scope:e.rs:impl:4:0" as ScopeId,
+        location: PARSE_LOC,
+        parameters: [],
+        static: true,
+      };
+      return {
+        enum_id,
+        parse_id,
+        variant_id,
+        definition: {
+          kind: "enum",
+          symbol_id: enum_id,
+          name: "MetaVarExpr" as SymbolName,
+          defining_scope_id: "scope:e.rs:file:0:0" as ScopeId,
+          location: ENUM_LOC,
+          is_exported: true,
+          is_const: false,
+          members: [
+            {
+              symbol_id: variant_id,
+              name: "Count" as SymbolName,
+              location: { ...ENUM_LOC, start_line: 2, end_line: 2 },
+            },
+          ],
+          methods: [parse],
+        },
+      };
+    }
+
+    it("indexes an enum's associated functions as its members", () => {
+      const { enum_id, parse_id, definition } = make_enum();
+      registry.update_file("e.rs" as FilePath, [definition]);
+
+      expect(registry.get_member_index().get(enum_id)).toEqual(
+        new Map<SymbolName, SymbolId>([["parse" as SymbolName, parse_id]])
+      );
+    });
+
+    it("keeps an enum's variants out of the member index", () => {
+      const { enum_id, definition } = make_enum();
+      registry.update_file("e.rs" as FilePath, [definition]);
+
+      expect(
+        registry.get_member_index().get(enum_id)?.has("Count" as SymbolName)
+      ).toBe(false);
+    });
+
+    it("registers an enum's associated function by symbol and by location", () => {
+      const { parse_id, definition } = make_enum();
+      registry.update_file("e.rs" as FilePath, [definition]);
+
+      expect(registry.get(parse_id)?.name).toEqual("parse" as SymbolName);
+      expect(registry.get_symbol_at_location(location_key(PARSE_LOC))).toEqual(
+        parse_id
+      );
+    });
+
+    it("evicts an enum's associated functions when the file is removed", () => {
+      const { enum_id, parse_id, definition } = make_enum();
+      registry.update_file("e.rs" as FilePath, [definition]);
+      registry.remove_file("e.rs" as FilePath);
+
+      expect(registry.get(parse_id)).toBeUndefined();
+      expect(registry.get_member_index().get(enum_id)).toBeUndefined();
+      expect(
+        registry.get_symbol_at_location(location_key(PARSE_LOC))
+      ).toBeUndefined();
     });
   });
 

@@ -4,6 +4,10 @@ import { DefinitionRegistry } from "../registries/definition";
 import { ScopeRegistry } from "../registries/scope";
 import { ResolutionRegistry } from "../resolution_registry";
 import { ExportRegistry } from "../registries/export";
+import { ImportGraph } from "../import_resolution/import_graph";
+import { ReferenceRegistry } from "../registries/reference";
+import { TypeRegistry } from "../registries/type";
+import type { CallResolutionContext } from "./call_resolver";
 import type { FileSystemFolder } from "../file_folders";
 import { make_export_chain_context } from "../resolution_test_helpers";
 import { set_test_resolutions, unwrap } from "../resolve_references.test";
@@ -21,6 +25,8 @@ import type {
   ConstructorDefinition,
   FunctionDefinition,
 } from "@ariadnejs/types";
+import { create_module_resolution_context } from "../import_resolution";
+import type { ModuleResolutionContext } from "../import_resolution";
 
 // Test fixtures
 const TEST_FILE = "test.ts" as FilePath;
@@ -43,15 +49,32 @@ describe("Constructor Call Resolution", () => {
   let scopes: ScopeRegistry;
   let resolutions: ResolutionRegistry;
   let exports: ExportRegistry;
+  let imports: ImportGraph;
   let languages: Map<FilePath, Language>;
-  let root_folder: FileSystemFolder;
+  let modules: ModuleResolutionContext;
 
   beforeEach(() => {
     definitions = new DefinitionRegistry();
     scopes = new ScopeRegistry();
     resolutions = new ResolutionRegistry();
-    ({ exports, languages, root_folder } = make_export_chain_context());
+    imports = new ImportGraph();
+    ({ exports, languages, modules } = make_export_chain_context());
   });
+
+  /** The slice of CallResolutionContext constructor resolution reads. */
+  function context(): CallResolutionContext {
+    return {
+      references: new ReferenceRegistry(),
+      types: new TypeRegistry(),
+      definitions,
+      scopes,
+      resolutions,
+      exports,
+      imports,
+      languages,
+      modules,
+    };
+  }
 
   describe("Resolves to constructor symbol", () => {
     it("resolves a constructor call to the explicit constructor symbol", () => {
@@ -104,12 +127,7 @@ describe("Constructor Call Resolution", () => {
 
       const resolved = resolve_constructor_call(
         call_ref,
-        definitions,
-        scopes,
-        resolutions,
-        exports,
-        languages,
-        root_folder
+        context()
       );
 
       expect(unwrap(resolved)).toEqual([constructor_id]);
@@ -176,12 +194,7 @@ describe("Constructor Call Resolution", () => {
 
       const resolved = resolve_constructor_call(
         call_ref,
-        definitions,
-        scopes,
-        resolutions,
-        exports,
-        languages,
-        root_folder
+        context()
       );
 
       expect(unwrap(resolved)).toEqual([constructor_id]);
@@ -219,12 +232,7 @@ describe("Constructor Call Resolution", () => {
 
       const resolved = resolve_constructor_call(
         call_ref,
-        definitions,
-        scopes,
-        resolutions,
-        exports,
-        languages,
-        root_folder
+        context()
       );
 
       expect(unwrap(resolved)).toEqual([class_id]);
@@ -261,12 +269,7 @@ describe("Constructor Call Resolution", () => {
 
       const resolved = resolve_constructor_call(
         call_ref,
-        definitions,
-        scopes,
-        resolutions,
-        exports,
-        languages,
-        root_folder
+        context()
       );
 
       expect(unwrap(resolved)).toEqual([class_id]);
@@ -331,12 +334,7 @@ describe("Constructor Call Resolution", () => {
 
       const resolved = resolve_constructor_call(
         call_ref,
-        definitions,
-        scopes,
-        resolutions,
-        exports,
-        languages,
-        root_folder
+        context()
       );
 
       expect(unwrap(resolved)).toEqual([parent_ctor_id]);
@@ -372,12 +370,7 @@ describe("Constructor Call Resolution", () => {
 
       const resolved = resolve_constructor_call(
         call_ref,
-        definitions,
-        scopes,
-        resolutions,
-        exports,
-        languages,
-        root_folder
+        context()
       );
 
       expect(unwrap(resolved)).toEqual([child_id]);
@@ -428,12 +421,7 @@ describe("Constructor Call Resolution", () => {
 
       const resolved = resolve_constructor_call(
         call_ref,
-        definitions,
-        scopes,
-        resolutions,
-        exports,
-        languages,
-        root_folder
+        context()
       );
 
       expect(unwrap(resolved)).toEqual([class_a_id]);
@@ -452,12 +440,7 @@ describe("Constructor Call Resolution", () => {
 
       const resolved = resolve_constructor_call(
         call_ref,
-        definitions,
-        scopes,
-        resolutions,
-        exports,
-        languages,
-        root_folder
+        context()
       );
 
       expect(resolved.ok).toBe(false);
@@ -497,12 +480,7 @@ describe("Constructor Call Resolution", () => {
 
       const resolved = resolve_constructor_call(
         call_ref,
-        definitions,
-        scopes,
-        resolutions,
-        exports,
-        languages,
-        root_folder
+        context()
       );
 
       expect(resolved.ok).toBe(false);
@@ -527,12 +505,7 @@ describe("Constructor Call Resolution", () => {
 
       const resolved = resolve_constructor_call(
         call_ref,
-        definitions,
-        scopes,
-        resolutions,
-        exports,
-        languages,
-        root_folder
+        context()
       );
 
       expect(resolved.ok).toBe(false);
@@ -584,12 +557,7 @@ describe("Constructor Call Resolution", () => {
 
       const resolved = resolve_constructor_call(
         call_ref,
-        definitions,
-        scopes,
-        resolutions,
-        exports,
-        languages,
-        root_folder
+        context()
       );
 
       expect(unwrap(resolved)).toEqual([class_id]);

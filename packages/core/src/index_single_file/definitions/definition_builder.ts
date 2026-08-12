@@ -573,6 +573,20 @@ export class DefinitionBuilder {
       }
     }
 
+    // Check methods in enums (Rust impl blocks targeting enums)
+    for (const enum_state of this.enums.values()) {
+      const method_state = enum_state.methods?.get(callable_id);
+      if (method_state) {
+        method_state.parameters.set(definition.symbol_id, param_def);
+        return this;
+      }
+    }
+
+    // The indexed callable surface is deliberately partial — a parameter whose
+    // owner no handler indexes is an expected gap, not an inconsistency, so it
+    // is dropped rather than raised. Raising here would abort the file's index
+    // and drop it from the corpus entirely, which manufactures exactly the
+    // uncalled-looking functions entry-point detection exists to avoid.
     return this;
   }
 
@@ -624,7 +638,7 @@ export class DefinitionBuilder {
     scope_id: ScopeId;
     import_path: ModulePath;
     original_name?: SymbolName;
-    import_kind: "named" | "default" | "namespace";
+    import_kind: "named" | "default" | "namespace" | "wildcard";
     is_type_only?: boolean;
     is_commonjs_require?: boolean;
     export?: ExportMetadata;

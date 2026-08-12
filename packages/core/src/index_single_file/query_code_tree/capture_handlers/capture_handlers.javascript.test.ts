@@ -144,6 +144,8 @@ describe("JavaScript Builder Configuration", () => {
         "definition.parameter",
         "definition.variable",
         "import.reexport",
+        "import.reexport.namespace",
+        "import.reexport.wildcard",
       ]);
     });
 
@@ -181,6 +183,8 @@ describe("JavaScript Builder Configuration", () => {
     it("should contain all re-export capture handler functions", () => {
       const reexport_mappings = [
         "import.reexport",
+        "import.reexport.wildcard",
+        "import.reexport.namespace",
       ];
 
       for (const mapping of reexport_mappings) {
@@ -2360,6 +2364,131 @@ export { create_class_id as create_py_class_id } from "./symbol_factories.python
           import_path: "./symbol_factories.python",
           export_name: "create_py_class_id" as SymbolName,
           is_reexport: true,
+        },
+      ]);
+    });
+  });
+
+  describe("Wildcard re-exports", () => {
+    function index_js_imports(code: string) {
+      const tree = parser.parse(code);
+      const lines = code.split("\n");
+      const parsed_file = {
+        file_path: TEST_FILE_PATH,
+        file_lines: lines.length,
+        file_end_column: lines[lines.length - 1].length + 1,
+        tree: tree,
+        lang: "javascript" as const,
+      };
+      const index = build_index_single_file(parsed_file, tree, "javascript");
+      return Array.from(index.imported_symbols.values()).map((i) => ({
+        name: i.name,
+        import_path: i.import_path,
+        import_kind: i.import_kind,
+        original_name: i.original_name,
+        export: i.export,
+      }));
+    }
+
+    it("records a wildcard re-export edge for export * from", () => {
+      expect(index_js_imports("export * from './m.js';")).toEqual([
+        {
+          name: "m",
+          import_path: "./m.js",
+          import_kind: "wildcard",
+          original_name: undefined,
+          export: { is_reexport: true },
+        },
+      ]);
+    });
+
+    it("binds the alias as a namespace object for export * as ns from", () => {
+      expect(index_js_imports("export * as ns from './m.js';")).toEqual([
+        {
+          name: "ns",
+          import_path: "./m.js",
+          import_kind: "namespace",
+          original_name: undefined,
+          export: {},
+        },
+      ]);
+    });
+
+    it("carries the export metadata onto a namespace import re-exported by name", () => {
+      expect(
+        index_js_imports("import * as X from './m';\nexport { X };")
+      ).toEqual([
+        {
+          name: "X",
+          import_path: "./m",
+          import_kind: "namespace",
+          original_name: undefined,
+          export: { export_name: undefined, is_reexport: false },
+        },
+      ]);
+    });
+
+    it("keys wildcard and alias symbol ids on their derived names", () => {
+      const tree = parser.parse(
+        "export * from './m.js';\nexport * as ns from './n.js';"
+      );
+      const parsed_file = {
+        file_path: TEST_FILE_PATH,
+        file_lines: 2,
+        file_end_column: 30,
+        tree: tree,
+        lang: "javascript" as const,
+      };
+      const index = build_index_single_file(parsed_file, tree, "javascript");
+      const ids = Array.from(index.imported_symbols.keys()).sort();
+
+      expect(ids).toEqual([
+        "variable:/test/file.js:1:1:1:23:m",
+        "variable:/test/file.js:2:13:2:14:ns",
+      ]);
+    });
+
+    it("does not treat a plain named re-export as a wildcard edge", () => {
+      expect(index_js_imports("export { foo } from './m.js';")).toEqual([
+        {
+          name: "foo",
+          import_path: "./m.js",
+          import_kind: "named",
+          original_name: undefined,
+          export: { is_reexport: true, export_name: undefined },
+        },
+      ]);
+    });
+
+    it("does not attach export metadata to an import nobody re-exports", () => {
+      expect(index_js_imports("import { a } from './m';")).toEqual([
+        {
+          name: "a",
+          import_path: "./m",
+          import_kind: "named",
+          original_name: undefined,
+          export: undefined,
+        },
+      ]);
+    });
+
+    it("leaves a from-clause re-export of an imported name to the reexport handler", () => {
+      expect(
+        index_js_imports("import { a } from './m';\nexport { a } from './m';")
+      ).toEqual([
+        {
+          name: "a",
+          import_path: "./m",
+          import_kind: "named",
+          original_name: undefined,
+          export: undefined,
+        },
+        {
+          name: "a",
+          import_path: "./m",
+          import_kind: "named",
+          original_name: undefined,
+          export: { is_reexport: true, export_name: undefined },
         },
       ]);
     });

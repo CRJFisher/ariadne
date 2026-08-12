@@ -972,15 +972,15 @@ describe("find_containing_class", () => {
 // ============================================================================
 
 describe("find_containing_callable with anonymous functions", () => {
-  it("should return matching SymbolId for arrow function parameters", () => {
+  it("returns the declarator-named function id for a declarator arrow's parameters", () => {
+    // The definition pass mints `const fn = (x) => …` under the declarator
+    // name, so the parameter's owner id must agree with that, not with a
+    // location-keyed anonymous.
     const code = "const fn = (x) => x * 2;";
     const root = parse_js(code);
 
     const param_node = find_arrow_function_param(root, "x");
     expect(param_node).not.toBeNull();
-
-    const arrow_node = find_arrow_function(root);
-    expect(arrow_node).not.toBeNull();
 
     const capture: CaptureNode = {
       category: SemanticCategory.DEFINITION,
@@ -998,8 +998,7 @@ describe("find_containing_callable with anonymous functions", () => {
     };
 
     const callable_id = find_containing_callable(capture);
-    const expected_id = anonymous_function_symbol(node_to_location(arrow_node!, file_path));
-    expect(callable_id).toBe(expected_id);
+    expect(callable_id).toBe("function:/test.js:1:7:1:8:fn");
   });
 
   it("should return matching SymbolId for callback arrow function parameters", () => {

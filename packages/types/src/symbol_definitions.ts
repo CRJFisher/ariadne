@@ -271,8 +271,30 @@ export interface VariableDefinition extends Definition {
  */
 export interface ImportDefinition extends Definition {
   readonly kind: "import";
-  readonly import_path: ModulePath; // Module path imported from
-  readonly import_kind: "named" | "default" | "namespace"; // Type of import
+  // Module path imported from.
+  // @language rust — a `#[path = "sys/unix.rs"] mod x;` declaration carries a
+  // file path relative to the directory the declaring file sits in, not a `::`
+  // path. `::` is Rust's only path separator, so the two forms never collide and
+  // `resolve_module_path_rust` tells them apart by `/` or a `.rs` suffix.
+  readonly import_path: ModulePath;
+  // "wildcard" carries two facts with different language sets:
+  // @language rust,python — the statement binds every public name of
+  // `import_path` into `defining_scope_id` (`use m::*`, `from m import *`).
+  // @language javascript,typescript,python,rust — with
+  // `export: { is_reexport: true }` it forwards that whole surface without
+  // binding it locally (`export * from`, `pub use m::*`, module-level
+  // `from m import *`). `name` is the module path's last segment — or the
+  // path itself when it has none (`from . import *`) — and is never matched
+  // against a call terminal.
+  // "namespace" carries two facts:
+  // @language javascript,typescript — the statement binds a whole module object
+  // (`import * as X`, `const X = require(...)`).
+  // @language rust — the statement is a bodyless `mod x;`, the edge to the file
+  // backing the module. It binds no name of its own (the NamespaceDefinition
+  // does), and incremental re-resolution treats the declaring file as forwarding
+  // that module's whole surface, because a `crate::declarer::x::item` path
+  // reaches straight through it.
+  readonly import_kind: "named" | "default" | "namespace" | "wildcard"; // Type of import
   readonly original_name?: SymbolName; // Original name in source module if aliased (for named imports)
   readonly is_type_only?: boolean; // TypeScript type-only import (e.g., import type { Foo })
   // @language javascript

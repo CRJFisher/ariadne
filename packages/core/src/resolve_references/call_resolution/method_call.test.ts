@@ -25,6 +25,8 @@ import type {
   ClassDefinition,
   VariableDefinition,
 } from "@ariadnejs/types";
+import { create_module_resolution_context } from "../import_resolution";
+import type { ModuleResolutionContext } from "../import_resolution";
 
 const TEST_FILE = "test.ts" as FilePath;
 const FILE_SCOPE_ID = "scope:test.ts:file:0:0" as ScopeId;
@@ -62,7 +64,7 @@ describe("Method Call Resolution", () => {
   let imports: ImportGraph;
   let exports: ExportRegistry;
   let languages: Map<FilePath, Language>;
-  let root_folder: FileSystemFolder;
+  let modules: ModuleResolutionContext;
 
   beforeEach(() => {
     scopes = new ScopeRegistry();
@@ -70,7 +72,7 @@ describe("Method Call Resolution", () => {
     types = new TypeRegistry();
     resolutions = new ResolutionRegistry();
     imports = new ImportGraph();
-    ({ exports, languages, root_folder } = make_export_chain_context());
+    ({ exports, languages, modules } = make_export_chain_context());
   });
 
   describe("Basic Method Calls", () => {
@@ -166,7 +168,7 @@ describe("Method Call Resolution", () => {
         imports,
         exports,
         languages,
-        root_folder
+        modules
       );
 
       expect(unwrap(resolved)).toEqual([method_id]);
@@ -220,7 +222,7 @@ describe("Method Call Resolution", () => {
         imports,
         exports,
         languages,
-        root_folder
+        modules
       );
 
       expect(unwrap(resolved)).toEqual([method_id]);
@@ -277,7 +279,7 @@ describe("Method Call Resolution", () => {
         imports,
         exports,
         languages,
-        root_folder
+        modules
       );
 
       expect(unwrap(resolved)).toEqual([method_id]);
@@ -342,7 +344,7 @@ describe("Method Call Resolution", () => {
         imports,
         exports,
         languages,
-        root_folder
+        modules
       );
 
       expect(unwrap(resolved_first)).toEqual([set_name_id]);
@@ -365,7 +367,7 @@ describe("Method Call Resolution", () => {
         imports,
         exports,
         languages,
-        root_folder
+        modules
       );
 
       expect(unwrap(resolved_second)).toEqual([set_age_id]);
@@ -435,7 +437,7 @@ describe("Method Call Resolution", () => {
         imports,
         exports,
         languages,
-        root_folder
+        modules
       );
 
       expect(unwrap(resolved)).toEqual([method_id]);
@@ -510,7 +512,7 @@ describe("Method Call Resolution", () => {
         imports,
         exports,
         languages,
-        root_folder
+        modules
       );
 
       expect(unwrap(resolved)).toEqual([helper_id]);
@@ -576,7 +578,7 @@ describe("Method Call Resolution", () => {
         imports,
         exports,
         languages,
-        root_folder
+        modules
       );
 
       const error = unwrap_err(resolved);
@@ -620,7 +622,7 @@ describe("Method Call Resolution", () => {
         imports,
         exports,
         languages,
-        root_folder
+        modules
       );
 
       const error = unwrap_err(resolved);
@@ -665,7 +667,7 @@ describe("Method Call Resolution", () => {
         imports,
         exports,
         languages,
-        root_folder
+        modules
       );
 
       const error = unwrap_err(resolved);
@@ -694,7 +696,7 @@ describe("Method Call Resolution", () => {
         imports,
         exports,
         languages,
-        root_folder
+        modules
       );
 
       const error = unwrap_err(resolved);
@@ -741,7 +743,7 @@ describe("Method Call Resolution", () => {
         imports,
         exports,
         languages,
-        root_folder
+        modules
       );
 
       const error = unwrap_err(resolved);
@@ -768,7 +770,7 @@ describe("Method Call Resolution", () => {
         imports,
         exports,
         languages,
-        root_folder
+        modules
       );
 
       const error = unwrap_err(resolved);
@@ -816,7 +818,7 @@ describe("Method Call Resolution", () => {
         imports,
         exports,
         languages,
-        root_folder
+        modules
       );
 
       const error = unwrap_err(resolved);
@@ -980,7 +982,7 @@ describe("Method Call Resolution", () => {
         imports,
         exports,
         languages,
-        root_folder
+        modules
       );
 
       expect([...unwrap(resolved)].sort()).toEqual(
@@ -1056,7 +1058,7 @@ describe("Method Call Resolution", () => {
         imports,
         exports,
         languages,
-        root_folder
+        modules
       );
 
       expect(unwrap(resolved)).toEqual([method_id]);
@@ -1127,7 +1129,7 @@ describe("Method Call Resolution", () => {
         imports,
         exports,
         languages,
-        root_folder
+        modules
       );
 
       const error = unwrap_err(resolved);

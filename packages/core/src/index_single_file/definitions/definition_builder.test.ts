@@ -661,4 +661,24 @@ describe("DefinitionBuilder - Public API", () => {
     expect(class_def.decorators).toHaveLength(1);
     expect(class_def.methods[0].parameters).toHaveLength(1);
   });
+
+  it("drops a parameter whose owning callable the builder never created", () => {
+    // The indexed callable surface is partial by design; an unindexed owner
+    // must not abort the file's index.
+    const context = create_test_context();
+    const builder = new DefinitionBuilder(context);
+
+    const returned = builder.add_parameter_to_callable(
+      "function:test.ts:1:0:1:10:absent" as SymbolId,
+      {
+        symbol_id: "param:test.ts:1:11:1:12:p" as SymbolId,
+        name: "p" as SymbolName,
+        location: create_test_location(1, 11),
+        scope_id: context.root_scope_id,
+      }
+    );
+
+    expect(returned).toBe(builder);
+    expect(builder.build().functions.size).toBe(0);
+  });
 });

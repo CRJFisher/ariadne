@@ -9,8 +9,6 @@
 import type {
   SymbolId,
   SymbolName,
-  FilePath,
-  Language,
   ConstructorCallReference,
   ClassDefinition,
   Result,
@@ -18,16 +16,17 @@ import type {
 } from "@ariadnejs/types";
 import { err, ok } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "../registries/definition";
-import type { ExportRegistry } from "../registries/export";
-import type { ScopeRegistry } from "../registries/scope";
 import type { ResolutionRegistry } from "../resolution_registry";
-import type { FileSystemFolder } from "../file_folders";
 import { resolve_namespace_export } from "../export_chain_lookup";
+import type { CallResolutionContext } from "./call_resolver";
 import {
-  resolve_self_type_rust,
-  resolve_type_via_module_path_rust,
+  resolve_type_via_path_prefix_rust,
   find_associated_constructor_rust,
 } from "./constructor.rust";
+import {
+  RUST_SELF_TYPE_KEYWORD,
+  resolve_self_type_rust,
+} from "./path_resolution.rust";
 
 /**
  * Resolve a constructor call to its constructor definition, falling back to the
@@ -35,45 +34,42 @@ import {
  */
 export function resolve_constructor_call(
   call_ref: ConstructorCallReference,
-  definitions: DefinitionRegistry,
-  scopes: ScopeRegistry,
-  resolutions: ResolutionRegistry,
-  exports: ExportRegistry,
-  languages: ReadonlyMap<FilePath, Language>,
-  root_folder: FileSystemFolder,
-  import_source_resolver?: (import_id: SymbolId) => FilePath | undefined
+  context: CallResolutionContext
 ): Result<SymbolId[], ResolutionFailure> {
+  const { definitions, scopes, resolutions, exports, imports, languages, modules } =
+    context;
   let class_symbol: SymbolId | null = null;
 
   // Namespace-qualified constructor: property_chain = [namespace, class_name] — need both parts
-  if (call_ref.property_chain && call_ref.property_chain.length > 1 && import_source_resolver) {
+  if (call_ref.property_chain && call_ref.property_chain.length > 1) {
     const namespace_id = resolutions.resolve(call_ref.scope_id, call_ref.property_chain[0]);
     if (namespace_id) {
       const namespace_def = definitions.get(namespace_id);
       if (namespace_def?.kind === "import" && namespace_def.import_kind === "namespace") {
-        const source_file = import_source_resolver(namespace_id);
+        const source_file = imports.get_resolved_import_path(namespace_id);
         if (source_file) {
-          class_symbol = resolve_namespace_export(source_file, call_ref.property_chain[1], exports, languages, root_folder);
+          class_symbol = resolve_namespace_export(source_file, call_ref.property_chain[1], exports, languages, modules);
         }
       }
     }
   }
 
+  // @language rust
   // `Self` is never in scope, so its substitution must run before the bare-name
-  // lookup; the leaf self-guards and returns null for any other call shape.
-  if (!class_symbol) {
-    class_symbol = resolve_self_type_rust(call_ref, scopes, definitions);
+  // lookup would fail.
+  if (!class_symbol && call_ref.name === RUST_SELF_TYPE_KEYWORD) {
+    class_symbol = resolve_self_type_rust(call_ref.scope_id, scopes, definitions);
   }
 
   if (!class_symbol) {
     class_symbol = resolutions.resolve(call_ref.scope_id, call_ref.name as SymbolName);
   }
 
-  // Inline full-path constructors are never bound by a bare name, so the module
-  // path walk runs only after the bare-name miss; the leaf self-guards on
+  // Inline full-path constructors are never bound by a bare name, so path
+  // resolution runs only after the bare-name miss; the leaf self-guards on
   // `path_prefix`, leaving the TS/Python `new ClassName()` path untouched.
   if (!class_symbol) {
-    class_symbol = resolve_type_via_module_path_rust(call_ref, definitions, scopes, resolutions);
+    class_symbol = resolve_type_via_path_prefix_rust(call_ref, context);
   }
 
   if (!class_symbol) {

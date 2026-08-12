@@ -4,6 +4,10 @@ import { DefinitionRegistry } from "../registries/definition";
 import { ScopeRegistry } from "../registries/scope";
 import { ResolutionRegistry } from "../resolution_registry";
 import { ExportRegistry } from "../registries/export";
+import { ImportGraph } from "../import_resolution/import_graph";
+import { ReferenceRegistry } from "../registries/reference";
+import { TypeRegistry } from "../registries/type";
+import type { CallResolutionContext } from "./call_resolver";
 import type { FileSystemFolder } from "../file_folders";
 import { make_export_chain_context } from "../resolution_test_helpers";
 import { set_test_resolutions, unwrap } from "../resolve_references.test";
@@ -19,6 +23,8 @@ import type {
   MethodDefinition,
   ClassDefinition,
 } from "@ariadnejs/types";
+import { create_module_resolution_context } from "../import_resolution";
+import type { ModuleResolutionContext } from "../import_resolution";
 
 // Test fixtures
 const TEST_FILE = "test.ts" as FilePath;
@@ -39,15 +45,32 @@ describe("Rust Constructor Resolution", () => {
   let scopes: ScopeRegistry;
   let resolutions: ResolutionRegistry;
   let exports: ExportRegistry;
+  let imports: ImportGraph;
   let languages: Map<FilePath, Language>;
-  let root_folder: FileSystemFolder;
+  let modules: ModuleResolutionContext;
 
   beforeEach(() => {
     definitions = new DefinitionRegistry();
     scopes = new ScopeRegistry();
     resolutions = new ResolutionRegistry();
-    ({ exports, languages, root_folder } = make_export_chain_context());
+    imports = new ImportGraph();
+    ({ exports, languages, modules } = make_export_chain_context());
   });
+
+  /** The slice of CallResolutionContext constructor resolution reads. */
+  function context(): CallResolutionContext {
+    return {
+      references: new ReferenceRegistry(),
+      types: new TypeRegistry(),
+      definitions,
+      scopes,
+      resolutions,
+      exports,
+      imports,
+      languages,
+      modules,
+    };
+  }
 
   describe("Rust associated constructor (member-index link)", () => {
     // Rust `impl T { fn new() }` indexes `new` as a plain method, leaving
@@ -105,12 +128,7 @@ describe("Rust Constructor Resolution", () => {
 
       const resolved = resolve_constructor_call(
         call_ref,
-        definitions,
-        scopes,
-        resolutions,
-        exports,
-        languages,
-        root_folder
+        context()
       );
 
       expect(unwrap(resolved)).toEqual([new_method_id]);
@@ -129,12 +147,7 @@ describe("Rust Constructor Resolution", () => {
 
       const resolved = resolve_constructor_call(
         call_ref,
-        definitions,
-        scopes,
-        resolutions,
-        exports,
-        languages,
-        root_folder
+        context()
       );
 
       expect(unwrap(resolved)).toEqual([class_id]);
@@ -171,12 +184,7 @@ describe("Rust Constructor Resolution", () => {
 
       const resolved = resolve_constructor_call(
         call_ref,
-        definitions,
-        scopes,
-        resolutions,
-        exports,
-        languages,
-        root_folder
+        context()
       );
 
       expect(unwrap(resolved)).toEqual([bare_class_id]);
@@ -225,12 +233,7 @@ describe("Rust Constructor Resolution", () => {
 
       const resolved = resolve_constructor_call(
         call_ref,
-        definitions,
-        scopes,
-        resolutions,
-        exports,
-        languages,
-        root_folder
+        context()
       );
 
       expect(unwrap(resolved)).toEqual([class_id]);
@@ -239,12 +242,13 @@ describe("Rust Constructor Resolution", () => {
 
   describe("Inline-full-path constructor (module-path walk)", () => {
     // The terminal type name misses in scope and a type-last path_prefix is
-    // present; the resolver walks the module path to bind the type. These cases
-    // assert the bail boundaries — the positive resolution is exercised
-    // end-to-end in project.rust.integration.test.ts.
-    it("bails when the module qualifier does not resolve in scope", () => {
-      // crate::runtime::Driver::new(): `Driver` not in scope, and `runtime` does
-      // not resolve at all — bail rather than fabricate an edge.
+    // present; the resolver hands the module path to the shared `::`-path
+    // resolver. These cases assert the bail boundaries with an empty file tree
+    // and no imports, so the module-file hop can never land — the positive
+    // resolution is exercised end-to-end in project.rust.integration.test.ts.
+    it("bails when the module path names no in-scope module and no indexed file", () => {
+      // crate::runtime::Driver::new(): `Driver` is not in scope, `runtime` names
+      // no module, and no file backs the path — bail rather than fabricate.
       set_test_resolutions(resolutions, FILE_SCOPE_ID, new Map());
 
       const call_ref = create_constructor_call_reference(
@@ -258,12 +262,7 @@ describe("Rust Constructor Resolution", () => {
 
       const resolved = resolve_constructor_call(
         call_ref,
-        definitions,
-        scopes,
-        resolutions,
-        exports,
-        languages,
-        root_folder
+        context()
       );
 
       expect(resolved.ok).toBe(false);
@@ -273,10 +272,10 @@ describe("Rust Constructor Resolution", () => {
       }
     });
 
-    it("bails when the module qualifier resolves to a non-namespace definition", () => {
-      // Outer::Inner::new(): `Inner` not in scope, and the qualifier `Outer`
-      // resolves to a type, not a `mod` — only a namespace has a module body to
-      // walk, so bail rather than treat a type as a module.
+    it("bails when the module qualifier resolves to a type rather than a module", () => {
+      // Outer::Inner::new(): `Inner` is not in scope, and `Outer` resolves to a
+      // type. A type is not a module: it has no body to look `Inner` up in, and
+      // a `use` that binds one is never followed as a module either.
       const outer_id = class_symbol("Outer", MOCK_LOCATION);
       const outer_def: ClassDefinition = {
         kind: "class",
@@ -307,12 +306,7 @@ describe("Rust Constructor Resolution", () => {
 
       const resolved = resolve_constructor_call(
         call_ref,
-        definitions,
-        scopes,
-        resolutions,
-        exports,
-        languages,
-        root_folder
+        context()
       );
 
       expect(resolved.ok).toBe(false);
@@ -323,8 +317,8 @@ describe("Rust Constructor Resolution", () => {
     });
 
     it("bails when the path_prefix carries no module path (lone type segment)", () => {
-      // Cell::<u8>::new() reduces to name `Cell`, prefix ["Cell"] — a single
-      // segment is the type itself with no module to walk, so the bare miss stands.
+      // Cell::<u8>::new() reduces to name `Cell`, prefix ["Cell"] — dropping the
+      // type leaves an empty module path, so the bare miss stands.
       set_test_resolutions(resolutions, FILE_SCOPE_ID, new Map());
 
       const call_ref = create_constructor_call_reference(
@@ -338,12 +332,7 @@ describe("Rust Constructor Resolution", () => {
 
       const resolved = resolve_constructor_call(
         call_ref,
-        definitions,
-        scopes,
-        resolutions,
-        exports,
-        languages,
-        root_folder
+        context()
       );
 
       expect(resolved.ok).toBe(false);

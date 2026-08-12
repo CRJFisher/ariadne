@@ -22,6 +22,7 @@ import {
 import { ScopeRegistry } from "../registries/scope";
 import { DefinitionRegistry } from "../registries/definition";
 import { TypeRegistry } from "../registries/type";
+import { ExportRegistry } from "../registries/export";
 import { ResolutionRegistry } from "../resolution_registry";
 import { ImportGraph } from "../import_resolution/import_graph";
 import { set_test_resolutions } from "../resolve_references.test";
@@ -31,16 +32,21 @@ import type {
   ScopeId,
   Location,
   FilePath,
+  ModulePath,
+  LexicalScope,
   SelfReferenceCall,
   MethodCallReference,
   MethodDefinition,
   ClassDefinition,
   PropertyDefinition,
+  ImportDefinition,
+  NamespaceDefinition,
 } from "@ariadnejs/types";
 import {
   class_symbol,
   method_symbol,
   property_symbol,
+  namespace_symbol,
   is_ok,
   is_err,
 } from "@ariadnejs/types";
@@ -1088,6 +1094,192 @@ describe("resolve_receiver_type", () => {
         expect(result.error.stage).toBe("type_inference");
         expect(result.error.reason).toBe("member_type_unknown");
       }
+    });
+  });
+});
+
+/**
+ * A re-export surface whose every link lands on another import definition,
+ * which is what makes a chain a hop-by-hop walk for the receiver instead of a
+ * single `ExportRegistry` lookup. Keyed by file: every hop re-exports the same
+ * name.
+ */
+class ImportChainExports extends ExportRegistry {
+  private readonly links: ReadonlyMap<FilePath, SymbolId>;
+
+  constructor(links: ReadonlyMap<FilePath, SymbolId>) {
+    super();
+    this.links = links;
+  }
+
+  override resolve_export_chain(source_file: FilePath): SymbolId | null {
+    return this.links.get(source_file) ?? null;
+  }
+}
+
+describe("re-export chain dereferencing", () => {
+  const NAMESPACE_FILE = "widgets.ts" as FilePath;
+  const NAMESPACE_FILE_SCOPE_ID = "scope:widgets.ts:file:0:0" as ScopeId;
+  const NAMESPACE_BODY_SCOPE_ID = "scope:widgets.ts:Widgets:1:0" as ScopeId;
+  const NAMESPACE_LOCATION: Location = {
+    file_path: NAMESPACE_FILE,
+    start_line: 1,
+    start_column: 0,
+    end_line: 9,
+    end_column: 1,
+  };
+
+  const widgets_id = namespace_symbol("Widgets", NAMESPACE_LOCATION);
+  const inner_class_id = class_symbol("Inner" as SymbolName, {
+    ...NAMESPACE_LOCATION,
+    start_line: 2,
+    end_line: 4,
+  });
+
+  function barrel_file(hop: number): FilePath {
+    return `barrel${hop}.ts` as FilePath;
+  }
+
+  /** The `import { Widgets } from './barrel<hop+1>'` at a given depth. */
+  function chain_import(hop: number): ImportDefinition {
+    const file = hop === 0 ? TEST_FILE : barrel_file(hop);
+    return {
+      kind: "import",
+      symbol_id: `import:${file}:${hop}:0:${hop}:30:Widgets` as SymbolId,
+      name: "Widgets" as SymbolName,
+      defining_scope_id: `scope:${file}:file:0:0` as ScopeId,
+      location: {
+        file_path: file,
+        start_line: hop,
+        start_column: 0,
+        end_line: hop,
+        end_column: 30,
+      },
+      import_kind: "named",
+      import_path: `./barrel${hop + 1}` as ModulePath,
+    };
+  }
+
+  function namespace_scopes(): Map<ScopeId, LexicalScope> {
+    return new Map<ScopeId, LexicalScope>([
+      [
+        NAMESPACE_FILE_SCOPE_ID,
+        {
+          id: NAMESPACE_FILE_SCOPE_ID,
+          parent_id: null,
+          name: null,
+          type: "module",
+          location: { ...NAMESPACE_LOCATION, start_line: 0 },
+          child_ids: [NAMESPACE_BODY_SCOPE_ID],
+        },
+      ],
+      [
+        NAMESPACE_BODY_SCOPE_ID,
+        {
+          id: NAMESPACE_BODY_SCOPE_ID,
+          parent_id: NAMESPACE_FILE_SCOPE_ID,
+          name: "Widgets" as SymbolName,
+          type: "module",
+          location: NAMESPACE_LOCATION,
+          child_ids: [],
+        },
+      ],
+    ]);
+  }
+
+  /**
+   * `hops` barrels that each re-export `Widgets` from the next, with the
+   * deepest one exporting `deepest_target` — the namespace itself, or a hop
+   * already on the chain to close it into a cycle.
+   */
+  function setup_chain(
+    hops: number,
+    deepest_target: SymbolId
+  ): ReceiverResolutionContext {
+    const scopes = new ScopeRegistry();
+    const definitions = new DefinitionRegistry();
+    const resolutions = new ResolutionRegistry();
+    const imports = new ImportGraph();
+    const links = new Map<FilePath, SymbolId>();
+
+    for (let hop = 0; hop < hops; hop++) {
+      const import_def = chain_import(hop);
+      definitions.update_file(import_def.location.file_path, [import_def]);
+      imports["resolved_import_paths"].set(
+        import_def.symbol_id,
+        barrel_file(hop + 1)
+      );
+      if (hop > 0) {
+        links.set(barrel_file(hop), import_def.symbol_id);
+      }
+    }
+    links.set(barrel_file(hops), deepest_target);
+
+    const widgets_namespace: NamespaceDefinition = {
+      kind: "namespace",
+      symbol_id: widgets_id,
+      name: "Widgets" as SymbolName,
+      defining_scope_id: NAMESPACE_FILE_SCOPE_ID,
+      location: NAMESPACE_LOCATION,
+      is_exported: true,
+    };
+    const inner_class: ClassDefinition = {
+      kind: "class",
+      symbol_id: inner_class_id,
+      name: "Inner" as SymbolName,
+      defining_scope_id: NAMESPACE_BODY_SCOPE_ID,
+      location: { ...NAMESPACE_LOCATION, start_line: 2, end_line: 4 },
+      is_exported: true,
+      extends: [],
+      methods: [],
+      properties: [],
+      decorators: [],
+      constructors: [],
+    };
+    definitions.update_file(NAMESPACE_FILE, [widgets_namespace, inner_class]);
+    scopes.update_file(NAMESPACE_FILE, namespace_scopes());
+
+    set_test_resolutions(
+      resolutions,
+      FILE_SCOPE_ID,
+      new Map([["Widgets" as SymbolName, chain_import(0).symbol_id]])
+    );
+
+    return {
+      scopes,
+      definitions,
+      types: new TypeRegistry(),
+      resolutions,
+      imports,
+      ...make_export_chain_context(),
+      exports: new ImportChainExports(links),
+    };
+  }
+
+  const receiver: ReceiverExpression = {
+    base: { type: "identifier", value: "Widgets" as SymbolName },
+    chain: ["Inner" as SymbolName],
+    method_name: "build" as SymbolName,
+    scope_id: FILE_SCOPE_ID,
+  };
+
+  it("resolves a namespace member through ten re-export hops", () => {
+    const context = setup_chain(10, widgets_id);
+
+    const result = resolve_receiver_type(receiver, context);
+
+    expect(is_ok(result) && result.value).toBe(inner_class_id);
+  });
+
+  it("resolves nothing when the re-export chain is circular", () => {
+    const context = setup_chain(3, chain_import(0).symbol_id);
+
+    const result = resolve_receiver_type(receiver, context);
+
+    expect(is_err(result) && result.error).toEqual({
+      stage: "receiver_resolution",
+      reason: "method_not_on_type",
+      partial_info: { resolved_receiver_type: chain_import(0).symbol_id },
     });
   });
 });

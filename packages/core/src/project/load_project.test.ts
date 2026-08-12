@@ -503,4 +503,123 @@ describe("load_project", () => {
       expect(entry_point_names(call_graph)).toEqual(["emit_template"]);
     });
   });
+
+  /**
+   * A corpus arrives one file at a time, and a caller can arrive before the
+   * callee it names. Nothing re-reads the whole corpus afterwards, so every
+   * cross-file read a file makes has to be recorded as a dependency of it —
+   * these pin the two reads that reach a file no import statement in the
+   * caller names.
+   */
+  describe("resolution does not depend on the order files arrive in", () => {
+    async function write_file(relative_path: string, content: string): Promise<void> {
+      const absolute_path = path.join(temp_dir, relative_path);
+      await fs.mkdir(path.dirname(absolute_path), { recursive: true });
+      await fs.writeFile(absolute_path, content, "utf-8");
+    }
+
+    /**
+     * The files a named call in `caller` binds to, by defining file. Reading
+     * the edge itself rather than the entry-point set: a stale binding still
+     * keeps its target off the entry points.
+     */
+    function call_target_files(
+      project: Project,
+      caller: string,
+      call_name: string,
+    ): string[] {
+      const call = project.resolutions
+        .get_calls_for_file(path.join(temp_dir, caller) as FilePath)
+        .find((c) => (c.name as string) === call_name);
+      if (call === undefined) {
+        throw new Error(`expected a call named ${call_name} in ${caller}`);
+      }
+      return call.resolutions
+        .map((r) => project.definitions.get(r.symbol_id)?.location.file_path as string)
+        .map((file_path) => path.relative(temp_dir, file_path))
+        .sort();
+    }
+
+    it("resolves a Rust qualified path whose module file is indexed after the caller", async () => {
+      await write_file("lib.rs", "mod caller;\nmod deep;\n");
+      // `caller.rs` declares no module of its own: `crate::deep::inner` is the
+      // only thing naming the file the call lands in.
+      await write_file(
+        "caller.rs",
+        "pub fn run() -> i32 {\n    crate::deep::inner::deep_fn()\n}\n",
+      );
+      await write_file("deep.rs", "pub mod inner;\n");
+      await write_file("deep/inner.rs", "pub fn deep_fn() -> i32 {\n    1\n}\n");
+
+      const { project } = await load_project({
+        project_path: temp_dir,
+        files: ["caller.rs", "deep/inner.rs", "deep.rs", "lib.rs"],
+      });
+
+      expect(call_target_files(project, "caller.rs", "deep_fn")).toEqual([
+        "deep/inner.rs",
+      ]);
+    });
+
+    it("resolves a name through a star-re-exporting barrel indexed after the consumer", async () => {
+      // Named so a plain alphabetical walk is consumer-first too, not only the
+      // explicit order below.
+      await write_file(
+        "app.ts",
+        "import { leaf_fn } from './barrel';\n\nexport function drive(): number {\n  return leaf_fn();\n}\n",
+      );
+      await write_file("barrel.ts", "export * from './leaf';\n");
+      await write_file("leaf.ts", "export function leaf_fn(): number {\n  return 1;\n}\n");
+
+      const { project } = await load_project({
+        project_path: temp_dir,
+        files: ["app.ts", "barrel.ts", "leaf.ts"],
+      });
+
+      expect(call_target_files(project, "app.ts", "leaf_fn")).toEqual(["leaf.ts"]);
+    });
+
+    it("resolves a path hopping through a #[path]-remapped module indexed after the caller", async () => {
+      // Nothing names `renamed.rs` but the `#[path]` attribute, so the hop is
+      // the only edge that can bring the caller back when the file arrives.
+      await write_file("lib.rs", "mod caller;\nmod deep;\n");
+      await write_file(
+        "caller.rs",
+        "pub fn run() -> i32 {\n    crate::deep::inner::deep_fn()\n}\n",
+      );
+      await write_file("deep.rs", "#[path = \"renamed.rs\"]\npub mod inner;\n");
+      await write_file("renamed.rs", "pub fn deep_fn() -> i32 {\n    1\n}\n");
+
+      const { project } = await load_project({
+        project_path: temp_dir,
+        files: ["caller.rs", "deep.rs", "lib.rs", "renamed.rs"],
+      });
+
+      expect(call_target_files(project, "caller.rs", "deep_fn")).toEqual([
+        "renamed.rs",
+      ]);
+    });
+
+    it("resolves a path hopping through a re-exported module indexed after the caller", async () => {
+      // `deep.rs` publishes the module rather than declaring it, so the file the
+      // path lands in is named by neither the caller nor the declaring module.
+      await write_file("lib.rs", "mod caller;\nmod deep;\nmod other;\n");
+      await write_file(
+        "caller.rs",
+        "pub fn run() -> i32 {\n    crate::deep::inner::deep_fn()\n}\n",
+      );
+      await write_file("deep.rs", "pub use crate::other::inner;\n");
+      await write_file("other/mod.rs", "pub mod inner;\n");
+      await write_file("other/inner.rs", "pub fn deep_fn() -> i32 {\n    1\n}\n");
+
+      const { project } = await load_project({
+        project_path: temp_dir,
+        files: ["caller.rs", "deep.rs", "lib.rs", "other/mod.rs", "other/inner.rs"],
+      });
+
+      expect(call_target_files(project, "caller.rs", "deep_fn")).toEqual([
+        "other/inner.rs",
+      ]);
+    });
+  });
 });

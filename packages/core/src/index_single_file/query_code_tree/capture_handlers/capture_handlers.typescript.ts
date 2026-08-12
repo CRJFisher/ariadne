@@ -425,9 +425,26 @@ export function handle_ts_definition_method(
   context: ProcessingContext
 ): void {
   const class_id = find_containing_class(capture);
-  if (!class_id) return;
-
   const method_id = create_method_id(capture);
+
+  if (!class_id) {
+    // An object-literal method (`{ m(p) {} }`) has no owning class. It is
+    // reached through the object's collection dispatch, never by its own name,
+    // so a named node here would surface as an entry point nothing can call.
+    // Registering it anonymously under the id the parameter pass computes still
+    // binds its parameters.
+    builder.add_anonymous_function(
+      {
+        symbol_id: method_id,
+        location: capture.location,
+        scope_id: context.get_scope_id(capture.location),
+        return_type: extract_return_type(capture.node),
+      },
+      capture
+    );
+    return;
+  }
+
   const parent = capture.node.parent; // method_definition
   const docstring = consume_documentation(capture.location);
 

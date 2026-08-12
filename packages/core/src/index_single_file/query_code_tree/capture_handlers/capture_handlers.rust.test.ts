@@ -1319,7 +1319,7 @@ impl MyStruct {
       expect(import_names).toEqual(["Read", "Write"]);
     });
 
-    it("should process wildcard use declaration", () => {
+    it("names a glob for its module's last segment and marks it a wildcard edge", () => {
       const code = "use std::io::*;";
       const tree = parser.parse(code);
       const use_node = find_node(tree.rootNode, "use_declaration");
@@ -1351,7 +1351,165 @@ impl MyStruct {
       const result = builder.build();
       const imports = Array.from(result.imports.values());
       expect(imports).toHaveLength(1);
-      expect(imports[0].import_kind).toBe("namespace");
+      expect(imports[0].name).toBe("io");
+      expect(imports[0].import_kind).toBe("wildcard");
+      expect(imports[0].export).toBeUndefined();
+    });
+
+    describe("pub use re-export edges", () => {
+      function index_rust_imports(code: string) {
+        const tree = parser.parse(code);
+        const lines = code.split("\n");
+        const parsed_file = {
+          file_path: "test.rs" as FilePath,
+          file_lines: lines.length,
+          file_end_column: lines[lines.length - 1]?.length || 0,
+          tree,
+          lang: "rust" as const,
+        };
+        const index = build_index_single_file(parsed_file, tree, "rust");
+        return Array.from(index.imported_symbols.values()).map((i) => ({
+          symbol_id: i.symbol_id,
+          name: i.name,
+          import_path: i.import_path,
+          import_kind: i.import_kind,
+          original_name: i.original_name,
+          export: i.export,
+        }));
+      }
+
+      it("attaches re-export metadata to a pub use of a single name", () => {
+        expect(index_rust_imports("pub use inner::x;")).toEqual([
+          {
+            symbol_id: "import:test.rs:1:x",
+            name: "x",
+            import_path: "inner",
+            import_kind: "named",
+            original_name: undefined,
+            export: { is_reexport: true },
+          },
+        ]);
+      });
+
+      it("attaches re-export metadata to every member of a pub use group", () => {
+        expect(index_rust_imports("pub use util::{copy, copy_bidirectional};")).toEqual([
+          {
+            symbol_id: "import:test.rs:1:copy",
+            name: "copy",
+            import_path: "util",
+            import_kind: "named",
+            original_name: undefined,
+            export: { is_reexport: true },
+          },
+          {
+            symbol_id: "import:test.rs:1:copy_bidirectional",
+            name: "copy_bidirectional",
+            import_path: "util",
+            import_kind: "named",
+            original_name: undefined,
+            export: { is_reexport: true },
+          },
+        ]);
+      });
+
+      it("attaches re-export metadata to a module-level pub use via self", () => {
+        expect(index_rust_imports("pub use self::mpsc;")).toEqual([
+          {
+            symbol_id: "import:test.rs:1:mpsc",
+            name: "mpsc",
+            import_path: "self",
+            import_kind: "named",
+            original_name: undefined,
+            export: { is_reexport: true },
+          },
+        ]);
+      });
+
+      it("attaches re-export metadata to a renamed pub use", () => {
+        expect(index_rust_imports("pub use a::b as c;")).toEqual([
+          {
+            symbol_id: "import:test.rs:1:c",
+            name: "c",
+            import_path: "a",
+            import_kind: "named",
+            original_name: "b",
+            export: { is_reexport: true },
+          },
+        ]);
+      });
+
+      it("records a private glob as a wildcard edge with no export metadata", () => {
+        expect(index_rust_imports("use m::*;")).toEqual([
+          {
+            symbol_id: "import:test.rs:1:m",
+            name: "m",
+            import_path: "m",
+            import_kind: "wildcard",
+            original_name: undefined,
+            export: undefined,
+          },
+        ]);
+      });
+
+      it("records a public glob as a re-exporting wildcard edge", () => {
+        expect(index_rust_imports("pub use m::*;")).toEqual([
+          {
+            symbol_id: "import:test.rs:1:m",
+            name: "m",
+            import_path: "m",
+            import_kind: "wildcard",
+            original_name: undefined,
+            export: { is_reexport: true },
+          },
+        ]);
+      });
+
+      it("treats a pub(crate) glob as a re-exporting wildcard edge", () => {
+        expect(
+          index_rust_imports("pub(crate) use sqlx_core::transaction::*;")
+        ).toEqual([
+          {
+            symbol_id: "import:test.rs:1:sqlx_core::transaction",
+            name: "transaction",
+            import_path: "sqlx_core::transaction",
+            import_kind: "wildcard",
+            original_name: undefined,
+            export: { is_reexport: true },
+          },
+        ]);
+      });
+
+      it("does not mark a pub use inside an inline mod block as a file-level re-export", () => {
+        expect(
+          index_rust_imports("pub mod wrapper {\n    pub use crate::inner::thing;\n}")
+        ).toEqual([
+          {
+            symbol_id: "import:test.rs:2:thing",
+            name: "thing",
+            import_path: "crate::inner",
+            import_kind: "named",
+            original_name: undefined,
+            export: undefined,
+          },
+        ]);
+      });
+
+      it("marks a pub extern crate as a re-export", () => {
+        expect(index_rust_imports("pub extern crate serde;")).toEqual([
+          {
+            symbol_id: "import:test.rs:1:serde",
+            name: "serde",
+            import_path: "serde",
+            import_kind: "named",
+            original_name: undefined,
+            export: { is_reexport: true },
+          },
+        ]);
+      });
+
+      it("has no import.reexport handler", () => {
+        expect("import.reexport" in RUST_HANDLERS).toEqual(false);
+      });
     });
 
     it("should process extern crate declaration", () => {

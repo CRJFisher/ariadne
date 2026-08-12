@@ -3572,4 +3572,65 @@ const result = items.map((x) =>
     });
   });
 
+  describe("Parameters of callables the source binds by position", () => {
+    function index_ts(code: string) {
+      const tree = parser.parse(code);
+      const parsed_file = create_parsed_file(
+        code,
+        "test.ts" as FilePath,
+        tree,
+        "typescript" as Language,
+      );
+      return build_index_single_file(parsed_file, tree, "typescript" as Language);
+    }
+
+    function parameter_names(code: string, function_name: string): string[] {
+      const fn = Array.from(index_ts(code).functions.values()).find(
+        (f) => (f.name as string) === function_name,
+      );
+      return Array.from(fn!.signature.parameters.values()).map((p) => p.name);
+    }
+
+    function variable_names(code: string): string[] {
+      return Array.from(index_ts(code).variables.values())
+        .map((v) => v.name as string)
+        .sort();
+    }
+
+    it("binds an object-literal method's parameters on an anonymous callable, not a named node", () => {
+      const callables = Array.from(
+        index_ts("const obj = { updateProfile(name: string, email: string) {} };").functions.values(),
+      );
+      expect(callables.map((f) => f.name as string)).toEqual(["<anonymous>"]);
+      expect(
+        Array.from(callables[0].signature.parameters.values()).map((p) => p.name),
+      ).toEqual(["name", "email"]);
+    });
+
+    it("binds the parameters of a declarator-assigned arrow", () => {
+      expect(parameter_names("const f = (p: number) => p;", "f")).toEqual(["p"]);
+    });
+
+    it("binds a for-of and a for-in loop head by name", () => {
+      expect(variable_names("for (const a of xs) { a.m(); }")).toContain("a");
+      expect(variable_names("for (const b in o) { o[b]; }")).toContain("b");
+    });
+
+    it("binds each identifier of a destructured declarator by name", () => {
+      expect(
+        variable_names("const { c } = o;\nconst [d] = xs;\nconst { ...r } = o;"),
+      ).toEqual(["c", "d", "r"]);
+    });
+
+    it("binds each identifier of a destructured parameter by name", () => {
+      expect(variable_names("function f({ g }, [h]) { return g + h; }")).toEqual([
+        "g",
+        "h",
+      ]);
+    });
+
+    it("binds each identifier of a type-annotated destructured parameter by name", () => {
+      expect(variable_names("function f({ g }: T) { return g; }")).toEqual(["g"]);
+    });
+  });
 });

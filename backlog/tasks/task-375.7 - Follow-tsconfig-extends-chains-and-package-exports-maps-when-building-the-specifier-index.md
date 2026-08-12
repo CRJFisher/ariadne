@@ -1,7 +1,7 @@
 ---
 id: TASK-375.7
 title: "Follow tsconfig extends chains and package exports maps when building the specifier index"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-07-30 14:10"
 labels:
@@ -58,12 +58,92 @@ Identified by comparing Ariadne against Graphify (`~/workspace/tools/graphify`),
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 `ModuleSpecifierIndex` construction follows `tsconfig.json`/`jsconfig.json` `extends` chains to a fixed point, accepting the single-string and TypeScript 5 array forms, with a cycle guard that terminates.
-- [ ] #2 `paths` and `baseUrl` are resolved relative to the config that declares them, pinned by a test with a base config two directories above the leaf.
-- [ ] #3 A workspace package's `exports` field is honoured — root and subpath forms — in a documented condition precedence order, with `index.*` probing retained as the no-`exports` fallback.
-- [ ] #4 An `exports` target that would escape its package directory is rejected.
-- [ ] #5 A specifier matching no on-disk target still resolves opaquely and fabricates no edge.
+- [x] #1 `ModuleSpecifierIndex` construction follows `tsconfig.json`/`jsconfig.json` `extends` chains to a fixed point, accepting the single-string and TypeScript 5 array forms, with a cycle guard that terminates.
+- [x] #2 `paths` and `baseUrl` are resolved relative to the config that declares them, pinned by a test with a base config two directories above the leaf.
+- [x] #3 A workspace package's `exports` field is honoured — root and subpath forms — in a documented condition precedence order, with `index.*` probing retained as the no-`exports` fallback.
+- [x] #4 An `exports` target that would escape its package directory is rejected.
+- [x] #5 A specifier matching no on-disk target still resolves opaquely and fabricates no edge.
 - [ ] #6 Changes are confined to `module_specifier_index.ts`; no signature introduced by TASK-375.4 changes.
-- [ ] #7 The `import_resolution/*.test.ts` suites and `import_graph.test.ts` stay green.
+      <!-- partial: The index construction is confined to `module_specifier_index.ts`, but the consumer's remainder arithmetic in `import_resolution.typescript.ts` was rewritten to accept a file-valued entry — see deviation 3. -->
+- [x] #7 The `import_resolution/*.test.ts` suites and `import_graph.test.ts` stay green.
 
 <!-- AC:END -->
+
+## Implementation Notes
+
+### What a user gets
+
+The two TypeScript monorepo layouts that resolved to nothing now resolve, so calls through them
+stop making their callees look uncalled.
+
+- **A per-package `tsconfig.json` that declares no `paths` of its own** inherits them through
+  `extends`, from a base config any number of directories up. Aliases are rooted at the config that
+  *declares* them, so a base two directories above the leaf points at its own `baseUrl`, not the
+  leaf's.
+- **A workspace package whose entry point is declared in `exports`** resolves — the `"."` form, the
+  condition-only sugar form (`{"import": "./src/index.ts"}` with no `.`-prefixed key, which is what
+  most modern packages ship), and published subpaths like `@scope/pkg/testing`.
+
+A specifier that matches nothing on disk is still returned opaquely, and an `exports` target that
+would escape its package directory is refused.
+
+### The approach
+
+`extends` is followed before a config's own `paths` are read, so the extending config overrides what
+it inherits, and each config's `paths`/`baseUrl` resolve against its own directory. Only
+path-relative bases are followed: a bare specifier names a published config package, which is not
+part of the analysed source.
+
+An `exports` entry is a set of alternatives, so condition selection offers every candidate in a
+stated precedence — `source`, `import`, `module`, `require`, `default`, `types` — and takes the
+first that is both inside the package directory and present in the tree. `types` ranks last: a
+`.d.ts` carries declarations and no bodies, so it yields no call edge on its own, but a package
+that publishes nothing else still points somewhere in the project rather than staying opaque. Requiring presence is what
+keeps a manifest that only publishes a built artefact from pointing the specifier at a file that is
+not there; the package directory stays and `index.*` probing serves, exactly as before.
+
+### How to navigate the result
+
+Everything is in `resolve_references/import_resolution/module_specifier_index.ts`:
+`read_config_aliases` owns inheritance, `declared_aliases` owns one config's own entries,
+`base_config_files` owns which `extends` entries are followed, and `published_target` owns the
+`exports` decision including both guards. `.claude/rules/resolve-references.md` now lists the file in
+the module layout with a one-line statement of what it answers. The consumer — longest-prefix
+matching plus probing — is `import_resolution.typescript.ts`.
+
+### What review found
+
+- **Sibling `extends` entries shared a cycle guard.** With `extends: ["./a.json", "./b.json"]` where
+  both extend one base, `b.json`'s branch returned nothing because the base was already marked
+  visited, so the leaf resolved to `a.json`'s alias where TypeScript gives the later entry
+  precedence. The guard is now copied per branch and a separate shared cache keeps the common base
+  from being parsed twice — the same split `registries/export.ts` already makes for re-export
+  chains.
+- **Condition selection committed before checking presence.** A manifest naming a `.d.ts` or a build
+  it does not ship above a source target it does declare discarded the whole entry. Every candidate
+  is now offered to the presence check in precedence order.
+- **The condition-only `exports` form was never read**, so the most common modern shape fell back to
+  the package directory.
+- **Repointing a package name at a file broke deep imports.** `@scope/pkg/util` was joined onto
+  `pkg/src/index.ts`, producing `pkg/src/index.ts/util`. A remainder now joins onto the target's
+  directory, which is what a `src`-layout package means and is identical to the old behaviour for a
+  root-layout one.
+
+### Deviations from the work plan, and why
+
+1. **Wildcard `exports` subpaths are not read.** The work plan and the Tests section name only the
+   literal subpath form (`"./testing"`). A single-`*` pattern map is a separate shape and would be a
+   separate change.
+2. **`published_target` requires the target to be present in the tree.** Not asked for. Without it a
+   manifest that publishes only `./dist/index.js` moves the specifier off the package directory onto
+   a file the corpus never indexes, losing the `index.*` probe AC #3 explicitly requires be retained.
+3. **The consumer's remainder arithmetic was rewritten.** AC #6 asks for the work to be confined to
+   `module_specifier_index.ts`, and the extends/exports logic is. But an index entry can now be a
+   file rather than a directory, and `import_resolution.typescript.ts` had to learn that: an
+   entry-file probe, a dirname-derived join base and a separate no-remainder branch, about a dozen
+   net lines. Without it this task's own change loses deep-import edges. No signature changed.
+4. **`extended_config_files` is named `base_config_files`**, matching the vocabulary its caller and
+   its tests already use.
+
+### Known gaps, owned elsewhere
+

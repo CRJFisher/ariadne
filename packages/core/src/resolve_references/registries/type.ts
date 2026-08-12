@@ -9,7 +9,6 @@ import type {
 import type { SemanticIndex } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "./definition";
 import type { ExportRegistry } from "./export";
-import type { FileSystemFolder } from "../file_folders";
 import {
   extract_type_bindings,
   extract_constructor_bindings,
@@ -18,6 +17,7 @@ import {
 } from "../type_preprocessing";
 import type { ResolutionRegistry } from "../resolution_registry";
 import { resolve_namespace_export } from "../export_chain_lookup";
+import type { ModuleResolutionContext } from "../import_resolution";
 
 /**
  * Type metadata extracted from one file's semantic index, still keyed by name.
@@ -78,7 +78,7 @@ export class TypeRegistry {
     resolutions: ResolutionRegistry,
     exports: ExportRegistry,
     languages: ReadonlyMap<FilePath, Language>,
-    root_folder: FileSystemFolder,
+    modules: ModuleResolutionContext,
     import_source_resolver?: (import_id: SymbolId) => FilePath | undefined
   ): void {
     this.definitions = definitions;
@@ -91,7 +91,7 @@ export class TypeRegistry {
       resolutions,
       exports,
       languages,
-      root_folder,
+      modules,
       import_source_resolver
     );
   }
@@ -145,7 +145,7 @@ export class TypeRegistry {
     resolutions: ResolutionRegistry,
     exports: ExportRegistry,
     languages: ReadonlyMap<FilePath, Language>,
-    root_folder: FileSystemFolder,
+    modules: ModuleResolutionContext,
     import_source_resolver?: (import_id: SymbolId) => FilePath | undefined
   ): void {
     const resolved_symbols = new Set<SymbolId>();
@@ -188,7 +188,7 @@ export class TypeRegistry {
         const source_file = import_source_resolver(namespace_id);
         if (!source_file) continue;
 
-        const class_id = resolve_namespace_export(source_file, chain[1], exports, languages, root_folder);
+        const class_id = resolve_namespace_export(source_file, chain[1], exports, languages, modules);
         if (class_id) {
           this.symbol_types.set(symbol_id, class_id);
           resolved_symbols.add(symbol_id);
@@ -266,8 +266,10 @@ export class TypeRegistry {
 
   /**
    * Type members (methods, properties, extends) for a type, built on demand
-   * from its DefinitionRegistry entry. Enum members live in the member index
-   * rather than on the definition, so they are read from there.
+   * from its DefinitionRegistry entry. An enum's associated functions come from
+   * the member index — the definition's own `methods` is optional and the index
+   * is what call resolution reads — while its variants are the properties a
+   * caller can name.
    */
   get_type_members(type_id: SymbolId): TypeMemberInfo | undefined {
     if (!this.definitions) {
@@ -299,10 +301,11 @@ export class TypeRegistry {
         extends: def.extends ?? [],
       };
     } else if (def.kind === "enum") {
-      const member_map = this.definitions.get_member_index().get(type_id);
       return {
-        methods: new Map(),
-        properties: member_map || new Map(),
+        methods: new Map(this.definitions.get_member_index().get(type_id)),
+        properties: new Map(
+          def.members.map((m) => [m.name as SymbolName, m.symbol_id])
+        ),
         extends: [],
       };
     }

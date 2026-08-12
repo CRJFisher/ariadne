@@ -2889,4 +2889,24 @@ class Factory:
       ]);
     });
   });
+
+  describe("walrus binding", () => {
+    it("binds the name a walrus assignment introduces", () => {
+      const code = `def f(xs):
+    if (d := xs[0]):
+        return use_it(d)
+    return None
+`;
+      const tree = parser.parse(code);
+      const parsed_file = create_parsed_file(
+        code,
+        "test.py" as FilePath,
+        tree,
+        "python"
+      );
+      const index = build_index_single_file(parsed_file, tree, "python");
+      const names = Array.from(index.variables.values()).map((v) => v.name as string);
+      expect(names).toContain("d");
+    });
+  });
 });
