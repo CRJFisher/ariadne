@@ -1082,6 +1082,127 @@ mod private_module {
 
     });
 
+    it("carries a file-backed mod declaration as a module import alongside its namespace", () => {
+      const code = `mod config;
+pub mod helpers;
+pub mod inline {
+    pub fn f() {}
+}
+`;
+      const tree = parser.parse(code);
+      const file_path = "lib.rs" as FilePath;
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
+
+      const index = build_index_single_file(parsed_file, tree, "rust");
+
+      expect(
+        Array.from(index.namespaces.values())
+          .map((ns) => ns.name)
+          .sort(),
+      ).toEqual(["config", "helpers", "inline"] as SymbolName[]);
+
+      expect(
+        Array.from(index.imported_symbols.values()).map((imp) => ({
+          name: imp.name,
+          import_kind: imp.import_kind,
+          import_path: imp.import_path,
+        })),
+      ).toEqual([
+        {
+          name: "config" as SymbolName,
+          import_kind: "namespace",
+          import_path: "self::config",
+        },
+        {
+          name: "helpers" as SymbolName,
+          import_kind: "namespace",
+          import_path: "self::helpers",
+        },
+      ]);
+    });
+
+    it("anchors a nested bodyless mod declaration at its enclosing module", () => {
+      const code = `pub mod outer {
+    mod inner;
+}
+`;
+      const tree = parser.parse(code);
+      const file_path = "lib.rs" as FilePath;
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
+
+      const index = build_index_single_file(parsed_file, tree, "rust");
+
+      expect(
+        Array.from(index.imported_symbols.values()).map((imp) => ({
+          name: imp.name,
+          import_path: imp.import_path,
+        })),
+      ).toEqual([
+        { name: "inner" as SymbolName, import_path: "self::outer::inner" },
+      ]);
+    });
+
+    it("reads a #[path] attribute separated from its mod by a comment", () => {
+      const code = `#[path = "sys/unix.rs"]
+// pick the unix backend
+mod imp;
+`;
+      const tree = parser.parse(code);
+      const file_path = "lib.rs" as FilePath;
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
+
+      const index = build_index_single_file(parsed_file, tree, "rust");
+
+      expect(
+        Array.from(index.imported_symbols.values()).map(
+          (imp) => imp.import_path,
+        ),
+      ).toEqual(["sys/unix.rs"]);
+    });
+
+    it("keeps the default target for a mod carrying only non-path attributes", () => {
+      const code = `#[cfg(unix)]
+mod imp;
+`;
+      const tree = parser.parse(code);
+      const file_path = "lib.rs" as FilePath;
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
+
+      const index = build_index_single_file(parsed_file, tree, "rust");
+
+      expect(
+        Array.from(index.imported_symbols.values()).map(
+          (imp) => imp.import_path,
+        ),
+      ).toEqual(["self::imp"]);
+    });
+
+    it("carries a #[path] attribute as the module import's target file", () => {
+      const code = `#[cfg(unix)]
+#[path = "sys/unix.rs"]
+mod imp;
+`;
+      const tree = parser.parse(code);
+      const file_path = "lib.rs" as FilePath;
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
+
+      const index = build_index_single_file(parsed_file, tree, "rust");
+
+      expect(
+        Array.from(index.imported_symbols.values()).map((imp) => ({
+          name: imp.name,
+          import_kind: imp.import_kind,
+          import_path: imp.import_path,
+        })),
+      ).toEqual([
+        {
+          name: "imp" as SymbolName,
+          import_kind: "namespace",
+          import_path: "sys/unix.rs",
+        },
+      ]);
+    });
+
     it("CRITICAL: should extract use statements with complete structure", () => {
       // CRITICAL - Import extraction was completely missing for Rust!
       const code = `

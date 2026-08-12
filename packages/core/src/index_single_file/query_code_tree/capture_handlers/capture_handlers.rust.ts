@@ -33,6 +33,9 @@ import {
   find_containing_callable,
   extract_type_expression,
   extract_export_info,
+  extract_module_path_attribute,
+  module_declaration_path,
+  module_path_attribute_target,
   extract_imports_from_use_declaration,
   extract_import_from_extern_crate,
   detect_callback_context,
@@ -494,6 +497,11 @@ export function handle_definition_variable_mut(
 // MODULE HANDLERS
 // ============================================================================
 
+/**
+ * Binds a module's name in its declaring scope, for every `mod` — bodied or not.
+ * A bodyless declaration additionally carries the edge to the file backing it,
+ * emitted by `handle_definition_import_module`.
+ */
 export function handle_definition_module(
   capture: CaptureNode,
   builder: DefinitionBuilder,
@@ -509,6 +517,49 @@ export function handle_definition_module(
     scope_id: context.get_scope_id(capture.location),
     is_exported: export_info.is_exported,
     export: export_info.export,
+  });
+}
+
+/**
+ * A bodyless `mod x;` names the file that backs the module, so it carries a
+ * module edge as well as a binding. The edge is an import: it is what makes
+ * `src/config.rs` a dependency of the file declaring `mod config;`, so editing
+ * the module re-resolves its declarer and everything that reaches through it.
+ *
+ * A `#[path = "…"]` attribute puts a file path — not a `::` path — on
+ * `import_path`; `resolve_module_path_rust` tells the two apart by `/` or a
+ * `.rs` suffix and resolves the file form against the declaring file's own
+ * directory.
+ *
+ * The name still binds through the `NamespaceDefinition` that
+ * `handle_definition_module` emits — `DefinitionRegistry` keeps imports out of
+ * the scope index, so the two never compete.
+ */
+export function handle_definition_import_module(
+  capture: CaptureNode,
+  builder: DefinitionBuilder,
+  context: ProcessingContext
+): void {
+  const name = capture.node.childForFieldName("name")?.text as
+    | SymbolName
+    | undefined;
+  if (!name) return;
+
+  const { file_path, start_line, start_column } = capture.location;
+  const path_attribute = extract_module_path_attribute(capture.node);
+  builder.add_import({
+    // Keyed by position, not just line: a `mod x;` and a `use x::*;` written on
+    // one line would otherwise share an id and one would overwrite the other.
+    symbol_id: `import:${file_path}:${start_line}:${start_column}:${name}` as SymbolId,
+    name,
+    location: capture.location,
+    scope_id: context.get_scope_id(capture.location),
+    import_path: create_module_path(
+      path_attribute === undefined
+        ? module_declaration_path(capture.node, name)
+        : module_path_attribute_target(capture.node, path_attribute, file_path)
+    ),
+    import_kind: "namespace",
   });
 }
 
@@ -734,6 +785,7 @@ export const RUST_HANDLERS: HandlerRegistry = {
 
   // Module definitions
   "definition.module": handle_definition_module,
+  "definition.import.module": handle_definition_import_module,
 
   // Type definitions
   "definition.type_alias": handle_definition_type_alias,

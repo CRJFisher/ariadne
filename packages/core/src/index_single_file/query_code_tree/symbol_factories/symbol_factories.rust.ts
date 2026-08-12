@@ -213,6 +213,95 @@ export function extract_export_info(node: SyntaxNode): {
   };
 }
 
+/** Node types that may sit between an outer attribute and the item it annotates. */
+const ATTRIBUTE_RUN_NODE_TYPES: ReadonlySet<string> = new Set([
+  "attribute_item",
+  "line_comment",
+  "block_comment",
+]);
+
+/**
+ * The file a `#[path = "…"] mod x;` declaration names.
+ *
+ * Outer attributes are siblings preceding the item they annotate, not children
+ * of it, so the search walks backwards over the run immediately before the node.
+ * Comments are named siblings too and are legal between an attribute and its
+ * item, so the walk steps over them rather than stopping.
+ */
+export function extract_module_path_attribute(
+  node: SyntaxNode
+): string | undefined {
+  for (
+    let sibling = node.previousNamedSibling;
+    sibling && ATTRIBUTE_RUN_NODE_TYPES.has(sibling.type);
+    sibling = sibling.previousNamedSibling
+  ) {
+    const attribute = sibling.namedChild(0);
+    if (attribute?.type !== "attribute") continue;
+    if (attribute.namedChild(0)?.text !== "path") continue;
+
+    const value = attribute.namedChild(1);
+    if (value?.type !== "string_literal") continue;
+    const content = value.namedChild(0);
+    if (content?.type === "string_content") {
+      return content.text;
+    }
+  }
+
+  return undefined;
+}
+
+/** Names of the inline `mod` blocks a node sits inside, outermost first. */
+function enclosing_inline_modules(node: SyntaxNode): string[] {
+  const enclosing: string[] = [];
+  for (let ancestor = node.parent; ancestor; ancestor = ancestor.parent) {
+    if (ancestor.type !== "mod_item") continue;
+    const ancestor_name = ancestor.childForFieldName("name")?.text;
+    if (ancestor_name) {
+      enclosing.unshift(ancestor_name);
+    }
+  }
+  return enclosing;
+}
+
+/**
+ * The `::` path a bodyless `mod x;` declaration names, anchored at the declaring
+ * file. A declaration nested in an inline `mod y { … }` block names `y`'s
+ * submodule, so the chain of enclosing inline modules is part of the path.
+ */
+export function module_declaration_path(node: SyntaxNode, name: string): string {
+  return ["self", ...enclosing_inline_modules(node), name].join("::");
+}
+
+/**
+ * The file a `#[path = "…"]` declaration names, spelled relative to the
+ * directory the declaring file sits in.
+ *
+ * Rust resolves a top-level declaration's `#[path]` against that directory
+ * directly. One nested in an inline `mod` block resolves against the declaring
+ * module's own directory — `<dir>/<file stem>/<enclosing blocks>/`, with the stem
+ * dropped for a `mod.rs`/`lib.rs`/`main.rs` file, which owns the directory it sits
+ * in. Prefixing the chain onto the value keeps one spelling for both shapes, so
+ * the resolver always joins onto the declaring file's directory.
+ */
+export function module_path_attribute_target(
+  node: SyntaxNode,
+  attribute_value: string,
+  file_path: string
+): string {
+  const enclosing = enclosing_inline_modules(node);
+  if (enclosing.length === 0) {
+    return attribute_value;
+  }
+
+  const file_name = file_path.split("/").pop() ?? "";
+  const owns_its_directory =
+    file_name === "mod.rs" || file_name === "lib.rs" || file_name === "main.rs";
+  const stem = owns_its_directory ? [] : [file_name.replace(/\.rs$/, "")];
+
+  return [...stem, ...enclosing, attribute_value].join("/");
+}
+
 export function extract_generic_parameters(node: SyntaxNode): SymbolName[] {
   const generics: SymbolName[] = [];
   const type_params = node.childForFieldName?.("type_parameters");

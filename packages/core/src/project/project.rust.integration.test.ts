@@ -184,7 +184,8 @@ describe("Project Integration - Rust", () => {
       project.update_file(utils_file, utils_source);
       project.update_file(main_file, main_source);
 
-      // main.rs imports exactly 4 symbols: helper, process_data, calculate_total, validate_email
+      // main.rs imports 4 named symbols — helper, process_data,
+      // calculate_total, validate_email — plus the `mod utils;` module edge.
       const main_index = project.get_index_single_file(main_file);
       expect(main_index).toBeDefined();
 
@@ -194,6 +195,7 @@ describe("Project Integration - Rust", () => {
         "calculate_total",
         "helper",
         "process_data",
+        "utils",
         "validate_email",
       ] as SymbolName[]);
 
@@ -225,13 +227,15 @@ describe("Project Integration - Rust", () => {
       const main_index = project.get_index_single_file(main_file);
       expect(main_index).toBeDefined();
 
-      // main.rs imports: helper, process_data, calculate_total, validate_email
+      // main.rs imports helper, process_data, calculate_total and
+      // validate_email by name, and `utils` as a module edge.
       const imports = Array.from(main_index!.imported_symbols.values());
       const import_names = imports.map((i) => i.name).sort();
       expect(import_names).toEqual([
         "calculate_total",
         "helper",
         "process_data",
+        "utils",
         "validate_email",
       ] as SymbolName[]);
 
@@ -310,10 +314,15 @@ describe("Project Integration - Rust", () => {
       const main_index = project.get_index_single_file(uses_user_file);
       expect(main_index).toBeDefined();
 
-      // uses_user.rs imports exactly User and UserManager
+      // uses_user.rs imports User and UserManager by name, and `user_mod`
+      // as the module edge its `mod user_mod;` declares.
       const imports = Array.from(main_index!.imported_symbols.values());
       const import_names = imports.map((i) => i.name).sort();
-      expect(import_names).toEqual(["User", "UserManager"] as SymbolName[]);
+      expect(import_names).toEqual([
+        "User",
+        "UserManager",
+        "user_mod",
+      ] as SymbolName[]);
 
       // Verify User struct exists in user_mod.rs
       const user_mod_index = project.get_index_single_file(user_mod_file);
@@ -367,7 +376,11 @@ describe("Project Integration - Rust", () => {
 
       const imports = Array.from(main_index!.imported_symbols.values());
       const main_import_names = imports.map((i) => i.name).sort();
-      expect(main_import_names).toEqual(["User", "UserManager"] as SymbolName[]);
+      expect(main_import_names).toEqual([
+        "User",
+        "UserManager",
+        "user_mod",
+      ] as SymbolName[]);
 
       // Verify UserManager::new() and User::new() are captured as constructor calls
       const new_calls = main_index!.references.filter(
@@ -790,15 +803,15 @@ describe("Project Integration - Rust", () => {
       ]);
     });
 
-    it("bails on a separate-file module hop rather than fabricating a cross-file edge", async () => {
+    it("binds a separate-file module hop to the type's associated constructor", async () => {
       const caller_file = file_path("modules/uses_separate_gadget.rs");
       const gadget_file = file_path("modules/gadget.rs");
       project.update_file(gadget_file, load_source("modules/gadget.rs"));
       project.update_file(caller_file, load_source("modules/uses_separate_gadget.rs"));
 
       // crate::gadget::Gadget::new(): the type is in a sibling file declared only
-      // via `mod gadget;` with no `use`. There is no in-scope module body to walk,
-      // so the walk bails — the call stays unresolved (no fabricated edge).
+      // via `mod gadget;` with no `use`. The path names that file, so `Gadget`
+      // binds there and the call reaches its associated `new`.
       const caller_index = project.get_index_single_file(caller_file)!;
       const new_call = caller_index.references.find(
         (r): r is ConstructorCallReference =>
@@ -811,6 +824,16 @@ describe("Project Integration - Rust", () => {
         "Gadget",
       ] as SymbolName[]);
 
+      // The type is not bound by name in the caller: only the author's path can
+      // reach it, which is what this pins.
+      expect(
+        project.resolutions.resolve(new_call!.scope_id, "Gadget" as SymbolName)
+      ).toBeNull();
+
+      const gadget_new = project.definitions
+        .get_definitions_by_name("new" as SymbolName)
+        .find((def) => def.location.file_path === gadget_file)!;
+
       const call_graph = project.get_call_graph();
       const run_node = Array.from(call_graph.nodes.values()).find(
         (n) =>
@@ -819,7 +842,7 @@ describe("Project Integration - Rust", () => {
       const targets = run_node.enclosed_calls
         .filter((c) => c.name === ("Gadget" as SymbolName))
         .flatMap((c) => c.resolutions.map((r) => r.symbol_id));
-      expect(targets).toEqual([]);
+      expect(targets).toEqual([gadget_new.symbol_id]);
     });
   });
 
@@ -1311,7 +1334,11 @@ fn main() {
 
       const imports = Array.from(consumer_index!.imported_symbols.values());
       const import_names = imports.map((i) => i.name).sort();
-      expect(import_names).toEqual(["add", "multiply"] as SymbolName[]);
+      expect(import_names).toEqual([
+        "add",
+        "multiply",
+        "reexport",
+      ] as SymbolName[]);
 
       // Verify add() call resolves
       const add_call = consumer_index!.references.find(

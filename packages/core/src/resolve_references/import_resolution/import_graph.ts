@@ -47,6 +47,9 @@ export class ImportGraph {
   /** Import SymbolId → Submodule file path (for named imports referring to submodules) */
   private submodule_import_paths: Map<SymbolId, FilePath> = new Map();
 
+  /** File → files whose whole surface it puts onward, not just a name out of. */
+  private forwarded_surfaces: Map<FilePath, Set<FilePath>> = new Map();
+
   /**
    * Replace all import relationships for a file with a fresh set.
    *
@@ -98,6 +101,7 @@ export class ImportGraph {
     }
 
     const target_files = new Set<FilePath>();
+    const forwarded = new Set<FilePath>();
 
     this.imports_by_file.set(file_path, imports);
 
@@ -129,7 +133,24 @@ export class ImportGraph {
         );
         if (submodule_path) {
           this.submodule_import_paths.set(imp_def.symbol_id, submodule_path);
+          // The submodule is what the name denotes, so it is what this file
+          // depends on: editing it has to re-resolve this file.
+          target_files.add(submodule_path);
+          if (imp_def.export !== undefined) {
+            forwarded.add(submodule_path);
+          }
         }
+      }
+
+      // @language rust
+      // A `mod x;` edge puts the module's whole surface on this file's path
+      // surface, so a `crate::this_file::x::item` path reaches through it and a
+      // change to the module changes what this file forwards.
+      if (
+        imp_def.export !== undefined ||
+        (language === "rust" && imp_def.import_kind === "namespace")
+      ) {
+        forwarded.add(resolved_path);
       }
 
       target_files.add(resolved_path);
@@ -140,6 +161,12 @@ export class ImportGraph {
       this.imports_by_file.delete(file_path);
     } else {
       this.dependencies.set(file_path, target_files);
+    }
+
+    if (forwarded.size === 0) {
+      this.forwarded_surfaces.delete(file_path);
+    } else {
+      this.forwarded_surfaces.set(file_path, forwarded);
     }
 
     for (const target of target_files) {
@@ -220,6 +247,8 @@ export class ImportGraph {
       }
       this.imports_by_file.delete(file_path);
     }
+
+    this.forwarded_surfaces.delete(file_path);
   }
 
   /**
@@ -231,6 +260,16 @@ export class ImportGraph {
    */
   get_scope_imports(scope_id: ScopeId): readonly ImportDefinition[] {
     return this.imports_by_scope.get(scope_id) ?? [];
+  }
+
+  /**
+   * Whether `file` puts `source`'s whole surface onward rather than importing a
+   * name out of it — an exported import, or a Rust `mod` declaration whose module
+   * a path can reach straight through the declarer. Such a file's own dependents
+   * have to re-resolve when `source` changes, not just the file itself.
+   */
+  forwards_surface_of(file: FilePath, source: FilePath): boolean {
+    return this.forwarded_surfaces.get(file)?.has(source) ?? false;
   }
 
   /**
@@ -255,9 +294,10 @@ export class ImportGraph {
   /**
    * Get the submodule file path for a named import that refers to a submodule.
    *
-   * For Python's `from package import module`, returns the path to the submodule
-   * file (e.g. `package/module.py`) if the named import refers to a submodule
-   * rather than an explicit export.
+   * Set when a named import's final segment denotes a module of the resolved
+   * file rather than a name it exports: Python's `from package import module`
+   * (`package/module.py`) and Rust's `use crate::parent::child;`
+   * (`parent/child.rs`), which is how a `child::item` path finds its module.
    *
    * @param import_symbol_id - The import's symbol ID
    * @returns Submodule file path, or undefined if not a submodule import
@@ -276,5 +316,6 @@ export class ImportGraph {
     this.imports_by_scope.clear();
     this.resolved_import_paths.clear();
     this.submodule_import_paths.clear();
+    this.forwarded_surfaces.clear();
   }
 }

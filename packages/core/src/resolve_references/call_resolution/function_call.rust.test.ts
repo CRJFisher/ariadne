@@ -6,6 +6,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { make_export_chain_context } from "../resolution_test_helpers";
 import { resolve_function_call } from "./function_call";
+import { resolve_via_path_prefix_rust } from "./function_call.rust";
 import type { CallResolutionContext } from "./call_resolver";
 import { DefinitionRegistry } from "../registries/definition";
 import { TypeRegistry } from "../registries/type";
@@ -32,6 +33,8 @@ import type {
   NamespaceDefinition,
   LexicalScope,
   FunctionDefinition,
+  ImportDefinition,
+  ModulePath,
 } from "@ariadnejs/types";
 
 const TEST_FILE = "test.ts" as FilePath;
@@ -206,6 +209,37 @@ describe("Rust Qualified-Call Resolution", () => {
 
       const resolved = resolve_function_call(call_ref, context, resolutions);
       expect(unwrap(resolved)).toEqual([create_id]);
+    });
+
+    it("does not anchor an all-anchor prefix to a same-named import", () => {
+      // `crate::helper()` names an item of the crate root. Stripping the anchor
+      // leaves nothing to compare against a `use` path, so the matcher must not
+      // treat the empty prefix as matching every import in scope.
+      const import_def: ImportDefinition = {
+        kind: "import",
+        symbol_id: "import:test.ts:1:helper" as SymbolId,
+        name: "helper" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        import_path: "other" as ModulePath,
+        import_kind: "named",
+      };
+      imports.update_file(
+        TEST_FILE,
+        [import_def],
+        "rust",
+        context.resolution
+      );
+
+      const call_ref = create_function_call_reference(
+        "helper" as SymbolName,
+        { ...MOCK_LOCATION, start_line: 10 },
+        FILE_SCOPE_ID,
+        undefined,
+        ["crate"] as SymbolName[]
+      );
+
+      expect(resolve_via_path_prefix_rust(call_ref, context)).toBeNull();
     });
 
     it("falls back to bare resolution when the path prefix misses", () => {

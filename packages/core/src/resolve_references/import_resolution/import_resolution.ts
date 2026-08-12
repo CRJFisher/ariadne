@@ -13,7 +13,10 @@ import {
   resolve_module_path_python,
   resolve_submodule_path_python,
 } from "./import_resolution.python";
-import { resolve_module_path_rust } from "./import_resolution.rust";
+import {
+  resolve_module_path_rust,
+  resolve_submodule_path_rust,
+} from "./import_resolution.rust";
 
 /**
  * Everything module resolution reads about the project: the I/O-free file tree
@@ -75,9 +78,10 @@ export function resolve_module_path(
 
 /**
  * Resolve a named import that refers to a submodule file rather than an
- * explicit export. Only Python has this case (`from package import module`,
- * where `module` is a sibling file, not a name exported by the package); every
- * other language returns undefined.
+ * explicit export: Python's `from package import module` and Rust's
+ * `use crate::parent::child;`, where the final segment names a module of the
+ * resolved file rather than a name it exports. Every other language returns
+ * undefined.
  */
 export function resolve_submodule_import_path(
   resolved_source_file: FilePath,
@@ -85,12 +89,20 @@ export function resolve_submodule_import_path(
   language: Language,
   resolution: ModuleResolutionContext
 ): FilePath | undefined {
-  if (language === "python") {
-    return resolve_submodule_path_python(
-      resolved_source_file,
-      import_name,
-      resolution.root_folder
-    );
+  switch (language) {
+    case "python":
+      return resolve_submodule_path_python(
+        resolved_source_file,
+        import_name,
+        resolution.root_folder
+      );
+    case "rust":
+      return resolve_submodule_path_rust(
+        resolved_source_file,
+        import_name,
+        resolution.root_folder
+      );
+    default:
+      return undefined;
   }
-  return undefined;
 }

@@ -167,7 +167,34 @@ describe("resolve_submodule_import_path dispatcher", () => {
     expect(result).toBeUndefined();
   });
 
-  it("returns undefined for non-Python languages", () => {
+  it("resolves a Rust use path whose final segment is a submodule", () => {
+    const tree = create_file_tree("/project", [
+      "src/lib.rs",
+      "src/internals.rs",
+      "src/internals/attr.rs",
+    ]);
+    const result = resolve_submodule_import_path(
+      "/project/src/internals.rs" as FilePath,
+      "attr",
+      "rust",
+      create_module_resolution_context(tree)
+    );
+    expect(result).toBe("/project/src/internals/attr.rs");
+  });
+
+  it("returns undefined for a Rust flat sibling of the declaring file", () => {
+    // `src/attr.rs` is a module of the parent, not of `internals`.
+    const tree = create_file_tree("/project", ["src/internals.rs", "src/attr.rs"]);
+    const result = resolve_submodule_import_path(
+      "/project/src/internals.rs" as FilePath,
+      "attr",
+      "rust",
+      create_module_resolution_context(tree)
+    );
+    expect(result).toBeUndefined();
+  });
+
+  it("returns undefined for TypeScript", () => {
     const tree = create_file_tree("/project", [
       "src/index.ts",
       "src/utils.ts",

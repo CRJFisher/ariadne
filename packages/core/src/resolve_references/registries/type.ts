@@ -266,8 +266,10 @@ export class TypeRegistry {
 
   /**
    * Type members (methods, properties, extends) for a type, built on demand
-   * from its DefinitionRegistry entry. Enum members live in the member index
-   * rather than on the definition, so they are read from there.
+   * from its DefinitionRegistry entry. An enum's associated functions come from
+   * the member index — the definition's own `methods` is optional and the index
+   * is what call resolution reads — while its variants are the properties a
+   * caller can name.
    */
   get_type_members(type_id: SymbolId): TypeMemberInfo | undefined {
     if (!this.definitions) {
@@ -299,10 +301,11 @@ export class TypeRegistry {
         extends: def.extends ?? [],
       };
     } else if (def.kind === "enum") {
-      const member_map = this.definitions.get_member_index().get(type_id);
       return {
-        methods: new Map(),
-        properties: member_map || new Map(),
+        methods: new Map(this.definitions.get_member_index().get(type_id)),
+        properties: new Map(
+          def.members.map((m) => [m.name as SymbolName, m.symbol_id])
+        ),
         extends: [],
       };
     }

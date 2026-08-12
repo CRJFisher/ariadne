@@ -18,8 +18,13 @@ function ch(s: string): ContentHash {
 
 describe("cache_manifest", () => {
   describe("CURRENT_SCHEMA_VERSION", () => {
-    it("is 5", () => {
-      expect(CURRENT_SCHEMA_VERSION).toEqual(5);
+    it("is 6", () => {
+      expect(CURRENT_SCHEMA_VERSION).toEqual(6);
+    });
+
+    it("rejects v5 manifests, whose Rust indexes carry no mod edges", () => {
+      const v5_manifest = JSON.stringify({ schema_version: 5, entries: [] });
+      expect(deserialize_manifest(v5_manifest)).toBeNull();
     });
 
     it("rejects v1 manifests via deserialize_manifest", () => {

@@ -493,6 +493,15 @@
   !body
 )
 
+; The same bodyless declaration as a module edge to the file that backs it. One
+; pattern covers `mod x;` and `pub mod x;` alike — visibility is an unconstrained
+; child — and the whole item is captured so the handler can read the `#[path]`
+; attribute that precedes it.
+(mod_item
+  name: (identifier)
+  !body
+) @definition.import.module
+
 ; Public module definitions with body
 (mod_item
   (visibility_modifier)

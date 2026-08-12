@@ -19,6 +19,11 @@ import type { ContentHash } from "./content_hash";
  * `from m import *` as import_kind "wildcard") and export metadata on
  * re-exported namespace imports. A v5 index lacks both, so restoring it would
  * silently drop every wholesale module edge.
+ *
+ * v6: a Rust index gains one namespace import per bodyless `mod x;` — the edge
+ * to the file backing the module. A v5 index has none, so restoring it would
+ * leave every `mod`-qualified Rust path unresolvable and every module file
+ * missing from the dependency graph.
  */
 export const CURRENT_SCHEMA_VERSION = 6;
 

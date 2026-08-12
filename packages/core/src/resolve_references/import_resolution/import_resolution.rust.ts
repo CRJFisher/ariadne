@@ -1,8 +1,9 @@
 /**
  * Rust Module Resolution
  *
- * Resolves Rust use paths to absolute file paths following Rust
- * module resolution rules.
+ * Resolves a Rust module path to the absolute file path backing it, following
+ * Rust's module resolution rules. Two spellings arrive here: a `::` path, and
+ * the relative file path a `#[path = "…"] mod x;` declaration names.
  */
 
 import * as path from "path";
@@ -25,6 +26,19 @@ export function resolve_module_path_rust(
   resolution: ModuleResolutionContext
 ): FilePath {
   const { root_folder } = resolution;
+
+  // A `#[path = "…"] mod x;` declaration names its backing file directly rather
+  // than by module path. No `use` path can be spelled this way — `::` is the
+  // only separator Rust paths accept — so the file form is unambiguous. Rust
+  // resolves it against the directory the declaring file sits in, whatever that
+  // file is called.
+  if (import_path.includes("/") || import_path.endsWith(".rs")) {
+    return path.resolve(
+      path.dirname(importing_file),
+      import_path
+    ) as FilePath;
+  }
+
   const parts = import_path.split("::");
 
   if (parts[0] === "crate") {
@@ -49,6 +63,30 @@ export function resolve_module_path_rust(
 
     return import_path as FilePath;
   }
+}
+
+/**
+ * The file backing a submodule named by an item-position `use` segment.
+ *
+ * `use crate::internals::attr;` records module path `crate::internals` and name
+ * `attr`, so the resolved import path is `internals.rs` even when `attr` is a
+ * module of its own. Probing the declaring module's child directory recovers
+ * `internals/attr.rs`, which is what a `attr::Item` path must reach into.
+ * Restricted to that child directory: a flat sibling of the declaring file is a
+ * module of the *parent*, not of it.
+ */
+export function resolve_submodule_path_rust(
+  resolved_source_file: FilePath,
+  import_name: string,
+  root_folder: FileSystemFolder
+): FilePath | undefined {
+  return (
+    walk_rust_module_path(
+      module_child_dir(resolved_source_file),
+      [import_name],
+      root_folder
+    ) ?? undefined
+  );
 }
 
 /**
@@ -208,15 +246,19 @@ function resolve_from_current(
 }
 
 /**
- * Walk each module segment to a file, trying `module.rs` before `module/mod.rs`.
- * When no segment matches, return the inferred `module.rs` path so callers get a
- * stable target.
+ * Walk every module segment to a file, trying `module.rs` before
+ * `module/mod.rs`, and stop the moment a segment matches nothing.
+ *
+ * Every segment must match. A walk that skipped an unmatched segment would let
+ * a foreign path collapse onto a local module named by its tail — `std::fs::x`
+ * finding the crate's own `src/fs.rs` — which is a target no caller can tell
+ * apart from a real one.
  */
-function resolve_rust_module_path(
+function walk_rust_module_path(
   base_dir: string,
   module_parts: string[],
   root_folder: FileSystemFolder
-): FilePath {
+): FilePath | null {
   let current_path = base_dir;
 
   for (let i = 0; i < module_parts.length; i++) {
@@ -228,24 +270,40 @@ function resolve_rust_module_path(
       path.join(current_path, part, "mod.rs"),
     ];
 
-    for (const candidate of candidates) {
-      if (has_file_in_tree(candidate as FilePath, root_folder)) {
-        if (is_last) {
-          return candidate as FilePath;
-        } else {
-          // mod.rs style keeps submodules in the mod.rs directory; module.rs
-          // style (Rust 2018+) keeps them in a sibling `module/` directory.
-          const is_mod_rs = path.basename(candidate) === "mod.rs";
-          current_path = is_mod_rs
-            ? path.dirname(candidate)
-            : path.join(current_path, part);
-          break;
-        }
-      }
+    const matched = candidates.find((candidate) =>
+      has_file_in_tree(candidate as FilePath, root_folder)
+    );
+    if (!matched) {
+      return null;
     }
+    if (is_last) {
+      return matched as FilePath;
+    }
+    // mod.rs style keeps submodules in the mod.rs directory; module.rs style
+    // (Rust 2018+) keeps them in a sibling `module/` directory.
+    current_path =
+      path.basename(matched) === "mod.rs"
+        ? path.dirname(matched)
+        : path.join(current_path, part);
   }
 
-  return path.join(base_dir, `${module_parts.join("/")}.rs`) as FilePath;
+  return null;
+}
+
+/**
+ * The file a module path names, falling back to the inferred `module.rs` path so
+ * callers that need a stable dependency target get one even when nothing on disk
+ * matches.
+ */
+function resolve_rust_module_path(
+  base_dir: string,
+  module_parts: string[],
+  root_folder: FileSystemFolder
+): FilePath {
+  return (
+    walk_rust_module_path(base_dir, module_parts, root_folder) ??
+    (path.join(base_dir, `${module_parts.join("/")}.rs`) as FilePath)
+  );
 }
 
 /**

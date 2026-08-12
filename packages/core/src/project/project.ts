@@ -273,39 +273,15 @@ export class Project {
       ...fixed_import_definitions,
     ]);
 
-    // Phase 3: Re-resolve affected files. A dependent that forwards the
-    // changed file's surface onward (a wildcard edge or an exported import)
-    // changes its own surface too, so ITS dependents re-resolve as well — the
-    // barrel-chain case, where a leaf's names reach consumers only through
-    // re-exporting hops.
-    const affected_files = new Set([file_id, ...dependents]);
-    const forward_frontier = [...dependents].map((dependent) => ({
-      file: dependent,
-      source: file_id,
-    }));
-    for (
-      let next = forward_frontier.pop();
-      next !== undefined;
-      next = forward_frontier.pop()
-    ) {
-      const { file, source } = next;
-      const forwards = this.imports
-        .get_file_imports(file)
-        .some(
-          (imp) =>
-            imp.export !== undefined &&
-            this.imports.get_resolved_import_path(imp.symbol_id) === source,
-        );
-      if (!forwards) {
-        continue;
-      }
-      for (const dependent of this.imports.get_dependents(file)) {
-        if (!affected_files.has(dependent)) {
-          affected_files.add(dependent);
-          forward_frontier.push({ file: dependent, source: file });
-        }
-      }
-    }
+    // Phase 3: Re-resolve affected files. A dependent that forwards the changed
+    // file's surface onward changes its own surface too, so ITS dependents
+    // re-resolve as well — the barrel-chain case, where a leaf's names reach
+    // consumers only through re-exporting hops, and the Rust `mod` chain, where
+    // `crate::a::b::item` reaches through `a.rs` into `b.rs`. Without the second
+    // hop, editing `b.rs` re-resolves `a.rs` but not the file holding the call,
+    // so the path resolves only when the files happen to be indexed in the right
+    // order.
+    const affected_files = this.files_affected_by(file_id, dependents);
 
     this.resolutions.resolve_names(
       affected_files,
@@ -383,6 +359,51 @@ export class Project {
   }
 
   /**
+   * Re-resolve every indexed file once, so resolution stops depending on the
+   * order the files arrived in.
+   *
+   * A qualified Rust path reads the target module's own index, and a file is
+   * nobody's dependency until something imports it, so a caller indexed before
+   * its callee has no edge to bring it back. One pass over the whole corpus once
+   * loading is done converges that, at the cost of a single extra resolution of
+   * each file rather than one per file that arrived late.
+   */
+  resolve_all(): void {
+    if (!this.resolution) {
+      throw new Error("Project not initialized");
+    }
+
+    const all_files = new Set(this.index_single_filees.keys());
+    if (all_files.size === 0) {
+      return;
+    }
+
+    this.enriched_cache = null;
+
+    this.resolutions.resolve_names(
+      all_files,
+      this.languages,
+      this.definitions,
+      this.scopes,
+      this.exports,
+      this.imports,
+      this.resolution,
+    );
+
+    this.resolutions.resolve_calls_for_files(
+      all_files,
+      this.references,
+      this.scopes,
+      this.types,
+      this.definitions,
+      this.imports,
+      this.exports,
+      this.languages,
+      this.resolution,
+    );
+  }
+
+  /**
    * Remove a file from the project completely.
    * Removes all file-local data, registry entries, and resolutions.
    * Re-resolves dependent files to update their import resolutions.
@@ -415,11 +436,14 @@ export class Project {
     // Remove resolutions for deleted file
     this.resolutions.remove_file(file_id);
 
-    // Re-resolve dependent files (imports may be broken now)
-    if (dependents.size > 0) {
+    // Re-resolve every file the deletion can reach, not just direct dependents:
+    // a file two module hops away can hold a path that read the deleted file.
+    const affected = this.files_affected_by(file_id, dependents);
+    affected.delete(file_id);
+    if (affected.size > 0) {
       // Phase 1: Name resolution
       this.resolutions.resolve_names(
-        dependents,
+        affected,
         this.languages,
         this.definitions,
         this.scopes,
@@ -429,7 +453,7 @@ export class Project {
       );
 
       // Phase 2: Type registry (uses name resolutions)
-      for (const dependent_file of dependents) {
+      for (const dependent_file of affected) {
         const dependent_index = this.index_single_filees.get(dependent_file);
         if (dependent_index) {
           this.types.update_file(
@@ -447,7 +471,7 @@ export class Project {
 
       // Phase 3: Call resolution (uses types)
       this.resolutions.resolve_calls_for_files(
-        dependents,
+        affected,
         this.references,
         this.scopes,
         this.types,
@@ -458,6 +482,40 @@ export class Project {
         this.resolution
       );
     }
+  }
+
+  /**
+   * Every file whose resolutions a change to `file_id` can alter: the file
+   * itself, its direct dependents, and — transitively — the dependents of any
+   * dependent that puts the changed file's surface onward rather than importing
+   * one name out of it. That second hop is the barrel chain, where a leaf's
+   * names reach consumers only through re-exporting files, and the Rust `mod`
+   * chain, where `crate::a::b::item` reaches through `a.rs` into `b.rs`.
+   */
+  private files_affected_by(
+    file_id: FilePath,
+    dependents: Set<FilePath>,
+  ): Set<FilePath> {
+    const affected_files = new Set([file_id, ...dependents]);
+    const frontier = [...dependents].map((dependent) => ({
+      file: dependent,
+      source: file_id,
+    }));
+
+    for (let next = frontier.pop(); next !== undefined; next = frontier.pop()) {
+      const { file, source } = next;
+      if (!this.imports.forwards_surface_of(file, source)) {
+        continue;
+      }
+      for (const dependent of this.imports.get_dependents(file)) {
+        if (!affected_files.has(dependent)) {
+          affected_files.add(dependent);
+          frontier.push({ file: dependent, source: file });
+        }
+      }
+    }
+
+    return affected_files;
   }
 
   /**

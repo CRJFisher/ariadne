@@ -571,3 +571,70 @@ describe("resolve_module_path_rust", () => {
     });
   });
 });
+
+describe("#[path] module declarations", () => {
+  it("resolves a file target against the declaring file's own directory", () => {
+    const tree = create_file_tree("/project", ["src/sys.rs", "src/unix.rs"]);
+    expect(
+      resolve_module_path_rust(
+        "unix.rs",
+        "/project/src/sys.rs" as FilePath,
+        create_module_resolution_context(tree)
+      )
+    ).toBe("/project/src/unix.rs");
+  });
+
+  it("resolves a nested file target against the same directory", () => {
+    const tree = create_file_tree("/project", ["src/lib.rs", "src/sys/unix.rs"]);
+    expect(
+      resolve_module_path_rust(
+        "sys/unix.rs",
+        "/project/src/lib.rs" as FilePath,
+        create_module_resolution_context(tree)
+      )
+    ).toBe("/project/src/sys/unix.rs");
+  });
+
+  it("keeps treating a :: path as a module path", () => {
+    const tree = create_file_tree("/project", [
+      "src/lib.rs",
+      "src/a.rs",
+      "src/a/b.rs",
+    ]);
+    expect(
+      resolve_module_path_rust(
+        "crate::a::b",
+        "/project/src/lib.rs" as FilePath,
+        create_module_resolution_context(tree)
+      )
+    ).toBe("/project/src/a/b.rs");
+  });
+});
+
+describe("every segment of a module path must match", () => {
+  it("leaves a foreign path opaque rather than binding its tail to a local module", () => {
+    // `std::fs` is not this crate's `fs`. Skipping the unmatched `std` would
+    // collapse the path onto `src/fs.rs`, an edge into the crate itself.
+    const tree = create_file_tree("/project", ["src/lib.rs", "src/fs.rs"]);
+    expect(
+      resolve_module_path_rust(
+        "std::fs",
+        "/project/src/lib.rs" as FilePath,
+        create_module_resolution_context(tree)
+      )
+    ).toBe("std::fs");
+  });
+
+  it("still infers a target for an anchored path that matches nothing", () => {
+    // An anchored path names a place in this crate, so callers that need a
+    // stable dependency target get the inferred one.
+    const tree = create_file_tree("/project", ["src/lib.rs"]);
+    expect(
+      resolve_module_path_rust(
+        "crate::missing::deep",
+        "/project/src/lib.rs" as FilePath,
+        create_module_resolution_context(tree)
+      )
+    ).toBe("/project/src/missing/deep.rs");
+  });
+});

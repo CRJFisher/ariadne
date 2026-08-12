@@ -227,7 +227,8 @@ function resolve_scope_recursive(
     }
 
     // When the export chain yields nothing, the imported name may name a
-    // submodule file rather than an exported symbol (Python `from pkg import mod`).
+    // submodule file rather than an exported symbol — Python
+    // `from pkg import mod`, Rust `use crate::parent::child`.
     if (!resolved) {
       const submodule_path = context.imports.get_submodule_import_path(
         imp_def.symbol_id

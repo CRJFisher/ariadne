@@ -210,6 +210,7 @@ builds a method carrying `accessor_kind`.
 - `@definition.impl` - Impl blocks
 - `@definition.type_alias` - Type aliases
 - `@definition.enum` - Enums
+- `@definition.import.module` - Bodyless `mod x;` — the module edge to the file backing it, emitted alongside the `@definition.module` that binds the name. Captures the whole item so the handler can read the preceding `#[path = "…"]` attribute, which tree-sitter makes a sibling of `mod_item` rather than a child
 - `@scope.trait`, `@scope.impl` - Rust-specific scopes
 - `@reference.constructor.associated` - Associated function constructor (`Type::new()`)
 - `@reference.constructor.struct` - Struct literal constructor (`Foo { field: val }`)
@@ -386,6 +387,6 @@ This separation means:
 
 ---
 
-**Last Updated**: 2025-10-29
+**Last Updated**: 2026-08-11
 **Schema Version**: 1.0
 **Enforcement**: capture/receiver consistency Stop hook, `.claude/hooks/capture_receiver_consistency_stop.ts` (see Validation)

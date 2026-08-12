@@ -12,13 +12,13 @@ import type {
   SymbolName,
   ScopeId,
   FunctionCallReference,
+  ImportDefinition,
 } from "@ariadnejs/types";
 import type { CallResolutionContext } from "./call_resolver";
-import type { ResolutionRegistry } from "../resolution_registry";
 import {
-  is_callable_definition,
   normalize_path_prefix,
-  resolve_in_module_body,
+  resolve_qualified_path_rust,
+  resolve_under_module_file_rust,
 } from "./path_resolution.rust";
 
 /**
@@ -26,62 +26,37 @@ import {
  * qualifier instead of the bare terminal — which a same-name local definition
  * can shadow in the scope map.
  *
- * Resolution honours the qualifier in three ways, in order:
- * - Type-qualified associated function (`Parker::make`): the qualifier resolves
- *   to a struct/enum; look the terminal up in its member index. Associated
- *   functions are stored as `kind: "method"`; the method-rejection gate that
- *   guards bare function calls is bypassed here because the qualifier names the
- *   owning type explicitly. The member must be callable.
- * - Module-qualified to a `mod` in scope (`worker::create`): the qualifier
- *   resolves to a module/namespace; look the terminal up in that module's body
- *   scope. Binds even with no `use` for the terminal and over a local shadow.
- * - Module-qualified via a `use mod::terminal` import (`utils::helper`): bind to
- *   the matching import's cross-file target, over a same-name local shadow.
+ * The path resolver runs first: it binds the terminal under the type or module
+ * the prefix names, whether that module is an in-file `mod` block or a file of
+ * its own. Failing that, a `use <prefix>::<terminal>` statement in lexical scope
+ * anchors the terminal directly.
  *
  * Returns null on a path miss; the caller then falls back to bare resolution.
  */
 export function resolve_via_path_prefix_rust(
   ref: FunctionCallReference,
-  context: CallResolutionContext,
-  resolver: ResolutionRegistry
+  context: CallResolutionContext
 ): SymbolId | null {
-  const prefix = normalize_path_prefix(ref.path_prefix ?? []);
-  if (prefix.length === 0) return null;
+  const module_path = ref.path_prefix ?? [];
+  if (module_path.length === 0) return null;
 
-  const qualifier = prefix[prefix.length - 1];
-  const terminal = ref.name;
+  const via_path = resolve_qualified_path_rust(
+    module_path,
+    ref.name,
+    "callable",
+    ref.scope_id,
+    ref.location.file_path,
+    context
+  );
+  if (via_path) return via_path;
 
-  const qualifier_id = resolver.resolve(ref.scope_id, qualifier);
-  if (qualifier_id) {
-    const qualifier_def = context.definitions.get(qualifier_id);
+  // An all-anchor prefix (`crate::foo()`) names the module the anchor pins, not a
+  // module the `use` matcher could compare against: an empty prefix matches every
+  // import path, so it would bind to any same-named import in scope.
+  const anchor_prefix = normalize_path_prefix(module_path);
+  if (anchor_prefix.length === 0) return null;
 
-    // Type-qualified associated function: qualifier is the owning struct/enum.
-    if (qualifier_def?.kind === "class") {
-      const member = context.definitions
-        .get_member_index()
-        .get(qualifier_id)
-        ?.get(terminal);
-      if (member && is_callable_definition(member, context.definitions)) {
-        return member;
-      }
-    }
-
-    // Module-qualified to a `mod` in scope: resolve in the module's body scope.
-    // Rust `mod` declarations are captured as namespace definitions.
-    if (qualifier_def?.kind === "namespace") {
-      const member = resolve_in_module_body(
-        qualifier,
-        qualifier_def.defining_scope_id,
-        terminal,
-        context.scopes,
-        context.definitions
-      );
-      if (member) return member;
-    }
-  }
-
-  // Module-qualified via a matching `use` import (cross-file).
-  return resolve_via_import_anchor(ref, prefix, terminal, context);
+  return resolve_via_import_anchor(ref, anchor_prefix, ref.name, context);
 }
 
 /**
@@ -94,6 +69,11 @@ export function resolve_via_path_prefix_rust(
  * same-terminal imports from different modules. Within one scope, two imports
  * resolving to distinct targets are an ambiguous collision — reported as a miss
  * rather than silently taking the first.
+ *
+ * A wildcard edge (`use m::*`) names no terminal of its own; it puts `m`'s whole
+ * surface in scope, so a qualified call's prefix names a module under `m` and the
+ * terminal is resolved there. It is a second pass, so an explicit
+ * `use m::terminal` in the same scope wins.
  */
 function resolve_via_import_anchor(
   ref: FunctionCallReference,
@@ -103,31 +83,17 @@ function resolve_via_import_anchor(
 ): SymbolId | null {
   let scope_id: ScopeId | null = ref.scope_id;
   while (scope_id) {
-    const matches = new Set<SymbolId>();
-
-    for (const imp of context.imports.get_scope_imports(scope_id)) {
-      // Namespace imports bind the module name, not the terminal; wildcard
-      // imports bind no name at all.
-      if (imp.import_kind === "namespace" || imp.import_kind === "wildcard")
-        continue;
-
-      const imported_name = (imp.original_name ?? imp.name) as SymbolName;
-      if (imported_name !== terminal) continue;
-      if (!import_path_matches(imp.import_path, prefix)) continue;
-
-      const source_file = context.imports.get_resolved_import_path(
-        imp.symbol_id
-      );
-      if (!source_file) continue;
-
-      const resolved = context.exports.resolve_export_chain(
-        source_file,
-        imported_name,
-        imp.import_kind,
-        context.languages,
-        context.resolution
-      );
-      if (resolved) matches.add(resolved);
+    const imports = context.imports.get_scope_imports(scope_id);
+    const matches = anchored_named_matches(imports, prefix, terminal, context);
+    if (matches.size === 0) {
+      for (const resolved of anchored_wildcard_matches(
+        imports,
+        prefix,
+        terminal,
+        context
+      )) {
+        matches.add(resolved);
+      }
     }
 
     // A single unambiguous match in the nearest scope wins; an in-scope
@@ -140,6 +106,70 @@ function resolve_via_import_anchor(
   }
 
   return null;
+}
+
+function anchored_named_matches(
+  imports: readonly ImportDefinition[],
+  prefix: readonly SymbolName[],
+  terminal: SymbolName,
+  context: CallResolutionContext
+): Set<SymbolId> {
+  const matches = new Set<SymbolId>();
+
+  for (const imp of imports) {
+    // Only an import that binds the terminal itself anchors it. A `mod x;` edge
+    // and a namespace import bind the module name, and a wildcard binds no name
+    // at all.
+    if (imp.import_kind !== "named") continue;
+
+    const imported_name = (imp.original_name ?? imp.name) as SymbolName;
+    if (imported_name !== terminal) continue;
+    if (!import_path_matches(imp.import_path, prefix)) continue;
+
+    const source_file = context.imports.get_resolved_import_path(imp.symbol_id);
+    if (!source_file) continue;
+
+    const resolved = context.exports.resolve_export_chain(
+      source_file,
+      imported_name,
+      imp.import_kind,
+      context.languages,
+      context.resolution
+    );
+    if (resolved) matches.add(resolved);
+  }
+
+  return matches;
+}
+
+function anchored_wildcard_matches(
+  imports: readonly ImportDefinition[],
+  prefix: readonly SymbolName[],
+  terminal: SymbolName,
+  context: CallResolutionContext
+): Set<SymbolId> {
+  const matches = new Set<SymbolId>();
+
+  for (const imp of imports) {
+    if (imp.import_kind !== "wildcard") continue;
+
+    const source_file = context.imports.get_resolved_import_path(imp.symbol_id);
+    if (!source_file) continue;
+
+    // The glob brings the module's whole surface into scope, so the call's
+    // prefix names a module *under* that surface — `use crate::deep::*;` binds
+    // `m`, and `m::f()` is `f` inside `deep`'s `m`.
+    const resolved = resolve_under_module_file_rust(
+      source_file,
+      prefix,
+      terminal,
+      "callable",
+      context
+    );
+    if (resolved) matches.add(resolved);
+  }
+
+  return matches;
 }
 
 /**

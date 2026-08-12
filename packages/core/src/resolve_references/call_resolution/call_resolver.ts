@@ -212,16 +212,7 @@ function resolve_calls(
           break;
 
         case "constructor_call":
-          dispatch_result = resolve_constructor_call(
-            ref,
-            context.definitions,
-            context.scopes,
-            context.resolutions,
-            context.exports,
-            context.languages,
-            context.resolution,
-            (import_id) => context.imports.get_resolved_import_path(import_id)
-          );
+          dispatch_result = resolve_constructor_call(ref, context);
           break;
 
         case "property_access": {
