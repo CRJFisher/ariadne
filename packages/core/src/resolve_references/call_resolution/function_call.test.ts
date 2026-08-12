@@ -525,7 +525,7 @@ describe("Function Call Resolution", () => {
         imported_symbols: new Map(),
         references: [],
       };
-      const { exports, languages, resolution } = make_export_chain_context();
+      const { exports, languages, modules } = make_export_chain_context();
       types.update_file(
         py_file,
         py_index,
@@ -533,7 +533,7 @@ describe("Function Call Resolution", () => {
         resolutions,
         exports,
         languages,
-        resolution
+        modules
       );
 
       const call_ref = create_function_call_reference(

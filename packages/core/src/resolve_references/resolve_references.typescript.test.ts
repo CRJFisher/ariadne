@@ -1248,9 +1248,10 @@ export function run(): number {
     });
     temp_dirs.push(temp_dir);
 
-    const import_def = project.imports
-      .get_file_imports(file_paths["packages/app/main.ts"])
-      .find((imp) => imp.name === ("render" as SymbolName));
+    const import_def = Array.from(
+      project.get_index_single_file(file_paths["packages/app/main.ts"])!
+        .imported_symbols.values()
+    ).find((imp) => imp.name === ("render" as SymbolName));
     expect(import_def).toBeDefined();
     expect(
       project.imports.get_resolved_import_path(import_def!.symbol_id)

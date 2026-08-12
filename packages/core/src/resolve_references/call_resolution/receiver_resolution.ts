@@ -76,7 +76,7 @@ export interface ReceiverResolutionContext {
   readonly imports: ImportGraph;
   readonly exports: ExportRegistry;
   readonly languages: ReadonlyMap<FilePath, Language>;
-  readonly resolution: ModuleResolutionContext;
+  readonly modules: ModuleResolutionContext;
 }
 
 const SELF_REFERENCE_KEYWORDS = new Set(["this", "self", "super", "cls"]);
@@ -326,7 +326,7 @@ function resolve_namespace_member(
       property_name,
       context.exports,
       context.languages,
-      context.resolution
+      context.modules
     );
   }
 
@@ -366,7 +366,7 @@ function dereference_named_import(
       imported_name,
       def.import_kind === "default" ? "default" : "named",
       context.languages,
-      context.resolution
+      context.modules
     );
     if (!resolved) {
       return current;

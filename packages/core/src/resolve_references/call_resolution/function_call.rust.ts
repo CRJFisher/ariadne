@@ -136,7 +136,7 @@ function anchored_named_matches(
       imported_name,
       imp.import_kind,
       context.languages,
-      context.resolution
+      context.modules
     );
     if (resolved) matches.add(resolved);
   }

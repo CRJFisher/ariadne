@@ -78,7 +78,7 @@ export class TypeRegistry {
     resolutions: ResolutionRegistry,
     exports: ExportRegistry,
     languages: ReadonlyMap<FilePath, Language>,
-    resolution: ModuleResolutionContext,
+    modules: ModuleResolutionContext,
     import_source_resolver?: (import_id: SymbolId) => FilePath | undefined
   ): void {
     this.definitions = definitions;
@@ -91,7 +91,7 @@ export class TypeRegistry {
       resolutions,
       exports,
       languages,
-      resolution,
+      modules,
       import_source_resolver
     );
   }
@@ -145,7 +145,7 @@ export class TypeRegistry {
     resolutions: ResolutionRegistry,
     exports: ExportRegistry,
     languages: ReadonlyMap<FilePath, Language>,
-    resolution: ModuleResolutionContext,
+    modules: ModuleResolutionContext,
     import_source_resolver?: (import_id: SymbolId) => FilePath | undefined
   ): void {
     const resolved_symbols = new Set<SymbolId>();
@@ -188,7 +188,7 @@ export class TypeRegistry {
         const source_file = import_source_resolver(namespace_id);
         if (!source_file) continue;
 
-        const class_id = resolve_namespace_export(source_file, chain[1], exports, languages, resolution);
+        const class_id = resolve_namespace_export(source_file, chain[1], exports, languages, modules);
         if (class_id) {
           this.symbol_types.set(symbol_id, class_id);
           resolved_symbols.add(symbol_id);

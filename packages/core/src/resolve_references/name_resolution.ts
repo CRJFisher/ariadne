@@ -26,7 +26,7 @@ export interface NameResolutionContext {
   readonly scopes: ScopeRegistry;
   readonly exports: ExportRegistry;
   readonly imports: ImportGraph;
-  readonly resolution: ModuleResolutionContext;
+  readonly modules: ModuleResolutionContext;
 }
 
 /**
@@ -137,7 +137,7 @@ function resolve_scope_recursive(
       for (const [name, symbol_id] of context.exports.resolve_all_exports(
         source_file,
         context.languages,
-        context.resolution
+        context.modules
       )) {
         if (language === "rust") {
           if (ambiguous.has(name)) {
@@ -190,7 +190,7 @@ function resolve_scope_recursive(
           const sole_default = context.exports.resolve_sole_default_export(
             source_file,
             context.languages,
-            context.resolution
+            context.modules
           );
           if (
             sole_default &&
@@ -223,7 +223,7 @@ function resolve_scope_recursive(
         import_name,
         imp_def.import_kind,
         context.languages,
-        context.resolution
+        context.modules
       );
 
       // Explicit-named-import fallback: `is_exported` governs only the

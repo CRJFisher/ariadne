@@ -1650,9 +1650,11 @@ pub fn run() -> i32 {
       });
       temp_dirs.push(temp_dir);
 
-      const lib_imports = project.imports.get_file_imports(file_paths["src/lib.rs"]);
+      const lib_index = project.get_index_single_file(file_paths["src/lib.rs"]);
       expect(
-        lib_imports.map((imp) => imp.import_kind).sort()
+        Array.from(lib_index!.imported_symbols.values())
+          .map((imp) => imp.import_kind)
+          .sort()
       ).toEqual(["namespace", "wildcard"]);
     });
 

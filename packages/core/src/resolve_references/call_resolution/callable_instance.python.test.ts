@@ -33,7 +33,7 @@ const module_scope = "module:0:0" as ScopeId;
 const {
   exports: empty_exports,
   languages: empty_languages,
-  resolution: empty_resolution,
+  modules: empty_resolution,
 } = make_export_chain_context();
 
 function location(start_line: number, start_column = 0): Location {

@@ -9,7 +9,7 @@ import type { FilePath, Language } from "@ariadnejs/types";
 import { ExportRegistry } from "./registries/export";
 import type { FileSystemFolder } from "./file_folders";
 import type { ModuleResolutionContext } from "./import_resolution";
-import { create_module_resolution_context } from "./import_resolution";
+import { create_module_resolution_context, EMPTY_MODULE_SPECIFIER_INDEX } from "./import_resolution";
 
 /** An empty file-system tree, for unit tests that don't resolve module paths. */
 const EMPTY_ROOT_FOLDER: FileSystemFolder = {
@@ -27,11 +27,11 @@ const EMPTY_ROOT_FOLDER: FileSystemFolder = {
 export function make_export_chain_context(): {
   exports: ExportRegistry;
   languages: Map<FilePath, Language>;
-  resolution: ModuleResolutionContext;
+  modules: ModuleResolutionContext;
 } {
   return {
     exports: new ExportRegistry(),
     languages: new Map<FilePath, Language>(),
-    resolution: create_module_resolution_context(EMPTY_ROOT_FOLDER),
+    modules: create_module_resolution_context(EMPTY_ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX),
   };
 }

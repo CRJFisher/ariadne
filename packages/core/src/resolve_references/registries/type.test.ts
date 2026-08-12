@@ -160,7 +160,7 @@ function make_mock_registries() {
 const {
   exports: empty_exports,
   languages: empty_languages,
-  resolution: empty_resolution,
+  modules: empty_resolution,
 } = make_export_chain_context();
 
 describe("TypeRegistry", () => {

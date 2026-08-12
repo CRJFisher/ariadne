@@ -9,7 +9,6 @@ import * as os from "os";
 import type { FilePath } from "@ariadnejs/types";
 import {
   build_module_specifier_index,
-  parse_jsonc,
 } from "./module_specifier_index";
 import type { FileSystemFolder } from "../file_folders";
 
@@ -64,19 +63,40 @@ function aliases_governing(
   return config_aliases.get(directory as FilePath) ?? new Map();
 }
 
-describe("parse_jsonc", () => {
-  it("parses a trailing comma before a closing brace", () => {
-    expect(parse_jsonc("{ \"a\": 1, }")).toEqual({ a: 1 });
+describe("configs written as JSONC", () => {
+  it("indexes aliases from a config carrying line and block comments", async () => {
+    const { config_aliases, temp_dir } = await index_for({
+      "tsconfig.json": `{
+  // the app's own sources
+  "compilerOptions": {
+    "paths": {
+      /* one entry */ "@app": ["./src"],
+    },
+  },
+}`,
+      "src/index.ts": "export function run() { return 1; }\n",
+    });
+
+    expect(aliases_governing(config_aliases, temp_dir)).toEqual(
+      new Map([["@app", path.join(temp_dir, "src") as FilePath]])
+    );
   });
 
-  it("parses line and block comments", () => {
-    expect(
-      parse_jsonc("{\n  // a comment\n  \"a\": 1, /* inline */ \"b\": 2\n}")
-    ).toEqual({ a: 1, b: 2 });
-  });
+  it("reads a glob star in a key or target as text, not as a block comment", async () => {
+    const { config_aliases, temp_dir } = await index_for({
+      "tsconfig.json": `{
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["src/*"],
+    },
+  },
+}`,
+      "src/index.ts": "export function run() { return 1; }\n",
+    });
 
-  it("keeps comment-like text inside a string", () => {
-    expect(parse_jsonc("{ \"a\": \"http://x\" }")).toEqual({ a: "http://x" });
+    expect(aliases_governing(config_aliases, temp_dir)).toEqual(
+      new Map([["@", path.join(temp_dir, "src") as FilePath]])
+    );
   });
 });
 

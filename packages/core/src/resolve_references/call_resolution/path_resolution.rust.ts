@@ -93,7 +93,7 @@ export interface RustPathResolutionContext {
   readonly exports: ExportRegistry;
   readonly imports: ImportGraph;
   readonly languages: ReadonlyMap<FilePath, Language>;
-  readonly resolution: ModuleResolutionContext;
+  readonly modules: ModuleResolutionContext;
 }
 
 /**
@@ -238,7 +238,7 @@ function resolve_via_module_file(
     if (resolved) return resolved;
   }
 
-  if (!PATH_ANCHORS.has(root) && !context.resolution.specifiers.crate_roots.has(root)) {
+  if (!PATH_ANCHORS.has(root) && !context.modules.specifiers.crate_roots.has(root)) {
     return null;
   }
 
@@ -246,7 +246,7 @@ function resolve_via_module_file(
     const candidate = resolve_module_path_rust(
       module_path.slice(0, take).join("::"),
       referring_file,
-      context.resolution
+      context.modules
     );
 
     // The path spells this file out, so nothing imports it on the referring
@@ -489,7 +489,7 @@ function resolve_file_level_name(
       name,
       "named",
       context.languages,
-      context.resolution
+      context.modules
     ) ?? file_scope_definition(file, name, context);
   if (!found) return null;
 

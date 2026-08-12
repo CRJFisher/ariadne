@@ -23,9 +23,9 @@ import type { ModuleResolutionContext } from "./import_resolution";
 export function resolve_module_path_rust(
   import_path: string,
   importing_file: FilePath,
-  resolution: ModuleResolutionContext
+  modules: ModuleResolutionContext
 ): FilePath {
-  const { root_folder } = resolution;
+  const { root_folder } = modules;
 
   // A `#[path = "…"] mod x;` declaration names its backing file directly rather
   // than by module path. No `use` path can be spelled this way — `::` is the
@@ -56,7 +56,7 @@ export function resolve_module_path_rust(
 
     // Only once the local probe has missed: the leading segment may name
     // another crate in the workspace.
-    const from_crate = resolve_from_named_crate(parts, resolution);
+    const from_crate = resolve_from_named_crate(parts, modules);
     if (from_crate) {
       return from_crate;
     }
@@ -96,9 +96,9 @@ export function resolve_submodule_path_rust(
  */
 function resolve_from_named_crate(
   parts: string[],
-  resolution: ModuleResolutionContext
+  modules: ModuleResolutionContext
 ): FilePath | null {
-  const crate_root = resolution.specifiers.crate_roots.get(
+  const crate_root = modules.specifiers.crate_roots.get(
     parts[0].replace(/-/g, "_")
   );
   if (!crate_root) {
@@ -107,15 +107,15 @@ function resolve_from_named_crate(
 
   const remaining = parts.slice(1);
   if (remaining.length === 0) {
-    return crate_root_file(crate_root, resolution.root_folder);
+    return crate_root_file(crate_root, modules.root_folder);
   }
 
   const resolved = resolve_rust_module_path(
     crate_root,
     remaining,
-    resolution.root_folder
+    modules.root_folder
   );
-  return has_file_in_tree(resolved, resolution.root_folder) ? resolved : null;
+  return has_file_in_tree(resolved, modules.root_folder) ? resolved : null;
 }
 
 /**

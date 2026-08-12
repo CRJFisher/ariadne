@@ -372,7 +372,7 @@ export class ExportRegistry {
   resolve_sole_default_export(
     source_file: FilePath,
     languages: ReadonlyMap<FilePath, Language>,
-    resolution: ModuleResolutionContext
+    modules: ModuleResolutionContext
   ): SymbolId | null {
     // A file forwarding a whole module surface is not a sole-default module.
     if (
@@ -386,7 +386,7 @@ export class ExportRegistry {
       "" as SymbolName,
       "default",
       languages,
-      resolution
+      modules
     );
   }
 
@@ -462,7 +462,7 @@ export class ExportRegistry {
     holder: FilePath,
     edge: ImportDefinition,
     language: Language,
-    resolution: ModuleResolutionContext
+    modules: ModuleResolutionContext
   ): FilePath {
     let targets = this.edge_targets.get(holder);
     if (!targets) {
@@ -477,7 +477,7 @@ export class ExportRegistry {
       edge.import_path,
       holder,
       language,
-      resolution
+      modules
     );
     targets.set(edge.symbol_id, target);
     return target;
@@ -499,7 +499,7 @@ export class ExportRegistry {
     export_name: SymbolName,
     import_kind: "named" | "default" | "namespace",
     languages: ReadonlyMap<FilePath, Language>,
-    resolution: ModuleResolutionContext,
+    modules: ModuleResolutionContext,
     walk: ExportChainWalk = {
       visited: new Set(),
       memo: new Map(),
@@ -529,7 +529,7 @@ export class ExportRegistry {
       export_name,
       import_kind,
       languages,
-      resolution,
+      modules,
       subtree
     );
 
@@ -548,7 +548,7 @@ export class ExportRegistry {
     export_name: SymbolName,
     import_kind: "named" | "default" | "namespace",
     languages: ReadonlyMap<FilePath, Language>,
-    resolution: ModuleResolutionContext,
+    modules: ModuleResolutionContext,
     walk: ExportChainWalk
   ): SymbolId | null {
     const export_meta =
@@ -567,7 +567,7 @@ export class ExportRegistry {
         export_name,
         import_kind,
         languages,
-        resolution,
+        modules,
         walk
       );
     }
@@ -599,7 +599,7 @@ export class ExportRegistry {
         source_file,
         imp_def,
         language,
-        resolution
+        modules
       );
 
       const original_name = (imp_def.original_name ||
@@ -610,7 +610,7 @@ export class ExportRegistry {
         original_name,
         imp_def.import_kind,
         languages,
-        resolution,
+        modules,
         walk
       );
     }
@@ -634,7 +634,7 @@ export class ExportRegistry {
     export_name: SymbolName,
     import_kind: "named" | "namespace",
     languages: ReadonlyMap<FilePath, Language>,
-    resolution: ModuleResolutionContext,
+    modules: ModuleResolutionContext,
     walk: ExportChainWalk
   ): SymbolId | null {
     const edges = this.wildcard_reexports.get(source_file);
@@ -652,14 +652,14 @@ export class ExportRegistry {
         source_file,
         edge,
         language,
-        resolution
+        modules
       );
       const resolved = this.resolve_export_chain(
         target_file,
         export_name,
         import_kind,
         languages,
-        resolution,
+        modules,
         { ...walk, visited: new Set(walk.visited) }
       );
       if (resolved) {
@@ -680,9 +680,9 @@ export class ExportRegistry {
   resolve_all_exports(
     source_file: FilePath,
     languages: ReadonlyMap<FilePath, Language>,
-    resolution: ModuleResolutionContext
+    modules: ModuleResolutionContext
   ): ReadonlyMap<SymbolName, SymbolId> {
-    return this.collect_all_exports(source_file, languages, resolution, {
+    return this.collect_all_exports(source_file, languages, modules, {
       in_progress: new Set(),
       cycle_cut: { hit: false },
       sources: new Set(),
@@ -695,7 +695,7 @@ export class ExportRegistry {
   private collect_all_exports(
     file: FilePath,
     languages: ReadonlyMap<FilePath, Language>,
-    resolution: ModuleResolutionContext,
+    modules: ModuleResolutionContext,
     walk: SurfaceWalk
   ): ReadonlyMap<SymbolName, SymbolId> {
     walk.sources.add(file);
@@ -733,7 +733,7 @@ export class ExportRegistry {
         export_name,
         "named",
         languages,
-        resolution,
+        modules,
         {
           visited: new Set(),
           memo: new Map(),
@@ -759,12 +759,12 @@ export class ExportRegistry {
           file,
           edge,
           language,
-          resolution
+          modules
         );
         const surface = this.collect_all_exports(
           target_file,
           languages,
-          resolution,
+          modules,
           subtree
         );
         for (const [name, symbol_id] of surface) {

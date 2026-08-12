@@ -57,7 +57,7 @@ export interface CallResolutionContext {
   readonly resolutions: ResolutionRegistry;
   readonly exports: ExportRegistry;
   readonly languages: ReadonlyMap<FilePath, Language>;
-  readonly resolution: ModuleResolutionContext;
+  readonly modules: ModuleResolutionContext;
 }
 
 /**
@@ -183,7 +183,7 @@ function resolve_calls(
             context.imports,
             context.exports,
             context.languages,
-            context.resolution
+            context.modules
           );
 
           // If standard resolution failed, try collection dispatch resolution.
@@ -250,7 +250,7 @@ function resolve_calls(
             context.imports,
             context.exports,
             context.languages,
-            context.resolution
+            context.modules
           );
           const getters = (
             is_ok(getter_result) ? getter_result.value : []

@@ -36,7 +36,7 @@ export function resolve_constructor_call(
   call_ref: ConstructorCallReference,
   context: CallResolutionContext
 ): Result<SymbolId[], ResolutionFailure> {
-  const { definitions, scopes, resolutions, exports, imports, languages, resolution } =
+  const { definitions, scopes, resolutions, exports, imports, languages, modules } =
     context;
   let class_symbol: SymbolId | null = null;
 
@@ -48,7 +48,7 @@ export function resolve_constructor_call(
       if (namespace_def?.kind === "import" && namespace_def.import_kind === "namespace") {
         const source_file = imports.get_resolved_import_path(namespace_id);
         if (source_file) {
-          class_symbol = resolve_namespace_export(source_file, call_ref.property_chain[1], exports, languages, resolution);
+          class_symbol = resolve_namespace_export(source_file, call_ref.property_chain[1], exports, languages, modules);
         }
       }
     }

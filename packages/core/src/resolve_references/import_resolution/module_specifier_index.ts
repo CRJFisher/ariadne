@@ -51,7 +51,7 @@ export const EMPTY_MODULE_SPECIFIER_INDEX: ModuleSpecifierIndex = {
  * parses. JSONC is the format editors accept for these files, and real
  * projects use it — nest's `paths` block ends with a trailing comma.
  */
-export function parse_jsonc(text: string): unknown {
+function parse_jsonc(text: string): unknown {
   let out = "";
   let in_string = false;
   let in_line_comment = false;

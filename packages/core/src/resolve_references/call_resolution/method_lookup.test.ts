@@ -61,7 +61,7 @@ describe("resolve_method_on_type", () => {
   let imports: ImportGraph;
   let exports: ExportRegistry;
   let languages: Map<FilePath, Language>;
-  let resolution: ModuleResolutionContext;
+  let modules: ModuleResolutionContext;
   let context: ReceiverResolutionContext;
 
   beforeEach(() => {
@@ -70,7 +70,7 @@ describe("resolve_method_on_type", () => {
     types = new TypeRegistry();
     resolutions = new ResolutionRegistry();
     imports = new ImportGraph();
-    ({ exports, languages, resolution } = make_export_chain_context());
+    ({ exports, languages, modules } = make_export_chain_context());
     context = {
       scopes,
       definitions,
@@ -79,7 +79,7 @@ describe("resolve_method_on_type", () => {
       imports,
       exports,
       languages,
-      resolution,
+      modules,
     };
   });
 

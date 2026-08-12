@@ -228,7 +228,7 @@ describe("Rust Qualified-Call Resolution", () => {
         TEST_FILE,
         [import_def],
         "rust",
-        context.resolution
+        context.modules
       );
 
       const call_ref = create_function_call_reference(

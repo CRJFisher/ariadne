@@ -32,7 +32,10 @@ import { join } from "path";
 import type { PersistenceStorage, CacheManifestEntry } from "../persistence";
 import { write_file_index, write_cache_manifest } from "./project_cache_strategy";
 import type { ModuleResolutionContext } from "../resolve_references/import_resolution";
-import { build_module_specifier_index } from "../resolve_references/import_resolution";
+import {
+  build_module_specifier_index,
+  create_module_resolution_context,
+} from "../resolve_references/import_resolution";
 
 /**
  * Options for the classification pipeline. Extends `TraceCallGraphOptions`
@@ -84,7 +87,7 @@ export class Project {
 
   // ===== Resolution layer (always up-to-date) =====
   public resolutions: ResolutionRegistry = new ResolutionRegistry();
-  private resolution?: ModuleResolutionContext = undefined;
+  private modules?: ModuleResolutionContext = undefined;
   private excluded_folders: Set<string> = new Set();
 
   // ===== EnrichedCallGraph cache =====
@@ -116,10 +119,10 @@ export class Project {
     // module resolution that needs real I/O; every later resolution query runs
     // against this snapshot and the I/O-free file tree.
     const root_folder = await this.get_file_tree(resolved_path);
-    this.resolution = {
+    this.modules = create_module_resolution_context(
       root_folder,
-      specifiers: await build_module_specifier_index(root_folder),
-    };
+      await build_module_specifier_index(root_folder)
+    );
   }
 
   /**
@@ -138,7 +141,7 @@ export class Project {
    * @param content - The file's source code
    */
   update_file(file_id: FilePath, content: string): void {
-    if (!this.resolution) {
+    if (!this.modules) {
       throw new Error("Project not initialized");
     }
 
@@ -166,7 +169,7 @@ export class Project {
     this.languages.set(file_id, parsed_file.lang);
 
     // Phases 2-5: Registry update + resolution
-    this.apply_index_and_resolve(file_id, index_single_file, dependents, this.resolution);
+    this.apply_index_and_resolve(file_id, index_single_file, dependents, this.modules);
   }
 
   /**
@@ -184,7 +187,7 @@ export class Project {
     content: string,
     cached_index: SemanticIndex,
   ): void {
-    if (!this.resolution) {
+    if (!this.modules) {
       throw new Error("Project not initialized");
     }
 
@@ -196,7 +199,7 @@ export class Project {
     this.file_contents.set(file_id, content);
     this.languages.set(file_id, cached_index.language);
 
-    this.apply_index_and_resolve(file_id, cached_index, dependents, this.resolution);
+    this.apply_index_and_resolve(file_id, cached_index, dependents, this.modules);
   }
 
   /**
@@ -207,7 +210,7 @@ export class Project {
     file_id: FilePath,
     index_single_file: SemanticIndex,
     dependents: Set<FilePath>,
-    resolution: ModuleResolutionContext,
+    modules: ModuleResolutionContext,
   ): void {
     const get_import_path = (import_id: SymbolId) => this.imports.get_resolved_import_path(import_id);
 
@@ -254,7 +257,7 @@ export class Project {
       file_id,
       import_definitions,
       index_single_file.language,
-      resolution,
+      modules,
     );
 
     // Phase 2.5: Fix ImportDefinition locations to point to source files
@@ -290,7 +293,7 @@ export class Project {
       this.scopes,
       this.exports,
       this.imports,
-      resolution,
+      modules,
     );
 
     // Phase 3.5: Cross-file type inheritance resolution
@@ -331,7 +334,7 @@ export class Project {
           this.resolutions,
           this.exports,
           this.languages,
-          resolution,
+          modules,
           get_import_path,
         );
       }
@@ -354,7 +357,7 @@ export class Project {
       this.imports,
       this.exports,
       this.languages,
-      resolution,
+      modules,
     );
   }
 
@@ -366,7 +369,7 @@ export class Project {
    * @param file_id - The file to remove
    */
   remove_file(file_id: FilePath): void {
-    if (!this.resolution) {
+    if (!this.modules) {
       throw new Error("Project not initialized");
     }
 
@@ -404,7 +407,7 @@ export class Project {
         this.scopes,
         this.exports,
         this.imports,
-        this.resolution
+        this.modules
       );
 
       // Phase 2: Type registry (uses name resolutions)
@@ -418,7 +421,7 @@ export class Project {
             this.resolutions,
             this.exports,
             this.languages,
-            this.resolution,
+            this.modules,
             get_import_path
           );
         }
@@ -434,7 +437,7 @@ export class Project {
         this.imports,
         this.exports,
         this.languages,
-        this.resolution
+        this.modules
       );
     }
   }
@@ -548,17 +551,17 @@ export class Project {
   /**
    * Recursively build a file system tree from a root folder.
    *
-   * @param resolution - Absolute path to the root folder
+   * @param root_folder - Absolute path to the root folder
    * @returns FileSystemFolder tree structure
    */
   private async get_file_tree(
-    resolution: FilePath
+    root_folder: FilePath
   ): Promise<FileSystemFolder> {
     const folders_map = new Map<string, FileSystemFolder>();
     const files_set = new Set<string>();
 
     // Read directory contents
-    const entries = await readdir(resolution, { withFileTypes: true });
+    const entries = await readdir(root_folder, { withFileTypes: true });
 
     // Process each entry
     for (const entry of entries) {
@@ -569,7 +572,7 @@ export class Project {
         }
 
         // Recursively process subdirectory
-        const sub_folder_path = join(resolution, entry.name) as FilePath;
+        const sub_folder_path = join(root_folder, entry.name) as FilePath;
         const sub_tree = await this.get_file_tree(sub_folder_path);
         folders_map.set(entry.name, sub_tree);
       } else if (entry.isFile()) {
@@ -580,7 +583,7 @@ export class Project {
     }
 
     return {
-      path: resolution,
+      path: root_folder,
       folders: folders_map,
       files: files_set,
     };

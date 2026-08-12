@@ -16,14 +16,14 @@ export function resolve_namespace_export(
   export_name: SymbolName,
   exports: ExportRegistry,
   languages: ReadonlyMap<FilePath, Language>,
-  resolution: ModuleResolutionContext
+  modules: ModuleResolutionContext
 ): SymbolId | null {
   return exports.resolve_export_chain(
     source_file,
     export_name,
     "namespace",
     languages,
-    resolution
+    modules
   );
 }
 

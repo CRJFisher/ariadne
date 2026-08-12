@@ -10,7 +10,7 @@ import type {
   SymbolId,
 } from "@ariadnejs/types";
 import type { FileSystemFolder } from "../file_folders";
-import { create_module_resolution_context } from "../import_resolution";
+import { create_module_resolution_context, EMPTY_MODULE_SPECIFIER_INDEX } from "../import_resolution";
 
 function create_import_definition(
   source: FilePath,
@@ -61,7 +61,7 @@ describe("ImportGraph", () => {
         file1,
         [create_import_definition(file2, file1)],
         TEST_LANGUAGE,
-        create_module_resolution_context(MOCK_ROOT_FOLDER)
+        create_module_resolution_context(MOCK_ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX)
       );
 
       expect(graph.get_dependents(file2)).toEqual(new Set([file1]));
@@ -79,7 +79,7 @@ describe("ImportGraph", () => {
           create_import_definition(file3, file1, "b"),
         ],
         TEST_LANGUAGE,
-        create_module_resolution_context(MOCK_ROOT_FOLDER)
+        create_module_resolution_context(MOCK_ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX)
       );
 
       expect(graph.get_dependents(file2)).toEqual(new Set([file1]));
@@ -100,7 +100,7 @@ describe("ImportGraph", () => {
           },
         ],
         TEST_LANGUAGE,
-        create_module_resolution_context(MOCK_ROOT_FOLDER)
+        create_module_resolution_context(MOCK_ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX)
       );
 
       expect(graph.get_dependents(leaf)).toEqual(new Set([barrel]));
@@ -115,13 +115,13 @@ describe("ImportGraph", () => {
         file1,
         [create_import_definition(file2, file1)],
         TEST_LANGUAGE,
-        create_module_resolution_context(MOCK_ROOT_FOLDER)
+        create_module_resolution_context(MOCK_ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX)
       );
       graph.update_file(
         file1,
         [create_import_definition(file3, file1)],
         TEST_LANGUAGE,
-        create_module_resolution_context(MOCK_ROOT_FOLDER)
+        create_module_resolution_context(MOCK_ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX)
       );
 
       expect(graph.get_dependents(file2)).toEqual(new Set());
@@ -131,7 +131,7 @@ describe("ImportGraph", () => {
     it("leaves a file with no imports out of the dependents index", () => {
       const file1 = "file1.ts" as FilePath;
 
-      graph.update_file(file1, [], TEST_LANGUAGE, create_module_resolution_context(MOCK_ROOT_FOLDER));
+      graph.update_file(file1, [], TEST_LANGUAGE, create_module_resolution_context(MOCK_ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX));
 
       expect(graph.get_dependents(file1)).toEqual(new Set());
     });
@@ -147,7 +147,7 @@ describe("ImportGraph", () => {
           create_import_definition(file2, file1, "b"),
         ],
         TEST_LANGUAGE,
-        create_module_resolution_context(MOCK_ROOT_FOLDER)
+        create_module_resolution_context(MOCK_ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX)
       );
 
       expect(graph.get_dependents(file2)).toEqual(new Set([file1]));
@@ -161,13 +161,13 @@ describe("ImportGraph", () => {
         file1,
         [create_import_definition(file2, file1)],
         TEST_LANGUAGE,
-        create_module_resolution_context(MOCK_ROOT_FOLDER)
+        create_module_resolution_context(MOCK_ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX)
       );
       graph.update_file(
         file2,
         [create_import_definition(file1, file2)],
         TEST_LANGUAGE,
-        create_module_resolution_context(MOCK_ROOT_FOLDER)
+        create_module_resolution_context(MOCK_ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX)
       );
 
       expect(graph.get_dependents(file1)).toEqual(new Set([file2]));
@@ -181,7 +181,7 @@ describe("ImportGraph", () => {
         file1,
         [create_import_definition(file1, file1)],
         TEST_LANGUAGE,
-        create_module_resolution_context(MOCK_ROOT_FOLDER)
+        create_module_resolution_context(MOCK_ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX)
       );
 
       expect(graph.get_dependents(file1)).toEqual(new Set([file1]));
@@ -203,13 +203,13 @@ describe("ImportGraph", () => {
         file2,
         [create_import_definition(file1, file2)],
         TEST_LANGUAGE,
-        create_module_resolution_context(MOCK_ROOT_FOLDER)
+        create_module_resolution_context(MOCK_ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX)
       );
       graph.update_file(
         file3,
         [create_import_definition(file1, file3)],
         TEST_LANGUAGE,
-        create_module_resolution_context(MOCK_ROOT_FOLDER)
+        create_module_resolution_context(MOCK_ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX)
       );
 
       expect(graph.get_dependents(file1)).toEqual(new Set([file2, file3]));
@@ -223,7 +223,7 @@ describe("ImportGraph", () => {
         file1,
         [create_import_definition(file2, file1)],
         TEST_LANGUAGE,
-        create_module_resolution_context(MOCK_ROOT_FOLDER)
+        create_module_resolution_context(MOCK_ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX)
       );
 
       const dependents = graph.get_dependents(file2);
@@ -249,7 +249,7 @@ describe("ImportGraph", () => {
         file1,
         [import_a, import_b],
         TEST_LANGUAGE,
-        create_module_resolution_context(MOCK_ROOT_FOLDER)
+        create_module_resolution_context(MOCK_ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX)
       );
 
       expect(graph.get_scope_imports(import_a.defining_scope_id)).toEqual([
@@ -267,9 +267,9 @@ describe("ImportGraph", () => {
         file1,
         [import_def],
         TEST_LANGUAGE,
-        create_module_resolution_context(MOCK_ROOT_FOLDER)
+        create_module_resolution_context(MOCK_ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX)
       );
-      graph.update_file(file1, [], TEST_LANGUAGE, create_module_resolution_context(MOCK_ROOT_FOLDER));
+      graph.update_file(file1, [], TEST_LANGUAGE, create_module_resolution_context(MOCK_ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX));
 
       expect(graph.get_scope_imports(import_def.defining_scope_id)).toEqual([]);
     });
@@ -285,7 +285,7 @@ describe("ImportGraph", () => {
         file1,
         [import_def],
         TEST_LANGUAGE,
-        create_module_resolution_context(MOCK_ROOT_FOLDER)
+        create_module_resolution_context(MOCK_ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX)
       );
 
       expect(graph.get_resolved_import_path(import_def.symbol_id)).toBe(file2);
@@ -305,9 +305,9 @@ describe("ImportGraph", () => {
         file1,
         [import_def],
         TEST_LANGUAGE,
-        create_module_resolution_context(MOCK_ROOT_FOLDER)
+        create_module_resolution_context(MOCK_ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX)
       );
-      graph.update_file(file1, [], TEST_LANGUAGE, create_module_resolution_context(MOCK_ROOT_FOLDER));
+      graph.update_file(file1, [], TEST_LANGUAGE, create_module_resolution_context(MOCK_ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX));
 
       expect(
         graph.get_resolved_import_path(import_def.symbol_id)
@@ -324,7 +324,7 @@ describe("ImportGraph", () => {
         file1,
         [create_import_definition(file2, file1)],
         TEST_LANGUAGE,
-        create_module_resolution_context(MOCK_ROOT_FOLDER)
+        create_module_resolution_context(MOCK_ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX)
       );
 
       graph.remove_file(file1);
@@ -341,13 +341,13 @@ describe("ImportGraph", () => {
         importer,
         [create_import_definition(hub, importer)],
         TEST_LANGUAGE,
-        create_module_resolution_context(MOCK_ROOT_FOLDER)
+        create_module_resolution_context(MOCK_ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX)
       );
       graph.update_file(
         hub,
         [create_import_definition(target, hub)],
         TEST_LANGUAGE,
-        create_module_resolution_context(MOCK_ROOT_FOLDER)
+        create_module_resolution_context(MOCK_ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX)
       );
 
       graph.remove_file(hub);
@@ -365,13 +365,13 @@ describe("ImportGraph", () => {
         file1,
         [create_import_definition(file2, file1)],
         TEST_LANGUAGE,
-        create_module_resolution_context(MOCK_ROOT_FOLDER)
+        create_module_resolution_context(MOCK_ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX)
       );
       graph.update_file(
         file3,
         [create_import_definition(file2, file3)],
         TEST_LANGUAGE,
-        create_module_resolution_context(MOCK_ROOT_FOLDER)
+        create_module_resolution_context(MOCK_ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX)
       );
 
       graph.remove_file(file1);
@@ -388,7 +388,7 @@ describe("ImportGraph", () => {
         file1,
         [import_def],
         TEST_LANGUAGE,
-        create_module_resolution_context(MOCK_ROOT_FOLDER)
+        create_module_resolution_context(MOCK_ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX)
       );
 
       graph.remove_file(file1);
@@ -406,7 +406,7 @@ describe("ImportGraph", () => {
         file1,
         [create_import_definition(file1, file1)],
         TEST_LANGUAGE,
-        create_module_resolution_context(MOCK_ROOT_FOLDER)
+        create_module_resolution_context(MOCK_ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX)
       );
 
       graph.remove_file(file1);
@@ -422,7 +422,7 @@ describe("ImportGraph", () => {
         file1,
         [create_import_definition(file2, file1)],
         TEST_LANGUAGE,
-        create_module_resolution_context(MOCK_ROOT_FOLDER)
+        create_module_resolution_context(MOCK_ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX)
       );
 
       graph.remove_file("unknown.ts" as FilePath);
@@ -502,7 +502,7 @@ describe("ImportGraph", () => {
       const caller_file = "/project/caller.py" as FilePath;
       const import_def = create_python_module_import(caller_file, "pipeline");
 
-      graph.update_file(caller_file, [import_def], "python", create_module_resolution_context(root_folder));
+      graph.update_file(caller_file, [import_def], "python", create_module_resolution_context(root_folder, EMPTY_MODULE_SPECIFIER_INDEX));
 
       expect(graph.get_submodule_import_path(import_def.symbol_id)).toBe(
         "/project/training/pipeline.py"
@@ -517,7 +517,7 @@ describe("ImportGraph", () => {
       const caller_file = "/project/caller.py" as FilePath;
       const import_def = create_python_module_import(caller_file, "train_model");
 
-      graph.update_file(caller_file, [import_def], "python", create_module_resolution_context(root_folder));
+      graph.update_file(caller_file, [import_def], "python", create_module_resolution_context(root_folder, EMPTY_MODULE_SPECIFIER_INDEX));
 
       expect(
         graph.get_submodule_import_path(import_def.symbol_id)
@@ -537,7 +537,7 @@ describe("ImportGraph", () => {
         export: { is_reexport: true },
       };
 
-      graph.update_file(caller_file, [import_def], "python", create_module_resolution_context(root_folder));
+      graph.update_file(caller_file, [import_def], "python", create_module_resolution_context(root_folder, EMPTY_MODULE_SPECIFIER_INDEX));
 
       expect(
         graph.get_submodule_import_path(import_def.symbol_id)
@@ -553,7 +553,7 @@ describe("ImportGraph", () => {
       const caller_file = "/project/caller.py" as FilePath;
       const import_def = create_python_module_import(caller_file, "pipeline");
 
-      graph.update_file(caller_file, [import_def], "python", create_module_resolution_context(root_folder));
+      graph.update_file(caller_file, [import_def], "python", create_module_resolution_context(root_folder, EMPTY_MODULE_SPECIFIER_INDEX));
 
       graph.remove_file(caller_file);
 
@@ -571,7 +571,7 @@ describe("ImportGraph", () => {
       const caller_file = "/project/caller.py" as FilePath;
       const import_def = create_python_module_import(caller_file, "pipeline");
 
-      graph.update_file(caller_file, [import_def], "python", create_module_resolution_context(root_folder));
+      graph.update_file(caller_file, [import_def], "python", create_module_resolution_context(root_folder, EMPTY_MODULE_SPECIFIER_INDEX));
 
       graph.clear();
 
@@ -591,7 +591,7 @@ describe("ImportGraph", () => {
         file1,
         [import_def],
         TEST_LANGUAGE,
-        create_module_resolution_context(MOCK_ROOT_FOLDER)
+        create_module_resolution_context(MOCK_ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX)
       );
 
       graph.clear();

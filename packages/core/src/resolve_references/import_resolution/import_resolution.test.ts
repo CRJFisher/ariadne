@@ -8,6 +8,7 @@ import {
   resolve_module_path,
   resolve_submodule_import_path,
 } from "./import_resolution";
+import { EMPTY_MODULE_SPECIFIER_INDEX } from "./module_specifier_index";
 import type { FileSystemFolder } from "../file_folders";
 import { create_module_resolution_context } from "../import_resolution";
 
@@ -70,7 +71,7 @@ describe("resolve_module_path dispatcher", () => {
       "./utils",
       "/project/src/app.ts" as FilePath,
       "typescript",
-      create_module_resolution_context(tree)
+      create_module_resolution_context(tree, EMPTY_MODULE_SPECIFIER_INDEX)
     );
     expect(result).toBe("/project/src/utils.ts");
   });
@@ -81,7 +82,7 @@ describe("resolve_module_path dispatcher", () => {
       "./utils",
       "/project/src/app.js" as FilePath,
       "javascript",
-      create_module_resolution_context(tree)
+      create_module_resolution_context(tree, EMPTY_MODULE_SPECIFIER_INDEX)
     );
     expect(result).toBe("/project/src/utils.js");
   });
@@ -95,7 +96,7 @@ describe("resolve_module_path dispatcher", () => {
       "utils",
       "/project/pkg/main.py" as FilePath,
       "python",
-      create_module_resolution_context(tree)
+      create_module_resolution_context(tree, EMPTY_MODULE_SPECIFIER_INDEX)
     );
     expect(result).toBe("/project/pkg/utils.py");
   });
@@ -109,7 +110,7 @@ describe("resolve_module_path dispatcher", () => {
       "crate::utils",
       "/project/src/lib.rs" as FilePath,
       "rust",
-      create_module_resolution_context(tree)
+      create_module_resolution_context(tree, EMPTY_MODULE_SPECIFIER_INDEX)
     );
     expect(result).toBe("/project/src/utils.rs");
   });
@@ -121,7 +122,7 @@ describe("resolve_module_path dispatcher", () => {
         "./utils",
         "/project/src/app.rb" as FilePath,
         "ruby" as "typescript",
-        create_module_resolution_context(tree)
+        create_module_resolution_context(tree, EMPTY_MODULE_SPECIFIER_INDEX)
       )
     ).toThrow("Unsupported language");
   });
@@ -137,7 +138,7 @@ describe("resolve_submodule_import_path dispatcher", () => {
       "/project/pkg/__init__.py" as FilePath,
       "pipeline",
       "python",
-      create_module_resolution_context(tree)
+      create_module_resolution_context(tree, EMPTY_MODULE_SPECIFIER_INDEX)
     );
     expect(result).toBe("/project/pkg/pipeline.py");
   });
@@ -151,7 +152,7 @@ describe("resolve_submodule_import_path dispatcher", () => {
       "/project/pkg/__init__.py" as FilePath,
       "nested",
       "python",
-      create_module_resolution_context(tree)
+      create_module_resolution_context(tree, EMPTY_MODULE_SPECIFIER_INDEX)
     );
     expect(result).toBe("/project/pkg/nested/__init__.py");
   });
@@ -162,7 +163,7 @@ describe("resolve_submodule_import_path dispatcher", () => {
       "/project/pkg/__init__.py" as FilePath,
       "some_export",
       "python",
-      create_module_resolution_context(tree)
+      create_module_resolution_context(tree, EMPTY_MODULE_SPECIFIER_INDEX)
     );
     expect(result).toBeUndefined();
   });
@@ -177,7 +178,7 @@ describe("resolve_submodule_import_path dispatcher", () => {
       "/project/src/internals.rs" as FilePath,
       "attr",
       "rust",
-      create_module_resolution_context(tree)
+      create_module_resolution_context(tree, EMPTY_MODULE_SPECIFIER_INDEX)
     );
     expect(result).toBe("/project/src/internals/attr.rs");
   });
@@ -189,7 +190,7 @@ describe("resolve_submodule_import_path dispatcher", () => {
       "/project/src/internals.rs" as FilePath,
       "attr",
       "rust",
-      create_module_resolution_context(tree)
+      create_module_resolution_context(tree, EMPTY_MODULE_SPECIFIER_INDEX)
     );
     expect(result).toBeUndefined();
   });
@@ -203,7 +204,7 @@ describe("resolve_submodule_import_path dispatcher", () => {
       "/project/src/index.ts" as FilePath,
       "utils",
       "typescript",
-      create_module_resolution_context(tree)
+      create_module_resolution_context(tree, EMPTY_MODULE_SPECIFIER_INDEX)
     );
     expect(result).toBeUndefined();
   });

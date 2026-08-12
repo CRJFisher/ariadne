@@ -16,23 +16,23 @@ import type { ModuleResolutionContext } from "./import_resolution";
  *
  * @param import_path - Import path from import statement
  * @param importing_file - Path to file containing the import (absolute or relative to the root folder)
- * @param resolution - The project's file tree and specifier index
+ * @param modules - The project's file tree and specifier index
  * @returns Path to the imported file (relative to the root folder if importing_file is relative, absolute otherwise)
  */
 export function resolve_module_path_typescript(
   import_path: string,
   importing_file: FilePath,
-  resolution: ModuleResolutionContext
+  modules: ModuleResolutionContext
 ): FilePath {
   if (import_path.startsWith("./") || import_path.startsWith("../")) {
     return resolve_relative_typescript(
       import_path,
       importing_file,
-      resolution.root_folder
+      modules.root_folder
     );
   }
 
-  return resolve_bare_typescript(import_path, importing_file, resolution);
+  return resolve_bare_typescript(import_path, importing_file, modules);
 }
 
 /** A specifier index entry that claims a specifier, and how much of it it claims. */
@@ -56,11 +56,11 @@ interface SpecifierMatch {
 function resolve_bare_typescript(
   import_path: string,
   importing_file: FilePath,
-  resolution: ModuleResolutionContext
+  modules: ModuleResolutionContext
 ): FilePath {
   const match =
-    governing_alias(import_path, importing_file, resolution) ??
-    longest_matching_entry(import_path, resolution.specifiers.package_roots);
+    governing_alias(import_path, importing_file, modules) ??
+    longest_matching_entry(import_path, modules.specifiers.package_roots);
   if (match === null) {
     return import_path as FilePath;
   }
@@ -68,7 +68,7 @@ function resolve_bare_typescript(
   const { target } = match;
   const remainder = import_path.slice(match.key.length).replace(/^\//, "");
   if (!remainder) {
-    return (probe_candidates(target, resolution.root_folder) ??
+    return (probe_candidates(target, modules.root_folder) ??
       import_path) as FilePath;
   }
 
@@ -77,12 +77,12 @@ function resolve_bare_typescript(
   // extension. A deeper specifier sits beside the file an entry names, and
   // inside a directory it names — probing the entry and taking its parent is
   // both, because a directory probes to its own `index.*`.
-  const entry_file = probe_candidates(target, resolution.root_folder);
+  const entry_file = probe_candidates(target, modules.root_folder);
   const join_base = entry_file ? path.dirname(entry_file) : target;
 
   const found = probe_candidates(
     path.join(join_base, remainder),
-    resolution.root_folder
+    modules.root_folder
   );
   return (found ?? import_path) as FilePath;
 }
@@ -100,12 +100,12 @@ function resolve_bare_typescript(
 function governing_alias(
   import_path: string,
   importing_file: FilePath,
-  resolution: ModuleResolutionContext
+  modules: ModuleResolutionContext
 ): SpecifierMatch | null {
-  const { config_aliases } = resolution.specifiers;
+  const { config_aliases } = modules.specifiers;
   const absolute_file = path.isAbsolute(importing_file)
     ? importing_file
-    : path.resolve(resolution.root_folder.path, importing_file);
+    : path.resolve(modules.root_folder.path, importing_file);
 
   let directory = path.dirname(absolute_file);
   for (;;) {

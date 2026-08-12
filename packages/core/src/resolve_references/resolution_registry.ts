@@ -56,7 +56,7 @@ export class ResolutionRegistry {
     scopes: ScopeRegistry,
     exports: ExportRegistry,
     imports: ImportGraph,
-    resolution: ModuleResolutionContext
+    modules: ModuleResolutionContext
   ): void {
     if (file_ids.size === 0) {
       return;
@@ -74,7 +74,7 @@ export class ResolutionRegistry {
       scopes,
       exports,
       imports,
-      resolution,
+      modules,
     };
 
     const result = resolve_names_impl(file_ids, context);
@@ -95,7 +95,7 @@ export class ResolutionRegistry {
     imports: ImportGraph,
     exports: ExportRegistry,
     languages: ReadonlyMap<FilePath, Language>,
-    resolution: ModuleResolutionContext
+    modules: ModuleResolutionContext
   ): void {
     if (file_ids.size === 0) {
       return;
@@ -110,7 +110,7 @@ export class ResolutionRegistry {
       resolutions: this,
       exports,
       languages,
-      resolution,
+      modules,
     };
 
     const result = resolve_calls_for_files(file_ids, context);

@@ -73,13 +73,13 @@ export class ImportGraph {
    * @param file_path - The file being updated
    * @param imports - ImportDefinitions from the file
    * @param language - Programming language of the file
-   * @param resolution - Root folder for module resolution
+   * @param modules - The project's file tree and specifier index
    */
   update_file(
     file_path: FilePath,
     imports: ImportDefinition[],
     language: Language,
-    resolution: ModuleResolutionContext
+    modules: ModuleResolutionContext
   ): void {
     const old_deps = this.dependencies.get(file_path);
     if (old_deps) {
@@ -137,7 +137,7 @@ export class ImportGraph {
         imp_def.import_path,
         file_path,
         language,
-        resolution
+        modules
       );
       this.resolved_import_paths.set(imp_def.symbol_id, resolved_path);
 
@@ -147,7 +147,7 @@ export class ImportGraph {
           resolved_path,
           import_name,
           language,
-          resolution
+          modules
         );
         if (submodule_path) {
           this.submodule_import_paths.set(imp_def.symbol_id, submodule_path);
@@ -359,14 +359,6 @@ export class ImportGraph {
    */
   forwards_surface_of(file: FilePath, source: FilePath): boolean {
     return this.forwarded_surfaces.get(file)?.has(source) ?? false;
-  }
-
-  /**
-   * All ImportDefinitions a file recorded in its last update, used to decide
-   * whether the file forwards another file's export surface.
-   */
-  get_file_imports(file_path: FilePath): readonly ImportDefinition[] {
-    return this.imports_by_file.get(file_path) ?? [];
   }
 
   /**

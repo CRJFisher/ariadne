@@ -51,14 +51,14 @@ describe("Constructor Call Resolution", () => {
   let exports: ExportRegistry;
   let imports: ImportGraph;
   let languages: Map<FilePath, Language>;
-  let resolution: ModuleResolutionContext;
+  let modules: ModuleResolutionContext;
 
   beforeEach(() => {
     definitions = new DefinitionRegistry();
     scopes = new ScopeRegistry();
     resolutions = new ResolutionRegistry();
     imports = new ImportGraph();
-    ({ exports, languages, resolution } = make_export_chain_context());
+    ({ exports, languages, modules } = make_export_chain_context());
   });
 
   /** The slice of CallResolutionContext constructor resolution reads. */
@@ -72,7 +72,7 @@ describe("Constructor Call Resolution", () => {
       exports,
       imports,
       languages,
-      resolution,
+      modules,
     };
   }
 

@@ -64,7 +64,7 @@ describe("Method Call Resolution", () => {
   let imports: ImportGraph;
   let exports: ExportRegistry;
   let languages: Map<FilePath, Language>;
-  let resolution: ModuleResolutionContext;
+  let modules: ModuleResolutionContext;
 
   beforeEach(() => {
     scopes = new ScopeRegistry();
@@ -72,7 +72,7 @@ describe("Method Call Resolution", () => {
     types = new TypeRegistry();
     resolutions = new ResolutionRegistry();
     imports = new ImportGraph();
-    ({ exports, languages, resolution } = make_export_chain_context());
+    ({ exports, languages, modules } = make_export_chain_context());
   });
 
   describe("Basic Method Calls", () => {
@@ -168,7 +168,7 @@ describe("Method Call Resolution", () => {
         imports,
         exports,
         languages,
-        resolution
+        modules
       );
 
       expect(unwrap(resolved)).toEqual([method_id]);
@@ -222,7 +222,7 @@ describe("Method Call Resolution", () => {
         imports,
         exports,
         languages,
-        resolution
+        modules
       );
 
       expect(unwrap(resolved)).toEqual([method_id]);
@@ -279,7 +279,7 @@ describe("Method Call Resolution", () => {
         imports,
         exports,
         languages,
-        resolution
+        modules
       );
 
       expect(unwrap(resolved)).toEqual([method_id]);
@@ -344,7 +344,7 @@ describe("Method Call Resolution", () => {
         imports,
         exports,
         languages,
-        resolution
+        modules
       );
 
       expect(unwrap(resolved_first)).toEqual([set_name_id]);
@@ -367,7 +367,7 @@ describe("Method Call Resolution", () => {
         imports,
         exports,
         languages,
-        resolution
+        modules
       );
 
       expect(unwrap(resolved_second)).toEqual([set_age_id]);
@@ -437,7 +437,7 @@ describe("Method Call Resolution", () => {
         imports,
         exports,
         languages,
-        resolution
+        modules
       );
 
       expect(unwrap(resolved)).toEqual([method_id]);
@@ -512,7 +512,7 @@ describe("Method Call Resolution", () => {
         imports,
         exports,
         languages,
-        resolution
+        modules
       );
 
       expect(unwrap(resolved)).toEqual([helper_id]);
@@ -578,7 +578,7 @@ describe("Method Call Resolution", () => {
         imports,
         exports,
         languages,
-        resolution
+        modules
       );
 
       const error = unwrap_err(resolved);
@@ -622,7 +622,7 @@ describe("Method Call Resolution", () => {
         imports,
         exports,
         languages,
-        resolution
+        modules
       );
 
       const error = unwrap_err(resolved);
@@ -667,7 +667,7 @@ describe("Method Call Resolution", () => {
         imports,
         exports,
         languages,
-        resolution
+        modules
       );
 
       const error = unwrap_err(resolved);
@@ -696,7 +696,7 @@ describe("Method Call Resolution", () => {
         imports,
         exports,
         languages,
-        resolution
+        modules
       );
 
       const error = unwrap_err(resolved);
@@ -743,7 +743,7 @@ describe("Method Call Resolution", () => {
         imports,
         exports,
         languages,
-        resolution
+        modules
       );
 
       const error = unwrap_err(resolved);
@@ -770,7 +770,7 @@ describe("Method Call Resolution", () => {
         imports,
         exports,
         languages,
-        resolution
+        modules
       );
 
       const error = unwrap_err(resolved);
@@ -818,7 +818,7 @@ describe("Method Call Resolution", () => {
         imports,
         exports,
         languages,
-        resolution
+        modules
       );
 
       const error = unwrap_err(resolved);
@@ -982,7 +982,7 @@ describe("Method Call Resolution", () => {
         imports,
         exports,
         languages,
-        resolution
+        modules
       );
 
       expect([...unwrap(resolved)].sort()).toEqual(
@@ -1058,7 +1058,7 @@ describe("Method Call Resolution", () => {
         imports,
         exports,
         languages,
-        resolution
+        modules
       );
 
       expect(unwrap(resolved)).toEqual([method_id]);
@@ -1129,7 +1129,7 @@ describe("Method Call Resolution", () => {
         imports,
         exports,
         languages,
-        resolution
+        modules
       );
 
       const error = unwrap_err(resolved);

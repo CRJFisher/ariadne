@@ -139,7 +139,7 @@ describe("resolve_qualified_path_rust", () => {
     const definitions = new DefinitionRegistry();
     const scopes = new ScopeRegistry();
     const resolutions = new ResolutionRegistry();
-    const { exports, languages, resolution } = make_export_chain_context();
+    const { exports, languages, modules } = make_export_chain_context();
 
     const file_scope: LexicalScope = {
       id: FILE_SCOPE,
@@ -231,7 +231,7 @@ describe("resolve_qualified_path_rust", () => {
       exports,
       imports: new ImportGraph(),
       languages,
-      resolution,
+      modules,
     };
   }
 

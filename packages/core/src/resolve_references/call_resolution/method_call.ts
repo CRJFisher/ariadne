@@ -59,7 +59,7 @@ export function resolve_method_call(
   imports: ImportGraph,
   exports: ExportRegistry,
   languages: ReadonlyMap<FilePath, Language>,
-  resolution: ModuleResolutionContext
+  modules: ModuleResolutionContext
 ): Result<SymbolId[], ResolutionFailure> {
   const context: ReceiverResolutionContext = {
     scopes,
@@ -69,7 +69,7 @@ export function resolve_method_call(
     imports,
     exports,
     languages,
-    resolution,
+    modules,
   };
 
   const receiver = extract_receiver(call_ref);
