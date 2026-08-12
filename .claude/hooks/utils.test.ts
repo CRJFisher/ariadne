@@ -4,6 +4,7 @@ import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 import { get_project_dir } from "./utils.js";
+import { git_env } from "./scan_base.js";
 
 /**
  * A main checkout plus a linked worktree, mirroring the shape a session takes
@@ -15,12 +16,18 @@ function build_repo_with_worktree(): { main: string; worktree: string } {
   );
   const main = path.join(root, "main");
   fs.mkdirSync(main);
-  // Git exports GIT_DIR and GIT_INDEX_FILE to the processes it spawns, so a
-  // nested git command run from inside a hook would address the outer
-  // repository instead of the one built here.
-  const { GIT_DIR, GIT_INDEX_FILE, GIT_WORK_TREE, ...clean_env } = process.env;
+  // git_env() drops the GIT_DIR and GIT_INDEX_FILE that git exports to the
+  // processes it spawns, which would otherwise address the outer repository
+  // instead of the one built here. Ambient git config can carry signing and
+  // hooks paths that would steer these commands, so the temp repo is made the
+  // only authority.
+  const env = {
+    ...git_env(),
+    GIT_CONFIG_GLOBAL: "/dev/null",
+    GIT_CONFIG_SYSTEM: "/dev/null",
+  };
   const git = (cmd: string, cwd: string) =>
-    execSync(`git ${cmd}`, { cwd, stdio: "ignore", env: clean_env });
+    execSync(`git ${cmd}`, { cwd, stdio: "ignore", env });
   git("init -q .", main);
   git("config user.email t@t.t", main);
   git("config user.name t", main);
