@@ -1728,6 +1728,82 @@ pub fn deep_fn() -> i32 {
         file_paths["deep/inner.rs"]
       );
     });
+
+    it("re-resolves a caller that reaches the edited module only through its path", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "deep/inner.rs": `pub fn deep_fn() -> i32 {
+    1
+}
+`,
+        "deep.rs": `pub mod inner;
+`,
+        "lib.rs": `mod caller;
+mod deep;
+`,
+        // `caller.rs` declares no module: the path is the only thing that names
+        // `deep/inner.rs` here, so the edit reaches this file only if reading a
+        // module file made it a dependent of that file.
+        "caller.rs": `pub fn run() -> i32 {
+    crate::deep::inner::deep_fn()
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      project.update_file(
+        file_paths["deep/inner.rs"],
+        `
+pub fn deep_fn() -> i32 {
+    2
+}
+`
+      );
+
+      expect_rust_call_resolves_to(
+        project,
+        file_paths["caller.rs"],
+        "deep_fn",
+        file_paths["deep/inner.rs"]
+      );
+    });
+
+    it("re-resolves a caller whose path hopped through a #[path]-remapped module", async () => {
+      // The path spells `deep::inner`, but `inner`'s file is named by the
+      // attribute, so only the hop itself knows which file the call read.
+      const { project, temp_dir, file_paths } = await setup_project({
+        "src/renamed.rs": `pub fn deep_fn() -> i32 {
+    1
+}
+`,
+        "src/deep.rs": `#[path = "renamed.rs"]
+pub mod inner;
+`,
+        "src/lib.rs": `mod caller;
+mod deep;
+`,
+        "src/caller.rs": `pub fn run() -> i32 {
+    crate::deep::inner::deep_fn()
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      project.update_file(
+        file_paths["src/renamed.rs"],
+        `
+pub fn deep_fn() -> i32 {
+    2
+}
+`
+      );
+
+      expect_rust_call_resolves_to(
+        project,
+        file_paths["src/caller.rs"],
+        "deep_fn",
+        file_paths["src/renamed.rs"]
+      );
+    });
   });
 
   // Module-qualified shapes taken from the Rust corpora the triage sampled.

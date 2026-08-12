@@ -44,6 +44,51 @@ interface EnhancedExportMetadata {
 const WILDCARD_EXPORT_NAME = "*";
 
 /**
+ * Accumulators for one top-level `resolve_export_chain` walk.
+ *
+ * `visited` tracks the current root-to-here path, so a wildcard branch copies
+ * it; `memo` and `sources` are shared by the whole walk.
+ */
+interface ExportChainWalk {
+  /** Chain keys on the path being walked, for cycle cutting. */
+  readonly visited: Set<string>;
+
+  /**
+   * Results already reached in this walk, which makes a diamond-shaped barrel
+   * graph linear: without it the per-branch `visited` copies walk every
+   * root-to-leaf PATH, which is exponential in barrel depth.
+   */
+  readonly memo: Map<string, SymbolId | null>;
+
+  /** Set when a branch was truncated by a cycle rather than answered. */
+  readonly cycle_cut: { hit: boolean };
+
+  /**
+   * Files whose export records the walk read. Only a surface walk collects
+   * them — they are what decides when its memo entry dies.
+   */
+  readonly sources: Set<FilePath> | undefined;
+}
+
+/** Accumulators for one top-level `resolve_all_exports` walk. */
+interface SurfaceWalk {
+  /** Files on the path being walked, for cycle cutting. */
+  readonly in_progress: Set<FilePath>;
+
+  /** Set when a branch was truncated by a cycle rather than answered. */
+  readonly cycle_cut: { hit: boolean };
+
+  /** Files whose export records the surface being built read. */
+  readonly sources: Set<FilePath>;
+}
+
+/** A file's public surface together with the files it was computed from. */
+interface MemoisedSurface {
+  readonly surface: ReadonlyMap<SymbolName, SymbolId>;
+  readonly sources: ReadonlySet<FilePath>;
+}
+
+/**
  * Registry tracking what symbols each file exports, keyed for the two lookups
  * import resolution needs: the set of exported symbols per file, and per-name
  * metadata rich enough to follow `export { x } from './other'` re-export chains
@@ -68,13 +113,31 @@ export class ExportRegistry {
   private wildcard_reexports: Map<FilePath, ImportDefinition[]> = new Map();
 
   /**
-   * Memo for `resolve_all_exports`, dropped wholesale on any mutation: a file's
-   * surface is embedded in every downstream barrel's entry, so per-file
-   * eviction would leave stale entries. Keyed by FilePath only — the languages
-   * map and root folder are stable for a Project's lifetime.
+   * Memo for `resolve_all_exports`. A file's surface is embedded in every
+   * downstream barrel's entry, so each entry records the files it was computed
+   * from and dies when any of them is re-indexed. Keyed by FilePath only — the
+   * languages map and root folder are stable for a Project's lifetime.
    */
-  private all_exports_memo: Map<FilePath, ReadonlyMap<SymbolName, SymbolId>> =
-    new Map();
+  private all_exports_memo: Map<FilePath, MemoisedSurface> = new Map();
+
+  /**
+   * The reverse of every entry's `sources`, so a re-indexed file names the
+   * entries that read it without a scan. Written and cleared in lockstep with
+   * `all_exports_memo`: an entry either side knows about and the other does not
+   * would serve a surface computed from a file that has since changed.
+   */
+  private all_exports_readers: Map<FilePath, Set<FilePath>> = new Map();
+
+  /**
+   * The file each of a file's export edges points at, keyed by the edge's
+   * symbol. Resolving a module path walks the project's file tree, and one
+   * barrel's fan is re-walked for every name a consumer imports through it, so
+   * the answer is cached beside the edges it belongs to — it is a function of
+   * the holding file's own import path and a file tree that is fixed for a
+   * Project's lifetime. `remove_file` drops it with the edges, so a re-indexed
+   * file resolves whatever it now spells.
+   */
+  private edge_targets: Map<FilePath, Map<SymbolId, FilePath>> = new Map();
 
   /**
    * Replace all export information for a file from its current definitions.
@@ -332,7 +395,8 @@ export class ExportRegistry {
     this.export_metadata.delete(file_id);
     this.default_exports.delete(file_id);
     this.wildcard_reexports.delete(file_id);
-    this.all_exports_memo.clear();
+    this.edge_targets.delete(file_id);
+    this.invalidate_surfaces(file_id);
   }
 
   clear(): void {
@@ -340,7 +404,83 @@ export class ExportRegistry {
     this.export_metadata.clear();
     this.default_exports.clear();
     this.wildcard_reexports.clear();
+    this.edge_targets.clear();
     this.all_exports_memo.clear();
+    this.all_exports_readers.clear();
+  }
+
+  /**
+   * Drop every memoised surface that read `file` — its own included, because a
+   * surface always reads the file it belongs to.
+   */
+  private invalidate_surfaces(file: FilePath): void {
+    const readers = this.all_exports_readers.get(file);
+    if (!readers) {
+      return;
+    }
+    // `forget_surface` mutates the very set being iterated.
+    for (const reader of [...readers]) {
+      this.forget_surface(reader);
+    }
+  }
+
+  private forget_surface(file: FilePath): void {
+    const memoised = this.all_exports_memo.get(file);
+    if (!memoised) {
+      return;
+    }
+    this.all_exports_memo.delete(file);
+    for (const source of memoised.sources) {
+      const readers = this.all_exports_readers.get(source);
+      if (!readers) {
+        continue;
+      }
+      readers.delete(file);
+      if (readers.size === 0) {
+        this.all_exports_readers.delete(source);
+      }
+    }
+  }
+
+  private memoise_surface(
+    file: FilePath,
+    surface: ReadonlyMap<SymbolName, SymbolId>,
+    sources: ReadonlySet<FilePath>
+  ): void {
+    this.all_exports_memo.set(file, { surface, sources });
+    for (const source of sources) {
+      let readers = this.all_exports_readers.get(source);
+      if (!readers) {
+        readers = new Set();
+        this.all_exports_readers.set(source, readers);
+      }
+      readers.add(file);
+    }
+  }
+
+  private resolve_edge_target(
+    holder: FilePath,
+    edge: ImportDefinition,
+    language: Language,
+    resolution: ModuleResolutionContext
+  ): FilePath {
+    let targets = this.edge_targets.get(holder);
+    if (!targets) {
+      targets = new Map();
+      this.edge_targets.set(holder, targets);
+    }
+    const cached = targets.get(edge.symbol_id);
+    if (cached !== undefined) {
+      return cached;
+    }
+    const target = resolve_module_path(
+      edge.import_path,
+      holder,
+      language,
+      resolution
+    );
+    targets.set(edge.symbol_id, target);
+    return target;
   }
 
   /**
@@ -349,7 +489,7 @@ export class ExportRegistry {
    * keyed lookup misses, fan out across the file's wildcard re-export edges.
    *
    * @param export_name - Ignored for default imports.
-   * @param visited - Cycle-detection accumulator; callers leave it unset.
+   * @param walk - Accumulators for one top-level call; callers leave it unset.
    * @returns The resolved symbol_id, or null when the name is on no keyed
    *   record and no wildcard edge (or two wildcard edges disagree), the source
    *   language is unknown, or the chain is circular.
@@ -360,45 +500,45 @@ export class ExportRegistry {
     import_kind: "named" | "default" | "namespace",
     languages: ReadonlyMap<FilePath, Language>,
     resolution: ModuleResolutionContext,
-    visited: Set<string> = new Set(),
-    memo: Map<string, SymbolId | null> = new Map(),
-    cycle_cut: { hit: boolean } = { hit: false }
+    walk: ExportChainWalk = {
+      visited: new Set(),
+      memo: new Map(),
+      cycle_cut: { hit: false },
+      sources: undefined,
+    }
   ): SymbolId | null {
+    walk.sources?.add(source_file);
+
     const key =
       import_kind === "default"
         ? `${source_file}:default`
         : `${source_file}:${export_name}:${import_kind}`;
 
-    // The memo lives for one top-level call and makes diamond-shaped barrel
-    // graphs linear: without it the per-branch visited copies walk every
-    // root-to-leaf PATH, which is exponential in barrel depth.
-    if (memo.has(key)) {
-      return memo.get(key) ?? null;
+    if (walk.memo.has(key)) {
+      return walk.memo.get(key) ?? null;
     }
-    if (visited.has(key)) {
-      cycle_cut.hit = true;
+    if (walk.visited.has(key)) {
+      walk.cycle_cut.hit = true;
       return null;
     }
-    visited.add(key);
+    walk.visited.add(key);
 
-    const subtree_cut = { hit: false };
+    const subtree: ExportChainWalk = { ...walk, cycle_cut: { hit: false } };
     const result = this.resolve_export_record(
       source_file,
       export_name,
       import_kind,
       languages,
       resolution,
-      visited,
-      memo,
-      subtree_cut
+      subtree
     );
 
     // A cycle-truncated result is path-dependent and must not be memoised;
     // every ancestor of the cut inherits that.
-    if (subtree_cut.hit) {
-      cycle_cut.hit = true;
+    if (subtree.cycle_cut.hit) {
+      walk.cycle_cut.hit = true;
     } else {
-      memo.set(key, result);
+      walk.memo.set(key, result);
     }
     return result;
   }
@@ -409,9 +549,7 @@ export class ExportRegistry {
     import_kind: "named" | "default" | "namespace",
     languages: ReadonlyMap<FilePath, Language>,
     resolution: ModuleResolutionContext,
-    visited: Set<string>,
-    memo: Map<string, SymbolId | null>,
-    cycle_cut: { hit: boolean }
+    walk: ExportChainWalk
   ): SymbolId | null {
     const export_meta =
       import_kind === "default"
@@ -430,9 +568,7 @@ export class ExportRegistry {
         import_kind,
         languages,
         resolution,
-        visited,
-        memo,
-        cycle_cut
+        walk
       );
     }
 
@@ -459,9 +595,9 @@ export class ExportRegistry {
         return null;
       }
 
-      const resolved_file = resolve_module_path(
-        imp_def.import_path,
+      const resolved_file = this.resolve_edge_target(
         source_file,
+        imp_def,
         language,
         resolution
       );
@@ -475,9 +611,7 @@ export class ExportRegistry {
         imp_def.import_kind,
         languages,
         resolution,
-        visited,
-        memo,
-        cycle_cut
+        walk
       );
     }
 
@@ -501,9 +635,7 @@ export class ExportRegistry {
     import_kind: "named" | "namespace",
     languages: ReadonlyMap<FilePath, Language>,
     resolution: ModuleResolutionContext,
-    visited: Set<string>,
-    memo: Map<string, SymbolId | null>,
-    cycle_cut: { hit: boolean }
+    walk: ExportChainWalk
   ): SymbolId | null {
     const edges = this.wildcard_reexports.get(source_file);
     if (!edges) {
@@ -516,9 +648,9 @@ export class ExportRegistry {
 
     const matches = new Set<SymbolId>();
     for (const edge of edges) {
-      const target_file = resolve_module_path(
-        edge.import_path,
+      const target_file = this.resolve_edge_target(
         source_file,
+        edge,
         language,
         resolution
       );
@@ -528,9 +660,7 @@ export class ExportRegistry {
         import_kind,
         languages,
         resolution,
-        new Set(visited),
-        memo,
-        cycle_cut
+        { ...walk, visited: new Set(walk.visited) }
       );
       if (resolved) {
         matches.add(resolved);
@@ -544,20 +674,19 @@ export class ExportRegistry {
    * Every name a file's public surface offers, with re-export chains followed
    * and wildcard edges recursed into. A file's own named export shadows a
    * star-provided name; a name reachable through two wildcard edges with
-   * distinct targets is dropped. Memoised per FilePath until any mutation.
+   * distinct targets is dropped. Memoised per FilePath until one of the files
+   * the surface was computed from is re-indexed.
    */
   resolve_all_exports(
     source_file: FilePath,
     languages: ReadonlyMap<FilePath, Language>,
     resolution: ModuleResolutionContext
   ): ReadonlyMap<SymbolName, SymbolId> {
-    return this.collect_all_exports(
-      source_file,
-      languages,
-      resolution,
-      new Set(),
-      { hit: false }
-    );
+    return this.collect_all_exports(source_file, languages, resolution, {
+      in_progress: new Set(),
+      cycle_cut: { hit: false },
+      sources: new Set(),
+    });
   }
 
   private static readonly empty_exports: ReadonlyMap<SymbolName, SymbolId> =
@@ -567,19 +696,29 @@ export class ExportRegistry {
     file: FilePath,
     languages: ReadonlyMap<FilePath, Language>,
     resolution: ModuleResolutionContext,
-    in_progress: Set<FilePath>,
-    cycle_cut: { hit: boolean }
+    walk: SurfaceWalk
   ): ReadonlyMap<SymbolName, SymbolId> {
-    if (in_progress.has(file)) {
-      cycle_cut.hit = true;
+    walk.sources.add(file);
+
+    if (walk.in_progress.has(file)) {
+      walk.cycle_cut.hit = true;
       return ExportRegistry.empty_exports;
     }
-    const memo = this.all_exports_memo.get(file);
-    if (memo) {
-      return memo;
+    const memoised = this.all_exports_memo.get(file);
+    if (memoised) {
+      // The entry embeds the surfaces it stars, so whoever adopts it inherits
+      // its dependence on the files those came from.
+      for (const source of memoised.sources) {
+        walk.sources.add(source);
+      }
+      return memoised.surface;
     }
-    in_progress.add(file);
-    const subtree_cut = { hit: false };
+    walk.in_progress.add(file);
+    const subtree: SurfaceWalk = {
+      in_progress: walk.in_progress,
+      cycle_cut: { hit: false },
+      sources: new Set([file]),
+    };
 
     const result = new Map<SymbolName, SymbolId>();
     const own_names = new Set<SymbolName>();
@@ -594,7 +733,13 @@ export class ExportRegistry {
         export_name,
         "named",
         languages,
-        resolution
+        resolution,
+        {
+          visited: new Set(),
+          memo: new Map(),
+          cycle_cut: { hit: false },
+          sources: subtree.sources,
+        }
       );
       if (resolved) {
         result.set(export_name, resolved);
@@ -606,13 +751,13 @@ export class ExportRegistry {
     // A file with wildcard edges was indexed, so its language is always known;
     // treat a miss as truncation rather than silently caching a partial surface.
     if (edges && !language) {
-      subtree_cut.hit = true;
+      subtree.cycle_cut.hit = true;
     }
     if (edges && language) {
       for (const edge of edges) {
-        const target_file = resolve_module_path(
-          edge.import_path,
+        const target_file = this.resolve_edge_target(
           file,
+          edge,
           language,
           resolution
         );
@@ -620,8 +765,7 @@ export class ExportRegistry {
           target_file,
           languages,
           resolution,
-          in_progress,
-          subtree_cut
+          subtree
         );
         for (const [name, symbol_id] of surface) {
           if (own_names.has(name) || poisoned.has(name)) {
@@ -638,13 +782,16 @@ export class ExportRegistry {
       }
     }
 
-    in_progress.delete(file);
+    walk.in_progress.delete(file);
     // A cycle-truncated result is incomplete relative to a fresh top-level
     // walk of the same file, so it must not be cached.
-    if (subtree_cut.hit) {
-      cycle_cut.hit = true;
+    if (subtree.cycle_cut.hit) {
+      walk.cycle_cut.hit = true;
     } else {
-      this.all_exports_memo.set(file, result);
+      this.memoise_surface(file, result, subtree.sources);
+    }
+    for (const source of subtree.sources) {
+      walk.sources.add(source);
     }
     return result;
   }

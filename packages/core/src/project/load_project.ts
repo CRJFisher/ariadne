@@ -311,11 +311,6 @@ export async function load_project(
     );
   }
 
-  // Every file is indexed now, so resolve once more across the whole corpus: a
-  // file indexed before the module its paths read had nothing to resolve
-  // against, and nothing imports it to bring it back.
-  project.resolve_all();
-
   // Write updated manifest
   if (storage && manifest_entries.size > 0) {
     await write_cache_manifest(storage, manifest_entries);

@@ -1205,6 +1205,69 @@ describe("ExportRegistry", () => {
       expect(all_export_names(registry, MAIN)).toEqual(["new_fn"]);
     });
 
+    it("returns the updated surface when a leaf two wildcard hops away is re-indexed", () => {
+      const MIDDLE = "middle.ts" as FilePath;
+      const old_fn = create_function_definition("old_fn", HELPER, 1);
+      const registry = new ExportRegistry();
+      registry.update_file(HELPER, create_definition_registry({ [HELPER]: [old_fn] }));
+      registry.update_file(
+        MIDDLE,
+        create_definition_registry({
+          [MIDDLE]: [create_wildcard_reexport_definition(MIDDLE, "./helper", 1)],
+        })
+      );
+      registry.update_file(
+        MAIN,
+        create_definition_registry({
+          [MAIN]: [create_wildcard_reexport_definition(MAIN, "./middle", 1)],
+        })
+      );
+      expect(all_export_names(registry, MAIN)).toEqual(["old_fn"]);
+
+      const new_fn = create_function_definition("new_fn", HELPER, 1);
+      registry.update_file(HELPER, create_definition_registry({ [HELPER]: [new_fn] }));
+
+      expect(all_export_names(registry, MAIN)).toEqual(["new_fn"]);
+    });
+
+    it("returns the surface a starred file gains when it is indexed after the file starring it", () => {
+      const registry = new ExportRegistry();
+      registry.update_file(
+        MAIN,
+        create_definition_registry({
+          [MAIN]: [create_wildcard_reexport_definition(MAIN, "./helper", 1)],
+        })
+      );
+      // The empty answer was computed by reading a file the registry did not
+      // hold, so the file's arrival has to invalidate it.
+      expect(all_export_names(registry, MAIN)).toEqual([]);
+
+      const late_fn = create_function_definition("late_fn", HELPER, 1);
+      registry.update_file(HELPER, create_definition_registry({ [HELPER]: [late_fn] }));
+
+      expect(all_export_names(registry, MAIN)).toEqual(["late_fn"]);
+    });
+
+    it("serves a surface from the memo after a file it never read is re-indexed", () => {
+      const foo = create_function_definition("foo", HELPER, 1);
+      const registry = new ExportRegistry();
+      registry.update_file(HELPER, create_definition_registry({ [HELPER]: [foo] }));
+      registry.update_file(
+        MAIN,
+        create_definition_registry({
+          [MAIN]: [create_wildcard_reexport_definition(MAIN, "./helper", 1)],
+        })
+      );
+      const first = registry.resolve_all_exports(MAIN, ALL_TS, create_module_resolution_context(ROOT_FOLDER));
+
+      registry.update_file(
+        A,
+        create_definition_registry({ [A]: [create_function_definition("unrelated", A, 1)] })
+      );
+
+      expect(registry.resolve_all_exports(MAIN, ALL_TS, create_module_resolution_context(ROOT_FOLDER))).toBe(first);
+    });
+
     it("returns an empty surface for a wildcard target removed from the registry", () => {
       const gone = create_function_definition("gone", HELPER, 1);
       const registry = new ExportRegistry();

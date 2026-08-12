@@ -11,6 +11,7 @@ import type {
   SymbolId,
   SymbolName,
   ScopeId,
+  FilePath,
   FunctionCallReference,
   ImportDefinition,
 } from "@ariadnejs/types";
@@ -90,6 +91,7 @@ function resolve_via_import_anchor(
         imports,
         prefix,
         terminal,
+        ref.location.file_path,
         context
       )) {
         matches.add(resolved);
@@ -146,6 +148,7 @@ function anchored_wildcard_matches(
   imports: readonly ImportDefinition[],
   prefix: readonly SymbolName[],
   terminal: SymbolName,
+  referring_file: FilePath,
   context: CallResolutionContext
 ): Set<SymbolId> {
   const matches = new Set<SymbolId>();
@@ -164,6 +167,7 @@ function anchored_wildcard_matches(
       prefix,
       terminal,
       "callable",
+      referring_file,
       context
     );
     if (resolved) matches.add(resolved);

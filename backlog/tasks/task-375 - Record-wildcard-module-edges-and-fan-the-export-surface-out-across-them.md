@@ -89,31 +89,86 @@ Capture names are `@import.reexport.wildcard` / `@import.reexport.namespace` (th
 
 Front door for readers: `registries/export.ts` (edge storage, fan-out, `resolve_all_exports`), then `name_resolution.ts` (the one wildcard arm plus its guard), then the four capture handlers.
 
+### Deviations from the acceptance criteria
+
+Each criterion below is met in a different shape from the one it names. The criteria are left
+as written — an acceptance criterion edited to match its implementation can never fail — and
+what actually shipped is recorded here.
+
+- **#1, `export * as ns from './m.js'`.** Closes as a `namespace` record, not a `wildcard` one.
+  The statement publishes exactly one name whose value is a module namespace object; it splats
+  no surface, so a wildcard record would misdescribe it. `import * as X from './m'; export { X }`
+  is the same shape and closes the same way.
+- **#2, the four TypeScript rows.** Closed on fixture reproductions of each corpus shape, not
+  on a re-triage of microsoft/TypeScript. The corpus is out of this repo, so it cannot back a
+  repeatable test; re-triage is the epic-level verification pass.
+- **#3, the sqlx rows.** The intra-crate glob shape the criterion words is closed. The corpus
+  rows are additionally cross-crate (`pub(crate) use sqlx_core::transaction::*`) and are
+  covered by their own integration tests, both named rows individually.
+- **#8, the one-arm altitude check.** Held: `name_resolution.ts` gains one layered arm and a
+  `continue` guard in the existing import loop. No pre-existing assertion in the 491-line suite
+  was edited; new wildcard cases were appended.
+- **#9, `ImportGraph`'s shape.** Not held, deliberately, and this is the largest deviation in
+  the family. The class gains a `forwarded_surfaces` map with `forwards_surface_of`, a
+  `module_path_reads`/`module_path_readers` pair with `record_module_path_read`, a
+  `get_importing_dependents` accessor that excludes path readers, a changed `update_file`
+  signature, and a dependency edge for a named import that denotes a submodule. Holding the
+  criterion literally would have cost the capability outright: without the forwarding hop a
+  consumer behind a barrel never re-resolves when its leaf changes, and without the recorded
+  path read whether a Rust `::` call resolves at all depends on the order files are indexed in.
+  The criterion was written to forbid gratuitous restructuring; every one of these earns its
+  place against a test that goes red without it. Recorded here as knowingly broken rather than
+  reworded.
+- **#10, the bench corpus.** Measured on a synthetic replica of `src/services/_namespaces/ts.ts`
+  rather than the out-of-repo corpus, for the same reason as #2.
+
 ### Deferred rows and follow-ups (recorded, not dropped)
 
 - The corpus sqlx rows are cross-crate (`pub(crate) use sqlx_core::transaction::*`) and additionally need TASK-375.4's `crate_roots` index; the intra-crate glob shape (AC #3's literal wording) closes here.
 - `ts.X.y()` property-chain access through a namespace _variable_ is TASK-375.2's descent; the corpus caller's named-import form closes here.
 - `use crate::S` crate-root items are TASK-375.3's resolver defect; Rust fixtures route `pub use` through submodules.
-- The two tokio `pub use` rows stay blocked on `cfg_*!` macro-body indexing (AC #11). No backlog task owns that prerequisite yet; it belongs to the `syntactic_extraction` area and should be filed when the epic's residual rows are re-triaged.
-- Corpus re-triage of microsoft/TypeScript, sqlx and django is deferred to the epic-level verification pass; AC #2/#3 close here on fixture reproductions of the exact shapes.
-- The ~37 dead `@export.*` captures (no registered handler) remain unrevived per YAGNI; the audit is still unowned and should be filed alongside the two orphan captures task-364.11 already tracks.
-- Python `__all__` is not honored: a star surface binds every public module-level name, over-approximating toward reachability. Real corpora (django) use `__all__` heavily — worth its own follow-up.
+- The two tokio `pub use` rows stay blocked on `cfg_*!` macro-body indexing (AC #11), owned by TASK-381.
+- Corpus re-triage of microsoft/TypeScript, sqlx and django is TASK-385, which also carries TASK-375.1's unperformed AC #9. AC #2/#3 close here on fixture reproductions of the exact shapes, so the number this epic moved is not yet measured.
+- The `@export.*` captures with no registered handler are audited by TASK-382; none is revived here, per YAGNI.
+- Python `__all__` is not honored and a Rust glob nested in a braced use-tree is not extracted at all — both are TASK-383.
+- `fix_import_locations` name-matches over `get_exports`, which now contains import-backed symbols, so go-to-definition can land on a re-export rather than the origin — TASK-384.
 - A binding exported under two names in separate statements (`export { a }; export { a as b };`) publishes only the last name; the single-statement form publishes both.
-- Rust globs nested in a braced use-tree (`use crate::{a::*, b::*}`) are not extracted at all — a pre-existing `extract_imports_from_use_declaration` gap, now load-bearing for wildcard edges.
-- `fix_import_locations` name-matches over `get_exports`, which now contains import-backed symbols; following the export chain there instead would make go-to-definition land on origins for re-exported names.
 
 ### Verification
 
-`packages/core` suite green throughout (3521 at base → 3600+ with this task's tests); typecheck and lint clean. Bench (median-ish single runs, base 42b0c27d vs this task):
+`packages/core` 3764/3764 green; typecheck clean across all five packages; lint clean.
 
-| case | before | after |
+The star-fan case (20 leaves, 5 nested barrels) is the one this task adds and the one AC #10
+exists to record. Measured on one machine, same run conditions throughout:
+
+| case | before narrowing | after |
 | --- | --- | --- |
-| update_file small (avg) | 16.70 ms | 13.00 ms |
-| eager resolution first/avg | 0.71/0.69 ms | 0.68/0.53 ms |
-| incremental update | 0.38 ms | 0.29 ms |
-| full rebuild (20 files) | 10.82 ms | 8.50 ms |
-| get_call_graph cold/warm | 22.11/0.01 ms | 19.37/0.01 ms |
+| consumer cold update | 53.09 ms | 6.87 ms |
+| starred-leaf update (avg) | 34.22 ms | 1.66 ms |
+| unrelated-file update (avg) | 0.70 ms | 0.31 ms |
 
-All deltas within run noise. The new synthetic star-fan case (20 leaves, 5 nested barrels): consumer cold update 29.93 ms; starred-leaf update 1.15 ms avg (each drops the `resolve_all_exports` memo); unrelated-file update 0.30 ms avg.
+The general cases are unchanged within run noise: update_file small 13.66 ms, incremental
+update 0.33 ms, full rebuild (20 files) 8.25 ms, get_call_graph cold/warm 18.38/0.01 ms.
+
+The cost the first cut carried was not the `resolve_all_exports` memo, which the TypeScript
+fan never calls — it is reached only from `name_resolution.ts` for Rust and Python wildcard
+imports. It was 656 `resolve_export_chain` calls per leaf update, each re-deriving
+`resolve_module_path` for every wildcard edge and walking the file tree to do it. Each export
+edge's resolved target is now cached under the file that holds the edge, and dropped by the
+same per-file removal that drops the edges — the existing invalidation, not a new one.
+
+The memo is narrowed as well: an entry records the files its surface read, a reverse index
+maps a file to the entries that read it, and a file's removal drops only those. A
+cycle-truncated surface is still never memoised.
+
+Resolution no longer depends on the order files are indexed in, and it costs no whole-corpus
+pass to get there. A Rust `::` path spells its target file out, so no import statement names
+it and the reader was nobody's dependent; every module file the hop reads is now recorded on
+`ImportGraph` as a path read of the referring file, whether or not the project holds that file
+yet. A path read makes its reader a dependent but never a forwarding hub — measured: routing
+path readers through the surface-forwarding walk turned every module edit in a synthetic
+601-file crate into a whole-corpus re-resolution, 987 ms → 5493 ms. Keeping them leaves holds
+it at 804 ms, below the 987 ms the deleted whole-corpus pass cost, with all 200 caller-first
+calls resolved.
 
 A six-lens review fan-out ran to completion (correctness ×2, contracts, test-quality, completeness, cold-read). Its verified findings were fixed in a dedicated round: duplicate import-backed re-exports no longer throw (the cfg-gated `pub use` shape); Rust re-export metadata gates on the file's root scope; the export chain gained a per-call memo that makes diamond-shaped barrel graphs linear (both correctness lenses measured exponential blowup without it); incremental re-resolution walks dependents transitively through forwarding files (the barrel-chain staleness both lenses reproduced); `resolve_sole_default_export` treats a wildcard barrel as a named surface; a declared-but-unresolvable own export shadows the star surface in both lookups. Findings noted but not actioned: Python `__all__`, the double-alias export, the braced nested-glob extraction gap, and go-to-definition chain-following in `fix_import_locations` (all listed above); renaming `@import.reexport.namespace` and normalising the two empty-metadata spellings were judged not worth the churn.

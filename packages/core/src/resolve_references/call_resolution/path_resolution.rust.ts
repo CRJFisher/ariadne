@@ -37,6 +37,11 @@
  * `use` that binds an item rather than a module is never followed as a module,
  * so `Foo::bar()` and `serde_json::to_string()` fall through untouched.
  *
+ * Every module file the hop reads is recorded on `ImportGraph` as a dependency
+ * of the referring file. The path names that file and no import statement does,
+ * so the edge exists nowhere else — and without it resolution would depend on
+ * the order the corpus happened to be indexed in.
+ *
  * A path that misses every hop is not resolved here; `function_call.rust.ts`
  * then looks for a `use` statement in lexical scope that anchors the terminal.
  */
@@ -208,7 +213,8 @@ export function resolve_qualified_path_rust(
  * what they wrote, the sibling is a guess. Failing that, the longest leading run
  * of segments is resolved to a file and shortened one segment at a time, so
  * `x::Type::assoc` lands on `x.rs` with `Type` left over. Every landing is tried
- * in turn rather than committing to the deepest one.
+ * in turn rather than committing to the deepest one, and every one is recorded
+ * as a read so the referring file re-resolves when it changes.
  */
 function resolve_via_module_file(
   module_path: readonly SymbolName[],
@@ -226,6 +232,7 @@ function resolve_via_module_file(
       module_path.slice(1),
       terminal,
       terminal_kind,
+      referring_file,
       context
     );
     if (resolved) return resolved;
@@ -241,6 +248,14 @@ function resolve_via_module_file(
       referring_file,
       context.resolution
     );
+
+    // The path spells this file out, so nothing imports it on the referring
+    // file's behalf: record the read as the dependency it is, or the referring
+    // file never re-resolves when the module arrives or changes. Recorded
+    // before the guard because a candidate the project does not hold yet is
+    // precisely the one whose arrival has to bring the reader back.
+    context.imports.record_module_path_read(referring_file, candidate);
+
     if (!is_indexed(candidate, context)) continue;
 
     const resolved = resolve_under_module_file(
@@ -248,6 +263,7 @@ function resolve_via_module_file(
       module_path.slice(take),
       terminal,
       terminal_kind,
+      referring_file,
       context
     );
     if (resolved) return resolved;
@@ -313,10 +329,18 @@ export function resolve_under_module_file_rust(
   module_path: readonly SymbolName[],
   terminal: SymbolName,
   terminal_kind: RustTerminalKind,
+  referring_file: FilePath,
   context: RustPathResolutionContext
 ): SymbolId | null {
   return is_indexed(file, context)
-    ? resolve_under_module_file(file, module_path, terminal, terminal_kind, context)
+    ? resolve_under_module_file(
+        file,
+        module_path,
+        terminal,
+        terminal_kind,
+        referring_file,
+        context
+      )
     : null;
 }
 
@@ -333,6 +357,7 @@ function resolve_under_module_file(
   remaining: readonly SymbolName[],
   terminal: SymbolName,
   terminal_kind: RustTerminalKind,
+  referring_file: FilePath,
   context: RustPathResolutionContext
 ): SymbolId | null {
   if (remaining.length === 0) {
@@ -371,11 +396,18 @@ function resolve_under_module_file(
     // A module cannot be its own submodule, so a hop back to the file we are
     // already reading is the one shape that would not shorten `remaining`.
     if (next === file) continue;
+
+    // The hop is taken on the referring file's behalf and can land on a module
+    // no import of that file names — a `#[path]`-remapped `mod` among them — so
+    // the read is its dependency however the landed file happens to bind it.
+    context.imports.record_module_path_read(referring_file, next);
+
     const resolved = resolve_under_module_file(
       next,
       remaining.slice(1),
       terminal,
       terminal_kind,
+      referring_file,
       context
     );
     if (resolved) return resolved;

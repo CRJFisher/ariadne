@@ -51,6 +51,20 @@ export class ImportGraph {
   private forwarded_surfaces: Map<FilePath, Set<FilePath>> = new Map();
 
   /**
+   * File → module files its `::` paths read directly, and the reverse.
+   *
+   * Kept apart from the import edges because a path reader is a leaf: it read
+   * the module file's own records and, if the path went deeper, every file it
+   * hopped on to — each recorded here in its own right. So it never has to
+   * follow a surface the file it read forwards, which is what stops one crate
+   * root, read by every file that spells `crate::`, turning any module's edit
+   * into a whole-corpus re-resolution.
+   */
+  private module_path_reads: Map<FilePath, Set<FilePath>> = new Map();
+
+  private module_path_readers: Map<FilePath, Set<FilePath>> = new Map();
+
+  /**
    * Replace all import relationships for a file with a fresh set.
    *
    * Module paths are resolved to absolute file paths once here and cached, so
@@ -79,6 +93,10 @@ export class ImportGraph {
         }
       }
     }
+
+    // The file's new text decides which module files its paths read; resolution
+    // re-records them straight after this call.
+    this.clear_module_path_reads(file_path);
 
     const old_import_defs = this.imports_by_file.get(file_path);
     if (old_import_defs) {
@@ -181,13 +199,83 @@ export class ImportGraph {
   }
 
   /**
-   * Get files that import from this file (direct dependents).
-   * These are the files that need invalidation when this file changes.
+   * Record that resolving a reference in `file` read `module_file` as a module
+   * of its own.
+   *
+   * A Rust `::` path reaches a module file no import statement in `file` names
+   * — `crate::deep::inner::deep_fn()` is spelled entirely in the path — so
+   * without this the reader is nobody's dependent and keeps whatever its first
+   * pass happened to see: the module's arrival never reaches it, and neither
+   * does a later edit.
+   *
+   * The edge is recorded whether or not the project holds `module_file` yet,
+   * because "the project does not hold this file" is itself part of the answer
+   * the hop read, and the read has to be re-taken when that stops being true.
+   * `update_file` drops the file's reads before resolution re-takes them, so a
+   * re-indexed file keeps only the reads its current text still makes.
+   */
+  record_module_path_read(file: FilePath, module_file: FilePath): void {
+    if (file === module_file) {
+      return;
+    }
+
+    let reads = this.module_path_reads.get(file);
+    if (!reads) {
+      reads = new Set();
+      this.module_path_reads.set(file, reads);
+    }
+    if (reads.has(module_file)) {
+      return;
+    }
+    reads.add(module_file);
+
+    let readers = this.module_path_readers.get(module_file);
+    if (!readers) {
+      readers = new Set();
+      this.module_path_readers.set(module_file, readers);
+    }
+    readers.add(file);
+  }
+
+  private clear_module_path_reads(file_path: FilePath): void {
+    const reads = this.module_path_reads.get(file_path);
+    if (!reads) {
+      return;
+    }
+    for (const module_file of reads) {
+      const readers = this.module_path_readers.get(module_file);
+      if (!readers) {
+        continue;
+      }
+      readers.delete(file_path);
+      if (readers.size === 0) {
+        this.module_path_readers.delete(module_file);
+      }
+    }
+    this.module_path_reads.delete(file_path);
+  }
+
+  /**
+   * Every file whose resolutions this file's own content can change: the ones
+   * importing from it, and the ones whose `::` paths read it as a module.
    *
    * @param file_path - The file to query
-   * @returns Set of files that import from this file
    */
   get_dependents(file_path: FilePath): Set<FilePath> {
+    const dependents = new Set(this.dependents.get(file_path) ?? []);
+    for (const reader of this.module_path_readers.get(file_path) ?? []) {
+      dependents.add(reader);
+    }
+    return dependents;
+  }
+
+  /**
+   * The dependents that reach this file through an import statement, and so
+   * also see whatever surface it forwards onward. A path reader is excluded:
+   * it holds a direct edge to every file its path read, so it never has to be
+   * carried a second hop.
+   */
+  get_importing_dependents(file_path: FilePath): Set<FilePath> {
     const deps = this.dependents.get(file_path);
     return deps ? new Set(deps) : new Set();
   }
@@ -249,6 +337,7 @@ export class ImportGraph {
     }
 
     this.forwarded_surfaces.delete(file_path);
+    this.clear_module_path_reads(file_path);
   }
 
   /**
@@ -317,5 +406,7 @@ export class ImportGraph {
     this.resolved_import_paths.clear();
     this.submodule_import_paths.clear();
     this.forwarded_surfaces.clear();
+    this.module_path_reads.clear();
+    this.module_path_readers.clear();
   }
 }

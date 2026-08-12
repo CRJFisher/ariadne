@@ -359,51 +359,6 @@ export class Project {
   }
 
   /**
-   * Re-resolve every indexed file once, so resolution stops depending on the
-   * order the files arrived in.
-   *
-   * A qualified Rust path reads the target module's own index, and a file is
-   * nobody's dependency until something imports it, so a caller indexed before
-   * its callee has no edge to bring it back. One pass over the whole corpus once
-   * loading is done converges that, at the cost of a single extra resolution of
-   * each file rather than one per file that arrived late.
-   */
-  resolve_all(): void {
-    if (!this.resolution) {
-      throw new Error("Project not initialized");
-    }
-
-    const all_files = new Set(this.index_single_filees.keys());
-    if (all_files.size === 0) {
-      return;
-    }
-
-    this.enriched_cache = null;
-
-    this.resolutions.resolve_names(
-      all_files,
-      this.languages,
-      this.definitions,
-      this.scopes,
-      this.exports,
-      this.imports,
-      this.resolution,
-    );
-
-    this.resolutions.resolve_calls_for_files(
-      all_files,
-      this.references,
-      this.scopes,
-      this.types,
-      this.definitions,
-      this.imports,
-      this.exports,
-      this.languages,
-      this.resolution,
-    );
-  }
-
-  /**
    * Remove a file from the project completely.
    * Removes all file-local data, registry entries, and resolutions.
    * Re-resolves dependent files to update their import resolutions.
@@ -491,6 +446,10 @@ export class Project {
    * one name out of it. That second hop is the barrel chain, where a leaf's
    * names reach consumers only through re-exporting files, and the Rust `mod`
    * chain, where `crate::a::b::item` reaches through `a.rs` into `b.rs`.
+   *
+   * Only importers are carried across that hop: a file that reached the changed
+   * file through a `::` path already holds a direct edge to every module file
+   * its path read, so it is a leaf of this walk rather than another hub.
    */
   private files_affected_by(
     file_id: FilePath,
@@ -507,7 +466,7 @@ export class Project {
       if (!this.imports.forwards_surface_of(file, source)) {
         continue;
       }
-      for (const dependent of this.imports.get_dependents(file)) {
+      for (const dependent of this.imports.get_importing_dependents(file)) {
         if (!affected_files.has(dependent)) {
           affected_files.add(dependent);
           frontier.push({ file: dependent, source: file });
