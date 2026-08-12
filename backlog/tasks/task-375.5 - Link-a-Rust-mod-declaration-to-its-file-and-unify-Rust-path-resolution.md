@@ -55,15 +55,19 @@ The alias/shadow rows split: the eight module-qualified Rust calls close here on
 
 <!-- AC:BEGIN -->
 
-- [x] #1 `build_index_single_file` emits an `ImportDefinition` with `import_kind: "namespace"` and the module path for `mod config;` and `pub mod config;` alongside the surviving `NamespaceDefinition`, and `#[path = "…"] mod x;` carries the override on `module_path`.
+- [ ] #1 `build_index_single_file` emits an `ImportDefinition` with `import_kind: "namespace"` and the module path for `mod config;` and `pub mod config;` alongside the surviving `NamespaceDefinition`, and `#[path = "…"] mod x;` carries the override on `module_path`.
+      <!-- partial: The `#[path]` override is carried and honoured on the module edge's `import_path`; the `NamespaceDefinition.module_path` field the criterion names was deliberately not added — see deviation 2. -->
 - [x] #2 `src/lib.rs` is a dependent of `src/config.rs` in `ImportGraph.dependencies`, and `update_file` on `config.rs` re-resolves the `lib.rs` call site.
 - [x] #3 The Rust file-backed `mod` path false-positives clear: `mod config;` + `config::build()`, `crate::intrinsic::check()`, `self::config::build()`, `use crate::config;` + `config::build()` and `crate::deep::inner::deep_fn()` all resolve.
 - [x] #4 The corpus shapes `migrate::expand`, `self::imp::ctrl_c`, `list::channel`, `back::write::optimize`, `MetaVarExpr::parse`, `config::Options::from_matches` and `attr::Container::from_ast` all resolve.
-- [x] #5 The eight module-qualified Rust alias/shadow calls resolve, with `mod x;` beating a same-name local `x` in scope.
+- [ ] #5 The eight module-qualified Rust alias/shadow calls resolve, with `mod x;` beating a same-name local `x` in scope.
+      <!-- partial: The precedence rule is pinned by two shape tests; the eight named alias/shadow rows are not individually measured. -->
 - [x] #6 `Foo::bar()` and `serde_json::to_string()` still fall through untouched — no edge is fabricated for a path whose file the project has not indexed.
-- [x] #7 `resolve_type_via_module_path_rust` is deleted, `resolve_via_path_prefix_rust` is a call into the unified resolver, and `normalize_path_prefix` is no longer exported.
+- [ ] #7 `resolve_type_via_module_path_rust` is deleted, `resolve_via_path_prefix_rust` is a call into the unified resolver, and `normalize_path_prefix` is no longer exported.
+      <!-- partial: `normalize_path_prefix` stays exported — the use-anchor matcher and its tests need it — and the type-last adapter survives; see deviations 3 and 4. -->
 - [x] #8 Integration tests in `resolve_references.rust.test.ts` cover every evidence case listed above individually, plus the incremental `update_file` case.
-- [x] #9 `path_resolution.rust.test.ts`, `function_call.rust.test.ts` and `constructor.rust.test.ts` stay green with no behavioural edits.
+- [ ] #9 `path_resolution.rust.test.ts`, `function_call.rust.test.ts` and `constructor.rust.test.ts` stay green with no behavioural edits.
+      <!-- partial: `path_resolution.rust.test.ts`'s private-helper suites were deleted and re-aimed at the module entry point: green, but not the untouched regression guard the criterion asks for. -->
 - [x] #10 The `#[cfg]`-gated `mod` over-approximation is recorded in the change's decision record; if `#[path]` is dropped, the tokio `self::imp::ctrl_c` row is explicitly re-routed rather than left open.
 
 <!-- AC:END -->
@@ -140,8 +144,10 @@ directory. Both are fixed and tested.
 
 Review also found that resolution depended on the order files were indexed in — a caller indexed
 before its callee module had nothing to resolve against, and nothing imports a caller to bring it
-back. `Project.resolve_all()` runs one whole-corpus pass at the end of `load_project`; on sqlx that
-alone clears 8 further false positives.
+back. Every module file the path hop reads is recorded on `ImportGraph` as a path read of the
+referring file, so the caller re-resolves when the module arrives. The read is recorded whether or
+not the project holds the file yet, since the file arriving is exactly what has to bring the reader
+back, and a path read makes its reader a dependent without making it a forwarding hub.
 
 ### Deviations from the work plan, and why
 
@@ -205,16 +211,6 @@ fail:
 
 ### Known gaps, owned elsewhere
 
-- **The incremental path does not converge the way loading does.** A qualified path reads the
-  target module's index, but that read is not an import edge, so the invalidation closure cannot
-  see it. `crate::a::b::deep_fn()` written with no `use` records nothing linking the caller to
-  `b.rs`: `load_project`'s whole-corpus `resolve_all()` pass makes the loaded state correct, but a
-  later `update_file` on `b.rs` leaves the caller holding the old symbol id, and the edited function
-  is reported as an entry point until something re-resolves the caller. `remove_file` has the same
-  shape. Before this task the path produced no edge at all, so the loaded state is strictly better
-  and only the edit path degrades to roughly what it was. Closing it properly means recording a
-  path-read edge in the `ImportGraph` when the resolver lands on a file, so the existing machinery
-  covers it — a change to the dependency graph that deserves its own task and its own review.
 - **`Enum::new()` is still unresolvable.** The constructor route gates on `find_class_definition`,
   which rejects an enum, so a Rust enum with `pub fn new() -> Self` stays a false positive even
   though its `new` now sits in the member index. Pre-existing, and widening `constructor.ts`'s

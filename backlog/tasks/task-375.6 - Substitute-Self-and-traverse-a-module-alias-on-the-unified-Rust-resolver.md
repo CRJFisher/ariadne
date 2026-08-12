@@ -45,8 +45,10 @@ Both are thin adapters on the unified resolver from sub-task 1.5 and are trivial
 - [x] #2 `SELF_TYPE_KEYWORD` lives in `path_resolution.rust.ts`, `Self` is substituted before any anchor handling, and `PATH_ANCHORS` is unchanged.
 - [x] #3 `resolve_self_type_rust` takes `(scope_id, scopes, definitions)` with the `name === 'Self'` gate at its constructor call site.
 - [x] #4 The rustc `compute_debuginfo_type_name` false-positive clears through the `super::alias` module-alias hop.
-- [x] #5 Integration tests cover every evidence case individually — both `impl`-block positions, the trait-default-body shapes, and the `super::alias` path — each asserting the call reference resolves.
-- [x] #6 The four trait-default-method-body rows are measured, not assumed: any that do not clear are explicitly re-routed to `type-model-completion` with the reason recorded.
+- [ ] #5 Integration tests cover every evidence case individually — both `impl`-block positions, the trait-default-body shapes, and the `super::alias` path — each asserting the call reference resolves.
+      <!-- partial: One trait-default-body shape is tested; the four the criterion names are enumerated nowhere and are covered by that single shape. -->
+- [ ] #6 The four trait-default-method-body rows are measured, not assumed: any that do not clear are explicitly re-routed to `type-model-completion` with the reason recorded.
+      <!-- partial: One trait-default shape was measured and clears; the four corpus rows themselves are unmeasured — TASK-385. -->
 - [x] #7 `constructor.rust.test.ts` and `path_resolution.rust.test.ts` stay green.
 
 <!-- AC:END -->

@@ -4,13 +4,13 @@
  * Tests the pure functions for resolving symbol names in scopes.
  */
 
+import { EMPTY_MODULE_SPECIFIER_INDEX } from "./resolution_test_helpers";
 import { describe, it, expect, beforeEach } from "vitest";
 import { resolve_names, type NameResolutionContext } from "./name_resolution";
 import { DefinitionRegistry } from "./registries/definition";
 import { ScopeRegistry } from "./registries/scope";
 import { ExportRegistry } from "./registries/export";
 import { ImportGraph } from "./import_resolution/import_graph";
-import { EMPTY_MODULE_SPECIFIER_INDEX } from "./import_resolution/module_specifier_index";
 import { function_symbol, namespace_symbol, variable_symbol } from "@ariadnejs/types";
 import type {
   FilePath,

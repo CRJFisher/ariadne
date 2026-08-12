@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
+import { EMPTY_MODULE_SPECIFIER_INDEX } from "../resolution_test_helpers";
 import { ExportRegistry } from "./export";
 import type {
   FilePath,
@@ -15,7 +16,7 @@ import type {
 } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "./definition";
 import type { FileSystemFolder } from "../file_folders";
-import { create_module_resolution_context, EMPTY_MODULE_SPECIFIER_INDEX } from "../import_resolution";
+import { create_module_resolution_context,} from "../import_resolution";
 
 function make_location(file_path: FilePath, start_line: number, len: number): Location {
   return {

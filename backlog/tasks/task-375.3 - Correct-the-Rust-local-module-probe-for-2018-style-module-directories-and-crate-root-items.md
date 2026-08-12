@@ -49,14 +49,15 @@ This task and sub-task 1.4 rewrite the same ten-line `else` arm of `resolve_modu
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 `resolve_module_path_rust('inner')` from `src/deep.rs` resolves to `src/deep/inner.rs` instead of returning the opaque specifier.
-- [ ] #2 `resolve_module_path_rust('self::inner')` from `src/deep.rs` resolves to `src/deep/inner.rs` instead of `src/inner.rs`.
-- [ ] #3 `use crate::S;` in `src/other.rs` against `src/lib.rs` declaring `pub struct S` resolves `S`, and no path of the form `src/.rs` is ever produced.
-- [ ] #4 The three already-correct rows still resolve unchanged: `config` from `src/lib.rs`, `crate::deep::inner` from `src/lib.rs`, `super::config` from `src/deep/inner.rs`.
-- [ ] #5 `import_resolution.rust.test.ts` asserts all six rows of the measured module-path table plus the empty-module-path case as direct `resolve_module_path_rust` assertions.
+- [x] #1 `resolve_module_path_rust('inner')` from `src/deep.rs` resolves to `src/deep/inner.rs` instead of returning the opaque specifier.
+- [x] #2 `resolve_module_path_rust('self::inner')` from `src/deep.rs` resolves to `src/deep/inner.rs` instead of `src/inner.rs`.
+- [x] #3 `use crate::S;` in `src/other.rs` against `src/lib.rs` declaring `pub struct S` resolves `S`, and no path of the form `src/.rs` is ever produced.
+- [x] #4 The three already-correct rows still resolve unchanged: `config` from `src/lib.rs`, `crate::deep::inner` from `src/lib.rs`, `super::config` from `src/deep/inner.rs`.
+- [x] #5 `import_resolution.rust.test.ts` asserts all six rows of the measured module-path table plus the empty-module-path case as direct `resolve_module_path_rust` assertions.
 - [ ] #6 Integration tests in `resolve_references.rust.test.ts` cover every evidence case in this task — 2018-style `crate::a::b::f()`, `self::x::f()`, `super::x::f()`, `use crate::S;` + `S::assoc()`, `use crate::{Item}` braced group, and the `use crate::inner::T;` control — each asserting the call reference resolves.
-- [ ] #7 No `crate_roots` lookup is introduced in this task; the `else` arm still returns unmatched leading segments opaquely.
-- [ ] #8 This task is merged before sub-task 1.4.
+      <!-- partial: A plain `super::x::f()` module-qualified call has no integration row; the only super-anchored call test traverses a module alias. -->
+- [x] #7 No `crate_roots` lookup is introduced in this task; the `else` arm still returns unmatched leading segments opaquely.
+- [x] #8 This task is merged before sub-task 1.4.
 
 <!-- AC:END -->
 

@@ -63,7 +63,8 @@ Identified by comparing Ariadne against Graphify (`~/workspace/tools/graphify`),
 - [x] #3 A workspace package's `exports` field is honoured — root and subpath forms — in a documented condition precedence order, with `index.*` probing retained as the no-`exports` fallback.
 - [x] #4 An `exports` target that would escape its package directory is rejected.
 - [x] #5 A specifier matching no on-disk target still resolves opaquely and fabricates no edge.
-- [x] #6 Changes are confined to `module_specifier_index.ts`; no signature introduced by TASK-375.4 changes.
+- [ ] #6 Changes are confined to `module_specifier_index.ts`; no signature introduced by TASK-375.4 changes.
+      <!-- partial: The index construction is confined to `module_specifier_index.ts`, but the consumer's remainder arithmetic in `import_resolution.typescript.ts` was rewritten to accept a file-valued entry — see deviation 3. -->
 - [x] #7 The `import_resolution/*.test.ts` suites and `import_graph.test.ts` stay green.
 
 <!-- AC:END -->
@@ -94,9 +95,10 @@ path-relative bases are followed: a bare specifier names a published config pack
 part of the analysed source.
 
 An `exports` entry is a set of alternatives, so condition selection offers every candidate in a
-stated precedence — `source`, `import`, `module`, `require`, `default` — and takes the first that is
-both inside the package directory and present in the tree. `types` is deliberately absent: a `.d.ts`
-carries declarations and no bodies, so it can never yield a call edge. Requiring presence is what
+stated precedence — `source`, `import`, `module`, `require`, `default`, `types` — and takes the
+first that is both inside the package directory and present in the tree. `types` ranks last: a
+`.d.ts` carries declarations and no bodies, so it yields no call edge on its own, but a package
+that publishes nothing else still points somewhere in the project rather than staying opaque. Requiring presence is what
 keeps a manifest that only publishes a built artefact from pointing the specifier at a file that is
 not there; the package directory stays and `index.*` probing serves, exactly as before.
 
@@ -135,17 +137,13 @@ matching plus probing — is `import_resolution.typescript.ts`.
 2. **`published_target` requires the target to be present in the tree.** Not asked for. Without it a
    manifest that publishes only `./dist/index.js` moves the specifier off the package directory onto
    a file the corpus never indexes, losing the `index.*` probe AC #3 explicitly requires be retained.
-3. **Two lines of `import_resolution.typescript.ts` changed.** AC #6 asks for the work to be
-   confined to `module_specifier_index.ts`, and the extends/exports logic is. But an index entry can
-   now be a file rather than a directory, and the consumer's remainder arithmetic had to learn that —
-   otherwise this task's own change loses deep-import edges. No signature changed.
+3. **The consumer's remainder arithmetic was rewritten.** AC #6 asks for the work to be confined to
+   `module_specifier_index.ts`, and the extends/exports logic is. But an index entry can now be a
+   file rather than a directory, and `import_resolution.typescript.ts` had to learn that: an
+   entry-file probe, a dirname-derived join base and a separate no-remainder branch, about a dozen
+   net lines. Without it this task's own change loses deep-import edges. No signature changed.
 4. **`extended_config_files` is named `base_config_files`**, matching the vocabulary its caller and
    its tests already use.
 
 ### Known gaps, owned elsewhere
 
-- Manifests under `node_modules` and `dist` are still indexed, because the manifest walk uses the
-  same file tree path probing needs and `IGNORED_DIRECTORIES` lives in `project/`, which
-  `resolve_references/` may not import. On this repo's own tree that is 609 of 1594 `package_roots`
-  entries, none of which can carry an edge. Closing it means lifting that constant to a
-  stage-neutral home.

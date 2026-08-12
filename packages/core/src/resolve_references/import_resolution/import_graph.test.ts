@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
+import { EMPTY_MODULE_SPECIFIER_INDEX } from "../resolution_test_helpers";
 import { ImportGraph } from "./import_graph";
 import type {
   FilePath,
@@ -10,7 +11,7 @@ import type {
   SymbolId,
 } from "@ariadnejs/types";
 import type { FileSystemFolder } from "../file_folders";
-import { create_module_resolution_context, EMPTY_MODULE_SPECIFIER_INDEX } from "../import_resolution";
+import { create_module_resolution_context,} from "../import_resolution";
 
 function create_import_definition(
   source: FilePath,

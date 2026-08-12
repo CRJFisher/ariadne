@@ -578,5 +578,48 @@ describe("load_project", () => {
 
       expect(call_target_files(project, "app.ts", "leaf_fn")).toEqual(["leaf.ts"]);
     });
+
+    it("resolves a path hopping through a #[path]-remapped module indexed after the caller", async () => {
+      // Nothing names `renamed.rs` but the `#[path]` attribute, so the hop is
+      // the only edge that can bring the caller back when the file arrives.
+      await write_file("lib.rs", "mod caller;\nmod deep;\n");
+      await write_file(
+        "caller.rs",
+        "pub fn run() -> i32 {\n    crate::deep::inner::deep_fn()\n}\n",
+      );
+      await write_file("deep.rs", "#[path = \"renamed.rs\"]\npub mod inner;\n");
+      await write_file("renamed.rs", "pub fn deep_fn() -> i32 {\n    1\n}\n");
+
+      const { project } = await load_project({
+        project_path: temp_dir,
+        files: ["caller.rs", "deep.rs", "lib.rs", "renamed.rs"],
+      });
+
+      expect(call_target_files(project, "caller.rs", "deep_fn")).toEqual([
+        "renamed.rs",
+      ]);
+    });
+
+    it("resolves a path hopping through a re-exported module indexed after the caller", async () => {
+      // `deep.rs` publishes the module rather than declaring it, so the file the
+      // path lands in is named by neither the caller nor the declaring module.
+      await write_file("lib.rs", "mod caller;\nmod deep;\nmod other;\n");
+      await write_file(
+        "caller.rs",
+        "pub fn run() -> i32 {\n    crate::deep::inner::deep_fn()\n}\n",
+      );
+      await write_file("deep.rs", "pub use crate::other::inner;\n");
+      await write_file("other/mod.rs", "pub mod inner;\n");
+      await write_file("other/inner.rs", "pub fn deep_fn() -> i32 {\n    1\n}\n");
+
+      const { project } = await load_project({
+        project_path: temp_dir,
+        files: ["caller.rs", "deep.rs", "lib.rs", "other/mod.rs", "other/inner.rs"],
+      });
+
+      expect(call_target_files(project, "caller.rs", "deep_fn")).toEqual([
+        "other/inner.rs",
+      ]);
+    });
   });
 });

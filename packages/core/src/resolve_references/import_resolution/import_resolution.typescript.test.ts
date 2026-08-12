@@ -2,10 +2,10 @@
  * Tests for TypeScript module resolution
  */
 
+import { EMPTY_MODULE_SPECIFIER_INDEX } from "../resolution_test_helpers";
 import { describe, it, expect } from "vitest";
 import type { FilePath } from "@ariadnejs/types";
 import { resolve_module_path_typescript } from "./import_resolution.typescript";
-import { EMPTY_MODULE_SPECIFIER_INDEX } from "./module_specifier_index";
 import { create_file_tree } from "./import_resolution.test";
 import { create_module_resolution_context } from "../import_resolution";
 import type { ModuleSpecifierIndex } from "./module_specifier_index";
@@ -420,7 +420,31 @@ describe("resolve_module_path_typescript", () => {
       ).toBe("/project/packages/pkg_a/lib/thing.ts");
     });
 
-    it("takes an ancestor config's alias when the nearest config declares none for it", () => {
+    it("takes an ancestor config's alias when no config nearer the file declares one", () => {
+      // pkg_a carries no aliases of its own, so the config above governs it.
+      const tree = create_file_tree("/project", [
+        "packages/pkg_a/src/app.ts",
+        "shared/thing.ts",
+      ]);
+      const context = create_module_resolution_context(
+        tree,
+        specifier_index({ "/project": { "@lib": "/project/shared" } })
+      );
+
+      expect(
+        resolve_module_path_typescript(
+          "@lib/thing",
+          "/project/packages/pkg_a/src/app.ts" as FilePath,
+          context
+        )
+      ).toBe("/project/shared/thing.ts");
+    });
+
+    it("leaves a specifier the governing config does not alias opaque, ignoring an ancestor's", () => {
+      // `paths` do not merge across configs: pkg_a declares aliases, so pkg_a is
+      // the project that governs app.ts, and `@lib` is not one of its keys —
+      // binding it to the root's `shared/` would put a call in another package's
+      // tree and leave pkg_a's own definition looking uncalled.
       const tree = create_file_tree("/project", [
         "packages/pkg_a/src/app.ts",
         "shared/thing.ts",
@@ -439,7 +463,7 @@ describe("resolve_module_path_typescript", () => {
           "/project/packages/pkg_a/src/app.ts" as FilePath,
           context
         )
-      ).toBe("/project/shared/thing.ts");
+      ).toBe("@lib/thing");
     });
 
     it("leaves a specifier that merely starts with an alias key opaque", () => {

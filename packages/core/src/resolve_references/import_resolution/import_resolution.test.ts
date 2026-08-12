@@ -2,13 +2,13 @@
  * Tests for import resolution dispatcher + shared test helpers
  */
 
+import { EMPTY_MODULE_SPECIFIER_INDEX } from "../resolution_test_helpers";
 import { describe, it, expect } from "vitest";
 import type { FilePath } from "@ariadnejs/types";
 import {
   resolve_module_path,
   resolve_submodule_import_path,
 } from "./import_resolution";
-import { EMPTY_MODULE_SPECIFIER_INDEX } from "./module_specifier_index";
 import type { FileSystemFolder } from "../file_folders";
 import { create_module_resolution_context } from "../import_resolution";
 

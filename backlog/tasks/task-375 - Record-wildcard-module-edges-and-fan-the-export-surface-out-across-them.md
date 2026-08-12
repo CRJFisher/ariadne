@@ -64,14 +64,17 @@ Widening `resolve_module_path`'s return type into a resolved / external / unmatc
 <!-- AC:BEGIN -->
 
 - [x] #1 `build_index_single_file` returns the exact asserted `ImportDefinition` literal for `export * from './m.js'`, `export * as ns from './m.js'`, `import * as X from './m'; export { X }`, `pub use inner::x;`, `pub use util::{a, b};`, `pub use self::mpsc;`, `pub use a::b as c;`, `use m::*;`, `pub use m::*;` and `from m import *`.
-- [x] #2 The four TypeScript `export *` false-positives clear: `loadModuleFromGlobalCache`, `findTokenOnLeftOfPosition`, `emitDetachedComments` and `discoverTypings`.
-- [x] #3 The two sqlx intra-crate glob rows clear: `use crate::transaction::*` binds `begin -> begin_ansi_transaction_sql`.
+- [ ] #2 The four TypeScript `export *` false-positives clear: `loadModuleFromGlobalCache`, `findTokenOnLeftOfPosition`, `emitDetachedComments` and `discoverTypings`.
+      <!-- partial: Closed on fixture reproductions of the four shapes; whether the corpus rows clear is unmeasured — TASK-385 owns the re-triage. -->
+- [ ] #3 The two sqlx intra-crate glob rows clear: `use crate::transaction::*` binds `begin -> begin_ansi_transaction_sql`.
+      <!-- partial: The intra-crate shape the criterion words is closed; the corpus rows it names are cross-crate and unmeasured — TASK-385. -->
 - [x] #4 Indexing a file with six `from … import *` lines (the `django/forms/__init__.py` shape) no longer reaches the `Duplicate export name` throw and `Project.update_file` completes for the file.
 - [x] #5 Integration tests (`Project` + `update_file`, temp dir, plus the three-file `_namespaces` barrel fixture) cover every evidence case in this task's triage evidence individually — all four TypeScript `export *` rows, both sqlx glob rows, single- and two-hop intra-crate `pub use`, and both Python star shapes — each asserting `resolutions.length === 1`.
 - [x] #6 A name reachable through two distinct wildcard edges resolves to nothing unless every path reaches the same `SymbolId`; mutually star-re-exporting `a.ts`/`b.ts` terminates and returns null.
 - [x] #7 The duplicate-export throw stays reachable for genuine duplicate non-wildcard names, and `registries/export.test.ts`, `export.python.test.ts` and `export.typescript.test.ts` stay green.
 - [x] #8 `name_resolution.test.ts` (491 lines) stays green with only the one new wildcard arm in `name_resolution.ts` — a failure there means the chosen altitude was wrong.
-- [x] #9 `import_graph.test.ts` stays green: `ImportGraph`'s shape is unchanged.
+- [ ] #9 `import_graph.test.ts` stays green: `ImportGraph`'s shape is unchanged.
+      <!-- no: Deliberately broken: the forwarding hop and the recorded path read are each load-bearing — see Deviations. -->
 - [x] #10 `project.bench.test.ts` on the TypeScript corpus is measured before and after the `resolve_all_exports` memo and the regression is recorded.
 - [x] #11 The two tokio `pub use` rows are recorded as blocked on `cfg_*!` macro-body indexing and are not counted against this task.
 
@@ -85,7 +88,7 @@ Wholesale module edges exist in the index. `export * from`, `pub use m::*`, `use
 
 Two shapes the plan called wildcard are namespace objects instead: `export * as ns from` and `import * as X …; export { X }` publish one name whose export chain terminates at the import definition itself; member access descends through the resolved path (the `_namespaces` hop). The chain also follows any import-backed export record — a two-statement `import { a } …; export { a }` reaches the origin definition, not the intermediate import symbol.
 
-Capture names are `@import.reexport.wildcard` / `@import.reexport.namespace` (the planned `@import.wildcard_reexport` fails SemanticEntity validation). The persistence schema bumps to v5 so pre-wildcard caches are discarded rather than silently replayed.
+Capture names are `@import.reexport.wildcard` / `@import.reexport.namespace` (the planned `@import.wildcard_reexport` fails SemanticEntity validation). The persistence schema bumps to v6 so caches predating the wildcard edges and the Rust module edge are discarded rather than silently replayed.
 
 Front door for readers: `registries/export.ts` (edge storage, fan-out, `resolve_all_exports`), then `name_resolution.ts` (the one wildcard arm plus its guard), then the four capture handlers.
 

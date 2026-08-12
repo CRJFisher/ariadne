@@ -40,12 +40,6 @@ export interface ModuleSpecifierIndex {
   readonly crate_roots: ReadonlyMap<string, FilePath>;
 }
 
-export const EMPTY_MODULE_SPECIFIER_INDEX: ModuleSpecifierIndex = {
-  package_roots: new Map(),
-  config_aliases: new Map(),
-  crate_roots: new Map(),
-};
-
 /**
  * Strip comments and trailing commas so a hand-maintained `tsconfig.json`
  * parses. JSONC is the format editors accept for these files, and real

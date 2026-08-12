@@ -51,14 +51,19 @@ For untyped JS parameters the failure moves **forward** from `name_resolution/na
 <!-- AC:BEGIN -->
 
 - [ ] #1 `add_parameter_to_callable` throws for an unknown callable id and `definition_builder.test.ts` asserts it; the full core suite is run against the throwing version and every construct that trips it is recorded.
-- [ ] #2 `signature.parameters` matches the exact asserted literal for `const f = (p) => {}`, `const f = function (p) {}`, `return function (p) {}`, `module.exports = function (p) {}` and `obj = { m(p) {} }`, and the `anonymous_function_symbol` fallback still applies to a genuinely anonymous IIFE.
-- [ ] #3 `for (const a of xs)`, `for (const k in o)`, `const { c } = o`, `const [d] = xs`, `const { ...r } = o` and `function f({ g }: T)` each bind by name in both JavaScript and TypeScript.
-- [ ] #4 Rust `if let Some(b)`, `match o { Some(d) => … }` and `while let Some(c) = it.next()` bind `b`, `d` and `c` and never `Some(c)`; the Python walrus `if (d := xs[0]):` binds `d`.
+      <!-- no: `add_parameter_to_callable` deliberately drops an unowned parameter — raising would drop the whole file from the corpus. Nothing detects a future owner-id disagreement. -->
+- [x] #2 `signature.parameters` matches the exact asserted literal for `const f = (p) => {}`, `const f = function (p) {}`, `return function (p) {}`, `module.exports = function (p) {}` and `obj = { m(p) {} }`, and the `anonymous_function_symbol` fallback still applies to a genuinely anonymous IIFE.
+- [x] #3 `for (const a of xs)`, `for (const k in o)`, `const { c } = o`, `const [d] = xs`, `const { ...r } = o` and `function f({ g }: T)` each bind by name in both JavaScript and TypeScript.
+- [x] #4 Rust `if let Some(b)`, `match o { Some(d) => … }` and `while let Some(c) = it.next()` bind `b`, `d` and `c` and never `Some(c)`; the Python walrus `if (d := xs[0]):` binds `d`.
 - [ ] #5 The webpack `lib/ids/IdHelpers.js:148` (`chunkGraph.getChunkRootModules`) and mocha `lib/interfaces/common.js:75` (`suites[0].beforeEach`) false-positives clear.
+      <!-- no: Both rows move from `name_resolution`/`name_not_in_scope` to `type_inference`/`receiver_type_unknown`; nothing types the receiver, so the calls still do not resolve. -->
 - [ ] #6 The loop-head evidence case `for (const p of ps) { p.close() }` resolves, closing the re-homed pattern/loop-head rows.
+      <!-- no: The loop-head name binds but the receiver takes no type, so `p.close()` finds no target — the row moves bucket rather than clearing. Owned by type-model-completion. -->
 - [ ] #7 Integration tests cover every evidence case in this group's triage evidence individually — the two reproduced corpus rows plus each source form in the binder table — and not a single representative.
-- [ ] #8 `javascript_typescript_scope_boundary_extractor.test.ts` (312 lines) needs no editing.
+      <!-- partial: Three evidence rows have Project-level tests; the remaining binder-table forms are pinned at the index level only. -->
+- [x] #8 `javascript_typescript_scope_boundary_extractor.test.ts` (312 lines) needs no editing.
 - [ ] #9 Triage is re-run on the four affected JS/TS/Python projects and the per-row split of the 39 qualified-callee rows is recorded as measured bucket movement, with rows that move to `type_inference/receiver_type_unknown` re-routed to `type-model-completion` rather than counted as failures.
+      <!-- no: Triage was not re-run; the per-row split of the 39 qualified-callee rows is unmeasured — owned by TASK-385. -->
 
 <!-- AC:END -->
 

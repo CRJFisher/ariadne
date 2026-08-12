@@ -2,10 +2,10 @@
  * Tests for Rust module resolution
  */
 
+import { EMPTY_MODULE_SPECIFIER_INDEX } from "../resolution_test_helpers";
 import { describe, it, expect } from "vitest";
 import type { FilePath } from "@ariadnejs/types";
 import { resolve_module_path_rust } from "./import_resolution.rust";
-import { EMPTY_MODULE_SPECIFIER_INDEX } from "./module_specifier_index";
 import { create_file_tree } from "./import_resolution.test";
 import { create_module_resolution_context } from "../import_resolution";
 

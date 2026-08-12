@@ -9,13 +9,24 @@ import type { FilePath, Language } from "@ariadnejs/types";
 import { ExportRegistry } from "./registries/export";
 import type { FileSystemFolder } from "./file_folders";
 import type { ModuleResolutionContext } from "./import_resolution";
-import { create_module_resolution_context, EMPTY_MODULE_SPECIFIER_INDEX } from "./import_resolution";
+import { create_module_resolution_context } from "./import_resolution";
+import type { ModuleSpecifierIndex } from "./import_resolution";
 
 /** An empty file-system tree, for unit tests that don't resolve module paths. */
 const EMPTY_ROOT_FOLDER: FileSystemFolder = {
   path: "/" as FilePath,
   folders: new Map(),
   files: new Set(),
+};
+
+/**
+ * An index naming nothing, so every bare specifier stays opaque. A test wanting
+ * a specifier to resolve builds the entries it means instead.
+ */
+export const EMPTY_MODULE_SPECIFIER_INDEX: ModuleSpecifierIndex = {
+  package_roots: new Map(),
+  config_aliases: new Map(),
+  crate_roots: new Map(),
 };
 
 /**

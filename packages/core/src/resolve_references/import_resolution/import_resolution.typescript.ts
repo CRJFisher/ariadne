@@ -93,9 +93,11 @@ function resolve_bare_typescript(
  * declare the same key against different `src/` directories, and only the
  * config the file sits under says which one this file meant.
  *
- * A config that declares nothing about the specifier is not an answer, so the
- * walk continues past it to the config above — a repo-root config's aliases
- * reach the packages beneath it whether or not they extend it.
+ * The nearest config declaring any alias is the project that governs the file,
+ * and `paths` do not merge across configs: a specifier that config says nothing
+ * about is a miss, not a reason to keep climbing. A directory whose config
+ * declares no alias at all records no entry, so a package carrying only compiler
+ * flags still reaches the aliases of the config above it.
  */
 function governing_alias(
   import_path: string,
@@ -110,11 +112,8 @@ function governing_alias(
   let directory = path.dirname(absolute_file);
   for (;;) {
     const aliases = config_aliases.get(directory as FilePath);
-    const match = aliases
-      ? longest_matching_entry(import_path, aliases)
-      : null;
-    if (match !== null) {
-      return match;
+    if (aliases) {
+      return longest_matching_entry(import_path, aliases);
     }
     const parent = path.dirname(directory);
     if (parent === directory) {

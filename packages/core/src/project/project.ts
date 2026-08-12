@@ -609,9 +609,11 @@ export class Project {
   }
 
   /**
-   * Get all files that depend on a given file.
+   * Every file whose resolutions this file's content can change: the files that
+   * import from it, and the files that reached it through a Rust `::` path,
+   * which name it without importing it.
+   *
    * @param file_id - The file to check dependencies for
-   * @returns Set of files that import from this file
    */
   get_dependents(file_id: FilePath): Set<FilePath> {
     return this.imports.get_dependents(file_id);

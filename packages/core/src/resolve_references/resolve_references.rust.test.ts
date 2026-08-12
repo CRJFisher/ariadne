@@ -1772,9 +1772,12 @@ pub fn deep_fn() -> i32 {
     it("re-resolves a caller whose path hopped through a #[path]-remapped module", async () => {
       // The path spells `deep::inner`, but `inner`'s file is named by the
       // attribute, so only the hop itself knows which file the call read.
+      // The caller is listed first deliberately: `setup_project` indexes in
+      // insertion order, and a hop recorded only for an already-indexed module
+      // would resolve on the reverse order and fail here.
       const { project, temp_dir, file_paths } = await setup_project({
-        "src/renamed.rs": `pub fn deep_fn() -> i32 {
-    1
+        "src/caller.rs": `pub fn run() -> i32 {
+    crate::deep::inner::deep_fn()
 }
 `,
         "src/deep.rs": `#[path = "renamed.rs"]
@@ -1783,8 +1786,8 @@ pub mod inner;
         "src/lib.rs": `mod caller;
 mod deep;
 `,
-        "src/caller.rs": `pub fn run() -> i32 {
-    crate::deep::inner::deep_fn()
+        "src/renamed.rs": `pub fn deep_fn() -> i32 {
+    1
 }
 `,
       });

@@ -51,16 +51,16 @@ The third cross-crate row, `compute_debuginfo_type_name`, needs one hop more: a 
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 `ModuleSpecifierIndex` is built once in `Project.initialize` from `tsconfig.json`/`jsconfig.json`, `package.json` and `Cargo.toml`, tolerating JSONC with trailing commas, and falls back to the directory name where a manifest is unreadable.
-- [ ] #2 `root_folder: FileSystemFolder` is replaced by `ModuleResolutionContext { root_folder, specifiers }` across all 33 non-test signatures, including `resolve_module_path_rust`.
-- [ ] #3 The sqlx cross-crate false-positives clear: `sqlx_core::raw_sql::raw_sql` resolves `raw_sql`, and `rollback_ansi_transaction_sql` resolves.
-- [ ] #4 The nest `mixin` false-positive clears: the bare specifier `@nestjs/common` resolves through the tsconfig `paths` alias onto the directory whose `index.ts` star-re-exports.
-- [ ] #5 A cross-crate `use other_crate::m::item` with a `-`/`_` name mismatch and a cross-crate `use other_crate::m::*` both resolve.
-- [ ] #6 An unmatched leading segment (a genuinely external crate) still returns opaquely and fabricates no edge.
-- [ ] #7 Integration tests cover every evidence case listed above individually, including the nest bare-specifier chain end to end.
-- [ ] #8 `import_resolution.{typescript,rust,python,javascript}.test.ts` stay green across the `probe_candidates` extraction, and `import_graph.test.ts` stays green.
-- [ ] #9 Sub-task 1.3 is merged before this task, and the `crate_roots` lookup sits after the local-module probe in the `else` arm.
-- [ ] #10 The `compute_debuginfo_type_name` row is recorded as closing in sub-task 1.6, not here.
+- [x] #1 `ModuleSpecifierIndex` is built once in `Project.initialize` from `tsconfig.json`/`jsconfig.json`, `package.json` and `Cargo.toml`, tolerating JSONC with trailing commas, and falls back to the directory name where a manifest is unreadable.
+- [x] #2 `root_folder: FileSystemFolder` is replaced by `ModuleResolutionContext { root_folder, specifiers }` across all 33 non-test signatures, including `resolve_module_path_rust`.
+- [x] #3 The sqlx cross-crate false-positives clear: `sqlx_core::raw_sql::raw_sql` resolves `raw_sql`, and `rollback_ansi_transaction_sql` resolves.
+- [x] #4 The nest `mixin` false-positive clears: the bare specifier `@nestjs/common` resolves through the tsconfig `paths` alias onto the directory whose `index.ts` star-re-exports.
+- [x] #5 A cross-crate `use other_crate::m::item` with a `-`/`_` name mismatch and a cross-crate `use other_crate::m::*` both resolve.
+- [x] #6 An unmatched leading segment (a genuinely external crate) still returns opaquely and fabricates no edge.
+- [x] #7 Integration tests cover every evidence case listed above individually, including the nest bare-specifier chain end to end.
+- [x] #8 `import_resolution.{typescript,rust,python,javascript}.test.ts` stay green across the `probe_candidates` extraction, and `import_graph.test.ts` stays green.
+- [x] #9 Sub-task 1.3 is merged before this task, and the `crate_roots` lookup sits after the local-module probe in the `else` arm.
+- [x] #10 The `compute_debuginfo_type_name` row is recorded as closing in sub-task 1.6, not here.
 
 <!-- AC:END -->
 

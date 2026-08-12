@@ -29,7 +29,7 @@ export interface ModuleResolutionContext {
 
 /**
  * Build a resolution context. A caller with no readable manifests passes
- * `EMPTY_MODULE_SPECIFIER_INDEX`, which resolves every bare specifier opaquely.
+ * ``, which resolves every bare specifier opaquely.
  */
 export function create_module_resolution_context(
   root_folder: FileSystemFolder,

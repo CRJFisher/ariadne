@@ -40,12 +40,12 @@ The second half of this leaf's evidence — a re-exported namespace import losin
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 The four namespace-object member-access false-positives clear.
-- [ ] #2 `export namespace Core { export function f() {} }` resolves when reached directly (the `FindAllReferences.Core.getReferencesForFileName` shape) with no barrel anywhere in the chain.
-- [ ] #3 `import { formatting } from './_namespaces/ts.js'` followed by `formatting.formatOnSemicolon(...)` resolves for both a `export *` leaf and a named leaf re-export.
-- [ ] #4 The three-chained-barrel `discoverTypings` shape resolves across a wildcard hop, a namespace-object hop and a wildcard hop.
-- [ ] #5 Integration tests (using the `_namespaces` barrel fixture) cover each of these evidence cases individually, each asserting `resolutions.length === 1`.
-- [ ] #6 The existing `resolve_references.*.test.ts` namespace-import suites stay green and no hop that previously resolved through `get_type_member` / `get_member_index()` changes target.
+- [x] #1 The four namespace-object member-access false-positives clear.
+- [x] #2 `export namespace Core { export function f() {} }` resolves when reached directly (the `FindAllReferences.Core.getReferencesForFileName` shape) with no barrel anywhere in the chain.
+- [x] #3 `import { formatting } from './_namespaces/ts.js'` followed by `formatting.formatOnSemicolon(...)` resolves for both a `export *` leaf and a named leaf re-export.
+- [x] #4 The three-chained-barrel `discoverTypings` shape resolves across a wildcard hop, a namespace-object hop and a wildcard hop.
+- [x] #5 Integration tests (using the `_namespaces` barrel fixture) cover each of these evidence cases individually, each asserting `resolutions.length === 1`.
+- [x] #6 The existing `resolve_references.*.test.ts` namespace-import suites stay green and no hop that previously resolved through `get_type_member` / `get_member_index()` changes target.
 
 <!-- AC:END -->
 

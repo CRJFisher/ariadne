@@ -227,6 +227,12 @@ function resolve_via_module_file(
   const root = module_path[0];
 
   for (const anchor of module_files_bound_in_scope(root, scope_id, context)) {
+    // Recorded before the guard for the same reason as the candidate loop
+    // below: a module the project does not hold yet is precisely the one whose
+    // arrival has to bring this reader back.
+    context.imports.record_module_path_read(referring_file, anchor);
+    if (!is_indexed(anchor, context)) continue;
+
     const resolved = resolve_under_module_file(
       anchor,
       module_path.slice(1),
@@ -401,6 +407,7 @@ function resolve_under_module_file(
     // no import of that file names — a `#[path]`-remapped `mod` among them — so
     // the read is its dependency however the landed file happens to bind it.
     context.imports.record_module_path_read(referring_file, next);
+    if (!is_indexed(next, context)) continue;
 
     const resolved = resolve_under_module_file(
       next,
@@ -454,7 +461,7 @@ function module_files_bound_in_scope(
         (imp.import_kind === "namespace"
           ? context.imports.get_resolved_import_path(imp.symbol_id)
           : undefined);
-      if (target && is_indexed(target, context) && !matches.includes(target)) {
+      if (target && !matches.includes(target)) {
         matches.push(target);
       }
     }
