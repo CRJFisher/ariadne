@@ -80,7 +80,7 @@ function resolve_callable_value(
       context.imports,
       context.exports,
       context.languages,
-      context.root_folder
+      context.modules
     );
     return is_ok(method_result) ? method_result.value : [];
   }
