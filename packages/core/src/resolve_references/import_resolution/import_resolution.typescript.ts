@@ -39,6 +39,12 @@ export function resolve_module_path_typescript(
  * so `@scope/pkg/sub` prefers a `@scope/pkg/sub` entry over `@scope/pkg`. The
  * alias target is probed the same way a relative path is, so a directory
  * target lands on its `index.*`.
+ *
+ * An entry may name a file rather than a directory — a package whose `exports`
+ * declares its entry point does. A deeper specifier the index does not list
+ * sits beside that file rather than under it, so the remainder joins onto its
+ * directory: `@scope/pkg/util` with a `pkg/src/index.ts` entry is
+ * `pkg/src/util`.
  */
 function resolve_bare_typescript(
   import_path: string,
@@ -60,9 +66,23 @@ function resolve_bare_typescript(
   }
 
   const remainder = import_path.slice(matched_key.length).replace(/^\//, "");
-  const absolute_target = remainder ? path.join(target, remainder) : target;
+  if (!remainder) {
+    return (probe_candidates(target, resolution.root_folder) ??
+      import_path) as FilePath;
+  }
 
-  const found = probe_candidates(absolute_target, resolution.root_folder);
+  // Probing decides whether the entry named a file or a directory, which the
+  // path alone cannot: a `paths` alias routinely names a file without its
+  // extension. A deeper specifier sits beside the file an entry names, and
+  // inside a directory it names — probing the entry and taking its parent is
+  // both, because a directory probes to its own `index.*`.
+  const entry_file = probe_candidates(target, resolution.root_folder);
+  const join_base = entry_file ? path.dirname(entry_file) : target;
+
+  const found = probe_candidates(
+    path.join(join_base, remainder),
+    resolution.root_folder
+  );
   return (found ?? import_path) as FilePath;
 }
 

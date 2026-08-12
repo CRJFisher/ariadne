@@ -39,8 +39,12 @@ async function setup_project(
   const project = new Project();
   await project.initialize(temp_dir as FilePath);
 
+  // Manifests belong on disk for the specifier index to read, but only source
+  // files are indexed — the same split the real loader makes.
   for (const [relative_path, content] of Object.entries(files)) {
-    project.update_file(file_paths[relative_path], content);
+    if (/\.(ts|tsx|js|jsx)$/.test(relative_path)) {
+      project.update_file(file_paths[relative_path], content);
+    }
   }
 
   return { project, temp_dir, file_paths };
@@ -1030,9 +1034,7 @@ export function installTypings(fileNames: string[]): number {
   it("resolves a bare specifier through a tsconfig paths alias onto a star-re-exporting barrel", async () => {
     // nest: `import { mixin } from "@nestjs/common"`, where the alias target's
     // index.ts is itself a star re-export chain.
-    const temp_dir = fs.mkdtempSync(path.join(os.tmpdir(), "ariadne-ts-alias-"));
-    temp_dirs.push(temp_dir);
-    const files: Record<string, string> = {
+    const { project, temp_dir, file_paths } = await setup_project({
       "tsconfig.json": `{
   "compilerOptions": {
     "paths": {
@@ -1052,22 +1054,8 @@ export function inject(): number {
   return mixin();
 }
 `,
-    };
-    const file_paths: Record<string, FilePath> = {};
-    for (const [relative_path, content] of Object.entries(files)) {
-      const abs = path.join(temp_dir, relative_path);
-      fs.mkdirSync(path.dirname(abs), { recursive: true });
-      fs.writeFileSync(abs, content);
-      file_paths[relative_path] = abs as FilePath;
-    }
-
-    const project = new Project();
-    await project.initialize(temp_dir as FilePath);
-    for (const [relative_path, content] of Object.entries(files)) {
-      if (relative_path.endsWith(".ts")) {
-        project.update_file(file_paths[relative_path], content);
-      }
-    }
+    });
+    temp_dirs.push(temp_dir);
 
     expect_call_resolves_to(
       project,
@@ -1075,6 +1063,205 @@ export function inject(): number {
       "mixin",
       file_paths["packages/common/utils.ts"]
     );
+  });
+
+  it("resolves an alias a per-package tsconfig inherits through extends", async () => {
+    // The standard monorepo layout: one shared base config declares `paths`,
+    // each package's own config declares none and only extends it.
+    const { project, temp_dir, file_paths } = await setup_project({
+      "tsconfig.base.json": `{
+  "compilerOptions": {
+    "baseUrl": "./libs",
+    "paths": {
+      "@app/shared": ["shared"],
+    },
+  },
+}`,
+      "packages/web/tsconfig.json": "{ \"extends\": \"../../tsconfig.base.json\" }",
+      "libs/shared/index.ts": `export function share(): number {
+  return 1;
+}
+`,
+      "packages/web/app.ts": `import { share } from "@app/shared";
+
+export function run(): number {
+  return share();
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect_call_resolves_to(
+      project,
+      file_paths["packages/web/app.ts"],
+      "share",
+      file_paths["libs/shared/index.ts"]
+    );
+  });
+
+  it("resolves a workspace package through its exports entry point", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "packages/core/package.json": `{
+  "name": "@scope/core",
+  "exports": { ".": { "import": "./src/index.ts" } }
+}`,
+      "packages/core/src/index.ts": `export function core(): number {
+  return 1;
+}
+`,
+      "packages/app/main.ts": `import { core } from "@scope/core";
+
+export function run(): number {
+  return core();
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect_call_resolves_to(
+      project,
+      file_paths["packages/app/main.ts"],
+      "core",
+      file_paths["packages/core/src/index.ts"]
+    );
+  });
+
+  it("resolves a workspace package's subpath export", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "packages/core/package.json": `{
+  "name": "@scope/core",
+  "exports": {
+    ".": "./src/index.ts",
+    "./testing": "./src/testing/harness.ts"
+  }
+}`,
+      "packages/core/src/index.ts": `export function core(): number {
+  return 1;
+}
+`,
+      "packages/core/src/testing/harness.ts": `export function harness(): number {
+  return 2;
+}
+`,
+      "packages/app/main.ts": `import { harness } from "@scope/core/testing";
+
+export function run(): number {
+  return harness();
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect_call_resolves_to(
+      project,
+      file_paths["packages/app/main.ts"],
+      "harness",
+      file_paths["packages/core/src/testing/harness.ts"]
+    );
+  });
+
+  it("resolves a deep import into a package whose exports names its entry point", async () => {
+    // A specifier the `exports` map does not list sits beside the entry point it
+    // does, not under it.
+    const { project, temp_dir, file_paths } = await setup_project({
+      "packages/core/package.json": `{
+  "name": "@scope/core",
+  "exports": { ".": "./src/index.ts" }
+}`,
+      "packages/core/src/index.ts": `export function core(): number {
+  return 1;
+}
+`,
+      "packages/core/src/util/helper.ts": `export function helper(): number {
+  return 2;
+}
+`,
+      "packages/app/main.ts": `import { helper } from "@scope/core/util/helper";
+
+export function run(): number {
+  return helper();
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect_call_resolves_to(
+      project,
+      file_paths["packages/app/main.ts"],
+      "helper",
+      file_paths["packages/core/src/util/helper.ts"]
+    );
+  });
+
+  it("resolves a deep import through an alias naming a file without its extension", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "tsconfig.json": `{
+  "compilerOptions": {
+    "paths": { "@app/lib": ["./src/lib/index"] },
+  },
+}`,
+      "src/lib/index.ts": `export function entry(): number {
+  return 1;
+}
+`,
+      "src/lib/deep.ts": `export function deep(): number {
+  return 2;
+}
+`,
+      "src/app.ts": `import { deep } from "@app/lib/deep";
+
+export function run(): number {
+  return deep();
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect_call_resolves_to(
+      project,
+      file_paths["src/app.ts"],
+      "deep",
+      file_paths["src/lib/deep.ts"]
+    );
+  });
+
+  it("leaves a genuinely external specifier opaque", async () => {
+    // Decoys the resolver must not reach for: a directory whose name looks like
+    // the specifier's scope, and a workspace package whose declared name differs
+    // from its directory.
+    const { project, temp_dir, file_paths } = await setup_project({
+      "vendor/ui/index.ts": `export function render(): number {
+  return 1;
+}
+`,
+      "packages/other/package.json": "{ \"name\": \"@other/pkg\" }",
+      "packages/other/index.ts": `export function render(): number {
+  return 2;
+}
+`,
+      "packages/app/main.ts": `import { render } from "@vendor/ui";
+
+export function run(): number {
+  return render();
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    const import_def = project.imports
+      .get_file_imports(file_paths["packages/app/main.ts"])
+      .find((imp) => imp.name === ("render" as SymbolName));
+    expect(import_def).toBeDefined();
+    expect(
+      project.imports.get_resolved_import_path(import_def!.symbol_id)
+    ).toEqual("@vendor/ui" as FilePath);
+
+    const call = project.resolutions
+      .get_calls_for_file(file_paths["packages/app/main.ts"])
+      .find((c) => c.name === ("render" as SymbolName));
+    expect(call).toBeDefined();
+    expect(call!.resolutions).toEqual([]);
+    expect(call!.resolution_failure?.reason).toEqual("name_not_in_scope");
   });
 
   it("resolves a two-statement named re-export through to the origin definition", async () => {

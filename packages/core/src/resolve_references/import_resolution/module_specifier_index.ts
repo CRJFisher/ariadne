@@ -11,6 +11,7 @@ import * as path from "path";
 import { readFile } from "fs/promises";
 import type { FilePath } from "@ariadnejs/types";
 import type { FileSystemFolder } from "../file_folders";
+import { has_file_in_tree } from "../file_folders";
 
 export interface ModuleSpecifierIndex {
   /**
@@ -102,18 +103,21 @@ export async function build_module_specifier_index(
 ): Promise<ModuleSpecifierIndex> {
   const package_roots = new Map<string, FilePath>();
   const crate_roots = new Map<string, FilePath>();
+  const parsed_configs: ConfigAliasCache = new Map();
 
   for (const directory of walk_directories(root_folder)) {
     if (directory.files.has("tsconfig.json")) {
       await index_tsconfig_paths(
         path.join(directory.path, "tsconfig.json") as FilePath,
-        package_roots
+        package_roots,
+        parsed_configs
       );
     }
     if (directory.files.has("jsconfig.json")) {
       await index_tsconfig_paths(
         path.join(directory.path, "jsconfig.json") as FilePath,
-        package_roots
+        package_roots,
+        parsed_configs
       );
     }
     if (directory.files.has("package.json")) {
@@ -137,32 +141,135 @@ function* walk_directories(
 }
 
 /**
- * A tsconfig `paths` entry maps a specifier to one or more targets; the first
- * target wins, and a trailing `/*` on either side is dropped so the key is the
- * specifier prefix a lookup matches on.
+ * Index a config's aliases, its own declarations layered over everything it
+ * inherits through `extends`.
  */
 async function index_tsconfig_paths(
   config_file: FilePath,
-  package_roots: Map<string, FilePath>
+  package_roots: Map<string, FilePath>,
+  parsed: ConfigAliasCache
 ): Promise<void> {
+  for (const [key, target] of await read_config_aliases(
+    config_file,
+    new Set(),
+    parsed
+  )) {
+    package_roots.set(key, target);
+  }
+}
+
+/**
+ * Aliases already read from a config, shared across every leaf that extends it.
+ * One shared base config is the whole point of the `extends` layout, so without
+ * this it is re-read and re-parsed once per package.
+ */
+type ConfigAliasCache = Map<FilePath, ReadonlyMap<string, FilePath>>;
+
+/**
+ * Every alias a config declares or inherits.
+ *
+ * `extends` is followed first so the extending config's own `paths` override
+ * what it inherits, and each config's `paths` and `baseUrl` are resolved
+ * against the directory of the config that *declares* them — a base config two
+ * directories up roots its aliases there, not at the leaf.
+ *
+ * `visited` cuts a cyclic chain and is copied per branch, so two entries of an
+ * `extends` array that share a base each still inherit from it; `parsed` is the
+ * shared cache that keeps the shared base from being read twice.
+ */
+async function read_config_aliases(
+  config_file: FilePath,
+  visited: Set<FilePath>,
+  parsed: ConfigAliasCache
+): Promise<ReadonlyMap<string, FilePath>> {
+  const cached = parsed.get(config_file);
+  if (cached) {
+    return cached;
+  }
+
+  const aliases = new Map<string, FilePath>();
+  if (visited.has(config_file)) {
+    return aliases;
+  }
+  visited.add(config_file);
+
   const config = await read_json_file(config_file);
   if (!is_record(config)) {
-    return;
+    return aliases;
   }
+
+  const config_dir = path.dirname(config_file);
+  for (const base_config of base_config_files(config["extends"], config_dir)) {
+    for (const [key, target] of await read_config_aliases(
+      base_config,
+      new Set(visited),
+      parsed
+    )) {
+      aliases.set(key, target);
+    }
+  }
+
+  for (const [key, target] of declared_aliases(config, config_dir)) {
+    aliases.set(key, target);
+  }
+
+  parsed.set(config_file, aliases);
+  return aliases;
+}
+
+/**
+ * The config files an `extends` field names, in the order their aliases apply.
+ * TypeScript 5 accepts an array, whose later entries override earlier ones, as
+ * well as the single-string form. A bare specifier names an npm-published
+ * config, so only path-relative entries are followed — a base published by a
+ * workspace package therefore contributes nothing, even when its source is in
+ * the tree. An entry that does not already end in
+ * `.json` names the config without its extension (`../tsconfig.base`), which
+ * `path.extname` cannot tell from a real extension.
+ */
+function base_config_files(
+  extends_field: unknown,
+  config_dir: string
+): FilePath[] {
+  const entries =
+    typeof extends_field === "string"
+      ? [extends_field]
+      : Array.isArray(extends_field)
+        ? extends_field.filter((entry) => typeof entry === "string")
+        : [];
+
+  return entries
+    .filter((entry) => entry.startsWith(".") || path.isAbsolute(entry))
+    .map((entry) => {
+      const with_extension = entry.endsWith(".json") ? entry : `${entry}.json`;
+      return path.resolve(config_dir, with_extension) as FilePath;
+    });
+}
+
+/**
+ * A config's own `paths` entries. Each maps a specifier to one or more targets;
+ * the first target wins, and a trailing `/*` on either side is dropped so the
+ * key is the specifier prefix a lookup matches on.
+ */
+function declared_aliases(
+  config: Record<string, unknown>,
+  config_dir: string
+): Map<string, FilePath> {
+  const aliases = new Map<string, FilePath>();
+
   const compiler_options = config["compilerOptions"];
   if (!is_record(compiler_options)) {
-    return;
+    return aliases;
   }
   const paths = compiler_options["paths"];
   if (!is_record(paths)) {
-    return;
+    return aliases;
   }
 
   const base_url =
     typeof compiler_options["baseUrl"] === "string"
       ? compiler_options["baseUrl"]
       : ".";
-  const config_dir = path.dirname(config_file);
 
   for (const [specifier, targets] of Object.entries(paths)) {
     if (!Array.isArray(targets) || typeof targets[0] !== "string") {
@@ -170,16 +277,21 @@ async function index_tsconfig_paths(
     }
     const key = specifier.replace(/\/\*$/, "");
     const target = targets[0].replace(/\/\*$/, "");
-    package_roots.set(
-      key,
-      path.resolve(config_dir, base_url, target) as FilePath
-    );
+    aliases.set(key, path.resolve(config_dir, base_url, target) as FilePath);
   }
+
+  return aliases;
 }
 
 /**
  * A workspace package's own name denotes its directory, so an import of that
  * name from a sibling package resolves inside the project.
+ *
+ * A package that declares `exports` says where each of its entry points really
+ * lives, so the name is pointed at that file instead of the directory, and each
+ * subpath it publishes (`@scope/pkg/testing`) becomes a key of its own. Without
+ * `exports` the name stays on the directory and the specifier resolver probes
+ * its `index.*`.
  */
 async function index_package_name(
   directory: FileSystemFolder,
@@ -195,7 +307,113 @@ async function index_package_name(
   if (typeof name !== "string" || package_roots.has(name)) {
     return;
   }
-  package_roots.set(name, directory.path);
+
+  const exports_field = manifest["exports"];
+  const root_target = published_target(directory, root_export_entry(exports_field));
+  package_roots.set(name, root_target ?? directory.path);
+
+  if (!is_record(exports_field)) {
+    return;
+  }
+  for (const [subpath, value] of Object.entries(exports_field)) {
+    if (!subpath.startsWith("./")) {
+      continue;
+    }
+    const key = `${name}/${subpath.slice(2)}`;
+    const target = published_target(directory, value);
+    if (target && !package_roots.has(key)) {
+      package_roots.set(key, target);
+    }
+  }
+}
+
+/**
+ * The `exports` entry for the package's own name. A map keyed by subpaths carries
+ * it under `"."`; a map with no `.`-prefixed key is Node's sugar for that entry
+ * alone, and the keys are conditions. The two forms cannot be mixed, so which
+ * one is present decides unambiguously.
+ */
+function root_export_entry(exports_field: unknown): unknown {
+  if (!is_record(exports_field)) {
+    return exports_field;
+  }
+  return Object.keys(exports_field).some((key) => key.startsWith("."))
+    ? exports_field["."]
+    : exports_field;
+}
+
+/**
+ * The conditions an `exports` entry may be keyed by, most source-like first: a
+ * condition object is a set of alternatives and only one of them can be the file
+ * to analyse. `source`, `import` and `module` name original or ESM-built modules
+ * where a package publishes them; `require` and `default` name the artefact,
+ * which is the answer only when nothing better is declared. `types` ranks last
+ * because a `.d.ts` carries declarations and no bodies — but a package that
+ * points `types` at real source and `default` at a build it does not ship in the
+ * tree has that source as its only reachable entry, and only the last rank can
+ * still find it.
+ */
+const EXPORT_CONDITION_PRECEDENCE = [
+  "source",
+  "import",
+  "module",
+  "require",
+  "default",
+  "types",
+] as const;
+
+/**
+ * The relative targets an `exports` value names, most source-like first,
+ * following nested condition objects. Every candidate is offered rather than
+ * only the best-ranked one: a manifest that names a `.d.ts` or a `dist/` build
+ * above the source it also declares would otherwise discard the whole entry.
+ *
+ * A conditional array form (`["./a.js", "./b.js"]`) is not read: it is a
+ * fallback list whose members are alternatives, and picking one would be a
+ * guess.
+ */
+function export_target_candidates(value: unknown): string[] {
+  if (typeof value === "string") {
+    return [value];
+  }
+  if (!is_record(value)) {
+    return [];
+  }
+  return EXPORT_CONDITION_PRECEDENCE.flatMap((condition) =>
+    export_target_candidates(value[condition])
+  );
+}
+
+/**
+ * The file an `exports` entry publishes: the first candidate inside the
+ * package's own directory that is present in the tree.
+ *
+ * Containment is a hard guard — `"./evil": "../../../etc/passwd"` names a file
+ * the package does not own, and indexing it would let a specifier reach anywhere
+ * on disk. (The subtree probe below rejects an escaping path too; the explicit
+ * check states the rule rather than leaving it to a side effect.) Presence keeps
+ * a manifest that only publishes built artefacts from pointing the specifier at
+ * a file that is not there, leaving the package directory to be probed for its
+ * `index.*` instead.
+ */
+function published_target(
+  package_directory: FileSystemFolder,
+  entry: unknown
+): FilePath | undefined {
+  const package_dir = package_directory.path;
+
+  for (const target of export_target_candidates(entry)) {
+    const resolved = path.resolve(package_dir, target);
+    const relative = path.relative(package_dir, resolved);
+    if (relative.startsWith("..") || path.isAbsolute(relative)) {
+      continue;
+    }
+    if (has_file_in_tree(resolved as FilePath, package_directory)) {
+      return resolved as FilePath;
+    }
+  }
+
+  return undefined;
 }
 
 /**
