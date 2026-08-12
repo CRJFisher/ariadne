@@ -780,6 +780,9 @@ def run():
     const { project, temp_dir, file_paths } = await setup_project({
       "lib.py": `def helper():
     return "lib"
+
+def lib_only():
+    return "lib_only"
 `,
       "app.py": `from lib import *
 
@@ -787,7 +790,7 @@ def helper():
     return "app"
 
 def run():
-    return helper()
+    return helper() + lib_only()
 `,
     });
     temp_dirs.push(temp_dir);
@@ -798,6 +801,15 @@ def run():
       "run",
       "helper",
       file_paths["app.py"]
+    );
+    // The star surface is layered, not absent: a name only it supplies binds
+    // through it. Without this the shadowing assertion above holds trivially.
+    expect_python_call_resolves_to(
+      project,
+      file_paths["app.py"],
+      "run",
+      "lib_only",
+      file_paths["lib.py"]
     );
   });
 
@@ -841,6 +853,9 @@ def beta():
     const { project, temp_dir, file_paths } = await setup_project({
       "one.py": `def shared():
     return 1
+
+def one_only():
+    return 3
 `,
       "two.py": `def shared():
     return 2
@@ -849,7 +864,7 @@ def beta():
 from two import shared
 
 def run():
-    return shared()
+    return shared() + one_only()
 `,
     });
     temp_dirs.push(temp_dir);
@@ -860,6 +875,15 @@ def run():
       "run",
       "shared",
       file_paths["two.py"]
+    );
+    // The star surface is layered below the explicit import, not discarded: a
+    // name only `one.py` supplies still binds through the star edge.
+    expect_python_call_resolves_to(
+      project,
+      file_paths["app.py"],
+      "run",
+      "one_only",
+      file_paths["one.py"]
     );
   });
 });

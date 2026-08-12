@@ -197,12 +197,32 @@ export class ExportRegistry {
         }
 
         // Two import-backed records for one name are legal source, not an
-        // indexing bug: cfg-gated alternates (`#[cfg(unix)] pub use a::Thing;
-        // #[cfg(not(unix))] pub use b::Thing;`) and Python's rebinding
-        // (`from a import x` then `from b import x`). Keep the first for
-        // determinism; the throw below stays reserved for duplicate local
-        // definitions.
+        // indexing bug, so the throw below stays reserved for duplicate local
+        // definitions. Which record survives is a language question: Rust's
+        // cfg-gated alternates (`#[cfg(unix)] pub use a::Thing;
+        // #[cfg(not(unix))] pub use b::Thing;`) name the same item under
+        // mutually exclusive builds, so the first is as good as the second and
+        // keeps the file indexed; Python's `from a import x` then
+        // `from b import x` genuinely rebinds, so the last in source order is
+        // the one the module exports — the same rule reassignment follows.
         if (existing.import_def && import_def) {
+          if (
+            is_python_file(file_id) &&
+            should_replace_python_variable(
+              existing.symbol_id,
+              def.location.start_line
+            )
+          ) {
+            metadata_map.set(export_name, {
+              symbol_id: def.symbol_id,
+              export_name,
+              is_default,
+              is_reexport,
+              import_def,
+            });
+            symbol_ids.add(def.symbol_id);
+            symbol_ids.delete(existing.symbol_id);
+          }
           return;
         }
 

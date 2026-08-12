@@ -40,6 +40,7 @@ afterAll(() => {
 /** Write files to a temp dir and return the tree Project would build for it. */
 async function index_for(files: Record<string, string>): Promise<{
   package_roots: ReadonlyMap<string, FilePath>;
+  config_aliases: ReadonlyMap<FilePath, ReadonlyMap<string, FilePath>>;
   crate_roots: ReadonlyMap<string, FilePath>;
   temp_dir: string;
 }> {
@@ -53,6 +54,14 @@ async function index_for(files: Record<string, string>): Promise<{
 
   const index = await build_module_specifier_index(read_tree(temp_dir));
   return { ...index, temp_dir };
+}
+
+/** The aliases the config in `directory` declares over the files beneath it. */
+function aliases_governing(
+  config_aliases: ReadonlyMap<FilePath, ReadonlyMap<string, FilePath>>,
+  directory: string
+): ReadonlyMap<string, FilePath> {
+  return config_aliases.get(directory as FilePath) ?? new Map();
 }
 
 describe("parse_jsonc", () => {
@@ -73,7 +82,7 @@ describe("parse_jsonc", () => {
 
 describe("build_module_specifier_index", () => {
   it("indexes a tsconfig paths alias relative to the config that declares it", async () => {
-    const { package_roots, temp_dir } = await index_for({
+    const { config_aliases, temp_dir } = await index_for({
       "tsconfig.json": `{
   "compilerOptions": {
     "paths": {
@@ -84,9 +93,37 @@ describe("build_module_specifier_index", () => {
       "packages/common/index.ts": "export function mixin() { return 1; }\n",
     });
 
-    expect(package_roots.get("@nestjs/common")).toBe(
+    expect(aliases_governing(config_aliases, temp_dir).get("@nestjs/common")).toBe(
       path.join(temp_dir, "packages/common")
     );
+  });
+
+  it("keys each package's aliases under that package, not one project-wide map", async () => {
+    // `@/*` is the conventional self-alias, so every package declares it. One
+    // shared map keyed by `@` keeps whichever package the walk reached last.
+    const { config_aliases, temp_dir } = await index_for({
+      "packages/pkg_a/tsconfig.json": `{
+  "compilerOptions": { "paths": { "@/*": ["src/*"] } },
+}`,
+      "packages/pkg_a/src/index.ts": "export function a() { return 1; }\n",
+      "packages/pkg_b/tsconfig.json": `{
+  "compilerOptions": { "paths": { "@/*": ["src/*"] } },
+}`,
+      "packages/pkg_b/src/index.ts": "export function b() { return 2; }\n",
+    });
+
+    expect(
+      aliases_governing(
+        config_aliases,
+        path.join(temp_dir, "packages/pkg_a")
+      ).get("@")
+    ).toBe(path.join(temp_dir, "packages/pkg_a/src"));
+    expect(
+      aliases_governing(
+        config_aliases,
+        path.join(temp_dir, "packages/pkg_b")
+      ).get("@")
+    ).toBe(path.join(temp_dir, "packages/pkg_b/src"));
   });
 
   it("indexes a workspace package by its declared name", async () => {
@@ -123,7 +160,7 @@ describe("build_module_specifier_index", () => {
 
   describe("tsconfig extends chains", () => {
     it("inherits paths from a base config two directories above the leaf", async () => {
-      const { package_roots, temp_dir } = await index_for({
+      const { config_aliases, temp_dir } = await index_for({
         "tsconfig.base.json": `{
   "compilerOptions": {
     "baseUrl": "./libs",
@@ -136,14 +173,18 @@ describe("build_module_specifier_index", () => {
         "libs/shared/index.ts": "export function shared() { return 1; }\n",
       });
 
-      // Rooted at the declaring config's baseUrl, not at the leaf's directory.
-      expect(package_roots.get("@app/shared")).toBe(
-        path.join(temp_dir, "libs/shared")
-      );
+      // Rooted at the declaring config's baseUrl, not at the leaf's directory,
+      // and governing the leaf package the inheriting config sits in.
+      expect(
+        aliases_governing(
+          config_aliases,
+          path.join(temp_dir, "packages/web")
+        ).get("@app/shared")
+      ).toBe(path.join(temp_dir, "libs/shared"));
     });
 
     it("lets a leaf config override an alias it inherits", async () => {
-      const { package_roots, temp_dir } = await index_for({
+      const { config_aliases, temp_dir } = await index_for({
         "tsconfig.base.json": `{
   "compilerOptions": {
     "paths": { "@app/lib": ["./base/lib"] },
@@ -159,13 +200,13 @@ describe("build_module_specifier_index", () => {
         "leaf/lib/index.ts": "export function leaf() { return 1; }\n",
       });
 
-      expect(package_roots.get("@app/lib")).toBe(
+      expect(aliases_governing(config_aliases, temp_dir).get("@app/lib")).toBe(
         path.join(temp_dir, "leaf/lib")
       );
     });
 
     it("takes the last entry of a TypeScript 5 array extends", async () => {
-      const { package_roots, temp_dir } = await index_for({
+      const { config_aliases, temp_dir } = await index_for({
         "first.json": `{
   "compilerOptions": { "paths": { "@app/lib": ["./first/lib"] } },
 }`,
@@ -177,13 +218,13 @@ describe("build_module_specifier_index", () => {
         "second/lib/index.ts": "export function second() { return 1; }\n",
       });
 
-      expect(package_roots.get("@app/lib")).toBe(
+      expect(aliases_governing(config_aliases, temp_dir).get("@app/lib")).toBe(
         path.join(temp_dir, "second/lib")
       );
     });
 
     it("adds an extension to an extends entry that omits one", async () => {
-      const { package_roots, temp_dir } = await index_for({
+      const { config_aliases, temp_dir } = await index_for({
         "tsconfig.base.json": `{
   "compilerOptions": { "paths": { "@app/lib": ["./base/lib"] } },
 }`,
@@ -191,13 +232,13 @@ describe("build_module_specifier_index", () => {
         "base/lib/index.ts": "export function base() { return 1; }\n",
       });
 
-      expect(package_roots.get("@app/lib")).toBe(
+      expect(aliases_governing(config_aliases, temp_dir).get("@app/lib")).toBe(
         path.join(temp_dir, "base/lib")
       );
     });
 
     it("terminates on a cyclic extends chain", async () => {
-      const { package_roots, temp_dir } = await index_for({
+      const { config_aliases, temp_dir } = await index_for({
         "tsconfig.json": `{
   "extends": "./tsconfig.other.json",
   "compilerOptions": { "paths": { "@app/leaf": ["./leaf"] } },
@@ -210,14 +251,15 @@ describe("build_module_specifier_index", () => {
         "other/index.ts": "export function other() { return 1; }\n",
       });
 
-      expect(package_roots.get("@app/leaf")).toBe(path.join(temp_dir, "leaf"));
-      expect(package_roots.get("@app/other")).toBe(path.join(temp_dir, "other"));
+      const aliases = aliases_governing(config_aliases, temp_dir);
+      expect(aliases.get("@app/leaf")).toBe(path.join(temp_dir, "leaf"));
+      expect(aliases.get("@app/other")).toBe(path.join(temp_dir, "other"));
     });
 
     it("lets each entry of an extends array inherit from a shared base", async () => {
       // TypeScript gives later array entries precedence, so `b.json` — which
       // declares nothing of its own — must still carry what it inherits.
-      const { package_roots, temp_dir } = await index_for({
+      const { config_aliases, temp_dir } = await index_for({
         "base.json": `{
   "compilerOptions": { "paths": { "@app/lib": ["./from-base"] } },
 }`,
@@ -231,7 +273,7 @@ describe("build_module_specifier_index", () => {
         "from-a/index.ts": "export function a() { return 1; }\n",
       });
 
-      expect(package_roots.get("@app/lib")).toBe(
+      expect(aliases_governing(config_aliases, temp_dir).get("@app/lib")).toBe(
         path.join(temp_dir, "from-base")
       );
     });
@@ -240,7 +282,7 @@ describe("build_module_specifier_index", () => {
       // Only a path-relative base is followed. The base here is not itself named
       // `tsconfig.json`, so the directory walk does not pick it up independently
       // and nothing but the skip decides the answer.
-      const { package_roots, temp_dir } = await index_for({
+      const { config_aliases, temp_dir } = await index_for({
         "tsconfig.json": `{
   "extends": "@scope/config/base.json",
   "compilerOptions": { "paths": { "@app/lib": ["./lib"] } },
@@ -252,12 +294,13 @@ describe("build_module_specifier_index", () => {
         "@scope/config/other/index.ts": "export function o() { return 1; }\n",
       });
 
-      expect(package_roots.get("@app/lib")).toBe(path.join(temp_dir, "lib"));
-      expect(package_roots.has("@app/other")).toBe(false);
+      const aliases = aliases_governing(config_aliases, temp_dir);
+      expect(aliases.get("@app/lib")).toBe(path.join(temp_dir, "lib"));
+      expect(aliases.has("@app/other")).toBe(false);
     });
 
     it("skips an npm-published base config that is not on disk", async () => {
-      const { package_roots, temp_dir } = await index_for({
+      const { config_aliases, temp_dir } = await index_for({
         "tsconfig.json": `{
   "extends": "@tsconfig/node20/tsconfig.json",
   "compilerOptions": { "paths": { "@app/lib": ["./lib"] } },
@@ -265,7 +308,53 @@ describe("build_module_specifier_index", () => {
         "lib/index.ts": "export function f() { return 1; }\n",
       });
 
-      expect(package_roots.get("@app/lib")).toBe(path.join(temp_dir, "lib"));
+      expect(aliases_governing(config_aliases, temp_dir).get("@app/lib")).toBe(
+        path.join(temp_dir, "lib")
+      );
+    });
+  });
+
+  describe("manifest walk", () => {
+    it("leaves manifests in vendored and generated directories out", async () => {
+      const { package_roots, config_aliases, crate_roots } = await index_for({
+        "node_modules/dep/package.json": "{ \"name\": \"dep\" }",
+        "node_modules/dep/tsconfig.json": `{
+  "compilerOptions": { "paths": { "@dep/lib": ["./src"] } },
+}`,
+        "dist/package.json": "{ \"name\": \"built\" }",
+        "build/package.json": "{ \"name\": \"built-output\" }",
+        "target/vendored-crate/Cargo.toml": "[package]\nname = \"vendored-crate\"\n",
+        "__pycache__/package.json": "{ \"name\": \"cached\" }",
+        ".yarn/cache/pkg/package.json": "{ \"name\": \"cached-dep\" }",
+        "packages/app/package.json": "{ \"name\": \"@scope/app\" }",
+        "packages/app/index.ts": "export function f() { return 1; }\n",
+      });
+
+      expect([...package_roots.keys()]).toEqual(["@scope/app"]);
+      expect(config_aliases.size).toBe(0);
+      expect(crate_roots.size).toBe(0);
+    });
+
+    it("indexes a workspace package three directories below the root", async () => {
+      // The walk is depth-unbounded: a grouped package sits deeper than the
+      // conventional `packages/<name>` and still has to be found.
+      const { package_roots, config_aliases, temp_dir } = await index_for({
+        "packages/group/deeppkg/package.json": "{ \"name\": \"@scope/deep\" }",
+        "packages/group/deeppkg/tsconfig.json": `{
+  "compilerOptions": { "paths": { "@/*": ["src/*"] } },
+}`,
+        "packages/group/deeppkg/src/index.ts": "export function f() { return 1; }\n",
+      });
+
+      expect(package_roots.get("@scope/deep")).toBe(
+        path.join(temp_dir, "packages/group/deeppkg")
+      );
+      expect(
+        aliases_governing(
+          config_aliases,
+          path.join(temp_dir, "packages/group/deeppkg")
+        ).get("@")
+      ).toBe(path.join(temp_dir, "packages/group/deeppkg/src"));
     });
   });
 

@@ -16,9 +16,22 @@ import { has_file_in_tree } from "../file_folders";
 export interface ModuleSpecifierIndex {
   /**
    * @language javascript,typescript
-   * Specifier or tsconfig `paths` key -> the file or directory it names.
+   * Package name, or a subpath it publishes -> the file or directory it names.
+   * A declared package name is unique across the project, so it answers the
+   * same way for every importing file.
    */
   readonly package_roots: ReadonlyMap<string, FilePath>;
+
+  /**
+   * @language javascript,typescript
+   * Directory of the config that governs a file -> the tsconfig `paths` key ->
+   * the file or directory it names.
+   *
+   * Aliases are scoped to their declaring config rather than pooled: `@/*` is
+   * the conventional self-alias, so every package in a monorepo declares it,
+   * each pointing at its own `src/`.
+   */
+  readonly config_aliases: ReadonlyMap<FilePath, ReadonlyMap<string, FilePath>>;
 
   /**
    * @language rust
@@ -29,6 +42,7 @@ export interface ModuleSpecifierIndex {
 
 export const EMPTY_MODULE_SPECIFIER_INDEX: ModuleSpecifierIndex = {
   package_roots: new Map(),
+  config_aliases: new Map(),
   crate_roots: new Map(),
 };
 
@@ -93,6 +107,8 @@ export function parse_jsonc(text: string): unknown {
   return JSON.parse(out.replace(/,(\s*[}\]])/g, "$1"));
 }
 
+const ALIAS_DECLARING_CONFIGS = ["tsconfig.json", "jsconfig.json"] as const;
+
 /**
  * Read every manifest in the tree and index what its names denote. Unreadable
  * or malformed manifests are skipped: an absent entry leaves a specifier
@@ -102,23 +118,20 @@ export async function build_module_specifier_index(
   root_folder: FileSystemFolder
 ): Promise<ModuleSpecifierIndex> {
   const package_roots = new Map<string, FilePath>();
+  const config_aliases = new Map<FilePath, Map<string, FilePath>>();
   const crate_roots = new Map<string, FilePath>();
   const parsed_configs: ConfigAliasCache = new Map();
 
   for (const directory of walk_directories(root_folder)) {
-    if (directory.files.has("tsconfig.json")) {
-      await index_tsconfig_paths(
-        path.join(directory.path, "tsconfig.json") as FilePath,
-        package_roots,
-        parsed_configs
-      );
-    }
-    if (directory.files.has("jsconfig.json")) {
-      await index_tsconfig_paths(
-        path.join(directory.path, "jsconfig.json") as FilePath,
-        package_roots,
-        parsed_configs
-      );
+    for (const config_name of ALIAS_DECLARING_CONFIGS) {
+      if (directory.files.has(config_name)) {
+        await index_config_aliases(
+          path.join(directory.path, config_name) as FilePath,
+          directory.path,
+          config_aliases,
+          parsed_configs
+        );
+      }
     }
     if (directory.files.has("package.json")) {
       await index_package_name(directory, package_roots);
@@ -128,33 +141,60 @@ export async function build_module_specifier_index(
     }
   }
 
-  return { package_roots, crate_roots };
+  return { package_roots, config_aliases, crate_roots };
 }
+
+/**
+ * Directories holding generated, vendored or version-control content. Their
+ * manifests describe code the project consumes rather than code it contains,
+ * and an installed dependency tree holds thousands of them — each one a
+ * serial read before indexing can start.
+ *
+ * Depth is deliberately unbounded: a workspace package can sit at any depth
+ * (`packages/group/deeppkg`), and a cap loses it.
+ */
+const VENDORED_DIRECTORIES = new Set([
+  "node_modules",
+  "dist",
+  "build",
+  "target",
+  "__pycache__",
+]);
 
 function* walk_directories(
   folder: FileSystemFolder
 ): Generator<FileSystemFolder> {
   yield folder;
-  for (const child of folder.folders.values()) {
+  for (const [name, child] of folder.folders) {
+    // A dot prefix covers `.git`, and every tool cache that follows its lead.
+    if (VENDORED_DIRECTORIES.has(name) || name.startsWith(".")) {
+      continue;
+    }
     yield* walk_directories(child);
   }
 }
 
 /**
- * Index a config's aliases, its own declarations layered over everything it
- * inherits through `extends`.
+ * Index a config's aliases under the directory it governs — the files beneath
+ * it — with its own declarations layered over everything it inherits through
+ * `extends`.
  */
-async function index_tsconfig_paths(
+async function index_config_aliases(
   config_file: FilePath,
-  package_roots: Map<string, FilePath>,
+  config_dir: FilePath,
+  config_aliases: Map<FilePath, Map<string, FilePath>>,
   parsed: ConfigAliasCache
 ): Promise<void> {
-  for (const [key, target] of await read_config_aliases(
-    config_file,
-    new Set(),
-    parsed
-  )) {
-    package_roots.set(key, target);
+  const aliases = await read_config_aliases(config_file, new Set(), parsed);
+  if (aliases.size === 0) {
+    return;
+  }
+
+  const governed =
+    config_aliases.get(config_dir) ?? new Map<string, FilePath>();
+  config_aliases.set(config_dir, governed);
+  for (const [key, target] of aliases) {
+    governed.set(key, target);
   }
 }
 

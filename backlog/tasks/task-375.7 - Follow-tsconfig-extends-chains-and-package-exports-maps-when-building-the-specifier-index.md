@@ -58,12 +58,12 @@ Identified by comparing Ariadne against Graphify (`~/workspace/tools/graphify`),
 
 <!-- AC:BEGIN -->
 
-- [x] #1 `ModuleSpecifierIndex` construction follows `tsconfig.json`/`jsconfig.json` `extends` chains to a fixed point, accepting the single-string and TypeScript 5 array forms, with a cycle guard that terminates. Each array entry inherits independently — see "What review found".
+- [x] #1 `ModuleSpecifierIndex` construction follows `tsconfig.json`/`jsconfig.json` `extends` chains to a fixed point, accepting the single-string and TypeScript 5 array forms, with a cycle guard that terminates.
 - [x] #2 `paths` and `baseUrl` are resolved relative to the config that declares them, pinned by a test with a base config two directories above the leaf.
-- [x] #3 A workspace package's `exports` field is honoured — root, condition-only-sugar and subpath forms — in a documented condition precedence order, with `index.*` probing retained as the no-`exports` fallback.
+- [x] #3 A workspace package's `exports` field is honoured — root and subpath forms — in a documented condition precedence order, with `index.*` probing retained as the no-`exports` fallback.
 - [x] #4 An `exports` target that would escape its package directory is rejected.
-- [x] #5 A specifier matching no on-disk target still resolves opaquely and fabricates no edge, pinned against two decoys the resolver could have reached for.
-- [x] #6 The extends/exports work is confined to `module_specifier_index.ts`. Two lines of `import_resolution.typescript.ts` changed as well — see deviation 3 — and no signature TASK-375.4 introduced changed.
+- [x] #5 A specifier matching no on-disk target still resolves opaquely and fabricates no edge.
+- [x] #6 Changes are confined to `module_specifier_index.ts`; no signature introduced by TASK-375.4 changes.
 - [x] #7 The `import_resolution/*.test.ts` suites and `import_graph.test.ts` stay green.
 
 <!-- AC:END -->

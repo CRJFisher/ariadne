@@ -7,10 +7,32 @@
 
 import { describe, it, expect, afterAll } from "vitest";
 import { Project } from "../project/project";
+import { load_project } from "../project/load_project";
 import type { FilePath, SymbolName } from "@ariadnejs/types";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
+
+/**
+ * Write a crate layout to a fresh temp directory without indexing it, for the
+ * cases that need the real loader rather than a hand-driven `update_file`.
+ */
+function write_files(files: Record<string, string>): {
+  temp_dir: string;
+  file_paths: Record<string, FilePath>;
+} {
+  const temp_dir = fs.mkdtempSync(path.join(os.tmpdir(), "ariadne-rs-resolve-"));
+
+  const file_paths: Record<string, FilePath> = {};
+  for (const [relative_path, content] of Object.entries(files)) {
+    const abs_path = path.join(temp_dir, relative_path);
+    fs.mkdirSync(path.dirname(abs_path), { recursive: true });
+    fs.writeFileSync(abs_path, content);
+    file_paths[relative_path] = abs_path as FilePath;
+  }
+
+  return { temp_dir, file_paths };
+}
 
 /**
  * Helper to set up a project with files already on disk before initialization.
@@ -22,15 +44,7 @@ async function setup_project(
   temp_dir: string;
   file_paths: Record<string, FilePath>;
 }> {
-  const temp_dir = fs.mkdtempSync(path.join(os.tmpdir(), "ariadne-rs-resolve-"));
-
-  const file_paths: Record<string, FilePath> = {};
-  for (const [relative_path, content] of Object.entries(files)) {
-    const abs_path = path.join(temp_dir, relative_path);
-    fs.mkdirSync(path.dirname(abs_path), { recursive: true });
-    fs.writeFileSync(abs_path, content);
-    file_paths[relative_path] = abs_path as FilePath;
-  }
+  const { temp_dir, file_paths } = write_files(files);
 
   const project = new Project();
   await project.initialize(temp_dir as FilePath);
@@ -743,39 +757,86 @@ pub fn run2() -> i32 {
       );
     });
 
-    it("indexes cfg-gated duplicate pub use re-exports without a duplicate-export error", async () => {
-      const { project, temp_dir, file_paths } = await setup_project({
+    it("keeps the crate root and its mod edges when cfg arms re-export one name twice", async () => {
+      // Two cfg arms publishing `Handle` are legal Rust, not an indexing bug.
+      // Treating them as a duplicate export throws mid-index and the loader
+      // drops src/lib.rs, taking the crate root's whole published surface —
+      // its `mod` declarations and its re-exports — out of the corpus.
+      const { temp_dir, file_paths } = write_files({
         "src/lib.rs": `pub mod unix_impl;
 pub mod windows_impl;
-pub mod app;
+pub mod unix_app;
+pub mod windows_app;
+pub mod root_app;
 
 #[cfg(unix)]
-pub use crate::unix_impl::spawn;
-#[cfg(not(unix))]
-pub use crate::windows_impl::spawn;
+pub use crate::unix_impl::Handle;
+#[cfg(windows)]
+pub use crate::windows_impl::Handle;
 `,
-        "src/unix_impl.rs": `pub fn spawn() -> i32 {
-    1
-}
-`,
-        "src/windows_impl.rs": `pub fn spawn() -> i32 {
-    2
-}
-`,
-        "src/app.rs": `use crate::spawn;
+        "src/unix_impl.rs": `pub struct Handle;
 
-pub fn run_spawn() -> i32 {
-    spawn()
+impl Handle {
+    pub fn open() -> i32 {
+        1
+    }
+}
+`,
+        "src/windows_impl.rs": `pub struct Handle;
+
+impl Handle {
+    pub fn open() -> i32 {
+        2
+    }
+}
+`,
+        "src/unix_app.rs": `use crate::unix_impl::Handle;
+
+pub fn run_unix() -> i32 {
+    Handle::open()
+}
+`,
+        "src/windows_app.rs": `use crate::windows_impl::Handle;
+
+pub fn run_windows() -> i32 {
+    Handle::open()
+}
+`,
+        "src/root_app.rs": `use crate::Handle;
+
+pub fn run_root() -> i32 {
+    Handle::open()
 }
 `,
       });
       temp_dirs.push(temp_dir);
 
-      // Both cfg arms index; the first record wins deterministically. The call
-      // may resolve or stay open depending on crate-root import resolution,
-      // but indexing must never abort the file.
-      const lib_exports = project.exports.get_exports(file_paths["src/lib.rs"]);
-      expect(lib_exports.size).toBeGreaterThan(0);
+      const { project, dropped_files } = await load_project({
+        project_path: temp_dir,
+      });
+
+      expect([...dropped_files]).toEqual([]);
+
+      expect_rust_call_resolves_to(
+        project,
+        file_paths["src/unix_app.rs"],
+        "open",
+        file_paths["src/unix_impl.rs"]
+      );
+      expect_rust_call_resolves_to(
+        project,
+        file_paths["src/windows_app.rs"],
+        "open",
+        file_paths["src/windows_impl.rs"]
+      );
+      // The crate-root surface is reachable only through src/lib.rs, and the
+      // first cfg arm is the record that wins there.
+      expect_rust_call_resolves_to(
+        project,
+        file_paths["src/root_app.rs"],
+        "open",
+        file_paths["src/unix_impl.rs"]
+      );
     });
 
     it("does not leak a nested mod's pub use glob onto the file surface", async () => {
@@ -888,6 +949,37 @@ pub fn run() -> usize {
         file_paths["sqlx-postgres/src/connection.rs"],
         "raw_sql",
         file_paths["sqlx-core/src/raw_sql.rs"]
+      );
+    });
+
+    it("resolves a cross-crate item through a crate-visible glob re-export", async () => {
+      // sqlx: `pub(crate) use sqlx_core::transaction::*;` in sqlx-mysql, whose
+      // TransactionManager then calls the ANSI SQL builders by bare name.
+      const { project, temp_dir, file_paths } = await setup_project({
+        "sqlx-core/Cargo.toml": "[package]\nname = \"sqlx-core\"\n",
+        "sqlx-core/src/lib.rs": `pub mod transaction;
+`,
+        "sqlx-core/src/transaction.rs": `pub fn rollback_ansi_transaction_sql(depth: usize) -> String {
+    format!("ROLLBACK {}", depth)
+}
+`,
+        "sqlx-mysql/Cargo.toml": "[package]\nname = \"sqlx-mysql\"\n",
+        "sqlx-mysql/src/lib.rs": `pub mod transaction;
+`,
+        "sqlx-mysql/src/transaction.rs": `pub(crate) use sqlx_core::transaction::*;
+
+pub fn rollback(depth: usize) -> String {
+    rollback_ansi_transaction_sql(depth)
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      expect_rust_call_resolves_to(
+        project,
+        file_paths["sqlx-mysql/src/transaction.rs"],
+        "rollback_ansi_transaction_sql",
+        file_paths["sqlx-core/src/transaction.rs"]
       );
     });
 

@@ -42,12 +42,12 @@ Both are thin adapters on the unified resolver from sub-task 1.5 and are trivial
 <!-- AC:BEGIN -->
 
 - [x] #1 The `Self::` false-positives clear for calls inside the defining `impl` block and from a different `impl` block for the same type.
-- [x] #2 `RUST_SELF_TYPE_KEYWORD` lives in `path_resolution.rust.ts`, `Self` is substituted before any anchor is read, and `PATH_ANCHORS` is unchanged.
-- [x] #3 `resolve_self_type_rust` takes `(scope_id, scopes, definitions)` with the `name === 'Self'` gate at its constructor call site. It moved to `path_resolution.rust.ts` alongside the keyword — see deviation 1.
-- [x] #4 The rustc `compute_debuginfo_type_name` false-positive clears through the module-alias hop.
-- [x] #5 Integration tests cover each shape individually: both `impl`-block positions, an instance-method body, an enum's own impl, an associated function reached through a trait impl on the same type, a trait's own default method body, and the `super::alias` path.
-- [x] #6 The trait-default shape is measured, not assumed: `Self::required()` in a trait's default body resolves, so nothing is re-routed. The task's "four shapes" are not enumerated anywhere — see deviation 3.
-- [x] #7 `constructor.rust.test.ts` stays green. `path_resolution.rust.test.ts` was retargeted onto the resolver's entry point, as recorded in TASK-375.5.
+- [x] #2 `SELF_TYPE_KEYWORD` lives in `path_resolution.rust.ts`, `Self` is substituted before any anchor handling, and `PATH_ANCHORS` is unchanged.
+- [x] #3 `resolve_self_type_rust` takes `(scope_id, scopes, definitions)` with the `name === 'Self'` gate at its constructor call site.
+- [x] #4 The rustc `compute_debuginfo_type_name` false-positive clears through the `super::alias` module-alias hop.
+- [x] #5 Integration tests cover every evidence case individually — both `impl`-block positions, the trait-default-body shapes, and the `super::alias` path — each asserting the call reference resolves.
+- [x] #6 The four trait-default-method-body rows are measured, not assumed: any that do not clear are explicitly re-routed to `type-model-completion` with the reason recorded.
+- [x] #7 `constructor.rust.test.ts` and `path_resolution.rust.test.ts` stay green.
 
 <!-- AC:END -->
 

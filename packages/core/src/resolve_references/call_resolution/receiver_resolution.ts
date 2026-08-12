@@ -306,7 +306,11 @@ function resolve_namespace_member(
   property_name: SymbolName,
   context: ReceiverResolutionContext
 ): SymbolId | null {
-  const def = context.definitions.get(dereference_named_import(current, context));
+  const named = dereference_named_import(current, context);
+  if (!named) {
+    return null;
+  }
+  const def = context.definitions.get(named);
 
   if (def?.kind === "namespace") {
     return resolve_namespace_scope_member(def, property_name, context);
@@ -334,14 +338,20 @@ function resolve_namespace_member(
  * written as `import { Ns } from …; Ns.Inner.f()` descends into the namespace
  * itself rather than stopping at the import record. A namespace import is left
  * alone: it denotes the module, which the caller resolves against its exports.
+ *
+ * Termination is the visited set `ExportRegistry.resolve_export_chain` threads:
+ * re-entering a symbol means the chain is circular, so it names no definition
+ * and resolves to null rather than to an arbitrary link on the cycle. A chain
+ * that merely runs deep is followed to its end.
  */
 function dereference_named_import(
   symbol_id: SymbolId,
   context: ReceiverResolutionContext
-): SymbolId {
+): SymbolId | null {
   let current = symbol_id;
-  // Bounded: an import chain longer than this is a cycle, not a real surface.
-  for (let hop = 0; hop < 8; hop++) {
+  const visited = new Set<SymbolId>([current]);
+
+  for (;;) {
     const def = context.definitions.get(current);
     if (def?.kind !== "import" || def.import_kind === "namespace") {
       return current;
@@ -358,12 +368,15 @@ function dereference_named_import(
       context.languages,
       context.resolution
     );
-    if (!resolved || resolved === current) {
+    if (!resolved) {
       return current;
     }
+    if (visited.has(resolved)) {
+      return null;
+    }
+    visited.add(resolved);
     current = resolved;
   }
-  return current;
 }
 
 /**

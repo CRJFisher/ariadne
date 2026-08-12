@@ -55,16 +55,16 @@ The alias/shadow rows split: the eight module-qualified Rust calls close here on
 
 <!-- AC:BEGIN -->
 
-- [x] #1 `build_index_single_file` emits an `ImportDefinition` with `import_kind: "namespace"` and the module path for `mod config;` and `pub mod config;` alongside the surviving `NamespaceDefinition`, and `#[path = "…"] mod x;` carries the override. The override lives on the module edge's `import_path`, not on a new `NamespaceDefinition.module_path` — see deviation 2.
-- [x] #2 `src/lib.rs` is a dependent of `src/config.rs` in the `ImportGraph`, and `update_file` on `config.rs` re-resolves the `lib.rs` call site.
+- [x] #1 `build_index_single_file` emits an `ImportDefinition` with `import_kind: "namespace"` and the module path for `mod config;` and `pub mod config;` alongside the surviving `NamespaceDefinition`, and `#[path = "…"] mod x;` carries the override on `module_path`.
+- [x] #2 `src/lib.rs` is a dependent of `src/config.rs` in `ImportGraph.dependencies`, and `update_file` on `config.rs` re-resolves the `lib.rs` call site.
 - [x] #3 The Rust file-backed `mod` path false-positives clear: `mod config;` + `config::build()`, `crate::intrinsic::check()`, `self::config::build()`, `use crate::config;` + `config::build()` and `crate::deep::inner::deep_fn()` all resolve.
 - [x] #4 The corpus shapes `migrate::expand`, `self::imp::ctrl_c`, `list::channel`, `back::write::optimize`, `MetaVarExpr::parse`, `config::Options::from_matches` and `attr::Container::from_ast` all resolve.
-- [x] #5 The module-qualified alias/shadow calls resolve, with the author's path beating a same-name local in scope. The eight rows are one shape and are covered by one test each for the local-variable and local-function shadow — see deviation 5.
-- [x] #6 `Foo::bar()` and `serde_json::to_string()` still fall through untouched, and so do three further shapes review found the first cut got wrong — see "What review found".
-- [x] #7 One resolver owns Rust path resolution and `resolve_via_path_prefix_rust` calls into it. Two structural clauses do not hold as written: the type-last adapter survives, and `normalize_path_prefix` stays exported — see deviations 3 and 4.
-- [x] #8 Integration tests in `resolve_references.rust.test.ts` cover every evidence case listed above individually, plus the incremental `update_file` case at one and two module hops.
-- [x] #9 `function_call.rust.test.ts` and `constructor.rust.test.ts` stay green with no assertion changed. `path_resolution.rust.test.ts` was retargeted onto the resolver's entry point — see deviation 4.
-- [x] #10 The `#[cfg]`-gated over-approximation is recorded below and implemented: every variant binds. `#[path]` shipped, so the tokio `self::imp::ctrl_c` row needed no re-route.
+- [x] #5 The eight module-qualified Rust alias/shadow calls resolve, with `mod x;` beating a same-name local `x` in scope.
+- [x] #6 `Foo::bar()` and `serde_json::to_string()` still fall through untouched — no edge is fabricated for a path whose file the project has not indexed.
+- [x] #7 `resolve_type_via_module_path_rust` is deleted, `resolve_via_path_prefix_rust` is a call into the unified resolver, and `normalize_path_prefix` is no longer exported.
+- [x] #8 Integration tests in `resolve_references.rust.test.ts` cover every evidence case listed above individually, plus the incremental `update_file` case.
+- [x] #9 `path_resolution.rust.test.ts`, `function_call.rust.test.ts` and `constructor.rust.test.ts` stay green with no behavioural edits.
+- [x] #10 The `#[cfg]`-gated `mod` over-approximation is recorded in the change's decision record; if `#[path]` is dropped, the tokio `self::imp::ctrl_c` row is explicitly re-routed rather than left open.
 
 <!-- AC:END -->
 

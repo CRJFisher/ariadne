@@ -477,6 +477,114 @@ describe("ExportRegistry", () => {
     });
   });
 
+  describe("two import-backed records for one name", () => {
+    const PKG_PY = "pkg.py" as FilePath;
+    const A_PY = "a.py" as FilePath;
+    const B_PY = "b.py" as FilePath;
+    const MAIN_RS = "main.rs" as FilePath;
+    const A_RS = "a.rs" as FilePath;
+    const B_RS = "b.rs" as FilePath;
+
+    const PY_ROOT: FileSystemFolder = {
+      path: "/" as FilePath,
+      folders: new Map(),
+      files: new Set(["pkg.py", "a.py", "b.py"]),
+    };
+    const RS_ROOT: FileSystemFolder = {
+      path: "/" as FilePath,
+      folders: new Map(),
+      files: new Set(["main.rs", "a.rs", "b.rs"]),
+    };
+
+    const ALL_PY: ReadonlyMap<FilePath, Language> = new Map<FilePath, Language>([
+      [PKG_PY, "python"],
+      [A_PY, "python"],
+      [B_PY, "python"],
+    ]);
+    const ALL_RS: ReadonlyMap<FilePath, Language> = new Map<FilePath, Language>([
+      [MAIN_RS, "rust"],
+      [A_RS, "rust"],
+      [B_RS, "rust"],
+    ]);
+
+    function resolve_in(
+      registry: ExportRegistry,
+      file: FilePath,
+      name: string,
+      languages: ReadonlyMap<FilePath, Language>,
+      root: FileSystemFolder
+    ): SymbolId | null {
+      return registry.resolve_export_chain(
+        file,
+        name as SymbolName,
+        "named",
+        languages,
+        create_module_resolution_context(root)
+      );
+    }
+
+    it("keeps the first of two cfg-gated Rust re-exports of one name", () => {
+      // #[cfg(unix)] pub use crate::a::Thing; #[cfg(not(unix))] pub use crate::b::Thing;
+      const origin_a = create_function_definition("Thing", A_RS, 1);
+      const origin_b = create_function_definition("Thing", B_RS, 1);
+      const registry = new ExportRegistry();
+      registry.update_file(A_RS, create_definition_registry({ [A_RS]: [origin_a] }));
+      registry.update_file(B_RS, create_definition_registry({ [B_RS]: [origin_b] }));
+      registry.update_file(
+        MAIN_RS,
+        create_definition_registry({
+          [MAIN_RS]: [
+            create_reexport_definition("Thing", MAIN_RS, "crate::a", 1),
+            create_reexport_definition("Thing", MAIN_RS, "crate::b", 2),
+          ],
+        })
+      );
+
+      expect(resolve_in(registry, MAIN_RS, "Thing", ALL_RS, RS_ROOT)).toBe(
+        origin_a.symbol_id
+      );
+    });
+
+    it("exports the last of two Python imports of one name", () => {
+      // from a import x  →  from b import x: the second binding is the module's x.
+      const origin_a = create_function_definition("x", A_PY, 1);
+      const origin_b = create_function_definition("x", B_PY, 1);
+      const registry = new ExportRegistry();
+      registry.update_file(A_PY, create_definition_registry({ [A_PY]: [origin_a] }));
+      registry.update_file(B_PY, create_definition_registry({ [B_PY]: [origin_b] }));
+      const from_a = create_reexport_definition("x", PKG_PY, "a", 1);
+      const from_b = create_reexport_definition("x", PKG_PY, "b", 2);
+      registry.update_file(
+        PKG_PY,
+        create_definition_registry({ [PKG_PY]: [from_a, from_b] })
+      );
+
+      expect(resolve_in(registry, PKG_PY, "x", ALL_PY, PY_ROOT)).toBe(
+        origin_b.symbol_id
+      );
+      expect(registry.get_exports(PKG_PY)).toEqual(new Set([from_b.symbol_id]));
+    });
+
+    it("exports the later Python import when the two arrive out of source order", () => {
+      const origin_a = create_function_definition("x", A_PY, 1);
+      const origin_b = create_function_definition("x", B_PY, 1);
+      const registry = new ExportRegistry();
+      registry.update_file(A_PY, create_definition_registry({ [A_PY]: [origin_a] }));
+      registry.update_file(B_PY, create_definition_registry({ [B_PY]: [origin_b] }));
+      const from_b = create_reexport_definition("x", PKG_PY, "b", 9);
+      const from_a = create_reexport_definition("x", PKG_PY, "a", 2);
+      registry.update_file(
+        PKG_PY,
+        create_definition_registry({ [PKG_PY]: [from_b, from_a] })
+      );
+
+      expect(resolve_in(registry, PKG_PY, "x", ALL_PY, PY_ROOT)).toBe(
+        origin_b.symbol_id
+      );
+      expect(registry.get_exports(PKG_PY)).toEqual(new Set([from_b.symbol_id]));
+    });
+  });
+
   describe("re-export chains", () => {
     it("follows a single re-export hop to the source symbol", () => {
       const foo = create_function_definition("foo", "helper.ts" as FilePath, 1);
@@ -910,26 +1018,6 @@ describe("ExportRegistry", () => {
       );
 
       expect(resolve_named(registry, MAIN, "origin")).toBe(origin.symbol_id);
-    });
-
-    it("keeps the first record when two import-backed re-exports collide on a name", () => {
-      const origin_a = create_function_definition("Thing", A, 1);
-      const origin_b = create_function_definition("Thing", B, 1);
-      const registry = new ExportRegistry();
-      registry.update_file(A, create_definition_registry({ [A]: [origin_a] }));
-      registry.update_file(B, create_definition_registry({ [B]: [origin_b] }));
-
-      // The cfg-gated shape: #[cfg(unix)] pub use a::Thing; #[cfg(not(unix))] pub use b::Thing;
-      const first = create_reexport_definition("Thing", MAIN, "./a", 1);
-      const second = create_reexport_definition("Thing", MAIN, "./b", 2);
-      expect(() =>
-        registry.update_file(
-          MAIN,
-          create_definition_registry({ [MAIN]: [first, second] })
-        )
-      ).not.toThrow();
-
-      expect(resolve_named(registry, MAIN, "Thing")).toBe(origin_a.symbol_id);
     });
 
     it("binds ambiguous-through-one-edge names to the other edge's unambiguous answer", () => {

@@ -7,6 +7,26 @@ import type { FilePath } from "@ariadnejs/types";
 import { resolve_module_path_typescript } from "./import_resolution.typescript";
 import { create_file_tree } from "./import_resolution.test";
 import { create_module_resolution_context } from "../import_resolution";
+import type { ModuleSpecifierIndex } from "./module_specifier_index";
+
+/** A specifier index carrying only the config aliases a test declares. */
+function specifier_index(
+  config_aliases: Record<string, Record<string, string>>,
+  package_roots: Record<string, string> = {}
+): ModuleSpecifierIndex {
+  return {
+    package_roots: new Map(
+      Object.entries(package_roots) as [string, FilePath][]
+    ),
+    config_aliases: new Map(
+      Object.entries(config_aliases).map(([directory, aliases]) => [
+        directory as FilePath,
+        new Map(Object.entries(aliases) as [string, FilePath][]),
+      ])
+    ),
+    crate_roots: new Map(),
+  };
+}
 
 describe("resolve_module_path_typescript", () => {
   describe("relative imports", () => {
@@ -322,6 +342,145 @@ describe("resolve_module_path_typescript", () => {
         create_module_resolution_context(tree)
       );
       expect(result).toBe("lodash/fp");
+    });
+  });
+
+  describe("tsconfig paths aliases", () => {
+    const two_package_tree = () =>
+      create_file_tree("/project", [
+        "packages/pkg_a/src/app.ts",
+        "packages/pkg_a/src/helper.ts",
+        "packages/pkg_b/src/app.ts",
+        "packages/pkg_b/src/helper.ts",
+      ]);
+
+    const two_package_aliases = specifier_index({
+      "/project/packages/pkg_a": { "@": "/project/packages/pkg_a/src" },
+      "/project/packages/pkg_b": { "@": "/project/packages/pkg_b/src" },
+    });
+
+    it("resolves the alias key both packages declare to each one's own src", () => {
+      const context = create_module_resolution_context(
+        two_package_tree(),
+        two_package_aliases
+      );
+
+      expect(
+        resolve_module_path_typescript(
+          "@/helper",
+          "/project/packages/pkg_a/src/app.ts" as FilePath,
+          context
+        )
+      ).toBe("/project/packages/pkg_a/src/helper.ts");
+      expect(
+        resolve_module_path_typescript(
+          "@/helper",
+          "/project/packages/pkg_b/src/app.ts" as FilePath,
+          context
+        )
+      ).toBe("/project/packages/pkg_b/src/helper.ts");
+    });
+
+    it("resolves the alias key both packages declare for a root-relative importing file", () => {
+      const context = create_module_resolution_context(
+        two_package_tree(),
+        two_package_aliases
+      );
+
+      expect(
+        resolve_module_path_typescript(
+          "@/helper",
+          "packages/pkg_b/src/app.ts" as FilePath,
+          context
+        )
+      ).toBe("/project/packages/pkg_b/src/helper.ts");
+    });
+
+    it("prefers the alias of the nearest config over an ancestor's", () => {
+      const tree = create_file_tree("/project", [
+        "packages/pkg_a/src/app.ts",
+        "packages/pkg_a/lib/thing.ts",
+        "shared/thing.ts",
+      ]);
+      const context = create_module_resolution_context(
+        tree,
+        specifier_index({
+          "/project": { "@lib": "/project/shared" },
+          "/project/packages/pkg_a": { "@lib": "/project/packages/pkg_a/lib" },
+        })
+      );
+
+      expect(
+        resolve_module_path_typescript(
+          "@lib/thing",
+          "/project/packages/pkg_a/src/app.ts" as FilePath,
+          context
+        )
+      ).toBe("/project/packages/pkg_a/lib/thing.ts");
+    });
+
+    it("takes an ancestor config's alias when the nearest config declares none for it", () => {
+      const tree = create_file_tree("/project", [
+        "packages/pkg_a/src/app.ts",
+        "shared/thing.ts",
+      ]);
+      const context = create_module_resolution_context(
+        tree,
+        specifier_index({
+          "/project": { "@lib": "/project/shared" },
+          "/project/packages/pkg_a": { "@": "/project/packages/pkg_a/src" },
+        })
+      );
+
+      expect(
+        resolve_module_path_typescript(
+          "@lib/thing",
+          "/project/packages/pkg_a/src/app.ts" as FilePath,
+          context
+        )
+      ).toBe("/project/shared/thing.ts");
+    });
+
+    it("leaves a specifier that merely starts with an alias key opaque", () => {
+      // `@other/…` is a scope of its own, not the `@` alias — and the file the
+      // alias would land on exists, so only the key boundary decides.
+      const tree = create_file_tree("/project", [
+        "packages/pkg_a/src/app.ts",
+        "packages/pkg_a/src/other/helper.ts",
+      ]);
+      const context = create_module_resolution_context(
+        tree,
+        specifier_index({
+          "/project/packages/pkg_a": { "@": "/project/packages/pkg_a/src" },
+        })
+      );
+
+      expect(
+        resolve_module_path_typescript(
+          "@other/helper",
+          "/project/packages/pkg_a/src/app.ts" as FilePath,
+          context
+        )
+      ).toBe("@other/helper");
+    });
+
+    it("resolves a package name declared anywhere in the project", () => {
+      const tree = create_file_tree("/project", [
+        "packages/pkg_a/src/app.ts",
+        "packages/lib/index.ts",
+      ]);
+      const context = create_module_resolution_context(
+        tree,
+        specifier_index({}, { "@scope/lib": "/project/packages/lib" })
+      );
+
+      expect(
+        resolve_module_path_typescript(
+          "@scope/lib",
+          "/project/packages/pkg_a/src/app.ts" as FilePath,
+          context
+        )
+      ).toBe("/project/packages/lib/index.ts");
     });
   });
 

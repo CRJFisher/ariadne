@@ -781,20 +781,26 @@ export function build(fields) {
     });
   });
 
-  describe("parameters of positionally-bound callables reach the receiver", () => {
-    function method_call_failure(
+  describe("names bound at parameter position and in loop heads reach the receiver", () => {
+    function method_call_outcome(
       project: Project,
       file: FilePath,
       call_name: string
-    ): string | undefined {
+    ) {
       const call = project.resolutions
         .get_calls_for_file(file)
         .find((c) => c.name === (call_name as SymbolName));
-      expect(call).toBeDefined();
-      return call!.resolution_failure?.reason;
+      if (call === undefined) {
+        throw new Error(`no call named ${call_name} indexed in ${file}`);
+      }
+      return {
+        resolution_count: call.resolutions.length,
+        stage: call.resolution_failure?.stage,
+        reason: call.resolution_failure?.reason,
+      };
     }
 
-    it("binds a declarator arrow's parameter so a call on it leaves name resolution", async () => {
+    it("a declarator arrow's parameter binds, so a call on it fails at type inference, not name resolution", async () => {
       // webpack lib/ids/IdHelpers.js:148 — chunkGraph.getChunkRootModules(chunk)
       // inside `const getShortChunkName = (chunk, chunkGraph, …) => {…}`.
       const { project, temp_dir, file_paths } = await setup_project({
@@ -809,11 +815,15 @@ export { getShortChunkName };
       temp_dirs.push(temp_dir);
 
       expect(
-        method_call_failure(project, file_paths["IdHelpers.js"], "getChunkRootModules")
-      ).not.toEqual("name_not_in_scope");
+        method_call_outcome(project, file_paths["IdHelpers.js"], "getChunkRootModules")
+      ).toEqual({
+        resolution_count: 0,
+        stage: "type_inference",
+        reason: "receiver_type_unknown",
+      });
     });
 
-    it("binds a whole-module CommonJS export's parameter so a call on it leaves name resolution", async () => {
+    it("a whole-module CommonJS export's parameter binds, so a call on it fails at type inference, not name resolution", async () => {
       // mocha lib/interfaces/common.js:75 — suites[0].beforeEach(name, fn)
       // inside `module.exports = function (suites, context) {…}`.
       const { project, temp_dir, file_paths } = await setup_project({
@@ -825,11 +835,18 @@ export { getShortChunkName };
       temp_dirs.push(temp_dir);
 
       expect(
-        method_call_failure(project, file_paths["common.js"], "beforeEach")
-      ).not.toEqual("name_not_in_scope");
+        method_call_outcome(project, file_paths["common.js"], "beforeEach")
+      ).toEqual({
+        resolution_count: 0,
+        stage: "type_inference",
+        reason: "receiver_type_unknown",
+      });
     });
 
-    it("binds a loop-head name so a call on it resolves", async () => {
+    it("a loop-head name binds, so a call on it fails at type inference, not name resolution", async () => {
+      // `Handle.close` is in the same file and still not chosen: nothing types
+      // the parameter `ps`, so the loop-head binding gives the receiver an
+      // identity but no type.
       const { project, temp_dir, file_paths } = await setup_project({
         "loop.js": `export class Handle {
   close() {
@@ -847,8 +864,12 @@ export function close_all(ps) {
       temp_dirs.push(temp_dir);
 
       expect(
-        method_call_failure(project, file_paths["loop.js"], "close")
-      ).not.toEqual("name_not_in_scope");
+        method_call_outcome(project, file_paths["loop.js"], "close")
+      ).toEqual({
+        resolution_count: 0,
+        stage: "type_inference",
+        reason: "receiver_type_unknown",
+      });
     });
   });
 

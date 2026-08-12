@@ -117,6 +117,13 @@ function resolve_scope_recursive(
   // that surface is served by the ExportRegistry fan-out instead.
   const language = context.languages.get(file_path);
   if (language === "rust" || language === "python") {
+    const wildcard_layer = new Map<SymbolName, SymbolId>();
+    // @language rust
+    // Two globs offering one name from different symbols is E0659: rustc binds
+    // neither, so the name leaves this layer entirely — the same one-match rule
+    // the ExportRegistry fan-out applies to `pub use m::*`. Python is the other
+    // way round: a later `from m import *` rebinds, so last write wins.
+    const ambiguous = new Set<SymbolName>();
     for (const imp_def of import_defs) {
       if (imp_def.import_kind !== "wildcard") {
         continue;
@@ -132,8 +139,22 @@ function resolve_scope_recursive(
         context.languages,
         context.resolution
       )) {
-        scope_resolutions.set(name, symbol_id);
+        if (language === "rust") {
+          if (ambiguous.has(name)) {
+            continue;
+          }
+          const claimed = wildcard_layer.get(name);
+          if (claimed && claimed !== symbol_id) {
+            ambiguous.add(name);
+            wildcard_layer.delete(name);
+            continue;
+          }
+        }
+        wildcard_layer.set(name, symbol_id);
       }
+    }
+    for (const [name, symbol_id] of wildcard_layer) {
+      scope_resolutions.set(name, symbol_id);
     }
   }
 

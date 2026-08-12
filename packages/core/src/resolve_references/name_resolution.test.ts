@@ -334,32 +334,31 @@ describe("resolve_names", () => {
       };
     }
 
-    function export_function_from(
+    function export_functions_from(
       file: FilePath,
-      name: string,
-      start_line: number
-    ): SymbolId {
-      const fn: FunctionDefinition = {
+      ...names: string[]
+    ): SymbolId[] {
+      const defs: FunctionDefinition[] = names.map((name, index) => ({
         kind: "function",
         symbol_id: function_symbol(name as SymbolName, {
           ...MOCK_LOCATION,
           file_path: file,
-          start_line,
+          start_line: index + 1,
         }),
         name: name as SymbolName,
         defining_scope_id: `scope:${file}:file:0:0` as ScopeId,
-        location: { ...MOCK_LOCATION, file_path: file, start_line },
+        location: { ...MOCK_LOCATION, file_path: file, start_line: index + 1 },
         signature: { parameters: [] },
         body_scope_id: `scope:${file}:${name}:1:0` as ScopeId,
         is_exported: true,
-      };
-      definitions.update_file(file, [fn]);
+      }));
+      definitions.update_file(file, defs);
       exports.update_file(file, definitions);
-      return fn.symbol_id;
+      return defs.map((def) => def.symbol_id);
     }
 
     it("binds a wildcard import's target surface into the importing scope", () => {
-      const helper_id = export_function_from(LIB_PY, "helper", 1);
+      const [helper_id] = export_functions_from(LIB_PY, "helper");
       scopes.update_file(
         APP_PY,
         new Map([[APP_SCOPE, make_scope(APP_SCOPE, "global", null)]])
@@ -379,8 +378,8 @@ describe("resolve_names", () => {
     });
 
     it("lets an explicit named import shadow a name the wildcard also provides", () => {
-      export_function_from(LIB_PY, "shared", 1);
-      const two_id = export_function_from(TWO_PY, "shared", 1);
+      export_functions_from(LIB_PY, "shared");
+      const [two_id] = export_functions_from(TWO_PY, "shared");
       scopes.update_file(
         APP_PY,
         new Map([[APP_SCOPE, make_scope(APP_SCOPE, "global", null)]])
@@ -412,7 +411,7 @@ describe("resolve_names", () => {
     });
 
     it("lets a local definition shadow a name the wildcard provides", () => {
-      export_function_from(LIB_PY, "helper", 1);
+      export_functions_from(LIB_PY, "helper");
       const local_id = function_symbol("helper" as SymbolName, {
         ...MOCK_LOCATION,
         file_path: APP_PY,
@@ -440,6 +439,129 @@ describe("resolve_names", () => {
       expect(
         result.resolutions_by_scope.get(APP_SCOPE)!.get("helper" as SymbolName)
       ).toBe(local_id);
+    });
+
+    it("rebinds a Python name to the later of two wildcard imports supplying it", () => {
+      export_functions_from(LIB_PY, "dup");
+      const [two_dup] = export_functions_from(TWO_PY, "dup");
+      scopes.update_file(
+        APP_PY,
+        new Map([[APP_SCOPE, make_scope(APP_SCOPE, "global", null)]])
+      );
+      imports.update_file(
+        APP_PY,
+        [
+          make_wildcard_import(APP_PY, APP_SCOPE, "lib"),
+          make_wildcard_import(APP_PY, APP_SCOPE, "two"),
+        ],
+        "python",
+        create_module_resolution_context(py_root_folder)
+      );
+
+      const result = resolve_names(new Set([APP_PY]), py_context());
+
+      expect(result.resolutions_by_scope.get(APP_SCOPE)).toEqual(
+        new Map<SymbolName, SymbolId>([["dup" as SymbolName, two_dup]])
+      );
+    });
+
+    describe("Rust glob ambiguity", () => {
+      const MAIN_RS = "main.rs" as FilePath;
+      const ONE_RS = "one.rs" as FilePath;
+      const TWO_RS = "two.rs" as FilePath;
+      const SHARED_RS = "shared.rs" as FilePath;
+      const MAIN_RS_SCOPE = "scope:main.rs:file:0:0" as ScopeId;
+
+      const rs_root_folder: FileSystemFolder = {
+        path: "/" as FilePath,
+        folders: new Map(),
+        files: new Set(["main.rs", "one.rs", "two.rs", "shared.rs"]),
+      };
+
+      function rs_context(): NameResolutionContext {
+        return {
+          languages: new Map<FilePath, Language>([
+            [MAIN_RS, "rust"],
+            [ONE_RS, "rust"],
+            [TWO_RS, "rust"],
+            [SHARED_RS, "rust"],
+          ]),
+          definitions,
+          scopes,
+          exports,
+          imports,
+          resolution: create_module_resolution_context(rs_root_folder),
+        };
+      }
+
+      function make_glob_import(module_name: string): ImportDefinition {
+        return {
+          kind: "import",
+          symbol_id: variable_symbol(module_name as SymbolName, {
+            ...MOCK_LOCATION,
+            file_path: MAIN_RS,
+          }),
+          name: module_name as SymbolName,
+          defining_scope_id: MAIN_RS_SCOPE,
+          location: { ...MOCK_LOCATION, file_path: MAIN_RS },
+          import_path: `crate::${module_name}` as ModulePath,
+          import_kind: "wildcard",
+        };
+      }
+
+      function reexport_glob_from(file: FilePath, module_name: string): void {
+        definitions.update_file(file, [
+          {
+            kind: "import",
+            symbol_id: variable_symbol(module_name as SymbolName, {
+              ...MOCK_LOCATION,
+              file_path: file,
+            }),
+            name: module_name as SymbolName,
+            defining_scope_id: `scope:${file}:file:0:0` as ScopeId,
+            location: { ...MOCK_LOCATION, file_path: file },
+            import_path: `crate::${module_name}` as ModulePath,
+            import_kind: "wildcard",
+            export: { is_reexport: true },
+          },
+        ]);
+        exports.update_file(file, definitions);
+      }
+
+      function resolve_main_scope(): ReadonlyMap<SymbolName, SymbolId> {
+        scopes.update_file(
+          MAIN_RS,
+          new Map([[MAIN_RS_SCOPE, make_scope(MAIN_RS_SCOPE, "global", null)]])
+        );
+        imports.update_file(
+          MAIN_RS,
+          [make_glob_import("one"), make_glob_import("two")],
+          "rust",
+          create_module_resolution_context(rs_root_folder)
+        );
+        return resolve_names(new Set([MAIN_RS]), rs_context()).resolutions_by_scope.get(
+          MAIN_RS_SCOPE
+        )!;
+      }
+
+      it("binds nothing for a name two globs supply from different modules", () => {
+        const [, only_one] = export_functions_from(ONE_RS, "dup", "only_one");
+        export_functions_from(TWO_RS, "dup");
+
+        expect(resolve_main_scope()).toEqual(
+          new Map<SymbolName, SymbolId>([["only_one" as SymbolName, only_one]])
+        );
+      });
+
+      it("binds a name two globs reach through the same re-exported module", () => {
+        const [dup] = export_functions_from(SHARED_RS, "dup");
+        reexport_glob_from(ONE_RS, "shared");
+        reexport_glob_from(TWO_RS, "shared");
+
+        expect(resolve_main_scope()).toEqual(
+          new Map<SymbolName, SymbolId>([["dup" as SymbolName, dup]])
+        );
+      });
     });
 
     it("does not layer a wildcard surface into a JavaScript or TypeScript scope", () => {

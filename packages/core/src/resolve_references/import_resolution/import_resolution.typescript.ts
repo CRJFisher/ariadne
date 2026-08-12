@@ -9,9 +9,10 @@ import type { ModuleResolutionContext } from "./import_resolution";
  *
  * Relative imports (`./`, `../`) are probed against the file tree for `.ts`,
  * `.tsx`, `.js`, `.jsx` extensions and `index.*` files. A bare specifier is
- * resolved through the project's specifier index — a tsconfig `paths` alias or
- * a workspace package name — and stays opaque when the index does not name it,
- * because then it is a genuinely external module.
+ * resolved through the project's specifier index — a tsconfig `paths` alias
+ * declared by a config that governs the importing file, or a workspace package
+ * name — and stays opaque when the index does not name it, because then it is
+ * a genuinely external module.
  *
  * @param import_path - Import path from import statement
  * @param importing_file - Path to file containing the import (absolute or relative to the root folder)
@@ -31,14 +32,20 @@ export function resolve_module_path_typescript(
     );
   }
 
-  return resolve_bare_typescript(import_path, resolution);
+  return resolve_bare_typescript(import_path, importing_file, resolution);
+}
+
+/** A specifier index entry that claims a specifier, and how much of it it claims. */
+interface SpecifierMatch {
+  readonly key: string;
+  readonly target: FilePath;
 }
 
 /**
- * Resolve a bare specifier through the specifier index, longest prefix first
- * so `@scope/pkg/sub` prefers a `@scope/pkg/sub` entry over `@scope/pkg`. The
- * alias target is probed the same way a relative path is, so a directory
- * target lands on its `index.*`.
+ * Resolve a bare specifier through the specifier index: a `paths` alias the
+ * importing file's own configs declare first, then the project's package
+ * names. The alias target is probed the same way a relative path is, so a
+ * directory target lands on its `index.*`.
  *
  * An entry may name a file rather than a directory — a package whose `exports`
  * declares its entry point does. A deeper specifier the index does not list
@@ -48,24 +55,18 @@ export function resolve_module_path_typescript(
  */
 function resolve_bare_typescript(
   import_path: string,
+  importing_file: FilePath,
   resolution: ModuleResolutionContext
 ): FilePath {
-  const { package_roots } = resolution.specifiers;
-
-  let matched_key = "";
-  let target: FilePath | null = null;
-  for (const [key, root] of package_roots) {
-    const matches = import_path === key || import_path.startsWith(`${key}/`);
-    if (matches && key.length > matched_key.length) {
-      matched_key = key;
-      target = root;
-    }
-  }
-  if (target === null) {
+  const match =
+    governing_alias(import_path, importing_file, resolution) ??
+    longest_matching_entry(import_path, resolution.specifiers.package_roots);
+  if (match === null) {
     return import_path as FilePath;
   }
 
-  const remainder = import_path.slice(matched_key.length).replace(/^\//, "");
+  const { target } = match;
+  const remainder = import_path.slice(match.key.length).replace(/^\//, "");
   if (!remainder) {
     return (probe_candidates(target, resolution.root_folder) ??
       import_path) as FilePath;
@@ -84,6 +85,61 @@ function resolve_bare_typescript(
     resolution.root_folder
   );
   return (found ?? import_path) as FilePath;
+}
+
+/**
+ * The alias a config governing the importing file gives the specifier, nearest
+ * config first. `@/*` is the conventional self-alias, so sibling packages
+ * declare the same key against different `src/` directories, and only the
+ * config the file sits under says which one this file meant.
+ *
+ * A config that declares nothing about the specifier is not an answer, so the
+ * walk continues past it to the config above — a repo-root config's aliases
+ * reach the packages beneath it whether or not they extend it.
+ */
+function governing_alias(
+  import_path: string,
+  importing_file: FilePath,
+  resolution: ModuleResolutionContext
+): SpecifierMatch | null {
+  const { config_aliases } = resolution.specifiers;
+  const absolute_file = path.isAbsolute(importing_file)
+    ? importing_file
+    : path.resolve(resolution.root_folder.path, importing_file);
+
+  let directory = path.dirname(absolute_file);
+  for (;;) {
+    const aliases = config_aliases.get(directory as FilePath);
+    const match = aliases
+      ? longest_matching_entry(import_path, aliases)
+      : null;
+    if (match !== null) {
+      return match;
+    }
+    const parent = path.dirname(directory);
+    if (parent === directory) {
+      return null;
+    }
+    directory = parent;
+  }
+}
+
+/**
+ * The entry claiming the longest prefix of the specifier, so `@scope/pkg/sub`
+ * prefers a `@scope/pkg/sub` entry over `@scope/pkg`.
+ */
+function longest_matching_entry(
+  import_path: string,
+  entries: ReadonlyMap<string, FilePath>
+): SpecifierMatch | null {
+  let match: SpecifierMatch | null = null;
+  for (const [key, target] of entries) {
+    const matches = import_path === key || import_path.startsWith(`${key}/`);
+    if (matches && key.length > (match === null ? -1 : match.key.length)) {
+      match = { key, target };
+    }
+  }
+  return match;
 }
 
 /**

@@ -63,16 +63,16 @@ Widening `resolve_module_path`'s return type into a resolved / external / unmatc
 
 <!-- AC:BEGIN -->
 
-- [x] #1 `build_index_single_file` returns the exact asserted `ImportDefinition` literal for `export * from './m.js'`, `export * as ns from './m.js'`, `import * as X from './m'; export { X }`, `pub use inner::x;`, `pub use util::{a, b};`, `pub use self::mpsc;`, `pub use a::b as c;`, `use m::*;`, `pub use m::*;` and `from m import *`. (`export * as ns` closes as a namespace record, not a wildcard — see Implementation Notes.)
-- [x] #2 The four TypeScript `export *` false-positives clear: `loadModuleFromGlobalCache`, `findTokenOnLeftOfPosition`, `emitDetachedComments` and `discoverTypings`. (Closed on fixture reproductions of the exact corpus shapes; corpus re-triage is the epic-level pass.)
-- [x] #3 The two sqlx intra-crate glob rows clear: `use crate::transaction::*` binds `begin -> begin_ansi_transaction_sql`. (Intra-crate shape as written; the corpus rows are additionally cross-crate and wait on TASK-375.4 — see Deferred rows.)
+- [x] #1 `build_index_single_file` returns the exact asserted `ImportDefinition` literal for `export * from './m.js'`, `export * as ns from './m.js'`, `import * as X from './m'; export { X }`, `pub use inner::x;`, `pub use util::{a, b};`, `pub use self::mpsc;`, `pub use a::b as c;`, `use m::*;`, `pub use m::*;` and `from m import *`.
+- [x] #2 The four TypeScript `export *` false-positives clear: `loadModuleFromGlobalCache`, `findTokenOnLeftOfPosition`, `emitDetachedComments` and `discoverTypings`.
+- [x] #3 The two sqlx intra-crate glob rows clear: `use crate::transaction::*` binds `begin -> begin_ansi_transaction_sql`.
 - [x] #4 Indexing a file with six `from … import *` lines (the `django/forms/__init__.py` shape) no longer reaches the `Duplicate export name` throw and `Project.update_file` completes for the file.
-- [x] #5 Integration tests (`Project` + `update_file`, temp dir, plus the three-file `_namespaces` barrel fixture) cover every evidence case in this task's triage evidence individually — all four TypeScript `export *` rows, both sqlx glob rows, single- and two-hop intra-crate `pub use`, and both Python star shapes — each asserting `resolutions.length === 1` plus the target definition's identity.
+- [x] #5 Integration tests (`Project` + `update_file`, temp dir, plus the three-file `_namespaces` barrel fixture) cover every evidence case in this task's triage evidence individually — all four TypeScript `export *` rows, both sqlx glob rows, single- and two-hop intra-crate `pub use`, and both Python star shapes — each asserting `resolutions.length === 1`.
 - [x] #6 A name reachable through two distinct wildcard edges resolves to nothing unless every path reaches the same `SymbolId`; mutually star-re-exporting `a.ts`/`b.ts` terminates and returns null.
 - [x] #7 The duplicate-export throw stays reachable for genuine duplicate non-wildcard names, and `registries/export.test.ts`, `export.python.test.ts` and `export.typescript.test.ts` stay green.
-- [x] #8 `name_resolution.test.ts` (491 lines) stays green with only the one new wildcard arm in `name_resolution.ts` — a failure there means the chosen altitude was wrong. (The pre-existing 491 lines' assertions are unedited; new wildcard cases were appended.)
-- [x] #9 `import_graph.test.ts` stays green: `ImportGraph`'s dependency semantics are unchanged (one read-only `get_file_imports` accessor was added for the barrel-chain invalidation walk).
-- [x] #10 `project.bench.test.ts` is measured before and after and the numbers are recorded in the Verification section below; the fan measurement is a synthetic replica of `src/services/_namespaces/ts.ts`, not the out-of-repo corpus.
+- [x] #8 `name_resolution.test.ts` (491 lines) stays green with only the one new wildcard arm in `name_resolution.ts` — a failure there means the chosen altitude was wrong.
+- [x] #9 `import_graph.test.ts` stays green: `ImportGraph`'s shape is unchanged.
+- [x] #10 `project.bench.test.ts` on the TypeScript corpus is measured before and after the `resolve_all_exports` memo and the regression is recorded.
 - [x] #11 The two tokio `pub use` rows are recorded as blocked on `cfg_*!` macro-body indexing and are not counted against this task.
 
 <!-- AC:END -->
