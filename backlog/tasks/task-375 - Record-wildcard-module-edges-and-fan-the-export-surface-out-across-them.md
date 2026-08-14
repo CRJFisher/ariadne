@@ -134,7 +134,8 @@ what actually shipped is recorded here.
 - Corpus re-triage of microsoft/TypeScript, sqlx and django is TASK-385, which also carries TASK-375.1's unperformed AC #9. AC #2/#3 close here on fixture reproductions of the exact shapes, so the number this epic moved is not yet measured.
 - The `@export.*` captures with no registered handler are audited by TASK-382; none is revived here, per YAGNI.
 - Python `__all__` is not honored and a Rust glob nested in a braced use-tree is not extracted at all — both are TASK-383.
-- `fix_import_locations` name-matches over `get_exports`, which now contains import-backed symbols, so go-to-definition can land on a re-export rather than the origin — TASK-384.
+- `fix_import_locations` name-matches over `get_exports`, which now contains import-backed symbols, so go-to-definition can land on a re-export rather than the origin. Carried as a note rather than a task: it moves a reported location, not a call edge, so nothing in the call graph depends on it. `ExportRegistry.resolve_export_chain` is the walk that would fix it if it ever earns the work.
+- A review raised a related concern — that `resolve_namespace_member` asks `get_resolved_import_path` for the original symbol rather than the dereferenced one, looking members up in the barrel instead of the module the namespace import points at. It does not reproduce: the three-hop `import { JsTyping } from "./_namespaces/ts"` shape resolves to the leaf by exact `SymbolId`, pinned in `resolve_references.typescript.test.ts`. Recorded so the same concern is not re-raised from a reading of the code alone.
 - A binding exported under two names in separate statements (`export { a }; export { a as b };`) publishes only the last name; the single-statement form publishes both.
 
 ### Verification

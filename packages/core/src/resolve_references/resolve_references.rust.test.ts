@@ -2223,5 +2223,32 @@ use crate::real as alias;
         file_paths["src/real.rs"]
       );
     });
+
+    it("resolves a module-qualified call anchored at super", async () => {
+      // The plain shape: `super` names the parent module and the segment after
+      // it names a sibling of the calling module, with no alias or `use` in
+      // between to carry the hop.
+      const { project, temp_dir, file_paths } = await setup_project({
+        "src/lib.rs": `pub mod helpers;
+pub mod app;
+`,
+        "src/helpers.rs": `pub fn helper_fn() -> i32 {
+    1
+}
+`,
+        "src/app.rs": `pub fn run() -> i32 {
+    super::helpers::helper_fn()
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      expect_rust_call_resolves_to(
+        project,
+        file_paths["src/app.rs"],
+        "helper_fn",
+        file_paths["src/helpers.rs"]
+      );
+    });
   });
 });
