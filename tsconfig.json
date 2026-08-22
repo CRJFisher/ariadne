@@ -15,6 +15,7 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   },
+  "files": [],
   "references": [
     {
       "path": "./packages/types"
