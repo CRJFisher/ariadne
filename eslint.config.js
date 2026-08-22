@@ -268,7 +268,12 @@ export default [
       "*.js", // Ignore JS files in root
       "packages/*/dist/**",
       "packages/*/node_modules/**",
-      "**/tests/fixtures/**/*.js", // Ignore JavaScript fixture files
+      // Fixture corpus — the per-language sample code Ariadne parses, not
+      // project source. It must keep its own ecosystem's conventions
+      // (camelCase members, `var`, dynamic imports) or the parser tests stop
+      // exercising real-world input. Harness code at the fixtures root
+      // (fixture_helpers.ts, index_single_file_json.ts) is source, and stays linted.
+      "**/tests/fixtures/*/**",
       "**/.claude/hooks/**", // Ignore Claude hook files
       "**/.claude/skills/triage/templates/**", // Ignore templates
       "**/.claude/skills/triage/reference/**", // Ignore reference docs
