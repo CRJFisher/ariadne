@@ -68,7 +68,7 @@ When the input is a directory path and a project config already exists for that 
    - `project_path`: absolute path (required)
    - `folders`: relevant source directories (omit if analyzing everything)
    - `exclude`: the list decided in step 4
-   - `include_tests`: optional, default `false`. Admits test callables as entry-point *candidates*; it never changes which files are indexed.
+   - `include_tests`: optional, default `false`. Admits test callables as entry-point _candidates_; it never changes which files are indexed.
    - `max_files`: optional, default 20,000. Detection refuses a corpus larger than this rather than indexing part of one.
    - `project_name` is auto-derived for external projects via `path_to_project_id(project_path)` — do not include it in the config. Only internal projects (`project_path: "."`) require an explicit `project_name`.
 6. Save it directly to `~/.ariadne/triage-entrypoints/project_configs/{name}.json` — state the saved config in your reply text as a record, not a request for approval.
@@ -81,6 +81,8 @@ If no arguments are provided or the input is ambiguous, stop and print an error 
 ## State and Output Locations
 
 Scripts that operate on existing triage state take `--project <name>` (`prepare_triage` uses `--project` at creation time; `get_triage_summary` enumerates every project and takes no flags). Each pipeline invocation operates on exactly one project, and different projects can run in parallel against the same `triage_state/` dir — the project name is the isolation boundary.
+
+The name is derived from the target: a GitHub target takes its owner-qualified slug (`vuejs/core` → `vuejs--core`), a directory target its resolved path, and a saved config the config's `project_name`. Both halves of a slug are load-bearing — `vuejs/core` and `home-assistant/core` are unrelated codebases, and a shared name would merge their run histories behind one LATEST pointer.
 
 A project runs **one triage at a time**. `prepare_triage` refuses while another run for the project is `status: "active"`, naming each live run, the commit it was prepared at, and both remedies: continue it by passing its id to the Phase 3-4 scripts, or `abandon_run.ts` to discard it. To triage two targets concurrently, give them distinct `--project` names.
 
