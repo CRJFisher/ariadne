@@ -15,6 +15,12 @@ function producer_shaped_file(): TriageResultsFile {
       {
         id: "novel-7",
         entry_index: 7,
+        member_symbol: {
+          file_path: "lib/router.js",
+          name: "handle_request",
+          kind: "method",
+          start_line: 42,
+        },
         member_evidence: { file: "lib/router.js", line: 42, why: "only caller is dead" },
         proposed_root_cause: "dynamic dispatch through a string-keyed table",
         evidence_excerpt: "router[method](path, handler)",

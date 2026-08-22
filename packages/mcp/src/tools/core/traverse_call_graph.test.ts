@@ -10,6 +10,7 @@ import type {
   SymbolId,
   FilePath,
   SymbolName,
+  ScopeId,
 } from "@ariadnejs/types";
 
 function create_mock_node(
@@ -26,7 +27,7 @@ function create_mock_node(
     name: name as SymbolName,
     definition: {
       symbol_id,
-      name,
+      name: name as SymbolName,
       kind: "function",
       location: {
         file_path: file_path as FilePath,
@@ -35,10 +36,12 @@ function create_mock_node(
         end_line,
         end_column: 1,
       },
-      scope_id: "scope:module" as any,
+      is_exported: false,
+      defining_scope_id: "scope:module" as ScopeId,
+      body_scope_id: "scope:module#body" as ScopeId,
       signature: {
         parameters: [],
-        return_type: "void",
+        return_type: "void" as SymbolName,
       },
     },
     location: {
