@@ -16,7 +16,7 @@
   "scripts": {
     "update-version": "node scripts/update-version.js",
     "prebuild": "npm run update-version",
-    "build": "tsc && chmod +x dist/cli.js",
+    "build": "tsc -p tsconfig.build.json && chmod +x dist/cli.js",
     "test": "vitest run",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",

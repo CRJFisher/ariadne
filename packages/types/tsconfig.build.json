@@ -1,8 +1,10 @@
 {
   "compilerOptions": {
     "target": "es2020",
+    "lib": ["ES2022"],
     "module": "commonjs",
     "outDir": "./dist",
+    "rootDir": "./src",
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
@@ -10,24 +12,15 @@
     "strict": true,
     "skipLibCheck": true,
     "composite": true,
-    "resolveJsonModule": true,
-    "esModuleInterop": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   },
-  "files": [],
-  "references": [
-    {
-      "path": "./packages/types/tsconfig.build.json"
-    },
-    {
-      "path": "./packages/skill-protocol/tsconfig.build.json"
-    },
-    {
-      "path": "./packages/skill-fs/tsconfig.build.json"
-    },
-    {
-      "path": "./packages/core/tsconfig.build.json"
-    }
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/**/*.test.ts"
   ]
 }

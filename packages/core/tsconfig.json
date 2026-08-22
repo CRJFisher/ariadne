@@ -1,25 +1,21 @@
 {
-  "extends": "../../tsconfig.json",
+  "extends": "./tsconfig.build.json",
   "compilerOptions": {
-    "outDir": "./dist",
     "rootDir": ".",
-    "types": [
-      "node"
-    ],
+    "composite": false,
+    "noEmit": true,
+    "declaration": false,
+    "declarationMap": false
   },
   "include": [
     "src/**/*.ts",
     "tests/**/*.ts",
     "tests/**/*.json",
-    "tree_sitter_grammars.d.ts"
+    "tree_sitter_grammars.d.ts",
+    "scripts/**/*.ts"
   ],
   "exclude": [
     "node_modules",
     "dist"
-  ],
-  "references": [
-    {
-      "path": "../types"
-    }
   ]
 }
