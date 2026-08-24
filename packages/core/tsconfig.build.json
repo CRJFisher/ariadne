@@ -16,7 +16,8 @@
     "dist",
     "tests",
     "src/**/*.test.ts",
-    "src/**/*.bench.test.ts"
+    "src/**/*.bench.test.ts",
+    "src/benchmark_corpus_load/**"
   ],
   "references": [
     {
