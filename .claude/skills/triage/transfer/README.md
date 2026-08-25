@@ -1,6 +1,7 @@
 # Merging Ariadne triage data from another machine
 
-This bundle carries the **cohort 2** triage verdicts and a perf investigation.
+This bundle carries the **cohort 2** triage verdicts and the performance work on
+indexing at vscode's scale.
 Merging folds them into this machine's `~/.ariadne` as a union: anything this
 machine already has stays exactly as it is, anything only the bundle has is
 copied in, and a path both machines hold with different content is reported and
@@ -22,7 +23,8 @@ triage-entrypoints/
   triage_state/<project>/runs/    per-run state and per-entry verdicts
   analysis_output/<project>/      entry-point dumps and published results
   project_configs/                pipeline configuration for the cohort's targets
-perf-investigation-<date>/
+perf-investigation-<date>/        probes and profiles from the indexing investigation
+benchmark-runs/                   per-run reachability maps from the benchmark harness
 ```
 
 `MANIFEST.json` names both sides of the selection: `selection.included` is every

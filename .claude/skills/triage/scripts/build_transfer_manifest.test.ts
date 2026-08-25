@@ -176,6 +176,20 @@ describe("build_transfer_manifest", () => {
       ]);
     });
 
+    it("picks up the benchmark runs alongside the investigation", () => {
+      fs.mkdirSync(path.join(ariadne_dir, "benchmark-runs", "host-123-2026-08-25T07-53-37-151Z"), {
+        recursive: true,
+      });
+      fs.mkdirSync(path.join(ariadne_dir, "perf-investigation-2026-08-23", "probe"), {
+        recursive: true,
+      });
+
+      expect(resolve_payload_paths(ariadne_dir, new Set([2]))).toEqual([
+        "benchmark-runs",
+        "perf-investigation-2026-08-23",
+      ]);
+    });
+
     it("never names the clones, the cache, the plan store, or scratch space", () => {
       seed_run(COHORT_2);
       fs.mkdirSync(path.join(store_dir, "repos", COHORT_2), { recursive: true });
@@ -183,6 +197,7 @@ describe("build_transfer_manifest", () => {
       fs.mkdirSync(path.join(ariadne_dir, "plan", "tasks"), { recursive: true });
       fs.mkdirSync(path.join(ariadne_dir, "skill-analysis"), { recursive: true });
       fs.mkdirSync(path.join(ariadne_dir, "tmp"), { recursive: true });
+      fs.mkdirSync(path.join(ariadne_dir, "benchmarks-unrelated"), { recursive: true });
 
       const selected = resolve_payload_paths(ariadne_dir, new Set([2]));
 

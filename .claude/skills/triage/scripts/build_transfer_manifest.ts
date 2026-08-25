@@ -67,8 +67,16 @@ class UsageError extends Error {}
 /** The store namespace under `~/.ariadne`, fixed independently of the skill name. */
 const TRIAGE_DIR = "triage-entrypoints";
 
-/** Non-triage subtrees a bundle carries, matched by name prefix. */
-const EXTRA_TREE_PREFIXES: readonly string[] = ["perf-investigation-"];
+/**
+ * Measurement subtrees a bundle carries, matched by top-level name prefix.
+ *
+ * These hold the performance work on indexing at vscode's scale — the one
+ * cohort-2 target still out of reach — so they travel with the cohort's verdicts
+ * rather than being stranded on the machine that recorded them. Prefix matching
+ * is what keeps a date-stamped investigation directory from needing this list
+ * edited each time one is opened.
+ */
+const MEASUREMENT_TREE_PREFIXES: readonly string[] = ["perf-investigation-", "benchmark-runs"];
 
 /** Subtrees deliberately left behind, with the reason a reader will want. */
 const EXCLUDED_TREES: ReadonlyArray<{ path: string; reason: string }> = [
@@ -246,7 +254,7 @@ export function resolve_payload_paths(
   if (fs.existsSync(ariadne_dir)) {
     for (const entry of fs.readdirSync(ariadne_dir, { withFileTypes: true })) {
       if (!entry.isDirectory()) continue;
-      if (EXTRA_TREE_PREFIXES.some((prefix) => entry.name.startsWith(prefix))) {
+      if (MEASUREMENT_TREE_PREFIXES.some((prefix) => entry.name.startsWith(prefix))) {
         resolved.push(entry.name);
       }
     }
