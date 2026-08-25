@@ -19,6 +19,7 @@ import {
   ANALYSIS_OUTPUT_SUBDIR,
   default_store_dir,
   detect_entrypoints_root,
+  list_analysis_projects,
   list_run_ids,
   list_state_projects,
   list_subdirectories,
@@ -103,6 +104,26 @@ describe("store_layout", () => {
       expect(list_state_projects(tmp_dir)).toEqual(["a--a", "b--b"]);
       expect(list_run_ids(tmp_dir, "b--b")).toEqual(["r1", "r2"]);
       expect(list_run_ids(tmp_dir, "a--a")).toEqual([]);
+    });
+
+    it("leaves tooling scratch dot-directories out of the project and run lists", () => {
+      fs.mkdirSync(path.join(tmp_dir, "triage_state", ".claude", ".cc-writes"), {
+        recursive: true,
+      });
+      fs.mkdirSync(path.join(tmp_dir, "triage_state", "a--a", "runs", ".tmp"), {
+        recursive: true,
+      });
+      fs.mkdirSync(path.join(tmp_dir, "triage_state", "a--a", "runs", "r1"), {
+        recursive: true,
+      });
+      fs.mkdirSync(path.join(tmp_dir, "analysis_output", ".claude", ".cc-writes"), {
+        recursive: true,
+      });
+      fs.mkdirSync(path.join(tmp_dir, "analysis_output", "a--a"), { recursive: true });
+
+      expect(list_state_projects(tmp_dir)).toEqual(["a--a"]);
+      expect(list_run_ids(tmp_dir, "a--a")).toEqual(["r1"]);
+      expect(list_analysis_projects(tmp_dir)).toEqual(["a--a"]);
     });
   });
 });

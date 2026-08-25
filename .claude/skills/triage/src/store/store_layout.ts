@@ -117,12 +117,18 @@ export function project_config_file(store_dir: string, project: string): string 
 
 // ===== Discovery =====
 
-/** Immediate subdirectory names of `dir`, sorted. Absent `dir` yields none. */
+/**
+ * Immediate subdirectory names of `dir`, sorted. Absent `dir` yields none.
+ *
+ * Dot-directories are never store entries — no project id or run id starts
+ * with a dot, while tooling drops scratch dirs such as `.claude/.cc-writes`
+ * beside them — so they are not surveyed as projects or runs.
+ */
 export function list_subdirectories(dir: string): string[] {
   if (!fs.existsSync(dir)) return [];
   return fs
     .readdirSync(dir, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
+    .filter((entry) => entry.isDirectory() && !entry.name.startsWith("."))
     .map((entry) => entry.name)
     .sort();
 }

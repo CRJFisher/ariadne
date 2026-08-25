@@ -1,0 +1,7 @@
+{
+  "key": "once",
+  "run_id": "20260825T132605Z-26c99fcf",
+  "scope": "once",
+  "step_id": "task_381_2",
+  "summary": "Landed TASK-381.2 as commit 930fd09b: extract_entry_point_diagnostics now sorts the file iteration once at its single source, sorts each name's call-site list by (file, line, column) before the 50-si…"
+}
