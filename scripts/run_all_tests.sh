@@ -11,6 +11,14 @@ set -e
 
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
+# Git exports the variables that locate the repository being committed to its
+# hooks (GIT_DIR, GIT_WORK_TREE, and GIT_INDEX_FILE for the commit's temporary
+# index). Every test that builds a repository of its own in a temp directory
+# would inherit them and commit against this repository's index instead —
+# "invalid object … for '.changeset/README.md'" — so the suites run without them.
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR GIT_OBJECT_DIRECTORY \
+  GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_PREFIX
+
 # Nested worktree dirs are pruned ANCHORED to PROJECT_DIR, not by an unanchored
 # `*/.claude/worktrees*` substring. When this script runs from inside a worktree
 # (a commit made in the worktree), PROJECT_DIR *is* that worktree, whose own path
