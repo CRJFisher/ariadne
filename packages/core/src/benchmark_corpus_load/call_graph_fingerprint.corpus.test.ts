@@ -15,12 +15,18 @@
  * 38 outside it. One of the seven numbers would then be a constant empty
  * digest on every run, which is the vacuous guard TASK-370 exists about.
  *
- * WHY THE HASHES ARE NOT A SELF-FULFILLING SNAPSHOT. What is committed here is
- * the MEMBER LIST — symbol ids and file paths a reviewer can read. The hashes
- * are asserted to be the digest OF that list, and the live load is asserted to
- * produce exactly that list. To bless a broken graph you must edit the member
- * list, and that diff names the symbols that appeared and disappeared. You
- * cannot do it by pasting sixteen hex digits.
+ * WHAT THE COMMITTED MEMBER LIST BUYS, AND WHAT IT DOES NOT. What is committed
+ * here is the MEMBER LIST — symbol ids and file paths a reviewer can read — and
+ * the hashes are asserted to be the digest OF that list. So a regression cannot
+ * be blessed by pasting sixteen hex digits; it takes an edit to the list.
+ *
+ * How much protection that is depends on the defect. One that moves symbol
+ * IDENTITY shows up as a name appearing or disappearing, which reads clearly in
+ * review. One that moves only a LOCATION — a reachability witness sliding from
+ * a use site to an import statement — shows up as changed line:column tuples
+ * inside otherwise identical ids, which is easy to wave through. Regenerating
+ * this list from a run is therefore a real way to launder such a defect, and
+ * the list is a review artefact rather than a proof.
  *
  * To update after a deliberate change: re-derive the member list by reading the
  * corpus, not by pasting a run's output, then let the derivation test compute
@@ -64,6 +70,7 @@ const CORPUS_ROOT = path.join(
 
 const EXPECTED_MEMBERS: Readonly<Record<FingerprintComponentName, readonly string[]>> = {
   nodes: [
+    "function:src/aaa_first_reader.ts:5:17:5:26:read_first",
     "function:src/callback.ts:3:17:3:27:apply_twice",
     "function:src/callback.ts:7:17:7:19:run",
     "function:src/entry.ts:6:17:6:20:main",
@@ -76,6 +83,7 @@ const EXPECTED_MEMBERS: Readonly<Record<FingerprintComponentName, readonly strin
     "function:src/unresolved.ts:5:17:5:22:report",
     "function:src/utils.ts:1:17:1:22:helper",
     "function:src/utils.ts:5:17:5:28:other_helper",
+    "function:src/zzz_second_reader.ts:5:17:5:27:read_second",
   ],
   call_edges: [
     "function:src/callback.ts:3:17:3:27:apply_twice->parameter:src/callback.ts:3:29:3:30:fn#2",
@@ -95,8 +103,10 @@ const EXPECTED_MEMBERS: Readonly<Record<FingerprintComponentName, readonly strin
     "function:src/unresolved.ts:5:17:5:22:report|method|log@src/unresolved.ts:6:3:6:22",
   ],
   raw_entry_points: [
+    "function:src/aaa_first_reader.ts:5:17:5:26:read_first",
     "function:src/orphan.ts:1:17:1:28:never_called",
     "function:src/orphan.ts:5:17:5:33:also_never_called",
+    "function:src/zzz_second_reader.ts:5:17:5:27:read_second",
   ],
   indirect_reachability_keys: [
     "function:src/callback.ts:3:17:3:27:apply_twice",
@@ -122,18 +132,17 @@ const EXPECTED_MEMBERS: Readonly<Record<FingerprintComponentName, readonly strin
     "function:src/registry.ts:5:17:5:24:dispatch|function_reference||src/entry.ts:8:22:8:29",
     "function:src/unresolved.ts:1:17:1:29:parse_payload|function_reference||src/entry.ts:10:3:10:15",
     "function:src/unresolved.ts:5:17:5:22:report|function_reference||src/entry.ts:17:1:17:6",
-    "function:src/utils.ts:1:17:1:22:helper|function_reference||src/entry.ts:7:18:7:23",
+    "function:src/utils.ts:1:17:1:22:helper|collection_read|variable:src/zzz_second_reader.ts:3:7:3:18:SECOND_TABLE|src/zzz_second_reader.ts:6:10:6:21",
     "function:src/utils.ts:5:17:5:28:other_helper|function_reference||src/callback.ts:8:22:8:33",
   ],
 };
 
-
 /** The counts the corpus produces. Every one is positive by construction. */
 const EXPECTED_COUNTS: Readonly<Record<FingerprintComponentName, number>> = {
-  nodes: 12,
+  nodes: 14,
   call_edges: 11,
   unresolved_calls: 2,
-  raw_entry_points: 2,
+  raw_entry_points: 4,
   indirect_reachability_keys: 10,
   dropped_files: 1,
   indirect_reachability_evidence: 10,
@@ -192,9 +201,9 @@ describe("the in-repo corpus guard", () => {
   it("records the file counts the corpus produces", async () => {
     const { row } = await load_guard_arm();
     expect(row.file_counts).toEqual({
-      discovered: 8,
-      offered: 8,
-      indexed: 7,
+      discovered: 10,
+      offered: 10,
+      indexed: 9,
       dropped: 1,
     });
   }, 60_000);

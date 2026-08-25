@@ -313,6 +313,63 @@ describe("refusals", () => {
     ).toThrow(/holds an absolute path/);
   });
 
+  it("refuses a relative corpus root, which would strip the wrong prefix", () => {
+    expect(() =>
+      fingerprint_call_graph({
+        call_graph: build_graph(COLLECTION_EVIDENCE),
+        resolutions: call_source([]),
+        indexed_files: [],
+        dropped_files: new Set<FilePath>(),
+        corpus_root: "corpus/root",
+      }),
+    ).toThrow(/must be absolute/);
+  });
+
+  it("sees an absolute path in a component whose first member is relative", () => {
+    // The guard cannot look at members[0] alone: a symbol id leads with its
+    // kind, so `class:` sorts before `variable:` and an absolute path inside
+    // the latter never reaches index 0.
+    expect(() =>
+      fingerprint_call_graph({
+        call_graph: {
+          nodes: new Map([
+            [`class:${ROOT}/a.ts:1:1:1:2:C` as SymbolId, { enclosed_calls: [] }],
+            ["variable:/elsewhere/b.ts:1:1:1:2:V" as SymbolId, { enclosed_calls: [] }],
+          ]),
+          entry_points: [],
+          indirect_reachability: new Map(),
+        },
+        resolutions: call_source([]),
+        indexed_files: [],
+        dropped_files: new Set<FilePath>(),
+        corpus_root: ROOT,
+      }),
+    ).toThrow(/holds an absolute path \(variable:\/elsewhere/);
+  });
+
+  it("strips the root only where a path begins, so a recurring root cannot collide", () => {
+    // Deleting every occurrence would glue the surrounding segments, making
+    // `<root>/a/<root>/x.ts` and `<root>/ax.ts` the same member.
+    const recurring = fingerprint_call_graph({
+      call_graph: {
+        nodes: new Map([
+          [`function:${ROOT}/a${ROOT}/x.ts:1:1:1:2:f` as SymbolId, { enclosed_calls: [] }],
+          [`function:${ROOT}/ax.ts:1:1:1:2:f` as SymbolId, { enclosed_calls: [] }],
+        ]),
+        entry_points: [],
+        indirect_reachability: new Map(),
+      },
+      resolutions: call_source([]),
+      indexed_files: [],
+      dropped_files: new Set<FilePath>(),
+      corpus_root: ROOT,
+    });
+    expect([...recurring.nodes.members]).toEqual([
+      "function:a/corpus/x.ts:1:1:1:2:f",
+      "function:ax.ts:1:1:1:2:f",
+    ]);
+  });
+
   it("refuses to compare two fingerprints recorded under different schemas", () => {
     const recorded = record_fingerprint(fingerprint_of());
     const older = { ...recorded, schema_version: recorded.schema_version - 1 };

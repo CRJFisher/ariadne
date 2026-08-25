@@ -51,6 +51,15 @@ export function nested_slice(
   if (size <= 0) {
     throw new Error(`Slice size must be positive, got ${size}`);
   }
+  if (size > path_sorted_files.length) {
+    // Clamping would run a different file set than the one asked for under the
+    // name of the one asked for — the same reason `plan_nested_slices` drops an
+    // over-large size rather than folding it onto the full corpus.
+    throw new Error(
+      `A slice of ${size} files was asked for, but the corpus holds ${path_sorted_files.length}. ` +
+        "Ask for a slice the corpus can supply, or use the full corpus.",
+    );
+  }
   return path_sorted_files.slice(0, size);
 }
 

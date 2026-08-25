@@ -75,6 +75,7 @@ describe("discover_corpus over the in-repo benchmark corpus", () => {
   it("selects the src tree for the src predicate", async () => {
     const files = await discover_corpus(CORPUS, "src");
     expect(files.map((file) => path.relative(CORPUS, file))).toEqual([
+      "src/aaa_first_reader.ts",
       "src/callback.ts",
       "src/duplicate_exports.js",
       "src/entry.ts",
@@ -83,6 +84,7 @@ describe("discover_corpus over the in-repo benchmark corpus", () => {
       "src/registry.ts",
       "src/unresolved.ts",
       "src/utils.ts",
+      "src/zzz_second_reader.ts",
     ]);
   });
 
@@ -102,6 +104,7 @@ describe("discover_corpus over the in-repo benchmark corpus", () => {
   it("drops the .js file under a .ts-only predicate", async () => {
     const files = await discover_corpus(CORPUS, "folder-ts:src");
     expect(files.map((file) => path.relative(CORPUS, file))).toEqual([
+      "src/aaa_first_reader.ts",
       "src/callback.ts",
       "src/entry.ts",
       "src/handlers.ts",
@@ -109,6 +112,7 @@ describe("discover_corpus over the in-repo benchmark corpus", () => {
       "src/registry.ts",
       "src/unresolved.ts",
       "src/utils.ts",
+      "src/zzz_second_reader.ts",
     ]);
   });
 

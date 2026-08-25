@@ -55,16 +55,6 @@ import {
 
 const BYTES_PER_MB = 1024 * 1024;
 
-/**
- * The heap a corpus-scale arm needs. The corpus dies at node's default ceiling,
- * so an arm that would run for hours before dying refuses to start instead and
- * names the flag.
- */
-const CORPUS_SCALE_HEAP_FLOOR_MB = 6000;
-
-/** Offering more than this many files is a corpus-scale run. */
-const CORPUS_SCALE_FILE_COUNT = 3000;
-
 /** How many files the arm is offered. `"full"` offers every discovered file. */
 export type SliceSize = number | "full";
 
@@ -110,6 +100,7 @@ export async function run_benchmark_arm(
       ? discovered
       : nested_slice(discovered, request.slice_size);
 
+  assert_predicate_selected_files(offered.length, request, corpus_root);
   assert_heap_is_large_enough(offered.length);
 
   const file_sizes =
@@ -214,16 +205,45 @@ export async function run_benchmark_arm(
   return { row, fingerprint };
 }
 
+/**
+ * Refuse a predicate that matched nothing, before the load rather than after.
+ *
+ * `load_project` treats an empty `files` list as "no filter" and walks the
+ * whole project path, so a mistyped predicate would quietly load the entire
+ * repository root — 12,654 files and 1,653.9 s of CPU against vscode — and only
+ * then fail, blaming discovery for disagreeing with the loader. One typo would
+ * cost the hours-then-die failure this harness exists to end.
+ */
+function assert_predicate_selected_files(
+  offered_file_count: number,
+  request: ArmRequest,
+  corpus_root: string,
+): void {
+  if (offered_file_count > 0) return;
+  throw new Error(
+    `Predicate "${request.predicate}" selected no files under ${corpus_root}. ` +
+      "There is nothing to measure, and loading would walk the whole corpus root instead.",
+  );
+}
+
+/**
+ * Refuse an arm the heap cannot hold, before it spends the CPU.
+ *
+ * The requirement scales with the file count from measured growth — roughly
+ * 1.26 MB of settled heap per file, over a 400 MB base — because a single
+ * threshold is wrong in both directions: a flat 3,000-file floor refuses a
+ * 2,999-file arm that fits comfortably, and passes a 5,000-file arm that does
+ * not.
+ */
 function assert_heap_is_large_enough(offered_file_count: number): void {
-  if (offered_file_count < CORPUS_SCALE_FILE_COUNT) return;
+  const required_mb = Math.ceil(400 + 1.4 * offered_file_count);
   const heap_cap_mb = Math.round(
     v8.getHeapStatistics().heap_size_limit / BYTES_PER_MB,
   );
-  if (heap_cap_mb >= CORPUS_SCALE_HEAP_FLOOR_MB) return;
+  if (heap_cap_mb >= required_mb) return;
   throw new Error(
-    `Refusing to start a ${offered_file_count}-file arm under a ${heap_cap_mb} MB heap cap. ` +
-      "The corpus exhausts node's default ceiling and the run would die after hours of CPU. " +
-      "Re-run with --max-old-space-size=6144.",
+    `Refusing to start a ${offered_file_count}-file arm: it needs about ${required_mb} MB of heap and this process has ${heap_cap_mb} MB. ` +
+      `The run would die part-way through after spending the CPU. Re-run with --max-old-space-size=${Math.ceil(required_mb * 1.25)}.`,
   );
 }
 

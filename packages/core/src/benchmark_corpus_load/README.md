@@ -69,16 +69,18 @@ The seventh is not decoration. An order-dependence in which read site got
 recorded as a function's reachability evidence survived the six-number version
 entirely, because it never moves entry-point membership.
 
-The dropped set belongs in it because it grows with the corpus — 1 file at
-n=100, 3 at n=120, 8 at n=200 — so a fingerprint compared across two
+The dropped set belongs in it because it grows with the corpus. Over vscode's
+`src/` at f3fa55c3 it holds 1 file at n=100, 2 at n=120 and 8 at n=200; over
+`folder-ts:src/vs/base` it holds 9 at n=200. The series is a property of the
+predicate as much as of the size, which is why a fingerprint compared across two
 differently-sized slices means nothing without it.
 
 Calls are enumerated from the resolution registry, not from each node's
 `enclosed_calls`. A call at module scope has no enclosing function scope and so
-reaches no node: on the 200-file `src/vs/base` slice, 2,114 of 15,428 calls
-(13.7%) are invisible from the nodes alone — and those are exactly the
-module-level registration calls of the exported-singleton idiom the recorded
-order-dependence clustered on.
+reaches no node: over the first 200 path-sorted `.ts` files of `src/vs/base` at
+f3fa55c3, ingested forward, 2,086 of 15,428 call references have no enclosing
+node. Those are the module-level registration calls of the exported-singleton
+idiom, which is the construct order-dependence shows up in.
 
 ## Corpora and predicates
 
@@ -113,13 +115,19 @@ microsoft/vscode@f3fa55c3 · folder-ts:src/vs/base · 200 of 479 files · ariadn
 
 Peak RSS is reported as a mean over at least two runs with the spread, never as
 a single figure: it varies by up to 61% run to run on one arm and one input,
-while the settled heap on the same runs is stable to 0.01%. `summarize_samples`
-refuses fewer than two runs.
+while the settled heap barely moves. Over five arms on the in-repo corpus, peak
+RSS spread 23.8% while the settled heap spread 0.51% — and 0.51% is the
+quantisation floor there, since the field is rounded to a tenth of a megabyte on
+a 19.5 MB heap. The corpus-scale figure behind the 0.01% claim comes from an arm
+three orders of magnitude larger, where a tenth of a megabyte is invisible.
+`summarize_samples` refuses fewer than two runs.
 
 The RSS sampler cannot observe the trace phase, which is fully synchronous — so
-`peak_rss_mb` is a defensible lower bound rather than a true high-water mark. On
-a sub-second arm it is close to meaningless; on a corpus-scale arm the load phase
-yields often enough to sample properly (measured: 55 samples over an 18.5 s load).
+`peak_rss_mb` is a defensible lower bound rather than a true high-water mark.
+Cross-checked against `/usr/bin/time -l` on vscode arms it runs 0.2–0.7% low. On
+a sub-second arm no interval fires at all and it equals the closing reading; on a
+corpus-scale arm the load phase yields often enough to sample properly (measured:
+55 samples over an 18.5 s load).
 
 ## Running it
 

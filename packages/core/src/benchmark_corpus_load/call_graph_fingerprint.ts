@@ -22,12 +22,13 @@
  * Calls are enumerated from the resolution registry rather than from each
  * node's `enclosed_calls`. A call written at module scope has no enclosing
  * function scope, so `call_resolver` never files it under a caller and it
- * reaches no node: measured on the 200-file `src/vs/base` slice, 2,114 of
- * 15,428 calls (13.7%) and 897 of 7,948 unresolved calls (11.3%) are invisible
- * from the nodes alone. Those are exactly the module-level registration calls
- * of the exported-singleton idiom that the recorded order-dependence clustered
- * on, so a fingerprint built from nodes would be blind to the very construct
- * it exists to watch. Such a call is attributed to a synthetic `module:<path>`
+ * reaches no node. Over the first 200 path-sorted `.ts` files of vscode's
+ * `src/vs/base` at f3fa55c3, ingested forward, 2,086 of 15,428 call references
+ * had no enclosing node — a seventh of the corpus's calls, invisible to a
+ * fingerprint built from nodes alone. Those are the module-level registration
+ * calls of the exported-singleton idiom, which is the construct order-dependence
+ * shows up in, so a node-built fingerprint would be blind to exactly what it
+ * exists to watch. Such a call is attributed to a synthetic `module:<path>`
  * caller.
  *
  * Every member is relative to the corpus root. Symbol ids embed the absolute
@@ -42,9 +43,9 @@ import {
   type CallReference,
   type FilePath,
   type IndirectReachability,
-  type LocationKey,
   type SymbolId,
 } from "@ariadnejs/types";
+import * as path from "path";
 import { compare_paths } from "./corpus_predicate";
 import { digest_members } from "./streaming_digest";
 
@@ -147,19 +148,36 @@ export interface FingerprintInput {
 }
 
 function normalize_root(corpus_root: string): string {
-  const forward = corpus_root.replace(/\\/g, "/");
+  if (!path.isAbsolute(corpus_root)) {
+    throw new Error(
+      `The corpus root must be absolute, got "${corpus_root}". A relative root strips the wrong prefix and leaves machine-specific paths in every member.`,
+    );
+  }
+  const forward = path.resolve(corpus_root).replace(/\\/g, "/");
   return forward.endsWith("/") ? forward : `${forward}/`;
 }
 
+function escape_for_regexp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 /**
- * Strip the corpus root out of every path the value embeds.
- *
- * Symbol ids are `kind:file_path:start:…:name` and location keys are
- * `file_path:start:…`, so the root appears inside the value rather than at its
- * head. Replacing every occurrence covers both without parsing either.
+ * A member is `kind:path:…` or `path:…`, so the corpus root appears at the head
+ * of the value or immediately after a `:`. The replacement is anchored there
+ * rather than applied everywhere: a root that recurs INSIDE a path would
+ * otherwise be deleted mid-string and glue the surrounding segments together,
+ * so `<root>/a/<root>/x.ts` and `<root>/ax.ts` would produce the same member.
  */
-function relativize(value: string, normalized_root: string): string {
-  return value.replace(/\\/g, "/").split(normalized_root).join("");
+function build_relativizer(normalized_root: string): (value: string) => string {
+  const anchored = new RegExp(`(^|:)${escape_for_regexp(normalized_root)}`, "g");
+  const seen = new Map<string, string>();
+  return (value: string): string => {
+    const held = seen.get(value);
+    if (held !== undefined) return held;
+    const relative = value.replace(/\\/g, "/").replace(anchored, "$1");
+    seen.set(value, relative);
+    return relative;
+  };
 }
 
 function build_component(members: string[]): FingerprintComponent {
@@ -171,10 +189,12 @@ function build_component(members: string[]): FingerprintComponent {
   };
 }
 
-function node_members(call_graph: FingerprintableGraph, root: string): string[] {
+function node_members(call_graph: FingerprintableGraph,
+  relativize: (value: string) => string,
+): string[] {
   const members: string[] = [];
   for (const symbol_id of call_graph.nodes.keys()) {
-    members.push(relativize(symbol_id, root));
+    members.push(relativize(symbol_id));
   }
   return members;
 }
@@ -186,26 +206,46 @@ function node_members(call_graph: FingerprintableGraph, root: string): string[] 
  * A call enclosed by a function is attributed to that function; one at module
  * scope is attributed to `module:<relative path>`, because it has a caller in
  * every sense that matters to a reader even though no node holds it.
+ *
+ * Ownership is keyed by the call REFERENCE, not by its location. Two distinct
+ * references routinely share one location — the resolver emits a synthetic
+ * callback invocation at the receiver call's own site, and emits duplicate
+ * references for `new Map()`/`new Set()`/`new Promise()` — so a location-keyed
+ * map is last-writer-wins over node iteration order. That order is the order
+ * files arrived, which made this function invent an order-dependence of its
+ * own: measured on a 200-file slice, 539 of 15,428 call sites were filed under
+ * the wrong caller and reversing the node map alone moved 417 unresolved
+ * members. A fingerprint built to detect order-dependence must not manufacture
+ * any.
+ *
+ * A reference can still be enclosed by two nodes — a callback's body and the
+ * method around it both claim it. The smallest symbol id wins, which is a
+ * property of the two definitions rather than of the walk. It resolves to the
+ * one whose definition starts earlier in the file, since a symbol id leads with
+ * its kind and position.
  */
 function attributed_calls(
   input: FingerprintInput,
-  root: string,
+  relativize: (value: string) => string,
 ): { caller: string; call: CallReference }[] {
-  const enclosing = new Map<LocationKey, SymbolId>();
+  const enclosing = new Map<CallReference, SymbolId>();
   for (const [caller_id, node] of input.call_graph.nodes) {
     for (const call of node.enclosed_calls) {
-      enclosing.set(location_key(call.location), caller_id);
+      const held = enclosing.get(call);
+      if (held === undefined || compare_paths(caller_id, held) < 0) {
+        enclosing.set(call, caller_id);
+      }
     }
   }
 
   const attributed: { caller: string; call: CallReference }[] = [];
   for (const file of input.indexed_files) {
     for (const call of input.resolutions.get_calls_for_file(file)) {
-      const owner = enclosing.get(location_key(call.location));
+      const owner = enclosing.get(call);
       const caller =
         owner === undefined
-          ? `module:${relativize(file, root)}`
-          : relativize(owner, root);
+          ? `module:${relativize(file)}`
+          : relativize(owner);
       attributed.push({ caller, call });
     }
   }
@@ -216,22 +256,27 @@ function attributed_calls(
  * Distinct caller-to-callee pairs, each carrying how many call sites realise
  * it.
  *
- * One member per pair keeps the component the size AC #2 asks for, and the
- * `#n` suffix keeps the multiplicity that would otherwise be lost: measured on
- * the 200-file slice, 9,066 (call site, target) tuples collapse to 7,469
- * pairs, so a resolver change that double-registers a reference or moves how
- * many sites reach a polymorphic target would pass an unsuffixed component
- * untouched. Nothing else pins resolved-call multiplicity — `unresolved_calls`
- * covers only the sites with no target at all.
+ * One member per pair keeps the component one row per edge rather than one per
+ * call site, and the `#n` suffix keeps the multiplicity that would otherwise be
+ * lost: over the 200-file `src/vs/base` slice roughly a quarter of the
+ * (reference, target) tuples share a pair with another, so a resolver change
+ * that double-registers a reference, or that moves how many sites reach a
+ * polymorphic target, would pass an unsuffixed component untouched. Nothing
+ * else pins resolved-call multiplicity — `unresolved_calls` covers only the
+ * sites with no target at all.
+ *
+ * `n` counts references the resolver emitted, not distinct source call sites.
+ * The two differ where the resolver emits more than one reference for one site,
+ * which it does for `new Map()`, `new Set()` and `new Promise()`.
  */
 function call_edge_members(
   attributed: readonly { caller: string; call: CallReference }[],
-  root: string,
+  relativize: (value: string) => string,
 ): string[] {
   const site_counts = new Map<string, number>();
   for (const { caller, call } of attributed) {
     for (const resolution of call.resolutions) {
-      const pair = `${caller}->${relativize(resolution.symbol_id, root)}`;
+      const pair = `${caller}->${relativize(resolution.symbol_id)}`;
       site_counts.set(pair, (site_counts.get(pair) ?? 0) + 1);
     }
   }
@@ -247,12 +292,12 @@ function call_edge_members(
  */
 function unresolved_call_members(
   attributed: readonly { caller: string; call: CallReference }[],
-  root: string,
+  relativize: (value: string) => string,
 ): string[] {
   const members: string[] = [];
   for (const { caller, call } of attributed) {
     if (call.resolutions.length > 0) continue;
-    const site = relativize(location_key(call.location), root);
+    const site = relativize(location_key(call.location));
     members.push(`${caller}|${call.call_type}|${call.name}@${site}`);
   }
   return members;
@@ -260,11 +305,11 @@ function unresolved_call_members(
 
 function indirect_reachability_key_members(
   call_graph: FingerprintableGraph,
-  root: string,
+  relativize: (value: string) => string,
 ): string[] {
   const members: string[] = [];
   for (const symbol_id of indirect_reachability(call_graph).keys()) {
-    members.push(relativize(symbol_id, root));
+    members.push(relativize(symbol_id));
   }
   return members;
 }
@@ -276,18 +321,18 @@ function indirect_reachability_key_members(
  */
 function indirect_reachability_evidence_members(
   call_graph: FingerprintableGraph,
-  root: string,
+  relativize: (value: string) => string,
 ): string[] {
   const members: string[] = [];
   for (const [symbol_id, entry] of indirect_reachability(call_graph)) {
     const { reason } = entry;
     const collection =
       reason.type === "collection_read"
-        ? relativize(reason.collection_id, root)
+        ? relativize(reason.collection_id)
         : "";
-    const read_site = relativize(location_key(reason.read_location), root);
+    const read_site = relativize(location_key(reason.read_location));
     members.push(
-      `${relativize(symbol_id, root)}|${reason.type}|${collection}|${read_site}`,
+      `${relativize(symbol_id)}|${reason.type}|${collection}|${read_site}`,
     );
   }
   return members;
@@ -299,24 +344,32 @@ function indirect_reachability(
   return call_graph.indirect_reachability ?? EMPTY_INDIRECT_REACHABILITY;
 }
 
+/** A path segment that survived relativization: `/` at the head of the value or
+ *  straight after a `:`, or a Windows drive letter in either position. */
+const ABSOLUTE_SEGMENT = /(^|:)(\/|[A-Za-z]:\/)/;
+
 /**
  * Refuse a fingerprint that still embeds an absolute path.
  *
  * A member that kept its absolute path makes the fingerprint a function of
  * where the corpus sits on disk, so a baseline committed from one checkout can
  * never match another's recomputation — and the diff would show every member
- * differing with no clue why. Members are sorted, and `/` sorts below every
- * character a symbol id starts with, so the offender is at index 0.
+ * differing with no clue why. It happens whenever a symbol is defined outside
+ * the corpus root, so it is a real condition rather than a defensive nicety.
+ *
+ * Every member is scanned. Checking only the first would miss six of the seven
+ * components: a symbol id leads with its kind, so `class:` sorts before
+ * `variable:` and an absolute path inside the latter never reaches index 0.
  */
 export function assert_members_are_relative(
   fingerprint: CallGraphFingerprint,
 ): void {
   for (const name of FINGERPRINT_COMPONENT_NAMES) {
-    const first = fingerprint[name].members[0];
-    if (first !== undefined && (first.startsWith("/") || /^[A-Za-z]:\//.test(first))) {
+    for (const member of fingerprint[name].members) {
+      if (!ABSOLUTE_SEGMENT.test(member)) continue;
       throw new Error(
-        `Fingerprint component "${name}" holds an absolute path (${first}). ` +
-          "The corpus root did not strip, so this fingerprint describes a location rather than a corpus — resolve the corpus root before loading.",
+        `Fingerprint component "${name}" holds an absolute path (${member}). ` +
+          "This member names a location rather than a corpus, so the fingerprint could never be reproduced from another checkout — the symbol is defined outside the corpus root.",
       );
     }
   }
@@ -325,29 +378,29 @@ export function assert_members_are_relative(
 export function fingerprint_call_graph(
   input: FingerprintInput,
 ): CallGraphFingerprint {
-  const root = normalize_root(input.corpus_root);
-  const attributed = attributed_calls(input, root);
+  const relativize = build_relativizer(normalize_root(input.corpus_root));
+  const attributed = attributed_calls(input, relativize);
 
   const dropped: string[] = [];
   for (const file_path of input.dropped_files) {
-    dropped.push(relativize(file_path, root));
+    dropped.push(relativize(file_path));
   }
 
   const fingerprint: CallGraphFingerprint = {
-    nodes: build_component(node_members(input.call_graph, root)),
-    call_edges: build_component(call_edge_members(attributed, root)),
+    nodes: build_component(node_members(input.call_graph, relativize)),
+    call_edges: build_component(call_edge_members(attributed, relativize)),
     unresolved_calls: build_component(
-      unresolved_call_members(attributed, root),
+      unresolved_call_members(attributed, relativize),
     ),
     raw_entry_points: build_component(
-      input.call_graph.entry_points.map((id) => relativize(id, root)),
+      input.call_graph.entry_points.map((id) => relativize(id)),
     ),
     indirect_reachability_keys: build_component(
-      indirect_reachability_key_members(input.call_graph, root),
+      indirect_reachability_key_members(input.call_graph, relativize),
     ),
     dropped_files: build_component(dropped),
     indirect_reachability_evidence: build_component(
-      indirect_reachability_evidence_members(input.call_graph, root),
+      indirect_reachability_evidence_members(input.call_graph, relativize),
     ),
   };
 

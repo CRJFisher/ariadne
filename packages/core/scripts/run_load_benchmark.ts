@@ -47,8 +47,34 @@ import {
 } from "../src/benchmark_corpus_load";
 import { cite_row, format_citation } from "../src/benchmark_corpus_load/measurement_row";
 
-/** The heap the corpus needs; the default ceiling kills a full-corpus arm. */
-const HEAP_MB = 6144;
+/**
+ * What `"full"` is assumed to cost when sizing a child, since the parent does
+ * not walk the corpus before spawning. vscode's `src/` is 8,494 files.
+ */
+const FULL_SLICE_HEAP_BASIS = 8494;
+
+/**
+ * The heap an arm of this size needs, from measured growth: two same-session
+ * vscode arms cost 420.1 MB of settled heap at 200 files and 925.1 MB at 600 —
+ * about 1.26 MB per file, with peak RSS a little above that.
+ *
+ * The parent sizes each child from the same function the child refuses
+ * against, so the two can never disagree. A floor set independently of the flag
+ * that feeds it is a guard that cannot fire: a 6,144 MB flag yields a 6,192 MB
+ * limit, so a 6,000 MB floor passed every arm the CLI could spawn.
+ *
+ * The coefficient comes from two points and is unverified above 600 files.
+ * Re-measure before trusting a full-corpus figure.
+ */
+export function required_heap_mb(offered_file_count: number): number {
+  return Math.ceil(400 + 1.4 * offered_file_count);
+}
+
+/** What to give a child: its requirement plus headroom. */
+function heap_mb_for(slice: SliceSize): number {
+  const offered = slice === "full" ? FULL_SLICE_HEAP_BASIS : slice;
+  return Math.max(2048, Math.ceil(required_heap_mb(offered) * 1.25));
+}
 
 /** Every arm runs at least twice: a single peak-RSS figure is not a measurement. */
 const REPETITIONS = 2;
@@ -63,11 +89,32 @@ const DEFAULT_CORPUS_ROOT = path.join(
 
 function flag(name: string, fallback?: string): string {
   const index = process.argv.indexOf(`--${name}`);
-  if (index === -1 || index === process.argv.length - 1) {
+  if (index === -1) {
     if (fallback !== undefined) return fallback;
     throw new Error(`Missing required flag --${name}`);
   }
-  return process.argv[index + 1];
+  const value = process.argv[index + 1];
+  // A flag whose value is missing, or is itself a flag, is a mangled command
+  // line rather than a request for the default. Falling back would launder it
+  // into a run that looks deliberate.
+  if (value === undefined) {
+    throw new Error(`--${name} needs a value`);
+  }
+  if (value.startsWith("--")) {
+    throw new Error(
+      `--${name} was given "${value}", which is another flag. Supply its value.`,
+    );
+  }
+  return value;
+}
+
+function numeric_flag(name: string, fallback?: string): number {
+  const raw = flag(name, fallback);
+  const value = Number(raw);
+  if (!Number.isFinite(value)) {
+    throw new Error(`--${name} must be a number, got "${raw}"`);
+  }
+  return value;
 }
 
 function has_flag(name: string): boolean {
@@ -96,7 +143,8 @@ function show_help(): void {
       "",
       "Options:",
       "  --corpus-root <path>    default ~/.ariadne/triage-entrypoints/repos/microsoft--vscode",
-      "  --corpus-name <name>    default microsoft/vscode",
+      "  --corpus-name <name>    required: which corpus this row is for",
+      "  --run-dir <path>        where arm results land",
       "  --corpus-commit <sha>   required: a row without it is not a measurement",
       "  --predicate <name>      src | repository-root | folder:<p> | folder-ts:<p>",
       "  --slice <n|full>        default full",
@@ -117,33 +165,69 @@ async function run_as_child(): Promise<void> {
 // --------------------------------------------------------------- parent role
 
 function spawn_arm(request: ArmRequest, out: string): Promise<ArmResult> {
+  // The arm runs the script belonging to the checkout it claims to measure. A
+  // run that spawned the orchestrator's own script would execute one tree's
+  // bytes and stamp another tree's commit onto the row — a row naming something
+  // other than what it measured, which is the one thing this harness exists to
+  // make impossible.
+  const script = path.join(
+    request.ariadne_repo_path,
+    "packages",
+    "core",
+    "scripts",
+    "run_load_benchmark.ts",
+  );
+  if (!fs.existsSync(script)) {
+    return Promise.reject(
+      new Error(
+        `Arm "${request.arm}" names ${request.ariadne_repo_path} as its checkout, but ${script} does not exist there. An arm must run the tree it reports.`,
+      ),
+    );
+  }
+
   return new Promise((resolve, reject) => {
     const child = spawn(
       process.execPath,
       [
         "--import",
         "tsx",
-        `--max-old-space-size=${HEAP_MB}`,
-        __filename,
+        `--max-old-space-size=${heap_mb_for(request.slice_size)}`,
+        script,
         "--run-arm",
         JSON.stringify(request),
         "--out",
         out,
       ],
-      { cwd: repo_root(), stdio: ["ignore", "ignore", "inherit"] },
+      { cwd: request.ariadne_repo_path, stdio: ["ignore", "ignore", "inherit"] },
     );
     child.on("error", reject);
-    child.on("exit", (code) => {
-      if (code !== 0) {
-        reject(
-          new Error(
-            `Arm "${request.arm}" (sequence ${request.sequence_index}) exited ${code}. ` +
-              "No usable result; a partial arm is never substituted for a finished one.",
+    child.on("exit", (code, signal) => {
+      if (code === 0) {
+        read_arm_result(out).then(resolve, (error: unknown) =>
+          reject(
+            new Error(
+              `Arm "${request.arm}" (sequence ${request.sequence_index}) exited 0 but its result could not be read: ${
+                error instanceof Error ? error.message : String(error)
+              }`,
+            ),
           ),
         );
         return;
       }
-      read_arm_result(out).then(resolve, reject);
+      // A SIGKILL here is almost always the OOM killer, which is the expected
+      // corpus-scale failure; reporting it as "exited null" reads like a
+      // harness bug instead.
+      const cause =
+        signal === "SIGKILL"
+          ? "was killed on SIGKILL — most likely the OOM killer; raise the heap"
+          : signal !== null
+            ? `was killed on ${signal}`
+            : `exited ${code}`;
+      reject(
+        new Error(
+          `Arm "${request.arm}" (sequence ${request.sequence_index}) ${cause}. No usable result; a partial arm is never substituted for a finished one.`,
+        ),
+      );
     });
   });
 }
@@ -299,6 +383,11 @@ async function run_orders(context: RunContext, slice: SliceSize): Promise<void> 
     }
   }
   console.log(`\nidentical across orders: ${verdict.identical_across_orders}`);
+  if (!verdict.identical_across_orders) {
+    // The one question this mode exists to answer, answered "the reported graph
+    // is a function of the walk". Exiting 0 would let a CI chain go green on it.
+    process.exitCode = 1;
+  }
 
   // The silence above is only evidence because the probe was shown to report a
   // difference on a tree that had one. That demonstration travels with it.
@@ -334,34 +423,42 @@ async function main(): Promise<void> {
     return;
   }
 
+  const mode = ["interleave", "slices", "orders"].find((name) => has_flag(name));
+  if (mode === undefined) {
+    show_help();
+    return;
+  }
+
   const session_id = create_session_id();
-  const run_dir = path.join(os.homedir(), ".ariadne", "benchmark-runs", session_id);
+  const run_dir = flag(
+    "run-dir",
+    path.join(os.homedir(), ".ariadne", "benchmark-runs", session_id),
+  );
   fs.mkdirSync(run_dir, { recursive: true });
 
   const context: RunContext = {
     session_id,
     run_dir,
-    corpus_name: flag("corpus-name", "microsoft/vscode"),
+    corpus_name: flag("corpus-name"),
     corpus_root,
     corpus_commit: flag("corpus-commit"),
     predicate: parse_corpus_predicate_name(flag("predicate", "src")),
-    seed: Number(flag("seed", "1")),
+    seed: numeric_flag("seed", "1"),
   };
 
   const slice_flag = flag("slice", "full");
-  const slice: SliceSize = slice_flag === "full" ? "full" : Number(slice_flag);
+  const slice: SliceSize =
+    slice_flag === "full" ? "full" : numeric_flag("slice");
 
   console.log(`session ${session_id}`);
   console.log(`results in ${run_dir}`);
 
-  if (has_flag("interleave")) {
+  if (mode === "interleave") {
     await run_interleaved(context, slice);
-  } else if (has_flag("slices")) {
+  } else if (mode === "slices") {
     await run_slices(context);
-  } else if (has_flag("orders")) {
-    await run_orders(context, slice);
   } else {
-    show_help();
+    await run_orders(context, slice);
   }
 }
 

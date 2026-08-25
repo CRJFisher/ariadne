@@ -152,6 +152,14 @@ describe("check_rows_comparable", () => {
     expect(verdict.refusals[0]).toContain("fingerprint schema differs");
   });
 
+  it("refuses two rows taken with different include_tests", () => {
+    // It moves the raw entry points, so without this refusal a multi-order diff
+    // would report the walk for a difference the flag caused.
+    const verdict = check_rows_comparable(row(), row({ include_tests: true }));
+    expect(verdict.comparable).toEqual(false);
+    expect(verdict.refusals[0]).toContain("include_tests differs (false vs true)");
+  });
+
   it("PERMITS two rows that differ only in ingest order", () => {
     // Comparing two orders through the fingerprint is exactly what a
     // multi-order run is, so comparability must not refuse it — only a RATIO

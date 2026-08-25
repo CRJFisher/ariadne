@@ -70,6 +70,11 @@ export function check_rows_comparable(
       `fingerprint schema differs (${baseline.fingerprint.schema_version} vs ${candidate.fingerprint.schema_version}) — the members behind these digests are not the same kind of thing`,
     );
   }
+  if (baseline.include_tests !== candidate.include_tests) {
+    refusals.push(
+      `include_tests differs (${baseline.include_tests} vs ${candidate.include_tests}) — it moves the raw entry points, so a diff would report the walk for a difference the flag caused`,
+    );
+  }
   if (baseline.corpus.predicate !== candidate.corpus.predicate) {
     refusals.push(
       `corpus predicate differs (${baseline.corpus.predicate} vs ${candidate.corpus.predicate}) — ${CORPUS_EVIDENCE}`,
