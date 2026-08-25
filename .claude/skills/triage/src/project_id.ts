@@ -1,5 +1,7 @@
 import path from "path";
 
+import { repos_clone_id } from "./store/store_layout.js";
+
 /** Convert a resolved project path to a collision-free identifier for file naming. */
 export function path_to_project_id(project_path: string): string {
   return project_path.replace(/\//g, "-");
@@ -8,7 +10,10 @@ export function path_to_project_id(project_path: string): string {
 /**
  * Derive a project identifier from config fields.
  * Internal projects (project_path=".") require an explicit name.
- * External projects derive the identifier from the resolved absolute path.
+ * A corpus that is a clone under the store's `repos/` takes the clone's
+ * owner-qualified slug — the id its runs, published results and `targets.yaml`
+ * are filed under. Any other external project derives the identifier from its
+ * resolved absolute path.
  */
 export function project_id_from_config(
   raw_project_path: string,
@@ -20,5 +25,6 @@ export function project_id_from_config(
     }
     return explicit_name;
   }
-  return path_to_project_id(path.resolve(raw_project_path));
+  const resolved = path.resolve(raw_project_path);
+  return repos_clone_id(resolved) ?? path_to_project_id(resolved);
 }

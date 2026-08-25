@@ -12,7 +12,7 @@ Triage pipeline for entry point analysis: detect false positives and classify ro
 
 **This pipeline runs headlessly, end to end, in a single turn.** Every phase — config creation, file-count checks, dispensing, investigating, finalizing — proceeds on sensible defaults without pausing for confirmation. Never call `AskUserQuestion` anywhere in this skill; it is not in this skill's `allowed-tools`. When a step below says "ask" or "confirm," that describes an interactive fallback this skill does not use — resolve it autonomously instead, per the guidance at that step, and log the decision in your reply text rather than pausing for input.
 
-Each invocation produces a self-contained run under `triage_state/<project>/runs/<run-id>/`. Run-id format is `<short-commit>-<iso-ts>` (e.g. `deadbee-2026-04-28T13-42-07.812Z`); `nogit-...` for non-git projects. Re-running at the same target commit reuses prior `confirmed_unreachable` verdicts via the TP cache (skip with `--no-reuse-tp`). A new commit on the target busts the cache: every entry re-investigates.
+Each invocation produces a self-contained run under `triage_state/<project>/runs/<run-id>/`. Run-id format is `<short-commit>-<iso-ts>` (e.g. `deadbee-2026-04-28T13-42-07.812Z`); `nogit-...` for non-git projects. Re-running at the same target commit reuses prior `confirmed_unreachable` verdicts via the TP cache (skip with `--no-reuse-tp`). Moving the target to a new commit (`--commit <sha>`, see **Phase 1**) busts the cache: every entry re-investigates.
 
 **Script invocation:** Always use `node --import tsx` to run scripts. Never use `pnpm exec tsx` or `npx tsx` — these create IPC Unix sockets that the sandbox blocks.
 
@@ -34,8 +34,9 @@ Before routing, extract any pipeline flags from the arguments:
 | Flag              | Variable     | Default |
 | ----------------- | ------------ | ------- |
 | `--max-count <n>` | `$MAX_COUNT` | `250`   |
+| `--commit <sha>`  | `$COMMIT`    | unset   |
 
-Strip extracted flags from the input before applying the routing table below.
+Strip extracted flags from the input before applying the routing table below. `$COMMIT` is the full sha Phase 1 puts a `repos/` clone at; unset, the clone goes to the commit of the project's newest run, or to upstream HEAD for a project with no run on record.
 
 Resolve the analysis target from the remaining input using this routing table:
 
@@ -46,6 +47,8 @@ Resolve the analysis target from the remaining input using this routing table:
 | Absolute or relative directory path | `/Users/chuck/workspace/some-repo`, `../other-repo`      | If a project config exists for this path, use `--config <config-path>`; otherwise follow **Creating a New Project Config** below |
 | `owner/repo` or GitHub URL          | `anthropics/sdk-python`, `https://github.com/owner/repo` | Use `--github <value>`                                                                                                           |
 | Natural language                    | "analyze the core package"                               | Interpret intent and map to one of the above                                                                                     |
+
+A config whose `project_path` is a clone under `~/.ariadne/triage-entrypoints/repos/` names a corpus Phase 1 creates or moves itself, so that directory need not exist before the pipeline starts.
 
 ### Creating a New Project Config
 
@@ -70,11 +73,11 @@ When the input is a directory path and a project config already exists for that 
    - `exclude`: the list decided in step 4
    - `include_tests`: optional, default `false`. Admits test callables as entry-point _candidates_; it never changes which files are indexed.
    - `max_files`: optional, default 20,000. Detection refuses a corpus larger than this rather than indexing part of one.
-   - `project_name` is auto-derived for external projects via `path_to_project_id(project_path)` — do not include it in the config. Only internal projects (`project_path: "."`) require an explicit `project_name`.
+   - `project_name` is auto-derived for external projects — a `repos/<owner>--<repo>` clone takes that slug, any other directory `path_to_project_id(project_path)` — do not include it in the config. Only internal projects (`project_path: "."`) require an explicit `project_name`.
 6. Save it directly to `~/.ariadne/triage-entrypoints/project_configs/{name}.json` — state the saved config in your reply text as a record, not a request for approval.
 7. Continue the pipeline with `--config ~/.ariadne/triage-entrypoints/project_configs/{name}.json`.
 
-No project configs ship pre-authored — author one with the steps above. A saved config lives at `~/.ariadne/triage-entrypoints/project_configs/<name>.json` and is passed to every phase via `--config <path>`. The file is a JSON object with `project_path` (required), optional `folders` (source directories to index), optional `exclude` (directories to skip), optional `include_tests` (default `false`; a candidate-side gate that never changes the corpus), optional `max_files` (default 20,000; detection refuses a larger corpus), and `project_name` (only for internal `project_path: "."` projects). Pass the same `--config` to every phase: `prepare_triage` re-indexes, and without it that phase indexes a different corpus than detection analysed.
+No project configs ship pre-authored — author one with the steps above. A saved config lives at `~/.ariadne/triage-entrypoints/project_configs/<name>.json` and is passed to every phase via `--config <path>`. The file is a JSON object with `project_path` (required; a `repos/<owner>--<repo>` clone is created on demand), optional `folders` (source directories to index), optional `exclude` (directories to skip), optional `include_tests` (default `false`; a candidate-side gate that never changes the corpus), optional `max_files` (default 20,000; detection refuses a larger corpus), and `project_name` (only for internal `project_path: "."` projects). Pass the same `--config` to every phase: `prepare_triage` re-indexes, and without it that phase indexes a different corpus than detection analysed.
 
 If no arguments are provided or the input is ambiguous, stop and print an error describing what is missing — do not ask the user and do not guess a target.
 
@@ -82,7 +85,7 @@ If no arguments are provided or the input is ambiguous, stop and print an error 
 
 Scripts that operate on existing triage state take `--project <name>` (`prepare_triage` uses `--project` at creation time; `get_triage_summary` enumerates every project and takes no flags). Each pipeline invocation operates on exactly one project, and different projects can run in parallel against the same `triage_state/` dir — the project name is the isolation boundary.
 
-The name is derived from the target: a GitHub target takes its owner-qualified slug (`vuejs/core` → `vuejs--core`), a directory target its resolved path, and a saved config the config's `project_name`. Both halves of a slug are load-bearing — `vuejs/core` and `home-assistant/core` are unrelated codebases, and a shared name would merge their run histories behind one LATEST pointer.
+The name is derived from the target: a GitHub target takes its owner-qualified slug (`vuejs/core` → `vuejs--core`), a directory target its resolved path, and a saved config the same rule applied to its `project_path` — the slug when that path is a `repos/` clone, the resolved path otherwise. Both halves of a slug are load-bearing — `vuejs/core` and `home-assistant/core` are unrelated codebases, and a shared name would merge their run histories behind one LATEST pointer.
 
 A project runs **one triage at a time**. `prepare_triage` refuses while another run for the project is `status: "active"`, naming each live run, the commit it was prepared at, and both remedies: continue it by passing its id to the Phase 3-4 scripts, or `abandon_run.ts` to discard it. To triage two targets concurrently, give them distinct `--project` names.
 
@@ -121,23 +124,27 @@ node --import tsx .claude/skills/triage/scripts/preview_folders.ts \
 
 If the estimated post-exclusion count exceeds ~4,000 files, note it in your reply text as a record — indexing at that scale takes significantly longer than a typical run — and proceed into Phase 1 regardless. Do not pause for confirmation; revise the config's `exclude` list yourself only if a further reduction is clearly warranted by the criteria in **Creating a New Project Config** step 3.
 
+When the config names a `repos/` clone that is not on disk yet, skip the preview: Phase 1 creates the clone at the run commit, and the config's `exclude` list was decided when it was authored.
+
 ## Phase 1: Detect
 
 Use the target resolved from the **Analysis Target** section above to construct the detect command.
 
 ```bash
-# From a project config (preferred when one has been authored)
+# From a project config (preferred when one has been authored); add --commit $COMMIT when set
 node --import tsx .claude/skills/triage/scripts/detect_entrypoints.ts \
   --config ~/.ariadne/triage-entrypoints/project_configs/<name>.json
 
 # Local repository
 node --import tsx .claude/skills/triage/scripts/detect_entrypoints.ts --path /path/to/repo
 
-# GitHub repository
+# GitHub repository; add --commit $COMMIT when set
 node --import tsx .claude/skills/triage/scripts/detect_entrypoints.ts --github owner/repo
 ```
 
-Options: `--config <file>`, `--path <dir>`, `--github <repo>`, `--branch <name>`, `--depth <n>`. Folder filters, exclusions, and test inclusion are declared in the project config file, not as CLI flags.
+Options: `--config <file>`, `--path <dir>`, `--github <repo>`, `--commit <sha>`, `--depth <n>`. Folder filters, exclusions, and test inclusion are declared in the project config file, not as CLI flags.
+
+**Corpus commit.** A GitHub target, and a config whose `project_path` is under `~/.ariadne/triage-entrypoints/repos/`, is a clone detection owns. Before indexing, the clone is put at one commit: `$COMMIT` when set, else the commit of the project's newest run (`triage_state/<project>/runs/<run-id>/manifest.json` → `commit_hash`), else upstream HEAD for a project with no run on record. A clone already at that commit is left untouched; one at another commit has the sha fetched and checked out. Detection exits non-zero and writes no dump when the commit cannot be reached — report its error and stop. To triage a target at its current upstream tip after earlier runs, name the tip: `git ls-remote https://github.com/<owner>/<repo> HEAD | cut -f1`. A `--path` target, or a config naming a directory outside `repos/`, is the user's own working tree and is analysed as it stands; `--commit` is refused for it.
 
 Author a config with **Creating a New Project Config** above; it lives at `~/.ariadne/triage-entrypoints/project_configs/<name>.json`.
 
@@ -290,7 +297,7 @@ Default keep-count is `5` (override with `--keep` or `ARIADNE_RETAIN_RUNS`). Run
 The user's iteration cycle when tuning the classifier registry or Ariadne core resolution against a fixed target commit:
 
 ```bash
-# 1. Detect once (entry-point set is stable for a given target HEAD)
+# 1. Detect once (the clone stays at the run commit until Phase 1 is given --commit)
 node --import tsx scripts/detect_entrypoints.ts --config <config> > /dev/null
 # capture the analysis JSON path (or use Glob to find it)
 

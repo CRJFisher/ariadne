@@ -5,23 +5,35 @@
  * Analyzes entrypoints in any local directory or GitHub repository.
  * Supports multiple languages: TypeScript, JavaScript, Python, Rust, Go, Java, C++, C.
  *
+ * A GitHub target is cloned into `~/.ariadne/triage-entrypoints/repos/<owner>--<repo>`,
+ * and that clone's commit is part of every run's identity: the run manifest
+ * records it as `commit_hash`, and every published verdict's file and line
+ * numbers point into the tree at that commit. So the clone is put at exactly
+ * one commit before anything is indexed — `--commit <sha>` when given, else
+ * the commit of the project's newest run, else upstream HEAD for a project
+ * with no run on record — and detection fails without writing a dump when
+ * that commit cannot be reached. A clone already at the commit is left as it
+ * is. A directory outside `repos/` is the user's own working tree and is never
+ * checked out.
+ *
  * Usage:
- *   # From project config (preferred; carries folders, exclude, include_tests, max_files)
- *   node --import tsx detect_entrypoints.ts --config path/to/config.json
+ *   # From project config (preferred; carries folders, exclude, include_tests, max_files).
+ *   # A config whose project_path is a repos/ clone creates or moves that clone.
+ *   node --import tsx detect_entrypoints.ts --config path/to/config.json [--commit <sha>]
  *
  *   # Local repository (analyzes everything under the path with default exclusions)
  *   node --import tsx detect_entrypoints.ts --path /path/to/repo
  *
  *   # GitHub repository
- *   node --import tsx detect_entrypoints.ts --github owner/repo
+ *   node --import tsx detect_entrypoints.ts --github owner/repo [--commit <sha>]
  *   node --import tsx detect_entrypoints.ts --github https://github.com/owner/repo
  *
  * Options:
  *   --config <file>  Project config file (preferred; see config format in load_project_config)
- *   --path <dir>     Local directory to analyze
+ *   --path <dir>     Local directory to analyze; never checked out
  *   --github <repo>  GitHub repository (owner/repo or full URL)
- *   --branch <name>  Branch to analyze (default: default branch, --github only)
- *   --depth <n>      Clone depth for GitHub repos (default: 1, --github only)
+ *   --commit <sha>   Full sha the repos/ clone is put at (--github, or --config naming a repos/ clone)
+ *   --depth <n>      History depth of each fetch into a repos/ clone (default: 1)
  */
 
 import {
@@ -50,10 +62,12 @@ import {
 } from "../src/analysis_scope.js";
 import { load_registry } from "../src/known_issues_registry.js";
 import { path_to_project_id, project_id_from_config } from "../src/project_id.js";
+import { list_runs } from "../src/store/run_discovery.js";
+import { default_store_dir, repos_clone_id, repos_root } from "../src/store/store_layout.js";
+import type { RunManifest } from "../src/triage_state_types.js";
 import * as path from "path";
 import * as fs from "fs/promises";
-import * as os from "os";
-import { execSync } from "child_process";
+import { execFileSync } from "child_process";
 import "@ariadnejs/skill-fs/require-node-import-tsx";
 
 // ===== Types =====
@@ -72,7 +86,8 @@ interface AnalysisResult extends CoreAnalysisResult {
 interface CLIArgs {
   path?: string;
   github?: string;
-  branch?: string;
+  /** Full sha a repos/ clone is put at; null defers to the project's newest run, then upstream HEAD. */
+  commit: string | null;
   depth: number;
   config?: string;
 }
@@ -83,7 +98,7 @@ interface ProjectConfig {
   scope: AnalysisScope;
 }
 
-interface CloneResult {
+interface CorpusCheckout {
   local_path: string;
   commit_hash: string;
 }
@@ -105,6 +120,7 @@ interface ResolvedMode {
 function parse_cli_args(): CLIArgs {
   const args = process.argv.slice(2);
   const result: CLIArgs = {
+    commit: null,
     depth: 1,
   };
 
@@ -119,10 +135,10 @@ function parse_cli_args(): CLIArgs {
       result.github = args[++i];
     } else if (arg.startsWith("--github=")) {
       result.github = arg.split("=")[1];
-    } else if (arg === "--branch" && args[i + 1]) {
-      result.branch = args[++i];
-    } else if (arg.startsWith("--branch=")) {
-      result.branch = arg.split("=")[1];
+    } else if (arg === "--commit" && args[i + 1]) {
+      result.commit = args[++i];
+    } else if (arg.startsWith("--commit=")) {
+      result.commit = arg.split("=")[1];
     } else if (arg === "--depth" && args[i + 1]) {
       result.depth = parseInt(args[++i], 10);
     } else if (arg.startsWith("--depth=")) {
@@ -134,26 +150,37 @@ function parse_cli_args(): CLIArgs {
     }
   }
 
+  // A full sha is what a fetch can name and what HEAD is asserted against;
+  // run manifests record commits in that form.
+  if (result.commit !== null) {
+    if (!/^[0-9a-f]{40}$/i.test(result.commit)) {
+      console.error(`Error: --commit must be a full 40-hex commit sha, got "${result.commit}".`);
+      process.exit(2);
+    }
+    result.commit = result.commit.toLowerCase();
+  }
+
   return result;
 }
 
 function print_usage(): void {
   console.error(`
 Usage:
-  node --import tsx detect_entrypoints.ts --config path/to/config.json
+  node --import tsx detect_entrypoints.ts --config path/to/config.json [--commit <sha>]
   node --import tsx detect_entrypoints.ts --path /path/to/repo
-  node --import tsx detect_entrypoints.ts --github owner/repo
+  node --import tsx detect_entrypoints.ts --github owner/repo [--commit <sha>]
 
 Options:
   --config <file>  Project config file (preferred; carries folders, exclude, include_tests)
-  --path <dir>     Local directory to analyze
-  --github <repo>  GitHub repository (owner/repo or full URL)
-  --branch <name>  Branch to analyze (--github only, default: default branch)
-  --depth <n>      Clone depth for GitHub repos (--github only, default: 1)
+  --path <dir>     Local directory to analyze; never checked out
+  --github <repo>  GitHub repository (owner/repo or full URL), cloned into repos/<owner>--<repo>
+  --commit <sha>   Full sha the repos/ clone is put at (--github, or --config naming a repos/
+                   clone). Default: the project's newest run's commit, else upstream HEAD.
+  --depth <n>      History depth of each fetch into a repos/ clone (default: 1)
 
 Config file format (JSON):
   {
-    "project_path": "/absolute/path/to/repo",
+    "project_path": "/absolute/path/to/repo",  // a repos/<owner>--<repo> clone is created on demand
     "folders": ["src", "lib"],
     "exclude": ["vendor", "generated"],
     "include_tests": false,
@@ -208,9 +235,9 @@ export async function load_project_config(config_path: string): Promise<ProjectC
   };
 }
 
-// ===== GitHub Cloning =====
+// ===== Corpus checkout =====
 
-const ARIADNE_REPOS_DIR = path.join(os.homedir(), ".ariadne", "triage-entrypoints", "repos");
+const REPOS_DIR = repos_root(default_store_dir());
 
 function parse_github_url(repo: string): string {
   // Already a full URL
@@ -249,6 +276,19 @@ export function github_repo_to_project_id(repo: string): string {
 }
 
 /**
+ * The clone URL of a `repos/<owner>--<repo>` clone, from its name alone. A
+ * GitHub owner name cannot contain two consecutive hyphens, so the first `--`
+ * is the owner/repo boundary even when the repository's own name holds one.
+ */
+export function github_url_from_project_id(project_id: string): string {
+  const boundary = project_id.indexOf("--");
+  if (boundary <= 0 || boundary + 2 >= project_id.length) {
+    throw new Error(`${project_id} is not an <owner>--<repo> clone name`);
+  }
+  return `https://github.com/${project_id.slice(0, boundary)}/${project_id.slice(boundary + 2)}.git`;
+}
+
+/**
  * Serialize access to a clone_dir using an atomic mkdir lock. Parallel pipelines
  * cloning the same slug must not race — second caller waits until first finishes,
  * then reuses the clone.
@@ -277,67 +317,123 @@ async function with_clone_lock<T>(clone_dir: string, fn: () => Promise<T>): Prom
   }
 }
 
-async function clone_github_repo(
-  repo: string,
-  branch?: string,
-  depth: number = 1
-): Promise<CloneResult> {
-  const github_url = parse_github_url(repo);
-  const clone_dir = path.join(ARIADNE_REPOS_DIR, github_repo_to_project_id(repo));
+/**
+ * Run git in `cwd` and return its trimmed stdout. A failure carries git's own
+ * stderr, so a refused fetch names the sha and the remote's reason.
+ */
+function git(args: string[], cwd: string): string {
+  try {
+    return execFileSync("git", args, {
+      cwd,
+      encoding: "utf-8",
+      stdio: ["ignore", "pipe", "pipe"],
+    }).trim();
+  } catch (error: unknown) {
+    const stderr = (error as { stderr?: string }).stderr?.trim();
+    throw new Error(`git ${args.join(" ")} failed in ${cwd}${stderr ? `: ${stderr}` : ""}`);
+  }
+}
 
-  await fs.mkdir(ARIADNE_REPOS_DIR, { recursive: true });
+async function has_git_dir(dir: string): Promise<boolean> {
+  return fs.stat(path.join(dir, ".git")).then(
+    () => true,
+    () => false,
+  );
+}
+
+/**
+ * HEAD of the clone at `dir`, or null when it resolves to no commit — an init
+ * whose fetch never landed. Callers gate on `has_git_dir` first, so an
+ * enclosing repository's HEAD is never mistaken for the clone's.
+ */
+function clone_head(dir: string): string | null {
+  try {
+    return git(["rev-parse", "--verify", "HEAD^{commit}"], dir);
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The commit the project's newest run was produced on, or null when no run
+ * has recorded one.
+ *
+ * Newest by `created_at`, not by run id: run ids sort by short commit first,
+ * so the id that sorts last is not the run made last.
+ */
+export async function recorded_run_commit(project_name: string): Promise<string | null> {
+  let newest: RunManifest | null = null;
+  for (const { manifest } of await list_runs(project_name)) {
+    if (manifest === null || manifest.commit_hash === null) continue;
+    if (newest === null || manifest.created_at > newest.created_at) newest = manifest;
+  }
+  return newest === null ? null : newest.commit_hash;
+}
+
+/**
+ * Put the clone at `clone_dir` at `commit` and report where its HEAD is.
+ *
+ * A clone already at `commit` is left untouched — no fetch, no checkout — so
+ * one pinned by hand is recognised and a working tree at the right commit is
+ * never disturbed. A clone at any other commit has the sha fetched into it
+ * and checked out; it is never re-cloned. An absent clone is built as
+ * `git init` → `remote add origin` → `fetch --depth <n> origin <sha>` →
+ * `checkout --detach FETCH_HEAD`, since GitHub serves any reachable commit
+ * by sha, and HEAD is then asserted equal to `commit`. Every failure throws,
+ * which is before any dump is written.
+ *
+ * `commit === null` is a project with no run on record and nothing named on
+ * the command line: an absent clone is fetched at upstream HEAD, an existing
+ * one is used where it stands.
+ */
+export async function ensure_corpus_checkout(options: {
+  clone_dir: string;
+  remote_url: string;
+  commit: string | null;
+  depth: number;
+}): Promise<CorpusCheckout> {
+  const { clone_dir, remote_url, commit, depth } = options;
+  await fs.mkdir(path.dirname(clone_dir), { recursive: true });
 
   return with_clone_lock(clone_dir, async () => {
-    await fs.mkdir(clone_dir, { recursive: true });
-
-    // Reuse existing clone if present
-    let commit_hash: string;
-    try {
-      await fs.stat(path.join(clone_dir, ".git"));
-      console.error(`Using existing clone at ${clone_dir}`);
-      commit_hash = execSync("git rev-parse HEAD", {
-        encoding: "utf-8",
-        cwd: clone_dir,
-      }).trim();
-      console.error(`At commit ${commit_hash.substring(0, 7)}`);
-    } catch {
-      console.error(`Cloning ${github_url} to ${clone_dir}...`);
-
-      let clone_cmd = `git clone --depth ${depth}`;
-      if (branch) {
-        clone_cmd += ` -b ${branch}`;
-      }
-      clone_cmd += ` ${github_url} ${clone_dir}`;
-
-      try {
-        execSync(clone_cmd, { encoding: "utf-8", stdio: "pipe" });
-      } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        throw new Error(`Failed to clone repository: ${message}`);
-      }
-
-      commit_hash = execSync("git rev-parse HEAD", {
-        encoding: "utf-8",
-        cwd: clone_dir,
-      }).trim();
-
-      console.error(`Cloned at commit ${commit_hash.substring(0, 7)}`);
+    const is_clone = await has_git_dir(clone_dir);
+    const head = is_clone ? clone_head(clone_dir) : null;
+    if (head !== null && (commit === null || head === commit)) {
+      console.error(`Using existing clone at ${clone_dir} at commit ${head.substring(0, 7)}`);
+      return { local_path: clone_dir, commit_hash: head };
     }
 
-    return { local_path: clone_dir, commit_hash };
+    const target = commit === null ? "upstream HEAD" : `commit ${commit.substring(0, 7)}`;
+    if (is_clone) {
+      console.error(`Moving clone at ${clone_dir} to ${target}...`);
+    } else {
+      console.error(`Cloning ${remote_url} into ${clone_dir} at ${target}...`);
+      await fs.mkdir(clone_dir, { recursive: true });
+      git(["init", "--quiet"], clone_dir);
+      git(["remote", "add", "origin", remote_url], clone_dir);
+    }
+    git(["fetch", "--quiet", `--depth=${depth}`, "origin", commit ?? "HEAD"], clone_dir);
+    git(
+      ["-c", "advice.detachedHead=false", "checkout", "--quiet", "--detach", "FETCH_HEAD"],
+      clone_dir,
+    );
+
+    const landed = git(["rev-parse", "HEAD"], clone_dir);
+    if (commit !== null && landed !== commit) {
+      throw new Error(`Clone at ${clone_dir} is at ${landed} after fetching ${commit}`);
+    }
+    console.error(`Clone at ${clone_dir} is at commit ${landed.substring(0, 7)}`);
+    return { local_path: clone_dir, commit_hash: landed };
   });
 }
 
 /**
- * Get commit hash for local git repository (if available)
+ * HEAD of the user's own repository at `repo_path`, or undefined when the
+ * directory is not under git.
  */
 function get_local_commit_hash(repo_path: string): string | undefined {
   try {
-    return execSync("git rev-parse HEAD", {
-      encoding: "utf-8",
-      cwd: repo_path,
-      stdio: "pipe",
-    }).trim();
+    return git(["rev-parse", "HEAD"], repo_path);
   } catch {
     return undefined;
   }
@@ -475,14 +571,15 @@ async function main() {
 
   const resolved = await resolve_mode(args);
 
-  // Create storage for local paths only (GitHub clones use temp dirs — caching is pointless)
+  // The persisted index is keyed by corpus path and invalidated per file by
+  // content hash, so it serves a repos/ clone moving between commits as well
+  // as a working tree the user edits — and `prepare_triage` re-indexes the
+  // same corpus through the same cache.
   let storage: PersistenceStorage | undefined;
-  if (resolved.source_info.type === "local") {
-    const cache_dir = resolve_cache_dir(resolved.project_path);
-    if (cache_dir) {
-      storage = new FileSystemStorage(cache_dir);
-      console.error(`Cache directory: ${cache_dir}`);
-    }
+  const cache_dir = resolve_cache_dir(resolved.project_path);
+  if (cache_dir) {
+    storage = new FileSystemStorage(cache_dir);
+    console.error(`Cache directory: ${cache_dir}`);
   }
 
   const { files_analyzed, entry_points } = await analyze_directory(
@@ -515,16 +612,28 @@ async function main() {
 }
 
 async function resolve_mode(args: CLIArgs): Promise<ResolvedMode> {
-  if (args.config) return resolve_config_mode(args.config);
+  if (args.config) return resolve_config_mode(args.config, args.commit, args.depth);
   if (args.path && args.github) {
     console.error("Error: --path and --github are mutually exclusive.");
     print_usage();
     process.exit(2);
   }
-  if (args.github) return resolve_github_mode(args.github, args.branch, args.depth);
-  if (args.path) return resolve_local_mode(args.path);
+  if (args.github) return resolve_github_mode(args.github, args.commit, args.depth);
+  if (args.path) {
+    if (args.commit !== null) exit_commit_outside_repos(path.resolve(args.path));
+    return resolve_local_mode(args.path);
+  }
   console.error("Error: One of --config, --path, or --github is required.");
   print_usage();
+  process.exit(2);
+}
+
+/** `--commit` moves a clone this script owns; a working tree the user owns is never checked out. */
+function exit_commit_outside_repos(project_path: string): never {
+  console.error(
+    `Error: --commit applies to a clone under ${REPOS_DIR}; ${project_path} is a working tree ` +
+      "this script never checks out.",
+  );
   process.exit(2);
 }
 
@@ -541,36 +650,60 @@ async function ensure_directory(dir_path: string): Promise<void> {
   }
 }
 
-async function resolve_config_mode(config_path: string): Promise<ResolvedMode> {
+async function resolve_config_mode(
+  config_path: string,
+  cli_commit: string | null,
+  depth: number,
+): Promise<ResolvedMode> {
   const config = await load_project_config(config_path);
-  await ensure_directory(config.project_path);
+  const clone_id = repos_clone_id(config.project_path);
+  if (clone_id === null) {
+    if (cli_commit !== null) exit_commit_outside_repos(config.project_path);
+    await ensure_directory(config.project_path);
+    return {
+      project_path: config.project_path,
+      project_name: config.project_name,
+      scope: config.scope,
+      source_info: {
+        type: "local",
+        commit_hash: get_local_commit_hash(config.project_path),
+      },
+    };
+  }
+
+  const github_url = github_url_from_project_id(clone_id);
+  const checkout = await ensure_corpus_checkout({
+    clone_dir: config.project_path,
+    remote_url: github_url,
+    commit: cli_commit ?? (await recorded_run_commit(config.project_name)),
+    depth,
+  });
   return {
-    project_path: config.project_path,
+    project_path: checkout.local_path,
     project_name: config.project_name,
     scope: config.scope,
-    source_info: {
-      type: "local",
-      commit_hash: get_local_commit_hash(config.project_path),
-    },
+    source_info: { type: "github", github_url, commit_hash: checkout.commit_hash },
   };
 }
 
 async function resolve_github_mode(
   github: string,
-  branch: string | undefined,
+  cli_commit: string | null,
   depth: number,
 ): Promise<ResolvedMode> {
-  const clone_result = await clone_github_repo(github, branch, depth);
+  const project_name = github_repo_to_project_id(github);
+  const github_url = parse_github_url(github);
+  const checkout = await ensure_corpus_checkout({
+    clone_dir: path.join(REPOS_DIR, project_name),
+    remote_url: github_url,
+    commit: cli_commit ?? (await recorded_run_commit(project_name)),
+    depth,
+  });
   return {
-    project_path: clone_result.local_path,
-    project_name: github_repo_to_project_id(github),
+    project_path: checkout.local_path,
+    project_name,
     scope: load_analysis_scope(null),
-    source_info: {
-      type: "github",
-      github_url: parse_github_url(github),
-      branch,
-      commit_hash: clone_result.commit_hash,
-    },
+    source_info: { type: "github", github_url, commit_hash: checkout.commit_hash },
   };
 }
 

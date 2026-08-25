@@ -63,6 +63,26 @@ export function repos_root(store_dir: string): string {
   return path.join(store_dir, REPOS_SUBDIR);
 }
 
+/**
+ * The project id of a corpus that is a clone under this store's `repos/`, or
+ * null for any other directory.
+ *
+ * The clone directory is named by the owner-qualified slug, so the id is a
+ * read of the path rather than a guess. The guard is the store's actual
+ * `repos/` root, not a parent merely named `repos`: a positive answer licenses
+ * `detect_entrypoints` to create, fetch into and check out the directory, and
+ * that must never reach a working tree the user owns. (`project_identity.ts`
+ * asks the looser question of a path another machine recorded.)
+ */
+export function repos_clone_id(
+  project_path: string,
+  store_dir: string = default_store_dir(),
+): string | null {
+  const resolved = path.resolve(project_path);
+  if (path.dirname(resolved) !== repos_root(store_dir)) return null;
+  return path.basename(resolved);
+}
+
 // ===== Per-project run state =====
 
 export function project_state_dir(store_dir: string, project: string): string {

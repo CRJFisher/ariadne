@@ -203,7 +203,6 @@ export interface CallRefDiagnostic {
 export interface AnalysisSourceInfo {
   type: "local" | "github";
   github_url?: string;
-  branch?: string;
   /** Full HEAD commit hash at detection time. Absent for non-git projects. */
   commit_hash?: string;
 }

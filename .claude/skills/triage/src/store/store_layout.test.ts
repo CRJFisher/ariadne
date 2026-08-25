@@ -25,6 +25,7 @@ import {
   list_subdirectories,
   manifest_file,
   project_config_file,
+  repos_clone_id,
   state_file,
   triage_results_file,
 } from "./store_layout.js";
@@ -73,6 +74,25 @@ describe("store_layout", () => {
       expect(project_config_file(BUNDLE_ROOT, "owner--repo")).toEqual(
         "/bundle/triage-entrypoints/project_configs/owner--repo.json",
       );
+    });
+
+    it("names a clone directly under the store's repos/ by its directory", () => {
+      expect(repos_clone_id("/bundle/triage-entrypoints/repos/owner--repo", BUNDLE_ROOT)).toEqual(
+        "owner--repo",
+      );
+      expect(
+        repos_clone_id("/bundle/triage-entrypoints/repos/../repos/owner--repo/", BUNDLE_ROOT),
+      ).toEqual("owner--repo");
+    });
+
+    it("names nothing outside repos/, under another store's repos/, or below a clone", () => {
+      expect(
+        repos_clone_id("/bundle/triage-entrypoints/triage_state/owner--repo", BUNDLE_ROOT),
+      ).toEqual(null);
+      expect(repos_clone_id("/elsewhere/repos/owner--repo", BUNDLE_ROOT)).toEqual(null);
+      expect(
+        repos_clone_id("/bundle/triage-entrypoints/repos/owner--repo/src", BUNDLE_ROOT),
+      ).toEqual(null);
     });
   });
 

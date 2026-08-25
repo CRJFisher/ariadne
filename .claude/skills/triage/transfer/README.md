@@ -32,8 +32,9 @@ project carried, `selection.omitted` every project left behind and the cohort it
 belongs to.
 
 Four things are deliberately absent. `triage-entrypoints/repos/` holds shallow
-clones at pinned commits, which `detect_entrypoints` re-creates from each run's
-recorded `commit_hash`. `cache/` holds the derived per-corpus index in
+clones at pinned commits, which `detect_entrypoints` re-creates at the
+`commit_hash` a project's newest run recorded, or at any run's via `--commit`
+(step 5). `cache/` holds the derived per-corpus index in
 directories named by a hash of the corpus's absolute path, so it is not even
 addressable on a machine with a different home directory. `plan/` and
 `skill-analysis/` are cohort 1 work and stay on the machine that produced them.
@@ -148,10 +149,36 @@ for (const p of m.store.inventory) {
 
 ### 5. Re-clone the corpora you want to work on
 
-The clones are not in the bundle. `/triage <owner>/<repo>` re-clones a target on
-demand; a run's `manifest.json` records the `commit_hash` its verdicts were
-produced against, and `triage-entrypoints/project_configs/` carries the folder
-and exclusion settings each large target needs.
+The clones are not in the bundle. Every verdict's file and line numbers point
+into the clone at the commit its run recorded, so a clone is re-created at that
+commit, not at upstream HEAD. For a target with a config
+(`triage-entrypoints/project_configs/` carries the folder and exclusion settings
+each large target needs):
+
+```bash
+node --import tsx $SKILL/scripts/detect_entrypoints.ts \
+  --config ~/.ariadne/triage-entrypoints/project_configs/<project>.json
+```
+
+For any other target, `/triage <owner>/<repo>` or directly:
+
+```bash
+node --import tsx $SKILL/scripts/detect_entrypoints.ts --github <owner>/<repo>
+```
+
+Either form puts `repos/<project>/` at the commit of the project's newest run
+(`triage_state/<project>/runs/<run-id>/manifest.json` → `commit_hash`), leaves a
+clone already there untouched, and exits non-zero without writing a dump if the
+commit cannot be fetched. To read an older run's verdicts against its own tree,
+name that run's commit:
+
+```bash
+node --import tsx $SKILL/scripts/detect_entrypoints.ts \
+  --github <owner>/<repo> --commit <commit_hash>
+```
+
+Detection re-indexes the corpus as part of this and writes a fresh
+`detect_entrypoints/` dump at that commit.
 
 ## Reading the merged results
 
