@@ -400,6 +400,9 @@ async function run_orders(context: RunContext, slice: SliceSize): Promise<void> 
   console.log(`\n${format_citation(cite_row(baseline.row))}`);
   console.log(`baseline order: ${verdict.baseline_order}`);
   for (const entry of verdict.comparisons) {
+    if (!entry.diagnostics_identical) {
+      console.log(`  ${entry.order}: diagnostics payload differs`);
+    }
     if (entry.comparison.identical) {
       console.log(`  ${entry.order}: identical`);
       continue;
@@ -416,9 +419,16 @@ async function run_orders(context: RunContext, slice: SliceSize): Promise<void> 
     }
   }
   console.log(`\nidentical across orders: ${verdict.identical_across_orders}`);
-  if (!verdict.identical_across_orders) {
-    // The one question this mode exists to answer, answered "the reported graph
-    // is a function of the walk". Exiting 0 would let a CI chain go green on it.
+  console.log(
+    `diagnostics identical across orders: ${verdict.diagnostics_identical_across_orders}`,
+  );
+  if (
+    !verdict.identical_across_orders ||
+    !verdict.diagnostics_identical_across_orders
+  ) {
+    // The one question this mode exists to answer, answered "the reported
+    // product is a function of the walk". Exiting 0 would let a CI chain go
+    // green on it.
     process.exitCode = 1;
   }
 
@@ -431,6 +441,12 @@ async function run_orders(context: RunContext, slice: SliceSize): Promise<void> 
       `(${recorded.entry_points_forward} -> ${recorded.entry_points_descending_size}), ` +
       `${Object.values(recorded.recorded_hashes).filter((pair) => pair.changed).length} of ` +
       `${Object.keys(recorded.recorded_hashes).length} recorded hashes changed`,
+  );
+  const recorded_diagnostics = verdict.recorded_diagnostics_validation;
+  console.log(
+    `diagnostics validated on ${recorded_diagnostics.corpus}@${recorded_diagnostics.corpus_commit} ` +
+      `(${recorded_diagnostics.file_count} files): three ingest orders once produced ` +
+      `${new Set(recorded_diagnostics.diag_hashes_before_repair.both_causes_present).size} distinct payloads`,
   );
 }
 

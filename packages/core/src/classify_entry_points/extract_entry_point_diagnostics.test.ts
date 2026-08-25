@@ -814,3 +814,77 @@ describe("qualification keeps genuine call sites", () => {
     ]);
   });
 });
+
+describe("diagnostics evidence is a function of the corpus, not the ingest order", () => {
+  async function write_corpus(
+    files: readonly (readonly [string, string])[],
+  ): Promise<string> {
+    const root = await mkdtemp(join(tmpdir(), "ariadne-diag-order-"));
+    temp_roots.push(root);
+    for (const [relative_path, content] of files) {
+      const absolute_path = join(root, relative_path);
+      await mkdir(dirname(absolute_path), { recursive: true });
+      await writeFile(absolute_path, content, "utf8");
+    }
+    return root;
+  }
+
+  async function enriched_in_order(
+    root: string,
+    files: readonly (readonly [string, string])[],
+  ): Promise<EnrichedEntryPoint[]> {
+    const project = new Project();
+    await project.initialize(root as FilePath);
+    for (const [relative_path, content] of files) {
+      project.update_file(join(root, relative_path) as FilePath, content);
+    }
+    const call_graph = trace_call_graph(
+      project.definitions,
+      project.resolutions,
+      project.get_languages(),
+      { include_tests: false },
+    );
+    return extract_entry_point_diagnostics(call_graph, project);
+  }
+
+  it("keeps the earliest call sites under the cap whichever order files arrive in", async () => {
+    // Sixty same-named call sites against a fifty-site cap: which fifty
+    // survive is only well-defined if it is a property of the corpus. Each
+    // caller file resolves `helper` to its own local, so the exported one in
+    // helper.ts stays an entry point whose evidence is matched by name alone.
+    const call_lines = Array.from({ length: 20 }, () => "  helper();").join("\n");
+    const caller_file = (suffix: string) =>
+      `function helper(): number {\n  return 0;\n}\nfunction drive_${suffix}(): void {\n${call_lines}\n}\n`;
+    const files: readonly (readonly [string, string])[] = [
+      ["callers/a.ts", caller_file("a")],
+      ["callers/b.ts", caller_file("b")],
+      ["callers/c.ts", caller_file("c")],
+      ["helper.ts", "export function helper(): number {\n  return 1;\n}\n"],
+    ];
+    const root = await write_corpus(files);
+
+    const forward = await enriched_in_order(root, files);
+    const reversed = await enriched_in_order(root, [...files].reverse());
+
+    const entry_forward = entry_for(forward, "helper", "helper.ts");
+    const entry_reversed = entry_for(reversed, "helper", "helper.ts");
+
+    expect(entry_forward.diagnostics.ariadne_call_refs).toHaveLength(50);
+    expect(entry_forward.diagnostics.grep_call_sites).toHaveLength(10);
+
+    // The fifty retained are the earliest call sites in path order: all of
+    // a.ts and b.ts, then the first ten of c.ts.
+    const kept_per_file: Record<string, number> = {};
+    for (const ref of entry_forward.diagnostics.ariadne_call_refs) {
+      const file_key = ref.caller_file.slice(root.length + 1);
+      kept_per_file[file_key] = (kept_per_file[file_key] ?? 0) + 1;
+    }
+    expect(kept_per_file).toEqual({
+      "callers/a.ts": 20,
+      "callers/b.ts": 20,
+      "callers/c.ts": 10,
+    });
+
+    expect(entry_forward).toEqual(entry_reversed);
+  });
+});

@@ -73,6 +73,12 @@ describe("cite_row", () => {
       rss_at_end_mb: 1,
       settled_heap_mb: 1,
       fingerprint: { schema_version: 3, components: {} as never },
+      diagnostics: {
+        schema_version: 1,
+        entry_point_count: 1,
+        diag_hash: "1".repeat(16),
+        canonical_hash: "2".repeat(16),
+      },
       environment,
     });
 
@@ -125,6 +131,12 @@ describe("cite_row", () => {
       rss_at_end_mb: 1,
       settled_heap_mb: 1,
       fingerprint: { schema_version: 3, components: {} as never },
+      diagnostics: {
+        schema_version: 1,
+        entry_point_count: 1,
+        diag_hash: "1".repeat(16),
+        canonical_hash: "2".repeat(16),
+      },
       environment,
     });
     expect(format_citation(cited)).toContain("200 of 479 files");

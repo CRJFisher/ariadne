@@ -35,6 +35,7 @@ import tree_sitter_typescript_manifest from "tree-sitter-typescript/package.json
 import type { CorpusIdentity, FileCounts } from "./corpus_predicate";
 import type { IngestOrder } from "./ingest_order";
 import type { RecordedFingerprint } from "./call_graph_fingerprint";
+import type { DiagnosticsFingerprint } from "./diagnostics_fingerprint";
 import { round_to_tenth } from "./round_measurement";
 
 const BYTES_PER_MB = 1024 * 1024;
@@ -120,6 +121,13 @@ export interface MeasurementRow {
    *  peak RSS varies by up to 61%. */
   readonly settled_heap_mb: number;
   readonly fingerprint: RecordedFingerprint;
+  /**
+   * The two-hash digest of the entry-point diagnostics payload. On the row
+   * rather than beside it because the payload is part of the reported product
+   * — it is what a user reads and what the triage classifiers consume — and
+   * an order-dependence in it never moves the call-graph fingerprint.
+   */
+  readonly diagnostics: DiagnosticsFingerprint;
   readonly environment: RunEnvironment;
 }
 

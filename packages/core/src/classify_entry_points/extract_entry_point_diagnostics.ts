@@ -268,21 +268,43 @@ function extract_metadata(node: CallableNode): EntryPointMetadata {
 // ===== Indexes =====
 
 /**
- * Split every source file into lines, exactly once.
+ * Split every source file into lines, exactly once, in sorted path order.
+ *
+ * The sort is what makes diagnostics reproducible. `get_file_contents()` is
+ * insertion-ordered, so its key order records the order the loader happened to
+ * reach files — a directory-walk artefact for a fresh load, and a different
+ * artefact again when a driver batches or re-resolves files in another order.
+ * Every downstream index here is built by iterating this map (the grep index
+ * and the reference index both do), and each appends hits to per-name lists, so
+ * that incidental order leaked all the way out into the `grep_call_sites` and
+ * `reference_sites` lists a classifier reads. Two runs over the identical file
+ * SET could therefore hand the classifiers the same evidence in a different
+ * order. Sorting once, here, fixes the iteration order of every index built
+ * from this map at its single source rather than at each consumer.
  */
 function build_lines_by_file(
   source_files: ReadonlyMap<FilePath, string>,
 ): Map<FilePath, string[]> {
   const lines_by_file = new Map<FilePath, string[]>();
-  for (const [file_path, content] of source_files) {
+  const by_path = [...source_files].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
+  for (const [file_path, content] of by_path) {
     lines_by_file.set(file_path, content.split("\n"));
   }
   return lines_by_file;
 }
 
 /**
- * Build an index of call references grouped by the called name.
- * Used to find which call graph nodes reference a given function name.
+ * Build an index of call references grouped by the called name, each name's
+ * entries in source order.
+ *
+ * The sort is what makes the evidence reproducible, because
+ * `find_matching_call_refs` keeps only the first `MAX_DIAGNOSTICS_PER_ENTRY` of
+ * them. `call_graph.nodes` is insertion-ordered by the definition registry, so
+ * without a sort the surviving call sites for a heavily-called name would be
+ * whichever ones the loader happened to reach first — making the evidence a
+ * classifier sees for that entry point an artefact of load order rather than of
+ * the code. Ordering by call-site position instead makes the truncation keep
+ * the earliest call sites in the project, the same ones on every run.
  */
 function build_call_refs_by_name(
   call_graph: CallGraph,
@@ -301,7 +323,21 @@ function build_call_refs_by_name(
     }
   }
 
+  for (const entries of index.values()) {
+    entries.sort((a, b) => compare_locations(a.call_ref.location, b.call_ref.location));
+  }
+
   return index;
+}
+
+/** Total order on call-site positions: file, then line, then column. */
+function compare_locations(
+  a: CallReference["location"],
+  b: CallReference["location"],
+): number {
+  if (a.file_path !== b.file_path) return a.file_path < b.file_path ? -1 : 1;
+  if (a.start_line !== b.start_line) return a.start_line - b.start_line;
+  return a.start_column - b.start_column;
 }
 
 /**
@@ -659,7 +695,10 @@ function captures_from_refs(refs: CallReference[]): string[] {
       captures.add(name);
     }
   }
-  return [...captures];
+  // Sorted, not insertion-ordered: the refs arrive in whatever order the
+  // resolver recorded them, so an unsorted list would report the same set of
+  // captures differently between runs.
+  return [...captures].sort();
 }
 
 /**

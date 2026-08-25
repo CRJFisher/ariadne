@@ -19,6 +19,7 @@ import * as path from "path";
 import { performance } from "node:perf_hooks";
 import * as v8 from "v8";
 import { trace_call_graph } from "../trace_call_graph/trace_call_graph";
+import { extract_entry_point_diagnostics } from "../classify_entry_points/extract_entry_point_diagnostics";
 import { load_project } from "../project/load_project";
 import {
   assert_pinned_file_count,
@@ -42,9 +43,17 @@ import {
   type FingerprintComparison,
 } from "./call_graph_fingerprint";
 import {
+  diagnostics_fingerprints_identical,
+  fingerprint_diagnostics,
+} from "./diagnostics_fingerprint";
+import {
   RECORDED_ORDER_SENSITIVITY,
   type RecordedOrderSensitivity,
 } from "./recorded_order_sensitivity";
+import {
+  RECORDED_DIAGNOSTICS_BASELINE,
+  type RecordedDiagnosticsBaseline,
+} from "./recorded_diagnostics_baseline";
 import { assert_rows_comparable } from "./compare_measurements";
 import {
   capture_run_environment,
@@ -157,6 +166,13 @@ export async function run_benchmark_arm(
     corpus_root,
   });
 
+  // Extracted after the timing capture, like the fingerprint: the diagnostics
+  // payload is part of what the arm guards, not part of what it times.
+  const diagnostics = fingerprint_diagnostics(
+    extract_entry_point_diagnostics(call_graph, loaded.project),
+    corpus_root,
+  );
+
   // Stopped after the fingerprint, not before it: the member strings a
   // corpus-scale fingerprint holds are hundreds of megabytes, and a peak that
   // excluded them would describe a moment the process was never nearest its
@@ -201,6 +217,7 @@ export async function run_benchmark_arm(
       v8.getHeapStatistics().used_heap_size / BYTES_PER_MB,
     ),
     fingerprint: record_fingerprint(fingerprint),
+    diagnostics,
     environment: capture_run_environment({
       session_id: request.session_id,
       ariadne_repo_path: request.ariadne_repo_path,
@@ -296,21 +313,37 @@ function assert_every_offered_file_is_accounted_for(
 interface OrderComparison {
   readonly order: IngestOrder;
   readonly comparison: FingerprintComparison;
+  /**
+   * Whether this order's diagnostics payload matched the baseline order's.
+   * Separate from the call-graph comparison because the payload can move while
+   * every one of the seven components holds still — entry-point membership is
+   * a set difference, so walk order can only reorder it, while the evidence
+   * lists under each entry are capped and order-fed.
+   */
+  readonly diagnostics_identical: boolean;
 }
 
 /**
- * The verdict of a multi-order run: whether the reported call graph is a
- * function of the codebase or of the order the loader walked it.
+ * The verdict of a multi-order run: whether the reported call graph AND the
+ * diagnostics payload attached to it are functions of the codebase or of the
+ * order the loader walked it.
  */
 interface MultiOrderVerdict {
   readonly baseline_order: IngestOrder;
   readonly comparisons: readonly OrderComparison[];
   readonly identical_across_orders: boolean;
+  readonly diagnostics_identical_across_orders: boolean;
   /**
    * The measured order-dependence this probe was validated against, carried on
    * the verdict so a silent result is never read without it.
    */
   readonly recorded_validation: RecordedOrderSensitivity;
+  /**
+   * The measured diagnostics order-dependence, carried for the same reason:
+   * the diagnostics half of a silent verdict is only evidence because the
+   * recorded run shows three orders once produced three payloads.
+   */
+  readonly recorded_diagnostics_validation: RecordedDiagnosticsBaseline;
 }
 
 /**
@@ -337,6 +370,10 @@ export function diff_ingest_orders(
     return {
       order: other.row.ingest_order,
       comparison: compare_fingerprints(baseline.fingerprint, other.fingerprint),
+      diagnostics_identical: diagnostics_fingerprints_identical(
+        baseline.row.diagnostics,
+        other.row.diagnostics,
+      ),
     };
   });
 
@@ -346,6 +383,10 @@ export function diff_ingest_orders(
     identical_across_orders: comparisons.every(
       (entry) => entry.comparison.identical,
     ),
+    diagnostics_identical_across_orders: comparisons.every(
+      (entry) => entry.diagnostics_identical,
+    ),
     recorded_validation: RECORDED_ORDER_SENSITIVITY,
+    recorded_diagnostics_validation: RECORDED_DIAGNOSTICS_BASELINE,
   };
 }

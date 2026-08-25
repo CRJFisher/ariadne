@@ -71,6 +71,12 @@ function row(overrides: Partial<MeasurementRow> = {}): MeasurementRow {
         indirect_reachability_evidence: { count: 26610, hash: "0".repeat(16) },
       },
     },
+    diagnostics: {
+      schema_version: 1,
+      entry_point_count: 17994,
+      diag_hash: "1".repeat(16),
+      canonical_hash: "2".repeat(16),
+    },
     environment: ENVIRONMENT,
     ...overrides,
   };

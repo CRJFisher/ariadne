@@ -214,6 +214,23 @@ hash held still. Those values came from a different algorithm over a
 five-component fingerprint and can never be recomputed here, so they are a
 record of one run rather than a value to compare a current digest with.
 
+The diagnostics payload — the evidence a classifier reads about each entry
+point — carries its own pair of digests on every row, because its defect class
+is invisible to the seven components: entry-point membership is a set
+difference, so walk order can only reorder it, while the capped evidence lists
+under each entry are fed in whatever order built them. `diag_hash` digests the
+payload as extraction emitted it; `canonical_hash` digests a deep-sorted form,
+so only a membership difference can move it. The pair's disagreement is a
+diagnosis — diag moving while canonical holds is an ordering difference, both
+moving is a membership one, and that discrimination is what exposed the
+fifty-site evidence cap as a membership defect fed in walk order. A
+multi-order run diffs the pair alongside the seven components,
+`RECORDED_DIAGNOSTICS_BASELINE` keeps the vscode-slice measurement that
+established the property — its hashes verbatim from the investigation's own
+algorithm, never a value to compare a current digest with — and the live guard
+runs on every test against the in-repo corpus in
+`diagnostics_fingerprint.corpus.test.ts`.
+
 That the comparison can see each of the seven components move is proven in
 `call_graph_fingerprint.test.ts` over a synthetic fingerprint. It is deliberately
 not re-proven at corpus scale: the proof does not read member content, and

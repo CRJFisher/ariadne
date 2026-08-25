@@ -91,6 +91,12 @@ function build_result(): ArmResult {
         ]),
       ) as Record<FingerprintComponentName, { count: number; hash: string }>,
     },
+    diagnostics: {
+      schema_version: 1,
+      entry_point_count: 2,
+      diag_hash: "1".repeat(16),
+      canonical_hash: "2".repeat(16),
+    },
     environment: {
       machine: "Darwin 21.6.0 x64",
       hostname: "measure-01",
