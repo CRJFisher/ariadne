@@ -1,7 +1,7 @@
 ---
 id: TASK-381.1
 title: "Graduate the load-performance probes into a repeatable full-corpus benchmark and a seven-number regression fingerprint"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-08-24 09:07"
 labels:
@@ -45,3 +45,108 @@ A corpus-derived constant is meaningless without its input, and this corpus has 
 - [ ] #13 Peak RSS on any row is reported as a mean over >= 2 runs with the spread, never as a single figure, because peak RSS varies up to 61% run to run on one arm and inputs while settled heap is stable to 0.01%.
 
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+
+## High-level summary
+
+Ariadne can now measure what a full-corpus load costs and guard what that load
+produces, and both halves refuse the comparisons that would make their numbers
+meaningless. A measurement is an arm: one file set, offered to one process, in
+one order. Every row it records names the corpus commit, the discovery predicate
+that selected the files, the count that predicate produced, the Ariadne commit,
+the machine and the node version — and `format_citation` renders that line, so a
+figure quoted in a task doc carries its own provenance.
+
+The guard on what a load produces is seven values taken together: node ids,
+caller-to-callee pairs with their call-site counts, unresolved call sites, raw
+entry points, indirect-reachability keys, the dropped-file set, and the evidence
+tuple behind each indirect reachability. The seventh is the one that catches a
+reachability witness moving between read sites, which never changes entry-point
+membership and so passes every other component untouched.
+
+The harness refuses more than it reports. Two rows taken against different
+tree-sitter versions are not compared, because a hoisted grammar once made forty
+test failures look environmental. A ratio may not cross a session, a machine or
+a host, because identical computation measured 777.6 s, 801.3 s and 1,019.4 s in
+three sessions and a cross-session speedup claim was wrong by 40%. A predicate
+that matched nothing, an arm larger than the heap can hold, a slice the corpus
+cannot supply, and a mangled command line are each refused before any work is
+spent rather than after.
+
+The first thing the harness did against real code was find a defect. Run over
+vscode's `src/vs/base`, it reports that what Ariadne says about a function — who
+calls it, whether anything calls it, and why it is reachable — depends on the
+order the loader walked the files. The mechanism is `resolve_polymorphic_method`
+expanding a call against a registry snapshot taken when the caller's file is
+resolved, while re-resolution reaches only importers: every target gained by a
+different order comes from a file that arrived later. That is what TASK-381.11
+exists to fix, now reproducible in minutes rather than recorded from a tree that
+no longer exists.
+
+### What is measured, and what is only argued
+
+Reproduced exactly on this machine: the smoke run (191 indexed, 9 dropped, 4,917
+nodes, 1,673 raw entry points over the first 200 path-sorted `.ts` files of
+`src/vs/base` at f3fa55c3) and both pinned discovery counts (8,494 for `src`,
+12,654 for the repository root). Four arms interleaved A,B,A,B in four distinct
+processes under one session. Peak RSS cross-checked against `/usr/bin/time -l`
+to within 0.7%.
+
+Not measured: a true corpus-scale arm. The 2M-member claims behind the streaming
+digest, the merge-join diff and the arm-file writer are argued and unit-tested,
+not observed at scale, and the heap coefficient comes from two points at 200 and
+600 files. The committed fingerprint has been reproduced only on darwin/x64,
+while CI runs linux/x64 and darwin/arm64.
+
+### Notable decisions
+
+A predicate names an extension set as well as a folder. `src/vs/base` holds two
+`.js` files inside its first 200 path-sorted entries, and the two 200-file sets
+index and drop identically — 191 and 9 either way — while diverging on
+everything else, 5,070 nodes against 4,917. A folder alone does not identify a
+file set.
+
+Calls are enumerated from the resolution registry rather than from each node's
+enclosed calls, because a call at module scope has no enclosing function scope
+and reaches no node: a seventh of the corpus's calls, and exactly the
+module-level registration calls of the exported-singleton idiom that
+order-dependence shows up in. Attribution keys on the call reference itself,
+since the resolver emits several references at one location and a location-keyed
+map would resolve ties by walk order — which made an earlier revision of this
+harness invent the very dependence it exists to detect.
+
+The guard corpus lives at `packages/core/benchmark_corpus/`, outside any
+`tests/` or `fixtures/` path. `is_in_test_dir` matches those segments and
+`detect_entry_points` drops every test node, so the same files score zero raw
+entry points inside `tests/fixtures/` and thirty-eight outside it — one seventh
+of the guard would be a constant empty digest on every run. Two of its files
+read one function as a value so that its evidence is contested across files,
+which is what lets the corpus express an order-dependence at all.
+
+### Acceptance criteria
+
+All thirteen are addressed. #3 reproduces the documented baseline exactly. #6's
+recorded validation is kept as a historical constant that cannot be recomputed —
+its hashes came from a different algorithm over a five-component fingerprint —
+and is supplemented by an order-dependence reproducible on today's tree. #10's
+guard runs against the in-repo corpus on every test run; only the corpus-scale
+rows skip. #13's peak RSS is reported through `summarize_samples`, which refuses
+fewer than two runs.
+
+### Known gaps, recorded rather than closed
+
+`unresolved_calls` double-counts 242 sites at slice 200 because the resolver
+emits duplicate references for `new Map()`, `new Set()` and `new Promise()`; the
+count is inflated by 3% until that is fixed upstream. Call-site multiplicity
+counts resolver-emitted references rather than distinct source sites, which
+differs for 65 of 7,746 pairs. Anonymous functions appear as calling themselves,
+which traces to `find_enclosing_function_scope` handing a synthetic callback
+invocation the arrow's own body scope — a resolver defect deserving its own
+task. The orchestrator script has no test file; it is exercised end to end by
+hand. `npm run clean` leaves the tsbuildinfo behind in both `core` and `types`,
+so a clean rebuild silently produces an empty `dist`.
+
+<!-- SECTION:NOTES:END -->
