@@ -274,6 +274,15 @@ export default [
       // exercising real-world input. Harness code at the fixtures root
       // (fixture_helpers.ts, index_single_file_json.ts) is source, and stays linted.
       "**/tests/fixtures/*/**",
+      // The benchmark guard corpus is the same kind of thing: sample code the
+      // fingerprint mechanism is run against, shaped so that all seven
+      // components are non-empty. `duplicate_exports.js` exports one name twice
+      // ON PURPOSE, so indexing throws and the file lands in `dropped_files` —
+      // the only source of that component. It sits outside `tests/` because
+      // `is_in_test_dir` would mark every file in it a test file and collapse
+      // its entry points to zero, so the exemption follows the corpus rather
+      // than the path.
+      "packages/core/benchmark_corpus/**",
       "**/.claude/hooks/**", // Ignore Claude hook files
       "**/.claude/skills/triage/templates/**", // Ignore templates
       "**/.claude/skills/triage/reference/**", // Ignore reference docs

@@ -424,6 +424,11 @@ describe("Project", () => {
   });
 
   describe("parser buffer auto-adjustment", () => {
+    // 30s rather than the 5s default: this test parses a generated 130 KB file
+    // of 2,000 functions and takes ~2.6s on an idle 4-core box, which leaves
+    // under 2x headroom and crosses the default whenever the machine is busy.
+    // Its assertions are about what was extracted, not how fast — a genuine
+    // parse failure fails them whatever the timeout is.
     it("should parse large files by auto-growing the buffer", async () => {
       const project = new Project();
       await project.initialize();
@@ -443,6 +448,6 @@ describe("Project", () => {
       const stats = project.get_stats();
       expect(stats.file_count).toEqual(1);
       expect(stats.definition_count).toBeGreaterThan(1000);
-    });
+    }, 30_000);
   });
 });
