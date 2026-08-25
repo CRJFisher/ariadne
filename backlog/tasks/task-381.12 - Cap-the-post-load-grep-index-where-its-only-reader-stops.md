@@ -9,6 +9,8 @@ labels:
   - entry_point_classification
 dependencies:
   - TASK-381.1
+  - TASK-381.2
+  - TASK-381.8
 priority: medium
 ---
 

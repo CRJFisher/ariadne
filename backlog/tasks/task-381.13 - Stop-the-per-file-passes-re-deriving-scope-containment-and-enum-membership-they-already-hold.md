@@ -9,6 +9,8 @@ labels:
   - syntactic_extraction
 dependencies:
   - TASK-381.1
+  - TASK-381.7
+  - TASK-381.18
 priority: medium
 ---
 

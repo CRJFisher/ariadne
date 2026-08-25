@@ -10,6 +10,8 @@ labels:
   - polymorphic_dispatch
 dependencies:
   - TASK-381.8
+  - TASK-381.11
+  - TASK-381.18
 priority: medium
 ---
 

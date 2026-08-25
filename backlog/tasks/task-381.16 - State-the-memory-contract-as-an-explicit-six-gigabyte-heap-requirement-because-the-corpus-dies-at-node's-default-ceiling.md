@@ -10,6 +10,7 @@ labels:
   - docs
 dependencies:
   - TASK-381.8
+  - TASK-381.11
 priority: high
 ---
 

@@ -8,6 +8,7 @@ labels:
   - performance
   - architecture
 dependencies:
+  - TASK-381.9
   - TASK-381.10
   - TASK-381.11
   - TASK-381.13

@@ -9,6 +9,8 @@ labels:
   - performance
 dependencies:
   - TASK-381.1
+  - TASK-381.4
+  - TASK-381.10
 priority: high
 ---
 
