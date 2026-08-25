@@ -1,7 +1,7 @@
 ---
 id: TASK-381.1
 title: "Graduate the load-performance probes into a repeatable full-corpus benchmark and a seven-number regression fingerprint"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-08-24 09:07"
 labels:
@@ -45,3 +45,149 @@ A corpus-derived constant is meaningless without its input, and this corpus has 
 - [ ] #13 Peak RSS on any row is reported as a mean over >= 2 runs with the spread, never as a single figure, because peak RSS varies up to 61% run to run on one arm and inputs while settled heap is stable to 0.01%.
 
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+
+## High-level summary
+
+Ariadne can now measure what a full-corpus load costs and guard what that load
+produces, and both halves refuse the comparisons that would make their numbers
+meaningless. A measurement is an arm: one file set, offered to one process, in
+one order. Every row it records names the corpus commit, the discovery predicate
+that selected the files, the count that predicate produced, the Ariadne commit,
+the machine and the node version — and `format_citation` renders that line, so a
+figure quoted in a task doc carries its own provenance.
+
+The guard on what a load produces is seven values taken together: node ids,
+caller-to-callee pairs with their call-site counts, unresolved call sites, raw
+entry points, indirect-reachability keys, the dropped-file set, and the evidence
+tuple behind each indirect reachability. The seventh is the one that catches a
+reachability witness moving between read sites, which never changes entry-point
+membership and so passes every other component untouched.
+
+The harness refuses more than it reports. Two rows taken against different
+tree-sitter versions are not compared, because a hoisted grammar once made forty
+test failures look environmental. A ratio may not cross a session, a machine or
+a host, because identical computation measured 777.6 s, 801.3 s and 1,019.4 s in
+three sessions and a cross-session speedup claim was wrong by 40%. A predicate
+that matched nothing, an arm larger than the heap can hold, a slice the corpus
+cannot supply, and a mangled command line are each refused before any work is
+spent rather than after.
+
+The first thing the harness did against real code was find a defect. Run over
+vscode's `src/vs/base`, it reports that what Ariadne says about a function — who
+calls it, whether anything calls it, and why it is reachable — depends on the
+order the loader walked the files. The mechanism is `resolve_polymorphic_method`
+expanding a call against a registry snapshot taken when the caller's file is
+resolved, while re-resolution reaches only importers: every target gained by a
+different order comes from a file that arrived later. That is what TASK-381.11
+exists to fix, now reproducible in minutes rather than recorded from a tree that
+no longer exists.
+
+### What is measured, and what is only argued
+
+Reproduced exactly on this machine: the smoke run (191 indexed, 9 dropped, 4,917
+nodes, 1,673 raw entry points and 7,702 unresolved call sites over the first 200
+path-sorted `.ts` files of `src/vs/base` at f3fa55c3) and both pinned discovery
+counts (8,494 for `src`, 12,654 for the repository root). Four arms interleaved
+A,B,A,B in four distinct processes under one session. Peak RSS cross-checked
+against `/usr/bin/time -l` to within 0.7%. The nested-slice curve over
+`folder-ts:src/vs/base/browser` measured 100.0, 114.9 and 110.4 ms of CPU per
+file at n=50, 100 and 106, with marginal costs of 129.8 and 35.0 ms per added
+file — the curve itself saying that cost per file is not constant.
+
+Not measured: a true corpus-scale arm. The 2M-member claims behind the streaming
+digest, the merge-join diff and the arm-file writer are argued and unit-tested,
+not observed at scale, and the heap coefficient comes from two points at 200 and
+600 files. The committed fingerprint has been reproduced only on darwin/x64,
+while CI runs linux/x64 and darwin/arm64.
+
+### Module layout
+
+The folder holds one concern per file, so a name is fully true of what is under
+it. `benchmark_corpus_load.ts` is the arm; `corpus_predicate.ts` decides which
+files a row is about and holds every arm over a pinned corpus to the count that
+was measured for it; `nested_slice.ts` decides WHICH files an arm sees and
+`ingest_order.ts` the sequence they arrive in; `measurement_row.ts` is the row
+and the environment that fills it, with `round_measurement.ts`,
+`resident_set_sampler.ts` and `cite_row.ts` beside it; `call_graph_fingerprint.ts`
+and `streaming_digest.ts` are the guard; `compare_measurements.ts` is what may
+be divided into what; `arm_result_file.ts` carries a result between processes.
+`index.ts` is exactly the orchestrator script's import list.
+
+Component digests are length-prefixed rather than newline-delimited, so the
+encoding is injective and a member holding a newline is an ordinary member
+instead of a refusal that could only fire after the corpus had been loaded.
+Members built from several fields escape the characters they are joined with, so
+a TypeScript private member name cannot make one call edge read as another.
+Both changes move every digest, so the fingerprint schema is version 3.
+
+### Notable decisions
+
+A predicate names an extension set as well as a folder. `src/vs/base` holds two
+`.js` files inside its first 200 path-sorted entries, and the two 200-file sets
+index and drop identically — 191 and 9 either way — while diverging on
+everything else, 5,070 nodes against 4,917. A folder alone does not identify a
+file set.
+
+Calls are enumerated from the resolution registry rather than from each node's
+enclosed calls, because a call at module scope has no enclosing function scope
+and reaches no node: a seventh of the corpus's calls, and exactly the
+module-level registration calls of the exported-singleton idiom that
+order-dependence shows up in. Attribution keys on the call reference itself,
+since the resolver emits several references at one location and a location-keyed
+map would resolve ties by walk order — which made an earlier revision of this
+harness invent the very dependence it exists to detect.
+
+The guard corpus lives at `packages/core/benchmark_corpus/`, outside any
+`tests/` or `fixtures/` path. `is_in_test_dir` matches those segments and
+`detect_entry_points` drops every test node, so the same files score zero raw
+entry points inside `tests/fixtures/` and thirty-eight outside it — one seventh
+of the guard would be a constant empty digest on every run. Two of its files
+read one function as a value so that its evidence is contested across files,
+which is what lets the corpus express an order-dependence at all.
+
+### Acceptance criteria
+
+All thirteen are addressed. #3 reproduces the documented baseline exactly. #6's
+recorded validation is kept as a historical constant that cannot be recomputed —
+its hashes came from a different algorithm over a five-component fingerprint —
+and is supplemented by an order-dependence reproducible on today's tree. #10's
+guard runs against the in-repo corpus on every test run; only the corpus-scale
+rows skip. #13's peak RSS is reported through `summarize_samples`, which refuses
+fewer than two runs.
+
+### The duplicate-reference defect, fixed at its root
+
+`unresolved_calls` over-counted because two tree-sitter query patterns in
+`typescript.scm` each matched a strict subset of another: a `new X<T>()` was
+captured by both the plain constructor pattern and a "constructor with type
+arguments" pattern, and a `foo<T>()` by both the plain call pattern and a
+"generic function call" pattern. The `.generic` capture suffix reached no
+handler — it mapped to the same reference kind as the plain form — so each of
+those sites produced two identical `CallReference`s, inflating both unresolved
+call sites and resolved call-site multiplicity for every generic construction
+and generic call in a corpus.
+
+Removing the two redundant patterns left all 3,753 existing tests passing
+unchanged, which is what confirms the suffix carried no behaviour. Over the
+200-file `src/vs/base` slice the fix removes 333 duplicate references and drops
+unresolved call sites from 7,948 to 7,702. `index_single_file.typescript.test.ts`
+now pins one reference per `new` site and one per call site, type arguments or
+not; the test that previously covered generic constructors asserted
+`toBeGreaterThanOrEqual(3)` and passed with the duplicates in place.
+
+### Known gaps, recorded rather than closed
+
+Call-site multiplicity counts resolver-emitted references rather than distinct
+source sites. That is now one per site wherever the resolver emits one reference
+per site, but the fingerprint does not enforce it. Anonymous functions appear as
+calling themselves, which traces to `find_enclosing_function_scope` handing a
+synthetic callback invocation the arrow's own body scope — a resolver defect
+deserving its own task. The orchestrator script has no test file; it is
+exercised end to end by hand, and every CLI refusal and exit code in it was
+re-verified that way.
+
+<!-- SECTION:NOTES:END -->

@@ -261,7 +261,7 @@ describe("Project", () => {
       expect(call_graph.nodes.size).toBeGreaterThan(0);
     });
 
-    it("should recalculate call graph on each call (no caching)", async () => {
+    it("returns a fresh wrapper over the cached enriched graph", async () => {
       await project.initialize();
       const file1 = "file1.ts" as FilePath;
       project.update_file(file1, "function foo() {}");
@@ -269,11 +269,28 @@ describe("Project", () => {
       const graph1 = project.get_call_graph();
       const graph2 = project.get_call_graph();
 
-      // Should be DIFFERENT references (recalculated each time)
+      // The wrapper is rebuilt on each call...
       expect(graph1).not.toBe(graph2);
 
-      // But should have same structure
-      expect(graph1.nodes.size).toBe(graph2.nodes.size);
+      // ...but both read the SAME underlying enriched graph, so a caller that
+      // asks twice never pays for classification twice. This is a cache-identity
+      // property, asserted without depending on wall-clock timing.
+      expect(graph2.nodes).toBe(graph1.nodes);
+      expect(graph2.entry_points).toEqual(graph1.entry_points);
+    });
+
+    it("shares one enriched graph with get_classified_entry_points", async () => {
+      await project.initialize();
+      const file1 = "file1.ts" as FilePath;
+      project.update_file(file1, "function foo() {}");
+
+      project.get_call_graph();
+      const first = project.get_classified_entry_points();
+      const second = project.get_classified_entry_points();
+
+      // Both methods share a single EnrichedCallGraph, so triage callers never
+      // repeat classification.
+      expect(second).toBe(first);
     });
 
     it("should reflect changes immediately after file update", async () => {

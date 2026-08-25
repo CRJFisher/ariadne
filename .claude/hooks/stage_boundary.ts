@@ -18,14 +18,17 @@ import ts from "typescript";
 
 export const CORE_SRC = "packages/core/src";
 
-// project is the orchestrator: it may value-import any stage, and no stage may
-// import it. The Infinity sentinel encodes both directions in one comparison.
+// project is the orchestrator and benchmark_corpus_load is the measurement
+// harness over it: both sit above every stage, may value-import any of them,
+// and are imported by none. The Infinity sentinel encodes both directions in
+// one comparison.
 export const STAGE_ORDER: Record<string, number> = {
   index_single_file: 1,
   resolve_references: 2,
   trace_call_graph: 3,
   classify_entry_points: 3,
   project: Number.POSITIVE_INFINITY,
+  benchmark_corpus_load: Number.POSITIVE_INFINITY,
 };
 
 const REGISTRIES_PREFIX = `${CORE_SRC}/resolve_references/registries/`;

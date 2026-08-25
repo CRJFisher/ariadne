@@ -80,7 +80,7 @@ All captures follow this pattern:
 - `@definition.function` - Function definition
 - `@reference.call` - Function/method call
 - `@scope.class` - Class scope
-- `@reference.call.generic` - Generic function call (optional qualifier)
+- `@reference.type.generic` - Generic type reference (optional qualifier)
 
 ### Parts Explained
 
@@ -181,9 +181,7 @@ Language-specific features explicitly allowed:
 - `@definition.enum.member` - Enum members
 - `@definition.namespace` - Namespaces
 - `@definition.type_parameter` - Generic type parameters (emitted; no handler currently consumes it — see Validation)
-- `@reference.call.generic` - Generic calls
 - `@reference.constructor` - Constructor calls
-- `@reference.constructor.generic` - Generic constructor calls (involves type parameters)
 - `@reference.constructor.qualified` - Namespace-qualified constructor calls (`new ns.Foo()`)
 - `@assignment.constructor.qualified` - Namespace-qualified constructor with assignment target
 - `@reference.property` - Property-name read of an identifier-receiver member access
@@ -219,7 +217,6 @@ builds a method carrying `accessor_kind`.
 | Qualifier     | Meaning                            | Example                    |
 | ------------- | ---------------------------------- | -------------------------- |
 | _(none)_      | Simple identifier constructor      | `new Foo()`                |
-| `.generic`    | Involves type parameters           | `new Foo<T>()`             |
 | `.qualified`  | Accessed via namespace/member path | `new ns.Foo()`, `ns.Foo()` |
 | `.associated` | Rust `::new()` associated function | `Type::new()`              |
 | `.struct`     | Rust struct literal                | `Foo { field: val }`       |

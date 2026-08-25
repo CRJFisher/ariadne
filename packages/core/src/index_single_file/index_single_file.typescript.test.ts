@@ -743,7 +743,10 @@ describe("Semantic Index - TypeScript", () => {
       });
     });
 
-    it("should handle generic constructors", () => {
+    it("emits one constructor reference per `new` site, type arguments or not", () => {
+      // Explicit type arguments do not make a second call. Three sites, three
+      // references: a duplicate here would double the call-site multiplicity a
+      // call graph reports for every generic construction in a corpus.
       const code = `
         class Container<T> {
           constructor(public value: T) {}
@@ -771,17 +774,46 @@ describe("Semantic Index - TypeScript", () => {
         (r): r is ConstructorCallReference => r.kind === "constructor_call",
       );
 
-      // Should have at least 3 constructor calls
-      expect(constructor_refs.length).toBeGreaterThanOrEqual(3);
-
-      // Check that the Container constructor calls have metadata
-      const container_refs = constructor_refs.filter(
-        (r) => r.name === "Container",
-      );
-      expect(container_refs.length).toBeGreaterThanOrEqual(3);
-      container_refs.forEach((ref) => {
+      expect(constructor_refs.length).toEqual(3);
+      expect(
+        constructor_refs.map((ref) => ref.location.start_line).sort(),
+      ).toEqual([6, 7, 8]);
+      constructor_refs.forEach((ref) => {
+        expect(ref.name).toEqual("Container");
         expect(ref.construct_target).toBeDefined();
       });
+    });
+
+    it("emits one call reference per call site, type arguments or not", () => {
+      const code = `
+        function identity<T>(value: T): T {
+          return value;
+        }
+
+        const explicit = identity<number>(1);
+        const inferred = identity(2);
+      `;
+
+      const tree = parser.parse(code);
+      const parsed_file = create_parsed_file(
+        code,
+        "test.ts" as FilePath,
+        tree,
+        "typescript" as Language,
+      );
+      const index = build_index_single_file(
+        parsed_file,
+        tree,
+        "typescript" as Language,
+      );
+
+      const calls = index.references.filter(
+        (r): r is FunctionCallReference =>
+          r.kind === "function_call" && r.name === "identity",
+      );
+
+      expect(calls.length).toEqual(2);
+      expect(calls.map((ref) => ref.location.start_line).sort()).toEqual([6, 7]);
     });
 
     it("should extract method resolution metadata for all receiver patterns", () => {
