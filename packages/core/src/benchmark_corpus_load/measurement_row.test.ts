@@ -10,8 +10,9 @@ import * as path from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
 import {
   capture_run_environment,
-  cite_row,
-  format_citation,
+  create_session_id,
+  current_load_average,
+  find_ariadne_repo_root,
   read_ariadne_commit,
   UNKNOWN_COMMIT,
 } from "./measurement_row";
@@ -36,10 +37,11 @@ afterAll(() => {
 
 describe("capture_run_environment", () => {
   it("records the grammar versions this process actually loaded", () => {
-    // The only check that would have caught the incident AC #7 exists for: two
-    // measurement worktrees silently resolved tree-sitter 0.21.1 and
-    // tree-sitter-typescript 0.21.2 from hoisted copies, and the ~40 grammar
-    // failures both runs called environmental were exactly that.
+    // The declared version is not the loaded one: two measurement worktrees
+    // silently resolved tree-sitter 0.21.1 and tree-sitter-typescript 0.21.2
+    // from hoisted copies, and the ~40 grammar failures both runs called
+    // environmental were exactly that. Only a check against the resolved
+    // manifests catches it.
     const declared = JSON.parse(
       fs.readFileSync(
         path.join(__dirname, "..", "..", "package.json"),
@@ -102,71 +104,47 @@ describe("read_ariadne_commit", () => {
   });
 });
 
-describe("format_citation", () => {
-  const citation = {
-    corpus_name: "microsoft/vscode",
-    corpus_commit: "f3fa55c3",
-    predicate: "src",
-    offered_file_count: 8494,
-    discovered_file_count: 8494,
-    ariadne_commit: "12458246",
-    machine: "Darwin 21.6.0 x64",
-    node_version: "v22.23.2",
-  };
-
-  it("names all six things a quoted number must carry", () => {
-    expect(format_citation(citation)).toEqual(
-      "microsoft/vscode@f3fa55c3 · src · 8494 files · ariadne@12458246 · Darwin 21.6.0 x64 · node v22.23.2",
-    );
+describe("find_ariadne_repo_root", () => {
+  it("finds the checkout this process runs from, by its workspace manifest", () => {
+    const root = find_ariadne_repo_root();
+    expect(fs.existsSync(path.join(root, "pnpm-workspace.yaml"))).toEqual(true);
+    expect(__dirname.startsWith(root)).toEqual(true);
   });
 
-  it("says a sliced arm is a slice, so a prefix is never read as the corpus", () => {
-    expect(
-      format_citation({
-        ...citation,
-        predicate: "folder-ts:src/vs/base",
-        offered_file_count: 200,
-        discovered_file_count: 479,
-      }),
-    ).toEqual(
-      "microsoft/vscode@f3fa55c3 · folder-ts:src/vs/base · 200 of 479 files · ariadne@12458246 · Darwin 21.6.0 x64 · node v22.23.2",
-    );
+  it("agrees with the commit read from that same checkout", () => {
+    // The two are how an arm names the tree it ran: the path fills
+    // `ariadne_repo_path` and the commit is read back out of it.
+    const root = find_ariadne_repo_root();
+    expect(read_ariadne_commit(root)).not.toEqual(UNKNOWN_COMMIT);
+  });
+});
+
+describe("create_session_id", () => {
+  it("names a directory safely, because the id is also the run directory", () => {
+    // An ISO timestamp's colons are illegal in a path on Windows.
+    const session_id = create_session_id();
+    expect(/[:]/.test(session_id)).toEqual(false);
+    expect(session_id.startsWith(`${os.hostname()}-${process.pid}-`)).toEqual(true);
   });
 
-  it("derives the citation from the row rather than from a second source", () => {
-    const environment = capture_run_environment({
-      session_id: "s",
-      ariadne_repo_path: __dirname,
-    });
-    const cited = cite_row({
-      arm: "a",
-      sequence_index: 0,
-      corpus: {
-        corpus_name: "microsoft/vscode",
-        corpus_root: "/corpora/vscode",
-        corpus_commit: "f3fa55c3",
-        predicate: "src",
-      },
-      file_counts: { discovered: 8494, offered: 200, indexed: 191, dropped: 9 },
-      ingest_order: "forward",
-      seed: 1,
-      include_tests: false,
-      cpu_user_ms: 1,
-      cpu_system_ms: 1,
-      wall_ms: 1,
-      cpu_per_wall: 1,
-      load_cpu_ms: 1,
-      trace_cpu_ms: 1,
-      loadavg_at_start: [0, 0, 0],
-      loadavg_at_end: [0, 0, 0],
-      peak_rss_mb: 1,
-      rss_at_end_mb: 1,
-      settled_heap_mb: 1,
-      fingerprint: { schema_version: 2, components: {} as never },
-      environment,
-    });
-    expect(cited.offered_file_count).toEqual(200);
-    expect(cited.discovered_file_count).toEqual(8494);
-    expect(cited.node_version).toEqual(process.version);
+  it("carries the host, the pid and a timestamp, so a row names its session", () => {
+    // Rows that do not share a session id may not be divided into one another,
+    // so the id has to identify one orchestrator invocation on one machine.
+    const suffix = create_session_id().slice(
+      `${os.hostname()}-${process.pid}-`.length,
+    );
+    expect(/^\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z$/.test(suffix)).toEqual(
+      true,
+    );
+  });
+});
+
+describe("current_load_average", () => {
+  it("reports the three load averages, each to a tenth", () => {
+    const [one, five, fifteen] = current_load_average();
+    for (const value of [one, five, fifteen]) {
+      expect(value).toEqual(Math.round(value * 10) / 10);
+    }
+    expect(current_load_average().length).toEqual(3);
   });
 });

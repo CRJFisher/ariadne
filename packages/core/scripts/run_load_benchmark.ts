@@ -27,9 +27,12 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import {
+  cite_row,
   create_session_id,
   diff_ingest_orders,
   discover_corpus,
+  find_ariadne_repo_root,
+  format_citation,
   measure_speedup_against_control,
   parse_corpus_predicate_name,
   plan_nested_slices,
@@ -45,7 +48,6 @@ import {
   type MeasurementRow,
   type SliceSize,
 } from "../src/benchmark_corpus_load";
-import { cite_row, format_citation } from "../src/benchmark_corpus_load/measurement_row";
 
 /**
  * What `"full"` is assumed to cost when sizing a child, since the parent does
@@ -119,16 +121,6 @@ function numeric_flag(name: string, fallback?: string): number {
 
 function has_flag(name: string): boolean {
   return process.argv.includes(`--${name}`);
-}
-
-function repo_root(): string {
-  let dir = __dirname;
-  while (!fs.existsSync(path.join(dir, "pnpm-workspace.yaml"))) {
-    const parent = path.dirname(dir);
-    if (parent === dir) throw new Error("could not locate repo root");
-    dir = parent;
-  }
-  return dir;
 }
 
 function show_help(): void {
@@ -285,7 +277,7 @@ function report_rows(label: string, rows: readonly MeasurementRow[]): void {
 }
 
 async function run_interleaved(context: RunContext, slice: SliceSize): Promise<void> {
-  const control_repo = repo_root();
+  const control_repo = find_ariadne_repo_root();
   const candidate_repo = flag("candidate-repo", control_repo);
   const control: ArmResult[] = [];
   const candidate: ArmResult[] = [];
@@ -320,6 +312,43 @@ async function run_interleaved(context: RunContext, slice: SliceSize): Promise<v
   console.log(
     `\nspeedup ${speedup.speedup}x (control ${speedup.control.mean}s / candidate ${speedup.candidate.mean}s, session ${speedup.session_id})`,
   );
+
+  // Two arms of one tree measure the session's noise, not a change. Printed as
+  // a speedup it reads as a result, and a 1.03x noise floor has been quoted as
+  // a 3% win before.
+  if (
+    control[0].row.environment.ariadne_commit ===
+    candidate[0].row.environment.ariadne_commit
+  ) {
+    console.log(
+      `  NOISE FLOOR: both arms ran ariadne@${control[0].row.environment.ariadne_commit}. ` +
+        "This figure is what a null change measures in this session, not a speedup. Pass --candidate-repo to measure one.",
+    );
+  }
+}
+
+/**
+ * CPU seconds per file, and the marginal cost of the files a slice added over
+ * the one before it.
+ *
+ * The mean is what a budget gets extrapolated from and the marginal is what
+ * says whether that extrapolation is allowed: cost per file is not constant,
+ * and two fits taken from small slices missed the measured corpus cost by
+ * 2.19x and 16.8x. A rising marginal is the curve saying so.
+ */
+function report_cost_per_file(
+  size: number,
+  cpu_mean_seconds: number,
+  previous: { size: number; cpu_mean_seconds: number } | undefined,
+): void {
+  const mean_ms_per_file = (cpu_mean_seconds / size) * 1000;
+  const marginal =
+    previous === undefined
+      ? "—"
+      : `${(((cpu_mean_seconds - previous.cpu_mean_seconds) / (size - previous.size)) * 1000).toFixed(1)} ms/file over the ${size - previous.size} files added`;
+  console.log(
+    `  cost per file  mean ${mean_ms_per_file.toFixed(1)} ms   marginal ${marginal}`,
+  );
 }
 
 async function run_slices(context: RunContext): Promise<void> {
@@ -328,17 +357,21 @@ async function run_slices(context: RunContext): Promise<void> {
   console.log(`nested slices over ${discovered.length} discovered files: ${sizes.join(", ")}`);
 
   let sequence_index = 0;
+  let previous: { size: number; cpu_mean_seconds: number } | undefined;
   for (const size of sizes) {
     const rows: MeasurementRow[] = [];
     for (let repetition = 0; repetition < REPETITIONS; repetition++) {
       const result = await spawn_arm(
-        arm_request(context, `slice-${size}`, sequence_index, size, "forward", repo_root()),
+        arm_request(context, `slice-${size}`, sequence_index, size, "forward", find_ariadne_repo_root()),
         path.join(context.run_dir, `${sequence_index}-slice-${size}.arm`),
       );
       rows.push(result.row);
       sequence_index++;
     }
     report_rows(`slice ${size}`, rows);
+    const cpu_mean_seconds = summarize_cpu_seconds(rows).mean;
+    report_cost_per_file(size, cpu_mean_seconds, previous);
+    previous = { size, cpu_mean_seconds };
   }
 }
 
@@ -346,7 +379,7 @@ async function run_orders(context: RunContext, slice: SliceSize): Promise<void> 
   // One arm per process, compared pairwise against the baseline: a full corpus
   // cannot hold four of its own fingerprints in one heap.
   const baseline = await spawn_arm(
-    arm_request(context, "order-forward", 0, slice, "forward", repo_root()),
+    arm_request(context, "order-forward", 0, slice, "forward", find_ariadne_repo_root()),
     path.join(context.run_dir, "0-order-forward.arm"),
   );
 
@@ -356,7 +389,7 @@ async function run_orders(context: RunContext, slice: SliceSize): Promise<void> 
     if (order === "forward") continue;
     others.push(
       await spawn_arm(
-        arm_request(context, `order-${order}`, sequence_index, slice, order, repo_root()),
+        arm_request(context, `order-${order}`, sequence_index, slice, order, find_ariadne_repo_root()),
         path.join(context.run_dir, `${sequence_index}-order-${order}.arm`),
       ),
     );
@@ -396,8 +429,8 @@ async function run_orders(context: RunContext, slice: SliceSize): Promise<void> 
     `validated against ${recorded.ariadne_tree} on ${recorded.corpus}@${recorded.corpus_commit} ` +
       `(${recorded.predicate}, ${recorded.file_count} files): ${recorded.entry_points_moved} entry points moved ` +
       `(${recorded.entry_points_forward} -> ${recorded.entry_points_descending_size}), ` +
-      `${Object.values(recorded.legacy_hashes).filter((pair) => pair.changed).length} of ` +
-      `${Object.keys(recorded.legacy_hashes).length} recorded hashes changed`,
+      `${Object.values(recorded.recorded_hashes).filter((pair) => pair.changed).length} of ` +
+      `${Object.keys(recorded.recorded_hashes).length} recorded hashes changed`,
   );
 }
 

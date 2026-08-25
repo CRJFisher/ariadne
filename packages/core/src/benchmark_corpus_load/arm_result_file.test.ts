@@ -163,6 +163,20 @@ describe("write_arm_result / read_arm_result", () => {
     );
   });
 
+  it("refuses a line naming a component the fingerprint does not have", async () => {
+    // A component name is read straight off the line. An unknown one means the
+    // file came from a different fingerprint schema, and silently dropping it
+    // would read the file back as a complete result with a component missing.
+    const file = temp_file("unknown-component.arm");
+    await write_arm_result(file, build_result());
+    const contents = fs.readFileSync(file, "utf-8");
+    fs.writeFileSync(file, `renamed_component\t"a"\n${contents}`);
+
+    await expect(read_arm_result(file)).rejects.toThrow(
+      /names an unknown fingerprint component "renamed_component"/,
+    );
+  });
+
   it("survives a member holding the tab it is delimited with", async () => {
     // Members are JSON-encoded on their line, so a symbol whose name carried a
     // tab neither corrupts the line format nor silently merges two members.

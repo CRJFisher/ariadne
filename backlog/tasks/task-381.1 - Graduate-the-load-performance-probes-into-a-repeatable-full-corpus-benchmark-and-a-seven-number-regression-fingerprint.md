@@ -89,17 +89,40 @@ no longer exists.
 ### What is measured, and what is only argued
 
 Reproduced exactly on this machine: the smoke run (191 indexed, 9 dropped, 4,917
-nodes, 1,673 raw entry points over the first 200 path-sorted `.ts` files of
-`src/vs/base` at f3fa55c3) and both pinned discovery counts (8,494 for `src`,
-12,654 for the repository root). Four arms interleaved A,B,A,B in four distinct
-processes under one session. Peak RSS cross-checked against `/usr/bin/time -l`
-to within 0.7%.
+nodes, 1,673 raw entry points and 7,702 unresolved call sites over the first 200
+path-sorted `.ts` files of `src/vs/base` at f3fa55c3) and both pinned discovery
+counts (8,494 for `src`, 12,654 for the repository root). Four arms interleaved
+A,B,A,B in four distinct processes under one session. Peak RSS cross-checked
+against `/usr/bin/time -l` to within 0.7%. The nested-slice curve over
+`folder-ts:src/vs/base/browser` measured 100.0, 114.9 and 110.4 ms of CPU per
+file at n=50, 100 and 106, with marginal costs of 129.8 and 35.0 ms per added
+file — the curve itself saying that cost per file is not constant.
 
 Not measured: a true corpus-scale arm. The 2M-member claims behind the streaming
 digest, the merge-join diff and the arm-file writer are argued and unit-tested,
 not observed at scale, and the heap coefficient comes from two points at 200 and
 600 files. The committed fingerprint has been reproduced only on darwin/x64,
 while CI runs linux/x64 and darwin/arm64.
+
+### Module layout
+
+The folder holds one concern per file, so a name is fully true of what is under
+it. `benchmark_corpus_load.ts` is the arm; `corpus_predicate.ts` decides which
+files a row is about and holds every arm over a pinned corpus to the count that
+was measured for it; `nested_slice.ts` decides WHICH files an arm sees and
+`ingest_order.ts` the sequence they arrive in; `measurement_row.ts` is the row
+and the environment that fills it, with `round_measurement.ts`,
+`resident_set_sampler.ts` and `cite_row.ts` beside it; `call_graph_fingerprint.ts`
+and `streaming_digest.ts` are the guard; `compare_measurements.ts` is what may
+be divided into what; `arm_result_file.ts` carries a result between processes.
+`index.ts` is exactly the orchestrator script's import list.
+
+Component digests are length-prefixed rather than newline-delimited, so the
+encoding is injective and a member holding a newline is an ordinary member
+instead of a refusal that could only fire after the corpus had been loaded.
+Members built from several fields escape the characters they are joined with, so
+a TypeScript private member name cannot make one call edge read as another.
+Both changes move every digest, so the fingerprint schema is version 3.
 
 ### Notable decisions
 
@@ -136,17 +159,35 @@ guard runs against the in-repo corpus on every test run; only the corpus-scale
 rows skip. #13's peak RSS is reported through `summarize_samples`, which refuses
 fewer than two runs.
 
+### The duplicate-reference defect, fixed at its root
+
+`unresolved_calls` over-counted because two tree-sitter query patterns in
+`typescript.scm` each matched a strict subset of another: a `new X<T>()` was
+captured by both the plain constructor pattern and a "constructor with type
+arguments" pattern, and a `foo<T>()` by both the plain call pattern and a
+"generic function call" pattern. The `.generic` capture suffix reached no
+handler — it mapped to the same reference kind as the plain form — so each of
+those sites produced two identical `CallReference`s, inflating both unresolved
+call sites and resolved call-site multiplicity for every generic construction
+and generic call in a corpus.
+
+Removing the two redundant patterns left all 3,753 existing tests passing
+unchanged, which is what confirms the suffix carried no behaviour. Over the
+200-file `src/vs/base` slice the fix removes 333 duplicate references and drops
+unresolved call sites from 7,948 to 7,702. `index_single_file.typescript.test.ts`
+now pins one reference per `new` site and one per call site, type arguments or
+not; the test that previously covered generic constructors asserted
+`toBeGreaterThanOrEqual(3)` and passed with the duplicates in place.
+
 ### Known gaps, recorded rather than closed
 
-`unresolved_calls` double-counts 242 sites at slice 200 because the resolver
-emits duplicate references for `new Map()`, `new Set()` and `new Promise()`; the
-count is inflated by 3% until that is fixed upstream. Call-site multiplicity
-counts resolver-emitted references rather than distinct source sites, which
-differs for 65 of 7,746 pairs. Anonymous functions appear as calling themselves,
-which traces to `find_enclosing_function_scope` handing a synthetic callback
-invocation the arrow's own body scope — a resolver defect deserving its own
-task. The orchestrator script has no test file; it is exercised end to end by
-hand. `npm run clean` leaves the tsbuildinfo behind in both `core` and `types`,
-so a clean rebuild silently produces an empty `dist`.
+Call-site multiplicity counts resolver-emitted references rather than distinct
+source sites. That is now one per site wherever the resolver emits one reference
+per site, but the fingerprint does not enforce it. Anonymous functions appear as
+calling themselves, which traces to `find_enclosing_function_scope` handing a
+synthetic callback invocation the arrow's own body scope — a resolver defect
+deserving its own task. The orchestrator script has no test file; it is
+exercised end to end by hand, and every CLI refusal and exit code in it was
+re-verified that way.
 
 <!-- SECTION:NOTES:END -->

@@ -9,11 +9,9 @@
  * could not take in at all, and — the seventh — the evidence recorded for each
  * indirect reachability.
  *
- * The seventh is not decoration. An order-dependence in which read site got
- * recorded as a function's reachability evidence passed a six-value version
- * untouched, because moving the evidence never moves entry-point membership;
- * it took four independent writers collapsed into one position-ordered writer
- * to close, and nothing but this component would have shown it.
+ * The seventh is not decoration. An order-dependence in which read site is
+ * recorded as a function's reachability evidence never moves entry-point
+ * membership, so nothing but this component would show it.
  *
  * The dropped-file set belongs here because it grows with the corpus — one
  * file at n=100, three at n=120, eight at n=200 — so a fingerprint compared
@@ -23,8 +21,8 @@
  * node's `enclosed_calls`. A call written at module scope has no enclosing
  * function scope, so `call_resolver` never files it under a caller and it
  * reaches no node. Over the first 200 path-sorted `.ts` files of vscode's
- * `src/vs/base` at f3fa55c3, ingested forward, 2,086 of 15,428 call references
- * had no enclosing node — a seventh of the corpus's calls, invisible to a
+ * `src/vs/base` at f3fa55c3, ingested forward, 1,908 of 15,095 call references
+ * had no enclosing node — an eighth of the corpus's calls, invisible to a
  * fingerprint built from nodes alone. Those are the module-level registration
  * calls of the exported-singleton idiom, which is the construct order-dependence
  * shows up in, so a node-built fingerprint would be blind to exactly what it
@@ -55,7 +53,7 @@ import { digest_members } from "./streaming_digest";
  * component set changes. A recorded baseline carries it, and a comparison
  * across two versions is refused rather than reported as seven regressions.
  */
-export const FINGERPRINT_SCHEMA_VERSION = 2;
+export const FINGERPRINT_SCHEMA_VERSION = 3;
 
 const EMPTY_INDIRECT_REACHABILITY: ReadonlyMap<SymbolId, IndirectReachability> =
   new Map();
@@ -94,7 +92,7 @@ export type CallGraphFingerprint = Readonly<
 >;
 
 /** A component reduced to what a recorded row or a committed baseline holds. */
-export interface RecordedComponent {
+interface RecordedComponent {
   readonly count: number;
   readonly hash: string;
 }
@@ -130,7 +128,7 @@ export interface CallSource {
   get_calls_for_file(file_id: FilePath): readonly CallReference[];
 }
 
-export interface FingerprintInput {
+interface FingerprintInput {
   /**
    * The raw graph from `trace_call_graph` — entry points unfiltered by
    * classification, so the fingerprint moves when resolution moves rather than
@@ -180,16 +178,39 @@ function build_relativizer(normalized_root: string): (value: string) => string {
   };
 }
 
+/**
+ * The characters that separate fields inside a member, and the escape itself.
+ *
+ * A member built from several fields is only a function of those fields if no
+ * field can contain a separator. Symbol ids end in a name taken from source
+ * text, and `#` opens a private member name in TypeScript, so an unescaped
+ * `caller->target#count` would let `new A().#x` style ids collide with a
+ * genuinely different edge. Escaping is applied to every field of a
+ * multi-field member; single-field components carry no separator and stay
+ * verbatim, which is what makes them readable in a committed baseline.
+ */
+const FIELD_SEPARATORS = /[\\>#|@]/g;
+
+function escape_field(value: string): string {
+  return value.replace(FIELD_SEPARATORS, "\\$&");
+}
+
+/**
+ * Sort the members and digest them. Takes ownership of the array and sorts it
+ * in place: at two million members a defensive copy is a second array of the
+ * same size, held at exactly the moment the process is nearest its ceiling.
+ */
 function build_component(members: string[]): FingerprintComponent {
-  const sorted = [...members].sort(compare_paths);
+  members.sort(compare_paths);
   return {
-    count: sorted.length,
-    hash: digest_members(sorted),
-    members: sorted,
+    count: members.length,
+    hash: digest_members(members),
+    members,
   };
 }
 
-function node_members(call_graph: FingerprintableGraph,
+function node_members(
+  call_graph: FingerprintableGraph,
   relativize: (value: string) => string,
 ): string[] {
   const members: string[] = [];
@@ -200,23 +221,16 @@ function node_members(call_graph: FingerprintableGraph,
 }
 
 /**
- * Every call the resolver produced a reference for, paired with the caller it
- * belongs to.
- *
- * A call enclosed by a function is attributed to that function; one at module
- * scope is attributed to `module:<relative path>`, because it has a caller in
- * every sense that matters to a reader even though no node holds it.
+ * Which node encloses each call reference.
  *
  * Ownership is keyed by the call REFERENCE, not by its location. Two distinct
- * references routinely share one location — the resolver emits a synthetic
- * callback invocation at the receiver call's own site, and emits duplicate
- * references for `new Map()`/`new Set()`/`new Promise()` — so a location-keyed
- * map is last-writer-wins over node iteration order. That order is the order
- * files arrived, which made this function invent an order-dependence of its
- * own: measured on a 200-file slice, 539 of 15,428 call sites were filed under
- * the wrong caller and reversing the node map alone moved 417 unresolved
- * members. A fingerprint built to detect order-dependence must not manufacture
- * any.
+ * references can share one location — the resolver emits a synthetic callback
+ * invocation at the receiver call's own site — so a location-keyed map is
+ * last-writer-wins over node iteration order, and that order is the order files
+ * arrived. Measured on the 200-file `src/vs/base` slice, 527 source locations
+ * hold more than one reference, 1,068 references in all, so a location-keyed
+ * attribution decides every one of them by the walk. A fingerprint built to
+ * detect order-dependence must not manufacture any.
  *
  * A reference can still be enclosed by two nodes — a callback's body and the
  * method around it both claim it. The smallest symbol id wins, which is a
@@ -224,12 +238,11 @@ function node_members(call_graph: FingerprintableGraph,
  * one whose definition starts earlier in the file, since a symbol id leads with
  * its kind and position.
  */
-function attributed_calls(
-  input: FingerprintInput,
-  relativize: (value: string) => string,
-): { caller: string; call: CallReference }[] {
+function build_enclosing_callers(
+  call_graph: FingerprintableGraph,
+): ReadonlyMap<CallReference, SymbolId> {
   const enclosing = new Map<CallReference, SymbolId>();
-  for (const [caller_id, node] of input.call_graph.nodes) {
+  for (const [caller_id, node] of call_graph.nodes) {
     for (const call of node.enclosed_calls) {
       const held = enclosing.get(call);
       if (held === undefined || compare_paths(caller_id, held) < 0) {
@@ -237,19 +250,35 @@ function attributed_calls(
       }
     }
   }
+  return enclosing;
+}
 
-  const attributed: { caller: string; call: CallReference }[] = [];
+/**
+ * Every call the resolver produced a reference for, paired with the caller it
+ * belongs to.
+ *
+ * A call enclosed by a function is attributed to that function; one at module
+ * scope is attributed to `module:<relative path>`, because it has a caller in
+ * every sense that matters to a reader even though no node holds it.
+ *
+ * Yielded rather than collected. At corpus scale this is roughly two million
+ * pairs, and holding them all so two components can each read them once puts
+ * an array the size of the call universe beside the members those components
+ * are building.
+ */
+function* attributed_calls(
+  input: FingerprintInput,
+  enclosing: ReadonlyMap<CallReference, SymbolId>,
+  relativize: (value: string) => string,
+): Generator<{ caller: string; call: CallReference }> {
   for (const file of input.indexed_files) {
     for (const call of input.resolutions.get_calls_for_file(file)) {
       const owner = enclosing.get(call);
       const caller =
-        owner === undefined
-          ? `module:${relativize(file)}`
-          : relativize(owner);
-      attributed.push({ caller, call });
+        owner === undefined ? `module:${relativize(file)}` : relativize(owner);
+      yield { caller, call };
     }
   }
-  return attributed;
 }
 
 /**
@@ -265,18 +294,17 @@ function attributed_calls(
  * else pins resolved-call multiplicity — `unresolved_calls` covers only the
  * sites with no target at all.
  *
- * `n` counts references the resolver emitted, not distinct source call sites.
- * The two differ where the resolver emits more than one reference for one site,
- * which it does for `new Map()`, `new Set()` and `new Promise()`.
+ * `n` counts the references the resolver emitted for the pair. That is one per
+ * source call site wherever the resolver emits one reference per site.
  */
 function call_edge_members(
-  attributed: readonly { caller: string; call: CallReference }[],
+  attributed: Iterable<{ caller: string; call: CallReference }>,
   relativize: (value: string) => string,
 ): string[] {
   const site_counts = new Map<string, number>();
   for (const { caller, call } of attributed) {
     for (const resolution of call.resolutions) {
-      const pair = `${caller}->${relativize(resolution.symbol_id)}`;
+      const pair = `${escape_field(caller)}->${escape_field(relativize(resolution.symbol_id))}`;
       site_counts.set(pair, (site_counts.get(pair) ?? 0) + 1);
     }
   }
@@ -286,19 +314,20 @@ function call_edge_members(
 /**
  * Every call site the resolver produced a reference for and could not place.
  *
- * The number this component reports is the count the epic quotes; the members
- * exist so a comparison can say which call sites gained or lost a target
- * rather than only that the total moved.
+ * The members exist so a comparison can say which call sites gained or lost a
+ * target rather than only that the total moved.
  */
 function unresolved_call_members(
-  attributed: readonly { caller: string; call: CallReference }[],
+  attributed: Iterable<{ caller: string; call: CallReference }>,
   relativize: (value: string) => string,
 ): string[] {
   const members: string[] = [];
   for (const { caller, call } of attributed) {
     if (call.resolutions.length > 0) continue;
     const site = relativize(location_key(call.location));
-    members.push(`${caller}|${call.call_type}|${call.name}@${site}`);
+    members.push(
+      `${escape_field(caller)}|${escape_field(call.call_type)}|${escape_field(call.name)}@${escape_field(site)}`,
+    );
   }
   return members;
 }
@@ -327,12 +356,10 @@ function indirect_reachability_evidence_members(
   for (const [symbol_id, entry] of indirect_reachability(call_graph)) {
     const { reason } = entry;
     const collection =
-      reason.type === "collection_read"
-        ? relativize(reason.collection_id)
-        : "";
+      reason.type === "collection_read" ? relativize(reason.collection_id) : "";
     const read_site = relativize(location_key(reason.read_location));
     members.push(
-      `${relativize(symbol_id)}|${reason.type}|${collection}|${read_site}`,
+      `${escape_field(relativize(symbol_id))}|${escape_field(reason.type)}|${escape_field(collection)}|${escape_field(read_site)}`,
     );
   }
   return members;
@@ -379,7 +406,7 @@ export function fingerprint_call_graph(
   input: FingerprintInput,
 ): CallGraphFingerprint {
   const relativize = build_relativizer(normalize_root(input.corpus_root));
-  const attributed = attributed_calls(input, relativize);
+  const enclosing = build_enclosing_callers(input.call_graph);
 
   const dropped: string[] = [];
   for (const file_path of input.dropped_files) {
@@ -388,9 +415,17 @@ export function fingerprint_call_graph(
 
   const fingerprint: CallGraphFingerprint = {
     nodes: build_component(node_members(input.call_graph, relativize)),
-    call_edges: build_component(call_edge_members(attributed, relativize)),
+    call_edges: build_component(
+      call_edge_members(
+        attributed_calls(input, enclosing, relativize),
+        relativize,
+      ),
+    ),
     unresolved_calls: build_component(
-      unresolved_call_members(attributed, relativize),
+      unresolved_call_members(
+        attributed_calls(input, enclosing, relativize),
+        relativize,
+      ),
     ),
     raw_entry_points: build_component(
       input.call_graph.entry_points.map((id) => relativize(id)),
@@ -421,7 +456,7 @@ export function record_fingerprint(
   return { schema_version: FINGERPRINT_SCHEMA_VERSION, components };
 }
 
-export interface ComponentComparison {
+interface ComponentComparison {
   readonly component: FingerprintComponentName;
   readonly identical: boolean;
   readonly baseline_count: number;
@@ -444,13 +479,24 @@ export interface FingerprintComparison {
 }
 
 /**
- * Both member lists are sorted, so the difference is a merge-join: it names
+ * The multiset difference of two sorted member lists, as a merge-join: it names
  * what moved without holding a second copy of either side.
+ *
+ * A multiset rather than a set, because members repeat — `unresolved_calls`
+ * carries one member per call site and two sites in one caller can be
+ * character-identical. Three copies on the left against one on the right report
+ * two on the left and none on the right, which is the honest reading: two call
+ * sites were lost.
  */
 function diff_sorted(
   baseline: readonly string[],
   candidate: readonly string[],
-): { only_baseline: string[]; only_candidate: string[]; baseline_total: number; candidate_total: number } {
+): {
+  only_baseline: string[];
+  only_candidate: string[];
+  baseline_total: number;
+  candidate_total: number;
+} {
   const only_baseline: string[] = [];
   const only_candidate: string[] = [];
   let baseline_total = 0;
@@ -471,7 +517,11 @@ function diff_sorted(
     } else if (order < 0) {
       baseline_total = take(only_baseline, baseline[left++], baseline_total);
     } else {
-      candidate_total = take(only_candidate, candidate[right++], candidate_total);
+      candidate_total = take(
+        only_candidate,
+        candidate[right++],
+        candidate_total,
+      );
     }
   }
   while (left < baseline.length) {
@@ -491,7 +541,12 @@ function compare_component(
 ): ComponentComparison {
   const identical = baseline.hash === candidate.hash;
   const diff = identical
-    ? { only_baseline: [], only_candidate: [], baseline_total: 0, candidate_total: 0 }
+    ? {
+        only_baseline: [],
+        only_candidate: [],
+        baseline_total: 0,
+        candidate_total: 0,
+      }
     : diff_sorted(baseline.members, candidate.members);
 
   return {
@@ -532,21 +587,4 @@ export function compare_fingerprints(
     differing_components: differing,
     components,
   };
-}
-
-/** Which components moved between two recorded rows, refusing a version skew. */
-export function compare_recorded_fingerprints(
-  baseline: RecordedFingerprint,
-  candidate: RecordedFingerprint,
-): readonly FingerprintComponentName[] {
-  if (baseline.schema_version !== candidate.schema_version) {
-    throw new Error(
-      `Refusing to compare fingerprints across schema versions ${baseline.schema_version} and ${candidate.schema_version} — ` +
-        "the members behind these digests are not the same kind of thing, so a difference would report as seven regressions.",
-    );
-  }
-  return FINGERPRINT_COMPONENT_NAMES.filter(
-    (name) =>
-      baseline.components[name].hash !== candidate.components[name].hash,
-  );
 }

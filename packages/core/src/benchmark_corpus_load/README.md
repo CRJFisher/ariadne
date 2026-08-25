@@ -10,8 +10,8 @@ predicate is not a measurement.
 **Serial arms are judged on CPU.** Wall clock on a shared box measures
 scheduling, not work. Full-corpus runs on an idle box recorded cpu/wall between
 0.97 and 1.09; the same hardware under load recorded 0.04 to 0.5 at loadavg
-100–273 against 4 CPUs. The 11.23-hour figure this epic started from is a wall
-number taken at roughly 5× oversubscription.
+100–273 against 4 CPUs. One 11.23-hour figure on record is a wall number taken
+at roughly 5× oversubscription of work that costs a fraction of it.
 
 **Worker-pool arms are judged on wall, taken on an idle box, with CPU reported
 alongside.** A pool's whole point is to finish sooner in wall-clock terms while
@@ -29,9 +29,11 @@ cpu/wall so a reader can see for themselves whether a wall number means anything
 ## No corpus-scale figure without a corpus-scale run
 
 Cost per file is not constant, so a small-slice measurement extrapolated to the
-corpus is wrong by a factor nobody can predict. Two fits taken during this epic
-missed by **2.19×** and **16.8×**. A budget stated for the corpus comes from an
-arm that ran the corpus.
+corpus is wrong by a factor nobody can predict. Two such fits missed the
+measured corpus cost by **2.19×** and **16.8×**. A budget stated for the corpus
+comes from an arm that ran the corpus. `--slices` reports the marginal cost of
+the files each slice added over the one before it, which is the curve saying
+whether an extrapolation is allowed at all.
 
 ## Ratios: same session, same machine, or not at all
 
@@ -43,9 +45,13 @@ in three sessions on one machine.
 
 So a speedup is only ever a candidate arm divided into a control arm that ran
 interleaved with it, in the same session, on the same machine. A ratio taken
-across sessions was wrong by 40%: an export-gate repair was reported at 2.202×
-and measured **1.570×** once a verifier built their own control. `compare_measurements`
-refuses the inadmissible cases rather than trusting the caller to remember.
+across sessions is wrong by 40%: 2.202× claimed, **1.570×** measured against a
+same-session control. `compare_measurements` refuses the inadmissible cases
+rather than trusting the caller to remember.
+
+Two arms of one tree measure the session's noise floor rather than a change, so
+`--interleave` says so on the line beneath the ratio when both arms report the
+same Ariadne commit.
 
 Arms interleave **A,B,A,B** rather than A,A,B,B so both arms share whatever
 thermal and scheduling drift the session has.
@@ -65,9 +71,9 @@ call sites; raw `trace_call_graph` entry points; `indirect_reachability` keys;
 the dropped-file set; and the evidence tuple behind each indirect reachability
 (function, reason type, collection, read site).
 
-The seventh is not decoration. An order-dependence in which read site got
-recorded as a function's reachability evidence survived the six-number version
-entirely, because it never moves entry-point membership.
+The seventh is not decoration. An order-dependence in which read site is
+recorded as a function's reachability evidence never moves entry-point
+membership, so nothing but this component shows it.
 
 The dropped set belongs in it because it grows with the corpus. Over vscode's
 `src/` at f3fa55c3 it holds 1 file at n=100, 2 at n=120 and 8 at n=200; over
@@ -75,10 +81,20 @@ The dropped set belongs in it because it grows with the corpus. Over vscode's
 predicate as much as of the size, which is why a fingerprint compared across two
 differently-sized slices means nothing without it.
 
+A member built from several fields escapes the characters those fields are
+joined with — `\`, `>`, `#`, `|` and `@` — so a TypeScript private member name
+cannot make one edge read as another. Single-field members carry no separator
+and stay verbatim, which is what keeps a committed baseline readable.
+
+Component digests are taken one member at a time, each member fed as its UTF-8
+byte length, a colon, then its bytes. Two million members never become one
+string, and the encoding is injective, so no member content can make one member
+look like two.
+
 Calls are enumerated from the resolution registry, not from each node's
 `enclosed_calls`. A call at module scope has no enclosing function scope and so
 reaches no node: over the first 200 path-sorted `.ts` files of `src/vs/base` at
-f3fa55c3, ingested forward, 2,086 of 15,428 call references have no enclosing
+f3fa55c3, ingested forward, 1,908 of 15,095 call references have no enclosing
 node. Those are the module-level registration calls of the exported-singleton
 idiom, which is the construct order-dependence shows up in.
 
@@ -101,6 +117,10 @@ At microsoft/vscode `f3fa55c3`, four defensible counts:
 
 `src/` costs 510.3 s of CPU and the repository root 1,653.9 s. They answer the
 ten-minute question differently, so rows for the two are never compared.
+
+The first two rows are load-bearing. An arm over `microsoft/vscode` at that
+commit refuses to run when its discovery walk finds a different count, because
+every figure recorded for that corpus is stated over the pinned one.
 
 ## Quoting a number
 
@@ -131,10 +151,11 @@ corpus-scale arm the load phase yields often enough to sample properly (measured
 
 ## Running it
 
-The corpus is absent in CI and in most checkouts, so corpus-scale **rows** skip
-cleanly. The fingerprint mechanism itself never skips: it is guarded on every
-test run against `packages/core/benchmark_corpus`, a nine-file corpus committed
-beside this module and shaped so all seven components are non-empty.
+A corpus of vscode's scale is absent in CI and in most checkouts, so
+corpus-scale **rows** skip cleanly. The fingerprint mechanism itself never
+skips: it is guarded on every test run against `packages/core/benchmark_corpus`,
+a ten-file corpus committed beside this module and shaped so all seven
+components are non-empty.
 
 ```bash
 # Node 22 is required (engines: >=22.13.0 <23.0.0).
@@ -171,20 +192,27 @@ is how the hoisted-grammar incident happened in the first place.
 ### The smoke run
 
 The first 200 path-sorted `.ts` files of `src/vs/base` at corpus `f3fa55c3`
-reproduce, on Ariadne `12458246`: **191 indexed, 9 dropped, 4,917 nodes, 1,673
-raw entry points**. Use `--predicate folder-ts:src/vs/base --slice 200`; the
-plain `folder:` form is a different file set and gives 5,070 and 1,728.
+reproduce **191 indexed, 9 dropped, 4,917 nodes, 1,673 raw entry points, 7,702
+unresolved call sites**. Use `--predicate folder-ts:src/vs/base --slice 200`;
+the plain `folder:` form is a different file set and gives 5,070 nodes and 1,728
+entry points.
+
+These are stated over the corpus rather than over one Ariadne commit, because
+that is what makes them a smoke run: the Ariadne commit belongs on the row, and
+the run prints it in the citation line above the numbers. A change to the
+pipeline that moves any of them is the signal the run exists to give.
 
 ## Determinism
 
 A multi-order run that reports "no difference" is worth exactly as much as the
 demonstration that it could report one. That demonstration is
-`RECORDED_ORDER_SENSITIVITY`, measured on the pre-TASK-381.11 tree: over the same
-8,494 files, forward against largest-first moved 31 entry points (17,994 → 17,973
-— a net 21, because 26 left and 5 entered) and changed four of five recorded
-hashes while the node hash held still. Those values came from a different
-algorithm over a five-component fingerprint and can never be recomputed here,
-which is why they are named `legacy_hashes` and flagged incomparable.
+`RECORDED_ORDER_SENSITIVITY`, measured on a tree whose polymorphic expansion
+depended on the order files arrived in: over the same 8,494 files, forward
+against largest-first moved 31 entry points (17,994 → 17,973 — a net 21, because
+26 left and 5 entered) and changed four of five recorded hashes while the node
+hash held still. Those values came from a different algorithm over a
+five-component fingerprint and can never be recomputed here, so they are a
+record of one run rather than a value to compare a current digest with.
 
 That the comparison can see each of the seven components move is proven in
 `call_graph_fingerprint.test.ts` over a synthetic fingerprint. It is deliberately

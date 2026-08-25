@@ -20,7 +20,6 @@ import type {
 import {
   assert_members_are_relative,
   compare_fingerprints,
-  compare_recorded_fingerprints,
   fingerprint_call_graph,
   record_fingerprint,
   FINGERPRINT_COMPONENT_NAMES,
@@ -158,8 +157,8 @@ describe("the seven components", () => {
 
   it("counts a caller-to-callee pair once, carrying its call-site count", () => {
     // `alpha` reaches `beta` from two call sites. One member keeps the
-    // component the size AC #2 asks for; the `#2` keeps the multiplicity that
-    // nothing else in the fingerprint pins.
+    // component one row per edge rather than one per call site; the `#2` keeps
+    // the multiplicity that nothing else in the fingerprint pins.
     const fingerprint = fingerprint_of();
     expect([...fingerprint.call_edges.members]).toEqual([
       "function:a.ts:1:0:3:1:alpha->function:b.ts:1:0:3:1:beta#2",
@@ -210,6 +209,150 @@ describe("the seven components", () => {
       );
       expect(fingerprint[name].count).toEqual(fingerprint[name].members.length);
     }
+  });
+});
+
+describe("a member is a function of its fields", () => {
+  it("escapes a separator inside a caller or target name", () => {
+    // A TypeScript private member starts with `#`, which is also the separator
+    // in front of a call-edge's site count. Unescaped, `a->b#3` could be read
+    // as either (a, b, 3) or (a, "b#3", …).
+    const private_method = `method:${ROOT}/a.ts:1:0:3:1:#run` as SymbolId;
+    const fingerprint = fingerprint_call_graph({
+      call_graph: {
+        nodes: new Map([[private_method, { enclosed_calls: [] }]]),
+        entry_points: [],
+        indirect_reachability: new Map(),
+      },
+      resolutions: call_source([
+        {
+          ...call("a.ts", 4, "#run", []),
+          resolutions: [
+            {
+              symbol_id: private_method,
+              confidence: "certain" as const,
+              reason: { type: "direct" as const },
+            },
+          ],
+        },
+      ]),
+      indexed_files: [`${ROOT}/a.ts` as FilePath],
+      dropped_files: new Set<FilePath>(),
+      corpus_root: ROOT,
+    });
+
+    expect([...fingerprint.call_edges.members]).toEqual([
+      "module:a.ts->method:a.ts:1:0:3:1:\\#run#1",
+    ]);
+  });
+
+  it("escapes every separator an unresolved-call member is built from", () => {
+    const fingerprint = fingerprint_call_graph({
+      call_graph: {
+        nodes: new Map(),
+        entry_points: [],
+        indirect_reachability: new Map(),
+      },
+      resolutions: call_source([call("a.ts", 4, "a|b@c#d>e", [])]),
+      indexed_files: [`${ROOT}/a.ts` as FilePath],
+      dropped_files: new Set<FilePath>(),
+      corpus_root: ROOT,
+    });
+
+    expect([...fingerprint.unresolved_calls.members]).toEqual([
+      "module:a.ts|function|a\\|b\\@c\\#d\\>e@a.ts:4:0:4:8",
+    ]);
+  });
+
+  it("leaves a single-field member verbatim, so a baseline stays readable", () => {
+    // Only members built from several fields carry separators. A node id is one
+    // field, so a private method's name reads as it appears in source.
+    const private_method = `method:${ROOT}/a.ts:1:0:3:1:#run` as SymbolId;
+    const fingerprint = fingerprint_call_graph({
+      call_graph: {
+        nodes: new Map([[private_method, { enclosed_calls: [] }]]),
+        entry_points: [private_method],
+        indirect_reachability: new Map(),
+      },
+      resolutions: call_source([]),
+      indexed_files: [],
+      dropped_files: new Set<FilePath>(),
+      corpus_root: ROOT,
+    });
+
+    expect([...fingerprint.nodes.members]).toEqual([
+      "method:a.ts:1:0:3:1:#run",
+    ]);
+  });
+});
+
+describe("a comparison names what moved, up to a cap", () => {
+  function fingerprint_with_nodes(names: readonly string[]) {
+    return fingerprint_call_graph({
+      call_graph: {
+        nodes: new Map(
+          names.map((name) => [
+            `function:${ROOT}/a.ts:1:0:3:1:${name}` as SymbolId,
+            { enclosed_calls: [] },
+          ]),
+        ),
+        entry_points: [],
+        indirect_reachability: new Map(),
+      },
+      resolutions: call_source([]),
+      indexed_files: [],
+      dropped_files: new Set<FilePath>(),
+      corpus_root: ROOT,
+    });
+  }
+
+  it("names at most fifty members per direction and totals the rest", () => {
+    // At corpus scale a component moves by millions of members. Naming them all
+    // is a report nobody reads and a string nobody can hold.
+    const baseline = fingerprint_with_nodes(
+      Array.from({ length: 120 }, (_, index) => `old${String(index).padStart(3, "0")}`),
+    );
+    const candidate = fingerprint_with_nodes(
+      Array.from({ length: 130 }, (_, index) => `new${String(index).padStart(3, "0")}`),
+    );
+
+    const nodes = compare_fingerprints(baseline, candidate).components.find(
+      (component) => component.component === "nodes",
+    );
+
+    expect(nodes?.only_baseline.length).toEqual(50);
+    expect(nodes?.only_candidate.length).toEqual(50);
+    expect(nodes?.only_baseline_total).toEqual(120);
+    expect(nodes?.only_candidate_total).toEqual(130);
+  });
+
+  it("counts a repeated member once per copy, so a lost call site shows up", () => {
+    // The difference is a multiset difference: three copies on the left against
+    // one on the right reports two lost, which is two call sites.
+    const baseline = {
+      ...fingerprint_with_nodes([]),
+      unresolved_calls: {
+        count: 3,
+        hash: digest_members(["same", "same", "same"]),
+        members: ["same", "same", "same"],
+      },
+    };
+    const candidate = {
+      ...fingerprint_with_nodes([]),
+      unresolved_calls: {
+        count: 1,
+        hash: digest_members(["same"]),
+        members: ["same"],
+      },
+    };
+
+    const unresolved = compare_fingerprints(baseline, candidate).components.find(
+      (component) => component.component === "unresolved_calls",
+    );
+
+    expect(unresolved?.only_baseline).toEqual(["same", "same"]);
+    expect(unresolved?.only_candidate).toEqual([]);
+    expect(unresolved?.only_baseline_total).toEqual(2);
   });
 });
 
@@ -370,14 +513,6 @@ describe("refusals", () => {
     ]);
   });
 
-  it("refuses to compare two fingerprints recorded under different schemas", () => {
-    const recorded = record_fingerprint(fingerprint_of());
-    const older = { ...recorded, schema_version: recorded.schema_version - 1 };
-    expect(() => compare_recorded_fingerprints(older, recorded)).toThrow(
-      /Refusing to compare fingerprints across schema versions/,
-    );
-  });
-
   it("accepts a fingerprint whose members are all relative", () => {
     const fingerprint = fingerprint_of();
     assert_members_are_relative(fingerprint);
@@ -388,6 +523,10 @@ describe("refusals", () => {
 describe("record_fingerprint", () => {
   it("carries the schema version and drops the members", () => {
     const recorded = record_fingerprint(fingerprint_of());
+    // The literal value is pinned, not just echoed: a row records it and
+    // `check_rows_comparable` refuses a row from another version, so bumping it
+    // without meaning to would silently refuse every earlier recorded row.
+    expect(FINGERPRINT_SCHEMA_VERSION).toEqual(3);
     expect(recorded.schema_version).toEqual(FINGERPRINT_SCHEMA_VERSION);
     const names = Object.keys(recorded.components) as FingerprintComponentName[];
     expect(names).toEqual([...FINGERPRINT_COMPONENT_NAMES]);

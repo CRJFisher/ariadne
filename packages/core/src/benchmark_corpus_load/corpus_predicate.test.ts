@@ -8,26 +8,35 @@
 
 import { describe, expect, it } from "vitest";
 import * as path from "node:path";
-import * as fs from "node:fs";
 import {
+  assert_pinned_file_count,
   compare_paths,
   discover_corpus,
   parse_corpus_predicate_name,
   resolve_corpus_predicate,
   PINNED_CORPUS_COUNTS,
+  type CorpusIdentity,
 } from "./corpus_predicate";
+import { find_ariadne_repo_root } from "./measurement_row";
 
-function find_repo_root(): string {
-  let dir = __dirname;
-  while (!fs.existsSync(path.join(dir, "pnpm-workspace.yaml"))) {
-    const parent = path.dirname(dir);
-    if (parent === dir) throw new Error("could not locate repo root");
-    dir = parent;
-  }
-  return dir;
+const CORPUS = path.join(
+  find_ariadne_repo_root(),
+  "packages",
+  "core",
+  "benchmark_corpus",
+);
+
+function vscode_at(
+  overrides: Partial<CorpusIdentity> = {},
+): CorpusIdentity {
+  return {
+    corpus_name: "microsoft/vscode",
+    corpus_root: "/corpora/vscode",
+    corpus_commit: "f3fa55c3",
+    predicate: "src",
+    ...overrides,
+  };
 }
-
-const CORPUS = path.join(find_repo_root(), "packages", "core", "benchmark_corpus");
 
 describe("resolve_corpus_predicate", () => {
   it("walks src/ for the src predicate", () => {
@@ -47,7 +56,7 @@ describe("resolve_corpus_predicate", () => {
   });
 
   it("builds a .ts-only folder predicate", () => {
-    // AC #3's smoke run is stated over `.ts` files, and `src/vs/base` holds
+    // The pinned smoke run is stated over `.ts` files, and `src/vs/base` holds
     // four `.js` files, two of which sort inside the first 200.
     const predicate = resolve_corpus_predicate("folder-ts:src/vs/base");
     expect(predicate.folders).toEqual(["src/vs/base"]);
@@ -76,6 +85,7 @@ describe("discover_corpus over the in-repo benchmark corpus", () => {
     const files = await discover_corpus(CORPUS, "src");
     expect(files.map((file) => path.relative(CORPUS, file))).toEqual([
       "src/aaa_first_reader.ts",
+      "src/arithmetic.ts",
       "src/callback.ts",
       "src/duplicate_exports.js",
       "src/entry.ts",
@@ -83,7 +93,6 @@ describe("discover_corpus over the in-repo benchmark corpus", () => {
       "src/orphan.ts",
       "src/registry.ts",
       "src/unresolved.ts",
-      "src/utils.ts",
       "src/zzz_second_reader.ts",
     ]);
   });
@@ -105,13 +114,13 @@ describe("discover_corpus over the in-repo benchmark corpus", () => {
     const files = await discover_corpus(CORPUS, "folder-ts:src");
     expect(files.map((file) => path.relative(CORPUS, file))).toEqual([
       "src/aaa_first_reader.ts",
+      "src/arithmetic.ts",
       "src/callback.ts",
       "src/entry.ts",
       "src/handlers.ts",
       "src/orphan.ts",
       "src/registry.ts",
       "src/unresolved.ts",
-      "src/utils.ts",
       "src/zzz_second_reader.ts",
     ]);
   });
@@ -143,5 +152,72 @@ describe("PINNED_CORPUS_COUNTS", () => {
           entry.corpus === "microsoft/vscode" && entry.corpus_commit === "f3fa55c3",
       ),
     ).toEqual(true);
+  });
+});
+
+describe("assert_pinned_file_count", () => {
+  it("passes a walk that found the count pinned for that corpus", () => {
+    expect(() => assert_pinned_file_count(vscode_at(), 8494)).not.toThrow();
+  });
+
+  it("refuses a walk that found a different count under the same name", () => {
+    // Every corpus-scale figure is stated over the pinned count. A walk that
+    // starts selecting a different file set re-bases all of them at once.
+    expect(() => assert_pinned_file_count(vscode_at(), 8500)).toThrow(
+      /found 8500 files, but 8494 is pinned for it/,
+    );
+  });
+
+  it("holds each predicate to its own count", () => {
+    expect(() =>
+      assert_pinned_file_count(vscode_at({ predicate: "repository-root" }), 8494),
+    ).toThrow(/found 8494 files, but 12654 is pinned for it/);
+    expect(() =>
+      assert_pinned_file_count(
+        vscode_at({ predicate: "repository-root" }),
+        12654,
+      ),
+    ).not.toThrow();
+  });
+
+  it("matches a full commit sha against the abbreviation the pin records", () => {
+    expect(() =>
+      assert_pinned_file_count(
+        vscode_at({ corpus_commit: "f3fa55c3a1b2c3d4e5f60718293a4b5c6d7e8f90" }),
+        8494,
+      ),
+    ).not.toThrow();
+  });
+
+  it("leaves a corpus, commit or predicate it has no count for unconstrained", () => {
+    // The pin records what has been measured; it is not a whitelist of what may
+    // be measured.
+    expect(() =>
+      assert_pinned_file_count(vscode_at({ corpus_commit: "0000000" }), 12),
+    ).not.toThrow();
+    expect(() =>
+      assert_pinned_file_count(vscode_at({ corpus_name: "some/other" }), 12),
+    ).not.toThrow();
+    expect(() =>
+      assert_pinned_file_count(vscode_at({ predicate: "folder:src/vs" }), 12),
+    ).not.toThrow();
+  });
+
+  it("never matches a shell count, which is not a predicate the harness runs", () => {
+    // The two shell rows are recorded so a count quoted from a one-liner can be
+    // told apart from Ariadne's walk. Their predicate strings can never equal a
+    // CorpusPredicateName.
+    const shell_predicates = PINNED_CORPUS_COUNTS.filter((entry) =>
+      entry.predicate.startsWith("shell: "),
+    );
+    expect(shell_predicates.length).toEqual(2);
+    for (const entry of shell_predicates) {
+      expect(() =>
+        assert_pinned_file_count(
+          vscode_at({ predicate: entry.predicate as never }),
+          entry.file_count + 1,
+        ),
+      ).toThrow();
+    }
   });
 });

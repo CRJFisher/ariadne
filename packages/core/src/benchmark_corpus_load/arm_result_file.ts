@@ -20,8 +20,8 @@
  *
  * Each member is JSON-encoded on its line. A symbol id ends in a name taken
  * from source text, and a quoted property name may legally contain a tab or a
- * newline; unencoded, one such member would both corrupt the line format and
- * silently collide with another member in the digest.
+ * newline; unencoded, one such member would corrupt the line format and be
+ * read back as two.
  *
  * Reading recomputes each component's digest from its members and checks it
  * against the digest the row recorded. That catches a truncated file, and it
@@ -49,7 +49,8 @@ const ROW_LINE_PREFIX = "row\t";
  * teardown are the pipeline's problem. A hand-rolled `write`/`drain` loop
  * hangs forever when the stream errors instead — `drain` never fires — and a
  * silent hang at the persist step, after the load has already been paid for,
- * is the worst version of the failure this epic exists to end.
+ * is the worst version of the hours-then-nothing failure this harness exists to
+ * end.
  */
 function* arm_result_lines(result: ArmResult): Generator<string> {
   for (const component of FINGERPRINT_COMPONENT_NAMES) {
@@ -118,7 +119,10 @@ export async function read_arm_result(file_path: string): Promise<ArmResult> {
     const component_members = members.get(component) ?? [];
     const hash = digest_members(component_members);
     const recorded = row.fingerprint.components[component];
-    if (hash !== recorded.hash || component_members.length !== recorded.count) {
+    // The digest covers the count: a member list of a different length cannot
+    // reproduce the recorded hash, so checking the length as well would only
+    // ever fire alongside it.
+    if (hash !== recorded.hash) {
       throw new Error(
         `${file_path} does not reproduce its own "${component}" component: recorded ${recorded.count}/${recorded.hash}, read back ${component_members.length}/${hash}`,
       );

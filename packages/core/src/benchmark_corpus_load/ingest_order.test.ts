@@ -1,20 +1,17 @@
 /**
- * The file sets and arrival orders an arm ingests.
+ * The sequence a fixed file set arrives in.
  *
- * Two properties carry the ACs: slices are nested by construction, so a
- * cost-per-file curve describes one codebase growing rather than several
- * unrelated corpora; and a shuffled order is reproducible from the seed the
- * row records, so a multi-order run can be re-run.
+ * A shuffled order is reproducible from the seed the row records, so a
+ * multi-order run can be re-run; every other order is a function of the corpus
+ * alone.
  */
 
 import { describe, expect, it } from "vitest";
 import type { FilePath } from "@ariadnejs/types";
-import {
-  INGEST_ORDERS,
-  nested_slice,
-  order_files,
-  plan_nested_slices,
-} from "./ingest_order";
+import * as fs from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
+import { INGEST_ORDERS, measure_file_sizes, order_files } from "./ingest_order";
 
 const FILES = [
   "/c/a.ts",
@@ -95,36 +92,24 @@ describe("order_files", () => {
   });
 });
 
-describe("nested_slice", () => {
-  it("takes a prefix, so every smaller slice is contained in every larger", () => {
-    const small = nested_slice(FILES, 2);
-    const large = nested_slice(FILES, 4);
-    expect(small).toEqual(["/c/a.ts", "/c/b.ts"]);
-    expect(large.slice(0, small.length)).toEqual(small);
-  });
+describe("measure_file_sizes", () => {
+  it("reads the byte size of every file the descending order needs", async () => {
+    const dir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "sizes-")));
+    const small = path.join(dir, "small.ts") as FilePath;
+    const large = path.join(dir, "large.ts") as FilePath;
+    fs.writeFileSync(small, "ab");
+    fs.writeFileSync(large, "abcdefgh");
 
-  it("refuses a non-positive size", () => {
-    expect(() => nested_slice(FILES, 0)).toThrow(/must be positive/);
-  });
-});
+    const sizes = await measure_file_sizes([small, large]);
+    expect([...sizes]).toEqual([
+      [small, 2],
+      [large, 8],
+    ]);
+    expect(order_files([small, large], "descending_size", { file_sizes: sizes, seed: 1 })).toEqual([
+      large,
+      small,
+    ]);
 
-describe("plan_nested_slices", () => {
-  it("drops sizes the corpus cannot supply and ends at the full corpus", () => {
-    // A slice larger than the corpus is dropped rather than clamped: two
-    // clamped slices would be one file set under two names, and a curve drawn
-    // through them would show flat growth that never happened.
-    expect(plan_nested_slices(new Array(150).fill("/c/x.ts") as FilePath[])).toEqual(
-      [50, 100, 150],
-    );
-  });
-
-  it("keeps every size below the corpus and appends its length", () => {
-    expect(
-      plan_nested_slices(new Array(2500).fill("/c/x.ts") as FilePath[]),
-    ).toEqual([50, 100, 200, 1200, 2000, 2500]);
-  });
-
-  it("refuses an empty corpus rather than planning a zero-file slice", () => {
-    expect(() => plan_nested_slices([])).toThrow(/empty corpus/);
+    fs.rmSync(dir, { recursive: true, force: true });
   });
 });

@@ -7,65 +7,38 @@
  * length, losing the run. Feeding the hash member by member bounds the largest
  * string the process holds at one member, whatever the corpus size.
  *
+ * A member is fed as its UTF-8 byte length, a colon, then its bytes. That
+ * encoding is injective: the byte stream can only be cut into members one way,
+ * so no member content can make one member look like two and
+ * `digest(["a\nb"])` differs from `digest(["a", "b"])`. A delimiter-only
+ * encoding cannot say that, and the guard it needs instead can only fire once
+ * the corpus has been walked and the CPU already spent.
+ *
  * The digest is the leading 64 bits of SHA-256, rendered as 16 hex characters.
- * That width is short enough to quote in a task acceptance criterion and wide
- * enough that a collision between two call graphs of this scale is not a
- * practical concern.
+ * That width is short enough to quote in a report and wide enough that a
+ * collision between two call graphs of this scale is not a practical concern.
  */
 
-import { createHash } from "crypto";
+import { Buffer } from "node:buffer";
+import { createHash } from "node:crypto";
 
 /** Hex characters kept from the SHA-256 digest. 16 hex characters is 64 bits. */
 const DIGEST_HEX_LENGTH = 16;
-
-interface StreamingDigest {
-  /**
-   * Fold one member into the digest. The member is terminated with a newline
-   * so that `["ab", "c"]` and `["a", "bc"]` do not collide; members are symbol
-   * ids, location keys and relative file paths, none of which contain one.
-   */
-  update(member: string): void;
-  /** The finished digest. Calling `update` afterwards throws. */
-  digest(): string;
-}
-
-function open_streaming_digest(): StreamingDigest {
-  const hash = createHash("sha256");
-  let finished = false;
-
-  return {
-    update(member: string): void {
-      if (member.includes("\n")) {
-        throw new Error(
-          `A fingerprint member may not contain a newline: ${JSON.stringify(member.slice(0, 60))}. ` +
-            "Members are newline-delimited into the digest, so such a member collides with the two members it looks like — digest([\"a\\nb\"]) and digest([\"a\", \"b\"]) are the same value.",
-        );
-      }
-      if (finished) {
-        throw new Error(
-          "Streaming digest already finished — open a new digest rather than extending a published fingerprint component",
-        );
-      }
-      hash.update(member);
-      hash.update("\n");
-    },
-    digest(): string {
-      finished = true;
-      return hash.digest("hex").slice(0, DIGEST_HEX_LENGTH);
-    },
-  };
-}
 
 /**
  * Digest an already-ordered member list. Order is the caller's responsibility:
  * every fingerprint component sorts its members before hashing, so that two
  * runs that ingested the same corpus in different orders produce the same
  * digest whenever they produced the same set.
+ *
+ * The members are consumed as an iterable and never collected, so a caller may
+ * hand over a generator and the process holds one member at a time.
  */
 export function digest_members(members: Iterable<string>): string {
-  const digest = open_streaming_digest();
+  const hash = createHash("sha256");
   for (const member of members) {
-    digest.update(member);
+    hash.update(`${Buffer.byteLength(member, "utf8")}:`);
+    hash.update(member);
   }
-  return digest.digest();
+  return hash.digest("hex").slice(0, DIGEST_HEX_LENGTH);
 }

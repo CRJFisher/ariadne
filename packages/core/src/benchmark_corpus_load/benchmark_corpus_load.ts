@@ -21,17 +21,19 @@ import * as v8 from "v8";
 import { trace_call_graph } from "../trace_call_graph/trace_call_graph";
 import { load_project } from "../project/load_project";
 import {
+  assert_pinned_file_count,
   discover_corpus,
   type CorpusIdentity,
   type CorpusPredicateName,
   type FileCounts,
 } from "./corpus_predicate";
+import { is_in_test_dir } from "../project/test_dir_patterns";
 import {
   measure_file_sizes,
-  nested_slice,
   order_files,
   type IngestOrder,
 } from "./ingest_order";
+import { nested_slice } from "./nested_slice";
 import {
   fingerprint_call_graph,
   record_fingerprint,
@@ -47,11 +49,10 @@ import { assert_rows_comparable } from "./compare_measurements";
 import {
   capture_run_environment,
   current_load_average,
-  round_to_tenth,
-  round_to_hundredth,
-  start_resident_set_sampler,
   type MeasurementRow,
 } from "./measurement_row";
+import { round_to_hundredth, round_to_tenth } from "./round_measurement";
+import { start_resident_set_sampler } from "./resident_set_sampler";
 
 const BYTES_PER_MB = 1024 * 1024;
 
@@ -94,7 +95,18 @@ export async function run_benchmark_arm(
   request: ArmRequest,
 ): Promise<ArmResult> {
   const corpus_root = path.resolve(request.corpus_root);
+  const corpus: CorpusIdentity = {
+    corpus_name: request.corpus_name,
+    corpus_root,
+    corpus_commit: request.corpus_commit,
+    predicate: request.predicate,
+  };
+
+  assert_corpus_root_is_outside_a_test_tree(corpus_root);
+
   const discovered = await discover_corpus(corpus_root, request.predicate);
+  assert_pinned_file_count(corpus, discovered.length);
+
   const offered =
     request.slice_size === "full"
       ? discovered
@@ -136,8 +148,6 @@ export async function run_benchmark_arm(
   const wall_total_ms = performance.now() - wall_at_start;
   const loadavg_at_end = current_load_average();
 
-  assert_offered_files_reached_the_loader(loaded.discovered_files.size, ordered.length);
-
   const indexed_files = [...loaded.project.get_file_contents().keys()];
   const fingerprint = fingerprint_call_graph({
     call_graph,
@@ -153,19 +163,14 @@ export async function run_benchmark_arm(
   // ceiling.
   const peak_rss_mb = sampler.stop();
 
-  const corpus: CorpusIdentity = {
-    corpus_name: request.corpus_name,
-    corpus_root,
-    corpus_commit: request.corpus_commit,
-    predicate: request.predicate,
-  };
-
   const file_counts: FileCounts = {
     discovered: discovered.length,
     offered: ordered.length,
     indexed: indexed_files.length,
     dropped: loaded.dropped_files.size,
   };
+
+  assert_every_offered_file_is_accounted_for(file_counts);
 
   const cpu_user_ms = cpu_total.user / 1000;
   const cpu_system_ms = cpu_total.system / 1000;
@@ -203,6 +208,26 @@ export async function run_benchmark_arm(
   };
 
   return { row, fingerprint };
+}
+
+/**
+ * Refuse a corpus that sits inside a test tree.
+ *
+ * `is_in_test_dir` matches on the file's ABSOLUTE path, so a corpus checked out
+ * under a directory called `test`, `tests` or `fixtures` — anywhere above the
+ * corpus root, including in the user's home directory — marks every file in it
+ * as a test file. `detect_entry_points` then drops every callable and the arm
+ * reports zero raw entry points: measured, one file set scored 0 inside
+ * `tests/fixtures/` and 38 outside it. Nothing about the result looks wrong,
+ * which is why this refuses rather than warns.
+ */
+function assert_corpus_root_is_outside_a_test_tree(corpus_root: string): void {
+  const normalized = corpus_root.replace(/\\/g, "/");
+  if (!is_in_test_dir(normalized)) return;
+  throw new Error(
+    `The corpus root ${corpus_root} lies inside a test tree. Every file under it would be marked a test file and the arm would report zero raw entry points. ` +
+      "Move the corpus outside any `test`, `tests`, `__tests__`, `fixtures` or `__fixtures__` directory.",
+  );
 }
 
 /**
@@ -248,23 +273,27 @@ function assert_heap_is_large_enough(offered_file_count: number): void {
 }
 
 /**
- * The loader is handed the arm's file list, and `load_project` re-filters it
- * through `is_supported_file`. A divergence means the two walks disagree about
- * what the corpus is, which makes the row's file count a claim about a
- * different file set than the one measured.
+ * Every file the arm offered was either indexed or reported dropped.
+ *
+ * The loader re-filters the arm's file list through `is_supported_file`, so a
+ * file discovery selected can silently never reach indexing at all. That file
+ * would appear in neither count, and the row would name a corpus larger than
+ * the one it measured while showing nothing wrong. The dropped set is what
+ * makes a missing file visible, so the two counts have to close over the
+ * offered total.
  */
-function assert_offered_files_reached_the_loader(
-  loader_saw: number,
-  offered: number,
+function assert_every_offered_file_is_accounted_for(
+  file_counts: FileCounts,
 ): void {
-  if (loader_saw === offered) return;
+  const accounted = file_counts.indexed + file_counts.dropped;
+  if (accounted === file_counts.offered) return;
   throw new Error(
-    `The loader took ${loader_saw} of the ${offered} files this arm offered. ` +
-      "Discovery and the loader disagree about the corpus, so the row's file count would name a different file set than the one measured.",
+    `This arm offered ${file_counts.offered} files, and ${file_counts.indexed} were indexed and ${file_counts.dropped} reported dropped — ${accounted} in all. ` +
+      "A file that is neither indexed nor dropped never reached the loader, so the row's file count names a different file set than the one measured.",
   );
 }
 
-export interface OrderComparison {
+interface OrderComparison {
   readonly order: IngestOrder;
   readonly comparison: FingerprintComparison;
 }
@@ -273,7 +302,7 @@ export interface OrderComparison {
  * The verdict of a multi-order run: whether the reported call graph is a
  * function of the codebase or of the order the loader walked it.
  */
-export interface MultiOrderVerdict {
+interface MultiOrderVerdict {
   readonly baseline_order: IngestOrder;
   readonly comparisons: readonly OrderComparison[];
   readonly identical_across_orders: boolean;

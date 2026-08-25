@@ -4,11 +4,11 @@
  *
  * Wall clock on a shared box measures scheduling, not work. Full-corpus runs
  * on an idle box recorded cpu/wall between 0.97 and 1.09; the same hardware
- * under load recorded 0.04 to 0.5 at loadavg 100-273 against 4 CPUs, and the
- * 11.23-hour figure this epic started from is a wall number taken at roughly
- * 5x oversubscription. A row therefore carries CPU and wall and their ratio
- * and the load average, so a reader can see for themselves whether the wall
- * number means anything.
+ * under load recorded 0.04 to 0.5 at loadavg 100-273 against 4 CPUs, and a
+ * wall figure taken at roughly 5x oversubscription reports 11.23 hours for
+ * that same work. A row therefore carries CPU and wall and their ratio and the
+ * load average, so a reader can see for themselves whether the wall number
+ * means anything.
  *
  * Absolute CPU is machine-bound and does not transfer even between two runs of
  * provably identical computation: one arm producing byte-identical structural
@@ -18,29 +18,31 @@
  * machine, the node version and the resolved grammar versions, and
  * `compare_measurements` refuses any ratio that crosses them.
  *
- * The grammar versions are on the row because two measurement worktrees
- * silently resolved tree-sitter 0.21.1 and tree-sitter-typescript 0.21.2 from
- * hoisted copies instead of the 0.25.0 and 0.23.2 a normal checkout uses, and
- * the ~40 grammar test failures both runs waved off as environmental were
- * exactly that.
+ * The grammar versions are on the row because the declared version is not the
+ * loaded one: two measurement worktrees silently resolved tree-sitter 0.21.1
+ * and tree-sitter-typescript 0.21.2 from hoisted copies instead of the 0.25.0
+ * and 0.23.2 a normal checkout uses, and the ~40 grammar test failures both
+ * runs waved off as environmental were exactly that.
  */
 
-import { execFileSync } from "child_process";
-import * as os from "os";
-import { clearInterval, setInterval } from "node:timers";
+import { execFileSync } from "node:child_process";
+import * as fs from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
 import * as v8 from "v8";
 import tree_sitter_manifest from "tree-sitter/package.json";
 import tree_sitter_typescript_manifest from "tree-sitter-typescript/package.json";
 import type { CorpusIdentity, FileCounts } from "./corpus_predicate";
 import type { IngestOrder } from "./ingest_order";
 import type { RecordedFingerprint } from "./call_graph_fingerprint";
+import { round_to_tenth } from "./round_measurement";
 
 const BYTES_PER_MB = 1024 * 1024;
 
 /** Recorded when the Ariadne checkout is not a git repository. */
 export const UNKNOWN_COMMIT = "unknown";
 
-export type LoadAverage = readonly [number, number, number];
+type LoadAverage = readonly [number, number, number];
 
 export interface RunEnvironment {
   /** Operating system, release and architecture, as one comparable string. */
@@ -73,8 +75,8 @@ export interface MeasurementRow {
   /**
    * Position in the interleaved A,B,A,B sequence, 0-based and unique within a
    * session. Without it "interleaved" is an unverifiable claim about an
-   * unordered set of files, and the within-session thermal drift the epic
-   * cares about cannot be read off the rows.
+   * unordered set of files, and within-session thermal drift cannot be read off
+   * the rows.
    */
   readonly sequence_index: number;
   readonly corpus: CorpusIdentity;
@@ -106,9 +108,9 @@ export interface MeasurementRow {
   readonly loadavg_at_end: LoadAverage;
   /**
    * Highest resident set the sampler saw. Reported through `summarize_peak_rss`
-   * over at least two runs, never as a single figure — see AC #13. The sampler
-   * cannot observe the synchronous trace phase, so this is a defensible lower
-   * bound rather than a true high-water mark.
+   * over at least two runs, never as a single figure. The sampler cannot observe
+   * the synchronous trace phase, so this is a defensible lower bound rather than
+   * a true high-water mark.
    */
   readonly peak_rss_mb: number;
   /** Resident set when the arm finished. Named for what it is: RSS does not fall
@@ -124,13 +126,9 @@ export interface MeasurementRow {
 /**
  * The grammar versions this process actually loaded.
  *
- * Read from the resolved manifests rather than from `packages/core/package.json`
- * because the declared version is not the loaded one: two measurement worktrees
- * silently resolved 0.21.1 and 0.21.2 from hoisted copies while declaring
- * 0.25.0 and 0.23.2, and the ~40 grammar failures both runs called
- * environmental were exactly that. A static import resolves through the same
- * node resolution the grammars themselves load through, so what is recorded is
- * what ran.
+ * Read from the resolved manifests rather than from `packages/core/package.json`,
+ * because a static import resolves through the same node resolution the grammars
+ * themselves load through: what is recorded is what ran.
  */
 function resolved_grammar_versions(): {
   tree_sitter: string;
@@ -161,6 +159,29 @@ export function read_ariadne_commit(ariadne_repo_path: string): string {
   } catch {
     return UNKNOWN_COMMIT;
   }
+}
+
+/**
+ * The Ariadne checkout this process is running from, found by walking up to the
+ * directory holding `pnpm-workspace.yaml`.
+ *
+ * This is what an arm records as its `ariadne_repo_path` when no second
+ * worktree is named, and what the in-repo corpus is located from. It is
+ * deliberately the running process's checkout and never a stand-in for a
+ * candidate arm's tree: the candidate names its own.
+ */
+export function find_ariadne_repo_root(): string {
+  let dir = __dirname;
+  while (!fs.existsSync(path.join(dir, "pnpm-workspace.yaml"))) {
+    const parent = path.dirname(dir);
+    if (parent === dir) {
+      throw new Error(
+        "Could not locate the Ariadne repository root: no pnpm-workspace.yaml above this file.",
+      );
+    }
+    dir = parent;
+  }
+  return dir;
 }
 
 /**
@@ -204,104 +225,7 @@ export function capture_run_environment(
   };
 }
 
-export interface ResidentSetSampler {
-  /** Stop sampling and return the highest resident set seen, in MB. */
-  stop(): number;
-}
-
-/**
- * Sample resident set size while an arm runs.
- *
- * Node reports current RSS, not the process high-water mark, so the peak is
- * sampled. It is reported as a mean over repeated runs rather than as a single
- * figure — see `summarize_peak_rss` — because peak RSS varies by up to 61% run
- * to run on one arm and one input, while the settled heap on the same runs is
- * stable to 0.01%.
- */
-export function start_resident_set_sampler(
-  interval_ms = 200,
-): ResidentSetSampler {
-  let peak_bytes = process.memoryUsage.rss();
-  const timer = setInterval(() => {
-    const current = process.memoryUsage.rss();
-    if (current > peak_bytes) peak_bytes = current;
-  }, interval_ms);
-  timer.unref();
-
-  return {
-    stop(): number {
-      clearInterval(timer);
-      const current = process.memoryUsage.rss();
-      if (current > peak_bytes) peak_bytes = current;
-      return round_to_tenth(peak_bytes / BYTES_PER_MB);
-    },
-  };
-}
-
-export function round_to_tenth(value: number): number {
-  return Math.round(value * 10) / 10;
-}
-
-export function round_to_hundredth(value: number): number {
-  return Math.round(value * 100) / 100;
-}
-
 export function current_load_average(): LoadAverage {
   const [one, five, fifteen] = os.loadavg();
-  return [
-    round_to_tenth(one),
-    round_to_tenth(five),
-    round_to_tenth(fifteen),
-  ];
-}
-
-/**
- * Exactly what must be named beside any file count or absolute runtime this
- * epic quotes.
- *
- * A separate type because "no task may assert a count without naming all six"
- * is a citation obligation, and an obligation nothing renders is one nobody
- * discharges. `format_citation` is the sanctioned way to state a number.
- */
-export interface RowCitation {
-  readonly corpus_name: string;
-  readonly corpus_commit: string;
-  readonly predicate: string;
-  readonly offered_file_count: number;
-  readonly discovered_file_count: number;
-  readonly ariadne_commit: string;
-  readonly machine: string;
-  readonly node_version: string;
-}
-
-export function cite_row(row: MeasurementRow): RowCitation {
-  return {
-    corpus_name: row.corpus.corpus_name,
-    corpus_commit: row.corpus.corpus_commit,
-    predicate: row.corpus.predicate,
-    offered_file_count: row.file_counts.offered,
-    discovered_file_count: row.file_counts.discovered,
-    ariadne_commit: row.environment.ariadne_commit,
-    machine: row.environment.machine,
-    node_version: row.environment.node_version,
-  };
-}
-
-/**
- * The one line a task doc pastes above a number. A sliced arm renders "200 of
- * 479 files" so a prefix is never mistaken for the whole corpus.
- */
-export function format_citation(citation: RowCitation): string {
-  const files =
-    citation.offered_file_count === citation.discovered_file_count
-      ? `${citation.discovered_file_count} files`
-      : `${citation.offered_file_count} of ${citation.discovered_file_count} files`;
-  return [
-    `${citation.corpus_name}@${citation.corpus_commit}`,
-    citation.predicate,
-    files,
-    `ariadne@${citation.ariadne_commit}`,
-    citation.machine,
-    `node ${citation.node_version}`,
-  ].join(" · ");
+  return [round_to_tenth(one), round_to_tenth(five), round_to_tenth(fifteen)];
 }

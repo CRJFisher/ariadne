@@ -1,11 +1,12 @@
 /**
- * The recorded order-dependence is a historical constant: the tree that
- * produced it no longer exists, so it cannot be recomputed. What CAN be
- * checked is its internal consistency — the only failure mode a transcribed
- * constant has is a typo.
+ * The recorded order-dependence is a constant: the tree that produced it no
+ * longer exists, so it cannot be recomputed. What CAN be checked is its
+ * internal consistency — the only failure mode a transcribed constant has is a
+ * typo.
  */
 
 import { describe, expect, it } from "vitest";
+import { FINGERPRINT_COMPONENT_NAMES } from "./call_graph_fingerprint";
 import { RECORDED_ORDER_SENSITIVITY } from "./recorded_order_sensitivity";
 
 describe("RECORDED_ORDER_SENSITIVITY", () => {
@@ -17,7 +18,8 @@ describe("RECORDED_ORDER_SENSITIVITY", () => {
       predicate: RECORDED_ORDER_SENSITIVITY.predicate,
       file_count: RECORDED_ORDER_SENSITIVITY.file_count,
     }).toEqual({
-      ariadne_tree: "pre-TASK-381.11",
+      ariadne_tree:
+        "a tree whose polymorphic expansion depended on the order files arrived in",
       corpus: "microsoft/vscode",
       corpus_commit: "f3fa55c3",
       predicate: "src",
@@ -46,7 +48,7 @@ describe("RECORDED_ORDER_SENSITIVITY", () => {
 
   it("marks a hash as changed exactly when its two values differ", () => {
     for (const [name, pair] of Object.entries(
-      RECORDED_ORDER_SENSITIVITY.legacy_hashes,
+      RECORDED_ORDER_SENSITIVITY.recorded_hashes,
     )) {
       expect({ name, changed: pair.changed }).toEqual({
         name,
@@ -58,7 +60,7 @@ describe("RECORDED_ORDER_SENSITIVITY", () => {
   it("records four hashes moving while the node hash holds still", () => {
     // That is what an order dependence looks like from outside: the set of
     // functions is unchanged, and what the graph says about them is not.
-    const changed = Object.entries(RECORDED_ORDER_SENSITIVITY.legacy_hashes)
+    const changed = Object.entries(RECORDED_ORDER_SENSITIVITY.recorded_hashes)
       .filter(([, pair]) => pair.changed)
       .map(([name]) => name);
     expect(changed.sort()).toEqual([
@@ -67,15 +69,26 @@ describe("RECORDED_ORDER_SENSITIVITY", () => {
       "indirect_reachability",
       "resolved_edges",
     ]);
-    expect(RECORDED_ORDER_SENSITIVITY.legacy_hashes.nodes.changed).toEqual(false);
+    expect(RECORDED_ORDER_SENSITIVITY.recorded_hashes.nodes.changed).toEqual(false);
   });
 
-  it("declares itself incomparable with a current fingerprint", () => {
-    // The values were produced by SHA-1 over `join("|")` against a
-    // five-component fingerprint. Comparing one against a current digest is
-    // meaningless, so the data says so rather than a comment someone can miss.
+  it("keeps the five names of the fingerprint that recorded it, not today's seven", () => {
+    // The values came from SHA-1 over `join("|")` against a five-component
+    // fingerprint, so they are a record of one run rather than a value to
+    // compare a current digest with. `nodes` is the one name the two sets
+    // share, and even there the two hashes are of different things.
+    const recorded = Object.keys(RECORDED_ORDER_SENSITIVITY.recorded_hashes);
+    expect(recorded.sort()).toEqual([
+      "call_references",
+      "entry_points",
+      "indirect_reachability",
+      "nodes",
+      "resolved_edges",
+    ]);
     expect(
-      RECORDED_ORDER_SENSITIVITY.comparable_with_current_fingerprint,
-    ).toEqual(false);
+      recorded.filter((name) =>
+        (FINGERPRINT_COMPONENT_NAMES as readonly string[]).includes(name),
+      ),
+    ).toEqual(["nodes"]);
   });
 });

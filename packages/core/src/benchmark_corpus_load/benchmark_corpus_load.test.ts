@@ -6,23 +6,14 @@
  */
 
 import * as fs from "node:fs";
+import * as os from "node:os";
 import * as path from "node:path";
 import { describe, expect, it } from "vitest";
 import { diff_ingest_orders, run_benchmark_arm } from "./benchmark_corpus_load";
-import { create_session_id } from "./measurement_row";
+import { create_session_id, find_ariadne_repo_root } from "./measurement_row";
 import { INGEST_ORDERS, type IngestOrder } from "./ingest_order";
 
-function find_repo_root(): string {
-  let dir = __dirname;
-  while (!fs.existsSync(path.join(dir, "pnpm-workspace.yaml"))) {
-    const parent = path.dirname(dir);
-    if (parent === dir) throw new Error("could not locate repo root");
-    dir = parent;
-  }
-  return dir;
-}
-
-const REPO_ROOT = find_repo_root();
+const REPO_ROOT = find_ariadne_repo_root();
 const CORPUS = path.join(REPO_ROOT, "packages", "core", "benchmark_corpus");
 
 function arm(order: IngestOrder, sequence_index: number, session_id: string) {
@@ -124,6 +115,63 @@ describe("refusals before the work", () => {
     ).rejects.toThrow(/selected no files/);
   }, 60_000);
 
+  it("refuses a corpus root that lies inside a test tree", async () => {
+    // `is_in_test_dir` matches the ABSOLUTE path, so a corpus checked out under
+    // a `test`, `tests` or `fixtures` directory anywhere above it marks every
+    // file as a test file and the arm reports zero raw entry points. Nothing
+    // about that result looks wrong from the outside.
+    const staging = fs.realpathSync(
+      fs.mkdtempSync(path.join(os.tmpdir(), "corpus-in-tests-")),
+    );
+    const under_tests = path.join(staging, "tests", "corpus");
+    fs.mkdirSync(path.join(under_tests, "src"), { recursive: true });
+    fs.writeFileSync(
+      path.join(under_tests, "src", "entry.ts"),
+      "export function main(): number {\n  return 1;\n}\n",
+    );
+
+    await expect(
+      run_benchmark_arm({
+        arm: "in-tests",
+        sequence_index: 0,
+        corpus_name: "staged",
+        corpus_root: under_tests,
+        corpus_commit: "in-repo",
+        predicate: "src",
+        slice_size: "full",
+        ingest_order: "forward",
+        seed: 1,
+        include_tests: false,
+        ariadne_repo_path: REPO_ROOT,
+        session_id: create_session_id(),
+      }),
+    ).rejects.toThrow(/lies inside a test tree/);
+
+    fs.rmSync(staging, { recursive: true, force: true });
+  }, 60_000);
+
+  it("refuses a discovery walk that disagrees with a pinned file count", async () => {
+    // Every corpus-scale figure is stated over the pinned count. A walk that
+    // starts selecting a different file set re-bases all of them while every
+    // row keeps naming the old corpus.
+    await expect(
+      run_benchmark_arm({
+        arm: "mislabelled",
+        sequence_index: 0,
+        corpus_name: "microsoft/vscode",
+        corpus_root: CORPUS,
+        corpus_commit: "f3fa55c3",
+        predicate: "src",
+        slice_size: "full",
+        ingest_order: "forward",
+        seed: 1,
+        include_tests: false,
+        ariadne_repo_path: REPO_ROOT,
+        session_id: create_session_id(),
+      }),
+    ).rejects.toThrow(/found 10 files, but 8494 is pinned for it/);
+  }, 60_000);
+
   it("refuses a slice the corpus cannot supply", async () => {
     await expect(
       run_benchmark_arm({
@@ -149,17 +197,17 @@ describe("diff_ingest_orders", () => {
     // This pins a real defect, not a desired property. Ariadne records the LAST
     // writer's read site as a function's reachability evidence, so when two
     // files both read the same function as a value, which one is remembered
-    // depends on the order the loader walked them. `helper` is read by
+    // depends on the order the loader walked them. `increment` is read by
     // `aaa_first_reader` and `zzz_second_reader` for exactly this purpose.
     //
     // Only the seventh component moves: the SET of reachable functions is
     // unchanged, and what the graph says about them is not. That is the shape
-    // of failure the six-value fingerprint could not see, which is why the
-    // seventh exists.
+    // of failure a fingerprint without the evidence component cannot see, which
+    // is why the seventh exists.
     //
-    // TASK-381.11 makes the reported graph a function of the codebase rather
-    // than of the walk. When it lands, this test fails — and that failure is
-    // the signal it worked. Update it to assert independence then.
+    // Making the reported graph a function of the codebase rather than of the
+    // walk turns this test red — and that failure is the signal it worked.
+    // Assert independence then.
     const session_id = create_session_id();
     const baseline = await arm("forward", 0, session_id);
     const others = [];
@@ -188,10 +236,10 @@ describe("diff_ingest_orders", () => {
       (component) => component.component === "indirect_reachability_evidence",
     );
     expect(evidence?.only_baseline).toEqual([
-      "function:src/utils.ts:1:17:1:22:helper|collection_read|variable:src/zzz_second_reader.ts:3:7:3:18:SECOND_TABLE|src/zzz_second_reader.ts:6:10:6:21",
+      "function:src/arithmetic.ts:1:17:1:25:increment|collection_read|variable:src/zzz_second_reader.ts:3:7:3:18:SECOND_TABLE|src/zzz_second_reader.ts:6:10:6:21",
     ]);
     expect(evidence?.only_candidate).toEqual([
-      "function:src/utils.ts:1:17:1:22:helper|collection_read|variable:src/aaa_first_reader.ts:3:7:3:17:FIRST_TABLE|src/aaa_first_reader.ts:6:10:6:20",
+      "function:src/arithmetic.ts:1:17:1:25:increment|collection_read|variable:src/aaa_first_reader.ts:3:7:3:17:FIRST_TABLE|src/aaa_first_reader.ts:6:10:6:20",
     ]);
   }, 120_000);
 
@@ -235,9 +283,7 @@ describe("diff_ingest_orders", () => {
     const verdict = diff_ingest_orders(baseline, [reversed]);
 
     expect(verdict.recorded_validation.entry_points_moved).toEqual(31);
-    expect(
-      verdict.recorded_validation.comparable_with_current_fingerprint,
-    ).toEqual(false);
+    expect(verdict.recorded_validation.file_count).toEqual(8494);
   }, 120_000);
 
   it("refuses to read two different corpora as an order difference", async () => {

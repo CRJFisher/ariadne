@@ -19,7 +19,8 @@
  * session, on the same machine.
  */
 
-import { round_to_hundredth, type MeasurementRow } from "./measurement_row";
+import type { MeasurementRow } from "./measurement_row";
+import { round_to_hundredth } from "./round_measurement";
 
 const CROSS_SESSION_EVIDENCE =
   "identical computation measured 777.6 s, 801.3 s and 1,019.4 s in three sessions with byte-identical structural output, and a cross-session speedup claim was wrong by 40% (2.202x claimed, 1.570x against a same-session control)";
@@ -30,7 +31,7 @@ const GRAMMAR_EVIDENCE =
 const CORPUS_EVIDENCE =
   "vscode's `src/` corpus costs 510.3 s of CPU and its repository root costs 1,653.9 s; the two answer the ten-minute question differently and are never divided into one another";
 
-export interface ComparabilityVerdict {
+interface ComparabilityVerdict {
   readonly comparable: boolean;
   /** Empty when the rows may be compared; otherwise every reason they may not. */
   readonly refusals: readonly string[];
@@ -146,7 +147,7 @@ export function check_ratio_admissible(
   return { comparable: refusals.length === 0, refusals };
 }
 
-export interface SampleSummary {
+interface SampleSummary {
   readonly run_count: number;
   readonly mean: number;
   readonly min: number;
@@ -205,7 +206,7 @@ export function summarize_cpu_seconds(
   );
 }
 
-export interface ControlledSpeedup {
+interface ControlledSpeedup {
   readonly control: SampleSummary;
   readonly candidate: SampleSummary;
   /** Control CPU over candidate CPU. Above 1.0 means the candidate is faster. */

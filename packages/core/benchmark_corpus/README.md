@@ -1,7 +1,7 @@
 # Benchmark guard corpus
 
 A small corpus the fingerprint mechanism is guarded against on every test run.
-The vscode corpus this epic measures is absent in CI and in most checkouts, so
+A corpus of vscode's scale is absent in CI and in most checkouts, so
 corpus-scale rows skip — this is what keeps the mechanism itself from skipping.
 
 ## Why it lives here and not under `tests/`
@@ -13,8 +13,9 @@ path reports **zero** raw entry points: the same files score 0 inside
 constant empty digest on every run, guarding nothing.
 
 The check is against the ABSOLUTE path, so a checkout under `~/test/…` would
-collapse it too. `EXPECTED_COUNTS` asserts an exact positive count for every
-component, so such a move fails loudly rather than silently.
+collapse it too. An arm refuses a corpus root that lies inside a test tree, and
+`EXPECTED_COUNTS` asserts an exact positive count for every component, so such a
+move fails loudly rather than silently.
 
 ## What each file is for
 
@@ -28,8 +29,8 @@ Every one of the seven components is non-empty by construction.
 | `src/callback.ts` | a function passed as a value — `function_reference` evidence |
 | `src/unresolved.ts` | calls into `JSON` and `console` that do not resolve |
 | `src/orphan.ts` | exported, never called — the raw entry points |
-| `src/utils.ts` | the shared callee |
-| `src/aaa_first_reader.ts`, `src/zzz_second_reader.ts` | two files that both read `helper` as a value, so its reachability evidence is CONTESTED across files |
+| `src/arithmetic.ts` | the shared callee |
+| `src/aaa_first_reader.ts`, `src/zzz_second_reader.ts` | two files that both read `increment` as a value, so its reachability evidence is CONTESTED across files |
 | `src/duplicate_exports.js` | exports one name twice, so indexing throws and the file is dropped |
 | `tools/build_report.ts` | outside `src/`, so the two predicates differ by exactly one file |
 

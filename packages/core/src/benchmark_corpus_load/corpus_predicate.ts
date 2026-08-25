@@ -30,8 +30,8 @@ import { find_source_files, parse_gitignore } from "../project/file_loading";
 
 /**
  * The two pinned predicates, plus two folder forms. `folder:` walks a subtree
- * exactly as `load_project` would; `folder-ts:` restricts that walk to `.ts`
- * — not `.tsx` — which is the predicate AC #3's smoke run is stated in.
+ * exactly as `load_project` would; `folder-ts:` restricts that walk to `.ts` —
+ * not `.tsx`.
  */
 export type CorpusPredicateName =
   | "src"
@@ -40,9 +40,9 @@ export type CorpusPredicateName =
   | `folder-ts:${string}`;
 
 /** The two predicates whose file counts are pinned by measurement. */
-export type PinnedCorpusPredicateName = "src" | "repository-root";
+type PinnedCorpusPredicateName = "src" | "repository-root";
 
-export interface CorpusPredicate {
+interface CorpusPredicate {
   readonly name: CorpusPredicateName;
   /**
    * Folders under the corpus root to walk. Empty means the root itself, which
@@ -57,7 +57,7 @@ export interface CorpusPredicate {
   readonly description: string;
 }
 
-export const CORPUS_PREDICATES: Readonly<
+const CORPUS_PREDICATES: Readonly<
   Record<PinnedCorpusPredicateName, CorpusPredicate>
 > = {
   src: {
@@ -83,8 +83,13 @@ export const CORPUS_PREDICATES: Readonly<
  * because quoting any one of them alone has already caused an argument: two of
  * them are `find` results over `.ts` files and two are Ariadne's own walk, and
  * they differ by up to 49%.
+ *
+ * The two harness rows are load-bearing rather than documentation:
+ * `assert_pinned_file_count` holds every arm over that corpus to them, so a
+ * discovery walk that starts selecting a different file set refuses instead of
+ * reporting a different corpus under the same name.
  */
-export interface PinnedCorpusCount {
+interface PinnedCorpusCount {
   readonly corpus: string;
   readonly corpus_commit: string;
   readonly predicate: string;
@@ -98,7 +103,7 @@ export const PINNED_CORPUS_COUNTS: readonly PinnedCorpusCount[] = [
     corpus_commit: "f3fa55c3",
     predicate: "src",
     file_count: 8494,
-    note: "Ariadne's discovery walk over `src/`. Every phase-2 and phase-3 number in TASK-381 refers to this corpus. 510.3 s of CPU.",
+    note: "Ariadne's discovery walk over `src/`. 510.3 s of CPU.",
   },
   {
     corpus: "microsoft/vscode",
@@ -122,6 +127,45 @@ export const PINNED_CORPUS_COUNTS: readonly PinnedCorpusCount[] = [
     note: "Not a predicate the harness runs; recorded for the same reason.",
   },
 ];
+
+/** Shortest abbreviation two commit strings may agree on and still be one commit. */
+const MIN_COMMIT_PREFIX_LENGTH = 7;
+
+function same_commit(left: string, right: string): boolean {
+  const shorter = left.length <= right.length ? left : right;
+  const longer = left.length <= right.length ? right : left;
+  if (shorter.length < MIN_COMMIT_PREFIX_LENGTH) return false;
+  return longer.startsWith(shorter);
+}
+
+/**
+ * Hold a discovery walk to the count that was measured for this corpus,
+ * commit and predicate.
+ *
+ * The pinned counts are what every corpus-scale figure is stated over. A walk
+ * that starts including or excluding files silently re-bases all of them onto
+ * a different corpus while every row keeps naming the old one, so the mismatch
+ * is refused at discovery rather than reconciled afterwards. A corpus, commit
+ * or predicate with no pinned row is unconstrained: the pin is a record of
+ * what has been measured, not a whitelist of what may be.
+ */
+export function assert_pinned_file_count(
+  corpus: CorpusIdentity,
+  discovered_file_count: number,
+): void {
+  const pinned = PINNED_CORPUS_COUNTS.find(
+    (row) =>
+      row.corpus === corpus.corpus_name &&
+      row.predicate === corpus.predicate &&
+      same_commit(row.corpus_commit, corpus.corpus_commit),
+  );
+  if (pinned === undefined) return;
+  if (pinned.file_count === discovered_file_count) return;
+  throw new Error(
+    `Discovery over ${corpus.corpus_name}@${corpus.corpus_commit} (${corpus.predicate}) found ${discovered_file_count} files, but ${pinned.file_count} is pinned for it. ` +
+      "Either the checkout is not at that commit, or the walk has changed what it selects — every figure recorded for this corpus is stated over the pinned count.",
+  );
+}
 
 const FOLDER_PREFIX = "folder:";
 const FOLDER_TS_PREFIX = "folder-ts:";
