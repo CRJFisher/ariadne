@@ -527,10 +527,15 @@ describe("a repos/ clone is put at the commit the run recorded", () => {
   let upstream: { url: string; older: string; newer: string };
   let clone_dir: string;
 
+  // Every step here is a git spawn from the test worker, which costs a few
+  // hundred milliseconds each and several seconds when the pre-commit and
+  // stop hooks run the suites side by side.
+  const GIT_BOUND_TIMEOUT_MS = 60_000;
+
   beforeAll(async () => {
     upstream_dir = await fs.mkdtemp(path.join(os.tmpdir(), "detect-entrypoints-upstream-"));
     upstream = await make_upstream(upstream_dir);
-  });
+  }, GIT_BOUND_TIMEOUT_MS);
 
   afterAll(async () => {
     await fs.rm(upstream_dir, { recursive: true, force: true });
@@ -551,14 +556,14 @@ describe("a repos/ clone is put at the commit the run recorded", () => {
     expect(checkout).toEqual({ local_path: clone_dir, commit_hash: upstream.older });
     expect(git(["rev-parse", "HEAD"], clone_dir)).toEqual(upstream.older);
     expect(await source_in_clone()).toEqual(OLDER_SOURCE);
-  });
+  }, GIT_BOUND_TIMEOUT_MS);
 
   it("takes upstream HEAD only when no commit is named", async () => {
     const checkout = await checkout_at(null);
 
     expect(checkout).toEqual({ local_path: clone_dir, commit_hash: upstream.newer });
     expect(await source_in_clone()).toEqual(NEWER_SOURCE);
-  });
+  }, GIT_BOUND_TIMEOUT_MS);
 
   it("moves an existing clone at another commit to the requested sha", async () => {
     await checkout_at(upstream.newer);
@@ -568,7 +573,7 @@ describe("a repos/ clone is put at the commit the run recorded", () => {
     expect(checkout).toEqual({ local_path: clone_dir, commit_hash: upstream.older });
     expect(git(["rev-parse", "HEAD"], clone_dir)).toEqual(upstream.older);
     expect(await source_in_clone()).toEqual(OLDER_SOURCE);
-  });
+  }, GIT_BOUND_TIMEOUT_MS);
 
   it("leaves a clone already at the requested sha untouched", async () => {
     await checkout_at(upstream.older);
@@ -587,7 +592,7 @@ describe("a repos/ clone is put at the commit the run recorded", () => {
     expect(git(["rev-parse", "--abbrev-ref", "HEAD"], clone_dir)).toEqual("pinned");
     expect(await source_in_clone()).toEqual(edited);
     expect(await fs.readFile(path.join(clone_dir, "scratch.txt"), "utf8")).toEqual("kept");
-  });
+  }, GIT_BOUND_TIMEOUT_MS);
 
   it("refuses a sha the remote does not serve, and the next attempt is not confused by what it left", async () => {
     const missing = "0123456789abcdef0123456789abcdef01234567";
@@ -596,7 +601,7 @@ describe("a repos/ clone is put at the commit the run recorded", () => {
 
     const checkout = await checkout_at(upstream.older);
     expect(checkout).toEqual({ local_path: clone_dir, commit_hash: upstream.older });
-  });
+  }, GIT_BOUND_TIMEOUT_MS);
 
   it("exits non-zero and writes no dump when a config's run commit cannot be fetched", async () => {
     await checkout_at(upstream.newer);
@@ -610,7 +615,7 @@ describe("a repos/ clone is put at the commit the run recorded", () => {
     expect(run.stderr).toContain(missing);
     expect(git(["rev-parse", "HEAD"], clone_dir)).toEqual(upstream.newer);
     expect(await fs.readdir(STORE)).toEqual(["repos"]);
-  }, 60_000);
+  }, GIT_BOUND_TIMEOUT_MS);
 });
 
 describe("the commit a project's runs recorded", () => {
