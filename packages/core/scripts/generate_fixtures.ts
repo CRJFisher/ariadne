@@ -10,6 +10,8 @@
  *   npm run generate-fixtures -- --file path/to/file.ts
  */
 
+import type TreeSitter from "tree-sitter";
+
 import fs from "fs";
 import path from "path";
 import { glob } from "glob";
@@ -63,7 +65,7 @@ const EXT_TO_LANG: Record<string, Language> = {
 function create_parsed_file(
   code: string,
   file_path: FilePath,
-  tree: Parser.Tree,
+  tree: TreeSitter.Tree,
   language: Language
 ): ParsedFile {
   const lines = code.split("\n");

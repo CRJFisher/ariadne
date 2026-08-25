@@ -1,7 +1,11 @@
 {
-  "extends": "./tsconfig.json",
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "rootDir": "./src"
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "types": [
+      "node"
+    ]
   },
   "include": [
     "src/**/*.ts",
@@ -12,6 +16,12 @@
     "dist",
     "tests",
     "src/**/*.test.ts",
-    "src/**/*.bench.test.ts"
+    "src/**/*.bench.test.ts",
+    "src/benchmark_corpus_load/**"
+  ],
+  "references": [
+    {
+      "path": "../types/tsconfig.build.json"
+    }
   ]
 }

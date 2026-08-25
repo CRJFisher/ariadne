@@ -14,6 +14,7 @@
  * `discover_runs`, so the whole flow is hermetic.
  */
 
+import type { Dirent } from "node:fs";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
@@ -219,7 +220,7 @@ interface FileStamp {
 async function snapshot_tree(root: string): Promise<Map<string, FileStamp>> {
   const out = new Map<string, FileStamp>();
   async function walk(dir: string): Promise<void> {
-    let entries: Awaited<ReturnType<typeof fs.readdir>>;
+    let entries: Dirent[];
     try {
       entries = await fs.readdir(dir, { withFileTypes: true });
     } catch {

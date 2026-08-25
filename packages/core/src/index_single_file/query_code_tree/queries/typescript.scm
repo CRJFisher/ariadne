@@ -697,12 +697,6 @@
   function: (identifier) @reference.call
 )
 
-; Generic function calls (TypeScript)
-(call_expression
-  function: (identifier) @reference.call.generic
-  type_arguments: (type_arguments)
-) @reference.call.generic
-
 ; Method calls with receiver tracking
 ; Complete capture - extractor derives method name, receiver, property chain
 (call_expression
@@ -726,12 +720,6 @@
 ; Constructor calls
 (new_expression
   constructor: (identifier) @reference.constructor
-)
-
-; Constructor calls with type arguments (TypeScript)
-(new_expression
-  constructor: (identifier) @reference.constructor.generic
-  type_arguments: (type_arguments)
 )
 
 ; Namespace-qualified constructor calls: new models.User(name)

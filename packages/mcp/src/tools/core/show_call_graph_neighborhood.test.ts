@@ -14,6 +14,8 @@ import type {
   SymbolId,
   FilePath,
   SymbolName,
+  ScopeId,
+  FunctionDefinition,
 } from "@ariadnejs/types";
 
 /**
@@ -27,14 +29,14 @@ function create_mock_node(
   end_line: number,
   enclosed_calls: CallableNode["enclosed_calls"] = [],
   is_test = false
-): CallableNode {
+): CallableNode & { definition: FunctionDefinition } {
   const symbol_id = id as SymbolId;
   return {
     symbol_id,
     name: name as SymbolName,
     definition: {
       symbol_id,
-      name,
+      name: name as SymbolName,
       kind: "function",
       location: {
         file_path: file_path as FilePath,
@@ -43,10 +45,12 @@ function create_mock_node(
         end_line,
         end_column: 1,
       },
-      scope_id: "scope:module" as any,
+      is_exported: false,
+      defining_scope_id: "scope:module" as ScopeId,
+      body_scope_id: "scope:module#body" as ScopeId,
       signature: {
         parameters: [],
-        return_type: "void",
+        return_type: "void" as SymbolName,
       },
     },
     location: {
@@ -508,7 +512,7 @@ describe("show_call_graph_neighborhood", () => {
       name: "my_func" as SymbolName,
       definition: {
         symbol_id: node_id,
-        name: "my_func",
+        name: "my_func" as SymbolName,
         kind: "function",
         location: {
           file_path: "test.ts" as FilePath,
@@ -517,10 +521,27 @@ describe("show_call_graph_neighborhood", () => {
           end_line: 10,
           end_column: 1,
         },
-        scope_id: "scope:module" as any,
+        is_exported: false,
+        defining_scope_id: "scope:module" as ScopeId,
+        body_scope_id: "scope:module#body" as ScopeId,
         signature: {
-          parameters: [{ name: "x", type: "number" }],
-          return_type: "string",
+          parameters: [
+            {
+              kind: "parameter",
+              symbol_id: "symbol:my_func#x" as SymbolId,
+              name: "x" as SymbolName,
+              defining_scope_id: "scope:module#body" as ScopeId,
+              location: {
+                file_path: "test.ts" as FilePath,
+                start_line: 1,
+                start_column: 0,
+                end_line: 1,
+                end_column: 1,
+              },
+              type: "number" as SymbolName,
+            },
+          ],
+          return_type: "string" as SymbolName,
         },
       },
       location: {

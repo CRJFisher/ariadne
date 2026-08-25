@@ -1,0 +1,380 @@
+# Triage target corpora — the external repositories the self-healing pipeline is
+# run against to exercise Ariadne's entry-point detection over real-world code.
+#
+# Run a target with:  /triage <slug>
+#
+# This file is the register of triage targets. It is not mirrored in the backlog:
+# these targets are tracked here and nowhere else. Nothing reads the file yet —
+# the pipeline still takes its target from the `/triage` argument.
+#
+# ---------------------------------------------------------------------------
+# Join keys, for whoever wires this up later
+# ---------------------------------------------------------------------------
+# `project_id` is the join key across every downstream store: the owner-qualified
+# slug, as derived by `github_repo_to_project_id()` in scripts/detect_entrypoints.ts.
+# Both halves are load-bearing — a repo name alone is not unique, and this id names
+# the directories that hold a project's whole run history.
+#
+# Given a project_id, the pipeline's state is reachable at:
+#   ~/.ariadne/triage-entrypoints/repos/<project_id>/          the shallow clone
+#   ~/.ariadne/triage-entrypoints/triage_state/<project_id>/LATEST
+#                                                             active run-id pointer
+#   ~/.ariadne/triage-entrypoints/triage_state/<project_id>/runs/<run-id>/
+#                                                             per-run state; run-id
+#                                                             is <short-commit>-<iso-ts>
+#   ~/.ariadne/triage-entrypoints/analysis_output/<project_id>/triage_results/<run-id>.json
+#                                                             published results, kept forever
+# and in this repo:
+#   known_issues/registry.json   rules carry `observed_projects: [<project_id>]`
+#                                and `last_seen_run`
+#
+# Those are the sources for the denormalised fields worth adding later —
+# last_triaged_at and last_run_id (from the LATEST pointer), and open_issue_count
+# (registry rules whose `observed_projects` contains the project_id). All of them
+# are cache, and all of them go stale; add them only alongside a script that
+# regenerates them. `triaged` below is the coarse, hand-maintained stand-in.
+#
+# ---------------------------------------------------------------------------
+# Fields
+# ---------------------------------------------------------------------------
+#   project_id    join key; the owner-qualified slug (see above)
+#   slug          owner/repo as passed to /triage
+#   url           repository link
+#   language      primary language the target was chosen to exercise
+#   cohort        1 = the first 20 targets; 2 = the next 20
+#   triaged       whether the pipeline has been run against this target
+#   why           what this repo exercises that the others do not
+#
+# Cohort 2 slugs have NOT been verified against GitHub (no network access when
+# this file was written) — confirm each on first clone.
+
+schema_version: 1
+
+targets:
+  # ---- cohort 1 · JavaScript ----
+  - project_id: webpack--webpack
+    slug: webpack/webpack
+    url: https://github.com/webpack/webpack
+    language: javascript
+    cohort: 1
+    triaged: true
+    why: "Complex prototypal OOP (`Compiler`, `Compilation`, `Module` subclasses), Tapable event hooks, plugin architecture, CommonJS + ESM output, generators, async patterns, closures. One of the richest plain-JS codebases."
+
+  - project_id: expressjs--express
+    slug: expressjs/express
+    url: https://github.com/expressjs/express
+    language: javascript
+    cohort: 1
+    triaged: true
+    why: "Classic Node.js middleware framework. Prototype-chain extension (`app` built on `http.IncomingMessage`), HOF middleware factories, closures for route scope, callback-based async, CommonJS throughout. 15+ year history."
+
+  - project_id: lodash--lodash
+    slug: lodash/lodash
+    url: https://github.com/lodash/lodash
+    language: javascript
+    cohort: 1
+    triaged: true
+    why: "Definitive JS functional utility library. Currying, partial application, lazy evaluation via `_.chain()`, memoization, HOF, iteratee shorthands, dual CJS/ESM build, `lodash/fp` auto-curried variants."
+
+  - project_id: mochajs--mocha
+    slug: mochajs/mocha
+    url: https://github.com/mochajs/mocha
+    language: javascript
+    cohort: 1
+    triaged: true
+    why: "Mature JS testing framework (Node + browser). Prototypal inheritance for Runner/Suite/Test, multiple async patterns (callbacks, Promises, async/await, generators), EventEmitter composition, plugin-style reporters, CommonJS modules."
+
+  - project_id: jquery--jquery
+    slug: jquery/jquery
+    url: https://github.com/jquery/jquery
+    language: javascript
+    cohort: 1
+    triaged: true
+    why: "Most studied JS codebase ever. `jQuery.fn` prototype chain, IIFE module pattern, method chaining, event delegation, closures, cross-env compatibility shims, AMD/CJS/global factory pattern. Nearly 20-year history."
+
+  # ---- cohort 1 · TypeScript ----
+  - project_id: microsoft--TypeScript
+    slug: microsoft/TypeScript
+    url: https://github.com/microsoft/TypeScript
+    language: typescript
+    cohort: 1
+    triaged: true
+    why: "The TypeScript compiler itself. Conditional types, mapped types, recursive generics, complex type inference, declaration merging, namespaces, discriminated unions, utility type implementations. ~100k+ lines."
+
+  - project_id: nestjs--nest
+    slug: nestjs/nest
+    url: https://github.com/nestjs/nest
+    language: typescript
+    cohort: 1
+    triaged: true
+    why: "Server-side framework built around decorators and DI. `@Controller`, `@Injectable`, `@Module`, parameter decorators, abstract classes, interfaces, generics, module augmentation, complex generic factory patterns, metadata reflection."
+
+  - project_id: angular--angular
+    slug: angular/angular
+    url: https://github.com/angular/angular
+    language: typescript
+    cohort: 1
+    triaged: true
+    why: "Full UI framework with 11+ year history. `@Component`, `@NgModule`, `@Input` decorators, abstract classes, complex generics, enums, declaration merging, mapped types for reactive forms, deep conditional/inferred types in the Angular compiler."
+
+  - project_id: typeorm--typeorm
+    slug: typeorm/typeorm
+    url: https://github.com/typeorm/typeorm
+    language: typescript
+    cohort: 1
+    triaged: true
+    why: "ORM built for the TS decorator ecosystem. `@Entity`, `@Column`, `@ManyToOne` entity decorators, generic repository patterns, abstract base classes, mapped types for partial/deep partials, union/intersection types in query builders, `emitDecoratorMetadata` patterns."
+
+  - project_id: prisma--prisma
+    slug: prisma/prisma
+    url: https://github.com/prisma/prisma
+    language: typescript
+    cohort: 1
+    triaged: true
+    why: "Sophisticated generated client type system. Conditional types (`IsKnownRequest`), mapped types for select/include/where builders, template literal types, recursive generic types for nested relations, `Partial`/`Pick`/`Omit` pushed to limits, inferred return types that change by query shape."
+
+  # ---- cohort 1 · Python ----
+  - project_id: django--django
+    slug: django/django
+    url: https://github.com/django/django
+    language: python
+    cohort: 1
+    triaged: true
+    why: "`ModelBase` metaclass inspects class bodies to build field registries, custom descriptors for field access, `__dunder__` methods (`__get__`, `__set__`, `__init_subclass__`), class-based views with deep inheritance, decorators for routing/permissions/caching, `transaction.atomic` context managers. ~300k+ lines, dates to 2005."
+
+  - project_id: pytorch--pytorch
+    slug: pytorch/pytorch
+    url: https://github.com/pytorch/pytorch
+    language: python
+    cohort: 1
+    triaged: true
+    why: "`__torch_function__` and `__torch_dispatch__` dunder protocols, custom metaclasses for tensor types, generators/iterators in DataLoader (`__iter__`/`__next__`), `@property` descriptors, dataclasses in config objects, type hints with generics, `torch.no_grad()` context managers."
+
+  - project_id: pandas-dev--pandas
+    slug: pandas-dev/pandas
+    url: https://github.com/pandas-dev/pandas
+    language: python
+    cohort: 1
+    triaged: true
+    why: "`CachedProperty` and accessor descriptors (`.str`, `.dt`, `.cat`), `__getitem__`/`__setitem__`/`__getattr__` overrides, complex class hierarchy (`DataFrame` → `NDFrame` → `PandasObject`), generators in iteration, `__slots__`, `@abstractmethod`, typing generics, `option_context` context managers. ~400k+ lines."
+
+  - project_id: sqlalchemy--sqlalchemy
+    slug: sqlalchemy/sqlalchemy
+    url: https://github.com/sqlalchemy/sqlalchemy
+    language: python
+    cohort: 1
+    triaged: true
+    why: "Richest single source of advanced Python idioms. `DeclarativeMeta` metaclass, full descriptor protocol (`__get__`/`__set__`/`__delete__`), `__init_subclass__`, `__class_getitem__`, `__slots__`, async ORM (`asyncio`/`async with`/`async for`), dataclasses integration, deeply layered type generics. ~200k+ lines, founded 2006."
+
+  - project_id: celery--celery
+    slug: celery/celery
+    url: https://github.com/celery/celery
+    language: python
+    cohort: 1
+    triaged: true
+    why: "`@app.task` decorators, metaclasses for task class registration, `__reduce__` and pickle protocols, context managers for connection pooling, generators for result iteration, signals via descriptor-like patterns, dynamic imports, `__init_subclass__` for plugin registration. Sync and async execution backends. ~150k+ lines, founded 2009."
+
+  # ---- cohort 1 · Rust ----
+  - project_id: rust-lang--rust
+    slug: rust-lang/rust
+    url: https://github.com/rust-lang/rust
+    language: rust
+    cohort: 1
+    triaged: true
+    why: "The Rust compiler itself. Proc macros (bootstrapped), complex trait hierarchies and generics, lifetimes everywhere, unsafe (LLVM bindings), pattern matching on deeply nested enums (AST/HIR/MIR), closures and iterators, modules at massive scale, trait objects for compiler passes."
+
+  - project_id: tokio-rs--tokio
+    slug: tokio-rs/tokio
+    url: https://github.com/tokio-rs/tokio
+    language: rust
+    cohort: 1
+    triaged: true
+    why: "Canonical async runtime. `Future` trait implementations, `Pin<Box<dyn ...>>` trait objects, wakers and polling machinery, unsafe for scheduler internals, complex generic bounds, `tokio::select!` and `tokio::spawn` macros, concurrent data structures."
+
+  - project_id: actix--actix-web
+    slug: actix/actix-web
+    url: https://github.com/actix/actix-web
+    language: rust
+    cohort: 1
+    triaged: true
+    why: "Production web framework on Tokio. Trait objects for request handlers (`FromRequest`, `Responder`), proc attribute macros (`#[get(\"/\")]`, `#[post(\"/\")]`), complex generic bounds on middleware, enums-with-data for HTTP types, closures as handlers, actor pattern."
+
+  - project_id: serde-rs--serde
+    slug: serde-rs/serde
+    url: https://github.com/serde-rs/serde
+    language: rust
+    cohort: 1
+    triaged: true
+    why: "Gold standard for proc macro design. `serde_derive` parses `TokenStream` and emits `Serialize`/`Deserialize` trait impls, lifetime-parameterised deserialisers (`Deserializer<'de>`), visitor pattern with trait objects, zero-cost abstraction, no-std compatibility."
+
+  - project_id: launchbadge--sqlx
+    slug: launchbadge/sqlx
+    url: https://github.com/launchbadge/sqlx
+    language: rust
+    cohort: 1
+    triaged: true
+    why: "Async-first SQL toolkit with compile-time query checking. Proc macros that query a live DB at compile time (`query!`, `query_as!`), complex lifetime management for borrowed query results, `Executor`/`Encode`/`Decode` trait abstraction, async streams (implementing `Stream`), unsafe FFI with native DB clients, multi-crate workspace."
+
+  # ---- cohort 2 · JavaScript ----
+  - project_id: nodejs--node
+    slug: nodejs/node
+    url: https://github.com/nodejs/node
+    language: javascript
+    cohort: 2
+    triaged: true
+    why: "The JS standard library itself. lib/ routes almost every call through the primordials indirection layer and the internalBinding boundary, with EventEmitter and async_hooks callbacks throughout. Cohort 1 had no stdlib-shaped corpus."
+
+  - project_id: babel--babel
+    slug: babel/babel
+    url: https://github.com/babel/babel
+    language: javascript
+    cohort: 2
+    triaged: true
+    why: "AST visitor plugin architecture — plugins register visitors keyed by node type and the traversal invokes them, so almost no call edge is written at its call site. Also a large multi-package monorepo, which exercises cross-package resolution."
+
+  - project_id: eslint--eslint
+    slug: eslint/eslint
+    url: https://github.com/eslint/eslint
+    language: javascript
+    cohort: 2
+    triaged: true
+    why: "Rule modules are resolved by name from config at runtime and invoked through a visitor-keyed registry. Pairs with babel on visitor dispatch but adds config-cascade indirection over which code is reachable at all."
+
+  - project_id: Automattic--mongoose
+    slug: Automattic/mongoose
+    url: https://github.com/Automattic/mongoose
+    language: javascript
+    cohort: 2
+    triaged: true
+    why: "Schema-driven runtime method generation — model methods are attached to prototypes as schemas are compiled, so the definitions never appear in the AST. Directly probes whether detection reports never-defined methods as unreachable."
+
+  - project_id: Leaflet--Leaflet
+    slug: Leaflet/Leaflet
+    url: https://github.com/Leaflet/Leaflet
+    language: javascript
+    cohort: 2
+    triaged: true
+    why: "A hand-rolled class system (L.Class.extend) predating ES classes, where inheritance and the initialize constructor convention are expressed as plain object literals. Cohort 1 covered prototypal OOP via webpack but not extend-style emulation."
+
+  # ---- cohort 2 · TypeScript ----
+  - project_id: microsoft--vscode
+    slug: microsoft/vscode
+    url: https://github.com/microsoft/vscode
+    language: typescript
+    cohort: 2
+    triaged: false
+    why: "Service-locator DI through decorators plus a contribution-point registry, and an extension-host RPC boundary where both ends are TS. The largest TS corpus available — expect a long index time and consider scoping the analysis."
+
+  - project_id: vuejs--core
+    slug: vuejs/core
+    url: https://github.com/vuejs/core
+    language: typescript
+    cohort: 2
+    triaged: true
+    why: "Proxy-based reactivity, where effects are invoked from get/set traps rather than from call sites. Compiler and runtime in one repo, so generated render functions and the code generating them are both in scope. NOTE the project_id collision with home-assistant/core."
+
+  - project_id: ReactiveX--rxjs
+    slug: ReactiveX/rxjs
+    url: https://github.com/ReactiveX/rxjs
+    language: typescript
+    cohort: 2
+    triaged: true
+    why: "Operator pipelines composed through pipe(), higher-order observables, and subscription callbacks — nearly every edge is mediated by a higher-order function. The densest available test of HOF call resolution."
+
+  - project_id: sveltejs--svelte
+    slug: sveltejs/svelte
+    url: https://github.com/sveltejs/svelte
+    language: typescript
+    cohort: 2
+    triaged: true
+    why: "A compiler that emits JavaScript. Lifecycle functions are called by generated code rather than by anything in the source, which is a distinct unreachability shape from the framework-invoked case cohort 1 covered."
+
+  - project_id: puppeteer--puppeteer
+    slug: puppeteer/puppeteer
+    url: https://github.com/puppeteer/puppeteer
+    language: typescript
+    cohort: 2
+    triaged: true
+    why: "Event-driven dispatch over the Chrome DevTools Protocol with generated protocol types, so handlers are invoked across a transport boundary from string-keyed events."
+
+  # ---- cohort 2 · Python ----
+  - project_id: fastapi--fastapi
+    slug: fastapi/fastapi
+    url: https://github.com/fastapi/fastapi
+    language: python
+    cohort: 2
+    triaged: true
+    why: "Dependency injection driven by type hints — handlers are invoked by the framework and their dependencies resolved from annotations. A different framework-invocation shape from django, and it exercises annotation-based resolution."
+
+  - project_id: home-assistant--core
+    slug: home-assistant/core
+    url: https://github.com/home-assistant/core
+    language: python
+    cohort: 2
+    triaged: true
+    why: "Around a thousand integrations loaded dynamically via importlib and wired through an async event bus from config. The strongest available test of dynamic-import reachability. Very large. NOTE the project_id collision with vuejs/core."
+
+  - project_id: scikit-learn--scikit-learn
+    slug: scikit-learn/scikit-learn
+    url: https://github.com/scikit-learn/scikit-learn
+    language: python
+    cohort: 2
+    triaged: true
+    why: "A duck-typed estimator API where fit/predict are contract by convention rather than by inheritance, composed through mixins, with __init__ introspected for parameters. Tests resolution with no nominal type to anchor to."
+
+  - project_id: ansible--ansible
+    slug: ansible/ansible
+    url: https://github.com/ansible/ansible
+    language: python
+    cohort: 2
+    triaged: true
+    why: "A plugin loader that resolves modules by name at runtime, and modules executed as separate processes. The extreme end of dynamic dispatch — useful for establishing where detection should stop rather than what it should find."
+
+  - project_id: pydantic--pydantic
+    slug: pydantic/pydantic
+    url: https://github.com/pydantic/pydantic
+    language: python
+    cohort: 2
+    triaged: true
+    why: "Metaclass-driven model construction with validators registered by decorator, over a Rust core. Cohort 1 saw metaclasses via django and sqlalchemy but not as the library's entire purpose."
+
+  # ---- cohort 2 · Rust ----
+  - project_id: bevyengine--bevy
+    slug: bevyengine/bevy
+    url: https://github.com/bevyengine/bevy
+    language: rust
+    cohort: 2
+    triaged: true
+    why: "An ECS where systems are registered as trait impls via IntoSystem and never called directly, resolved through deeply generic trait dispatch. Probably the hardest Rust reachability target in the ecosystem."
+
+  - project_id: denoland--deno
+    slug: denoland/deno
+    url: https://github.com/denoland/deno
+    language: rust
+    cohort: 2
+    triaged: true
+    why: "Rust to V8 op bindings generated by proc macros, plus a TypeScript runtime in the same repo. Tests both macro-generated definitions and a polyglot corpus where language attribution matters."
+
+  - project_id: rust-lang--cargo
+    slug: rust-lang/cargo
+    url: https://github.com/rust-lang/cargo
+    language: rust
+    cohort: 2
+    triaged: true
+    why: "A conventionally structured CLI — subcommand dispatch tables, trait objects for sources and registries. Deliberately the baseline of the Rust set, to separate real detection failures from trait-magic noise."
+
+  - project_id: tauri-apps--tauri
+    slug: tauri-apps/tauri
+    url: https://github.com/tauri-apps/tauri
+    language: rust
+    cohort: 2
+    triaged: true
+    why: "IPC command handlers registered by the tauri::command proc macro and invoked from JavaScript. A cross-language entry point with the caller outside the Rust source entirely."
+
+  - project_id: tokio-rs--axum
+    slug: tokio-rs/axum
+    url: https://github.com/tokio-rs/axum
+    language: rust
+    cohort: 2
+    triaged: true
+    why: "Tower Service composition with extractors selected by type through FromRequest impls, so handler edges are resolved entirely by the type system. Complements actix-web with a non-actor web architecture."

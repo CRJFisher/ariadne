@@ -26,7 +26,8 @@ export function helper${index}(x: number) { return x + ${index}; }
 const val${index} = func${index}();`;
 }
 
-// Call-graph + classification benchmarks live in `project.bench.test.ts`.
+// Corpus-scale load and call-graph measurement lives in
+// `benchmark_corpus_load/`, driven by `scripts/run_load_benchmark.ts`.
 describe("Persistence - Performance Benchmarks", () => {
   it(
     "serialization throughput",

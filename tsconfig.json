@@ -15,18 +15,19 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   },
+  "files": [],
   "references": [
     {
-      "path": "./packages/types"
+      "path": "./packages/types/tsconfig.build.json"
     },
     {
-      "path": "./packages/skill-protocol"
+      "path": "./packages/skill-protocol/tsconfig.build.json"
     },
     {
-      "path": "./packages/skill-fs"
+      "path": "./packages/skill-fs/tsconfig.build.json"
     },
     {
-      "path": "./packages/core"
+      "path": "./packages/core/tsconfig.build.json"
     }
   ]
 }

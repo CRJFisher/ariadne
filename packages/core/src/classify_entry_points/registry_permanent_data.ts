@@ -31,7 +31,7 @@ export const PERMANENT_REGISTRY_FILE: KnownIssuesRegistryFile = {
       },
       "observed_count": 12,
       "observed_projects": [
-        "webpack"
+        "webpack--webpack"
       ],
       "last_seen_run": "2026-04-16T18-10-16.855Z",
       "classification": {
@@ -197,9 +197,9 @@ export const PERMANENT_REGISTRY_FILE: KnownIssuesRegistryFile = {
       },
       "observed_count": 43,
       "observed_projects": [
-        "webpack",
-        "lodash",
-        "prisma"
+        "webpack--webpack",
+        "lodash--lodash",
+        "prisma--prisma"
       ],
       "last_seen_run": "2026-04-27T16-24-40.808Z"
     },
@@ -218,7 +218,7 @@ export const PERMANENT_REGISTRY_FILE: KnownIssuesRegistryFile = {
       },
       "observed_count": 12,
       "observed_projects": [
-        "mocha"
+        "mochajs--mocha"
       ],
       "last_seen_run": "2026-04-23T20-41-21.302Z"
     },
@@ -237,7 +237,7 @@ export const PERMANENT_REGISTRY_FILE: KnownIssuesRegistryFile = {
       },
       "observed_count": 1,
       "observed_projects": [
-        "mocha"
+        "mochajs--mocha"
       ],
       "last_seen_run": "2026-04-23T20-41-21.302Z"
     },
@@ -256,7 +256,7 @@ export const PERMANENT_REGISTRY_FILE: KnownIssuesRegistryFile = {
       },
       "observed_count": 6,
       "observed_projects": [
-        "nest"
+        "nestjs--nest"
       ],
       "last_seen_run": "2026-04-23T22-12-28.705Z"
     },
@@ -275,7 +275,7 @@ export const PERMANENT_REGISTRY_FILE: KnownIssuesRegistryFile = {
       },
       "observed_count": 1,
       "observed_projects": [
-        "nest"
+        "nestjs--nest"
       ],
       "last_seen_run": "2026-04-23T22-12-28.705Z"
     },
@@ -294,7 +294,7 @@ export const PERMANENT_REGISTRY_FILE: KnownIssuesRegistryFile = {
       },
       "observed_count": 27,
       "observed_projects": [
-        "angular"
+        "angular--angular"
       ],
       "last_seen_run": "2026-04-25T17-07-32.678Z"
     },
@@ -313,7 +313,7 @@ export const PERMANENT_REGISTRY_FILE: KnownIssuesRegistryFile = {
       },
       "observed_count": 1,
       "observed_projects": [
-        "lodash"
+        "lodash--lodash"
       ],
       "last_seen_run": "2026-04-27T11-02-57.035Z"
     },
@@ -332,7 +332,7 @@ export const PERMANENT_REGISTRY_FILE: KnownIssuesRegistryFile = {
       },
       "observed_count": 8,
       "observed_projects": [
-        "lodash"
+        "lodash--lodash"
       ],
       "last_seen_run": "2026-04-27T11-02-57.035Z"
     },
@@ -351,7 +351,7 @@ export const PERMANENT_REGISTRY_FILE: KnownIssuesRegistryFile = {
       },
       "observed_count": 12,
       "observed_projects": [
-        "typeorm"
+        "typeorm--typeorm"
       ],
       "last_seen_run": "2026-04-27T16-19-42.325Z"
     },
@@ -370,7 +370,7 @@ export const PERMANENT_REGISTRY_FILE: KnownIssuesRegistryFile = {
       },
       "observed_count": 4,
       "observed_projects": [
-        "prisma"
+        "prisma--prisma"
       ],
       "last_seen_run": "2026-04-27T16-24-40.808Z"
     },

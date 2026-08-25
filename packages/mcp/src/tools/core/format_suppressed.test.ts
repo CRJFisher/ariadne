@@ -98,19 +98,21 @@ describe("format_classification_tag", () => {
   it("formats dunder_protocol with [dunder_protocol: <protocol>]", () => {
     const tag = format_classification_tag({
       kind: "dunder_protocol",
+      group_id: "py-dunder-protocol",
       protocol: "__str__",
     });
     expect(tag).toEqual("[dunder_protocol: __str__]");
   });
 
   it("formats test_only as bare [test_only]", () => {
-    const tag = format_classification_tag({ kind: "test_only" });
+    const tag = format_classification_tag({ kind: "test_only", group_id: "test-only-helper" });
     expect(tag).toEqual("[test_only]");
   });
 
   it("formats indirect_only with [indirect_only: <via.type>] for function_reference", () => {
     const tag = format_classification_tag({
       kind: "indirect_only",
+      group_id: "callback-passed-to-invoker",
       via: { type: "function_reference", read_location: make_location("e.py", 1, 1) },
     });
     expect(tag).toEqual("[indirect_only: function_reference]");
@@ -119,6 +121,7 @@ describe("format_classification_tag", () => {
   it("formats indirect_only with [indirect_only: <via.type>] for collection_read", () => {
     const tag = format_classification_tag({
       kind: "indirect_only",
+      group_id: "callback-passed-to-invoker",
       via: {
         type: "collection_read",
         collection_id: "variable:foo.py:1:0:1:1:handlers" as SymbolId,
@@ -136,7 +139,7 @@ describe("sort_suppressed", () => {
       name: string,
       file_path: string,
       start_line: number,
-      classification: SuppressedClassification = { kind: "test_only" }
+      classification: SuppressedClassification = { kind: "test_only", group_id: "test-only-helper" }
     ): SuppressedEntryData => ({
       node: make_function_node({
         symbol_id,
@@ -168,7 +171,7 @@ describe("sort_suppressed", () => {
           start_line: 1,
           end_line: 1,
         }),
-        classification: { kind: "test_only" },
+        classification: { kind: "test_only", group_id: "test-only-helper" },
       },
       {
         node: make_function_node({
@@ -178,7 +181,7 @@ describe("sort_suppressed", () => {
           start_line: 1,
           end_line: 1,
         }),
-        classification: { kind: "test_only" },
+        classification: { kind: "test_only", group_id: "test-only-helper" },
       },
     ];
     const original_first_name = entries[0].node.name;
@@ -207,7 +210,7 @@ describe("format_suppressed_section", () => {
     const text = format_suppressed_section([
       {
         node,
-        classification: { kind: "dunder_protocol", protocol: "__str__" },
+        classification: { kind: "dunder_protocol", group_id: "py-dunder-protocol", protocol: "__str__" },
       },
     ]);
     expect(text).toContain("Suppressed (known false positives):");
@@ -238,13 +241,13 @@ describe("build_suppressed_entries", () => {
       entry_points: [],
     };
     const known_false_positives: readonly ClassifiedEntryPoint[] = [
-      { symbol_id: id, classification: { kind: "test_only" } },
+      { symbol_id: id, classification: { kind: "test_only", group_id: "test-only-helper" } },
     ];
 
     const entries = build_suppressed_entries(known_false_positives, call_graph);
 
     expect(entries).toEqual<SuppressedEntryData[]>([
-      { node, classification: { kind: "test_only" } },
+      { node, classification: { kind: "test_only", group_id: "test-only-helper" } },
     ]);
   });
 
@@ -255,7 +258,7 @@ describe("build_suppressed_entries", () => {
       entry_points: [],
     };
     const entries = build_suppressed_entries(
-      [{ symbol_id: id, classification: { kind: "test_only" } }],
+      [{ symbol_id: id, classification: { kind: "test_only", group_id: "test-only-helper" } }],
       call_graph
     );
 
@@ -310,8 +313,8 @@ describe("build_suppressed_entries", () => {
 
     const entries = build_suppressed_entries(
       [
-        { symbol_id: a_id, classification: { kind: "test_only" } },
-        { symbol_id: b_id, classification: { kind: "test_only" } },
+        { symbol_id: a_id, classification: { kind: "test_only", group_id: "test-only-helper" } },
+        { symbol_id: b_id, classification: { kind: "test_only", group_id: "test-only-helper" } },
       ],
       call_graph
     );

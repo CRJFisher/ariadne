@@ -261,7 +261,7 @@ describe("Project", () => {
       expect(call_graph.nodes.size).toBeGreaterThan(0);
     });
 
-    it("should recalculate call graph on each call (no caching)", async () => {
+    it("returns a fresh wrapper over the cached enriched graph", async () => {
       await project.initialize();
       const file1 = "file1.ts" as FilePath;
       project.update_file(file1, "function foo() {}");
@@ -269,11 +269,28 @@ describe("Project", () => {
       const graph1 = project.get_call_graph();
       const graph2 = project.get_call_graph();
 
-      // Should be DIFFERENT references (recalculated each time)
+      // The wrapper is rebuilt on each call...
       expect(graph1).not.toBe(graph2);
 
-      // But should have same structure
-      expect(graph1.nodes.size).toBe(graph2.nodes.size);
+      // ...but both read the SAME underlying enriched graph, so a caller that
+      // asks twice never pays for classification twice. This is a cache-identity
+      // property, asserted without depending on wall-clock timing.
+      expect(graph2.nodes).toBe(graph1.nodes);
+      expect(graph2.entry_points).toEqual(graph1.entry_points);
+    });
+
+    it("shares one enriched graph with get_classified_entry_points", async () => {
+      await project.initialize();
+      const file1 = "file1.ts" as FilePath;
+      project.update_file(file1, "function foo() {}");
+
+      project.get_call_graph();
+      const first = project.get_classified_entry_points();
+      const second = project.get_classified_entry_points();
+
+      // Both methods share a single EnrichedCallGraph, so triage callers never
+      // repeat classification.
+      expect(second).toBe(first);
     });
 
     it("should reflect changes immediately after file update", async () => {
@@ -407,6 +424,11 @@ describe("Project", () => {
   });
 
   describe("parser buffer auto-adjustment", () => {
+    // 30s rather than the 5s default: this test parses a generated 130 KB file
+    // of 2,000 functions and takes ~2.6s on an idle 4-core box, which leaves
+    // under 2x headroom and crosses the default whenever the machine is busy.
+    // Its assertions are about what was extracted, not how fast — a genuine
+    // parse failure fails them whatever the timeout is.
     it("should parse large files by auto-growing the buffer", async () => {
       const project = new Project();
       await project.initialize();
@@ -426,6 +448,6 @@ describe("Project", () => {
       const stats = project.get_stats();
       expect(stats.file_count).toEqual(1);
       expect(stats.definition_count).toBeGreaterThan(1000);
-    });
+    }, 30_000);
   });
 });

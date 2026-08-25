@@ -9,9 +9,9 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsc --build tsconfig.json",
+    "build": "tsc --build tsconfig.build.json",
     "test": "vitest run",
-    "clean": "rm -rf dist tsconfig.tsbuildinfo",
+    "clean": "rm -rf dist tsconfig.build.tsbuildinfo",
     "prepublishOnly": "npm run build"
   },
   "keywords": [

@@ -230,19 +230,22 @@ function parse_github_url(repo: string): string {
 }
 
 /**
- * Derive a stable directory name and project ID from a GitHub repo reference.
- * "webpack/webpack" → dir: "webpack--webpack", project_id: "webpack"
+ * Derive the project identifier for a GitHub repo reference: the owner-qualified
+ * slug. "vuejs/core" → "vuejs--core".
+ *
+ * Both halves of the slug are load-bearing. A repo name alone is not unique —
+ * `vuejs/core` and `home-assistant/core` are unrelated codebases — and this id
+ * names the clone directory, the `triage_state/<project>/` tree that owns the
+ * LATEST pointer, and the published `analysis_output/<project>/` tree. Two repos
+ * sharing an id would silently share one run history and repoint each other's
+ * active run.
  */
-function github_repo_to_ids(repo: string): { dir_name: string; project_id: string } {
+export function github_repo_to_project_id(repo: string): string {
   const slug = repo
     .replace(/^https?:\/\/github\.com\//, "")
     .replace(/^git@github\.com:/, "")
     .replace(/\.git$/, "");
-  const parts = slug.split("/");
-  return {
-    dir_name: parts.join("--"),
-    project_id: parts[parts.length - 1],
-  };
+  return slug.split("/").join("--");
 }
 
 /**
@@ -280,8 +283,7 @@ async function clone_github_repo(
   depth: number = 1
 ): Promise<CloneResult> {
   const github_url = parse_github_url(repo);
-  const { dir_name } = github_repo_to_ids(repo);
-  const clone_dir = path.join(ARIADNE_REPOS_DIR, dir_name);
+  const clone_dir = path.join(ARIADNE_REPOS_DIR, github_repo_to_project_id(repo));
 
   await fs.mkdir(ARIADNE_REPOS_DIR, { recursive: true });
 
@@ -561,7 +563,7 @@ async function resolve_github_mode(
   const clone_result = await clone_github_repo(github, branch, depth);
   return {
     project_path: clone_result.local_path,
-    project_name: github_repo_to_ids(github).project_id,
+    project_name: github_repo_to_project_id(github),
     scope: load_analysis_scope(null),
     source_info: {
       type: "github",

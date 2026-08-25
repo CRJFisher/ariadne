@@ -8,7 +8,10 @@ import { init_analytics } from "./analytics/session_writer";
 import { create_core_tool_group } from "./tools/core/tool_group";
 
 vi.mock("@modelcontextprotocol/sdk/server/mcp.js", () => ({
-  McpServer: vi.fn().mockImplementation(function () {
+  McpServer: vi.fn().mockImplementation(function (this: {
+    server: Record<string, unknown>;
+    connect: () => unknown;
+  }) {
     this.server = { oninitialized: null, getClientVersion: vi.fn() };
     this.connect = vi.fn();
   }),
@@ -19,7 +22,11 @@ vi.mock("@modelcontextprotocol/sdk/server/stdio.js", () => ({
 }));
 
 vi.mock("./project_manager", () => ({
-  ProjectManager: vi.fn().mockImplementation(function () {
+  ProjectManager: vi.fn().mockImplementation(function (this: {
+    initialize: () => unknown;
+    load_all_files: () => unknown;
+    is_watching: () => boolean;
+  }) {
     this.initialize = vi.fn();
     this.load_all_files = vi.fn();
     this.is_watching = vi.fn().mockReturnValue(false);

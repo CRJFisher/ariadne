@@ -1,25 +1,18 @@
 {
+  "extends": "./tsconfig.build.json",
   "compilerOptions": {
-    "target": "es2020",
-    "module": "commonjs",
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "declaration": true,
-    "declarationMap": true,
-    "sourceMap": true,
-    "forceConsistentCasingInFileNames": true,
-    "strict": true,
-    "skipLibCheck": true,
-    "composite": true,
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
+    "rootDir": ".",
+    "composite": false,
+    "noEmit": true,
+    "declaration": false,
+    "declarationMap": false
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "tests/**/*"
   ],
   "exclude": [
     "node_modules",
-    "dist",
-    "src/**/*.test.ts"
+    "dist"
   ]
 }

@@ -89,7 +89,13 @@ describe("active_run_conflict_message", () => {
  * Drives the real CLI so the guard's wiring is covered, not just its message,
  * and so the recovery loop the refusal prescribes is proven to actually work.
  */
-describe("prepare_triage CLI active-run guard", () => {
+// Every case here drives the real CLI, so each `run_script` pays a cold
+// `node --import tsx` start (~600 ms idle). The unblocking case spawns three of
+// them in sequence and measures 3.5-4 s alongside the rest of the suite, which
+// leaves no room under vitest's 5 s default. The budget is sized to that work,
+// not to the assertions — they are unchanged, and a guard that genuinely hangs
+// still fails well inside it.
+describe("prepare_triage CLI active-run guard", { timeout: 30_000 }, () => {
   const SCRIPTS = path.dirname(fileURLToPath(import.meta.url));
   const TMP = path.join(
     process.env.TMPDIR ?? "/tmp",

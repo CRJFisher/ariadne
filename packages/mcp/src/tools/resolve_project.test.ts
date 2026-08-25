@@ -49,6 +49,8 @@ describe("resolve_project", () => {
     vi.mocked(load_project).mockResolvedValue({
       project: scoped_project,
       dropped_files: new Set(),
+      discovered_files: new Set(),
+      gitignore_patterns: [],
     });
 
     const result = await resolve_project(
@@ -71,6 +73,8 @@ describe("resolve_project", () => {
     vi.mocked(load_project).mockResolvedValue({
       project: scoped_project,
       dropped_files: new Set(),
+      discovered_files: new Set(),
+      gitignore_patterns: [],
     });
 
     const result = await resolve_project(
@@ -147,6 +151,8 @@ describe("resolve_project", () => {
     vi.mocked(load_project).mockResolvedValue({
       project: scoped_project,
       dropped_files: new Set(),
+      discovered_files: new Set(),
+      gitignore_patterns: [],
     });
 
     const result = await resolve_project(

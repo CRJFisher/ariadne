@@ -12,7 +12,11 @@ import {
 } from "@ariadnejs/core";
 import type { EnrichedEntryPoint } from "@ariadnejs/types";
 
-import { analyze_directory, load_project_config } from "./detect_entrypoints.js";
+import {
+  analyze_directory,
+  github_repo_to_project_id,
+  load_project_config,
+} from "./detect_entrypoints.js";
 import { DEFAULT_MAX_FILES, load_analysis_scope } from "../src/analysis_scope.js";
 
 let tmpdir: string;
@@ -362,6 +366,35 @@ describe("complete_caller_evidence", () => {
 
     expect(entry.diagnostics.grep_call_sites_outside_index.map((h) => h.content)).toEqual([
       "new Foo();",
+    ]);
+  });
+});
+
+describe("a GitHub project id keeps both halves of the slug", () => {
+  it("qualifies the repo name with its owner", () => {
+    expect(github_repo_to_project_id("webpack/webpack")).toEqual("webpack--webpack");
+    expect(github_repo_to_project_id("pandas-dev/pandas")).toEqual("pandas-dev--pandas");
+  });
+
+  it("separates two repos that share a name under different owners", () => {
+    expect(github_repo_to_project_id("vuejs/core")).toEqual("vuejs--core");
+    expect(github_repo_to_project_id("home-assistant/core")).toEqual("home-assistant--core");
+  });
+
+  it("derives one id from every accepted spelling of the same repo", () => {
+    const spellings = [
+      "vuejs/core",
+      "https://github.com/vuejs/core",
+      "https://github.com/vuejs/core.git",
+      "git@github.com:vuejs/core",
+      "git@github.com:vuejs/core.git",
+    ];
+    expect(spellings.map(github_repo_to_project_id)).toEqual([
+      "vuejs--core",
+      "vuejs--core",
+      "vuejs--core",
+      "vuejs--core",
+      "vuejs--core",
     ]);
   });
 });

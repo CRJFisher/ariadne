@@ -269,7 +269,7 @@ function make_resolved_call(
     location: caller_location,
     scope_id: make_scope_id(caller_location.file_path, caller_location.start_line),
     call_type: "function",
-    resolutions: [{ symbol_id: callee_id, confidence: "high" }],
+    resolutions: [{ symbol_id: callee_id, confidence: "certain", reason: { type: "direct" } }],
   };
 }
 
@@ -749,7 +749,7 @@ describe("list_entrypoints — show_suppressed (server-level config)", () => {
       known_false_positives: [
         {
           symbol_id: dunder_id,
-          classification: { kind: "dunder_protocol", protocol: "__str__" },
+          classification: { kind: "dunder_protocol", group_id: "py-dunder-protocol", protocol: "__str__" },
         },
       ],
     });
@@ -851,7 +851,7 @@ describe("list_entrypoints — show_suppressed (server-level config)", () => {
       known_false_positives: [
         {
           symbol_id: dunder_id,
-          classification: { kind: "dunder_protocol", protocol: "__repr__" },
+          classification: { kind: "dunder_protocol", group_id: "py-dunder-protocol", protocol: "__repr__" },
         },
         {
           symbol_id: route_id,
@@ -863,12 +863,13 @@ describe("list_entrypoints — show_suppressed (server-level config)", () => {
         },
         {
           symbol_id: test_only_id,
-          classification: { kind: "test_only" },
+          classification: { kind: "test_only", group_id: "test-only-helper" },
         },
         {
           symbol_id: indirect_id,
           classification: {
             kind: "indirect_only",
+            group_id: "callback-passed-to-invoker",
             via: { type: "function_reference", read_location: indirect_loc },
           },
         },
@@ -954,9 +955,9 @@ describe("list_entrypoints — show_suppressed (server-level config)", () => {
     vi.mocked(mock_project.get_classified_entry_points).mockReturnValue({
       true_entry_points: [],
       known_false_positives: [
-        { symbol_id: a_id, classification: { kind: "test_only" } },
-        { symbol_id: b_id, classification: { kind: "test_only" } },
-        { symbol_id: c_id, classification: { kind: "test_only" } },
+        { symbol_id: a_id, classification: { kind: "test_only", group_id: "test-only-helper" } },
+        { symbol_id: b_id, classification: { kind: "test_only", group_id: "test-only-helper" } },
+        { symbol_id: c_id, classification: { kind: "test_only", group_id: "test-only-helper" } },
       ],
     });
 
@@ -984,7 +985,7 @@ describe("list_entrypoints — show_suppressed (server-level config)", () => {
     vi.mocked(mock_project.get_classified_entry_points).mockReturnValue({
       true_entry_points: [],
       known_false_positives: [
-        { symbol_id: ghost_id, classification: { kind: "test_only" } },
+        { symbol_id: ghost_id, classification: { kind: "test_only", group_id: "test-only-helper" } },
       ],
     });
 

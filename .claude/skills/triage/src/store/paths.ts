@@ -44,7 +44,10 @@ const STATE_DIR =
   process.env.ARIADNE_TRIAGE_ENTRYPOINTS_DIR_OVERRIDE ??
   path.join(os.homedir(), ".ariadne", "triage-entrypoints");
 
-export const TRIAGE_STATE_DIR = path.join(STATE_DIR, "triage_state");
+/** Name of the store subdirectory holding per-project run state. */
+export const TRIAGE_STATE_SUBDIR = "triage_state";
+
+export const TRIAGE_STATE_DIR = path.join(STATE_DIR, TRIAGE_STATE_SUBDIR);
 
 export const RUNS_SUBDIR = "runs";
 export const LATEST_FILENAME = "LATEST";
