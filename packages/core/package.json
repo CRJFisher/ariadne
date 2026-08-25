@@ -18,7 +18,7 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
     "benchmark": "npx tsx scripts/run_load_benchmark.ts",
-    "clean": "rm -rf dist",
+    "clean": "rm -rf dist tsconfig.build.tsbuildinfo",
     "prepublishOnly": "npm run build && npm test",
     "discover-features": "npx tsx scripts/discover_features.ts",
     "generate-fixtures": "npx tsx scripts/generate_fixtures.ts",
