@@ -283,6 +283,28 @@ describe("JavaScript Metadata Extractors", () => {
       });
     });
 
+    it.each([
+      ["toString", 8],
+      ["valueOf", 7],
+      ["constructor", 11],
+      ["hasOwnProperty", 14],
+    ])(
+      "does not treat the Object.prototype member name '%s' as a self keyword",
+      (name, end_column) => {
+        const code = `${name}.padStart(2)`;
+        const tree = parser.parse(code);
+        const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+        const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_receiver_info(call_expr, TEST_FILE);
+
+        expect(result).toEqual({
+          receiver_location: { file_path: TEST_FILE, start_line: 1, start_column: 1, end_line: 1, end_column },
+          property_chain: [name, "padStart"],
+          is_self_reference: false,
+        });
+      },
+    );
+
     it("detects 'super' as self-reference", () => {
       const code = "super.process()";
       const tree = parser.parse(code);

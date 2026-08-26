@@ -13,6 +13,18 @@ import type { MetadataExtractors, ReceiverInfo } from "./metadata_extractor_type
 import { node_to_location } from "../../node_to_location";
 
 /**
+ * The receiver names that mean "the enclosing class", keyed for lookup.
+ *
+ * A Map, not an object literal: a chain rooted at a plain identifier such as
+ * `toString` or `valueOf` would read `Object.prototype`'s member out of a
+ * literal and be misread as a self-reference call.
+ */
+const SELF_KEYWORDS = new Map<string, "this" | "super">([
+  ["this", "this"],
+  ["super", "super"],
+]);
+
+/**
  * JSDoc carries types in a preceding comment rather than the AST, so the type
  * lives on the sibling immediately before the declaration statement.
  */
@@ -366,11 +378,7 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
         : [object_node.text as SymbolName]);
 
       // A self keyword can sit at the root of a nested chain (this.data.items.push()).
-      const SELF_KEYWORDS: Record<string, "this" | "super"> = {
-        this: "this",
-        super: "super",
-      };
-      const keyword = SELF_KEYWORDS[chain[0]];
+      const keyword = SELF_KEYWORDS.get(chain[0]);
 
       // Carry chain arguments only when an intermediate position is a call with
       // an identifier argument — the raw material for generic-return inference.
