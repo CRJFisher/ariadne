@@ -68,6 +68,7 @@ TASK-381.1 is Done and merged into the integration branch. Every other sub-task 
 - Every ratio comes from an interleaved control arm in the same session; no budget is judged against a number quoted in a doc, and no corpus-scale figure comes from a slice. Serial steps are judged on CPU; step 17 on wall taken on an idle box.
 - Corpus: microsoft/vscode at f3fa55c3, `~/.ariadne/triage-entrypoints/repos/microsoft--vscode`, `src/` only — 8,494 files under Ariadne's walk. Full-corpus arms run with `--max-old-space-size=12288` until step 9 lands (peak RSS 7.83 GB on the stack alone) and `6144` after it. The flag goes on the harness command line, never inside Ariadne.
 - Steps 3, 9 and 10 move the fingerprint by design: each re-baselines the harness's committed expected value and accounts for every moved member. Every other step asserts a byte-identical fingerprint against the tree immediately before it.
+- A step's session is one shot: nothing re-invokes it. `ScheduleWakeup` and `Monitor` are denied, and no work is backgrounded; whatever must be waited for runs in the foreground, and the session ends only by reporting its result.
 
 ### Order
 
