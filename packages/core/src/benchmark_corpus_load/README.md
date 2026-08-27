@@ -56,6 +56,13 @@ same Ariadne commit.
 Arms interleave **A,B,A,B** rather than A,A,B,B so both arms share whatever
 thermal and scheduling drift the session has.
 
+An interleaved pair names both of its checkouts — `--control-repo` and
+`--candidate-repo`, each defaulting to the orchestrator's own tree — so which
+tree the orchestrator happens to live in never decides which arm is the
+control. The pair also diffs its two fingerprints: a speedup between arms that
+describe different call graphs is not a speedup, so a difference prints the
+moved components and exits non-zero.
+
 ## Grammar versions travel with every row
 
 Two measurement worktrees silently resolved tree-sitter 0.21.1 and
@@ -130,6 +137,20 @@ Ariadne commit, machine and node version. `format_citation` renders that line:
 ```text
 microsoft/vscode@f3fa55c3 · folder-ts:src/vs/base · 200 of 479 files · ariadne@12458246 · Darwin 21.6.0 x64 · node v22.23.2
 ```
+
+## What eviction costs
+
+`RECORDED_EVICTION_INDEX_COST` holds the whole-load arms taken when
+`DefinitionRegistry` stopped scanning the project to evict one file. Over
+vscode's `src/` at f3fa55c3, entries visited inside `remove_file` fall from
+83.3M at 200 files, 397.4M at 600 and 1,743,715,817 at 1,200 to **zero**, while
+the keyed cost holds flat at 10.61, 10.55 and 10.53 operations per evicted
+symbol. Same-session interleaved CPU was 1.07x, 1.13x and 1.22x with a
+byte-identical fingerprint at every size.
+
+The entry counts travel between machines because they are a property of the
+algorithm; the CPU figures do not, and `--interleave` prints the record beneath
+its own arms marked as such.
 
 ## Memory
 

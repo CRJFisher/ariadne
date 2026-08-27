@@ -27,7 +27,9 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import {
+  assert_rows_comparable,
   cite_row,
+  compare_fingerprints,
   create_session_id,
   diff_ingest_orders,
   discover_corpus,
@@ -42,6 +44,7 @@ import {
   summarize_peak_rss,
   write_arm_result,
   INGEST_ORDERS,
+  RECORDED_EVICTION_INDEX_COST,
   type ArmRequest,
   type ArmResult,
   type IngestOrder,
@@ -140,7 +143,8 @@ function show_help(): void {
       "  --corpus-commit <sha>   required: a row without it is not a measurement",
       "  --predicate <name>      src | repository-root | folder:<p> | folder-ts:<p>",
       "  --slice <n|full>        default full",
-      "  --candidate-repo <path> the second checkout, for --interleave",
+      "  --control-repo <path>   the control arm's checkout, for --interleave",
+      "  --candidate-repo <path> the candidate arm's checkout, for --interleave",
       "  --seed <n>              default 1",
     ].join("\n"),
   );
@@ -276,9 +280,50 @@ function report_rows(label: string, rows: readonly MeasurementRow[]): void {
   }
 }
 
+/**
+ * Whether the two trees report the same call graph, component by component.
+ *
+ * A speedup between two arms that describe different graphs is not a speedup,
+ * so the two are printed together. A step that moves the fingerprint by design
+ * reads the component breakdown here and accounts for every moved member; every
+ * other step needs this line to say "identical", and a difference exits
+ * non-zero so a chain cannot go green over it.
+ */
+function report_fingerprint_agreement(
+  control: ArmResult,
+  candidate: ArmResult,
+): void {
+  assert_rows_comparable(control.row, candidate.row);
+  const comparison = compare_fingerprints(
+    control.fingerprint,
+    candidate.fingerprint,
+  );
+  if (comparison.identical) {
+    console.log("\nfingerprint identical across arms");
+    return;
+  }
+  console.log(
+    `\nfingerprint differs across arms: ${comparison.differing_components.join(", ")}`,
+  );
+  for (const component of comparison.components) {
+    if (component.identical) continue;
+    console.log(
+      `  ${component.component}: ${component.baseline_count} -> ${component.candidate_count}` +
+        `, only_control ${component.only_baseline_total}, only_candidate ${component.only_candidate_total}`,
+    );
+    for (const member of component.only_baseline.slice(0, 5)) console.log(`     -${member}`);
+    for (const member of component.only_candidate.slice(0, 5)) console.log(`     +${member}`);
+  }
+  process.exitCode = 1;
+}
+
 async function run_interleaved(context: RunContext, slice: SliceSize): Promise<void> {
-  const control_repo = find_ariadne_repo_root();
-  const candidate_repo = flag("candidate-repo", control_repo);
+  // Both checkouts are named, each defaulting to the orchestrator's own tree,
+  // so which arm the orchestrator happens to live in never decides which arm is
+  // the control. A row that named the wrong tree would invert every ratio taken
+  // from it.
+  const control_repo = flag("control-repo", find_ariadne_repo_root());
+  const candidate_repo = flag("candidate-repo", find_ariadne_repo_root());
   const control: ArmResult[] = [];
   const candidate: ArmResult[] = [];
 
@@ -305,6 +350,8 @@ async function run_interleaved(context: RunContext, slice: SliceSize): Promise<v
   report_rows("control", control.map((result) => result.row));
   report_rows("candidate", candidate.map((result) => result.row));
 
+  report_fingerprint_agreement(control[0], candidate[0]);
+
   const speedup = measure_speedup_against_control(
     control.map((result) => result.row),
     candidate.map((result) => result.row),
@@ -325,6 +372,29 @@ async function run_interleaved(context: RunContext, slice: SliceSize): Promise<v
         "This figure is what a null change measures in this session, not a speedup. Pass --candidate-repo to measure one.",
     );
   }
+
+  report_recorded_eviction_cost(control[0].row.file_counts.offered);
+}
+
+/**
+ * What this file set cost when `DefinitionRegistry`'s eviction became keyed.
+ *
+ * Printed as a record and never as a comparand: it was taken in its own
+ * session on its own machine, and dividing a live arm into it is the mistake
+ * that turned 1.570x into a claimed 2.202x. What does travel is the entry
+ * count, which is a property of the algorithm rather than of the box.
+ */
+function report_recorded_eviction_cost(offered_file_count: number): void {
+  const recorded = RECORDED_EVICTION_INDEX_COST.sizes.find(
+    (size) => size.file_count === offered_file_count,
+  );
+  if (recorded === undefined) return;
+  console.log(
+    `\nrecorded for this file set when eviction became keyed (${RECORDED_EVICTION_INDEX_COST.machine}, ${RECORDED_EVICTION_INDEX_COST.node_version}, session ${recorded.session_id} — not a comparand for the arms above):` +
+      `\n  scanned entries inside remove_file ${recorded.scanned_entries_before.toLocaleString("en-US")} -> ${recorded.scanned_entries_after}` +
+      `, keyed operations ${recorded.keyed_per_evicted_symbol_after} per evicted symbol over ${recorded.evicted_symbols.toLocaleString("en-US")} of them` +
+      `\n  CPU control ${recorded.control.cpu_seconds.join(" / ")} s against candidate ${recorded.candidate.cpu_seconds.join(" / ")} s (${recorded.speedup}x), fingerprint identical`,
+  );
 }
 
 /**
