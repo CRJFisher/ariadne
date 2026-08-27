@@ -38,6 +38,9 @@ importers:
       eslint-plugin-unused-imports:
         specifier: ^4.3.0
         version: 4.3.0(@typescript-eslint/eslint-plugin@8.54.0(@typescript-eslint/parser@8.54.0(eslint@9.39.2(jiti@1.21.7))(typescript@6.0.2))(eslint@9.39.2(jiti@1.21.7))(typescript@6.0.2))(eslint@9.39.2(jiti@1.21.7))
+      globals:
+        specifier: ^14.0.0
+        version: 14.0.0
       markdownlint-cli:
         specifier: ^0.47.0
         version: 0.47.0
@@ -2122,6 +2125,7 @@ packages:
   eslint@9.39.2:
     resolution: {integrity: sha512-LEyamqS7W5HB3ujJyvi0HQK/dtVINZvd5mAAp9eT5S/ujByGjiZLCzPcHVzuXbpJDJF/cxwHlfceVUDZ2lnSTw==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+    deprecated: This version is no longer supported. Please see https://eslint.org/version-support for other options.
     hasBin: true
     peerDependencies:
       jiti: '*'

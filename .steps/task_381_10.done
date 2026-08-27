@@ -1,0 +1,7 @@
+{
+  "key": "once",
+  "run_id": "20260827T093324Z-a1d79ac1",
+  "scope": "once",
+  "step_id": "task_381_10",
+  "summary": "A call written `x.toString()` is now reported as a call on `x` rather than on the enclosing class, and the index that carries that fact crosses both of its transports unchanged — the cache's JSON rou…"
+}
