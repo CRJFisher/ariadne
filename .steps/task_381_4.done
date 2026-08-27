@@ -1,0 +1,7 @@
+{
+  "key": "once",
+  "run_id": "20260827T153836Z-b64ec8bf",
+  "scope": "once",
+  "step_id": "task_381_4",
+  "summary": "The end state already held; I changed nothing in the repo (only wrote a throwaway verification script to /tmp). Already landed across commits b1051ae5, cd6f99b9 and 0615c1aa, with a clean tree: proje…"
+}
