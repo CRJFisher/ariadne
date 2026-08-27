@@ -266,6 +266,40 @@ impl Animal {
       assert_index_equal(index, restored);
     });
   });
+
+  describe("a receiver chain rooted at an Object.prototype member name", () => {
+    // A field holding a function fails the two transports differently: JSON
+    // drops it without a word, so a restored file carries a different reference
+    // record from a cold one, and structuredClone refuses outright, so the file
+    // never crosses a worker boundary at all.
+    const OBJECT_PROTOTYPE_MEMBERS = [
+      "toString",
+      "valueOf",
+      "constructor",
+      "hasOwnProperty",
+    ];
+
+    it.each(OBJECT_PROTOTYPE_MEMBERS)(
+      "restores identical reference records for a chain rooted at '%s'",
+      (member) => {
+        const index = parse_js(`${member}.padStart(2);`);
+        const restored = deserialize_semantic_index(
+          serialize_semantic_index(index),
+        );
+        expect([...restored.references]).toEqual([...index.references]);
+      },
+    );
+
+    it.each(OBJECT_PROTOTYPE_MEMBERS)(
+      "clones every reference record for a chain rooted at '%s'",
+      (member) => {
+        const index = parse_js(`${member}.padStart(2);`);
+        expect([...globalThis.structuredClone(index).references]).toEqual([
+          ...index.references,
+        ]);
+      },
+    );
+  });
 });
 
 describe("validate_semantic_index_shape", () => {
