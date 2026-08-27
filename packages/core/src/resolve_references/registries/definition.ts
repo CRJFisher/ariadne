@@ -69,6 +69,53 @@ function bind_member_alias(
 }
 
 /**
+ * Read per write rather than cached, so a test can arm and disarm the invariant
+ * around the code it measures. Three lookups per indexed file is nothing beside
+ * the pass the invariant itself costs.
+ */
+function reverse_index_assertions_enabled(): boolean {
+  return process.env.ARIADNE_ASSERT_REGISTRY_INVARIANTS === "1";
+}
+
+/**
+ * The first key on which a live reverse index and a freshly rebuilt one
+ * disagree, described well enough to name the write site that caused it, or
+ * null when the two are equal.
+ */
+function first_divergence(
+  live: ReadonlyMap<SymbolId, ReadonlySet<SymbolId>>,
+  rebuilt: ReadonlyMap<SymbolId, ReadonlySet<SymbolId>>,
+  live_name: string,
+  forward_name: string
+): string | null {
+  for (const [key, expected] of rebuilt) {
+    const held = live.get(key);
+    if (!held) {
+      return `${live_name} is missing "${key}", which ${forward_name} says has ${expected.size} entr${expected.size === 1 ? "y" : "ies"} — a write site populated ${forward_name} without ${live_name}`;
+    }
+    for (const value of expected) {
+      if (!held.has(value)) {
+        return `${live_name}["${key}"] is missing "${value}", which ${forward_name} holds`;
+      }
+    }
+  }
+
+  for (const [key, held] of live) {
+    const expected = rebuilt.get(key);
+    if (!expected) {
+      return `${live_name} still holds "${key}" with ${held.size} entr${held.size === 1 ? "y" : "ies"}, which ${forward_name} no longer has — an eviction path dropped ${forward_name} without ${live_name}`;
+    }
+    for (const value of held) {
+      if (!expected.has(value)) {
+        return `${live_name}["${key}"] still holds "${value}", which ${forward_name} no longer has`;
+      }
+    }
+  }
+
+  return null;
+}
+
+/**
  * Central registry for all definitions across the project, supporting incremental
  * updates when files change. The secondary indexes below are all rebuilt per-file
  * on update_file / remove_file so they stay consistent with by_symbol.
@@ -90,10 +137,25 @@ export class DefinitionRegistry {
    */
   private member_owner: Map<SymbolId, SymbolId> = new Map();
 
+  /**
+   * The inverse of `member_owner`: declaring type → the members it declares.
+   * Evicting a type reads its own members here instead of asking every member
+   * in the project who owns it.
+   */
+  private owner_members: Map<SymbolId, Set<SymbolId>> = new Map();
+
   private by_scope: Map<ScopeId, Map<SymbolName, SymbolId>> = new Map();
 
   /** Parent type SymbolId → subtypes that extend/implement it, for polymorphic method dispatch. */
   private type_subtypes: Map<SymbolId, Set<SymbolId>> = new Map();
+
+  /**
+   * The inverse of `type_subtypes`: subtype → the parents whose subtype sets
+   * list it. Evicting a type reads its own parents here instead of visiting
+   * every parent set in the project, and it is what tells
+   * `is_subtype_registered` which parents to name-match.
+   */
+  private subtype_parents: Map<SymbolId, Set<SymbolId>> = new Map();
 
   /** Variable SymbolId → the function collection (Map/Array/Object of functions) it holds, for collection dispatch. */
   private function_collections: Map<SymbolId, FunctionCollection> = new Map();
@@ -143,7 +205,7 @@ export class DefinitionRegistry {
         for (const method of def.methods ?? []) {
           this.by_symbol.set(method.symbol_id, method);
           set_member_symbol(flat_members, method);
-          this.member_owner.set(method.symbol_id, def.symbol_id);
+          this.register_member_owner(method.symbol_id, def.symbol_id);
           const method_loc_key = location_key(method.location);
           this.location_to_symbol.set(method_loc_key, method.symbol_id);
         }
@@ -152,7 +214,7 @@ export class DefinitionRegistry {
           for (const prop of def.properties) {
             this.by_symbol.set(prop.symbol_id, prop);
             flat_members.set(prop.name, prop.symbol_id);
-            this.member_owner.set(prop.symbol_id, def.symbol_id);
+            this.register_member_owner(prop.symbol_id, def.symbol_id);
             const prop_loc_key = location_key(prop.location);
             this.location_to_symbol.set(prop_loc_key, prop.symbol_id);
           }
@@ -171,7 +233,7 @@ export class DefinitionRegistry {
         if (def.kind === "class" && def.constructors) {
           for (const ctor of def.constructors) {
             this.by_symbol.set(ctor.symbol_id, ctor);
-            this.member_owner.set(ctor.symbol_id, def.symbol_id);
+            this.register_member_owner(ctor.symbol_id, def.symbol_id);
             const ctor_loc_key = location_key(ctor.location);
             this.location_to_symbol.set(ctor_loc_key, ctor.symbol_id);
             flat_members.set(ctor.name, ctor.symbol_id);
@@ -206,6 +268,8 @@ export class DefinitionRegistry {
         this.function_collections.set(def.symbol_id, def.function_collection);
       }
     }
+
+    this.assert_reverse_indices_consistent(`update_file(${file_id})`);
   }
 
   /**
@@ -316,6 +380,101 @@ export class DefinitionRegistry {
     }
   }
 
+  /**
+   * The single writer of `member_owner`. Both directions of the ownership edge
+   * are set here so no caller can record one without the other.
+   */
+  private register_member_owner(member_id: SymbolId, owner_id: SymbolId): void {
+    this.member_owner.set(member_id, owner_id);
+    let members = this.owner_members.get(owner_id);
+    if (!members) {
+      members = new Set();
+      this.owner_members.set(owner_id, members);
+    }
+    members.add(member_id);
+  }
+
+  /**
+   * The single writer of `type_subtypes`, for the same reason
+   * `register_member_owner` is the single writer of `member_owner`.
+   */
+  private register_subtype(parent_id: SymbolId, subtype_id: SymbolId): void {
+    let subtypes = this.type_subtypes.get(parent_id);
+    if (!subtypes) {
+      subtypes = new Set();
+      this.type_subtypes.set(parent_id, subtypes);
+    }
+    subtypes.add(subtype_id);
+
+    let parents = this.subtype_parents.get(subtype_id);
+    if (!parents) {
+      parents = new Set();
+      this.subtype_parents.set(subtype_id, parents);
+    }
+    parents.add(parent_id);
+  }
+
+  /** Drop the ownership edge of one member, from both directions. */
+  private forget_member(member_id: SymbolId): void {
+    const owner_id = this.member_owner.get(member_id);
+    if (owner_id !== undefined) {
+      const members = this.owner_members.get(owner_id);
+      if (members) {
+        members.delete(member_id);
+        if (members.size === 0) {
+          this.owner_members.delete(owner_id);
+        }
+      }
+    }
+    this.member_owner.delete(member_id);
+  }
+
+  /** Drop every ownership edge a declaring type holds, from both directions. */
+  private forget_owned_members(owner_id: SymbolId): void {
+    const members = this.owner_members.get(owner_id);
+    if (!members) {
+      return;
+    }
+    for (const member_id of members) {
+      this.member_owner.delete(member_id);
+    }
+    this.owner_members.delete(owner_id);
+  }
+
+  /**
+   * Drop every inheritance edge a type sits on, in both roles: the subtypes it
+   * is the parent of, and the parents it is a subtype of.
+   */
+  private forget_type_edges(type_id: SymbolId): void {
+    const subtypes = this.type_subtypes.get(type_id);
+    if (subtypes) {
+      for (const subtype_id of subtypes) {
+        const parents = this.subtype_parents.get(subtype_id);
+        if (parents) {
+          parents.delete(type_id);
+          if (parents.size === 0) {
+            this.subtype_parents.delete(subtype_id);
+          }
+        }
+      }
+      this.type_subtypes.delete(type_id);
+    }
+
+    const parents = this.subtype_parents.get(type_id);
+    if (parents) {
+      for (const parent_id of parents) {
+        const siblings = this.type_subtypes.get(parent_id);
+        if (siblings) {
+          siblings.delete(type_id);
+          if (siblings.size === 0) {
+            this.type_subtypes.delete(parent_id);
+          }
+        }
+      }
+      this.subtype_parents.delete(type_id);
+    }
+  }
+
   remove_file(file_id: FilePath): void {
     const symbol_ids = this.by_file.get(file_id);
     if (!symbol_ids) {
@@ -361,21 +520,15 @@ export class DefinitionRegistry {
       }
 
       this.by_symbol.delete(symbol_id);
-      for (const [member_id, owner_id] of this.member_owner) {
-        if (owner_id === symbol_id) this.member_owner.delete(member_id);
-      }
-      this.member_owner.delete(symbol_id);
+      this.forget_owned_members(symbol_id);
+      this.forget_member(symbol_id);
       this.member_index.delete(symbol_id);
-
-      // This symbol may be a parent type and/or a subtype, so drop both its
-      // own subtype set and its membership in every other set.
-      this.type_subtypes.delete(symbol_id);
-      for (const subtypes of this.type_subtypes.values()) {
-        subtypes.delete(symbol_id);
-      }
+      this.forget_type_edges(symbol_id);
     }
 
     this.by_file.delete(file_id);
+
+    this.assert_reverse_indices_consistent(`remove_file(${file_id})`);
   }
 
   size(): number {
@@ -393,13 +546,7 @@ export class DefinitionRegistry {
       );
 
       if (parent_id) {
-        if (!this.type_subtypes.has(parent_id)) {
-          this.type_subtypes.set(parent_id, new Set());
-        }
-        const subtypes = this.type_subtypes.get(parent_id);
-        if (subtypes) {
-          subtypes.add(def.symbol_id);
-        }
+        this.register_subtype(parent_id, def.symbol_id);
       }
     }
   }
@@ -507,13 +654,7 @@ export class DefinitionRegistry {
         const parent_id = resolutions.resolve(def.defining_scope_id, parent_name);
 
         if (parent_id) {
-          if (!this.type_subtypes.has(parent_id)) {
-            this.type_subtypes.set(parent_id, new Set());
-          }
-          const subtypes = this.type_subtypes.get(parent_id);
-          if (subtypes) {
-            subtypes.add(def.symbol_id);
-          }
+          this.register_subtype(parent_id, def.symbol_id);
 
           const parent_def = this.by_symbol.get(parent_id);
           if (parent_def) {
@@ -523,22 +664,92 @@ export class DefinitionRegistry {
       }
     }
 
+    this.assert_reverse_indices_consistent(
+      `resolve_cross_file_type_inheritance(${file_id})`
+    );
+
     return affected_parent_files;
   }
 
+  /** Whether `child_id` already has a registered parent named `parent_name`. */
   private is_subtype_registered(
     child_id: SymbolId,
     parent_name: SymbolName
   ): boolean {
-    for (const [parent_id, subtypes] of this.type_subtypes) {
-      if (subtypes.has(child_id)) {
-        const parent_def = this.by_symbol.get(parent_id);
-        if (parent_def && parent_def.name === parent_name) {
-          return true;
-        }
+    for (const parent_id of this.subtype_parents.get(child_id) ?? []) {
+      const parent_def = this.by_symbol.get(parent_id);
+      if (parent_def && parent_def.name === parent_name) {
+        return true;
       }
     }
     return false;
+  }
+
+  /**
+   * Both reverse indices rebuilt from the forward maps they invert and compared
+   * against the live ones: the first divergence, or null when they agree.
+   *
+   * A write site that populates a forward map and forgets its reverse index
+   * fails silently rather than loudly: eviction under-deletes, the stale
+   * ownership edge outlives the file that produced it, and the call graph moves
+   * an edge onto a symbol that no longer exists. Nothing observable says so.
+   * Rebuilding is what makes that failure speak.
+   */
+  private verify_reverse_indices(): string | null {
+    const rebuilt_owner_members = new Map<SymbolId, Set<SymbolId>>();
+    for (const [member_id, owner_id] of this.member_owner) {
+      let members = rebuilt_owner_members.get(owner_id);
+      if (!members) {
+        members = new Set();
+        rebuilt_owner_members.set(owner_id, members);
+      }
+      members.add(member_id);
+    }
+
+    const rebuilt_subtype_parents = new Map<SymbolId, Set<SymbolId>>();
+    for (const [parent_id, subtypes] of this.type_subtypes) {
+      for (const subtype_id of subtypes) {
+        let parents = rebuilt_subtype_parents.get(subtype_id);
+        if (!parents) {
+          parents = new Set();
+          rebuilt_subtype_parents.set(subtype_id, parents);
+        }
+        parents.add(parent_id);
+      }
+    }
+
+    return (
+      first_divergence(
+        this.owner_members,
+        rebuilt_owner_members,
+        "owner_members",
+        "member_owner"
+      ) ??
+      first_divergence(
+        this.subtype_parents,
+        rebuilt_subtype_parents,
+        "subtype_parents",
+        "type_subtypes"
+      )
+    );
+  }
+
+  /**
+   * The invariant as a guard, run after every registry write when
+   * `ARIADNE_ASSERT_REGISTRY_INVARIANTS=1` arms it. It costs a pass over the
+   * whole registry, which a test run can afford and a corpus load cannot, so a
+   * production load leaves it disarmed.
+   */
+  private assert_reverse_indices_consistent(after: string): void {
+    if (!reverse_index_assertions_enabled()) {
+      return;
+    }
+    const divergence = this.verify_reverse_indices();
+    if (divergence !== null) {
+      throw new Error(
+        `DefinitionRegistry reverse index diverged after ${after}: ${divergence}`
+      );
+    }
   }
 
   clear(): void {
@@ -547,8 +758,10 @@ export class DefinitionRegistry {
     this.location_to_symbol.clear();
     this.member_index.clear();
     this.member_owner.clear();
+    this.owner_members.clear();
     this.by_scope.clear();
     this.type_subtypes.clear();
+    this.subtype_parents.clear();
     this.function_collections.clear();
   }
 }

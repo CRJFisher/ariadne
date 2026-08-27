@@ -300,8 +300,8 @@ describe("resolve_method_on_type", () => {
       ]);
 
       // Set up type inheritance index (interface -> implementing classes)
-      definitions["type_subtypes"] = new Map();
-      definitions["type_subtypes"].set(interface_id, new Set([class_a_id, class_b_id]));
+      definitions["register_subtype"](interface_id, class_a_id);
+      definitions["register_subtype"](interface_id, class_b_id);
 
       // Setup TypeRegistry to return the interface method
       types["resolved_type_members"] = new Map();
@@ -438,8 +438,7 @@ describe("resolve_method_on_type", () => {
       ]);
 
       // Set up type subtypes index (Base -> Child)
-      definitions["type_subtypes"] = new Map();
-      definitions["type_subtypes"].set(base_class_id, new Set([child_class_id]));
+      definitions["register_subtype"](base_class_id, child_class_id);
 
       // Setup TypeRegistry to return the base method
       types["resolved_type_members"] = new Map();
@@ -522,11 +521,7 @@ describe("resolve_method_on_type", () => {
       };
 
       definitions.update_file(TEST_FILE, [base_class_def, child_class_def]);
-      definitions["type_subtypes"] = new Map();
-      definitions["type_subtypes"].set(
-        base_class_id,
-        new Set([child_class_id])
-      );
+      definitions["register_subtype"](base_class_id, child_class_id);
 
       const result = resolve_method_on_type(
         base_class_id,
@@ -630,9 +625,8 @@ describe("resolve_method_on_type", () => {
       ]);
 
       // Set up transitive type subtypes index (A -> B -> C)
-      definitions["type_subtypes"] = new Map();
-      definitions["type_subtypes"].set(class_a_id, new Set([class_b_id]));
-      definitions["type_subtypes"].set(class_b_id, new Set([class_c_id]));
+      definitions["register_subtype"](class_a_id, class_b_id);
+      definitions["register_subtype"](class_b_id, class_c_id);
 
       // Setup TypeRegistry to return A's method
       types["resolved_type_members"] = new Map();
@@ -703,8 +697,7 @@ describe("resolve_method_on_type", () => {
       ]);
 
       // Set up type subtypes index (Base -> Child)
-      definitions["type_subtypes"] = new Map();
-      definitions["type_subtypes"].set(base_class_id, new Set([child_class_id]));
+      definitions["register_subtype"](base_class_id, child_class_id);
 
       // Setup TypeRegistry
       types["resolved_type_members"] = new Map();
@@ -816,8 +809,8 @@ describe("resolve_method_on_type", () => {
       ]);
 
       // Set up type subtypes index (Base -> Child1, Base -> Child2)
-      definitions["type_subtypes"] = new Map();
-      definitions["type_subtypes"].set(base_class_id, new Set([child1_class_id, child2_class_id]));
+      definitions["register_subtype"](base_class_id, child1_class_id);
+      definitions["register_subtype"](base_class_id, child2_class_id);
 
       // Setup TypeRegistry
       types["resolved_type_members"] = new Map();
