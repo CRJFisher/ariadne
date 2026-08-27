@@ -41,6 +41,8 @@ export { RECORDED_RESOLUTION_EVICTION_COST } from "./recorded_resolution_evictio
 
 export { RECORDED_NAME_TABLE_MEMORY } from "./recorded_name_table_memory";
 
+export { RECORDED_FULL_CORPUS_BASELINE } from "./recorded_full_corpus_baseline";
+
 export { compare_fingerprints } from "./call_graph_fingerprint";
 
 export {

@@ -46,6 +46,7 @@ import {
   INGEST_ORDERS,
   RECORDED_CORPUS_PASS_COST,
   RECORDED_EVICTION_INDEX_COST,
+  RECORDED_FULL_CORPUS_BASELINE,
   RECORDED_NAME_TABLE_MEMORY,
   RECORDED_RESOLUTION_EVICTION_COST,
   type ArmRequest,
@@ -380,6 +381,40 @@ async function run_interleaved(context: RunContext, slice: SliceSize): Promise<v
   report_recorded_corpus_pass(control[0].row.file_counts.offered);
   report_recorded_resolution_eviction(control[0].row.file_counts.offered);
   report_recorded_name_table(control[0].row.file_counts.offered);
+  report_recorded_full_corpus_baseline(control[0].row.file_counts.offered);
+}
+
+/**
+ * What a whole corpus cost when it was last run end to end, and where that cost
+ * was.
+ *
+ * Printed for an arm that offered every file one of the two pinned predicates
+ * discovers, because that is the only arm the record is about: a slice's cost
+ * per file is not the corpus's, and two fits from slices missed the measured
+ * corpus cost by 2.19x and 16.8x. The file counts and the phase shares travel
+ * between machines; the CPU and RSS absolutes beside them do not, so they are
+ * marked as a record rather than a comparand for the arms above.
+ */
+function report_recorded_full_corpus_baseline(offered_file_count: number): void {
+  const recorded = RECORDED_FULL_CORPUS_BASELINE.corpora.find(
+    (arm) => arm.offered === offered_file_count,
+  );
+  if (recorded === undefined) return;
+  // The split was taken over one predicate's corpus, so printing it under the
+  // other one's row would attribute a share to a run that never produced it.
+  const phases =
+    recorded.predicate === RECORDED_FULL_CORPUS_BASELINE.phase_split_predicate
+      ? `\n  where the CPU went: ${RECORDED_FULL_CORPUS_BASELINE.phase_split
+          .filter((phase) => phase.contained_by === "the run")
+          .map((phase) => `${phase.phase} ${phase.share_percent}%`)
+          .join(", ")}`
+      : "";
+  console.log(
+    `\nrecorded for this corpus when it last ran end to end (${RECORDED_FULL_CORPUS_BASELINE.machine}, ${RECORDED_FULL_CORPUS_BASELINE.node_version}, ariadne@${RECORDED_FULL_CORPUS_BASELINE.ariadne_commit} — not a comparand for the arms above):` +
+      `\n  ${recorded.predicate}: ${recorded.indexed} of ${recorded.offered} indexed, ${recorded.dropped} dropped, in ${recorded.processes} processes at a ${recorded.heap_cap_mb} MB heap` +
+      `\n  CPU ${recorded.cpu_seconds.mean} s (CV ${recorded.cpu_seconds.cv_percent}%), peak RSS ${recorded.peak_rss_mb.mean} MB (spread ${recorded.peak_rss_mb.spread_percent}%) against a settled heap of ${recorded.settled_heap_mb.mean} MB (spread ${recorded.settled_heap_mb.spread_percent}%)` +
+      phases,
+  );
 }
 
 /**

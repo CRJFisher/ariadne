@@ -110,8 +110,9 @@ idiom, which is the construct order-dependence shows up in.
 A predicate names a folder set **and** an extension set, because a folder alone
 does not identify a file set. `src/vs/base` holds four `.js` files and two of
 them sort inside the first 200, displacing two `.ts` files. The two 200-file sets
-index and drop identically — 191 and 9 either way — and diverge on everything
-else: 5,070 nodes and 1,728 entry points against 4,917 and 1,673.
+diverge on every number a row carries: 186 indexed, 14 dropped, 4,665 nodes and
+1,573 entry points under `folder:`, against 185, 15, 4,500 and 1,518 under
+`folder-ts:`.
 
 At microsoft/vscode `f3fa55c3`, four defensible counts:
 
@@ -122,8 +123,9 @@ At microsoft/vscode `f3fa55c3`, four defensible counts:
 | shell: `.ts` under `src/` excluding `.d.ts` | 8,451  |
 | shell: `.ts` under `src/` including `.d.ts` | 8,648  |
 
-`src/` costs 510.3 s of CPU and the repository root 1,653.9 s. They answer the
-ten-minute question differently, so rows for the two are never compared.
+`src/` costs 337.3 s of CPU and the repository root 1,105.7 s on one 6-core box.
+They answer the ten-minute question differently, so rows for the two are never
+compared.
 
 The first two rows are load-bearing. An arm over `microsoft/vscode` at that
 commit refuses to run when its discovery walk finds a different count, because
@@ -228,6 +230,44 @@ scheme — freed **5.42 KB/file against a 68 KB/file estimate**. V8 already shar
 those strings. The path interning that does pay is inside cache blobs, measured
 at 2.32x, and belongs to TASK-381.9.
 
+## What a whole corpus costs
+
+`RECORDED_FULL_CORPUS_BASELINE` is the row every later step is judged against:
+every file each predicate discovers, offered to one process, run to completion.
+
+Over vscode's `src/` at f3fa55c3 the load indexes **7,818 of 8,494** with 676
+dropped, in **337.3 s of CPU** — mean of three independent processes, CV 0.89%,
+cpu/wall 1.03–1.05 — at 7,177.6 MB peak RSS. Over the repository root it indexes
+11,659 of 12,654 for **1,105.7 s** at 8,352.6 MB. 49% more files costs 3.28× the
+CPU, so the two predicates still answer the ten-minute question differently:
+5.62 minutes against 18.43.
+
+Where that CPU goes, measured at the phase boundaries of one full-corpus run:
+
+| phase                          | CPU        | share  |
+| ------------------------------ | ---------- | ------ |
+| parse and index                | 292,833 ms | 85.03% |
+| the rest of the load           | 26,873 ms  | 7.80%  |
+| resolve the corpus             | 24,075 ms  | 6.99%  |
+| — `resolve_calls_for_files`    | 13,929 ms  | 4.04%  |
+| — fix import locations         | 7,074 ms   | 2.05%  |
+| — `resolve_names`              | 1,824 ms   | 0.53%  |
+| — `resolve_callback_invocations` | 1,908 ms | 0.51%  |
+| drop rollback                  | 187 ms     | 0.05%  |
+| `trace_call_graph`             | 440 ms     | 0.13%  |
+
+Entry-point detection is free; the whole cost is the load, and 51.28% of the
+load-and-trace subtrees is spent crossing the JavaScript/native boundary to read
+tree-sitter node fields. `Project.remove_file` is called **zero** times: a failed
+ingest rolls back through `evict_ingested_file`, which costs 187 ms over 676
+drops.
+
+Ratios come from a control arm — the tree as it stood before this work — run
+interleaved in the same session over nested slices, because the control tree
+does not finish the corpus. It buys **1.52× at 200 files, 2.09× at 600 and 3.40×
+at 1,200**, and a ratio that rises with the file set is exactly why the
+corpus-scale one may not be extrapolated from any of them.
+
 ## Memory
 
 Peak RSS is reported as a mean over at least two runs with the spread, never as
@@ -289,15 +329,17 @@ is how the hoisted-grammar incident happened in the first place.
 ### The smoke run
 
 The first 200 path-sorted `.ts` files of `src/vs/base` at corpus `f3fa55c3`
-reproduce **191 indexed, 9 dropped, 4,917 nodes, 1,673 raw entry points, 7,702
+reproduce **185 indexed, 15 dropped, 4,500 nodes, 1,518 raw entry points, 8,107
 unresolved call sites**. Use `--predicate folder-ts:src/vs/base --slice 200`;
-the plain `folder:` form is a different file set and gives 5,070 nodes and 1,728
-entry points.
+the plain `folder:` form is a different file set.
 
 These are stated over the corpus rather than over one Ariadne commit, because
 that is what makes them a smoke run: the Ariadne commit belongs on the row, and
 the run prints it in the citation line above the numbers. A change to the
-pipeline that moves any of them is the signal the run exists to give.
+pipeline that moves any of them is the signal the run exists to give. The
+coverage half of this line reads 185/15 on the tree the load-performance work
+started from as well as on the tree it stands at now, so its last move predates
+that work.
 
 ## Determinism
 

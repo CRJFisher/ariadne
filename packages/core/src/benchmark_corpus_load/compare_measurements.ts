@@ -29,7 +29,7 @@ const GRAMMAR_EVIDENCE =
   "two measurement worktrees silently resolved tree-sitter 0.21.1 / tree-sitter-typescript 0.21.2 from hoisted copies instead of 0.25.0 / 0.23.2, and the ~40 grammar failures both runs called environmental were exactly that";
 
 const CORPUS_EVIDENCE =
-  "vscode's `src/` corpus costs 510.3 s of CPU and its repository root costs 1,653.9 s; the two answer the ten-minute question differently and are never divided into one another";
+  "vscode's `src/` corpus costs 337.3 s of CPU and its repository root costs 1,105.7 s on one 6-core Darwin 24.6.0 box; the two answer the ten-minute question differently and are never divided into one another";
 
 interface ComparabilityVerdict {
   readonly comparable: boolean;

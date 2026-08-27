@@ -252,7 +252,7 @@ function assert_corpus_root_is_outside_a_test_tree(corpus_root: string): void {
  *
  * `load_project` treats an empty `files` list as "no filter" and walks the
  * whole project path, so a mistyped predicate would quietly load the entire
- * repository root — 12,654 files and 1,653.9 s of CPU against vscode — and only
+ * repository root — 12,654 files and 1,105.7 s of CPU against vscode — and only
  * then fail, blaming discovery for disagreeing with the loader. One typo would
  * cost the hours-then-die failure this harness exists to end.
  */

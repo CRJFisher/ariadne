@@ -4,9 +4,9 @@
  * A corpus-derived constant without its input is not a measurement, and this
  * is not pedantry: microsoft/vscode has at least four defensible file counts
  * at one commit, and two of them answer the ten-minute question in opposite
- * directions. The tree under `src/` costs 510.3 s of CPU; the repository root,
+ * directions. The tree under `src/` costs 337.3 s of CPU; the repository root,
  * which is what `load_project({project_path})` discovers when no folder filter
- * is given, holds half again as many files and costs 1,653.9 s. Rows for the
+ * is given, holds half again as many files and costs 1,105.7 s. Rows for the
  * two are never compared.
  *
  * So every row names a predicate, and discovery here is the same walk
@@ -103,14 +103,14 @@ export const PINNED_CORPUS_COUNTS: readonly PinnedCorpusCount[] = [
     corpus_commit: "f3fa55c3",
     predicate: "src",
     file_count: 8494,
-    note: "Ariadne's discovery walk over `src/`. 510.3 s of CPU.",
+    note: "Ariadne's discovery walk over `src/`. 337.3 s of CPU on a 6-core Darwin 24.6.0 box at ariadne@25af64a8.",
   },
   {
     corpus: "microsoft/vscode",
     corpus_commit: "f3fa55c3",
     predicate: "repository-root",
     file_count: 12654,
-    note: "`find_source_files` at the repository root — what `load_project({project_path})` discovers with no folder filter. 1,653.9 s of CPU.",
+    note: "`find_source_files` at the repository root — what `load_project({project_path})` discovers with no folder filter. 1,105.7 s of CPU on the same box and tree.",
   },
   {
     corpus: "microsoft/vscode",

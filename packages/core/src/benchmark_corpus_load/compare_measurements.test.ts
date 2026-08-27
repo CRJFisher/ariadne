@@ -117,7 +117,7 @@ describe("check_rows_comparable", () => {
   });
 
   it("refuses two rows for different corpus predicates", () => {
-    // `src` costs 510.3 s of CPU and the repository root 1,653.9 s; they answer
+    // `src` costs 337.3 s of CPU and the repository root 1,105.7 s; they answer
     // the ten-minute question differently.
     const verdict = check_rows_comparable(
       row(),
@@ -131,8 +131,8 @@ describe("check_rows_comparable", () => {
       }),
     );
     expect(verdict.comparable).toEqual(false);
-    expect(verdict.refusals[0]).toContain("510.3");
-    expect(verdict.refusals[0]).toContain("1,653.9");
+    expect(verdict.refusals[0]).toContain("337.3");
+    expect(verdict.refusals[0]).toContain("1,105.7");
   });
 
   it("refuses two rows whose offered file counts differ", () => {
