@@ -1,0 +1,7 @@
+{
+  "key": "once",
+  "run_id": "20260827T153836Z-b64ec8bf",
+  "scope": "once",
+  "step_id": "task_381_7",
+  "summary": "Ran the measurement session TASK-381.7 asks for and landed its rows as commit b1649c9d (`feat(381.7): record what a whole corpus costs on the landed load path`). Nothing of this step existed in the t…"
+}
