@@ -83,7 +83,7 @@ export function content_matches_cache(
 
 /**
  * Try to restore a file from cache. Reads the cached index from storage,
- * reads file content from disk, and calls restore_file.
+ * reads file content from disk, and hands it to the bulk load's pass A.
  * Returns true on success, false on any failure.
  */
 export async function try_restore_from_cache(
@@ -102,7 +102,7 @@ export async function try_restore_from_cache(
     const cached_index = deserialize_semantic_index(parsed);
 
     const content = existing_content ?? await fs.readFile(file_path, "utf-8");
-    project.restore_file(file_path, content, cached_index);
+    project.ingest_restored_file(file_path, content, cached_index);
     return true;
   } catch (error) {
     console.warn(

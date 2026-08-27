@@ -204,6 +204,12 @@ export async function load_project(
   let cache_misses = 0;
   const dropped_files = new Set<FilePath>();
 
+  // Pass A: index every file and write its own facts into the registries.
+  //
+  // Nothing cross-file is asked here. Asking on arrival re-resolves every
+  // already-loaded importer each time a file lands, so the same resolution
+  // state is rebuilt over and over against a corpus that is still incomplete —
+  // and an import naming a file that has not arrived yet has no answer at all.
   for (const file_path of files_to_load) {
     const fp = file_path as FilePath;
     let used_cache = false;
@@ -253,16 +259,16 @@ export async function load_project(
       } else {
         cache_misses++;
         try {
-          project.update_file(fp, content);
+          project.ingest_file(fp, content);
         } catch (error) {
-          // `update_file` writes content, language, definitions and scopes
-          // before a later phase can throw. Left in place, that partial state
+          // `ingest_file` writes content, language, definitions and scopes
+          // before a later registry can throw. Left in place, that partial state
           // makes the file's callables phantom entry points and every grep hit
           // inside it uncapturable — the file's text is in the corpus while its
           // references are not. Roll it back so the file is cleanly unindexed.
           dropped_files.add(fp);
           try {
-            project.remove_file(fp);
+            project.evict_ingested_file(fp);
           } catch (rollback_error) {
             // A rollback that throws would abort the whole load over one bad
             // file, losing every file after it. Degrade to the per-file skip
@@ -302,6 +308,9 @@ export async function load_project(
       cache_hits++;
     }
   }
+
+  // Pass B: resolve the corpus once, against fully-populated registries.
+  project.resolve_corpus();
 
   // Log cache statistics
   if (storage) {

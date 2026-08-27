@@ -53,17 +53,27 @@ export interface ClassifyOptions extends TraceCallGraphOptions {
  * Manages:
  * - File-level data (SemanticIndex per file)
  * - Project-level registries (definitions, types, scopes, exports, imports)
- * - Symbol resolution (eager, always up-to-date)
+ * - Symbol resolution
  * - Call graph computation
  *
- * Architecture:
- * - When a file changes, recompute file-local data
- * - Update all registries incrementally
- * - Immediately re-resolve affected files (updated file + dependents)
- * - State is always consistent - no "pending" or "stale" data
+ * Two drivers sit on one set of phases.
  *
- * Provides efficient incremental updates: only affected files are re-parsed
- * and re-resolved, while unchanged files reuse cached results.
+ * The INCREMENTAL driver — `update_file`, `restore_file`, `remove_file` — is
+ * the file watcher's. One file changes in an already-consistent project, so it
+ * repairs exactly the region the edit can have invalidated: the file itself
+ * plus every file whose resolutions its surface reaches. State is consistent
+ * when each call returns.
+ *
+ * The BULK driver — `ingest_file` / `ingest_restored_file` per file, then one
+ * `resolve_corpus()` — loads a corpus. Nothing cross-file is asked until every
+ * file is present, so every such question is asked once against the whole
+ * corpus rather than repeatedly against the fraction of it that had arrived.
+ * Between the first ingest and `resolve_corpus()` the project is deliberately
+ * inconsistent and nothing may read the call graph.
+ *
+ * Both drivers compose the same private steps — `populate_registries`,
+ * `fix_import_locations_for_file`, `resolve_files`, `evict_file` — so no phase
+ * has a second implementation to drift from the first.
  */
 export class Project {
   // ===== File-level data (immutable once computed) =====
@@ -126,57 +136,31 @@ export class Project {
   }
 
   /**
-   * Add or update a file in the project.
-   * This is the main entry point for incremental updates.
+   * Add or update one file in an already-consistent project.
    *
-   * Process (3 phases):
-   * 0. Track dependents before updating import graph
-   * 1. Compute file-local data (SemanticIndex)
-   * 2. Update all project registries
-   * 3. Re-resolve affected files (this file + dependents)
-   *
-   * After this method completes, all project state is consistent and up-to-date.
+   * The incremental-edit entry point. Bulk corpus loading does not come through
+   * here: see `ingest_file` + `resolve_corpus`.
    *
    * @param file_id - The file to update
    * @param content - The file's source code
    */
   update_file(file_id: FilePath, content: string): void {
-    if (!this.modules) {
-      throw new Error("Project not initialized");
-    }
+    const modules = this.begin_mutation();
 
-    // Any file mutation invalidates the EnrichedCallGraph cache.
-    this.enriched_cache = null;
-
-    // Phase 0: Track who depends on this file (before updating imports)
+    // Read before the import graph is rewritten, so the files that depended on
+    // the OLD surface are re-resolved too.
     const dependents = this.imports.get_dependents(file_id);
 
-    // Phase 1: Compute file-local data
-    // Auto-adjust buffer to fit the file (2x content length)
-    const needed = content.length * 2;
-    if (needed > this.parser_buffer_size) {
-      this.parser_buffer_size = needed;
-    }
-    const parsed_file = parse_file(file_id, content, this.parser_buffer_size);
-    const index_single_file = build_index_single_file(
-      parsed_file,
-      parsed_file.tree,
-      parsed_file.lang
-    );
+    const index_single_file = this.index_and_store(file_id, content);
 
-    this.index_single_filees.set(file_id, index_single_file);
-    this.file_contents.set(file_id, content);
-    this.languages.set(file_id, parsed_file.lang);
-
-    // Phases 2-5: Registry update + resolution
-    this.apply_index_and_resolve(file_id, index_single_file, dependents, this.modules);
+    this.populate_registries(file_id, index_single_file, modules);
+    this.fix_import_locations_for_file(file_id, index_single_file);
+    this.resolve_files(this.files_affected_by(file_id, dependents), modules);
   }
 
   /**
-   * Restore a file from a cached SemanticIndex, skipping tree-sitter parsing.
-   *
-   * Used by the persistence layer when a file's content has not changed since
-   * the cache was written. Runs only registry updates + resolution (Phases 2-5).
+   * Restore one file from a cached SemanticIndex into an already-consistent
+   * project, skipping tree-sitter parsing.
    *
    * @param file_id - The file to restore
    * @param content - The file's source code (stored for `get_file_contents()` access)
@@ -187,34 +171,136 @@ export class Project {
     content: string,
     cached_index: SemanticIndex,
   ): void {
-    if (!this.modules) {
-      throw new Error("Project not initialized");
-    }
-
-    this.enriched_cache = null;
+    const modules = this.begin_mutation();
 
     const dependents = this.imports.get_dependents(file_id);
 
-    this.index_single_filees.set(file_id, cached_index);
-    this.file_contents.set(file_id, content);
-    this.languages.set(file_id, cached_index.language);
+    this.store_file(file_id, content, cached_index, cached_index.language);
 
-    this.apply_index_and_resolve(file_id, cached_index, dependents, this.modules);
+    this.populate_registries(file_id, cached_index, modules);
+    this.fix_import_locations_for_file(file_id, cached_index);
+    this.resolve_files(this.files_affected_by(file_id, dependents), modules);
   }
 
   /**
-   * Run registry update and resolution phases for a file with a known SemanticIndex.
-   * Shared by update_file() (after parsing) and restore_file() (from cached index).
+   * Bulk-load pass A: index one file and write its own facts into the project
+   * registries, resolving nothing.
+   *
+   * Deferring resolution is what keeps the load flat. Resolving on arrival
+   * re-resolves every already-loaded importer each time a file lands, so a
+   * widely-imported file drags hundreds of files through resolution that the
+   * next arrival drags through again — all of it against a corpus that is still
+   * incomplete, and none of it able to see a file that has not arrived yet.
+   *
+   * @param file_id - The file to ingest
+   * @param content - The file's source code
    */
-  private apply_index_and_resolve(
-    file_id: FilePath,
-    index_single_file: SemanticIndex,
-    dependents: Set<FilePath>,
-    modules: ModuleResolutionContext,
-  ): void {
-    const get_import_path = (import_id: SymbolId) => this.imports.get_resolved_import_path(import_id);
+  ingest_file(file_id: FilePath, content: string): void {
+    const modules = this.begin_mutation();
+    const index_single_file = this.index_and_store(file_id, content);
+    this.populate_registries(file_id, index_single_file, modules);
+  }
 
-    // Phase 2: Update project-level registries
+  /**
+   * Bulk-load pass A for a file whose SemanticIndex came from the persistence
+   * cache: registry population only, no parse and no resolution.
+   */
+  ingest_restored_file(
+    file_id: FilePath,
+    content: string,
+    cached_index: SemanticIndex,
+  ): void {
+    const modules = this.begin_mutation();
+    this.store_file(file_id, content, cached_index, cached_index.language);
+    this.populate_registries(file_id, cached_index, modules);
+  }
+
+  /**
+   * Undo a pass-A ingest that threw part-way through, without resolving.
+   *
+   * Pass A holds no resolution state to repair, so the re-resolution
+   * `remove_file` owes an edit is pure waste here — and it would be waste
+   * charged against an incomplete corpus, resolving files that pass B resolves
+   * again from a better position.
+   */
+  evict_ingested_file(file_id: FilePath): void {
+    this.begin_mutation();
+    this.evict_file(file_id);
+  }
+
+  /**
+   * Bulk-load pass B: resolve the whole corpus once.
+   *
+   * Runs against fully-populated definition, export and import registries, so
+   * every cross-file question — which file an import names, which definition an
+   * export chain ends at, which class a subtype extends — is answerable on the
+   * first attempt.
+   *
+   * Phase 2.5 runs for every file before any file is resolved. An import can
+   * only be repointed at the file it names once that file is indexed, so
+   * running it per-arrival leaves every import naming a not-yet-ingested file
+   * pointing at the import statement for good.
+   */
+  resolve_corpus(): void {
+    const modules = this.begin_mutation();
+    const all_files = new Set(this.index_single_filees.keys());
+
+    for (const [file_id, index_single_file] of this.index_single_filees) {
+      this.fix_import_locations_for_file(file_id, index_single_file);
+    }
+
+    this.resolve_files(all_files, modules);
+  }
+
+  /**
+   * Open a state-changing operation: drop the EnrichedCallGraph cache the
+   * mutation is about to invalidate, and hand back the module resolution
+   * context every cross-file lookup needs.
+   */
+  private begin_mutation(): ModuleResolutionContext {
+    if (!this.modules) {
+      throw new Error("Project not initialized");
+    }
+    this.enriched_cache = null;
+    return this.modules;
+  }
+
+  /** Phase 1: parse a file, build its SemanticIndex, and store the file-local data. */
+  private index_and_store(file_id: FilePath, content: string): SemanticIndex {
+    // Auto-adjust buffer to fit the file (2x content length)
+    const needed = content.length * 2;
+    if (needed > this.parser_buffer_size) {
+      this.parser_buffer_size = needed;
+    }
+    const parsed_file = parse_file(file_id, content, this.parser_buffer_size);
+    const index_single_file = build_index_single_file(
+      parsed_file,
+      parsed_file.tree,
+      parsed_file.lang,
+    );
+    this.store_file(file_id, content, index_single_file, parsed_file.lang);
+    return index_single_file;
+  }
+
+  private store_file(
+    file_id: FilePath,
+    content: string,
+    index_single_file: SemanticIndex,
+    language: Language,
+  ): void {
+    this.index_single_filees.set(file_id, index_single_file);
+    this.file_contents.set(file_id, content);
+    this.languages.set(file_id, language);
+  }
+
+  /**
+   * Flatten a file's SemanticIndex into the definition list the registries
+   * consume: top-level definitions, class/interface/enum members, and
+   * parameters.
+   */
+  private collect_all_definitions(
+    index_single_file: SemanticIndex,
+  ): AnyDefinition[] {
     const all_definitions: AnyDefinition[] = [
       ...Array.from(index_single_file.functions.values()),
       ...Array.from(index_single_file.classes.values()),
@@ -245,49 +331,81 @@ export class Project {
 
     all_definitions.push(...extract_all_parameters(index_single_file));
 
+    return all_definitions;
+  }
+
+  /**
+   * Phase 2: write one file's own facts into the project-level registries.
+   * Reads no other file's resolutions, so the answer does not depend on which
+   * files have arrived.
+   */
+  private populate_registries(
+    file_id: FilePath,
+    index_single_file: SemanticIndex,
+    modules: ModuleResolutionContext,
+  ): void {
+    const all_definitions = this.collect_all_definitions(index_single_file);
+
     this.definitions.update_file(file_id, all_definitions);
     this.scopes.update_file(file_id, index_single_file.scopes);
     this.exports.update_file(file_id, this.definitions);
     this.references.update_file(file_id, index_single_file.references);
 
-    const import_definitions = Array.from(
-      index_single_file.imported_symbols.values(),
-    );
     this.imports.update_file(
       file_id,
-      import_definitions,
+      Array.from(index_single_file.imported_symbols.values()),
       index_single_file.language,
       modules,
     );
+  }
 
-    // Phase 2.5: Fix ImportDefinition locations to point to source files
+  /**
+   * Phase 2.5: repoint this file's ImportDefinitions at the definitions they
+   * name, so "go to definition" on an imported symbol lands where it is
+   * declared rather than on the import statement.
+   *
+   * Reads the export and definition registries of OTHER files, so it can only
+   * answer for a file that is already indexed.
+   */
+  private fix_import_locations_for_file(
+    file_id: FilePath,
+    index_single_file: SemanticIndex,
+  ): void {
     const fixed_import_definitions = fix_import_definition_locations(
-      import_definitions,
+      Array.from(index_single_file.imported_symbols.values()),
       this.imports,
       this.exports,
       this.definitions,
     );
 
-    const non_import_definitions = all_definitions.filter(
-      (def) => def.kind !== "import",
-    );
+    const non_import_definitions = this.collect_all_definitions(
+      index_single_file,
+    ).filter((def) => def.kind !== "import");
+
     this.definitions.update_file(file_id, [
       ...non_import_definitions,
       ...fixed_import_definitions,
     ]);
+  }
 
-    // Phase 3: Re-resolve affected files. A dependent that forwards the changed
-    // file's surface onward changes its own surface too, so ITS dependents
-    // re-resolve as well — the barrel-chain case, where a leaf's names reach
-    // consumers only through re-exporting hops, and the Rust `mod` chain, where
-    // `crate::a::b::item` reaches through `a.rs` into `b.rs`. Without the second
-    // hop, editing `b.rs` re-resolves `a.rs` but not the file holding the call,
-    // so the path resolves only when the files happen to be indexed in the right
-    // order.
-    const affected_files = this.files_affected_by(file_id, dependents);
+  /**
+   * Phases 3-5: resolve names, cross-file type inheritance, references, types
+   * and calls for a set of files.
+   */
+  private resolve_files(
+    files: Set<FilePath>,
+    modules: ModuleResolutionContext,
+  ): void {
+    if (files.size === 0) {
+      return;
+    }
 
+    const get_import_path = (import_id: SymbolId) =>
+      this.imports.get_resolved_import_path(import_id);
+
+    // Phase 3: Name resolution
     this.resolutions.resolve_names(
-      affected_files,
+      files,
       this.languages,
       this.definitions,
       this.scopes,
@@ -298,24 +416,23 @@ export class Project {
 
     // Phase 3.5: Cross-file type inheritance resolution
     const files_needing_call_reresolution = new Set<FilePath>();
-    for (const affected_file of affected_files) {
-      const parent_files =
-        this.definitions.resolve_cross_file_type_inheritance(
-          affected_file,
-          this.resolutions,
-        );
+    for (const file_id of files) {
+      const parent_files = this.definitions.resolve_cross_file_type_inheritance(
+        file_id,
+        this.resolutions,
+      );
       for (const parent_file of parent_files) {
         files_needing_call_reresolution.add(parent_file);
       }
     }
 
     // Phase 3.6: Reference preprocessing
-    for (const affected_file of affected_files) {
-      const affected_index = this.index_single_filees.get(affected_file);
-      if (affected_index) {
+    for (const file_id of files) {
+      const index_single_file = this.index_single_filees.get(file_id);
+      if (index_single_file) {
         preprocess_references(
-          affected_file,
-          affected_index.language,
+          file_id,
+          index_single_file.language,
           this.references,
           this.definitions,
           this.resolutions,
@@ -324,12 +441,12 @@ export class Project {
     }
 
     // Phase 4: Type registry
-    for (const affected_file of affected_files) {
-      const affected_index = this.index_single_filees.get(affected_file);
-      if (affected_index) {
+    for (const file_id of files) {
+      const index_single_file = this.index_single_filees.get(file_id);
+      if (index_single_file) {
         this.types.update_file(
-          affected_file,
-          affected_index,
+          file_id,
+          index_single_file,
           this.definitions,
           this.resolutions,
           this.exports,
@@ -344,12 +461,8 @@ export class Project {
     // Pass the same exports/languages/resolution instances handed to
     // resolve_names above, so namespace re-export following sees the current
     // export graph rather than a stale snapshot.
-    const call_resolution_files = new Set([
-      ...affected_files,
-      ...files_needing_call_reresolution,
-    ]);
     this.resolutions.resolve_calls_for_files(
-      call_resolution_files,
+      new Set([...files, ...files_needing_call_reresolution]),
       this.references,
       this.scopes,
       this.types,
@@ -369,77 +482,32 @@ export class Project {
    * @param file_id - The file to remove
    */
   remove_file(file_id: FilePath): void {
-    if (!this.modules) {
-      throw new Error("Project not initialized");
-    }
+    const modules = this.begin_mutation();
 
-    this.enriched_cache = null;
-
-    const get_import_path = (import_id: SymbolId) => this.imports.get_resolved_import_path(import_id);
     const dependents = this.imports.get_dependents(file_id);
 
-    // Remove from file-level stores
+    this.evict_file(file_id);
+
+    // Re-resolve every file the deletion can reach, not just direct dependents:
+    // a file two module hops away can hold a path that read the deleted file.
+    const affected = this.files_affected_by(file_id, dependents);
+    affected.delete(file_id);
+    this.resolve_files(affected, modules);
+  }
+
+  /** Drop every trace of a file from the file-level stores and the registries. */
+  private evict_file(file_id: FilePath): void {
     this.index_single_filees.delete(file_id);
     this.file_contents.delete(file_id);
     this.languages.delete(file_id);
 
-    // Remove from registries
     this.definitions.remove_file(file_id);
     this.types.remove_file(file_id);
     this.scopes.remove_file(file_id);
     this.exports.remove_file(file_id);
     this.references.remove_file(file_id);
     this.imports.remove_file(file_id);
-
-    // Remove resolutions for deleted file
     this.resolutions.remove_file(file_id);
-
-    // Re-resolve every file the deletion can reach, not just direct dependents:
-    // a file two module hops away can hold a path that read the deleted file.
-    const affected = this.files_affected_by(file_id, dependents);
-    affected.delete(file_id);
-    if (affected.size > 0) {
-      // Phase 1: Name resolution
-      this.resolutions.resolve_names(
-        affected,
-        this.languages,
-        this.definitions,
-        this.scopes,
-        this.exports,
-        this.imports,
-        this.modules
-      );
-
-      // Phase 2: Type registry (uses name resolutions)
-      for (const dependent_file of affected) {
-        const dependent_index = this.index_single_filees.get(dependent_file);
-        if (dependent_index) {
-          this.types.update_file(
-            dependent_file,
-            dependent_index,
-            this.definitions,
-            this.resolutions,
-            this.exports,
-            this.languages,
-            this.modules,
-            get_import_path
-          );
-        }
-      }
-
-      // Phase 3: Call resolution (uses types)
-      this.resolutions.resolve_calls_for_files(
-        affected,
-        this.references,
-        this.scopes,
-        this.types,
-        this.definitions,
-        this.imports,
-        this.exports,
-        this.languages,
-        this.modules
-      );
-    }
   }
 
   /**
