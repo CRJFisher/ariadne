@@ -115,12 +115,12 @@ else: 5,070 nodes and 1,728 entry points against 4,917 and 1,673.
 
 At microsoft/vscode `f3fa55c3`, four defensible counts:
 
-| predicate | files |
-| --- | --- |
-| Ariadne's walk over `src/` | 8,494 |
-| Ariadne's walk at the repository root | 12,654 |
-| shell: `.ts` under `src/` excluding `.d.ts` | 8,451 |
-| shell: `.ts` under `src/` including `.d.ts` | 8,648 |
+| predicate                                   | files  |
+| ------------------------------------------- | ------ |
+| Ariadne's walk over `src/`                  | 8,494  |
+| Ariadne's walk at the repository root       | 12,654 |
+| shell: `.ts` under `src/` excluding `.d.ts` | 8,451  |
+| shell: `.ts` under `src/` including `.d.ts` | 8,648  |
 
 `src/` costs 510.3 s of CPU and the repository root 1,653.9 s. They answer the
 ten-minute question differently, so rows for the two are never compared.
@@ -180,6 +180,30 @@ an exported singleton through a constructor binding, which is the defect
 TASK-381.11 states against `resolve_corpus` by name. None is a re-target: the
 call site stops resolving. Against them the candidate resolves 693 edges forward
 the per-arrival driver did not.
+
+## What evicting a batch of files costs
+
+`RECORDED_RESOLUTION_EVICTION_COST` holds what `ResolutionState` eviction costs
+under both shapes — one call per file, and one call per batch. Over vscode's
+`src/` at f3fa55c3 a cold load's evictions remove nothing at all, because the
+two-phase driver resolves once after every file is in the registries: the calls
+fall from 1,200 to 56 at 1,200 files, every one of them returns the state it was
+given, and clone allocations fall from **6,000 to zero**.
+
+The cost that remains is the incremental one. At 1,200 files, one edit to
+`vs/editor/common/core/range.ts` — which 252 files reach — scanned 11.3M scope
+entries and cloned 28.5M map entries evicting them one at a time, against
+54,684 and 136,729 for the whole batch. The seven components and both
+diagnostics digests are identical under the two shapes at 200, 600 and 1,200
+files, and identical again after the edits.
+
+That record is also where the copy-on-write question is settled. A full-corpus
+profile gives the copy-on-write family a quarter of the run, and that share
+belongs to the export-gate rollback path, which evicts one file at a time
+against a fully resolved project. A bulk load's own `ResolutionState` work is
+two applies over a state that was empty when they cloned it. Making the state
+mutable needs a profile of a long-running incremental session, which nobody has
+taken.
 
 ## Memory
 

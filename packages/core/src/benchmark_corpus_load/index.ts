@@ -37,6 +37,8 @@ export { RECORDED_EVICTION_INDEX_COST } from "./recorded_eviction_index_cost";
 
 export { RECORDED_CORPUS_PASS_COST } from "./recorded_corpus_pass_cost";
 
+export { RECORDED_RESOLUTION_EVICTION_COST } from "./recorded_resolution_eviction_cost";
+
 export { compare_fingerprints } from "./call_graph_fingerprint";
 
 export {

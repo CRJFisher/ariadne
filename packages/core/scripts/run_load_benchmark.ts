@@ -46,6 +46,7 @@ import {
   INGEST_ORDERS,
   RECORDED_CORPUS_PASS_COST,
   RECORDED_EVICTION_INDEX_COST,
+  RECORDED_RESOLUTION_EVICTION_COST,
   type ArmRequest,
   type ArmResult,
   type IngestOrder,
@@ -376,6 +377,28 @@ async function run_interleaved(context: RunContext, slice: SliceSize): Promise<v
 
   report_recorded_eviction_cost(control[0].row.file_counts.offered);
   report_recorded_corpus_pass(control[0].row.file_counts.offered);
+  report_recorded_resolution_eviction(control[0].row.file_counts.offered);
+}
+
+/**
+ * What resolution-state eviction cost this file set under both shapes.
+ *
+ * Entry counts only: they are properties of the algorithm and travel, while the
+ * CPU beside them in the record is a single observation of one process and is
+ * never a comparand for a live arm.
+ */
+function report_recorded_resolution_eviction(offered_file_count: number): void {
+  const recorded = RECORDED_RESOLUTION_EVICTION_COST.cold_load.find(
+    (row) => row.file_count === offered_file_count,
+  );
+  if (recorded === undefined) return;
+  const hub = RECORDED_RESOLUTION_EVICTION_COST.incremental.edits[0];
+  console.log(
+    `\nrecorded for this file set when resolution state started evicting a batch in one pass (${RECORDED_RESOLUTION_EVICTION_COST.machine}, ${RECORDED_RESOLUTION_EVICTION_COST.node_version} — not a comparand for the arms above):` +
+      `\n  eviction calls over the load ${recorded.eviction_calls.per_file.toLocaleString("en-US")} -> ${recorded.eviction_calls.batched}` +
+      `, cloned map entries ${recorded.cloned_entries.batched}, clone allocations ${recorded.clone_allocations.per_file.toLocaleString("en-US")} -> ${recorded.clone_allocations.batched}` +
+      `\n  one edit to ${hub.file} (${hub.affected_files} files affected) clones ${hub.cloned_entries.per_file.toLocaleString("en-US")} -> ${hub.cloned_entries.batched.toLocaleString("en-US")} entries, fingerprint identical`,
+  );
 }
 
 /**

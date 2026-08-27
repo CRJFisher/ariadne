@@ -10,7 +10,7 @@ import {
   get_all_referenced_symbols,
   get_indirect_reachability,
   size,
-  remove_file,
+  remove_files,
   apply_name_resolution,
   apply_call_resolution,
   clear,
@@ -397,7 +397,7 @@ describe("size", () => {
 // Update Function Tests
 // ============================================================================
 
-describe("remove_file", () => {
+describe("remove_files", () => {
   it("removes resolutions for the file's scopes", () => {
     const symbol_a = function_symbol("funcA" as SymbolName, MOCK_LOCATION_A);
     const symbol_b = function_symbol("funcB" as SymbolName, MOCK_LOCATION_B);
@@ -416,7 +416,7 @@ describe("remove_file", () => {
       indirect_reachability: new Map(),
     };
 
-    const result = remove_file(state, FILE_A);
+    const result = remove_files(state, new Set([FILE_A]));
 
     expect(result.resolutions_by_scope.has(SCOPE_A)).toBe(false);
     expect(result.resolutions_by_scope.has(SCOPE_B)).toBe(true);
@@ -441,7 +441,7 @@ describe("remove_file", () => {
       resolved_calls_by_file: new Map([[FILE_A, [call]]]),
     };
 
-    const result = remove_file(state, FILE_A);
+    const result = remove_files(state, new Set([FILE_A]));
 
     expect(result.resolved_calls_by_file.has(FILE_A)).toBe(false);
   });
@@ -463,7 +463,7 @@ describe("remove_file", () => {
       calls_by_caller_scope: new Map([[SCOPE_A, [call]]]),
     };
 
-    const result = remove_file(state, FILE_A);
+    const result = remove_files(state, new Set([FILE_A]));
 
     expect(result.calls_by_caller_scope.has(SCOPE_A)).toBe(false);
   });
@@ -497,7 +497,7 @@ describe("remove_file", () => {
       ]),
     };
 
-    const result = remove_file(state, FILE_A);
+    const result = remove_files(state, new Set([FILE_A]));
 
     expect(result.indirect_reachability.has(symbol_a)).toBe(false);
     expect(result.indirect_reachability.has(symbol_b)).toBe(true);
@@ -530,7 +530,7 @@ describe("remove_file", () => {
       ]),
     };
 
-    const result = remove_file(state, FILE_A);
+    const result = remove_files(state, new Set([FILE_A]));
 
     expect(result.indirect_reachability.has(symbol_a)).toBe(false);
     expect(result.indirect_reachability.has(symbol_b)).toBe(true);
@@ -547,7 +547,7 @@ describe("remove_file", () => {
       scope_to_file: new Map([[SCOPE_A, FILE_A]]),
     };
 
-    const result = remove_file(state, FILE_A);
+    const result = remove_files(state, new Set([FILE_A]));
 
     // Original state unchanged
     expect(state.resolutions_by_scope.has(SCOPE_A)).toBe(true);
@@ -555,6 +555,96 @@ describe("remove_file", () => {
 
     // Result has file removed
     expect(result.resolutions_by_scope.has(SCOPE_A)).toBe(false);
+  });
+
+  it("removes every file in the batch in one pass", () => {
+    const symbol_a = function_symbol("funcA" as SymbolName, MOCK_LOCATION_A);
+    const symbol_b = function_symbol("funcB" as SymbolName, MOCK_LOCATION_B);
+
+    const state: ResolutionState = {
+      ...create_resolution_state(),
+      resolutions_by_scope: new Map([
+        [SCOPE_A, new Map([["funcA" as SymbolName, symbol_a]])],
+        [SCOPE_B, new Map([["funcB" as SymbolName, symbol_b]])],
+      ]),
+      scope_to_file: new Map([
+        [SCOPE_A, FILE_A],
+        [SCOPE_B, FILE_B],
+      ]),
+    };
+
+    const result = remove_files(state, new Set([FILE_A, FILE_B]));
+
+    expect(result.resolutions_by_scope.size).toBe(0);
+    expect(result.scope_to_file.size).toBe(0);
+  });
+
+  it("returns the same state when the batch removes nothing", () => {
+    const symbol_a = function_symbol("funcA" as SymbolName, MOCK_LOCATION_A);
+
+    const state: ResolutionState = {
+      ...create_resolution_state(),
+      resolutions_by_scope: new Map([
+        [SCOPE_A, new Map([["funcA" as SymbolName, symbol_a]])],
+      ]),
+      scope_to_file: new Map([[SCOPE_A, FILE_A]]),
+    };
+
+    const result = remove_files(state, new Set([FILE_B]));
+
+    expect(result).toBe(state);
+  });
+
+  it("clones when only a resolved_calls_by_file entry is affected", () => {
+    const symbol_a = function_symbol("funcA" as SymbolName, MOCK_LOCATION_A);
+
+    const call: CallReference = {
+      call_type: "function",
+      name: "funcA" as SymbolName,
+      location: MOCK_LOCATION_A,
+      scope_id: SCOPE_A,
+      resolutions: [
+        { symbol_id: symbol_a, confidence: "certain", reason: { type: "direct" } },
+      ],
+    };
+
+    // FILE_B owns no scope and no indirect entry, so the scope scan alone would
+    // report nothing to remove while its resolved calls are still in state.
+    const state: ResolutionState = {
+      ...create_resolution_state(),
+      scope_to_file: new Map([[SCOPE_A, FILE_A]]),
+      resolved_calls_by_file: new Map([[FILE_B, [call]]]),
+    };
+
+    const result = remove_files(state, new Set([FILE_B]));
+
+    expect(result).not.toBe(state);
+    expect(result.resolved_calls_by_file.has(FILE_B)).toBe(false);
+    expect(result.scope_to_file.has(SCOPE_A)).toBe(true);
+  });
+
+  it("clones when only an indirect_reachability entry is affected", () => {
+    const symbol_a = function_symbol("callbackA" as SymbolName, MOCK_LOCATION_A);
+
+    const entry_a: IndirectReachability = {
+      reason: {
+        type: "collection_read",
+        collection_id: MOCK_COLLECTION_ID_A,
+        read_location: MOCK_LOCATION_A,
+      },
+    };
+
+    const state: ResolutionState = {
+      ...create_resolution_state(),
+      scope_to_file: new Map([[SCOPE_B, FILE_B]]),
+      indirect_reachability: new Map([[symbol_a, entry_a]]),
+    };
+
+    const result = remove_files(state, new Set([FILE_A]));
+
+    expect(result).not.toBe(state);
+    expect(result.indirect_reachability.size).toBe(0);
+    expect(result.scope_to_file.has(SCOPE_B)).toBe(true);
   });
 });
 

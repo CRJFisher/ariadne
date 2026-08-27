@@ -23,7 +23,7 @@ import {
   get_all_referenced_symbols as get_all_referenced_symbols_from_state,
   get_indirect_reachability as get_indirect_reachability_from_state,
   size as get_state_size,
-  remove_file as remove_file_from_state,
+  remove_files as remove_files_from_state,
   apply_name_resolution,
   apply_call_resolution,
   clear as clear_state,
@@ -64,9 +64,7 @@ export class ResolutionRegistry {
 
     // Drop stale resolutions before re-resolving so a changed file's old
     // targets never linger alongside its new ones.
-    for (const file_id of file_ids) {
-      this.state = remove_file_from_state(this.state, file_id);
-    }
+    this.state = remove_files_from_state(this.state, file_ids);
 
     const context: NameResolutionContext = {
       languages,
@@ -118,7 +116,7 @@ export class ResolutionRegistry {
   }
 
   remove_file(file_id: FilePath): void {
-    this.state = remove_file_from_state(this.state, file_id);
+    this.state = remove_files_from_state(this.state, new Set([file_id]));
   }
 
   size(): number {
