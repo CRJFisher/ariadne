@@ -1,0 +1,7 @@
+{
+  "key": "once",
+  "run_id": "20260827T093324Z-a1d79ac1",
+  "scope": "once",
+  "step_id": "task_381_18",
+  "summary": "Brought call resolution to the task's end state and committed as fd4e06cf (5 files, working tree clean). Two root causes, both in the same construct. (1) `resolve_callback_invocations` emitted the sy…"
+}
