@@ -46,6 +46,7 @@ import {
   INGEST_ORDERS,
   RECORDED_CORPUS_PASS_COST,
   RECORDED_EVICTION_INDEX_COST,
+  RECORDED_NAME_TABLE_MEMORY,
   RECORDED_RESOLUTION_EVICTION_COST,
   type ArmRequest,
   type ArmResult,
@@ -378,6 +379,28 @@ async function run_interleaved(context: RunContext, slice: SliceSize): Promise<v
   report_recorded_eviction_cost(control[0].row.file_counts.offered);
   report_recorded_corpus_pass(control[0].row.file_counts.offered);
   report_recorded_resolution_eviction(control[0].row.file_counts.offered);
+  report_recorded_name_table(control[0].row.file_counts.offered);
+}
+
+/**
+ * What the name table retained for this file set under both shapes.
+ *
+ * The stored-entry and visible-pair counts travel between machines because they
+ * are properties of the algorithm; the KB/file figures beside them were taken
+ * in their own session and are printed as a record rather than a comparand.
+ */
+function report_recorded_name_table(offered_file_count: number): void {
+  const recorded = RECORDED_NAME_TABLE_MEMORY.slices.find(
+    (slice) => slice.offered_files === offered_file_count,
+  );
+  if (recorded === undefined) return;
+  console.log(
+    `\nrecorded for this file set when the name table became a parent chain (${RECORDED_NAME_TABLE_MEMORY.machine}, ${RECORDED_NAME_TABLE_MEMORY.node_version} — not a comparand for the arms above):` +
+      `\n  retained name table ${recorded.name_table_kb_per_file.flattened} -> ${recorded.name_table_kb_per_file.chained} KB/file` +
+      `, stored entries ${recorded.stored_entries.flattened.toLocaleString("en-US")} -> ${recorded.stored_entries.chained.toLocaleString("en-US")}` +
+      `, ${recorded.scopes.toLocaleString("en-US")} scopes over ${recorded.chain_links.toLocaleString("en-US")} links at mean depth ${recorded.mean_chain_depth}` +
+      `\n  visible (scope, name) pairs ${recorded.visible_scope_name_pairs.toLocaleString("en-US")} under both shapes, fingerprint identical, CPU ${recorded.cpu_total_ms.flattened} -> ${recorded.cpu_total_ms.chained} ms`,
+  );
 }
 
 /**

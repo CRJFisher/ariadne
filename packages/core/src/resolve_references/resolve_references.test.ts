@@ -16,6 +16,7 @@ import type {
   SymbolReference,
 } from "@ariadnejs/types";
 import type { ResolutionRegistry } from "./resolution_registry";
+import type { ScopeResolutions } from "./resolution_state";
 import * as path from "path";
 import * as os from "os";
 import * as fs from "fs";
@@ -41,12 +42,16 @@ export function set_test_resolutions(
   resolutions: Map<SymbolName, SymbolId>
 ): void {
   const internal = (registry as object) as {
-    state: { resolutions_by_scope: Map<ScopeId, Map<SymbolName, SymbolId>> };
+    state: { resolutions_by_scope: Map<ScopeId, ScopeResolutions> };
   };
   if (!internal.state.resolutions_by_scope) {
     internal.state.resolutions_by_scope = new Map();
   }
-  internal.state.resolutions_by_scope.set(scope_id, resolutions);
+  // A seeded scope inherits nothing: these units name every binding they need.
+  internal.state.resolutions_by_scope.set(scope_id, {
+    own: resolutions,
+    parent: null,
+  });
 }
 
 /** Locate the CallableNode for a caller function defined in a given file. */

@@ -7,6 +7,10 @@
 import { EMPTY_MODULE_SPECIFIER_INDEX } from "./resolution_test_helpers";
 import { describe, it, expect, beforeEach } from "vitest";
 import { resolve_names, type NameResolutionContext } from "./name_resolution";
+import type {
+  NameResolutionResult,
+  ScopeResolutions,
+} from "./resolution_state";
 import { DefinitionRegistry } from "./registries/definition";
 import { ScopeRegistry } from "./registries/scope";
 import { ExportRegistry } from "./registries/export";
@@ -28,6 +32,36 @@ import type {
 } from "@ariadnejs/types";
 import type { FileSystemFolder } from "./file_folders";
 import { create_module_resolution_context } from "./import_resolution";
+
+/**
+ * Every name visible in `scope_id`, flattened back into one map.
+ *
+ * Resolution stores each scope's own bindings chained to its parent's, so the
+ * flat map is assembled here — outermost scope first, so a nearer binding
+ * overwrites the one it shadows. This is what a lookup in that scope can see,
+ * which is the contract these tests assert.
+ */
+function visible_bindings(
+  result: NameResolutionResult,
+  scope_id: ScopeId
+): Map<SymbolName, SymbolId> {
+  const chain: ScopeResolutions[] = [];
+  for (
+    let n: ScopeResolutions | null =
+      result.resolutions_by_scope.get(scope_id) ?? null;
+    n !== null;
+    n = n.parent
+  ) {
+    chain.push(n);
+  }
+  const flat = new Map<SymbolName, SymbolId>();
+  for (const node of chain.reverse()) {
+    for (const [name, symbol_id] of node.own) {
+      flat.set(name, symbol_id);
+    }
+  }
+  return flat;
+}
 
 const TEST_FILE = "test.ts" as FilePath;
 const FILE_SCOPE_ID = "scope:test.ts:file:0:0" as ScopeId;
@@ -135,7 +169,7 @@ describe("resolve_names", () => {
 
       const result = resolve_names(new Set([TEST_FILE]), context);
 
-      expect(result.resolutions_by_scope.get(FILE_SCOPE_ID)).toEqual(
+      expect(visible_bindings(result, FILE_SCOPE_ID)).toEqual(
         new Map<SymbolName, SymbolId>([["greet" as SymbolName, func_id]])
       );
     });
@@ -158,7 +192,7 @@ describe("resolve_names", () => {
 
       const result = resolve_names(new Set([TEST_FILE]), context);
 
-      expect(result.resolutions_by_scope.get(FILE_SCOPE_ID)).toEqual(
+      expect(visible_bindings(result, FILE_SCOPE_ID)).toEqual(
         new Map<SymbolName, SymbolId>([
           ["funcA" as SymbolName, func_a],
           ["funcB" as SymbolName, func_b],
@@ -179,7 +213,7 @@ describe("resolve_names", () => {
 
       const result = resolve_names(new Set([TEST_FILE]), context);
 
-      const file_scope = result.resolutions_by_scope.get(FILE_SCOPE_ID)!;
+      const file_scope = visible_bindings(result, FILE_SCOPE_ID);
       expect(file_scope.get("missing" as SymbolName)).toBeUndefined();
     });
   });
@@ -202,7 +236,7 @@ describe("resolve_names", () => {
 
       const result = resolve_names(new Set([TEST_FILE]), context);
 
-      expect(result.resolutions_by_scope.get(inner_scope_id)).toEqual(
+      expect(visible_bindings(result, inner_scope_id)).toEqual(
         new Map<SymbolName, SymbolId>([["outer" as SymbolName, outer_func]])
       );
     });
@@ -230,10 +264,10 @@ describe("resolve_names", () => {
       const result = resolve_names(new Set([TEST_FILE]), context);
 
       expect(
-        result.resolutions_by_scope.get(FILE_SCOPE_ID)!.get("func" as SymbolName)
+        visible_bindings(result, FILE_SCOPE_ID).get("func" as SymbolName)
       ).toBe(outer_func);
       expect(
-        result.resolutions_by_scope.get(inner_scope_id)!.get("func" as SymbolName)
+        visible_bindings(result, inner_scope_id).get("func" as SymbolName)
       ).toBe(inner_func);
     });
   });
@@ -259,7 +293,7 @@ describe("resolve_names", () => {
 
       const result = resolve_names(new Set([TEST_FILE]), context);
 
-      expect(result.resolutions_by_scope.get(FILE_SCOPE_ID)).toEqual(
+      expect(visible_bindings(result, FILE_SCOPE_ID)).toEqual(
         new Map<SymbolName, SymbolId>([["utils" as SymbolName, import_id]])
       );
     });
@@ -284,7 +318,7 @@ describe("resolve_names", () => {
 
       const result = resolve_names(new Set([TEST_FILE]), context);
 
-      expect(result.resolutions_by_scope.get(FILE_SCOPE_ID)).toEqual(
+      expect(visible_bindings(result, FILE_SCOPE_ID)).toEqual(
         new Map<SymbolName, SymbolId>()
       );
     });
@@ -373,7 +407,7 @@ describe("resolve_names", () => {
 
       const result = resolve_names(new Set([APP_PY]), py_context());
 
-      expect(result.resolutions_by_scope.get(APP_SCOPE)).toEqual(
+      expect(visible_bindings(result, APP_SCOPE)).toEqual(
         new Map<SymbolName, SymbolId>([["helper" as SymbolName, helper_id]])
       );
     });
@@ -407,7 +441,7 @@ describe("resolve_names", () => {
       const result = resolve_names(new Set([APP_PY]), py_context());
 
       expect(
-        result.resolutions_by_scope.get(APP_SCOPE)!.get("shared" as SymbolName)
+        visible_bindings(result, APP_SCOPE).get("shared" as SymbolName)
       ).toBe(two_id);
     });
 
@@ -438,7 +472,7 @@ describe("resolve_names", () => {
       const result = resolve_names(new Set([APP_PY]), py_context());
 
       expect(
-        result.resolutions_by_scope.get(APP_SCOPE)!.get("helper" as SymbolName)
+        visible_bindings(result, APP_SCOPE).get("helper" as SymbolName)
       ).toBe(local_id);
     });
 
@@ -461,7 +495,7 @@ describe("resolve_names", () => {
 
       const result = resolve_names(new Set([APP_PY]), py_context());
 
-      expect(result.resolutions_by_scope.get(APP_SCOPE)).toEqual(
+      expect(visible_bindings(result, APP_SCOPE)).toEqual(
         new Map<SymbolName, SymbolId>([["dup" as SymbolName, two_dup]])
       );
     });
@@ -540,9 +574,10 @@ describe("resolve_names", () => {
           "rust",
           create_module_resolution_context(rs_root_folder, EMPTY_MODULE_SPECIFIER_INDEX)
         );
-        return resolve_names(new Set([MAIN_RS]), rs_context()).resolutions_by_scope.get(
+        return visible_bindings(
+          resolve_names(new Set([MAIN_RS]), rs_context()),
           MAIN_RS_SCOPE
-        )!;
+        );
       }
 
       it("binds nothing for a name two globs supply from different modules", () => {
@@ -615,7 +650,7 @@ describe("resolve_names", () => {
       };
       const result = resolve_names(new Set([APP_TS]), ts_context);
 
-      expect(result.resolutions_by_scope.get(APP_TS_SCOPE)).toEqual(
+      expect(visible_bindings(result, APP_TS_SCOPE)).toEqual(
         new Map<SymbolName, SymbolId>()
       );
     });
@@ -654,9 +689,7 @@ describe("resolve_names", () => {
       const result = resolve_names(new Set([TEST_FILE]), context);
 
       expect(
-        result.resolutions_by_scope
-          .get(inner_scope_id)!
-          .get("has_flatten" as SymbolName)
+        visible_bindings(result, inner_scope_id).get("has_flatten" as SymbolName)
       ).toBe(outer_func);
     });
 
@@ -691,7 +724,7 @@ describe("resolve_names", () => {
       const result = resolve_names(new Set([TEST_FILE]), context);
 
       expect(
-        result.resolutions_by_scope.get(inner_scope_id)!.get("value" as SymbolName)
+        visible_bindings(result, inner_scope_id).get("value" as SymbolName)
       ).toBe(local_var);
     });
   });
@@ -715,7 +748,7 @@ describe("resolve_names", () => {
       const result = resolve_names(new Set([TEST_FILE]), context);
 
       expect(
-        result.resolutions_by_scope.get(FILE_SCOPE_ID)!.get("helper" as SymbolName)
+        visible_bindings(result, FILE_SCOPE_ID).get("helper" as SymbolName)
       ).toBe(helper_id);
     });
 
@@ -743,7 +776,7 @@ describe("resolve_names", () => {
       const result = resolve_names(new Set([TEST_FILE]), context);
 
       expect(
-        result.resolutions_by_scope.get(FILE_SCOPE_ID)!.get("temp" as SymbolName)
+        visible_bindings(result, FILE_SCOPE_ID).get("temp" as SymbolName)
       ).toBeUndefined();
     });
   });
@@ -785,10 +818,10 @@ describe("resolve_names", () => {
 
       const result = resolve_names(new Set([file_a, file_b]), context);
 
-      expect(result.resolutions_by_scope.get(scope_a)).toEqual(
+      expect(visible_bindings(result, scope_a)).toEqual(
         new Map<SymbolName, SymbolId>([["funcA" as SymbolName, func_a]])
       );
-      expect(result.resolutions_by_scope.get(scope_b)).toEqual(
+      expect(visible_bindings(result, scope_b)).toEqual(
         new Map<SymbolName, SymbolId>([["funcB" as SymbolName, func_b]])
       );
       expect(result.scope_to_file.get(scope_a)).toBe(file_a);

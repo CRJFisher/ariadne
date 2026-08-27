@@ -39,6 +39,8 @@ export { RECORDED_CORPUS_PASS_COST } from "./recorded_corpus_pass_cost";
 
 export { RECORDED_RESOLUTION_EVICTION_COST } from "./recorded_resolution_eviction_cost";
 
+export { RECORDED_NAME_TABLE_MEMORY } from "./recorded_name_table_memory";
+
 export { compare_fingerprints } from "./call_graph_fingerprint";
 
 export {

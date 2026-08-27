@@ -18,7 +18,13 @@ Resolves symbol names within scopes using lexical scope walk:
 2. Check imports
 3. Walk up to parent scope (repeat)
 
-**Output:** `Map<ScopeId, Map<SymbolName, SymbolId>>` — what each name resolves to in each scope.
+**Output:** `Map<ScopeId, ScopeResolutions>`, where `ScopeResolutions` is `{ own, parent }` — the
+names a scope binds itself, chained to its enclosing scope. A lookup that misses `own` walks
+`parent` (`lookup_in_scope_chain`), so the chain is walked at read time rather than flattened
+into every scope at write time. A scope binding nothing shares its parent's link outright.
+
+Chains never cross a file boundary — each file starts at its root scope with no parent — so
+evicting a file drops every link it owns and leaves none dangling.
 
 ### Phase 2: Call Resolution (`call_resolution/`)
 

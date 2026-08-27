@@ -3,6 +3,23 @@
  *
  * Pure functions for resolving symbol names in scopes.
  * Implements lexical scoping with import shadowing and local definition override.
+ *
+ * A scope's table holds only the names that scope binds, chained to its
+ * parent's, because lexical scoping is a chain and storing it flattened stores
+ * every visible name once per scope that can see it. What that costs is in
+ * `RECORDED_NAME_TABLE_MEMORY`
+ * (`benchmark_corpus_load/recorded_name_table_memory.ts`): over 800 files of
+ * vscode's `src/` the flattened form retained 113.73 KB/file against the
+ * chain's 10.02, storing 2,153,280 entries against 71,341 for the identical set
+ * of 2,153,280 visible (scope, name) pairs.
+ *
+ * Do not intern the `SymbolName` keys, the file paths or the symbol ids here.
+ * The ceiling of any such scheme was measured by performing the rewrite
+ * outright — every retained string slot replaced by the canonical instance of
+ * its content — and `INTERNING_CEILING` in that same record has the row:
+ * 1,455,167 slots rewritten freed 5.42 KB/file against a 68 KB/file estimate,
+ * because V8 already shares these strings and the estimate counted pointer
+ * slots as copies.
  */
 
 import type {
@@ -16,7 +33,12 @@ import type { DefinitionRegistry } from "./registries/definition";
 import type { ScopeRegistry } from "./registries/scope";
 import type { ExportRegistry } from "./registries/export";
 import type { ImportGraph } from "./import_resolution/import_graph";
-import type { NameResolutionResult } from "./resolution_state";
+import {
+  EMPTY_SCOPE_RESOLUTIONS,
+  lookup_in_scope_chain,
+  type NameResolutionResult,
+  type ScopeResolutions,
+} from "./resolution_state";
 import type { ModuleResolutionContext } from "./import_resolution";
 
 /** Registries and language map consulted while resolving names in a scope tree. */
@@ -46,10 +68,7 @@ export function resolve_names(
     };
   }
 
-  const all_resolutions_by_scope = new Map<
-    ScopeId,
-    ReadonlyMap<SymbolName, SymbolId>
-  >();
+  const all_resolutions_by_scope = new Map<ScopeId, ScopeResolutions>();
   const all_scope_to_file = new Map<ScopeId, FilePath>();
 
   for (const file_id of file_ids) {
@@ -65,7 +84,7 @@ export function resolve_names(
 
     const file_result = resolve_scope_recursive(
       root_scope.id,
-      new Map(),
+      null,
       file_id,
       context
     );
@@ -85,19 +104,23 @@ export function resolve_names(
 }
 
 interface ScopeTreeResolutionResult {
-  readonly resolutions_by_scope: Map<ScopeId, Map<SymbolName, SymbolId>>;
+  readonly resolutions_by_scope: Map<ScopeId, ScopeResolutions>;
   readonly scope_to_file: Map<ScopeId, FilePath>;
 }
 
 /**
- * Resolve a scope and its descendants over a base map inherited from the
- * parent scope. Later steps shadow earlier ones: imports shadow inherited
- * names, local definitions shadow imports (minus the self-initializer
- * carve-out), and hoisted functions fill only names with no closer binding.
+ * Resolve a scope and its descendants, recording only the names each scope
+ * binds itself and chaining to the enclosing scope for the rest. Later steps
+ * shadow earlier ones: imports shadow inherited names, local definitions shadow
+ * imports (minus the self-initializer carve-out), and hoisted functions fill
+ * only names with no closer binding.
+ *
+ * "Already in scope" is therefore asked of the chain (`in_scope`), not of a
+ * pre-flattened copy of every visible name.
  */
 function resolve_scope_recursive(
   scope_id: ScopeId,
-  parent_resolutions: ReadonlyMap<SymbolName, SymbolId>,
+  parent_node: ScopeResolutions | null,
   file_path: FilePath,
   context: NameResolutionContext
 ): ScopeTreeResolutionResult {
@@ -105,7 +128,11 @@ function resolve_scope_recursive(
     resolutions_by_scope: new Map(),
     scope_to_file: new Map(),
   };
-  const scope_resolutions = new Map(parent_resolutions);
+  const own = new Map<SymbolName, SymbolId>();
+
+  const in_scope = (name: SymbolName): boolean =>
+    own.has(name) ||
+    (parent_node !== null && lookup_in_scope_chain(parent_node, name) !== null);
 
   const import_defs = context.imports.get_scope_imports(scope_id);
 
@@ -154,7 +181,7 @@ function resolve_scope_recursive(
       }
     }
     for (const [name, symbol_id] of wildcard_layer) {
-      scope_resolutions.set(name, symbol_id);
+      own.set(name, symbol_id);
     }
   }
 
@@ -260,7 +287,7 @@ function resolve_scope_recursive(
     }
 
     if (resolved) {
-      scope_resolutions.set(imp_def.name, resolved);
+      own.set(imp_def.name, resolved);
     }
   }
 
@@ -282,7 +309,7 @@ function resolve_scope_recursive(
     // is acceptable because a self-initializer local is a leaf value in the
     // shapes this targets (serde `let has_flatten = has_flatten(fields)`), and
     // the call edge — what entry-point detection needs — is what we recover.
-    if (scope_resolutions.has(name) && is_self_initializer(symbol_id, name, context)) {
+    if (in_scope(name) && is_self_initializer(symbol_id, name, context)) {
       continue;
     }
     // Preserve a CommonJS `const X = require()` rebind to the default-export
@@ -290,7 +317,7 @@ function resolve_scope_recursive(
     if (require_default_rebinds.has(name)) {
       continue;
     }
-    scope_resolutions.set(name, symbol_id);
+    own.set(name, symbol_id);
   }
 
   // @language javascript,rust
@@ -307,12 +334,21 @@ function resolve_scope_recursive(
   // detection — but only for a name with no competing binding, which in valid
   // code is never referenced from a scope that cannot reach it.
   for (const [name, symbol_id] of collect_hoisted_functions(scope_id, context)) {
-    if (!scope_resolutions.has(name)) {
-      scope_resolutions.set(name, symbol_id);
+    if (!in_scope(name)) {
+      own.set(name, symbol_id);
     }
   }
 
-  result.resolutions_by_scope.set(scope_id, scope_resolutions);
+  // A scope that binds nothing of its own sees exactly what its parent sees, so
+  // it shares the parent's link rather than adding an empty one. Most block
+  // scopes bind nothing, so this is what keeps the chain short enough for the
+  // lookup walk to stay cheap.
+  const node: ScopeResolutions =
+    own.size === 0
+      ? (parent_node ?? EMPTY_SCOPE_RESOLUTIONS)
+      : { own, parent: parent_node };
+
+  result.resolutions_by_scope.set(scope_id, node);
   result.scope_to_file.set(scope_id, file_path);
 
   const scope = context.scopes.get_scope(scope_id);
@@ -320,7 +356,7 @@ function resolve_scope_recursive(
     for (const child_id of scope.child_ids) {
       const child_result = resolve_scope_recursive(
         child_id,
-        scope_resolutions,
+        node,
         file_path,
         context
       );

@@ -14,6 +14,8 @@ import {
   apply_name_resolution,
   apply_call_resolution,
   clear,
+  lookup_in_scope_chain,
+  type ScopeResolutions,
 } from "./resolution_state";
 import { function_symbol } from "@ariadnejs/types";
 import type {
@@ -65,6 +67,11 @@ const MOCK_COLLECTION_ID_B = "variable:b.ts:1:0:1:10:handlers" as SymbolId;
 // Query Function Tests
 // ============================================================================
 
+/** A scope binding these names and inheriting nothing — the shape state stores. */
+function bindings(own: Map<SymbolName, SymbolId>): ScopeResolutions {
+  return { own, parent: null };
+}
+
 describe("create_resolution_state", () => {
   it("returns a state with five empty maps", () => {
     const state = create_resolution_state();
@@ -90,7 +97,7 @@ describe("resolve", () => {
     const state: ResolutionState = {
       ...create_resolution_state(),
       resolutions_by_scope: new Map([
-        [SCOPE_A, new Map([["greet" as SymbolName, symbol_id]])],
+        [SCOPE_A, bindings(new Map([["greet" as SymbolName, symbol_id]]))],
       ]),
     };
 
@@ -112,7 +119,7 @@ describe("resolve", () => {
     const state: ResolutionState = {
       ...create_resolution_state(),
       resolutions_by_scope: new Map([
-        [SCOPE_A, new Map([["greet" as SymbolName, symbol_id]])],
+        [SCOPE_A, bindings(new Map([["greet" as SymbolName, symbol_id]]))],
       ]),
     };
 
@@ -376,13 +383,15 @@ describe("size", () => {
     const state: ResolutionState = {
       ...create_resolution_state(),
       resolutions_by_scope: new Map([
-        [SCOPE_A, new Map([["funcA" as SymbolName, symbol_a]])],
+        [SCOPE_A, bindings(new Map([["funcA" as SymbolName, symbol_a]]))],
         [
           SCOPE_B,
-          new Map([
-            ["funcB" as SymbolName, symbol_b],
-            ["funcC" as SymbolName, symbol_c],
-          ]),
+          bindings(
+            new Map([
+              ["funcB" as SymbolName, symbol_b],
+              ["funcC" as SymbolName, symbol_c],
+            ])
+          ),
         ],
       ]),
     };
@@ -404,8 +413,8 @@ describe("remove_files", () => {
 
     const state: ResolutionState = {
       resolutions_by_scope: new Map([
-        [SCOPE_A, new Map([["funcA" as SymbolName, symbol_a]])],
-        [SCOPE_B, new Map([["funcB" as SymbolName, symbol_b]])],
+        [SCOPE_A, bindings(new Map([["funcA" as SymbolName, symbol_a]]))],
+        [SCOPE_B, bindings(new Map([["funcB" as SymbolName, symbol_b]]))],
       ]),
       scope_to_file: new Map([
         [SCOPE_A, FILE_A],
@@ -542,7 +551,7 @@ describe("remove_files", () => {
     const state: ResolutionState = {
       ...create_resolution_state(),
       resolutions_by_scope: new Map([
-        [SCOPE_A, new Map([["funcA" as SymbolName, symbol_a]])],
+        [SCOPE_A, bindings(new Map([["funcA" as SymbolName, symbol_a]]))],
       ]),
       scope_to_file: new Map([[SCOPE_A, FILE_A]]),
     };
@@ -564,8 +573,8 @@ describe("remove_files", () => {
     const state: ResolutionState = {
       ...create_resolution_state(),
       resolutions_by_scope: new Map([
-        [SCOPE_A, new Map([["funcA" as SymbolName, symbol_a]])],
-        [SCOPE_B, new Map([["funcB" as SymbolName, symbol_b]])],
+        [SCOPE_A, bindings(new Map([["funcA" as SymbolName, symbol_a]]))],
+        [SCOPE_B, bindings(new Map([["funcB" as SymbolName, symbol_b]]))],
       ]),
       scope_to_file: new Map([
         [SCOPE_A, FILE_A],
@@ -585,7 +594,7 @@ describe("remove_files", () => {
     const state: ResolutionState = {
       ...create_resolution_state(),
       resolutions_by_scope: new Map([
-        [SCOPE_A, new Map([["funcA" as SymbolName, symbol_a]])],
+        [SCOPE_A, bindings(new Map([["funcA" as SymbolName, symbol_a]]))],
       ]),
       scope_to_file: new Map([[SCOPE_A, FILE_A]]),
     };
@@ -656,14 +665,14 @@ describe("apply_name_resolution", () => {
     const state: ResolutionState = {
       ...create_resolution_state(),
       resolutions_by_scope: new Map([
-        [SCOPE_A, new Map([["funcA" as SymbolName, symbol_a]])],
+        [SCOPE_A, bindings(new Map([["funcA" as SymbolName, symbol_a]]))],
       ]),
       scope_to_file: new Map([[SCOPE_A, FILE_A]]),
     };
 
     const result_to_apply: NameResolutionResult = {
       resolutions_by_scope: new Map([
-        [SCOPE_B, new Map([["funcB" as SymbolName, symbol_b]])],
+        [SCOPE_B, bindings(new Map([["funcB" as SymbolName, symbol_b]]))],
       ]),
       scope_to_file: new Map([[SCOPE_B, FILE_B]]),
     };
@@ -683,23 +692,26 @@ describe("apply_name_resolution", () => {
     const state: ResolutionState = {
       ...create_resolution_state(),
       resolutions_by_scope: new Map([
-        [SCOPE_A, new Map([["func" as SymbolName, symbol_old]])],
+        [SCOPE_A, bindings(new Map([["func" as SymbolName, symbol_old]]))],
       ]),
       scope_to_file: new Map([[SCOPE_A, FILE_A]]),
     };
 
     const result_to_apply: NameResolutionResult = {
       resolutions_by_scope: new Map([
-        [SCOPE_A, new Map([["func" as SymbolName, symbol_new]])],
+        [SCOPE_A, bindings(new Map([["func" as SymbolName, symbol_new]]))],
       ]),
       scope_to_file: new Map([[SCOPE_A, FILE_A]]),
     };
 
     const result = apply_name_resolution(state, result_to_apply);
 
-    expect(result.resolutions_by_scope.get(SCOPE_A)!.get("func" as SymbolName)).toBe(
-      symbol_new
-    );
+    expect(
+      lookup_in_scope_chain(
+        result.resolutions_by_scope.get(SCOPE_A)!,
+        "func" as SymbolName
+      )
+    ).toBe(symbol_new);
   });
 
   it("does not mutate the original state", () => {
@@ -709,7 +721,7 @@ describe("apply_name_resolution", () => {
 
     const result_to_apply: NameResolutionResult = {
       resolutions_by_scope: new Map([
-        [SCOPE_B, new Map([["funcB" as SymbolName, symbol_b]])],
+        [SCOPE_B, bindings(new Map([["funcB" as SymbolName, symbol_b]]))],
       ]),
       scope_to_file: new Map([[SCOPE_B, FILE_B]]),
     };

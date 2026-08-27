@@ -28,12 +28,46 @@ import type {
 // Types
 // ============================================================================
 
+/**
+ * One scope's name bindings, chained to the bindings of the scope enclosing it.
+ *
+ * Lexical scoping *is* a chain, so it is stored as one: `own` holds only the
+ * names this scope binds itself, and a lookup that misses walks `parent`. A
+ * scope that binds nothing shares its parent's node outright, so the chain has
+ * one link per *binding* scope rather than one per scope.
+ *
+ * Chains never cross a file boundary — `resolve_names` starts each file at its
+ * root scope with no parent, and recursion only descends that file's scope
+ * tree — so evicting a file drops every node it owns with no dangling links.
+ */
+export interface ScopeResolutions {
+  readonly own: ReadonlyMap<SymbolName, SymbolId>;
+  readonly parent: ScopeResolutions | null;
+}
+
+/** A scope binding no names of its own; shared, and safe to share, as it is immutable and empty. */
+export const EMPTY_SCOPE_RESOLUTIONS: ScopeResolutions = {
+  own: new Map(),
+  parent: null,
+};
+
+/** Resolve `name` against a scope's own bindings, then its enclosing scopes'. */
+export function lookup_in_scope_chain(
+  node: ScopeResolutions,
+  name: SymbolName
+): SymbolId | null {
+  for (let n: ScopeResolutions | null = node; n !== null; n = n.parent) {
+    const hit = n.own.get(name);
+    if (hit !== undefined) {
+      return hit;
+    }
+  }
+  return null;
+}
+
 export interface ResolutionState {
-  /** Primary storage for name resolution: scope → name → resolved symbol. */
-  readonly resolutions_by_scope: ReadonlyMap<
-    ScopeId,
-    ReadonlyMap<SymbolName, SymbolId>
-  >;
+  /** Primary storage for name resolution: scope → that scope's link in its file's binding chain. */
+  readonly resolutions_by_scope: ReadonlyMap<ScopeId, ScopeResolutions>;
 
   /** Reverse index enabling per-file removal of a scope's resolutions. */
   readonly scope_to_file: ReadonlyMap<ScopeId, FilePath>;
@@ -59,10 +93,7 @@ export interface ResolutionState {
 }
 
 export interface NameResolutionResult {
-  readonly resolutions_by_scope: ReadonlyMap<
-    ScopeId,
-    ReadonlyMap<SymbolName, SymbolId>
-  >;
+  readonly resolutions_by_scope: ReadonlyMap<ScopeId, ScopeResolutions>;
   readonly scope_to_file: ReadonlyMap<ScopeId, FilePath>;
 }
 
@@ -104,7 +135,8 @@ export function resolve(
   scope_id: ScopeId,
   name: SymbolName
 ): SymbolId | null {
-  return state.resolutions_by_scope.get(scope_id)?.get(name) ?? null;
+  const node = state.resolutions_by_scope.get(scope_id);
+  return node === undefined ? null : lookup_in_scope_chain(node, name);
 }
 
 export function get_calls_by_caller_scope(
@@ -153,11 +185,21 @@ export function get_indirect_reachability(
   return state.indirect_reachability;
 }
 
-/** Total number of name resolutions across all scopes. */
+/**
+ * Number of name bindings held across the project — each counted once, at the
+ * scope that binds it, not once per scope that can see it.
+ */
 export function size(state: ResolutionState): number {
   let count = 0;
-  for (const scope_resolutions of state.resolutions_by_scope.values()) {
-    count += scope_resolutions.size;
+  const counted = new Set<ScopeResolutions>();
+  for (const node of state.resolutions_by_scope.values()) {
+    for (let n: ScopeResolutions | null = node; n !== null; n = n.parent) {
+      if (counted.has(n)) {
+        break; // this node and every node above it is already counted
+      }
+      counted.add(n);
+      count += n.own.size;
+    }
   }
   return count;
 }

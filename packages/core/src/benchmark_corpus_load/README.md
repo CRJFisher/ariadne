@@ -205,6 +205,29 @@ two applies over a state that was empty when they cloned it. Making the state
 mutable needs a profile of a long-running incremental session, which nobody has
 taken.
 
+## What the name table retains
+
+`RECORDED_NAME_TABLE_MEMORY` holds what the per-scope name table costs under both
+shapes — a copy of every visible binding in every scope, and each scope's own
+bindings chained to its parent's. Over vscode's `src/` at f3fa55c3, retained
+bytes measured **by deletion** under forced GC fall from 171.86 to 10.84 KB/file
+at 200 files and from 113.73 to 10.02 at 800, because 2,153,280 stored entries
+become 71,341 and 36,910 scopes collapse to 21,916 links at mean depth 3.19.
+
+The equivalence is structural rather than sampled: the visible (scope, name)
+pair count — every name a lookup in a scope can see, summed over scopes — is
+identical under both shapes at every slice, so the chain exposes exactly the
+name set the flat table materialised. All seven fingerprint components agree
+too, and CPU lands at 0.98–1.00x, which is what says the copying removed pays
+for the walking added.
+
+The record also carries `INTERNING_CEILING`, so the cheaper-looking alternative
+is not re-proposed from an estimate. Rewriting all 1,455,167 retained string
+slots to the canonical instance of their content — the ceiling of any interning
+scheme — freed **5.42 KB/file against a 68 KB/file estimate**. V8 already shares
+those strings. The path interning that does pay is inside cache blobs, measured
+at 2.32x, and belongs to TASK-381.9.
+
 ## Memory
 
 Peak RSS is reported as a mean over at least two runs with the spread, never as
