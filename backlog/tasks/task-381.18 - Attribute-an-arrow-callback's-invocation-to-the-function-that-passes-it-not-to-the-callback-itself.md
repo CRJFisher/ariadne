@@ -109,3 +109,128 @@ one.
 - [ ] #6 `Could not find body scope for anonymous function` is either fixed or filed as its own task with its own evidence; it is not left as an unexplained warning on the corpus.
 
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+
+## What the user gets
+
+A function that passes a callback reaches it. Ask "what does `dead_with_arrow`
+call" and the arrow it hands to `map` is in the answer; delete
+`dead_with_arrow` and `helper_from_arrow`, which only that arrow calls, is
+reported as reachable from nothing. Both answers were wrong before, in opposite
+directions: the caller reached nothing, and the callback was its own caller, so
+an orphaned callback could never surface.
+
+On the probe file the reported graph is now symmetric between the two forms,
+and both callbacks are nodes:
+
+```text
+dead_with_arrow               -> <anonymous>@5   (synthetic)
+<anonymous>@5                 -> helper_from_arrow
+dead_with_function_expression -> <anonymous>@9   (synthetic)
+<anonymous>@9                 -> helper_from_function_expression
+```
+
+## Two defects, one construct
+
+The synthetic invocation carried `scope_id: callable.defining_scope_id`. That
+field says where the callback is DEFINED; the invocation happens where the
+receiver call is WRITTEN. For a `function` expression the two coincide by
+accident, for an arrow they do not, and the enclosing-function walk returned the
+arrow itself. The invocation now carries the receiver call's own `scope_id`,
+which is the same field every real call site uses, so the two forms cannot
+diverge again through this path.
+
+Repairing that alone left five anonymous callables still their own caller, and
+the cause was the second defect — the one AC #6 names. `find_body_scope_for_definition`
+matched an anonymous definition to the smallest scope CONTAINING it. An
+anonymous definition spans its whole node, but its scope opens at the parameter
+list: `(v) => v` puts the two on the same span, while `async (v) => v` and
+`function (v) {…}` open the scope after the definition starts. So no scope
+contained those definitions, and the match either threw — the
+`Could not find body scope for anonymous function` warning — or, where an
+enclosing callback existed, silently handed over that callback's scope. A
+callback that borrows its neighbour's scope reports the neighbour's calls as its
+own, including its own invocation. The match now takes the outermost anonymous
+scope INSIDE the definition's span, which is the definition's own scope for all
+three forms and never a nested callback's.
+
+Both fixes are needed for AC #2. On the vs/base slice the resolver fix alone
+takes anonymous-caller self-edges from 700 to 4, and the body-scope fix takes
+those last four to 0 — every one of them an `async` arrow nested inside another
+arrow, at `async.ts:2090`, `:2096`, `:2507` and `:2513`, each having borrowed the
+outer arrow's scope. The warning is fixed rather than filed:
+it is the same construct, and no task remains open against it.
+
+## Measured on the vs/base slice
+
+`microsoft/vscode@f3fa55c3` · `folder-ts:src/vs/base` · 200 of 479 files (185
+indexed, 15 dropped) · Darwin 24.6.0 · node v22.22.1. Control arm is this tree
+with only the two source files reverted, run in the same session; its seven
+components reproduce TASK-381.10's committed baseline row exactly.
+
+| component | before | after |
+| --- | --- | --- |
+| nodes | 4489/ed52bfdc4390ce91 | 4500/be6ba857c971b4bd |
+| call edges | 4612/78fe76a12e7b741f | 4613/5ae4a7e202248f96 |
+| unresolved | 8107/af65333659086bff | 8107/d6d22e85763d6577 |
+| raw entry points | 1518/47cd168e752835d0 | 1518/47cd168e752835d0 |
+| indirect keys | 821/8ffe9ec8ebd60173 | 821/8ffe9ec8ebd60173 |
+| dropped | 15/e9240d8d08cdeafd | 15/e9240d8d08cdeafd |
+| indirect evidence | 821/f2be5826108a3188 | 821/f2be5826108a3188 |
+
+Self-edges with an anonymous caller: **700 → 0**. Self-edges with a named
+caller — ordinary recursion — **110 → 110**, byte-identical. The task was
+written against 782 and 159 measured on an earlier tree; 700 and 110 are what
+the same slice produces on the tree this step branched from, and the control arm
+is that tree.
+
+Every moved member accounts for:
+
+- **nodes +11, −0.** Eleven anonymous callables that had no body scope now have
+  one, so each becomes a node. A strict superset; nothing is lost.
+- **call edges −722.** 700 are the anonymous self-edges. The remaining 22 are
+  calls that were attributed to the wrong caller because the anonymous function
+  holding them had no node (17 recorded against `module:<file>`) or had borrowed
+  a neighbour's scope (5).
+- **call edges +723.** 703 are caller-to-callback edges — 576 from a named
+  caller, 127 from an anonymous one. 20 are those mis-attributed calls landing on
+  the function that holds them. The three callback edges that vanish rather than
+  move gain a better caller in the same pass: `doRefreshSubTree`, `debounce` and
+  `throttle` now reach the callbacks that previously reached themselves.
+- **unresolved calls ±59, count unchanged.** The same call sites, re-attributed
+  from `module:<file>` to the anonymous node that now exists to hold them.
+- No callee anywhere in the slice loses every incoming edge, and the raw
+  entry-point set does not move.
+
+`Could not find body scope for anonymous function` is emitted zero times over
+the slice, against 15 before — one per anonymous definition, across nine files.
+Eleven of the fifteen sit in files that survive the load; the other four are in
+`dom.ts`, `cancellation.ts` and `filters.ts`, which the load drops, so they
+never reach the graph either way. That is why the node count moves by 11 and
+not by 15.
+
+## The in-repo corpus does not exercise this
+
+The epic expects this step to move the seven-number fingerprint, and over
+`packages/core/benchmark_corpus` it moves in **zero** components: the corpus
+holds no anonymous callable at all — no arrow, no `function` expression, no
+lambda — so the committed member list needs no edit. Each of its seven lists was
+re-derived from the corpus source to confirm that, name by name and span by
+span, rather than compared against a run. The guard therefore does not cover
+this construct, which is carried as follow-up work rather than fixed here:
+adding one would move all seven components and `file_counts`, which is exactly
+the movement this step exists to isolate.
+
+## Where the guards live
+
+`call_resolver.test.ts` pins the two forms side by side twice: once over
+`resolve_calls_for_files` with each form's `defining_scope_id` set as the indexer
+produces it, and once end to end over the probe file through `Project`, asserting
+both caller-to-callback edges and nothing else. `scope_lookup.test.ts` pins the
+scope-opens-after-the-definition shape and the nested-callback case. All four
+were run against the pre-fix tree first: three fail there.
+
+<!-- SECTION:NOTES:END -->

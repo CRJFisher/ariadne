@@ -436,6 +436,13 @@ function infer_call_type_from_resolution(
  * Emit a synthetic invocation edge (receiver → callback) for each anonymous
  * function passed to a higher-order function, so callbacks are not reported as
  * unreachable.
+ *
+ * The invocation happens where the receiver call is written, so it carries the
+ * receiver call's scope — not the callback's `defining_scope_id`. An arrow's
+ * definition spans exactly its own function scope, so that field names the
+ * arrow itself and the enclosing-function walk in `resolve_calls_for_files`
+ * would return the callback as its own caller, hiding both the real caller's
+ * reach and the callback's own unreachability.
  */
 function resolve_callback_invocations(
   file_ids: Set<FilePath>,
@@ -489,7 +496,7 @@ function resolve_callback_invocations(
     invocations.push({
       location: callback_context.receiver_location,
       name: "<anonymous>" as SymbolName,
-      scope_id: callable.defining_scope_id,
+      scope_id: receiver_call.scope_id,
       call_type: "function",
       resolutions: [
         {

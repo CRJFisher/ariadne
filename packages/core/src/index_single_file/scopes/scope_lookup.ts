@@ -12,9 +12,8 @@ import type {
  * location spans from the parameters to the closing brace. Tree-sitter places
  * the name and the scope differently across the constructs we index, so several
  * strategies are tried from most to least precise:
- *   0. Arrow functions: the definition spans the whole node and the scope
- *      contains it rather than starting after it, so match by smallest
- *      containing scope.
+ *   0. Anonymous functions: the definition spans the whole node, so its own
+ *      scope is the outermost anonymous scope INSIDE that span.
  *   1. Same line as the definition ends, exact name match.
  *   2. Within 5 lines, for multi-line signatures.
  *   3. Within 2 lines with no name match, when either side is anonymous and the
@@ -34,31 +33,39 @@ export function find_body_scope_for_definition(
   const is_anonymous = def_name === "" || def_name === "<anonymous>";
 
   if (is_anonymous) {
-    const containment_candidates: { scope: LexicalScope; size: number }[] = [];
+    // Matching by containment IN the definition, rather than by a scope that
+    // contains it, is what makes the forms agree. `(v) => v` puts its scope on
+    // exactly the definition's span, but `async (v) => v` and `function (v) {}`
+    // start their scope at the parameter list, after the definition's own
+    // start — so a scope containing the definition is never the definition's
+    // own, and an enclosing callback's scope would be borrowed instead, making
+    // that callback's node report calls it does not hold.
+    const owned_candidates: { scope: LexicalScope; size: number }[] = [];
 
     for (const scope of callable_scopes) {
       const scope_is_anonymous = scope.name === null || scope.name === "";
       if (!scope_is_anonymous) continue;
 
-      const scope_contains_def =
-        scope.location.start_line <= def_location.start_line &&
-        scope.location.end_line >= def_location.end_line &&
-        (scope.location.start_line < def_location.start_line ||
-          scope.location.start_column <= def_location.start_column) &&
-        (scope.location.end_line > def_location.end_line ||
-          scope.location.end_column >= def_location.end_column);
+      const def_contains_scope =
+        scope.location.start_line >= def_location.start_line &&
+        scope.location.end_line <= def_location.end_line &&
+        (scope.location.start_line > def_location.start_line ||
+          scope.location.start_column >= def_location.start_column) &&
+        (scope.location.end_line < def_location.end_line ||
+          scope.location.end_column <= def_location.end_column);
 
-      if (scope_contains_def) {
+      if (def_contains_scope) {
         const size =
           (scope.location.end_line - scope.location.start_line) * 10000 +
           (scope.location.end_column - scope.location.start_column);
-        containment_candidates.push({ scope, size });
+        owned_candidates.push({ scope, size });
       }
     }
 
-    if (containment_candidates.length > 0) {
-      containment_candidates.sort((a, b) => a.size - b.size);
-      return containment_candidates[0].scope.id;
+    // The outermost, so a nested callback's scope is never taken for its own.
+    if (owned_candidates.length > 0) {
+      owned_candidates.sort((a, b) => b.size - a.size);
+      return owned_candidates[0].scope.id;
     }
   }
 

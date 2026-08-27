@@ -4,8 +4,12 @@
  * groupings, and type-registry side effects it produces.
  */
 
+import * as fs from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
 import { describe, it, expect, beforeEach } from "vitest";
 import { make_export_chain_context } from "../resolution_test_helpers";
+import { Project } from "../../project/project";
 import {
   resolve_calls_for_files,
   type CallResolutionContext,
@@ -966,6 +970,234 @@ describe("resolve_calls_for_files", () => {
       const invocation = calls.find((c) => c.is_callback_invocation === true)!;
       expect(invocation.resolutions).toEqual([
         { symbol_id: callback_id, confidence: "certain", reason: { type: "direct" } },
+      ]);
+    });
+
+    it("attributes an arrow callback and a function-expression callback alike to the function that passes them", () => {
+      // The two forms reach here with different `defining_scope_id`s, exactly as
+      // the indexer produces them: an arrow's definition spans its own function
+      // scope, so `get_scope_id` lands on the arrow itself, while a `function`
+      // expression's definition starts before its scope does, so it lands on the
+      // enclosing function. Both are passed at a receiver call inside the
+      // enclosing function, and both invocations belong to that function.
+      const arrow_caller_scope = "scope:test.ts:dead_with_arrow" as ScopeId;
+      const arrow_own_scope = "scope:test.ts:arrow" as ScopeId;
+      const expression_caller_scope =
+        "scope:test.ts:dead_with_function_expression" as ScopeId;
+      const expression_own_scope = "scope:test.ts:function_expression" as ScopeId;
+
+      const arrow_location: Location = {
+        file_path: TEST_FILE,
+        start_line: 5,
+        start_column: 21,
+        end_line: 5,
+        end_column: 55,
+      };
+      const arrow_receiver_location: Location = {
+        file_path: TEST_FILE,
+        start_line: 5,
+        start_column: 10,
+        end_line: 5,
+        end_column: 56,
+      };
+      const expression_location: Location = {
+        file_path: TEST_FILE,
+        start_line: 9,
+        start_column: 21,
+        end_line: 11,
+        end_column: 3,
+      };
+      const expression_receiver_location: Location = {
+        file_path: TEST_FILE,
+        start_line: 9,
+        start_column: 10,
+        end_line: 11,
+        end_column: 4,
+      };
+
+      const arrow_id = anonymous_function_symbol(arrow_location);
+      const expression_id = anonymous_function_symbol(expression_location);
+
+      const arrow_def: FunctionDefinition = {
+        kind: "function",
+        symbol_id: arrow_id,
+        name: "<anonymous>" as SymbolName,
+        defining_scope_id: arrow_own_scope,
+        location: arrow_location,
+        signature: { parameters: [] },
+        body_scope_id: arrow_own_scope,
+        is_exported: false,
+        callback_context: {
+          is_callback: true,
+          receiver_is_external: null,
+          receiver_location: arrow_receiver_location,
+        },
+      };
+      const expression_def: FunctionDefinition = {
+        kind: "function",
+        symbol_id: expression_id,
+        name: "<anonymous>" as SymbolName,
+        defining_scope_id: expression_caller_scope,
+        location: expression_location,
+        signature: { parameters: [] },
+        body_scope_id: expression_own_scope,
+        is_exported: false,
+        callback_context: {
+          is_callback: true,
+          receiver_is_external: null,
+          receiver_location: expression_receiver_location,
+        },
+      };
+      definitions.update_file(TEST_FILE, [arrow_def, expression_def]);
+
+      const span = (
+        start_line: number,
+        start_column: number,
+        end_line: number,
+        end_column: number
+      ): Location => ({
+        file_path: TEST_FILE,
+        start_line,
+        start_column,
+        end_line,
+        end_column,
+      });
+
+      const scope_map = new Map<ScopeId, LexicalScope>();
+      scope_map.set(FILE_SCOPE_ID, {
+        id: FILE_SCOPE_ID,
+        type: "module",
+        location: span(1, 1, 13, 0),
+        parent_id: null,
+        name: null,
+        child_ids: [arrow_caller_scope, expression_caller_scope],
+      });
+      scope_map.set(arrow_caller_scope, {
+        id: arrow_caller_scope,
+        type: "function",
+        location: span(4, 32, 6, 1),
+        parent_id: FILE_SCOPE_ID,
+        name: "dead_with_arrow" as SymbolName,
+        child_ids: [arrow_own_scope],
+      });
+      // An arrow's scope is its whole node, so it coincides with the definition.
+      scope_map.set(arrow_own_scope, {
+        id: arrow_own_scope,
+        type: "function",
+        location: arrow_location,
+        parent_id: arrow_caller_scope,
+        name: null,
+        child_ids: [],
+      });
+      scope_map.set(expression_caller_scope, {
+        id: expression_caller_scope,
+        type: "function",
+        location: span(8, 46, 12, 1),
+        parent_id: FILE_SCOPE_ID,
+        name: "dead_with_function_expression" as SymbolName,
+        child_ids: [expression_own_scope],
+      });
+      // A `function` expression's scope starts at its parameter list, after the
+      // definition's own start.
+      scope_map.set(expression_own_scope, {
+        id: expression_own_scope,
+        type: "function",
+        location: span(9, 30, 11, 3),
+        parent_id: expression_caller_scope,
+        name: null,
+        child_ids: [],
+      });
+      scopes.update_file(TEST_FILE, scope_map);
+
+      references.update_file(TEST_FILE, [
+        create_method_call_reference(
+          "map" as SymbolName,
+          arrow_receiver_location,
+          arrow_caller_scope,
+          arrow_receiver_location,
+          ["values" as SymbolName],
+          false
+        ),
+        create_method_call_reference(
+          "map" as SymbolName,
+          expression_receiver_location,
+          expression_caller_scope,
+          expression_receiver_location,
+          ["values" as SymbolName],
+          false
+        ),
+      ]);
+
+      const result = resolve_calls_for_files(new Set([TEST_FILE]), context);
+
+      const callbacks_invoked_by = (scope_id: ScopeId): SymbolId[] =>
+        (result.calls_by_caller_scope.get(scope_id) ?? [])
+          .filter((call) => call.is_callback_invocation === true)
+          .flatMap((call) => call.resolutions.map((r) => r.symbol_id));
+
+      expect({
+        dead_with_arrow: callbacks_invoked_by(arrow_caller_scope),
+        arrow_itself: callbacks_invoked_by(arrow_own_scope),
+        dead_with_function_expression: callbacks_invoked_by(
+          expression_caller_scope
+        ),
+        function_expression_itself: callbacks_invoked_by(expression_own_scope),
+      }).toEqual({
+        dead_with_arrow: [arrow_id],
+        arrow_itself: [],
+        dead_with_function_expression: [expression_id],
+        function_expression_itself: [],
+      });
+    });
+
+    it("reports the same caller-to-callback edge for both forms in a real call graph", async () => {
+      const source = [
+        "function helper_from_arrow(value: number): number { return value + 1; }",
+        "function helper_from_function_expression(value: number): number { return value + 2; }",
+        "",
+        "export function dead_with_arrow(values: number[]): number[] {",
+        "  return values.map((value) => helper_from_arrow(value));",
+        "}",
+        "",
+        "export function dead_with_function_expression(values: number[]): number[] {",
+        "  return values.map(function (value) {",
+        "    return helper_from_function_expression(value);",
+        "  });",
+        "}",
+        "",
+      ].join("\n");
+
+      const temp_dir = fs.mkdtempSync(path.join(os.tmpdir(), "callback-forms-"));
+      const probe = path.join(temp_dir, "probe.ts") as FilePath;
+      fs.writeFileSync(probe, source);
+
+      const project = new Project();
+      await project.initialize(temp_dir as FilePath);
+      project.update_file(probe, source);
+
+      const call_graph = project.get_call_graph();
+      const describe_node = (symbol_id: SymbolId) => {
+        const node = call_graph.nodes.get(symbol_id);
+        return node ? `${node.name}@${node.location.start_line}` : `MISSING:${symbol_id}`;
+      };
+
+      const callback_edges: string[] = [];
+      for (const [symbol_id, node] of call_graph.nodes) {
+        for (const call of node.enclosed_calls) {
+          if (call.is_callback_invocation !== true) continue;
+          for (const resolution of call.resolutions) {
+            callback_edges.push(
+              `${describe_node(symbol_id)} -> ${describe_node(resolution.symbol_id)}`
+            );
+          }
+        }
+      }
+
+      fs.rmSync(temp_dir, { recursive: true, force: true });
+
+      expect(callback_edges.sort()).toEqual([
+        "dead_with_arrow@4 -> <anonymous>@5",
+        "dead_with_function_expression@8 -> <anonymous>@9",
       ]);
     });
   });

@@ -80,7 +80,7 @@ describe("find_body_scope_for_definition", () => {
     expect(result).toBe(scope_id);
   });
 
-  it("matches an arrow function by the smallest containing scope", () => {
+  it("matches an arrow function to the scope on its own span, not to the callback enclosing it", () => {
     const def_location = mock_location(5, 6, 7, 20);
 
     const inner_id = "function:test.ts:5:6:7:20" as ScopeId;
@@ -95,6 +95,39 @@ describe("find_body_scope_for_definition", () => {
 
     const result = find_body_scope_for_definition(scopes, "<anonymous>" as SymbolName, def_location);
     expect(result).toBe(inner_id);
+  });
+
+  it("matches an anonymous scope that starts inside the definition, as `async (v) => …` and `function (v) {…}` do", () => {
+    // The definition opens at `async`/`function`; the scope opens at the
+    // parameter list, so no scope contains the definition.
+    const def_location = mock_location(6, 38, 6, 74);
+    const scope_id = "function:test.ts:6:44:6:74" as ScopeId;
+    const scope = mock_scope("function", "" as SymbolName, mock_location(6, 44, 6, 74), scope_id);
+
+    const scopes = new Map<ScopeId, LexicalScope>([[scope_id, scope]]);
+
+    const result = find_body_scope_for_definition(scopes, "<anonymous>" as SymbolName, def_location);
+    expect(result).toBe(scope_id);
+  });
+
+  it("gives a callback nested inside another callback its own scope, not the outer one", () => {
+    const outer_def = mock_location(5, 13, 7, 5);
+    const inner_def = mock_location(6, 38, 6, 74);
+
+    const outer_id = "function:test.ts:5:19:7:5" as ScopeId;
+    const inner_id = "function:test.ts:6:44:6:74" as ScopeId;
+    const outer = mock_scope("function", "" as SymbolName, mock_location(5, 19, 7, 5), outer_id);
+    const inner = mock_scope("function", "" as SymbolName, mock_location(6, 44, 6, 74), inner_id);
+
+    const scopes = new Map<ScopeId, LexicalScope>([
+      [outer_id, outer],
+      [inner_id, inner],
+    ]);
+
+    expect({
+      outer: find_body_scope_for_definition(scopes, "<anonymous>" as SymbolName, outer_def),
+      inner: find_body_scope_for_definition(scopes, "<anonymous>" as SymbolName, inner_def),
+    }).toEqual({ outer: outer_id, inner: inner_id });
   });
 
   it("picks the closest scope when multiple functions share a name", () => {
