@@ -44,6 +44,7 @@ import {
   summarize_peak_rss,
   write_arm_result,
   INGEST_ORDERS,
+  RECORDED_CORPUS_PASS_COST,
   RECORDED_EVICTION_INDEX_COST,
   type ArmRequest,
   type ArmResult,
@@ -374,6 +375,39 @@ async function run_interleaved(context: RunContext, slice: SliceSize): Promise<v
   }
 
   report_recorded_eviction_cost(control[0].row.file_counts.offered);
+  report_recorded_corpus_pass(control[0].row.file_counts.offered);
+}
+
+/**
+ * What the two-phase corpus pass measured for this file set.
+ *
+ * The counts travel between machines because they are properties of the
+ * algorithm; the CPU ratio beside them does not, so it is printed with its own
+ * session and marked as a record rather than a comparand.
+ */
+function report_recorded_corpus_pass(offered_file_count: number): void {
+  const collapse = RECORDED_CORPUS_PASS_COST.resolve_names.find(
+    (size) => size.file_count === offered_file_count,
+  );
+  if (collapse !== undefined) {
+    console.log(
+      `\nrecorded for this file set when the bulk load became a two-phase corpus pass (${RECORDED_CORPUS_PASS_COST.machine}, ${RECORDED_CORPUS_PASS_COST.node_version}):` +
+        `\n  resolve_names calls ${collapse.calls.before} -> ${collapse.calls.after}` +
+        `, files resolved ${collapse.files_resolved.before} -> ${collapse.files_resolved.after}` +
+        `, peak heap ${collapse.peak_heap_mb.before} -> ${collapse.peak_heap_mb.after} MB`,
+    );
+  }
+
+  const ratio = RECORDED_CORPUS_PASS_COST.reverse_index_ratio.find(
+    (size) => size.file_count === offered_file_count,
+  );
+  if (ratio !== undefined) {
+    console.log(
+      `  with TASK-381.3's reverse indices against without, both carrying this driver: ${ratio.speedup}x` +
+        ` (control ${ratio.control.cpu_seconds.join(" / ")} s against candidate ${ratio.candidate.cpu_seconds.join(" / ")} s,` +
+        ` session ${ratio.session_id} — not a comparand for the arms above)`,
+    );
+  }
 }
 
 /**

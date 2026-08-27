@@ -450,4 +450,98 @@ describe("Project", () => {
       expect(stats.definition_count).toBeGreaterThan(1000);
     }, 30_000);
   });
+
+  describe("bulk corpus load", () => {
+    const importer = "importer.ts" as FilePath;
+    const target = "target.ts" as FilePath;
+    const importer_code = `
+import { helper } from "./target";
+export function run() { return helper(); }
+`;
+    const target_code = "export function helper() { return 42; }";
+
+    /** Entry-point symbol names, so an assertion reads as the reported capability. */
+    function entry_point_names(loaded: Project): string[] {
+      return loaded
+        .get_call_graph()
+        .entry_points.map((id) => loaded.get_definition(id)!.name as string)
+        .sort();
+    }
+
+    it("resolves nothing until resolve_corpus runs", async () => {
+      await project.initialize();
+
+      project.ingest_file(importer, importer_code);
+      project.ingest_file(target, target_code);
+
+      expect(project.get_stats().file_count).toEqual(2);
+      expect(project.get_stats().resolution_count).toEqual(0);
+
+      project.resolve_corpus();
+
+      expect(entry_point_names(project)).toEqual(["run"]);
+    });
+
+    // The case the per-arrival driver cannot answer: when the importer is
+    // ingested first, the file its import names does not exist yet, and an
+    // import location repaired only on arrival stays on the import statement.
+    it("points an import at its declaration when the target arrives later", async () => {
+      await project.initialize();
+
+      project.ingest_file(importer, importer_code);
+      project.ingest_file(target, target_code);
+      project.resolve_corpus();
+
+      const index = project.get_index_single_file(importer)!;
+      const helper_import = Array.from(index.imported_symbols.values()).find(
+        (def) => def.name === "helper",
+      )!;
+
+      expect(project.get_definition(helper_import.symbol_id)!.location.file_path)
+        .toEqual(target);
+    });
+
+    it("evicts a part-ingested file without resolving", async () => {
+      await project.initialize();
+
+      project.ingest_file(importer, importer_code);
+      project.ingest_file(target, target_code);
+      project.evict_ingested_file(target);
+
+      expect(project.get_all_files()).toEqual([importer]);
+      expect(project.get_stats().resolution_count).toEqual(0);
+    });
+
+    it("takes an incremental edit against a corpus loaded in bulk", async () => {
+      await project.initialize();
+
+      project.ingest_file(target, target_code);
+      project.ingest_file(importer, importer_code);
+      project.resolve_corpus();
+
+      project.update_file(
+        target,
+        "export function helper() { return 7; }\nexport function extra() {}",
+      );
+
+      expect(entry_point_names(project)).toEqual(["extra", "run"]);
+    });
+
+    it("restores a cached index through the bulk pass", async () => {
+      await project.initialize();
+      project.update_file(target, target_code);
+      const cached_index = project.get_index_single_file(target)!;
+
+      const bulk = new Project();
+      await bulk.initialize();
+      bulk.ingest_file(importer, importer_code);
+      bulk.ingest_restored_file(target, target_code, cached_index);
+
+      expect(bulk.get_stats().resolution_count).toEqual(0);
+
+      bulk.resolve_corpus();
+
+      expect(entry_point_names(bulk)).toEqual(["run"]);
+    });
+  });
 });

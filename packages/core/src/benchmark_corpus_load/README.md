@@ -152,6 +152,35 @@ The entry counts travel between machines because they are a property of the
 algorithm; the CPU figures do not, and `--interleave` prints the record beneath
 its own arms marked as such.
 
+## What the corpus pass costs
+
+`RECORDED_CORPUS_PASS_COST` holds what changed when the bulk load stopped
+driving the file watcher's single-file API and became `ingest_file` per file
+followed by one `resolve_corpus()`. Over vscode's `src/` at f3fa55c3, calls to
+`resolve_names` fall from 100, 197 and 1,183 at 100, 200 and 1,200 files to
+**one** at every size, and peak heap over the 200-file slice falls from 385.7 MB
+to 181.2 MB. Every in-corpus import that has a declaration to point at now
+points at it — 478 and 3,057 that did not, at 200 and 1,200 files, against zero
+— and the residue is exactly the two shapes with no declaration to name, a
+wildcard edge and a name the source file does not export.
+
+Three entry points the per-arrival driver reported at 100 files of
+`folder-ts:src/vs/base` are gone, each named by symbol:
+`ToggleActionViewItem.focus` at `toggle.ts:106`, `ToggleActionViewItem.blur` at
+`:111` and `CheckboxActionViewItem.blur` at `:516`. No entry point is added and
+the node count holds at 3,203.
+
+The record also carries the cost. This driver loses call edges the per-arrival
+driver resolved: 77, 43, 21 and 29 at 1,200 files across the four orders. Most
+are edges the per-arrival driver itself failed to resolve under at least one of
+forward, reversed and shuffled, so they are instances of a resolver
+order-dependence that predates the change. The rest — 22, 4, 10 and 23 — it
+resolved under all three named orders, and every one of them reaches a method on
+an exported singleton through a constructor binding, which is the defect
+TASK-381.11 states against `resolve_corpus` by name. None is a re-target: the
+call site stops resolving. Against them the candidate resolves 693 edges forward
+the per-arrival driver did not.
+
 ## Memory
 
 Peak RSS is reported as a mean over at least two runs with the spread, never as

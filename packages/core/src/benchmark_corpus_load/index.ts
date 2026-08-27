@@ -35,6 +35,8 @@ export { cite_row, format_citation } from "./cite_row";
 
 export { RECORDED_EVICTION_INDEX_COST } from "./recorded_eviction_index_cost";
 
+export { RECORDED_CORPUS_PASS_COST } from "./recorded_corpus_pass_cost";
+
 export { compare_fingerprints } from "./call_graph_fingerprint";
 
 export {
