@@ -1,0 +1,7 @@
+{
+  "key": "once",
+  "run_id": "20260827T093324Z-a1d79ac1",
+  "scope": "once",
+  "step_id": "task_381_3",
+  "summary": "Evicting a file from `DefinitionRegistry` now costs its own symbols, not the project's. Landed as two commits on `feat/self-healing-pipeline-debug` (7a7a4f0f, f02a7583); working tree clean; the prima…"
+}
