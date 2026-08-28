@@ -44,6 +44,56 @@ interface EnhancedExportMetadata {
 const WILDCARD_EXPORT_NAME = "*";
 
 /**
+ * One of the two independent namespaces a declaration can bind a name in.
+ *
+ * A language with a single namespace only ever produces `"value"`.
+ */
+type DeclarationSpace = "value" | "type";
+
+/**
+ * The declaration space a definition binds its name in.
+ *
+ * TypeScript binds a name in two independent spaces, and one module routinely
+ * fills both under one name: `export const IFoo = createDecorator<IFoo>()`
+ * beside `export interface IFoo` is two bindings of `IFoo`, not one name
+ * declared twice. Keying export metadata on (space, name) is what lets both
+ * stand. Interfaces, type aliases and `import type` re-exports bind in the type
+ * space; everything a program can call, construct or read at run time binds in
+ * the value space.
+ */
+function declaration_space(def: ExportableDefinition): DeclarationSpace {
+  if (
+    def.kind === "interface" ||
+    def.kind === "type" ||
+    def.kind === "type_alias"
+  ) {
+    return "type";
+  }
+  if (def.kind === "import" && def.is_type_only === true) {
+    return "type";
+  }
+  return "value";
+}
+
+/** Symbol kinds whose declaration brings members with it. */
+const MEMBER_DECLARING_KINDS: ReadonlySet<string> = new Set([
+  "class",
+  "interface",
+  "enum",
+  "namespace",
+]);
+
+/**
+ * Whether a symbol's declaration carries members a consumer can reach through
+ * it. The kind is the first colon-delimited field of a SymbolId.
+ */
+function declares_members(symbol_id: SymbolId): boolean {
+  return MEMBER_DECLARING_KINDS.has(
+    symbol_id.slice(0, symbol_id.indexOf(":"))
+  );
+}
+
+/**
  * Accumulators for one top-level `resolve_export_chain` walk.
  *
  * `visited` tracks the current root-to-here path, so a wildcard branch copies
@@ -90,14 +140,35 @@ interface MemoisedSurface {
 
 /**
  * Registry tracking what symbols each file exports, keyed for the two lookups
- * import resolution needs: the set of exported symbols per file, and per-name
- * metadata rich enough to follow `export { x } from './other'` re-export chains
- * without a SemanticIndex.
+ * import resolution needs: the set of exported symbols per file, and
+ * per-(declaration space, name) metadata rich enough to follow
+ * `export { x } from './other'` re-export chains without a SemanticIndex.
+ *
+ * A name a file binds twice is source this registry describes, never source it
+ * refuses. Two declarations in different spaces are two bindings and both
+ * stand; two in the same space are declaration merging, and the first keeps the
+ * metadata slot while the later symbol still joins the file's export surface.
+ * That rule fires beyond TypeScript's merging: a Rust item declared once per
+ * `#[cfg]` build — `cli/src/util/os.rs` declares `pub fn os_release` under
+ * `#[cfg(windows)]` and again under `#[cfg(unix)]` — reaches it too, and there
+ * the surviving slot is simply whichever platform variant the file spells
+ * first, because nothing in the source ranks them and the indexer holds no
+ * build configuration to choose with. Both symbols are exported either way, so
+ * the choice moves which one a name resolves through, not what the file offers.
  */
 export class ExportRegistry {
   private exports: Map<FilePath, Set<SymbolId>> = new Map();
 
-  private export_metadata: Map<
+  /**
+   * Name-keyed metadata for the value space and the type space, held apart so
+   * one name can be bound in both. `get_export` is what picks between them.
+   */
+  private value_exports: Map<
+    FilePath,
+    Map<SymbolName, EnhancedExportMetadata>
+  > = new Map();
+
+  private type_exports: Map<
     FilePath,
     Map<SymbolName, EnhancedExportMetadata>
   > = new Map();
@@ -107,7 +178,7 @@ export class ExportRegistry {
   /**
    * Wholesale re-export edges out of a file: `export * from`, Rust
    * `pub use m::*`, Python module-level `from m import *`. Name-less by
-   * construction, so they live outside the name-keyed `export_metadata`;
+   * construction, so they live outside the name-keyed spaces;
    * `resolve_export_chain` fans out across them when a keyed lookup misses.
    */
   private wildcard_reexports: Map<FilePath, ImportDefinition[]> = new Map();
@@ -146,7 +217,10 @@ export class ExportRegistry {
     this.remove_file(file_id);
 
     const symbol_ids = new Set<SymbolId>();
-    const metadata_map = new Map<SymbolName, EnhancedExportMetadata>();
+    const by_space: Record<
+      DeclarationSpace,
+      Map<SymbolName, EnhancedExportMetadata>
+    > = { value: new Map(), type: new Map() };
     const wildcard_edges: ImportDefinition[] = [];
 
     const add_to_registry = (def: ExportableDefinition) => {
@@ -157,9 +231,9 @@ export class ExportRegistry {
           return;
         }
         // A wildcard edge binds no export name, so it never enters the
-        // name-keyed maps (whose duplicate-name throw is a real signal for
-        // named exports, but would fire on e.g. django's six `from … import *`
-        // lines in one file).
+        // name-keyed spaces at all: several such edges in one file (django's
+        // six `from … import *` lines) are surfaces to fan out across rather
+        // than competing bindings of the name `*`.
         if (def.import_kind === "wildcard") {
           if (def.export.is_reexport === true) {
             wildcard_edges.push(def);
@@ -182,6 +256,7 @@ export class ExportRegistry {
       // for the shadowing rules below.
       const import_def = def.kind === "import" ? def : undefined;
 
+      const metadata_map = by_space[declaration_space(def)];
       const existing = metadata_map.get(export_name);
 
       // A module may re-export several wildcards (`from .a import *` beside
@@ -193,6 +268,12 @@ export class ExportRegistry {
       }
 
       if (existing && !is_default) {
+        // Three rules below decide a same-space pair by language rather than by
+        // declaration space, so the (space, name) key does not subsume any of
+        // them and each is kept.
+        //
+        // `export const f = () => {}` emits a function AND a binding, both in
+        // the value space, and the binding is the exported one.
         const arrow_decision = resolve_arrow_function_export(
           existing.symbol_id,
           def.kind
@@ -212,11 +293,11 @@ export class ExportRegistry {
           return;
         }
 
-        // Python rebinds a module-level name freely — `x = 1; x = 2`, an
-        // `@overload` group, a version-guarded redefinition — and the last
-        // declaration in source order is the exported one. A second definition
-        // at the same location is not a rebinding but a double capture, and
-        // falls through to the throw below.
+        // Python has one declaration space and rebinds a module-level name
+        // freely — `x = 1; x = 2`, an `@overload` group, a version-guarded
+        // redefinition — so the LAST declaration in source order is the
+        // exported one, the opposite of the first-wins rule the merging case
+        // below takes.
         if (
           is_python_file(file_id) &&
           is_python_redefinition(existing.symbol_id, def.symbol_id)
@@ -241,7 +322,9 @@ export class ExportRegistry {
         }
 
         // A local definition (`def foo():`) shadows a re-exported import of the
-        // same name; the local binding is the one that gets exported.
+        // same name; the local binding is the one that gets exported. A local
+        // and a forwarded binding sit in the same space whenever they collide,
+        // so precedence between them is a question the space key cannot answer.
         if (existing.is_reexport && !is_reexport) {
           metadata_map.set(export_name, {
             symbol_id: def.symbol_id,
@@ -259,13 +342,11 @@ export class ExportRegistry {
           return;
         }
 
-        // Two import-backed records for one name are legal source, not an
-        // indexing bug, so the throw below stays reserved for duplicate local
-        // definitions. Which record survives is a language question: Rust's
-        // cfg-gated alternates (`#[cfg(unix)] pub use a::Thing;
-        // #[cfg(not(unix))] pub use b::Thing;`) name the same item under
-        // mutually exclusive builds, so the first is as good as the second and
-        // keeps the file indexed; Python's `from a import x` then
+        // Which of two import-backed records for one name survives is a
+        // language question: Rust's cfg-gated alternates
+        // (`#[cfg(unix)] pub use a::Thing; #[cfg(not(unix))] pub use b::Thing;`)
+        // name the same item under mutually exclusive builds, so the first is
+        // as good as the second; Python's `from a import x` then
         // `from b import x` genuinely rebinds, so the last in source order is
         // the one the module exports — the same rule reassignment follows.
         if (existing.import_def && import_def) {
@@ -289,12 +370,13 @@ export class ExportRegistry {
           return;
         }
 
-        throw new Error(
-          `Duplicate export name "${export_name}" in file ${file_id}.\n` +
-            `  First:  ${existing.symbol_id}\n` +
-            `  Second: ${def.symbol_id}\n` +
-            "This indicates a bug in is_exported logic or malformed source code."
-        );
+        // Declaration merging: a second declaration of one name in one space.
+        // The first keeps the metadata slot, so a consumer importing the name
+        // reaches whichever declaration the file spells first, and the later
+        // symbol still joins the export surface so nothing about the file is
+        // lost.
+        symbol_ids.add(def.symbol_id);
+        return;
       }
 
       const metadata: EnhancedExportMetadata = {
@@ -308,16 +390,11 @@ export class ExportRegistry {
       symbol_ids.add(def.symbol_id);
 
       if (is_default) {
-        const existing_default = this.default_exports.get(file_id);
-        if (existing_default) {
-          throw new Error(
-            `Multiple default exports found in file ${file_id}.\n` +
-              `  First:  ${existing_default.symbol_id}\n` +
-              `  Second: ${def.symbol_id}\n` +
-              "This indicates a bug in indexing or malformed source code."
-          );
+        // One default slot per file, first declaration wins — the same merging
+        // rule the named spaces take.
+        if (!this.default_exports.has(file_id)) {
+          this.default_exports.set(file_id, metadata);
         }
-        this.default_exports.set(file_id, metadata);
       } else {
         metadata_map.set(export_name, metadata);
       }
@@ -333,8 +410,11 @@ export class ExportRegistry {
     if (symbol_ids.size > 0) {
       this.exports.set(file_id, symbol_ids);
     }
-    if (metadata_map.size > 0) {
-      this.export_metadata.set(file_id, metadata_map);
+    if (by_space.value.size > 0) {
+      this.value_exports.set(file_id, by_space.value);
+    }
+    if (by_space.type.size > 0) {
+      this.type_exports.set(file_id, by_space.type);
     }
     if (wildcard_edges.length > 0) {
       this.wildcard_reexports.set(file_id, wildcard_edges);
@@ -349,11 +429,42 @@ export class ExportRegistry {
     return exports ? new Set(exports) : new Set();
   }
 
+  /**
+   * The one binding a name denotes for a consumer of this file.
+   *
+   * When both spaces bind the name, a member-declaring binding — class,
+   * interface, enum, namespace — wins over one that declares no members, and
+   * otherwise the value space wins. Both halves of that rule are what a caller
+   * needs: `export const IFoo = createDecorator<IFoo>()` beside
+   * `export interface IFoo` puts a member-less decorator constant in the value
+   * space, so `this.foo.bar()` through it reaches nothing while the interface
+   * answers it; and everywhere else the value binding is the only one a call
+   * can arrive at, since a type has no run-time identity to call.
+   */
   private get_export(
     file_path: FilePath,
     export_name: SymbolName
   ): EnhancedExportMetadata | undefined {
-    return this.export_metadata.get(file_path)?.get(export_name);
+    const value_binding = this.value_exports.get(file_path)?.get(export_name);
+    const type_binding = this.type_exports.get(file_path)?.get(export_name);
+    if (value_binding === undefined) {
+      return type_binding;
+    }
+    if (type_binding === undefined) {
+      return value_binding;
+    }
+    return declares_members(type_binding.symbol_id) &&
+      !declares_members(value_binding.symbol_id)
+      ? type_binding
+      : value_binding;
+  }
+
+  /** Every name the file binds, in either space, each listed once. */
+  private own_export_names(file_path: FilePath): Set<SymbolName> {
+    return new Set([
+      ...(this.value_exports.get(file_path)?.keys() ?? []),
+      ...(this.type_exports.get(file_path)?.keys() ?? []),
+    ]);
   }
 
   private get_default_export(
@@ -376,7 +487,8 @@ export class ExportRegistry {
   ): SymbolId | null {
     // A file forwarding a whole module surface is not a sole-default module.
     if (
-      this.export_metadata.has(source_file) ||
+      this.value_exports.has(source_file) ||
+      this.type_exports.has(source_file) ||
       this.wildcard_reexports.has(source_file)
     ) {
       return null;
@@ -392,7 +504,8 @@ export class ExportRegistry {
 
   remove_file(file_id: FilePath): void {
     this.exports.delete(file_id);
-    this.export_metadata.delete(file_id);
+    this.value_exports.delete(file_id);
+    this.type_exports.delete(file_id);
     this.default_exports.delete(file_id);
     this.wildcard_reexports.delete(file_id);
     this.edge_targets.delete(file_id);
@@ -401,7 +514,8 @@ export class ExportRegistry {
 
   clear(): void {
     this.exports.clear();
-    this.export_metadata.clear();
+    this.value_exports.clear();
+    this.type_exports.clear();
     this.default_exports.clear();
     this.wildcard_reexports.clear();
     this.edge_targets.clear();
@@ -721,13 +835,12 @@ export class ExportRegistry {
     };
 
     const result = new Map<SymbolName, SymbolId>();
-    const own_names = new Set<SymbolName>();
+    // A declared-but-unresolvable own export still shadows the star surface
+    // (ESM and Rust precedence), so the claims are taken before any resolution.
+    const own_names = this.own_export_names(file);
     const poisoned = new Set<SymbolName>();
 
-    for (const export_name of this.export_metadata.get(file)?.keys() ?? []) {
-      // A declared-but-unresolvable own export still shadows the star surface
-      // (ESM and Rust precedence): register the claim before the resolution.
-      own_names.add(export_name);
+    for (const export_name of own_names) {
       const resolved = this.resolve_export_chain(
         file,
         export_name,

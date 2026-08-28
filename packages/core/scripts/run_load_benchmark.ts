@@ -46,6 +46,7 @@ import {
   INGEST_ORDERS,
   RECORDED_CORPUS_PASS_COST,
   RECORDED_EVICTION_INDEX_COST,
+  RECORDED_EXPORT_DECLARATION_SPACE,
   RECORDED_FULL_CORPUS_BASELINE,
   RECORDED_NAME_TABLE_MEMORY,
   RECORDED_RESOLUTION_EVICTION_COST,
@@ -382,6 +383,40 @@ async function run_interleaved(context: RunContext, slice: SliceSize): Promise<v
   report_recorded_resolution_eviction(control[0].row.file_counts.offered);
   report_recorded_name_table(control[0].row.file_counts.offered);
   report_recorded_full_corpus_baseline(control[0].row.file_counts.offered);
+  report_recorded_export_declaration_space(control[0].row.file_counts.offered);
+}
+
+/**
+ * The re-baseline this corpus's fingerprint stands at, and what moved to get
+ * there.
+ *
+ * Printed for an arm over the same file set because a fingerprint that differs
+ * from the committed one is either this step's move — accounted for member by
+ * member here — or a regression, and a reader has no way to tell without the
+ * accounting beside it. The counts travel between machines; the CPU and RSS
+ * absolutes do not, so they are marked as a record.
+ */
+function report_recorded_export_declaration_space(
+  offered_file_count: number,
+): void {
+  const record = RECORDED_EXPORT_DECLARATION_SPACE;
+  if (record.discovered_files !== offered_file_count) return;
+  const [control, candidate] = record.arms;
+  console.log(
+    `\nrecorded for this corpus when export metadata was keyed on declaration space (${record.machine}, ${record.node_version}, session ${record.session_id} — not a comparand for the arms above):` +
+      `\n  indexed ${control.indexed} -> ${candidate.indexed} of ${record.discovered_files}, dropped ${control.dropped} -> ${candidate.dropped}` +
+      `, Project.remove_file called ${candidate.remove_file_calls} times on both arms` +
+      `\n  nodes ${control.fingerprint.nodes} -> ${candidate.fingerprint.nodes} with ${record.nodes_lost} lost` +
+      `, resolved call edges ${control.fingerprint.call_edges} -> ${candidate.fingerprint.call_edges}` +
+      `\n  raw candidates ${record.entry_point_accounting.raw_candidates_control} -> ${record.entry_point_accounting.raw_candidates_candidate}` +
+      `: ${record.entry_point_accounting.removed} removed, all ${record.entry_point_accounting.removed_in_candidate_called_set} of them called in the repaired arm` +
+      `; ${record.entry_point_accounting.added} added, ${record.entry_point_accounting.added_inside_readmitted_files} inside the readmitted files` +
+      `\n  CPU ${control.cpu_seconds.mean} s -> ${candidate.cpu_seconds.mean} s (${record.cpu_ratio}x)` +
+      `, peak RSS ${control.peak_rss_mb.mean} -> ${candidate.peak_rss_mb.mean} MB` +
+      `\n  residual outside the readmitted files: ${record.residual_outside_readmitted_files.length}` +
+      ` (${record.residual_outside_readmitted_files.filter((r) => r.cause === "classifier decision").length} classifier decisions,` +
+      ` ${record.residual_outside_readmitted_files.filter((r) => r.cause === "call site retargeted").length} retargeted call sites)`,
+  );
 }
 
 /**

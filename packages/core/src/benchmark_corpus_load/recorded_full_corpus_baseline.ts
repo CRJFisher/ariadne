@@ -171,6 +171,8 @@ export interface RecordedFullCorpusBaseline {
   readonly cost_centres: readonly RecordedCostCentre[];
   readonly cost_centres_scope: string;
   readonly superseded: readonly RecordedSupersession[];
+  /** The record that replaced this one, and for which predicate. */
+  readonly superseded_by: string;
   readonly note: string;
 }
 
@@ -519,6 +521,9 @@ export const RECORDED_FULL_CORPUS_BASELINE: RecordedFullCorpusBaseline = {
         "REFUTED. The landed tree indexes 7,818 of 8,494 with 676 dropped and reports 184,957 nodes, 322,300 call edges, 19,816 raw entry points and 25,811 indirect-reachability keys. Every prototype figure is superseded by the row above, which is what this checkpoint exists to establish.",
     },
   ],
+
+  superseded_by:
+    "RECORDED_EXPORT_DECLARATION_SPACE, for the `src/` predicate. TASK-381.8 keyed export metadata on (declaration space, name), which readmits all 676 of the files the `src/` row here reports dropped: 8,494 of 8,494 indexed, an empty dropped set, nodes 184,957 -> 201,595 with none lost, and resolved call edges 322,300 -> 1,076,088. The rows here remain the record of what the tree at ariadne@25af64a8 measured, and the phase split is still the one the per-file cost work is scoped from.",
 
   note:
     "Every arm offered every file its predicate discovered to one process and ran to completion. The `src/` arms ran at --max-old-space-size=12288 on the harness command line, the repository-root arms at 22645 because the harness refuses a 12,654-file arm below 18,116 MB, and Ariadne sets no heap flag itself. " +

@@ -413,7 +413,7 @@ describe("load_project", () => {
       expect(entry_point_names(call_graph)).toEqual(["write_locales"]);
     });
 
-    it("reports a file dropped by an indexing error (express lib/response.js shape)", async () => {
+    it("indexes a file that binds one export name twice (express lib/response.js shape)", async () => {
       await write_file(
         "lib/response.js",
         "exports.res = function res() {};\nexports.res = function res() {};\n",
@@ -424,19 +424,18 @@ describe("load_project", () => {
         project_path: temp_dir,
       });
 
-      expect([...dropped_files]).toEqual([path.join(temp_dir, "lib/response.js")]);
-      // Indexing writes registries in stages, so the throw left content,
-      // language and definitions behind. Rolling that back is what keeps the
-      // dropped file from minting phantom entry points and phantom uncaptured
-      // grep hits — its text must not be in the corpus while its references
-      // are missing.
+      expect([...dropped_files]).toEqual([]);
       expect(project.get_file_contents().has(
         path.join(temp_dir, "lib/response.js") as FilePath,
-      )).toBe(false);
+      )).toBe(true);
       expect(project.get_file_contents().has(
         path.join(temp_dir, "lib/app.js") as FilePath,
       )).toBe(true);
-      expect(node_names(raw_call_graph(project, false))).toEqual(["app"]);
+      expect(node_names(raw_call_graph(project, false)).sort()).toEqual([
+        "app",
+        "res",
+        "res",
+      ]);
     });
 
     it("refuses a corpus over max_files rather than indexing an arbitrary subset", async () => {

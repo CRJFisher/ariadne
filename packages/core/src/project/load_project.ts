@@ -63,6 +63,16 @@ export interface LoadedProject {
   readonly project: Project;
   readonly dropped_files: ReadonlySet<FilePath>;
   /**
+   * Why each dropped file was dropped, as the message its indexing threw.
+   *
+   * A coverage gate reporting drops has to say what kind of failure it found,
+   * because the answer decides who owns it: a list of paths reads as "these
+   * files are bad" no matter how many of them there are, while the message
+   * grouped over them names one defect once. The keys are exactly
+   * `dropped_files`.
+   */
+  readonly drop_reasons: ReadonlyMap<FilePath, string>;
+  /**
    * Every file discovery selected, before any of them was indexed. This is the
    * denominator for coverage: a caller comparing it against
    * `project.get_file_contents()` learns what the load could not take in
@@ -203,6 +213,7 @@ export async function load_project(
   let cache_hits = 0;
   let cache_misses = 0;
   const dropped_files = new Set<FilePath>();
+  const drop_reasons = new Map<FilePath, string>();
 
   // Pass A: index every file and write its own facts into the registries.
   //
@@ -267,6 +278,10 @@ export async function load_project(
           // inside it uncapturable — the file's text is in the corpus while its
           // references are not. Roll it back so the file is cleanly unindexed.
           dropped_files.add(fp);
+          drop_reasons.set(
+            fp,
+            error instanceof Error ? error.message : String(error),
+          );
           try {
             project.evict_ingested_file(fp);
           } catch (rollback_error) {
@@ -328,6 +343,7 @@ export async function load_project(
   return {
     project,
     dropped_files,
+    drop_reasons,
     discovered_files: files_to_load as ReadonlySet<FilePath>,
     gitignore_patterns,
   };

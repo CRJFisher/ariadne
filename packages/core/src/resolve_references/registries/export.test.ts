@@ -12,6 +12,10 @@ import type {
   VariableDefinition,
   FunctionDefinition,
   ImportDefinition,
+  InterfaceDefinition,
+  ClassDefinition,
+  NamespaceDefinition,
+  TypeAliasDefinition,
   ExportableDefinition,
 } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "./definition";
@@ -102,6 +106,93 @@ function create_reexport_definition(
     import_path: import_path as ModulePath,
     import_kind: options.import_kind ?? "named",
     original_name: options.original_name as SymbolName | undefined,
+  };
+}
+
+function create_constant_definition(
+  name: string,
+  file_path: FilePath,
+  start_line: number
+): VariableDefinition {
+  return {
+    kind: "constant",
+    name: name as SymbolName,
+    symbol_id:
+      `constant:${file_path}:${start_line}:0:${start_line}:${name.length}:${name}` as SymbolId,
+    defining_scope_id: `module:${file_path}` as ScopeId,
+    location: make_location(file_path, start_line, name.length),
+    is_exported: true,
+  };
+}
+
+function create_interface_definition(
+  name: string,
+  file_path: FilePath,
+  start_line: number
+): InterfaceDefinition {
+  return {
+    kind: "interface",
+    name: name as SymbolName,
+    symbol_id:
+      `interface:${file_path}:${start_line}:0:${start_line}:${name.length}:${name}` as SymbolId,
+    defining_scope_id: `module:${file_path}` as ScopeId,
+    location: make_location(file_path, start_line, name.length),
+    is_exported: true,
+    extends: [],
+    methods: [],
+    properties: [],
+  };
+}
+
+function create_class_definition(
+  name: string,
+  file_path: FilePath,
+  start_line: number
+): ClassDefinition {
+  return {
+    kind: "class",
+    name: name as SymbolName,
+    symbol_id:
+      `class:${file_path}:${start_line}:0:${start_line}:${name.length}:${name}` as SymbolId,
+    defining_scope_id: `module:${file_path}` as ScopeId,
+    location: make_location(file_path, start_line, name.length),
+    is_exported: true,
+    extends: [],
+    methods: [],
+    properties: [],
+    decorators: [],
+  };
+}
+
+function create_namespace_definition(
+  name: string,
+  file_path: FilePath,
+  start_line: number
+): NamespaceDefinition {
+  return {
+    kind: "namespace",
+    name: name as SymbolName,
+    symbol_id:
+      `namespace:${file_path}:${start_line}:0:${start_line}:${name.length}:${name}` as SymbolId,
+    defining_scope_id: `module:${file_path}` as ScopeId,
+    location: make_location(file_path, start_line, name.length),
+    is_exported: true,
+  };
+}
+
+function create_type_alias_definition(
+  name: string,
+  file_path: FilePath,
+  start_line: number
+): TypeAliasDefinition {
+  return {
+    kind: "type_alias",
+    name: name as SymbolName,
+    symbol_id:
+      `type_alias:${file_path}:${start_line}:0:${start_line}:${name.length}:${name}` as SymbolId,
+    defining_scope_id: `module:${file_path}` as ScopeId,
+    location: make_location(file_path, start_line, name.length),
+    is_exported: true,
   };
 }
 
@@ -236,7 +327,7 @@ describe("ExportRegistry", () => {
       expect(registry.get_exports(file_id)).toEqual(new Set([fn.symbol_id]));
     });
 
-    it("throws when a file declares two default exports", () => {
+    it("indexes a file declaring two default exports and keeps the first", () => {
       const first = create_function_definition("first", file_id, 1, {
         is_default: true,
       });
@@ -245,12 +336,23 @@ describe("ExportRegistry", () => {
       });
       const registry = new ExportRegistry();
 
-      expect(() =>
-        registry.update_file(
+      registry.update_file(
+        file_id,
+        create_definition_registry({ [file_id]: [first, second] })
+      );
+
+      expect(registry.get_exports(file_id)).toEqual(
+        new Set([first.symbol_id, second.symbol_id])
+      );
+      expect(
+        registry.resolve_export_chain(
           file_id,
-          create_definition_registry({ [file_id]: [first, second] })
+          "ignored" as SymbolName,
+          "default",
+          ALL_TS,
+          create_module_resolution_context(ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX)
         )
-      ).toThrow(/Multiple default exports/);
+      ).toBe(first.symbol_id);
     });
 
     it("returns null for a default lookup when the file has no default export", () => {
@@ -313,18 +415,155 @@ describe("ExportRegistry", () => {
     });
   });
 
+  describe("declaration spaces", () => {
+    const app = "app.ts" as FilePath;
+
+    it("registers a constant and an interface of one name as two bindings", () => {
+      // `export const IFoo = createDecorator<IFoo>()` beside
+      // `export interface IFoo`: two declaration spaces, two bindings, one
+      // name. Refusing the pair discarded the whole file.
+      const constant = create_constant_definition("IFoo", app, 1);
+      const shape = create_interface_definition("IFoo", app, 5);
+      const registry = new ExportRegistry();
+
+      registry.update_file(
+        app,
+        create_definition_registry({ "app.ts": [constant, shape] })
+      );
+
+      expect(registry.get_exports(app)).toEqual(
+        new Set([constant.symbol_id, shape.symbol_id])
+      );
+    });
+
+    it("resolves a name bound in both spaces to the member-declaring interface", () => {
+      const constant = create_constant_definition("IFoo", app, 1);
+      const shape = create_interface_definition("IFoo", app, 5);
+      const registry = new ExportRegistry();
+      registry.update_file(
+        app,
+        create_definition_registry({ "app.ts": [constant, shape] })
+      );
+
+      expect(resolve_named(registry, app, "IFoo")).toBe(shape.symbol_id);
+    });
+
+    it("resolves to the value binding when both spaces declare members", () => {
+      const implementation = create_class_definition("Widget", app, 1);
+      const shape = create_interface_definition("Widget", app, 5);
+      const registry = new ExportRegistry();
+      registry.update_file(
+        app,
+        create_definition_registry({ "app.ts": [implementation, shape] })
+      );
+
+      expect(resolve_named(registry, app, "Widget")).toBe(
+        implementation.symbol_id
+      );
+    });
+
+    it("resolves to the namespace when a type alias shares its name", () => {
+      const namespace = create_namespace_definition("Command", app, 1);
+      const alias = create_type_alias_definition("Command", app, 5);
+      const registry = new ExportRegistry();
+      registry.update_file(
+        app,
+        create_definition_registry({ "app.ts": [namespace, alias] })
+      );
+
+      expect(resolve_named(registry, app, "Command")).toBe(
+        namespace.symbol_id
+      );
+    });
+
+    it("binds a type-only re-export in the type space beside a value of that name", () => {
+      const value = create_function_definition("Thing", app, 1);
+      const type_only: ImportDefinition = {
+        ...create_reexport_definition("Thing", app, "./helper", 5),
+        is_type_only: true,
+      };
+      const registry = new ExportRegistry();
+
+      registry.update_file(
+        app,
+        create_definition_registry({ "app.ts": [value, type_only] })
+      );
+
+      expect(registry.get_exports(app)).toEqual(
+        new Set([value.symbol_id, type_only.symbol_id])
+      );
+      expect(resolve_named(registry, app, "Thing")).toBe(value.symbol_id);
+    });
+  });
+
   describe("duplicate handling", () => {
-    it("throws on two exported functions sharing a name", () => {
+    it("keeps the first of two interfaces of one name and exports both", () => {
+      // Declaration merging: one name, one space, two declarations. The file
+      // stays indexed and every symbol in it stays on the export surface.
+      const first = create_interface_definition("Options", "app.ts" as FilePath, 1);
+      const second = create_interface_definition("Options", "app.ts" as FilePath, 5);
+      const registry = new ExportRegistry();
+
+      registry.update_file(
+        "app.ts" as FilePath,
+        create_definition_registry({ "app.ts": [first, second] })
+      );
+
+      expect(registry.get_exports("app.ts" as FilePath)).toEqual(
+        new Set([first.symbol_id, second.symbol_id])
+      );
+      expect(resolve_named(registry, "app.ts" as FilePath, "Options")).toBe(
+        first.symbol_id
+      );
+    });
+
+    it("indexes a file declaring one exported function name twice", () => {
+      // The `#[cfg]`-gated Rust pair and the JavaScript redeclaration both land
+      // here: nothing in the source ranks the two, so the first spelled keeps
+      // the slot and the file is reported rather than discarded.
       const a = create_function_definition("dup", "app.ts" as FilePath, 1);
       const b = create_function_definition("dup", "app.ts" as FilePath, 5);
       const registry = new ExportRegistry();
 
-      expect(() =>
-        registry.update_file(
+      registry.update_file(
+        "app.ts" as FilePath,
+        create_definition_registry({ "app.ts": [a, b] })
+      );
+
+      expect(registry.get_exports("app.ts" as FilePath)).toEqual(
+        new Set([a.symbol_id, b.symbol_id])
+      );
+      expect(resolve_named(registry, "app.ts" as FilePath, "dup")).toBe(
+        a.symbol_id
+      );
+    });
+
+    it("keeps the first of two default exports and exports both symbols", () => {
+      const first = create_function_definition("first", "app.ts" as FilePath, 1, {
+        is_default: true,
+      });
+      const second = create_function_definition("second", "app.ts" as FilePath, 5, {
+        is_default: true,
+      });
+      const registry = new ExportRegistry();
+
+      registry.update_file(
+        "app.ts" as FilePath,
+        create_definition_registry({ "app.ts": [first, second] })
+      );
+
+      expect(registry.get_exports("app.ts" as FilePath)).toEqual(
+        new Set([first.symbol_id, second.symbol_id])
+      );
+      expect(
+        registry.resolve_export_chain(
           "app.ts" as FilePath,
-          create_definition_registry({ "app.ts": [a, b] })
+          "" as SymbolName,
+          "default",
+          ALL_TS,
+          create_module_resolution_context(ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX)
         )
-      ).toThrow(/Duplicate export name "dup"/);
+      ).toBe(first.symbol_id);
     });
 
     it("exports the last of a Python @overload group rather than aborting the file", () => {
@@ -368,19 +607,22 @@ describe("ExportRegistry", () => {
       );
     });
 
-    it("still throws when one Python definition is captured twice at one location", () => {
-      // Same name, same location, is not a rebinding — it is the indexing bug
-      // the duplicate-export error exists to surface.
+    it("keeps the first record when one Python definition is captured twice at one location", () => {
+      // Same name, same location, is not a rebinding — it is an indexing bug.
+      // It is reported by the file being described twice, not by the file being
+      // deleted from the corpus.
       const once = create_function_definition("dup", "app.py" as FilePath, 3);
       const twice = create_function_definition("dup", "app.py" as FilePath, 3);
       const registry = new ExportRegistry();
 
-      expect(() =>
-        registry.update_file(
-          "app.py" as FilePath,
-          create_definition_registry({ "app.py": [once, twice] })
-        )
-      ).toThrow(/Duplicate export name "dup"/);
+      registry.update_file(
+        "app.py" as FilePath,
+        create_definition_registry({ "app.py": [once, twice] })
+      );
+
+      expect(resolve_named(registry, "app.py" as FilePath, "dup")).toBe(
+        once.symbol_id
+      );
     });
 
     it("prefers a variable over a function of the same name (function seen first)", () => {
@@ -1064,23 +1306,23 @@ describe("ExportRegistry", () => {
       }
     });
 
-    it("still throws for two genuine duplicate non-wildcard names alongside a wildcard edge", () => {
+    it("keeps the first of two same-name records alongside a wildcard edge", () => {
       const first = create_function_definition("dup", MAIN, 1);
       const second = create_function_definition("dup", MAIN, 5);
       const registry = new ExportRegistry();
 
-      expect(() =>
-        registry.update_file(
-          MAIN,
-          create_definition_registry({
-            [MAIN]: [
-              first,
-              second,
-              create_wildcard_reexport_definition(MAIN, "./helper", 9),
-            ],
-          })
-        )
-      ).toThrow(/Duplicate export name "dup"/);
+      registry.update_file(
+        MAIN,
+        create_definition_registry({
+          [MAIN]: [
+            first,
+            second,
+            create_wildcard_reexport_definition(MAIN, "./helper", 9),
+          ],
+        })
+      );
+
+      expect(resolve_named(registry, MAIN, "dup")).toBe(first.symbol_id);
     });
   });
 

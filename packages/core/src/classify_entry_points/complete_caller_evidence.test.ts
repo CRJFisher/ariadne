@@ -144,7 +144,12 @@ describe("the out-of-index set is discovered minus indexed", () => {
     expect(lru.diagnostics.diagnosis).toEqual("callers-outside-indexed-corpus");
   });
 
-  it("greps a file the loader dropped on an indexing error (express lib/response.js shape)", async () => {
+  it("leaves no residue for a file that binds one export name twice (express lib/response.js shape)", async () => {
+    // The file is indexed, so both `res` declarations are nodes and the call
+    // inside the second is a call site in the graph rather than a grep hit
+    // outside it. `send_status` stays an entry point because `response.js`
+    // never imports it, which is a resolution question and no longer a
+    // coverage one.
     const root = await write_fixture({
       "lib/utils.js": "export function send_status(code) {\n  return code;\n}\n",
       "lib/response.js": [
@@ -158,12 +163,16 @@ describe("the out-of-index set is discovered minus indexed", () => {
 
     const { entry_points, residue } = await analyse(root);
 
-    expect(residue).toEqual(["lib/response.js"]);
-    const send_status = entry(entry_points, "send_status");
+    expect(residue).toEqual([]);
+    expect(entry_points.map((e) => e.name).sort()).toEqual([
+      "res",
+      "res",
+      "send_status",
+    ]);
     expect(
-      send_status.diagnostics.grep_call_sites_outside_index.map((h) => h.content),
-    ).toEqual(["return send_status(200);"]);
-    expect(send_status.diagnostics.diagnosis).toEqual("callers-outside-indexed-corpus");
+      entry(entry_points, "send_status").diagnostics
+        .grep_call_sites_outside_index,
+    ).toEqual([]);
   });
 
   it("leaves no residue when every discovered file is indexed", async () => {

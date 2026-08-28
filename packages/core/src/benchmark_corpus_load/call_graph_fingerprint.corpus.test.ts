@@ -4,9 +4,20 @@
  * A corpus of vscode's scale is absent in CI and in most checkouts, so the
  * corpus-scale ROWS skip — but the mechanism never does. This guard runs
  * against `packages/core/benchmark_corpus`, a ten-file corpus committed beside
- * the harness and chosen so that all seven components are non-empty: a
- * dropped file, both indirect-reachability variants, unresolved calls,
- * uncalled exports, and a module-scope call that no node encloses.
+ * the harness and chosen so that six of the seven components are non-empty:
+ * both indirect-reachability variants, unresolved calls, uncalled exports, and
+ * a module-scope call that no node encloses.
+ *
+ * The seventh, `dropped_files`, is asserted EMPTY and that is the point. It was
+ * non-empty only because `duplicate_exports.js` — a file whose two
+ * `exports.res = function res()` lines are legal JavaScript — used to abort
+ * indexing, so the component's guard was purchased by a bug. Keying export
+ * metadata on declaration space readmitted it, and manufacturing a replacement
+ * would mean committing a file Ariadne cannot index as a permanent fixture.
+ * `dropped_files` at zero is now the load-coverage guarantee itself, and the
+ * component's mechanism — that a drop enters the digest and that a comparison
+ * can see it move — is proven synthetically in `call_graph_fingerprint.test.ts`
+ * over a `broken.js` member instead.
  *
  * The corpus deliberately does NOT live under `tests/` or `fixtures/`.
  * `is_in_test_dir` matches those segments, `detect_entry_points` drops every
@@ -57,6 +68,8 @@ const EXPECTED_MEMBERS: Readonly<Record<FingerprintComponentName, readonly strin
     "function:src/arithmetic.ts:5:17:5:22:double",
     "function:src/callback.ts:3:17:3:27:apply_twice",
     "function:src/callback.ts:7:17:7:19:run",
+    "function:src/duplicate_exports.js:1:24:1:26:res",
+    "function:src/duplicate_exports.js:5:24:5:26:res",
     "function:src/entry.ts:6:17:6:20:main",
     "function:src/handlers.ts:1:17:1:21:alpha",
     "function:src/handlers.ts:5:17:5:20:beta",
@@ -86,6 +99,8 @@ const EXPECTED_MEMBERS: Readonly<Record<FingerprintComponentName, readonly strin
   ],
   raw_entry_points: [
     "function:src/aaa_first_reader.ts:5:17:5:26:read_first",
+    "function:src/duplicate_exports.js:1:24:1:26:res",
+    "function:src/duplicate_exports.js:5:24:5:26:res",
     "function:src/orphan.ts:1:17:1:28:never_called",
     "function:src/orphan.ts:5:17:5:33:also_never_called",
     "function:src/zzz_second_reader.ts:5:17:5:27:read_second",
@@ -102,9 +117,7 @@ const EXPECTED_MEMBERS: Readonly<Record<FingerprintComponentName, readonly strin
     "function:src/unresolved.ts:1:17:1:29:parse_payload",
     "function:src/unresolved.ts:5:17:5:22:report",
   ],
-  dropped_files: [
-    "src/duplicate_exports.js",
-  ],
+  dropped_files: [],
   indirect_reachability_evidence: [
     "function:src/arithmetic.ts:1:17:1:25:increment|collection_read|variable:src/zzz_second_reader.ts:3:7:3:18:SECOND_TABLE|src/zzz_second_reader.ts:6:10:6:21",
     "function:src/arithmetic.ts:5:17:5:22:double|function_reference||src/callback.ts:8:22:8:27",
@@ -121,12 +134,12 @@ const EXPECTED_MEMBERS: Readonly<Record<FingerprintComponentName, readonly strin
 
 /** The counts the corpus produces. Every one is positive by construction. */
 const EXPECTED_COUNTS: Readonly<Record<FingerprintComponentName, number>> = {
-  nodes: 14,
+  nodes: 16,
   call_edges: 11,
   unresolved_calls: 2,
-  raw_entry_points: 4,
+  raw_entry_points: 6,
   indirect_reachability_keys: 10,
-  dropped_files: 1,
+  dropped_files: 0,
   indirect_reachability_evidence: 10,
 };
 
@@ -168,11 +181,13 @@ describe("the in-repo corpus guard", () => {
     }
   }, 60_000);
 
-  it("holds a non-empty member list for all seven components", async () => {
+  it("holds the exact count of every component, six of them non-empty", async () => {
     // A component that is always empty has a constant digest and guards
-    // nothing. Every count in EXPECTED_COUNTS is positive, and asserting the
-    // exact value is what stops the corpus being moved under a `tests/` path —
-    // which silently empties `raw_entry_points` — without a test failing.
+    // nothing, so every count but `dropped_files` is positive here and the
+    // exact value is asserted — which is what stops the corpus being moved
+    // under a `tests/` path, silently emptying `raw_entry_points`, without a
+    // test failing. `dropped_files` is pinned at zero for the reason in this
+    // file's header.
     const { fingerprint } = await load_guard_arm();
     const counts = Object.fromEntries(
       FINGERPRINT_COMPONENT_NAMES.map((name) => [name, fingerprint[name].count]),
@@ -185,8 +200,8 @@ describe("the in-repo corpus guard", () => {
     expect(row.file_counts).toEqual({
       discovered: 10,
       offered: 10,
-      indexed: 9,
-      dropped: 1,
+      indexed: 10,
+      dropped: 0,
     });
   }, 60_000);
 

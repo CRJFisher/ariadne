@@ -10,11 +10,11 @@
  * diagnostics repair unlandable until resolution is fixed.
  *
  * The committed hashes are anchored to a payload the test reads back: the
- * summary assertion names the four entry points the corpus produces, and the
+ * summary assertion names the six entry points the corpus produces, and the
  * derivation assertion recomputes the committed hex from that same payload,
  * so a regression cannot be blessed by pasting sixteen hex digits.
  *
- * This corpus cannot exercise the capped-evidence channels — its four entry
+ * This corpus cannot exercise the capped-evidence channels — its six entry
  * points carry empty evidence lists, which the summary assertion pins so the
  * limitation stays visible. The order-dependence those channels had is
  * guarded where it can bite, by the ingest-order test in
@@ -43,12 +43,17 @@ const CORPUS_ROOT = path.join(
   "benchmark_corpus",
 );
 
-/** This epic's first guard baseline, measured on the landed repair. */
+/**
+ * The guard baseline, re-taken when export metadata became keyed on declaration
+ * space and `duplicate_exports.js` rejoined the corpus. Its two `res`
+ * declarations are two more uncalled exports, so the payload grows from four
+ * entries to six and both digests move with it.
+ */
 const EXPECTED_DIAGNOSTICS = {
   schema_version: DIAGNOSTICS_FINGERPRINT_SCHEMA_VERSION,
-  entry_point_count: 4,
-  diag_hash: "2137c19fcc86c4eb",
-  canonical_hash: "33247e7b3a040f85",
+  entry_point_count: 6,
+  diag_hash: "dad1bdd809fb2716",
+  canonical_hash: "263b466cf26d9e3e",
 };
 
 async function load_order_arm(order: IngestOrder, sequence_index: number, session_id: string) {
@@ -119,6 +124,24 @@ describe("the in-repo diagnostics guard", () => {
       {
         file: "src/aaa_first_reader.ts",
         name: "read_first",
+        kind: "function",
+        diagnosis: "no-textual-callers",
+        grep: 0,
+        refs: 0,
+        reference_sites: 0,
+      },
+      {
+        file: "src/duplicate_exports.js",
+        name: "res",
+        kind: "function",
+        diagnosis: "no-textual-callers",
+        grep: 0,
+        refs: 0,
+        reference_sites: 0,
+      },
+      {
+        file: "src/duplicate_exports.js",
+        name: "res",
         kind: "function",
         diagnosis: "no-textual-callers",
         grep: 0,

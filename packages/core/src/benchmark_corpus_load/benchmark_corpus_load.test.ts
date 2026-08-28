@@ -46,8 +46,8 @@ describe("run_benchmark_arm", () => {
     expect(row.file_counts).toEqual({
       discovered: 10,
       offered: 10,
-      indexed: 9,
-      dropped: 1,
+      indexed: 10,
+      dropped: 0,
     });
     expect(row.ingest_order).toEqual("forward");
     expect(row.seed).toEqual(12345);

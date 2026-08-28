@@ -49,6 +49,7 @@ describe("resolve_project", () => {
     vi.mocked(load_project).mockResolvedValue({
       project: scoped_project,
       dropped_files: new Set(),
+      drop_reasons: new Map(),
       discovered_files: new Set(),
       gitignore_patterns: [],
     });
@@ -73,6 +74,7 @@ describe("resolve_project", () => {
     vi.mocked(load_project).mockResolvedValue({
       project: scoped_project,
       dropped_files: new Set(),
+      drop_reasons: new Map(),
       discovered_files: new Set(),
       gitignore_patterns: [],
     });
@@ -151,6 +153,7 @@ describe("resolve_project", () => {
     vi.mocked(load_project).mockResolvedValue({
       project: scoped_project,
       dropped_files: new Set(),
+      drop_reasons: new Map(),
       discovered_files: new Set(),
       gitignore_patterns: [],
     });

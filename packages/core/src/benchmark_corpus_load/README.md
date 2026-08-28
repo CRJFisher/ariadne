@@ -82,11 +82,12 @@ The seventh is not decoration. An order-dependence in which read site is
 recorded as a function's reachability evidence never moves entry-point
 membership, so nothing but this component shows it.
 
-The dropped set belongs in it because it grows with the corpus. Over vscode's
-`src/` at f3fa55c3 it holds 1 file at n=100, 2 at n=120 and 8 at n=200; over
-`folder-ts:src/vs/base` it holds 9 at n=200. The series is a property of the
-predicate as much as of the size, which is why a fingerprint compared across two
-differently-sized slices means nothing without it.
+The dropped set belongs in it because it is the component a coverage loss moves
+and nothing else does. It is EMPTY at every slice of every predicate on record
+today — over vscode's `src/` it once grew with the corpus, holding 1 file at
+n=100, 2 at n=120, 8 at n=200 and 676 at the full 8,494, and every one of those
+was the same export-registry defect. Zero is the guarantee; a non-zero reading
+is the signal.
 
 A member built from several fields escapes the characters those fields are
 joined with — `\`, `>`, `#`, `|` and `@` — so a TypeScript private member name
@@ -110,9 +111,9 @@ idiom, which is the construct order-dependence shows up in.
 A predicate names a folder set **and** an extension set, because a folder alone
 does not identify a file set. `src/vs/base` holds four `.js` files and two of
 them sort inside the first 200, displacing two `.ts` files. The two 200-file sets
-diverge on every number a row carries: 186 indexed, 14 dropped, 4,665 nodes and
-1,573 entry points under `folder:`, against 185, 15, 4,500 and 1,518 under
-`folder-ts:`.
+diverge on every number a row carries: 5,868 nodes, 1,857 raw entry points and
+9,839 resolved edges under `folder:`, against 5,712, 1,801 and 9,657 under
+`folder-ts:`. Both now index 200 of 200.
 
 At microsoft/vscode `f3fa55c3`, four defensible counts:
 
@@ -123,8 +124,9 @@ At microsoft/vscode `f3fa55c3`, four defensible counts:
 | shell: `.ts` under `src/` excluding `.d.ts` | 8,451  |
 | shell: `.ts` under `src/` including `.d.ts` | 8,648  |
 
-`src/` costs 337.3 s of CPU and the repository root 1,105.7 s on one 6-core box.
-They answer the ten-minute question differently, so rows for the two are never
+`src/` costs 361.8 s of CPU on one 6-core box and the repository root 1,105.7 s
+on the same box before the export-registry repair readmitted 676 files. They
+answer the ten-minute question differently, so rows for the two are never
 compared.
 
 The first two rows are load-bearing. An arm over `microsoft/vscode` at that
@@ -244,17 +246,17 @@ CPU, so the two predicates still answer the ten-minute question differently:
 
 Where that CPU goes, measured at the phase boundaries of one full-corpus run:
 
-| phase                          | CPU        | share  |
-| ------------------------------ | ---------- | ------ |
-| parse and index                | 292,833 ms | 85.03% |
-| the rest of the load           | 26,873 ms  | 7.80%  |
-| resolve the corpus             | 24,075 ms  | 6.99%  |
-| — `resolve_calls_for_files`    | 13,929 ms  | 4.04%  |
-| — fix import locations         | 7,074 ms   | 2.05%  |
-| — `resolve_names`              | 1,824 ms   | 0.53%  |
-| — `resolve_callback_invocations` | 1,908 ms | 0.51%  |
-| drop rollback                  | 187 ms     | 0.05%  |
-| `trace_call_graph`             | 440 ms     | 0.13%  |
+| phase                            | CPU        | share  |
+| -------------------------------- | ---------- | ------ |
+| parse and index                  | 292,833 ms | 85.03% |
+| the rest of the load             | 26,873 ms  | 7.80%  |
+| resolve the corpus               | 24,075 ms  | 6.99%  |
+| — `resolve_calls_for_files`      | 13,929 ms  | 4.04%  |
+| — fix import locations           | 7,074 ms   | 2.05%  |
+| — `resolve_names`                | 1,824 ms   | 0.53%  |
+| — `resolve_callback_invocations` | 1,908 ms   | 0.51%  |
+| drop rollback                    | 187 ms     | 0.05%  |
+| `trace_call_graph`               | 440 ms     | 0.13%  |
 
 Entry-point detection is free; the whole cost is the load, and 51.28% of the
 load-and-trace subtrees is spent crossing the JavaScript/native boundary to read
@@ -267,6 +269,47 @@ interleaved in the same session over nested slices, because the control tree
 does not finish the corpus. It buys **1.52× at 200 files, 2.09× at 600 and 3.40×
 at 1,200**, and a ratio that rises with the file set is exactly why the
 corpus-scale one may not be extrapolated from any of them.
+
+## What keying exports on declaration space moved
+
+`RECORDED_EXPORT_DECLARATION_SPACE` is this corpus's fingerprint re-baseline.
+Over vscode's `src/` at f3fa55c3 the load indexes **8,494 of 8,494** with an
+empty dropped set, against 7,818 and 676 with the export gate active, and
+`Project.remove_file` is called zero times on both arms. All 676 drops were one
+defect: the taxonomy over the control arm is the single entry
+`Duplicate export name "…" in file <path>` at 676, and `Multiple default
+exports` fires on no file of this corpus.
+
+Nothing is lost. `nodes(gate) \ nodes(repair)` is **0** by literal set
+difference over the complete node id set, while nodes rise 184,957 → 201,595 and
+resolved call edges 322,300 → 1,076,088.
+
+The entry-point accounting is taken at the resolution level — nodes, minus
+`get_all_referenced_symbols()`, minus anonymous — because a falling count says
+nothing on its own. Raw candidates fall 24,553 → 20,099: of the 6,751 removed,
+**6,751 (100.00%)** are in the repaired arm's called set and **0** lost their
+node; of the 2,297 added, 2,283 lie inside the readmitted files.
+
+Two commitments the step was written against are refuted by its own arms and are
+carried in the record rather than dropped. **The CPU win is not there**: control
+362.68 s against candidate 361.77 s, two processes per arm interleaved in one
+session, which is 1.00x. The 2.202x and 1.570x on record were both taken on a
+tree whose bulk load still rolled a failed ingest back through the incremental
+`remove_file`; TASK-381.4 removed that cascade first, so the cost the repair was
+expected to remove was already zero. What it buys is 8.65% more files, 16,638
+more nodes and 753,788 more resolved edges for CPU the session's noise cannot
+distinguish. **And peak RSS is a property of the box**: 6,911.75 MB candidate
+against 6,914.1 MB control, a −0.03% difference under run-to-run spreads of 5%
+and 7%, so the `<= 6.6 GB` bound describes the machine the earlier figure was
+taken on and not this repair.
+
+The residual outside the readmitted files is 17, not the 10 the step budgeted.
+Three are classifier decisions — `reverse` at `rangeMapping.ts:51` and
+`mergeEditor/model/mapping.ts:74` and `:327`, raw candidates in both arms. The
+other 14 are call sites that retarget onto an interface member once the
+readmitted `lifecycle.ts` and `event.ts` supply `IDisposable` and `Event`; each
+keeps its node, and 21,421 symbols gain an edge against their 14. That
+population is TASK-389.
 
 ## Memory
 
@@ -291,8 +334,12 @@ corpus-scale arm the load phase yields often enough to sample properly (measured
 A corpus of vscode's scale is absent in CI and in most checkouts, so
 corpus-scale **rows** skip cleanly. The fingerprint mechanism itself never
 skips: it is guarded on every test run against `packages/core/benchmark_corpus`,
-a ten-file corpus committed beside this module and shaped so all seven
-components are non-empty.
+a ten-file corpus committed beside this module and shaped so six of the seven
+components are non-empty. The seventh, `dropped_files`, is pinned at ZERO: it
+was non-empty only because a file of legal JavaScript used to abort indexing,
+so its guard was purchased by a bug, and manufacturing a replacement would mean
+committing a file Ariadne cannot index as a permanent fixture. That component's
+mechanism is proven synthetically in `call_graph_fingerprint.test.ts` instead.
 
 ```bash
 # Node 22 is required (engines: >=22.13.0 <23.0.0).
@@ -329,7 +376,7 @@ is how the hoisted-grammar incident happened in the first place.
 ### The smoke run
 
 The first 200 path-sorted `.ts` files of `src/vs/base` at corpus `f3fa55c3`
-reproduce **185 indexed, 15 dropped, 4,500 nodes, 1,518 raw entry points, 8,107
+reproduce **200 indexed, 0 dropped, 5,712 nodes, 1,801 raw entry points, 8,090
 unresolved call sites**. Use `--predicate folder-ts:src/vs/base --slice 200`;
 the plain `folder:` form is a different file set.
 
@@ -337,9 +384,9 @@ These are stated over the corpus rather than over one Ariadne commit, because
 that is what makes them a smoke run: the Ariadne commit belongs on the row, and
 the run prints it in the citation line above the numbers. A change to the
 pipeline that moves any of them is the signal the run exists to give. The
-coverage half of this line reads 185/15 on the tree the load-performance work
-started from as well as on the tree it stands at now, so its last move predates
-that work.
+coverage half of this line read 185/15 from the start of the load-performance
+work until export metadata was keyed on declaration space; it reads 200/0 now,
+and 200/0 is what a healthy load of any slice of this corpus looks like.
 
 ## Determinism
 

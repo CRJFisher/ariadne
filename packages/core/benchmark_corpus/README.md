@@ -21,18 +21,18 @@ move fails loudly rather than silently.
 
 Every one of the seven components is non-empty by construction.
 
-| file | what it contributes |
-| --- | --- |
-| `src/entry.ts` | a module-scope call no node encloses; the corpus's live root |
-| `src/registry.ts` | a collection read — `collection_read` evidence carrying a collection id |
-| `src/handlers.ts` | functions reachable only through that collection |
-| `src/callback.ts` | a function passed as a value — `function_reference` evidence |
-| `src/unresolved.ts` | calls into `JSON` and `console` that do not resolve |
-| `src/orphan.ts` | exported, never called — the raw entry points |
-| `src/arithmetic.ts` | the shared callee |
-| `src/aaa_first_reader.ts`, `src/zzz_second_reader.ts` | two files that both read `increment` as a value, so its reachability evidence is CONTESTED across files |
-| `src/duplicate_exports.js` | exports one name twice, so indexing throws and the file is dropped |
-| `tools/build_report.ts` | outside `src/`, so the two predicates differ by exactly one file |
+| file                                                  | what it contributes                                                                                                                   |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/entry.ts`                                        | a module-scope call no node encloses; the corpus's live root                                                                          |
+| `src/registry.ts`                                     | a collection read — `collection_read` evidence carrying a collection id                                                               |
+| `src/handlers.ts`                                     | functions reachable only through that collection                                                                                      |
+| `src/callback.ts`                                     | a function passed as a value — `function_reference` evidence                                                                          |
+| `src/unresolved.ts`                                   | calls into `JSON` and `console` that do not resolve                                                                                   |
+| `src/orphan.ts`                                       | exported, never called — the raw entry points                                                                                         |
+| `src/arithmetic.ts`                                   | the shared callee                                                                                                                     |
+| `src/aaa_first_reader.ts`, `src/zzz_second_reader.ts` | two files that both read `increment` as a value, so its reachability evidence is CONTESTED across files                               |
+| `src/duplicate_exports.js`                            | exports one name twice — two bindings in one declaration space, which is declaration merging rather than a reason to discard the file |
+| `tools/build_report.ts`                               | outside `src/`, so the two predicates differ by exactly one file                                                                      |
 
 The two readers are what let this corpus express an order-dependence at all.
 Ariadne records the last writer's read site as a function's reachability

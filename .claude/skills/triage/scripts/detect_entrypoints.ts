@@ -235,6 +235,18 @@ export async function load_project_config(config_path: string): Promise<ProjectC
   };
 }
 
+/**
+ * Share of discovered files that may be dropped before the run refuses to
+ * report at all.
+ */
+const DROP_FAILURE_SHARE = 0.01;
+
+/**
+ * Ratio of indexed to discovered files below which coverage is reported as
+ * broken.
+ */
+const INDEXED_RATIO_FLOOR = 0.99;
+
 // ===== Corpus checkout =====
 
 const REPOS_DIR = repos_root(default_store_dir());
@@ -462,7 +474,7 @@ export async function analyze_directory(
 
   // Load project using shared pipeline
   const load_start = Date.now();
-  const { project, dropped_files, discovered_files, gitignore_patterns } = await load_project({
+  const { project, dropped_files, drop_reasons, discovered_files, gitignore_patterns } = await load_project({
     project_path,
     folders: scope.folders,
     exclude,
@@ -477,27 +489,66 @@ export async function analyze_directory(
 
   // Gate: files indexing dropped outright. Their call edges are absent from the
   // graph while the files exist on disk, so every entry they call reads as
-  // uncalled.
+  // uncalled. The giant-file gate below reads the indexed map, so a file that
+  // throws during indexing is only visible here.
+  //
+  // The report is the count and the error taxonomy, never a sample of paths.
+  // Drops arrive in populations with one cause: 676 of vscode's 8,494 files
+  // once shared a single defect, and printing ten of their paths described the
+  // ten while saying nothing about the defect — a list reads as ten bad files,
+  // a message grouped over 676 names one bug once. The taxonomy stays bounded
+  // as the corpus grows, which a path list does not.
+  //
+  // Above 1% of discovered files the gate FAILS rather than warns. Below that a
+  // drop is a handful of pathological sources; above it, indexing has a
+  // systematic defect and every entry point downstream of the missing edges is
+  // suspect, so a run that keeps going publishes false positives.
+  const discovered_count = discovered_files.size;
   if (dropped_files.size > 0) {
-    // Named, not just counted: the giant-file gate below reads the indexed map,
-    // so a vendored bundle that throws during indexing is only visible here.
-    log_warn(
-      `${dropped_files.size} discovered file(s) failed to index and contribute no call edges: ` +
-        [...dropped_files]
-          .slice(0, 10)
-          .map((f) => path.relative(project_path, f))
-          .join(", "),
-    );
+    const by_reason = new Map<string, number>();
+    for (const file of dropped_files) {
+      const reason = drop_reasons.get(file) ?? "unknown";
+      // Paths and quoted names are the per-file part of a message; masking them
+      // is what turns 676 messages into the one defect they all report.
+      const kind = reason
+        .split("\n")[0]
+        .replace(/"[^"]*"/g, "\"…\"")
+        .replace(/\S*\/\S*/g, "<path>")
+        .slice(0, 160);
+      by_reason.set(kind, (by_reason.get(kind) ?? 0) + 1);
+    }
+    const taxonomy = [...by_reason.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([kind, count]) => `${count}x ${kind}`)
+      .join("; ");
+    const share = discovered_count > 0 ? dropped_files.size / discovered_count : 0;
+    const report =
+      `${dropped_files.size} of ${discovered_count} discovered file(s) ` +
+      `(${(share * 100).toFixed(2)}%) failed to index and contribute no call edges: ${taxonomy}`;
+    if (share > DROP_FAILURE_SHARE) {
+      throw new Error(
+        `${report}\nAbove ${(DROP_FAILURE_SHARE * 100).toFixed(0)}% of the corpus, so every entry point downstream of the missing edges is unreliable.`,
+      );
+    }
+    log_warn(report);
   }
 
-  // Gate: indexed vs discovered ratio. A big gap suggests indexing dropped files
-  // (parse errors, unreadable sources) and downstream work will be blind to
-  // those files. The denominator is the set the load itself selected, so the
-  // ratio cannot drift against a second walk that filtered differently.
-  const discovered_count = discovered_files.size;
-  if (discovered_count > 0 && stats.file_count / discovered_count < 0.5) {
+  // Gate: indexed vs discovered ratio. It is RETAINED beside the drop gate
+  // because the two see different failures: a drop is a file the loader offered
+  // to indexing and indexing refused, while this ratio also catches a file that
+  // was never offered at all — discovered, then lost between the walk and the
+  // registries, where it appears in no drop set because nothing threw over it.
+  // The denominator is the set the load itself selected, so the ratio cannot
+  // drift against a second walk that filtered differently.
+  //
+  // The threshold is 0.99, taken from the measured post-repair ratios over
+  // microsoft/vscode at f3fa55c3: 1.000 over `src/` (8,494 of 8,494) and
+  // 0.99992 repo-wide (12,653 of 12,654, the one residual being a scope-tree
+  // invariant rather than an export one). A 0.50 threshold could not fire on
+  // any coverage loss short of half the corpus.
+  if (discovered_count > 0 && stats.file_count / discovered_count < INDEXED_RATIO_FLOOR) {
     log_warn(
-      `indexed ${stats.file_count}/${discovered_count} files (ratio ${(stats.file_count / discovered_count).toFixed(2)}) — indexing may be dropping files`,
+      `indexed ${stats.file_count}/${discovered_count} files (ratio ${(stats.file_count / discovered_count).toFixed(5)}) — files discovered but never offered to indexing`,
     );
   }
 
