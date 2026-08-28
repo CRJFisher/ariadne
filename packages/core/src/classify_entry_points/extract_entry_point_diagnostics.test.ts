@@ -6,6 +6,7 @@ import { Project } from "../project";
 import {
   build_grep_index,
   extract_entry_point_diagnostics,
+  MAX_GREP_HITS,
 } from "./extract_entry_point_diagnostics";
 import { trace_call_graph } from "../trace_call_graph/trace_call_graph";
 import { check_callback_passed_to_invoker } from "./builtins/check_callback-passed-to-invoker";
@@ -72,7 +73,7 @@ describe("build_grep_index", () => {
     ]);
   });
 
-  it("collects all occurrences of a repeated name across files", () => {
+  it("collects every occurrence of a repeated name across files while under the cap", () => {
     const lines_by_file = new Map<FilePath, string[]>([
       [fp("a.ts"), as_lines("foo(); foo();")],
       [fp("b.ts"), as_lines("foo();")],
@@ -87,6 +88,54 @@ describe("build_grep_index", () => {
       "a.ts:1",
       "b.ts:1",
     ]);
+  });
+
+  it("stops storing a name at MAX_GREP_HITS, keeping the corpus's first hits", () => {
+    // Sixteen occurrences against a ten-hit cap. The cap is applied as the
+    // hits arrive, so the eleventh onwards are never built — the index holds
+    // exactly what `grep_for_calls` can hand an investigator.
+    const eight_calls = (offset: number) =>
+      as_lines(Array.from({ length: 8 }, (_, i) => `foo(${offset + i});`).join("\n"));
+    const lines_by_file = new Map<FilePath, string[]>([
+      [fp("a.ts"), eight_calls(0)],
+      [fp("b.ts"), eight_calls(8)],
+    ]);
+
+    const index = build_grep_index(lines_by_file, new Map(), languages_for(lines_by_file), new Set());
+
+    const foo_hits = index.get("foo") ?? [];
+    expect(foo_hits).toHaveLength(MAX_GREP_HITS);
+    expect(foo_hits.map((h) => `${h.file_path}:${h.line}`)).toEqual([
+      "a.ts:1",
+      "a.ts:2",
+      "a.ts:3",
+      "a.ts:4",
+      "a.ts:5",
+      "a.ts:6",
+      "a.ts:7",
+      "a.ts:8",
+      "b.ts:1",
+      "b.ts:2",
+    ]);
+  });
+
+  it("caps each name independently", () => {
+    const lines_by_file = new Map<FilePath, string[]>([
+      [
+        fp("a.ts"),
+        as_lines(
+          [
+            ...Array.from({ length: 12 }, () => "foo();"),
+            ...Array.from({ length: 3 }, () => "bar();"),
+          ].join("\n"),
+        ),
+      ],
+    ]);
+
+    const index = build_grep_index(lines_by_file, new Map(), languages_for(lines_by_file), new Set());
+
+    expect(index.get("foo")).toHaveLength(MAX_GREP_HITS);
+    expect(index.get("bar")).toHaveLength(3);
   });
 
   it("ignores identifiers not followed by an open paren", () => {

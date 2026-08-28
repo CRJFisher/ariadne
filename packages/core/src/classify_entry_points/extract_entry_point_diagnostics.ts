@@ -10,9 +10,10 @@
  *   - Each indexed source file's content is split into lines exactly once
  *     (into `lines_by_file`).
  *   - The grep index is built in a single pass over `lines_by_file`: every
- *     `identifier\s*\(` occurrence in code maps from `identifier` → `GrepHit[]`.
- *     Per-entry grep becomes an O(1) `Map.get` plus a small filter — no
- *     quadratic regression on large repos.
+ *     `identifier\s*\(` occurrence in code maps from `identifier` → `GrepHit[]`,
+ *     capped at `MAX_GREP_HITS` per name as the hits arrive, which is where the
+ *     one reader stops. Per-entry grep becomes an O(1) `Map.get` — no quadratic
+ *     regression on large repos.
  *   - A hit counts as a call site only when it can be one: occurrences inside
  *     comments and strings never enter the index, and a hit landing where a
  *     callable of the same name is declared is dropped at lookup. Both rules
@@ -538,6 +539,13 @@ function receiver_kind_of(
  * `build_code_ranges`, which carries block-comment and docstring state across
  * lines, so a call after `/* … *\/` on one line survives while the interior of
  * a multi-line comment does not.
+ *
+ * Narrowing the index by keyword instead of by count is refuted and not done.
+ * A stoplist of language keywords takes call sites out of the window an
+ * investigator reads, for hits the cap has already discarded, and its premise
+ * is false for TypeScript, where `catch`, `new`, `for` and `typeof` are all
+ * legal method names and `.catch()` is everywhere. `RECORDED_GREP_INDEX_CAP`
+ * is the measurement, in `benchmark_corpus_load`.
  */
 export function build_grep_index(
   lines_by_file: ReadonlyMap<FilePath, string[]>,
@@ -567,6 +575,12 @@ export function build_grep_index(
           hits = [];
           index.set(name, hits);
         }
+        // Capped as hits arrive, not when they are read: `grep_for_calls` is
+        // the only reader and it stops at `MAX_GREP_HITS`, so a hit past the
+        // tenth is a record nothing can reach. Files arrive in sorted path
+        // order and occurrences within a file in source order, so the ten kept
+        // here are the corpus's first ten — the same ten a reader sees.
+        if (hits.length >= MAX_GREP_HITS) return;
         const refs = by_line?.get(line);
         hits.push({
           file_path,
@@ -580,6 +594,13 @@ export function build_grep_index(
   return index;
 }
 
+/**
+ * Textual call sites kept per name, on both grep channels.
+ *
+ * Load-bearing for memory rather than only for readability: a ubiquitous name
+ * in a large corpus reaches tens of thousands of occurrences, and every one of
+ * them past this bound is a `GrepHit` no reader can ask for.
+ */
 export const MAX_GREP_HITS = 10;
 
 /**
@@ -669,17 +690,18 @@ function reference_sites_for(
 
 /**
  * Look up textual call sites for a given name in the precomputed inverted
- * index, capped for the investigator who reads them.
+ * index.
  *
  * The index holds only occurrences that can be calls — `for_each_call_occurrence`
  * withheld comment and literal text, every line a callable of that name is
- * declared on, and every declaration header — so nothing is re-filtered here.
+ * declared on, and every declaration header — and it holds at most
+ * `MAX_GREP_HITS` of them per name, so nothing is re-filtered or re-cut here.
  */
 function grep_for_calls(
   name: string,
   grep_index: Map<string, GrepHit[]>,
 ): GrepHit[] {
-  return (grep_index.get(name) ?? []).slice(0, MAX_GREP_HITS);
+  return grep_index.get(name) ?? [];
 }
 
 /**

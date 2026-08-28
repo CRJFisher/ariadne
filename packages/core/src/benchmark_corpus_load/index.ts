@@ -51,6 +51,8 @@ export { RECORDED_MEMORY_CONTRACT } from "./recorded_memory_contract";
 
 export { RECORDED_CACHE_RESUMPTION } from "./recorded_cache_resumption";
 
+export { RECORDED_GREP_INDEX_CAP } from "./recorded_grep_index_cap";
+
 export { compare_fingerprints } from "./call_graph_fingerprint";
 
 export {

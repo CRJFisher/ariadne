@@ -344,6 +344,37 @@ target on this tree. The 68.56 MB the target was set against describes a smaller
 index than this tree produces; what does reproduce is the parse figure, 205.4 ms
 recorded against 208.1 measured, and the 175 ms bound is met at 174.3.
 
+## What capping the grep index frees
+
+`RECORDED_GREP_INDEX_CAP` holds what the post-load grep index costs under both
+shapes — every textual `name(` occurrence in the corpus, and the first
+`MAX_GREP_HITS` of them per name. Over vscode's `src/` at f3fa55c3, three arms
+interleaved control, candidate, control, retained hits fall **1,002,037 →
+178,136** and retained bytes, measured by deletion under forced GC, fall
+**147.04 → 36.40 MB**: 5.63x and 4.04x, and 110.6 MB of the run's peak heap.
+One name, `if`, accounts for 104,285 of the discarded hits.
+
+Nothing an investigator reads changes. The sha1 over `slice(0, 10)` of every
+name is byte-identical in all three arms, and both shapes key 51,882 names, so
+the capped index IS the readable window: 178,136 hits under either shape. A
+second pair of whole-corpus arms in the same session, run through
+`run_benchmark_arm`, agrees on all seven fingerprint components and on **both**
+diagnostics hashes over 17,563 entry points — `d08f8e814597b4bb` emitted and
+`834cc16d32aef077` canonical, the values `RECORDED_ORDER_INDEPENDENCE` already
+holds for this corpus in forward order.
+
+This is a **memory fix and not a speedup**, and the row says so in a field. The
+candidate's 406,963.0 ms of whole-corpus CPU sits 1.73% under a control mean of
+414,147.65 ms while the load phase — identical code in both arms — moves 1.61%
+of that on its own. `build_grep_index` itself saves 866 ms, 0.21% of the run.
+
+The record also carries the keyword stoplist proposed beside the cap, so it is
+not re-proposed from the number that makes it look free. It removes 147,194 of
+the uncapped index's hits, but the cap removes 823,901 including 146,945 of
+those; what the stoplist adds is **249 hits under 27 names out of 178,136** an
+investigator can read, and it moves the digest. `catch`, `new`, `for` and
+`typeof` are all legal TypeScript method names.
+
 ## Memory
 
 ### The contract
