@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { detect_indirect_reachability } from "./indirect_reachability";
+import {
+  detect_indirect_reachability,
+  record_indirect_reachability,
+} from "./indirect_reachability";
 import { function_symbol, method_symbol, variable_symbol } from "@ariadnejs/types";
 import type {
   SymbolId,
@@ -484,5 +487,154 @@ describe("detect_indirect_reachability", () => {
         ]),
       );
     });
+  });
+});
+
+/**
+ * A function read as a value from several places is one key in the map, and
+ * the read site stored under it is what the report shows as the evidence. The
+ * walk arrives at those places in ingest order, so the entry has to be chosen
+ * by where the read sits in the project rather than by when the walk got there.
+ */
+describe("the read site recorded as evidence", () => {
+  const EARLIER_FILE = "a_earlier.ts" as FilePath;
+  const LATER_FILE = "z_later.ts" as FilePath;
+
+  function read_site(file: FilePath, line: number, column: number): Location {
+    return {
+      file_path: file,
+      start_line: line,
+      start_column: column,
+      end_line: line,
+      end_column: column + 7,
+    };
+  }
+
+  function detect_over(
+    files: readonly (readonly [FilePath, readonly ReadRef[]])[],
+    registry: DefinitionRegistry,
+    resolve: (scope_id: string, name: SymbolName) => SymbolId | null,
+  ): Map<SymbolId, IndirectReachability> {
+    return detect_indirect_reachability(
+      new Map<FilePath, readonly ReadRef[]>(files),
+      registry,
+      resolve,
+    );
+  }
+
+  it("records the earliest file's read site whichever file the walk reaches first", () => {
+    const fn_def = make_function_def("handler", MOCK_LOCATION);
+    const registry = mock_definition_registry(
+      new Map<SymbolId, AnyDefinition>([[fn_def.symbol_id, fn_def]]),
+    );
+    const resolve = name_resolver({ handler: fn_def.symbol_id });
+    const earlier = read_site(EARLIER_FILE, 9, 4);
+    const later = read_site(LATER_FILE, 2, 0);
+
+    const earliest_first = detect_over(
+      [
+        [EARLIER_FILE, [read_ref("handler", earlier)]],
+        [LATER_FILE, [read_ref("handler", later)]],
+      ],
+      registry,
+      resolve,
+    );
+    const latest_first = detect_over(
+      [
+        [LATER_FILE, [read_ref("handler", later)]],
+        [EARLIER_FILE, [read_ref("handler", earlier)]],
+      ],
+      registry,
+      resolve,
+    );
+
+    const expected = new Map<SymbolId, IndirectReachability>([
+      [
+        fn_def.symbol_id,
+        { reason: { type: "function_reference", read_location: earlier } },
+      ],
+    ]);
+    expect(earliest_first).toEqual(expected);
+    expect(latest_first).toEqual(expected);
+  });
+
+  it("orders two read sites in one file by line and then column", () => {
+    const fn_def = make_function_def("handler", MOCK_LOCATION);
+    const registry = mock_definition_registry(
+      new Map<SymbolId, AnyDefinition>([[fn_def.symbol_id, fn_def]]),
+    );
+    const resolve = name_resolver({ handler: fn_def.symbol_id });
+    const first_on_the_line = read_site(EARLIER_FILE, 7, 2);
+    const later_on_the_line = read_site(EARLIER_FILE, 7, 30);
+    const on_a_later_line = read_site(EARLIER_FILE, 40, 0);
+
+    // Both directions, because a walk-order rule passes one of them by luck:
+    // first-wins answers the ascending list correctly and last-wins the
+    // descending one, and only a positional rule answers both.
+    const ascending = detect_over(
+      [
+        [
+          EARLIER_FILE,
+          [
+            read_ref("handler", first_on_the_line),
+            read_ref("handler", later_on_the_line),
+            read_ref("handler", on_a_later_line),
+          ],
+        ],
+      ],
+      registry,
+      resolve,
+    );
+    const descending = detect_over(
+      [
+        [
+          EARLIER_FILE,
+          [
+            read_ref("handler", on_a_later_line),
+            read_ref("handler", later_on_the_line),
+            read_ref("handler", first_on_the_line),
+          ],
+        ],
+      ],
+      registry,
+      resolve,
+    );
+
+    const expected = new Map<SymbolId, IndirectReachability>([
+      [
+        fn_def.symbol_id,
+        {
+          reason: {
+            type: "function_reference",
+            read_location: first_on_the_line,
+          },
+        },
+      ],
+    ]);
+    expect(ascending).toEqual(expected);
+    expect(descending).toEqual(expected);
+  });
+
+  it("keeps the earliest read site when a later writer merges into the map", () => {
+    const fn_def = make_function_def("handler", MOCK_LOCATION);
+    const earlier = read_site(EARLIER_FILE, 9, 4);
+    const later = read_site(LATER_FILE, 2, 0);
+    const map = new Map<SymbolId, IndirectReachability>();
+
+    record_indirect_reachability(map, fn_def.symbol_id, {
+      reason: { type: "function_reference", read_location: earlier },
+    });
+    record_indirect_reachability(map, fn_def.symbol_id, {
+      reason: { type: "function_reference", read_location: later },
+    });
+
+    expect(map).toEqual(
+      new Map<SymbolId, IndirectReachability>([
+        [
+          fn_def.symbol_id,
+          { reason: { type: "function_reference", read_location: earlier } },
+        ],
+      ]),
+    );
   });
 });

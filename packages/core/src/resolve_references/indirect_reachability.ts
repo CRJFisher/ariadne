@@ -25,6 +25,70 @@ interface VariableReadReference {
 }
 
 /**
+ * The single writer of an indirect-reachability map.
+ *
+ * A function can be read as a value from many files and the map holds one
+ * entry per function, so which read site becomes the reported evidence used to
+ * be decided by whichever of six writers reached the key first — some
+ * first-wins, some last-wins, all of them walking in ingest order. The entry
+ * kept is the one earliest in the project instead, so the evidence is a
+ * function of the corpus rather than of the order its files arrived in.
+ */
+export function record_indirect_reachability(
+  into: Map<SymbolId, IndirectReachability>,
+  fn_id: SymbolId,
+  entry: IndirectReachability
+): void {
+  const held = into.get(fn_id);
+  if (held === undefined || precedes(entry, held)) {
+    into.set(fn_id, entry);
+  }
+}
+
+/**
+ * Whether `candidate` sits earlier in the project than `held`: file path, then
+ * line, then column.
+ *
+ * The comparison runs on past the read site's start because the start alone is
+ * not a total order, and a pair it leaves unordered is a pair the walk decides.
+ * Two references can share a start — `apply_twice` is read both as the callee
+ * name and as the whole call expression at one column — and one read of a
+ * collection that spreads another reaches the same function under two
+ * collection ids at one location. Ending sooner wins, so the tighter span is
+ * the witness.
+ */
+function precedes(
+  candidate: IndirectReachability,
+  held: IndirectReachability
+): boolean {
+  const here = candidate.reason.read_location;
+  const there = held.reason.read_location;
+  if (here.file_path !== there.file_path) {
+    return here.file_path < there.file_path;
+  }
+  if (here.start_line !== there.start_line) {
+    return here.start_line < there.start_line;
+  }
+  if (here.start_column !== there.start_column) {
+    return here.start_column < there.start_column;
+  }
+  if (here.end_line !== there.end_line) {
+    return here.end_line < there.end_line;
+  }
+  if (here.end_column !== there.end_column) {
+    return here.end_column < there.end_column;
+  }
+  if (candidate.reason.type !== held.reason.type) {
+    return candidate.reason.type < held.reason.type;
+  }
+  return collection_of(candidate) < collection_of(held);
+}
+
+function collection_of(entry: IndirectReachability): string {
+  return entry.reason.type === "collection_read" ? entry.reason.collection_id : "";
+}
+
+/**
  * Detect indirect reachability from variable read references.
  *
  * Two cases mark a symbol reachable: reading a function-collection variable
@@ -77,7 +141,7 @@ export function detect_indirect_reachability(
         ) {
           continue;
         }
-        indirect_reachability.set(symbol_id, {
+        record_indirect_reachability(indirect_reachability, symbol_id, {
           reason: { type: "function_reference", read_location: ref.location },
         });
       }
@@ -105,7 +169,7 @@ function mark_collection_as_consumed(
   visited.add(collection_id);
 
   for (const fn_id of collection.stored_functions) {
-    indirect_reachability.set(fn_id, {
+    record_indirect_reachability(indirect_reachability, fn_id, {
       reason: {
         type: "collection_read",
         collection_id,
@@ -129,7 +193,7 @@ function mark_collection_as_consumed(
       if (!ref_def) continue;
 
       if (ref_def.kind === "function") {
-        indirect_reachability.set(ref_id, {
+        record_indirect_reachability(indirect_reachability, ref_id, {
           reason: {
             type: "collection_read",
             collection_id,

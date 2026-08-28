@@ -1291,3 +1291,121 @@ export function drive(): number {
     );
   });
 });
+
+/**
+ * The exported-singleton idiom — `export const extUri = new ExtUri()`, imported
+ * and used from more than one file — driven through the BULK path in three
+ * arrival orders.
+ *
+ * The bulk path is what the guard is written against, and it is not
+ * interchangeable with `Project.update_file`: `resolve_corpus` runs phase 2.5
+ * for every file before it resolves any, so a constructor binding looked up by
+ * location sees every importer's rewritten import location already in the
+ * registry. The per-arrival driver resolves each file against the corpus as it
+ * stood when that file landed, and never asks the question at a moment when
+ * more than one file could answer it.
+ */
+describe("TypeScript Ingest Order Independence", () => {
+  const SINGLETON = `export class ExtUri {
+  compare(left: string, right: string): number {
+    return left < right ? -1 : 1;
+  }
+
+  basename(target: string): string {
+    return target;
+  }
+}
+
+export const extUri = new ExtUri();
+`;
+
+  const FIRST_CONSUMER = `import { extUri } from "./singleton";
+
+export function sort_paths(paths: string[]): string[] {
+  return [...paths].sort((left, right) => extUri.compare(left, right));
+}
+`;
+
+  const SECOND_CONSUMER = `import { extUri } from "./singleton";
+
+export function name_of(target: string): string {
+  return extUri.basename(target);
+}
+`;
+
+  /**
+   * The reported graph as text: node ids, entry points, and every resolved
+   * caller-to-callee edge, each path made relative so three runs over one
+   * directory are comparable.
+   */
+  function call_graph_shape(project: Project, temp_dir: string): string[] {
+    const call_graph = project.get_call_graph();
+    const relative = (value: string) => value.split(`${temp_dir}/`).join("");
+
+    const lines: string[] = [];
+    for (const symbol_id of call_graph.nodes.keys()) {
+      lines.push(`node ${relative(symbol_id)}`);
+    }
+    for (const symbol_id of call_graph.entry_points) {
+      lines.push(`entry ${relative(symbol_id)}`);
+    }
+    for (const [caller, node] of call_graph.nodes) {
+      for (const call of node.enclosed_calls) {
+        for (const resolution of call.resolutions) {
+          lines.push(
+            `edge ${relative(caller)} -> ${relative(resolution.symbol_id)}`
+          );
+        }
+      }
+    }
+    return lines.sort();
+  }
+
+  it("reports one call graph whichever order the corpus is ingested in", async () => {
+    const temp_dir = fs.mkdtempSync(
+      path.join(os.tmpdir(), "ariadne-ts-ingest-order-")
+    );
+    temp_dirs.push(temp_dir);
+
+    const sources: Record<string, string> = {
+      "singleton.ts": SINGLETON,
+      "consumer_a.ts": FIRST_CONSUMER,
+      "consumer_b.ts": SECOND_CONSUMER,
+    };
+    for (const [name, content] of Object.entries(sources)) {
+      fs.writeFileSync(path.join(temp_dir, name), content);
+    }
+
+    const orders = [
+      ["singleton.ts", "consumer_a.ts", "consumer_b.ts"],
+      ["consumer_b.ts", "consumer_a.ts", "singleton.ts"],
+      ["consumer_a.ts", "singleton.ts", "consumer_b.ts"],
+    ];
+
+    const shapes: string[][] = [];
+    for (const order of orders) {
+      const project = new Project();
+      await project.initialize(temp_dir as FilePath);
+      for (const name of order) {
+        project.ingest_file(
+          path.join(temp_dir, name) as FilePath,
+          sources[name]
+        );
+      }
+      project.resolve_corpus();
+      shapes.push(call_graph_shape(project, temp_dir));
+    }
+
+    expect(shapes[1]).toEqual(shapes[0]);
+    expect(shapes[2]).toEqual(shapes[0]);
+
+    // The idiom named in the shape, so a run that agreed on an empty graph
+    // could not pass: both methods reached through the singleton are called.
+    expect(shapes[0]).toContain(
+      "edge function:consumer_a.ts:4:26:4:69:<anonymous> -> method:singleton.ts:2:3:2:9:compare"
+    );
+    expect(shapes[0]).toContain(
+      "edge function:consumer_b.ts:3:17:3:23:name_of -> method:singleton.ts:6:3:6:10:basename"
+    );
+  });
+});

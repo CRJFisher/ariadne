@@ -44,18 +44,21 @@ import {
   summarize_peak_rss,
   write_arm_result,
   INGEST_ORDERS,
-  RECORDED_CORPUS_PASS_COST,
-  RECORDED_EVICTION_INDEX_COST,
-  RECORDED_EXPORT_DECLARATION_SPACE,
-  RECORDED_FULL_CORPUS_BASELINE,
-  RECORDED_NAME_TABLE_MEMORY,
-  RECORDED_RESOLUTION_EVICTION_COST,
   type ArmRequest,
   type ArmResult,
   type IngestOrder,
   type MeasurementRow,
   type SliceSize,
 } from "../src/benchmark_corpus_load";
+import {
+  report_recorded_corpus_pass,
+  report_recorded_eviction_cost,
+  report_recorded_export_declaration_space,
+  report_recorded_full_corpus_baseline,
+  report_recorded_name_table,
+  report_recorded_order_independence,
+  report_recorded_resolution_eviction,
+} from "./recorded_measurement_report";
 
 /**
  * What `"full"` is assumed to cost when sizing a child, since the parent does
@@ -387,167 +390,6 @@ async function run_interleaved(context: RunContext, slice: SliceSize): Promise<v
 }
 
 /**
- * The re-baseline this corpus's fingerprint stands at, and what moved to get
- * there.
- *
- * Printed for an arm over the same file set because a fingerprint that differs
- * from the committed one is either this step's move — accounted for member by
- * member here — or a regression, and a reader has no way to tell without the
- * accounting beside it. The counts travel between machines; the CPU and RSS
- * absolutes do not, so they are marked as a record.
- */
-function report_recorded_export_declaration_space(
-  offered_file_count: number,
-): void {
-  const record = RECORDED_EXPORT_DECLARATION_SPACE;
-  if (record.discovered_files !== offered_file_count) return;
-  const [control, candidate] = record.arms;
-  console.log(
-    `\nrecorded for this corpus when export metadata was keyed on declaration space (${record.machine}, ${record.node_version}, session ${record.session_id} — not a comparand for the arms above):` +
-      `\n  indexed ${control.indexed} -> ${candidate.indexed} of ${record.discovered_files}, dropped ${control.dropped} -> ${candidate.dropped}` +
-      `, Project.remove_file called ${candidate.remove_file_calls} times on both arms` +
-      `\n  nodes ${control.fingerprint.nodes} -> ${candidate.fingerprint.nodes} with ${record.nodes_lost} lost` +
-      `, resolved call edges ${control.fingerprint.call_edges} -> ${candidate.fingerprint.call_edges}` +
-      `\n  raw candidates ${record.entry_point_accounting.raw_candidates_control} -> ${record.entry_point_accounting.raw_candidates_candidate}` +
-      `: ${record.entry_point_accounting.removed} removed, all ${record.entry_point_accounting.removed_in_candidate_called_set} of them called in the repaired arm` +
-      `; ${record.entry_point_accounting.added} added, ${record.entry_point_accounting.added_inside_readmitted_files} inside the readmitted files` +
-      `\n  CPU ${control.cpu_seconds.mean} s -> ${candidate.cpu_seconds.mean} s (${record.cpu_ratio}x)` +
-      `, peak RSS ${control.peak_rss_mb.mean} -> ${candidate.peak_rss_mb.mean} MB` +
-      `\n  residual outside the readmitted files: ${record.residual_outside_readmitted_files.length}` +
-      ` (${record.residual_outside_readmitted_files.filter((r) => r.cause === "classifier decision").length} classifier decisions,` +
-      ` ${record.residual_outside_readmitted_files.filter((r) => r.cause === "call site retargeted").length} retargeted call sites)`,
-  );
-}
-
-/**
- * What a whole corpus cost when it was last run end to end, and where that cost
- * was.
- *
- * Printed for an arm that offered every file one of the two pinned predicates
- * discovers, because that is the only arm the record is about: a slice's cost
- * per file is not the corpus's, and two fits from slices missed the measured
- * corpus cost by 2.19x and 16.8x. The file counts and the phase shares travel
- * between machines; the CPU and RSS absolutes beside them do not, so they are
- * marked as a record rather than a comparand for the arms above.
- */
-function report_recorded_full_corpus_baseline(offered_file_count: number): void {
-  const recorded = RECORDED_FULL_CORPUS_BASELINE.corpora.find(
-    (arm) => arm.offered === offered_file_count,
-  );
-  if (recorded === undefined) return;
-  // The split was taken over one predicate's corpus, so printing it under the
-  // other one's row would attribute a share to a run that never produced it.
-  const phases =
-    recorded.predicate === RECORDED_FULL_CORPUS_BASELINE.phase_split_predicate
-      ? `\n  where the CPU went: ${RECORDED_FULL_CORPUS_BASELINE.phase_split
-          .filter((phase) => phase.contained_by === "the run")
-          .map((phase) => `${phase.phase} ${phase.share_percent}%`)
-          .join(", ")}`
-      : "";
-  console.log(
-    `\nrecorded for this corpus when it last ran end to end (${RECORDED_FULL_CORPUS_BASELINE.machine}, ${RECORDED_FULL_CORPUS_BASELINE.node_version}, ariadne@${RECORDED_FULL_CORPUS_BASELINE.ariadne_commit} — not a comparand for the arms above):` +
-      `\n  ${recorded.predicate}: ${recorded.indexed} of ${recorded.offered} indexed, ${recorded.dropped} dropped, in ${recorded.processes} processes at a ${recorded.heap_cap_mb} MB heap` +
-      `\n  CPU ${recorded.cpu_seconds.mean} s (CV ${recorded.cpu_seconds.cv_percent}%), peak RSS ${recorded.peak_rss_mb.mean} MB (spread ${recorded.peak_rss_mb.spread_percent}%) against a settled heap of ${recorded.settled_heap_mb.mean} MB (spread ${recorded.settled_heap_mb.spread_percent}%)` +
-      phases,
-  );
-}
-
-/**
- * What the name table retained for this file set under both shapes.
- *
- * The stored-entry and visible-pair counts travel between machines because they
- * are properties of the algorithm; the KB/file figures beside them were taken
- * in their own session and are printed as a record rather than a comparand.
- */
-function report_recorded_name_table(offered_file_count: number): void {
-  const recorded = RECORDED_NAME_TABLE_MEMORY.slices.find(
-    (slice) => slice.offered_files === offered_file_count,
-  );
-  if (recorded === undefined) return;
-  console.log(
-    `\nrecorded for this file set when the name table became a parent chain (${RECORDED_NAME_TABLE_MEMORY.machine}, ${RECORDED_NAME_TABLE_MEMORY.node_version} — not a comparand for the arms above):` +
-      `\n  retained name table ${recorded.name_table_kb_per_file.flattened} -> ${recorded.name_table_kb_per_file.chained} KB/file` +
-      `, stored entries ${recorded.stored_entries.flattened.toLocaleString("en-US")} -> ${recorded.stored_entries.chained.toLocaleString("en-US")}` +
-      `, ${recorded.scopes.toLocaleString("en-US")} scopes over ${recorded.chain_links.toLocaleString("en-US")} links at mean depth ${recorded.mean_chain_depth}` +
-      `\n  visible (scope, name) pairs ${recorded.visible_scope_name_pairs.toLocaleString("en-US")} under both shapes, fingerprint identical, CPU ${recorded.cpu_total_ms.flattened} -> ${recorded.cpu_total_ms.chained} ms`,
-  );
-}
-
-/**
- * What resolution-state eviction cost this file set under both shapes.
- *
- * Entry counts only: they are properties of the algorithm and travel, while the
- * CPU beside them in the record is a single observation of one process and is
- * never a comparand for a live arm.
- */
-function report_recorded_resolution_eviction(offered_file_count: number): void {
-  const recorded = RECORDED_RESOLUTION_EVICTION_COST.cold_load.find(
-    (row) => row.file_count === offered_file_count,
-  );
-  if (recorded === undefined) return;
-  const hub = RECORDED_RESOLUTION_EVICTION_COST.incremental.edits[0];
-  console.log(
-    `\nrecorded for this file set when resolution state started evicting a batch in one pass (${RECORDED_RESOLUTION_EVICTION_COST.machine}, ${RECORDED_RESOLUTION_EVICTION_COST.node_version} — not a comparand for the arms above):` +
-      `\n  eviction calls over the load ${recorded.eviction_calls.per_file.toLocaleString("en-US")} -> ${recorded.eviction_calls.batched}` +
-      `, cloned map entries ${recorded.cloned_entries.batched}, clone allocations ${recorded.clone_allocations.per_file.toLocaleString("en-US")} -> ${recorded.clone_allocations.batched}` +
-      `\n  one edit to ${hub.file} (${hub.affected_files} files affected) clones ${hub.cloned_entries.per_file.toLocaleString("en-US")} -> ${hub.cloned_entries.batched.toLocaleString("en-US")} entries, fingerprint identical`,
-  );
-}
-
-/**
- * What the two-phase corpus pass measured for this file set.
- *
- * The counts travel between machines because they are properties of the
- * algorithm; the CPU ratio beside them does not, so it is printed with its own
- * session and marked as a record rather than a comparand.
- */
-function report_recorded_corpus_pass(offered_file_count: number): void {
-  const collapse = RECORDED_CORPUS_PASS_COST.resolve_names.find(
-    (size) => size.file_count === offered_file_count,
-  );
-  if (collapse !== undefined) {
-    console.log(
-      `\nrecorded for this file set when the bulk load became a two-phase corpus pass (${RECORDED_CORPUS_PASS_COST.machine}, ${RECORDED_CORPUS_PASS_COST.node_version}):` +
-        `\n  resolve_names calls ${collapse.calls.before} -> ${collapse.calls.after}` +
-        `, files resolved ${collapse.files_resolved.before} -> ${collapse.files_resolved.after}` +
-        `, peak heap ${collapse.peak_heap_mb.before} -> ${collapse.peak_heap_mb.after} MB`,
-    );
-  }
-
-  const ratio = RECORDED_CORPUS_PASS_COST.reverse_index_ratio.find(
-    (size) => size.file_count === offered_file_count,
-  );
-  if (ratio !== undefined) {
-    console.log(
-      `  with TASK-381.3's reverse indices against without, both carrying this driver: ${ratio.speedup}x` +
-        ` (control ${ratio.control.cpu_seconds.join(" / ")} s against candidate ${ratio.candidate.cpu_seconds.join(" / ")} s,` +
-        ` session ${ratio.session_id} — not a comparand for the arms above)`,
-    );
-  }
-}
-
-/**
- * What this file set cost when `DefinitionRegistry`'s eviction became keyed.
- *
- * Printed as a record and never as a comparand: it was taken in its own
- * session on its own machine, and dividing a live arm into it is the mistake
- * that turned 1.570x into a claimed 2.202x. What does travel is the entry
- * count, which is a property of the algorithm rather than of the box.
- */
-function report_recorded_eviction_cost(offered_file_count: number): void {
-  const recorded = RECORDED_EVICTION_INDEX_COST.sizes.find(
-    (size) => size.file_count === offered_file_count,
-  );
-  if (recorded === undefined) return;
-  console.log(
-    `\nrecorded for this file set when eviction became keyed (${RECORDED_EVICTION_INDEX_COST.machine}, ${RECORDED_EVICTION_INDEX_COST.node_version}, session ${recorded.session_id} — not a comparand for the arms above):` +
-      `\n  scanned entries inside remove_file ${recorded.scanned_entries_before.toLocaleString("en-US")} -> ${recorded.scanned_entries_after}` +
-      `, keyed operations ${recorded.keyed_per_evicted_symbol_after} per evicted symbol over ${recorded.evicted_symbols.toLocaleString("en-US")} of them` +
-      `\n  CPU control ${recorded.control.cpu_seconds.join(" / ")} s against candidate ${recorded.candidate.cpu_seconds.join(" / ")} s (${recorded.speedup}x), fingerprint identical`,
-  );
-}
-
-/**
  * CPU seconds per file, and the marginal cost of the files a slice added over
  * the one before it.
  *
@@ -621,7 +463,22 @@ async function run_orders(context: RunContext, slice: SliceSize): Promise<void> 
   console.log(`baseline order: ${verdict.baseline_order}`);
   for (const entry of verdict.comparisons) {
     if (!entry.diagnostics_identical) {
-      console.log(`  ${entry.order}: diagnostics payload differs`);
+      // Which of the payload's two hashes moved is the diagnosis, not a
+      // detail: the canonical hash holding means the same entries were found
+      // and fed in a different order, and the canonical hash moving means a
+      // different set of entries was found. Reported as one boolean, an
+      // ordering residue reads as a membership regression.
+      const other = others.find((arm) => arm.row.ingest_order === entry.order);
+      const membership_moved =
+        other?.row.diagnostics.canonical_hash !==
+        baseline.row.diagnostics.canonical_hash;
+      console.log(
+        `  ${entry.order}: diagnostics payload differs — ${
+          membership_moved
+            ? "canonical hash moved, so its MEMBERSHIP differs"
+            : "canonical hash held, so only the EMISSION ORDER of its evidence lists differs"
+        }`,
+      );
     }
     if (entry.comparison.identical) {
       console.log(`  ${entry.order}: identical`);
@@ -668,6 +525,8 @@ async function run_orders(context: RunContext, slice: SliceSize): Promise<void> 
       `(${recorded_diagnostics.file_count} files): three ingest orders once produced ` +
       `${new Set(recorded_diagnostics.diag_hashes_before_repair.both_causes_present).size} distinct payloads`,
   );
+
+  report_recorded_order_independence(baseline.row.file_counts.offered);
 }
 
 async function main(): Promise<void> {

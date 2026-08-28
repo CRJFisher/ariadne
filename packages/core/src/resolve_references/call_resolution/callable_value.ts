@@ -10,6 +10,7 @@ import { is_ok } from "@ariadnejs/types";
 import {
   create_method_call_reference,
 } from "../../index_single_file/references/factories";
+import { record_indirect_reachability } from "../indirect_reachability";
 import { resolve_method_call } from "./method_call";
 import type { CallResolutionContext } from "./call_resolver";
 
@@ -38,11 +39,9 @@ export function resolve_callable_values(
         ) {
           continue;
         }
-        if (!reachable.has(target)) {
-          reachable.set(target, {
-            reason: { type: "function_reference", read_location: ref.location },
-          });
-        }
+        record_indirect_reachability(reachable, target, {
+          reason: { type: "function_reference", read_location: ref.location },
+        });
       }
     }
   }

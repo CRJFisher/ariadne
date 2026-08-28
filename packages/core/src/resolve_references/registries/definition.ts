@@ -169,14 +169,23 @@ export class DefinitionRegistry {
     for (const def of definitions) {
       this.by_symbol.set(def.symbol_id, def);
 
-      const loc_key = location_key(def.location);
-      this.location_to_symbol.set(loc_key, def.symbol_id);
-
       symbol_ids.add(def.symbol_id);
 
-      // Exclude ImportDefinitions from the scope index: they are resolved via
-      // import resolution, and indexing them here would override those results.
+      // An ImportDefinition enters neither index, for two separate reasons.
+      //
+      // Out of the location index because `fix_import_definition_locations`
+      // (project/fix_import_locations.ts) gives an import the location of the
+      // definition it names. Indexed here, N importers of one symbol each claim
+      // that symbol's key, the map holds one value, and the ingest order
+      // decides whether the declaration or an importer's import symbol answers
+      // for the declaration's own location. All four readers want the
+      // declaration.
+      //
+      // Out of the scope index because imports are resolved through import
+      // resolution, and indexing them here would override those results.
       if (def.kind !== "import") {
+        this.location_to_symbol.set(location_key(def.location), def.symbol_id);
+
         const scope_id = def.defining_scope_id;
         if (!this.by_scope.has(scope_id)) {
           this.by_scope.set(scope_id, new Map());
@@ -484,8 +493,22 @@ export class DefinitionRegistry {
     for (const symbol_id of symbol_ids) {
       const def = this.by_symbol.get(symbol_id);
       if (def) {
-        const loc_key = location_key(def.location);
-        this.location_to_symbol.delete(loc_key);
+        // Eviction inverts insertion exactly. An import was never written to
+        // either index and carries the location of a declaration it does not
+        // own, so deleting on its behalf would take the declaring file's entry
+        // out from under it the moment one importer is evicted.
+        if (def.kind !== "import") {
+          this.location_to_symbol.delete(location_key(def.location));
+
+          const scope_id = def.defining_scope_id;
+          const scope_map = this.by_scope.get(scope_id);
+          if (scope_map) {
+            scope_map.delete(def.name as SymbolName);
+            if (scope_map.size === 0) {
+              this.by_scope.delete(scope_id);
+            }
+          }
+        }
 
         // Members are first-class definitions in by_symbol and the location
         // index, so evict them alongside the type that owns them — the same set
@@ -506,15 +529,6 @@ export class DefinitionRegistry {
               this.location_to_symbol.delete(prop_loc_key);
               this.by_symbol.delete(prop.symbol_id);
             }
-          }
-        }
-
-        const scope_id = def.defining_scope_id;
-        const scope_map = this.by_scope.get(scope_id);
-        if (scope_map) {
-          scope_map.delete(def.name as SymbolName);
-          if (scope_map.size === 0) {
-            this.by_scope.delete(scope_id);
           }
         }
       }

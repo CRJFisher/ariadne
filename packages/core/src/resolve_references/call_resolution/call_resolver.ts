@@ -33,7 +33,10 @@ import type { ExportRegistry } from "../registries/export";
 import type { ImportGraph } from "../import_resolution/import_graph";
 import type { CallResolutionResult } from "../resolution_state";
 import type { ResolutionRegistry } from "../resolution_registry";
-import { detect_indirect_reachability } from "../indirect_reachability";
+import {
+  detect_indirect_reachability,
+  record_indirect_reachability,
+} from "../indirect_reachability";
 import { resolve_callable_values } from "./callable_value";
 import { resolve_method_call } from "./method_call";
 import { create_method_call_reference } from "../../index_single_file/references/factories";
@@ -144,9 +147,7 @@ export function resolve_calls_for_files(
     file_references,
     context
   )) {
-    if (!indirect_reachability.has(symbol_id)) {
-      indirect_reachability.set(symbol_id, entry);
-    }
+    record_indirect_reachability(indirect_reachability, symbol_id, entry);
   }
 
   return {

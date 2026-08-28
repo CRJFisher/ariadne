@@ -193,21 +193,13 @@ describe("refusals before the work", () => {
 });
 
 describe("diff_ingest_orders", () => {
-  it("reports the corpus as order-DEPENDENT, in the evidence component", async () => {
-    // This pins a real defect, not a desired property. Ariadne records the LAST
-    // writer's read site as a function's reachability evidence, so when two
-    // files both read the same function as a value, which one is remembered
-    // depends on the order the loader walked them. `increment` is read by
-    // `aaa_first_reader` and `zzz_second_reader` for exactly this purpose.
-    //
-    // Only the seventh component moves: the SET of reachable functions is
-    // unchanged, and what the graph says about them is not. That is the shape
-    // of failure a fingerprint without the evidence component cannot see, which
-    // is why the seventh exists.
-    //
-    // Making the reported graph a function of the codebase rather than of the
-    // walk turns this test red — and that failure is the signal it worked.
-    // Assert independence then.
+  it("reports the corpus as order-INDEPENDENT, evidence component included", async () => {
+    // `increment` is read as a value by both `aaa_first_reader` and
+    // `zzz_second_reader`, so the corpus carries the shape that used to make
+    // the seventh component move: one function, two candidate read sites, one
+    // slot to report. The recorded evidence is the site earliest in the
+    // project, whichever file the walk reached first, so all four orders agree
+    // — and the site named below is `aaa_first_reader`'s in every one of them.
     const session_id = create_session_id();
     const baseline = await arm("forward", 0, session_id);
     const others = [];
@@ -226,21 +218,22 @@ describe("diff_ingest_orders", () => {
       "descending_size",
       "shuffled",
     ]);
-    expect(verdict.identical_across_orders).toEqual(false);
+    expect(verdict.identical_across_orders).toEqual(true);
+    expect(
+      verdict.comparisons.map((entry) => [
+        ...entry.comparison.differing_components,
+      ]),
+    ).toEqual([[], [], []]);
 
-    const reversed = verdict.comparisons[0].comparison;
-    expect([...reversed.differing_components]).toEqual([
-      "indirect_reachability_evidence",
-    ]);
-    const evidence = reversed.components.find(
-      (component) => component.component === "indirect_reachability_evidence",
+    // Named rather than merely compared: three orders agreeing on an evidence
+    // component that lost the entry would also report no difference. The site
+    // is `aaa_first_reader`'s import of `increment`, which is the first read of
+    // it anywhere in the corpus.
+    expect([
+      ...baseline.fingerprint.indirect_reachability_evidence.members,
+    ]).toContain(
+      "function:src/arithmetic.ts:1:17:1:25:increment|function_reference||src/aaa_first_reader.ts:1:10:1:18",
     );
-    expect(evidence?.only_baseline).toEqual([
-      "function:src/arithmetic.ts:1:17:1:25:increment|collection_read|variable:src/zzz_second_reader.ts:3:7:3:18:SECOND_TABLE|src/zzz_second_reader.ts:6:10:6:21",
-    ]);
-    expect(evidence?.only_candidate).toEqual([
-      "function:src/arithmetic.ts:1:17:1:25:increment|collection_read|variable:src/aaa_first_reader.ts:3:7:3:17:FIRST_TABLE|src/aaa_first_reader.ts:6:10:6:20",
-    ]);
   }, 120_000);
 
   it("reports a difference when one exists, naming the component", async () => {

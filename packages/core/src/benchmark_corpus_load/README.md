@@ -391,14 +391,43 @@ and 200/0 is what a healthy load of any slice of this corpus looks like.
 ## Determinism
 
 A multi-order run that reports "no difference" is worth exactly as much as the
-demonstration that it could report one. That demonstration is
-`RECORDED_ORDER_SENSITIVITY`, measured on a tree whose polymorphic expansion
-depended on the order files arrived in: over the same 8,494 files, forward
-against largest-first moved 31 entry points (17,994 → 17,973 — a net 21, because
-26 left and 5 entered) and changed four of five recorded hashes while the node
-hash held still. Those values came from a different algorithm over a
-five-component fingerprint and can never be recomputed here, so they are a
-record of one run rather than a value to compare a current digest with.
+demonstration that it could report one. There are two such demonstrations on
+record.
+
+`RECORDED_ORDER_SENSITIVITY` is the older one, measured on a tree whose
+polymorphic expansion depended on the order files arrived in: over the same
+8,494 files, forward against largest-first moved 31 entry points (17,994 →
+17,973 — a net 21, because 26 left and 5 entered) and changed four of five
+recorded hashes while the node hash held still. Those values came from a
+different algorithm over a five-component fingerprint and can never be
+recomputed here, so they are a record of one run rather than a value to compare
+a current digest with.
+
+`RECORDED_ORDER_INDEPENDENCE` is the live one, and its digests **are**
+comparable with a current run because they came from this harness. Over
+vscode's `src/` the four orders now agree on all seven components — nodes
+201,595, resolved call edges 1,077,986, unresolved 420,958, entry points 17,563,
+indirect reachability 29,378 keys and 29,378 evidence tuples, dropped files 0 —
+and on the diagnostics `canonical_hash`. Its non-vacuity was taken in the same
+session on the tree immediately before the change: forward against descending
+byte size over the identical 8,494 files moved 37 entry points (17,647 → 17,620;
+32 forward-only, 5 revsize-only) and changed four of the seven components, while
+the node hash, the indirect-reachability key set and the dropped set held still.
+At 1,200 files the same tree gave four different entry-point sets — 4,163 /
+4,160 / 4,156 / 4,162, union 4,168 against intersection 4,151.
+
+The converged answer is a strict improvement rather than a different one, by
+literal set difference over the complete member lists: entry points −84 and +0,
+resolved caller-to-callee edges +1,898 and −0, unresolved call sites −3,099 and
++0, indirectly-reachable functions +3 and −0, node set byte-identical. The 84
+are methods of the exported-singleton idiom, and `receiver_type_unknown` falls
+163,174 → 158,233 over the corpus, which is where the 3.5% CPU goes: 1,842 of
+the freed call sites now reach member lookup and fail there instead.
+
+What is still order-dependent is the diagnostics payload's `diag_hash`, which
+takes four values under one `canonical_hash`. Membership is settled; emission
+order is not. It reads the same on the tree before the change, so it is neither
+introduced nor removed here.
 
 The diagnostics payload — the evidence a classifier reads about each entry
 point — carries its own pair of digests on every row, because its defect class

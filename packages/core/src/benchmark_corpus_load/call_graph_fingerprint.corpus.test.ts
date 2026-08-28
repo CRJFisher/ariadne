@@ -118,17 +118,31 @@ const EXPECTED_MEMBERS: Readonly<Record<FingerprintComponentName, readonly strin
     "function:src/unresolved.ts:5:17:5:22:report",
   ],
   dropped_files: [],
+  // Each read site here is the FIRST read of that function in the project, by
+  // file path then position — read off the corpus, not off a run. Eight of the
+  // ten are an import specifier, because importing a callable is a read of it
+  // and an import statement sits above every use in its file. `main` is read
+  // only at `entry.ts:15`, and `apply_twice` only inside `run`, so neither is
+  // imported anywhere and both name a use site.
+  //
+  // That is why three of these say `function_reference` where the collection
+  // that holds the function is the more informative evidence: `increment`,
+  // `alpha` and `beta` are each imported one line above the array literal that
+  // stores them, so the import wins on position and the collection id is lost
+  // from the tuple. The function is reachable either way — membership does not
+  // move — and preferring a use site over an import site without reopening the
+  // walk is TASK-390.
   indirect_reachability_evidence: [
-    "function:src/arithmetic.ts:1:17:1:25:increment|collection_read|variable:src/zzz_second_reader.ts:3:7:3:18:SECOND_TABLE|src/zzz_second_reader.ts:6:10:6:21",
-    "function:src/arithmetic.ts:5:17:5:22:double|function_reference||src/callback.ts:8:22:8:27",
+    "function:src/arithmetic.ts:1:17:1:25:increment|function_reference||src/aaa_first_reader.ts:1:10:1:18",
+    "function:src/arithmetic.ts:5:17:5:22:double|function_reference||src/callback.ts:1:10:1:15",
     "function:src/callback.ts:3:17:3:27:apply_twice|function_reference||src/callback.ts:8:10:8:20",
-    "function:src/callback.ts:7:17:7:19:run|function_reference||src/entry.ts:9:19:9:21",
+    "function:src/callback.ts:7:17:7:19:run|function_reference||src/entry.ts:3:10:3:12",
     "function:src/entry.ts:6:17:6:20:main|function_reference||src/entry.ts:15:19:15:22",
-    "function:src/handlers.ts:1:17:1:21:alpha|collection_read|variable:src/registry.ts:3:7:3:14:HANDLERS|src/registry.ts:6:19:6:26",
-    "function:src/handlers.ts:5:17:5:20:beta|collection_read|variable:src/registry.ts:3:7:3:14:HANDLERS|src/registry.ts:6:19:6:26",
-    "function:src/registry.ts:5:17:5:24:dispatch|function_reference||src/entry.ts:8:22:8:29",
-    "function:src/unresolved.ts:1:17:1:29:parse_payload|function_reference||src/entry.ts:10:3:10:15",
-    "function:src/unresolved.ts:5:17:5:22:report|function_reference||src/entry.ts:17:1:17:6",
+    "function:src/handlers.ts:1:17:1:21:alpha|function_reference||src/registry.ts:1:10:1:14",
+    "function:src/handlers.ts:5:17:5:20:beta|function_reference||src/registry.ts:1:17:1:20",
+    "function:src/registry.ts:5:17:5:24:dispatch|function_reference||src/entry.ts:2:10:2:17",
+    "function:src/unresolved.ts:1:17:1:29:parse_payload|function_reference||src/entry.ts:4:10:4:22",
+    "function:src/unresolved.ts:5:17:5:22:report|function_reference||src/entry.ts:4:25:4:30",
   ],
 };
 

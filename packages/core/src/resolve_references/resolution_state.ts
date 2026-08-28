@@ -23,6 +23,7 @@ import type {
   SymbolName,
   IndirectReachability,
 } from "@ariadnejs/types";
+import { record_indirect_reachability } from "./indirect_reachability";
 
 // ============================================================================
 // Types
@@ -328,7 +329,7 @@ export function apply_call_resolution(
 
   const new_indirect_reachability = new Map(state.indirect_reachability);
   for (const [fn_id, entry] of result.indirect_reachability) {
-    new_indirect_reachability.set(fn_id, entry);
+    record_indirect_reachability(new_indirect_reachability, fn_id, entry);
   }
 
   return {

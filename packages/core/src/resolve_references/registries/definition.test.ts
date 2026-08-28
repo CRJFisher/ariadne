@@ -1479,6 +1479,74 @@ describe("DefinitionRegistry", () => {
     });
   });
 
+  /**
+   * `fix_import_definition_locations` (project/fix_import_locations.ts) gives
+   * every ImportDefinition the location of the definition it names, so N
+   * importers of one exported singleton all carry that singleton's location.
+   * The location index holds one value per key, so unless imports stay out of
+   * it the survivor is whichever file was written last — the ingest order
+   * deciding which symbol answers for a declaration's own location, and a
+   * constructor binding looked up there landing on an import symbol whose type
+   * is never resolved.
+   */
+  describe("a declaration whose location several importers carry", () => {
+    const declaring_file = "singleton.ts" as FilePath;
+    const declaration_location: Location = {
+      file_path: declaring_file,
+      start_line: 12,
+      start_column: 13,
+      end_line: 12,
+      end_column: 19,
+    };
+    const declaration: VariableDefinition = {
+      kind: "variable",
+      symbol_id: variable_symbol("extUri" as SymbolName, declaration_location),
+      name: "extUri" as SymbolName,
+      defining_scope_id: `scope:${declaring_file}:module` as ScopeId,
+      location: declaration_location,
+      is_exported: true,
+    };
+
+    const first_importer = "consumer_a.ts" as FilePath;
+    const second_importer = "consumer_b.ts" as FilePath;
+
+    function importer_of(file: FilePath): ImportDefinition {
+      return {
+        kind: "import",
+        symbol_id: `import:${file}:1:9:1:15:extUri` as SymbolId,
+        name: "extUri" as SymbolName,
+        defining_scope_id: `scope:${file}:module` as ScopeId,
+        location: declaration_location,
+        import_path: "./singleton" as ModulePath,
+        import_kind: "named",
+      };
+    }
+
+    function load_declaration_then_both_importers(): void {
+      registry.update_file(declaring_file, [declaration]);
+      registry.update_file(first_importer, [importer_of(first_importer)]);
+      registry.update_file(second_importer, [importer_of(second_importer)]);
+    }
+
+    it("answers with the declaration after both importers are written", () => {
+      load_declaration_then_both_importers();
+
+      expect(
+        registry.get_symbol_at_location(location_key(declaration_location))
+      ).toBe(declaration.symbol_id);
+    });
+
+    it("keeps the declaration's key when an importer is evicted", () => {
+      load_declaration_then_both_importers();
+
+      registry.remove_file(second_importer);
+
+      expect(
+        registry.get_symbol_at_location(location_key(declaration_location))
+      ).toBe(declaration.symbol_id);
+    });
+  });
+
   describe("reverse ownership indices", () => {
     it("evicts a class's own members and leaves another file's alone", () => {
       const kept = inheritance_file(0);
