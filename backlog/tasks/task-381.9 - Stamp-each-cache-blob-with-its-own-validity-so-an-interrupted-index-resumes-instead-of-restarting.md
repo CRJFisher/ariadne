@@ -38,10 +38,10 @@ Three things leave with the manifest and two invariants have to be written down.
 - [ ] #2 #2 Each blob carries `{schema_version, indexer_version, source_path, content_hash, git_blob_hash?}`, `indexer_version` is sourced from the package version, a mismatch on either version axis independently rejects the blob, and blobs live under `<cache>/indexes/<indexer_version>/`.
 - [ ] #3 #2a The manifest-era cache layout is deleted outright on first run of the new build — no reader, no migration, no fallback path (NO BACKWARDS COMPATIBILITY); a test proves a pre-existing `manifest.json` and its blobs are removed rather than orphaned forever.
 - [ ] #4 #3 `deserialize_cached_index` returns null rather than throwing on corrupt, non-index-shaped, or wrong-`source_path` payloads.
-- [ ] #5 #4 `kill -9` eight seconds into a 200-file load, then restart: every blob written before the kill is a cache hit — 81 of 81 measured, against 0 of 87 today — 0 orphan `.tmp` files remain, and the fingerprint matches an uninterrupted cold load byte for byte AT THE SAME INGEST ORDER. Cross-order equality is TASK-381.11's criterion, not this one.
-- [ ] #6 #5 The source path is stored once per blob and elided from every `SymbolReference` record: blob bytes over the same 120-blob sample fall from 68.56 MB to <= 32 MB (measured 29.56) and `JSON.parse` from 205.4 ms to <= 175 ms (measured 166.1).
-- [ ] #7 #6 Warm cache hits equal the number of files offered minus the number dropped, at n=50, 200, 400 and 800 — today the miss count equals the drop count exactly, capping a fully warm run at 92.9% hits.
-- [ ] #8 #7 A full cache that matches nothing costs <= +6% CPU against cold (measured +5.3%, at 6.1 ms per rejected blob).
+- [ ] #5 #4 `kill -9` eight seconds into a 200-file load, then restart: every blob written before the kill is a cache hit — 160 of 160 measured, against 0 of 160 on an interleaved control arm from the tree immediately before — 0 orphan `.tmp` files remain, and the fingerprint matches an uninterrupted cold load byte for byte AT THE SAME INGEST ORDER. Cross-order equality is TASK-381.11's criterion, not this one.
+- [ ] #6 #5 The source path is stored once per blob and elided from every `SymbolReference` record. REFUTED IN ITS FIGURES, MET IN ITS MECHANISM: blob bytes over a 120-blob sample fall 83.96 -> 49.56 MB (1.694x), NOT to the 32 MB budgeted, and no elision of the path could have reached it — removing the path from the whole blob, definitions and scopes included, floors at 38.21 MB on this tree. The 68.56 MB the target was set against is a smaller index than this tree produces. `JSON.parse` falls 208.1 -> 174.3 ms, meeting the 175 ms bound, and the 205.4 ms control figure reproduces to 1.3%.
+- [ ] #7 #6 Warm cache hits equal the number of files offered minus the number dropped, at n=50, 200, 400 and 800 — measured 50/200/400/800 hits against an empty dropped set at every size, so the ceiling this criterion was written against (92.9% on a tree with drops) no longer binds.
+- [ ] #8 #7 A full cache that matches nothing costs <= +6% CPU against cold. MEASURED +2.94% at 1.21 ms per rejected blob, five reps interleaved A,B,A,B in one process at 800 files, against a control that indexes and writes the same 800 blobs and reads none. A control that writes nothing reads +25.4%, because it charges the rejection with the cost of populating a cache.
 - [ ] #9 #8 Orphan blobs are swept only on a full-corpus load, and a test proves a folder-scoped load deletes nothing outside its own scope.
 - [ ] #10 #8a Superseded `<cache>/indexes/<indexer_version>/` directories are removed on first use and the current one is retained — TASK-378 AC #3 carried forward — and a test proves an upgrade leaves exactly one version directory.
 - [ ] #11 #8b The chosen cache granularity (per-project or global) is stated in the persistence module documentation — TASK-378 AC #5 carried forward — since the sweep behaviour follows from it.
@@ -50,3 +50,69 @@ Three things leave with the manifest and two invariants have to be written down.
 - [ ] #14 #11 The `fsync` claim is removed from the atomicity comment: the blob is atomic for readers and not durable across power loss, and the comment says exactly that.
 
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+
+### What a user gets
+
+An interrupted run is no longer a total loss. Killing a 200-file load eight
+seconds in leaves 160 finished blobs, and the restart reuses every one of them
+and indexes the remaining 40 — against 0 of the same 160 on the tree
+immediately before, measured in the same session on the same corpus. The
+resumed run reports a call graph identical to an uninterrupted cold load's, all
+seven fingerprint components digest for digest.
+
+A user who upgrades now receives what they upgraded for. A blob carries the
+build of the indexer that produced it, so a shipped query-pattern fix
+invalidates every cached index rather than replaying pre-fix answers over
+unchanged source.
+
+A cached checkout costs the user's home directory 0.590 of what it did: the
+source path is stored once per blob instead of two or three times in every
+reference record.
+
+### Shape
+
+`persistence/cached_index.ts` is the blob format — the stamp and the index it
+validates, written as one document so a partial write is unreadable rather than
+trusted. `persistence/indexer_version.ts` reads the package version.
+`persistence/source_path_elision.ts` removes the blob's own path from every
+reference record on write and puts it back on read, exactly.
+`FileSystemStorage` stores blobs under `<cache>/indexes/<indexer_version>/`,
+deletes every other layout on first use, and gains `sweep(live_paths)` on the
+`PersistenceStorage` contract in place of `read_manifest`/`write_manifest`.
+`load_project` reads and validates per file inside pass A and sweeps once at the
+end, only when no `files` or `folders` filter narrowed the corpus.
+`packages/core/src/persistence/README.md` is the module's documentation:
+per-project granularity, the two version axes, both sweeps, and what the
+atomicity does and does not promise.
+
+`serialize_semantic_index` left the production surface with the manifest — a
+cached index is embedded in its stamp rather than stringified alone — and now
+lives in `serialize_index.test.ts` as the round-trip helper its remaining
+callers use.
+
+### The figures, and the one that is refuted
+
+`RECORDED_CACHE_RESUMPTION` holds every arm, and the benchmark README carries
+the prose. Measured on ariadne@ded8a2ca plus this change, Darwin 24.6.0 x64, 6
+cores, node v22.22.1, over microsoft/vscode at f3fa55c3.
+
+The blob-size target is refuted rather than met, and the refutation is
+checkable: 49.56 MB against a 32 MB budget, over a control arm of 83.96 MB in
+the same process. Removing the path from the WHOLE blob — definitions, scopes
+and map keys included — floors at 38.21 MB, so no elision of the path could have
+reached 32 on this tree. The 68.56 MB the target was set against describes a
+smaller index than this tree produces; the parse figure from the same
+investigation reproduces to 1.3% (205.4 ms recorded, 208.1 measured), which is
+what says the gap is the index's growth and not the measurement. The parse bound
+is met at 174.3 ms.
+
+The remaining 11.32 MB of path bytes in the 120-blob sample sit outside
+reference records, in the `SymbolId` and `ScopeId` map keys of the definition
+and scope collections. Taking those is a larger change than this criterion
+specifies and is left open.
+
+<!-- SECTION:NOTES:END -->

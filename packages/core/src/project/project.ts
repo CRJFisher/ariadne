@@ -29,8 +29,8 @@ import { parse_file } from "./parse_file";
 import type { FileSystemFolder } from "../resolve_references/file_folders";
 import { readdir, realpath } from "fs/promises";
 import { join } from "path";
-import type { PersistenceStorage, CacheManifestEntry } from "../persistence";
-import { write_file_index, write_cache_manifest } from "./project_cache_strategy";
+import type { PersistenceStorage } from "../persistence";
+import { write_file_index } from "./project_cache_strategy";
 import type { ModuleResolutionContext } from "../resolve_references/import_resolution";
 import {
   build_module_specifier_index,
@@ -741,25 +741,18 @@ export class Project {
   }
 
   /**
-   * Persist all per-file SemanticIndex data and a manifest to storage.
-   * No auto-save — the caller decides when to persist.
+   * Persist every per-file SemanticIndex to storage, each stamped with what
+   * validates it. No auto-save — the caller decides when to persist.
    */
   async save(storage: PersistenceStorage): Promise<void> {
-    const manifest_entries = new Map<FilePath, CacheManifestEntry>();
-
     for (const [file_path, index] of this.index_single_filees) {
       const content = this.file_contents.get(file_path);
       if (!content) continue;
 
-      // No git state here: entries this path writes carry no blob hash and are
+      // No git state here: blobs this path writes carry no blob hash and are
       // validated by content hash on the next load.
-      const entry = await write_file_index(storage, file_path, index, content, null);
-      if (entry) {
-        manifest_entries.set(file_path, entry);
-      }
+      await write_file_index(storage, file_path, index, content, null);
     }
-
-    await write_cache_manifest(storage, manifest_entries);
   }
 
   clear(): void {

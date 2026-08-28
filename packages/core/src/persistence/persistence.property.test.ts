@@ -3,9 +3,9 @@ import * as fc from "fast-check";
 import type { FilePath, Language } from "@ariadnejs/types";
 import { Project } from "../project/project";
 import {
-  serialize_semantic_index,
   deserialize_semantic_index,
 } from "./serialize_index";
+import { serialize_semantic_index } from "./serialize_index.test";
 import { build_index_single_file } from "../index_single_file/index_single_file";
 import type { ParsedFile } from "../index_single_file/parsed_file";
 import Parser from "tree-sitter";

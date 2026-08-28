@@ -3,12 +3,16 @@ import type { FilePath } from "@ariadnejs/types";
 import { Project } from "../project/project";
 import type { SemanticIndex } from "@ariadnejs/types";
 import {
-  serialize_semantic_index,
   deserialize_semantic_index,
 } from "./serialize_index";
+import { serialize_semantic_index } from "./serialize_index.test";
 import { InMemoryStorage } from "./storage.test";
 import { FileSystemStorage } from "./file_system_storage";
-import { CURRENT_SCHEMA_VERSION } from "./cache_manifest";
+import {
+  CURRENT_SCHEMA_VERSION,
+  deserialize_cached_index,
+} from "./cached_index";
+import { INDEXER_VERSION } from "./indexer_version";
 import { load_project } from "../project/load_project";
 import { execFile } from "child_process";
 import { promisify } from "util";
@@ -392,7 +396,9 @@ describe("Corruption/Recovery", () => {
       path.join(os.tmpdir(), "ariadne-corruption-test-"),
     );
     for (const [name, content] of Object.entries(files)) {
-      await fs.writeFile(path.join(temp_dir, name), content, "utf-8");
+      const file_path = path.join(temp_dir, name);
+      await fs.mkdir(path.dirname(file_path), { recursive: true });
+      await fs.writeFile(file_path, content, "utf-8");
     }
     return temp_dir;
   }
@@ -403,7 +409,7 @@ describe("Corruption/Recovery", () => {
     }
   }
 
-  it("falls back to full re-index on truncated manifest JSON", async () => {
+  it("falls back to full re-index on a truncated cached index", async () => {
     const dir = await setup_project_dir({
       "a.ts": "export function foo() { return 42; }",
     });
@@ -417,9 +423,11 @@ describe("Corruption/Recovery", () => {
       });
       const first_graph = first.get_call_graph();
 
-      // Corrupt manifest
-      const raw = (await storage.read_manifest()) ?? "";
-      storage.set_manifest(raw.slice(0, 20));
+      // The stamp and the index it validates are one document, so a partial
+      // write is unreadable rather than trusted.
+      const a_path = path.join(dir, "a.ts");
+      const raw = (await storage.read_index(a_path)) ?? "";
+      storage.set_index(a_path, raw.slice(0, 20));
 
       // Second load should fall back gracefully
       const { project: second } = await load_project({
@@ -473,7 +481,9 @@ describe("Corruption/Recovery", () => {
     }
   });
 
-  it("prunes manifest entries for deleted files on warm load", async () => {
+  // A blob for a file the corpus no longer holds is dead weight nothing will
+  // ever ask for again, so a whole-project load takes it with the file.
+  it("sweeps the blob of a deleted file on a full-corpus load", async () => {
     const dir = await setup_project_dir({
       "a.ts": "export function foo() { return 42; }",
       "b.ts": "import { foo } from './a'; const x = foo();",
@@ -484,24 +494,69 @@ describe("Corruption/Recovery", () => {
       // Cold load populates cache with both files
       const { project: cold } = await load_project({ project_path: dir, storage });
       expect(cold.get_stats().file_count).toEqual(2);
+      expect(new Set(storage.stored_paths())).toEqual(
+        new Set([path.join(dir, "a.ts"), path.join(dir, "b.ts")]),
+      );
 
-      const manifest_v1 = JSON.parse((await storage.read_manifest())!);
-      expect(manifest_v1.entries.length).toEqual(2);
-
-      // Delete b.ts from disk
       await fs.unlink(path.join(dir, "b.ts"));
 
-      // Warm load — b.ts is gone, its manifest entry should be pruned
       const { project: warm } = await load_project({ project_path: dir, storage });
       expect(warm.get_stats().file_count).toEqual(1);
+      expect(storage.stored_paths()).toEqual([path.join(dir, "a.ts")]);
+    } finally {
+      await cleanup();
+    }
+  });
 
-      const manifest_v2 = JSON.parse((await storage.read_manifest())!);
-      expect(manifest_v2.entries.length).toEqual(1);
+  // A scoped load sees a fraction of the corpus, so every blob outside its
+  // scope looks exactly like an orphan. Sweeping there deletes the rest of the
+  // project's cache and turns the next full load back into a cold one.
+  it("a folder-scoped load deletes nothing outside its own scope", async () => {
+    const dir = await setup_project_dir({
+      "a.ts": "export function foo() { return 42; }",
+      "sub/b.ts": "export function bar() { return 1; }",
+    });
+    try {
+      const storage = new InMemoryStorage();
 
-      const entry_paths = manifest_v2.entries.map(
-        (e: [string, unknown]) => e[0],
+      await load_project({ project_path: dir, storage });
+      expect(new Set(storage.stored_paths())).toEqual(
+        new Set([path.join(dir, "a.ts"), path.join(dir, "sub", "b.ts")]),
       );
-      expect(entry_paths).toEqual([path.join(dir, "a.ts")]);
+
+      await load_project({
+        project_path: dir,
+        folders: [path.join(dir, "sub")],
+        storage,
+      });
+
+      expect(new Set(storage.stored_paths())).toEqual(
+        new Set([path.join(dir, "a.ts"), path.join(dir, "sub", "b.ts")]),
+      );
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("a files-scoped load deletes nothing outside its own scope", async () => {
+    const dir = await setup_project_dir({
+      "a.ts": "export function foo() { return 42; }",
+      "b.ts": "export function bar() { return 1; }",
+    });
+    try {
+      const storage = new InMemoryStorage();
+
+      await load_project({ project_path: dir, storage });
+
+      await load_project({
+        project_path: dir,
+        files: [path.join(dir, "a.ts")],
+        storage,
+      });
+
+      expect(new Set(storage.stored_paths())).toEqual(
+        new Set([path.join(dir, "a.ts"), path.join(dir, "b.ts")]),
+      );
     } finally {
       await cleanup();
     }
@@ -518,7 +573,7 @@ describe("Corruption/Recovery", () => {
       const { project: first } = await load_project({ project_path: dir, storage });
       const first_stats = first.get_stats();
 
-      // Delete index for a.ts but keep manifest
+      // Delete the cached index for a.ts
       const a_path = path.join(dir, "a.ts");
       storage.delete_index(a_path);
 
@@ -544,7 +599,9 @@ describe("Incremental Consistency", () => {
       path.join(os.tmpdir(), "ariadne-incremental-test-"),
     );
     for (const [name, content] of Object.entries(files)) {
-      await fs.writeFile(path.join(temp_dir, name), content, "utf-8");
+      const file_path = path.join(temp_dir, name);
+      await fs.mkdir(path.dirname(file_path), { recursive: true });
+      await fs.writeFile(file_path, content, "utf-8");
     }
     return temp_dir;
   }
@@ -631,10 +688,6 @@ describe("Project.save()", () => {
     );
     await original.save(storage);
 
-    // Verify manifest was written
-    const manifest = await storage.read_manifest();
-    expect(manifest).not.toBeNull();
-
     // Verify indexes were written
     expect(await storage.read_index("a.ts")).not.toBeNull();
     expect(await storage.read_index("b.ts")).not.toBeNull();
@@ -660,8 +713,9 @@ describe("Project.save()", () => {
       if (raw) {
         const content =
           file_path === ("a.ts" as FilePath) ? a_content : b_content;
-        const index = deserialize_semantic_index(raw);
-        restored.restore_file(file_path, content, index);
+        const cached = deserialize_cached_index(raw, file_path);
+        expect(cached).not.toBeNull();
+        restored.restore_file(file_path, content, cached!.index);
       }
     }
 
@@ -699,14 +753,18 @@ describe("Schema version mismatch", () => {
       const { project: first } = await load_project({ project_path: temp_dir, storage });
       const first_stats = first.get_stats();
 
-      // Corrupt manifest with wrong schema version
-      const raw_manifest = (await storage.read_manifest()) ?? "";
-      const parsed_manifest = JSON.parse(raw_manifest);
-      parsed_manifest.schema_version = 999;
-      storage.set_manifest(JSON.stringify(parsed_manifest));
+      // Stamp the cached index with a schema version this build cannot read
+      const a_path = path.join(temp_dir, "a.ts");
+      const blob = JSON.parse((await storage.read_index(a_path))!);
+      blob.schema_version = 999;
+      storage.set_index(a_path, JSON.stringify(blob));
 
       // Second load should discard cache and re-index
-      const { project: second } = await load_project({ project_path: temp_dir, storage });
+      const { project: second, cache_hits } = await load_project({
+        project_path: temp_dir,
+        storage,
+      });
+      expect(cache_hits).toEqual(0);
       expect(second.get_stats()).toEqual(first_stats);
     } finally {
       await cleanup();
@@ -767,12 +825,13 @@ describe("Git-accelerated warm load", { timeout: 30_000 }, () => {
       const { project: cold } = await load_project({ project_path: temp_dir, storage });
       const cold_stats = cold.get_stats();
 
-      // Every entry should carry the git blob its index was built from
-      const manifest_json = await storage.read_manifest();
-      expect(manifest_json).not.toBeNull();
-      const manifest = JSON.parse(manifest_json!);
-      const blob_hashes = manifest.entries.map(
-        ([, entry]: [string, { git_blob_hash?: string }]) => entry.git_blob_hash,
+      // Every blob should carry the git blob its index was built from
+      const blob_hashes = await Promise.all(
+        ["a.ts", "b.ts"].map(async (name) => {
+          const raw = await storage.read_index(path.join(temp_dir, name));
+          expect(raw).not.toBeNull();
+          return JSON.parse(raw!).git_blob_hash as string | undefined;
+        }),
       );
       expect(blob_hashes.length).toEqual(2);
       for (const blob_hash of blob_hashes) {
@@ -780,7 +839,11 @@ describe("Git-accelerated warm load", { timeout: 30_000 }, () => {
       }
 
       // Warm load with unchanged tree — all files should use cache
-      const { project: warm } = await load_project({ project_path: temp_dir, storage });
+      const { project: warm, cache_hits } = await load_project({
+        project_path: temp_dir,
+        storage,
+      });
+      expect(cache_hits).toEqual(2);
 
       assert_projects_equivalent(cold, warm);
     } finally {
@@ -913,7 +976,7 @@ describe("Git-accelerated warm load", { timeout: 30_000 }, () => {
     }
   });
 
-  it("manifest blob hash is updated after warm load with changes", async () => {
+  it("the cached index's blob hash is updated after warm load with changes", async () => {
     await setup_git_repo({
       "a.ts": "export function foo() { return 42; }",
     });
@@ -921,11 +984,8 @@ describe("Git-accelerated warm load", { timeout: 30_000 }, () => {
       const storage = new InMemoryStorage();
 
       const blob_hash_for_a = async (): Promise<string | undefined> => {
-        const manifest = JSON.parse((await storage.read_manifest())!);
-        const row = manifest.entries.find(([file_path]: [string]) =>
-          file_path.endsWith("a.ts"),
-        );
-        return row?.[1]?.git_blob_hash;
+        const raw = await storage.read_index(path.join(temp_dir, "a.ts"));
+        return raw === null ? undefined : JSON.parse(raw).git_blob_hash;
       };
 
       await load_project({ project_path: temp_dir, storage });
@@ -995,7 +1055,7 @@ describe("load_project + FileSystemStorage", { timeout: 30_000 }, () => {
     }
   }
 
-  it("cold load persists indexes and manifest to disk", async () => {
+  it("cold load persists self-describing indexes to disk", async () => {
     project_dir = await fs.mkdtemp(
       path.join(os.tmpdir(), "ariadne-fss-project-"),
     );
@@ -1020,18 +1080,19 @@ describe("load_project + FileSystemStorage", { timeout: 30_000 }, () => {
         storage,
       });
 
-      // Manifest should exist on disk
-      const manifest_raw = await storage.read_manifest();
-      expect(manifest_raw).not.toBeNull();
-      const manifest = JSON.parse(manifest_raw!);
-      expect(manifest.schema_version).toEqual(CURRENT_SCHEMA_VERSION);
-      expect(manifest.entries.length).toEqual(2);
-
-      // Indexes should exist on disk
+      // Indexes should exist on disk, each carrying its own validity stamp
       const a_path = path.join(project_dir, "a.ts");
       const b_path = path.join(project_dir, "b.ts");
-      expect(await storage.read_index(a_path)).not.toBeNull();
-      expect(await storage.read_index(b_path)).not.toBeNull();
+      for (const source_path of [a_path, b_path]) {
+        const raw = await storage.read_index(source_path);
+        expect(raw).not.toBeNull();
+        const blob = JSON.parse(raw!);
+        expect(blob.schema_version).toEqual(CURRENT_SCHEMA_VERSION);
+        expect(blob.indexer_version).toEqual(INDEXER_VERSION);
+        expect(blob.source_path).toEqual(source_path);
+        expect(typeof blob.content_hash).toEqual("string");
+        expect(blob.index.file_path).toEqual(source_path);
+      }
 
       // Project should have correct stats
       expect(project.get_stats().file_count).toEqual(2);
@@ -1147,13 +1208,10 @@ describe("load_project + FileSystemStorage", { timeout: 30_000 }, () => {
         storage,
       });
 
-      // Entries should carry their git blob hashes on disk
-      const manifest_raw = await storage.read_manifest();
-      const manifest = JSON.parse(manifest_raw!);
-      expect(manifest.entries.length).toEqual(1);
-      for (const [, entry] of manifest.entries) {
-        expect(entry.git_blob_hash).toMatch(/^[0-9a-f]{40}$/);
-      }
+      // Cached indexes should carry their git blob hashes on disk
+      const raw = await storage.read_index(path.join(project_dir, "a.ts"));
+      expect(raw).not.toBeNull();
+      expect(JSON.parse(raw!).git_blob_hash).toMatch(/^[0-9a-f]{40}$/);
 
       // Warm load — should use git fast path with on-disk storage
       const { project: warm } = await load_project({
@@ -1162,6 +1220,174 @@ describe("load_project + FileSystemStorage", { timeout: 30_000 }, () => {
       });
 
       assert_projects_equivalent(cold, warm);
+    } finally {
+      await cleanup();
+    }
+  });
+});
+
+// ============================================================================
+// Interrupted-Load Resumption
+// ============================================================================
+
+/**
+ * The capability these guard: a load that dies partway through still leaves a
+ * cache worth having. Each blob validates itself, so reusing one file never
+ * depends on the run that wrote it having reached the end.
+ */
+describe("interrupted load", () => {
+  let project_dir = "";
+  let cache_dir = "";
+
+  async function cleanup(): Promise<void> {
+    for (const dir of [project_dir, cache_dir]) {
+      if (dir) await fs.rm(dir, { recursive: true, force: true });
+    }
+  }
+
+  it("reuses the indexes an interrupted run managed to write", async () => {
+    project_dir = await fs.mkdtemp(path.join(os.tmpdir(), "ariadne-partial-"));
+    cache_dir = await fs.mkdtemp(
+      path.join(os.tmpdir(), "ariadne-partial-cache-"),
+    );
+    try {
+      await fs.writeFile(
+        path.join(project_dir, "a.ts"),
+        "export function foo() { return 42; }",
+        "utf-8",
+      );
+      await fs.writeFile(
+        path.join(project_dir, "b.ts"),
+        "import { foo } from './a';\nexport const x = foo();",
+        "utf-8",
+      );
+
+      const storage = new FileSystemStorage(cache_dir);
+      const a_path = path.join(project_dir, "a.ts");
+      const b_path = path.join(project_dir, "b.ts");
+
+      // A run that only ever got as far as a.ts before dying.
+      await load_project({
+        project_path: project_dir,
+        files: [a_path],
+        storage,
+      });
+      expect(await storage.read_index(a_path)).not.toBeNull();
+      expect(await storage.read_index(b_path)).toBeNull();
+
+      // The next run over the whole corpus restores a.ts and indexes b.ts.
+      const {
+        project: resumed,
+        cache_hits,
+        cache_misses,
+      } = await load_project({ project_path: project_dir, storage });
+      const { project: fresh } = await load_project({
+        project_path: project_dir,
+      });
+
+      expect({ cache_hits, cache_misses }).toEqual({
+        cache_hits: 1,
+        cache_misses: 1,
+      });
+      assert_projects_equivalent(fresh, resumed);
+      expect(await storage.read_index(b_path)).not.toBeNull();
+    } finally {
+      await cleanup();
+    }
+  });
+
+  // The load and the sweep both run over the whole corpus, so a temporary file
+  // a killed write left behind is gone by the end of the next full load.
+  it("leaves no temporary file behind after resuming", async () => {
+    project_dir = await fs.mkdtemp(path.join(os.tmpdir(), "ariadne-tmp-"));
+    cache_dir = await fs.mkdtemp(path.join(os.tmpdir(), "ariadne-tmp-cache-"));
+    try {
+      await fs.writeFile(
+        path.join(project_dir, "a.ts"),
+        "export function foo() { return 42; }",
+        "utf-8",
+      );
+
+      const storage = new FileSystemStorage(cache_dir);
+      await load_project({ project_path: project_dir, storage });
+
+      const version_dir = path.join(cache_dir, "indexes", INDEXER_VERSION);
+      await fs.writeFile(
+        path.join(version_dir, "killed.9c1e02af.tmp"),
+        "half a blob",
+        "utf-8",
+      );
+
+      await load_project({ project_path: project_dir, storage });
+
+      const entries = await fs.readdir(version_dir);
+      expect(entries.filter((e) => e.endsWith(".tmp"))).toEqual([]);
+      expect(entries.length).toEqual(1);
+    } finally {
+      await cleanup();
+    }
+  });
+});
+
+// ============================================================================
+// Indexer Version
+// ============================================================================
+
+/**
+ * What the indexer-version axis buys a user: they upgrade for a fix to what
+ * indexing extracts, and every unchanged file re-indexes instead of replaying
+ * the answer the previous build gave.
+ *
+ * The two arms below differ only in the stamp. Both hold an index that says the
+ * file has no functions in it — the stand-in for whatever a previous build got
+ * wrong — over source that plainly does. Under this build's stamp the load
+ * serves that answer; under any other it re-indexes and reports the function.
+ */
+describe("indexer version", () => {
+  let project_dir = "";
+
+  async function cleanup(): Promise<void> {
+    if (project_dir) await fs.rm(project_dir, { recursive: true, force: true });
+  }
+
+  async function load_with_stale_blob(
+    indexer_version: string,
+  ): Promise<{ definition_count: number; cache_hits: number }> {
+    const storage = new InMemoryStorage();
+    const a_path = path.join(project_dir, "a.ts");
+
+    await load_project({ project_path: project_dir, storage });
+
+    const blob = JSON.parse((await storage.read_index(a_path))!);
+    blob.indexer_version = indexer_version;
+    blob.index.functions = [];
+    blob.index.references = [];
+    storage.set_index(a_path, JSON.stringify(blob));
+
+    const { project, cache_hits } = await load_project({
+      project_path: project_dir,
+      storage,
+    });
+    return { definition_count: project.get_stats().definition_count, cache_hits };
+  }
+
+  it("re-indexes rather than replaying an index another build produced", async () => {
+    project_dir = await fs.mkdtemp(path.join(os.tmpdir(), "ariadne-version-"));
+    try {
+      await fs.writeFile(
+        path.join(project_dir, "a.ts"),
+        "export function foo() { return 42; }",
+        "utf-8",
+      );
+
+      const replayed = await load_with_stale_blob(INDEXER_VERSION);
+      const reindexed = await load_with_stale_blob(`${INDEXER_VERSION}-next`);
+
+      expect(replayed.cache_hits).toEqual(1);
+      expect(replayed.definition_count).toEqual(0);
+
+      expect(reindexed.cache_hits).toEqual(0);
+      expect(reindexed.definition_count).toBeGreaterThan(0);
     } finally {
       await cleanup();
     }

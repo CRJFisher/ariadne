@@ -7,21 +7,15 @@ import {
   is_supported_file,
   parse_gitignore,
 } from "./file_loading";
-import type {
-  CacheManifest,
-  CacheManifestEntry,
-  PersistenceStorage,
-} from "../persistence";
+import type { PersistenceStorage } from "../persistence";
 import { is_git_repo, query_git_file_state } from "../persistence";
 import type { GitFileState } from "../persistence";
 import {
-  read_cache_manifest,
-  blob_hash_for_indexed_content,
+  read_cached_index,
   can_use_cache,
   content_matches_cache,
-  try_restore_from_cache,
+  restore_from_cache,
   write_file_index,
-  write_cache_manifest,
 } from "./project_cache_strategy";
 
 export interface LoadProjectOptions {
@@ -85,6 +79,17 @@ export interface LoadedProject {
    * — a config `exclude` would narrow it to the very files it is looking for.
    */
   readonly gitignore_patterns: readonly string[];
+  /**
+   * How many discovered files came out of the cache, and how many were indexed
+   * from source. Zero and zero when no storage was supplied.
+   *
+   * A caller measuring what a cache is worth cannot get this from the project:
+   * a restored file and a freshly indexed one are indistinguishable afterwards,
+   * which is the point. The pair also states the load's own invariant — over a
+   * warm cache, hits are the files offered minus the ones indexing dropped.
+   */
+  readonly cache_hits: number;
+  readonly cache_misses: number;
 }
 
 /**
@@ -181,14 +186,9 @@ export async function load_project(
     );
   }
 
-  // Load manifest if storage is provided
-  const manifest: CacheManifest | null = storage
-    ? await read_cache_manifest(storage)
-    : null;
-
   // Git-accelerated change detection
   // Query git state whenever storage is provided (even on cold load) so the
-  // manifest written at the end includes per-file blob hashes.
+  // indexes written during the load carry per-file blob hashes.
   let git_state: GitFileState | null = null;
   if (storage) {
     try {
@@ -197,16 +197,6 @@ export async function load_project(
       }
     } catch {
       // Git detection failed — fall back to content-hash path
-    }
-  }
-
-  // Build manifest_entries from existing manifest, pruning entries for files no longer on disk
-  const manifest_entries = new Map<FilePath, CacheManifestEntry>();
-  if (manifest) {
-    for (const [fp, entry] of manifest.entries) {
-      if (files_to_load.has(fp)) {
-        manifest_entries.set(fp, entry);
-      }
     }
   }
 
@@ -223,104 +213,80 @@ export async function load_project(
   // and an import naming a file that has not arrived yet has no answer at all.
   for (const file_path of files_to_load) {
     const fp = file_path as FilePath;
+
+    let content: string;
+    try {
+      content = await fs.readFile(file_path, "utf-8");
+    } catch {
+      continue; // Skip unreadable files
+    }
+
+    // Every blob validates itself, so the decision is per file and consults no
+    // project-wide state: whatever earlier runs managed to write is usable now,
+    // including the part of a run that was interrupted.
     let used_cache = false;
-
-    if (storage && manifest) {
-      const cached_entry = manifest.entries.get(fp);
-
-      if (cached_entry && can_use_cache(fp, cached_entry, git_state)) {
-        // Git fast path — restore from cache without reading file content for hashing
-        used_cache = await try_restore_from_cache(
-          project,
-          fp,
-          storage,
-        );
+    if (storage) {
+      const cached = await read_cached_index(storage, fp);
+      if (cached) {
+        // Git names the content without hashing it; content hashing is the
+        // fallback for a file git cannot vouch for — dirty, untracked, or
+        // indexed while it was one of those.
+        const usable =
+          can_use_cache(fp, cached, git_state) ||
+          content_matches_cache(content, cached);
+        if (usable) {
+          used_cache = restore_from_cache(project, fp, cached, content);
+        }
       }
     }
 
-    if (!used_cache) {
-      // Read file content (needed for both content-hash check and full index)
-      let content: string;
-      try {
-        content = await fs.readFile(file_path, "utf-8");
-      } catch {
-        continue; // Skip unreadable files
-      }
-
-      // Content-hash fallback: if git didn't confirm cache validity,
-      // check if content hash matches the cached entry
-      if (storage && manifest && !used_cache) {
-        const cached_entry = manifest.entries.get(fp);
-        if (cached_entry && content_matches_cache(content, cached_entry)) {
-          used_cache = await try_restore_from_cache(project, fp, storage, content);
-          if (used_cache) {
-            // The content hash just proved the cached index matches what is on
-            // disk, so git may now name it — an entry first written while the
-            // file was dirty would otherwise never rejoin the git path.
-            manifest_entries.set(fp, {
-              ...cached_entry,
-              git_blob_hash: blob_hash_for_indexed_content(fp, git_state),
-            });
-          }
-        }
-      }
-
-      if (used_cache) {
-        cache_hits++;
-      } else {
-        cache_misses++;
-        try {
-          project.ingest_file(fp, content);
-        } catch (error) {
-          // `ingest_file` writes content, language, definitions and scopes
-          // before a later registry can throw. Left in place, that partial state
-          // makes the file's callables phantom entry points and every grep hit
-          // inside it uncapturable — the file's text is in the corpus while its
-          // references are not. Roll it back so the file is cleanly unindexed.
-          dropped_files.add(fp);
-          drop_reasons.set(
-            fp,
-            error instanceof Error ? error.message : String(error),
-          );
-          try {
-            project.evict_ingested_file(fp);
-          } catch (rollback_error) {
-            // A rollback that throws would abort the whole load over one bad
-            // file, losing every file after it. Degrade to the per-file skip
-            // the drop already recorded.
-            console.warn(
-              `[ariadne] Could not roll back partial index of ${file_path}: ${
-                rollback_error instanceof Error ? rollback_error.message : rollback_error
-              }`,
-            );
-          }
-          console.warn(
-            `[ariadne] Skipping ${file_path}: ${
-              error instanceof Error ? error.message : error
-            }`,
-          );
-          continue;
-        }
-
-        // Update cache for this file
-        if (storage) {
-          const index = project.get_index_single_file(fp);
-          if (index) {
-            const entry = await write_file_index(
-              storage,
-              fp,
-              index,
-              content,
-              git_state,
-            );
-            if (entry) {
-              manifest_entries.set(fp, entry);
-            }
-          }
-        }
-      }
-    } else {
+    if (used_cache) {
       cache_hits++;
+      continue;
+    }
+
+    cache_misses++;
+    try {
+      project.ingest_file(fp, content);
+    } catch (error) {
+      // `ingest_file` writes content, language, definitions and scopes
+      // before a later registry can throw. Left in place, that partial state
+      // makes the file's callables phantom entry points and every grep hit
+      // inside it uncapturable — the file's text is in the corpus while its
+      // references are not. Roll it back so the file is cleanly unindexed.
+      dropped_files.add(fp);
+      drop_reasons.set(
+        fp,
+        error instanceof Error ? error.message : String(error),
+      );
+      try {
+        project.evict_ingested_file(fp);
+      } catch (rollback_error) {
+        // A rollback that throws would abort the whole load over one bad
+        // file, losing every file after it. Degrade to the per-file skip
+        // the drop already recorded.
+        console.warn(
+          `[ariadne] Could not roll back partial index of ${file_path}: ${
+            rollback_error instanceof Error ? rollback_error.message : rollback_error
+          }`,
+        );
+      }
+      console.warn(
+        `[ariadne] Skipping ${file_path}: ${
+          error instanceof Error ? error.message : error
+        }`,
+      );
+      continue;
+    }
+
+    // Persist inside the loop, because that is what makes an interruption
+    // survivable: the cache is exactly as complete as the load got, and a run
+    // that never reaches the end still leaves every file it finished behind.
+    if (storage) {
+      const index = project.get_index_single_file(fp);
+      if (index) {
+        await write_file_index(storage, fp, index, content, git_state);
+      }
     }
   }
 
@@ -335,9 +301,12 @@ export async function load_project(
     );
   }
 
-  // Write updated manifest
-  if (storage && manifest_entries.size > 0) {
-    await write_cache_manifest(storage, manifest_entries);
+  // Only a load of the whole project knows what a blob for an absent file means.
+  // A files- or folders-scoped load holds a fraction of the corpus, so every
+  // blob outside its scope would look like an orphan and sweeping would delete
+  // the rest of the project's cache.
+  if (storage && !has_filters) {
+    await storage.sweep(files_to_load);
   }
 
   return {
@@ -346,5 +315,7 @@ export async function load_project(
     drop_reasons,
     discovered_files: files_to_load as ReadonlySet<FilePath>,
     gitignore_patterns,
+    cache_hits,
+    cache_misses,
   };
 }

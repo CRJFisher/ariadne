@@ -125,6 +125,8 @@ describe("RECORDED_NAME_TABLE_MEMORY", () => {
     expect(by_class.reduce((sum, value) => sum + value, 0)).toBeGreaterThan(
       INTERNING.measured_kb_per_file,
     );
-    expect(INTERNING.verdict).toContain("TASK-381.9");
+    // The verdict names where path interning does pay, so a reader who arrives
+    // here from the refutation lands on the measurement rather than re-deriving.
+    expect(INTERNING.verdict).toContain("RECORDED_CACHE_RESUMPTION");
   });
 });

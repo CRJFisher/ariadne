@@ -1,7 +1,7 @@
 ---
 id: TASK-378
 title: "Key the index cache on the indexer version so a shipped fix invalidates stale entries"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-07-30 14:10"
 labels:
@@ -15,6 +15,23 @@ priority: high
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
+
+## Closed as superseded by TASK-381.9
+
+Every requirement here is carried, and the mechanism it named is delivered
+against a different structure: TASK-381.9 deletes the manifest entirely, so the
+indexer version is stamped on each blob rather than on a project-wide file.
+Nothing below is dropped. Each criterion maps to the criterion that carries it,
+so no follow-up re-adds a manifest to carry this axis:
+
+| criterion here | carried by                | as landed                                                                                                                   |
+| -------------- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| #1             | TASK-381.9 AC #2          | `indexer_version` comes from the `@ariadnejs/core` package version and is checked on every blob read; there is no manifest to reject. |
+| #2             | TASK-381.9 AC #2          | `schema_version` stays a separate format guard; a mismatch on either axis independently rejects the blob.                     |
+| #3             | TASK-381.9 AC #8a         | Blobs live under `<cache>/indexes/<indexer_version>/`; every other version directory is deleted on first use.                  |
+| #4             | TASK-381.9 AC #9          | The end-to-end test seeds one blob under this build's stamp and one under another, and shows the first replayed and the second re-indexed. |
+| #5             | TASK-381.9 AC #8b         | `packages/core/src/persistence/README.md` states the per-project granularity and why the sweep follows from it.                |
+| #6             | TASK-381.9 AC #10         | `persistence/*.test.ts` and the cache-restore paths in `project/project.test.ts` are green.                                    |
 
 ## Functionality at stake
 
@@ -56,11 +73,11 @@ Identified by comparing Ariadne against Graphify (`~/workspace/tools/graphify`).
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 The cache key includes an indexer-version component sourced from the package version, and `deserialize_manifest` rejects a manifest whose indexer version does not match the running build.
-- [ ] #2 `schema_version` remains a separate format guard; a mismatch on either axis independently discards the manifest.
-- [ ] #3 Superseded cache directories are removed on first use, and the current one is retained.
-- [ ] #4 A test proves the user-visible effect: with a warm cache and unchanged source, a change to indexing produces changed output rather than replaying the stale index.
-- [ ] #5 The chosen cache granularity (per-project or global) is stated in the persistence module documentation.
-- [ ] #6 `persistence/*.test.ts` and the cache-restore paths in `project/project.test.ts` stay green.
+- [x] #1 The cache key includes an indexer-version component sourced from the package version, and `deserialize_manifest` rejects a manifest whose indexer version does not match the running build.
+- [x] #2 `schema_version` remains a separate format guard; a mismatch on either axis independently discards the manifest.
+- [x] #3 Superseded cache directories are removed on first use, and the current one is retained.
+- [x] #4 A test proves the user-visible effect: with a warm cache and unchanged source, a change to indexing produces changed output rather than replaying the stale index.
+- [x] #5 The chosen cache granularity (per-project or global) is stated in the persistence module documentation.
+- [x] #6 `persistence/*.test.ts` and the cache-restore paths in `project/project.test.ts` stay green.
 
 <!-- AC:END -->

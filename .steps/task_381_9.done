@@ -1,0 +1,7 @@
+{
+  "key": "once",
+  "run_id": "20260828T142443Z-b03b41c1",
+  "scope": "once",
+  "step_id": "task_381_9",
+  "summary": "Delivered the self-describing cache blob. Working tree was clean at the start (cache_manifest.ts still present), so this was a from-scratch implementation merged by hand against the TASK-381.4 two-ph…"
+}

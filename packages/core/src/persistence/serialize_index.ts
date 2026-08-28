@@ -32,8 +32,15 @@ function deserialize_map<K, V>(entries: [K, V][]): ReadonlyMap<K, V> {
   return new Map(entries) as ReadonlyMap<K, V>;
 }
 
-export function serialize_semantic_index(index: SemanticIndex): string {
-  return JSON.stringify({
+/**
+ * The JSON-ready shape of an index, before stringification. Exposed separately
+ * so a cached index can be embedded in the stamp that validates it and the pair
+ * written as one document, rather than stringified twice.
+ */
+export function to_serializable_semantic_index(
+  index: SemanticIndex,
+): Record<string, unknown> {
+  return {
     file_path: index.file_path,
     language: index.language,
     root_scope_id: index.root_scope_id,
@@ -47,7 +54,7 @@ export function serialize_semantic_index(index: SemanticIndex): string {
     types: serialize_map(index.types),
     imported_symbols: serialize_map(index.imported_symbols),
     references: index.references,
-  });
+  };
 }
 
 export function deserialize_semantic_index(

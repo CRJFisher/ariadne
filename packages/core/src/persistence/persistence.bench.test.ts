@@ -2,9 +2,9 @@ import { describe, it, expect } from "vitest";
 import type { FilePath } from "@ariadnejs/types";
 import { Project } from "../project/project";
 import {
-  serialize_semantic_index,
   deserialize_semantic_index,
 } from "./serialize_index";
+import { serialize_semantic_index } from "./serialize_index.test";
 import { compute_content_hash } from "./content_hash";
 import { InMemoryStorage } from "./storage.test";
 import { load_project } from "../project/load_project";

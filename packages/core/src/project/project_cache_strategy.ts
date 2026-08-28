@@ -1,18 +1,11 @@
-import * as fs from "fs/promises";
 import type { FilePath } from "@ariadnejs/types";
-import type {
-  CacheManifest,
-  CacheManifestEntry,
-  PersistenceStorage,
-} from "../persistence";
+import type { CachedIndex, PersistenceStorage } from "../persistence";
 import {
   CURRENT_SCHEMA_VERSION,
+  INDEXER_VERSION,
   compute_content_hash,
-  deserialize_manifest,
-  serialize_manifest,
-  serialize_semantic_index,
-  deserialize_semantic_index,
-  validate_semantic_index_shape,
+  deserialize_cached_index,
+  serialize_cached_index,
 } from "../persistence";
 import type { GitFileState } from "../persistence";
 import type { SemanticIndex } from "@ariadnejs/types";
@@ -20,28 +13,34 @@ import type { Project } from "./project";
 
 /**
  * Cache read/write policy for project persistence: decides when a cached
- * per-file index is usable and is the single owner of content-hash
- * computation and index/manifest writes. Both `Project.save()` and
- * `load_project()` persist through these functions, so a manifest entry
- * exists only for a file whose index write succeeded.
+ * per-file index is usable and is the single owner of content-hash computation
+ * and index writes. Both `Project.save()` and `load_project()` persist through
+ * these functions, so a stored index always carries the stamp that decides its
+ * own validity.
  */
 
 /**
- * Read and deserialize the cache manifest, or null when absent or corrupt
- * (corruption falls back to a full re-index rather than failing the load).
+ * Read one file's cached index, or null when nothing usable is stored for it.
+ *
+ * A blob is the whole cache record: absent, corrupt, written by another schema
+ * or indexer version, or describing a different source file all mean the same
+ * thing here — the file must be re-indexed. Nothing consults a project-wide list
+ * first, so a cache an interrupted run left behind is read exactly as far as it
+ * got.
  */
-export async function read_cache_manifest(
+export async function read_cached_index(
   storage: PersistenceStorage,
-): Promise<CacheManifest | null> {
+  file_path: FilePath,
+): Promise<CachedIndex | null> {
   try {
-    const raw = await storage.read_manifest();
+    const raw = await storage.read_index(file_path);
     if (raw === null) return null;
-    return deserialize_manifest(raw);
+    return deserialize_cached_index(raw, file_path);
   } catch (error) {
     console.warn(
-      `[ariadne:persistence] Failed to load cache manifest: ${
+      `[ariadne:persistence] Cache read error for ${file_path}: ${
         error instanceof Error ? error.message : error
-      }. Falling back to full re-index.`,
+      }. Re-indexing.`,
     );
     return null;
   }
@@ -62,51 +61,41 @@ export async function read_cache_manifest(
  */
 export function can_use_cache(
   file_path: FilePath,
-  cached_entry: CacheManifestEntry,
+  cached: CachedIndex,
   git_state: GitFileState | null,
 ): boolean {
   const blob_hash = blob_hash_for_indexed_content(file_path, git_state);
-  return blob_hash !== undefined && blob_hash === cached_entry.git_blob_hash;
+  return blob_hash !== undefined && blob_hash === cached.git_blob_hash;
 }
 
 /**
- * Content-hash fallback for when git state cannot vouch for a file: the
- * cached index is usable iff the file's current content hashes to the
- * cached entry's content_hash.
+ * Content-hash fallback for when git state cannot vouch for a file: the cached
+ * index is usable iff the file's current content hashes to the stamp's
+ * `content_hash`.
  */
 export function content_matches_cache(
   content: string,
-  cached_entry: CacheManifestEntry,
+  cached: CachedIndex,
 ): boolean {
-  return compute_content_hash(content) === cached_entry.content_hash;
+  return compute_content_hash(content) === cached.content_hash;
 }
 
 /**
- * Try to restore a file from cache. Reads the cached index from storage,
- * reads file content from disk, and hands it to the bulk load's pass A.
- * Returns true on success, false on any failure.
+ * Hand an already-read cached index to the bulk load's pass A.
+ * Returns true on success, false when restoring threw.
  */
-export async function try_restore_from_cache(
+export function restore_from_cache(
   project: Project,
   file_path: FilePath,
-  storage: PersistenceStorage,
-  existing_content?: string,
-): Promise<boolean> {
+  cached: CachedIndex,
+  content: string,
+): boolean {
   try {
-    const raw_index = await storage.read_index(file_path);
-    if (raw_index === null) return false;
-
-    const parsed = JSON.parse(raw_index);
-    if (!validate_semantic_index_shape(parsed)) return false;
-
-    const cached_index = deserialize_semantic_index(parsed);
-
-    const content = existing_content ?? await fs.readFile(file_path, "utf-8");
-    project.ingest_restored_file(file_path, content, cached_index);
+    project.ingest_restored_file(file_path, content, cached.index);
     return true;
   } catch (error) {
     console.warn(
-      `[ariadne:persistence] Cache read error for ${file_path}: ${
+      `[ariadne:persistence] Cache restore error for ${file_path}: ${
         error instanceof Error ? error.message : error
       }. Re-indexing.`,
     );
@@ -131,14 +120,14 @@ export function blob_hash_for_indexed_content(
 }
 
 /**
- * Serialize and write one file's index, returning its manifest entry, or
- * null when the write failed (the file then carries no manifest entry, so
- * a later load re-indexes it instead of trusting a phantom cache row).
+ * Write one file's index and the stamp that validates it as a single atomic
+ * blob. A write that fails leaves no entry, so a later load re-indexes the file
+ * rather than trusting a half-written one.
  *
- * The entry's blob hash is derived here rather than supplied, so a caller
- * cannot stamp an entry with a blob its index did not come from — the defect
- * that let a staged edit serve a stale index. A caller with no git state passes
- * null and the entry falls back to content-hash validation.
+ * The stamp's blob hash is derived here rather than supplied, so a caller cannot
+ * claim an index came from a blob it did not — the defect that let a staged edit
+ * serve a stale index. A caller with no git state passes null and the entry
+ * falls back to content-hash validation.
  */
 export async function write_file_index(
   storage: PersistenceStorage,
@@ -146,38 +135,22 @@ export async function write_file_index(
   index: SemanticIndex,
   content: string,
   git_state: GitFileState | null,
-): Promise<CacheManifestEntry | null> {
-  try {
-    const content_hash = compute_content_hash(content);
-    await storage.write_index(file_path, serialize_semantic_index(index));
-    return { content_hash, git_blob_hash: blob_hash_for_indexed_content(file_path, git_state) };
-  } catch (error) {
-    console.warn(
-      `[ariadne:persistence] Failed to save index for ${file_path}: ${
-        error instanceof Error ? error.message : error
-      }`,
-    );
-    return null;
-  }
-}
-
-/**
- * Serialize and write the cache manifest under the current schema version.
- */
-export async function write_cache_manifest(
-  storage: PersistenceStorage,
-  entries: Map<FilePath, CacheManifestEntry>,
 ): Promise<void> {
   try {
-    await storage.write_manifest(
-      serialize_manifest({
+    await storage.write_index(
+      file_path,
+      serialize_cached_index({
         schema_version: CURRENT_SCHEMA_VERSION,
-        entries,
+        indexer_version: INDEXER_VERSION,
+        source_path: file_path,
+        content_hash: compute_content_hash(content),
+        git_blob_hash: blob_hash_for_indexed_content(file_path, git_state),
+        index,
       }),
     );
   } catch (error) {
     console.warn(
-      `[ariadne:persistence] Failed to save manifest: ${
+      `[ariadne:persistence] Failed to save index for ${file_path}: ${
         error instanceof Error ? error.message : error
       }`,
     );

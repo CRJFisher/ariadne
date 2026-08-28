@@ -49,6 +49,8 @@ export { RECORDED_ORDER_INDEPENDENCE } from "./recorded_order_independence";
 
 export { RECORDED_MEMORY_CONTRACT } from "./recorded_memory_contract";
 
+export { RECORDED_CACHE_RESUMPTION } from "./recorded_cache_resumption";
+
 export { compare_fingerprints } from "./call_graph_fingerprint";
 
 export {

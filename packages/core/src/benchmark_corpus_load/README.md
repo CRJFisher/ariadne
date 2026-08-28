@@ -229,8 +229,9 @@ The record also carries `INTERNING_CEILING`, so the cheaper-looking alternative
 is not re-proposed from an estimate. Rewriting all 1,455,167 retained string
 slots to the canonical instance of their content — the ceiling of any interning
 scheme — freed **5.42 KB/file against a 68 KB/file estimate**. V8 already shares
-those strings. The path interning that does pay is inside cache blobs, measured
-at 2.32x, and belongs to TASK-381.9.
+those strings. The path interning that does pay is inside cache blobs,
+where storing a file's path once instead of in every reference record measures
+1.694x on the bytes and 1.194x on `JSON.parse`.
 
 ## What a whole corpus costs
 
@@ -311,6 +312,38 @@ readmitted `lifecycle.ts` and `event.ts` supply `IDisposable` and `Event`; each
 keeps its node, and 21,421 symbols gain an edge against their 14. That
 population is TASK-389.
 
+## What an interrupted load can resume from
+
+`RECORDED_CACHE_RESUMPTION` holds the kill-and-restart pair. Over the 200
+path-sorted `.ts` files of vscode's `src/vs/base` at f3fa55c3, copied into a
+temp directory and loaded as a whole project, `kill -9` eight seconds in leaves
+**160 finished blobs** on disk. The restart reuses **160 of 160** and indexes the
+remaining 40, leaves zero temporary files, and reports a call graph identical to
+an uninterrupted cold load's — all seven components, digest for digest. The same
+kill on the tree immediately before, in the same session, leaves the same 160
+blobs and reuses **0**, because the manifest describing them is written after the
+loop the kill interrupted.
+
+Three costs travel with that record. A warm cache hits every file it is offered
+minus the files indexing dropped, measured at 50, 200, 400 and 800 files of
+`src/` with an empty dropped set at all four. A full cache that matches nothing
+costs **+2.94%** of CPU — 1.21 ms per rejected blob — against a control that
+indexes and writes the same 800 blobs and reads none; a control that wrote
+nothing charges the rejection with the cost of populating a cache and reads
++25.4% instead. And storing the source path once per blob instead of two or
+three times in every reference record takes 120 blobs from **83.96 MB to 49.56
+MB** and their `JSON.parse` from **208.1 ms to 174.3 ms**, five reps interleaved
+in one process.
+
+One commitment the step was written against is refuted by its own arms and is
+carried in the record rather than dropped. The 120-blob sample does **not** fall
+to 32 MB. Removing the path from every reference record reaches 49.56 MB, and
+removing it from the whole blob — definitions, scopes and map keys included —
+would floor at **38.21 MB**, so no elision of the path could have reached the
+target on this tree. The 68.56 MB the target was set against describes a smaller
+index than this tree produces; what does reproduce is the parse figure, 205.4 ms
+recorded against 208.1 measured, and the 175 ms bound is met at 174.3.
+
 ## Memory
 
 ### The contract
@@ -322,9 +355,9 @@ Darwin 24.6.0 x64, 6 cores, 32 GiB, node v22.22.1:
 
 | ceiling            | outcome                                                 |
 | ------------------ | ------------------------------------------------------- |
-| 4,144 MB (default) | dies after 444.3 s of CPU, `Reached heap limit`          |
-| 6,144 MB           | 8,494 of 8,494 in 356.22 s of CPU, 5,803.45 MB peak RSS  |
-| 12,288 MB          | 8,494 of 8,494 in 349.37 s of CPU, 6,880.9 MB peak RSS   |
+| 4,144 MB (default) | dies after 444.3 s of CPU, `Reached heap limit`         |
+| 6,144 MB           | 8,494 of 8,494 in 356.22 s of CPU, 5,803.45 MB peak RSS |
+| 12,288 MB          | 8,494 of 8,494 in 349.37 s of CPU, 6,880.9 MB peak RSS  |
 
 Each completing row is a mean of two processes, and the four arms ran
 interleaved A,B,A,B in one session, so the **1.02×** the smaller ceiling costs
@@ -348,7 +381,7 @@ its corpus is not a requirement.
 
 The live heap, read after a forced collection, is **4,046.1 MB**, and identical
 to a tenth of a megabyte at both ceilings that complete. The default ceiling is
-4,144 MB. So the load retains 97.9 MB *less* than the ceiling and still cannot
+4,144 MB. So the load retains 97.9 MB _less_ than the ceiling and still cannot
 run under it: the last six collections free 9 to 53 MB each for 1.2 to 2.3
 seconds of work, the last at a mutator utilisation of 0.018. What is missing is
 mark-compact working set, not room for the data. `RECORDED_MEMORY_CONTRACT`

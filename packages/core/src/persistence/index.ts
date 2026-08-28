@@ -2,15 +2,15 @@ export type { PersistenceStorage } from "./storage";
 export { FileSystemStorage } from "./file_system_storage";
 export type { ContentHash } from "./content_hash";
 export { compute_content_hash } from "./content_hash";
+export { INDEXER_VERSION } from "./indexer_version";
 export {
   CURRENT_SCHEMA_VERSION,
-  type CacheManifest,
-  type CacheManifestEntry,
-  serialize_manifest,
-  deserialize_manifest,
-} from "./cache_manifest";
+  type CachedIndex,
+  serialize_cached_index,
+  deserialize_cached_index,
+} from "./cached_index";
 export {
-  serialize_semantic_index,
+  to_serializable_semantic_index,
   deserialize_semantic_index,
   validate_semantic_index_shape,
 } from "./serialize_index";

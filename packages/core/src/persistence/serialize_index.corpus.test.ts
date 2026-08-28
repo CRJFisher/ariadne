@@ -25,11 +25,13 @@ import { discover_corpus } from "../benchmark_corpus_load";
 import { nested_slice } from "../benchmark_corpus_load/nested_slice";
 import { build_index_single_file } from "../index_single_file/index_single_file";
 import { parse_file } from "../project/parse_file";
+import { compute_content_hash } from "./content_hash";
 import {
-  deserialize_semantic_index,
-  serialize_semantic_index,
-  validate_semantic_index_shape,
-} from "./serialize_index";
+  CURRENT_SCHEMA_VERSION,
+  deserialize_cached_index,
+  serialize_cached_index,
+} from "./cached_index";
+import { INDEXER_VERSION } from "./indexer_version";
 
 const CORPUS_ROOT = path.join(
   os.homedir(),
@@ -79,13 +81,23 @@ async function index_slice(): Promise<Slice> {
   return { discovered: discovered.length, indexes };
 }
 
-/** The cache's own read path: JSON, shape gate, deserialize. */
-function restore_from_cache(index: SemanticIndex): SemanticIndex {
-  const parsed = JSON.parse(serialize_semantic_index(index));
-  if (!validate_semantic_index_shape(parsed)) {
-    throw new Error("The serialized index failed the cache's shape gate.");
+/** The cache's own write-then-read path, stamp and path elision included. */
+function restore_from_cache(
+  source_path: string,
+  index: SemanticIndex,
+): SemanticIndex {
+  const blob = serialize_cached_index({
+    schema_version: CURRENT_SCHEMA_VERSION,
+    indexer_version: INDEXER_VERSION,
+    source_path: source_path as FilePath,
+    content_hash: compute_content_hash(source_path),
+    index,
+  });
+  const restored = deserialize_cached_index(blob, source_path as FilePath);
+  if (restored === null) {
+    throw new Error("The cache rejected a blob it had just written.");
   }
-  return deserialize_semantic_index(parsed);
+  return restored.index;
 }
 
 describe.skipIf(!corpus_present)("the vs/base slice through both index transports", () => {
@@ -114,7 +126,7 @@ describe.skipIf(!corpus_present)("the vs/base slice through both index transport
     const { indexes } = await load_slice();
     const diverged: string[] = [];
     for (const { file, index } of indexes) {
-      const restored = restore_from_cache(index);
+      const restored = restore_from_cache(index.file_path, index);
       try {
         expect([...restored.references]).toEqual([...index.references]);
       } catch {
@@ -122,5 +134,24 @@ describe.skipIf(!corpus_present)("the vs/base slice through both index transport
       }
     }
     expect(diverged).toEqual([]);
+  }, 300_000);
+
+  // The blob header holds the source path; the reference records that would
+  // otherwise repeat it two or three times apiece hold none of it.
+  it("names the source path in no stored reference record", async () => {
+    const { indexes } = await load_slice();
+    const leaking: string[] = [];
+    for (const { file, index } of indexes) {
+      const blob = serialize_cached_index({
+        schema_version: CURRENT_SCHEMA_VERSION,
+        indexer_version: INDEXER_VERSION,
+        source_path: index.file_path,
+        content_hash: compute_content_hash(index.file_path),
+        index,
+      });
+      const stored = JSON.stringify(JSON.parse(blob).index.references);
+      if (stored.includes(index.file_path)) leaking.push(file);
+    }
+    expect(leaking).toEqual([]);
   }, 300_000);
 });

@@ -201,7 +201,7 @@ export const RECORDED_NAME_TABLE_MEMORY: RecordedNameTableMemory = {
     },
     pass_cost_ms_per_file: "4.1-4.6 against ~63 total, so ~7% of load CPU",
     verdict:
-      "Refuted by 12x and not implemented. The per-class figures sum ABOVE the whole, which is the signature of GC noise on a ~500 KB/file baseline: V8 already shares these strings, and the large occurrence counts are pointer slots rather than copies. This is the ceiling of any interning scheme, measured by performing the rewrite outright, so a creation-site implementation cannot beat it — and that one would additionally have to touch 211 `node.text` sites across every language leaf. The path interning that does pay is inside cache blobs, where TASK-381.9 measured 2.32x: a different mechanism on different data.",
+      "Refuted by 12x and not implemented. The per-class figures sum ABOVE the whole, which is the signature of GC noise on a ~500 KB/file baseline: V8 already shares these strings, and the large occurrence counts are pointer slots rather than copies. This is the ceiling of any interning scheme, measured by performing the rewrite outright, so a creation-site implementation cannot beat it — and that one would additionally have to touch 211 `node.text` sites across every language leaf. The path interning that does pay is inside cache blobs, where storing a file's path once instead of in every reference record measures 1.694x on the bytes: a different mechanism on different data, recorded in RECORDED_CACHE_RESUMPTION.",
   },
 
   note:

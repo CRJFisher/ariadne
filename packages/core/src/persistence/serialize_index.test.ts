@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import type { FilePath, Language, ScopeId, SymbolId } from "@ariadnejs/types";
 import type { SemanticIndex } from "@ariadnejs/types";
 import {
-  serialize_semantic_index,
+  to_serializable_semantic_index,
   deserialize_semantic_index,
   validate_semantic_index_shape,
 } from "./serialize_index";
@@ -13,6 +13,15 @@ import PythonParser from "tree-sitter-python";
 import JavaScriptParser from "tree-sitter-javascript";
 import RustParser from "tree-sitter-rust";
 import type { ParsedFile } from "../index_single_file/parsed_file";
+
+/**
+ * A `SemanticIndex` as one JSON document. Cache blobs embed the index in their
+ * validity stamp rather than stringifying it alone, so this shape exists only
+ * for the round-trip guards below and in the sibling persistence tests.
+ */
+export function serialize_semantic_index(index: SemanticIndex): string {
+  return JSON.stringify(to_serializable_semantic_index(index));
+}
 
 function make_parsed_file(
   content: string,
