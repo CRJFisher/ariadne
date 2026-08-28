@@ -47,6 +47,8 @@ export { RECORDED_EXPORT_DECLARATION_SPACE } from "./recorded_export_declaration
 
 export { RECORDED_ORDER_INDEPENDENCE } from "./recorded_order_independence";
 
+export { RECORDED_MEMORY_CONTRACT } from "./recorded_memory_contract";
+
 export { compare_fingerprints } from "./call_graph_fingerprint";
 
 export {

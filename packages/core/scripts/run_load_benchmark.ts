@@ -55,6 +55,7 @@ import {
   report_recorded_eviction_cost,
   report_recorded_export_declaration_space,
   report_recorded_full_corpus_baseline,
+  report_recorded_memory_contract,
   report_recorded_name_table,
   report_recorded_order_independence,
   report_recorded_resolution_eviction,
@@ -387,6 +388,7 @@ async function run_interleaved(context: RunContext, slice: SliceSize): Promise<v
   report_recorded_name_table(control[0].row.file_counts.offered);
   report_recorded_full_corpus_baseline(control[0].row.file_counts.offered);
   report_recorded_export_declaration_space(control[0].row.file_counts.offered);
+  report_recorded_memory_contract(control[0].row.file_counts.offered);
 }
 
 /**

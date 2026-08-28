@@ -20,10 +20,50 @@ import {
   RECORDED_EVICTION_INDEX_COST,
   RECORDED_EXPORT_DECLARATION_SPACE,
   RECORDED_FULL_CORPUS_BASELINE,
+  RECORDED_MEMORY_CONTRACT,
   RECORDED_NAME_TABLE_MEMORY,
   RECORDED_ORDER_INDEPENDENCE,
   RECORDED_RESOLUTION_EVICTION_COST,
 } from "../src/benchmark_corpus_load";
+
+/**
+ * What this file set needs from the heap, and what it does at the ceiling a
+ * user gets without a flag.
+ *
+ * Printed under a full-corpus arm because the ceiling is the difference
+ * between an entry-point report and a fatal V8 error several minutes in, and
+ * the flag that decides it lives on the command line that started the process.
+ * The live heap and the verdict travel between machines; the CPU and peak RSS
+ * beside them do not, so they are marked as a record.
+ */
+export function report_recorded_memory_contract(offered_file_count: number): void {
+  const record = RECORDED_MEMORY_CONTRACT;
+  const header = `\nrecorded memory contract for this file set (${record.machine}, ${record.node_version}, session ${record.session_id}):`;
+
+  // The floor is one corpus's. Printing it over the other one's row would hand
+  // a reader a requirement measured on a file set they are not running.
+  if (offered_file_count === record.other_corpus.discovered_files) {
+    const other = record.other_corpus;
+    console.log(
+      header +
+        `\n  ${other.discovered_files} discovered, ${other.indexed} indexed, ${other.dropped} dropped over ${other.cpu_seconds.observations.length} processes at --max-old-space-size=${other.heap_flag_mb}` +
+        `\n  live heap ${other.live_heap_mb.mean} MB, peak RSS ${other.peak_rss_mb.mean} MB (mean of ${other.peak_rss_mb.observations.length}, spread ${other.peak_rss_mb.spread_percent}%)` +
+        `\n  ${other.verdict}`,
+    );
+    return;
+  }
+  if (offered_file_count !== record.discovered_files) return;
+
+  const failing = record.at_default_ceiling;
+  const [smaller, larger] = record.completing;
+  console.log(
+    header +
+      `\n  --max-old-space-size >= ${record.required_old_space_mb} required; at node's ${record.default_old_space_ceiling_mb} MB default this corpus dies after ${failing.cpu_seconds} s of CPU with "${failing.fatal_error}"` +
+      `\n  live heap ${record.live_heap_mb.mean} MB (${record.live_heap_mb.observations.length} runs, spread ${record.live_heap_mb.spread_percent}%), ${record.live_heap_headroom_below_default_ceiling_mb} MB below that ceiling, so what is missing is collector working set` +
+      `\n  peak RSS ${smaller.peak_rss_mb.mean} MB at ${smaller.heap_flag_mb} against ${larger.peak_rss_mb.mean} MB at ${larger.heap_flag_mb} over one live set — the RSS-to-heap ratio is ${record.rss_to_live_heap.map((row) => `${row.ratio}x`).join(" and ")}, not a constant` +
+      `\n  the smaller ceiling costs ${record.cost_of_the_smaller_ceiling}x the CPU and reports the same graph; Ariadne sets no heap flag itself`,
+  );
+}
 
 /**
  * The re-baseline this corpus's fingerprint stands at, and what moved to get

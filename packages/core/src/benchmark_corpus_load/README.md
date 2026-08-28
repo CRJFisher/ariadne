@@ -313,6 +313,49 @@ population is TASK-389.
 
 ## Memory
 
+### The contract
+
+Reporting entry points over microsoft/vscode at `f3fa55c3`, `src/`, 8,494 files
+under Ariadne's discovery walk, requires node to be started with
+`--max-old-space-size` of at least **6144**. Measured on ariadne@417de2fc,
+Darwin 24.6.0 x64, 6 cores, 32 GiB, node v22.22.1:
+
+| ceiling            | outcome                                                 |
+| ------------------ | ------------------------------------------------------- |
+| 4,144 MB (default) | dies after 444.3 s of CPU, `Reached heap limit`          |
+| 6,144 MB           | 8,494 of 8,494 in 356.22 s of CPU, 5,803.45 MB peak RSS  |
+| 12,288 MB          | 8,494 of 8,494 in 349.37 s of CPU, 6,880.9 MB peak RSS   |
+
+Each completing row is a mean of two processes, and the four arms ran
+interleaved A,B,A,B in one session, so the **1.02×** the smaller ceiling costs
+in CPU is admissible. All four report one call graph — seven components and
+both diagnostics hashes, digest for digest — so the ceiling decides whether the
+load finishes and never what it finds.
+
+Ariadne sets no heap flag. Setting one needs a re-exec or a `NODE_OPTIONS`
+hand-off, which is a second execution path, and it would cover the CLI while
+leaving the MCP server and the library consumer with neither the flag nor the
+guarantee. The flag belongs on the command line that starts the process.
+
+The floor is `src/`'s and is not carried to the repository root. Over the
+12,654 files discovered there, the same stack retains **5,562.95 MB** and peaks
+at **8,540.05 MB** — each a mean of two processes at a 22,645 MB ceiling — so a
+6,144 MB ceiling would leave 581 MB of working set where `src/` died with 97.9
+MB. The floor for that corpus is unmeasured, and a requirement quoted without
+its corpus is not a requirement.
+
+### Why the default ceiling fails
+
+The live heap, read after a forced collection, is **4,046.1 MB**, and identical
+to a tenth of a megabyte at both ceilings that complete. The default ceiling is
+4,144 MB. So the load retains 97.9 MB *less* than the ceiling and still cannot
+run under it: the last six collections free 9 to 53 MB each for 1.2 to 2.3
+seconds of work, the last at a mutator utilisation of 0.018. What is missing is
+mark-compact working set, not room for the data. `RECORDED_MEMORY_CONTRACT`
+holds the bracket and TASK-393 is open against the live heap itself.
+
+### Reading a memory figure
+
 Peak RSS is reported as a mean over at least two runs with the spread, never as
 a single figure: it varies by up to 61% run to run on one arm and one input,
 while the settled heap barely moves. Over five arms on the in-repo corpus, peak
@@ -321,6 +364,17 @@ quantisation floor there, since the field is rounded to a tenth of a megabyte on
 a 19.5 MB heap. The corpus-scale figure behind the 0.01% claim comes from an arm
 three orders of magnitude larger, where a tenth of a megabyte is invisible.
 `summarize_samples` refuses fewer than two runs.
+
+A peak RSS figure is quoted with the ceiling it was taken at, because the
+collector schedules against that ceiling: 5,803.45 MB at 6,144 MB and 6,880.9
+MB at 12,288 MB, over one identical live set. That makes the RSS-to-live-heap
+ratio a pair — **1.43× and 1.70×** — and never a constant to project from.
+
+A closing `used_heap_size` is the live set only where the ceiling forces a full
+collection. Two processes at 6,144 MB read 5,155.1 and 5,155.4 MB; the same
+computation at 12,288 MB reads 5,592.4 and 7,178.8 MB, a 24.84% spread. The
+live figure comes from a forced collection under `--expose-gc`, and a run whose
+ceiling never forced one supports no ratio at all.
 
 The RSS sampler cannot observe the trace phase, which is fully synchronous — so
 `peak_rss_mb` is a defensible lower bound rather than a true high-water mark.
@@ -353,9 +407,12 @@ cost-per-file curve — every slice is a prefix of the next, so the curve descri
 one codebase growing), `--orders` (one file set in four arrival orders, diffed
 through the fingerprint).
 
-Arms run in separate processes at `--max-old-space-size=6144`; the corpus
-exhausts node's default ceiling, and an arm large enough to hit it refuses to
-start rather than dying after hours.
+Each arm runs in its own process, sized by `required_heap_mb` plus a quarter —
+12,292 MB required and 15,365 MB given, for the 8,494-file corpus — and an arm
+whose own ceiling is below that requirement refuses to start rather than dying
+after hours. The requirement is a linear model fitted to two small-slice points
+and it over-provisions at corpus scale: the measured floor for vscode's `src/`
+is 6,144 MB, and node's 4,144 MB default is what the corpus dies at.
 
 ### A second checkout for the candidate arm
 
