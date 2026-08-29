@@ -9,7 +9,7 @@ import {
   LANGUAGE_TO_TREESITTER_LANG,
   SUPPORTED_LANGUAGES,
   is_tsx_file,
-  grammar_for,
+  grammar_for_dialect,
   parser_for,
 } from "./parsers";
 
@@ -56,17 +56,17 @@ describe("parsers", () => {
     });
   });
 
-  describe("grammar_for", () => {
-    it("parses a .tsx file with the tsx grammar and a .ts file with typescript", () => {
-      expect(grammar_for("typescript", "/x/Component.tsx")).toBe(TypeScript.tsx);
-      expect(grammar_for("typescript", "/x/module.ts")).toBe(
+  describe("grammar_for_dialect", () => {
+    it("selects the tsx grammar for the tsx dialect and typescript otherwise", () => {
+      expect(grammar_for_dialect("typescript", true)).toBe(TypeScript.tsx);
+      expect(grammar_for_dialect("typescript", false)).toBe(
         TypeScript.typescript
       );
     });
 
-    it("uses the default grammar for non-typescript languages regardless of path", () => {
-      expect(grammar_for("javascript", "/x/App.jsx")).toBe(JavaScript);
-      expect(grammar_for("python", "/x/mod.py")).toBe(Python);
+    it("uses the default grammar for non-typescript languages in either dialect", () => {
+      expect(grammar_for_dialect("javascript", true)).toBe(JavaScript);
+      expect(grammar_for_dialect("python", false)).toBe(Python);
     });
   });
 

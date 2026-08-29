@@ -54,7 +54,7 @@ export function grammar_for_dialect(language: Language, tsx: boolean): Grammar {
 }
 
 // Grammar for parsing a file, dispatching `.tsx` to the tsx grammar.
-export function grammar_for(language: Language, file_path: string): Grammar {
+function grammar_for(language: Language, file_path: string): Grammar {
   return grammar_for_dialect(language, is_tsx_file(language, file_path));
 }
 
