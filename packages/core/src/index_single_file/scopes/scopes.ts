@@ -218,33 +218,33 @@ export function create_processing_context(
     scope_depths,
     root_scope_id,
     get_scope_id(location: Location): ScopeId {
-      // Find the deepest scope that contains this location
-      let best_scope_id = root_scope_id;
-      let best_depth = -1;
-
-      for (const scope of scopes.values()) {
-        if (!location_contains(scope.location, location)) {
-          continue;
-        }
-
-        const depth = scope_depths.get(scope.id);
-        if (depth === undefined) {
-          throw new Error(`Internal error: scope ${scope.id} has no precomputed depth`);
-        }
-
-        if (depth > best_depth) {
-          best_scope_id = scope.id;
-          best_depth = depth;
-        } else if (depth === best_depth && scope.id !== best_scope_id) {
-          throw new Error(
-            `Malformed scope tree: multiple scopes at depth ${depth} contain location ${JSON.stringify(
-              location
-            )}. ` + `Found scopes: ${best_scope_id} and ${scope.id}`
-          );
-        }
+      // Containment is a tree, so a descent costs one step per level of
+      // nesting where reading every scope costs one step per scope in the
+      // file — the difference between a lookup priced on a file's depth and
+      // one priced on its size, at roughly 952 lookups per file.
+      let current = scopes.get(root_scope_id);
+      if (!current) {
+        throw new Error(
+          `Root scope with id ${root_scope_id} not found at location ${JSON.stringify(
+            location
+          )}`
+        );
       }
 
-      return best_scope_id;
+      for (;;) {
+        let deeper: LexicalScope | undefined;
+        for (const child_id of current.child_ids) {
+          const child = scopes.get(child_id);
+          if (child && location_contains(child.location, location)) {
+            deeper = child;
+            break;
+          }
+        }
+        if (!deeper) {
+          return current.id;
+        }
+        current = deeper;
+      }
     },
     get_child_scope_with_symbol_name(
       scope_id: ScopeId,

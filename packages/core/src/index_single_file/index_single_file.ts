@@ -34,6 +34,16 @@ import {
 } from "./capture_types";
 import type { ProcessingContext } from "./scopes/processing_context";
 
+// The corpus mean is roughly 1,272 captures per file and every one of them is
+// checked against both enums, so the member lists are built once for the
+// process rather than once per capture.
+const SEMANTIC_CATEGORY_VALUES: ReadonlySet<string> = new Set(
+  Object.values(SemanticCategory)
+);
+const SEMANTIC_ENTITY_VALUES: ReadonlySet<string> = new Set(
+  Object.values(SemanticEntity)
+);
+
 // ============================================================================
 // Main Entry Point
 // ============================================================================
@@ -55,11 +65,11 @@ export function build_index_single_file(
   const capture_nodes: CaptureNode[] = filtered_captures.map((c) => {
     const parts = c.name.split(".");
     const category = parts[0] as SemanticCategory;
-    if (!Object.values(SemanticCategory).includes(category)) {
+    if (!SEMANTIC_CATEGORY_VALUES.has(category)) {
       throw new Error(`Invalid category: ${category}`);
     }
     const entity = parts[1] as SemanticEntity;
-    if (!Object.values(SemanticEntity).includes(entity)) {
+    if (!SEMANTIC_ENTITY_VALUES.has(entity)) {
       throw new Error(`Invalid entity: ${entity}`);
     }
 

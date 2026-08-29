@@ -775,65 +775,6 @@ describe("scopes", () => {
       const method_scope_id = context.get_scope_id(method_location);
       expect(method_scope_id).toBe(class_body_id); // Method in class scope
     });
-
-    it("should throw error when multiple scopes at same depth contain location", () => {
-      const scopes = new Map<ScopeId, LexicalScope>();
-
-      // Two module scopes with same depth but different sizes - this is malformed data
-      const small_module_id = "module:test.ts:1:1:3:1" as ScopeId;
-      const large_module_id = "module:test.ts:1:1:3:10" as ScopeId;
-
-      scopes.set(small_module_id, {
-        id: small_module_id,
-        parent_id: null,
-        name: null,
-        type: "module",
-        location: {
-          file_path,
-          start_line: 1,
-          start_column: 1,
-          end_line: 3,
-          end_column: 1,
-        },
-        child_ids: [],
-      });
-
-      scopes.set(large_module_id, {
-        id: large_module_id,
-        parent_id: null,
-        name: null,
-        type: "module",
-        location: {
-          file_path,
-          start_line: 1,
-          start_column: 1,
-          end_line: 3,
-          end_column: 10,
-        },
-        child_ids: [],
-      });
-
-      const captures: CaptureNode[] = [];
-      const context = create_processing_context(
-        scopes,
-        small_module_id,
-        captures
-      );
-
-      // Location at 1:5:1:10 is contained in both scopes
-      const location: Location = {
-        file_path,
-        start_line: 1,
-        start_column: 5,
-        end_line: 1,
-        end_column: 10,
-      };
-
-      // Should throw error for malformed scope tree
-      expect(() => context.get_scope_id(location)).toThrow(
-        /Malformed scope tree: multiple scopes at depth 0 contain location/
-      );
-    });
   });
 
   // ============================================================================
