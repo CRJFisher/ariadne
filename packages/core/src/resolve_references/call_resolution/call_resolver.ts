@@ -6,6 +6,30 @@
  * constructors: when a method call with `potential_construct_target` resolves
  * to a class (e.g. `user = models.User(name)`), the variable's type is
  * registered in the TypeRegistry so subsequent method calls on it can resolve.
+ *
+ * ## What a pass costs, and the limit that sets
+ *
+ * A pass reads only what its batch names: references for the batch's files, and
+ * the batch's own anonymous callables from `DefinitionRegistry`. Re-resolving
+ * one file reads what that file holds however large the project around it is —
+ * measured over vscode's `src/`, 8 callables at 1,200 files and 8 at 8,494,
+ * against 212,275 when the pass asked for the project's whole callable set.
+ *
+ * What grows is polymorphic dispatch, and it grows because its answer does.
+ * Over the same corpus, 927 → 8,494 files: unresolved call sites, the input,
+ * grow at exponent 1.013; resolved call edges, the output, at 1.310; subtype
+ * edges enumerated by `method_lookup` at 1.726; and CPU inside the polymorphic
+ * pair at 1.881, taking it from 5.6% of this term to 22.9%. The mean fan-out of
+ * one dispatch — subtypes enumerated per expansion — goes 4.64 → 16.77, because
+ * a wider corpus is one in which an interface genuinely has more
+ * implementations. Naming every possible runtime target is the capability, so
+ * this cost is intrinsic rather than a scan to be indexed away.
+ *
+ * The term itself measures an exponent of 1.134 by least squares over 927,
+ * 2,000 and 8,494 files, 1.506 between the two largest. Carried forward, it
+ * reaches 10% of a load at 19,000-35,000 files and half of one at 232,000-2.7M,
+ * where the memory contract already refuses: 8,494 files retain 4,046 MB live.
+ * `RECORDED_CALL_RESOLUTION_GROWTH` holds the arms behind every figure here.
  */
 
 import type {
@@ -444,6 +468,10 @@ function infer_call_type_from_resolution(
  * arrow itself and the enclosing-function walk in `resolve_calls_for_files`
  * would return the callback as its own caller, hiding both the real caller's
  * reach and the callback's own unreachability.
+ *
+ * The batch's own files are asked for their anonymous callables, so what this
+ * pass reads is a property of the batch and not of how much else the project
+ * holds.
  */
 function resolve_callback_invocations(
   file_ids: Set<FilePath>,
@@ -452,62 +480,49 @@ function resolve_callback_invocations(
 ): CallReference[] {
   const invocations: CallReference[] = [];
 
-  const all_callables = definitions.get_callable_definitions();
+  for (const file_id of file_ids) {
+    for (const callable of definitions.get_anonymous_callables_in_file(file_id)) {
+      const callback_context = callable.callback_context;
 
-  for (const callable of all_callables) {
-    if (callable.name !== ("<anonymous>" as SymbolName)) {
-      continue;
+      if (!callback_context || !callback_context.is_callback) {
+        continue;
+      }
+
+      const receiver_location = callback_context.receiver_location;
+      if (!receiver_location) {
+        continue;
+      }
+
+      const file_refs = references.get_file_references(
+        receiver_location.file_path
+      );
+
+      const receiver_call = file_refs.find(
+        (ref) =>
+          (ref.kind === "function_call" || ref.kind === "method_call") &&
+          ref.location.start_line === receiver_location.start_line &&
+          ref.location.start_column === receiver_location.start_column
+      );
+
+      if (!receiver_call) {
+        continue;
+      }
+
+      invocations.push({
+        location: receiver_location,
+        name: "<anonymous>" as SymbolName,
+        scope_id: receiver_call.scope_id,
+        call_type: "function",
+        resolutions: [
+          {
+            symbol_id: callable.symbol_id,
+            confidence: "certain" as const,
+            reason: { type: "direct" as const },
+          },
+        ],
+        is_callback_invocation: true,
+      });
     }
-
-    if (!file_ids.has(callable.location.file_path)) {
-      continue;
-    }
-
-    // Only FunctionDefinition carries callback_context.
-    if (callable.kind !== "function") {
-      continue;
-    }
-
-    const callback_context = callable.callback_context;
-
-    if (!callback_context || !callback_context.is_callback) {
-      continue;
-    }
-
-    if (!callback_context.receiver_location) {
-      continue;
-    }
-
-    const file_refs = references.get_file_references(
-      callback_context.receiver_location.file_path
-    );
-
-    const receiver_location = callback_context.receiver_location;
-    const receiver_call = file_refs.find(
-      (ref) =>
-        (ref.kind === "function_call" || ref.kind === "method_call") &&
-        ref.location.start_line === receiver_location.start_line &&
-        ref.location.start_column === receiver_location.start_column
-    );
-
-    if (!receiver_call) {
-      continue;
-    }
-
-    invocations.push({
-      location: callback_context.receiver_location,
-      name: "<anonymous>" as SymbolName,
-      scope_id: receiver_call.scope_id,
-      call_type: "function",
-      resolutions: [
-        {
-          symbol_id: callable.symbol_id,
-          confidence: "certain" as const,
-          reason: { type: "direct" as const },
-        },
-      ],
-      is_callback_invocation: true,
-    });
   }
 
   return invocations;

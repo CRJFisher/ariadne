@@ -8,6 +8,7 @@ import {
   property_symbol,
   enum_symbol,
   enum_member_symbol,
+  anonymous_function_symbol,
   location_key,
 } from "@ariadnejs/types";
 import type {
@@ -299,6 +300,53 @@ describe("DefinitionRegistry", () => {
 
     it("return empty array when no definitions exist", () => {
       expect(registry.get_callable_definitions()).toEqual([]);
+    });
+  });
+
+  describe("get_anonymous_callables_in_file", () => {
+    it("returns one file's anonymous functions in declaration order, and no named one", () => {
+      const file1 = "file1.ts" as FilePath;
+      const first = anonymous_function(file1, 5);
+      const second = anonymous_function(file1, 9);
+      const named = named_function(file1, "run" as SymbolName, 12);
+
+      registry.update_file(file1, [first, named, second]);
+
+      expect(registry.get_anonymous_callables_in_file(file1)).toEqual([
+        first,
+        second,
+      ]);
+    });
+
+    it("returns an empty list for a file the registry has never seen", () => {
+      expect(
+        registry.get_anonymous_callables_in_file("absent.ts" as FilePath)
+      ).toEqual([]);
+    });
+
+    it("replaces a file's callbacks when the file is re-indexed", () => {
+      const file1 = "file1.ts" as FilePath;
+      registry.update_file(file1, [anonymous_function(file1, 5)]);
+
+      const moved = anonymous_function(file1, 7);
+      registry.update_file(file1, [moved]);
+
+      expect(registry.get_anonymous_callables_in_file(file1)).toEqual([moved]);
+    });
+
+    it("drops an evicted file's callbacks and keeps every other file's", () => {
+      const file1 = "file1.ts" as FilePath;
+      const file2 = "file2.ts" as FilePath;
+      const survivor = anonymous_function(file2, 5);
+      registry.update_file(file1, [anonymous_function(file1, 5)]);
+      registry.update_file(file2, [survivor]);
+
+      registry.remove_file(file1);
+
+      expect(registry.get_anonymous_callables_in_file(file1)).toEqual([]);
+      expect(registry.get_anonymous_callables_in_file(file2)).toEqual([
+        survivor,
+      ]);
     });
   });
 
@@ -1742,6 +1790,51 @@ describe("DefinitionRegistry", () => {
 
 /** Classes per file in `inheritance_file`: one base and one subtype of it. */
 const CLASSES_PER_FILE = 2;
+
+function function_location(file_id: FilePath, line: number): Location {
+  return {
+    file_path: file_id,
+    start_line: line,
+    start_column: 0,
+    end_line: line + 2,
+    end_column: 1,
+  };
+}
+
+function anonymous_function(
+  file_id: FilePath,
+  line: number
+): FunctionDefinition {
+  const location = function_location(file_id, line);
+  return {
+    kind: "function",
+    symbol_id: anonymous_function_symbol(location),
+    name: "<anonymous>" as SymbolName,
+    defining_scope_id: `scope:${file_id}:module` as ScopeId,
+    location,
+    is_exported: false,
+    signature: { parameters: [] },
+    body_scope_id: `scope:${file_id}:anonymous:${line}` as ScopeId,
+  };
+}
+
+function named_function(
+  file_id: FilePath,
+  name: SymbolName,
+  line: number
+): FunctionDefinition {
+  const location = function_location(file_id, line);
+  return {
+    kind: "function",
+    symbol_id: function_symbol(name, location),
+    name,
+    defining_scope_id: `scope:${file_id}:module` as ScopeId,
+    location,
+    is_exported: false,
+    signature: { parameters: [] },
+    body_scope_id: `scope:${file_id}:${name}:${line}` as ScopeId,
+  };
+}
 
 function member_location(file_id: FilePath, line: number): Location {
   return {

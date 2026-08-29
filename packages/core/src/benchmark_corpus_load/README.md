@@ -375,6 +375,51 @@ those; what the stoplist adds is **249 hits under 27 names out of 178,136** an
 investigator can read, and it moves the digest. `catch`, `new`, `for` and
 `typeof` are all legal TypeScript method names.
 
+## What call resolution's growth is made of
+
+`RECORDED_CALL_RESOLUTION_GROWTH` holds the answer to where
+`resolve_calls_for_files` spends a corpus's worth of CPU, measured over vscode's
+`src/` at f3fa55c3 at 927, 2,000 and 8,494 files.
+
+The scan is a shape, not a budget. Indexing anonymous callables by file makes a
+resolve pass read the batch's own callbacks: a single-file re-resolve inside the
+loaded corpus reads **8** callables and visits 8 registry entries where it read
+212,275 and walked 916,801, and its CPU falls **132.7 → 74.5 ms** over five reps
+per arm. Over a cold whole-corpus load the same change buys nothing measurable —
+18,288.1 ms candidate against 18,175.3 ms control, four processes per arm
+interleaved, both spreading 13% — because the two-phase driver already collapsed
+the pass count to one, and one scan of the project is one scan of the batch when
+the batch IS the project. The scan that pass was paying for measures 16.3 ms of
+a 353 s run.
+
+The growth that remains is polymorphic dispatch, and it is the cost of a bigger
+answer. Across 927 → 8,494 files the term's input grows linearly and its output
+does not:
+
+| quantity                             | ratio  | exponent |
+| ------------------------------------ | ------ | -------- |
+| unresolved call sites (the input)    | 9.43×  | 1.013    |
+| polymorphic expansions               | 12.68× | 1.147    |
+| resolved call edges (the output)     | 18.2×  | 1.310    |
+| subtype walk steps                   | 33.76× | 1.589    |
+| subtype edges enumerated             | 45.79× | 1.726    |
+| CPU inside polymorphic dispatch      | 64.51× | 1.881    |
+
+The mean fan-out of one dispatch — subtypes enumerated per expansion — goes
+**4.64 → 6.09 → 16.77**, and the polymorphic family's share of the term goes
+5.6% → 6.3% → 22.9%. A wider corpus is one in which an interface genuinely has
+more implementations, so no index removes this: the work is naming every
+possible runtime target, and there are more of them.
+
+The term itself measures an exponent of **1.134** by least squares over the
+three sizes (1.506 between the two largest), against **1.83** from the fit this
+task was written against. Carrying the measured exponents forward puts the term
+at 10% of the run at 19,000–35,000 files, 25% at 67,000–307,000, and equal to
+everything else in the run at 232,000–2.7M. Those are sizes, not predictions —
+this module's own rule is that no fit is evidence — and the memory contract
+arrives first: 8,494 files retain 4,046 MB live, so 19,000 files need about 9 GB
+and 232,000 need about 111 GB.
+
 ## Memory
 
 ### The contract

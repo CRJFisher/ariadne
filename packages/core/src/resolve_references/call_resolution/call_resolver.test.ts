@@ -36,6 +36,7 @@ import type {
   SymbolName,
   Location,
   FunctionDefinition,
+  CallableDefinition,
   MethodDefinition,
   ClassDefinition,
   ConstructorDefinition,
@@ -1200,5 +1201,160 @@ describe("resolve_calls_for_files", () => {
         "dead_with_function_expression@8 -> <anonymous>@9",
       ]);
     });
+
+    it("reads one batch's callbacks whether the project holds 4 more files or 400", () => {
+      const read_counts: number[] = [];
+
+      for (const project_size of [5, 401]) {
+        const definitions_of_size = new DefinitionRegistry();
+        const scopes_of_size = new ScopeRegistry();
+        const references_of_size = new ReferenceRegistry();
+
+        for (let index = 0; index < project_size; index++) {
+          install_callback_file(
+            index,
+            definitions_of_size,
+            scopes_of_size,
+            references_of_size
+          );
+        }
+
+        const batch_file = callback_file_id(0);
+        const reads = count_anonymous_callables_read(definitions_of_size);
+
+        const result = resolve_calls_for_files(new Set([batch_file]), {
+          references: references_of_size,
+          scopes: scopes_of_size,
+          types,
+          definitions: definitions_of_size,
+          imports,
+          resolutions,
+          ...make_export_chain_context(),
+        });
+
+        expect(
+          result.resolved_calls_by_file
+            .get(batch_file)!
+            .filter((call) => call.is_callback_invocation === true)
+        ).toHaveLength(CALLBACKS_PER_FILE);
+        expect(reads.whole_project_scans).toBe(0);
+        read_counts.push(reads.callables_read);
+      }
+
+      expect(read_counts).toEqual([CALLBACKS_PER_FILE, CALLBACKS_PER_FILE]);
+    });
   });
 });
+
+/** Anonymous callbacks `install_callback_file` puts in each file it builds. */
+const CALLBACKS_PER_FILE = 2;
+
+const callback_file_id = (index: number): FilePath =>
+  `callbacks_${index}.ts` as FilePath;
+
+/**
+ * One file of `CALLBACKS_PER_FILE` anonymous callbacks, each passed at its own
+ * higher-order call, registered across the three registries call resolution
+ * reads them from.
+ */
+function install_callback_file(
+  index: number,
+  definitions: DefinitionRegistry,
+  scopes: ScopeRegistry,
+  references: ReferenceRegistry
+): void {
+  const file_id = callback_file_id(index);
+  const file_scope_id = `scope:${file_id}:file:0:0` as ScopeId;
+
+  const callbacks: FunctionDefinition[] = [];
+  const receiver_calls: FunctionCallReference[] = [];
+
+  for (let callback = 0; callback < CALLBACKS_PER_FILE; callback++) {
+    const line = 10 + callback;
+    const receiver_location: Location = {
+      file_path: file_id,
+      start_line: line,
+      start_column: 0,
+      end_line: line,
+      end_column: 40,
+    };
+    const callback_location: Location = {
+      ...receiver_location,
+      start_column: 12,
+    };
+
+    callbacks.push({
+      kind: "function",
+      symbol_id: anonymous_function_symbol(callback_location),
+      name: "<anonymous>" as SymbolName,
+      defining_scope_id: file_scope_id,
+      location: callback_location,
+      signature: { parameters: [] },
+      body_scope_id: `scope:${file_id}:callback:${line}` as ScopeId,
+      is_exported: false,
+      callback_context: {
+        is_callback: true,
+        receiver_is_external: false,
+        receiver_location,
+      },
+    });
+
+    receiver_calls.push({
+      kind: "function_call",
+      name: "forEach" as SymbolName,
+      location: receiver_location,
+      scope_id: file_scope_id,
+    });
+  }
+
+  definitions.update_file(file_id, callbacks);
+
+  const scope_map = new Map<ScopeId, LexicalScope>();
+  scope_map.set(file_scope_id, {
+    id: file_scope_id,
+    type: "global",
+    location: {
+      file_path: file_id,
+      start_line: 0,
+      start_column: 0,
+      end_line: 100,
+      end_column: 0,
+    },
+    parent_id: null,
+    name: null,
+    child_ids: [],
+  });
+  scopes.update_file(file_id, scope_map);
+
+  references.update_file(file_id, receiver_calls);
+}
+
+/**
+ * What one resolve pass reads out of the definition registry to find its
+ * callbacks: the callables handed back per file, and any request for the whole
+ * project's callable set — the scan whose cost is the corpus rather than the
+ * batch.
+ */
+function count_anonymous_callables_read(definitions: DefinitionRegistry): {
+  readonly callables_read: number;
+  readonly whole_project_scans: number;
+} {
+  const counts = { callables_read: 0, whole_project_scans: 0 };
+
+  const per_file = definitions.get_anonymous_callables_in_file.bind(definitions);
+  definitions.get_anonymous_callables_in_file = (
+    file_id: FilePath
+  ): readonly FunctionDefinition[] => {
+    const found = per_file(file_id);
+    counts.callables_read += found.length;
+    return found;
+  };
+
+  const whole_project = definitions.get_callable_definitions.bind(definitions);
+  definitions.get_callable_definitions = (): CallableDefinition[] => {
+    counts.whole_project_scans++;
+    return whole_project();
+  };
+
+  return counts;
+}

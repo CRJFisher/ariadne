@@ -10,9 +10,13 @@ import type {
   ClassDefinition,
   ExportableDefinition,
   FunctionCollection,
+  FunctionDefinition,
 } from "@ariadnejs/types";
 import { is_exportable, location_key } from "@ariadnejs/types";
 import { set_member_symbol } from "../type_preprocessing/member";
+
+/** The name `anonymous_function_symbol` gives every callable with no name of its own. */
+const ANONYMOUS_CALLABLE_NAME = "<anonymous>" as SymbolName;
 
 /**
  * Whether `outer` fully encloses `inner` within the same file, comparing
@@ -160,16 +164,35 @@ export class DefinitionRegistry {
   /** Variable SymbolId → the function collection (Map/Array/Object of functions) it holds, for collection dispatch. */
   private function_collections: Map<SymbolId, FunctionCollection> = new Map();
 
+  /**
+   * File → the anonymous functions it declares, which are the callbacks call
+   * resolution attributes to whoever passes them.
+   *
+   * Keyed on the file the definitions were registered under, so eviction
+   * inverts insertion exactly. The alternative — asking for every callable in
+   * the project and filtering down to the batch — makes each resolve pass cost
+   * the whole corpus to answer a question about a few files, which is a scan
+   * that grows with project size while its answer does not.
+   */
+  private anonymous_callables_by_file: Map<FilePath, FunctionDefinition[]> =
+    new Map();
+
   /** Replace all definitions for a file, rebuilding every index that keys off it. */
   update_file(file_id: FilePath, definitions: AnyDefinition[]): void {
     this.remove_file(file_id);
 
     const symbol_ids = new Set<SymbolId>();
 
+    const anonymous_callables: FunctionDefinition[] = [];
+
     for (const def of definitions) {
       this.by_symbol.set(def.symbol_id, def);
 
       symbol_ids.add(def.symbol_id);
+
+      if (def.kind === "function" && def.name === ANONYMOUS_CALLABLE_NAME) {
+        anonymous_callables.push(def);
+      }
 
       // An ImportDefinition enters neither index, for two separate reasons.
       //
@@ -261,6 +284,10 @@ export class DefinitionRegistry {
       this.by_file.set(file_id, symbol_ids);
     }
 
+    if (anonymous_callables.length > 0) {
+      this.anonymous_callables_by_file.set(file_id, anonymous_callables);
+    }
+
     // Inheritance registration resolves parent names against the scope index, so
     // it runs as a second pass once every definition above is indexed.
     for (const def of definitions) {
@@ -312,6 +339,13 @@ export class DefinitionRegistry {
       }
     }
     return callables;
+  }
+
+  /** The anonymous functions one file declares, in the order the file declares them. */
+  get_anonymous_callables_in_file(
+    file_id: FilePath
+  ): readonly FunctionDefinition[] {
+    return this.anonymous_callables_by_file.get(file_id) ?? [];
   }
 
   get_class_definitions(): ClassDefinition[] {
@@ -485,6 +519,8 @@ export class DefinitionRegistry {
   }
 
   remove_file(file_id: FilePath): void {
+    this.anonymous_callables_by_file.delete(file_id);
+
     const symbol_ids = this.by_file.get(file_id);
     if (!symbol_ids) {
       return;
@@ -777,5 +813,6 @@ export class DefinitionRegistry {
     this.type_subtypes.clear();
     this.subtype_parents.clear();
     this.function_collections.clear();
+    this.anonymous_callables_by_file.clear();
   }
 }
