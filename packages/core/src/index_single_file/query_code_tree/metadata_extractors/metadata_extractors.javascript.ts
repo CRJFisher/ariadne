@@ -407,6 +407,12 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
    * `const x = new Y()` fixes x's type to Y without inference, so the assigned
    * target is the most reliable type signal. Walks up to the enclosing declarator
    * or assignment.
+   *
+   * The walk is unbounded on purpose. Capping its depth moves 403 of the 7,322
+   * construct targets this corpus resolves, so it changes the reported graph
+   * rather than the cost of producing it — see `not_in_scope` in
+   * `benchmark_corpus_load/recorded_per_file_rederivation_cost.ts`, whose
+   * whole claim is a byte-identical fingerprint.
    */
   extract_construct_target(
     node: SyntaxNode,

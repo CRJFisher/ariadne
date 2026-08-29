@@ -55,6 +55,8 @@ export { RECORDED_GREP_INDEX_CAP } from "./recorded_grep_index_cap";
 
 export { RECORDED_CALL_RESOLUTION_GROWTH } from "./recorded_call_resolution_growth";
 
+export { RECORDED_PER_FILE_REDERIVATION_COST } from "./recorded_per_file_rederivation_cost";
+
 export { compare_fingerprints } from "./call_graph_fingerprint";
 
 export {

@@ -420,6 +420,41 @@ this module's own rule is that no fit is evidence — and the memory contract
 arrives first: 8,494 files retain 4,046 MB live, so 19,000 files need about 9 GB
 and 232,000 need about 111 GB.
 
+## What the per-file passes stopped re-deriving
+
+`RECORDED_PER_FILE_REDERIVATION_COST` holds what a file costs to index once
+scope containment is descended rather than scanned, enum membership is tested
+against module-scoped Sets, and each tree-sitter `Point` is bound once.
+
+Over all 8,494 files the run costs **351.01 s of CPU against 301.27 s** — a
+saving of **49.74 s**, 1.17×, 5.855 ms/file — from six arms interleaved
+control,candidate three times each in one session, the candidate's three
+observations spreading 0.21% and the control's 3.84%. Every full-corpus
+observation of the slower arm is slower than every observation of the faster
+one, so the gap does not rest on two means overlapping. All seven fingerprint
+components and both diagnostics hashes are identical at 200, 1,200 and 8,494
+files.
+
+The sample **under**-predicts the corpus here, which is the opposite of this
+module's usual warning and still a reason to take the corpus figure: 160
+size-stratified files measure 4.071 ms/file against 5.855 measured over all of
+them. Priced on their own the two components come to 2.038 ms/file for the
+descent (2.928 → 0.890) and 1.313 µs/capture for the normalisation loop
+(3.052 → 1.740), which is 1.556 ms/file at 1,185 captures per file.
+
+A sample arm passes over each file **once**. Indexing the same 160 files three
+times in one process reads the saving as 2.524 ms/file — 38% below the
+single-pass figure and 57% below the corpus's — because a repeated pass prices
+a JIT that a load never has.
+
+The descent is licensed by keeping the scan as an oracle and running both over
+every capture location in the sample: **189,602 lookups, 189,602 agreements,
+zero disagreements**, and zero locations where two scopes at one depth both
+contained the location. That last count is what the removed `Malformed scope
+tree` throw reported, and it is why one test goes with it — the row names that
+test and its reason, because a descent visits only what `root_scope_id` reaches
+through `child_ids` and so cannot witness two unreachable siblings.
+
 ## Memory
 
 ### The contract
