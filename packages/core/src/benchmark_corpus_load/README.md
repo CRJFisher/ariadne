@@ -465,7 +465,8 @@ of the algorithm and travel between machines, and CPU-seconds inside
 Over 200 size-stratified files of vscode's `src/` at f3fa55c3, a file costs
 **31,346.5 accessor calls to index against 11,096.8** — a 64.60% fall, 65.50%
 counting only the accessors that reach the addon — for the same 160,785
-references and 8,338 scopes. Over all 8,494 files, combined binding self-time
+references and 8,338 scopes. That count repeats to within 0.05% on both trees,
+three orders of magnitude below the fall. Over all 8,494 files, combined binding self-time
 under `--cpu-prof` falls **184.87 s → 121.45 s**, a saving of **63.42 s** from
 four arms interleaved control,candidate,control,candidate; the binding's share
 of the run goes 45.84% → 36.48%, recorded on both arms and asserted on neither,

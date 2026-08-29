@@ -160,6 +160,8 @@ export interface RecordedTreeSitterCrossings {
   /** The same fall counting only the accessors that reach the addon. */
   readonly addon_crossings_fall_percent: number;
   readonly counting_instrument: string;
+  /** How far the count repeats, so a single observation is read as one. */
+  readonly counting_jitter: string;
 
   readonly profiled_arms: readonly RecordedProfiledArm[];
   readonly control_binding_self_time_s: RecordedSpread;
@@ -339,6 +341,8 @@ export const RECORDED_TREE_SITTER_CROSSINGS: RecordedTreeSitterCrossings = {
   addon_crossings_fall_percent: 65.5,
   counting_instrument:
     "A probe outside the repository that replaces every accessor on `SyntaxNode.prototype` with a counting wrapper BEFORE it imports the checkout under test, so a crossing a tree makes once per process is counted rather than hidden behind a reference the tree captured earlier. The same probe file runs both arms, and counting is live only across `build_index_single_file` — the parse is outside the window, so no parser change could be read as an indexing change.",
+  counting_jitter:
+    "The count is a single observation per arm and repeats to within 0.05%: three control runs measured 6,269,291 / 6,269,358 / 6,269,255 and three candidate runs 2,219,362 / 2,219,628 / 2,219,734. The jitter is a property of both trees, not of this change — the control's `child` row moves 44 calls with no weak reference anywhere in it — and `references` and `scopes` are identical on every run. It is three orders of magnitude below the fall being claimed.",
 
   profiled_arms: [
     {
@@ -643,5 +647,6 @@ export const RECORDED_TREE_SITTER_CROSSINGS: RecordedTreeSitterCrossings = {
     "The profiled arms are NOT comparands for `corpus_arms`: a profiler costs this run about 40% more CPU (321.83 s against 299.31 s on one control arm), so the two families are only ever compared within themselves. " +
     "Binding self-time is the sum of self-time over every frame whose script is `tree-sitter/index.js`, taken from the V8 `.cpuprofile` at the default 1 ms sampling interval. " +
     "The crossing counts and the equivalence figures are properties of the corpus and travel between machines; the CPU and MB figures do not. " +
-    "The sample under-predicts the corpus again, as it did for TASK-381.13: 6.756 ms/file over 200 size-stratified files against 8.672 measured over all 8,494. The corpus figure is the one quoted.",
+    "The sample under-predicts the corpus again, as it did for TASK-381.13: 6.756 ms/file over 200 size-stratified files against 8.672 measured over all 8,494. The corpus figure is the one quoted. " +
+    "`candidate_commit` is the tree every arm here ran, and it is not the branch tip: one later commit drops the `export` keyword from `grammar_for` and moves that function's test onto `grammar_for_dialect`, which changes no emitted behaviour. The crossing count was re-taken on the tip and lands inside the jitter above.",
 };

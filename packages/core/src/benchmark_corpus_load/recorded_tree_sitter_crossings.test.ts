@@ -108,6 +108,8 @@ describe("RECORDED_TREE_SITTER_CROSSINGS", () => {
     // The counting instrument is one file run against both trees, which is what
     // makes a difference between the two a difference in the trees.
     expect(RECORD.counting_instrument).toContain("BEFORE it imports");
+    // A single observation per arm is only readable beside how far it repeats.
+    expect(RECORD.counting_jitter).toContain("0.05%");
   });
 
   it("takes its binding self-time saving from profiled whole-corpus arms", () => {
