@@ -1,0 +1,7 @@
+{
+  "key": "once",
+  "run_id": "20260828T142443Z-b03b41c1",
+  "scope": "once",
+  "step_id": "task_381_13",
+  "summary": "Reporting entry points over vscode's `src/` (8,494 files) now costs 301.27 s of CPU against 351.01 s — a 49.74 s saving, 1.17x, 5.855 ms/file — while reporting an identical call graph. The working tr…"
+}
