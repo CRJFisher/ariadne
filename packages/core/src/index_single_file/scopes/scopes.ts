@@ -221,7 +221,7 @@ export function create_processing_context(
       // Containment is a tree, so a descent costs one step per level of
       // nesting where reading every scope costs one step per scope in the
       // file — the difference between a lookup priced on a file's depth and
-      // one priced on its size, at roughly 952 lookups per file.
+      // one priced on its size, at 1,099.5 lookups per file.
       let current = scopes.get(root_scope_id);
       if (!current) {
         throw new Error(
