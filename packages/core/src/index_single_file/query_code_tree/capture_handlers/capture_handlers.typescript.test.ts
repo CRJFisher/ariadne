@@ -80,6 +80,7 @@ describe("TypeScript Builder Configuration", () => {
       file_end_column: lines[lines.length - 1].length + 1,
       tree: tree,
       lang: "typescript",
+      source: code,
     };
     return build_index_single_file(parsed_file, tree, "typescript");
   }

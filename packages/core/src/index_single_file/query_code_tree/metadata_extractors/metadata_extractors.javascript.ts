@@ -32,27 +32,22 @@ function extract_jsdoc_type(node: SyntaxNode): string | undefined {
   const statement_node = node.type === "variable_declarator" ? node.parent : node;
   if (!statement_node) return undefined;
 
-  const parent = statement_node.parent;
-  if (!parent) return undefined;
+  // The comment sits immediately before the declaration among its parent's
+  // children, and asking the node for that neighbour costs one crossing where
+  // enumerating the parent's children to find it costs one per child.
+  const preceding = statement_node.previousSibling;
+  if (!preceding || preceding.type !== "comment") return undefined;
 
-  for (let i = 0; i < parent.childCount; i++) {
-    const child = parent.child(i);
-    if (child === statement_node && i > 0) {
-      const prev_child = parent.child(i - 1);
-      if (prev_child && prev_child.type === "comment") {
-        const text = prev_child.text;
+  const text = preceding.text;
 
-        const type_match = text.match(/@type\s*\{([^}]+)\}/);
-        if (type_match) {
-          return type_match[1].trim();
-        }
+  const type_match = text.match(/@type\s*\{([^}]+)\}/);
+  if (type_match) {
+    return type_match[1].trim();
+  }
 
-        const returns_match = text.match(/@returns?\s*\{([^}]+)\}/);
-        if (returns_match) {
-          return returns_match[1].trim();
-        }
-      }
-    }
+  const returns_match = text.match(/@returns?\s*\{([^}]+)\}/);
+  if (returns_match) {
+    return returns_match[1].trim();
   }
 
   return undefined;
@@ -65,9 +60,8 @@ function extract_typescript_type(node: SyntaxNode): string | undefined {
   // A type_annotation node includes the leading ':'; the type is the first
   // non-':' child.
   if (type_annotation.type === "type_annotation") {
-    for (let i = 0; i < type_annotation.childCount; i++) {
-      const child = type_annotation.child(i);
-      if (child && child.type !== ":") {
+    for (const child of type_annotation.children) {
+      if (child.type !== ":") {
         return child.text;
       }
     }
@@ -290,6 +284,50 @@ function build_property_chain(
   return chain.length > 0 ? { chain, call_arguments } : undefined;
 }
 
+/**
+ * The construct target of every node under one declarator is that declarator's
+ * name, so the answer belongs to the ancestor chain rather than to the node
+ * that asked. Every call under one statement would otherwise re-walk the same
+ * chain to the root: over a size-stratified sample of vscode's `src/` this walk
+ * is the single largest consumer of parent crossings the index makes.
+ *
+ * Keyed on the node because a node belongs to exactly one tree and one file,
+ * and held weakly because the answer dies with the tree that was indexed.
+ */
+const CONSTRUCT_TARGET_BY_ANCESTOR = new WeakMap<SyntaxNode, SyntaxNode | null>();
+
+function construct_target_node(node: SyntaxNode): SyntaxNode | null {
+  const walked: SyntaxNode[] = [];
+  let target: SyntaxNode | null = null;
+  let parent = node.parent;
+
+  while (parent) {
+    const known = CONSTRUCT_TARGET_BY_ANCESTOR.get(parent);
+    if (known !== undefined) {
+      target = known;
+      break;
+    }
+    walked.push(parent);
+
+    const parent_type = parent.type;
+    if (parent_type === "variable_declarator") {
+      target = parent.childForFieldName("name");
+      break;
+    }
+    if (parent_type === "assignment_expression") {
+      target = parent.childForFieldName("left");
+      break;
+    }
+
+    parent = parent.parent;
+  }
+
+  for (const ancestor of walked) {
+    CONSTRUCT_TARGET_BY_ANCESTOR.set(ancestor, target);
+  }
+  return target;
+}
+
 export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
   extract_type_from_annotation(
     node: SyntaxNode,
@@ -418,28 +456,8 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
     node: SyntaxNode,
     file_path: FilePath
   ): Location | undefined {
-    let parent = node.parent;
-    while (parent) {
-      if (parent.type === "variable_declarator") {
-        const name = parent.childForFieldName("name");
-        if (name) {
-          return node_to_location(name, file_path);
-        }
-        break;
-      }
-
-      if (parent.type === "assignment_expression") {
-        const left = parent.childForFieldName("left");
-        if (left) {
-          return node_to_location(left, file_path);
-        }
-        break;
-      }
-
-      parent = parent.parent;
-    }
-
-    return undefined;
+    const target = construct_target_node(node);
+    return target ? node_to_location(target, file_path) : undefined;
   },
 
   /**
@@ -447,11 +465,13 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
    * the null-safety semantics of the call.
    */
   extract_is_optional_chain(node: SyntaxNode): boolean {
-    if (node.type === "optional_chain") {
+    const node_type = node.type;
+
+    if (node_type === "optional_chain") {
       return true;
     }
 
-    if (node.type === "call_expression") {
+    if (node_type === "call_expression") {
       const function_node = node.childForFieldName("function");
       if (function_node && function_node.type === "optional_chain") {
         return true;
@@ -461,10 +481,11 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
       }
     }
 
-    if (node.type === "member_expression") {
-      for (let i = 0; i < node.childCount; i++) {
-        const child = node.child(i);
-        if (child && child.type === "optional_chain") {
+    if (node_type === "member_expression") {
+      // One crossing for the whole child list, where asking for each child by
+      // index costs one per child plus one for the count.
+      for (const child of node.children) {
+        if (child.type === "optional_chain") {
           return true;
         }
       }
@@ -493,13 +514,14 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
       const function_node = node.childForFieldName("function");
 
       if (function_node) {
-        if (function_node.type === "member_expression") {
+        const function_type = function_node.type;
+        if (function_type === "member_expression") {
           const property_node = function_node.childForFieldName("property");
           if (property_node) {
             return property_node.text as SymbolName;
           }
         }
-        else if (function_node.type === "identifier") {
+        else if (function_type === "identifier") {
           return function_node.text as SymbolName;
         }
       }

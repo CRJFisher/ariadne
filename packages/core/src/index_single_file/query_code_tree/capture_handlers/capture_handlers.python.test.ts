@@ -1540,6 +1540,7 @@ class Drawable(Protocol):
       file_end_column: lines[lines.length - 1]?.length || 0,
       tree,
       lang: "python" as const,
+      source: code,
     };
     return build_index_single_file(parsed_file, tree, "python");
   }
@@ -1877,6 +1878,7 @@ class Point:
         file_end_column: lines[lines.length - 1]?.length || 0,
         tree,
         lang: "python" as const,
+        source: code,
       };
       return build_index_single_file(parsed_file, tree, "python");
     }
@@ -2191,6 +2193,7 @@ class Service:
         file_end_column: lines[lines.length - 1]?.length || 0,
         tree,
         lang: "python" as const,
+        source: code,
       };
       return build_index_single_file(parsed_file, tree, "python");
     }

@@ -15,7 +15,7 @@ import {
   create_processing_context,
 } from "./scopes/scopes";
 import { process_references } from "./references/references";
-import { node_to_location } from "./node_to_location";
+import { location_from_points } from "./node_to_location";
 import {
   DefinitionBuilder,
   type BuilderResult,
@@ -44,6 +44,8 @@ const SEMANTIC_ENTITY_VALUES: ReadonlySet<string> = new Set(
   Object.values(SemanticEntity)
 );
 
+const NEWLINE = 10;
+
 // ============================================================================
 // Main Entry Point
 // ============================================================================
@@ -62,6 +64,8 @@ export function build_index_single_file(
   // Filter out captures starting with underscore (anonymous captures for predicates)
   const filtered_captures = captures.filter((c) => !c.name.startsWith("_"));
 
+  const line_offsets = offsets_of_lines(file.source);
+
   const capture_nodes: CaptureNode[] = filtered_captures.map((c) => {
     const parts = c.name.split(".");
     const category = parts[0] as SemanticCategory;
@@ -73,13 +77,23 @@ export function build_index_single_file(
       throw new Error(`Invalid entity: ${entity}`);
     }
 
+    // A capture wants both its span's text and its location, and each of the
+    // two Points costs a crossing. Reading them once and slicing the parsed
+    // source between them costs two crossings where asking the node for its
+    // text as well costs four.
+    const start = c.node.startPosition;
+    const end = c.node.endPosition;
+
     return {
       category,
       entity,
       name: c.name,
       node: c.node,
-      text: c.node.text as SymbolName,
-      location: node_to_location(c.node, file.file_path),
+      text: file.source.slice(
+        line_offsets[start.row] + start.column,
+        line_offsets[end.row] + end.column
+      ) as SymbolName,
+      location: location_from_points(start, end, file.file_path),
     };
   });
 
@@ -117,6 +131,17 @@ export function build_index_single_file(
     imported_symbols: builder_result.imports,
     references: all_references,
   };
+}
+
+/** Where each line of the parsed source starts, indexed by row. */
+function offsets_of_lines(source: string): number[] {
+  const offsets = [0];
+  for (let i = 0; i < source.length; i++) {
+    if (source.charCodeAt(i) === NEWLINE) {
+      offsets.push(i + 1);
+    }
+  }
+  return offsets;
 }
 
 // ============================================================================

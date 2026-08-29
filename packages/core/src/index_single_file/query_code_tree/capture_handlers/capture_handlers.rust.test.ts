@@ -1366,6 +1366,7 @@ impl MyStruct {
           file_end_column: lines[lines.length - 1]?.length || 0,
           tree,
           lang: "rust" as const,
+          source: code,
         };
         const index = build_index_single_file(parsed_file, tree, "rust");
         return Array.from(index.imported_symbols.values()).map((i) => ({
@@ -1708,6 +1709,7 @@ impl MyStruct {
         file_end_column: lines[lines.length - 1]?.length || 0,
         tree,
         lang: "rust" as const,
+        source: code,
       };
       return build_index_single_file(parsed_file, tree, "rust");
     }
@@ -2062,6 +2064,7 @@ struct Arrays {
         file_end_column: lines[lines.length - 1]?.length || 0,
         tree,
         lang: "rust" as const,
+        source: code,
       };
       return build_index_single_file(parsed_file, tree, "rust");
     }
@@ -2273,6 +2276,7 @@ fn helper() {}
         file_end_column: lines[lines.length - 1]?.length || 0,
         tree,
         lang: "rust" as const,
+        source: code,
       };
       return build_index_single_file(parsed_file, tree, "rust");
     }

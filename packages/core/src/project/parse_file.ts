@@ -1,18 +1,8 @@
-import type TreeSitter from "tree-sitter";
-import { Parser } from "../native";
-import type { FilePath, Language } from "@ariadnejs/types";
+import type { FilePath } from "@ariadnejs/types";
 import type { ParsedFile } from "../index_single_file/parsed_file";
 import { assert_language } from "../detect_language";
 import { blank_mdx_frontmatter } from "./blank_mdx_frontmatter";
-import { grammar_for } from "../index_single_file/query_code_tree/parsers";
-
-function get_parser(language: Language, file_path: FilePath): TreeSitter {
-  const parser = new Parser();
-  // `.tsx` parses with the tsx grammar (JSX), `.ts` with the typescript grammar
-  // (angle-bracket casts); grammar_for owns that dispatch.
-  parser.setLanguage(grammar_for(language, file_path));
-  return parser;
-}
+import { parser_for } from "../index_single_file/query_code_tree/parsers";
 
 /**
  * The single parse-phase language dispatch: detects the language from the
@@ -26,7 +16,9 @@ export function parse_file(
   buffer_size: number
 ): ParsedFile {
   const language = assert_language(file_path);
-  const parser = get_parser(language, file_path);
+  // `.tsx` parses with the tsx grammar (JSX), `.ts` with the typescript grammar
+  // (angle-bracket casts); parser_for owns that dispatch.
+  const parser = parser_for(language, file_path);
   // MDX collapses to the JavaScript language, so its YAML frontmatter reaches
   // the JS grammar; blank it first so the block does not swallow the following
   // import. Blanking preserves line/column positions, leaving other content's
@@ -38,12 +30,13 @@ export function parse_file(
     bufferSize: buffer_size,
   });
 
-  const lines = content.split("\n");
+  const lines = parse_content.split("\n");
   return {
     file_path,
     file_lines: lines.length,
     file_end_column: lines[lines.length - 1]?.length || 0,
     tree,
     lang: language,
+    source: parse_content,
   };
 }

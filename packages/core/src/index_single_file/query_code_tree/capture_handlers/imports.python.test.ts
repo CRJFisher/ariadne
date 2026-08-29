@@ -29,6 +29,7 @@ function index_from_code(code: string) {
     file_end_column: lines[lines.length - 1]?.length ?? 0,
     tree,
     lang: "python",
+    source: code,
   };
   return build_index_single_file(parsed_file, tree, "python");
 }

@@ -43,6 +43,7 @@ function create_parsed_file(
     file_end_column: (lines[lines.length - 1]?.length || 0) + 1,
     tree,
     lang: language,
+    source: code,
   };
 }
 

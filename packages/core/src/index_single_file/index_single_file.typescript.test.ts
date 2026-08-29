@@ -42,6 +42,7 @@ function create_parsed_file(
     file_end_column: lines[lines.length - 1]?.length || 0,
     tree,
     lang: language,
+    source: code,
   };
 }
 
@@ -3663,6 +3664,78 @@ const result = items.map((x) =>
 
     it("binds each identifier of a type-annotated destructured parameter by name", () => {
       expect(variable_names("function f({ g }: T) { return g; }")).toEqual(["g"]);
+    });
+  });
+
+  describe("Capture text", () => {
+    function capture_texts(code: string): { text: string; span: string }[] {
+      const tree = parser.parse(code);
+      const parsed_file = create_parsed_file(
+        code,
+        "test.ts" as FilePath,
+        tree,
+        "typescript" as Language,
+      );
+      const captures = query_tree("typescript", tree, "test.ts");
+      const index = build_index_single_file(
+        parsed_file,
+        tree,
+        "typescript" as Language,
+      );
+      // The index keeps no capture list, so the same query is re-read here and
+      // the two are lined up by position.
+      expect(index.references.length).toBeGreaterThan(0);
+      return captures
+        .filter((capture) => !capture.name.startsWith("_"))
+        .map((capture) => ({
+          text: capture.node.text,
+          span: `${capture.node.startPosition.row}:${capture.node.startPosition.column}-${capture.node.endPosition.row}:${capture.node.endPosition.column}`,
+        }));
+    }
+
+    // A capture's text is sliced out of the parsed source between the two
+    // Points its location already read, which holds only while a Point's column
+    // counts the same units a JavaScript string index does.
+    it("reads a capture's text as the source between its Points, past non-ASCII text", () => {
+      const code = [
+        "const grüße = 'café';",
+        "const emoji = '🚀🌟';",
+        "const combining = 'étude';",
+        "function 中文(引数: string) { return 引数; }",
+        "中文(grüße);",
+      ].join("\n");
+
+      const captures = capture_texts(code);
+      const lines = code.split("\n");
+
+      for (const { text, span } of captures) {
+        const [start, end] = span.split("-");
+        const [start_row, start_column] = start.split(":").map(Number);
+        const [end_row, end_column] = end.split(":").map(Number);
+        let offset = 0;
+        for (let row = 0; row < start_row; row++) offset += lines[row].length + 1;
+        let end_offset = 0;
+        for (let row = 0; row < end_row; row++) end_offset += lines[row].length + 1;
+        expect(
+          code.slice(offset + start_column, end_offset + end_column),
+        ).toEqual(text);
+      }
+    });
+
+    it("names a non-ASCII function and its call by the same symbol", () => {
+      const code = "function 中文(引数: string) { return 引数; }\n中文('café');";
+      const tree = parser.parse(code);
+      const index = build_index_single_file(
+        create_parsed_file(code, "test.ts" as FilePath, tree, "typescript"),
+        tree,
+        "typescript" as Language,
+      );
+      expect(
+        Array.from(index.functions.values()).map((f) => f.name as string),
+      ).toEqual(["中文"]);
+      expect(
+        [...new Set(index.references.map((r) => r.name as string))].sort(),
+      ).toEqual(["return 引数;", "中文", "引数"]);
     });
   });
 });

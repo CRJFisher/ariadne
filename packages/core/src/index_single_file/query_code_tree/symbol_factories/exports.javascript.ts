@@ -32,10 +32,9 @@ function build_export_cache(root: SyntaxNode): ExportCache {
     commonjs_exports.set(symbol_name, { is_default: true });
   };
 
-  for (let i = 0; i < root.childCount; i++) {
-    const child = root.child(i);
-    if (!child) continue;
-
+  // One crossing for the module's whole statement list, where asking for each
+  // statement by index costs one per statement plus one for the count.
+  for (const child of root.children) {
     // export { foo, bar as baz } and its re-export form export { ... } from '...'
     if (child.type === "export_statement") {
       const specifiers = find_export_specifiers(child);
@@ -78,14 +77,14 @@ function build_export_cache(root: SyntaxNode): ExportCache {
           }
 
           if (object?.text === "module" && property?.text === "exports" && right?.type === "object") {
-            for (let j = 0; j < right.childCount; j++) {
-              const prop = right.child(j);
+            for (const prop of right.children) {
+              const prop_type = prop.type;
 
-              if (prop?.type === "shorthand_property_identifier") {
+              if (prop_type === "shorthand_property_identifier") {
                 commonjs_exports.set(prop.text as SymbolName, {});
               }
 
-              if (prop?.type === "pair") {
+              if (prop_type === "pair") {
                 const key = prop.childForFieldName("key");
                 const value = prop.childForFieldName("value");
 
@@ -437,10 +436,15 @@ const DESTRUCTURING_PATTERNS = new Set([
 
 function get_root_node(node: SyntaxNode): SyntaxNode {
   let current = node;
-  while (current.parent) {
-    current = current.parent;
+  for (;;) {
+    // Read once per level: testing and then re-reading `parent` walks the tree
+    // twice over.
+    const parent = current.parent;
+    if (!parent) {
+      return current;
+    }
+    current = parent;
   }
-  return current;
 }
 
 /**

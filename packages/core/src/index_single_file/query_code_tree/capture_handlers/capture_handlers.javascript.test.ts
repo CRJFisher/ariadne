@@ -1840,6 +1840,7 @@ export const NESTED = {
         file_end_column: lines[lines.length - 1].length + 1,
         tree: tree,
         lang: "javascript" as const,
+        source: code,
       };
 
       return build_index_single_file(parsed_file, tree, "javascript");
@@ -2224,6 +2225,7 @@ export const NESTED = {
         file_end_column: lines[lines.length - 1].length + 1,
         tree: tree,
         lang: "javascript" as const,
+        source: code,
       };
 
       const index = await build_index_single_file(parsed_file, tree, "javascript");
@@ -2252,6 +2254,7 @@ export const NESTED = {
         file_end_column: lines[lines.length - 1].length + 1,
         tree: tree,
         lang: "javascript" as const,
+        source: code,
       };
 
       const index = await build_index_single_file(parsed_file, tree, "javascript");
@@ -2277,6 +2280,7 @@ export const NESTED = {
         file_end_column: lines[lines.length - 1].length + 1,
         tree: tree,
         lang: "javascript" as const,
+        source: code,
       };
 
       const index = await build_index_single_file(parsed_file, tree, "javascript");
@@ -2301,6 +2305,7 @@ export const NESTED = {
         file_end_column: lines[lines.length - 1].length + 1,
         tree: tree,
         lang: "javascript" as const,
+        source: code,
       };
 
       const index = await build_index_single_file(parsed_file, tree, "javascript");
@@ -2335,6 +2340,7 @@ export { create_class_id as create_py_class_id } from "./symbol_factories.python
         file_end_column: lines[lines.length - 1].length + 1,
         tree: tree,
         lang: "javascript" as const,
+        source: code,
       };
 
       const index = await build_index_single_file(parsed_file, tree, "javascript");
@@ -2379,6 +2385,7 @@ export { create_class_id as create_py_class_id } from "./symbol_factories.python
         file_end_column: lines[lines.length - 1].length + 1,
         tree: tree,
         lang: "javascript" as const,
+        source: code,
       };
       const index = build_index_single_file(parsed_file, tree, "javascript");
       return Array.from(index.imported_symbols.values()).map((i) => ({
@@ -2429,15 +2436,15 @@ export { create_class_id as create_py_class_id } from "./symbol_factories.python
     });
 
     it("keys wildcard and alias symbol ids on their derived names", () => {
-      const tree = parser.parse(
-        "export * from './m.js';\nexport * as ns from './n.js';"
-      );
+      const code = "export * from './m.js';\nexport * as ns from './n.js';";
+      const tree = parser.parse(code);
       const parsed_file = {
         file_path: TEST_FILE_PATH,
         file_lines: 2,
         file_end_column: 30,
         tree: tree,
         lang: "javascript" as const,
+        source: code,
       };
       const index = build_index_single_file(parsed_file, tree, "javascript");
       const ids = Array.from(index.imported_symbols.keys()).sort();

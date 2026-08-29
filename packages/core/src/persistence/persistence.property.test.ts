@@ -26,6 +26,7 @@ function parse_ts_code(content: string, file_path: string): ReturnType<typeof bu
     file_end_column: lines[lines.length - 1]?.length || 0,
     tree,
     lang: "typescript" as Language,
+    source: content,
   };
   return build_index_single_file(parsed, tree, "typescript" as Language);
 }

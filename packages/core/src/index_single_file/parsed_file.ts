@@ -7,4 +7,6 @@ export interface ParsedFile {
   file_end_column: number;
   tree: Tree;
   lang: Language;
+  /** The text the tree was parsed from. */
+  source: string;
 }

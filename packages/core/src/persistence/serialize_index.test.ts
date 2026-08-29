@@ -36,6 +36,7 @@ function make_parsed_file(
     file_end_column: lines[lines.length - 1]?.length || 0,
     tree,
     lang: language,
+    source: content,
   };
 }
 

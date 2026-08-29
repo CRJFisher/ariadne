@@ -54,6 +54,7 @@ describe("Scope Boundary Extractor - All Languages", () => {
       file_end_column: lines[lines.length - 1]?.length || 0,
       tree,
       lang: language,
+      source: code,
     };
   }
 

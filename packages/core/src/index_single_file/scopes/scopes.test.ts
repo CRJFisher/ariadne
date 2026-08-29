@@ -29,6 +29,7 @@ describe("scopes", () => {
     file_end_column: 0,
     tree: null as any,
     lang: "typescript" as const,
+    source: "",
   } as ParsedFile;
 
   // Helper to create raw captures for testing
@@ -798,6 +799,7 @@ describe("scopes", () => {
         file_end_column: lines[lines.length - 1]?.length || 0,
         tree,
         lang: language,
+        source: code,
       };
     }
 
@@ -1332,6 +1334,7 @@ describe("scopes", () => {
           file_end_column: code.split("\n")[2]?.length || 0,
           tree,
           lang: "javascript" as Language,
+          source: code,
         };
 
         const index = build_index_single_file(parsed_file, tree, "javascript");
@@ -1368,6 +1371,7 @@ describe("scopes", () => {
           file_end_column: code.split("\n")[2]?.length || 0,
           tree,
           lang: "typescript" as Language,
+          source: code,
         };
 
         const index = build_index_single_file(parsed_file, tree, "typescript");
@@ -1399,6 +1403,7 @@ describe("scopes", () => {
           file_end_column: code.split("\n")[2]?.length || 0,
           tree,
           lang: "javascript" as Language,
+          source: code,
         };
 
         const index = build_index_single_file(parsed_file, tree, "javascript");
@@ -1428,6 +1433,7 @@ describe("scopes", () => {
           file_end_column: code.split("\n")[2]?.length || 0,
           tree,
           lang: "javascript" as Language,
+          source: code,
         };
 
         const index = build_index_single_file(parsed_file, tree, "javascript");
