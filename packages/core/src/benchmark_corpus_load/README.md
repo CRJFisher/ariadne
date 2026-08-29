@@ -455,6 +455,47 @@ tree` throw reported, and it is why one test goes with it — the row names that
 test and its reason, because a descent visits only what `root_scope_id` reaches
 through `child_ids` and so cannot witness two unreachable siblings.
 
+## What crossing into tree-sitter costs
+
+`RECORDED_TREE_SITTER_CROSSINGS` holds what indexing spends at the
+JavaScript/native boundary, in two units: accessor calls, which are a property
+of the algorithm and travel between machines, and CPU-seconds inside
+`tree-sitter/index.js`, which are not.
+
+Over 200 size-stratified files of vscode's `src/` at f3fa55c3, a file costs
+**31,346.5 accessor calls to index against 11,096.8** — a 64.60% fall, 65.50%
+counting only the accessors that reach the addon — for the same 160,785
+references and 8,338 scopes. Over all 8,494 files, combined binding self-time
+under `--cpu-prof` falls **184.87 s → 121.45 s**, a saving of **63.42 s** from
+four arms interleaved control,candidate,control,candidate; the binding's share
+of the run goes 45.84% → 36.48%, recorded on both arms and asserted on neither,
+because TASK-381.8 moved the denominator. Unprofiled, the whole run falls
+**299.90 s → 226.24 s** (73.66 s, 1.33×, 8.672 ms/file).
+
+45.7% of those crossings were reads of `node.type`, which the binding intends to
+be free. It mints one JavaScript class per node type id and assigns the type
+name onto that class — but the assignment travels through `SyntaxNode`'s
+getter-only accessor in sloppy mode and is a silent no-op, so every read
+marshalled the node and called the addon: 14,328 per indexed file, **42.91 CPU-
+seconds** of the corpus run. Holding the name where the binding meant to hold it
+takes that to one crossing per type id per process and 0.00 seconds.
+
+Both substitutions are licensed by an oracle rather than by argument. The pinned
+type name is compared against the binding's own accessor over **601,005 nodes,
+601,005 agreements, zero disagreements** — and pinning per *class* instead of
+per type id is recorded as REFUTED, because 251,206 of those nodes disagree when
+every anonymous token shares the base class. A capture's text, sliced from the
+parsed source between the two Points its location already read, is compared
+against `node.text` over **212,870 captures, 212,870 agreements, zero
+disagreements**, which is what says a Point's column counts the same units a
+JavaScript string index does.
+
+The sample under-predicts the corpus again — 6.756 ms/file over 200 files
+against 8.672 measured over all 8,494 — so the corpus figure is the one quoted.
+A profiled arm is never a comparand for an unprofiled one: the profiler costs
+this run about 40% more CPU, and the two families are only compared within
+themselves.
+
 ## Memory
 
 ### The contract

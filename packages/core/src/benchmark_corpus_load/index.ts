@@ -57,6 +57,8 @@ export { RECORDED_CALL_RESOLUTION_GROWTH } from "./recorded_call_resolution_grow
 
 export { RECORDED_PER_FILE_REDERIVATION_COST } from "./recorded_per_file_rederivation_cost";
 
+export { RECORDED_TREE_SITTER_CROSSINGS } from "./recorded_tree_sitter_crossings";
+
 export { compare_fingerprints } from "./call_graph_fingerprint";
 
 export {
