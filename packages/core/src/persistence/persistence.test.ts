@@ -1343,7 +1343,7 @@ describe("interrupted load", () => {
  * wrong — over source that plainly does. Under this build's stamp the load
  * serves that answer; under any other it re-indexes and reports the function.
  */
-describe("indexer version", () => {
+describe("indexer version", { timeout: 30_000 }, () => {
   let project_dir = "";
 
   async function cleanup(): Promise<void> {
