@@ -86,6 +86,13 @@ export interface ArmRequest {
   /** Whether test-file callables are admitted as entry points. */
   readonly include_tests: boolean;
   /**
+   * How many workers pass A dispatches to, or `"from_machine"` to let the load
+   * compute the width from this box's cores and load average. A width-one arm
+   * and a full-width arm are the same dispatch code, so naming the width here
+   * is what makes the pair comparable rather than a second code path.
+   */
+  readonly worker_width: number | "from_machine";
+  /**
    * The Ariadne checkout this arm measures. Named by the caller because an
    * interleaved pair is two worktrees and only the orchestrator knows which.
    */
@@ -142,6 +149,10 @@ export async function run_benchmark_arm(
   const loaded = await load_project({
     project_path: corpus_root,
     files: ordered,
+    worker_width:
+      request.worker_width === "from_machine"
+        ? undefined
+        : request.worker_width,
   });
 
   const cpu_after_load = process.cpuUsage(cpu_at_start);
@@ -218,6 +229,16 @@ export async function run_benchmark_arm(
     ),
     fingerprint: record_fingerprint(fingerprint),
     diagnostics,
+    index_dispatch: {
+      worker_width: loaded.index_dispatch.worker_width,
+      boot_ms: round_to_tenth(loaded.index_dispatch.boot_ms),
+      worker_pass_ms: round_to_tenth(loaded.index_dispatch.worker_pass_ms),
+      main_deserialize_ms: round_to_tenth(
+        loaded.index_dispatch.main_deserialize_ms,
+      ),
+      redispatched_inputs: loaded.index_dispatch.redispatched_inputs,
+      worker_restarts: loaded.index_dispatch.worker_restarts,
+    },
     environment: capture_run_environment({
       session_id: request.session_id,
       ariadne_repo_path: request.ariadne_repo_path,

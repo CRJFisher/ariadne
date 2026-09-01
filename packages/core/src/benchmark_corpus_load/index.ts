@@ -66,6 +66,7 @@ export {
   measure_speedup_against_control,
   summarize_cpu_seconds,
   summarize_peak_rss,
+  summarize_wall_seconds,
 } from "./compare_measurements";
 
 export { read_arm_result, write_arm_result } from "./arm_result_file";

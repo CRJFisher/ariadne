@@ -1,13 +1,20 @@
 import * as fs from "fs/promises";
+import * as os from "os";
 import * as path from "path";
 import type { FilePath } from "@ariadnejs/types";
 import { Project } from "./project";
+import { compute_worker_width } from "../dispatch_to_workers/worker_width";
+import {
+  index_files_across_threads,
+  type IndexedFile,
+  type ParallelIndexStats,
+} from "./parallel_index";
 import {
   find_source_files,
   is_supported_file,
   parse_gitignore,
 } from "./file_loading";
-import type { PersistenceStorage } from "../persistence";
+import type { CachedIndex, PersistenceStorage } from "../persistence";
 import { is_git_repo, query_git_file_state } from "../persistence";
 import type { GitFileState } from "../persistence";
 import {
@@ -37,6 +44,13 @@ export interface LoadProjectOptions {
   max_files?: number;
   /** Optional persistence storage. When provided, unchanged files skip tree-sitter parsing. */
   storage?: PersistenceStorage;
+  /**
+   * How many worker threads index files, overriding the width this machine's
+   * cores and load average compute. A measurement harness names it so a
+   * width-one arm and a full-width arm are the same code at two widths; nothing
+   * else should.
+   */
+  worker_width?: number;
 }
 
 /**
@@ -90,6 +104,13 @@ export interface LoadedProject {
    */
   readonly cache_hits: number;
   readonly cache_misses: number;
+  /**
+   * What pass A's worker dispatch cost, including the main-thread deserialize
+   * that partially cancels the win. A pool is judged on wall, so the term that
+   * lands back on the one thread every result comes through is reported rather
+   * than folded into the total.
+   */
+  readonly index_dispatch: ParallelIndexStats;
 }
 
 /**
@@ -211,84 +232,138 @@ export async function load_project(
   // already-loaded importer each time a file lands, so the same resolution
   // state is rebuilt over and over against a corpus that is still incomplete —
   // and an import naming a file that has not arrived yet has no answer at all.
-  for (const file_path of files_to_load) {
-    const fp = file_path as FilePath;
+  //
+  // The file-local half — read, parse, build the SemanticIndex — runs on worker
+  // threads. Populating the registries reads project-wide state and stays here,
+  // applied in the order `files_to_load` gives, because the graph Ariadne
+  // reports depends on the order files arrive in.
+  const ordered_paths = [...files_to_load];
+  const worker_width =
+    options.worker_width ??
+    compute_worker_width(os.cpus().length, os.loadavg()[0]);
 
-    let content: string;
-    try {
-      content = await fs.readFile(file_path, "utf-8");
-    } catch {
-      continue; // Skip unreadable files
-    }
-
-    // Every blob validates itself, so the decision is per file and consults no
-    // project-wide state: whatever earlier runs managed to write is usable now,
-    // including the part of a run that was interrupted.
-    let used_cache = false;
-    if (storage) {
-      const cached = await read_cached_index(storage, fp);
-      if (cached) {
-        // Git names the content without hashing it; content hashing is the
-        // fallback for a file git cannot vouch for — dirty, untracked, or
-        // indexed while it was one of those.
-        const usable =
-          can_use_cache(fp, cached, git_state) ||
-          content_matches_cache(content, cached);
-        if (usable) {
-          used_cache = restore_from_cache(project, fp, cached, content);
-        }
-      }
-    }
-
-    if (used_cache) {
-      cache_hits++;
+  // A cache hit is settled before anything is dispatched, so no worker ever
+  // consults the cache and the pool keeps one code path.
+  const restorable = new Map<FilePath, RestorableFile>();
+  const to_index: FilePath[] = [];
+  for (const file_path of ordered_paths) {
+    const decision = await decide_cache_reuse(storage, file_path, git_state);
+    if (decision === null) {
+      to_index.push(file_path);
       continue;
     }
+    restorable.set(file_path, decision);
+  }
 
+  const record_drop = (file_path: FilePath, reason: string): void => {
+    dropped_files.add(file_path);
+    drop_reasons.set(file_path, reason);
+    console.warn(`[ariadne] Skipping ${file_path}: ${reason}`);
+  };
+
+  const apply_restored = (file_path: FilePath): boolean => {
+    const restorable_file = restorable.get(file_path);
+    if (restorable_file === undefined) return false;
+    const restored = restore_from_cache(
+      project,
+      file_path,
+      restorable_file.cached,
+      restorable_file.content,
+    );
+    if (restored) cache_hits++;
+    return restored;
+  };
+
+  const apply_indexed = async (indexed: IndexedFile): Promise<void> => {
+    if (indexed.outcome === "unreadable") return;
     cache_misses++;
+    if (indexed.outcome === "failed") {
+      // Nothing reached the registries, so there is no partial state to roll
+      // back — the file is simply unindexed, which is what the drop records.
+      record_drop(indexed.file_path, indexed.reason);
+      return;
+    }
     try {
-      project.ingest_file(fp, content);
+      project.ingest_restored_file(
+        indexed.file_path,
+        indexed.content,
+        indexed.index,
+      );
     } catch (error) {
-      // `ingest_file` writes content, language, definitions and scopes
-      // before a later registry can throw. Left in place, that partial state
-      // makes the file's callables phantom entry points and every grep hit
-      // inside it uncapturable — the file's text is in the corpus while its
-      // references are not. Roll it back so the file is cleanly unindexed.
-      dropped_files.add(fp);
-      drop_reasons.set(
-        fp,
+      // Population writes content, language, definitions and scopes before a
+      // later registry can throw. Left in place, that partial state makes the
+      // file's callables phantom entry points and every grep hit inside it
+      // uncapturable — the file's text is in the corpus while its references
+      // are not. Roll it back so the file is cleanly unindexed.
+      record_drop(
+        indexed.file_path,
         error instanceof Error ? error.message : String(error),
       );
       try {
-        project.evict_ingested_file(fp);
+        project.evict_ingested_file(indexed.file_path);
       } catch (rollback_error) {
-        // A rollback that throws would abort the whole load over one bad
-        // file, losing every file after it. Degrade to the per-file skip
-        // the drop already recorded.
+        // A rollback that throws would abort the whole load over one bad file,
+        // losing every file after it. Degrade to the per-file skip the drop
+        // already recorded.
         console.warn(
-          `[ariadne] Could not roll back partial index of ${file_path}: ${
-            rollback_error instanceof Error ? rollback_error.message : rollback_error
+          `[ariadne] Could not roll back partial index of ${indexed.file_path}: ${
+            rollback_error instanceof Error
+              ? rollback_error.message
+              : rollback_error
           }`,
         );
       }
-      console.warn(
-        `[ariadne] Skipping ${file_path}: ${
-          error instanceof Error ? error.message : error
-        }`,
-      );
-      continue;
+      return;
     }
 
-    // Persist inside the loop, because that is what makes an interruption
+    // Persist as each file lands, because that is what makes an interruption
     // survivable: the cache is exactly as complete as the load got, and a run
     // that never reaches the end still leaves every file it finished behind.
     if (storage) {
-      const index = project.get_index_single_file(fp);
-      if (index) {
-        await write_file_index(storage, fp, index, content, git_state);
+      await write_file_index(
+        storage,
+        indexed.file_path,
+        indexed.index,
+        indexed.content,
+        git_state,
+      );
+    }
+  };
+
+  // A blob that validated and then failed to restore has no partial state and
+  // no index, so its file goes back through the same dispatch rather than
+  // through a second indexing path here.
+  const failed_restores: FilePath[] = [];
+  let cursor = 0;
+  const apply_restorable_before = (next_dispatched: FilePath | null): void => {
+    while (cursor < ordered_paths.length) {
+      const file_path = ordered_paths[cursor];
+      if (file_path === next_dispatched) {
+        cursor++;
+        return;
+      }
+      cursor++;
+      if (restorable.has(file_path) && !apply_restored(file_path)) {
+        failed_restores.push(file_path);
       }
     }
-  }
+  };
+
+  const dispatch_stats = await index_files_across_threads(
+    to_index,
+    worker_width,
+    async (indexed) => {
+      apply_restorable_before(indexed.file_path);
+      await apply_indexed(indexed);
+    },
+  );
+  apply_restorable_before(null);
+
+  const retry_stats = await index_files_across_threads(
+    failed_restores,
+    worker_width,
+    apply_indexed,
+  );
 
   // Pass B: resolve the corpus once, against fully-populated registries.
   project.resolve_corpus();
@@ -317,5 +392,64 @@ export async function load_project(
     gitignore_patterns,
     cache_hits,
     cache_misses,
+    index_dispatch: combine_dispatch_stats(dispatch_stats, retry_stats),
+  };
+}
+
+interface RestorableFile {
+  readonly content: string;
+  readonly cached: CachedIndex;
+}
+
+/**
+ * Whether one file can be restored from its cached index, decided before the
+ * pool sees it.
+ *
+ * Every blob validates itself, so the decision is per file and consults no
+ * project-wide state: whatever earlier runs managed to write is usable now,
+ * including the part of a run that was interrupted. Git names the content
+ * without hashing it; content hashing is the fallback for a file git cannot
+ * vouch for — dirty, untracked, or indexed while it was one of those.
+ */
+async function decide_cache_reuse(
+  storage: PersistenceStorage | undefined,
+  file_path: FilePath,
+  git_state: GitFileState | null,
+): Promise<RestorableFile | null> {
+  if (!storage) return null;
+  const cached = await read_cached_index(storage, file_path);
+  if (cached === null) return null;
+
+  let content: string;
+  try {
+    content = await fs.readFile(file_path, "utf-8");
+  } catch {
+    return null;
+  }
+
+  const usable =
+    can_use_cache(file_path, cached, git_state) ||
+    content_matches_cache(content, cached);
+  return usable ? { content, cached } : null;
+}
+
+/**
+ * The two dispatch rounds a load can make, as one row. A reader asking what
+ * threading cost this load wants the load's figure, not the first round's.
+ */
+function combine_dispatch_stats(
+  first: ParallelIndexStats,
+  second: ParallelIndexStats,
+): ParallelIndexStats {
+  return {
+    worker_width: first.worker_width,
+    boot_ms: first.boot_ms + second.boot_ms,
+    boot_cpu_ms: first.boot_cpu_ms + second.boot_cpu_ms,
+    worker_pass_ms: first.worker_pass_ms + second.worker_pass_ms,
+    redispatched_inputs:
+      first.redispatched_inputs + second.redispatched_inputs,
+    worker_restarts: first.worker_restarts + second.worker_restarts,
+    main_deserialize_ms:
+      first.main_deserialize_ms + second.main_deserialize_ms,
   };
 }

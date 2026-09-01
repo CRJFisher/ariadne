@@ -79,6 +79,14 @@ describe("cite_row", () => {
         diag_hash: "1".repeat(16),
         canonical_hash: "2".repeat(16),
       },
+      index_dispatch: {
+        worker_width: 1,
+        boot_ms: 0,
+        worker_pass_ms: 0,
+        main_deserialize_ms: 0,
+        redispatched_inputs: 0,
+        worker_restarts: 0,
+      },
       environment,
     });
 
@@ -136,6 +144,14 @@ describe("cite_row", () => {
         entry_point_count: 1,
         diag_hash: "1".repeat(16),
         canonical_hash: "2".repeat(16),
+      },
+      index_dispatch: {
+        worker_width: 1,
+        boot_ms: 0,
+        worker_pass_ms: 0,
+        main_deserialize_ms: 0,
+        redispatched_inputs: 0,
+        worker_restarts: 0,
       },
       environment,
     });

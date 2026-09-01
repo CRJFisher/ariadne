@@ -68,6 +68,7 @@ async function load_order_arm(order: IngestOrder, sequence_index: number, sessio
     ingest_order: order,
     seed: 1,
     include_tests: false,
+    worker_width: "from_machine",
     ariadne_repo_path: find_ariadne_repo_root(),
     session_id,
   });

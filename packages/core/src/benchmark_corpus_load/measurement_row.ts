@@ -68,6 +68,27 @@ export interface RunEnvironment {
 }
 
 /**
+ * What pass A's worker dispatch cost this arm.
+ *
+ * A worker-pool arm is judged on wall, so the terms that decide whether wall
+ * fell belong on the row rather than in a note beside it: the width the arm
+ * actually ran at, and the main-thread deserialize that lands back on the one
+ * thread every result comes through and partially cancels the win. Worker
+ * thread time IS counted by `process.cpuUsage()` — measured, a 1,500 ms worker
+ * spin counted as 1,492 ms — so `worker_pass_ms` is part of the arm's CPU and
+ * not a figure hidden from it.
+ */
+export interface IndexDispatchRow {
+  readonly worker_width: number;
+  readonly boot_ms: number;
+  readonly worker_pass_ms: number;
+  readonly main_deserialize_ms: number;
+  /** Files a dying worker handed back, which the pool re-dispatched. */
+  readonly redispatched_inputs: number;
+  readonly worker_restarts: number;
+}
+
+/**
  * One arm: one file set, offered to one process, in one order.
  */
 export interface MeasurementRow {
@@ -128,6 +149,7 @@ export interface MeasurementRow {
    * an order-dependence in it never moves the call-graph fingerprint.
    */
   readonly diagnostics: DiagnosticsFingerprint;
+  readonly index_dispatch: IndexDispatchRow;
   readonly environment: RunEnvironment;
 }
 

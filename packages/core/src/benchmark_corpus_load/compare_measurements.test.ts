@@ -77,13 +77,29 @@ function row(overrides: Partial<MeasurementRow> = {}): MeasurementRow {
       diag_hash: "1".repeat(16),
       canonical_hash: "2".repeat(16),
     },
+    index_dispatch: {
+      worker_width: 1,
+      boot_ms: 0,
+      worker_pass_ms: 0,
+      main_deserialize_ms: 0,
+      redispatched_inputs: 0,
+      worker_restarts: 0,
+    },
     environment: ENVIRONMENT,
     ...overrides,
   };
 }
 
 function with_environment(patch: Partial<RunEnvironment>): MeasurementRow {
-  return row({ environment: { ...ENVIRONMENT, ...patch } });
+  return row({ index_dispatch: {
+   worker_width: 1,
+   boot_ms: 0,
+   worker_pass_ms: 0,
+   main_deserialize_ms: 0,
+   redispatched_inputs: 0,
+   worker_restarts: 0,
+ },
+ environment: { ...ENVIRONMENT, ...patch } });
 }
 
 describe("check_rows_comparable", () => {

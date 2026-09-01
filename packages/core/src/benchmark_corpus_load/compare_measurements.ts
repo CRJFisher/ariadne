@@ -206,6 +206,24 @@ export function summarize_cpu_seconds(
   );
 }
 
+/**
+ * Wall seconds across an arm's runs.
+ *
+ * The unit rule keeps CPU as the judge for a serial arm, but a worker pool
+ * spends more CPU on purpose to finish sooner, so CPU alone reports a
+ * successful parallelisation as a regression. A wall figure is only a
+ * measurement on an idle box, which is why every row also carries its loadavg
+ * and cpu/wall.
+ */
+export function summarize_wall_seconds(
+  rows: readonly MeasurementRow[],
+): SampleSummary {
+  return summarize_samples(
+    rows.map((row) => row.wall_ms / 1000),
+    "wall seconds",
+  );
+}
+
 interface ControlledSpeedup {
   readonly control: SampleSummary;
   readonly candidate: SampleSummary;

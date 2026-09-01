@@ -97,6 +97,14 @@ function build_result(): ArmResult {
       diag_hash: "1".repeat(16),
       canonical_hash: "2".repeat(16),
     },
+    index_dispatch: {
+      worker_width: 1,
+      boot_ms: 0,
+      worker_pass_ms: 0,
+      main_deserialize_ms: 0,
+      redispatched_inputs: 0,
+      worker_restarts: 0,
+    },
     environment: {
       machine: "Darwin 21.6.0 x64",
       hostname: "measure-01",

@@ -169,6 +169,7 @@ async function load_guard_arm() {
     ingest_order: "forward",
     seed: 1,
     include_tests: false,
+    worker_width: "from_machine",
     ariadne_repo_path: find_ariadne_repo_root(),
     session_id: create_session_id(),
   });

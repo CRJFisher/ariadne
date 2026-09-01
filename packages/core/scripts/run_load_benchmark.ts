@@ -42,6 +42,7 @@ import {
   run_benchmark_arm,
   summarize_cpu_seconds,
   summarize_peak_rss,
+  summarize_wall_seconds,
   write_arm_result,
   INGEST_ORDERS,
   type ArmRequest,
@@ -135,6 +136,22 @@ function has_flag(name: string): boolean {
   return process.argv.includes(`--${name}`);
 }
 
+/**
+ * The width every arm of this run dispatches pass A at. A named width is what
+ * makes a width-one arm and a full-width arm comparable — they are the same
+ * dispatch code at two widths, not a serial path beside a pooled one.
+ */
+function parse_worker_width(raw: string): number | "from_machine" {
+  if (raw === "from_machine") return "from_machine";
+  const width = Number(raw);
+  if (!Number.isInteger(width) || width < 1) {
+    throw new Error(
+      `--worker-width must be "from_machine" or a whole number of workers, got "${raw}"`,
+    );
+  }
+  return width;
+}
+
 function show_help(): void {
   console.log(
     [
@@ -155,6 +172,7 @@ function show_help(): void {
       "  --control-repo <path>   the control arm's checkout, for --interleave",
       "  --candidate-repo <path> the candidate arm's checkout, for --interleave",
       "  --seed <n>              default 1",
+      "  --worker-width <n>      pass-A workers; default from_machine (cores and loadavg)",
     ].join("\n"),
   );
 }
@@ -245,6 +263,7 @@ interface RunContext {
   readonly corpus_commit: string;
   readonly predicate: ReturnType<typeof parse_corpus_predicate_name>;
   readonly seed: number;
+  readonly worker_width: number | "from_machine";
 }
 
 function arm_request(
@@ -266,6 +285,7 @@ function arm_request(
     ingest_order,
     seed: context.seed,
     include_tests: false,
+    worker_width: context.worker_width,
     ariadne_repo_path,
     session_id: context.session_id,
   };
@@ -282,9 +302,20 @@ function report_rows(label: string, rows: readonly MeasurementRow[]): void {
   console.log(
     `  peak RSS MB  mean ${rss.mean}  min ${rss.min}  max ${rss.max}  spread ${rss.spread_pct}%  (n=${rss.run_count})`,
   );
+  // Wall, not CPU, is the unit a worker-pool arm is judged in, so the wall
+  // figures and the main-thread term that eats into them print together.
+  const wall = summarize_wall_seconds(rows);
+  console.log(
+    `  wall s  mean ${wall.mean}  min ${wall.min}  max ${wall.max}  spread ${wall.spread_pct}%  (n=${wall.run_count})`,
+  );
   for (const row of rows) {
     console.log(
       `  #${row.sequence_index} pid ${row.environment.pid}  cpu/wall ${row.cpu_per_wall}  loadavg ${row.loadavg_at_start[0]}  indexed ${row.file_counts.indexed}/${row.file_counts.offered}  dropped ${row.file_counts.dropped}`,
+    );
+    const dispatch = row.index_dispatch;
+    console.log(
+      `     width ${dispatch.worker_width}  boot ${dispatch.boot_ms} ms  worker pass ${dispatch.worker_pass_ms} ms` +
+        `  main deserialize ${dispatch.main_deserialize_ms} ms  re-dispatched ${dispatch.redispatched_inputs}  restarts ${dispatch.worker_restarts}`,
     );
   }
 }
@@ -574,6 +605,7 @@ async function main(): Promise<void> {
     corpus_commit: flag("corpus-commit"),
     predicate: parse_corpus_predicate_name(flag("predicate", "src")),
     seed: numeric_flag("seed", "1"),
+    worker_width: parse_worker_width(flag("worker-width", "from_machine")),
   };
 
   const slice_flag = flag("slice", "full");
