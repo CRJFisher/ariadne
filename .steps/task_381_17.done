@@ -1,0 +1,7 @@
+{
+  "key": "once",
+  "run_id": "20260901T063943Z-28db2981",
+  "scope": "once",
+  "step_id": "task_381_17",
+  "summary": "Seven of the eight acceptance criteria now hold; AC #8 does not, and is left explicitly unticked in the task doc. Starting state: the tree was clean at 2b13f344 with no pool code of any kind, so all…"
+}
