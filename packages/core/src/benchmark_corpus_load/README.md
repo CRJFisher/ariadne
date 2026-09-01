@@ -497,6 +497,66 @@ A profiled arm is never a comparand for an unprofiled one: the profiler costs
 this run about 40% more CPU, and the two families are only compared within
 themselves.
 
+## What indexing across threads buys
+
+`RECORDED_WORKER_INDEX_DISPATCH` is the one record here judged on WALL. Pass A's
+file-local half — read, parse, build the `SemanticIndex` — runs on worker
+threads; populating the registries reads project-wide state and stays on the
+main thread, applied in the caller's file order.
+
+The target is computed, not fixed. Splitting one whole-corpus load at the seam
+a pool cuts at, on the tree **before** any pool code existed, puts **78.28%** of
+the run in parse-and-index — 178.01 s of 227.41 s, against read 20.15 s,
+populate 5.45 s, `resolve_corpus` 22.89 s and trace 0.54 s. So the target is
+`serial_wall × (1 − 0.7828 + 0.7828/3.2)` = **97.99 s**.
+
+Four arms interleaved control,candidate,control,candidate over vscode's `src/`
+at f3fa55c3:
+
+| arm            | wall                    | CPU                     |
+| -------------- | ----------------------- | ----------------------- |
+| serial         | 208.12, 216.26 → 212.19 | 222.94, 230.35 → 226.65 |
+| pooled, five   | 79.98, 79.32 → **79.65**| 277.08, 276.18 → 276.63 |
+
+**2.664× on wall for 1.221× the CPU** — a 22.06% rise inside the 35% permitted,
+and no CPU reduction is claimed. All seven fingerprint components and both
+diagnostics hashes are identical to the serial arm at 200, 1,200 and 8,494
+files, at width five and at width one. **Main-thread deserialize is 31.25% of
+that wall** and the pool cannot remove it, so every row carries it.
+
+Width is `max(1, min(cores − 1, floor(cores − loadavg)))`. One core always stays
+with the main thread, which deserializes every result and resolves the corpus.
+A width of one is the same dispatch code with one worker, so there is no serial
+path beside the pooled one — and at loadavg 7.26 the rule computes one, which is
+what makes a contended run the width-one arm.
+
+Three findings the step was not written against travel with it.
+
+**The JSON transport nearly doubles what the corpus retains.** A built index
+shares each symbol id between the map that keys it, the definition that carries
+it and every reference that names it, and each id embeds the file's absolute
+path; `JSON.parse` hands back a copy per occurrence. Over 1,200 files, live heap
+after a forced collection reads **507.1 MB built directly against 971.3 MB
+round-tripped**, two processes per arm. Sharing the repeated strings on the way
+in takes it to **460.7 MB** — below the directly-built figure, because the table
+also collapses duplicates the built index never shared. Unshared, the pooled
+load **died** at the 6,144 MB ceiling the memory contract states as this
+corpus's floor; shared, it completes there at 6,507.5 MB peak RSS and 3,240.4 MB
+live, against the 4,046.1 MB the serial load retains.
+
+**A `JSON.parse` reviver is the wrong instrument for that sharing.** It is
+called for every node in the document, numbers and locations included, and takes
+the parse off its fast path: 86.6 s of main-thread deserialize against 18.3 s
+unshared, which pushed the pooled wall to 132.9 s and gave the whole win back.
+Walking the parsed document reaches the same strings for 24.9 s.
+
+**A wider pool on a contended box was faster here, not slower.** At loadavg 7.3
+on six cores a width-five arm ran **141.55 s of wall against 327.17 s** for the
+width-one arm the rule computes, at 281.78 s of CPU against 274.86 s. It is
+claiming six of twelve runnable threads instead of two of eight — taking a
+larger share of a box someone else is using rather than doing less work — which
+is why the width rule is kept.
+
 ## Memory
 
 ### The contract
@@ -592,6 +652,11 @@ Modes: `--interleave` (A,B,A,B plus a controlled speedup), `--slices` (a nested
 cost-per-file curve — every slice is a prefix of the next, so the curve describes
 one codebase growing), `--orders` (one file set in four arrival orders, diffed
 through the fingerprint).
+
+`--worker-width <n>` fixes the width pass A dispatches at, so a width-one arm
+and a full-width arm are comparable. Without it the width comes from the box's
+cores and load average, which is what a real load does. Every arm boots the
+worker from `dist`, so `npm run build` runs before a measurement.
 
 Each arm runs in its own process, sized by `required_heap_mb` plus a quarter —
 12,292 MB required and 15,365 MB given, for the 8,494-file corpus — and an arm

@@ -1,13 +1,11 @@
 /**
- * Run one per-file pass across worker threads and hand its results back in the
+ * Run a per-file pass across worker threads and hand its results back in the
  * caller's input order.
  *
- * The passes that come through here are the ones that read nothing but the file
- * they are given — parsing and indexing a source file, and the textual byte
- * pass that builds a grep index. Everything else in the pipeline reads
- * project-wide registries and stays on one thread. Results are re-ordered
- * before delivery because the call graph Ariadne reports depends on the order
- * files arrive in.
+ * What comes through here is work that reads nothing but the file it is given.
+ * Everything else in the pipeline reads project-wide registries and stays on
+ * one thread. Results are re-ordered before delivery because the call graph
+ * Ariadne reports depends on the order files arrive in.
  *
  * The transport is whatever `postMessage` copies, and an indexing job hands
  * back a JSON string rather than an object graph: `structuredClone` throws on
@@ -22,9 +20,6 @@ import { Worker } from "node:worker_threads";
 import * as fs from "node:fs";
 import * as path from "node:path";
 
-/** Which per-file pass a worker should run for a job. */
-export type WorkerPassName = "index_file" | "grep_file";
-
 export interface WorkerOutcome<TOutput> {
   /** Position in the caller's input array. Outcomes arrive in this order. */
   readonly input_index: number;
@@ -33,14 +28,7 @@ export interface WorkerOutcome<TOutput> {
   readonly error: string | null;
 }
 
-export interface WorkerPassRequest<TInput, TShared> {
-  readonly pass: WorkerPassName;
-  /**
-   * Copied into every worker once at boot, for the state a whole pass shares.
-   * A corpus-wide table sent per job would cost more to copy than the job it
-   * serves.
-   */
-  readonly shared: TShared;
+export interface WorkerPassRequest<TInput> {
   readonly inputs: readonly TInput[];
   readonly worker_width: number;
 }
@@ -148,11 +136,11 @@ interface PoolWorker {
  * job the moment its result arrives, before the main thread spends anything
  * applying.
  */
-export async function dispatch_to_workers<TInput, TShared, TOutput>(
-  request: WorkerPassRequest<TInput, TShared>,
+export async function dispatch_to_workers<TInput, TOutput>(
+  request: WorkerPassRequest<TInput>,
   on_outcome: (outcome: WorkerOutcome<TOutput>) => void | Promise<void>,
 ): Promise<WorkerPoolStats> {
-  const { pass, shared, inputs, worker_width } = request;
+  const { inputs, worker_width } = request;
   if (worker_width < 1) {
     throw new Error(
       `A worker pass needs at least one worker, not ${worker_width}.`,
@@ -190,7 +178,7 @@ export async function dispatch_to_workers<TInput, TShared, TOutput>(
 
   const start_worker = (): PoolWorker => {
     const entry: PoolWorker = {
-      worker: new Worker(WORKER_ENTRY, { workerData: { pass, shared } }),
+      worker: new Worker(WORKER_ENTRY),
       in_flight: new Set<number>(),
       alive: true,
     };

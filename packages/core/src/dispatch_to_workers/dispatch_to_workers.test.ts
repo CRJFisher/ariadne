@@ -44,8 +44,8 @@ async function index_at_width(
   inputs: readonly IndexFileInput[],
 ): Promise<WorkerOutcome<IndexFileOutput>[]> {
   const seen: WorkerOutcome<IndexFileOutput>[] = [];
-  await dispatch_to_workers<IndexFileInput, null, IndexFileOutput>(
-    { pass: "index_file", shared: null, inputs, worker_width: width },
+  await dispatch_to_workers<IndexFileInput, IndexFileOutput>(
+    { inputs, worker_width: width },
     (outcome) => {
       seen.push(outcome);
     },
@@ -93,8 +93,8 @@ describe.runIf(WORKER_ENTRY_BUILT)("dispatch_to_workers", () => {
   });
 
   it("boots no worker for an empty input list", async () => {
-    const stats = await dispatch_to_workers<IndexFileInput, null, IndexFileOutput>(
-      { pass: "index_file", shared: null, inputs: [], worker_width: 4 },
+    const stats = await dispatch_to_workers<IndexFileInput, IndexFileOutput>(
+      { inputs: [], worker_width: 4 },
       () => {
         throw new Error("an empty pass must call back for nothing");
       },
@@ -106,13 +106,8 @@ describe.runIf(WORKER_ENTRY_BUILT)("dispatch_to_workers", () => {
 
   it("refuses a width below one rather than dispatching nothing forever", async () => {
     await expect(
-      dispatch_to_workers<IndexFileInput, null, IndexFileOutput>(
-        {
-          pass: "index_file",
-          shared: null,
-          inputs: [{ file_path: paths[0] }],
-          worker_width: 0,
-        },
+      dispatch_to_workers<IndexFileInput, IndexFileOutput>(
+        { inputs: [{ file_path: paths[0] }], worker_width: 0 },
         () => {},
       ),
     ).rejects.toThrow("at least one worker");

@@ -4,11 +4,12 @@ paths: packages/core/src/**
 
 # Stage Boundaries
 
-The pipeline order under `packages/core/src` is: `index_single_file` (stage 1) → `resolve_references` (stage 2) → `trace_call_graph` and `classify_entry_points` (stage 3). `project/` is the orchestrator above all stages, and `benchmark_corpus_load/` is the measurement harness over the whole pipeline, also above all stages. `logging/`, `persistence/`, and root files carry no stage.
+The pipeline order under `packages/core/src` is: `index_single_file` (stage 1) → `resolve_references` (stage 2) → `trace_call_graph` and `classify_entry_points` (stage 3). `project/` is the orchestrator above all stages, and `benchmark_corpus_load/` is the measurement harness over the whole pipeline, also above all stages. `logging/`, `persistence/`, `dispatch_to_workers/`, and root files carry no stage.
 
 ## Value-import direction
 
 - `project/` and `benchmark_corpus_load/` may value-import any stage; no stage value-imports either of them, or a later stage.
+- `dispatch_to_workers/` is stage-free infrastructure: it runs a per-file pass on worker threads and any stage may reach it, which is why it does not live under `project/`.
 - `resolve_references/registries/**` never imports `resolve_references/call_resolution/**` — a store never depends on the lookup logic built over it.
 - `import type` and inline `import { type X }` are exempt: type-only edges carry no runtime coupling.
 - Only relative imports within `packages/core/src` are in scope; `@ariadnejs/*` package imports are governed by package boundaries, not stages.

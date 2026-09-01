@@ -27,6 +27,7 @@ project/
 ├── project_cache_strategy.ts         # Cache read/write policy; sole owner of content-hash computation and blob writes
 ├── file_loading.ts                   # Source file discovery and ignore rules
 ├── parse_file.ts                     # Parse-phase language dispatch (grammar selection → ParsedFile)
+├── parallel_index.ts                 # Pass A across worker threads: ordered SemanticIndex delivery
 ├── detect_test_file.ts               # Test file detection (marshaller)
 ├── detect_test_file.{language}.ts    # Language-specific test detection
 ├── test_dir_patterns.ts              # TEST_DIR_PATTERNS + directory-name test markers

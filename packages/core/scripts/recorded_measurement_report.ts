@@ -21,6 +21,7 @@ import {
   RECORDED_EXPORT_DECLARATION_SPACE,
   RECORDED_FULL_CORPUS_BASELINE,
   RECORDED_MEMORY_CONTRACT,
+  RECORDED_WORKER_INDEX_DISPATCH,
   RECORDED_NAME_TABLE_MEMORY,
   RECORDED_ORDER_INDEPENDENCE,
   RECORDED_RESOLUTION_EVICTION_COST,
@@ -262,5 +263,25 @@ export function report_recorded_order_independence(offered_file_count: number): 
         : `\n  entry points -${record.entry_points_removed}/+${record.entry_points_added}, resolved edges +${record.strict_improvement.find((row) => row.component === "call_edges")?.only_after}/-0` +
           `, nodes byte-identical, receiver_type_unknown ${record.failure_taxonomy.before.by_reason.receiver_type_unknown} -> ${record.failure_taxonomy.after.by_reason.receiver_type_unknown}` +
           `\n  CPU ${before.cpu_seconds.join(" / ")} s before against ${after.cpu_seconds.join(" / ")} s after (${record.cost_ratio}x) — not a comparand for the arms above`),
+  );
+}
+
+/**
+ * The one record judged on WALL. Printed with the loads its arms ran at,
+ * because a wall figure taken under contention is not a measurement.
+ */
+export function report_recorded_worker_index_dispatch(
+  offered_file_count: number,
+): void {
+  const record = RECORDED_WORKER_INDEX_DISPATCH;
+  if (offered_file_count !== record.discovered_files) return;
+
+  console.log(
+    `\nrecorded worker dispatch for this file set (${record.machine}, ${record.node_version}, ${record.cpu_count} cores):` +
+      `\n  ${(record.parallelisable_share * 100).toFixed(2)}% of the serial run is parse-and-index, measured on ariadne@${record.share_arm_commit} before any pool code existed` +
+      `\n  target ${record.target_wall_s} s of wall = ${record.serial_wall_s} s x (1 - share + share/${record.target_efficiency}); achieved ${record.achieved_wall_s} s, which is ${record.wall_speedup}x` +
+      `\n  CPU ${record.pooled_cpu_s} s against ${record.serial_cpu_s} s serial — ${record.cpu_ratio}x, inside the ${record.cpu_ratio_permitted}x permitted; no CPU reduction is claimed` +
+      `\n  main-thread deserialize is ${(record.main_deserialize_share_of_wall * 100).toFixed(1)}% of that wall and the pool cannot remove it` +
+      `\n  ${record.memory_contract_at_6144}`,
   );
 }
