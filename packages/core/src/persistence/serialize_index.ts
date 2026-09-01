@@ -71,15 +71,43 @@ export function to_serializable_semantic_index(
  * The table is per document, so it holds one file's strings rather than the
  * corpus's, and it is dropped with the parse.
  */
-function parse_sharing_repeated_strings(json: string): Record<string, unknown> {
+function share_repeated_strings(root: Record<string, unknown>): void {
   const seen = new Map<string, string>();
-  return JSON.parse(json, (_key: string, value: unknown) => {
-    if (typeof value !== "string") return value;
-    const shared = seen.get(value);
-    if (shared !== undefined) return shared;
-    seen.set(value, value);
-    return value;
-  });
+  const pending: unknown[] = [root];
+  while (pending.length > 0) {
+    const node = pending.pop();
+    if (Array.isArray(node)) {
+      for (let i = 0; i < node.length; i++) {
+        const value: unknown = node[i];
+        if (typeof value === "string") {
+          const shared = seen.get(value);
+          if (shared === undefined) seen.set(value, value);
+          else node[i] = shared;
+        } else if (value !== null && typeof value === "object") {
+          pending.push(value);
+        }
+      }
+      continue;
+    }
+    if (node === null || typeof node !== "object") continue;
+    const record = node as Record<string, unknown>;
+    for (const key of Object.keys(record)) {
+      const value: unknown = record[key];
+      if (typeof value === "string") {
+        const shared = seen.get(value);
+        if (shared === undefined) seen.set(value, value);
+        else record[key] = shared;
+      } else if (value !== null && typeof value === "object") {
+        pending.push(value);
+      }
+    }
+  }
+}
+
+function parse_sharing_repeated_strings(json: string): Record<string, unknown> {
+  const parsed: Record<string, unknown> = JSON.parse(json);
+  share_repeated_strings(parsed);
+  return parsed;
 }
 
 export function deserialize_semantic_index(
