@@ -187,6 +187,34 @@ describe("serialize_semantic_index / deserialize_semantic_index", () => {
     });
   });
 
+  /**
+   * String identity is not observable from JavaScript, so what a test can hold
+   * is that sharing repeated strings changes no VALUE — the retained-bytes half
+   * is a measurement and lives in `RECORDED_WORKER_INDEX_DISPATCH`.
+   */
+  describe("a document whose strings repeat", () => {
+    it("restores every repeated string to its own value", () => {
+      const index = parse_ts(
+        [
+          "export class Repeated {",
+          "  first(): void {}",
+          "  second(): void { this.first(); }",
+          "}",
+          "export function repeated(): void { new Repeated().second(); }",
+        ].join("\n"),
+      );
+      const restored = deserialize_semantic_index(
+        serialize_semantic_index(index),
+      );
+
+      assert_index_equal(index, restored);
+      expect([...restored.classes.keys()]).toEqual([...index.classes.keys()]);
+      expect(restored.references.map((reference) => reference.name)).toEqual(
+        index.references.map((reference) => reference.name),
+      );
+    });
+  });
+
   describe("round-trip with real parsed files", () => {
     it("TypeScript: functions, classes, interfaces", () => {
       const code = `
