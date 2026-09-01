@@ -55,12 +55,8 @@ export async function index_files_across_threads(
   let main_deserialize_ms = 0;
   const inputs: IndexFileInput[] = paths.map((file_path) => ({ file_path }));
 
-  const pool_stats = await dispatch_to_workers<
-    IndexFileInput,
-    null,
-    IndexFileOutput
-  >(
-    { pass: "index_file", shared: null, inputs, worker_width },
+  const pool_stats = await dispatch_to_workers<IndexFileInput, IndexFileOutput>(
+    { inputs, worker_width },
     async (outcome) => {
       const file_path = paths[outcome.input_index];
       if (outcome.output === null) {

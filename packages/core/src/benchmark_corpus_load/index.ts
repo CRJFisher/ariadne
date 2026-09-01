@@ -59,6 +59,8 @@ export { RECORDED_PER_FILE_REDERIVATION_COST } from "./recorded_per_file_rederiv
 
 export { RECORDED_TREE_SITTER_CROSSINGS } from "./recorded_tree_sitter_crossings";
 
+export { RECORDED_WORKER_INDEX_DISPATCH } from "./recorded_worker_index_dispatch";
+
 export { compare_fingerprints } from "./call_graph_fingerprint";
 
 export {
