@@ -14,10 +14,12 @@ receiver resolution types the binding with one property hop off the source's
 type.
 
 A call on an interface-typed receiver now also records an edge to the interface
-member the call names, alongside every implementation — so a consumer asking who
-calls `IFoo.bar` gets an answer while entry-point detection still reaches the
-bodies that run. The interface member has no body scope, so it is never a
-call-graph node and the change is additive: attributions are added, never moved.
+member the call names, alongside every implementation, so the call graph holds
+the dispatch as the source wrote it rather than only as it runs. The interface
+member has no body scope, so it is never a call-graph node and the change is
+additive: attributions are added, never moved, and entry-point detection still
+reaches every implementation.
 
-`VariableDefinition` gains the two provenance fields, so the indexer version
-moves and existing per-file caches re-index once on the next load.
+`VariableDefinition` gains the two provenance fields. The cache entry's
+validity is stamped with the package version, so this release's bump is what
+retires blobs written by the previous indexer and re-indexes each file once.

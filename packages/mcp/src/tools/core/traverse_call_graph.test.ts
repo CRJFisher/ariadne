@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
   build_callers_index,
+  collect_callee_ids,
+  sort_symbol_ids,
   traverse_callees,
   traverse_callers,
 } from "./traverse_call_graph";
@@ -463,5 +465,77 @@ describe("traverse_callers", () => {
     expect(tree?.symbol_id).toBe(only.symbol_id);
     expect(tree?.children).toEqual([]);
     expect(tree?.is_cycle).toBe(false);
+  });
+});
+
+describe("callees a call names but the graph holds no node for", () => {
+  // A call on an interface-typed receiver resolves to the interface member as
+  // well as the implementations that run. The member declares no body, so the
+  // graph holds no node for it.
+  const member_id = "method:lib.ts:2:2:2:9:sweep" as SymbolId;
+
+  function graph_with_absent_callee(): {
+    call_graph: CallGraph;
+    caller: CallableNode;
+    impl_b: CallableNode;
+    impl_a: CallableNode;
+  } {
+    const impl_b = create_mock_node("m:b.ts:1:9:sweep", "sweep", "b.ts", 1, 9);
+    const impl_a = create_mock_node("m:a.ts:1:9:sweep", "sweep", "a.ts", 1, 9);
+    const caller = create_mock_node("f:caller.ts:1:9:load", "load", "caller.ts", 1, 9, [
+      {
+        name: "sweep" as SymbolName,
+        location: {} as never,
+        scope_id: "scope:caller" as never,
+        call_type: "method",
+        resolutions: [
+          { symbol_id: member_id, confidence: "certain" as never, reason: { type: "direct" } },
+          { symbol_id: impl_b.symbol_id, confidence: "certain" as never, reason: { type: "direct" } },
+          { symbol_id: impl_a.symbol_id, confidence: "certain" as never, reason: { type: "direct" } },
+        ],
+      },
+    ]);
+    return {
+      call_graph: {
+        nodes: new Map([
+          [caller.symbol_id, caller],
+          [impl_a.symbol_id, impl_a],
+          [impl_b.symbol_id, impl_b],
+        ]),
+        entry_points: [],
+      },
+      caller,
+      impl_a,
+      impl_b,
+    };
+  }
+
+  it("leaves a symbol the graph holds no node for out of a node's callees", () => {
+    const { call_graph, caller, impl_a, impl_b } = graph_with_absent_callee();
+
+    expect(collect_callee_ids(caller.enclosed_calls, call_graph)).toEqual([
+      impl_b.symbol_id,
+      impl_a.symbol_id,
+    ]);
+  });
+
+  it("orders the callees that remain by file, so an absent symbol cannot scramble them", () => {
+    const { call_graph, caller, impl_a, impl_b } = graph_with_absent_callee();
+
+    const tree = traverse_callees(caller.symbol_id, call_graph, null, 0, new Set());
+
+    expect(tree?.children.map((child) => child.symbol_id)).toEqual([
+      impl_a.symbol_id,
+      impl_b.symbol_id,
+    ]);
+  });
+
+  it("sorts a symbol with no node after every symbol that has one, and ties by id", () => {
+    const { call_graph, impl_a, impl_b } = graph_with_absent_callee();
+    const other_absent = "method:lib.ts:3:3:3:9:flush" as SymbolId;
+
+    expect(
+      sort_symbol_ids([member_id, impl_b.symbol_id, other_absent, impl_a.symbol_id], call_graph)
+    ).toEqual([impl_a.symbol_id, impl_b.symbol_id, member_id, other_absent]);
   });
 });

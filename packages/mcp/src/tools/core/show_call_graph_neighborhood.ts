@@ -2,10 +2,11 @@ import path from "path";
 import { z } from "zod";
 import { build_signature } from "@ariadnejs/core";
 import type { Project } from "@ariadnejs/core";
-import type { CallableNode, SymbolId } from "@ariadnejs/types";
+import type { CallableNode } from "@ariadnejs/types";
 import { find_node_by_symbol_ref, parse_symbol_ref } from "./resolve_symbol_ref.js";
 import {
   build_callers_index,
+  collect_callee_ids,
   sort_symbol_ids,
   traverse_callees,
   traverse_callers,
@@ -269,17 +270,7 @@ export async function show_call_graph_neighborhood(
   }
 
   // Traverse callees (downstream) with deduplication and deterministic ordering
-  const seen_callees = new Set<SymbolId>();
-  const callee_ids: SymbolId[] = [];
-
-  for (const call_ref of target_node.enclosed_calls) {
-    for (const resolution of call_ref.resolutions) {
-      if (!seen_callees.has(resolution.symbol_id)) {
-        seen_callees.add(resolution.symbol_id);
-        callee_ids.push(resolution.symbol_id);
-      }
-    }
-  }
+  const callee_ids = collect_callee_ids(target_node.enclosed_calls, call_graph);
 
   const sorted_callee_ids = sort_symbol_ids(callee_ids, call_graph);
 

@@ -344,6 +344,7 @@ export class DefinitionBuilder {
     return undefined;
   }
 
+  /** Rust enums carry methods through impl blocks. */
   add_method_to_enum(
     enum_id: SymbolId,
     definition: {

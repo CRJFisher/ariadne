@@ -284,6 +284,8 @@ function resolve_identifier_base(
     ) {
       type_id = context.resolutions.resolve(def.defining_scope_id, def.type);
     } else if (
+      // Every rung above states a type; this one only says where the value came
+      // from, so it is consulted last.
       (def.kind === "variable" || def.kind === "constant") &&
       def.destructured_from !== undefined &&
       def.destructured_key !== undefined

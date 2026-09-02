@@ -2,8 +2,7 @@
  * The provenance of an object-destructured binding: which identifier the
  * pattern unpacks and which property key the binding reads from it.
  *
- * Lives apart from the other symbol factories because it answers one question
- * with one strict AST walk; the strictness is the point. A nested pattern, a
+ * The strictness of the walk is the point. A nested pattern, a
  * parameter, a `for…of` head, a bare assignment, an array or rest pattern, and
  * any initializer that is not a bare identifier all return undefined, because
  * recording a source for those shapes would type the binding from a property

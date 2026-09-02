@@ -267,9 +267,9 @@ export interface VariableDefinition extends Definition {
    * @language javascript,typescript
    * The identifier an object-destructured binding unpacks: "options" in
    * `const { storage } = options`. Populated only when the declarator's
-   * initializer is a bare identifier — a member access, a call or an `await`
-   * expression names no binding whose members carry the property's type, so
-   * those leave it absent. Absent too for an array or rest pattern, whose
+   * initializer is a bare identifier — a member access, a call, an `await` or
+   * a non-null assertion (`options!`) is not one, so those leave it absent
+   * even where the value they produce has members. Absent too for an array or rest pattern, whose
    * bindings are keyed by position rather than by name, and for any
    * destructuring that is not a variable declarator's own pattern: a
    * parameter, a `for…of` head, a nested pattern, a bare assignment.

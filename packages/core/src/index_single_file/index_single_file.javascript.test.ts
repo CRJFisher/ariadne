@@ -2579,11 +2579,14 @@ const names = items.map(({id, name}) => name);`;
       }).toEqual({ destructured_from: "options", destructured_key: "storage" });
     });
 
-    it("records no destructuring provenance for a destructured require binding", () => {
-      const names = Array.from(
-        index_js("const { readFile } = require(\"fs\");").variables.values(),
-      ).map((v) => v.name as string);
-      expect(names).toEqual([]);
+    it("records a destructured require binding as an import rather than a variable", () => {
+      const index = index_js("const { readFile } = require(\"fs\");");
+      expect(
+        Array.from(index.variables.values()).map((v) => v.name as string),
+      ).toEqual([]);
+      expect(
+        Array.from(index.imported_symbols.values()).map((i) => i.name as string),
+      ).toEqual(["readFile"]);
     });
 
     it("keeps the anonymous fallback for a genuinely anonymous IIFE", () => {
