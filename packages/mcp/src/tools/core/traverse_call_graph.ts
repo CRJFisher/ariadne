@@ -18,6 +18,11 @@ export type CallersIndex = ReadonlyMap<SymbolId, ReadonlySet<SymbolId>>;
 /**
  * Build reverse index mapping callees to their callers.
  *
+ * Keyed by every symbol a call names, including one the graph holds no node
+ * for: an interface member has callers even though nothing executes it. Each
+ * lookup comes from a node's own id, so those keys are read by nobody until a
+ * tool can address a declaration.
+ *
  * @param call_graph - The call graph
  * @returns Map from callee SymbolId to set of caller SymbolIds
  */
@@ -52,6 +57,36 @@ export function build_callers_index(call_graph: CallGraph): CallersIndex {
 }
 
 /**
+ * The callees a node reaches, deduplicated and restricted to symbols the graph
+ * holds as nodes.
+ *
+ * A call resolves to every symbol it can name, and an interface member is one
+ * of them: a call on an interface-typed receiver names the member as well as
+ * the implementations that run. A member declares no body, so it is not a
+ * node — and a comparison against it has no location to order by, which would
+ * leave `sort_symbol_ids` no total order to sort the real callees into.
+ */
+export function collect_callee_ids(
+  enclosed_calls: CallableNode["enclosed_calls"],
+  call_graph: CallGraph
+): SymbolId[] {
+  const seen = new Set<SymbolId>();
+  const callee_ids: SymbolId[] = [];
+
+  for (const call_ref of enclosed_calls) {
+    for (const resolution of call_ref.resolutions) {
+      if (seen.has(resolution.symbol_id)) continue;
+      seen.add(resolution.symbol_id);
+      if (call_graph.nodes.has(resolution.symbol_id)) {
+        callee_ids.push(resolution.symbol_id);
+      }
+    }
+  }
+
+  return callee_ids;
+}
+
+/**
  * Sort symbol IDs by their node's file path, start line, and name.
  * Provides deterministic ordering for traversal results.
  */
@@ -59,7 +94,17 @@ export function sort_symbol_ids(ids: SymbolId[], call_graph: CallGraph): SymbolI
   return [...ids].sort((a, b) => {
     const node_a = call_graph.nodes.get(a);
     const node_b = call_graph.nodes.get(b);
-    if (!node_a || !node_b) return 0;
+
+    // A symbol the graph holds no node for has no location to order by. Calling
+    // every such pair equal would make the comparison intransitive — one absent
+    // symbol would sit equal to two symbols that order strictly between
+    // themselves — so absent symbols sort after present ones and among
+    // themselves by id, leaving a total order whatever the caller passes.
+    if (!node_a || !node_b) {
+      if (node_a) return -1;
+      if (node_b) return 1;
+      return a.localeCompare(b);
+    }
 
     // Sort by: file_path, then start_line, then name
     const file_cmp = node_a.location.file_path.localeCompare(
@@ -112,18 +157,7 @@ export function traverse_callees(
 
   visited.add(node_id);
 
-  // Collect all callee symbol IDs, deduplicating by symbol_id
-  const seen_callees = new Set<SymbolId>();
-  const callee_ids: SymbolId[] = [];
-
-  for (const call_ref of node.enclosed_calls) {
-    for (const resolution of call_ref.resolutions) {
-      if (!seen_callees.has(resolution.symbol_id)) {
-        seen_callees.add(resolution.symbol_id);
-        callee_ids.push(resolution.symbol_id);
-      }
-    }
-  }
+  const callee_ids = collect_callee_ids(node.enclosed_calls, call_graph);
 
   // Sort for deterministic ordering
   const sorted_callee_ids = sort_symbol_ids(callee_ids, call_graph);

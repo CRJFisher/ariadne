@@ -3675,12 +3675,15 @@ const result = items.map((x) =>
     });
 
     it("records provenance for each binding of a multi-name destructured declarator", () => {
-      expect(
-        destructuring_provenance(
-          "const { project_path, storage } = options;",
-          "storage",
-        ),
-      ).toEqual({ destructured_from: "options", destructured_key: "storage" });
+      const code = "const { project_path, storage } = options;";
+      expect(destructuring_provenance(code, "project_path")).toEqual({
+        destructured_from: "options",
+        destructured_key: "project_path",
+      });
+      expect(destructuring_provenance(code, "storage")).toEqual({
+        destructured_from: "options",
+        destructured_key: "storage",
+      });
     });
 
     it("records the source key rather than the local name when the binding is renamed", () => {
@@ -3692,6 +3695,12 @@ const result = items.map((x) =>
     it("records no destructuring provenance for a nested pattern", () => {
       expect(
         destructuring_provenance("const { inner: { storage } } = options;", "storage"),
+      ).toEqual({ destructured_from: undefined, destructured_key: undefined });
+    });
+
+    it("records no destructuring provenance when the initializer carries a non-null assertion", () => {
+      expect(
+        destructuring_provenance("const { storage } = options!;", "storage"),
       ).toEqual({ destructured_from: undefined, destructured_key: undefined });
     });
 

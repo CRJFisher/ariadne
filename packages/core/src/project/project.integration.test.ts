@@ -551,4 +551,73 @@ function bar() { return 42; }
     });
 
   });
+
+  describe("Destructured interface-typed binding re-resolution (TASK-389)", () => {
+    function sweep_is_entry_point(project: Project): boolean {
+      const cg = project.get_call_graph();
+      return cg.entry_points.some((id) => {
+        const node = cg.nodes.get(id);
+        return (
+          node?.name === ("sweep" as SymbolName) &&
+          node.location.file_path.includes("fs.ts")
+        );
+      });
+    }
+
+    it("re-resolves a destructured receiver when the interface's file changes", async () => {
+      const project = new Project();
+      await project.initialize();
+      project.update_file(
+        "lib.ts" as FilePath,
+        `export interface Storage { sweep(): void; }
+`
+      );
+      project.update_file(
+        "fs.ts" as FilePath,
+        `import { Storage } from "./lib";
+export class FileStorage implements Storage { sweep(): void {} }
+`
+      );
+      project.update_file(
+        "consumer.ts" as FilePath,
+        `import { Storage } from "./lib";
+` +
+          `interface Opts { storage?: Storage }
+` +
+          `function load(o: Opts) { const { storage } = o; storage!.sweep(); }
+`
+      );
+
+      // Reached through the destructured binding: not an entry point.
+      expect(sweep_is_entry_point(project)).toBe(false);
+
+      // Renaming the interface member breaks the property type, so the call no
+      // longer reaches FileStorage.sweep — the consumer must re-resolve.
+      project.update_file(
+        "lib.ts" as FilePath,
+        `export interface Storage { flush(): void; }
+`
+      );
+      expect(sweep_is_entry_point(project)).toBe(true);
+
+      // Restoring it reconnects the edge.
+      project.update_file(
+        "lib.ts" as FilePath,
+        `export interface Storage { sweep(): void; }
+`
+      );
+      expect(sweep_is_entry_point(project)).toBe(false);
+
+      // Retyping the property the binding is destructured from breaks the hop
+      // itself, with the interface left untouched.
+      project.update_file(
+        "consumer.ts" as FilePath,
+        "import { Storage } from \"./lib\";\n" +
+          "interface Opts { storage?: number }\n" +
+          "function load(o: Opts) { const { storage } = o; storage!.sweep(); }\n"
+      );
+      expect(sweep_is_entry_point(project)).toBe(true);
+    });
+  });
+
 });

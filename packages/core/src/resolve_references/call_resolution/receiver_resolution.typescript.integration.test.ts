@@ -593,6 +593,30 @@ function run(base: Base): void {
     }
   });
 
+  it("reaches the implementation through a binding destructured from another destructured binding", async () => {
+    const { project, file } = await project_from_inline(`
+interface PersistenceStorage {
+  sweep(paths: Set<string>): void;
+}
+class FileSystemStorage implements PersistenceStorage {
+  sweep(paths: Set<string>): void {}
+}
+interface Inner {
+  storage: PersistenceStorage;
+}
+interface Options {
+  inner: Inner;
+}
+function load(options: Options): void {
+  const { inner } = options;
+  const { storage } = inner;
+  storage.sweep(new Set());
+}
+`);
+    const call_graph = project.get_call_graph();
+    assert_member_reachable(call_graph, "sweep", file);
+  });
+
   it("reaches the implementation through a renamed destructured binding", async () => {
     const { project, file } = await project_from_inline(`
 interface PersistenceStorage {

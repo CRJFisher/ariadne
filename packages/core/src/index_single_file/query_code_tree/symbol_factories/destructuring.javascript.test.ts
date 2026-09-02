@@ -31,6 +31,12 @@ describe("extract_destructured_binding", () => {
     ).toEqual({ source: "options", key: "storage" });
   });
 
+  it("returns undefined for the key half of a renamed binding", () => {
+    const pair = find_node_by_type(parse_js("const { storage: s } = options;"), "pair_pattern");
+    const key = pair?.childForFieldName("key");
+    expect(extract_destructured_binding(key!)).toBeUndefined();
+  });
+
   it("returns undefined for a nested object pattern", () => {
     const inner = find_node_by_type(
       parse_js("const { inner: { storage } } = options;"),
