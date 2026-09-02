@@ -828,7 +828,7 @@ describe("Method Call Resolution", () => {
   });
 
   describe("Polymorphic Interface Resolution", () => {
-    it("resolves an interface method call to all implementations", () => {
+    it("resolves an interface method call to the interface member and every implementation", () => {
       // interface Handler { process() }; HandlerA, HandlerB implements Handler;
       // run(h: Handler) { h.process() } fans out to both implementations.
       const handler_param_id = variable_symbol("h", MOCK_LOCATION);
@@ -986,7 +986,7 @@ describe("Method Call Resolution", () => {
       );
 
       expect([...unwrap(resolved)].sort()).toEqual(
-        [handler_a_process_id, handler_b_process_id].sort()
+        [interface_method_id, handler_a_process_id, handler_b_process_id].sort()
       );
     });
 

@@ -391,24 +391,37 @@ function build_call_reference(
         )
       : syntax_fallback;
 
-  // Multiple method resolutions indicate interface + implementations (polymorphic dispatch)
-  const is_interface_impl =
-    call_type === "method" && resolved_symbols.length > 1;
+  // method_lookup puts the member the call names first and its polymorphic
+  // expansion after, so the head fixes the reason every element carries: when
+  // an interface declares the head, the rest reach it by implementing it, and
+  // the interface to name is the one that declares the member. A class
+  // dispatch (base + overrides) has no interface head, so every element is
+  // direct.
+  const head_owner =
+    resolved_symbols.length > 1
+      ? definitions.get_member_owner(resolved_symbols[0])
+      : undefined;
+  const interface_id =
+    head_owner !== undefined &&
+    definitions.get(head_owner)?.kind === "interface"
+      ? head_owner
+      : undefined;
 
   const base = {
     location: ref.location,
     name: ref.name,
     scope_id: ref.scope_id,
     call_type,
-    resolutions: resolved_symbols.map((symbol_id) => ({
+    resolutions: resolved_symbols.map((symbol_id, index) => ({
       symbol_id,
       confidence: "certain" as const,
-      reason: is_interface_impl
-        ? ({
-            type: "interface_implementation" as const,
-            interface_id: "unknown" as SymbolId,
-          } as const)
-        : ({ type: "direct" as const } as const),
+      reason:
+        interface_id !== undefined && index > 0
+          ? ({
+              type: "interface_implementation" as const,
+              interface_id,
+            } as const)
+          : ({ type: "direct" as const } as const),
     })),
   };
 

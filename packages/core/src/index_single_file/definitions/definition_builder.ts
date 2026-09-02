@@ -175,9 +175,6 @@ export class DefinitionBuilder {
   // Public API for Language Configs
   // ============================================================================
 
-  /**
-   * Add a class definition
-   */
   add_class(definition: {
     symbol_id: SymbolId;
     name: SymbolName;
@@ -210,9 +207,6 @@ export class DefinitionBuilder {
     return this;
   }
 
-  /**
-   * Add a method to a class
-   */
   add_method_to_class(
     class_id: SymbolId,
     definition: {
@@ -265,9 +259,6 @@ export class DefinitionBuilder {
     return this;
   }
 
-  /**
-   * Add a constructor to a class
-   */
   add_constructor_to_class(
     class_id: SymbolId,
     definition: {
@@ -353,9 +344,6 @@ export class DefinitionBuilder {
     return undefined;
   }
 
-  /**
-   * Add a method to an enum (for Rust enums with impl blocks)
-   */
   add_method_to_enum(
     enum_id: SymbolId,
     definition: {
@@ -407,9 +395,6 @@ export class DefinitionBuilder {
   // All languages
   // ==========================================================================
 
-  /**
-   * Add a function definition
-   */
   add_function(
     definition: {
       symbol_id: SymbolId;
@@ -464,8 +449,6 @@ export class DefinitionBuilder {
   }
 
   /**
-   * Add an anonymous function (arrow function, lambda, closure)
-   *
    * Anonymous functions don't have a name in the source code, so we generate a synthetic
    * SymbolId based on their location and use "<anonymous>" as the display name.
    *
@@ -519,9 +502,6 @@ export class DefinitionBuilder {
     return this;
   }
 
-  /**
-   * Add a parameter to a callable (function/method/constructor)
-   */
   add_parameter_to_callable(
     callable_id: SymbolId,
     definition: {
@@ -590,9 +570,6 @@ export class DefinitionBuilder {
     return this;
   }
 
-  /**
-   * Add a variable definition
-   */
   add_variable(definition: {
     kind: "variable" | "constant";
     symbol_id: SymbolId;
@@ -608,6 +585,8 @@ export class DefinitionBuilder {
     collection_source?: SymbolName;
     collection_source_key?: SymbolName;
     initialized_from_call?: SymbolName;
+    destructured_from?: SymbolName;
+    destructured_key?: SymbolName;
   }): DefinitionBuilder {
     this.variables.set(definition.symbol_id, {
       kind: definition.kind,
@@ -624,13 +603,12 @@ export class DefinitionBuilder {
       collection_source: definition.collection_source,
       collection_source_key: definition.collection_source_key,
       initialized_from_call: definition.initialized_from_call,
+      destructured_from: definition.destructured_from,
+      destructured_key: definition.destructured_key,
     });
     return this;
   }
 
-  /**
-   * Add an import definition
-   */
   add_import(definition: {
     symbol_id: SymbolId;
     name: SymbolName;
@@ -659,9 +637,6 @@ export class DefinitionBuilder {
     return this;
   }
 
-  /**
-   * Add a property to a class
-   */
   add_property_to_class(
     class_id: SymbolId,
     definition: {
@@ -740,9 +715,6 @@ export class DefinitionBuilder {
   // All languages
   // ==========================================================================
 
-  /**
-   * Add an interface definition
-   */
   add_interface(definition: {
     symbol_id: SymbolId;
     name: SymbolName;
@@ -771,9 +743,6 @@ export class DefinitionBuilder {
     return this;
   }
 
-  /**
-   * Add a method signature to an interface
-   */
   add_method_signature_to_interface(
     interface_id: SymbolId,
     definition: {
@@ -806,9 +775,6 @@ export class DefinitionBuilder {
     return this;
   }
 
-  /**
-   * Add a property signature to an interface
-   */
   add_property_signature_to_interface(
     interface_id: SymbolId,
     definition: {
@@ -834,9 +800,6 @@ export class DefinitionBuilder {
     return this;
   }
 
-  /**
-   * Add a type alias definition
-   */
   add_type_alias(definition: {
     kind: "type" | "type_alias";
     symbol_id: SymbolId;
@@ -856,9 +819,6 @@ export class DefinitionBuilder {
     return this;
   }
 
-  /**
-   * Add an enum definition
-   */
   add_enum(definition: {
     symbol_id: SymbolId;
     name: SymbolName;
@@ -887,9 +847,6 @@ export class DefinitionBuilder {
     return this;
   }
 
-  /**
-   * Add an enum member
-   */
   add_enum_member(
     enum_id: SymbolId,
     definition: {
@@ -911,9 +868,6 @@ export class DefinitionBuilder {
     return this;
   }
 
-  /**
-   * Add a namespace definition
-   */
   add_namespace(definition: {
     symbol_id: SymbolId;
     name: SymbolName;
@@ -937,9 +891,6 @@ export class DefinitionBuilder {
     return this;
   }
 
-  /**
-   * Add a decorator to a target (class, method, or property)
-   */
   add_decorator_to_target(
     target_id: SymbolId,
     decorator: {

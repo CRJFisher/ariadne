@@ -2569,6 +2569,23 @@ const names = items.map(({id, name}) => name);`;
       expect(names).toEqual(["g", "h"]);
     });
 
+    it("records the source and key of a destructured declarator on the variable", () => {
+      const storage = Array.from(
+        index_js("const { storage } = options;").variables.values(),
+      ).find((v) => (v.name as string) === "storage");
+      expect({
+        destructured_from: storage!.destructured_from as string | undefined,
+        destructured_key: storage!.destructured_key as string | undefined,
+      }).toEqual({ destructured_from: "options", destructured_key: "storage" });
+    });
+
+    it("records no destructuring provenance for a destructured require binding", () => {
+      const names = Array.from(
+        index_js("const { readFile } = require(\"fs\");").variables.values(),
+      ).map((v) => v.name as string);
+      expect(names).toEqual([]);
+    });
+
     it("keeps the anonymous fallback for a genuinely anonymous IIFE", () => {
       const result = index_js("(function (p) { return p; })(1);");
       const iife = Array.from(result.functions.values()).find(

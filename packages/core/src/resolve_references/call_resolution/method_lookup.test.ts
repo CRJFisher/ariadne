@@ -207,7 +207,7 @@ describe("resolve_method_on_type", () => {
   });
 
   describe("Interface polymorphic resolution", () => {
-    it("resolves method to all implementations", () => {
+    it("resolves an interface method to the interface member and every implementation", () => {
       const interface_id = interface_symbol("Handler", MOCK_LOCATION);
       const class_a_id = class_symbol("HandlerA", { ...MOCK_LOCATION, start_line: 10 });
       const class_b_id = class_symbol("HandlerB", { ...MOCK_LOCATION, start_line: 20 });
@@ -316,7 +316,79 @@ describe("resolve_method_on_type", () => {
         context
       );
 
-      expect(unwrap(result)).toEqual([method_a_id, method_b_id]);
+      expect(unwrap(result)).toEqual([interface_method_id, method_a_id, method_b_id]);
+    });
+
+    it("names the interface member ahead of the sole implementation", () => {
+      const interface_id = interface_symbol("Handler", MOCK_LOCATION);
+      const class_a_id = class_symbol("HandlerA", { ...MOCK_LOCATION, start_line: 10 });
+      const method_a_id = method_symbol("process" as SymbolName, { ...MOCK_LOCATION, start_line: 12 });
+      const interface_method_id = method_symbol("process" as SymbolName, MOCK_LOCATION);
+
+      const interface_method_def: MethodDefinition = {
+        kind: "method",
+        symbol_id: interface_method_id,
+        name: "process" as SymbolName,
+        defining_scope_id: "scope:test.ts:Handler:1:0" as ScopeId,
+        location: MOCK_LOCATION,
+        parameters: [],
+        decorators: [],
+      };
+      const interface_def: InterfaceDefinition = {
+        kind: "interface",
+        symbol_id: interface_id,
+        name: "Handler" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        is_exported: false,
+        extends: [],
+        methods: [interface_method_def],
+        properties: [],
+      };
+      const method_a_def: MethodDefinition = {
+        kind: "method",
+        symbol_id: method_a_id,
+        name: "process" as SymbolName,
+        defining_scope_id: "scope:test.ts:HandlerA:10:0" as ScopeId,
+        location: { ...MOCK_LOCATION, start_line: 12 },
+        parameters: [],
+        body_scope_id: "scope:test.ts:HandlerA.process:12:2" as ScopeId,
+        decorators: [],
+      };
+      const class_a_def: ClassDefinition = {
+        kind: "class",
+        symbol_id: class_a_id,
+        name: "HandlerA" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 10 },
+        is_exported: false,
+        extends: ["Handler" as SymbolName],
+        methods: [method_a_def],
+        properties: [],
+        decorators: [],
+        constructors: [],
+      };
+
+      definitions.update_file(TEST_FILE, [
+        interface_def,
+        interface_method_def,
+        class_a_def,
+        method_a_def,
+      ]);
+      definitions["register_subtype"](interface_id, class_a_id);
+      types["resolved_type_members"] = new Map();
+      types["resolved_type_members"].set(
+        interface_id,
+        new Map([[("process" as SymbolName), interface_method_id]])
+      );
+
+      const result = resolve_method_on_type(
+        interface_id,
+        "process" as SymbolName,
+        context
+      );
+
+      expect(unwrap(result)).toEqual([interface_method_id, method_a_id]);
     });
 
     it("fails with polymorphic_no_implementations for an interface no class implements", () => {

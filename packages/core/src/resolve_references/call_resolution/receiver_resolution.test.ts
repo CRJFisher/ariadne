@@ -41,6 +41,8 @@ import type {
   PropertyDefinition,
   ImportDefinition,
   NamespaceDefinition,
+  VariableDefinition,
+  ParameterDefinition,
 } from "@ariadnejs/types";
 import {
   class_symbol,
@@ -1280,6 +1282,217 @@ describe("re-export chain dereferencing", () => {
       stage: "receiver_resolution",
       reason: "method_not_on_type",
       partial_info: { resolved_receiver_type: chain_import(0).symbol_id },
+    });
+  });
+});
+
+describe("destructured binding receiver typing", () => {
+  let scopes: ScopeRegistry;
+  let definitions: DefinitionRegistry;
+  let types: TypeRegistry;
+  let resolutions: ResolutionRegistry;
+  let imports: ImportGraph;
+  let context: ReceiverResolutionContext;
+
+  const OPTIONS_ID = "interface:test.ts:1:0:3:1:Options" as SymbolId;
+  const STORAGE_PROP_ID = "property:test.ts:2:2:2:30:storage" as SymbolId;
+  const STORAGE_IFACE_ID = "interface:test.ts:5:0:7:1:PersistenceStorage" as SymbolId;
+  const OPTIONS_PARAM_ID = "parameter:test.ts:10:0:10:20:options" as SymbolId;
+  const BINDING_ID = "variable:test.ts:11:8:11:15:storage" as SymbolId;
+
+  beforeEach(() => {
+    scopes = new ScopeRegistry();
+    definitions = new DefinitionRegistry();
+    types = new TypeRegistry();
+    resolutions = new ResolutionRegistry();
+    imports = new ImportGraph();
+    context = {
+      scopes,
+      definitions,
+      types,
+      resolutions,
+      imports,
+      ...make_export_chain_context(),
+    };
+
+    const scope_map = new Map();
+    scope_map.set(FILE_SCOPE_ID, {
+      id: FILE_SCOPE_ID,
+      type: "file",
+      location: { file_path: TEST_FILE, start_line: 0, start_column: 0, end_line: 100, end_column: 0 },
+      parent_id: null,
+      child_ids: [],
+    });
+    scopes.update_file(TEST_FILE, scope_map);
+  });
+
+  /** Register the Options/PersistenceStorage types and the `options` parameter. */
+  function register_types(binding: Partial<VariableDefinition>): void {
+    definitions.update_file(TEST_FILE, [
+      {
+        kind: "interface",
+        symbol_id: OPTIONS_ID,
+        name: "Options" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 1 },
+        is_exported: false,
+        extends: [],
+        methods: [],
+        properties: [
+          {
+            kind: "property",
+            symbol_id: STORAGE_PROP_ID,
+            name: "storage" as SymbolName,
+            defining_scope_id: FILE_SCOPE_ID,
+            location: { ...MOCK_LOCATION, start_line: 2 },
+            type: "PersistenceStorage" as SymbolName,
+            decorators: [],
+          },
+        ],
+      },
+      {
+        kind: "interface",
+        symbol_id: STORAGE_IFACE_ID,
+        name: "PersistenceStorage" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 5 },
+        is_exported: false,
+        extends: [],
+        methods: [],
+        properties: [],
+      },
+      {
+        kind: "parameter",
+        symbol_id: OPTIONS_PARAM_ID,
+        name: "options" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 10 },
+        type: "Options" as SymbolName,
+      } as ParameterDefinition,
+      {
+        kind: "variable",
+        symbol_id: BINDING_ID,
+        name: (binding.name ?? "storage") as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 11 },
+        is_exported: false,
+        ...binding,
+      } as VariableDefinition,
+    ]);
+
+    const scope_resolutions = new Map<SymbolName, SymbolId>();
+    scope_resolutions.set("options" as SymbolName, OPTIONS_PARAM_ID);
+    scope_resolutions.set("Options" as SymbolName, OPTIONS_ID);
+    scope_resolutions.set("PersistenceStorage" as SymbolName, STORAGE_IFACE_ID);
+    scope_resolutions.set((binding.name ?? "storage") as SymbolName, BINDING_ID);
+    set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
+  }
+
+  it("types a shorthand destructured binding as the declared type of the property it unpacks", () => {
+    register_types({
+      name: "storage" as SymbolName,
+      destructured_from: "options" as SymbolName,
+      destructured_key: "storage" as SymbolName,
+    });
+
+    const result = resolve_receiver_type(
+      {
+        base: { type: "identifier", value: "storage" as SymbolName },
+        chain: [],
+        method_name: "sweep" as SymbolName,
+        scope_id: FILE_SCOPE_ID,
+      },
+      context
+    );
+
+    expect(is_ok(result) && result.value).toBe(STORAGE_IFACE_ID);
+  });
+
+  it("types a renamed destructured binding from the written key, not the bound name", () => {
+    register_types({
+      name: "store" as SymbolName,
+      destructured_from: "options" as SymbolName,
+      destructured_key: "storage" as SymbolName,
+    });
+
+    const result = resolve_receiver_type(
+      {
+        base: { type: "identifier", value: "store" as SymbolName },
+        chain: [],
+        method_name: "sweep" as SymbolName,
+        scope_id: FILE_SCOPE_ID,
+      },
+      context
+    );
+
+    expect(is_ok(result) && result.value).toBe(STORAGE_IFACE_ID);
+  });
+
+  it("fails with receiver_type_unknown when the destructured source has no known type", () => {
+    definitions.update_file(TEST_FILE, [
+      {
+        kind: "variable",
+        symbol_id: BINDING_ID,
+        name: "storage" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 11 },
+        is_exported: false,
+        destructured_from: "missing" as SymbolName,
+        destructured_key: "storage" as SymbolName,
+      } as VariableDefinition,
+    ]);
+    const scope_resolutions = new Map<SymbolName, SymbolId>();
+    scope_resolutions.set("storage" as SymbolName, BINDING_ID);
+    set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
+
+    const result = resolve_receiver_type(
+      {
+        base: { type: "identifier", value: "storage" as SymbolName },
+        chain: [],
+        method_name: "sweep" as SymbolName,
+        scope_id: FILE_SCOPE_ID,
+      },
+      context
+    );
+
+    expect(is_err(result) && result.error).toEqual({
+      stage: "type_inference",
+      reason: "receiver_type_unknown",
+      partial_info: { last_known_scope: FILE_SCOPE_ID },
+    });
+  });
+
+  it("stops rather than looping when a binding destructures itself", () => {
+    definitions.update_file(TEST_FILE, [
+      {
+        kind: "variable",
+        symbol_id: BINDING_ID,
+        name: "storage" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 11 },
+        is_exported: false,
+        destructured_from: "storage" as SymbolName,
+        destructured_key: "storage" as SymbolName,
+      } as VariableDefinition,
+    ]);
+    const scope_resolutions = new Map<SymbolName, SymbolId>();
+    scope_resolutions.set("storage" as SymbolName, BINDING_ID);
+    set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
+
+    const result = resolve_receiver_type(
+      {
+        base: { type: "identifier", value: "storage" as SymbolName },
+        chain: [],
+        method_name: "sweep" as SymbolName,
+        scope_id: FILE_SCOPE_ID,
+      },
+      context
+    );
+
+    expect(is_err(result) && result.error).toEqual({
+      stage: "type_inference",
+      reason: "receiver_type_unknown",
+      partial_info: { last_known_scope: FILE_SCOPE_ID },
     });
   });
 });
