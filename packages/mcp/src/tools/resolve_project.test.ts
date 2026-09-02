@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { resolve_project } from "./resolve_project";
 import type { ProjectManager } from "../project_manager";
+import type { FilePath } from "@ariadnejs/types";
 import { Project } from "@ariadnejs/core";
 
 import { load_project } from "@ariadnejs/core";
@@ -12,6 +13,28 @@ vi.mock("@ariadnejs/core", async () => {
     load_project: vi.fn(),
   };
 });
+
+/**
+ * What a load reports beside the project itself. Every field is required, so a
+ * mock names them once here rather than drifting per test.
+ */
+const EMPTY_LOAD_RESULT = {
+  dropped_files: new Set<FilePath>(),
+  drop_reasons: new Map<FilePath, string>(),
+  discovered_files: new Set<FilePath>(),
+  gitignore_patterns: [] as readonly string[],
+  cache_hits: 0,
+  cache_misses: 0,
+  index_dispatch: {
+    worker_width: 0,
+    boot_ms: 0,
+    boot_cpu_ms: 0,
+    worker_pass_ms: 0,
+    redispatched_inputs: 0,
+    worker_restarts: 0,
+    main_deserialize_ms: 0,
+  },
+};
 
 describe("resolve_project", () => {
   let mock_project_manager: Pick<ProjectManager, "get_project">;
@@ -48,10 +71,7 @@ describe("resolve_project", () => {
     const scoped_project = {} as Project;
     vi.mocked(load_project).mockResolvedValue({
       project: scoped_project,
-      dropped_files: new Set(),
-      drop_reasons: new Map(),
-      discovered_files: new Set(),
-      gitignore_patterns: [],
+      ...EMPTY_LOAD_RESULT,
     });
 
     const result = await resolve_project(
@@ -73,10 +93,7 @@ describe("resolve_project", () => {
     const scoped_project = {} as Project;
     vi.mocked(load_project).mockResolvedValue({
       project: scoped_project,
-      dropped_files: new Set(),
-      drop_reasons: new Map(),
-      discovered_files: new Set(),
-      gitignore_patterns: [],
+      ...EMPTY_LOAD_RESULT,
     });
 
     const result = await resolve_project(
@@ -152,10 +169,7 @@ describe("resolve_project", () => {
     const scoped_project = {} as Project;
     vi.mocked(load_project).mockResolvedValue({
       project: scoped_project,
-      dropped_files: new Set(),
-      drop_reasons: new Map(),
-      discovered_files: new Set(),
-      gitignore_patterns: [],
+      ...EMPTY_LOAD_RESULT,
     });
 
     const result = await resolve_project(
