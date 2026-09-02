@@ -3655,6 +3655,59 @@ const result = items.map((x) =>
       ).toEqual(["c", "d", "r"]);
     });
 
+    function destructuring_provenance(
+      code: string,
+      name: string,
+    ): { destructured_from: string | undefined; destructured_key: string | undefined } {
+      const variable = Array.from(index_ts(code).variables.values()).find(
+        (v) => (v.name as string) === name,
+      );
+      return {
+        destructured_from: variable!.destructured_from as string | undefined,
+        destructured_key: variable!.destructured_key as string | undefined,
+      };
+    }
+
+    it("records the source and key of a destructured declarator on the variable", () => {
+      expect(
+        destructuring_provenance("const { storage } = options;", "storage"),
+      ).toEqual({ destructured_from: "options", destructured_key: "storage" });
+    });
+
+    it("records provenance for each binding of a multi-name destructured declarator", () => {
+      expect(
+        destructuring_provenance(
+          "const { project_path, storage } = options;",
+          "storage",
+        ),
+      ).toEqual({ destructured_from: "options", destructured_key: "storage" });
+    });
+
+    it("records the source key rather than the local name when the binding is renamed", () => {
+      expect(
+        destructuring_provenance("const { storage: s } = options;", "s"),
+      ).toEqual({ destructured_from: "options", destructured_key: "storage" });
+    });
+
+    it("records no destructuring provenance for a nested pattern", () => {
+      expect(
+        destructuring_provenance("const { inner: { storage } } = options;", "storage"),
+      ).toEqual({ destructured_from: undefined, destructured_key: undefined });
+    });
+
+    it("records no destructuring provenance when the initializer is a call", () => {
+      expect(
+        destructuring_provenance("const { storage } = make();", "storage"),
+      ).toEqual({ destructured_from: undefined, destructured_key: undefined });
+    });
+
+    // A default-valued binding parses as object_assignment_pattern, which no
+    // `.scm` query matches, so the name is never indexed at all — a capture
+    // gap recorded by TASK-395, not a provenance decision.
+    it("binds no name at all for a default-valued destructured binding", () => {
+      expect(variable_names("const { storage = fb } = options;")).toEqual([]);
+    });
+
     it("binds each identifier of a destructured parameter by name", () => {
       expect(variable_names("function f({ g }, [h]) { return g + h; }")).toEqual([
         "g",

@@ -263,6 +263,29 @@ export interface VariableDefinition extends Definition {
    */
   readonly collection_source_key?: SymbolName;
   readonly initialized_from_call?: SymbolName; // Name of the function called in initializer (e.g. "getHandler" in "const h = getHandler()")
+  /**
+   * @language javascript,typescript
+   * The identifier an object-destructured binding unpacks: "options" in
+   * `const { storage } = options`. Populated only when the declarator's
+   * initializer is a bare identifier — a member access, a call or an `await`
+   * expression names no binding whose members carry the property's type, so
+   * those leave it absent. Absent too for an array or rest pattern, whose
+   * bindings are keyed by position rather than by name, and for any
+   * destructuring that is not a variable declarator's own pattern: a
+   * parameter, a `for…of` head, a nested pattern, a bare assignment.
+   *
+   * A receiver typed through this reaches the type a written
+   * `options.storage` would: the declared type of `destructured_key` on the
+   * source's type.
+   */
+  readonly destructured_from?: SymbolName;
+  /**
+   * @language javascript,typescript
+   * The property key read on `destructured_from`, written out for a shorthand
+   * binding as well as an aliased one: "storage" for both `{ storage }` and
+   * `{ storage: s }`. Present exactly when `destructured_from` is.
+   */
+  readonly destructured_key?: SymbolName;
 }
 
 /**

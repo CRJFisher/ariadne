@@ -21,6 +21,7 @@ import {
   extract_call_initializer_name,
   extract_accessor_kind,
 } from "../symbol_factories/symbol_factories.javascript";
+import { extract_destructured_binding } from "../symbol_factories/destructuring.javascript";
 import {
   consume_documentation,
 } from "../symbol_factories/documentation_state.javascript";
@@ -116,6 +117,7 @@ export function handle_ts_definition_variable(
   const collection_source = extract_collection_source(capture.node);
   const collection_source_key = extract_collection_source_key(capture.node);
   const initialized_from_call = extract_call_initializer_name(capture.node);
+  const destructured = extract_destructured_binding(capture.node);
 
   builder.add_variable({
     kind: is_const ? "constant" : "variable",
@@ -131,6 +133,8 @@ export function handle_ts_definition_variable(
     collection_source,
     collection_source_key,
     initialized_from_call,
+    destructured_from: destructured?.source,
+    destructured_key: destructured?.key,
   });
 }
 

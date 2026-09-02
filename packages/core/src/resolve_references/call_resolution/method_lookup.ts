@@ -173,7 +173,13 @@ export function resolve_method_on_type(
         partial_info: { resolved_receiver_type: receiver_type },
       });
     }
-    return ok(impls);
+    // The interface member the call names leads the list; the implementations
+    // that can actually run follow it. A consumer asking who calls
+    // `IDisposable.dispose` is asking a real question, so the member keeps its
+    // edge, while entry-point detection still reaches every implementation.
+    // This adds exactly one attribution per interface dispatch; the
+    // implementation fan-out is unchanged.
+    return ok([method_symbol, ...impls]);
   }
 
   // Fan a class call out to every subtype override so all possible runtime
@@ -197,8 +203,9 @@ export function resolve_method_on_type(
  * across transitive inheritance: if A implements I and B extends A, a call
  * to I.method() resolves to both A.method() and B.method() (where overridden).
  *
- * Interfaces are abstract, so only implementations are returned — there is no
- * base method to include.
+ * Only implementations are returned; the caller prepends the interface member
+ * the call names, so the member itself is attributed once regardless of how
+ * many implementations exist.
  */
 function resolve_polymorphic_method(
   interface_type_id: SymbolId,

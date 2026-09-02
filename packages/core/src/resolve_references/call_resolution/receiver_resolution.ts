@@ -30,6 +30,7 @@ import type {
   SelfReferenceKeyword,
   ChainCallArguments,
   MethodDefinition,
+  VariableDefinition,
   AnyDefinition,
   Result,
   ResolutionFailure,
@@ -232,7 +233,8 @@ function resolve_keyword_base(
 function resolve_identifier_base(
   identifier: SymbolName,
   scope_id: ScopeId,
-  context: ReceiverResolutionContext
+  context: ReceiverResolutionContext,
+  visited?: Set<SymbolId>
 ): Result<SymbolId, ResolutionFailure> {
   const symbol_id = context.resolutions.resolve(scope_id, identifier);
   if (!symbol_id) {
@@ -281,6 +283,18 @@ function resolve_identifier_base(
       def.type
     ) {
       type_id = context.resolutions.resolve(def.defining_scope_id, def.type);
+    } else if (
+      (def.kind === "variable" || def.kind === "constant") &&
+      def.destructured_from !== undefined &&
+      def.destructured_key !== undefined
+    ) {
+      type_id = resolve_destructured_property_type(
+        def,
+        def.destructured_from,
+        def.destructured_key,
+        context,
+        visited ?? new Set()
+      );
     }
   }
 
@@ -511,6 +525,53 @@ function walk_property_chain(
   }
 
   return ok(current_type);
+}
+
+/**
+ * Resolve a destructured binding to the type of the property it unpacks:
+ * `const { storage } = options` types `storage` as whatever the source's
+ * type declares for `storage`.
+ *
+ * The source is resolved as a receiver in its own right, so a chain of
+ * destructurings resolves one hop at a time by the same member walk a written
+ * `options.storage` takes. `visited` holds the bindings already on that
+ * chain, so a binding that destructures itself — directly or mutually — stops
+ * rather than recurring.
+ *
+ * Returns null when the source has no known type or carries no such member:
+ * the receiver that failed is the binding, so the caller's own
+ * `receiver_type_unknown` is the honest failure and is left in place.
+ */
+function resolve_destructured_property_type(
+  binding: VariableDefinition,
+  source: SymbolName,
+  key: SymbolName,
+  context: ReceiverResolutionContext,
+  visited: Set<SymbolId>
+): SymbolId | null {
+  if (visited.has(binding.symbol_id)) {
+    return null;
+  }
+  visited.add(binding.symbol_id);
+
+  const source_type = resolve_identifier_base(
+    source,
+    binding.defining_scope_id,
+    context,
+    visited
+  );
+  if (!source_type.ok) {
+    return null;
+  }
+
+  const property_type = walk_property_chain(
+    source_type.value,
+    [key],
+    undefined,
+    binding.defining_scope_id,
+    context
+  );
+  return property_type.ok ? property_type.value : null;
 }
 
 // @language typescript

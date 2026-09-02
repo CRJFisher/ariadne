@@ -477,3 +477,162 @@ function run(injector: Injector): void {
     expect(handle_call?.resolution_failure?.reason).toBe("member_type_unknown");
   });
 });
+
+describe("TypeScript interface-typed destructured binding receivers (TASK-389)", () => {
+  /** The SymbolId of the given method's resolution targets at its call site. */
+  function resolutions_of(
+    call_graph: CallGraph,
+    caller: string,
+    call_name: string
+  ): string[] {
+    const caller_node = Array.from(call_graph.nodes.values()).find(
+      (n) => n.name === (caller as SymbolName)
+    );
+    const call = caller_node?.enclosed_calls.find(
+      (c) => c.name === (call_name as SymbolName)
+    );
+    return (call?.resolutions ?? []).map((r) => r.symbol_id as string);
+  }
+
+  it("reaches the implementation through a destructured interface-typed option binding", async () => {
+    const { project, file } = await project_from_inline(`
+interface PersistenceStorage {
+  sweep(paths: Set<string>): void;
+}
+class FileSystemStorage implements PersistenceStorage {
+  sweep(paths: Set<string>): void {}
+}
+interface Options {
+  storage?: PersistenceStorage;
+}
+function load(options: Options): void {
+  const { storage } = options;
+  storage!.sweep(new Set());
+}
+`);
+    const call_graph = project.get_call_graph();
+    assert_member_reachable(call_graph, "sweep", file);
+
+    const impl_id = method_symbol_id(call_graph, "sweep", file);
+    expect(resolutions_of(call_graph, "load", "sweep")).toContain(impl_id);
+  });
+
+  it("attributes the dispatch to the interface member as well as the implementation", async () => {
+    const { project, file } = await project_from_inline(`
+interface PersistenceStorage {
+  sweep(paths: Set<string>): void;
+}
+class FileSystemStorage implements PersistenceStorage {
+  sweep(paths: Set<string>): void {}
+}
+interface Options {
+  storage?: PersistenceStorage;
+}
+function load(options: Options): void {
+  const { storage } = options;
+  storage!.sweep(new Set());
+}
+`);
+    const call_graph = project.get_call_graph();
+
+    const index = project.get_index_single_file(file);
+    const interface_member_id = Array.from(index!.interfaces.values())
+      .find((i) => (i.name as string) === "PersistenceStorage")
+      ?.methods.find((m) => (m.name as string) === "sweep")?.symbol_id as string;
+    const impl_id = method_symbol_id(call_graph, "sweep", file);
+
+    expect(resolutions_of(call_graph, "load", "sweep").sort()).toEqual(
+      [interface_member_id, impl_id].sort()
+    );
+    // The interface member gains an incoming edge without becoming a node.
+    expect(call_graph.nodes.has(interface_member_id as SymbolName as never)).toBe(false);
+
+    // The head is the interface member (direct); the implementation reaches it
+    // by implementing the interface, named as its declaring interface.
+    const load_node = Array.from(call_graph.nodes.values()).find(
+      (n) => n.name === ("load" as SymbolName)
+    );
+    const sweep_call = load_node?.enclosed_calls.find(
+      (c) => c.name === ("sweep" as SymbolName)
+    );
+    const interface_type_id = Array.from(
+      project.get_index_single_file(file)!.interfaces.values()
+    ).find((i) => (i.name as string) === "PersistenceStorage")!.symbol_id;
+    const by_id = new Map(
+      (sweep_call?.resolutions ?? []).map((r) => [r.symbol_id as string, r])
+    );
+    expect(by_id.get(interface_member_id)?.reason).toEqual({ type: "direct" });
+    expect(by_id.get(impl_id!)?.reason).toEqual({
+      type: "interface_implementation",
+      interface_id: interface_type_id,
+    });
+  });
+
+  it("attributes a class dispatch to its base and overrides, each of them direct", async () => {
+    const { project, file } = await project_from_inline(`
+class Base {
+  handle(): void {}
+}
+class Derived extends Base {
+  handle(): void {}
+}
+function run(base: Base): void {
+  base.handle();
+}
+`);
+    const call_graph = project.get_call_graph();
+    const run_node = Array.from(call_graph.nodes.values()).find(
+      (n) => n.name === ("run" as SymbolName)
+    );
+    const handle_call = run_node?.enclosed_calls.find(
+      (c) => c.name === ("handle" as SymbolName)
+    );
+    expect(handle_call?.resolutions.length).toBe(2);
+    for (const resolution of handle_call?.resolutions ?? []) {
+      expect(resolution.reason).toEqual({ type: "direct" });
+    }
+  });
+
+  it("reaches the implementation through a renamed destructured binding", async () => {
+    const { project, file } = await project_from_inline(`
+interface PersistenceStorage {
+  sweep(paths: Set<string>): void;
+}
+class FileSystemStorage implements PersistenceStorage {
+  sweep(paths: Set<string>): void {}
+}
+interface Options {
+  storage?: PersistenceStorage;
+}
+function load(options: Options): void {
+  const { storage: store } = options;
+  store!.sweep(new Set());
+}
+`);
+    const call_graph = project.get_call_graph();
+    assert_member_reachable(call_graph, "sweep", file);
+  });
+
+  it("leaves the implementation an entry point when the destructuring source is a call", async () => {
+    const { project, file } = await project_from_inline(`
+interface PersistenceStorage {
+  sweep(paths: Set<string>): void;
+}
+class FileSystemStorage implements PersistenceStorage {
+  sweep(paths: Set<string>): void {}
+}
+interface Options {
+  storage?: PersistenceStorage;
+}
+function make(): Options {
+  return { storage: new FileSystemStorage() };
+}
+function load(): void {
+  const { storage } = make();
+  storage!.sweep(new Set());
+}
+`);
+    const call_graph = project.get_call_graph();
+    expect(entry_point_for(call_graph, "sweep", file)).toBeDefined();
+  });
+});
