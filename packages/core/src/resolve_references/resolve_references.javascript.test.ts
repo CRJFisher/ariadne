@@ -661,6 +661,80 @@ export function build(fields) {
     });
   });
 
+  describe("Named functions assigned onto an object in the same file", () => {
+    // express `lib/application.js`: `app.engine = function engine(...)` and
+    // `app.set = function set(...)` are reachable through `app`, and each call
+    // resolves to the named definition — never to a location-keyed twin.
+    const FIXTURE = path.join(
+      __dirname,
+      "..",
+      "..",
+      "tests",
+      "fixtures",
+      "javascript",
+      "code",
+      "integration",
+      "express_application.js"
+    );
+
+    it("resolves every call through app to the call-graph node the assignment defined", async () => {
+      const source = fs.readFileSync(FIXTURE, "utf-8");
+      const { project, temp_dir, file_paths } = await setup_project({
+        "application.js": source,
+      });
+      temp_dirs.push(temp_dir);
+      const file = file_paths["application.js"];
+      const cg = project.get_call_graph();
+      const calls = project.resolutions
+        .get_calls_for_file(file)
+        .filter((call) => !call.is_callback_invocation);
+
+      // `new Error` is a runtime global and `view(options)` calls through a
+      // local variable; the four `app.*` calls are the ones this step is about.
+      expect(
+        calls.map((call) => [call.location.start_line, call.name])
+      ).toEqual([
+        [15, "Error"],
+        [32, "view"],
+        [35, "init"],
+        [36, "set"],
+        [37, "engine"],
+        [38, "render"],
+      ]);
+      expect(calls[0].resolution_failure?.reason).toEqual("name_not_in_scope");
+
+      /** The call graph holds a node only for a callable the definition store carries. */
+      const node_at = (start_line: number) =>
+        [...cg.nodes.values()].find(
+          (n) =>
+            n.location.file_path === file && n.location.start_line === start_line
+        );
+      const line_of = (needle: string) =>
+        source.split("\n").findIndex((l) => l.includes(needle)) + 1;
+      const resolutions_at = (start_line: number) =>
+        calls
+          .find((call) => call.location.start_line === start_line)
+          ?.resolutions.map((r) => r.symbol_id);
+
+      // Each call names the definition the assignment minted — asserted as the
+      // whole SymbolId, so a location-keyed twin or a phantom id fails here.
+      for (const [call_line, assignment] of [
+        [35, "app.init = function init("],
+        [36, "app.set = function set("],
+        [37, "app.engine = function engine("],
+        [38, "app.render = function ("],
+      ] as const) {
+        const target = node_at(line_of(assignment));
+        expect(target).toBeDefined();
+        expect(resolutions_at(call_line)).toEqual([target?.symbol_id]);
+      }
+
+      expect(is_entry_point(cg, "engine", file)).toEqual(false);
+      expect(is_entry_point(cg, "set", file)).toEqual(false);
+      expect(is_entry_point(cg, "init", file)).toEqual(false);
+    });
+  });
+
   describe("Value-position callables", () => {
     const ROUTE_FILES = {
       "user.js": [

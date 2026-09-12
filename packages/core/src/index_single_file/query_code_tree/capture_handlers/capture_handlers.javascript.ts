@@ -33,12 +33,14 @@ import {
   extract_default_value,
   extract_extends,
   detect_callback_context,
-  detect_function_collection,
-  detect_member_assignment,
   extract_collection_source,
-  extract_collection_source_key,
   extract_call_initializer_name,
 } from "../symbol_factories/symbol_factories.javascript";
+import {
+  detect_function_collection,
+  detect_member_assignment,
+  extract_collection_source_key,
+} from "../symbol_factories/function_collection.javascript";
 import { extract_destructured_binding } from "../symbol_factories/destructuring.javascript";
 import {
   extract_import_path,

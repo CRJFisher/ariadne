@@ -238,6 +238,75 @@
       },
       "body_scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:7:17:11:1"
     },
+    "function:<fixtures>/javascript/code/classes/prototype_methods.js:14:27:17:1:<anonymous>": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:14:27:17:1:<anonymous>",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 14,
+        "start_column": 27,
+        "end_line": 17,
+        "end_column": 1
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:14:35:17:1",
+      "callback_context": {
+        "is_callback": false,
+        "receiver_is_external": null,
+        "receiver_location": null
+      }
+    },
+    "function:<fixtures>/javascript/code/classes/prototype_methods.js:19:26:22:1:<anonymous>": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:19:26:22:1:<anonymous>",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 19,
+        "start_column": 26,
+        "end_line": 22,
+        "end_column": 1
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:19:34:22:1",
+      "callback_context": {
+        "is_callback": false,
+        "receiver_is_external": null,
+        "receiver_location": null
+      }
+    },
+    "function:<fixtures>/javascript/code/classes/prototype_methods.js:24:29:26:1:<anonymous>": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:24:29:26:1:<anonymous>",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 24,
+        "start_column": 29,
+        "end_line": 26,
+        "end_column": 1
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:24:37:26:1",
+      "callback_context": {
+        "is_callback": false,
+        "receiver_is_external": null,
+        "receiver_location": null
+      }
+    },
     "function:<fixtures>/javascript/code/classes/prototype_methods.js:29:10:29:12:Car": {
       "kind": "function",
       "symbol_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:29:10:29:12:Car",
@@ -336,6 +405,52 @@
         ]
       },
       "body_scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:29:13:32:1"
+    },
+    "function:<fixtures>/javascript/code/classes/prototype_methods.js:39:22:41:1:<anonymous>": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:39:22:41:1:<anonymous>",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 39,
+        "start_column": 22,
+        "end_line": 41,
+        "end_column": 1
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:39:30:41:1",
+      "callback_context": {
+        "is_callback": false,
+        "receiver_is_external": null,
+        "receiver_location": null
+      }
+    },
+    "function:<fixtures>/javascript/code/classes/prototype_methods.js:43:26:45:1:<anonymous>": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:43:26:45:1:<anonymous>",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 43,
+        "start_column": 26,
+        "end_line": 45,
+        "end_column": 1
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:43:34:45:1",
+      "callback_context": {
+        "is_callback": false,
+        "receiver_is_external": null,
+        "receiver_location": null
+      }
     },
     "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:10:58:20:testVehicle": {
       "kind": "function",
