@@ -513,6 +513,106 @@ fn compute_len(items: &[u8]) -> usize {
     });
   });
 
+  describe("same-file field and method sharing a name", () => {
+    it("holds the method under the name in the member index and the field as an owned member, so the call resolves to the method", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "job.rs": `struct Job { run: bool }
+impl Job {
+    fn run(&self) -> bool { self.run }
+}
+impl Job {
+    fn stop(&self) {}
+}
+fn main() {
+    let job = Job { run: true };
+    job.run();
+    job.stop();
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const job = project.definitions
+        .get_definitions_by_name("Job" as SymbolName)
+        .find((def) => def.kind === "class");
+      if (!job || job.kind !== "class") {
+        throw new Error("the fixture declares struct Job");
+      }
+      const member_of = (name: string) => {
+        const method = job.methods.find((m) => m.name === (name as SymbolName));
+        if (!method) {
+          throw new Error(`the fixture declares fn ${name}`);
+        }
+        return method.symbol_id;
+      };
+      const field = job.properties.find((property) => property.name === ("run" as SymbolName));
+      if (!field) {
+        throw new Error("the fixture declares field run");
+      }
+
+      expect([
+        ...(project.definitions.get_member_index().get(job.symbol_id) ?? []),
+      ]).toEqual([
+        ["run", member_of("run")],
+        ["stop", member_of("stop")],
+      ]);
+      expect(project.definitions.get_member_owner(field.symbol_id)).toBe(job.symbol_id);
+
+      expect(
+        project.resolutions
+          .get_calls_for_file(file_paths["job.rs"])
+          .map((call) => [
+            call.location.start_line,
+            call.name,
+            call.resolutions.map((r) => r.symbol_id),
+          ])
+      ).toEqual([
+        [9, "Job", [job.symbol_id]],
+        [10, "run", [member_of("run")]],
+        [11, "stop", [member_of("stop")]],
+      ]);
+    });
+
+    it("walks a property chain through the field, so a call on the field's type still resolves", async () => {
+      // The accessor-shadows-field shape: the call position needs `fn data`,
+      // and the hop before a call needs the field, which is what carries a type.
+      const { project, temp_dir, file_paths } = await setup_project({
+        "buf.rs": `struct Inner { }
+impl Inner {
+    fn ping(&self) {}
+}
+struct Buf { data: Inner }
+impl Buf {
+    fn data(&self) -> &Inner { &self.data }
+    fn go(&self) { self.data.ping(); }
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const inner = project.definitions
+        .get_definitions_by_name("Inner" as SymbolName)
+        .find((def) => def.kind === "class");
+      if (!inner || inner.kind !== "class") {
+        throw new Error("the fixture declares struct Inner");
+      }
+      const ping = inner.methods.find((m) => m.name === ("ping" as SymbolName));
+      if (!ping) {
+        throw new Error("the fixture declares fn ping");
+      }
+
+      expect(
+        project.resolutions
+          .get_calls_for_file(file_paths["buf.rs"])
+          .map((call) => [
+            call.location.start_line,
+            call.name,
+            call.resolutions.map((r) => r.symbol_id),
+          ])
+      ).toEqual([[8, "ping", [ping.symbol_id]]]);
+    });
+  });
+
   describe("cross-file super::super import", () => {
     it("resolves a call through a use super::super:: import two module levels up", async () => {
       const { project, temp_dir, file_paths } = await setup_project({
