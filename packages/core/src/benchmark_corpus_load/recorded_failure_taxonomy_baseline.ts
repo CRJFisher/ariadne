@@ -84,6 +84,8 @@ export const RECORDED_FAILURE_TAXONOMY_BASELINE: RecordedFailureTaxonomyBaseline
   // The tree at 279221d4 carrying this step's own change, which adds the
   // taxonomy to the harness and closes one structurally open resolver exit no
   // producer takes; the fingerprint of every row is what 279221d4 reports.
+  // Landed as 8ed82229, "emit a ResolutionFailure for every call reference the
+  // resolver drops".
   ariadne_commit: "279221d4",
   machine: "Darwin 24.6.0 x64",
   cpu_count: 6,
