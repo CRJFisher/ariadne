@@ -239,7 +239,7 @@ def run():
       ).toEqual(true);
     });
 
-    it("does not resolve an underscore-private member accessed through a namespace import", async () => {
+    it("resolves an underscore-private member accessed through a namespace import to the module-scope definition", async () => {
       const { project, temp_dir, file_paths } = await setup_project({
         "_lib.py": LIB,
         "namespace_app.py": `import _lib as ns
@@ -252,10 +252,12 @@ def run():
 
       const call_graph = project.get_call_graph();
 
-      // _make_block is not reached via the namespace member access.
+      // Python has no export keyword: `ns._make_block` is a real call, and the
+      // module member lookup falls back to the module's own top-level
+      // definition when the underscore name is absent from its export surface.
       expect(
         is_entry_point(call_graph, "_make_block", file_paths["_lib.py"])
-      ).toEqual(true);
+      ).toEqual(false);
 
       const run_node = find_caller_node(
         call_graph,
@@ -265,14 +267,11 @@ def run():
       const call = run_node!.enclosed_calls.find(
         (c) => c.name === ("_make_block" as SymbolName)
       );
-      const resolved_to_private = (call?.resolutions ?? []).some((r) => {
+      const targets = (call?.resolutions ?? []).map((r) => {
         const target = call_graph.nodes.get(r.symbol_id);
-        return (
-          target?.location.file_path === file_paths["_lib.py"] &&
-          target?.name === ("_make_block" as SymbolName)
-        );
+        return `${target?.name}@${path.basename(target?.location.file_path ?? "")}`;
       });
-      expect(resolved_to_private).toEqual(false);
+      expect(targets).toEqual(["_make_block@_lib.py"]);
     });
 
     it("binds an aliased underscore import under its alias and resolves the call to the original definition", async () => {
@@ -885,5 +884,315 @@ def run():
       "one_only",
       file_paths["one.py"]
     );
+  });
+});
+
+/**
+ * Python has no block scoping, so an import written under `if`, `try`/`except`
+ * or `with` binds in the enclosing module — and a function-local import in the
+ * function — exactly as the unguarded form does, and the calls through those
+ * bindings resolve.
+ */
+describe("Python guarded and function-local imports", () => {
+  const FIXTURES = path.join(__dirname, "..", "..", "tests", "fixtures", "python", "code", "integration");
+
+  it("binds guarded and function-local imports in the enclosing scope so calls through them resolve", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "guarded_base.py": fs.readFileSync(path.join(FIXTURES, "guarded_base.py"), "utf-8"),
+      "guarded_imports.py": fs.readFileSync(path.join(FIXTURES, "guarded_imports.py"), "utf-8"),
+    });
+    temp_dirs.push(temp_dir);
+    const file = file_paths["guarded_imports.py"];
+
+    // The guard clauses keep their block scopes — that is what holds two
+    // branches' bindings apart — and the imports they make are layered into the
+    // enclosing module or function scope on top.
+    const scope_types = [...project.get_index_single_file(file)!.scopes.values()]
+      .map((scope) => scope.type)
+      .sort();
+    // One per guard clause: if, elif, else, try, except, finally, with.
+    expect(scope_types).toEqual([
+      "block",
+      "block",
+      "block",
+      "block",
+      "block",
+      "block",
+      "block",
+      "function",
+      "module",
+    ]);
+
+    const calls = project.resolutions
+      .get_calls_for_file(file)
+      .map((call) => [
+        call.location.start_line,
+        call.name,
+        call.resolutions
+          .map((r) => {
+            const parts = r.symbol_id.split(":");
+            return `${parts[0]}:${path.basename(parts[1])}:${parts[parts.length - 1]}`;
+          })
+          .join(",") || call.resolution_failure?.reason,
+      ]);
+    // Every guarded binding resolves into guarded_base.py: `Celery` from the
+    // if/elif/else, `make_app` from the try and its except, `shutdown` from the
+    // finally, `_bootstrap` from the with, `LocalCelery` inside `build`, and
+    // `gb.make_app` / `gb._bootstrap` through the namespace import — the
+    // underscore name through the module-scope fallback. `os.environ.get` and
+    // the builtin `open` name nothing the project holds. Each construction is
+    // recorded twice on this tree; TASK-376.2 removes the second record.
+    expect(calls).toEqual([
+      [3, "get", "method_not_on_type"],
+      [4, "get", "method_not_on_type"],
+      [20, "open", "name_not_in_scope"],
+      [20, "open", "name_not_in_scope"],
+      [26, "LocalCelery", "class:guarded_base.py:Celery"],
+      [26, "LocalCelery", "class:guarded_base.py:Celery"],
+      [27, "send_task", "method:guarded_base.py:send_task"],
+      [33, "Celery", "class:guarded_base.py:Celery"],
+      [33, "Celery", "class:guarded_base.py:Celery"],
+      [34, "send_task", "method:guarded_base.py:send_task"],
+      [35, "make_app", "function:guarded_base.py:make_app"],
+      [35, "make_app", "constructor_target_not_a_class"],
+      [36, "_bootstrap", "function:guarded_base.py:_bootstrap"],
+      [36, "_bootstrap", "constructor_target_not_a_class"],
+      [37, "shutdown", "function:guarded_base.py:shutdown"],
+      [37, "shutdown", "constructor_target_not_a_class"],
+      [38, "make_app", "function:guarded_base.py:make_app"],
+      [39, "_bootstrap", "function:guarded_base.py:_bootstrap"],
+    ]);
+  });
+
+  it("keeps each branch's call on its own import when two branches import one name from different modules", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "fast.py": `def dumps(value):
+    return value
+`,
+      "slow.py": `def dumps(value):
+    return value
+`,
+      "app.py": `try:
+    from fast import dumps
+    fast_out = dumps(1)
+except ImportError:
+    from slow import dumps
+    slow_out = dumps(2)
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    // The guarded import is layered into the module scope, but each branch
+    // still binds its own name, so the call beside an import resolves to that
+    // import and neither module's `dumps` is left looking unreached.
+    const calls = project.resolutions
+      .get_calls_for_file(file_paths["app.py"])
+      .filter((call) => call.name === ("dumps" as SymbolName))
+      .map((call) => [
+        call.location.start_line,
+        call.resolutions
+          .map((r) => path.basename(r.symbol_id.split(":")[1]))
+          .join(",") || call.resolution_failure?.reason,
+      ]);
+    expect(calls).toEqual([
+      [3, "fast.py"],
+      [3, "constructor_target_not_a_class"],
+      [6, "slow.py"],
+      [6, "constructor_target_not_a_class"],
+    ]);
+
+    const call_graph = project.get_call_graph();
+    expect(is_entry_point(call_graph, "dumps", file_paths["fast.py"])).toEqual(false);
+    expect(is_entry_point(call_graph, "dumps", file_paths["slow.py"])).toEqual(false);
+  });
+
+  it("lets a function-local guarded import shadow a same-named module-level import", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "default_backend.py": `def execute():
+    return 1
+`,
+      "fast_backend.py": `def execute():
+    return 2
+`,
+      "app.py": `from default_backend import execute
+
+
+def run(flag):
+    if flag:
+        from fast_backend import execute
+    return execute()
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    // The guarded import binds in `run`, so it shadows the module-level one
+    // exactly as an unguarded function-local import would.
+    const call = project.resolutions
+      .get_calls_for_file(file_paths["app.py"])
+      .find((c) => c.name === ("execute" as SymbolName));
+    expect(
+      call!.resolutions.map((r) => path.basename(r.symbol_id.split(":")[1]))
+    ).toEqual(["fast_backend.py"]);
+
+    const call_graph = project.get_call_graph();
+    expect(
+      is_entry_point(call_graph, "execute", file_paths["fast_backend.py"])
+    ).toEqual(false);
+  });
+
+  it("keeps a scope's own import ahead of one hoisted out of a guard clause", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "direct.py": `def load():
+    return 1
+`,
+      "guarded.py": `def load():
+    return 2
+`,
+      "app.py": `from direct import load
+
+if True:
+    from guarded import load
+
+load()
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    // Both bind at module level, so the one the scope writes itself wins and
+    // the hoisted one only fills a name the scope does not already import.
+    const call = project.resolutions
+      .get_calls_for_file(file_paths["app.py"])
+      .find((c) => c.name === ("load" as SymbolName));
+    expect(
+      call!.resolutions.map((r) => path.basename(r.symbol_id.split(":")[1]))
+    ).toEqual(["direct.py"]);
+  });
+
+  it("does not let a nested branch's import answer a call in a sibling branch", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "a.py": `def x():
+    return 1
+`,
+      "b.py": `def x():
+    return 2
+`,
+      "app.py": `from a import x
+
+if FLAG:
+    if OTHER:
+        from b import x
+else:
+    x()
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    // The import is lifted to the module, not into the enclosing branch: in the
+    // `else` arm that import provably never ran, so the module-level `a` import
+    // is the only answer.
+    const call = project.resolutions
+      .get_calls_for_file(file_paths["app.py"])
+      .find((c) => c.name === ("x" as SymbolName));
+    expect(
+      call!.resolutions.map((r) => path.basename(r.symbol_id.split(":")[1]))
+    ).toEqual(["a.py"]);
+  });
+
+  it("binds every branch's wildcard surface when two guarded star imports share a display name", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "py2/compat.py": `def two_only():
+    return 2
+`,
+      "py3/compat.py": `def three_only():
+    return 3
+`,
+      "app.py": `if True:
+    from py2.compat import *
+else:
+    from py3.compat import *
+
+two_only()
+three_only()
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    // Both edges' display name is the last path segment, `compat`, which
+    // neither binds under, so they are disjoint surfaces rather than one name
+    // bound twice.
+    const calls = project.resolutions
+      .get_calls_for_file(file_paths["app.py"])
+      .map((c) => [
+        c.name,
+        c.resolutions.map((r) => path.basename(r.symbol_id.split(":")[1])).join(",") ||
+          c.resolution_failure?.reason,
+      ]);
+    // Each call is recorded twice on this tree; TASK-376.2 removes the second
+    // record, so the constructor rows disappear at merge.
+    expect(calls).toEqual([
+      ["two_only", "compat.py"],
+      ["two_only", "constructor_target_not_a_class"],
+      ["three_only", "compat.py"],
+      ["three_only", "constructor_target_not_a_class"],
+    ]);
+  });
+
+  it("lets a guarded import shadow a wildcard import of the same name", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "starmod.py": `def dumps(value):
+    return 1
+`,
+      "fast.py": `def dumps(value):
+    return 2
+`,
+      "app.py": `from starmod import *
+
+if True:
+    from fast import dumps
+
+dumps(1)
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    // The wildcard layer is the weakest binding, so an explicit import shadows
+    // it whether or not a guard clause encloses it.
+    const call = project.resolutions
+      .get_calls_for_file(file_paths["app.py"])
+      .find((c) => c.name === ("dumps" as SymbolName));
+    expect(
+      call!.resolutions.map((r) => path.basename(r.symbol_id.split(":")[1]))
+    ).toEqual(["fast.py"]);
+  });
+
+  it("confines an `except … as` alias to its clause so it cannot clobber a same-named typed local", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "app.py": `class Engine:
+    def start(self):
+        return 1
+
+
+def run():
+    e = Engine()
+    e.start()
+    try:
+        pass
+    except OSError as e:
+        pass
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    // Python deletes the alias at the end of the clause, so it is the one
+    // guard-clause binding that must not reach the enclosing function.
+    const call = project.resolutions
+      .get_calls_for_file(file_paths["app.py"])
+      .find((c) => c.name === ("start" as SymbolName));
+    expect(
+      call!.resolutions.map((r) => r.symbol_id.split(":").slice(-1)[0])
+    ).toEqual(["start"]);
+    expect(
+      is_entry_point(project.get_call_graph(), "start", file_paths["app.py"])
+    ).toEqual(false);
   });
 });
