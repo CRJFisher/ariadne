@@ -13,7 +13,7 @@ import type {
   FunctionDefinition,
 } from "@ariadnejs/types";
 import { is_exportable, location_key } from "@ariadnejs/types";
-import { set_member_symbol } from "../type_preprocessing/member";
+import { first_divergence, MemberIndex } from "./member_index";
 
 /** The name `anonymous_function_symbol` gives every callable with no name of its own. */
 const ANONYMOUS_CALLABLE_NAME = "<anonymous>" as SymbolName;
@@ -53,26 +53,6 @@ function is_tighter_span(a: Location, b: Location): boolean {
 }
 
 /**
- * Rebind `alias_name` in `flat_members` to the symbol of the member named by
- * `target_name`, when `target_name` is a bare reference to another member. A
- * no-op when there is no such member or the alias points at itself.
- */
-function bind_member_alias(
-  alias_name: SymbolName,
-  target_name: string | undefined,
-  alias_symbol: SymbolId,
-  flat_members: Map<SymbolName, SymbolId>
-): void {
-  if (!target_name) {
-    return;
-  }
-  const target = flat_members.get(target_name as SymbolName);
-  if (target && target !== alias_symbol) {
-    flat_members.set(alias_name, target);
-  }
-}
-
-/**
  * Read per write rather than cached, so a test can arm and disarm the invariant
  * around the code it measures. Three lookups per indexed file is nothing beside
  * the pass the invariant itself costs.
@@ -82,47 +62,12 @@ function reverse_index_assertions_enabled(): boolean {
 }
 
 /**
- * The first key on which a live reverse index and a freshly rebuilt one
- * disagree, described well enough to name the write site that caused it, or
- * null when the two are equal.
- */
-function first_divergence(
-  live: ReadonlyMap<SymbolId, ReadonlySet<SymbolId>>,
-  rebuilt: ReadonlyMap<SymbolId, ReadonlySet<SymbolId>>,
-  live_name: string,
-  forward_name: string
-): string | null {
-  for (const [key, expected] of rebuilt) {
-    const held = live.get(key);
-    if (!held) {
-      return `${live_name} is missing "${key}", which ${forward_name} says has ${expected.size} entr${expected.size === 1 ? "y" : "ies"} — a write site populated ${forward_name} without ${live_name}`;
-    }
-    for (const value of expected) {
-      if (!held.has(value)) {
-        return `${live_name}["${key}"] is missing "${value}", which ${forward_name} holds`;
-      }
-    }
-  }
-
-  for (const [key, held] of live) {
-    const expected = rebuilt.get(key);
-    if (!expected) {
-      return `${live_name} still holds "${key}" with ${held.size} entr${held.size === 1 ? "y" : "ies"}, which ${forward_name} no longer has — an eviction path dropped ${forward_name} without ${live_name}`;
-    }
-    for (const value of held) {
-      if (!expected.has(value)) {
-        return `${live_name}["${key}"] still holds "${value}", which ${forward_name} no longer has`;
-      }
-    }
-  }
-
-  return null;
-}
-
-/**
  * Central registry for all definitions across the project, supporting incremental
- * updates when files change. The secondary indexes below are all rebuilt per-file
+ * updates when files change. Most secondary indexes below are rebuilt per-file
  * on update_file / remove_file so they stay consistent with by_symbol.
+ * The member index (composed as `members: MemberIndex`) is the exception: a
+ * type's members are the union of every file that contributes to it, written
+ * only through `attach_members` and evicted per contributing file.
  */
 export class DefinitionRegistry {
   private by_symbol: Map<SymbolId, AnyDefinition> = new Map();
@@ -131,22 +76,12 @@ export class DefinitionRegistry {
 
   private location_to_symbol: Map<LocationKey, SymbolId> = new Map();
 
-  /** Type/class SymbolId → flat (member_name → member_symbol_id) combining methods, properties, and constructors. */
-  private member_index: Map<SymbolId, Map<SymbolName, SymbolId>> = new Map();
-
   /**
-   * Member SymbolId → the type that declares it. Every member is here, including
-   * the accessors `member_index` deduplicates away, so a lookup keyed on a
-   * symbol never depends on which accessor won a name.
+   * Per-type callable-member index (union across contributing files),
+   * ownership edges, and the name → types reverse index. Shares `by_symbol`
+   * by reference so a member registered there is visible here immediately.
    */
-  private member_owner: Map<SymbolId, SymbolId> = new Map();
-
-  /**
-   * The inverse of `member_owner`: declaring type → the members it declares.
-   * Evicting a type reads its own members here instead of asking every member
-   * in the project who owns it.
-   */
-  private owner_members: Map<SymbolId, Set<SymbolId>> = new Map();
+  private members: MemberIndex = new MemberIndex(this.by_symbol);
 
   private by_scope: Map<ScopeId, Map<SymbolName, SymbolId>> = new Map();
 
@@ -231,13 +166,16 @@ export class DefinitionRegistry {
         def.kind === "interface" ||
         def.kind === "enum"
       ) {
-        const flat_members = new Map<SymbolName, SymbolId>();
+        // Entries rather than a name-keyed map: a Rust field and a method may
+        // share a name, and a map would drop one of them before
+        // `attach_members` could decide which holds the name.
+        const own_members: [SymbolName, SymbolId][] = [];
 
         // `methods` is optional on an enum and required on the other two.
         for (const method of def.methods ?? []) {
           this.by_symbol.set(method.symbol_id, method);
-          set_member_symbol(flat_members, method);
-          this.register_member_owner(method.symbol_id, def.symbol_id);
+          own_members.push([method.name, method.symbol_id]);
+          this.members.register_member_owner(method.symbol_id, def.symbol_id);
           const method_loc_key = location_key(method.location);
           this.location_to_symbol.set(method_loc_key, method.symbol_id);
         }
@@ -245,8 +183,8 @@ export class DefinitionRegistry {
         if (def.kind !== "enum") {
           for (const prop of def.properties) {
             this.by_symbol.set(prop.symbol_id, prop);
-            flat_members.set(prop.name, prop.symbol_id);
-            this.register_member_owner(prop.symbol_id, def.symbol_id);
+            own_members.push([prop.name, prop.symbol_id]);
+            this.members.register_member_owner(prop.symbol_id, def.symbol_id);
             const prop_loc_key = location_key(prop.location);
             this.location_to_symbol.set(prop_loc_key, prop.symbol_id);
           }
@@ -259,24 +197,30 @@ export class DefinitionRegistry {
         // same member lookup that serves ordinary methods.
         //
         // Keying cannot clobber a real method: __init__/constructor are captured
-        // only into `def.constructors`, never `def.methods`, so the name is not
-        // already in flat_members. (Rust's `new` is captured as an ordinary
+        // only into `def.constructors`, never `def.methods`, so no method
+        // contends for the name. (Rust's `new` is captured as an ordinary
         // method, so it never reaches this loop.)
         if (def.kind === "class" && def.constructors) {
           for (const ctor of def.constructors) {
             this.by_symbol.set(ctor.symbol_id, ctor);
-            this.register_member_owner(ctor.symbol_id, def.symbol_id);
+            this.members.register_member_owner(ctor.symbol_id, def.symbol_id);
             const ctor_loc_key = location_key(ctor.location);
             this.location_to_symbol.set(ctor_loc_key, ctor.symbol_id);
-            flat_members.set(ctor.name, ctor.symbol_id);
+            own_members.push([ctor.name, ctor.symbol_id]);
           }
         }
 
-        if (def.kind === "class") {
-          this.capture_member_aliases(def, flat_members);
-        }
+        this.members.attach_members(def.symbol_id, own_members);
 
-        this.member_index.set(def.symbol_id, flat_members);
+        if (def.kind === "class") {
+          this.members.attach_members(
+            def.symbol_id,
+            this.members.capture_member_aliases(
+              def,
+              this.members.get_member_index().get(def.symbol_id) ?? new Map()
+            )
+          );
+        }
       }
     }
 
@@ -387,11 +331,45 @@ export class DefinitionRegistry {
 
   /** The type that declares `member_symbol_id`, or undefined for a non-member. */
   get_member_owner(member_symbol_id: SymbolId): SymbolId | undefined {
-    return this.member_owner.get(member_symbol_id);
+    return this.members.get_member_owner(member_symbol_id);
   }
 
+  /**
+   * Name → member for every type, live: a type's map is merged in place as
+   * files contribute to it, so a caller holding one across a registry write
+   * sees the write. Copy it to hold a snapshot.
+   */
   get_member_index(): ReadonlyMap<SymbolId, ReadonlyMap<SymbolName, SymbolId>> {
-    return this.member_index;
+    return this.members.get_member_index();
+  }
+
+  /**
+   * Every type whose member index holds a member named `name`. A type keeps
+   * the members another file contributed after its own declaration is evicted,
+   * so a caller that needs a live type checks `get` on the id.
+   */
+  get_members_by_name(name: SymbolName): ReadonlySet<SymbolId> {
+    return this.members.get_members_by_name(name);
+  }
+
+  /**
+   * A type's own members plus those it inherits, walking `subtype_parents`
+   * through parents of the type's own kind only: a class walks its parent
+   * classes and an interface its parent interfaces. See `MemberIndex.get_member_closure`.
+   */
+  get_member_closure(type_id: SymbolId): ReadonlyMap<SymbolName, SymbolId> {
+    return this.members.get_member_closure(type_id, this.subtype_parents);
+  }
+
+  /**
+   * Merge `members` into `type_id`'s member index, crediting each name to the
+   * file its member is declared in. See `MemberIndex.attach_members`.
+   */
+  attach_members(
+    type_id: SymbolId,
+    members: Iterable<readonly [SymbolName, SymbolId]>
+  ): void {
+    this.members.attach_members(type_id, members);
   }
 
   get_scope_definitions(scope_id: ScopeId): ReadonlyMap<SymbolName, SymbolId> {
@@ -399,47 +377,8 @@ export class DefinitionRegistry {
   }
 
   /**
-   * Capture class-body member aliases — `name = other_member` assignments whose
-   * right-hand side names another member of the same class (e.g. sqlalchemy's
-   * `__getitem__ = _getitem`). Rebinds the alias name in `flat_members` to the
-   * target member's symbol so calls through the alias resolve to the real member.
-   *
-   * Driven by class PropertyDefinitions carrying the right-hand side in
-   * `initial_value`. Only literal member-to-member aliases bind; an RHS that is
-   * not a bare member name has no matching key in `flat_members` and is ignored.
-   *
-   * Both class-body-level assignments and ones inside a class-body conditional
-   * block (e.g. `if not TYPE_CHECKING: __getitem__ = _getitem`) arrive here as
-   * class properties: the indexer lifts the conditional form to a class
-   * attribute (query_code_tree/queries/python.scm), so no scope reasoning is
-   * needed in the registry.
-   */
-  private capture_member_aliases(
-    class_def: ClassDefinition,
-    flat_members: Map<SymbolName, SymbolId>
-  ): void {
-    for (const prop of class_def.properties) {
-      bind_member_alias(prop.name, prop.initial_value, prop.symbol_id, flat_members);
-    }
-  }
-
-  /**
-   * The single writer of `member_owner`. Both directions of the ownership edge
-   * are set here so no caller can record one without the other.
-   */
-  private register_member_owner(member_id: SymbolId, owner_id: SymbolId): void {
-    this.member_owner.set(member_id, owner_id);
-    let members = this.owner_members.get(owner_id);
-    if (!members) {
-      members = new Set();
-      this.owner_members.set(owner_id, members);
-    }
-    members.add(member_id);
-  }
-
-  /**
    * The single writer of `type_subtypes`, for the same reason
-   * `register_member_owner` is the single writer of `member_owner`.
+   * `MemberIndex.register_member_owner` is the single writer of `member_owner`.
    */
   private register_subtype(parent_id: SymbolId, subtype_id: SymbolId): void {
     let subtypes = this.type_subtypes.get(parent_id);
@@ -455,33 +394,6 @@ export class DefinitionRegistry {
       this.subtype_parents.set(subtype_id, parents);
     }
     parents.add(parent_id);
-  }
-
-  /** Drop the ownership edge of one member, from both directions. */
-  private forget_member(member_id: SymbolId): void {
-    const owner_id = this.member_owner.get(member_id);
-    if (owner_id !== undefined) {
-      const members = this.owner_members.get(owner_id);
-      if (members) {
-        members.delete(member_id);
-        if (members.size === 0) {
-          this.owner_members.delete(owner_id);
-        }
-      }
-    }
-    this.member_owner.delete(member_id);
-  }
-
-  /** Drop every ownership edge a declaring type holds, from both directions. */
-  private forget_owned_members(owner_id: SymbolId): void {
-    const members = this.owner_members.get(owner_id);
-    if (!members) {
-      return;
-    }
-    for (const member_id of members) {
-      this.member_owner.delete(member_id);
-    }
-    this.owner_members.delete(owner_id);
   }
 
   /**
@@ -521,8 +433,17 @@ export class DefinitionRegistry {
   remove_file(file_id: FilePath): void {
     this.anonymous_callables_by_file.delete(file_id);
 
+    // Member names leave with the file that holds them, not with the type that
+    // declares them: a type declared here keeps whatever another file
+    // contributed, and a contribution made here to a type declared elsewhere
+    // goes with this file. A contributing file need not declare anything of
+    // its own — a Rust `impl` block for a foreign type is one — so this runs
+    // before the guard on the file's own definitions.
+    this.members.forget_contributed_members(file_id);
+
     const symbol_ids = this.by_file.get(file_id);
     if (!symbol_ids) {
+      this.assert_reverse_indices_consistent(`remove_file(${file_id})`);
       return;
     }
 
@@ -570,9 +491,8 @@ export class DefinitionRegistry {
       }
 
       this.by_symbol.delete(symbol_id);
-      this.forget_owned_members(symbol_id);
-      this.forget_member(symbol_id);
-      this.member_index.delete(symbol_id);
+      this.members.forget_owned_members(symbol_id);
+      this.members.forget_member(symbol_id);
       this.forget_type_edges(symbol_id);
     }
 
@@ -736,8 +656,10 @@ export class DefinitionRegistry {
   }
 
   /**
-   * Both reverse indices rebuilt from the forward maps they invert and compared
-   * against the live ones: the first divergence, or null when they agree.
+   * `subtype_parents` rebuilt from `type_subtypes`, the forward map it
+   * inverts, and compared against the live one, chained after `MemberIndex`'s
+   * own reverse-index check: the first divergence found anywhere, or null
+   * when everything agrees.
    *
    * A write site that populates a forward map and forgets its reverse index
    * fails silently rather than loudly: eviction under-deletes, the stale
@@ -746,16 +668,6 @@ export class DefinitionRegistry {
    * Rebuilding is what makes that failure speak.
    */
   private verify_reverse_indices(): string | null {
-    const rebuilt_owner_members = new Map<SymbolId, Set<SymbolId>>();
-    for (const [member_id, owner_id] of this.member_owner) {
-      let members = rebuilt_owner_members.get(owner_id);
-      if (!members) {
-        members = new Set();
-        rebuilt_owner_members.set(owner_id, members);
-      }
-      members.add(member_id);
-    }
-
     const rebuilt_subtype_parents = new Map<SymbolId, Set<SymbolId>>();
     for (const [parent_id, subtypes] of this.type_subtypes) {
       for (const subtype_id of subtypes) {
@@ -769,12 +681,7 @@ export class DefinitionRegistry {
     }
 
     return (
-      first_divergence(
-        this.owner_members,
-        rebuilt_owner_members,
-        "owner_members",
-        "member_owner"
-      ) ??
+      this.members.verify() ??
       first_divergence(
         this.subtype_parents,
         rebuilt_subtype_parents,
@@ -806,9 +713,7 @@ export class DefinitionRegistry {
     this.by_symbol.clear();
     this.by_file.clear();
     this.location_to_symbol.clear();
-    this.member_index.clear();
-    this.member_owner.clear();
-    this.owner_members.clear();
+    this.members.clear();
     this.by_scope.clear();
     this.type_subtypes.clear();
     this.subtype_parents.clear();
