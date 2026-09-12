@@ -367,6 +367,23 @@
   (#eq? @_exports_prop_arrow "exports")
 )
 
+; A function value assigned onto a member of a holder — `app.engine = function
+; () {}`, `Counter.prototype.tick = () => {}` — is a definition at the value's
+; own span. Where the holder is a bare identifier or `X.prototype`, that span is
+; also the id the holder's function collection records, so a call through the
+; holder reaches a real function; for any wider holder the definition stands on
+; its own and puts the function's own calls in the graph.
+; Only the bare `module` holder is excluded, because the whole-module
+; `module.exports = fn` rules above are the sole `exports` rules this file
+; carries — the CommonJS property-export rules live in javascript.scm only, so
+; `exports.NAME = fn` and `module.exports.NAME = fn` get their definition here.
+(assignment_expression
+  left: (member_expression
+    object: (_) @_member_holder
+    property: (property_identifier))
+  right: [(function_expression !name) (arrow_function)] @definition.anonymous_function
+  (#not-match? @_member_holder "^module$"))
+
 ; Variable declarations with assignments (tracking only — definition created by generic pattern above)
 (variable_declarator
   name: (identifier) @assignment.variable

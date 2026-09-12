@@ -777,6 +777,106 @@
       },
       "body_scope_id": "function:<fixtures>/javascript/code/functions/callbacks.js:50:22:52:1"
     },
+    "function:<fixtures>/javascript/code/functions/callbacks.js:54:29:59:1:<anonymous>": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/javascript/code/functions/callbacks.js:54:29:59:1:<anonymous>",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
+        "start_line": 54,
+        "start_column": 29,
+        "end_line": 59,
+        "end_column": 1
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/functions/callbacks.js:1:1:136:0",
+      "is_exported": false,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/javascript/code/functions/callbacks.js:54:37:59:1",
+            "symbol_id": "parameter:<fixtures>/javascript/code/functions/callbacks.js:54:38:54:42:event",
+            "name": "event",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
+              "start_line": 54,
+              "start_column": 38,
+              "end_line": 54,
+              "end_column": 42
+            }
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/javascript/code/functions/callbacks.js:54:37:59:1",
+            "symbol_id": "parameter:<fixtures>/javascript/code/functions/callbacks.js:54:45:54:52:callback",
+            "name": "callback",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
+              "start_line": 54,
+              "start_column": 45,
+              "end_line": 54,
+              "end_column": 52
+            }
+          }
+        ]
+      },
+      "body_scope_id": "function:<fixtures>/javascript/code/functions/callbacks.js:54:37:59:1",
+      "callback_context": {
+        "is_callback": false,
+        "receiver_is_external": null,
+        "receiver_location": null
+      }
+    },
+    "function:<fixtures>/javascript/code/functions/callbacks.js:61:31:69:1:<anonymous>": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/javascript/code/functions/callbacks.js:61:31:69:1:<anonymous>",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
+        "start_line": 61,
+        "start_column": 31,
+        "end_line": 69,
+        "end_column": 1
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/functions/callbacks.js:1:1:136:0",
+      "is_exported": false,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/javascript/code/functions/callbacks.js:61:39:69:1",
+            "symbol_id": "parameter:<fixtures>/javascript/code/functions/callbacks.js:61:40:61:44:event",
+            "name": "event",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
+              "start_line": 61,
+              "start_column": 40,
+              "end_line": 61,
+              "end_column": 44
+            }
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/javascript/code/functions/callbacks.js:61:39:69:1",
+            "symbol_id": "parameter:<fixtures>/javascript/code/functions/callbacks.js:61:47:61:50:data",
+            "name": "data",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/functions/callbacks.js",
+              "start_line": 61,
+              "start_column": 47,
+              "end_line": 61,
+              "end_column": 50
+            }
+          }
+        ]
+      },
+      "body_scope_id": "function:<fixtures>/javascript/code/functions/callbacks.js:61:39:69:1",
+      "callback_context": {
+        "is_callback": false,
+        "receiver_is_external": null,
+        "receiver_location": null
+      }
+    },
     "function:<fixtures>/javascript/code/functions/callbacks.js:63:14:63:25:callListener": {
       "kind": "function",
       "symbol_id": "function:<fixtures>/javascript/code/functions/callbacks.js:63:14:63:25:callListener",

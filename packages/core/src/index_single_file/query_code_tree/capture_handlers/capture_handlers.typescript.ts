@@ -17,10 +17,10 @@ import {
   extract_type_annotation,
   extract_initial_value,
   extract_collection_source,
-  extract_collection_source_key,
   extract_call_initializer_name,
   extract_accessor_kind,
 } from "../symbol_factories/symbol_factories.javascript";
+import { extract_collection_source_key } from "../symbol_factories/function_collection.javascript";
 import { extract_destructured_binding } from "../symbol_factories/destructuring.javascript";
 import {
   consume_documentation,
