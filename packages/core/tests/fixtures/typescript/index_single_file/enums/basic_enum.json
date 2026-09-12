@@ -21,7 +21,8 @@
         "class:<fixtures>/typescript/code/enums/basic_enum.ts:23:17:29:1",
         "function:<fixtures>/typescript/code/enums/basic_enum.ts:32:14:43:1",
         "function:<fixtures>/typescript/code/enums/basic_enum.ts:45:28:56:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "class:<fixtures>/typescript/code/enums/basic_enum.ts:7:16:12:1": {
       "id": "class:<fixtures>/typescript/code/enums/basic_enum.ts:7:16:12:1",
@@ -35,7 +36,8 @@
         "end_line": 12,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": "Direction"
     },
     "class:<fixtures>/typescript/code/enums/basic_enum.ts:15:13:20:1": {
       "id": "class:<fixtures>/typescript/code/enums/basic_enum.ts:15:13:20:1",
@@ -49,7 +51,8 @@
         "end_line": 20,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": "Status"
     },
     "class:<fixtures>/typescript/code/enums/basic_enum.ts:23:17:29:1": {
       "id": "class:<fixtures>/typescript/code/enums/basic_enum.ts:23:17:29:1",
@@ -63,7 +66,8 @@
         "end_line": 29,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": "FileAccess"
     },
     "function:<fixtures>/typescript/code/enums/basic_enum.ts:32:14:43:1": {
       "id": "function:<fixtures>/typescript/code/enums/basic_enum.ts:32:14:43:1",
@@ -79,7 +83,8 @@
       },
       "child_ids": [
         "block:<fixtures>/typescript/code/enums/basic_enum.ts:33:3:42:3"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/typescript/code/enums/basic_enum.ts:33:3:42:3": {
       "id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:33:3:42:3",
@@ -98,7 +103,8 @@
         "block:<fixtures>/typescript/code/enums/basic_enum.ts:36:5:37:27",
         "block:<fixtures>/typescript/code/enums/basic_enum.ts:38:5:39:27",
         "block:<fixtures>/typescript/code/enums/basic_enum.ts:40:5:41:28"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/typescript/code/enums/basic_enum.ts:34:5:35:25": {
       "id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:34:5:35:25",
@@ -112,7 +118,8 @@
         "end_line": 35,
         "end_column": 25
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/typescript/code/enums/basic_enum.ts:36:5:37:27": {
       "id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:36:5:37:27",
@@ -126,7 +133,8 @@
         "end_line": 37,
         "end_column": 27
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/typescript/code/enums/basic_enum.ts:38:5:39:27": {
       "id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:38:5:39:27",
@@ -140,7 +148,8 @@
         "end_line": 39,
         "end_column": 27
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/typescript/code/enums/basic_enum.ts:40:5:41:28": {
       "id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:40:5:41:28",
@@ -154,7 +163,8 @@
         "end_line": 41,
         "end_column": 28
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/enums/basic_enum.ts:45:28:56:1": {
       "id": "function:<fixtures>/typescript/code/enums/basic_enum.ts:45:28:56:1",
@@ -170,7 +180,8 @@
       },
       "child_ids": [
         "block:<fixtures>/typescript/code/enums/basic_enum.ts:46:3:55:3"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/typescript/code/enums/basic_enum.ts:46:3:55:3": {
       "id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:46:3:55:3",
@@ -189,7 +200,8 @@
         "block:<fixtures>/typescript/code/enums/basic_enum.ts:49:5:50:33",
         "block:<fixtures>/typescript/code/enums/basic_enum.ts:51:5:52:38",
         "block:<fixtures>/typescript/code/enums/basic_enum.ts:53:5:54:33"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/typescript/code/enums/basic_enum.ts:47:5:48:32": {
       "id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:47:5:48:32",
@@ -203,7 +215,8 @@
         "end_line": 48,
         "end_column": 32
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/typescript/code/enums/basic_enum.ts:49:5:50:33": {
       "id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:49:5:50:33",
@@ -217,7 +230,8 @@
         "end_line": 50,
         "end_column": 33
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/typescript/code/enums/basic_enum.ts:51:5:52:38": {
       "id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:51:5:52:38",
@@ -231,7 +245,8 @@
         "end_line": 52,
         "end_column": 38
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/typescript/code/enums/basic_enum.ts:53:5:54:33": {
       "id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:53:5:54:33",
@@ -245,7 +260,8 @@
         "end_line": 54,
         "end_column": 33
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {

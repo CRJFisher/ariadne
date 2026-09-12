@@ -28,6 +28,7 @@ function module_root(file_path: FilePath, child_ids: ScopeId[] = []): LexicalSco
     type: "module",
     location: loc,
     child_ids,
+    self_type_name: null,
   };
 }
 
@@ -36,7 +37,7 @@ function child_function(
   parent_id: ScopeId,
   name: string,
   start_line: number,
-  child_ids: ScopeId[] = []
+  child_ids: ScopeId[] = [],
 ): LexicalScope {
   const loc = location(file_path, start_line, start_line + 3);
   return {
@@ -46,6 +47,7 @@ function child_function(
     type: "function",
     location: loc,
     child_ids,
+    self_type_name: null,
   };
 }
 
@@ -119,6 +121,7 @@ describe("ScopeRegistry", () => {
         type: "function",
         location: loc,
         child_ids: [],
+        self_type_name: null,
       };
       registry.update_file(file1, scope_map(orphan));
 
@@ -220,6 +223,7 @@ describe("ScopeRegistry", () => {
         type,
         location: loc,
         child_ids: [],
+        self_type_name: null,
       };
     }
 

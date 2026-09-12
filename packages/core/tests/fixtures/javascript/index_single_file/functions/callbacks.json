@@ -26,7 +26,8 @@
         "function:<fixtures>/javascript/code/functions/callbacks.js:72:19:80:1",
         "function:<fixtures>/javascript/code/functions/callbacks.js:82:22:90:1",
         "function:<fixtures>/javascript/code/functions/callbacks.js:105:24:110:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/callbacks.js:7:22:16:1": {
       "id": "function:<fixtures>/javascript/code/functions/callbacks.js:7:22:16:1",
@@ -42,7 +43,8 @@
       },
       "child_ids": [
         "block:<fixtures>/javascript/code/functions/callbacks.js:9:3:14:3"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/javascript/code/functions/callbacks.js:9:3:14:3": {
       "id": "block:<fixtures>/javascript/code/functions/callbacks.js:9:3:14:3",
@@ -58,7 +60,8 @@
       },
       "child_ids": [
         "function:<fixtures>/javascript/code/functions/callbacks.js:10:26:12:5"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/callbacks.js:10:26:12:5": {
       "id": "function:<fixtures>/javascript/code/functions/callbacks.js:10:26:12:5",
@@ -72,7 +75,8 @@
         "end_line": 12,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/callbacks.js:19:21:21:1": {
       "id": "function:<fixtures>/javascript/code/functions/callbacks.js:19:21:21:1",
@@ -86,7 +90,8 @@
         "end_line": 21,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/callbacks.js:23:18:25:1": {
       "id": "function:<fixtures>/javascript/code/functions/callbacks.js:23:18:25:1",
@@ -100,7 +105,8 @@
         "end_line": 25,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/callbacks.js:28:25:47:1": {
       "id": "function:<fixtures>/javascript/code/functions/callbacks.js:28:25:47:1",
@@ -118,7 +124,8 @@
         "function:<fixtures>/javascript/code/functions/callbacks.js:29:20:31:3",
         "function:<fixtures>/javascript/code/functions/callbacks.js:33:15:35:3",
         "function:<fixtures>/javascript/code/functions/callbacks.js:37:27:44:3"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/callbacks.js:29:20:31:3": {
       "id": "function:<fixtures>/javascript/code/functions/callbacks.js:29:20:31:3",
@@ -132,7 +139,8 @@
         "end_line": 31,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/callbacks.js:33:15:35:3": {
       "id": "function:<fixtures>/javascript/code/functions/callbacks.js:33:15:35:3",
@@ -146,7 +154,8 @@
         "end_line": 35,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/callbacks.js:37:27:44:3": {
       "id": "function:<fixtures>/javascript/code/functions/callbacks.js:37:27:44:3",
@@ -162,7 +171,8 @@
       },
       "child_ids": [
         "block:<fixtures>/javascript/code/functions/callbacks.js:38:5:42:5"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/javascript/code/functions/callbacks.js:38:5:42:5": {
       "id": "block:<fixtures>/javascript/code/functions/callbacks.js:38:5:42:5",
@@ -178,7 +188,8 @@
       },
       "child_ids": [
         "block:<fixtures>/javascript/code/functions/callbacks.js:40:12:42:5"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/javascript/code/functions/callbacks.js:40:12:42:5": {
       "id": "block:<fixtures>/javascript/code/functions/callbacks.js:40:12:42:5",
@@ -192,7 +203,8 @@
         "end_line": 42,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/callbacks.js:50:22:52:1": {
       "id": "function:<fixtures>/javascript/code/functions/callbacks.js:50:22:52:1",
@@ -206,7 +218,8 @@
         "end_line": 52,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/callbacks.js:54:37:59:1": {
       "id": "function:<fixtures>/javascript/code/functions/callbacks.js:54:37:59:1",
@@ -222,7 +235,8 @@
       },
       "child_ids": [
         "block:<fixtures>/javascript/code/functions/callbacks.js:55:3:57:3"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/javascript/code/functions/callbacks.js:55:3:57:3": {
       "id": "block:<fixtures>/javascript/code/functions/callbacks.js:55:3:57:3",
@@ -236,7 +250,8 @@
         "end_line": 57,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/callbacks.js:61:39:69:1": {
       "id": "function:<fixtures>/javascript/code/functions/callbacks.js:61:39:69:1",
@@ -252,7 +267,8 @@
       },
       "child_ids": [
         "block:<fixtures>/javascript/code/functions/callbacks.js:62:3:67:3"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/javascript/code/functions/callbacks.js:62:3:67:3": {
       "id": "block:<fixtures>/javascript/code/functions/callbacks.js:62:3:67:3",
@@ -268,7 +284,8 @@
       },
       "child_ids": [
         "function:<fixtures>/javascript/code/functions/callbacks.js:63:26:65:5"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/callbacks.js:63:26:65:5": {
       "id": "function:<fixtures>/javascript/code/functions/callbacks.js:63:26:65:5",
@@ -282,7 +299,8 @@
         "end_line": 65,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/callbacks.js:72:19:80:1": {
       "id": "function:<fixtures>/javascript/code/functions/callbacks.js:72:19:80:1",
@@ -298,7 +316,8 @@
       },
       "child_ids": [
         "function:<fixtures>/javascript/code/functions/callbacks.js:74:14:79:3"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/callbacks.js:74:14:79:3": {
       "id": "function:<fixtures>/javascript/code/functions/callbacks.js:74:14:79:3",
@@ -314,7 +333,8 @@
       },
       "child_ids": [
         "function:<fixtures>/javascript/code/functions/callbacks.js:75:27:77:5"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/callbacks.js:75:27:77:5": {
       "id": "function:<fixtures>/javascript/code/functions/callbacks.js:75:27:77:5",
@@ -328,7 +348,8 @@
         "end_line": 77,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/callbacks.js:82:22:90:1": {
       "id": "function:<fixtures>/javascript/code/functions/callbacks.js:82:22:90:1",
@@ -345,7 +366,8 @@
       "child_ids": [
         "block:<fixtures>/javascript/code/functions/callbacks.js:83:3:85:3",
         "function:<fixtures>/javascript/code/functions/callbacks.js:86:24:88:3"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/javascript/code/functions/callbacks.js:83:3:85:3": {
       "id": "block:<fixtures>/javascript/code/functions/callbacks.js:83:3:85:3",
@@ -359,7 +381,8 @@
         "end_line": 85,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/callbacks.js:86:24:88:3": {
       "id": "function:<fixtures>/javascript/code/functions/callbacks.js:86:24:88:3",
@@ -373,7 +396,8 @@
         "end_line": 88,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/callbacks.js:105:24:110:1": {
       "id": "function:<fixtures>/javascript/code/functions/callbacks.js:105:24:110:1",
@@ -389,7 +413,8 @@
       },
       "child_ids": [
         "function:<fixtures>/javascript/code/functions/callbacks.js:106:19:108:3"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/callbacks.js:106:19:108:3": {
       "id": "function:<fixtures>/javascript/code/functions/callbacks.js:106:19:108:3",
@@ -403,7 +428,8 @@
         "end_line": 108,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {

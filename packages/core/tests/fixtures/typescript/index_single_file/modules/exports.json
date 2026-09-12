@@ -22,7 +22,8 @@
         "function:<fixtures>/typescript/code/modules/exports.ts:38:25:40:1",
         "class:<fixtures>/typescript/code/modules/exports.ts:42:14:46:1",
         "class:<fixtures>/typescript/code/modules/exports.ts:52:34:58:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/modules/exports.ts:11:28:13:1": {
       "id": "function:<fixtures>/typescript/code/modules/exports.ts:11:28:13:1",
@@ -36,7 +37,8 @@
         "end_line": 13,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "class:<fixtures>/typescript/code/modules/exports.ts:16:25:22:1": {
       "id": "class:<fixtures>/typescript/code/modules/exports.ts:16:25:22:1",
@@ -53,7 +55,8 @@
       "child_ids": [
         "constructor:<fixtures>/typescript/code/modules/exports.ts:17:14:17:42",
         "method:<fixtures>/typescript/code/modules/exports.ts:19:12:21:3"
-      ]
+      ],
+      "self_type_name": "HttpClient"
     },
     "constructor:<fixtures>/typescript/code/modules/exports.ts:17:14:17:42": {
       "id": "constructor:<fixtures>/typescript/code/modules/exports.ts:17:14:17:42",
@@ -67,7 +70,8 @@
         "end_line": 17,
         "end_column": 42
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/typescript/code/modules/exports.ts:19:12:21:3": {
       "id": "method:<fixtures>/typescript/code/modules/exports.ts:19:12:21:3",
@@ -81,7 +85,8 @@
         "end_line": 21,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "class:<fixtures>/typescript/code/modules/exports.ts:25:25:29:1": {
       "id": "class:<fixtures>/typescript/code/modules/exports.ts:25:25:29:1",
@@ -95,7 +100,8 @@
         "end_line": 29,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": "Config"
     },
     "function:<fixtures>/typescript/code/modules/exports.ts:38:25:40:1": {
       "id": "function:<fixtures>/typescript/code/modules/exports.ts:38:25:40:1",
@@ -109,7 +115,8 @@
         "end_line": 40,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "class:<fixtures>/typescript/code/modules/exports.ts:42:14:46:1": {
       "id": "class:<fixtures>/typescript/code/modules/exports.ts:42:14:46:1",
@@ -125,7 +132,8 @@
       },
       "child_ids": [
         "method:<fixtures>/typescript/code/modules/exports.ts:43:6:45:3"
-      ]
+      ],
+      "self_type_name": "Logger"
     },
     "method:<fixtures>/typescript/code/modules/exports.ts:43:6:45:3": {
       "id": "method:<fixtures>/typescript/code/modules/exports.ts:43:6:45:3",
@@ -139,7 +147,8 @@
         "end_line": 45,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "class:<fixtures>/typescript/code/modules/exports.ts:52:34:58:1": {
       "id": "class:<fixtures>/typescript/code/modules/exports.ts:52:34:58:1",
@@ -156,7 +165,8 @@
       "child_ids": [
         "constructor:<fixtures>/typescript/code/modules/exports.ts:53:14:53:40",
         "method:<fixtures>/typescript/code/modules/exports.ts:55:8:57:3"
-      ]
+      ],
+      "self_type_name": "Application"
     },
     "constructor:<fixtures>/typescript/code/modules/exports.ts:53:14:53:40": {
       "id": "constructor:<fixtures>/typescript/code/modules/exports.ts:53:14:53:40",
@@ -170,7 +180,8 @@
         "end_line": 53,
         "end_column": 40
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/typescript/code/modules/exports.ts:55:8:57:3": {
       "id": "method:<fixtures>/typescript/code/modules/exports.ts:55:8:57:3",
@@ -184,7 +195,8 @@
         "end_line": 57,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {

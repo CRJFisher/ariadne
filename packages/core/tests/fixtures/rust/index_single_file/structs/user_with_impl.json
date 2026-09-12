@@ -18,7 +18,8 @@
       "child_ids": [
         "class:<fixtures>/rust/code/structs/user_with_impl.rs:4:17:8:1",
         "block:<fixtures>/rust/code/structs/user_with_impl.rs:10:11:60:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "class:<fixtures>/rust/code/structs/user_with_impl.rs:4:17:8:1": {
       "id": "class:<fixtures>/rust/code/structs/user_with_impl.rs:4:17:8:1",
@@ -32,7 +33,8 @@
         "end_line": 8,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": "User"
     },
     "block:<fixtures>/rust/code/structs/user_with_impl.rs:10:11:60:1": {
       "id": "block:<fixtures>/rust/code/structs/user_with_impl.rs:10:11:60:1",
@@ -55,7 +57,8 @@
         "function:<fixtures>/rust/code/structs/user_with_impl.rs:45:20:48:5",
         "function:<fixtures>/rust/code/structs/user_with_impl.rs:51:22:54:5",
         "function:<fixtures>/rust/code/structs/user_with_impl.rs:57:20:59:5"
-      ]
+      ],
+      "self_type_name": "User"
     },
     "function:<fixtures>/rust/code/structs/user_with_impl.rs:12:15:18:5": {
       "id": "function:<fixtures>/rust/code/structs/user_with_impl.rs:12:15:18:5",
@@ -69,7 +72,8 @@
         "end_line": 18,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/structs/user_with_impl.rs:21:19:27:5": {
       "id": "function:<fixtures>/rust/code/structs/user_with_impl.rs:21:19:27:5",
@@ -83,7 +87,8 @@
         "end_line": 27,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/structs/user_with_impl.rs:30:20:32:5": {
       "id": "function:<fixtures>/rust/code/structs/user_with_impl.rs:30:20:32:5",
@@ -97,7 +102,8 @@
         "end_line": 32,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/structs/user_with_impl.rs:35:21:37:5": {
       "id": "function:<fixtures>/rust/code/structs/user_with_impl.rs:35:21:37:5",
@@ -111,7 +117,8 @@
         "end_line": 37,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/structs/user_with_impl.rs:40:23:42:5": {
       "id": "function:<fixtures>/rust/code/structs/user_with_impl.rs:40:23:42:5",
@@ -125,7 +132,8 @@
         "end_line": 42,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/structs/user_with_impl.rs:45:20:48:5": {
       "id": "function:<fixtures>/rust/code/structs/user_with_impl.rs:45:20:48:5",
@@ -139,7 +147,8 @@
         "end_line": 48,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/structs/user_with_impl.rs:51:22:54:5": {
       "id": "function:<fixtures>/rust/code/structs/user_with_impl.rs:51:22:54:5",
@@ -153,7 +162,8 @@
         "end_line": 54,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/structs/user_with_impl.rs:57:20:59:5": {
       "id": "function:<fixtures>/rust/code/structs/user_with_impl.rs:57:20:59:5",
@@ -167,7 +177,8 @@
         "end_line": 59,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {},

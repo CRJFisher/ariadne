@@ -23,7 +23,8 @@
         "function:<fixtures>/typescript/code/functions/async_functions.ts:27:26:29:1",
         "function:<fixtures>/typescript/code/functions/async_functions.ts:31:15:33:1",
         "function:<fixtures>/typescript/code/functions/async_functions.ts:36:26:44:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/functions/async_functions.ts:6:26:9:1": {
       "id": "function:<fixtures>/typescript/code/functions/async_functions.ts:6:26:9:1",
@@ -37,7 +38,8 @@
         "end_line": 9,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1": {
       "id": "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1",
@@ -53,7 +55,8 @@
       },
       "child_ids": [
         "function:<fixtures>/typescript/code/functions/async_functions.ts:12:28:12:49"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/functions/async_functions.ts:12:28:12:49": {
       "id": "function:<fixtures>/typescript/code/functions/async_functions.ts:12:28:12:49",
@@ -67,7 +70,8 @@
         "end_line": 12,
         "end_column": 49
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/functions/async_functions.ts:16:33:20:1": {
       "id": "function:<fixtures>/typescript/code/functions/async_functions.ts:16:33:20:1",
@@ -81,7 +85,8 @@
         "end_line": 20,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/functions/async_functions.ts:22:30:25:1": {
       "id": "function:<fixtures>/typescript/code/functions/async_functions.ts:22:30:25:1",
@@ -95,7 +100,8 @@
         "end_line": 25,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/functions/async_functions.ts:27:26:29:1": {
       "id": "function:<fixtures>/typescript/code/functions/async_functions.ts:27:26:29:1",
@@ -109,7 +115,8 @@
         "end_line": 29,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/functions/async_functions.ts:31:15:33:1": {
       "id": "function:<fixtures>/typescript/code/functions/async_functions.ts:31:15:33:1",
@@ -125,7 +132,8 @@
       },
       "child_ids": [
         "function:<fixtures>/typescript/code/functions/async_functions.ts:32:22:32:57"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/functions/async_functions.ts:32:22:32:57": {
       "id": "function:<fixtures>/typescript/code/functions/async_functions.ts:32:22:32:57",
@@ -139,7 +147,8 @@
         "end_line": 32,
         "end_column": 57
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/functions/async_functions.ts:36:26:44:1": {
       "id": "function:<fixtures>/typescript/code/functions/async_functions.ts:36:26:44:1",
@@ -155,7 +164,8 @@
       },
       "child_ids": [
         "block:<fixtures>/typescript/code/functions/async_functions.ts:37:3:43:3"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/typescript/code/functions/async_functions.ts:37:3:43:3": {
       "id": "block:<fixtures>/typescript/code/functions/async_functions.ts:37:3:43:3",
@@ -171,7 +181,8 @@
       },
       "child_ids": [
         "block:<fixtures>/typescript/code/functions/async_functions.ts:40:5:43:3"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/typescript/code/functions/async_functions.ts:40:5:43:3": {
       "id": "block:<fixtures>/typescript/code/functions/async_functions.ts:40:5:43:3",
@@ -185,7 +196,8 @@
         "end_line": 43,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {
@@ -492,20 +504,6 @@
             },
             "type": "number",
             "optional": false
-          },
-          {
-            "kind": "parameter",
-            "defining_scope_id": "block:<fixtures>/typescript/code/functions/async_functions.ts:40:5:43:3",
-            "symbol_id": "parameter:<fixtures>/typescript/code/functions/async_functions.ts:40:12:40:16:error",
-            "name": "error",
-            "location": {
-              "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
-              "start_line": 40,
-              "start_column": 12,
-              "end_line": 40,
-              "end_column": 16
-            },
-            "optional": false
           }
         ],
         "return_type": "Promise<object | null>"
@@ -576,6 +574,20 @@
       "defining_scope_id": "block:<fixtures>/typescript/code/functions/async_functions.ts:37:3:43:3",
       "is_exported": false,
       "initial_value": "await fetch_user(id)"
+    },
+    "variable:<fixtures>/typescript/code/functions/async_functions.ts:40:12:40:16:error": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/typescript/code/functions/async_functions.ts:40:12:40:16:error",
+      "name": "error",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 40,
+        "start_column": 12,
+        "end_line": 40,
+        "end_column": 16
+      },
+      "defining_scope_id": "block:<fixtures>/typescript/code/functions/async_functions.ts:40:5:43:3",
+      "is_exported": false
     }
   },
   "interfaces": {},

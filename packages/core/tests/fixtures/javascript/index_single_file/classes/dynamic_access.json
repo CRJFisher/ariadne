@@ -25,7 +25,8 @@
         "method:<fixtures>/javascript/code/classes/dynamic_access.js:67:19:79:3",
         "function:<fixtures>/javascript/code/classes/dynamic_access.js:83:22:92:1",
         "function:<fixtures>/javascript/code/classes/dynamic_access.js:117:40:122:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "class:<fixtures>/javascript/code/classes/dynamic_access.js:6:22:29:1": {
       "id": "class:<fixtures>/javascript/code/classes/dynamic_access.js:6:22:29:1",
@@ -44,7 +45,8 @@
         "method:<fixtures>/javascript/code/classes/dynamic_access.js:11:18:13:3",
         "method:<fixtures>/javascript/code/classes/dynamic_access.js:15:13:17:3",
         "method:<fixtures>/javascript/code/classes/dynamic_access.js:19:13:28:3"
-      ]
+      ],
+      "self_type_name": "ServiceManager"
     },
     "constructor:<fixtures>/javascript/code/classes/dynamic_access.js:7:14:9:3": {
       "id": "constructor:<fixtures>/javascript/code/classes/dynamic_access.js:7:14:9:3",
@@ -58,7 +60,8 @@
         "end_line": 9,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/dynamic_access.js:11:18:13:3": {
       "id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:11:18:13:3",
@@ -72,7 +75,8 @@
         "end_line": 13,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/dynamic_access.js:15:13:17:3": {
       "id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:15:13:17:3",
@@ -86,7 +90,8 @@
         "end_line": 17,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/dynamic_access.js:19:13:28:3": {
       "id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:19:13:28:3",
@@ -102,7 +107,8 @@
       },
       "child_ids": [
         "block:<fixtures>/javascript/code/classes/dynamic_access.js:21:5:26:5"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/javascript/code/classes/dynamic_access.js:21:5:26:5": {
       "id": "block:<fixtures>/javascript/code/classes/dynamic_access.js:21:5:26:5",
@@ -118,7 +124,8 @@
       },
       "child_ids": [
         "function:<fixtures>/javascript/code/classes/dynamic_access.js:22:33:24:7"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/classes/dynamic_access.js:22:33:24:7": {
       "id": "function:<fixtures>/javascript/code/classes/dynamic_access.js:22:33:24:7",
@@ -132,7 +139,8 @@
         "end_line": 24,
         "end_column": 7
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/dynamic_access.js:33:6:35:3": {
       "id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:33:6:35:3",
@@ -146,7 +154,8 @@
         "end_line": 35,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/dynamic_access.js:37:11:39:3": {
       "id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:37:11:39:3",
@@ -160,7 +169,8 @@
         "end_line": 39,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/dynamic_access.js:41:12:51:3": {
       "id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:41:12:51:3",
@@ -177,7 +187,8 @@
       "child_ids": [
         "function:<fixtures>/javascript/code/classes/dynamic_access.js:42:32:44:5",
         "block:<fixtures>/javascript/code/classes/dynamic_access.js:47:5:49:5"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/classes/dynamic_access.js:42:32:44:5": {
       "id": "function:<fixtures>/javascript/code/classes/dynamic_access.js:42:32:44:5",
@@ -191,7 +202,8 @@
         "end_line": 44,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/javascript/code/classes/dynamic_access.js:47:5:49:5": {
       "id": "block:<fixtures>/javascript/code/classes/dynamic_access.js:47:5:49:5",
@@ -205,7 +217,8 @@
         "end_line": 49,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/dynamic_access.js:59:11:61:3": {
       "id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:59:11:61:3",
@@ -219,7 +232,8 @@
         "end_line": 61,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/dynamic_access.js:63:11:65:3": {
       "id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:63:11:65:3",
@@ -233,7 +247,8 @@
         "end_line": 65,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/dynamic_access.js:67:19:79:3": {
       "id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:67:19:79:3",
@@ -249,7 +264,8 @@
       },
       "child_ids": [
         "function:<fixtures>/javascript/code/classes/dynamic_access.js:70:27:76:5"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/classes/dynamic_access.js:70:27:76:5": {
       "id": "function:<fixtures>/javascript/code/classes/dynamic_access.js:70:27:76:5",
@@ -265,7 +281,8 @@
       },
       "child_ids": [
         "block:<fixtures>/javascript/code/classes/dynamic_access.js:71:7:75:7"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/javascript/code/classes/dynamic_access.js:71:7:75:7": {
       "id": "block:<fixtures>/javascript/code/classes/dynamic_access.js:71:7:75:7",
@@ -281,7 +298,8 @@
       },
       "child_ids": [
         "block:<fixtures>/javascript/code/classes/dynamic_access.js:73:14:75:7"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/javascript/code/classes/dynamic_access.js:73:14:75:7": {
       "id": "block:<fixtures>/javascript/code/classes/dynamic_access.js:73:14:75:7",
@@ -295,7 +313,8 @@
         "end_line": 75,
         "end_column": 7
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/classes/dynamic_access.js:83:22:92:1": {
       "id": "function:<fixtures>/javascript/code/classes/dynamic_access.js:83:22:92:1",
@@ -312,7 +331,8 @@
       "child_ids": [
         "function:<fixtures>/javascript/code/classes/dynamic_access.js:84:33:86:3",
         "block:<fixtures>/javascript/code/classes/dynamic_access.js:88:3:90:3"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/classes/dynamic_access.js:84:33:86:3": {
       "id": "function:<fixtures>/javascript/code/classes/dynamic_access.js:84:33:86:3",
@@ -326,7 +346,8 @@
         "end_line": 86,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/javascript/code/classes/dynamic_access.js:88:3:90:3": {
       "id": "block:<fixtures>/javascript/code/classes/dynamic_access.js:88:3:90:3",
@@ -340,7 +361,8 @@
         "end_line": 90,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/classes/dynamic_access.js:117:40:122:1": {
       "id": "function:<fixtures>/javascript/code/classes/dynamic_access.js:117:40:122:1",
@@ -356,7 +378,8 @@
       },
       "child_ids": [
         "function:<fixtures>/javascript/code/classes/dynamic_access.js:118:27:120:3"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/classes/dynamic_access.js:118:27:120:3": {
       "id": "function:<fixtures>/javascript/code/classes/dynamic_access.js:118:27:120:3",
@@ -370,7 +393,8 @@
         "end_line": 120,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {

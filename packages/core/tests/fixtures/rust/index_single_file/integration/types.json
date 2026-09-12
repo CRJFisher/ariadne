@@ -1,0 +1,213 @@
+{
+  "file_path": "<fixtures>/rust/code/integration/types.rs",
+  "language": "rust",
+  "root_scope_id": "module:<fixtures>/rust/code/integration/types.rs:1:1:11:0",
+  "scopes": {
+    "module:<fixtures>/rust/code/integration/types.rs:1:1:11:0": {
+      "id": "module:<fixtures>/rust/code/integration/types.rs:1:1:11:0",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/rust/code/integration/types.rs",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 11,
+        "end_column": 0
+      },
+      "child_ids": [
+        "class:<fixtures>/rust/code/integration/types.rs:4:21:6:1",
+        "class:<fixtures>/rust/code/integration/types.rs:8:17:10:1"
+      ],
+      "self_type_name": null
+    },
+    "class:<fixtures>/rust/code/integration/types.rs:4:21:6:1": {
+      "id": "class:<fixtures>/rust/code/integration/types.rs:4:21:6:1",
+      "parent_id": "module:<fixtures>/rust/code/integration/types.rs:1:1:11:0",
+      "name": null,
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/rust/code/integration/types.rs",
+        "start_line": 4,
+        "start_column": 21,
+        "end_line": 6,
+        "end_column": 1
+      },
+      "child_ids": [],
+      "self_type_name": "Lowering"
+    },
+    "class:<fixtures>/rust/code/integration/types.rs:8:17:10:1": {
+      "id": "class:<fixtures>/rust/code/integration/types.rs:8:17:10:1",
+      "parent_id": "module:<fixtures>/rust/code/integration/types.rs:1:1:11:0",
+      "name": null,
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/rust/code/integration/types.rs",
+        "start_line": 8,
+        "start_column": 17,
+        "end_line": 10,
+        "end_column": 1
+      },
+      "child_ids": [],
+      "self_type_name": "Visit"
+    }
+  },
+  "functions": {},
+  "classes": {
+    "class:<fixtures>/rust/code/integration/types.rs:4:1:6:1:Lowering": {
+      "kind": "class",
+      "symbol_id": "class:<fixtures>/rust/code/integration/types.rs:4:1:6:1:Lowering",
+      "name": "Lowering",
+      "location": {
+        "file_path": "<fixtures>/rust/code/integration/types.rs",
+        "start_line": 4,
+        "start_column": 12,
+        "end_line": 4,
+        "end_column": 19
+      },
+      "defining_scope_id": "module:<fixtures>/rust/code/integration/types.rs:1:1:11:0",
+      "extends": [],
+      "is_exported": true,
+      "methods": [],
+      "properties": [
+        {
+          "kind": "property",
+          "defining_scope_id": "class:<fixtures>/rust/code/integration/types.rs:4:21:6:1",
+          "symbol_id": "property:<fixtures>/rust/code/integration/types.rs:5:5:5:9:depth",
+          "name": "depth",
+          "location": {
+            "file_path": "<fixtures>/rust/code/integration/types.rs",
+            "start_line": 5,
+            "start_column": 5,
+            "end_line": 5,
+            "end_column": 9
+          },
+          "type": "usize",
+          "decorators": []
+        }
+      ],
+      "decorators": []
+    }
+  },
+  "variables": {},
+  "interfaces": {
+    "interface:<fixtures>/rust/code/integration/types.rs:8:1:10:1:Visit": {
+      "kind": "interface",
+      "symbol_id": "interface:<fixtures>/rust/code/integration/types.rs:8:1:10:1:Visit",
+      "name": "Visit",
+      "location": {
+        "file_path": "<fixtures>/rust/code/integration/types.rs",
+        "start_line": 8,
+        "start_column": 11,
+        "end_line": 8,
+        "end_column": 15
+      },
+      "defining_scope_id": "module:<fixtures>/rust/code/integration/types.rs:1:1:11:0",
+      "is_exported": true,
+      "extends": [],
+      "methods": [
+        {
+          "kind": "method",
+          "symbol_id": "method:<fixtures>/rust/code/integration/types.rs:9:5:9:20:visit",
+          "name": "visit",
+          "location": {
+            "file_path": "<fixtures>/rust/code/integration/types.rs",
+            "start_line": 9,
+            "start_column": 8,
+            "end_line": 9,
+            "end_column": 12
+          },
+          "defining_scope_id": "class:<fixtures>/rust/code/integration/types.rs:8:17:10:1",
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "class:<fixtures>/rust/code/integration/types.rs:8:17:10:1",
+              "symbol_id": "parameter:<fixtures>/rust/code/integration/types.rs:9:14:9:18:&self",
+              "name": "self",
+              "location": {
+                "file_path": "<fixtures>/rust/code/integration/types.rs",
+                "start_line": 9,
+                "start_column": 14,
+                "end_line": 9,
+                "end_column": 18
+              },
+              "type": "Self",
+              "optional": false
+            }
+          ]
+        }
+      ],
+      "properties": []
+    }
+  },
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {},
+  "references": [
+    {
+      "kind": "type_reference",
+      "name": "Lowering",
+      "location": {
+        "file_path": "<fixtures>/rust/code/integration/types.rs",
+        "start_line": 4,
+        "start_column": 12,
+        "end_line": 4,
+        "end_column": 19
+      },
+      "scope_id": "module:<fixtures>/rust/code/integration/types.rs:1:1:11:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/rust/code/integration/types.rs:4:12:4:19:Lowering",
+        "type_name": "Lowering",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "Visit",
+      "location": {
+        "file_path": "<fixtures>/rust/code/integration/types.rs",
+        "start_line": 8,
+        "start_column": 11,
+        "end_line": 8,
+        "end_column": 15
+      },
+      "scope_id": "module:<fixtures>/rust/code/integration/types.rs:1:1:11:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/rust/code/integration/types.rs:8:11:8:15:Visit",
+        "type_name": "Visit",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "visit",
+      "location": {
+        "file_path": "<fixtures>/rust/code/integration/types.rs",
+        "start_line": 9,
+        "start_column": 8,
+        "end_line": 9,
+        "end_column": 12
+      },
+      "scope_id": "class:<fixtures>/rust/code/integration/types.rs:8:17:10:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/rust/code/integration/types.rs",
+        "start_line": 9,
+        "start_column": 15,
+        "end_line": 9,
+        "end_column": 18
+      },
+      "scope_id": "class:<fixtures>/rust/code/integration/types.rs:8:17:10:1",
+      "access_type": "read"
+    }
+  ]
+}

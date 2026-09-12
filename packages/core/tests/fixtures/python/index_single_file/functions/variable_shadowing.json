@@ -21,7 +21,8 @@
         "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
         "function:<fixtures>/python/code/functions/variable_shadowing.py:86:33:111:5",
         "function:<fixtures>/python/code/functions/variable_shadowing.py:10:17:12:25"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/variable_shadowing.py:20:28:83:5": {
       "id": "function:<fixtures>/python/code/functions/variable_shadowing.py:20:28:83:5",
@@ -38,7 +39,8 @@
       "child_ids": [
         "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
         "block:<fixtures>/python/code/functions/variable_shadowing.py:30:5:35:46"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/variable_shadowing.py:144:32:189:5": {
       "id": "function:<fixtures>/python/code/functions/variable_shadowing.py:144:32:189:5",
@@ -54,7 +56,8 @@
       },
       "child_ids": [
         "class:<fixtures>/python/code/functions/variable_shadowing.py:147:22:180:13"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9": {
       "id": "function:<fixtures>/python/code/functions/variable_shadowing.py:40:23:73:9",
@@ -70,7 +73,8 @@
       },
       "child_ids": [
         "function:<fixtures>/python/code/functions/variable_shadowing.py:51:28:64:13"
-      ]
+      ],
+      "self_type_name": null
     },
     "class:<fixtures>/python/code/functions/variable_shadowing.py:147:22:180:13": {
       "id": "class:<fixtures>/python/code/functions/variable_shadowing.py:147:22:180:13",
@@ -87,7 +91,8 @@
       "child_ids": [
         "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
         "constructor:<fixtures>/python/code/functions/variable_shadowing.py:152:21:154:76"
-      ]
+      ],
+      "self_type_name": "ShadowTest"
     },
     "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5": {
       "id": "function:<fixtures>/python/code/functions/variable_shadowing.py:114:26:141:5",
@@ -104,7 +109,8 @@
       "child_ids": [
         "function:<fixtures>/python/code/functions/variable_shadowing.py:127:29:131:81",
         "function:<fixtures>/python/code/functions/variable_shadowing.py:120:19:120:55"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/variable_shadowing.py:86:33:111:5": {
       "id": "function:<fixtures>/python/code/functions/variable_shadowing.py:86:33:111:5",
@@ -121,7 +127,8 @@
       "child_ids": [
         "block:<fixtures>/python/code/functions/variable_shadowing.py:100:17:104:5",
         "block:<fixtures>/python/code/functions/variable_shadowing.py:94:19:94:66"
-      ]
+      ],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13": {
       "id": "method:<fixtures>/python/code/functions/variable_shadowing.py:156:34:180:13",
@@ -137,7 +144,8 @@
       },
       "child_ids": [
         "function:<fixtures>/python/code/functions/variable_shadowing.py:166:31:169:54"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/variable_shadowing.py:51:28:64:13": {
       "id": "function:<fixtures>/python/code/functions/variable_shadowing.py:51:28:64:13",
@@ -151,7 +159,8 @@
         "end_line": 64,
         "end_column": 13
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/python/code/functions/variable_shadowing.py:30:5:35:46": {
       "id": "block:<fixtures>/python/code/functions/variable_shadowing.py:30:5:35:46",
@@ -167,7 +176,8 @@
       },
       "child_ids": [
         "block:<fixtures>/python/code/functions/variable_shadowing.py:34:5:35:46"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/variable_shadowing.py:127:29:131:81": {
       "id": "function:<fixtures>/python/code/functions/variable_shadowing.py:127:29:131:81",
@@ -183,7 +193,8 @@
       },
       "child_ids": [
         "function:<fixtures>/python/code/functions/variable_shadowing.py:131:16:131:81"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/python/code/functions/variable_shadowing.py:100:17:104:5": {
       "id": "block:<fixtures>/python/code/functions/variable_shadowing.py:100:17:104:5",
@@ -197,7 +208,8 @@
         "end_line": 104,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/variable_shadowing.py:166:31:169:54": {
       "id": "function:<fixtures>/python/code/functions/variable_shadowing.py:166:31:169:54",
@@ -211,7 +223,8 @@
         "end_line": 169,
         "end_column": 54
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "constructor:<fixtures>/python/code/functions/variable_shadowing.py:152:21:154:76": {
       "id": "constructor:<fixtures>/python/code/functions/variable_shadowing.py:152:21:154:76",
@@ -225,7 +238,8 @@
         "end_line": 154,
         "end_column": 76
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/variable_shadowing.py:10:17:12:25": {
       "id": "function:<fixtures>/python/code/functions/variable_shadowing.py:10:17:12:25",
@@ -239,7 +253,8 @@
         "end_line": 12,
         "end_column": 25
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/python/code/functions/variable_shadowing.py:34:5:35:46": {
       "id": "block:<fixtures>/python/code/functions/variable_shadowing.py:34:5:35:46",
@@ -253,7 +268,8 @@
         "end_line": 35,
         "end_column": 46
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/variable_shadowing.py:131:16:131:81": {
       "id": "function:<fixtures>/python/code/functions/variable_shadowing.py:131:16:131:81",
@@ -269,7 +285,8 @@
       },
       "child_ids": [
         "function:<fixtures>/python/code/functions/variable_shadowing.py:131:30:131:81"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/variable_shadowing.py:131:30:131:81": {
       "id": "function:<fixtures>/python/code/functions/variable_shadowing.py:131:30:131:81",
@@ -283,7 +300,8 @@
         "end_line": 131,
         "end_column": 81
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/python/code/functions/variable_shadowing.py:94:19:94:66": {
       "id": "block:<fixtures>/python/code/functions/variable_shadowing.py:94:19:94:66",
@@ -297,7 +315,8 @@
         "end_line": 94,
         "end_column": 66
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/variable_shadowing.py:120:19:120:55": {
       "id": "function:<fixtures>/python/code/functions/variable_shadowing.py:120:19:120:55",
@@ -311,7 +330,8 @@
         "end_line": 120,
         "end_column": 55
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {

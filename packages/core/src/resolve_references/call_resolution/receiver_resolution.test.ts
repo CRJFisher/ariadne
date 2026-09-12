@@ -385,6 +385,7 @@ describe("find_containing_class_scope", () => {
       location: { file_path: TEST_FILE, start_line: 0, start_column: 0, end_line: 100, end_column: 0 },
       parent_id: null,
       child_ids: [CLASS_SCOPE_ID],
+      self_type_name: null,
     });
     scope_map.set(CLASS_SCOPE_ID, {
       id: CLASS_SCOPE_ID,
@@ -392,6 +393,7 @@ describe("find_containing_class_scope", () => {
       location: { file_path: TEST_FILE, start_line: 1, start_column: 0, end_line: 50, end_column: 0 },
       parent_id: FILE_SCOPE_ID,
       child_ids: [METHOD_SCOPE_ID],
+      self_type_name: null,
     });
     scope_map.set(METHOD_SCOPE_ID, {
       id: METHOD_SCOPE_ID,
@@ -399,6 +401,7 @@ describe("find_containing_class_scope", () => {
       location: { file_path: TEST_FILE, start_line: 2, start_column: 2, end_line: 10, end_column: 2 },
       parent_id: CLASS_SCOPE_ID,
       child_ids: [],
+      self_type_name: null,
     });
     scopes.update_file(TEST_FILE, scope_map);
 
@@ -415,6 +418,7 @@ describe("find_containing_class_scope", () => {
       location: { file_path: TEST_FILE, start_line: 0, start_column: 0, end_line: 100, end_column: 0 },
       parent_id: null,
       child_ids: [CLASS_SCOPE_ID],
+      self_type_name: null,
     });
     scope_map.set(CLASS_SCOPE_ID, {
       id: CLASS_SCOPE_ID,
@@ -422,6 +426,7 @@ describe("find_containing_class_scope", () => {
       location: { file_path: TEST_FILE, start_line: 1, start_column: 0, end_line: 50, end_column: 0 },
       parent_id: FILE_SCOPE_ID,
       child_ids: [METHOD_SCOPE_ID],
+      self_type_name: null,
     });
     scope_map.set(METHOD_SCOPE_ID, {
       id: METHOD_SCOPE_ID,
@@ -429,6 +434,7 @@ describe("find_containing_class_scope", () => {
       location: { file_path: TEST_FILE, start_line: 2, start_column: 2, end_line: 20, end_column: 2 },
       parent_id: CLASS_SCOPE_ID,
       child_ids: [NESTED_SCOPE_ID],
+      self_type_name: null,
     });
     scope_map.set(NESTED_SCOPE_ID, {
       id: NESTED_SCOPE_ID,
@@ -436,6 +442,7 @@ describe("find_containing_class_scope", () => {
       location: { file_path: TEST_FILE, start_line: 3, start_column: 4, end_line: 10, end_column: 4 },
       parent_id: METHOD_SCOPE_ID,
       child_ids: [],
+      self_type_name: null,
     });
     scopes.update_file(TEST_FILE, scope_map);
 
@@ -453,6 +460,7 @@ describe("find_containing_class_scope", () => {
       location: { file_path: TEST_FILE, start_line: 0, start_column: 0, end_line: 100, end_column: 0 },
       parent_id: null,
       child_ids: [func_scope_id],
+      self_type_name: null,
     });
     scope_map.set(func_scope_id, {
       id: func_scope_id,
@@ -460,6 +468,7 @@ describe("find_containing_class_scope", () => {
       location: { file_path: TEST_FILE, start_line: 1, start_column: 0, end_line: 10, end_column: 0 },
       parent_id: FILE_SCOPE_ID,
       child_ids: [],
+      self_type_name: null,
     });
     scopes.update_file(TEST_FILE, scope_map);
 
@@ -476,6 +485,7 @@ describe("find_containing_class_scope", () => {
       location: { file_path: TEST_FILE, start_line: 0, start_column: 0, end_line: 100, end_column: 0 },
       parent_id: null,
       child_ids: [],
+      self_type_name: null,
     });
     scopes.update_file(TEST_FILE, scope_map);
 
@@ -492,6 +502,7 @@ describe("find_containing_class_scope", () => {
       location: { file_path: TEST_FILE, start_line: 0, start_column: 0, end_line: 100, end_column: 0 },
       parent_id: null,
       child_ids: [],
+      self_type_name: null,
     });
     scopes.update_file(TEST_FILE, scope_map);
 
@@ -549,6 +560,7 @@ describe("resolve_receiver_type", () => {
       location: { file_path: TEST_FILE, start_line: 0, start_column: 0, end_line: 100, end_column: 0 },
       parent_id: null,
       child_ids: [CLASS_SCOPE_ID],
+      self_type_name: null,
     });
     scope_map.set(CLASS_SCOPE_ID, {
       id: CLASS_SCOPE_ID,
@@ -556,6 +568,7 @@ describe("resolve_receiver_type", () => {
       location: { file_path: TEST_FILE, start_line: 1, start_column: 0, end_line: 50, end_column: 0 },
       parent_id: FILE_SCOPE_ID,
       child_ids: [METHOD_SCOPE_ID],
+      self_type_name: null,
     });
     scope_map.set(METHOD_SCOPE_ID, {
       id: METHOD_SCOPE_ID,
@@ -563,6 +576,7 @@ describe("resolve_receiver_type", () => {
       location: { file_path: TEST_FILE, start_line: 2, start_column: 2, end_line: 10, end_column: 2 },
       parent_id: CLASS_SCOPE_ID,
       child_ids: [],
+      self_type_name: null,
     });
     scopes.update_file(TEST_FILE, scope_map);
   }
@@ -686,6 +700,7 @@ describe("resolve_receiver_type", () => {
         location: { file_path: TEST_FILE, start_line: 0, start_column: 0, end_line: 100, end_column: 0 },
         parent_id: null,
         child_ids: [func_scope_id],
+        self_type_name: null,
       });
       scope_map.set(func_scope_id, {
         id: func_scope_id,
@@ -693,6 +708,7 @@ describe("resolve_receiver_type", () => {
         location: { file_path: TEST_FILE, start_line: 1, start_column: 0, end_line: 10, end_column: 0 },
         parent_id: FILE_SCOPE_ID,
         child_ids: [],
+        self_type_name: null,
       });
       scopes.update_file(TEST_FILE, scope_map);
 
@@ -871,6 +887,7 @@ describe("resolve_receiver_type", () => {
         location: { file_path: TEST_FILE, start_line: 0, start_column: 0, end_line: 100, end_column: 0 },
         parent_id: null,
         child_ids: [],
+        self_type_name: null,
       });
       scopes.update_file(TEST_FILE, scope_map);
 
@@ -928,6 +945,7 @@ describe("resolve_receiver_type", () => {
         location: { file_path: TEST_FILE, start_line: 0, start_column: 0, end_line: 100, end_column: 0 },
         parent_id: null,
         child_ids: [],
+        self_type_name: null,
       });
       scopes.update_file(TEST_FILE, scope_map);
 
@@ -971,6 +989,7 @@ describe("resolve_receiver_type", () => {
         location: { file_path: TEST_FILE, start_line: 0, start_column: 0, end_line: 100, end_column: 0 },
         parent_id: null,
         child_ids: [],
+        self_type_name: null,
       });
       scopes.update_file(TEST_FILE, scope_map);
 
@@ -999,6 +1018,7 @@ describe("resolve_receiver_type", () => {
         location: { file_path: TEST_FILE, start_line: 0, start_column: 0, end_line: 100, end_column: 0 },
         parent_id: null,
         child_ids: [],
+        self_type_name: null,
       });
       scopes.update_file(TEST_FILE, scope_map);
 
@@ -1173,6 +1193,7 @@ describe("re-export chain dereferencing", () => {
           type: "module",
           location: { ...NAMESPACE_LOCATION, start_line: 0 },
           child_ids: [NAMESPACE_BODY_SCOPE_ID],
+          self_type_name: null,
         },
       ],
       [
@@ -1184,6 +1205,7 @@ describe("re-export chain dereferencing", () => {
           type: "module",
           location: NAMESPACE_LOCATION,
           child_ids: [],
+          self_type_name: null,
         },
       ],
     ]);
@@ -1322,6 +1344,7 @@ describe("destructured binding receiver typing", () => {
       location: { file_path: TEST_FILE, start_line: 0, start_column: 0, end_line: 100, end_column: 0 },
       parent_id: null,
       child_ids: [],
+      self_type_name: null,
     });
     scopes.update_file(TEST_FILE, scope_map);
   });

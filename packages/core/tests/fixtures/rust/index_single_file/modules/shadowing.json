@@ -20,7 +20,8 @@
         "function:<fixtures>/rust/code/modules/shadowing.rs:13:8:22:1",
         "function:<fixtures>/rust/code/modules/shadowing.rs:25:18:28:1",
         "function:<fixtures>/rust/code/modules/shadowing.rs:31:23:33:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/modules/shadowing.rs:9:10:11:1": {
       "id": "function:<fixtures>/rust/code/modules/shadowing.rs:9:10:11:1",
@@ -34,7 +35,8 @@
         "end_line": 11,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/modules/shadowing.rs:13:8:22:1": {
       "id": "function:<fixtures>/rust/code/modules/shadowing.rs:13:8:22:1",
@@ -48,7 +50,8 @@
         "end_line": 22,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/modules/shadowing.rs:25:18:28:1": {
       "id": "function:<fixtures>/rust/code/modules/shadowing.rs:25:18:28:1",
@@ -62,7 +65,8 @@
         "end_line": 28,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/modules/shadowing.rs:31:23:33:1": {
       "id": "function:<fixtures>/rust/code/modules/shadowing.rs:31:23:33:1",
@@ -76,7 +80,8 @@
         "end_line": 33,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {
@@ -212,6 +217,21 @@
   },
   "types": {},
   "imported_symbols": {
+    "import:<fixtures>/rust/code/modules/shadowing.rs:4:1:utils": {
+      "kind": "import",
+      "symbol_id": "import:<fixtures>/rust/code/modules/shadowing.rs:4:1:utils",
+      "name": "utils",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/shadowing.rs",
+        "start_line": 4,
+        "start_column": 1,
+        "end_line": 4,
+        "end_column": 10
+      },
+      "defining_scope_id": "module:<fixtures>/rust/code/modules/shadowing.rs:1:1:33:1",
+      "import_path": "self::utils",
+      "import_kind": "namespace"
+    },
     "import:<fixtures>/rust/code/modules/shadowing.rs:6:helper": {
       "kind": "import",
       "symbol_id": "import:<fixtures>/rust/code/modules/shadowing.rs:6:helper",

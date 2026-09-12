@@ -21,7 +21,8 @@
         "function:<fixtures>/javascript/code/functions/iife_patterns.js:21:18:26:1",
         "function:<fixtures>/javascript/code/functions/iife_patterns.js:29:26:38:1",
         "function:<fixtures>/javascript/code/functions/iife_patterns.js:41:30:53:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/iife_patterns.js:7:26:12:1": {
       "id": "function:<fixtures>/javascript/code/functions/iife_patterns.js:7:26:12:1",
@@ -37,7 +38,8 @@
       },
       "child_ids": [
         "function:<fixtures>/javascript/code/functions/iife_patterns.js:8:18:10:3"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/iife_patterns.js:8:18:10:3": {
       "id": "function:<fixtures>/javascript/code/functions/iife_patterns.js:8:18:10:3",
@@ -51,7 +53,8 @@
         "end_line": 10,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/iife_patterns.js:15:18:18:1": {
       "id": "function:<fixtures>/javascript/code/functions/iife_patterns.js:15:18:18:1",
@@ -67,7 +70,8 @@
       },
       "child_ids": [
         "function:<fixtures>/javascript/code/functions/iife_patterns.js:16:18:16:40"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/iife_patterns.js:16:18:16:40": {
       "id": "function:<fixtures>/javascript/code/functions/iife_patterns.js:16:18:16:40",
@@ -81,7 +85,8 @@
         "end_line": 16,
         "end_column": 40
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/iife_patterns.js:21:18:26:1": {
       "id": "function:<fixtures>/javascript/code/functions/iife_patterns.js:21:18:26:1",
@@ -97,7 +102,8 @@
       },
       "child_ids": [
         "function:<fixtures>/javascript/code/functions/iife_patterns.js:22:17:24:3"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/iife_patterns.js:22:17:24:3": {
       "id": "function:<fixtures>/javascript/code/functions/iife_patterns.js:22:17:24:3",
@@ -111,7 +117,8 @@
         "end_line": 24,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/iife_patterns.js:29:26:38:1": {
       "id": "function:<fixtures>/javascript/code/functions/iife_patterns.js:29:26:38:1",
@@ -127,7 +134,8 @@
       },
       "child_ids": [
         "function:<fixtures>/javascript/code/functions/iife_patterns.js:32:19:37:3"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/iife_patterns.js:32:19:37:3": {
       "id": "function:<fixtures>/javascript/code/functions/iife_patterns.js:32:19:37:3",
@@ -143,7 +151,8 @@
       },
       "child_ids": [
         "function:<fixtures>/javascript/code/functions/iife_patterns.js:33:20:35:5"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/iife_patterns.js:33:20:35:5": {
       "id": "function:<fixtures>/javascript/code/functions/iife_patterns.js:33:20:35:5",
@@ -157,7 +166,8 @@
         "end_line": 35,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/iife_patterns.js:41:30:53:1": {
       "id": "function:<fixtures>/javascript/code/functions/iife_patterns.js:41:30:53:1",
@@ -174,7 +184,8 @@
       "child_ids": [
         "function:<fixtures>/javascript/code/functions/iife_patterns.js:42:25:44:3",
         "function:<fixtures>/javascript/code/functions/iife_patterns.js:46:24:48:3"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/iife_patterns.js:42:25:44:3": {
       "id": "function:<fixtures>/javascript/code/functions/iife_patterns.js:42:25:44:3",
@@ -188,7 +199,8 @@
         "end_line": 44,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/iife_patterns.js:46:24:48:3": {
       "id": "function:<fixtures>/javascript/code/functions/iife_patterns.js:46:24:48:3",
@@ -202,10 +214,34 @@
         "end_line": 48,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {
+    "function:<fixtures>/javascript/code/functions/iife_patterns.js:7:18:12:1:<anonymous>": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/javascript/code/functions/iife_patterns.js:7:18:12:1:<anonymous>",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/iife_patterns.js",
+        "start_line": 7,
+        "start_column": 18,
+        "end_line": 12,
+        "end_column": 1
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/functions/iife_patterns.js:1:1:65:0",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:<fixtures>/javascript/code/functions/iife_patterns.js:7:26:12:1",
+      "callback_context": {
+        "is_callback": false,
+        "receiver_is_external": null,
+        "receiver_location": null
+      }
+    },
     "function:<fixtures>/javascript/code/functions/iife_patterns.js:8:12:8:17:helper": {
       "kind": "function",
       "symbol_id": "function:<fixtures>/javascript/code/functions/iife_patterns.js:8:12:8:17:helper",
@@ -320,6 +356,52 @@
       },
       "body_scope_id": "function:<fixtures>/javascript/code/functions/iife_patterns.js:22:17:24:3"
     },
+    "function:<fixtures>/javascript/code/functions/iife_patterns.js:29:18:38:1:<anonymous>": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/javascript/code/functions/iife_patterns.js:29:18:38:1:<anonymous>",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/iife_patterns.js",
+        "start_line": 29,
+        "start_column": 18,
+        "end_line": 38,
+        "end_column": 1
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/functions/iife_patterns.js:1:1:65:0",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:<fixtures>/javascript/code/functions/iife_patterns.js:29:26:38:1",
+      "callback_context": {
+        "is_callback": false,
+        "receiver_is_external": null,
+        "receiver_location": null
+      }
+    },
+    "function:<fixtures>/javascript/code/functions/iife_patterns.js:32:11:37:3:<anonymous>": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/javascript/code/functions/iife_patterns.js:32:11:37:3:<anonymous>",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/iife_patterns.js",
+        "start_line": 32,
+        "start_column": 11,
+        "end_line": 37,
+        "end_column": 3
+      },
+      "defining_scope_id": "function:<fixtures>/javascript/code/functions/iife_patterns.js:29:26:38:1",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:<fixtures>/javascript/code/functions/iife_patterns.js:32:19:37:3",
+      "callback_context": {
+        "is_callback": false,
+        "receiver_is_external": null,
+        "receiver_location": null
+      }
+    },
     "function:<fixtures>/javascript/code/functions/iife_patterns.js:33:14:33:19:helper": {
       "kind": "function",
       "symbol_id": "function:<fixtures>/javascript/code/functions/iife_patterns.js:33:14:33:19:helper",
@@ -337,6 +419,29 @@
         "parameters": []
       },
       "body_scope_id": "function:<fixtures>/javascript/code/functions/iife_patterns.js:33:20:35:5"
+    },
+    "function:<fixtures>/javascript/code/functions/iife_patterns.js:41:22:53:1:<anonymous>": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/javascript/code/functions/iife_patterns.js:41:22:53:1:<anonymous>",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/iife_patterns.js",
+        "start_line": 41,
+        "start_column": 22,
+        "end_line": 53,
+        "end_column": 1
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/functions/iife_patterns.js:1:1:65:0",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:<fixtures>/javascript/code/functions/iife_patterns.js:41:30:53:1",
+      "callback_context": {
+        "is_callback": false,
+        "receiver_is_external": null,
+        "receiver_location": null
+      }
     },
     "function:<fixtures>/javascript/code/functions/iife_patterns.js:42:12:42:24:privateHelper": {
       "kind": "function",

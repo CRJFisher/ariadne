@@ -24,7 +24,8 @@
         "function:<fixtures>/typescript/code/enums/string_enum.ts:38:21:47:1",
         "class:<fixtures>/typescript/code/enums/string_enum.ts:50:18:54:1",
         "function:<fixtures>/typescript/code/enums/string_enum.ts:56:24:58:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "class:<fixtures>/typescript/code/enums/string_enum.ts:7:15:13:1": {
       "id": "class:<fixtures>/typescript/code/enums/string_enum.ts:7:15:13:1",
@@ -38,7 +39,8 @@
         "end_line": 13,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": "LogLevel"
     },
     "class:<fixtures>/typescript/code/enums/string_enum.ts:15:17:21:1": {
       "id": "class:<fixtures>/typescript/code/enums/string_enum.ts:15:17:21:1",
@@ -52,7 +54,8 @@
         "end_line": 21,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": "HttpMethod"
     },
     "class:<fixtures>/typescript/code/enums/string_enum.ts:23:18:27:1": {
       "id": "class:<fixtures>/typescript/code/enums/string_enum.ts:23:18:27:1",
@@ -66,7 +69,8 @@
         "end_line": 27,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": "Environment"
     },
     "function:<fixtures>/typescript/code/enums/string_enum.ts:30:13:32:1": {
       "id": "function:<fixtures>/typescript/code/enums/string_enum.ts:30:13:32:1",
@@ -80,7 +84,8 @@
         "end_line": 32,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/enums/string_enum.ts:34:22:36:1": {
       "id": "function:<fixtures>/typescript/code/enums/string_enum.ts:34:22:36:1",
@@ -94,7 +99,8 @@
         "end_line": 36,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/enums/string_enum.ts:38:21:47:1": {
       "id": "function:<fixtures>/typescript/code/enums/string_enum.ts:38:21:47:1",
@@ -110,7 +116,8 @@
       },
       "child_ids": [
         "block:<fixtures>/typescript/code/enums/string_enum.ts:39:3:46:3"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/typescript/code/enums/string_enum.ts:39:3:46:3": {
       "id": "block:<fixtures>/typescript/code/enums/string_enum.ts:39:3:46:3",
@@ -128,7 +135,8 @@
         "block:<fixtures>/typescript/code/enums/string_enum.ts:40:5:41:37",
         "block:<fixtures>/typescript/code/enums/string_enum.ts:42:5:43:43",
         "block:<fixtures>/typescript/code/enums/string_enum.ts:44:5:45:39"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/typescript/code/enums/string_enum.ts:40:5:41:37": {
       "id": "block:<fixtures>/typescript/code/enums/string_enum.ts:40:5:41:37",
@@ -142,7 +150,8 @@
         "end_line": 41,
         "end_column": 37
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/typescript/code/enums/string_enum.ts:42:5:43:43": {
       "id": "block:<fixtures>/typescript/code/enums/string_enum.ts:42:5:43:43",
@@ -156,7 +165,8 @@
         "end_line": 43,
         "end_column": 43
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/typescript/code/enums/string_enum.ts:44:5:45:39": {
       "id": "block:<fixtures>/typescript/code/enums/string_enum.ts:44:5:45:39",
@@ -170,7 +180,8 @@
         "end_line": 45,
         "end_column": 39
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "class:<fixtures>/typescript/code/enums/string_enum.ts:50:18:54:1": {
       "id": "class:<fixtures>/typescript/code/enums/string_enum.ts:50:18:54:1",
@@ -184,7 +195,8 @@
         "end_line": 54,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": "Color"
     },
     "function:<fixtures>/typescript/code/enums/string_enum.ts:56:24:58:1": {
       "id": "function:<fixtures>/typescript/code/enums/string_enum.ts:56:24:58:1",
@@ -198,7 +210,8 @@
         "end_line": 58,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {

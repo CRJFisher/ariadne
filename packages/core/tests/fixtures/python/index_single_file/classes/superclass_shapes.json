@@ -23,7 +23,8 @@
         "class:<fixtures>/python/code/classes/superclass_shapes.py:31:49:33:16",
         "class:<fixtures>/python/code/classes/superclass_shapes.py:36:14:38:16",
         "class:<fixtures>/python/code/classes/superclass_shapes.py:41:47:43:16"
-      ]
+      ],
+      "self_type_name": null
     },
     "class:<fixtures>/python/code/classes/superclass_shapes.py:18:43:23:47": {
       "id": "class:<fixtures>/python/code/classes/superclass_shapes.py:18:43:23:47",
@@ -40,7 +41,8 @@
       "child_ids": [
         "method:<fixtures>/python/code/classes/superclass_shapes.py:19:30:20:52",
         "method:<fixtures>/python/code/classes/superclass_shapes.py:22:28:23:47"
-      ]
+      ],
+      "self_type_name": "PGDDLCompiler"
     },
     "method:<fixtures>/python/code/classes/superclass_shapes.py:19:30:20:52": {
       "id": "method:<fixtures>/python/code/classes/superclass_shapes.py:19:30:20:52",
@@ -54,7 +56,8 @@
         "end_line": 20,
         "end_column": 52
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/superclass_shapes.py:22:28:23:47": {
       "id": "method:<fixtures>/python/code/classes/superclass_shapes.py:22:28:23:47",
@@ -68,7 +71,8 @@
         "end_line": 23,
         "end_column": 47
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "class:<fixtures>/python/code/classes/superclass_shapes.py:8:26:10:16": {
       "id": "class:<fixtures>/python/code/classes/superclass_shapes.py:8:26:10:16",
@@ -84,7 +88,8 @@
       },
       "child_ids": [
         "method:<fixtures>/python/code/classes/superclass_shapes.py:9:13:10:16"
-      ]
+      ],
+      "self_type_name": "BareBase"
     },
     "class:<fixtures>/python/code/classes/superclass_shapes.py:13:33:15:16": {
       "id": "class:<fixtures>/python/code/classes/superclass_shapes.py:13:33:15:16",
@@ -100,7 +105,8 @@
       },
       "child_ids": [
         "method:<fixtures>/python/code/classes/superclass_shapes.py:14:15:15:16"
-      ]
+      ],
+      "self_type_name": "DottedBase"
     },
     "class:<fixtures>/python/code/classes/superclass_shapes.py:26:34:28:16": {
       "id": "class:<fixtures>/python/code/classes/superclass_shapes.py:26:34:28:16",
@@ -116,7 +122,8 @@
       },
       "child_ids": [
         "method:<fixtures>/python/code/classes/superclass_shapes.py:27:16:28:16"
-      ]
+      ],
+      "self_type_name": "GenericBase"
     },
     "class:<fixtures>/python/code/classes/superclass_shapes.py:31:49:33:16": {
       "id": "class:<fixtures>/python/code/classes/superclass_shapes.py:31:49:33:16",
@@ -132,7 +139,8 @@
       },
       "child_ids": [
         "method:<fixtures>/python/code/classes/superclass_shapes.py:32:23:33:16"
-      ]
+      ],
+      "self_type_name": "DottedGenericBase"
     },
     "class:<fixtures>/python/code/classes/superclass_shapes.py:36:14:38:16": {
       "id": "class:<fixtures>/python/code/classes/superclass_shapes.py:36:14:38:16",
@@ -148,7 +156,8 @@
       },
       "child_ids": [
         "method:<fixtures>/python/code/classes/superclass_shapes.py:37:14:38:16"
-      ]
+      ],
+      "self_type_name": "NoBase"
     },
     "class:<fixtures>/python/code/classes/superclass_shapes.py:41:47:43:16": {
       "id": "class:<fixtures>/python/code/classes/superclass_shapes.py:41:47:43:16",
@@ -164,7 +173,8 @@
       },
       "child_ids": [
         "method:<fixtures>/python/code/classes/superclass_shapes.py:42:14:43:16"
-      ]
+      ],
+      "self_type_name": "MultiBase"
     },
     "method:<fixtures>/python/code/classes/superclass_shapes.py:9:13:10:16": {
       "id": "method:<fixtures>/python/code/classes/superclass_shapes.py:9:13:10:16",
@@ -178,7 +188,8 @@
         "end_line": 10,
         "end_column": 16
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/superclass_shapes.py:14:15:15:16": {
       "id": "method:<fixtures>/python/code/classes/superclass_shapes.py:14:15:15:16",
@@ -192,7 +203,8 @@
         "end_line": 15,
         "end_column": 16
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/superclass_shapes.py:27:16:28:16": {
       "id": "method:<fixtures>/python/code/classes/superclass_shapes.py:27:16:28:16",
@@ -206,7 +218,8 @@
         "end_line": 28,
         "end_column": 16
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/superclass_shapes.py:32:23:33:16": {
       "id": "method:<fixtures>/python/code/classes/superclass_shapes.py:32:23:33:16",
@@ -220,7 +233,8 @@
         "end_line": 33,
         "end_column": 16
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/superclass_shapes.py:37:14:38:16": {
       "id": "method:<fixtures>/python/code/classes/superclass_shapes.py:37:14:38:16",
@@ -234,7 +248,8 @@
         "end_line": 38,
         "end_column": 16
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/superclass_shapes.py:42:14:43:16": {
       "id": "method:<fixtures>/python/code/classes/superclass_shapes.py:42:14:43:16",
@@ -248,7 +263,8 @@
         "end_line": 43,
         "end_column": 16
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {},

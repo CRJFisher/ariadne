@@ -17,7 +17,8 @@
       },
       "child_ids": [
         "class:<fixtures>/python/code/modules/user_class.py:10:12:47:9"
-      ]
+      ],
+      "self_type_name": null
     },
     "class:<fixtures>/python/code/modules/user_class.py:10:12:47:9": {
       "id": "class:<fixtures>/python/code/modules/user_class.py:10:12:47:9",
@@ -38,7 +39,8 @@
         "method:<fixtures>/python/code/modules/user_class.py:36:19:38:27",
         "method:<fixtures>/python/code/modules/user_class.py:24:18:26:25",
         "method:<fixtures>/python/code/modules/user_class.py:20:17:22:24"
-      ]
+      ],
+      "self_type_name": "User"
     },
     "method:<fixtures>/python/code/modules/user_class.py:40:17:47:9": {
       "id": "method:<fixtures>/python/code/modules/user_class.py:40:17:47:9",
@@ -52,7 +54,8 @@
         "end_line": 47,
         "end_column": 9
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/modules/user_class.py:28:23:34:19": {
       "id": "method:<fixtures>/python/code/modules/user_class.py:28:23:34:19",
@@ -69,7 +72,8 @@
       "child_ids": [
         "block:<fixtures>/python/code/modules/user_class.py:32:9:33:30",
         "block:<fixtures>/python/code/modules/user_class.py:30:9:31:28"
-      ]
+      ],
+      "self_type_name": null
     },
     "constructor:<fixtures>/python/code/modules/user_class.py:13:17:18:26": {
       "id": "constructor:<fixtures>/python/code/modules/user_class.py:13:17:18:26",
@@ -83,7 +87,8 @@
         "end_line": 18,
         "end_column": 26
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/modules/user_class.py:36:19:38:27": {
       "id": "method:<fixtures>/python/code/modules/user_class.py:36:19:38:27",
@@ -97,7 +102,8 @@
         "end_line": 38,
         "end_column": 27
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/modules/user_class.py:24:18:26:25": {
       "id": "method:<fixtures>/python/code/modules/user_class.py:24:18:26:25",
@@ -111,7 +117,8 @@
         "end_line": 26,
         "end_column": 25
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/modules/user_class.py:20:17:22:24": {
       "id": "method:<fixtures>/python/code/modules/user_class.py:20:17:22:24",
@@ -125,7 +132,8 @@
         "end_line": 22,
         "end_column": 24
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/python/code/modules/user_class.py:32:9:33:30": {
       "id": "block:<fixtures>/python/code/modules/user_class.py:32:9:33:30",
@@ -139,7 +147,8 @@
         "end_line": 33,
         "end_column": 30
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/python/code/modules/user_class.py:30:9:31:28": {
       "id": "block:<fixtures>/python/code/modules/user_class.py:30:9:31:28",
@@ -153,7 +162,8 @@
         "end_line": 31,
         "end_column": 28
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {},

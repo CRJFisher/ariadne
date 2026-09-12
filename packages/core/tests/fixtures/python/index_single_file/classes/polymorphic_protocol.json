@@ -22,7 +22,8 @@
         "class:<fixtures>/python/code/classes/polymorphic_protocol.py:21:16:28:26",
         "class:<fixtures>/python/code/classes/polymorphic_protocol.py:31:16:38:26",
         "class:<fixtures>/python/code/classes/polymorphic_protocol.py:41:16:48:26"
-      ]
+      ],
+      "self_type_name": null
     },
     "class:<fixtures>/python/code/classes/polymorphic_protocol.py:9:25:18:11": {
       "id": "class:<fixtures>/python/code/classes/polymorphic_protocol.py:9:25:18:11",
@@ -39,7 +40,8 @@
       "child_ids": [
         "method:<fixtures>/python/code/classes/polymorphic_protocol.py:12:16:14:11",
         "method:<fixtures>/python/code/classes/polymorphic_protocol.py:16:17:18:11"
-      ]
+      ],
+      "self_type_name": "Handler"
     },
     "function:<fixtures>/python/code/classes/polymorphic_protocol.py:51:20:58:30": {
       "id": "function:<fixtures>/python/code/classes/polymorphic_protocol.py:51:20:58:30",
@@ -53,7 +55,8 @@
         "end_line": 58,
         "end_column": 30
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/python/code/classes/polymorphic_protocol.py:62:1:69:22": {
       "id": "block:<fixtures>/python/code/classes/polymorphic_protocol.py:62:1:69:22",
@@ -67,7 +70,8 @@
         "end_line": 69,
         "end_column": 22
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "class:<fixtures>/python/code/classes/polymorphic_protocol.py:21:16:28:26": {
       "id": "class:<fixtures>/python/code/classes/polymorphic_protocol.py:21:16:28:26",
@@ -84,7 +88,8 @@
       "child_ids": [
         "method:<fixtures>/python/code/classes/polymorphic_protocol.py:24:16:25:37",
         "method:<fixtures>/python/code/classes/polymorphic_protocol.py:27:17:28:26"
-      ]
+      ],
+      "self_type_name": "HandlerA"
     },
     "class:<fixtures>/python/code/classes/polymorphic_protocol.py:31:16:38:26": {
       "id": "class:<fixtures>/python/code/classes/polymorphic_protocol.py:31:16:38:26",
@@ -101,7 +106,8 @@
       "child_ids": [
         "method:<fixtures>/python/code/classes/polymorphic_protocol.py:34:16:35:37",
         "method:<fixtures>/python/code/classes/polymorphic_protocol.py:37:17:38:26"
-      ]
+      ],
+      "self_type_name": "HandlerB"
     },
     "class:<fixtures>/python/code/classes/polymorphic_protocol.py:41:16:48:26": {
       "id": "class:<fixtures>/python/code/classes/polymorphic_protocol.py:41:16:48:26",
@@ -118,7 +124,8 @@
       "child_ids": [
         "method:<fixtures>/python/code/classes/polymorphic_protocol.py:44:16:45:37",
         "method:<fixtures>/python/code/classes/polymorphic_protocol.py:47:17:48:26"
-      ]
+      ],
+      "self_type_name": "HandlerC"
     },
     "method:<fixtures>/python/code/classes/polymorphic_protocol.py:12:16:14:11": {
       "id": "method:<fixtures>/python/code/classes/polymorphic_protocol.py:12:16:14:11",
@@ -132,7 +139,8 @@
         "end_line": 14,
         "end_column": 11
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/polymorphic_protocol.py:16:17:18:11": {
       "id": "method:<fixtures>/python/code/classes/polymorphic_protocol.py:16:17:18:11",
@@ -146,7 +154,8 @@
         "end_line": 18,
         "end_column": 11
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/polymorphic_protocol.py:24:16:25:37": {
       "id": "method:<fixtures>/python/code/classes/polymorphic_protocol.py:24:16:25:37",
@@ -160,7 +169,8 @@
         "end_line": 25,
         "end_column": 37
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/polymorphic_protocol.py:34:16:35:37": {
       "id": "method:<fixtures>/python/code/classes/polymorphic_protocol.py:34:16:35:37",
@@ -174,7 +184,8 @@
         "end_line": 35,
         "end_column": 37
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/polymorphic_protocol.py:44:16:45:37": {
       "id": "method:<fixtures>/python/code/classes/polymorphic_protocol.py:44:16:45:37",
@@ -188,7 +199,8 @@
         "end_line": 45,
         "end_column": 37
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/polymorphic_protocol.py:27:17:28:26": {
       "id": "method:<fixtures>/python/code/classes/polymorphic_protocol.py:27:17:28:26",
@@ -202,7 +214,8 @@
         "end_line": 28,
         "end_column": 26
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/polymorphic_protocol.py:37:17:38:26": {
       "id": "method:<fixtures>/python/code/classes/polymorphic_protocol.py:37:17:38:26",
@@ -216,7 +229,8 @@
         "end_line": 38,
         "end_column": 26
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/polymorphic_protocol.py:47:17:48:26": {
       "id": "method:<fixtures>/python/code/classes/polymorphic_protocol.py:47:17:48:26",
@@ -230,7 +244,8 @@
         "end_line": 48,
         "end_column": 26
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {

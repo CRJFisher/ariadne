@@ -17,7 +17,8 @@
       },
       "child_ids": [
         "class:<fixtures>/python/code/classes/method_types.py:9:18:75:63"
-      ]
+      ],
+      "self_type_name": null
     },
     "class:<fixtures>/python/code/classes/method_types.py:9:18:75:63": {
       "id": "class:<fixtures>/python/code/classes/method_types.py:9:18:75:63",
@@ -43,7 +44,8 @@
         "method:<fixtures>/python/code/classes/method_types.py:58:17:60:72",
         "method:<fixtures>/python/code/classes/method_types.py:50:25:52:27",
         "method:<fixtures>/python/code/classes/method_types.py:33:18:35:24"
-      ]
+      ],
+      "self_type_name": "Calculator"
     },
     "method:<fixtures>/python/code/classes/method_types.py:68:17:75:63": {
       "id": "method:<fixtures>/python/code/classes/method_types.py:68:17:75:63",
@@ -59,7 +61,8 @@
       },
       "child_ids": [
         "block:<fixtures>/python/code/classes/method_types.py:70:9:75:63"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/python/code/classes/method_types.py:70:9:75:63": {
       "id": "block:<fixtures>/python/code/classes/method_types.py:70:9:75:63",
@@ -76,7 +79,8 @@
       "child_ids": [
         "block:<fixtures>/python/code/classes/method_types.py:74:9:75:63",
         "block:<fixtures>/python/code/classes/method_types.py:72:9:73:38"
-      ]
+      ],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/method_types.py:62:15:66:38": {
       "id": "method:<fixtures>/python/code/classes/method_types.py:62:15:66:38",
@@ -92,7 +96,8 @@
       },
       "child_ids": [
         "block:<fixtures>/python/code/classes/method_types.py:64:9:65:24"
-      ]
+      ],
+      "self_type_name": null
     },
     "constructor:<fixtures>/python/code/classes/method_types.py:14:17:18:29": {
       "id": "constructor:<fixtures>/python/code/classes/method_types.py:14:17:18:29",
@@ -106,7 +111,8 @@
         "end_line": 18,
         "end_column": 29
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/method_types.py:38:26:42:23": {
       "id": "method:<fixtures>/python/code/classes/method_types.py:38:26:42:23",
@@ -120,7 +126,8 @@
         "end_line": 42,
         "end_column": 23
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/method_types.py:20:12:24:21": {
       "id": "method:<fixtures>/python/code/classes/method_types.py:20:12:24:21",
@@ -134,7 +141,8 @@
         "end_line": 24,
         "end_column": 21
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/method_types.py:26:17:30:21": {
       "id": "method:<fixtures>/python/code/classes/method_types.py:26:17:30:21",
@@ -148,7 +156,8 @@
         "end_line": 30,
         "end_column": 21
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/method_types.py:45:23:47:78": {
       "id": "method:<fixtures>/python/code/classes/method_types.py:45:23:47:78",
@@ -162,7 +171,8 @@
         "end_line": 47,
         "end_column": 78
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/method_types.py:54:16:56:78": {
       "id": "method:<fixtures>/python/code/classes/method_types.py:54:16:56:78",
@@ -176,7 +186,8 @@
         "end_line": 56,
         "end_column": 78
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/method_types.py:58:17:60:72": {
       "id": "method:<fixtures>/python/code/classes/method_types.py:58:17:60:72",
@@ -190,7 +201,8 @@
         "end_line": 60,
         "end_column": 72
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/method_types.py:50:25:52:27": {
       "id": "method:<fixtures>/python/code/classes/method_types.py:50:25:52:27",
@@ -204,7 +216,8 @@
         "end_line": 52,
         "end_column": 27
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/method_types.py:33:18:35:24": {
       "id": "method:<fixtures>/python/code/classes/method_types.py:33:18:35:24",
@@ -218,7 +231,8 @@
         "end_line": 35,
         "end_column": 24
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/python/code/classes/method_types.py:74:9:75:63": {
       "id": "block:<fixtures>/python/code/classes/method_types.py:74:9:75:63",
@@ -232,7 +246,8 @@
         "end_line": 75,
         "end_column": 63
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/python/code/classes/method_types.py:72:9:73:38": {
       "id": "block:<fixtures>/python/code/classes/method_types.py:72:9:73:38",
@@ -246,7 +261,8 @@
         "end_line": 73,
         "end_column": 38
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/python/code/classes/method_types.py:64:9:65:24": {
       "id": "block:<fixtures>/python/code/classes/method_types.py:64:9:65:24",
@@ -260,7 +276,8 @@
         "end_line": 65,
         "end_column": 24
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {},

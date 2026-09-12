@@ -17,7 +17,8 @@
       },
       "child_ids": [
         "class:<fixtures>/python/code/entry_points/timed_outside_asv.py:6:17:8:16"
-      ]
+      ],
+      "self_type_name": null
     },
     "class:<fixtures>/python/code/entry_points/timed_outside_asv.py:6:17:8:16": {
       "id": "class:<fixtures>/python/code/entry_points/timed_outside_asv.py:6:17:8:16",
@@ -33,7 +34,8 @@
       },
       "child_ids": [
         "method:<fixtures>/python/code/entry_points/timed_outside_asv.py:7:21:8:16"
-      ]
+      ],
+      "self_type_name": "Stopwatch"
     },
     "method:<fixtures>/python/code/entry_points/timed_outside_asv.py:7:21:8:16": {
       "id": "method:<fixtures>/python/code/entry_points/timed_outside_asv.py:7:21:8:16",
@@ -47,7 +49,8 @@
         "end_line": 8,
         "end_column": 16
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {},

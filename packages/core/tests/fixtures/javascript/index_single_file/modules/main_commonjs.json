@@ -15,27 +15,13 @@
         "end_line": 26,
         "end_column": 0
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {},
   "classes": {},
   "variables": {
-    "variable:<fixtures>/javascript/code/modules/main_commonjs.js:7:7:7:45:{ helper, processData, calculateTotal }": {
-      "kind": "constant",
-      "symbol_id": "variable:<fixtures>/javascript/code/modules/main_commonjs.js:7:7:7:45:{ helper, processData, calculateTotal }",
-      "name": "{ helper, processData, calculateTotal }",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/modules/main_commonjs.js",
-        "start_line": 7,
-        "start_column": 7,
-        "end_line": 7,
-        "end_column": 45
-      },
-      "defining_scope_id": "module:<fixtures>/javascript/code/modules/main_commonjs.js:1:1:26:0",
-      "is_exported": false,
-      "docstring": "// CommonJS require"
-    },
     "variable:<fixtures>/javascript/code/modules/main_commonjs.js:10:7:10:14:greeting": {
       "kind": "constant",
       "symbol_id": "variable:<fixtures>/javascript/code/modules/main_commonjs.js:10:7:10:14:greeting",

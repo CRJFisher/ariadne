@@ -17,7 +17,8 @@
       },
       "child_ids": [
         "function:<fixtures>/rust/code/modules/uses_worker.rs:8:7:11:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/modules/uses_worker.rs:8:7:11:1": {
       "id": "function:<fixtures>/rust/code/modules/uses_worker.rs:8:7:11:1",
@@ -31,7 +32,8 @@
         "end_line": 11,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {
@@ -78,6 +80,21 @@
   },
   "types": {},
   "imported_symbols": {
+    "import:<fixtures>/rust/code/modules/uses_worker.rs:4:1:worker": {
+      "kind": "import",
+      "symbol_id": "import:<fixtures>/rust/code/modules/uses_worker.rs:4:1:worker",
+      "name": "worker",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/uses_worker.rs",
+        "start_line": 4,
+        "start_column": 1,
+        "end_line": 4,
+        "end_column": 11
+      },
+      "defining_scope_id": "module:<fixtures>/rust/code/modules/uses_worker.rs:1:1:12:0",
+      "import_path": "self::worker",
+      "import_kind": "namespace"
+    },
     "import:<fixtures>/rust/code/modules/uses_worker.rs:6:create": {
       "kind": "import",
       "symbol_id": "import:<fixtures>/rust/code/modules/uses_worker.rs:6:create",

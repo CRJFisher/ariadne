@@ -148,6 +148,7 @@ describe("resolve_qualified_path_rust", () => {
       type: "module",
       location: LOC,
       child_ids: [MODULE_SCOPE],
+      self_type_name: null,
     };
     const module_scope: LexicalScope = {
       id: MODULE_SCOPE,
@@ -156,6 +157,7 @@ describe("resolve_qualified_path_rust", () => {
       type: "module",
       location: LOC,
       child_ids: [],
+      self_type_name: null,
     };
     scopes.update_file(
       FILE,

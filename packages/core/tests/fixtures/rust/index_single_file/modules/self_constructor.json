@@ -19,7 +19,8 @@
         "class:<fixtures>/rust/code/modules/self_constructor.rs:5:19:7:1",
         "block:<fixtures>/rust/code/modules/self_constructor.rs:9:13:19:1",
         "function:<fixtures>/rust/code/modules/self_constructor.rs:21:9:23:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "class:<fixtures>/rust/code/modules/self_constructor.rs:5:19:7:1": {
       "id": "class:<fixtures>/rust/code/modules/self_constructor.rs:5:19:7:1",
@@ -33,7 +34,8 @@
         "end_line": 7,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": "Widget"
     },
     "block:<fixtures>/rust/code/modules/self_constructor.rs:9:13:19:1": {
       "id": "block:<fixtures>/rust/code/modules/self_constructor.rs:9:13:19:1",
@@ -50,7 +52,8 @@
       "child_ids": [
         "function:<fixtures>/rust/code/modules/self_constructor.rs:11:15:13:5",
         "function:<fixtures>/rust/code/modules/self_constructor.rs:16:18:18:5"
-      ]
+      ],
+      "self_type_name": "Widget"
     },
     "function:<fixtures>/rust/code/modules/self_constructor.rs:11:15:13:5": {
       "id": "function:<fixtures>/rust/code/modules/self_constructor.rs:11:15:13:5",
@@ -64,7 +67,8 @@
         "end_line": 13,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/modules/self_constructor.rs:16:18:18:5": {
       "id": "function:<fixtures>/rust/code/modules/self_constructor.rs:16:18:18:5",
@@ -78,7 +82,8 @@
         "end_line": 18,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/modules/self_constructor.rs:21:9:23:1": {
       "id": "function:<fixtures>/rust/code/modules/self_constructor.rs:21:9:23:1",
@@ -92,7 +97,8 @@
         "end_line": 23,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {

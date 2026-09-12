@@ -157,6 +157,7 @@ describe("Function Call Resolution", () => {
         parent_id: null,
         name: null,
         child_ids: [CLASS_SCOPE_ID],
+        self_type_name: null,
       });
       scope_map.set(CLASS_SCOPE_ID, {
         id: CLASS_SCOPE_ID,
@@ -165,6 +166,7 @@ describe("Function Call Resolution", () => {
         parent_id: FILE_SCOPE_ID,
         name: "Wrapper" as SymbolName,
         child_ids: [METHOD_BODY_SCOPE_ID],
+        self_type_name: null,
       });
       scope_map.set(METHOD_BODY_SCOPE_ID, {
         id: METHOD_BODY_SCOPE_ID,
@@ -173,6 +175,7 @@ describe("Function Call Resolution", () => {
         parent_id: CLASS_SCOPE_ID,
         name: "do_work" as SymbolName,
         child_ids: [],
+        self_type_name: null,
       });
       scopes.update_file(TEST_FILE, scope_map);
 
@@ -270,6 +273,7 @@ describe("Function Call Resolution", () => {
         parent_id: null,
         name: "Orphan" as SymbolName,
         child_ids: [ORPHAN_METHOD_SCOPE],
+        self_type_name: null,
       });
       scope_map.set(ORPHAN_METHOD_SCOPE, {
         id: ORPHAN_METHOD_SCOPE,
@@ -278,6 +282,7 @@ describe("Function Call Resolution", () => {
         parent_id: ORPHAN_CLASS_SCOPE,
         name: "do_work" as SymbolName,
         child_ids: [],
+        self_type_name: null,
       });
       scopes.update_file(TEST_FILE, scope_map);
 
