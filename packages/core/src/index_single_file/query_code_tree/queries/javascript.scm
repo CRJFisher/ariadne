@@ -168,7 +168,27 @@
         object: (member_expression) @_obj
         property: (property_identifier) @definition.function.commonjs_export)
       right: [(function_expression !name) (arrow_function)]
-      (#eq? @_obj "module.exports"))))
+      (#match? @_obj "^module[ \t\r\n]*[.][ \t\r\n]*exports$"))))
+
+; A function value assigned onto a member of any other holder —
+; `app.engine = function () {}`, `Counter.prototype.tick = () => {}` — is a
+; definition at the value's own span. Where the holder is a bare identifier or
+; `X.prototype`, that span is also the id the holder's function collection
+; records (detect_member_assignment reads those two shapes), so a call through
+; the holder reaches a real function; for any wider holder — `this.h = …`,
+; `a.b.c = …` — no collection records the value and the definition stands on
+; its own, which still puts the function's own calls in the graph.
+; The `exports` / `module.exports` holders are excluded because the rules above
+; already define those values under their exported names; both patterns read the
+; holder the same whitespace-tolerant way, so a line break inside it moves
+; neither. The bare `module` holder is excluded with them, which leaves
+; `module.foo = fn` on a locally bound `module` defined by nothing.
+(assignment_expression
+  left: (member_expression
+    object: (_) @_member_holder
+    property: (property_identifier))
+  right: [(function_expression !name) (arrow_function)] @definition.anonymous_function
+  (#not-match? @_member_holder "^(exports|module|module[ \t\r\n]*[.][ \t\r\n]*exports)$"))
 
 ; Variable declarations with assignments
 (variable_declarator
