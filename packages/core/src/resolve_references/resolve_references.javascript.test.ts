@@ -987,3 +987,27 @@ render(1);
     });
   });
 });
+
+/**
+ * express's `lib/express.js` requires `./application` and mixes its members
+ * into the application function; a member assigned onto the required module
+ * object in another file stays reachable across the boundary because the
+ * module object is consumed as a collection.
+ */
+describe("Cross-file require and mixin", () => {
+  const FIXTURES = path.join(__dirname, "..", "..", "tests", "fixtures", "javascript", "code", "integration");
+
+  it("leaves the mixed-in members reachable across the module boundary", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "mixin_application.js": fs.readFileSync(path.join(FIXTURES, "mixin_application.js"), "utf-8"),
+      "mixin_express.js": fs.readFileSync(path.join(FIXTURES, "mixin_express.js"), "utf-8"),
+    });
+    temp_dirs.push(temp_dir);
+    const application = file_paths["mixin_application.js"];
+    const cg = project.get_call_graph();
+    const engine = find_caller_node(cg, "engine", application);
+    expect(cg.indirect_reachability?.get(engine!.symbol_id)?.reason.type).toEqual("collection_read");
+    expect(is_entry_point(cg, "engine", application)).toEqual(false);
+    expect(is_entry_point(cg, "set", application)).toEqual(false);
+  });
+});

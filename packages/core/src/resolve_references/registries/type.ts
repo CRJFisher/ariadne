@@ -20,7 +20,7 @@ import {
   set_member_symbol,
 } from "../type_preprocessing";
 import type { ResolutionRegistry } from "../resolution_registry";
-import { resolve_namespace_export } from "../export_chain_lookup";
+import { resolve_module_member } from "../module_member_lookup";
 import type { ModuleResolutionContext } from "../import_resolution";
 
 /**
@@ -246,7 +246,15 @@ export class TypeRegistry {
         const source_file = import_source_resolver(namespace_id);
         if (!source_file) continue;
 
-        const class_id = resolve_namespace_export(source_file, chain[1], exports, languages, modules);
+        const class_id = resolve_module_member(
+          source_file,
+          chain[1],
+          "namespace",
+          exports,
+          definitions,
+          languages,
+          modules
+        );
         if (class_id) {
           this.symbol_types.set(symbol_id, class_id);
           resolved_symbols.add(symbol_id);

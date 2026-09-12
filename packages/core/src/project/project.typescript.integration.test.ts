@@ -1577,3 +1577,38 @@ export class Service {
   });
 
 });
+
+/**
+ * A member reached through a barrel resolves the same way whichever import
+ * form named it: `import { Engine }` through the re-export and `barrel.helper`
+ * through the namespace both land on the terminal definition.
+ */
+describe("Module members through a two-hop re-export chain", () => {
+  it("resolves a named import and a namespace member through the barrel to the same file's definitions", async () => {
+    const project = new Project();
+    await project.initialize(FIXTURE_ROOT as FilePath);
+    for (const name of ["reexport_engine.ts", "reexport_barrel.ts", "reexport_consumer.ts"]) {
+      project.update_file(file_path(name), load_source(name));
+    }
+    const calls = project.resolutions
+      .get_calls_for_file(file_path("reexport_consumer.ts"))
+      .map((call) => [
+        call.location.start_line,
+        call.name,
+        call.resolutions
+          .map((r) => `${r.symbol_id.split(":")[0]}:${path.basename(r.symbol_id.split(":")[1])}:${r.symbol_id.split(":").slice(-1)[0]}`)
+          .join(",") || call.resolution_failure?.reason,
+      ]);
+    // `engine.start()` types its receiver through the named import of the
+    // barrel, `barrel.helper()` reads a member of the namespace import, and
+    // `shared.start()` calls through an imported value the barrel re-exports.
+    // Name resolution binds each import to its terminal definition through the
+    // export chain before method lookup runs, so all three land in the engine
+    // file and the case pins the barrel end to end rather than one branch.
+    expect(calls).toEqual([
+      [5, "start", "method:reexport_engine.ts:start"],
+      [6, "helper", "function:reexport_engine.ts:helper"],
+      [7, "start", "method:reexport_engine.ts:start"],
+    ]);
+  });
+});
