@@ -19,13 +19,48 @@ import {
   RECORDED_CORPUS_PASS_COST,
   RECORDED_EVICTION_INDEX_COST,
   RECORDED_EXPORT_DECLARATION_SPACE,
+  RECORDED_FAILURE_TAXONOMY_BASELINE,
   RECORDED_FULL_CORPUS_BASELINE,
   RECORDED_MEMORY_CONTRACT,
   RECORDED_WORKER_INDEX_DISPATCH,
   RECORDED_NAME_TABLE_MEMORY,
   RECORDED_ORDER_INDEPENDENCE,
   RECORDED_RESOLUTION_EVICTION_COST,
+  format_failure_taxonomy_table,
+  same_commit,
+  type MeasurementRow,
 } from "../src/benchmark_corpus_load";
+
+/**
+ * Where this corpus's call references ended up on the tree TASK-376 started
+ * from, beside the arm that just counted them.
+ *
+ * Selected on the corpus, its commit, the predicate and the offered count
+ * together: a taxonomy is stated over one file set, and the same corpus under
+ * another predicate is another file set. The commit is matched the way
+ * `assert_pinned_file_count` matches it, so a run started with an abbreviated
+ * `--corpus-commit` — the form the README's own example uses — still finds its
+ * row. The counts travel between machines because they are properties of the
+ * algorithm; nothing here is a cost.
+ */
+export function report_recorded_failure_taxonomy(row: MeasurementRow): void {
+  const recorded = RECORDED_FAILURE_TAXONOMY_BASELINE.rows.find(
+    (candidate) =>
+      candidate.corpus === row.corpus.corpus_name &&
+      candidate.predicate === row.corpus.predicate &&
+      same_commit(candidate.corpus_commit, row.corpus.corpus_commit) &&
+      candidate.file_counts.offered === row.file_counts.offered,
+  );
+  if (recorded === undefined) return;
+  console.log(
+    `\nrecorded failure taxonomy for this file set at ariadne@${RECORDED_FAILURE_TAXONOMY_BASELINE.ariadne_commit} (the TASK-376 baseline — a record, not a comparand for the arms above):`,
+  );
+  for (const line of format_failure_taxonomy_table([
+    { label: "recorded", taxonomy: recorded.failure_taxonomy },
+  ])) {
+    console.log(`  ${line}`);
+  }
+}
 
 /**
  * What this file set needs from the heap, and what it does at the ceiling a

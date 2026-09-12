@@ -20,6 +20,26 @@ import {
 } from "./call_graph_fingerprint";
 import { digest_members } from "./streaming_digest";
 import type { MeasurementRow } from "./measurement_row";
+import {
+  RESOLUTION_FAILURE_REASONS,
+  type FailureTaxonomy,
+} from "./failure_taxonomy";
+
+/**
+ * Closed over its own references and agreeing with the row's two
+ * `unresolved_calls` members, because `read_arm_result` holds a taxonomy to
+ * both.
+ */
+function build_taxonomy(): FailureTaxonomy {
+  const by_reason = Object.fromEntries(
+    RESOLUTION_FAILURE_REASONS.map((reason) => [reason, 0]),
+  ) as Record<(typeof RESOLUTION_FAILURE_REASONS)[number], number>;
+  return {
+    call_references: 11,
+    resolved: 9,
+    by_reason: { ...by_reason, name_not_in_scope: 1, receiver_type_unknown: 1 },
+  };
+}
 
 const TEMP_DIRS: string[] = [];
 
@@ -120,7 +140,7 @@ function build_result(): ArmResult {
     },
   } as MeasurementRow;
 
-  return { row, fingerprint };
+  return { row, fingerprint, failure_taxonomy: build_taxonomy() };
 }
 
 describe("write_arm_result / read_arm_result", () => {
@@ -136,6 +156,74 @@ describe("write_arm_result / read_arm_result", () => {
         ...written.fingerprint[name].members,
       ]);
     }
+  });
+
+  it("round-trips the failure taxonomy beside the row", async () => {
+    const file = temp_file("taxonomy.arm");
+    const result = build_result();
+    await write_arm_result(file, result);
+    const read = await read_arm_result(file);
+    expect(read.failure_taxonomy).toEqual(build_taxonomy());
+  });
+
+  it("refuses a file whose arm wrote a row but no failure taxonomy", async () => {
+    const file = temp_file("no-taxonomy.arm");
+    const result = build_result();
+    await write_arm_result(file, result);
+    const kept = fs
+      .readFileSync(file, "utf-8")
+      .split("\n")
+      .filter((line) => !line.startsWith("failure_taxonomy\t"))
+      .join("\n");
+    fs.writeFileSync(file, kept);
+    await expect(read_arm_result(file)).rejects.toThrow(
+      "holds a measurement row but no failure taxonomy",
+    );
+  });
+
+  it("refuses a taxonomy that does not close over its own call references", async () => {
+    const file = temp_file("open-taxonomy.arm");
+    const result = build_result();
+    await write_arm_result(file, {
+      ...result,
+      failure_taxonomy: { ...result.failure_taxonomy, call_references: 12 },
+    });
+    await expect(read_arm_result(file)).rejects.toThrow(
+      "9 resolved plus 2 failed is not the 12 call references it is stated over",
+    );
+  });
+
+  it("refuses a taxonomy that disagrees with the row's unresolved count", async () => {
+    const file = temp_file("disagreeing-taxonomy.arm");
+    const result = build_result();
+    await write_arm_result(file, {
+      ...result,
+      failure_taxonomy: {
+        call_references: 12,
+        resolved: 9,
+        by_reason: { ...result.failure_taxonomy.by_reason, dynamic_dispatch: 1 },
+      },
+    });
+    await expect(read_arm_result(file)).rejects.toThrow(
+      "counting 3 unresolved calls against a row fingerprinting 2",
+    );
+  });
+
+  it("refuses a taxonomy missing a reason of the vocabulary", async () => {
+    const file = temp_file("short-taxonomy.arm");
+    const result = build_result();
+    const { dynamic_dispatch: _dropped, ...short } =
+      result.failure_taxonomy.by_reason;
+    await write_arm_result(file, {
+      ...result,
+      failure_taxonomy: {
+        ...result.failure_taxonomy,
+        by_reason: short as FailureTaxonomy["by_reason"],
+      },
+    });
+    await expect(read_arm_result(file)).rejects.toThrow(
+      "no count for dynamic_dispatch",
+    );
   });
 
   it("writes the row last, so its presence proves the file is complete", async () => {
@@ -209,6 +297,7 @@ describe("write_arm_result / read_arm_result", () => {
         },
       },
       fingerprint: { ...result.fingerprint, dropped_files: tabbed },
+      failure_taxonomy: result.failure_taxonomy,
     };
     await write_arm_result(file, written);
     const read = await read_arm_result(file);

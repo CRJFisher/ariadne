@@ -19,6 +19,7 @@ export {
 export {
   discover_corpus,
   parse_corpus_predicate_name,
+  same_commit,
 } from "./corpus_predicate";
 
 export { plan_nested_slices } from "./nested_slice";
@@ -60,6 +61,10 @@ export { RECORDED_PER_FILE_REDERIVATION_COST } from "./recorded_per_file_rederiv
 export { RECORDED_TREE_SITTER_CROSSINGS } from "./recorded_tree_sitter_crossings";
 
 export { RECORDED_WORKER_INDEX_DISPATCH } from "./recorded_worker_index_dispatch";
+
+export { RECORDED_FAILURE_TAXONOMY_BASELINE } from "./recorded_failure_taxonomy_baseline";
+
+export { format_failure_taxonomy_table } from "./failure_taxonomy";
 
 export { compare_fingerprints } from "./call_graph_fingerprint";
 
