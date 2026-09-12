@@ -27,7 +27,8 @@
         "method:<fixtures>/javascript/code/classes/object_literals.js:76:14:82:5",
         "method:<fixtures>/javascript/code/classes/object_literals.js:90:20:95:3",
         "method:<fixtures>/javascript/code/classes/object_literals.js:97:20:103:3"
-      ]
+      ],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/object_literals.js:10:6:13:3": {
       "id": "method:<fixtures>/javascript/code/classes/object_literals.js:10:6:13:3",
@@ -41,7 +42,8 @@
         "end_line": 13,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/object_literals.js:15:11:18:3": {
       "id": "method:<fixtures>/javascript/code/classes/object_literals.js:15:11:18:3",
@@ -55,7 +57,8 @@
         "end_line": 18,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/object_literals.js:20:11:22:3": {
       "id": "method:<fixtures>/javascript/code/classes/object_literals.js:20:11:22:3",
@@ -69,7 +72,8 @@
         "end_line": 22,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/object_literals.js:24:8:27:3": {
       "id": "method:<fixtures>/javascript/code/classes/object_literals.js:24:8:27:3",
@@ -83,7 +87,8 @@
         "end_line": 27,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/object_literals.js:30:10:41:3": {
       "id": "method:<fixtures>/javascript/code/classes/object_literals.js:30:10:41:3",
@@ -99,7 +104,8 @@
       },
       "child_ids": [
         "function:<fixtures>/javascript/code/classes/object_literals.js:31:30:37:5"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/classes/object_literals.js:31:30:37:5": {
       "id": "function:<fixtures>/javascript/code/classes/object_literals.js:31:30:37:5",
@@ -115,7 +121,8 @@
       },
       "child_ids": [
         "block:<fixtures>/javascript/code/classes/object_literals.js:32:7:36:7"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/javascript/code/classes/object_literals.js:32:7:36:7": {
       "id": "block:<fixtures>/javascript/code/classes/object_literals.js:32:7:36:7",
@@ -131,7 +138,8 @@
       },
       "child_ids": [
         "block:<fixtures>/javascript/code/classes/object_literals.js:34:14:36:7"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/javascript/code/classes/object_literals.js:34:14:36:7": {
       "id": "block:<fixtures>/javascript/code/classes/object_literals.js:34:14:36:7",
@@ -145,7 +153,8 @@
         "end_line": 36,
         "end_column": 7
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/object_literals.js:49:8:54:5": {
       "id": "method:<fixtures>/javascript/code/classes/object_literals.js:49:8:54:5",
@@ -161,7 +170,8 @@
       },
       "child_ids": [
         "function:<fixtures>/javascript/code/classes/object_literals.js:50:24:52:7"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/classes/object_literals.js:50:24:52:7": {
       "id": "function:<fixtures>/javascript/code/classes/object_literals.js:50:24:52:7",
@@ -175,7 +185,8 @@
         "end_line": 52,
         "end_column": 7
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/object_literals.js:56:11:65:5": {
       "id": "method:<fixtures>/javascript/code/classes/object_literals.js:56:11:65:5",
@@ -192,7 +203,8 @@
       "child_ids": [
         "function:<fixtures>/javascript/code/classes/object_literals.js:57:28:59:7",
         "block:<fixtures>/javascript/code/classes/object_literals.js:61:7:63:7"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/classes/object_literals.js:57:28:59:7": {
       "id": "function:<fixtures>/javascript/code/classes/object_literals.js:57:28:59:7",
@@ -206,7 +218,8 @@
         "end_line": 59,
         "end_column": 7
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/javascript/code/classes/object_literals.js:61:7:63:7": {
       "id": "block:<fixtures>/javascript/code/classes/object_literals.js:61:7:63:7",
@@ -220,7 +233,8 @@
         "end_line": 63,
         "end_column": 7
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/object_literals.js:69:9:74:5": {
       "id": "method:<fixtures>/javascript/code/classes/object_literals.js:69:9:74:5",
@@ -236,7 +250,8 @@
       },
       "child_ids": [
         "function:<fixtures>/javascript/code/classes/object_literals.js:70:27:72:7"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/classes/object_literals.js:70:27:72:7": {
       "id": "function:<fixtures>/javascript/code/classes/object_literals.js:70:27:72:7",
@@ -250,7 +265,8 @@
         "end_line": 72,
         "end_column": 7
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/object_literals.js:76:14:82:5": {
       "id": "method:<fixtures>/javascript/code/classes/object_literals.js:76:14:82:5",
@@ -266,7 +282,8 @@
       },
       "child_ids": [
         "function:<fixtures>/javascript/code/classes/object_literals.js:78:29:80:7"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/classes/object_literals.js:78:29:80:7": {
       "id": "function:<fixtures>/javascript/code/classes/object_literals.js:78:29:80:7",
@@ -280,7 +297,8 @@
         "end_line": 80,
         "end_column": 7
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/object_literals.js:90:20:95:3": {
       "id": "method:<fixtures>/javascript/code/classes/object_literals.js:90:20:95:3",
@@ -296,7 +314,8 @@
       },
       "child_ids": [
         "function:<fixtures>/javascript/code/classes/object_literals.js:91:29:93:5"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/classes/object_literals.js:91:29:93:5": {
       "id": "function:<fixtures>/javascript/code/classes/object_literals.js:91:29:93:5",
@@ -310,7 +329,8 @@
         "end_line": 93,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/object_literals.js:97:20:103:3": {
       "id": "method:<fixtures>/javascript/code/classes/object_literals.js:97:20:103:3",
@@ -326,7 +346,8 @@
       },
       "child_ids": [
         "function:<fixtures>/javascript/code/classes/object_literals.js:98:25:100:5"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/classes/object_literals.js:98:25:100:5": {
       "id": "function:<fixtures>/javascript/code/classes/object_literals.js:98:25:100:5",
@@ -340,7 +361,8 @@
         "end_line": 100,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {

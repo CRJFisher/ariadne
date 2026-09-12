@@ -1,4 +1,4 @@
-import type { FilePath, Location, ScopeType } from "@ariadnejs/types";
+import type { FilePath, Location, ScopeType, SymbolName } from "@ariadnejs/types";
 import type Parser from "tree-sitter";
 import {
   ScopeBoundaryExtractor,
@@ -50,6 +50,17 @@ export class PythonScopeBoundaryExtractor implements ScopeBoundaryExtractor {
     });
   }
 
+  // `self` and `cls` inside a class body denote the class; the capture is the
+  // body block, so the name is read off the class_definition around it.
+  extract_self_type_name(
+    node: Parser.SyntaxNode,
+    scope_type: ScopeType
+  ): SymbolName | null {
+    if (scope_type !== "class") return null;
+    const name_node = this.find_enclosing_class_definition(node)?.childForFieldName("name");
+    return name_node ? (name_node.text as SymbolName) : null;
+  }
+
   extract_boundaries(
     node: Parser.SyntaxNode,
     scope_type: ScopeType,
@@ -88,10 +99,7 @@ export class PythonScopeBoundaryExtractor implements ScopeBoundaryExtractor {
       );
     }
 
-    let class_node = block_node.parent;
-    while (class_node && class_node.type !== "class_definition") {
-      class_node = class_node.parent;
-    }
+    const class_node = this.find_enclosing_class_definition(block_node);
     if (!class_node) {
       throw new Error("Block node is not inside a class_definition");
     }
@@ -115,6 +123,16 @@ export class PythonScopeBoundaryExtractor implements ScopeBoundaryExtractor {
       symbol_location: node_to_location(name_node, file_path),
       scope_location,
     };
+  }
+
+  private find_enclosing_class_definition(
+    node: Parser.SyntaxNode
+  ): Parser.SyntaxNode | null {
+    let class_node = node.parent;
+    while (class_node && class_node.type !== "class_definition") {
+      class_node = class_node.parent;
+    }
+    return class_node;
   }
 
   private extract_function_boundaries(

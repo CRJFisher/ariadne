@@ -20,7 +20,8 @@
         "class:<fixtures>/typescript/code/generics/generic_classes.ts:20:18:33:1",
         "class:<fixtures>/typescript/code/generics/generic_classes.ts:36:44:50:1",
         "class:<fixtures>/typescript/code/generics/generic_classes.ts:53:37:67:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "class:<fixtures>/typescript/code/generics/generic_classes.ts:7:14:17:1": {
       "id": "class:<fixtures>/typescript/code/generics/generic_classes.ts:7:14:17:1",
@@ -38,7 +39,8 @@
         "constructor:<fixtures>/typescript/code/generics/generic_classes.ts:8:14:8:34",
         "method:<fixtures>/typescript/code/generics/generic_classes.ts:10:12:12:3",
         "method:<fixtures>/typescript/code/generics/generic_classes.ts:14:12:16:3"
-      ]
+      ],
+      "self_type_name": "Box"
     },
     "constructor:<fixtures>/typescript/code/generics/generic_classes.ts:8:14:8:34": {
       "id": "constructor:<fixtures>/typescript/code/generics/generic_classes.ts:8:14:8:34",
@@ -52,7 +54,8 @@
         "end_line": 8,
         "end_column": 34
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/typescript/code/generics/generic_classes.ts:10:12:12:3": {
       "id": "method:<fixtures>/typescript/code/generics/generic_classes.ts:10:12:12:3",
@@ -66,7 +69,8 @@
         "end_line": 12,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/typescript/code/generics/generic_classes.ts:14:12:16:3": {
       "id": "method:<fixtures>/typescript/code/generics/generic_classes.ts:14:12:16:3",
@@ -80,7 +84,8 @@
         "end_line": 16,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "class:<fixtures>/typescript/code/generics/generic_classes.ts:20:18:33:1": {
       "id": "class:<fixtures>/typescript/code/generics/generic_classes.ts:20:18:33:1",
@@ -98,7 +103,8 @@
         "constructor:<fixtures>/typescript/code/generics/generic_classes.ts:21:14:24:6",
         "method:<fixtures>/typescript/code/generics/generic_classes.ts:26:10:28:3",
         "method:<fixtures>/typescript/code/generics/generic_classes.ts:30:12:32:3"
-      ]
+      ],
+      "self_type_name": "Pair"
     },
     "constructor:<fixtures>/typescript/code/generics/generic_classes.ts:21:14:24:6": {
       "id": "constructor:<fixtures>/typescript/code/generics/generic_classes.ts:21:14:24:6",
@@ -112,7 +118,8 @@
         "end_line": 24,
         "end_column": 6
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/typescript/code/generics/generic_classes.ts:26:10:28:3": {
       "id": "method:<fixtures>/typescript/code/generics/generic_classes.ts:26:10:28:3",
@@ -126,7 +133,8 @@
         "end_line": 28,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/typescript/code/generics/generic_classes.ts:30:12:32:3": {
       "id": "method:<fixtures>/typescript/code/generics/generic_classes.ts:30:12:32:3",
@@ -140,7 +148,8 @@
         "end_line": 32,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "class:<fixtures>/typescript/code/generics/generic_classes.ts:36:44:50:1": {
       "id": "class:<fixtures>/typescript/code/generics/generic_classes.ts:36:44:50:1",
@@ -158,7 +167,8 @@
         "method:<fixtures>/typescript/code/generics/generic_classes.ts:39:6:41:3",
         "method:<fixtures>/typescript/code/generics/generic_classes.ts:43:13:45:3",
         "method:<fixtures>/typescript/code/generics/generic_classes.ts:47:10:49:3"
-      ]
+      ],
+      "self_type_name": "Collection"
     },
     "method:<fixtures>/typescript/code/generics/generic_classes.ts:39:6:41:3": {
       "id": "method:<fixtures>/typescript/code/generics/generic_classes.ts:39:6:41:3",
@@ -172,7 +182,8 @@
         "end_line": 41,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/typescript/code/generics/generic_classes.ts:43:13:45:3": {
       "id": "method:<fixtures>/typescript/code/generics/generic_classes.ts:43:13:45:3",
@@ -188,7 +199,8 @@
       },
       "child_ids": [
         "function:<fixtures>/typescript/code/generics/generic_classes.ts:44:28:44:51"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/generics/generic_classes.ts:44:28:44:51": {
       "id": "function:<fixtures>/typescript/code/generics/generic_classes.ts:44:28:44:51",
@@ -202,7 +214,8 @@
         "end_line": 44,
         "end_column": 51
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/typescript/code/generics/generic_classes.ts:47:10:49:3": {
       "id": "method:<fixtures>/typescript/code/generics/generic_classes.ts:47:10:49:3",
@@ -216,7 +229,8 @@
         "end_line": 49,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "class:<fixtures>/typescript/code/generics/generic_classes.ts:53:37:67:1": {
       "id": "class:<fixtures>/typescript/code/generics/generic_classes.ts:53:37:67:1",
@@ -234,7 +248,8 @@
         "constructor:<fixtures>/typescript/code/generics/generic_classes.ts:54:14:58:6",
         "method:<fixtures>/typescript/code/generics/generic_classes.ts:60:15:62:3",
         "method:<fixtures>/typescript/code/generics/generic_classes.ts:64:16:66:3"
-      ]
+      ],
+      "self_type_name": "Result"
     },
     "constructor:<fixtures>/typescript/code/generics/generic_classes.ts:54:14:58:6": {
       "id": "constructor:<fixtures>/typescript/code/generics/generic_classes.ts:54:14:58:6",
@@ -248,7 +263,8 @@
         "end_line": 58,
         "end_column": 6
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/typescript/code/generics/generic_classes.ts:60:15:62:3": {
       "id": "method:<fixtures>/typescript/code/generics/generic_classes.ts:60:15:62:3",
@@ -262,7 +278,8 @@
         "end_line": 62,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/typescript/code/generics/generic_classes.ts:64:16:66:3": {
       "id": "method:<fixtures>/typescript/code/generics/generic_classes.ts:64:16:66:3",
@@ -276,7 +293,8 @@
         "end_line": 66,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {

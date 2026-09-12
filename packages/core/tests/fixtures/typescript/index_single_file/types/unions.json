@@ -17,7 +17,8 @@
       },
       "child_ids": [
         "function:<fixtures>/typescript/code/types/unions.ts:30:18:39:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/types/unions.ts:30:18:39:1": {
       "id": "function:<fixtures>/typescript/code/types/unions.ts:30:18:39:1",
@@ -33,7 +34,8 @@
       },
       "child_ids": [
         "block:<fixtures>/typescript/code/types/unions.ts:31:3:38:3"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/typescript/code/types/unions.ts:31:3:38:3": {
       "id": "block:<fixtures>/typescript/code/types/unions.ts:31:3:38:3",
@@ -51,7 +53,8 @@
         "block:<fixtures>/typescript/code/types/unions.ts:32:5:33:41",
         "block:<fixtures>/typescript/code/types/unions.ts:34:5:35:29",
         "block:<fixtures>/typescript/code/types/unions.ts:36:5:37:40"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/typescript/code/types/unions.ts:32:5:33:41": {
       "id": "block:<fixtures>/typescript/code/types/unions.ts:32:5:33:41",
@@ -65,7 +68,8 @@
         "end_line": 33,
         "end_column": 41
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/typescript/code/types/unions.ts:34:5:35:29": {
       "id": "block:<fixtures>/typescript/code/types/unions.ts:34:5:35:29",
@@ -79,7 +83,8 @@
         "end_line": 35,
         "end_column": 29
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/typescript/code/types/unions.ts:36:5:37:40": {
       "id": "block:<fixtures>/typescript/code/types/unions.ts:36:5:37:40",
@@ -93,7 +98,8 @@
         "end_line": 37,
         "end_column": 40
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {

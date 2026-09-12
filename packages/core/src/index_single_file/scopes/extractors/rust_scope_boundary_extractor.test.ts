@@ -329,3 +329,93 @@ describe("RustScopeBoundaryExtractor", () => {
     });
   });
 });
+
+// `Self` in a class-family body and `self` in an `impl` block both name the
+// item the body belongs to; the query captures the body node, so the name is
+// read off the node around it.
+describe("RustScopeBoundaryExtractor.extract_self_type_name", () => {
+  let parser: Parser;
+  let extractor: RustScopeBoundaryExtractor;
+
+  beforeAll(() => {
+    parser = new Parser();
+    parser.setLanguage(Rust);
+    extractor = new RustScopeBoundaryExtractor();
+  });
+
+  function body_of(code: string, item_type: string): Parser.SyntaxNode {
+    const item = find_by_type(parser.parse(code).rootNode, item_type)!;
+    return item.childForFieldName("body")!;
+  }
+
+  it("names the struct for a field_declaration_list body", () => {
+    const body = body_of("struct Point { x: f64 }", "struct_item");
+    expect(body.type).toBe("field_declaration_list");
+    expect(extractor.extract_self_type_name(body, "class")).toBe("Point");
+  });
+
+  it("names the enum for an enum_variant_list body", () => {
+    const body = body_of("enum Shape { Circle, Square }", "enum_item");
+    expect(body.type).toBe("enum_variant_list");
+    expect(extractor.extract_self_type_name(body, "class")).toBe("Shape");
+  });
+
+  it("names the trait for a trait body", () => {
+    const body = body_of("trait Visit { fn visit(&self); }", "trait_item");
+    expect(body.type).toBe("declaration_list");
+    expect(extractor.extract_self_type_name(body, "class")).toBe("Visit");
+  });
+
+  it("names the implemented type for an inherent impl block", () => {
+    const body = body_of("impl Lowering { fn descend(&mut self) { } }", "impl_item");
+    expect(extractor.extract_self_type_name(body, "block")).toBe("Lowering");
+  });
+
+  it("names the base type for a generic impl block", () => {
+    const body = body_of("impl<T> Container<T> { fn get(&self) { } }", "impl_item");
+    expect(extractor.extract_self_type_name(body, "block")).toBe("Container");
+  });
+
+  it("names the implemented type, never the trait, for a trait impl block", () => {
+    const body = body_of(
+      "impl ValueVisitor<M> for ValidityVisitor<M> { fn visit(&self) { } }",
+      "impl_item"
+    );
+    expect(extractor.extract_self_type_name(body, "block")).toBe("ValidityVisitor");
+  });
+
+  it("records null for a trait impl on a reference type", () => {
+    const body = body_of("impl Visit for &Lowering { fn visit(&self) { } }", "impl_item");
+    expect(extractor.extract_self_type_name(body, "block")).toBe(null);
+  });
+
+  it("records null for a trait impl on a scoped path", () => {
+    const body = body_of("impl Visit for crate::ast::Lowering { fn visit(&self) { } }", "impl_item");
+    expect(extractor.extract_self_type_name(body, "block")).toBe(null);
+  });
+
+  it("records null for a blanket impl, whose type is the block's own parameter", () => {
+    const body = body_of("impl<T> Visit for T { fn visit(&self) { } }", "impl_item");
+    expect(extractor.extract_self_type_name(body, "block")).toBe(null);
+  });
+
+  it("records null for a bounded blanket impl whose parameter is spelled like a type", () => {
+    const body = body_of(
+      "impl<Handler: Send> Service for Handler { fn call(&self) { } }",
+      "impl_item"
+    );
+    expect(extractor.extract_self_type_name(body, "block")).toBe(null);
+  });
+
+  it("names the implemented type when a parameter of the same shape is bound elsewhere", () => {
+    const body = body_of("impl<T> Visit for Container<T> { fn visit(&self) { } }", "impl_item");
+    expect(extractor.extract_self_type_name(body, "block")).toBe("Container");
+  });
+
+  it("records null for a block that is not an impl body and for a function", () => {
+    const if_block = find_by_type(parser.parse("fn f() { if true { } }").rootNode, "if_expression")!;
+    expect(extractor.extract_self_type_name(if_block, "block")).toBe(null);
+    const function_item = find_by_type(parser.parse("fn f() { }").rootNode, "function_item")!;
+    expect(extractor.extract_self_type_name(function_item, "function")).toBe(null);
+  });
+});

@@ -19,7 +19,8 @@
         "function:<fixtures>/javascript/code/functions/variable_shadowing.js:9:23:44:1",
         "function:<fixtures>/javascript/code/functions/variable_shadowing.js:47:28:53:1",
         "function:<fixtures>/javascript/code/functions/variable_shadowing.js:56:26:84:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/variable_shadowing.js:9:23:44:1": {
       "id": "function:<fixtures>/javascript/code/functions/variable_shadowing.js:9:23:44:1",
@@ -36,7 +37,8 @@
       "child_ids": [
         "function:<fixtures>/javascript/code/functions/variable_shadowing.js:13:18:15:3",
         "block:<fixtures>/javascript/code/functions/variable_shadowing.js:19:3:41:3"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/variable_shadowing.js:13:18:15:3": {
       "id": "function:<fixtures>/javascript/code/functions/variable_shadowing.js:13:18:15:3",
@@ -50,7 +52,8 @@
         "end_line": 15,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/javascript/code/functions/variable_shadowing.js:19:3:41:3": {
       "id": "block:<fixtures>/javascript/code/functions/variable_shadowing.js:19:3:41:3",
@@ -67,7 +70,8 @@
       "child_ids": [
         "function:<fixtures>/javascript/code/functions/variable_shadowing.js:23:25:25:5",
         "function:<fixtures>/javascript/code/functions/variable_shadowing.js:33:24:35:7"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/variable_shadowing.js:23:25:25:5": {
       "id": "function:<fixtures>/javascript/code/functions/variable_shadowing.js:23:25:25:5",
@@ -81,7 +85,8 @@
         "end_line": 25,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/variable_shadowing.js:33:24:35:7": {
       "id": "function:<fixtures>/javascript/code/functions/variable_shadowing.js:33:24:35:7",
@@ -95,7 +100,8 @@
         "end_line": 35,
         "end_column": 7
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/variable_shadowing.js:47:28:53:1": {
       "id": "function:<fixtures>/javascript/code/functions/variable_shadowing.js:47:28:53:1",
@@ -111,7 +117,8 @@
       },
       "child_ids": [
         "function:<fixtures>/javascript/code/functions/variable_shadowing.js:48:20:50:3"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/variable_shadowing.js:48:20:50:3": {
       "id": "function:<fixtures>/javascript/code/functions/variable_shadowing.js:48:20:50:3",
@@ -125,7 +132,8 @@
         "end_line": 50,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/variable_shadowing.js:56:26:84:1": {
       "id": "function:<fixtures>/javascript/code/functions/variable_shadowing.js:56:26:84:1",
@@ -142,7 +150,8 @@
       "child_ids": [
         "function:<fixtures>/javascript/code/functions/variable_shadowing.js:59:18:77:3",
         "function:<fixtures>/javascript/code/functions/variable_shadowing.js:79:22:81:3"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/variable_shadowing.js:59:18:77:3": {
       "id": "function:<fixtures>/javascript/code/functions/variable_shadowing.js:59:18:77:3",
@@ -159,7 +168,8 @@
       "child_ids": [
         "function:<fixtures>/javascript/code/functions/variable_shadowing.js:62:20:70:5",
         "function:<fixtures>/javascript/code/functions/variable_shadowing.js:72:27:74:5"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/variable_shadowing.js:62:20:70:5": {
       "id": "function:<fixtures>/javascript/code/functions/variable_shadowing.js:62:20:70:5",
@@ -175,7 +185,8 @@
       },
       "child_ids": [
         "function:<fixtures>/javascript/code/functions/variable_shadowing.js:65:27:67:7"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/variable_shadowing.js:65:27:67:7": {
       "id": "function:<fixtures>/javascript/code/functions/variable_shadowing.js:65:27:67:7",
@@ -189,7 +200,8 @@
         "end_line": 67,
         "end_column": 7
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/variable_shadowing.js:72:27:74:5": {
       "id": "function:<fixtures>/javascript/code/functions/variable_shadowing.js:72:27:74:5",
@@ -203,7 +215,8 @@
         "end_line": 74,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/variable_shadowing.js:79:22:81:3": {
       "id": "function:<fixtures>/javascript/code/functions/variable_shadowing.js:79:22:81:3",
@@ -217,7 +230,8 @@
         "end_line": 81,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {

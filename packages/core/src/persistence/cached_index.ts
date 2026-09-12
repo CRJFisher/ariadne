@@ -19,7 +19,7 @@ import {
  * distinction, and with it the ability to change the format without also
  * claiming every shipped release changes indexing.
  */
-export const CURRENT_SCHEMA_VERSION = 7;
+export const CURRENT_SCHEMA_VERSION = 8;
 
 /**
  * One file's cached index together with everything that decides whether it still

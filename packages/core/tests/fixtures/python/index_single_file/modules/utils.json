@@ -20,7 +20,8 @@
         "function:<fixtures>/python/code/modules/utils.py:24:23:26:48",
         "function:<fixtures>/python/code/modules/utils.py:14:17:16:29",
         "function:<fixtures>/python/code/modules/utils.py:9:11:11:23"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/modules/utils.py:19:20:21:54": {
       "id": "function:<fixtures>/python/code/modules/utils.py:19:20:21:54",
@@ -36,7 +37,8 @@
       },
       "child_ids": [
         "block:<fixtures>/python/code/modules/utils.py:21:15:21:54"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/modules/utils.py:24:23:26:48": {
       "id": "function:<fixtures>/python/code/modules/utils.py:24:23:26:48",
@@ -50,7 +52,8 @@
         "end_line": 26,
         "end_column": 48
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/modules/utils.py:14:17:16:29": {
       "id": "function:<fixtures>/python/code/modules/utils.py:14:17:16:29",
@@ -64,7 +67,8 @@
         "end_line": 16,
         "end_column": 29
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/modules/utils.py:9:11:11:23": {
       "id": "function:<fixtures>/python/code/modules/utils.py:9:11:11:23",
@@ -78,7 +82,8 @@
         "end_line": 11,
         "end_column": 23
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/python/code/modules/utils.py:21:15:21:54": {
       "id": "block:<fixtures>/python/code/modules/utils.py:21:15:21:54",
@@ -92,7 +97,8 @@
         "end_line": 21,
         "end_column": 54
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {

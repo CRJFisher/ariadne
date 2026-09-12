@@ -17,7 +17,8 @@
       },
       "child_ids": [
         "class:<fixtures>/typescript/code/classes/properties.ts:6:14:30:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "class:<fixtures>/typescript/code/classes/properties.ts:6:14:30:1": {
       "id": "class:<fixtures>/typescript/code/classes/properties.ts:6:14:30:1",
@@ -36,7 +37,8 @@
         "method:<fixtures>/typescript/code/classes/properties.ts:19:17:21:3",
         "method:<fixtures>/typescript/code/classes/properties.ts:23:24:25:3",
         "method:<fixtures>/typescript/code/classes/properties.ts:27:24:29:3"
-      ]
+      ],
+      "self_type_name": "Person"
     },
     "constructor:<fixtures>/typescript/code/classes/properties.ts:12:14:17:3": {
       "id": "constructor:<fixtures>/typescript/code/classes/properties.ts:12:14:17:3",
@@ -50,7 +52,8 @@
         "end_line": 17,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/typescript/code/classes/properties.ts:19:17:21:3": {
       "id": "method:<fixtures>/typescript/code/classes/properties.ts:19:17:21:3",
@@ -64,7 +67,8 @@
         "end_line": 21,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/typescript/code/classes/properties.ts:23:24:25:3": {
       "id": "method:<fixtures>/typescript/code/classes/properties.ts:23:24:25:3",
@@ -78,7 +82,8 @@
         "end_line": 25,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/typescript/code/classes/properties.ts:27:24:29:3": {
       "id": "method:<fixtures>/typescript/code/classes/properties.ts:27:24:29:3",
@@ -92,7 +97,8 @@
         "end_line": 29,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {},

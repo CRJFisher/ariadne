@@ -26,7 +26,8 @@
         "function:<fixtures>/typescript/code/functions/call_chains.ts:51:26:53:1",
         "function:<fixtures>/typescript/code/functions/call_chains.ts:55:28:58:1",
         "function:<fixtures>/typescript/code/functions/call_chains.ts:60:22:62:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/functions/call_chains.ts:6:21:10:1": {
       "id": "function:<fixtures>/typescript/code/functions/call_chains.ts:6:21:10:1",
@@ -40,7 +41,8 @@
         "end_line": 10,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/functions/call_chains.ts:12:22:17:1": {
       "id": "function:<fixtures>/typescript/code/functions/call_chains.ts:12:22:17:1",
@@ -54,7 +56,8 @@
         "end_line": 17,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/functions/call_chains.ts:19:20:21:1": {
       "id": "function:<fixtures>/typescript/code/functions/call_chains.ts:19:20:21:1",
@@ -68,7 +71,8 @@
         "end_line": 21,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/functions/call_chains.ts:23:24:29:1": {
       "id": "function:<fixtures>/typescript/code/functions/call_chains.ts:23:24:29:1",
@@ -82,7 +86,8 @@
         "end_line": 29,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/functions/call_chains.ts:31:23:36:1": {
       "id": "function:<fixtures>/typescript/code/functions/call_chains.ts:31:23:36:1",
@@ -98,7 +103,8 @@
       },
       "child_ids": [
         "block:<fixtures>/typescript/code/functions/call_chains.ts:32:3:34:3"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/typescript/code/functions/call_chains.ts:32:3:34:3": {
       "id": "block:<fixtures>/typescript/code/functions/call_chains.ts:32:3:34:3",
@@ -112,7 +118,8 @@
         "end_line": 34,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/functions/call_chains.ts:38:20:40:1": {
       "id": "function:<fixtures>/typescript/code/functions/call_chains.ts:38:20:40:1",
@@ -126,7 +133,8 @@
         "end_line": 40,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/functions/call_chains.ts:43:36:49:1": {
       "id": "function:<fixtures>/typescript/code/functions/call_chains.ts:43:36:49:1",
@@ -142,7 +150,8 @@
       },
       "child_ids": [
         "block:<fixtures>/typescript/code/functions/call_chains.ts:44:3:48:3"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/typescript/code/functions/call_chains.ts:44:3:48:3": {
       "id": "block:<fixtures>/typescript/code/functions/call_chains.ts:44:3:48:3",
@@ -156,7 +165,8 @@
         "end_line": 48,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/functions/call_chains.ts:51:26:53:1": {
       "id": "function:<fixtures>/typescript/code/functions/call_chains.ts:51:26:53:1",
@@ -170,7 +180,8 @@
         "end_line": 53,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/functions/call_chains.ts:55:28:58:1": {
       "id": "function:<fixtures>/typescript/code/functions/call_chains.ts:55:28:58:1",
@@ -184,7 +195,8 @@
         "end_line": 58,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/functions/call_chains.ts:60:22:62:1": {
       "id": "function:<fixtures>/typescript/code/functions/call_chains.ts:60:22:62:1",
@@ -198,7 +210,8 @@
         "end_line": 62,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {

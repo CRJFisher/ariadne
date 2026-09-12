@@ -100,6 +100,7 @@ describe("resolve_calls_for_files", () => {
         parent_id: null,
         name: null,
         child_ids: [],
+        self_type_name: null,
       });
       scopes.update_file(TEST_FILE, scope_map);
 
@@ -140,6 +141,7 @@ describe("resolve_calls_for_files", () => {
         parent_id: null,
         name: null,
         child_ids: [FUNC_SCOPE_ID],
+        self_type_name: null,
       });
       scope_map.set(FUNC_SCOPE_ID, {
         id: FUNC_SCOPE_ID,
@@ -148,6 +150,7 @@ describe("resolve_calls_for_files", () => {
         parent_id: FILE_SCOPE_ID,
         name: "greet" as SymbolName,
         child_ids: [],
+        self_type_name: null,
       });
       scopes.update_file(TEST_FILE, scope_map);
 
@@ -185,6 +188,7 @@ describe("resolve_calls_for_files", () => {
         parent_id: null,
         name: null,
         child_ids: [],
+        self_type_name: null,
       });
       scopes.update_file(TEST_FILE, scope_map);
 
@@ -257,6 +261,7 @@ describe("resolve_calls_for_files", () => {
         parent_id: null,
         name: null,
         child_ids: [],
+        self_type_name: null,
       });
       scopes.update_file(file_a, scope_map_a);
       const scope_map_b = new Map<ScopeId, LexicalScope>();
@@ -267,6 +272,7 @@ describe("resolve_calls_for_files", () => {
         parent_id: null,
         name: null,
         child_ids: [],
+        self_type_name: null,
       });
       scopes.update_file(file_b, scope_map_b);
 
@@ -328,6 +334,7 @@ describe("resolve_calls_for_files", () => {
         parent_id: null,
         name: null,
         child_ids: [caller_scope],
+        self_type_name: null,
       });
       scope_map.set(caller_scope, {
         id: caller_scope,
@@ -336,6 +343,7 @@ describe("resolve_calls_for_files", () => {
         parent_id: FILE_SCOPE_ID,
         name: "main" as SymbolName,
         child_ids: [],
+        self_type_name: null,
       });
       scopes.update_file(TEST_FILE, scope_map);
 
@@ -417,6 +425,7 @@ describe("resolve_calls_for_files", () => {
         parent_id: null,
         name: null,
         child_ids: [CLASS_SCOPE_ID],
+        self_type_name: null,
       });
       scope_map.set(CLASS_SCOPE_ID, {
         id: CLASS_SCOPE_ID,
@@ -425,6 +434,7 @@ describe("resolve_calls_for_files", () => {
         parent_id: FILE_SCOPE_ID,
         name: "Wrapper" as SymbolName,
         child_ids: [METHOD_BODY_SCOPE_ID],
+        self_type_name: null,
       });
       scope_map.set(METHOD_BODY_SCOPE_ID, {
         id: METHOD_BODY_SCOPE_ID,
@@ -433,6 +443,7 @@ describe("resolve_calls_for_files", () => {
         parent_id: CLASS_SCOPE_ID,
         name: "do_work" as SymbolName,
         child_ids: [],
+        self_type_name: null,
       });
       scopes.update_file(TEST_FILE, scope_map);
 
@@ -506,6 +517,7 @@ describe("resolve_calls_for_files", () => {
             parent_id: null,
             name: null,
             child_ids: [FUNC_SCOPE_ID],
+            self_type_name: null,
           },
         ],
         [
@@ -517,6 +529,7 @@ describe("resolve_calls_for_files", () => {
             parent_id: FILE_SCOPE_ID,
             name: "do_work" as SymbolName,
             child_ids: [inner_scope_id],
+            self_type_name: null,
           },
         ],
         [
@@ -528,6 +541,7 @@ describe("resolve_calls_for_files", () => {
             parent_id: FUNC_SCOPE_ID,
             name: "do_work" as SymbolName,
             child_ids: [],
+            self_type_name: null,
           },
         ],
       ]);
@@ -580,6 +594,7 @@ describe("resolve_calls_for_files", () => {
             parent_id: null,
             name: null,
             child_ids: [CLASS_SCOPE_ID],
+            self_type_name: null,
           },
         ],
         [
@@ -591,6 +606,7 @@ describe("resolve_calls_for_files", () => {
             parent_id: FILE_SCOPE_ID,
             name: "Wrapper" as SymbolName,
             child_ids: [METHOD_BODY_SCOPE_ID],
+            self_type_name: null,
           },
         ],
         [
@@ -602,6 +618,7 @@ describe("resolve_calls_for_files", () => {
             parent_id: CLASS_SCOPE_ID,
             name: "do_work" as SymbolName,
             child_ids: [],
+            self_type_name: null,
           },
         ],
       ]);
@@ -676,6 +693,7 @@ describe("resolve_calls_for_files", () => {
         parent_id: null,
         name: null,
         child_ids: [CLASS_SCOPE_ID],
+        self_type_name: null,
       });
       scope_map.set(CLASS_SCOPE_ID, {
         id: CLASS_SCOPE_ID,
@@ -684,6 +702,7 @@ describe("resolve_calls_for_files", () => {
         parent_id: FILE_SCOPE_ID,
         name: "MyClass" as SymbolName,
         child_ids: [CTOR_SCOPE_ID],
+        self_type_name: null,
       });
       scope_map.set(CTOR_SCOPE_ID, {
         id: CTOR_SCOPE_ID,
@@ -692,6 +711,7 @@ describe("resolve_calls_for_files", () => {
         parent_id: CLASS_SCOPE_ID,
         name: "constructor" as SymbolName,
         child_ids: [],
+        self_type_name: null,
       });
       scopes.update_file(TEST_FILE, scope_map);
 
@@ -752,6 +772,7 @@ describe("resolve_calls_for_files", () => {
         parent_id: null,
         name: null,
         child_ids: [],
+        self_type_name: null,
       });
       scopes.update_file(TEST_FILE, scope_map);
 
@@ -830,6 +851,7 @@ describe("resolve_calls_for_files", () => {
         parent_id: null,
         name: null,
         child_ids: [],
+        self_type_name: null,
       });
       scopes.update_file(TEST_FILE, scope_map);
 
@@ -893,6 +915,7 @@ describe("resolve_calls_for_files", () => {
         parent_id: null,
         name: null,
         child_ids: [CLASS_SCOPE_ID],
+        self_type_name: null,
       });
       scope_map.set(CLASS_SCOPE_ID, {
         id: CLASS_SCOPE_ID,
@@ -901,6 +924,7 @@ describe("resolve_calls_for_files", () => {
         parent_id: FILE_SCOPE_ID,
         name: "Service" as SymbolName,
         child_ids: [CTOR_SCOPE_ID],
+        self_type_name: null,
       });
       scopes.update_file(TEST_FILE, scope_map);
 
@@ -956,6 +980,7 @@ describe("resolve_calls_for_files", () => {
         parent_id: null,
         name: null,
         child_ids: [],
+        self_type_name: null,
       });
       scopes.update_file(TEST_FILE, scope_map);
 
@@ -1074,6 +1099,7 @@ describe("resolve_calls_for_files", () => {
         parent_id: null,
         name: null,
         child_ids: [arrow_caller_scope, expression_caller_scope],
+        self_type_name: null,
       });
       scope_map.set(arrow_caller_scope, {
         id: arrow_caller_scope,
@@ -1082,6 +1108,7 @@ describe("resolve_calls_for_files", () => {
         parent_id: FILE_SCOPE_ID,
         name: "dead_with_arrow" as SymbolName,
         child_ids: [arrow_own_scope],
+        self_type_name: null,
       });
       // An arrow's scope is its whole node, so it coincides with the definition.
       scope_map.set(arrow_own_scope, {
@@ -1091,6 +1118,7 @@ describe("resolve_calls_for_files", () => {
         parent_id: arrow_caller_scope,
         name: null,
         child_ids: [],
+        self_type_name: null,
       });
       scope_map.set(expression_caller_scope, {
         id: expression_caller_scope,
@@ -1099,6 +1127,7 @@ describe("resolve_calls_for_files", () => {
         parent_id: FILE_SCOPE_ID,
         name: "dead_with_function_expression" as SymbolName,
         child_ids: [expression_own_scope],
+        self_type_name: null,
       });
       // A `function` expression's scope starts at its parameter list, after the
       // definition's own start.
@@ -1109,6 +1138,7 @@ describe("resolve_calls_for_files", () => {
         parent_id: expression_caller_scope,
         name: null,
         child_ids: [],
+        self_type_name: null,
       });
       scopes.update_file(TEST_FILE, scope_map);
 
@@ -1325,6 +1355,7 @@ function install_callback_file(
     parent_id: null,
     name: null,
     child_ids: [],
+    self_type_name: null,
   });
   scopes.update_file(file_id, scope_map);
 

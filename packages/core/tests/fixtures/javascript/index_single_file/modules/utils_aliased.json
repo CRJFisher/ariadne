@@ -19,7 +19,8 @@
         "function:<fixtures>/javascript/code/modules/utils_aliased.js:6:23:8:1",
         "function:<fixtures>/javascript/code/modules/utils_aliased.js:10:26:12:1",
         "class:<fixtures>/javascript/code/modules/utils_aliased.js:14:26:18:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/modules/utils_aliased.js:6:23:8:1": {
       "id": "function:<fixtures>/javascript/code/modules/utils_aliased.js:6:23:8:1",
@@ -33,7 +34,8 @@
         "end_line": 8,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/modules/utils_aliased.js:10:26:12:1": {
       "id": "function:<fixtures>/javascript/code/modules/utils_aliased.js:10:26:12:1",
@@ -47,7 +49,8 @@
         "end_line": 12,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "class:<fixtures>/javascript/code/modules/utils_aliased.js:14:26:18:1": {
       "id": "class:<fixtures>/javascript/code/modules/utils_aliased.js:14:26:18:1",
@@ -63,7 +66,8 @@
       },
       "child_ids": [
         "method:<fixtures>/javascript/code/modules/utils_aliased.js:15:10:17:3"
-      ]
+      ],
+      "self_type_name": "DataManager"
     },
     "method:<fixtures>/javascript/code/modules/utils_aliased.js:15:10:17:3": {
       "id": "method:<fixtures>/javascript/code/modules/utils_aliased.js:15:10:17:3",
@@ -77,7 +81,8 @@
         "end_line": 17,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {

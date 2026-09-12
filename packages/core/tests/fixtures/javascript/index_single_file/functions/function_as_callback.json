@@ -19,7 +19,8 @@
         "function:<fixtures>/javascript/code/functions/function_as_callback.js:1:15:3:1",
         "function:<fixtures>/javascript/code/functions/function_as_callback.js:5:17:5:28",
         "function:<fixtures>/javascript/code/functions/function_as_callback.js:7:14:9:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/function_as_callback.js:1:15:3:1": {
       "id": "function:<fixtures>/javascript/code/functions/function_as_callback.js:1:15:3:1",
@@ -33,7 +34,8 @@
         "end_line": 3,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/function_as_callback.js:5:17:5:28": {
       "id": "function:<fixtures>/javascript/code/functions/function_as_callback.js:5:17:5:28",
@@ -47,7 +49,8 @@
         "end_line": 5,
         "end_column": 28
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/function_as_callback.js:7:14:9:1": {
       "id": "function:<fixtures>/javascript/code/functions/function_as_callback.js:7:14:9:1",
@@ -61,7 +64,8 @@
         "end_line": 9,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {
@@ -124,7 +128,21 @@
       "defining_scope_id": "module:<fixtures>/javascript/code/functions/function_as_callback.js:1:1:10:0",
       "is_exported": false,
       "signature": {
-        "parameters": []
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/javascript/code/functions/function_as_callback.js:5:17:5:28",
+            "symbol_id": "parameter:<fixtures>/javascript/code/functions/function_as_callback.js:5:18:5:18:x",
+            "name": "x",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/functions/function_as_callback.js",
+              "start_line": 5,
+              "start_column": 18,
+              "end_line": 5,
+              "end_column": 18
+            }
+          }
+        ]
       },
       "body_scope_id": "function:<fixtures>/javascript/code/functions/function_as_callback.js:5:17:5:28"
     },

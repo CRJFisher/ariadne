@@ -33,6 +33,7 @@ const mock_scope = (
   type,
   location,
   child_ids: [],
+  self_type_name: null,
 });
 
 describe("find_body_scope_for_definition", () => {

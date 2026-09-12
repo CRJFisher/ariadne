@@ -98,6 +98,7 @@ describe("Method Call Resolution", () => {
         },
         parent_id: null,
         child_ids: [CLASS_SCOPE_ID],
+        self_type_name: null,
       });
       scopes.update_file(TEST_FILE, scope_map);
 

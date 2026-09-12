@@ -23,7 +23,8 @@
         "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:31:20:34:1",
         "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:36:18:38:1",
         "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:19:43:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:24:13:1": {
       "id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:8:24:13:1",
@@ -39,7 +40,8 @@
       },
       "child_ids": [
         "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:10:35:10:39"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:10:35:10:39": {
       "id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:10:35:10:39",
@@ -53,7 +55,8 @@
         "end_line": 10,
         "end_column": 39
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:15:24:19:1": {
       "id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:15:24:19:1",
@@ -69,7 +72,8 @@
       },
       "child_ids": [
         "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:18:38:18:42"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:18:38:18:42": {
       "id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:18:38:18:42",
@@ -83,7 +87,8 @@
         "end_line": 18,
         "end_column": 42
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:22:25:1": {
       "id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:21:22:25:1",
@@ -97,7 +102,8 @@
         "end_line": 25,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:27:24:29:1": {
       "id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:27:24:29:1",
@@ -111,7 +117,8 @@
         "end_line": 29,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:31:20:34:1": {
       "id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:31:20:34:1",
@@ -125,7 +132,8 @@
         "end_line": 34,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:36:18:38:1": {
       "id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:36:18:38:1",
@@ -139,7 +147,8 @@
         "end_line": 38,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:19:43:1": {
       "id": "function:<fixtures>/javascript/code/integration/commonjs_response_object/response.js:40:19:43:1",
@@ -153,7 +162,8 @@
         "end_line": 43,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {

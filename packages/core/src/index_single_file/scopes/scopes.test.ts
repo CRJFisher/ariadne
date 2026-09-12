@@ -3,6 +3,8 @@
  */
 
 import { describe, it, expect, beforeEach, beforeAll } from "vitest";
+import { readFileSync } from "fs";
+import { join } from "path";
 import Parser from "tree-sitter";
 import { LANGUAGE_TO_TREESITTER_LANG } from "../query_code_tree/parsers";
 import JavaScript from "tree-sitter-javascript";
@@ -416,6 +418,7 @@ describe("scopes", () => {
           end_column: 0,
         },
         child_ids: [func_id],
+        self_type_name: null,
       });
 
       scopes.set(func_id, {
@@ -431,6 +434,7 @@ describe("scopes", () => {
           end_column: 1,
         },
         child_ids: [block_id],
+        self_type_name: null,
       });
 
       scopes.set(block_id, {
@@ -446,6 +450,7 @@ describe("scopes", () => {
           end_column: 3,
         },
         child_ids: [],
+        self_type_name: null,
       });
 
       const captures: CaptureNode[] = [];
@@ -477,6 +482,7 @@ describe("scopes", () => {
           end_column: 0,
         },
         child_ids: [func_id],
+        self_type_name: null,
       });
 
       scopes.set(func_id, {
@@ -492,6 +498,7 @@ describe("scopes", () => {
           end_column: 1,
         },
         child_ids: [block_id],
+        self_type_name: null,
       });
 
       scopes.set(block_id, {
@@ -507,6 +514,7 @@ describe("scopes", () => {
           end_column: 3,
         },
         child_ids: [],
+        self_type_name: null,
       });
 
       const captures: CaptureNode[] = [];
@@ -568,6 +576,7 @@ describe("scopes", () => {
           end_column: 0,
         },
         child_ids: [class_id],
+        self_type_name: null,
       });
 
       scopes.set(class_id, {
@@ -583,6 +592,7 @@ describe("scopes", () => {
           end_column: 1,
         },
         child_ids: [method1_id, method2_id],
+        self_type_name: null,
       });
 
       scopes.set(method1_id, {
@@ -598,6 +608,7 @@ describe("scopes", () => {
           end_column: 3,
         },
         child_ids: [],
+        self_type_name: null,
       });
 
       scopes.set(method2_id, {
@@ -613,6 +624,7 @@ describe("scopes", () => {
           end_column: 3,
         },
         child_ids: [],
+        self_type_name: null,
       });
 
       const captures: CaptureNode[] = [];
@@ -731,6 +743,7 @@ describe("scopes", () => {
           end_column: 0,
         },
         child_ids: [class_body_id],
+        self_type_name: null,
       });
 
       scopes.set(class_body_id, {
@@ -746,6 +759,7 @@ describe("scopes", () => {
           end_column: 1,
         },
         child_ids: [],
+        self_type_name: null,
       });
 
       const captures: CaptureNode[] = [];
@@ -2454,6 +2468,203 @@ fn main() {}`;
 
           expect(count_scope_captures(index.scopes, "method", "create")).toBe(1);
         });
+      });
+    });
+
+    // What `self`/`this`/`cls`/`Self` means inside a scope is recorded as the
+    // scope is built, so every shape that binds one of those keywords names
+    // its type and every other scope records null.
+    describe("self_type_name", () => {
+      function scope_facts(code: string, language: Language, file: FilePath) {
+        const parser = new Parser();
+        parser.setLanguage(LANGUAGE_TO_TREESITTER_LANG.get(language)!);
+        const tree = parser.parse(code);
+        const index = build_index_single_file(
+          create_parsed_file(code, file, tree, language),
+          tree,
+          language
+        );
+        return [...index.scopes.values()]
+          .sort(
+            (a, b) =>
+              a.location.start_line - b.location.start_line ||
+              a.location.start_column - b.location.start_column
+          )
+          .map((scope) => ({
+            type: scope.type,
+            name: scope.name,
+            self_type_name: scope.self_type_name,
+            line: scope.location.start_line,
+          }));
+      }
+
+      it("records the class for a JavaScript class body and null for a class expression no definition registers", () => {
+        const code = [
+          "class Foo {",
+          "  m() { if (x) { } }",
+          "}",
+          "const Anon = class {",
+          "  n() { }",
+          "};",
+          "const Named = class Bar {",
+          "  p() { }",
+          "};",
+          "module.exports = class Exported {",
+          "  q() { }",
+          "};",
+          "const arrow = () => { };",
+          "function f() { }",
+        ].join("\n");
+        // `class Bar`'s scope carries the name as its own identifier and still
+        // records no self type: the name binds only inside the expression, so
+        // reading it would point `this` at any enclosing `Bar` instead.
+        expect(scope_facts(code, "javascript", "test.js" as FilePath)).toEqual([
+          { type: "module", name: null, self_type_name: null, line: 1 },
+          { type: "class", name: "Foo", self_type_name: "Foo", line: 1 },
+          { type: "method", name: "m", self_type_name: null, line: 2 },
+          { type: "block", name: null, self_type_name: null, line: 2 },
+          { type: "class", name: null, self_type_name: null, line: 4 },
+          { type: "method", name: "n", self_type_name: null, line: 5 },
+          { type: "class", name: "Bar", self_type_name: null, line: 7 },
+          { type: "method", name: "p", self_type_name: null, line: 8 },
+          { type: "class", name: "Exported", self_type_name: "Exported", line: 10 },
+          { type: "method", name: "q", self_type_name: null, line: 11 },
+          { type: "function", name: null, self_type_name: null, line: 13 },
+          { type: "function", name: "f", self_type_name: null, line: 14 },
+        ]);
+      });
+
+      it("records the interface and the enum for TypeScript interface and enum bodies", () => {
+        const code = [
+          "interface Shape {",
+          "  area(): number;",
+          "}",
+          "enum Color {",
+          "  Red,",
+          "}",
+          "class Box { }",
+          "module.exports = class Exported { q() { } };",
+        ].join("\n");
+        // `typescript.scm` registers a class definition for a declaration only,
+        // so the CommonJS assignment that names a class in JavaScript names
+        // nothing here and its body records null.
+        expect(scope_facts(code, "typescript", "test.ts" as FilePath)).toEqual([
+          { type: "module", name: null, self_type_name: null, line: 1 },
+          { type: "class", name: "Shape", self_type_name: "Shape", line: 1 },
+          { type: "method", name: "area", self_type_name: null, line: 2 },
+          { type: "class", name: "Color", self_type_name: "Color", line: 4 },
+          { type: "class", name: "Box", self_type_name: "Box", line: 7 },
+          { type: "class", name: "Exported", self_type_name: null, line: 8 },
+          { type: "method", name: "q", self_type_name: null, line: 8 },
+        ]);
+      });
+
+      it("records the class for a Python class body block and null for functions, lambdas and loop blocks", () => {
+        const code = [
+          "class Widget:",
+          "    def paint(self):",
+          "        handler = lambda x: x",
+          "        return handler",
+          "",
+          "def helper():",
+          "    for i in range(3):",
+          "        pass",
+        ].join("\n");
+        // The Python class scope is captured on the body block, whose own
+        // `name` is null; the self type is read off the class_definition.
+        expect(scope_facts(code, "python", "test.py" as FilePath)).toEqual([
+          { type: "module", name: null, self_type_name: null, line: 1 },
+          { type: "class", name: null, self_type_name: "Widget", line: 1 },
+          { type: "method", name: "paint", self_type_name: null, line: 2 },
+          { type: "function", name: null, self_type_name: null, line: 3 },
+          { type: "function", name: "helper", self_type_name: null, line: 6 },
+          { type: "block", name: null, self_type_name: null, line: 7 },
+        ]);
+      });
+
+      it("records the implemented type for every Rust impl block and the item for struct, enum and trait bodies", () => {
+        const code = [
+          "struct S { x: i32 }",
+          "enum E { A }",
+          "trait Tr { fn t(&self); }",
+          "impl S { fn a(&self) { } }",
+          "impl<T> Wrapper<T> { }",
+          "impl Tr for S { fn t(&self) { } }",
+          "impl Tr for &S { }",
+          "impl<T> Tr for T { }",
+          "fn f() { if true { } }",
+        ].join("\n");
+        // Struct, enum and trait bodies are class scopes captured on the body
+        // node; each impl body is a block scope that binds `self` to the
+        // implemented type. `impl Tr for &S` implements a reference and
+        // `impl<T> Tr for T` implements its own type parameter — neither names
+        // a definition a lookup could reach, so both record null like the `if`
+        // block.
+        expect(scope_facts(code, "rust", "test.rs" as FilePath)).toEqual([
+          { type: "module", name: null, self_type_name: null, line: 1 },
+          { type: "class", name: null, self_type_name: "S", line: 1 },
+          { type: "class", name: null, self_type_name: "E", line: 2 },
+          { type: "class", name: null, self_type_name: "Tr", line: 3 },
+          { type: "block", name: null, self_type_name: "S", line: 4 },
+          { type: "function", name: "a", self_type_name: null, line: 4 },
+          { type: "block", name: null, self_type_name: "Wrapper", line: 5 },
+          { type: "block", name: null, self_type_name: "S", line: 6 },
+          { type: "function", name: "t", self_type_name: null, line: 6 },
+          { type: "block", name: null, self_type_name: null, line: 7 },
+          { type: "block", name: null, self_type_name: null, line: 8 },
+          { type: "function", name: "f", self_type_name: null, line: 9 },
+          { type: "block", name: null, self_type_name: null, line: 9 },
+        ]);
+      });
+
+      it("records the type for a Rust impl block whose struct is declared in another file", () => {
+        const fixture = (name: string) =>
+          join(
+            __dirname,
+            "..",
+            "..",
+            "..",
+            "tests",
+            "fixtures",
+            "rust",
+            "code",
+            "integration",
+            name
+          ) as FilePath;
+        const declarations = fixture("types.rs");
+        const implementations = fixture("impls.rs");
+
+        // The declaring file names its own types off the item around each body.
+        expect(
+          scope_facts(readFileSync(declarations, "utf-8"), "rust", declarations)
+        ).toEqual([
+          { type: "module", name: null, self_type_name: null, line: 1 },
+          { type: "class", name: null, self_type_name: "Lowering", line: 4 },
+          { type: "class", name: null, self_type_name: "Visit", line: 8 },
+        ]);
+
+        // The implementing file declares no class of its own, so no per-file
+        // member index could name the type — each impl block records it anyway,
+        // the trait impl included, and the method scopes inside stay null.
+        const code = readFileSync(implementations, "utf-8");
+        const parser = new Parser();
+        parser.setLanguage(LANGUAGE_TO_TREESITTER_LANG.get("rust")!);
+        const tree = parser.parse(code);
+        const index = build_index_single_file(
+          create_parsed_file(code, implementations, tree, "rust"),
+          tree,
+          "rust"
+        );
+        expect(index.classes.size).toEqual(0);
+        expect(scope_facts(code, "rust", implementations)).toEqual([
+          { type: "module", name: null, self_type_name: null, line: 1 },
+          { type: "block", name: null, self_type_name: "Lowering", line: 9 },
+          { type: "function", name: "descend", self_type_name: null, line: 10 },
+          { type: "block", name: null, self_type_name: "Lowering", line: 15 },
+          { type: "function", name: "visit", self_type_name: null, line: 16 },
+          { type: "block", name: null, self_type_name: "Lowering", line: 21 },
+          { type: "function", name: "report", self_type_name: null, line: 22 },
+        ]);
       });
     });
   });

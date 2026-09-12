@@ -17,7 +17,8 @@
       },
       "child_ids": [
         "class:<fixtures>/typescript/code/classes/basic_class.ts:5:19:14:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "class:<fixtures>/typescript/code/classes/basic_class.ts:5:19:14:1": {
       "id": "class:<fixtures>/typescript/code/classes/basic_class.ts:5:19:14:1",
@@ -34,7 +35,8 @@
       "child_ids": [
         "constructor:<fixtures>/typescript/code/classes/basic_class.ts:6:14:9:6",
         "method:<fixtures>/typescript/code/classes/basic_class.ts:11:8:13:3"
-      ]
+      ],
+      "self_type_name": "User"
     },
     "constructor:<fixtures>/typescript/code/classes/basic_class.ts:6:14:9:6": {
       "id": "constructor:<fixtures>/typescript/code/classes/basic_class.ts:6:14:9:6",
@@ -48,7 +50,8 @@
         "end_line": 9,
         "end_column": 6
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/typescript/code/classes/basic_class.ts:11:8:13:3": {
       "id": "method:<fixtures>/typescript/code/classes/basic_class.ts:11:8:13:3",
@@ -62,7 +65,8 @@
         "end_line": 13,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {},

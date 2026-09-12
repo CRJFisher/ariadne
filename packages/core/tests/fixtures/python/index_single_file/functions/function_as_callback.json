@@ -19,7 +19,8 @@
         "function:<fixtures>/python/code/functions/function_as_callback.py:7:9:8:34",
         "function:<fixtures>/python/code/functions/function_as_callback.py:1:13:2:26",
         "function:<fixtures>/python/code/functions/function_as_callback.py:4:12:5:16"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/function_as_callback.py:7:9:8:34": {
       "id": "function:<fixtures>/python/code/functions/function_as_callback.py:7:9:8:34",
@@ -33,7 +34,8 @@
         "end_line": 8,
         "end_column": 34
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/function_as_callback.py:1:13:2:26": {
       "id": "function:<fixtures>/python/code/functions/function_as_callback.py:1:13:2:26",
@@ -47,7 +49,8 @@
         "end_line": 2,
         "end_column": 26
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/function_as_callback.py:4:12:5:16": {
       "id": "function:<fixtures>/python/code/functions/function_as_callback.py:4:12:5:16",
@@ -61,7 +64,8 @@
         "end_line": 5,
         "end_column": 16
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {

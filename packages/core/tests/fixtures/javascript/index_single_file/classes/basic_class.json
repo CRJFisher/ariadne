@@ -20,7 +20,8 @@
         "class:<fixtures>/javascript/code/classes/basic_class.js:34:14:42:1",
         "class:<fixtures>/javascript/code/classes/basic_class.js:44:26:56:1",
         "function:<fixtures>/javascript/code/classes/basic_class.js:59:14:64:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "class:<fixtures>/javascript/code/classes/basic_class.js:6:12:32:1": {
       "id": "class:<fixtures>/javascript/code/classes/basic_class.js:6:12:32:1",
@@ -40,7 +41,8 @@
         "method:<fixtures>/javascript/code/classes/basic_class.js:17:10:23:3",
         "method:<fixtures>/javascript/code/classes/basic_class.js:25:11:27:3",
         "method:<fixtures>/javascript/code/classes/basic_class.js:29:13:31:3"
-      ]
+      ],
+      "self_type_name": "User"
     },
     "constructor:<fixtures>/javascript/code/classes/basic_class.js:7:14:11:3": {
       "id": "constructor:<fixtures>/javascript/code/classes/basic_class.js:7:14:11:3",
@@ -54,7 +56,8 @@
         "end_line": 11,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/basic_class.js:13:8:15:3": {
       "id": "method:<fixtures>/javascript/code/classes/basic_class.js:13:8:15:3",
@@ -68,7 +71,8 @@
         "end_line": 15,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/basic_class.js:17:10:23:3": {
       "id": "method:<fixtures>/javascript/code/classes/basic_class.js:17:10:23:3",
@@ -82,7 +86,8 @@
         "end_line": 23,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/basic_class.js:25:11:27:3": {
       "id": "method:<fixtures>/javascript/code/classes/basic_class.js:25:11:27:3",
@@ -96,7 +101,8 @@
         "end_line": 27,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/basic_class.js:29:13:31:3": {
       "id": "method:<fixtures>/javascript/code/classes/basic_class.js:29:13:31:3",
@@ -110,7 +116,8 @@
         "end_line": 31,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "class:<fixtures>/javascript/code/classes/basic_class.js:34:14:42:1": {
       "id": "class:<fixtures>/javascript/code/classes/basic_class.js:34:14:42:1",
@@ -127,7 +134,8 @@
       "child_ids": [
         "constructor:<fixtures>/javascript/code/classes/basic_class.js:35:14:37:3",
         "method:<fixtures>/javascript/code/classes/basic_class.js:39:8:41:3"
-      ]
+      ],
+      "self_type_name": "Animal"
     },
     "constructor:<fixtures>/javascript/code/classes/basic_class.js:35:14:37:3": {
       "id": "constructor:<fixtures>/javascript/code/classes/basic_class.js:35:14:37:3",
@@ -141,7 +149,8 @@
         "end_line": 37,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/basic_class.js:39:8:41:3": {
       "id": "method:<fixtures>/javascript/code/classes/basic_class.js:39:8:41:3",
@@ -155,7 +164,8 @@
         "end_line": 41,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "class:<fixtures>/javascript/code/classes/basic_class.js:44:26:56:1": {
       "id": "class:<fixtures>/javascript/code/classes/basic_class.js:44:26:56:1",
@@ -173,7 +183,8 @@
         "method:<fixtures>/javascript/code/classes/basic_class.js:45:20:47:3",
         "method:<fixtures>/javascript/code/classes/basic_class.js:49:8:51:3",
         "method:<fixtures>/javascript/code/classes/basic_class.js:53:8:55:3"
-      ]
+      ],
+      "self_type_name": "Dog"
     },
     "method:<fixtures>/javascript/code/classes/basic_class.js:45:20:47:3": {
       "id": "method:<fixtures>/javascript/code/classes/basic_class.js:45:20:47:3",
@@ -187,7 +198,8 @@
         "end_line": 47,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/basic_class.js:49:8:51:3": {
       "id": "method:<fixtures>/javascript/code/classes/basic_class.js:49:8:51:3",
@@ -201,7 +213,8 @@
         "end_line": 51,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/basic_class.js:53:8:55:3": {
       "id": "method:<fixtures>/javascript/code/classes/basic_class.js:53:8:55:3",
@@ -215,7 +228,8 @@
         "end_line": 55,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/classes/basic_class.js:59:14:64:1": {
       "id": "function:<fixtures>/javascript/code/classes/basic_class.js:59:14:64:1",
@@ -229,7 +243,8 @@
         "end_line": 64,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {

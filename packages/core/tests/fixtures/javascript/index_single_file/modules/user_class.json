@@ -17,7 +17,8 @@
       },
       "child_ids": [
         "class:<fixtures>/javascript/code/modules/user_class.js:6:19:34:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "class:<fixtures>/javascript/code/modules/user_class.js:6:19:34:1": {
       "id": "class:<fixtures>/javascript/code/modules/user_class.js:6:19:34:1",
@@ -37,7 +38,8 @@
         "method:<fixtures>/javascript/code/modules/user_class.js:17:11:19:3",
         "method:<fixtures>/javascript/code/modules/user_class.js:21:16:25:3",
         "method:<fixtures>/javascript/code/modules/user_class.js:27:10:33:3"
-      ]
+      ],
+      "self_type_name": "User"
     },
     "constructor:<fixtures>/javascript/code/modules/user_class.js:7:14:11:3": {
       "id": "constructor:<fixtures>/javascript/code/modules/user_class.js:7:14:11:3",
@@ -51,7 +53,8 @@
         "end_line": 11,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/modules/user_class.js:13:10:15:3": {
       "id": "method:<fixtures>/javascript/code/modules/user_class.js:13:10:15:3",
@@ -65,7 +68,8 @@
         "end_line": 15,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/modules/user_class.js:17:11:19:3": {
       "id": "method:<fixtures>/javascript/code/modules/user_class.js:17:11:19:3",
@@ -79,7 +83,8 @@
         "end_line": 19,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/modules/user_class.js:21:16:25:3": {
       "id": "method:<fixtures>/javascript/code/modules/user_class.js:21:16:25:3",
@@ -93,7 +98,8 @@
         "end_line": 25,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/modules/user_class.js:27:10:33:3": {
       "id": "method:<fixtures>/javascript/code/modules/user_class.js:27:10:33:3",
@@ -107,7 +113,8 @@
         "end_line": 33,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {},
