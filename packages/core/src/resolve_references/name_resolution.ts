@@ -28,6 +28,7 @@ import type {
   ScopeId,
   SymbolName,
   Language,
+  ImportDefinition,
 } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "./registries/definition";
 import type { ScopeRegistry } from "./registries/scope";
@@ -134,7 +135,29 @@ function resolve_scope_recursive(
     own.has(name) ||
     (parent_node !== null && lookup_in_scope_chain(parent_node, name) !== null);
 
-  const import_defs = context.imports.get_scope_imports(scope_id);
+  const language = context.languages.get(file_path);
+  const own_imports = context.imports.get_scope_imports(scope_id);
+
+  // @language python
+  // Python has no block scoping, so an import written under `if`, `elif`,
+  // `else`, `try`, `except`, `finally` or `with` binds in the enclosing module
+  // or function exactly as its unguarded form does. The guard clause keeps its
+  // scope — that is what holds two branches' same-named locals apart, and what
+  // confines an `except … as e` alias Python deletes at the end of the clause —
+  // so the binding is layered in here rather than the scope being removed.
+  // Only a scope that can own a binding takes the hoist. A block scope is
+  // itself one of the branches being lifted out of, so hoisting into it would
+  // let one branch's import answer a call sited in a sibling branch, where that
+  // import provably never ran; the enclosing function or module still gets it.
+  const hoisted_imports =
+    language === "python" &&
+    context.scopes.get_scope(scope_id)?.type !== "block"
+      ? collect_hoisted_imports(scope_id, context)
+      : [];
+  const hoisted_import_symbols = new Set(
+    hoisted_imports.map((imp_def) => imp_def.symbol_id)
+  );
+  const import_defs = [...own_imports, ...hoisted_imports];
 
   // @language rust,python
   // A wildcard import (`use m::*`, `from m import *`) binds every public name
@@ -142,7 +165,6 @@ function resolve_scope_recursive(
   // explicit import (below) and a local definition both shadow it. JS/TS is
   // excluded: its only wildcard form, `export * from`, binds nothing locally —
   // that surface is served by the ExportRegistry fan-out instead.
-  const language = context.languages.get(file_path);
   if (language === "rust" || language === "python") {
     const wildcard_layer = new Map<SymbolName, SymbolId>();
     // @language rust
@@ -188,6 +210,9 @@ function resolve_scope_recursive(
   // Names bound to a CommonJS default-export class by the import pass below; the
   // local-definition pass must not revert them to the raw import symbol.
   const require_default_rebinds = new Set<SymbolName>();
+
+  /** Names this scope binds through an import it writes itself, which a hoisted one never displaces. */
+  const own_import_names = new Set<SymbolName>();
 
   for (const imp_def of import_defs) {
     let resolved: SymbolId | null = null;
@@ -287,6 +312,19 @@ function resolve_scope_recursive(
     }
 
     if (resolved) {
+      if (hoisted_import_symbols.has(imp_def.symbol_id)) {
+        // A hoisted import binds *in* this scope, so it shadows whatever the
+        // chain inherits exactly as its unguarded form would — asking the chain
+        // here would drop a function-local `if flag: from m import x` in every
+        // file whose module scope also binds `x`. It loses only to an import
+        // this scope writes itself; the local-definition pass below still
+        // shadows it in turn.
+        if (own_import_names.has(imp_def.name)) {
+          continue;
+        }
+      } else {
+        own_import_names.add(imp_def.name);
+      }
       own.set(imp_def.name, resolved);
     }
   }
@@ -436,4 +474,48 @@ function collect_hoisted_functions(
   }
 
   return hoisted;
+}
+
+/**
+ * Collect the imports declared in descendant block scopes that bind in
+ * `scope_id`. Descends only through `block` scopes and stops at any nested
+ * function/method/constructor/class scope — those bind their own imports. When
+ * a name is imported in blocks at different depths, or in sibling branches of
+ * one guard, the first reached wins; the branch that actually runs is not
+ * knowable here, and every branch's own scope still binds its own import.
+ */
+function collect_hoisted_imports(
+  scope_id: ScopeId,
+  context: NameResolutionContext
+): ImportDefinition[] {
+  const hoisted = new Map<SymbolName, ImportDefinition>();
+  // A wildcard edge's `name` is the module path's last segment — a display
+  // name it never binds under — so several of them share one key while binding
+  // disjoint surfaces. They bypass the dedup entirely; the wildcard layer
+  // resolves per-exported-name conflicts on its own.
+  const wildcards: ImportDefinition[] = [];
+  const scope = context.scopes.get_scope(scope_id);
+  if (!scope?.child_ids) {
+    return [];
+  }
+
+  for (const child_id of scope.child_ids) {
+    const child = context.scopes.get_scope(child_id);
+    if (child?.type !== "block") {
+      continue;
+    }
+
+    for (const imp_def of [
+      ...context.imports.get_scope_imports(child_id),
+      ...collect_hoisted_imports(child_id, context),
+    ]) {
+      if (imp_def.import_kind === "wildcard") {
+        wildcards.push(imp_def);
+      } else if (!hoisted.has(imp_def.name)) {
+        hoisted.set(imp_def.name, imp_def);
+      }
+    }
+  }
+
+  return [...wildcards, ...hoisted.values()];
 }
