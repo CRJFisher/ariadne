@@ -18,16 +18,27 @@ import {
   extract_return_type,
   extract_parameter_type,
   extract_collection_source,
-  extract_collection_source_key,
   extract_extends,
   extract_call_initializer_name,
   detect_callback_context,
-  detect_function_collection,
   find_containing_callable,
   find_containing_class,
 } from "./symbol_factories.javascript";
-import { anonymous_function_symbol } from "@ariadnejs/types";
-import type { FilePath, SymbolName } from "@ariadnejs/types";
+import {
+  extract_collection_source_key,
+  detect_function_collection,
+} from "./function_collection.javascript";
+import { anonymous_function_symbol, function_symbol, method_symbol } from "@ariadnejs/types";
+import type {
+  CollectionMember,
+  FilePath,
+  SemanticIndex,
+  SymbolId,
+  SymbolName,
+} from "@ariadnejs/types";
+import { readdirSync, readFileSync } from "fs";
+import { join } from "path";
+import { build_index_single_file } from "../../index_single_file";
 import { extract_jsdoc_type } from "./jsdoc_extraction.javascript";
 import { node_to_location } from "../../node_to_location";
 import { SemanticCategory, SemanticEntity, type CaptureNode } from "../../capture_types";
@@ -1077,5 +1088,275 @@ describe("detect_callback_context", () => {
     expect(result.is_callback).toBe(false);
     expect(result.receiver_location).toBeNull();
   });
+
+  it("treats a function written inside a callback body as its own, not as a second callback", () => {
+    const root = parse_js("register(function (req) { app.m = () => 1; });");
+    const arrow_node = find_arrow_function(root)!;
+    const result = detect_callback_context(arrow_node, file_path);
+    expect(result.is_callback).toBe(false);
+    expect(result.receiver_location).toBeNull();
+  });
+
+  it("treats a class-field initialiser as its own, not as a callback of the enclosing call", () => {
+    const root = parse_js("f(class { m = () => 1; });");
+    const arrow_node = find_arrow_function(root)!;
+    const result = detect_callback_context(arrow_node, file_path);
+    expect(result.is_callback).toBe(false);
+    expect(result.receiver_location).toBeNull();
+  });
+
+  it("treats a function returned from a callback as its own, not as a second callback", () => {
+    const root = parse_js("register(function (req) { return () => 1; });");
+    const arrow_node = find_arrow_function(root)!;
+    const result = detect_callback_context(arrow_node, file_path);
+    expect(result.is_callback).toBe(false);
+    expect(result.receiver_location).toBeNull();
+  });
 });
 
+/**
+ * Every id a function collection records must be the id the definition
+ * builder minted for the same node: a collection member that names no
+ * definition is a phantom, and a call through the holder lands on nothing
+ * while the real function dangles as a false entry point.
+ */
+describe("collection member ids name real definitions", () => {
+  function index_javascript(code: string, file: FilePath): SemanticIndex {
+    const parser = new Parser();
+    parser.setLanguage(LANGUAGE_TO_TREESITTER_LANG.get("javascript")!);
+    const tree = parser.parse(code);
+    const lines = code.split("\n");
+    return build_index_single_file(
+      {
+        file_path: file,
+        file_lines: lines.length,
+        file_end_column: lines[lines.length - 1]?.length ?? 0,
+        tree,
+        lang: "javascript",
+        source: code,
+      },
+      tree,
+      "javascript"
+    );
+  }
+
+  interface RecordedMember {
+    readonly holder: string;
+    readonly name: string;
+    readonly symbol_id: SymbolId;
+  }
+
+  /**
+   * Every id any collection in the index holds, with the holder and member
+   * name. A `stored_functions` entry carries no name of its own, so it is
+   * recorded under the empty name and reads as the holder alone.
+   */
+  function recorded_members(index: SemanticIndex): RecordedMember[] {
+    const recorded: RecordedMember[] = [];
+    const walk = (holder: string, members: readonly CollectionMember[]) => {
+      for (const member of members) {
+        if ("symbol_id" in member) recorded.push({ holder, name: member.name, symbol_id: member.symbol_id });
+        if ("nested" in member) walk(`${holder}.${member.name}`, member.nested);
+      }
+    };
+    for (const definition of [...index.variables.values(), ...index.functions.values()]) {
+      const collection = definition.function_collection;
+      if (!collection) continue;
+      for (const symbol_id of collection.stored_functions) {
+        recorded.push({ holder: definition.name, name: "", symbol_id });
+      }
+      walk(definition.name, collection.named_members ?? []);
+    }
+    return recorded;
+  }
+
+  /** How a recorded member reads in a phantom report: `app.render`, or `app [stored]`. */
+  function member_label(member: RecordedMember): string {
+    return member.name ? `${member.holder}.${member.name}` : `${member.holder} [stored]`;
+  }
+
+  /** The ids the definition builder minted: functions, and every class or object-literal method. */
+  function definition_ids(index: SemanticIndex): Set<SymbolId> {
+    const ids = new Set<SymbolId>(index.functions.keys());
+    for (const class_def of index.classes.values()) {
+      for (const method of class_def.methods) ids.add(method.symbol_id);
+    }
+    return ids;
+  }
+
+  const file = "members.js" as FilePath;
+
+  it("records a named function expression under the id of its own named definition", () => {
+    const index = index_javascript(
+      "var proto = {};\nproto.engine = function engine() { return 1; };",
+      file
+    );
+    const expected_id = function_symbol("engine" as SymbolName, {
+      file_path: file,
+      start_line: 2,
+      start_column: 25,
+      end_line: 2,
+      end_column: 30,
+    });
+    // The collection holds the member twice — in `stored_functions` and as a
+    // named member — and both carry the named definition's id.
+    expect(recorded_members(index)).toEqual([
+      { holder: "proto", name: "", symbol_id: expected_id },
+      { holder: "proto", name: "engine", symbol_id: expected_id },
+    ]);
+    expect(index.functions.get(expected_id)?.name).toEqual("engine");
+  });
+
+  it("records an anonymous function expression and an arrow under the ids of their own definitions", () => {
+    const index = index_javascript(
+      "var proto = {};\nproto.run = function () { return 1; };\nproto.go = () => 2;",
+      file
+    );
+    const run_id = anonymous_function_symbol({
+      file_path: file,
+      start_line: 2,
+      start_column: 13,
+      end_line: 2,
+      end_column: 37,
+    });
+    const go_id = anonymous_function_symbol({
+      file_path: file,
+      start_line: 3,
+      start_column: 12,
+      end_line: 3,
+      end_column: 18,
+    });
+    expect(recorded_members(index)).toEqual([
+      { holder: "proto", name: "", symbol_id: run_id },
+      { holder: "proto", name: "", symbol_id: go_id },
+      { holder: "proto", name: "run", symbol_id: run_id },
+      { holder: "proto", name: "go", symbol_id: go_id },
+    ]);
+    expect([...index.functions.keys()].sort()).toEqual([run_id, go_id]);
+  });
+
+  it("records object-literal methods and function-valued pairs under the ids of their own definitions", () => {
+    const index = index_javascript(
+      "const handlers = {\n  short() { return 1; },\n  long: function () { return 2; },\n  arrow: () => 3,\n};",
+      file
+    );
+    const short_id = method_symbol("short" as SymbolName, {
+      file_path: file,
+      start_line: 2,
+      start_column: 3,
+      end_line: 2,
+      end_column: 7,
+    });
+    const long_id = anonymous_function_symbol({
+      file_path: file,
+      start_line: 3,
+      start_column: 9,
+      end_line: 3,
+      end_column: 33,
+    });
+    const arrow_id = anonymous_function_symbol({
+      file_path: file,
+      start_line: 4,
+      start_column: 10,
+      end_line: 4,
+      end_column: 16,
+    });
+    expect(recorded_members(index)).toEqual([
+      { holder: "handlers", name: "", symbol_id: short_id },
+      { holder: "handlers", name: "", symbol_id: long_id },
+      { holder: "handlers", name: "", symbol_id: arrow_id },
+      { holder: "handlers", name: "short", symbol_id: short_id },
+      { holder: "handlers", name: "long", symbol_id: long_id },
+      { holder: "handlers", name: "arrow", symbol_id: arrow_id },
+    ]);
+    expect([...definition_ids(index)].sort()).toEqual([long_id, arrow_id, short_id]);
+  });
+
+  it("records no member for an object-literal key no definition builder captures", () => {
+    // A quoted or numeric shorthand key reaches no `@definition.method`
+    // capture, and `constructor` is excluded from that capture with no class
+    // to receive it, so recording a member for any of them would name a
+    // function the index does not hold.
+    const index = index_javascript(
+      "const handlers = {\n  'my-key'() { return 1; },\n  1() { return 2; },\n  constructor() { return 3; },\n};",
+      file
+    );
+    expect(recorded_members(index)).toEqual([]);
+    expect([...definition_ids(index)]).toEqual([]);
+  });
+
+  it("leaves the CommonJS exports bag to the rules that name its members", () => {
+    // `exports.top` is defined at the property node under its exported name;
+    // the member-assignment rule must not mint a second definition at the
+    // value span. Nested in a function body the assignment is a local write,
+    // and no rule defines it.
+    const index = index_javascript(
+      "exports.top = () => 1;\nfunction configure() {\n  exports.hidden = () => 2;\n}",
+      file
+    );
+    expect([...index.functions.keys()]).toEqual([
+      function_symbol("top" as SymbolName, {
+        file_path: file,
+        start_line: 1,
+        start_column: 9,
+        end_line: 1,
+        end_column: 11,
+      }),
+      function_symbol("configure" as SymbolName, {
+        file_path: file,
+        start_line: 2,
+        start_column: 10,
+        end_line: 2,
+        end_column: 18,
+      }),
+    ]);
+  });
+
+  it("defines a CommonJS property export whose holder is split across lines", () => {
+    // The member-assignment rule excludes this holder, so the property-export
+    // rule is the only one that can define it; both read the holder the same
+    // way, so a line break between `module` and `exports` changes neither.
+    const index = index_javascript(
+      "module\n  .exports.handler = function (p) { return p; };",
+      file
+    );
+    expect([...index.functions.keys()]).toEqual([
+      function_symbol("handler" as SymbolName, {
+        file_path: file,
+        start_line: 2,
+        start_column: 12,
+        end_line: 2,
+        end_column: 18,
+      }),
+    ]);
+  });
+
+  it("names a definition with every id any collection in the JavaScript fixture corpus records", () => {
+    const root = join(__dirname, "..", "..", "..", "..", "tests", "fixtures", "javascript", "code");
+    const files: string[] = [];
+    const walk = (dir: string) => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const full = join(dir, entry.name);
+        if (entry.isDirectory()) walk(full);
+        else if (entry.name.endsWith(".js")) files.push(full);
+      }
+    };
+    walk(root);
+    files.sort();
+
+    let recorded = 0;
+    const phantoms: string[] = [];
+    for (const path of files) {
+      const index = index_javascript(readFileSync(path, "utf-8"), path as FilePath);
+      const ids = definition_ids(index);
+      for (const member of recorded_members(index)) {
+        recorded++;
+        if (!ids.has(member.symbol_id)) {
+          phantoms.push(`${path.slice(root.length + 1)} ${member_label(member)} records ${member.symbol_id}`);
+        }
+      }
+    }
+    expect(phantoms).toEqual([]);
+    expect({ files: files.length, recorded }).toEqual({ files: 31, recorded: 62 });
+  });
+});

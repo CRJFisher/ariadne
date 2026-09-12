@@ -5,6 +5,7 @@
 import { describe, it, expect } from "vitest";
 import Parser from "tree-sitter";
 import { LANGUAGE_TO_TREESITTER_LANG } from "../parsers";
+import { build_index_single_file } from "../../index_single_file";
 import type { SyntaxNode } from "tree-sitter";
 import {
   create_interface_id,
@@ -49,7 +50,12 @@ import {
   property_symbol,
   type_symbol,
 } from "@ariadnejs/types";
-import type { FilePath, SymbolId, SymbolName } from "@ariadnejs/types";
+import type {
+  CollectionMember,
+  FilePath,
+  SymbolId,
+  SymbolName,
+} from "@ariadnejs/types";
 import { node_to_location } from "../../node_to_location";
 import { SemanticCategory, SemanticEntity, type CaptureNode } from "../../capture_types";
 
@@ -1247,5 +1253,92 @@ describe("is_async_method", () => {
     expect(name_node).not.toBeNull();
 
     expect(is_async_method(name_node)).toBe(false);
+  });
+});
+
+/**
+ * The member-assignment rule in `typescript.scm` is the TypeScript half of the
+ * same invariant `symbol_factories.javascript.test.ts` pins for JavaScript:
+ * every id a function collection records must be an id the definition builder
+ * minted, or a call through the holder lands on nothing.
+ */
+describe("collection member ids name real definitions (TypeScript)", () => {
+  const file = "members.ts" as FilePath;
+
+  function index_typescript(code: string) {
+    const parser = new Parser();
+    parser.setLanguage(LANGUAGE_TO_TREESITTER_LANG.get("typescript")!);
+    const tree = parser.parse(code);
+    const lines = code.split("\n");
+    return build_index_single_file(
+      {
+        file_path: file,
+        file_lines: lines.length,
+        file_end_column: lines[lines.length - 1]?.length ?? 0,
+        tree,
+        lang: "typescript",
+        source: code,
+      },
+      tree,
+      "typescript"
+    );
+  }
+
+  function recorded_ids(index: ReturnType<typeof index_typescript>): SymbolId[] {
+    const recorded: SymbolId[] = [];
+    const walk = (members: readonly CollectionMember[]) => {
+      for (const member of members) {
+        if ("symbol_id" in member) recorded.push(member.symbol_id);
+        if ("nested" in member) walk(member.nested);
+      }
+    };
+    for (const definition of [...index.variables.values(), ...index.functions.values()]) {
+      const collection = definition.function_collection;
+      if (!collection) continue;
+      recorded.push(...collection.stored_functions);
+      walk(collection.named_members ?? []);
+    }
+    return recorded;
+  }
+
+  it("records a member-assigned function under the id of its own definition", () => {
+    const index = index_typescript(
+      "const app: Record<string, unknown> = {};\napp.engine = function () { return 1; };"
+    );
+    const engine_id = anonymous_function_symbol({
+      file_path: file,
+      start_line: 2,
+      start_column: 14,
+      end_line: 2,
+      end_column: 38,
+    });
+    expect(recorded_ids(index)).toEqual([engine_id, engine_id]);
+    expect([...index.functions.keys()]).toEqual([engine_id]);
+  });
+
+  it("defines a CommonJS property export, which no other rule in this grammar names", () => {
+    const index = index_typescript("exports.handler = async () => { return 1; };");
+    expect([...index.functions.keys()]).toEqual([
+      anonymous_function_symbol({
+        file_path: file,
+        start_line: 1,
+        start_column: 19,
+        end_line: 1,
+        end_column: 43,
+      }),
+    ]);
+  });
+
+  it("leaves the whole-module export to the rule that already defines it", () => {
+    const index = index_typescript("module.exports = function () { return 1; };");
+    expect([...index.functions.keys()]).toEqual([
+      anonymous_function_symbol({
+        file_path: file,
+        start_line: 1,
+        start_column: 18,
+        end_line: 1,
+        end_column: 42,
+      }),
+    ]);
   });
 });

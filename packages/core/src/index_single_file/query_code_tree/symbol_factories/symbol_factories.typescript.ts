@@ -11,8 +11,6 @@ import type {
   SymbolId,
   SymbolName,
   Location,
-  CallbackContext,
-  FilePath,
 } from "@ariadnejs/types";
 import {
   anonymous_function_symbol,
@@ -30,8 +28,9 @@ import type { CaptureNode } from "../../capture_types";
 import { node_to_location } from "../../node_to_location";
 import { bound_callable_name_node } from "./symbol_factories.javascript";
 
-// Re-export detect_function_collection from JavaScript to avoid duplication
-export { detect_function_collection } from "./symbol_factories.javascript";
+// Re-exported from JavaScript: the shapes are identical, and a second copy drifts.
+export { detect_callback_context } from "./symbol_factories.javascript";
+export { detect_function_collection } from "./function_collection.javascript";
 
 // ============================================================================
 // TypeScript-Specific Symbol ID Creation
@@ -802,46 +801,3 @@ export function find_decorator_target(
 // Callback Detection
 // ============================================================================
 
-/**
- * Detect if an anonymous function node is being passed as a callback to another function.
- * Returns callback context with:
- * - is_callback: true if the function is in call expression arguments
- * - receiver_location: location of the call expression receiving this callback
- * - receiver_is_external: null (will be classified during resolution phase)
- */
-export function detect_callback_context(
-  node: SyntaxNode,
-  file_path: FilePath
-): CallbackContext {
-  let current: SyntaxNode | null = node.parent;
-  let depth = 0;
-  const MAX_DEPTH = 5; // Limit upward traversal
-
-  while (current && depth < MAX_DEPTH) {
-    // Check if we're in an arguments node
-    if (current.type === "arguments") {
-      // Check if the parent of arguments is a call_expression or new_expression
-      const call_node = current.parent;
-      if (
-        call_node &&
-        (call_node.type === "call_expression" ||
-          call_node.type === "new_expression")
-      ) {
-        return {
-          is_callback: true,
-          receiver_is_external: null, // Will be classified during resolution
-          receiver_location: node_to_location(call_node, file_path),
-        };
-      }
-    }
-    current = current.parent;
-    depth++;
-  }
-
-  // Not a callback
-  return {
-    is_callback: false,
-    receiver_is_external: null,
-    receiver_location: null,
-  };
-}
