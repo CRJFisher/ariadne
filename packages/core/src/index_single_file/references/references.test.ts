@@ -67,7 +67,6 @@ function create_test_context(): ProcessingContext {
     scope_depths: new Map(),
     root_scope_id,
     get_scope_id: (loc: Location) => root_scope_id,
-    get_child_scope_with_symbol_name: (scope_id: ScopeId, name: SymbolName) => root_scope_id,
   };
 }
 

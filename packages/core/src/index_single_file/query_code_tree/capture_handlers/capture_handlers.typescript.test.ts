@@ -29,7 +29,6 @@ describe("TypeScript Builder Configuration", () => {
     root_scope_id: "scope:root" as ScopeId,
     get_scope_id: (location: Location): ScopeId =>
       `scope:${location.start_line}:${location.start_column}` as ScopeId,
-    get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => "scope:root" as ScopeId,
   };
 
   beforeAll(() => {

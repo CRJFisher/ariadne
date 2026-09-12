@@ -61,8 +61,8 @@ import type { ImportGraph } from "../import_resolution/import_graph";
 import type { ModuleResolutionContext } from "../import_resolution";
 import { resolve_module_path_rust } from "../import_resolution/import_resolution.rust";
 import {
-  find_containing_class_scope,
-  find_class_from_scope,
+  find_self_type,
+  type SelfTypeResolutionContext,
 } from "./receiver_resolution";
 
 const PATH_ANCHORS: ReadonlySet<string> = new Set(["crate", "self", "super"]);
@@ -148,11 +148,7 @@ export function resolve_qualified_path_rust(
     // deeper path has no meaning here; a type terminal (`Self::new()`) is
     // substituted at the constructor call site instead.
     if (module_path.length > 1 || terminal_kind !== "callable") return null;
-    const self_type = resolve_self_type_rust(
-      scope_id,
-      context.scopes,
-      context.definitions
-    );
+    const self_type = resolve_self_type_rust(scope_id, context);
     return self_type
       ? resolve_associated_item(self_type, terminal, context)
       : null;
@@ -280,22 +276,16 @@ function resolve_via_module_file(
 
 /**
  * The enclosing `impl`/`trait` type of a scope — what `Self` denotes there.
- * `Self` is never in scope, so a caller that sees the keyword resolves it here
- * instead of through the scope map.
+ * `Self` is never a binding of its own, so a caller that sees the keyword
+ * resolves it here instead of through the scope map. Rust's `Self` is exactly
+ * the self type every language's `self`/`this` reads, so the walk is shared.
  */
 export function resolve_self_type_rust(
   scope_id: ScopeId,
-  scopes: ScopeRegistry,
-  definitions: DefinitionRegistry
+  context: SelfTypeResolutionContext
 ): SymbolId | null {
-  const class_scope_id = find_containing_class_scope(
-    scope_id,
-    scopes,
-    definitions
-  );
-  if (!class_scope_id) return null;
-
-  return find_class_from_scope(class_scope_id, definitions);
+  const self_type = find_self_type(scope_id, context);
+  return self_type.ok ? self_type.value : null;
 }
 
 /**

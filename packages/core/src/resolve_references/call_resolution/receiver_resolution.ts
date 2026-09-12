@@ -6,7 +6,8 @@
  * and regular method calls (obj.method()) through a two-phase approach:
  *
  * Phase 1: Resolve the base of the receiver expression
- *   - Self-reference keywords (this, self, super, cls) → containing class type
+ *   - Self-reference keywords (this, self, super, cls) → the type the enclosing
+ *     scope names as its self type
  *   - Identifiers → resolve in scope, get type
  *
  * Phase 2: Walk the property chain to get the final receiver type
@@ -25,6 +26,7 @@ import type {
   FilePath,
   ScopeId,
   Language,
+  LexicalScope,
   SelfReferenceCall,
   MethodCallReference,
   SelfReferenceKeyword,
@@ -66,18 +68,29 @@ export interface ReceiverExpression {
 }
 
 /**
- * Registries needed to infer the type of a receiver expression and look up
- * methods on that type (phases 1 and 2 of receiver resolution).
+ * Registries needed to name the type a self receiver denotes: the scope tree
+ * that records the name, the resolver that binds it, and the import surface a
+ * name declared in another file is reached through.
+ *
+ * Narrower than `ReceiverResolutionContext` so the Rust path resolver, which
+ * carries no `TypeRegistry`, can resolve `Self` through the same walk.
  */
-export interface ReceiverResolutionContext {
+export interface SelfTypeResolutionContext {
   readonly scopes: ScopeRegistry;
   readonly definitions: DefinitionRegistry;
-  readonly types: TypeRegistry;
   readonly resolutions: ResolutionRegistry;
   readonly imports: ImportGraph;
   readonly exports: ExportRegistry;
   readonly languages: ReadonlyMap<FilePath, Language>;
   readonly modules: ModuleResolutionContext;
+}
+
+/**
+ * Registries needed to infer the type of a receiver expression and look up
+ * methods on that type (phases 1 and 2 of receiver resolution).
+ */
+export interface ReceiverResolutionContext extends SelfTypeResolutionContext {
+  readonly types: TypeRegistry;
 }
 
 const SELF_REFERENCE_KEYWORDS = new Set(["this", "self", "super", "cls"]);
@@ -180,51 +193,81 @@ function resolve_keyword_base(
   scope_id: ScopeId,
   context: ReceiverResolutionContext
 ): Result<SymbolId, ResolutionFailure> {
-  const class_scope_id = find_containing_class_scope(scope_id, context.scopes, context.definitions);
-  if (!class_scope_id) {
-    // Object-literal methods and prototype/member-assigned functions have no
-    // enclosing class scope. Bind `this`/self to the function collection whose
-    // body encloses the call so `this.method()` resolves against its siblings.
+  const self_type = find_self_type(scope_id, context);
+
+  if (!self_type.ok) {
+    // Object-literal methods and prototype/member-assigned functions sit in no
+    // scope that names a type. Bind `this`/self to the function collection
+    // holding them so `this.method()` resolves against its siblings. `super`
+    // takes no such binding — a collection has no parent to dispatch against.
     if (keyword !== "super") {
-      const scope = context.scopes.get_scope(scope_id);
-      if (scope) {
-        const collection_id = context.definitions.find_enclosing_collection(scope.location);
-        if (collection_id) {
-          return ok(collection_id);
-        }
+      const collection_id = find_enclosing_function_collection(scope_id, context);
+      if (collection_id) {
+        return ok(collection_id);
       }
     }
 
-    return err({
-      stage: "receiver_resolution",
-      reason: "no_enclosing_class_scope",
-      partial_info: { last_known_scope: scope_id },
-    });
-  }
-
-  const class_symbol_id = find_class_from_scope(class_scope_id, context.definitions);
-  if (!class_symbol_id) {
-    return err({
-      stage: "receiver_resolution",
-      reason: "class_definition_not_found",
-      partial_info: { last_known_scope: class_scope_id },
-    });
+    return self_type;
   }
 
   // super dispatches against the parent class; index 0 is the current class.
   if (keyword === "super") {
-    const inheritance_chain = context.types.walk_inheritance_chain(class_symbol_id);
+    const inheritance_chain = context.types.walk_inheritance_chain(self_type.value);
     if (inheritance_chain.length < 2) {
       return err({
         stage: "receiver_resolution",
         reason: "no_parent_class",
-        partial_info: { resolved_receiver_type: class_symbol_id },
+        partial_info: { resolved_receiver_type: self_type.value },
       });
     }
     return ok(inheritance_chain[1]);
   }
 
-  return ok(class_symbol_id);
+  return self_type;
+}
+
+/**
+ * The function collection a `this` with no enclosing type denotes: either the
+ * collection whose member body encloses the call, or — when the call sits in
+ * the holder's own body rather than in one of its members — the collection the
+ * enclosing function itself carries.
+ *
+ * The second shape is a constructor function assembled by prototype assignment
+ * (express's `function View() { this.lookup() }` with `View.prototype.lookup =
+ * fn`): the members are folded onto the holder, but none of them spans the
+ * holder's body, so the member scan alone misses it.
+ */
+function find_enclosing_function_collection(
+  scope_id: ScopeId,
+  context: SelfTypeResolutionContext
+): SymbolId | null {
+  const scope = context.scopes.get_scope(scope_id);
+  if (!scope) {
+    return null;
+  }
+
+  const member_holder = context.definitions.find_enclosing_collection(scope.location);
+  if (member_holder) {
+    return member_holder;
+  }
+
+  for (
+    let current: LexicalScope | undefined = scope;
+    current;
+    current = current.parent_id
+      ? context.scopes.get_scope(current.parent_id)
+      : undefined
+  ) {
+    if (current.type !== "function" || !current.name) {
+      continue;
+    }
+    const holder_id = context.resolutions.resolve(current.id, current.name);
+    if (holder_id && context.definitions.get_function_collection(holder_id)) {
+      return holder_id;
+    }
+  }
+
+  return null;
 }
 
 /**
@@ -364,7 +407,7 @@ function resolve_namespace_member(
  */
 function dereference_named_import(
   symbol_id: SymbolId,
-  context: ReceiverResolutionContext
+  context: SelfTypeResolutionContext
 ): SymbolId | null {
   let current = symbol_id;
   const visited = new Set<SymbolId>([current]);
@@ -726,69 +769,92 @@ function parse_single_type_argument(annotation: SymbolName): SymbolName | null {
 }
 
 /**
- * Walk up the scope tree to the class scope enclosing `start_scope_id`, or null if none.
- * `definitions` lets a Rust impl block — which is a `block` scope, not a `class` scope —
- * count as a class scope when it owns methods.
+ * The type a `self`/`this`/`cls`/`Self` receiver in `scope_id` denotes.
+ *
+ * Each scope that binds a self receiver records the type it binds it to
+ * (`LexicalScope.self_type_name`), so the type is read off the scope tree as a
+ * declared fact rather than inferred from the members the scope happens to
+ * hold. That is what makes a body with no members of its own — a
+ * constructor-only class, a cross-file Rust `impl` — name its type, and what
+ * keeps the answer independent of which member of a same-named pair the
+ * name-keyed indexes kept.
+ *
+ * The walk stops at the FIRST scope carrying a name: a nested class binds
+ * `self` to itself, and continuing to an enclosing type would bind it to the
+ * wrong one.
  */
-export function find_containing_class_scope(
-  start_scope_id: ScopeId,
-  scopes: ScopeRegistry,
-  definitions?: DefinitionRegistry
-): ScopeId | null {
-  let current_scope_id: ScopeId | null = start_scope_id;
-
-  while (current_scope_id) {
-    const scope = scopes.get_scope(current_scope_id);
-    if (!scope) {
-      return null;
+export function find_self_type(
+  scope_id: ScopeId,
+  context: SelfTypeResolutionContext
+): Result<SymbolId, ResolutionFailure> {
+  for (
+    let scope = context.scopes.get_scope(scope_id);
+    scope;
+    scope = scope.parent_id ? context.scopes.get_scope(scope.parent_id) : undefined
+  ) {
+    const self_type_name = scope.self_type_name;
+    if (!self_type_name) {
+      continue;
     }
 
-    if (scope.type === "class") {
-      return current_scope_id;
+    // A type is declared outside the body that records its name, so the lookup
+    // starts one scope out: a member named after its own class (`class Foo { Foo
+    // = 5 }`, a Python class attribute) can only shadow the declaration, never
+    // be it. Starting outside also reaches a Rust `impl`'s `use`, which sits in
+    // the module scope above the block.
+    const lookup_scope_id = scope.parent_id ?? scope.id;
+    const symbol_id = resolve_self_type_name(
+      self_type_name,
+      lookup_scope_id,
+      scope.location.file_path,
+      context
+    );
+
+    if (symbol_id) {
+      return ok(symbol_id);
     }
 
-    // @language rust
-    // A Rust impl block is a `block` scope; owning methods distinguishes it from a
-    // plain block (if/for/loop), which never owns class members.
-    if (scope.type === "block" && definitions) {
-      if (find_class_from_scope(current_scope_id, definitions)) {
-        return current_scope_id;
-      }
-    }
-
-    current_scope_id = scope.parent_id;
+    return err({
+      stage: "receiver_resolution",
+      reason: "class_definition_not_found",
+      partial_info: { last_known_scope: scope.id },
+    });
   }
 
-  return null;
+  return err({
+    stage: "receiver_resolution",
+    reason: "no_enclosing_class_scope",
+    partial_info: { last_known_scope: scope_id },
+  });
 }
 
 /**
- * Find the class definition owning a class scope, by locating any method defined in the
- * scope and reverse-looking-up its owner through the member index. The scope tree alone
- * does not link a class body back to its class symbol.
+ * The type `self_type_name` denotes when looked up from `lookup_scope_id`.
+ *
+ * The lexical binding answers first, so an imported type resolves through the
+ * same chain every other name uses. A scope holds one symbol per name, though,
+ * so a type declared beside a same-named non-type — a TypeScript `class Foo`
+ * merged with a `namespace Foo` — can lose that slot; the type is then asked for
+ * by kind, which a self receiver is entitled to do because only a type can be
+ * what `self` denotes.
  */
-export function find_class_from_scope(
-  class_scope_id: ScopeId,
-  definitions: DefinitionRegistry
+function resolve_self_type_name(
+  self_type_name: SymbolName,
+  lookup_scope_id: ScopeId,
+  file_id: FilePath,
+  context: SelfTypeResolutionContext
 ): SymbolId | null {
-  const scope_symbols = definitions.get_scope_definitions(class_scope_id);
-  if (!scope_symbols) {
-    return null;
+  const resolved = context.resolutions.resolve(lookup_scope_id, self_type_name);
+  const bound = resolved ? dereference_named_import(resolved, context) : null;
+  const kind = bound ? context.definitions.get(bound)?.kind : undefined;
+
+  if (bound && (kind === "class" || kind === "interface" || kind === "enum")) {
+    return bound;
   }
 
-  // The scope index is keyed by name, so a getter/setter pair leaves whichever
-  // accessor came last under that name. Asking each candidate for its owner
-  // directly means the answer never depends on which one that was.
-  for (const symbol_id of scope_symbols.values()) {
-    const definition = definitions.get(symbol_id);
-    if (definition?.kind !== "method") {
-      continue;
-    }
-    const owner = definitions.get_member_owner(symbol_id);
-    if (owner) {
-      return owner;
-    }
-  }
-
-  return null;
+  return context.definitions.find_type_declared_in_scope(
+    file_id,
+    lookup_scope_id,
+    self_type_name
+  );
 }

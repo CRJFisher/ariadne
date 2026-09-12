@@ -25,7 +25,6 @@ const TEST_FILE_PATH: FilePath = "test.js" as FilePath;
 function create_test_context(): ProcessingContext {
   return {
     get_scope_id: () => "test-scope" as ScopeId,
-    get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => "test-scope" as ScopeId,
     captures: [],
     scopes: new Map<ScopeId, LexicalScope>(),
     scope_depths: new Map<ScopeId, number>(),
