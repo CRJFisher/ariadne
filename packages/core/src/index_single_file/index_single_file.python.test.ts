@@ -14,7 +14,6 @@ import type {
   TypeReference,
   MethodCallReference,
   SelfReferenceCall,
-  ConstructorCallReference,
   PropertyAccessReference,
   VariableReference,
   AssignmentReference,
@@ -416,7 +415,7 @@ class Calculator:
       expect(type_refs.length).toBeGreaterThan(0);
     });
 
-    it("should handle constructor calls", () => {
+    it("records a class instantiation as a call carrying the assignment target it lands in", () => {
       const code = `
 class Person:
     def __init__(self, name: str):
@@ -430,11 +429,18 @@ person = Person("Alice")
 
       const index = build_index_single_file(parsed_file, tree, "python");
 
-      // Check that constructor call was captured
-      const constructs = index.references.filter(
-        (r): r is ConstructorCallReference => r.kind === "constructor_call"
-      );
-      expect(constructs.length).toBeGreaterThan(0);
+      // A Python construction is a plain call in the index; the constructor
+      // rewrite happens once the callee resolves to a class, in resolution.
+      const calls = index.references
+        .filter((r): r is FunctionCallReference => r.kind === "function_call")
+        .map((r) => ({ name: r.name, target: r.potential_construct_target }));
+      expect(calls).toEqual([
+        {
+          name: "Person",
+          target: { file_path, start_line: 6, start_column: 1, end_line: 6, end_column: 6 },
+        },
+      ]);
+      expect(index.references.filter((r) => r.kind === "constructor_call")).toEqual([]);
     });
   });
 
@@ -443,7 +449,7 @@ person = Person("Alice")
   // ============================================================================
 
   describe("Class Instantiation Metadata", () => {
-    it("should extract construct_target for class instantiation", () => {
+    it("carries the assignment target on plain, argument-bearing and annotated instantiations", () => {
       const code = `
 obj = MyClass()
 instance = MyClass(arg1, arg2)
@@ -454,27 +460,26 @@ typed_obj: MyClass = MyClass()
       const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const result = build_index_single_file(parsed_file, tree, "python");
 
-      // Find constructor calls
-      const constructor_calls = result.references.filter(
-        (ref): ref is ConstructorCallReference => ref.kind === "constructor_call"
-      );
-      expect(constructor_calls.length).toBeGreaterThan(0);
-
-      // Check MyClass() constructor
-      const my_class_construct = constructor_calls.find(
-        (ref) => ref.name === "MyClass"
-      );
-      expect(my_class_construct).toBeDefined();
-      if (my_class_construct?.construct_target) {
-        // Should point to the variable being assigned
-        expect(my_class_construct.construct_target).toHaveProperty("start_line");
-        expect(my_class_construct.construct_target).toHaveProperty(
-          "start_column"
-        );
-      }
+      const calls = result.references
+        .filter((ref): ref is FunctionCallReference => ref.kind === "function_call")
+        .map((ref) => ({ name: ref.name, target: ref.potential_construct_target }));
+      expect(calls).toEqual([
+        {
+          name: "MyClass",
+          target: { file_path, start_line: 2, start_column: 1, end_line: 2, end_column: 3 },
+        },
+        {
+          name: "MyClass",
+          target: { file_path, start_line: 3, start_column: 1, end_line: 3, end_column: 8 },
+        },
+        {
+          name: "MyClass",
+          target: { file_path, start_line: 4, start_column: 1, end_line: 4, end_column: 9 },
+        },
+      ]);
     });
 
-    it("should handle nested constructor calls", () => {
+    it("carries the enclosing assignment target on a nested call too", () => {
       const code = `
 wrapper = Wrapper(Inner(data))
 result = process(Factory.create())
@@ -484,21 +489,36 @@ result = process(Factory.create())
       const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const result = build_index_single_file(parsed_file, tree, "python");
 
-      const constructor_calls = result.references.filter(
-        (ref): ref is ConstructorCallReference => ref.kind === "constructor_call"
-      );
-
-      // Check Wrapper constructor
-      const wrapper_construct = constructor_calls.find(
-        (ref) => ref.name === "Wrapper"
-      );
-      expect(wrapper_construct).toBeDefined();
-
-      // Check Inner constructor (nested)
-      const inner_construct = constructor_calls.find(
-        (ref) => ref.name === "Inner"
-      );
-      expect(inner_construct).toBeDefined();
+      const calls = result.references
+        .filter(
+          (ref): ref is FunctionCallReference | MethodCallReference =>
+            ref.kind === "function_call" || ref.kind === "method_call"
+        )
+        .map((ref) => ({ kind: ref.kind, name: ref.name, target: ref.potential_construct_target }));
+      // The target is the assignment the call sits in, however deep: `Inner`
+      // and `Wrapper` both land in `wrapper`, and `create` lands in `result`.
+      expect(calls).toEqual([
+        {
+          kind: "function_call",
+          name: "Wrapper",
+          target: { file_path, start_line: 2, start_column: 1, end_line: 2, end_column: 7 },
+        },
+        {
+          kind: "function_call",
+          name: "Inner",
+          target: { file_path, start_line: 2, start_column: 1, end_line: 2, end_column: 7 },
+        },
+        {
+          kind: "function_call",
+          name: "process",
+          target: { file_path, start_line: 3, start_column: 1, end_line: 3, end_column: 6 },
+        },
+        {
+          kind: "method_call",
+          name: "create",
+          target: { file_path, start_line: 3, start_column: 1, end_line: 3, end_column: 6 },
+        },
+      ]);
     });
   });
 
@@ -1031,7 +1051,7 @@ class UntypedClass:
       expect(type_refs.length).toBeLessThanOrEqual(1);
     });
 
-    it("should handle standalone constructor calls without assignment", () => {
+    it("carries no assignment target on a call that lands in none", () => {
       const code = `
 MyClass()
 print(Factory.create())
@@ -1041,17 +1061,20 @@ print(Factory.create())
       const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const result = build_index_single_file(parsed_file, tree, "python");
 
-      const constructor_calls = result.references.filter(
-        (ref): ref is ConstructorCallReference => ref.kind === "constructor_call"
-      );
-
-      // Standalone MyClass() won't have construct_target
-      const standalone = constructor_calls.find(
-        (ref) => ref.name === "MyClass"
-      );
-      expect(standalone).toBeDefined();
-      // construct_target should be undefined for standalone calls
-      expect(standalone?.construct_target).toBeUndefined();
+      const calls = result.references
+        .filter(
+          (ref): ref is FunctionCallReference | MethodCallReference =>
+            ref.kind === "function_call" || ref.kind === "method_call"
+        )
+        .map((ref) => ({
+          name: ref.name,
+          has_target: "potential_construct_target" in ref,
+        }));
+      expect(calls).toEqual([
+        { name: "MyClass", has_target: false },
+        { name: "print", has_target: false },
+        { name: "create", has_target: false },
+      ]);
     });
 
     it("should extract method resolution metadata for all receiver patterns", () => {
@@ -1077,43 +1100,45 @@ service2.get_data()
       const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const result = build_index_single_file(parsed_file, tree, "python");
 
-      // Scenario 1: Receiver from type annotation
-      // Verify the assignment is captured
-      const service1_assignment = result.references.find(
-        (ref): ref is AssignmentReference =>
-          ref.kind === "assignment" && ref.name === "service1"
-      );
-      expect(service1_assignment).toBeDefined();
+      // Scenario 1: the annotated assignment is recorded, and both `get_data`
+      // calls carry the receiver the method is looked up on.
+      const service1_assignments = result.references
+        .filter(
+          (ref): ref is AssignmentReference =>
+            ref.kind === "assignment" && ref.name === "service1"
+        )
+        .map((ref) => ref.location.start_line);
+      // Recorded twice: a typed assignment matches the patterns with and
+      // without a type annotation. Pre-existing, owned by TASK-374.5.
+      expect(service1_assignments).toEqual([10, 10]);
 
-      // Note: assignment_type from type annotations is a future enhancement
+      const method_calls = result.references
+        .filter(
+          (ref): ref is MethodCallReference =>
+            ref.kind === "method_call" && ref.name === "get_data"
+        )
+        .map((ref) => ({
+          line: ref.location.start_line,
+          receiver_line: ref.receiver_location?.start_line ?? null,
+        }));
+      expect(method_calls).toEqual([
+        { line: 11, receiver_line: 11 },
+        { line: 15, receiver_line: 15 },
+      ]);
 
-      // Verify method calls have receiver_location
-      const method_calls = result.references.filter(
-        (ref): ref is MethodCallReference =>
-          ref.kind === "method_call" && ref.name === "get_data"
-      );
-
-      // Should have at least 2 get_data method calls
-      expect(method_calls.length).toBeGreaterThanOrEqual(2);
-
-      // At least some method calls should have receiver_location
-      // (calls within class definitions may not have it)
-      const calls_with_receiver = method_calls.filter(
-        (c) => c.receiver_location
-      );
-      expect(calls_with_receiver.length).toBeGreaterThan(0);
-
-      // Scenario 2: Verify constructor call has construct_target
-      const constructor_calls = result.references.filter(
-        (ref): ref is ConstructorCallReference =>
-          ref.kind === "constructor_call" && ref.name === "Service"
-      );
-
-      // Should have at least one constructor call with construct_target
-      const construct_with_target = constructor_calls.find(
-        (c) => c.construct_target
-      );
-      expect(construct_with_target).toBeDefined();
+      // Scenario 2: the construction `service2 = Service()` is a plain call
+      // carrying its assignment target; resolution turns it into the
+      // constructor call once `Service` resolves to the class.
+      const service_calls = result.references
+        .filter(
+          (ref): ref is FunctionCallReference =>
+            ref.kind === "function_call" && ref.name === "Service"
+        )
+        .map((ref) => ref.potential_construct_target);
+      expect(service_calls).toEqual([
+        undefined,
+        { file_path, start_line: 14, start_column: 1, end_line: 14, end_column: 8 },
+      ]);
     });
   });
 

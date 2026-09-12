@@ -284,7 +284,6 @@ arrow = lambda a: a + 1
         "export.function",
         "export.variable",
         "reference.call",
-        "reference.constructor",
         "reference.member_access",
         "reference.property",
         "reference.super",
@@ -693,7 +692,18 @@ describe("Fixture corpus invariants", () => {
         "reference.call",
         "reference.this",
       ],
-      known_duplicates: [],
+      // A typed local assignment inside a function (`p: Parser = make()`,
+      // `a: Optional[Parser] = Parser()`, `w: Parser = Wrapper().build()`)
+      // mints definition.variable twice at
+      // the name's range: the assignment patterns with and without a type both
+      // match. Pre-existing in the grammar and owned by TASK-374.5; pinned so a
+      // NEW duplicate still fails. Byte offsets move when the fixture is
+      // edited — re-run this test and re-pin rather than widening the list.
+      known_duplicates: [
+        "python/code/integration/uses_parsers.py definition.variable@775:776 x2",
+        "python/code/integration/uses_parsers.py definition.variable@846:847 x2",
+        "python/code/integration/uses_parsers.py definition.variable@924:925 x2",
+      ],
       single_definition_per_range: true,
     },
     javascript: {
@@ -785,6 +795,9 @@ describe("Fixture corpus invariants", () => {
     "definition.field+definition.variable",
     "definition.enum_member+definition.field+definition.variable",
     "definition.field+definition.property.interface+definition.variable",
+    // A typed local assignment's name, captured by both assignment patterns;
+    // the per-file duplicate list above pins the one occurrence.
+    "definition.variable+definition.variable",
   ];
 
   function corpus_files(lang: string, ext: string): string[] {

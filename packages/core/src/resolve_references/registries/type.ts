@@ -6,7 +6,11 @@ import type {
   Language,
   TypeMemberInfo,
 } from "@ariadnejs/types";
-import type { SemanticIndex } from "@ariadnejs/types";
+import type {
+  AnyDefinition,
+  SemanticIndex,
+  SymbolReference,
+} from "@ariadnejs/types";
 import type { DefinitionRegistry } from "./definition";
 import type { ExportRegistry } from "./export";
 import {
@@ -25,8 +29,10 @@ import type { ModuleResolutionContext } from "../import_resolution";
  * call and never stored.
  */
 interface ExtractedTypeData {
-  /** Annotation/constructor site → type name, e.g. `new User()` → "User" */
-  simple_type_bindings: Map<LocationKey, SymbolName>;
+  /** Annotated symbol → the type name it declares, e.g. `p: User` → "User" */
+  annotation_bindings: Map<LocationKey, SymbolName>;
+  /** Constructed symbol → the type name it constructs, e.g. `new User()` → "User" */
+  construction_bindings: Map<LocationKey, SymbolName>;
   /** Constructor site → namespace chain, e.g. `new models.User()` → ["models", "User"] */
   namespace_constructor_bindings: Map<LocationKey, readonly SymbolName[]>;
   /** Type → member metadata, with extends/implements still as names */
@@ -38,6 +44,36 @@ interface ExtractedTypeData {
 /** Symbols a file contributed, tracked so remove_file() can evict them. */
 interface FileTypeContributions {
   resolved_symbols: Set<SymbolId>;
+}
+
+/**
+ * Whether a resolved name can be a symbol's type — something a later member
+ * lookup can be answered from. A binding can name a function: a construction
+ * whose callee resolves to a factory, or an annotation that shadows a class
+ * name. Typing a symbol as a plain function makes every method call on it look
+ * up members on a function, which is why `kind` is checked at all.
+ *
+ * A JavaScript constructor function is the exception the kind alone cannot
+ * express: `function Vehicle() {}` with `Vehicle.prototype.start = ...` is a
+ * `function` definition holding a function collection, and `new Vehicle()` is
+ * the only route by which those prototype methods are ever reached.
+ *
+ * A type alias is deliberately not a type here: it carries no member index, so
+ * binding through one names something with nothing to look up.
+ */
+function names_a_type(
+  type_id: SymbolId,
+  definitions: DefinitionRegistry
+): boolean {
+  const definition: AnyDefinition | undefined = definitions.get(type_id);
+  if (
+    definition?.kind === "class" ||
+    definition?.kind === "interface" ||
+    definition?.kind === "enum"
+  ) {
+    return true;
+  }
+  return definitions.get_function_collection(type_id) !== undefined;
 }
 
 /**
@@ -67,6 +103,11 @@ export class TypeRegistry {
    * Must run after ResolutionRegistry.resolve_names() for the file: resolving a
    * type name depends on name-resolution results.
    *
+   * @param references - The file's references as the ReferenceRegistry holds
+   *   them after preprocessing, not the index's own. A Python construction is
+   *   a plain call in the index and becomes a constructor call only once its
+   *   callee has resolved to a class, so the constructor bindings that type
+   *   `x = C()` exist only on the preprocessed side.
    * @param import_source_resolver - Resolves a namespace import symbol to its
    *   source file. When absent, namespace-qualified constructor bindings
    *   (`user = models.User()`) are skipped rather than resolved.
@@ -74,6 +115,7 @@ export class TypeRegistry {
   update_file(
     file_path: FilePath,
     index: SemanticIndex,
+    references: readonly SymbolReference[],
     definitions: DefinitionRegistry,
     resolutions: ResolutionRegistry,
     exports: ExportRegistry,
@@ -83,7 +125,7 @@ export class TypeRegistry {
   ): void {
     this.definitions = definitions;
     this.remove_file(file_path);
-    const extracted = this.extract_type_data(index);
+    const extracted = this.extract_type_data(index, references);
     this.resolve_type_metadata(
       file_path,
       extracted,
@@ -96,7 +138,10 @@ export class TypeRegistry {
     );
   }
 
-  private extract_type_data(index: SemanticIndex): ExtractedTypeData {
+  private extract_type_data(
+    index: SemanticIndex,
+    references: readonly SymbolReference[]
+  ): ExtractedTypeData {
     const type_bindings_from_defs = extract_type_bindings({
       variables: index.variables,
       functions: index.functions,
@@ -104,12 +149,7 @@ export class TypeRegistry {
       interfaces: index.interfaces,
     });
 
-    const ctor_bindings = extract_constructor_bindings(index.references);
-
-    const simple_type_bindings = new Map([
-      ...type_bindings_from_defs,
-      ...ctor_bindings.direct,
-    ]);
+    const ctor_bindings = extract_constructor_bindings(references);
 
     const type_members = extract_type_members({
       classes: index.classes,
@@ -127,7 +167,8 @@ export class TypeRegistry {
     }
 
     return {
-      simple_type_bindings,
+      annotation_bindings: new Map(type_bindings_from_defs),
+      construction_bindings: new Map(ctor_bindings.direct),
       namespace_constructor_bindings: new Map(ctor_bindings.namespace_qualified),
       type_members: new Map(type_members),
       call_initializers,
@@ -150,18 +191,35 @@ export class TypeRegistry {
   ): void {
     const resolved_symbols = new Set<SymbolId>();
 
-    // STEP 1: variable/parameter → annotated or directly-constructed type.
-    for (const [loc_key, type_name] of extracted.simple_type_bindings) {
+    // STEP 1: variable/parameter → constructed or annotated type.
+    // One symbol can carry both (`h: Handler = HandlerA()`). The construction
+    // names the class that actually runs, which is the edge a call graph wants,
+    // so it is tried first: annotating with a Protocol or a base class must not
+    // cost the implementation the call reaches. The annotation answers whenever
+    // the construction names nothing that can hold members — there is none, or
+    // it resolves to a factory function, as `p: Parser = make()` does.
+    const binding_locations = new Set([
+      ...extracted.annotation_bindings.keys(),
+      ...extracted.construction_bindings.keys(),
+    ]);
+    for (const loc_key of binding_locations) {
       const symbol_id = definitions.get_symbol_at_location(loc_key);
       if (!symbol_id) continue;
 
       const scope_id = definitions.get_symbol_scope(symbol_id);
       if (!scope_id) continue;
 
-      const type_id = resolutions.resolve(scope_id, type_name);
-      if (type_id) {
+      const candidates = [
+        extracted.construction_bindings.get(loc_key),
+        extracted.annotation_bindings.get(loc_key),
+      ];
+      for (const type_name of candidates) {
+        if (!type_name) continue;
+        const type_id = resolutions.resolve(scope_id, type_name);
+        if (!type_id || !names_a_type(type_id, definitions)) continue;
         this.symbol_types.set(symbol_id, type_id);
         resolved_symbols.add(symbol_id);
+        break;
       }
     }
 
