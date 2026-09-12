@@ -47,6 +47,10 @@ import {
   fingerprint_diagnostics,
 } from "./diagnostics_fingerprint";
 import {
+  count_failure_taxonomy,
+  type FailureTaxonomy,
+} from "./failure_taxonomy";
+import {
   RECORDED_ORDER_SENSITIVITY,
   type RecordedOrderSensitivity,
 } from "./recorded_order_sensitivity";
@@ -105,6 +109,8 @@ export interface ArmResult {
   readonly row: MeasurementRow;
   /** The full fingerprint, members included, for diffing against another arm. */
   readonly fingerprint: CallGraphFingerprint;
+  /** Where every call reference ended up, by reason — see `failure_taxonomy.ts`. */
+  readonly failure_taxonomy: FailureTaxonomy;
 }
 
 export async function run_benchmark_arm(
@@ -184,6 +190,14 @@ export async function run_benchmark_arm(
     corpus_root,
   );
 
+  // Read over the same indexed files, from the same registry, as the
+  // fingerprint's call components, so `call_references - resolved` is the
+  // fingerprint's unresolved count by construction rather than by coincidence.
+  const failure_taxonomy = count_failure_taxonomy(
+    loaded.project.resolutions,
+    indexed_files,
+  );
+
   // Stopped after the fingerprint, not before it: the member strings a
   // corpus-scale fingerprint holds are hundreds of megabytes, and a peak that
   // excluded them would describe a moment the process was never nearest its
@@ -245,7 +259,7 @@ export async function run_benchmark_arm(
     }),
   };
 
-  return { row, fingerprint };
+  return { row, fingerprint, failure_taxonomy };
 }
 
 /**

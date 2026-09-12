@@ -16,7 +16,9 @@
  * members were all flushed before it, so the row's presence is the
  * completeness proof and no separate terminator is needed — where a row-first
  * format would read back as valid whenever the truncated tail happened to be
- * an empty component.
+ * an empty component. The failure taxonomy travels on its own line just
+ * before the row: it is a fourteen-key summary rather than members, and a
+ * file without it is an arm that did not finish.
  *
  * Each member is JSON-encoded on its line. A symbol id ends in a name taken
  * from source text, and a quoted property name may legally contain a tab or a
@@ -41,8 +43,14 @@ import {
 } from "./call_graph_fingerprint";
 import type { MeasurementRow } from "./measurement_row";
 import type { ArmResult } from "./benchmark_corpus_load";
+import {
+  RESOLUTION_FAILURE_REASONS,
+  unresolved_total,
+  type FailureTaxonomy,
+} from "./failure_taxonomy";
 
 const ROW_LINE_PREFIX = "row\t";
+const TAXONOMY_LINE_PREFIX = "failure_taxonomy\t";
 
 /**
  * Yield the file a line at a time so backpressure, write errors and stream
@@ -58,6 +66,7 @@ function* arm_result_lines(result: ArmResult): Generator<string> {
       yield `${component}\t${JSON.stringify(member)}\n`;
     }
   }
+  yield `${TAXONOMY_LINE_PREFIX}${JSON.stringify(result.failure_taxonomy)}\n`;
   yield `${ROW_LINE_PREFIX}${JSON.stringify(result.row)}\n`;
 }
 
@@ -83,11 +92,18 @@ export async function read_arm_result(file_path: string): Promise<ArmResult> {
   }
 
   let row: MeasurementRow | undefined;
+  let failure_taxonomy: FailureTaxonomy | undefined;
 
   for await (const line of lines) {
     if (line === "") continue;
     if (line.startsWith(ROW_LINE_PREFIX)) {
       row = JSON.parse(line.slice(ROW_LINE_PREFIX.length)) as MeasurementRow;
+      continue;
+    }
+    if (line.startsWith(TAXONOMY_LINE_PREFIX)) {
+      failure_taxonomy = JSON.parse(
+        line.slice(TAXONOMY_LINE_PREFIX.length),
+      ) as FailureTaxonomy;
       continue;
     }
     const separator = line.indexOf("\t");
@@ -109,6 +125,11 @@ export async function read_arm_result(file_path: string): Promise<ArmResult> {
   if (row === undefined) {
     throw new Error(
       `${file_path} holds no measurement row — the row is written last, so its absence means the arm did not finish writing.`,
+    );
+  }
+  if (failure_taxonomy === undefined) {
+    throw new Error(
+      `${file_path} holds a measurement row but no failure taxonomy — every finished arm writes one before its row.`,
     );
   }
 
@@ -134,5 +155,50 @@ export async function read_arm_result(file_path: string): Promise<ArmResult> {
     };
   }
 
-  return { row, fingerprint: fingerprint as CallGraphFingerprint };
+  assert_taxonomy_reproduces_the_row(file_path, failure_taxonomy, row);
+
+  return {
+    row,
+    fingerprint: fingerprint as CallGraphFingerprint,
+    failure_taxonomy,
+  };
+}
+
+/**
+ * Hold the taxonomy to the row it travelled with, the way each component is
+ * held to its recorded digest.
+ *
+ * A taxonomy is read back long after the arm's process is gone, and every use
+ * of it — the side-by-side report, a recorded baseline row — states it over the
+ * arm's call references. A file whose taxonomy does not close, or does not
+ * agree with the unresolved count the same arm fingerprinted, describes two
+ * different loads, and nothing downstream can tell which one is the arm.
+ */
+function assert_taxonomy_reproduces_the_row(
+  file_path: string,
+  taxonomy: FailureTaxonomy,
+  row: MeasurementRow,
+): void {
+  const absent = RESOLUTION_FAILURE_REASONS.filter(
+    (reason) => typeof taxonomy.by_reason[reason] !== "number",
+  );
+  if (absent.length > 0) {
+    throw new Error(
+      `${file_path} holds a failure taxonomy with no count for ${absent.join(", ")} — every reason is a key, so an arm and a recorded row always carry the same columns.`,
+    );
+  }
+
+  const unresolved = unresolved_total(taxonomy);
+  if (taxonomy.resolved + unresolved !== taxonomy.call_references) {
+    throw new Error(
+      `${file_path} holds a failure taxonomy that does not close: ${taxonomy.resolved} resolved plus ${unresolved} failed is not the ${taxonomy.call_references} call references it is stated over.`,
+    );
+  }
+
+  const fingerprinted = row.fingerprint.components.unresolved_calls.count;
+  if (unresolved !== fingerprinted) {
+    throw new Error(
+      `${file_path} holds a failure taxonomy counting ${unresolved} unresolved calls against a row fingerprinting ${fingerprinted} — the two are read from one registry over one file set, so they cannot disagree about the same arm.`,
+    );
+  }
 }

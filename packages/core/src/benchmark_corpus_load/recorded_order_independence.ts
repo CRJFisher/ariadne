@@ -17,6 +17,8 @@
  * beside them, which are properties of the box.
  */
 
+import type { FailureTaxonomy } from "./failure_taxonomy";
+
 interface ComponentDigest {
   readonly count: number;
   readonly hash: string;
@@ -103,12 +105,6 @@ interface ArmCost {
   readonly sequence_indices: readonly number[];
   readonly cpu_seconds: readonly number[];
   readonly peak_rss_mb: readonly number[];
-}
-
-interface FailureTaxonomy {
-  readonly call_references: number;
-  readonly resolved: number;
-  readonly by_reason: Readonly<Record<string, number>>;
 }
 
 export interface RecordedOrderIndependence {
@@ -508,6 +504,10 @@ export const RECORDED_ORDER_INDEPENDENCE: RecordedOrderIndependence = {
         no_enclosing_class_scope: 396,
         constructor_target_not_a_class: 355,
         no_parent_class: 86,
+        import_unresolved: 0,
+        reexport_chain_unresolved: 0,
+        dynamic_dispatch: 0,
+        definition_has_no_body_scope: 0,
       },
     },
     after: {
@@ -524,6 +524,10 @@ export const RECORDED_ORDER_INDEPENDENCE: RecordedOrderIndependence = {
         no_enclosing_class_scope: 396,
         constructor_target_not_a_class: 355,
         no_parent_class: 86,
+        import_unresolved: 0,
+        reexport_chain_unresolved: 0,
+        dynamic_dispatch: 0,
+        definition_has_no_body_scope: 0,
       },
     },
   },
