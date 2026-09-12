@@ -258,6 +258,12 @@ function resolve_calls(
           // reject the raw ref, hence the synthetic method_call. The tail's
           // constructor-inclusion and late-binding enrichments don't apply to
           // getter reads.
+          //
+          // A property read is therefore outside the resolved-plus-failed
+          // invariant that every call-kind reference ends as one CallReference
+          // with a target or a reason: a read that reaches a getter adds a
+          // CallReference beside the call kinds, and one that does not adds
+          // nothing, because there was no call to leave unexplained.
           const getter_call = create_method_call_reference(
             ref.name,
             ref.location,
@@ -293,7 +299,9 @@ function resolve_calls(
 
         // A callable value never becomes a CallReference — it resolves to an
         // indirect-reachability entry in resolve_callable_values, keeping
-        // build_call_reference exhaustive over call kinds only.
+        // build_call_reference exhaustive over call kinds only. None of these
+        // four is a call, so none is counted by the resolved-plus-failed
+        // invariant; only the call kinds above owe a target or a reason.
         case "callable_value":
         case "variable_reference":
         case "type_reference":
@@ -340,11 +348,16 @@ function resolve_calls(
       }
 
       // Emit a CallReference even on failure so downstream consumers can read
-      // `resolution_failure`.
+      // `resolution_failure`. A dispatch that succeeded with nothing is refused
+      // rather than passed through: a CallReference with no target and no reason
+      // is a call the failure taxonomy cannot count, which leaves the taxonomy
+      // short of the call references it is stated over.
       const failure: ResolutionFailure | undefined =
-        resolved_symbols.length === 0 && is_err(dispatch_result)
-          ? dispatch_result.error
-          : undefined;
+        resolved_symbols.length > 0
+          ? undefined
+          : is_err(dispatch_result)
+            ? dispatch_result.error
+            : refuse_unexplained_dispatch(ref as CallSymbolReference);
 
       const call_ref = build_call_reference(
         ref as CallSymbolReference,
@@ -357,6 +370,27 @@ function resolve_calls(
   }
 
   return resolved_calls;
+}
+
+/**
+ * Refuse a dispatch that succeeded with no target.
+ *
+ * No producer in `call_resolution/` returns `ok([])` — every path that finds
+ * nothing returns `err` with the reason it observed — but the result type
+ * permits it, and the resolved-plus-failed invariant is a property of the
+ * CallReferences this file emits, not of each producer. Naming a reason here
+ * would be inventing one: the resolver did not observe a fan-out that came back
+ * empty, it observed a producer that broke its contract, and a reason recorded
+ * on that basis is indistinguishable in a corpus baseline from one a producer
+ * actually reached. So the exit is closed by refusing, like the `never` check
+ * over `ref.kind` above, and `count_failure_taxonomy` never has to sum over a
+ * call it cannot explain.
+ */
+function refuse_unexplained_dispatch(ref: CallSymbolReference): never {
+  throw new Error(
+    `Dispatch for the ${ref.kind} "${ref.name}" at ${location_key(ref.location)} succeeded with no target. ` +
+      "A producer that finds nothing has to return err with the reason it observed; a call with neither a target nor a reason cannot be counted.",
+  );
 }
 
 /**

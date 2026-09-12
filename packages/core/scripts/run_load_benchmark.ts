@@ -17,9 +17,8 @@
  *     --corpus-root ~/.ariadne/triage-entrypoints/repos/microsoft--vscode \
  *     --corpus-commit f3fa55c3 --predicate folder-ts:src/vs/base --slice 200
  *
- * Modes: --interleave (A,B,A,B and a controlled speedup), --slices (a nested
- * cost-per-file curve), --orders (the same file set in four arrival orders,
- * diffed through the seven-number fingerprint).
+ * The modes and flags are listed by `--help`, which is the one list that cannot
+ * drift from what `main` dispatches on.
  */
 
 import { spawn } from "node:child_process";
@@ -35,6 +34,7 @@ import {
   discover_corpus,
   find_ariadne_repo_root,
   format_citation,
+  format_failure_taxonomy_table,
   measure_speedup_against_control,
   parse_corpus_predicate_name,
   plan_nested_slices,
@@ -55,6 +55,7 @@ import {
   report_recorded_corpus_pass,
   report_recorded_eviction_cost,
   report_recorded_export_declaration_space,
+  report_recorded_failure_taxonomy,
   report_recorded_full_corpus_baseline,
   report_recorded_memory_contract,
   report_recorded_worker_index_dispatch,
@@ -62,12 +63,6 @@ import {
   report_recorded_order_independence,
   report_recorded_resolution_eviction,
 } from "./recorded_measurement_report";
-
-/**
- * What `"full"` is assumed to cost when sizing a child, since the parent does
- * not walk the corpus before spawning. vscode's `src/` is 8,494 files.
- */
-const FULL_SLICE_HEAP_BASIS = 8494;
 
 /**
  * The heap an arm of this size needs, from measured growth: two same-session
@@ -87,9 +82,38 @@ export function required_heap_mb(offered_file_count: number): number {
 }
 
 /** What to give a child: its requirement plus headroom. */
-function heap_mb_for(slice: SliceSize): number {
-  const offered = slice === "full" ? FULL_SLICE_HEAP_BASIS : slice;
-  return Math.max(2048, Math.ceil(required_heap_mb(offered) * 1.25));
+function heap_mb_for(offered_file_count: number): number {
+  return Math.max(2048, Math.ceil(required_heap_mb(offered_file_count) * 1.25));
+}
+
+/**
+ * The files a slice offers, so the child's heap is sized from what it will
+ * hold. The parent walks the corpus once for this: sizing a full arm from
+ * another corpus's count gave a 30,000-file corpus a heap the child then
+ * refused, after the parent had already committed the session to it.
+ */
+function offered_count_for(slice: SliceSize, discovered_count: number): number {
+  return slice === "full" ? discovered_count : slice;
+}
+
+/**
+ * Refuse a heap the box cannot back before the child spends an hour reaching
+ * it. V8 does not reserve old space up front, so a flag past physical memory
+ * is accepted and the arm dies to the OOM killer at the end of the load; the
+ * refusal here names the corpus, the count and both figures so a recorded
+ * baseline can say exactly why the corpus is absent.
+ */
+function assert_heap_fits_the_box(
+  heap_mb: number,
+  corpus_name: string,
+  offered_file_count: number,
+): void {
+  const total_mb = Math.round(os.totalmem() / (1024 * 1024));
+  if (heap_mb <= total_mb) return;
+  throw new Error(
+    `Refusing to spawn a ${offered_file_count}-file arm over ${corpus_name}: it needs a ${heap_mb} MB heap (${required_heap_mb(offered_file_count)} MB required plus headroom) and this box has ${total_mb} MB of memory. ` +
+      "Narrow the predicate, or measure on a box that can hold it; a partial arm is never recorded.",
+  );
 }
 
 /** Every arm runs at least twice: a single peak-RSS figure is not a measurement. */
@@ -162,14 +186,15 @@ function show_help(): void {
       "  --interleave   control and candidate arms A,B,A,B, then a controlled speedup",
       "  --slices       one arm per nested slice, for a cost-per-file curve",
       "  --orders       the same file set in four arrival orders, diffed",
+      "  --baseline     one arm, forward order, the whole file set: the failure-taxonomy row a step is measured against",
       "",
       "Options:",
       "  --corpus-root <path>    default ~/.ariadne/triage-entrypoints/repos/microsoft--vscode",
       "  --corpus-name <name>    required: which corpus this row is for",
       "  --run-dir <path>        where arm results land",
       "  --corpus-commit <sha>   required: a row without it is not a measurement",
-      "  --predicate <name>      src | repository-root | folder:<p> | folder-ts:<p>",
-      "  --slice <n|full>        default full",
+      "  --predicate <name>      src | repository-root | folder:<p> | folder-ts:<p> | repository-root-excluding:<pattern>,<pattern>",
+      "  --slice <n|full>        default full; read by --interleave and --orders only",
       "  --control-repo <path>   the control arm's checkout, for --interleave",
       "  --candidate-repo <path> the candidate arm's checkout, for --interleave",
       "  --seed <n>              default 1",
@@ -188,7 +213,11 @@ async function run_as_child(): Promise<void> {
 
 // --------------------------------------------------------------- parent role
 
-function spawn_arm(request: ArmRequest, out: string): Promise<ArmResult> {
+function spawn_arm(
+  request: ArmRequest,
+  out: string,
+  heap_mb: number,
+): Promise<ArmResult> {
   // The arm runs the script belonging to the checkout it claims to measure. A
   // run that spawned the orchestrator's own script would execute one tree's
   // bytes and stamp another tree's commit onto the row — a row naming something
@@ -215,7 +244,7 @@ function spawn_arm(request: ArmRequest, out: string): Promise<ArmResult> {
       [
         "--import",
         "tsx",
-        `--max-old-space-size=${heap_mb_for(request.slice_size)}`,
+        `--max-old-space-size=${heap_mb}`,
         script,
         "--run-arm",
         JSON.stringify(request),
@@ -263,8 +292,22 @@ interface RunContext {
   readonly corpus_root: string;
   readonly corpus_commit: string;
   readonly predicate: ReturnType<typeof parse_corpus_predicate_name>;
+  /** What the predicate's walk found, so a full arm's heap is sized from it. */
+  readonly discovered_count: number;
   readonly seed: number;
   readonly worker_width: number | "from_machine";
+}
+
+/** Spawn one arm sized for what it will be offered. */
+function spawn_sized_arm(
+  context: RunContext,
+  request: ArmRequest,
+  out: string,
+): Promise<ArmResult> {
+  const offered = offered_count_for(request.slice_size, context.discovered_count);
+  const heap_mb = heap_mb_for(offered);
+  assert_heap_fits_the_box(heap_mb, context.corpus_name, offered);
+  return spawn_arm(request, out, heap_mb);
 }
 
 function arm_request(
@@ -358,6 +401,49 @@ function report_fingerprint_agreement(
   process.exitCode = 1;
 }
 
+/** Printed under the fingerprint agreement: the two answer one question at two depths. */
+function report_failure_taxonomy(
+  arms: readonly { label: string; taxonomy: ArmResult["failure_taxonomy"] }[],
+): void {
+  console.log("\nfailure taxonomy");
+  for (const line of format_failure_taxonomy_table(arms)) {
+    console.log(`  ${line}`);
+  }
+}
+
+/**
+ * One arm over the whole file set, forward order, on the orchestrator's own
+ * tree: the row a corpus is baselined with. The interleaved pair exists to
+ * measure a change; a baseline measures a tree, and four full arms of one
+ * tree would spend a session on the noise floor.
+ */
+async function run_baseline(context: RunContext): Promise<void> {
+  const result = await spawn_sized_arm(
+    context,
+    arm_request(context, "baseline", 0, "full", "forward", find_ariadne_repo_root()),
+    path.join(context.run_dir, "0-baseline.arm"),
+  );
+  // Printed as one row rather than through the spread summaries, which need two.
+  const row = result.row;
+  console.log("\nbaseline");
+  console.log(`  ${format_citation(cite_row(row))}`);
+  console.log(
+    `  #${row.sequence_index} pid ${row.environment.pid}  CPU ${((row.cpu_user_ms + row.cpu_system_ms) / 1000).toFixed(1)} s  wall ${(row.wall_ms / 1000).toFixed(1)} s  cpu/wall ${row.cpu_per_wall}  loadavg ${row.loadavg_at_start.join(" ")}  heap cap ${row.environment.heap_cap_mb} MB`,
+  );
+  console.log(
+    `  indexed ${row.file_counts.indexed}/${row.file_counts.offered}  dropped ${row.file_counts.dropped}  discovered ${row.file_counts.discovered}`,
+  );
+  console.log(
+    `  fingerprint ${Object.entries(row.fingerprint.components)
+      .map(([component, { count, hash }]) => `${component} ${count}/${hash}`)
+      .join("  ")}`,
+  );
+  report_failure_taxonomy([
+    { label: "baseline", taxonomy: result.failure_taxonomy },
+  ]);
+  report_recorded_failure_taxonomy(result.row);
+}
+
 async function run_interleaved(context: RunContext, slice: SliceSize): Promise<void> {
   // Both checkouts are named, each defaulting to the orchestrator's own tree,
   // so which arm the orchestrator happens to live in never decides which arm is
@@ -374,14 +460,16 @@ async function run_interleaved(context: RunContext, slice: SliceSize): Promise<v
   for (let repetition = 0; repetition < REPETITIONS; repetition++) {
     const control_index = repetition * 2;
     control.push(
-      await spawn_arm(
+      await spawn_sized_arm(
+        context,
         arm_request(context, "control", control_index, slice, "forward", control_repo),
         path.join(context.run_dir, `${control_index}-control.arm`),
       ),
     );
     const candidate_index = control_index + 1;
     candidate.push(
-      await spawn_arm(
+      await spawn_sized_arm(
+        context,
         arm_request(context, "candidate", candidate_index, slice, "forward", candidate_repo),
         path.join(context.run_dir, `${candidate_index}-candidate.arm`),
       ),
@@ -392,6 +480,11 @@ async function run_interleaved(context: RunContext, slice: SliceSize): Promise<v
   report_rows("candidate", candidate.map((result) => result.row));
 
   report_fingerprint_agreement(control[0], candidate[0]);
+  report_failure_taxonomy([
+    { label: "control", taxonomy: control[0].failure_taxonomy },
+    { label: "candidate", taxonomy: candidate[0].failure_taxonomy },
+  ]);
+  report_recorded_failure_taxonomy(control[0].row);
 
   const speedup = measure_speedup_against_control(
     control.map((result) => result.row),
@@ -458,7 +551,8 @@ async function run_slices(context: RunContext): Promise<void> {
   for (const size of sizes) {
     const rows: MeasurementRow[] = [];
     for (let repetition = 0; repetition < REPETITIONS; repetition++) {
-      const result = await spawn_arm(
+      const result = await spawn_sized_arm(
+        context,
         arm_request(context, `slice-${size}`, sequence_index, size, "forward", find_ariadne_repo_root()),
         path.join(context.run_dir, `${sequence_index}-slice-${size}.arm`),
       );
@@ -475,7 +569,8 @@ async function run_slices(context: RunContext): Promise<void> {
 async function run_orders(context: RunContext, slice: SliceSize): Promise<void> {
   // One arm per process, compared pairwise against the baseline: a full corpus
   // cannot hold four of its own fingerprints in one heap.
-  const baseline = await spawn_arm(
+  const baseline = await spawn_sized_arm(
+    context,
     arm_request(context, "order-forward", 0, slice, "forward", find_ariadne_repo_root()),
     path.join(context.run_dir, "0-order-forward.arm"),
   );
@@ -485,7 +580,8 @@ async function run_orders(context: RunContext, slice: SliceSize): Promise<void> 
   for (const order of INGEST_ORDERS) {
     if (order === "forward") continue;
     others.push(
-      await spawn_arm(
+      await spawn_sized_arm(
+        context,
         arm_request(context, `order-${order}`, sequence_index, slice, order, find_ariadne_repo_root()),
         path.join(context.run_dir, `${sequence_index}-order-${order}.arm`),
       ),
@@ -586,10 +682,33 @@ async function main(): Promise<void> {
     return;
   }
 
-  const mode = ["interleave", "slices", "orders"].find((name) => has_flag(name));
+  const mode = ["interleave", "slices", "orders", "baseline"].find((name) =>
+    has_flag(name),
+  );
   if (mode === undefined) {
     show_help();
     return;
+  }
+
+  // Every flag is read and reconciled before a run directory or a corpus walk
+  // commits the session to anything: a mistyped command line costs the message,
+  // not a full-tree walk it then throws away.
+  const predicate = parse_corpus_predicate_name(flag("predicate", "src"));
+  const corpus_name = flag("corpus-name");
+  const corpus_commit = flag("corpus-commit");
+  const seed = numeric_flag("seed", "1");
+  const worker_width = parse_worker_width(flag("worker-width", "from_machine"));
+  const slice_flag = flag("slice", "full");
+  const slice: SliceSize =
+    slice_flag === "full" ? "full" : numeric_flag("slice");
+  // `--slices` plans its own sizes and `--baseline` states its row over the
+  // whole file set, so neither reads `--slice`. Running the full corpus for
+  // someone who asked for 200 files would launder a mangled command line into
+  // a run that looks deliberate.
+  if (slice !== "full" && (mode === "slices" || mode === "baseline")) {
+    throw new Error(
+      `--slices plans its own nested slice sizes and --baseline states its row over the whole file set; neither reads --slice, which was given "${slice_flag}". Drop --slice, or use --interleave or --orders to measure a slice.`,
+    );
   }
 
   const session_id = create_session_id();
@@ -599,28 +718,29 @@ async function main(): Promise<void> {
   );
   fs.mkdirSync(run_dir, { recursive: true });
 
+  const discovered_count = (await discover_corpus(corpus_root, predicate)).length;
   const context: RunContext = {
     session_id,
     run_dir,
-    corpus_name: flag("corpus-name"),
+    corpus_name,
     corpus_root,
-    corpus_commit: flag("corpus-commit"),
-    predicate: parse_corpus_predicate_name(flag("predicate", "src")),
-    seed: numeric_flag("seed", "1"),
-    worker_width: parse_worker_width(flag("worker-width", "from_machine")),
+    corpus_commit,
+    predicate,
+    discovered_count,
+    seed,
+    worker_width,
   };
-
-  const slice_flag = flag("slice", "full");
-  const slice: SliceSize =
-    slice_flag === "full" ? "full" : numeric_flag("slice");
 
   console.log(`session ${session_id}`);
   console.log(`results in ${run_dir}`);
+  console.log(`${discovered_count} files discovered under ${predicate}`);
 
   if (mode === "interleave") {
     await run_interleaved(context, slice);
   } else if (mode === "slices") {
     await run_slices(context);
+  } else if (mode === "baseline") {
+    await run_baseline(context);
   } else {
     await run_orders(context, slice);
   }

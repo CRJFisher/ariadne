@@ -106,6 +106,43 @@ f3fa55c3, ingested forward, 1,908 of 15,095 call references have no enclosing
 node. Those are the module-level registration calls of the exported-singleton
 idiom, which is the construct order-dependence shows up in.
 
+## Where a call went, and why
+
+The fingerprint's `unresolved_calls` says how many call sites the resolver could
+not place. The failure taxonomy says why, reason by reason, over the same call
+references: `count_failure_taxonomy` reads every `CallReference` of every
+indexed file from the registry the fingerprint reads, so the two never describe
+different call universes. Every arm carries one, `resolved + Σ by_reason` equals
+`call_references`, and every reason of the vocabulary is a key at zero, so a
+reason appearing for the first time reads as a delta rather than a new column.
+
+A call carrying neither a target nor a reason is refused rather than summed
+over — by `count_failure_taxonomy` when an arm counts, by `read_arm_result` when
+a written arm is read back, and by the resolver itself at the exit that would
+emit one. A taxonomy that does not close is a resolver exit that recorded
+nothing, and summing over it would state the taxonomy over fewer calls than it
+claims.
+
+`RECORDED_FAILURE_TAXONOMY_BASELINE` holds the pre-epic row per evidence
+corpus — the row a later change is judged against, since a change that claims to
+turn failures into resolved calls is only a number when the same corpus, at the
+same commit, over the same file set, is counted before and after. Each row is a
+`--baseline` arm; the invocation that produces one is in the file's header.
+
+Which mode answers which question:
+
+| question                                        | mode           |
+| ----------------------------------------------- | -------------- |
+| did this change recover calls, and at what cost | `--interleave` |
+| where do this tree's calls stand, on the record | `--baseline`   |
+| what a file costs as the corpus grows           | `--slices`     |
+| does arrival order change the call graph        | `--orders`     |
+
+`--interleave` measures two checkouts in one session and prints control and
+candidate side by side with a delta column. `--baseline` measures one tree with
+one arm and prints the recorded row beside it where one exists for that file
+set.
+
 ## Corpora and predicates
 
 A predicate names a folder set **and** an extension set, because a folder alone
@@ -132,6 +169,12 @@ compared.
 The first two rows are load-bearing. An arm over `microsoft/vscode` at that
 commit refuses to run when its discovery walk finds a different count, because
 every figure recorded for that corpus is stated over the pinned one.
+
+A fifth form, `repository-root-excluding:<pattern>,<pattern>`, walks the root
+with extra gitignore-style patterns appended, which is how a triage project
+config's `exclude` list reaches `load_project`. A row measured under it names
+the file set a triage run indexed — `repository-root-excluding:js_tests,scripts,docs`
+is django's config, `repository-root-excluding:baselines` is TypeScript's.
 
 ## Quoting a number
 
@@ -396,14 +439,14 @@ The growth that remains is polymorphic dispatch, and it is the cost of a bigger
 answer. Across 927 → 8,494 files the term's input grows linearly and its output
 does not:
 
-| quantity                             | ratio  | exponent |
-| ------------------------------------ | ------ | -------- |
-| unresolved call sites (the input)    | 9.43×  | 1.013    |
-| polymorphic expansions               | 12.68× | 1.147    |
-| resolved call edges (the output)     | 18.2×  | 1.310    |
-| subtype walk steps                   | 33.76× | 1.589    |
-| subtype edges enumerated             | 45.79× | 1.726    |
-| CPU inside polymorphic dispatch      | 64.51× | 1.881    |
+| quantity                          | ratio  | exponent |
+| --------------------------------- | ------ | -------- |
+| unresolved call sites (the input) | 9.43×  | 1.013    |
+| polymorphic expansions            | 12.68× | 1.147    |
+| resolved call edges (the output)  | 18.2×  | 1.310    |
+| subtype walk steps                | 33.76× | 1.589    |
+| subtype edges enumerated          | 45.79× | 1.726    |
+| CPU inside polymorphic dispatch   | 64.51× | 1.881    |
 
 The mean fan-out of one dispatch — subtypes enumerated per expansion — goes
 **4.64 → 6.09 → 16.77**, and the polymorphic family's share of the term goes
@@ -483,7 +526,7 @@ takes that to one crossing per type id per process and 0.00 seconds.
 
 Both substitutions are licensed by an oracle rather than by argument. The pinned
 type name is compared against the binding's own accessor over **601,005 nodes,
-601,005 agreements, zero disagreements** — and pinning per *class* instead of
+601,005 agreements, zero disagreements** — and pinning per _class_ instead of
 per type id is recorded as REFUTED, because 251,206 of those nodes disagree when
 every anonymous token shares the base class. A capture's text, sliced from the
 parsed source between the two Points its location already read, is compared
@@ -513,10 +556,10 @@ populate 5.45 s, `resolve_corpus` 22.89 s and trace 0.54 s. So the target is
 Four arms interleaved control,candidate,control,candidate over vscode's `src/`
 at f3fa55c3:
 
-| arm            | wall                    | CPU                     |
-| -------------- | ----------------------- | ----------------------- |
-| serial         | 208.12, 216.26 → 212.19 | 222.94, 230.35 → 226.65 |
-| pooled, five   | 79.98, 79.32 → **79.65**| 277.08, 276.18 → 276.63 |
+| arm          | wall                     | CPU                     |
+| ------------ | ------------------------ | ----------------------- |
+| serial       | 208.12, 216.26 → 212.19  | 222.94, 230.35 → 226.65 |
+| pooled, five | 79.98, 79.32 → **79.65** | 277.08, 276.18 → 276.63 |
 
 **2.664× on wall for 1.221× the CPU** — a 22.06% rise inside the 35% permitted,
 and no CPU reduction is claimed. All seven fingerprint components and both
@@ -651,7 +694,11 @@ npx tsx packages/core/scripts/run_load_benchmark.ts --interleave \
 Modes: `--interleave` (A,B,A,B plus a controlled speedup), `--slices` (a nested
 cost-per-file curve — every slice is a prefix of the next, so the curve describes
 one codebase growing), `--orders` (one file set in four arrival orders, diffed
-through the fingerprint).
+through the fingerprint), `--baseline` (one arm, forward order, over the whole
+file set: the failure-taxonomy row a later change is measured against).
+`--slice` is read by `--interleave` and `--orders`; `--slices` plans its own
+sizes and `--baseline` states its row over everything the predicate discovers,
+so passing `--slice` to either is refused rather than ignored.
 
 `--worker-width <n>` fixes the width pass A dispatches at, so a width-one arm
 and a full-width arm are comparable. Without it the width comes from the box's

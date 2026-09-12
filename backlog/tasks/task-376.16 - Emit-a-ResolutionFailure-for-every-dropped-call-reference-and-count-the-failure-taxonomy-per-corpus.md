@@ -1,0 +1,76 @@
+---
+id: TASK-376.16
+title: "Emit a ResolutionFailure for every dropped call reference and count the failure taxonomy per corpus"
+status: Done
+assignee: []
+created_date: "2026-09-07 06:55"
+labels:
+  - plan-export
+  - method_lookup
+dependencies: []
+parent_task_id: TASK-376
+priority: high
+ordinal: 500
+---
+
+## Description
+
+<!-- SECTION:DESCRIPTION:BEGIN -->
+
+§7 step 7, plus the measurement harness every later step is judged with. Wave 1; no dependencies. Owns `call_resolution/call_resolver.ts` and `benchmark_corpus_load/`.
+
+## Root cause
+
+A call reference that resolves to nothing must end as a `CallReference` carrying a `ResolutionFailure`, or the failure taxonomy under-counts and the epic's recovery cannot be measured. `call_resolver.ts` attaches a failure only when the dispatch result `is_err` (`:342-347`), and three exits produce neither a target nor a failure: a `property_access` whose getter probe finds no getter pushes nothing (`:243-292`, the push guarded at `:286-290`); a method dispatch that returns `ok([])` (reachable at `:229`, where `method_result` may be `ok` and empty) emits a `CallReference` with empty `resolutions` and no `resolution_failure`; and `callable_value` / `variable_reference` / `type_reference` / `assignment` references `continue` at `:297-301`, which is correct for non-call kinds and must be stated as such. No counter, assertion or diagnostic relates the references a file emits to the `CallReference`s the resolver returns; the only structural guard is the `never` exhaustiveness check over `ref.kind` (`:303-308`).
+
+The reason vocabulary is `ResolutionFailureReason` in `packages/types/src/resolution_failure.ts:34-48` — fourteen reasons across seven stages (`:14-21`): `name_not_in_scope`, `import_unresolved`, `reexport_chain_unresolved`, `receiver_type_unknown`, `method_not_on_type`, `polymorphic_no_implementations`, `collection_dispatch_miss`, `dynamic_dispatch`, `no_enclosing_class_scope`, `class_definition_not_found`, `no_parent_class`, `member_type_unknown`, `definition_has_no_body_scope`, `constructor_target_not_a_class`. `partial_info` (`:62-66`) carries `resolved_receiver_type`, `import_target_file` and `last_known_scope`.
+
+TASK-381.11 recorded a per-reason taxonomy over vscode (`benchmark_corpus_load/recorded_order_independence.ts:496-522`: `call_references`, `resolved`, `by_reason`) from an ad-hoc count; the harness itself exposes no such surface, so every later step would have to re-derive it.
+
+## Work plan
+
+1. Audit `call_resolver.ts` and every `resolve_*` path in `call_resolution/` for references that return without either a resolved target or a recorded `ResolutionFailure`. At each such exit emit a typed failure, reusing the existing vocabulary and adding a reason only where none describes the drop: an empty `ok([])` from method dispatch becomes the failure its producer means (`polymorphic_no_implementations` for an empty fan-out, `method_not_on_type` otherwise); a getter probe that finds no getter is a `property_access`, not a call, and is documented as excluded from the invariant at `:297-301`'s comment.
+2. State and assert the invariant in the resolver tier: for a given file, every call-kind reference the index emits (`function_call`, `method_call`, `constructor_call`) ends as exactly one `CallReference` whose `resolutions` is non-empty or whose `resolution_failure` is set. Assert it in `call_resolver.test.ts` over the fixture corpora for all four languages and in a `Project`-tier test that counts references against `CallReference`s per file.
+3. Add a `failure_taxonomy` component to the `benchmark_corpus_load` harness's `ArmResult` — `{ call_references, resolved, by_reason: Record<ResolutionFailureReason, number> }` — computed from the same `CallReference`s the seven-number fingerprint reads, and print it in `scripts/run_load_benchmark.ts`'s report so a step's control and candidate arms show the per-reason delta side by side. Move `RECORDED_ORDER_INDEPENDENCE.failure_taxonomy` onto the new type.
+4. Record the pre-epic baseline row per corpus for angular, rustc, tokio, sqlx, TypeScript, django, pandas, celery, express and mocha (checkouts under `~/.ariadne/triage-entrypoints/repos/`, over the file sets the triage runs indexed where a `project_configs/<repo>.json` exists), on this step's landed tree, as a recorded-measurement file beside the existing `recorded_*.ts` rows. This is the row TASK-376.17, TASK-376.13 and TASK-376.18 report against.
+
+<!-- SECTION:DESCRIPTION:END -->
+
+## Acceptance Criteria
+
+<!-- AC:BEGIN -->
+
+- [x] #1 Every call-kind reference emitted by the index ends as either a resolved call or a recorded `ResolutionFailure`; the `ok([])` and any other silent exit in `call_resolution/` is closed, and the `property_access` exclusion is stated at the exit.
+  Evidence: `call_resolver.ts` refuses an empty successful dispatch (`refuse_unexplained_dispatch`), naming the kind, the callee and the site, and the `property_access` and non-call exits state the exclusion in their comments. The audit found no producer that returns `ok([])` on this tree — `resolve_polymorphic_class_method` always includes the base method, the interface branch already turns an empty fan-out into `polymorphic_no_implementations`, `resolve_function_call` and `resolve_constructor_call` return `err` when they find nothing — so the exit is open in the type and taken by nothing. It is closed by refusing rather than by naming a reason: the resolver did not observe a fan-out that came back empty, it observed a producer breaking its contract, and a reason recorded on that basis is indistinguishable in a corpus baseline from one a producer actually reached.
+- [x] #2 The `resolved + failed == call references` invariant is asserted per file in `call_resolver.test.ts` over the four language fixture corpora and at the `Project` tier.
+  Evidence: `call_resolver.test.ts` › "resolved-plus-failed invariant" compares, per file, the call-kind references against the CallReferences by location and pins the corpus totals (typescript 32 files / 97 references / 64 resolved / 33 failed; javascript 30 / 214 / 137 / 77; python 42 / 392 / 188 / 204; rust 24 / 155 / 106 / 49), and "counts a file's calls against its references at the Project tier" pins eight call-kind references to eight CallReferences plus the one getter read, with three reasons named (`method_not_on_type` for a miss on a known receiver, `receiver_type_unknown` for an untyped one, `name_not_in_scope` for a callee and a receiver that are not in scope at all) so a resolver that recorded the wrong reason fails here rather than moving a corpus total by nothing. Both pass on the base tree as well — the invariant holds there — which is what makes the closed exit structural rather than a reproduced drop.
+- [x] #3 `benchmark_corpus_load` reports a per-reason failure taxonomy per arm, typed on `ResolutionFailureReason`, and the run report prints control and candidate side by side.
+  Evidence: `failure_taxonomy.ts` (`FailureTaxonomy`, `count_failure_taxonomy`, `format_failure_taxonomy_table`), `ArmResult.failure_taxonomy` computed over the same indexed files and registry as the fingerprint, persisted on its own line in the arm result file, and held on read-back to the row it travelled with — present, complete over the fourteen reasons, closed over its own references, and agreeing with the row's `unresolved_calls` count (`arm_result_file.test.ts`, four refusal cases). `run_load_benchmark.ts` prints control and candidate with a delta column under the fingerprint agreement, and a `--baseline` mode prints one arm; `failure_taxonomy.test.ts` › "starts every row's first column at one index" pins the table's columns on the raw lines, so the longest reasons cannot drift out of the column a reader reads them down. `benchmark_corpus_load.test.ts` › "counts the failure taxonomy over the same calls the fingerprint's unresolved component reads" pins the in-repo corpus (13 / 11 / 2) and its equality with `unresolved_calls`. `RECORDED_ORDER_INDEPENDENCE.failure_taxonomy` is on the shared type.
+- [ ] #4 A pre-epic taxonomy row is recorded for each of the ten evidence corpora on this step's tree, with the corpus commit, file count and grammar versions each row already carries.
+  Evidence: nine of the ten are recorded. `recorded_failure_taxonomy_baseline.ts` holds nine measured rows (angular 6,345 files; rustc 3,516 under the triage config's excludes; tokio 790; sqlx 459; django 3,012 under its excludes; pandas 1,510; celery 418; express 141; mocha 534), each with the corpus commit, file counts, fingerprint and taxonomy, and one refusal rather than a row: microsoft/TypeScript discovers 19,783 files under `repository-root-excluding:baselines`, which the harness refuses at a 35,122 MB heap on a 32,768 MB box, recorded verbatim under `not_measured`. `recorded_failure_taxonomy_baseline.test.ts` closes every row over its references and against the fingerprint, and pins each arm's session, cost and loadavg. Serial arms, loadavg 4–6 on a shared box, recorded on every row. The tenth row is what TASK-376's wave-1 session 8 measures — on a box that can hold the corpus, or as a separately named narrower predicate — so this criterion stays open until it lands.
+- [x] #5 `call_resolver.test.ts` and the `benchmark_corpus_load` suite stay green; the seven-number fingerprint is byte-identical to the tree before this step.
+  Evidence: the full core suite passes (196 files, 4,460 tests), `tsc --noEmit` and `pnpm lint` are clean. The fingerprint code is untouched and the only resolver change is on a path no producer reaches, so every fingerprint component the recorded rows carry is what `279221d4` reports; the in-repo corpus fingerprint tests are unchanged and green. `unresolved_call_members` never reads `resolution_failure` — it keys on the caller, call type, name and site — so no fingerprint component could move even if that path were reached.
+
+<!-- AC:END -->
+
+## Implementation Notes
+
+## High-level summary
+
+Every call Ariadne cannot resolve now says why, and the corpus harness counts those reasons, so the epic that follows can measure recovery rather than feel it. The resolver upheld the invariant in practice but not in structure: its result type allowed a dispatch to succeed with nothing, and such a call would have reached the taxonomy with neither a target nor a reason. `call_resolver.ts` closes that exit at its tail, states which non-call references sit outside the invariant, and `call_resolver.test.ts` pins the resolved-plus-failed count per file over all four fixture corpora and at the Project tier.
+
+The harness gains `failure_taxonomy` on every arm, counted over the same registry and file set as the seven-number fingerprint. One rule runs through all three tiers: a call carrying neither a target nor a reason is refused, never counted. The resolver refuses at the exit that would emit one, `count_failure_taxonomy` refuses when an arm counts, and `read_arm_result` refuses when a written arm is read back — a taxonomy that does not close, or that disagrees with the row's own unresolved count, describes a different load than the row it travelled with. The run report prints control and candidate side by side with a delta column, and `--baseline` prints one arm beside its recorded row.
+
+Start at `benchmark_corpus_load/failure_taxonomy.ts` for the count and its table, `recorded_failure_taxonomy_baseline.ts` for the nine measured corpora and the one refusal, and `call_resolver.ts`'s tail for the closed exit. `benchmark_corpus_load/README.md` § "Where a call went, and why" is the front door, including which mode answers which question. The recorded rows describe the tree at `279221d4` plus this uncommitted change.
+
+The audit of `call_resolution/` found the `ok([])` exit open in the result type and taken by no producer: every path that finds nothing returns `err` with the reason it observed, and the class fan-out always carries its base method. The tail of `resolve_calls` refuses such a dispatch rather than naming a reason for it. Naming one would be inventing it — the resolver did not observe a fan-out that came back empty, it observed a producer breaking its contract — and an invented `polymorphic_no_implementations` is indistinguishable, in a corpus baseline, from one a producer actually reached, in exactly the bucket the epic measures its recovery in. Refusing closes the exit the way the `never` check over `ref.kind` two cases above closes its own, and leaves `count_failure_taxonomy`'s refusal reachable rather than pre-empted. The invariant tests therefore pass on the base tree too; the closed exit is structural.
+
+Two harness changes go beyond the doc's list because the ten baseline runs needed them. The parent sized a full arm's heap from vscode's file count, which would have handed rustc a heap the child refuses after the session had begun; it now walks the corpus once and sizes from the real count, and refuses a heap the box cannot back before spawning. And the interleaved mode measures a change with four full arms, so a `--baseline` mode runs one arm, forward order, over the whole file set and prints the row a corpus is baselined with. The `repository-root-excluding:` predicate is not surplus: work-plan item 4 asks for the file sets the triage runs indexed, and it applies a triage config's `exclude` list as `load_project` does — as gitignore-style patterns — so the django, rustc and TypeScript rows name those sets.
+
+Every flag is now read and reconciled before a run directory or a corpus walk commits the session, and `--slice` passed to `--slices` or `--baseline` is refused rather than silently dropped: `--slices` plans its own nested sizes and `--baseline` states its row over the whole file set, so honouring the flag by ignoring it would launder a mangled command line into a run that looks deliberate.
+
+The tree these rows describe is `279221d4` with this step's change applied and uncommitted, which is why `ariadne_commit` reads `279221d4`; no commit carries the change yet.
+
+Three things to watch. The refusal at the resolver's tail throws where the old code would have mislabelled, and nothing between `resolve_calls` and its callers catches it: `resolve_corpus()` is called outside `load_project`'s per-file drop handler, and `update_file` is called straight from the MCP file watcher's callbacks. The `never` check over `ref.kind` two cases above has the same reach, so this is a second instance of an accepted exposure rather than a new class of one, and it is unreachable on this tree — but a producer that ever broke its contract would abort a load rather than degrade it. `required_heap_mb` is a two-point linear fit unverified above 600 files and over-provisions at corpus scale, and it is the only reason microsoft/TypeScript is refused rather than measured; re-fitting it against a measured floor is a third route to that row, beside a larger box and a narrower predicate. And the nine corpora are not in `PINNED_CORPUS_COUNTS`, so a discovery walk that drifts on one of them leaves the recorded comparison silently absent instead of refusing.
+
+After merge with TASK-376.2, the Python row of "resolved-plus-failed invariant" moves: that step adds two fixture files and stops recording each Python call twice.

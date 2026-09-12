@@ -28,7 +28,9 @@ import {
   class_symbol,
   variable_symbol,
   anonymous_function_symbol,
+  location_key,
 } from "@ariadnejs/types";
+import { is_supported_file } from "../../project/file_loading";
 import type {
   FilePath,
   ScopeId,
@@ -1358,3 +1360,185 @@ function count_anonymous_callables_read(definitions: DefinitionRegistry): {
 
   return counts;
 }
+
+/**
+ * Every call-kind reference a file emits ends as exactly one CallReference
+ * carrying a target or a reason. This is what makes the failure taxonomy a
+ * count of the calls rather than of the calls the resolver happened to
+ * explain, and it is asserted over whole corpora because a silent exit is a
+ * property of a resolver path, not of any one construct.
+ */
+describe("resolved-plus-failed invariant", () => {
+  const FIXTURES_ROOT = path.resolve(__dirname, "../../../tests/fixtures");
+  const CALL_KINDS: ReadonlySet<string> = new Set([
+    "function_call",
+    "method_call",
+    "self_reference_call",
+    "constructor_call",
+  ]);
+
+  function walk(dir: string): FilePath[] {
+    const files: FilePath[] = [];
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) files.push(...walk(full));
+      else if (is_supported_file(full)) files.push(full as FilePath);
+    }
+    return files.sort();
+  }
+
+  interface CorpusTally {
+    readonly files: number;
+    readonly call_references: number;
+    readonly resolved: number;
+    readonly failed: number;
+  }
+
+  /**
+   * Compare, per file, the call-kind references the index emitted with the
+   * CallReferences the resolver returned, by location. Callback invocations
+   * are synthesised at the receiver call's site and getter reads are
+   * `property_access` references, so both sit outside the invariant and are
+   * set aside before the comparison.
+   */
+  function tally_corpus(project: Project): CorpusTally {
+    let call_references = 0;
+    let resolved = 0;
+    let failed = 0;
+    const files = project.get_all_files().sort();
+    for (const file of files) {
+      const references = project.references.get_file_references(file);
+      const expected = references
+        .filter((reference) => CALL_KINDS.has(reference.kind))
+        .map((reference) => location_key(reference.location))
+        .sort();
+      const expected_sites = new Set(expected);
+      const property_reads = new Set(
+        references
+          .filter((reference) => reference.kind === "property_access")
+          .map((reference) => location_key(reference.location)),
+      );
+      const calls = project.resolutions
+        .get_calls_for_file(file)
+        .filter((call) => !call.is_callback_invocation)
+        .filter((call) => {
+          const site = location_key(call.location);
+          return expected_sites.has(site) || !property_reads.has(site);
+        });
+      expect(calls.map((call) => location_key(call.location)).sort()).toEqual(
+        expected,
+      );
+      for (const call of calls) {
+        const outcome =
+          call.resolutions.length > 0
+            ? "resolution_failure" in call
+              ? "both"
+              : "resolved"
+            : call.resolution_failure === undefined
+              ? "silent"
+              : "failed";
+        expect({ site: location_key(call.location), outcome }).toEqual({
+          site: location_key(call.location),
+          outcome: call.resolutions.length > 0 ? "resolved" : "failed",
+        });
+        call_references++;
+        if (outcome === "resolved") resolved++;
+        else failed++;
+      }
+    }
+    return { files: files.length, call_references, resolved, failed };
+  }
+
+  async function load_fixture_corpus(language: string): Promise<Project> {
+    const root = path.join(FIXTURES_ROOT, language, "code");
+    const project = new Project();
+    await project.initialize(root as FilePath);
+    for (const file of walk(root)) {
+      project.update_file(file, fs.readFileSync(file, "utf-8"));
+    }
+    return project;
+  }
+
+  it.each([
+    ["typescript", { files: 32, call_references: 97, resolved: 64, failed: 33 }],
+    ["javascript", { files: 30, call_references: 214, resolved: 137, failed: 77 }],
+    ["python", { files: 42, call_references: 392, resolved: 188, failed: 204 }],
+    ["rust", { files: 24, call_references: 155, resolved: 106, failed: 49 }],
+  ] as const)(
+    "ends every call-kind reference of the %s fixture corpus as one CallReference with a target or a reason",
+    async (language, expected: CorpusTally) => {
+      const tally = tally_corpus(await load_fixture_corpus(language));
+      expect(tally.resolved + tally.failed).toEqual(tally.call_references);
+      expect(tally).toEqual(expected);
+    },
+  );
+
+  it("counts a file's calls against its references at the Project tier", async () => {
+    const root = fs.realpathSync(
+      fs.mkdtempSync(path.join(os.tmpdir(), "resolved-plus-failed-")),
+    );
+    const project = new Project();
+    await project.initialize(root as FilePath);
+    const file = path.join(root, "main.ts") as FilePath;
+    project.update_file(
+      file,
+      [
+        "class Box { get size() { return 1; } open() {} }",
+        "function make(): Box { return new Box(); }",
+        "function take(x) { x.run(); }",
+        "const box = make();",
+        "box.open();",
+        "box.absent();",
+        "box.size;",
+        "missing();",
+        "unknown.method();",
+        "new Box();",
+      ].join("\n"),
+    );
+    const call_kinds = project.references
+      .get_file_references(file)
+      .filter((reference) => CALL_KINDS.has(reference.kind))
+      .map((reference) => `${reference.kind}:${reference.name}`)
+      .sort();
+    const calls = project.resolutions
+      .get_calls_for_file(file)
+      .map((call) => ({
+        name: call.name,
+        call_type: call.call_type,
+        outcome:
+          call.resolutions.length > 0
+            ? "resolved"
+            : call.resolution_failure?.reason ?? "silent",
+      }))
+      .sort((left, right) => left.name.localeCompare(right.name));
+    expect(call_kinds).toEqual([
+      "constructor_call:Box",
+      "constructor_call:Box",
+      "function_call:make",
+      "function_call:missing",
+      "method_call:absent",
+      "method_call:method",
+      "method_call:open",
+      "method_call:run",
+    ]);
+    // Eight call-kind references, eight CallReferences with a target or a
+    // reason — plus a ninth for `box.size`, the getter read, which is a
+    // `property_access` reference and sits outside the invariant: it adds a
+    // CallReference when it reaches a getter and nothing when it does not.
+    // Three reasons are pinned rather than one, so a resolver that recorded the
+    // wrong reason for a known-receiver miss or an untyped receiver fails here
+    // instead of moving a corpus total by nothing.
+    expect(calls).toEqual([
+      { name: "absent", call_type: "method", outcome: "method_not_on_type" },
+      { name: "Box", call_type: "constructor", outcome: "resolved" },
+      { name: "Box", call_type: "constructor", outcome: "resolved" },
+      { name: "make", call_type: "function", outcome: "resolved" },
+      { name: "method", call_type: "method", outcome: "name_not_in_scope" },
+      { name: "missing", call_type: "function", outcome: "name_not_in_scope" },
+      { name: "open", call_type: "method", outcome: "resolved" },
+      { name: "run", call_type: "method", outcome: "receiver_type_unknown" },
+      { name: "size", call_type: "method", outcome: "resolved" },
+    ]);
+    fs.rmSync(root, { recursive: true, force: true });
+  });
+});

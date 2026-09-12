@@ -29,15 +29,19 @@ import type { FilePath } from "@ariadnejs/types";
 import { find_source_files, parse_gitignore } from "../project/file_loading";
 
 /**
- * The two pinned predicates, plus two folder forms. `folder:` walks a subtree
- * exactly as `load_project` would; `folder-ts:` restricts that walk to `.ts` —
- * not `.tsx`.
+ * The two pinned predicates, plus three derived forms. `folder:` walks a
+ * subtree exactly as `load_project` would; `folder-ts:` restricts that walk to
+ * `.ts` — not `.tsx`; `repository-root-excluding:` walks the root with extra
+ * gitignore-style patterns appended, which is how a triage project config's
+ * `exclude` list reaches `load_project`, so a row can name the file set a
+ * triage run indexed.
  */
 export type CorpusPredicateName =
   | "src"
   | "repository-root"
   | `folder:${string}`
-  | `folder-ts:${string}`;
+  | `folder-ts:${string}`
+  | `repository-root-excluding:${string}`;
 
 /** The two predicates whose file counts are pinned by measurement. */
 type PinnedCorpusPredicateName = "src" | "repository-root";
@@ -54,6 +58,12 @@ interface CorpusPredicate {
    * everything `find_source_files` returns.
    */
   readonly extensions: readonly string[];
+  /**
+   * Gitignore-style patterns appended to the corpus's own, the way
+   * `load_project` appends a project config's `exclude` list. Empty for every
+   * predicate but the excluding form.
+   */
+  readonly excluded_patterns: readonly string[];
   readonly description: string;
 }
 
@@ -64,6 +74,7 @@ const CORPUS_PREDICATES: Readonly<
     name: "src",
     folders: ["src"],
     extensions: [],
+    excluded_patterns: [],
     description:
       "Ariadne's discovery walk over the corpus's `src/` folder, gitignore applied.",
   },
@@ -71,6 +82,7 @@ const CORPUS_PREDICATES: Readonly<
     name: "repository-root",
     folders: [],
     extensions: [],
+    excluded_patterns: [],
     description:
       "Ariadne's discovery walk over the whole repository, gitignore applied — what `load_project({project_path})` selects with no folder filter.",
   },
@@ -131,7 +143,7 @@ export const PINNED_CORPUS_COUNTS: readonly PinnedCorpusCount[] = [
 /** Shortest abbreviation two commit strings may agree on and still be one commit. */
 const MIN_COMMIT_PREFIX_LENGTH = 7;
 
-function same_commit(left: string, right: string): boolean {
+export function same_commit(left: string, right: string): boolean {
   const shorter = left.length <= right.length ? left : right;
   const longer = left.length <= right.length ? right : left;
   if (shorter.length < MIN_COMMIT_PREFIX_LENGTH) return false;
@@ -169,6 +181,7 @@ export function assert_pinned_file_count(
 
 const FOLDER_PREFIX = "folder:";
 const FOLDER_TS_PREFIX = "folder-ts:";
+const ROOT_EXCLUDING_PREFIX = "repository-root-excluding:";
 
 /**
  * The predicate a name selects. The folder forms build one on the spot so a
@@ -188,6 +201,7 @@ export function resolve_corpus_predicate(
       name,
       folders: [folder],
       extensions: [".ts"],
+      excluded_patterns: [],
       description: `Ariadne's discovery walk over \`${folder}\`, restricted to \`.ts\`, gitignore applied.`,
     };
   }
@@ -198,12 +212,44 @@ export function resolve_corpus_predicate(
       name,
       folders: [folder],
       extensions: [],
+      excluded_patterns: [],
       description: `Ariadne's discovery walk over \`${folder}\`, gitignore applied.`,
     };
   }
+  if (name.startsWith(ROOT_EXCLUDING_PREFIX)) {
+    const patterns = parse_excluded_patterns(
+      name.slice(ROOT_EXCLUDING_PREFIX.length),
+      name,
+    );
+    return {
+      name,
+      folders: [],
+      extensions: [],
+      excluded_patterns: patterns,
+      description: `Ariadne's discovery walk over the whole repository, gitignore applied, excluding ${patterns
+        .map((pattern) => `\`${pattern}\``)
+        .join(", ")} — the \`exclude\` list of the triage project config.`,
+    };
+  }
   throw new Error(
-    `Unknown corpus predicate "${name}" — use "src", "repository-root", "folder:<relative path>", or "folder-ts:<relative path>"`,
+    `Unknown corpus predicate "${name}" — use "src", "repository-root", "folder:<relative path>", "folder-ts:<relative path>", or "repository-root-excluding:<pattern>,<pattern>"`,
   );
+}
+
+/**
+ * The comma-separated pattern list of an excluding predicate. A comma is safe as
+ * the separator because a gitignore pattern with one would be a literal comma
+ * in a path, which no triage config uses; an empty entry is a mangled name
+ * rather than "exclude nothing".
+ */
+function parse_excluded_patterns(raw: string, name: string): string[] {
+  const patterns = raw.split(",").map((pattern) => pattern.trim());
+  if (patterns.some((pattern) => pattern === "")) {
+    throw new Error(
+      `An excluding predicate needs at least one non-empty pattern: "repository-root-excluding:tests,docs", not "${name}"`,
+    );
+  }
+  return patterns;
 }
 
 function assert_folder_is_named(folder: string, name: string): void {
@@ -271,8 +317,11 @@ export async function discover_corpus(
   predicate: CorpusPredicateName,
 ): Promise<FilePath[]> {
   const root = path.resolve(corpus_root);
-  const gitignore_patterns = await parse_gitignore(root);
   const resolved = resolve_corpus_predicate(predicate);
+  const gitignore_patterns = [
+    ...(await parse_gitignore(root)),
+    ...resolved.excluded_patterns,
+  ];
   const discovered = new Set<FilePath>();
 
   const walk_roots =
