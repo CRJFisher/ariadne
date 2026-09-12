@@ -646,22 +646,16 @@
 ; FUNCTION AND METHOD CALLS
 ; ============================================================================
 ;
-; NOTE: Python Class Instantiation Limitation
-; -------------------------------------------
-; In Python, class instantiation (e.g., `obj = MyClass()`) uses identical syntax
-; to function calls (e.g., `result = my_function()`). Both are represented as
-; `call` nodes with an `identifier` function field in tree-sitter.
-;
-; Unlike TypeScript/JavaScript (`new ClassName()`) or Rust (`StructName { ... }`),
-; there is NO syntactic distinction at the AST level.
-;
-; Capture Strategy:
-; - Calls WITH argument lists are captured as @reference.constructor (heuristic)
-;   This provides construct_target metadata for type binding extraction
-; - At resolution time, if the identifier resolves to a class symbol,
-;   the call is resolved to __init__. Otherwise, it's treated as a function call.
-; - The call_type in CallReference is inferred from the resolved symbol, not syntax
-; - See: resolve_references/call_resolution/call_resolution.python.ts
+; Python class instantiation (`obj = MyClass()`) is syntactically a call: both it
+; and `result = my_function()` are `call` nodes with an `identifier` function
+; field, where TypeScript/JavaScript write `new ClassName()` and Rust a struct
+; literal. So every call with an identifier callee other than `super` is one
+; `@reference.call`, carrying the assignment target it lands in when there is
+; one, and
+; `resolve_references/preprocess_references.python.ts` rewrites the ones whose
+; callee resolves to a class into constructor calls once names are resolved.
+; A construction is therefore recorded once, and only when the callee is a
+; class.
 ;
 ; ============================================================================
 
@@ -679,18 +673,6 @@
     attribute: (identifier)
   )
 ) @reference.call
-
-; Constructor calls (class instantiation) - heuristic capture for construct_target extraction
-; This captures ALL calls with argument lists as potential constructors.
-; Actual call type is determined at resolution time based on what the identifier resolves to.
-; The call itself is already captured as @reference.call by the patterns above —
-; this pattern adds only the constructor heuristic, keeping one @reference.call
-; per call node.
-(call
-  function: (identifier) @reference.constructor
-  arguments: (argument_list)
-  (#not-eq? @reference.constructor "super")
-)
 
 ; Attribute access
 (attribute
