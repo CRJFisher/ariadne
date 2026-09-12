@@ -1767,3 +1767,123 @@ class C(B):
   });
 
 });
+
+/**
+ * A Python construction is recorded once, only when the callee is a class,
+ * and the variable it lands in takes the class as its type; a plain call is a
+ * call, whatever scope it sits in; and a declared annotation beats whatever
+ * the initializer was inferred to construct.
+ */
+describe("Python constructions and plain calls", () => {
+  const PARSERS = "integration/parsers.py";
+  const USES = "integration/uses_parsers.py";
+
+  // A resolution is only evidence if it names which definition answered: the
+  // class in parsers.py and uses_parsers.py's own import alias for it share the
+  // trailing name, so kind and file are what tell them apart.
+  function name_target(symbol_id: string): string {
+    const parts = symbol_id.split(":");
+    const kind = parts[0];
+    const name = parts[parts.length - 1];
+    const file = path.basename(parts.slice(1, parts.length - 5).join(":"));
+    return `${kind} ${file}:${name}`;
+  }
+
+  interface CallShape {
+    readonly line: number;
+    readonly name: string;
+    readonly call_type: "function" | "method" | "constructor";
+    readonly outcome: string;
+  }
+
+  async function load(): Promise<{ project: Project; calls: CallShape[] }> {
+    const project = new Project();
+    await project.initialize(FIXTURE_ROOT as FilePath);
+    project.update_file(file_path(PARSERS), load_source(PARSERS));
+    project.update_file(file_path(USES), load_source(USES));
+    const calls = project.resolutions
+      .get_calls_for_file(file_path(USES))
+      .map((call) => ({
+        line: call.location.start_line,
+        name: call.name as string,
+        call_type: call.call_type,
+        outcome:
+          call.resolutions.length > 0
+            ? call.resolutions.map((resolution) => name_target(resolution.symbol_id)).join(",")
+            : (call.resolution_failure?.reason ?? "silent"),
+      }))
+      .sort((left, right) => left.line - right.line || left.name.localeCompare(right.name));
+    return { project, calls };
+  }
+
+  it("records each call once: constructions as constructor calls to the class, plain calls as function calls", async () => {
+    const { calls } = await load();
+    // `helper(1)` at module level and `helper(2)` inside a method are plain
+    // calls and nothing else; `Parser()` inside `__init__` and in `build` is
+    // one constructor call each, to the class (which declares no `__init__`);
+    // `dispatch(flavor)` and `make()` are the factory calls and carry no
+    // constructor edge. No call in the file fails as a construction of a
+    // non-class.
+    expect(calls).toEqual([
+      { line: 15, name: "helper", call_type: "function", outcome: "function parsers.py:helper" },
+      { line: 20, name: "Parser", call_type: "constructor", outcome: "class parsers.py:Parser" },
+      { line: 23, name: "helper", call_type: "function", outcome: "function parsers.py:helper" },
+      { line: 24, name: "dispatch", call_type: "function", outcome: "function parsers.py:dispatch" },
+      { line: 25, name: "close", call_type: "method", outcome: "receiver_type_unknown" },
+      { line: 30, name: "make", call_type: "function", outcome: "function parsers.py:make" },
+      { line: 31, name: "parse", call_type: "method", outcome: "method parsers.py:parse" },
+      { line: 32, name: "Parser", call_type: "constructor", outcome: "class parsers.py:Parser" },
+      { line: 33, name: "close", call_type: "method", outcome: "method parsers.py:close" },
+      { line: 34, name: "Parser", call_type: "constructor", outcome: "class parsers.py:Parser" },
+      { line: 35, name: "close", call_type: "method", outcome: "method parsers.py:close" },
+      // `w: Parser = Wrapper().build()`: `construct_target` walks up to the
+      // enclosing assignment, so a construction anywhere inside the initialiser
+      // claims it, and `w` takes `Wrapper` rather than the declared `Parser`.
+      // Pre-existing — the same shape mistypes without an annotation too — and
+      // pinned here because it is what distinguishes the binding order.
+      { line: 40, name: "build", call_type: "method", outcome: "receiver_type_unknown" },
+      { line: 40, name: "Wrapper", call_type: "constructor", outcome: "class parsers.py:Wrapper" },
+      { line: 41, name: "parse", call_type: "method", outcome: "method_not_on_type" },
+    ]);
+  });
+
+  it("types the constructed and annotated variables as the class, so their method calls resolve", async () => {
+    const { project } = await load();
+    const uses_index = project.get_index_single_file(file_path(USES));
+    const parsers_index = project.get_index_single_file(file_path(PARSERS));
+    const parser_class_id = Array.from(parsers_index!.classes.values()).find(
+      (definition) => definition.name === ("Parser" as SymbolName)
+    )!.symbol_id;
+
+    const type_of = (name: string) => {
+      const variable = Array.from(uses_index!.variables.values()).find(
+        (definition) => definition.name === (name as SymbolName)
+      );
+      return variable ? project.types.get_symbol_type(variable.symbol_id) : undefined;
+    };
+
+    // `p: Parser = make()` takes the declared annotation, because `make` is a
+    // factory and names no type; `x = Parser()` and
+    // `a: Optional[Parser] = Parser()` both take the constructed class, the one
+    // whose methods actually run. Nothing types `parser = dispatch(flavor)`:
+    // the factory declares no return type, and TASK-376.11's value channel is
+    // where that receiver gains one.
+    const wrapper_class_id = Array.from(parsers_index!.classes.values()).find(
+      (definition) => definition.name === ("Wrapper" as SymbolName)
+    )!.symbol_id;
+
+    expect({
+      p: type_of("p"),
+      x: type_of("x"),
+      a: type_of("a"),
+      parser: type_of("parser"),
+      w: type_of("w"),
+    }).toEqual({
+      p: parser_class_id,
+      x: parser_class_id,
+      a: parser_class_id,
+      parser: null,
+      w: wrapper_class_id,
+    });
+  });
+});

@@ -529,6 +529,7 @@ describe("Function Call Resolution", () => {
       types.update_file(
         py_file,
         py_index,
+        [],
         definitions,
         resolutions,
         exports,
