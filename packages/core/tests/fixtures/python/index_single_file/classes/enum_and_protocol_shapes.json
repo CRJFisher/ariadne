@@ -24,7 +24,8 @@
         "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:47:39:48:18",
         "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:33:35:34:13",
         "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:43:39:44:13"
-      ]
+      ],
+      "self_type_name": null
     },
     "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:51:26:58:20": {
       "id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:51:26:58:20",
@@ -40,7 +41,8 @@
       },
       "child_ids": [
         "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:54:17:58:20"
-      ]
+      ],
+      "self_type_name": "NestedHolder"
     },
     "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:13:22:18:24": {
       "id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:13:22:18:24",
@@ -56,7 +58,8 @@
       },
       "child_ids": [
         "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:17:17:18:24"
-      ]
+      ],
+      "self_type_name": "BareEnum"
     },
     "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:26:28:30:25": {
       "id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:26:28:30:25",
@@ -72,7 +75,8 @@
       },
       "child_ids": [
         "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:29:15:30:25"
-      ]
+      ],
+      "self_type_name": "MemberlessEnum"
     },
     "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:54:17:58:20": {
       "id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:54:17:58:20",
@@ -88,7 +92,8 @@
       },
       "child_ids": [
         "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:57:25:58:20"
-      ]
+      ],
+      "self_type_name": "Inner"
     },
     "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:37:30:40:32": {
       "id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:37:30:40:32",
@@ -104,7 +109,8 @@
       },
       "child_ids": [
         "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:40:15:40:32"
-      ]
+      ],
+      "self_type_name": "BareProtocol"
     },
     "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:29:15:30:25": {
       "id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:29:15:30:25",
@@ -118,7 +124,8 @@
         "end_line": 30,
         "end_column": 25
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:17:17:18:24": {
       "id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:17:17:18:24",
@@ -132,7 +139,8 @@
         "end_line": 18,
         "end_column": 24
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:57:25:58:20": {
       "id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:57:25:58:20",
@@ -146,7 +154,8 @@
         "end_line": 58,
         "end_column": 20
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:21:32:23:12": {
       "id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:21:32:23:12",
@@ -160,7 +169,8 @@
         "end_line": 23,
         "end_column": 12
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": "DottedEnum"
     },
     "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:40:15:40:32": {
       "id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:40:15:40:32",
@@ -174,7 +184,8 @@
         "end_line": 40,
         "end_column": 32
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:47:39:48:18": {
       "id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:47:39:48:18",
@@ -188,7 +199,8 @@
         "end_line": 48,
         "end_column": 18
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": "GenericProtocol"
     },
     "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:33:35:34:13": {
       "id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:33:35:34:13",
@@ -202,7 +214,8 @@
         "end_line": 34,
         "end_column": 13
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": "DerivedEnum"
     },
     "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:43:39:44:13": {
       "id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:43:39:44:13",
@@ -216,7 +229,8 @@
         "end_line": 44,
         "end_column": 13
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": "DottedProtocol"
     }
   },
   "functions": {},
@@ -633,6 +647,38 @@
             "end_column": 8
           }
         }
+      ],
+      "methods": [
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:13:22:18:24",
+          "symbol_id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:17:9:17:16:describe",
+          "name": "describe",
+          "location": {
+            "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+            "start_line": 17,
+            "start_column": 9,
+            "end_line": 17,
+            "end_column": 16
+          },
+          "async": false,
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:17:17:18:24",
+              "symbol_id": "parameter:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:17:18:17:21:self",
+              "name": "self",
+              "location": {
+                "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+                "start_line": 17,
+                "start_column": 18,
+                "end_line": 17,
+                "end_column": 21
+              }
+            }
+          ],
+          "body_scope_id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:17:17:18:24"
+        }
       ]
     },
     "enum:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:21:7:21:16:DottedEnum": {
@@ -690,7 +736,39 @@
       "defining_scope_id": "module:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:1:1:59:0",
       "is_exported": true,
       "is_const": false,
-      "members": []
+      "members": [],
+      "methods": [
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:26:28:30:25",
+          "symbol_id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:29:9:29:14:shared",
+          "name": "shared",
+          "location": {
+            "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+            "start_line": 29,
+            "start_column": 9,
+            "end_line": 29,
+            "end_column": 14
+          },
+          "async": false,
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:29:15:30:25",
+              "symbol_id": "parameter:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:29:16:29:19:self",
+              "name": "self",
+              "location": {
+                "file_path": "<fixtures>/python/code/classes/enum_and_protocol_shapes.py",
+                "start_line": 29,
+                "start_column": 16,
+                "end_line": 29,
+                "end_column": 19
+              }
+            }
+          ],
+          "body_scope_id": "method:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:29:15:30:25"
+        }
+      ]
     },
     "enum:<fixtures>/python/code/classes/enum_and_protocol_shapes.py:51:7:51:18:NestedHolder": {
       "kind": "enum",

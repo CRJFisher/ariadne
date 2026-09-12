@@ -15,30 +15,13 @@
         "end_line": 8,
         "end_column": 0
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {},
   "classes": {},
-  "variables": {
-    "variable:<fixtures>/javascript/code/integration/route_handlers/app.js:3:5:3:8:user": {
-      "kind": "variable",
-      "symbol_id": "variable:<fixtures>/javascript/code/integration/route_handlers/app.js:3:5:3:8:user",
-      "name": "user",
-      "location": {
-        "file_path": "<fixtures>/javascript/code/integration/route_handlers/app.js",
-        "start_line": 3,
-        "start_column": 5,
-        "end_line": 3,
-        "end_column": 8
-      },
-      "defining_scope_id": "module:<fixtures>/javascript/code/integration/route_handlers/app.js:1:1:8:0",
-      "is_exported": false,
-      "initial_value": "require(\"./user\")",
-      "docstring": "// by name and never invoked at a syntactic call site.",
-      "initialized_from_call": "require"
-    }
-  },
+  "variables": {},
   "interfaces": {},
   "enums": {},
   "namespaces": {},

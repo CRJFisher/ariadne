@@ -27,7 +27,8 @@
         "method:<fixtures>/javascript/code/classes/object_literals.js:76:14:82:5",
         "method:<fixtures>/javascript/code/classes/object_literals.js:90:20:95:3",
         "method:<fixtures>/javascript/code/classes/object_literals.js:97:20:103:3"
-      ]
+      ],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/object_literals.js:10:6:13:3": {
       "id": "method:<fixtures>/javascript/code/classes/object_literals.js:10:6:13:3",
@@ -41,7 +42,8 @@
         "end_line": 13,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/object_literals.js:15:11:18:3": {
       "id": "method:<fixtures>/javascript/code/classes/object_literals.js:15:11:18:3",
@@ -55,7 +57,8 @@
         "end_line": 18,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/object_literals.js:20:11:22:3": {
       "id": "method:<fixtures>/javascript/code/classes/object_literals.js:20:11:22:3",
@@ -69,7 +72,8 @@
         "end_line": 22,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/object_literals.js:24:8:27:3": {
       "id": "method:<fixtures>/javascript/code/classes/object_literals.js:24:8:27:3",
@@ -83,7 +87,8 @@
         "end_line": 27,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/object_literals.js:30:10:41:3": {
       "id": "method:<fixtures>/javascript/code/classes/object_literals.js:30:10:41:3",
@@ -99,7 +104,8 @@
       },
       "child_ids": [
         "function:<fixtures>/javascript/code/classes/object_literals.js:31:30:37:5"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/classes/object_literals.js:31:30:37:5": {
       "id": "function:<fixtures>/javascript/code/classes/object_literals.js:31:30:37:5",
@@ -115,7 +121,8 @@
       },
       "child_ids": [
         "block:<fixtures>/javascript/code/classes/object_literals.js:32:7:36:7"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/javascript/code/classes/object_literals.js:32:7:36:7": {
       "id": "block:<fixtures>/javascript/code/classes/object_literals.js:32:7:36:7",
@@ -131,7 +138,8 @@
       },
       "child_ids": [
         "block:<fixtures>/javascript/code/classes/object_literals.js:34:14:36:7"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/javascript/code/classes/object_literals.js:34:14:36:7": {
       "id": "block:<fixtures>/javascript/code/classes/object_literals.js:34:14:36:7",
@@ -145,7 +153,8 @@
         "end_line": 36,
         "end_column": 7
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/object_literals.js:49:8:54:5": {
       "id": "method:<fixtures>/javascript/code/classes/object_literals.js:49:8:54:5",
@@ -161,7 +170,8 @@
       },
       "child_ids": [
         "function:<fixtures>/javascript/code/classes/object_literals.js:50:24:52:7"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/classes/object_literals.js:50:24:52:7": {
       "id": "function:<fixtures>/javascript/code/classes/object_literals.js:50:24:52:7",
@@ -175,7 +185,8 @@
         "end_line": 52,
         "end_column": 7
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/object_literals.js:56:11:65:5": {
       "id": "method:<fixtures>/javascript/code/classes/object_literals.js:56:11:65:5",
@@ -192,7 +203,8 @@
       "child_ids": [
         "function:<fixtures>/javascript/code/classes/object_literals.js:57:28:59:7",
         "block:<fixtures>/javascript/code/classes/object_literals.js:61:7:63:7"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/classes/object_literals.js:57:28:59:7": {
       "id": "function:<fixtures>/javascript/code/classes/object_literals.js:57:28:59:7",
@@ -206,7 +218,8 @@
         "end_line": 59,
         "end_column": 7
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/javascript/code/classes/object_literals.js:61:7:63:7": {
       "id": "block:<fixtures>/javascript/code/classes/object_literals.js:61:7:63:7",
@@ -220,7 +233,8 @@
         "end_line": 63,
         "end_column": 7
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/object_literals.js:69:9:74:5": {
       "id": "method:<fixtures>/javascript/code/classes/object_literals.js:69:9:74:5",
@@ -236,7 +250,8 @@
       },
       "child_ids": [
         "function:<fixtures>/javascript/code/classes/object_literals.js:70:27:72:7"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/classes/object_literals.js:70:27:72:7": {
       "id": "function:<fixtures>/javascript/code/classes/object_literals.js:70:27:72:7",
@@ -250,7 +265,8 @@
         "end_line": 72,
         "end_column": 7
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/object_literals.js:76:14:82:5": {
       "id": "method:<fixtures>/javascript/code/classes/object_literals.js:76:14:82:5",
@@ -266,7 +282,8 @@
       },
       "child_ids": [
         "function:<fixtures>/javascript/code/classes/object_literals.js:78:29:80:7"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/classes/object_literals.js:78:29:80:7": {
       "id": "function:<fixtures>/javascript/code/classes/object_literals.js:78:29:80:7",
@@ -280,7 +297,8 @@
         "end_line": 80,
         "end_column": 7
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/object_literals.js:90:20:95:3": {
       "id": "method:<fixtures>/javascript/code/classes/object_literals.js:90:20:95:3",
@@ -296,7 +314,8 @@
       },
       "child_ids": [
         "function:<fixtures>/javascript/code/classes/object_literals.js:91:29:93:5"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/classes/object_literals.js:91:29:93:5": {
       "id": "function:<fixtures>/javascript/code/classes/object_literals.js:91:29:93:5",
@@ -310,7 +329,8 @@
         "end_line": 93,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/object_literals.js:97:20:103:3": {
       "id": "method:<fixtures>/javascript/code/classes/object_literals.js:97:20:103:3",
@@ -326,7 +346,8 @@
       },
       "child_ids": [
         "function:<fixtures>/javascript/code/classes/object_literals.js:98:25:100:5"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/classes/object_literals.js:98:25:100:5": {
       "id": "function:<fixtures>/javascript/code/classes/object_literals.js:98:25:100:5",
@@ -340,10 +361,143 @@
         "end_line": 100,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {
+    "method:<fixtures>/javascript/code/classes/object_literals.js:10:3:10:5:add": {
+      "kind": "function",
+      "symbol_id": "method:<fixtures>/javascript/code/classes/object_literals.js:10:3:10:5:add",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 10,
+        "start_column": 3,
+        "end_line": 10,
+        "end_column": 5
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
+      "is_exported": false,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:10:6:13:3",
+            "symbol_id": "parameter:<fixtures>/javascript/code/classes/object_literals.js:10:7:10:9:num",
+            "name": "num",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+              "start_line": 10,
+              "start_column": 7,
+              "end_line": 10,
+              "end_column": 9
+            }
+          }
+        ]
+      },
+      "body_scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:10:6:13:3"
+    },
+    "method:<fixtures>/javascript/code/classes/object_literals.js:15:3:15:10:multiply": {
+      "kind": "function",
+      "symbol_id": "method:<fixtures>/javascript/code/classes/object_literals.js:15:3:15:10:multiply",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 15,
+        "start_column": 3,
+        "end_line": 15,
+        "end_column": 10
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
+      "is_exported": false,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:15:11:18:3",
+            "symbol_id": "parameter:<fixtures>/javascript/code/classes/object_literals.js:15:12:15:14:num",
+            "name": "num",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+              "start_line": 15,
+              "start_column": 12,
+              "end_line": 15,
+              "end_column": 14
+            }
+          }
+        ]
+      },
+      "body_scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:15:11:18:3"
+    },
+    "method:<fixtures>/javascript/code/classes/object_literals.js:20:3:20:10:getValue": {
+      "kind": "function",
+      "symbol_id": "method:<fixtures>/javascript/code/classes/object_literals.js:20:3:20:10:getValue",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 20,
+        "start_column": 3,
+        "end_line": 20,
+        "end_column": 10
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:20:11:22:3"
+    },
+    "method:<fixtures>/javascript/code/classes/object_literals.js:24:3:24:7:reset": {
+      "kind": "function",
+      "symbol_id": "method:<fixtures>/javascript/code/classes/object_literals.js:24:3:24:7:reset",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 24,
+        "start_column": 3,
+        "end_line": 24,
+        "end_column": 7
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:24:8:27:3"
+    },
+    "method:<fixtures>/javascript/code/classes/object_literals.js:30:3:30:9:compute": {
+      "kind": "function",
+      "symbol_id": "method:<fixtures>/javascript/code/classes/object_literals.js:30:3:30:9:compute",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 30,
+        "start_column": 3,
+        "end_line": 30,
+        "end_column": 9
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
+      "is_exported": false,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:30:10:41:3",
+            "symbol_id": "parameter:<fixtures>/javascript/code/classes/object_literals.js:30:11:30:20:operations",
+            "name": "operations",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+              "start_line": 30,
+              "start_column": 11,
+              "end_line": 30,
+              "end_column": 20
+            }
+          }
+        ]
+      },
+      "body_scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:30:10:41:3"
+    },
     "function:<fixtures>/javascript/code/classes/object_literals.js:31:14:31:29:processOperation": {
       "kind": "function",
       "symbol_id": "function:<fixtures>/javascript/code/classes/object_literals.js:31:14:31:29:processOperation",
@@ -376,6 +530,38 @@
       },
       "body_scope_id": "function:<fixtures>/javascript/code/classes/object_literals.js:31:30:37:5"
     },
+    "method:<fixtures>/javascript/code/classes/object_literals.js:49:5:49:7:get": {
+      "kind": "function",
+      "symbol_id": "method:<fixtures>/javascript/code/classes/object_literals.js:49:5:49:7:get",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 49,
+        "start_column": 5,
+        "end_line": 49,
+        "end_column": 7
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
+      "is_exported": false,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:49:8:54:5",
+            "symbol_id": "parameter:<fixtures>/javascript/code/classes/object_literals.js:49:9:49:10:id",
+            "name": "id",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+              "start_line": 49,
+              "start_column": 9,
+              "end_line": 49,
+              "end_column": 10
+            }
+          }
+        ]
+      },
+      "body_scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:49:8:54:5"
+    },
     "function:<fixtures>/javascript/code/classes/object_literals.js:50:16:50:23:buildUrl": {
       "kind": "function",
       "symbol_id": "function:<fixtures>/javascript/code/classes/object_literals.js:50:16:50:23:buildUrl",
@@ -393,6 +579,38 @@
         "parameters": []
       },
       "body_scope_id": "function:<fixtures>/javascript/code/classes/object_literals.js:50:24:52:7"
+    },
+    "method:<fixtures>/javascript/code/classes/object_literals.js:56:5:56:10:create": {
+      "kind": "function",
+      "symbol_id": "method:<fixtures>/javascript/code/classes/object_literals.js:56:5:56:10:create",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 56,
+        "start_column": 5,
+        "end_line": 56,
+        "end_column": 10
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
+      "is_exported": false,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:56:11:65:5",
+            "symbol_id": "parameter:<fixtures>/javascript/code/classes/object_literals.js:56:12:56:19:userData",
+            "name": "userData",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+              "start_line": 56,
+              "start_column": 12,
+              "end_line": 56,
+              "end_column": 19
+            }
+          }
+        ]
+      },
+      "body_scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:56:11:65:5"
     },
     "function:<fixtures>/javascript/code/classes/object_literals.js:57:16:57:27:validateData": {
       "kind": "function",
@@ -412,6 +630,24 @@
       },
       "body_scope_id": "function:<fixtures>/javascript/code/classes/object_literals.js:57:28:59:7"
     },
+    "method:<fixtures>/javascript/code/classes/object_literals.js:69:5:69:8:list": {
+      "kind": "function",
+      "symbol_id": "method:<fixtures>/javascript/code/classes/object_literals.js:69:5:69:8:list",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 69,
+        "start_column": 5,
+        "end_line": 69,
+        "end_column": 8
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:69:9:74:5"
+    },
     "function:<fixtures>/javascript/code/classes/object_literals.js:70:16:70:26:getEndpoint": {
       "kind": "function",
       "symbol_id": "function:<fixtures>/javascript/code/classes/object_literals.js:70:16:70:26:getEndpoint",
@@ -429,6 +665,38 @@
         "parameters": []
       },
       "body_scope_id": "function:<fixtures>/javascript/code/classes/object_literals.js:70:27:72:7"
+    },
+    "method:<fixtures>/javascript/code/classes/object_literals.js:76:5:76:13:getByUser": {
+      "kind": "function",
+      "symbol_id": "method:<fixtures>/javascript/code/classes/object_literals.js:76:5:76:13:getByUser",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 76,
+        "start_column": 5,
+        "end_line": 76,
+        "end_column": 13
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
+      "is_exported": false,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:76:14:82:5",
+            "symbol_id": "parameter:<fixtures>/javascript/code/classes/object_literals.js:76:15:76:20:userId",
+            "name": "userId",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+              "start_line": 76,
+              "start_column": 15,
+              "end_line": 76,
+              "end_column": 20
+            }
+          }
+        ]
+      },
+      "body_scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:76:14:82:5"
     },
     "function:<fixtures>/javascript/code/classes/object_literals.js:78:16:78:28:addUserFilter": {
       "kind": "function",
@@ -448,6 +716,24 @@
       },
       "body_scope_id": "function:<fixtures>/javascript/code/classes/object_literals.js:78:29:80:7"
     },
+    "method:<fixtures>/javascript/code/classes/object_literals.js:90:3:90:19:['get' + 'Count']": {
+      "kind": "function",
+      "symbol_id": "method:<fixtures>/javascript/code/classes/object_literals.js:90:3:90:19:['get' + 'Count']",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 90,
+        "start_column": 3,
+        "end_line": 90,
+        "end_column": 19
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:90:20:95:3"
+    },
     "function:<fixtures>/javascript/code/classes/object_literals.js:91:14:91:28:getCurrentCount": {
       "kind": "function",
       "symbol_id": "function:<fixtures>/javascript/code/classes/object_literals.js:91:14:91:28:getCurrentCount",
@@ -465,6 +751,38 @@
         "parameters": []
       },
       "body_scope_id": "function:<fixtures>/javascript/code/classes/object_literals.js:91:29:93:5"
+    },
+    "method:<fixtures>/javascript/code/classes/object_literals.js:97:3:97:19:['set' + 'Count']": {
+      "kind": "function",
+      "symbol_id": "method:<fixtures>/javascript/code/classes/object_literals.js:97:3:97:19:['set' + 'Count']",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+        "start_line": 97,
+        "start_column": 3,
+        "end_line": 97,
+        "end_column": 19
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/object_literals.js:1:1:132:0",
+      "is_exported": false,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:97:20:103:3",
+            "symbol_id": "parameter:<fixtures>/javascript/code/classes/object_literals.js:97:21:97:25:value",
+            "name": "value",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/classes/object_literals.js",
+              "start_line": 97,
+              "start_column": 21,
+              "end_line": 97,
+              "end_column": 25
+            }
+          }
+        ]
+      },
+      "body_scope_id": "method:<fixtures>/javascript/code/classes/object_literals.js:97:20:103:3"
     },
     "function:<fixtures>/javascript/code/classes/object_literals.js:98:14:98:24:updateCount": {
       "kind": "function",

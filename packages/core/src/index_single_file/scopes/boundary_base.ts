@@ -1,7 +1,7 @@
 // Kept free of imports from the language extractors so those can extend this
 // base without a circular dependency.
 
-import type { FilePath, Location, ScopeType } from "@ariadnejs/types";
+import type { FilePath, Location, ScopeType, SymbolName } from "@ariadnejs/types";
 import type Parser from "tree-sitter";
 import { node_to_location } from "../node_to_location";
 import type { CaptureNode } from "../capture_types";
@@ -115,6 +115,17 @@ export interface ScopeBoundaryExtractor {
     file_path: FilePath
   ): ScopeBoundaries;
 
+  /**
+   * The type a `self`/`this`/`cls`/`Self` receiver in the scope this capture
+   * opens is looked up on, or null when no name a lookup could reach is
+   * available. `scope_type === "class"` is the whole class family:
+   * `map_capture_to_scope_type` collapses interface and enum captures into it.
+   */
+  extract_self_type_name(
+    node: Parser.SyntaxNode,
+    scope_type: ScopeType
+  ): SymbolName | null;
+
   sort_captures(captures: readonly CaptureNode[]): CaptureNode[];
 }
 
@@ -130,6 +141,17 @@ export class CommonScopeBoundaryExtractor implements ScopeBoundaryExtractor {
         compare_locations(a.location, b.location) ||
         get_capture_priority(a.entity) - get_capture_priority(b.entity)
     );
+  }
+
+  // Every grammar anchors a class-family scope to the body node, so the type
+  // the body belongs to is the declaration around it.
+  extract_self_type_name(
+    node: Parser.SyntaxNode,
+    scope_type: ScopeType
+  ): SymbolName | null {
+    if (scope_type !== "class") return null;
+    const name_node = node.parent?.childForFieldName("name");
+    return name_node ? (name_node.text as SymbolName) : null;
   }
 
   extract_boundaries(

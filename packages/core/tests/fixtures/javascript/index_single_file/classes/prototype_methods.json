@@ -24,7 +24,8 @@
         "function:<fixtures>/javascript/code/classes/prototype_methods.js:39:30:41:1",
         "function:<fixtures>/javascript/code/classes/prototype_methods.js:43:34:45:1",
         "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:21:62:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/classes/prototype_methods.js:7:17:11:1": {
       "id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:7:17:11:1",
@@ -38,7 +39,8 @@
         "end_line": 11,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/classes/prototype_methods.js:14:35:17:1": {
       "id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:14:35:17:1",
@@ -52,7 +54,8 @@
         "end_line": 17,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/classes/prototype_methods.js:19:34:22:1": {
       "id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:19:34:22:1",
@@ -66,7 +69,8 @@
         "end_line": 22,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/classes/prototype_methods.js:24:37:26:1": {
       "id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:24:37:26:1",
@@ -80,7 +84,8 @@
         "end_line": 26,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/classes/prototype_methods.js:29:13:32:1": {
       "id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:29:13:32:1",
@@ -94,7 +99,8 @@
         "end_line": 32,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/classes/prototype_methods.js:39:30:41:1": {
       "id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:39:30:41:1",
@@ -108,7 +114,8 @@
         "end_line": 41,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/classes/prototype_methods.js:43:34:45:1": {
       "id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:43:34:45:1",
@@ -122,7 +129,8 @@
         "end_line": 45,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:21:62:1": {
       "id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:21:62:1",
@@ -136,7 +144,8 @@
         "end_line": 62,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {

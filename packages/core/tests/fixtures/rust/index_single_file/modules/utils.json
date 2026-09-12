@@ -21,7 +21,8 @@
         "function:<fixtures>/rust/code/modules/utils.rs:12:23:14:1",
         "function:<fixtures>/rust/code/modules/utils.rs:16:22:18:1",
         "function:<fixtures>/rust/code/modules/utils.rs:21:19:23:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/modules/utils.rs:4:14:6:1": {
       "id": "function:<fixtures>/rust/code/modules/utils.rs:4:14:6:1",
@@ -35,7 +36,8 @@
         "end_line": 6,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/modules/utils.rs:8:20:10:1": {
       "id": "function:<fixtures>/rust/code/modules/utils.rs:8:20:10:1",
@@ -49,7 +51,8 @@
         "end_line": 10,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/modules/utils.rs:12:23:14:1": {
       "id": "function:<fixtures>/rust/code/modules/utils.rs:12:23:14:1",
@@ -63,7 +66,8 @@
         "end_line": 14,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/modules/utils.rs:16:22:18:1": {
       "id": "function:<fixtures>/rust/code/modules/utils.rs:16:22:18:1",
@@ -77,7 +81,8 @@
         "end_line": 18,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/modules/utils.rs:21:19:23:1": {
       "id": "function:<fixtures>/rust/code/modules/utils.rs:21:19:23:1",
@@ -91,7 +96,8 @@
         "end_line": 23,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {

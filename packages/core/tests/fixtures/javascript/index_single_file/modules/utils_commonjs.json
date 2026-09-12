@@ -19,7 +19,8 @@
         "function:<fixtures>/javascript/code/modules/utils_commonjs.js:6:16:8:1",
         "function:<fixtures>/javascript/code/modules/utils_commonjs.js:10:21:12:1",
         "function:<fixtures>/javascript/code/modules/utils_commonjs.js:14:24:16:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/modules/utils_commonjs.js:6:16:8:1": {
       "id": "function:<fixtures>/javascript/code/modules/utils_commonjs.js:6:16:8:1",
@@ -33,7 +34,8 @@
         "end_line": 8,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/modules/utils_commonjs.js:10:21:12:1": {
       "id": "function:<fixtures>/javascript/code/modules/utils_commonjs.js:10:21:12:1",
@@ -47,7 +49,8 @@
         "end_line": 12,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/modules/utils_commonjs.js:14:24:16:1": {
       "id": "function:<fixtures>/javascript/code/modules/utils_commonjs.js:14:24:16:1",
@@ -63,7 +66,8 @@
       },
       "child_ids": [
         "function:<fixtures>/javascript/code/modules/utils_commonjs.js:15:23:15:53"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/modules/utils_commonjs.js:15:23:15:53": {
       "id": "function:<fixtures>/javascript/code/modules/utils_commonjs.js:15:23:15:53",
@@ -77,7 +81,8 @@
         "end_line": 15,
         "end_column": 53
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {

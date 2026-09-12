@@ -20,7 +20,8 @@
         "block:<fixtures>/rust/code/structs/constructor_workflow.rs:12:14:64:1",
         "function:<fixtures>/rust/code/structs/constructor_workflow.rs:66:8:87:1",
         "function:<fixtures>/rust/code/structs/constructor_workflow.rs:90:30:102:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "class:<fixtures>/rust/code/structs/constructor_workflow.rs:5:16:10:1": {
       "id": "class:<fixtures>/rust/code/structs/constructor_workflow.rs:5:16:10:1",
@@ -34,7 +35,8 @@
         "end_line": 10,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": "Product"
     },
     "block:<fixtures>/rust/code/structs/constructor_workflow.rs:12:14:64:1": {
       "id": "block:<fixtures>/rust/code/structs/constructor_workflow.rs:12:14:64:1",
@@ -56,7 +58,8 @@
         "function:<fixtures>/rust/code/structs/constructor_workflow.rs:44:22:47:5",
         "function:<fixtures>/rust/code/structs/constructor_workflow.rs:50:25:53:5",
         "function:<fixtures>/rust/code/structs/constructor_workflow.rs:56:16:63:5"
-      ]
+      ],
+      "self_type_name": "Product"
     },
     "function:<fixtures>/rust/code/structs/constructor_workflow.rs:14:11:21:5": {
       "id": "function:<fixtures>/rust/code/structs/constructor_workflow.rs:14:11:21:5",
@@ -70,7 +73,8 @@
         "end_line": 21,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/structs/constructor_workflow.rs:24:15:31:5": {
       "id": "function:<fixtures>/rust/code/structs/constructor_workflow.rs:24:15:31:5",
@@ -84,7 +88,8 @@
         "end_line": 31,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/structs/constructor_workflow.rs:34:16:36:5": {
       "id": "function:<fixtures>/rust/code/structs/constructor_workflow.rs:34:16:36:5",
@@ -98,7 +103,8 @@
         "end_line": 36,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/structs/constructor_workflow.rs:39:17:41:5": {
       "id": "function:<fixtures>/rust/code/structs/constructor_workflow.rs:39:17:41:5",
@@ -112,7 +118,8 @@
         "end_line": 41,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/structs/constructor_workflow.rs:44:22:47:5": {
       "id": "function:<fixtures>/rust/code/structs/constructor_workflow.rs:44:22:47:5",
@@ -126,7 +133,8 @@
         "end_line": 47,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/structs/constructor_workflow.rs:50:25:53:5": {
       "id": "function:<fixtures>/rust/code/structs/constructor_workflow.rs:50:25:53:5",
@@ -140,7 +148,8 @@
         "end_line": 53,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/structs/constructor_workflow.rs:56:16:63:5": {
       "id": "function:<fixtures>/rust/code/structs/constructor_workflow.rs:56:16:63:5",
@@ -154,7 +163,8 @@
         "end_line": 63,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/structs/constructor_workflow.rs:66:8:87:1": {
       "id": "function:<fixtures>/rust/code/structs/constructor_workflow.rs:66:8:87:1",
@@ -168,7 +178,8 @@
         "end_line": 87,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/structs/constructor_workflow.rs:90:30:102:1": {
       "id": "function:<fixtures>/rust/code/structs/constructor_workflow.rs:90:30:102:1",
@@ -182,7 +193,8 @@
         "end_line": 102,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {

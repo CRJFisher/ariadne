@@ -1,4 +1,4 @@
-import type { FilePath, Location } from "@ariadnejs/types";
+import type { FilePath, Location, ScopeType, SymbolName } from "@ariadnejs/types";
 import type Parser from "tree-sitter";
 import {
   CommonScopeBoundaryExtractor,
@@ -15,6 +15,23 @@ import { node_to_location } from "../../node_to_location";
 export class JavaScriptTypeScriptScopeBoundaryExtractor
   extends CommonScopeBoundaryExtractor
 {
+  // A class expression's own name binds only inside its body, and
+  // `javascript.scm` registers a definition for one only when it is assigned to
+  // a CommonJS export. Reading the name off any other class expression would
+  // point `this` at whatever enclosing binding shares that name, which is the
+  // shadowing the query excludes; those bodies get no type instead.
+  override extract_self_type_name(
+    node: Parser.SyntaxNode,
+    scope_type: ScopeType,
+  ): SymbolName | null {
+    if (scope_type !== "class") return null;
+    const declaration = node.parent;
+    if (declaration?.type === "class" && !is_commonjs_exported_class(declaration)) {
+      return null;
+    }
+    return super.extract_self_type_name(node, scope_type);
+  }
+
   protected extract_class_boundaries(
     node: Parser.SyntaxNode,
     file_path: FilePath,
@@ -202,4 +219,21 @@ export class JavaScriptTypeScriptScopeBoundaryExtractor
       },
     };
   }
+}
+/**
+ * Whether a `class` expression is the `module.exports = class X {}` /
+ * `exports.X = class X {}` shape. It mirrors the anchor `javascript.scm` puts
+ * on its named-class-expression definition rule: those are the only class
+ * expressions whose name a later lookup can reach.
+ */
+function is_commonjs_exported_class(class_node: Parser.SyntaxNode): boolean {
+  const assignment = class_node.parent;
+  if (assignment?.type !== "assignment_expression") return false;
+  if (assignment.childForFieldName("right")?.id !== class_node.id) return false;
+
+  const target = assignment.childForFieldName("left");
+  if (target?.type !== "member_expression") return false;
+
+  const base = target.childForFieldName("object");
+  return base?.type === "identifier" && (base.text === "module" || base.text === "exports");
 }

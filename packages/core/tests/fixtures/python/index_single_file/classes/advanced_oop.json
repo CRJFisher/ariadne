@@ -21,7 +21,8 @@
         "class:<fixtures>/python/code/classes/advanced_oop.py:109:28:127:44",
         "class:<fixtures>/python/code/classes/advanced_oop.py:57:22:71:57",
         "class:<fixtures>/python/code/classes/advanced_oop.py:97:15:106:35"
-      ]
+      ],
+      "self_type_name": null
     },
     "class:<fixtures>/python/code/classes/advanced_oop.py:10:19:54:35": {
       "id": "class:<fixtures>/python/code/classes/advanced_oop.py:10:19:54:35",
@@ -44,7 +45,8 @@
         "method:<fixtures>/python/code/classes/advanced_oop.py:37:15:39:27",
         "method:<fixtures>/python/code/classes/advanced_oop.py:20:13:22:25",
         "method:<fixtures>/python/code/classes/advanced_oop.py:42:19:44:12"
-      ]
+      ],
+      "self_type_name": "Animal"
     },
     "class:<fixtures>/python/code/classes/advanced_oop.py:74:20:94:39": {
       "id": "class:<fixtures>/python/code/classes/advanced_oop.py:74:20:94:39",
@@ -63,7 +65,8 @@
         "method:<fixtures>/python/code/classes/advanced_oop.py:91:13:94:39",
         "constructor:<fixtures>/python/code/classes/advanced_oop.py:77:17:80:34",
         "method:<fixtures>/python/code/classes/advanced_oop.py:82:19:84:36"
-      ]
+      ],
+      "self_type_name": "Bird"
     },
     "class:<fixtures>/python/code/classes/advanced_oop.py:109:28:127:44": {
       "id": "class:<fixtures>/python/code/classes/advanced_oop.py:109:28:127:44",
@@ -82,7 +85,8 @@
         "constructor:<fixtures>/python/code/classes/advanced_oop.py:112:17:114:53",
         "method:<fixtures>/python/code/classes/advanced_oop.py:120:19:122:47",
         "method:<fixtures>/python/code/classes/advanced_oop.py:116:19:118:39"
-      ]
+      ],
+      "self_type_name": "Bat"
     },
     "class:<fixtures>/python/code/classes/advanced_oop.py:57:22:71:57": {
       "id": "class:<fixtures>/python/code/classes/advanced_oop.py:57:22:71:57",
@@ -100,7 +104,8 @@
         "constructor:<fixtures>/python/code/classes/advanced_oop.py:60:17:63:34",
         "method:<fixtures>/python/code/classes/advanced_oop.py:69:14:71:57",
         "method:<fixtures>/python/code/classes/advanced_oop.py:65:19:67:50"
-      ]
+      ],
+      "self_type_name": "Mammal"
     },
     "class:<fixtures>/python/code/classes/advanced_oop.py:97:15:106:35": {
       "id": "class:<fixtures>/python/code/classes/advanced_oop.py:97:15:106:35",
@@ -117,7 +122,8 @@
       "child_ids": [
         "method:<fixtures>/python/code/classes/advanced_oop.py:100:17:102:39",
         "method:<fixtures>/python/code/classes/advanced_oop.py:104:13:106:35"
-      ]
+      ],
+      "self_type_name": "Flyable"
     },
     "constructor:<fixtures>/python/code/classes/advanced_oop.py:13:17:17:26": {
       "id": "constructor:<fixtures>/python/code/classes/advanced_oop.py:13:17:17:26",
@@ -131,7 +137,8 @@
         "end_line": 17,
         "end_column": 26
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/advanced_oop.py:25:13:29:26": {
       "id": "method:<fixtures>/python/code/classes/advanced_oop.py:25:13:29:26",
@@ -147,7 +154,8 @@
       },
       "child_ids": [
         "block:<fixtures>/python/code/classes/advanced_oop.py:27:9:28:52"
-      ]
+      ],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/advanced_oop.py:86:12:89:67": {
       "id": "method:<fixtures>/python/code/classes/advanced_oop.py:86:12:89:67",
@@ -161,7 +169,8 @@
         "end_line": 89,
         "end_column": 67
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/advanced_oop.py:124:12:127:44": {
       "id": "method:<fixtures>/python/code/classes/advanced_oop.py:124:12:127:44",
@@ -175,7 +184,8 @@
         "end_line": 127,
         "end_column": 44
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/advanced_oop.py:91:13:94:39": {
       "id": "method:<fixtures>/python/code/classes/advanced_oop.py:91:13:94:39",
@@ -189,7 +199,8 @@
         "end_line": 94,
         "end_column": 39
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/advanced_oop.py:46:13:49:35": {
       "id": "method:<fixtures>/python/code/classes/advanced_oop.py:46:13:49:35",
@@ -203,7 +214,8 @@
         "end_line": 49,
         "end_column": 35
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/advanced_oop.py:51:13:54:35": {
       "id": "method:<fixtures>/python/code/classes/advanced_oop.py:51:13:54:35",
@@ -217,7 +229,8 @@
         "end_line": 54,
         "end_column": 35
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "constructor:<fixtures>/python/code/classes/advanced_oop.py:60:17:63:34": {
       "id": "constructor:<fixtures>/python/code/classes/advanced_oop.py:60:17:63:34",
@@ -231,7 +244,8 @@
         "end_line": 63,
         "end_column": 34
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "constructor:<fixtures>/python/code/classes/advanced_oop.py:77:17:80:34": {
       "id": "constructor:<fixtures>/python/code/classes/advanced_oop.py:77:17:80:34",
@@ -245,7 +259,8 @@
         "end_line": 80,
         "end_column": 34
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/advanced_oop.py:69:14:71:57": {
       "id": "method:<fixtures>/python/code/classes/advanced_oop.py:69:14:71:57",
@@ -259,7 +274,8 @@
         "end_line": 71,
         "end_column": 57
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "constructor:<fixtures>/python/code/classes/advanced_oop.py:112:17:114:53": {
       "id": "constructor:<fixtures>/python/code/classes/advanced_oop.py:112:17:114:53",
@@ -273,7 +289,8 @@
         "end_line": 114,
         "end_column": 53
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/advanced_oop.py:65:19:67:50": {
       "id": "method:<fixtures>/python/code/classes/advanced_oop.py:65:19:67:50",
@@ -287,7 +304,8 @@
         "end_line": 67,
         "end_column": 50
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/advanced_oop.py:120:19:122:47": {
       "id": "method:<fixtures>/python/code/classes/advanced_oop.py:120:19:122:47",
@@ -301,7 +319,8 @@
         "end_line": 122,
         "end_column": 47
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/advanced_oop.py:100:17:102:39": {
       "id": "method:<fixtures>/python/code/classes/advanced_oop.py:100:17:102:39",
@@ -315,7 +334,8 @@
         "end_line": 102,
         "end_column": 39
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/advanced_oop.py:116:19:118:39": {
       "id": "method:<fixtures>/python/code/classes/advanced_oop.py:116:19:118:39",
@@ -329,7 +349,8 @@
         "end_line": 118,
         "end_column": 39
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/advanced_oop.py:82:19:84:36": {
       "id": "method:<fixtures>/python/code/classes/advanced_oop.py:82:19:84:36",
@@ -343,7 +364,8 @@
         "end_line": 84,
         "end_column": 36
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/advanced_oop.py:104:13:106:35": {
       "id": "method:<fixtures>/python/code/classes/advanced_oop.py:104:13:106:35",
@@ -357,7 +379,8 @@
         "end_line": 106,
         "end_column": 35
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/advanced_oop.py:32:16:34:28": {
       "id": "method:<fixtures>/python/code/classes/advanced_oop.py:32:16:34:28",
@@ -371,7 +394,8 @@
         "end_line": 34,
         "end_column": 28
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/advanced_oop.py:37:15:39:27": {
       "id": "method:<fixtures>/python/code/classes/advanced_oop.py:37:15:39:27",
@@ -385,7 +409,8 @@
         "end_line": 39,
         "end_column": 27
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/advanced_oop.py:20:13:22:25": {
       "id": "method:<fixtures>/python/code/classes/advanced_oop.py:20:13:22:25",
@@ -399,7 +424,8 @@
         "end_line": 22,
         "end_column": 25
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/advanced_oop.py:42:19:44:12": {
       "id": "method:<fixtures>/python/code/classes/advanced_oop.py:42:19:44:12",
@@ -413,7 +439,8 @@
         "end_line": 44,
         "end_column": 12
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/python/code/classes/advanced_oop.py:27:9:28:52": {
       "id": "block:<fixtures>/python/code/classes/advanced_oop.py:27:9:28:52",
@@ -427,7 +454,8 @@
         "end_line": 28,
         "end_column": 52
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {},

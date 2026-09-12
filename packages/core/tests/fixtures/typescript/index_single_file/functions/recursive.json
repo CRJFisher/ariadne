@@ -23,7 +23,8 @@
         "function:<fixtures>/typescript/code/functions/recursive.ts:36:16:41:1",
         "class:<fixtures>/typescript/code/functions/recursive.ts:44:20:48:1",
         "function:<fixtures>/typescript/code/functions/recursive.ts:50:18:55:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/functions/recursive.ts:6:19:11:1": {
       "id": "function:<fixtures>/typescript/code/functions/recursive.ts:6:19:11:1",
@@ -39,7 +40,8 @@
       },
       "child_ids": [
         "block:<fixtures>/typescript/code/functions/recursive.ts:7:3:9:3"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/typescript/code/functions/recursive.ts:7:3:9:3": {
       "id": "block:<fixtures>/typescript/code/functions/recursive.ts:7:3:9:3",
@@ -53,7 +55,8 @@
         "end_line": 9,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/functions/recursive.ts:13:19:18:1": {
       "id": "function:<fixtures>/typescript/code/functions/recursive.ts:13:19:18:1",
@@ -69,7 +72,8 @@
       },
       "child_ids": [
         "block:<fixtures>/typescript/code/functions/recursive.ts:14:3:16:3"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/typescript/code/functions/recursive.ts:14:3:16:3": {
       "id": "block:<fixtures>/typescript/code/functions/recursive.ts:14:3:16:3",
@@ -83,7 +87,8 @@
         "end_line": 16,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/functions/recursive.ts:20:19:26:1": {
       "id": "function:<fixtures>/typescript/code/functions/recursive.ts:20:19:26:1",
@@ -99,7 +104,8 @@
       },
       "child_ids": [
         "block:<fixtures>/typescript/code/functions/recursive.ts:21:3:23:3"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/typescript/code/functions/recursive.ts:21:3:23:3": {
       "id": "block:<fixtures>/typescript/code/functions/recursive.ts:21:3:23:3",
@@ -113,7 +119,8 @@
         "end_line": 23,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/functions/recursive.ts:29:17:34:1": {
       "id": "function:<fixtures>/typescript/code/functions/recursive.ts:29:17:34:1",
@@ -129,7 +136,8 @@
       },
       "child_ids": [
         "block:<fixtures>/typescript/code/functions/recursive.ts:30:3:32:3"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/typescript/code/functions/recursive.ts:30:3:32:3": {
       "id": "block:<fixtures>/typescript/code/functions/recursive.ts:30:3:32:3",
@@ -143,7 +151,8 @@
         "end_line": 32,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/functions/recursive.ts:36:16:41:1": {
       "id": "function:<fixtures>/typescript/code/functions/recursive.ts:36:16:41:1",
@@ -159,7 +168,8 @@
       },
       "child_ids": [
         "block:<fixtures>/typescript/code/functions/recursive.ts:37:3:39:3"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/typescript/code/functions/recursive.ts:37:3:39:3": {
       "id": "block:<fixtures>/typescript/code/functions/recursive.ts:37:3:39:3",
@@ -173,7 +183,8 @@
         "end_line": 39,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "class:<fixtures>/typescript/code/functions/recursive.ts:44:20:48:1": {
       "id": "class:<fixtures>/typescript/code/functions/recursive.ts:44:20:48:1",
@@ -187,7 +198,8 @@
         "end_line": 48,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": "TreeNode"
     },
     "function:<fixtures>/typescript/code/functions/recursive.ts:50:18:55:1": {
       "id": "function:<fixtures>/typescript/code/functions/recursive.ts:50:18:55:1",
@@ -203,7 +215,8 @@
       },
       "child_ids": [
         "block:<fixtures>/typescript/code/functions/recursive.ts:51:3:53:3"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/typescript/code/functions/recursive.ts:51:3:53:3": {
       "id": "block:<fixtures>/typescript/code/functions/recursive.ts:51:3:53:3",
@@ -217,7 +230,8 @@
         "end_line": 53,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {
@@ -331,20 +345,6 @@
               "end_column": 22
             },
             "type": "number[]",
-            "optional": false
-          },
-          {
-            "kind": "parameter",
-            "defining_scope_id": "function:<fixtures>/typescript/code/functions/recursive.ts:20:19:26:1",
-            "symbol_id": "parameter:<fixtures>/typescript/code/functions/recursive.ts:24:20:24:23:rest",
-            "name": "rest",
-            "location": {
-              "file_path": "<fixtures>/typescript/code/functions/recursive.ts",
-              "start_line": 24,
-              "start_column": 20,
-              "end_line": 24,
-              "end_column": 23
-            },
             "optional": false
           }
         ],
@@ -474,16 +474,30 @@
   },
   "classes": {},
   "variables": {
-    "variable:<fixtures>/typescript/code/functions/recursive.ts:24:9:24:24:[first, ...rest]": {
-      "kind": "constant",
-      "symbol_id": "variable:<fixtures>/typescript/code/functions/recursive.ts:24:9:24:24:[first, ...rest]",
-      "name": "[first, ...rest]",
+    "variable:<fixtures>/typescript/code/functions/recursive.ts:24:10:24:14:first": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/typescript/code/functions/recursive.ts:24:10:24:14:first",
+      "name": "first",
       "location": {
         "file_path": "<fixtures>/typescript/code/functions/recursive.ts",
         "start_line": 24,
-        "start_column": 9,
+        "start_column": 10,
         "end_line": 24,
-        "end_column": 24
+        "end_column": 14
+      },
+      "defining_scope_id": "function:<fixtures>/typescript/code/functions/recursive.ts:20:19:26:1",
+      "is_exported": false
+    },
+    "variable:<fixtures>/typescript/code/functions/recursive.ts:24:20:24:23:rest": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/typescript/code/functions/recursive.ts:24:20:24:23:rest",
+      "name": "rest",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/recursive.ts",
+        "start_line": 24,
+        "start_column": 20,
+        "end_line": 24,
+        "end_column": 23
       },
       "defining_scope_id": "function:<fixtures>/typescript/code/functions/recursive.ts:20:19:26:1",
       "is_exported": false

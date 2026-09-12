@@ -19,7 +19,8 @@
         "function:<fixtures>/javascript/code/functions/nested_scopes.js:7:16:9:1",
         "function:<fixtures>/javascript/code/functions/nested_scopes.js:14:23:39:1",
         "function:<fixtures>/javascript/code/functions/nested_scopes.js:45:23:48:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/nested_scopes.js:7:16:9:1": {
       "id": "function:<fixtures>/javascript/code/functions/nested_scopes.js:7:16:9:1",
@@ -33,7 +34,8 @@
         "end_line": 9,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/nested_scopes.js:14:23:39:1": {
       "id": "function:<fixtures>/javascript/code/functions/nested_scopes.js:14:23:39:1",
@@ -50,7 +52,8 @@
       "child_ids": [
         "block:<fixtures>/javascript/code/functions/nested_scopes.js:18:3:21:3",
         "function:<fixtures>/javascript/code/functions/nested_scopes.js:23:25:35:3"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/javascript/code/functions/nested_scopes.js:18:3:21:3": {
       "id": "block:<fixtures>/javascript/code/functions/nested_scopes.js:18:3:21:3",
@@ -64,7 +67,8 @@
         "end_line": 21,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/nested_scopes.js:23:25:35:3": {
       "id": "function:<fixtures>/javascript/code/functions/nested_scopes.js:23:25:35:3",
@@ -80,7 +84,8 @@
       },
       "child_ids": [
         "function:<fixtures>/javascript/code/functions/nested_scopes.js:28:28:31:5"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/nested_scopes.js:28:28:31:5": {
       "id": "function:<fixtures>/javascript/code/functions/nested_scopes.js:28:28:31:5",
@@ -94,7 +99,8 @@
         "end_line": 31,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/nested_scopes.js:45:23:48:1": {
       "id": "function:<fixtures>/javascript/code/functions/nested_scopes.js:45:23:48:1",
@@ -108,7 +114,8 @@
         "end_line": 48,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {

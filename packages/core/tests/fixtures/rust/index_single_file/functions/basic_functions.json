@@ -24,7 +24,8 @@
         "function:<fixtures>/rust/code/functions/basic_functions.rs:25:14:27:1",
         "function:<fixtures>/rust/code/functions/basic_functions.rs:29:18:31:1",
         "function:<fixtures>/rust/code/functions/basic_functions.rs:33:12:36:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/functions/basic_functions.rs:4:9:6:1": {
       "id": "function:<fixtures>/rust/code/functions/basic_functions.rs:4:9:6:1",
@@ -38,7 +39,8 @@
         "end_line": 6,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/functions/basic_functions.rs:8:7:10:1": {
       "id": "function:<fixtures>/rust/code/functions/basic_functions.rs:8:7:10:1",
@@ -52,7 +54,8 @@
         "end_line": 10,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/functions/basic_functions.rs:12:12:14:1": {
       "id": "function:<fixtures>/rust/code/functions/basic_functions.rs:12:12:14:1",
@@ -66,7 +69,8 @@
         "end_line": 14,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/functions/basic_functions.rs:16:11:18:1": {
       "id": "function:<fixtures>/rust/code/functions/basic_functions.rs:16:11:18:1",
@@ -80,7 +84,8 @@
         "end_line": 18,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/functions/basic_functions.rs:20:14:23:1": {
       "id": "function:<fixtures>/rust/code/functions/basic_functions.rs:20:14:23:1",
@@ -94,7 +99,8 @@
         "end_line": 23,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/functions/basic_functions.rs:25:14:27:1": {
       "id": "function:<fixtures>/rust/code/functions/basic_functions.rs:25:14:27:1",
@@ -108,7 +114,8 @@
         "end_line": 27,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/functions/basic_functions.rs:29:18:31:1": {
       "id": "function:<fixtures>/rust/code/functions/basic_functions.rs:29:18:31:1",
@@ -122,7 +129,8 @@
         "end_line": 31,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/functions/basic_functions.rs:33:12:36:1": {
       "id": "function:<fixtures>/rust/code/functions/basic_functions.rs:33:12:36:1",
@@ -136,7 +144,8 @@
         "end_line": 36,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {

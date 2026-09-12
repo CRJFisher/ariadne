@@ -28,7 +28,8 @@
         "block:<fixtures>/rust/code/traits/polymorphic_handler.rs:65:27:73:1",
         "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:77:23:81:1",
         "module:<fixtures>/rust/code/traits/polymorphic_handler.rs:84:11:97:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "class:<fixtures>/rust/code/traits/polymorphic_handler.rs:4:19:7:1": {
       "id": "class:<fixtures>/rust/code/traits/polymorphic_handler.rs:4:19:7:1",
@@ -42,7 +43,8 @@
         "end_line": 7,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": "Handler"
     },
     "class:<fixtures>/rust/code/traits/polymorphic_handler.rs:9:21:11:1": {
       "id": "class:<fixtures>/rust/code/traits/polymorphic_handler.rs:9:21:11:1",
@@ -56,7 +58,8 @@
         "end_line": 11,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": "HandlerA"
     },
     "block:<fixtures>/rust/code/traits/polymorphic_handler.rs:13:15:19:1": {
       "id": "block:<fixtures>/rust/code/traits/polymorphic_handler.rs:13:15:19:1",
@@ -72,7 +75,8 @@
       },
       "child_ids": [
         "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:14:15:18:5"
-      ]
+      ],
+      "self_type_name": "HandlerA"
     },
     "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:14:15:18:5": {
       "id": "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:14:15:18:5",
@@ -86,7 +90,8 @@
         "end_line": 18,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/rust/code/traits/polymorphic_handler.rs:21:27:29:1": {
       "id": "block:<fixtures>/rust/code/traits/polymorphic_handler.rs:21:27:29:1",
@@ -103,7 +108,8 @@
       "child_ids": [
         "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:22:15:24:5",
         "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:26:16:28:5"
-      ]
+      ],
+      "self_type_name": "HandlerA"
     },
     "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:22:15:24:5": {
       "id": "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:22:15:24:5",
@@ -117,7 +123,8 @@
         "end_line": 24,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:26:16:28:5": {
       "id": "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:26:16:28:5",
@@ -131,7 +138,8 @@
         "end_line": 28,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "class:<fixtures>/rust/code/traits/polymorphic_handler.rs:31:21:33:1": {
       "id": "class:<fixtures>/rust/code/traits/polymorphic_handler.rs:31:21:33:1",
@@ -145,7 +153,8 @@
         "end_line": 33,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": "HandlerB"
     },
     "block:<fixtures>/rust/code/traits/polymorphic_handler.rs:35:15:41:1": {
       "id": "block:<fixtures>/rust/code/traits/polymorphic_handler.rs:35:15:41:1",
@@ -161,7 +170,8 @@
       },
       "child_ids": [
         "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:36:15:40:5"
-      ]
+      ],
+      "self_type_name": "HandlerB"
     },
     "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:36:15:40:5": {
       "id": "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:36:15:40:5",
@@ -175,7 +185,8 @@
         "end_line": 40,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/rust/code/traits/polymorphic_handler.rs:43:27:51:1": {
       "id": "block:<fixtures>/rust/code/traits/polymorphic_handler.rs:43:27:51:1",
@@ -192,7 +203,8 @@
       "child_ids": [
         "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:44:15:46:5",
         "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:48:16:50:5"
-      ]
+      ],
+      "self_type_name": "HandlerB"
     },
     "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:44:15:46:5": {
       "id": "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:44:15:46:5",
@@ -206,7 +218,8 @@
         "end_line": 46,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:48:16:50:5": {
       "id": "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:48:16:50:5",
@@ -220,7 +233,8 @@
         "end_line": 50,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "class:<fixtures>/rust/code/traits/polymorphic_handler.rs:53:21:55:1": {
       "id": "class:<fixtures>/rust/code/traits/polymorphic_handler.rs:53:21:55:1",
@@ -234,7 +248,8 @@
         "end_line": 55,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": "HandlerC"
     },
     "block:<fixtures>/rust/code/traits/polymorphic_handler.rs:57:15:63:1": {
       "id": "block:<fixtures>/rust/code/traits/polymorphic_handler.rs:57:15:63:1",
@@ -250,7 +265,8 @@
       },
       "child_ids": [
         "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:58:15:62:5"
-      ]
+      ],
+      "self_type_name": "HandlerC"
     },
     "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:58:15:62:5": {
       "id": "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:58:15:62:5",
@@ -264,7 +280,8 @@
         "end_line": 62,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/rust/code/traits/polymorphic_handler.rs:65:27:73:1": {
       "id": "block:<fixtures>/rust/code/traits/polymorphic_handler.rs:65:27:73:1",
@@ -281,7 +298,8 @@
       "child_ids": [
         "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:66:15:68:5",
         "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:70:16:72:5"
-      ]
+      ],
+      "self_type_name": "HandlerC"
     },
     "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:66:15:68:5": {
       "id": "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:66:15:68:5",
@@ -295,7 +313,8 @@
         "end_line": 68,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:70:16:72:5": {
       "id": "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:70:16:72:5",
@@ -309,7 +328,8 @@
         "end_line": 72,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:77:23:81:1": {
       "id": "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:77:23:81:1",
@@ -323,7 +343,8 @@
         "end_line": 81,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "module:<fixtures>/rust/code/traits/polymorphic_handler.rs:84:11:97:1": {
       "id": "module:<fixtures>/rust/code/traits/polymorphic_handler.rs:84:11:97:1",
@@ -339,7 +360,8 @@
       },
       "child_ids": [
         "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:88:33:96:5"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:88:33:96:5": {
       "id": "function:<fixtures>/rust/code/traits/polymorphic_handler.rs:88:33:96:5",
@@ -353,7 +375,8 @@
         "end_line": 96,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {
@@ -944,10 +967,10 @@
   },
   "types": {},
   "imported_symbols": {
-    "import:<fixtures>/rust/code/traits/polymorphic_handler.rs:85:*": {
+    "import:<fixtures>/rust/code/traits/polymorphic_handler.rs:85:super": {
       "kind": "import",
-      "symbol_id": "import:<fixtures>/rust/code/traits/polymorphic_handler.rs:85:*",
-      "name": "*",
+      "symbol_id": "import:<fixtures>/rust/code/traits/polymorphic_handler.rs:85:super",
+      "name": "super",
       "location": {
         "file_path": "<fixtures>/rust/code/traits/polymorphic_handler.rs",
         "start_line": 85,
@@ -957,7 +980,7 @@
       },
       "defining_scope_id": "module:<fixtures>/rust/code/traits/polymorphic_handler.rs:84:11:97:1",
       "import_path": "super",
-      "import_kind": "namespace"
+      "import_kind": "wildcard"
     }
   },
   "references": [

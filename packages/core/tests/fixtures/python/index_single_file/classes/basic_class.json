@@ -18,7 +18,8 @@
       "child_ids": [
         "class:<fixtures>/python/code/classes/basic_class.py:6:12:19:44",
         "class:<fixtures>/python/code/classes/basic_class.py:22:15:32:25"
-      ]
+      ],
+      "self_type_name": null
     },
     "class:<fixtures>/python/code/classes/basic_class.py:6:12:19:44": {
       "id": "class:<fixtures>/python/code/classes/basic_class.py:6:12:19:44",
@@ -37,7 +38,8 @@
         "method:<fixtures>/python/code/classes/basic_class.py:18:17:19:44",
         "method:<fixtures>/python/code/classes/basic_class.py:15:19:16:27",
         "method:<fixtures>/python/code/classes/basic_class.py:12:17:13:26"
-      ]
+      ],
+      "self_type_name": "User"
     },
     "class:<fixtures>/python/code/classes/basic_class.py:22:15:32:25": {
       "id": "class:<fixtures>/python/code/classes/basic_class.py:22:15:32:25",
@@ -55,7 +57,8 @@
         "constructor:<fixtures>/python/code/classes/basic_class.py:23:17:26:26",
         "method:<fixtures>/python/code/classes/basic_class.py:28:23:29:48",
         "method:<fixtures>/python/code/classes/basic_class.py:31:18:32:25"
-      ]
+      ],
+      "self_type_name": "Product"
     },
     "constructor:<fixtures>/python/code/classes/basic_class.py:7:17:10:26": {
       "id": "constructor:<fixtures>/python/code/classes/basic_class.py:7:17:10:26",
@@ -69,7 +72,8 @@
         "end_line": 10,
         "end_column": 26
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "constructor:<fixtures>/python/code/classes/basic_class.py:23:17:26:26": {
       "id": "constructor:<fixtures>/python/code/classes/basic_class.py:23:17:26:26",
@@ -83,7 +87,8 @@
         "end_line": 26,
         "end_column": 26
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/basic_class.py:28:23:29:48": {
       "id": "method:<fixtures>/python/code/classes/basic_class.py:28:23:29:48",
@@ -97,7 +102,8 @@
         "end_line": 29,
         "end_column": 48
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/basic_class.py:18:17:19:44": {
       "id": "method:<fixtures>/python/code/classes/basic_class.py:18:17:19:44",
@@ -111,7 +117,8 @@
         "end_line": 19,
         "end_column": 44
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/basic_class.py:15:19:16:27": {
       "id": "method:<fixtures>/python/code/classes/basic_class.py:15:19:16:27",
@@ -125,7 +132,8 @@
         "end_line": 16,
         "end_column": 27
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/basic_class.py:12:17:13:26": {
       "id": "method:<fixtures>/python/code/classes/basic_class.py:12:17:13:26",
@@ -139,7 +147,8 @@
         "end_line": 13,
         "end_column": 26
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/basic_class.py:31:18:32:25": {
       "id": "method:<fixtures>/python/code/classes/basic_class.py:31:18:32:25",
@@ -153,7 +162,8 @@
         "end_line": 32,
         "end_column": 25
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {},

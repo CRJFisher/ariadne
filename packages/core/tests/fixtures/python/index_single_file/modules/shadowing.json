@@ -17,7 +17,8 @@
       },
       "child_ids": [
         "function:<fixtures>/python/code/modules/shadowing.py:10:11:12:25"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/modules/shadowing.py:10:11:12:25": {
       "id": "function:<fixtures>/python/code/modules/shadowing.py:10:11:12:25",
@@ -31,7 +32,8 @@
         "end_line": 12,
         "end_column": 25
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {

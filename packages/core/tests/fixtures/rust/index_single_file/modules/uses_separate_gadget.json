@@ -1,10 +1,10 @@
 {
   "file_path": "<fixtures>/rust/code/modules/uses_separate_gadget.rs",
   "language": "rust",
-  "root_scope_id": "module:<fixtures>/rust/code/modules/uses_separate_gadget.rs:1:1:12:0",
+  "root_scope_id": "module:<fixtures>/rust/code/modules/uses_separate_gadget.rs:1:1:11:0",
   "scopes": {
-    "module:<fixtures>/rust/code/modules/uses_separate_gadget.rs:1:1:12:0": {
-      "id": "module:<fixtures>/rust/code/modules/uses_separate_gadget.rs:1:1:12:0",
+    "module:<fixtures>/rust/code/modules/uses_separate_gadget.rs:1:1:11:0": {
+      "id": "module:<fixtures>/rust/code/modules/uses_separate_gadget.rs:1:1:11:0",
       "parent_id": null,
       "name": null,
       "type": "module",
@@ -12,97 +12,115 @@
         "file_path": "<fixtures>/rust/code/modules/uses_separate_gadget.rs",
         "start_line": 1,
         "start_column": 1,
-        "end_line": 12,
+        "end_line": 11,
         "end_column": 0
       },
       "child_ids": [
-        "function:<fixtures>/rust/code/modules/uses_separate_gadget.rs:9:7:11:1"
-      ]
+        "function:<fixtures>/rust/code/modules/uses_separate_gadget.rs:8:7:10:1"
+      ],
+      "self_type_name": null
     },
-    "function:<fixtures>/rust/code/modules/uses_separate_gadget.rs:9:7:11:1": {
-      "id": "function:<fixtures>/rust/code/modules/uses_separate_gadget.rs:9:7:11:1",
-      "parent_id": "module:<fixtures>/rust/code/modules/uses_separate_gadget.rs:1:1:12:0",
+    "function:<fixtures>/rust/code/modules/uses_separate_gadget.rs:8:7:10:1": {
+      "id": "function:<fixtures>/rust/code/modules/uses_separate_gadget.rs:8:7:10:1",
+      "parent_id": "module:<fixtures>/rust/code/modules/uses_separate_gadget.rs:1:1:11:0",
       "name": "run",
       "type": "function",
       "location": {
         "file_path": "<fixtures>/rust/code/modules/uses_separate_gadget.rs",
-        "start_line": 9,
+        "start_line": 8,
         "start_column": 7,
-        "end_line": 11,
+        "end_line": 10,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {
-    "function:<fixtures>/rust/code/modules/uses_separate_gadget.rs:9:1:11:1:run": {
+    "function:<fixtures>/rust/code/modules/uses_separate_gadget.rs:8:1:10:1:run": {
       "kind": "function",
-      "symbol_id": "function:<fixtures>/rust/code/modules/uses_separate_gadget.rs:9:1:11:1:run",
+      "symbol_id": "function:<fixtures>/rust/code/modules/uses_separate_gadget.rs:8:1:10:1:run",
       "name": "run",
       "location": {
         "file_path": "<fixtures>/rust/code/modules/uses_separate_gadget.rs",
-        "start_line": 9,
+        "start_line": 8,
         "start_column": 4,
-        "end_line": 9,
+        "end_line": 8,
         "end_column": 6
       },
-      "defining_scope_id": "module:<fixtures>/rust/code/modules/uses_separate_gadget.rs:1:1:12:0",
+      "defining_scope_id": "module:<fixtures>/rust/code/modules/uses_separate_gadget.rs:1:1:11:0",
       "is_exported": false,
       "signature": {
         "parameters": []
       },
-      "body_scope_id": "function:<fixtures>/rust/code/modules/uses_separate_gadget.rs:9:7:11:1"
+      "body_scope_id": "function:<fixtures>/rust/code/modules/uses_separate_gadget.rs:8:7:10:1"
     }
   },
   "classes": {},
   "variables": {
-    "variable:<fixtures>/rust/code/modules/uses_separate_gadget.rs:10:9:10:10:_g": {
+    "variable:<fixtures>/rust/code/modules/uses_separate_gadget.rs:9:9:9:10:_g": {
       "kind": "variable",
-      "symbol_id": "variable:<fixtures>/rust/code/modules/uses_separate_gadget.rs:10:9:10:10:_g",
+      "symbol_id": "variable:<fixtures>/rust/code/modules/uses_separate_gadget.rs:9:9:9:10:_g",
       "name": "_g",
       "location": {
         "file_path": "<fixtures>/rust/code/modules/uses_separate_gadget.rs",
-        "start_line": 10,
+        "start_line": 9,
         "start_column": 9,
-        "end_line": 10,
+        "end_line": 9,
         "end_column": 10
       },
-      "defining_scope_id": "function:<fixtures>/rust/code/modules/uses_separate_gadget.rs:9:7:11:1",
+      "defining_scope_id": "function:<fixtures>/rust/code/modules/uses_separate_gadget.rs:8:7:10:1",
       "is_exported": false
     }
   },
   "interfaces": {},
   "enums": {},
   "namespaces": {
-    "module:<fixtures>/rust/code/modules/uses_separate_gadget.rs:7:5:7:10:<module>": {
+    "module:<fixtures>/rust/code/modules/uses_separate_gadget.rs:6:5:6:10:<module>": {
       "kind": "namespace",
-      "symbol_id": "module:<fixtures>/rust/code/modules/uses_separate_gadget.rs:7:5:7:10:<module>",
+      "symbol_id": "module:<fixtures>/rust/code/modules/uses_separate_gadget.rs:6:5:6:10:<module>",
       "name": "gadget",
       "location": {
         "file_path": "<fixtures>/rust/code/modules/uses_separate_gadget.rs",
-        "start_line": 7,
+        "start_line": 6,
         "start_column": 5,
-        "end_line": 7,
+        "end_line": 6,
         "end_column": 10
       },
-      "defining_scope_id": "module:<fixtures>/rust/code/modules/uses_separate_gadget.rs:1:1:12:0",
+      "defining_scope_id": "module:<fixtures>/rust/code/modules/uses_separate_gadget.rs:1:1:11:0",
       "is_exported": false
     }
   },
   "types": {},
-  "imported_symbols": {},
+  "imported_symbols": {
+    "import:<fixtures>/rust/code/modules/uses_separate_gadget.rs:6:1:gadget": {
+      "kind": "import",
+      "symbol_id": "import:<fixtures>/rust/code/modules/uses_separate_gadget.rs:6:1:gadget",
+      "name": "gadget",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/uses_separate_gadget.rs",
+        "start_line": 6,
+        "start_column": 1,
+        "end_line": 6,
+        "end_column": 11
+      },
+      "defining_scope_id": "module:<fixtures>/rust/code/modules/uses_separate_gadget.rs:1:1:11:0",
+      "import_path": "self::gadget",
+      "import_kind": "namespace"
+    }
+  },
   "references": [
     {
       "kind": "variable_reference",
       "name": "gadget",
       "location": {
         "file_path": "<fixtures>/rust/code/modules/uses_separate_gadget.rs",
-        "start_line": 7,
+        "start_line": 6,
         "start_column": 5,
-        "end_line": 7,
+        "end_line": 6,
         "end_column": 10
       },
-      "scope_id": "module:<fixtures>/rust/code/modules/uses_separate_gadget.rs:1:1:12:0",
+      "scope_id": "module:<fixtures>/rust/code/modules/uses_separate_gadget.rs:1:1:11:0",
       "access_type": "read"
     },
     {
@@ -110,12 +128,12 @@
       "name": "run",
       "location": {
         "file_path": "<fixtures>/rust/code/modules/uses_separate_gadget.rs",
-        "start_line": 9,
+        "start_line": 8,
         "start_column": 4,
-        "end_line": 9,
+        "end_line": 8,
         "end_column": 6
       },
-      "scope_id": "module:<fixtures>/rust/code/modules/uses_separate_gadget.rs:1:1:12:0",
+      "scope_id": "module:<fixtures>/rust/code/modules/uses_separate_gadget.rs:1:1:11:0",
       "access_type": "read"
     },
     {
@@ -123,12 +141,12 @@
       "name": "_g",
       "location": {
         "file_path": "<fixtures>/rust/code/modules/uses_separate_gadget.rs",
-        "start_line": 10,
+        "start_line": 9,
         "start_column": 9,
-        "end_line": 10,
+        "end_line": 9,
         "end_column": 10
       },
-      "scope_id": "function:<fixtures>/rust/code/modules/uses_separate_gadget.rs:9:7:11:1",
+      "scope_id": "function:<fixtures>/rust/code/modules/uses_separate_gadget.rs:8:7:10:1",
       "access_type": "read"
     },
     {
@@ -136,17 +154,17 @@
       "name": "Gadget",
       "location": {
         "file_path": "<fixtures>/rust/code/modules/uses_separate_gadget.rs",
-        "start_line": 10,
+        "start_line": 9,
         "start_column": 14,
-        "end_line": 10,
+        "end_line": 9,
         "end_column": 34
       },
-      "scope_id": "function:<fixtures>/rust/code/modules/uses_separate_gadget.rs:9:7:11:1",
+      "scope_id": "function:<fixtures>/rust/code/modules/uses_separate_gadget.rs:8:7:10:1",
       "construct_target": {
         "file_path": "<fixtures>/rust/code/modules/uses_separate_gadget.rs",
-        "start_line": 10,
+        "start_line": 9,
         "start_column": 9,
-        "end_line": 10,
+        "end_line": 9,
         "end_column": 10
       },
       "path_prefix": [
@@ -160,12 +178,12 @@
       "name": "gadget",
       "location": {
         "file_path": "<fixtures>/rust/code/modules/uses_separate_gadget.rs",
-        "start_line": 10,
+        "start_line": 9,
         "start_column": 21,
-        "end_line": 10,
+        "end_line": 9,
         "end_column": 26
       },
-      "scope_id": "function:<fixtures>/rust/code/modules/uses_separate_gadget.rs:9:7:11:1",
+      "scope_id": "function:<fixtures>/rust/code/modules/uses_separate_gadget.rs:8:7:10:1",
       "access_type": "read"
     },
     {
@@ -173,12 +191,12 @@
       "name": "Gadget",
       "location": {
         "file_path": "<fixtures>/rust/code/modules/uses_separate_gadget.rs",
-        "start_line": 10,
+        "start_line": 9,
         "start_column": 29,
-        "end_line": 10,
+        "end_line": 9,
         "end_column": 34
       },
-      "scope_id": "function:<fixtures>/rust/code/modules/uses_separate_gadget.rs:9:7:11:1",
+      "scope_id": "function:<fixtures>/rust/code/modules/uses_separate_gadget.rs:8:7:10:1",
       "access_type": "read"
     },
     {
@@ -186,12 +204,12 @@
       "name": "new",
       "location": {
         "file_path": "<fixtures>/rust/code/modules/uses_separate_gadget.rs",
-        "start_line": 10,
+        "start_line": 9,
         "start_column": 37,
-        "end_line": 10,
+        "end_line": 9,
         "end_column": 39
       },
-      "scope_id": "function:<fixtures>/rust/code/modules/uses_separate_gadget.rs:9:7:11:1",
+      "scope_id": "function:<fixtures>/rust/code/modules/uses_separate_gadget.rs:8:7:10:1",
       "access_type": "read"
     }
   ]

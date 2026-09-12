@@ -25,7 +25,8 @@
         "block:<fixtures>/rust/code/functions/variable_shadowing.rs:140:19:159:1",
         "function:<fixtures>/rust/code/functions/variable_shadowing.rs:161:12:177:1",
         "function:<fixtures>/rust/code/functions/variable_shadowing.rs:180:33:191:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/functions/variable_shadowing.rs:9:16:11:1": {
       "id": "function:<fixtures>/rust/code/functions/variable_shadowing.rs:9:16:11:1",
@@ -39,7 +40,8 @@
         "end_line": 11,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/functions/variable_shadowing.rs:16:27:61:1": {
       "id": "function:<fixtures>/rust/code/functions/variable_shadowing.rs:16:27:61:1",
@@ -55,7 +57,8 @@
       },
       "child_ids": [
         "function:<fixtures>/rust/code/functions/variable_shadowing.rs:30:22:55:5"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/functions/variable_shadowing.rs:30:22:55:5": {
       "id": "function:<fixtures>/rust/code/functions/variable_shadowing.rs:30:22:55:5",
@@ -69,7 +72,8 @@
         "end_line": 55,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/functions/variable_shadowing.rs:63:26:87:1": {
       "id": "function:<fixtures>/rust/code/functions/variable_shadowing.rs:63:26:87:1",
@@ -85,7 +89,8 @@
       },
       "child_ids": [
         "function:<fixtures>/rust/code/functions/variable_shadowing.rs:69:19:81:5"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/functions/variable_shadowing.rs:69:19:81:5": {
       "id": "function:<fixtures>/rust/code/functions/variable_shadowing.rs:69:19:81:5",
@@ -101,7 +106,8 @@
       },
       "child_ids": [
         "function:<fixtures>/rust/code/functions/variable_shadowing.rs:74:22:77:9"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/functions/variable_shadowing.rs:74:22:77:9": {
       "id": "function:<fixtures>/rust/code/functions/variable_shadowing.rs:74:22:77:9",
@@ -115,7 +121,8 @@
         "end_line": 77,
         "end_column": 9
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/functions/variable_shadowing.rs:89:24:111:1": {
       "id": "function:<fixtures>/rust/code/functions/variable_shadowing.rs:89:24:111:1",
@@ -131,7 +138,8 @@
       },
       "child_ids": [
         "block:<fixtures>/rust/code/functions/variable_shadowing.rs:94:18:108:5"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/rust/code/functions/variable_shadowing.rs:94:18:108:5": {
       "id": "block:<fixtures>/rust/code/functions/variable_shadowing.rs:94:18:108:5",
@@ -147,7 +155,8 @@
       },
       "child_ids": [
         "block:<fixtures>/rust/code/functions/variable_shadowing.rs:95:9:107:9"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/rust/code/functions/variable_shadowing.rs:95:9:107:9": {
       "id": "block:<fixtures>/rust/code/functions/variable_shadowing.rs:95:9:107:9",
@@ -161,7 +170,8 @@
         "end_line": 107,
         "end_column": 9
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/functions/variable_shadowing.rs:113:23:134:1": {
       "id": "function:<fixtures>/rust/code/functions/variable_shadowing.rs:113:23:134:1",
@@ -177,7 +187,8 @@
       },
       "child_ids": [
         "block:<fixtures>/rust/code/functions/variable_shadowing.rs:118:5:131:5"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/rust/code/functions/variable_shadowing.rs:118:5:131:5": {
       "id": "block:<fixtures>/rust/code/functions/variable_shadowing.rs:118:5:131:5",
@@ -191,7 +202,8 @@
         "end_line": 131,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "class:<fixtures>/rust/code/functions/variable_shadowing.rs:136:21:138:1": {
       "id": "class:<fixtures>/rust/code/functions/variable_shadowing.rs:136:21:138:1",
@@ -205,7 +217,8 @@
         "end_line": 138,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": "ShadowStruct"
     },
     "block:<fixtures>/rust/code/functions/variable_shadowing.rs:140:19:159:1": {
       "id": "block:<fixtures>/rust/code/functions/variable_shadowing.rs:140:19:159:1",
@@ -222,7 +235,8 @@
       "child_ids": [
         "function:<fixtures>/rust/code/functions/variable_shadowing.rs:141:11:143:5",
         "function:<fixtures>/rust/code/functions/variable_shadowing.rs:145:29:158:5"
-      ]
+      ],
+      "self_type_name": "ShadowStruct"
     },
     "function:<fixtures>/rust/code/functions/variable_shadowing.rs:141:11:143:5": {
       "id": "function:<fixtures>/rust/code/functions/variable_shadowing.rs:141:11:143:5",
@@ -236,7 +250,8 @@
         "end_line": 143,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/functions/variable_shadowing.rs:145:29:158:5": {
       "id": "function:<fixtures>/rust/code/functions/variable_shadowing.rs:145:29:158:5",
@@ -250,7 +265,8 @@
         "end_line": 158,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/functions/variable_shadowing.rs:161:12:177:1": {
       "id": "function:<fixtures>/rust/code/functions/variable_shadowing.rs:161:12:177:1",
@@ -264,7 +280,8 @@
         "end_line": 177,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/functions/variable_shadowing.rs:180:33:191:1": {
       "id": "function:<fixtures>/rust/code/functions/variable_shadowing.rs:180:33:191:1",
@@ -278,7 +295,8 @@
         "end_line": 191,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {
@@ -392,6 +410,88 @@
       },
       "return_type": "String",
       "body_scope_id": "function:<fixtures>/rust/code/functions/variable_shadowing.rs:63:26:87:1"
+    },
+    "function:<fixtures>/rust/code/functions/variable_shadowing.rs:69:19:81:5:<anonymous>": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/rust/code/functions/variable_shadowing.rs:69:19:81:5:<anonymous>",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/rust/code/functions/variable_shadowing.rs",
+        "start_line": 69,
+        "start_column": 19,
+        "end_line": 81,
+        "end_column": 5
+      },
+      "defining_scope_id": "function:<fixtures>/rust/code/functions/variable_shadowing.rs:69:19:81:5",
+      "is_exported": false,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/rust/code/functions/variable_shadowing.rs:69:19:81:5",
+            "symbol_id": "parameter:<fixtures>/rust/code/functions/variable_shadowing.rs:69:20:69:24:value",
+            "name": "value",
+            "location": {
+              "file_path": "<fixtures>/rust/code/functions/variable_shadowing.rs",
+              "start_line": 69,
+              "start_column": 20,
+              "end_line": 69,
+              "end_column": 24
+            },
+            "type": "&str",
+            "optional": false
+          }
+        ],
+        "return_type": "String"
+      },
+      "return_type": "String",
+      "body_scope_id": "function:<fixtures>/rust/code/functions/variable_shadowing.rs:69:19:81:5",
+      "callback_context": {
+        "is_callback": false,
+        "receiver_is_external": null,
+        "receiver_location": null
+      }
+    },
+    "function:<fixtures>/rust/code/functions/variable_shadowing.rs:74:22:77:9:<anonymous>": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/rust/code/functions/variable_shadowing.rs:74:22:77:9:<anonymous>",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/rust/code/functions/variable_shadowing.rs",
+        "start_line": 74,
+        "start_column": 22,
+        "end_line": 77,
+        "end_column": 9
+      },
+      "defining_scope_id": "function:<fixtures>/rust/code/functions/variable_shadowing.rs:74:22:77:9",
+      "is_exported": false,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/rust/code/functions/variable_shadowing.rs:74:22:77:9",
+            "symbol_id": "parameter:<fixtures>/rust/code/functions/variable_shadowing.rs:74:23:74:28:helper",
+            "name": "helper",
+            "location": {
+              "file_path": "<fixtures>/rust/code/functions/variable_shadowing.rs",
+              "start_line": 74,
+              "start_column": 23,
+              "end_line": 74,
+              "end_column": 28
+            },
+            "type": "i32",
+            "optional": false
+          }
+        ],
+        "return_type": "String"
+      },
+      "return_type": "String",
+      "body_scope_id": "function:<fixtures>/rust/code/functions/variable_shadowing.rs:74:22:77:9",
+      "callback_context": {
+        "is_callback": false,
+        "receiver_is_external": null,
+        "receiver_location": null
+      }
     },
     "function:<fixtures>/rust/code/functions/variable_shadowing.rs:89:1:111:1:test_match_shadowing": {
       "kind": "function",
@@ -920,6 +1020,20 @@
       "defining_scope_id": "function:<fixtures>/rust/code/functions/variable_shadowing.rs:89:24:111:1",
       "is_exported": false
     },
+    "variable:<fixtures>/rust/code/functions/variable_shadowing.rs:95:9:95:14:helper": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/rust/code/functions/variable_shadowing.rs:95:9:95:14:helper",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/rust/code/functions/variable_shadowing.rs",
+        "start_line": 95,
+        "start_column": 9,
+        "end_line": 95,
+        "end_column": 14
+      },
+      "defining_scope_id": "block:<fixtures>/rust/code/functions/variable_shadowing.rs:95:9:107:9",
+      "is_exported": false
+    },
     "variable:<fixtures>/rust/code/functions/variable_shadowing.rs:97:17:97:25:processed": {
       "kind": "variable",
       "symbol_id": "variable:<fixtures>/rust/code/functions/variable_shadowing.rs:97:17:97:25:processed",
@@ -1303,6 +1417,21 @@
   },
   "types": {},
   "imported_symbols": {
+    "import:<fixtures>/rust/code/functions/variable_shadowing.rs:4:1:utils": {
+      "kind": "import",
+      "symbol_id": "import:<fixtures>/rust/code/functions/variable_shadowing.rs:4:1:utils",
+      "name": "utils",
+      "location": {
+        "file_path": "<fixtures>/rust/code/functions/variable_shadowing.rs",
+        "start_line": 4,
+        "start_column": 1,
+        "end_line": 4,
+        "end_column": 10
+      },
+      "defining_scope_id": "module:<fixtures>/rust/code/functions/variable_shadowing.rs:1:1:191:1",
+      "import_path": "self::utils",
+      "import_kind": "namespace"
+    },
     "import:<fixtures>/rust/code/functions/variable_shadowing.rs:6:helper": {
       "kind": "import",
       "symbol_id": "import:<fixtures>/rust/code/functions/variable_shadowing.rs:6:helper",

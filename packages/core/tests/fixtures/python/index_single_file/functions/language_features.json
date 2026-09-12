@@ -35,7 +35,8 @@
         "block:<fixtures>/python/code/functions/language_features.py:35:21:35:54",
         "block:<fixtures>/python/code/functions/language_features.py:116:13:116:45",
         "block:<fixtures>/python/code/functions/language_features.py:113:15:113:43"
-      ]
+      ],
+      "self_type_name": null
     },
     "class:<fixtures>/python/code/functions/language_features.py:72:23:95:44": {
       "id": "class:<fixtures>/python/code/functions/language_features.py:72:23:95:44",
@@ -54,7 +55,8 @@
         "method:<fixtures>/python/code/functions/language_features.py:87:17:91:28",
         "constructor:<fixtures>/python/code/functions/language_features.py:75:17:78:28",
         "method:<fixtures>/python/code/functions/language_features.py:93:16:95:44"
-      ]
+      ],
+      "self_type_name": "ResourceManager"
     },
     "function:<fixtures>/python/code/functions/language_features.py:99:19:108:33": {
       "id": "function:<fixtures>/python/code/functions/language_features.py:99:19:108:33",
@@ -70,7 +72,8 @@
       },
       "child_ids": [
         "block:<fixtures>/python/code/functions/language_features.py:104:5:108:33"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/python/code/functions/language_features.py:130:17:139:1": {
       "id": "block:<fixtures>/python/code/functions/language_features.py:130:17:139:1",
@@ -84,7 +87,8 @@
         "end_line": 139,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/language_features.py:61:24:68:23": {
       "id": "function:<fixtures>/python/code/functions/language_features.py:61:24:68:23",
@@ -100,7 +104,8 @@
       },
       "child_ids": [
         "block:<fixtures>/python/code/functions/language_features.py:64:5:68:23"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/language_features.py:52:21:58:23": {
       "id": "function:<fixtures>/python/code/functions/language_features.py:52:21:58:23",
@@ -116,7 +121,8 @@
       },
       "child_ids": [
         "block:<fixtures>/python/code/functions/language_features.py:54:5:58:23"
-      ]
+      ],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/functions/language_features.py:80:18:85:19": {
       "id": "method:<fixtures>/python/code/functions/language_features.py:80:18:85:19",
@@ -130,7 +136,8 @@
         "end_line": 85,
         "end_column": 19
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/python/code/functions/language_features.py:104:5:108:33": {
       "id": "block:<fixtures>/python/code/functions/language_features.py:104:5:108:33",
@@ -146,7 +153,8 @@
       },
       "child_ids": [
         "block:<fixtures>/python/code/functions/language_features.py:106:5:108:33"
-      ]
+      ],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/functions/language_features.py:87:17:91:28": {
       "id": "method:<fixtures>/python/code/functions/language_features.py:87:17:91:28",
@@ -160,7 +168,8 @@
         "end_line": 91,
         "end_column": 28
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/python/code/functions/language_features.py:54:5:58:23": {
       "id": "block:<fixtures>/python/code/functions/language_features.py:54:5:58:23",
@@ -174,7 +183,8 @@
         "end_line": 58,
         "end_column": 23
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/python/code/functions/language_features.py:64:5:68:23": {
       "id": "block:<fixtures>/python/code/functions/language_features.py:64:5:68:23",
@@ -188,7 +198,8 @@
         "end_line": 68,
         "end_column": 23
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/python/code/functions/language_features.py:124:1:127:43": {
       "id": "block:<fixtures>/python/code/functions/language_features.py:124:1:127:43",
@@ -202,7 +213,8 @@
         "end_line": 127,
         "end_column": 43
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/python/code/functions/language_features.py:119:1:122:37": {
       "id": "block:<fixtures>/python/code/functions/language_features.py:119:1:122:37",
@@ -216,7 +228,8 @@
         "end_line": 122,
         "end_column": 37
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "constructor:<fixtures>/python/code/functions/language_features.py:75:17:78:28": {
       "id": "constructor:<fixtures>/python/code/functions/language_features.py:75:17:78:28",
@@ -230,7 +243,8 @@
         "end_line": 78,
         "end_column": 28
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/python/code/functions/language_features.py:142:17:145:1": {
       "id": "block:<fixtures>/python/code/functions/language_features.py:142:17:145:1",
@@ -246,7 +260,8 @@
       },
       "child_ids": [
         "function:<fixtures>/python/code/functions/language_features.py:143:6:143:46"
-      ]
+      ],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/functions/language_features.py:93:16:95:44": {
       "id": "method:<fixtures>/python/code/functions/language_features.py:93:16:95:44",
@@ -260,7 +275,8 @@
         "end_line": 95,
         "end_column": 44
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/python/code/functions/language_features.py:106:5:108:33": {
       "id": "block:<fixtures>/python/code/functions/language_features.py:106:5:108:33",
@@ -274,7 +290,8 @@
         "end_line": 108,
         "end_column": 33
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/language_features.py:11:11:13:26": {
       "id": "function:<fixtures>/python/code/functions/language_features.py:11:11:13:26",
@@ -288,7 +305,8 @@
         "end_line": 13,
         "end_column": 26
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/language_features.py:21:18:23:24": {
       "id": "function:<fixtures>/python/code/functions/language_features.py:21:18:23:24",
@@ -302,7 +320,8 @@
         "end_line": 23,
         "end_column": 24
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/language_features.py:26:21:28:20": {
       "id": "function:<fixtures>/python/code/functions/language_features.py:26:21:28:20",
@@ -316,7 +335,8 @@
         "end_line": 28,
         "end_column": 20
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/language_features.py:16:17:18:19": {
       "id": "function:<fixtures>/python/code/functions/language_features.py:16:17:18:19",
@@ -330,7 +350,8 @@
         "end_line": 18,
         "end_column": 19
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/python/code/functions/language_features.py:45:15:45:74": {
       "id": "block:<fixtures>/python/code/functions/language_features.py:45:15:45:74",
@@ -344,7 +365,8 @@
         "end_line": 45,
         "end_column": 74
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/python/code/functions/language_features.py:38:18:38:71": {
       "id": "block:<fixtures>/python/code/functions/language_features.py:38:18:38:71",
@@ -358,7 +380,8 @@
         "end_line": 38,
         "end_column": 71
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/python/code/functions/language_features.py:42:23:42:76": {
       "id": "block:<fixtures>/python/code/functions/language_features.py:42:23:42:76",
@@ -372,7 +395,8 @@
         "end_line": 42,
         "end_column": 76
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/python/code/functions/language_features.py:48:17:48:70": {
       "id": "block:<fixtures>/python/code/functions/language_features.py:48:17:48:70",
@@ -386,7 +410,8 @@
         "end_line": 48,
         "end_column": 70
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/language_features.py:143:6:143:46": {
       "id": "function:<fixtures>/python/code/functions/language_features.py:143:6:143:46",
@@ -400,7 +425,8 @@
         "end_line": 143,
         "end_column": 46
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/python/code/functions/language_features.py:35:21:35:54": {
       "id": "block:<fixtures>/python/code/functions/language_features.py:35:21:35:54",
@@ -414,7 +440,8 @@
         "end_line": 35,
         "end_column": 54
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/python/code/functions/language_features.py:116:13:116:45": {
       "id": "block:<fixtures>/python/code/functions/language_features.py:116:13:116:45",
@@ -428,7 +455,8 @@
         "end_line": 116,
         "end_column": 45
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/python/code/functions/language_features.py:113:15:113:43": {
       "id": "block:<fixtures>/python/code/functions/language_features.py:113:15:113:43",
@@ -442,7 +470,8 @@
         "end_line": 113,
         "end_column": 43
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {

@@ -19,7 +19,8 @@
         "class:<fixtures>/python/code/classes/inheritance.py:17:19:26:44",
         "class:<fixtures>/python/code/classes/inheritance.py:6:14:14:53",
         "class:<fixtures>/python/code/classes/inheritance.py:29:19:34:41"
-      ]
+      ],
+      "self_type_name": null
     },
     "class:<fixtures>/python/code/classes/inheritance.py:17:19:26:44": {
       "id": "class:<fixtures>/python/code/classes/inheritance.py:17:19:26:44",
@@ -37,7 +38,8 @@
         "constructor:<fixtures>/python/code/classes/inheritance.py:18:17:20:26",
         "method:<fixtures>/python/code/classes/inheritance.py:25:14:26:44",
         "method:<fixtures>/python/code/classes/inheritance.py:22:14:23:22"
-      ]
+      ],
+      "self_type_name": "Dog"
     },
     "class:<fixtures>/python/code/classes/inheritance.py:6:14:14:53": {
       "id": "class:<fixtures>/python/code/classes/inheritance.py:6:14:14:53",
@@ -55,7 +57,8 @@
         "method:<fixtures>/python/code/classes/inheritance.py:10:14:11:68",
         "method:<fixtures>/python/code/classes/inheritance.py:13:13:14:53",
         "constructor:<fixtures>/python/code/classes/inheritance.py:7:17:8:24"
-      ]
+      ],
+      "self_type_name": "Animal"
     },
     "class:<fixtures>/python/code/classes/inheritance.py:29:19:34:41": {
       "id": "class:<fixtures>/python/code/classes/inheritance.py:29:19:34:41",
@@ -72,7 +75,8 @@
       "child_ids": [
         "method:<fixtures>/python/code/classes/inheritance.py:33:14:34:41",
         "method:<fixtures>/python/code/classes/inheritance.py:30:14:31:22"
-      ]
+      ],
+      "self_type_name": "Cat"
     },
     "constructor:<fixtures>/python/code/classes/inheritance.py:18:17:20:26": {
       "id": "constructor:<fixtures>/python/code/classes/inheritance.py:18:17:20:26",
@@ -86,7 +90,8 @@
         "end_line": 20,
         "end_column": 26
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/inheritance.py:10:14:11:68": {
       "id": "method:<fixtures>/python/code/classes/inheritance.py:10:14:11:68",
@@ -100,7 +105,8 @@
         "end_line": 11,
         "end_column": 68
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/inheritance.py:13:13:14:53": {
       "id": "method:<fixtures>/python/code/classes/inheritance.py:13:13:14:53",
@@ -114,7 +120,8 @@
         "end_line": 14,
         "end_column": 53
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/inheritance.py:25:14:26:44": {
       "id": "method:<fixtures>/python/code/classes/inheritance.py:25:14:26:44",
@@ -128,7 +135,8 @@
         "end_line": 26,
         "end_column": 44
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/inheritance.py:33:14:34:41": {
       "id": "method:<fixtures>/python/code/classes/inheritance.py:33:14:34:41",
@@ -142,7 +150,8 @@
         "end_line": 34,
         "end_column": 41
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "constructor:<fixtures>/python/code/classes/inheritance.py:7:17:8:24": {
       "id": "constructor:<fixtures>/python/code/classes/inheritance.py:7:17:8:24",
@@ -156,7 +165,8 @@
         "end_line": 8,
         "end_column": 24
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/inheritance.py:22:14:23:22": {
       "id": "method:<fixtures>/python/code/classes/inheritance.py:22:14:23:22",
@@ -170,7 +180,8 @@
         "end_line": 23,
         "end_column": 22
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/classes/inheritance.py:30:14:31:22": {
       "id": "method:<fixtures>/python/code/classes/inheritance.py:30:14:31:22",
@@ -184,7 +195,8 @@
         "end_line": 31,
         "end_column": 22
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {},

@@ -20,7 +20,8 @@
         "function:<fixtures>/javascript/code/modules/utils_es6.js:11:28:13:1",
         "function:<fixtures>/javascript/code/modules/utils_es6.js:15:30:17:1",
         "function:<fixtures>/javascript/code/modules/utils_es6.js:20:35:22:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/modules/utils_es6.js:7:23:9:1": {
       "id": "function:<fixtures>/javascript/code/modules/utils_es6.js:7:23:9:1",
@@ -34,7 +35,8 @@
         "end_line": 9,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/modules/utils_es6.js:11:28:13:1": {
       "id": "function:<fixtures>/javascript/code/modules/utils_es6.js:11:28:13:1",
@@ -48,7 +50,8 @@
         "end_line": 13,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/modules/utils_es6.js:15:30:17:1": {
       "id": "function:<fixtures>/javascript/code/modules/utils_es6.js:15:30:17:1",
@@ -62,7 +65,8 @@
         "end_line": 17,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/modules/utils_es6.js:20:35:22:1": {
       "id": "function:<fixtures>/javascript/code/modules/utils_es6.js:20:35:22:1",
@@ -76,7 +80,8 @@
         "end_line": 22,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {

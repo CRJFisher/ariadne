@@ -19,7 +19,8 @@
         "module:<fixtures>/rust/code/modules/inline_modules.rs:4:11:12:1",
         "function:<fixtures>/rust/code/modules/inline_modules.rs:16:8:23:1",
         "function:<fixtures>/rust/code/modules/inline_modules.rs:25:23:29:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "module:<fixtures>/rust/code/modules/inline_modules.rs:4:11:12:1": {
       "id": "module:<fixtures>/rust/code/modules/inline_modules.rs:4:11:12:1",
@@ -36,7 +37,8 @@
       "child_ids": [
         "function:<fixtures>/rust/code/modules/inline_modules.rs:5:18:7:5",
         "function:<fixtures>/rust/code/modules/inline_modules.rs:9:24:11:5"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/modules/inline_modules.rs:5:18:7:5": {
       "id": "function:<fixtures>/rust/code/modules/inline_modules.rs:5:18:7:5",
@@ -50,7 +52,8 @@
         "end_line": 7,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/modules/inline_modules.rs:9:24:11:5": {
       "id": "function:<fixtures>/rust/code/modules/inline_modules.rs:9:24:11:5",
@@ -64,7 +67,8 @@
         "end_line": 11,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/modules/inline_modules.rs:16:8:23:1": {
       "id": "function:<fixtures>/rust/code/modules/inline_modules.rs:16:8:23:1",
@@ -78,7 +82,8 @@
         "end_line": 23,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/modules/inline_modules.rs:25:23:29:1": {
       "id": "function:<fixtures>/rust/code/modules/inline_modules.rs:25:23:29:1",
@@ -92,7 +97,8 @@
         "end_line": 29,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {

@@ -18,7 +18,8 @@
       "child_ids": [
         "module:<fixtures>/rust/code/modules/inline_path_constructor.rs:6:13:21:1",
         "function:<fixtures>/rust/code/modules/inline_path_constructor.rs:23:7:27:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "module:<fixtures>/rust/code/modules/inline_path_constructor.rs:6:13:21:1": {
       "id": "module:<fixtures>/rust/code/modules/inline_path_constructor.rs:6:13:21:1",
@@ -34,7 +35,8 @@
       },
       "child_ids": [
         "block:<fixtures>/rust/code/modules/inline_path_constructor.rs:16:17:20:5"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/rust/code/modules/inline_path_constructor.rs:16:17:20:5": {
       "id": "block:<fixtures>/rust/code/modules/inline_path_constructor.rs:16:17:20:5",
@@ -50,7 +52,8 @@
       },
       "child_ids": [
         "function:<fixtures>/rust/code/modules/inline_path_constructor.rs:17:19:19:9"
-      ]
+      ],
+      "self_type_name": "Driver"
     },
     "function:<fixtures>/rust/code/modules/inline_path_constructor.rs:17:19:19:9": {
       "id": "function:<fixtures>/rust/code/modules/inline_path_constructor.rs:17:19:19:9",
@@ -64,7 +67,8 @@
         "end_line": 19,
         "end_column": 9
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/modules/inline_path_constructor.rs:23:7:27:1": {
       "id": "function:<fixtures>/rust/code/modules/inline_path_constructor.rs:23:7:27:1",
@@ -78,7 +82,8 @@
         "end_line": 27,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {

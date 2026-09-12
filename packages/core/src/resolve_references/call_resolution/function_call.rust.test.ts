@@ -182,6 +182,7 @@ describe("Rust Qualified-Call Resolution", () => {
         parent_id: null,
         name: null,
         child_ids: [MODULE_SCOPE_ID],
+        self_type_name: null,
       });
       scope_map.set(MODULE_SCOPE_ID, {
         id: MODULE_SCOPE_ID,
@@ -190,6 +191,7 @@ describe("Rust Qualified-Call Resolution", () => {
         parent_id: FILE_SCOPE_ID,
         name: "worker" as SymbolName,
         child_ids: [],
+        self_type_name: null,
       });
       scopes.update_file(TEST_FILE, scope_map);
 
