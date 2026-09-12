@@ -174,7 +174,7 @@ const name = user.getName();
       }
     });
 
-    it("should resolve constructor and method calls in Python", () => {
+    it("resolves a Python construction to the class's constructor and a method call on the constructed variable", () => {
       project.update_file("test.py" as FilePath, `
 class User:
     def __init__(self, name):
@@ -186,25 +186,19 @@ user = User("Alice")
 name = user.get_name()
       `);
 
-      const index = project.get_index_single_file("test.py" as FilePath);
-
-      // Find constructor call
-      const constructor_calls = index?.references.filter(
-        (r): r is ConstructorCallReference => r.kind === "constructor_call"
-      );
-      expect(constructor_calls?.length).toBeGreaterThan(0);
-
-      // Find method call
-      const method_calls = index?.references.filter(
-        (r) => r.kind === "method_call" && r.name === ("get_name" as SymbolName)
-      );
-      expect(method_calls?.length).toBeGreaterThan(0);
-
-      if (method_calls && method_calls.length > 0) {
-        const method_call = method_calls[0];
-        const resolved = project.resolutions.resolve(method_call.scope_id, method_call.name);
-        expect(resolved).toBeDefined();
-      }
+      // The construction is one constructor CallReference reaching `__init__`,
+      // and `user` takes `User` as its type from it, so `get_name` resolves.
+      const calls = project.resolutions
+        .get_calls_for_file("test.py" as FilePath)
+        .map((call) => ({
+          name: call.name,
+          call_type: call.call_type,
+          targets: call.resolutions.map((r) => r.symbol_id.split(":").slice(-1)[0]),
+        }));
+      expect(calls).toEqual([
+        { name: "User", call_type: "constructor", targets: ["__init__"] },
+        { name: "get_name", call_type: "method", targets: ["get_name"] },
+      ]);
     });
 
     it("should resolve associated functions and methods in Rust", () => {

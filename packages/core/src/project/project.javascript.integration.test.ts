@@ -736,8 +736,33 @@ describe("Project Integration - JavaScript", () => {
       );
       expect(get_info_call).toBeDefined();
 
-      // Note: Prototype methods may not resolve in the same way as ES6 class methods
-      // due to the dynamic nature of prototype assignment. This is expected.
+    });
+
+    it("types a variable constructed from a constructor function, so its prototype method calls resolve", async () => {
+      const file = file_path("classes/prototype_methods.js");
+      project.update_file(file, load_source("classes/prototype_methods.js"));
+
+      // `new Vehicle()` binds `vehicle` to a `function` definition, not a
+      // class; the prototype methods hang off it as a function collection and
+      // are reachable only through that binding. Each resolves to the
+      // assignment that defined it, named by the line it sits on.
+      const prototype_calls = project.resolutions
+        .get_calls_for_file(file)
+        .filter((call) => [49, 50, 54, 55].includes(call.location.start_line))
+        .map((call) => ({
+          line: call.location.start_line,
+          name: call.name as string,
+          target_lines: call.resolutions.map(
+            (resolution) => resolution.symbol_id.split(":").slice(-5)[0]
+          ),
+        }));
+
+      expect(prototype_calls).toEqual([
+        { line: 49, name: "start", target_lines: ["14"] },
+        { line: 50, name: "getInfo", target_lines: ["24"] },
+        { line: 54, name: "honk", target_lines: ["39"] },
+        { line: 55, name: "getDoors", target_lines: ["43"] },
+      ]);
     });
 
     it("should handle method chaining", async () => {
