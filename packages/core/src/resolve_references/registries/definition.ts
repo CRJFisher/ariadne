@@ -573,6 +573,7 @@ export class DefinitionRegistry {
       this.forget_owned_members(symbol_id);
       this.forget_member(symbol_id);
       this.member_index.delete(symbol_id);
+      this.function_collections.delete(symbol_id);
       this.forget_type_edges(symbol_id);
     }
 

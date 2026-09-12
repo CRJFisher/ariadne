@@ -152,6 +152,7 @@ describe("resolve_callable_instance", () => {
     types.update_file(
       file_path,
       make_index(new Map([[var_id, var_def]]), new Map([[class_id, class_def]])),
+      [],
       definitions,
       resolutions,
       empty_exports,
@@ -198,6 +199,7 @@ describe("resolve_callable_instance", () => {
           [derived_id, derived_def],
         ])
       ),
+      [],
       definitions,
       resolutions,
       empty_exports,
@@ -238,6 +240,7 @@ describe("resolve_callable_instance", () => {
         new Map([[const_id, const_def]]),
         new Map([[class_id, class_def]])
       ),
+      [],
       definitions,
       resolutions,
       empty_exports,
@@ -268,6 +271,7 @@ describe("resolve_callable_instance", () => {
     types.update_file(
       file_path,
       make_index(new Map([[var_id, var_def]]), new Map([[class_id, class_def]])),
+      [],
       definitions,
       resolutions,
       empty_exports,

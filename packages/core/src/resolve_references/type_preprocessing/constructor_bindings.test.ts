@@ -1,9 +1,12 @@
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import * as fs from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
 import Parser from "tree-sitter";
 import JavaScript from "tree-sitter-javascript";
 import { LANGUAGE_TO_TREESITTER_LANG } from "../../index_single_file/query_code_tree/parsers";
-import Python from "tree-sitter-python";
 import Rust from "tree-sitter-rust";
+import { Project } from "../../project/project";
 import type { Language, FilePath } from "@ariadnejs/types";
 import { build_index_single_file } from "../../index_single_file/index_single_file";
 import type { ParsedFile } from "../../index_single_file/parsed_file";
@@ -382,15 +385,30 @@ describe("Constructor Tracking - TypeScript", () => {
   });
 });
 
+/**
+ * A Python construction is a plain call in the index and becomes a constructor
+ * call only once its callee has resolved to a class, so the bindings a Python
+ * file yields are read off its references after preprocessing, through a
+ * Project, rather than off the raw index.
+ */
 describe("Constructor Tracking - Python", () => {
-  let parser: Parser;
+  const temp_dirs: string[] = [];
 
-  beforeAll(() => {
-    parser = new Parser();
-    parser.setLanguage(Python);
+  afterAll(() => {
+    for (const dir of temp_dirs) fs.rmSync(dir, { recursive: true, force: true });
   });
 
-  it("binds a simple assignment to its class name", () => {
+  async function python_bindings(code: string) {
+    const dir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "ctor-bindings-")));
+    temp_dirs.push(dir);
+    const file = path.join(dir, "test.py") as FilePath;
+    const project = new Project();
+    await project.initialize(dir as FilePath);
+    project.update_file(file, code);
+    return extract_constructor_bindings(project.references.get_file_references(file));
+  }
+
+  it("binds a simple assignment to its class name", async () => {
     const code = `
 class User:
     pass
@@ -398,23 +416,14 @@ class User:
 user = User()
     `;
 
-    const tree = parser.parse(code);
-    const parsed_file = create_parsed_file(
-      code,
-      "test.py" as FilePath,
-      tree,
-      "python"
-    );
-    const index = build_index_single_file(parsed_file, tree, "python");
-
-    const bindings = extract_constructor_bindings(index.references);
+    const bindings = await python_bindings(code);
 
     expect(bindings.direct.size).toBe(1);
     const type_values = Array.from(bindings.direct.values());
     expect(type_values).toEqual(["User"]);
   });
 
-  it("binds each of multiple assignments to its class name", () => {
+  it("binds each of multiple assignments to its class name", async () => {
     const code = `
 class Dog:
     pass
@@ -426,23 +435,14 @@ my_dog = Dog()
 my_cat = Cat()
     `;
 
-    const tree = parser.parse(code);
-    const parsed_file = create_parsed_file(
-      code,
-      "test.py" as FilePath,
-      tree,
-      "python"
-    );
-    const index = build_index_single_file(parsed_file, tree, "python");
-
-    const bindings = extract_constructor_bindings(index.references);
+    const bindings = await python_bindings(code);
 
     expect(bindings.direct.size).toBe(2);
     const type_values = Array.from(bindings.direct.values()).sort();
     expect(type_values).toEqual(["Cat", "Dog"]);
   });
 
-  it("binds a constructor assigned to an instance attribute", () => {
+  it("binds a constructor assigned to an instance attribute", async () => {
     const code = `
 class Service:
     pass
@@ -452,23 +452,14 @@ class App:
         self.service = Service()
     `;
 
-    const tree = parser.parse(code);
-    const parsed_file = create_parsed_file(
-      code,
-      "test.py" as FilePath,
-      tree,
-      "python"
-    );
-    const index = build_index_single_file(parsed_file, tree, "python");
-
-    const bindings = extract_constructor_bindings(index.references);
+    const bindings = await python_bindings(code);
 
     expect(bindings.direct.size).toBe(1);
     const type_values = Array.from(bindings.direct.values());
     expect(type_values).toEqual(["Service"]);
   });
 
-  it("binds a type-annotated assignment to its class name", () => {
+  it("binds a type-annotated assignment to its class name", async () => {
     const code = `
 class Database:
     pass
@@ -476,23 +467,14 @@ class Database:
 db: Database = Database()
     `;
 
-    const tree = parser.parse(code);
-    const parsed_file = create_parsed_file(
-      code,
-      "test.py" as FilePath,
-      tree,
-      "python"
-    );
-    const index = build_index_single_file(parsed_file, tree, "python");
-
-    const bindings = extract_constructor_bindings(index.references);
+    const bindings = await python_bindings(code);
 
     expect(bindings.direct.size).toBe(1);
     const type_values = Array.from(bindings.direct.values());
     expect(type_values).toEqual(["Database"]);
   });
 
-  it("binds a class that defines __init__ to its class name", () => {
+  it("binds a class that defines __init__ to its class name", async () => {
     const code = `
 class X:
     def __init__(self):
@@ -501,16 +483,7 @@ class X:
 x = X()
     `;
 
-    const tree = parser.parse(code);
-    const parsed_file = create_parsed_file(
-      code,
-      "test.py" as FilePath,
-      tree,
-      "python"
-    );
-    const index = build_index_single_file(parsed_file, tree, "python");
-
-    const bindings = extract_constructor_bindings(index.references);
+    const bindings = await python_bindings(code);
 
     expect(bindings.direct.size).toBe(1);
     const type_values = Array.from(bindings.direct.values());

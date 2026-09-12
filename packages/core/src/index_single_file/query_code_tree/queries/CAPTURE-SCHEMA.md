@@ -194,8 +194,12 @@ Language-specific features explicitly allowed:
 - `@decorator.method` - Method decorators, any decorator shape (bare, dotted, call-shaped)
 - `@definition.property.interface` - Attribute signature declared in a Protocol body
 - `@definition.enum_member` - Member declared in an Enum body
-- `@reference.constructor` - Class instantiation (function call that is a class)
 - `@reference.this` - `self` and `cls` identifiers
+
+A Python construction is not captured as a constructor: `obj = MyClass()` is
+syntactically a call, so it is one `@reference.call`, and
+`resolve_references/preprocess_references.python.ts` rewrites the calls whose
+callee resolves to a class into constructor calls once names are resolved.
 
 Python emits one `@definition.class` per `class_definition` whatever shape its
 bases take; the class capture handler discriminates Enum and Protocol classes
