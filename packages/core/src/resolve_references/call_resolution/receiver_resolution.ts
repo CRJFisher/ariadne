@@ -477,7 +477,32 @@ function walk_property_chain(
     let member_type = context.types.get_symbol_type(member_symbol);
 
     if (!member_type) {
-      const member_def = context.definitions.get(member_symbol);
+      let member_def = context.definitions.get(member_symbol);
+
+      // The member index gives a callable the name it shares with a field —
+      // Rust's `struct Buf { data: Inner }` beside `fn data(&self)` — because
+      // the call position needs the method. A chain position that is not
+      // itself a call is a value, so where the callable yields no type the
+      // chain continues through the declared field, which carries one. The
+      // field is looked up on the type that supplied the member, which
+      // inheritance may put above the receiver.
+      if (
+        (member_def?.kind === "method" || member_def?.kind === "constructor") &&
+        chain_arguments?.[index] == null
+      ) {
+        const declaring_type =
+          context.definitions.get_member_owner(member_symbol) ?? current_type;
+        const owner = context.definitions.get(declaring_type);
+        const field =
+          owner?.kind === "class" || owner?.kind === "interface"
+            ? owner.properties.find((property) => property.name === property_name)
+            : undefined;
+        if (field?.type) {
+          member_symbol = field.symbol_id;
+          member_def = field;
+        }
+      }
+
       if (member_def) {
         if (
           member_def.kind === "class" ||

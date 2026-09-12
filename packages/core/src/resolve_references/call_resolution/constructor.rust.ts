@@ -74,7 +74,7 @@ export function find_associated_constructor_rust(
   if (!member) {
     return null;
   }
-  // A field named `new` (`struct T { new: ... }`) overwrites the `fn new` method
-  // in the flat member index; only a callable target is the constructor.
+  // A struct whose only member named `new` is a field (`struct T { new: ... }`,
+  // no `fn new`) puts a property in the slot; only a callable is a constructor.
   return is_callable_definition(member, definitions) ? member : null;
 }

@@ -8,6 +8,7 @@ import {
   property_symbol,
   enum_symbol,
   enum_member_symbol,
+  interface_symbol,
   anonymous_function_symbol,
   location_key,
 } from "@ariadnejs/types";
@@ -18,6 +19,7 @@ import type {
   ConstructorDefinition,
   EnumDefinition,
   ImportDefinition,
+  InterfaceDefinition,
   MethodDefinition,
   PropertyDefinition,
   FunctionCollection,
@@ -1630,7 +1632,7 @@ describe("DefinitionRegistry", () => {
       expect(registry.get_subtypes(base.symbol_id)).toEqual(new Set());
       expect(registry["subtype_parents"].get(child.symbol_id)).toBeUndefined();
       expect(registry["type_subtypes"].size).toBe(0);
-      expect(registry["owner_members"].size).toBe(0);
+      expect(registry["members"]["owner_members"].size).toBe(0);
     });
 
     it("keeps both indices consistent through a class-body member alias", () => {
@@ -1668,7 +1670,7 @@ describe("DefinitionRegistry", () => {
       registry.remove_file(file_id);
 
       expect(registry["verify_reverse_indices"]()).toBeNull();
-      expect(registry["owner_members"].size).toBe(0);
+      expect(registry["members"]["owner_members"].size).toBe(0);
       expect(registry.get_member_owner(alias.symbol_id)).toBeUndefined();
     });
 
@@ -1676,7 +1678,7 @@ describe("DefinitionRegistry", () => {
       const file = inheritance_file(0);
       registry.update_file(file.file_id, file.definitions);
 
-      registry["owner_members"].delete(file.definitions[0].symbol_id);
+      registry["members"]["owner_members"].delete(file.definitions[0].symbol_id);
 
       expect(registry["verify_reverse_indices"]()).toContain(
         "owner_members is missing"
@@ -1698,7 +1700,7 @@ describe("DefinitionRegistry", () => {
       const file = inheritance_file(0);
       registry.update_file(file.file_id, file.definitions);
 
-      registry["owner_members"].delete(file.definitions[0].symbol_id);
+      registry["members"]["owner_members"].delete(file.definitions[0].symbol_id);
 
       expect(() => registry.remove_file(file.file_id)).toThrow(
         /reverse index diverged/
@@ -1753,10 +1755,13 @@ describe("DefinitionRegistry", () => {
 
           const evicted_symbols = file_count * CLASSES_PER_FILE;
           expect(counts.scanned_entries).toBe(0);
-          expect(loaded["member_owner"].size).toBe(0);
-          expect(loaded["owner_members"].size).toBe(0);
+          expect(loaded["members"]["member_owner"].size).toBe(0);
+          expect(loaded["members"]["owner_members"].size).toBe(0);
           expect(loaded["type_subtypes"].size).toBe(0);
           expect(loaded["subtype_parents"].size).toBe(0);
+          expect(loaded["members"]["member_index"].size).toBe(0);
+          expect(loaded["members"]["members_by_file"].size).toBe(0);
+          expect(loaded["members"]["members_by_name"].size).toBe(0);
           per_symbol.push(counts.keyed_operations / evicted_symbols);
         }
 
@@ -1784,6 +1789,437 @@ describe("DefinitionRegistry", () => {
           new Set([child.symbol_id])
         );
       });
+    });
+  });
+
+  /**
+   * A type's members are the union of every file that contributes them,
+   * recorded per file so an eviction takes back exactly what its file brought.
+   * No pipeline pass contributes across files yet — TASK-376.8's `impl` attach
+   * pass is the first — so these drive `attach_members` directly.
+   */
+  describe("member index across files", () => {
+    const declaring = "types.rs" as FilePath;
+    const declaring_scope = `scope:${declaring}:module` as ScopeId;
+    const impl_file = "impls.rs" as FilePath;
+    const impl_scope = `scope:${impl_file}:module` as ScopeId;
+
+    function registry_with_cross_file_member(): {
+      registry: DefinitionRegistry;
+      type: ClassDefinition;
+      attached: MethodDefinition;
+    } {
+      const registry = new DefinitionRegistry();
+      const type = make_class_with_members(declaring, declaring_scope, "Lowering", 1, []);
+      const attached = method_in(impl_file, impl_scope, "descend", 3);
+      registry.update_file(declaring, [type]);
+      registry.update_file(impl_file, [attached]);
+      registry.attach_members(
+        type.symbol_id,
+        new Map([[attached.name, attached.symbol_id]])
+      );
+      return { registry, type, attached };
+    }
+
+    it("exposes the union of members attached from two files under one type", () => {
+      const { registry, type, attached } = registry_with_cross_file_member();
+
+      expect(names_of(registry.get_member_index().get(type.symbol_id))).toEqual([
+        "Lowering_run",
+        "Lowering_state",
+        "constructor",
+        "descend",
+      ]);
+      expect(registry.get_member_index().get(type.symbol_id)?.get(attached.name)).toBe(
+        attached.symbol_id
+      );
+      expect(registry["verify_reverse_indices"]()).toBeNull();
+    });
+
+    it("evicts exactly the evicted file's members and leaves the declaring file's", () => {
+      const { registry, type } = registry_with_cross_file_member();
+
+      registry.remove_file(impl_file);
+
+      expect(names_of(registry.get_member_index().get(type.symbol_id))).toEqual([
+        "Lowering_run",
+        "Lowering_state",
+        "constructor",
+      ]);
+      expect(registry.get_members_by_name("descend" as SymbolName)).toEqual(new Set());
+      expect(registry["verify_reverse_indices"]()).toBeNull();
+    });
+
+    it("keeps another file's contribution when the declaring file is re-indexed", () => {
+      const { registry, type, attached } = registry_with_cross_file_member();
+
+      registry.update_file(declaring, [type]);
+
+      expect(registry.get_member_index().get(type.symbol_id)?.get(attached.name)).toBe(
+        attached.symbol_id
+      );
+      expect(registry["verify_reverse_indices"]()).toBeNull();
+    });
+
+    it("neither duplicates nor loses members when a file is updated twice", () => {
+      const registry = new DefinitionRegistry();
+      const type = make_class_with_members(declaring, declaring_scope, "Lowering", 1, []);
+      const dropped = type.methods[0];
+      const trimmed: ClassDefinition = { ...type, methods: [] };
+
+      registry.update_file(declaring, [type]);
+      registry.update_file(declaring, [trimmed]);
+
+      // The second index is the whole truth about the file: the method it no
+      // longer declares is gone from both the index and its provenance.
+      expect(names_of(registry.get_member_index().get(type.symbol_id))).toEqual([
+        "Lowering_state",
+        "constructor",
+      ]);
+      expect(registry["members"]["members_by_file"].get(declaring)?.get(type.symbol_id)).toEqual(
+        new Set(["Lowering_state", "constructor"])
+      );
+      expect(registry.get_members_by_name(dropped.name)).toEqual(new Set());
+      expect(registry.get_members_by_name("Lowering_state" as SymbolName)).toEqual(
+        new Set([type.symbol_id])
+      );
+      expect(registry["verify_reverse_indices"]()).toBeNull();
+    });
+
+    it("takes a contribution back from a file that declares nothing of its own", () => {
+      const registry = new DefinitionRegistry();
+      const type = make_class_with_members(declaring, declaring_scope, "Lowering", 1, []);
+      const attached = method_in(impl_file, impl_scope, "descend", 3);
+      registry.update_file(declaring, [type]);
+      // A Rust `impl` block for a type declared elsewhere indexes to no
+      // top-level definition of its own, so the file is absent from by_file.
+      registry["by_symbol"].set(attached.symbol_id, attached);
+      registry.attach_members(type.symbol_id, [[attached.name, attached.symbol_id]]);
+      expect(registry.get_members_by_name(attached.name)).toEqual(
+        new Set([type.symbol_id])
+      );
+
+      registry.remove_file(impl_file);
+
+      expect(registry.get_member_index().get(type.symbol_id)?.has(attached.name)).toBe(
+        false
+      );
+      expect(registry.get_members_by_name(attached.name)).toEqual(new Set());
+      expect(registry["members"]["members_by_file"].has(impl_file)).toBe(false);
+      expect(registry["verify_reverse_indices"]()).toBeNull();
+    });
+
+    it("re-indexing the contributing file takes its contribution with it until it is attached again", () => {
+      const { registry, type, attached } = registry_with_cross_file_member();
+      const other = method_in(impl_file, impl_scope, "unrelated", 9);
+
+      registry.update_file(impl_file, [attached, other]);
+
+      // Eviction is per file, so the producer that attached a member re-attaches
+      // it when its file is indexed again.
+      expect(registry.get_member_index().get(type.symbol_id)?.has(attached.name)).toBe(
+        false
+      );
+      registry.attach_members(type.symbol_id, [[attached.name, attached.symbol_id]]);
+      expect(registry.get_member_index().get(type.symbol_id)?.get(attached.name)).toBe(
+        attached.symbol_id
+      );
+      expect(registry["verify_reverse_indices"]()).toBeNull();
+    });
+
+    it("keeps a contribution to a type whose own declaration is evicted", () => {
+      const { registry, type, attached } = registry_with_cross_file_member();
+
+      registry.remove_file(declaring);
+
+      // The type's own members left with its file; the contribution waits for
+      // the declaration to come back, so `get_members_by_name` can name a type
+      // the registry no longer holds.
+      expect(names_of(registry.get_member_index().get(type.symbol_id))).toEqual([
+        "descend",
+      ]);
+      expect(registry.get_members_by_name(attached.name)).toEqual(
+        new Set([type.symbol_id])
+      );
+      expect(names_of(registry.get_member_closure(type.symbol_id))).toEqual([
+        "descend",
+      ]);
+      expect(registry.get(type.symbol_id)).toBeUndefined();
+      expect(registry["verify_reverse_indices"]()).toBeNull();
+    });
+
+    it("leaves no member index entry for a type that declares no members", () => {
+      const registry = new DefinitionRegistry();
+      const declared = interface_with_method(declaring, declaring_scope, "Marker", 1, "mark", []);
+      const marker: InterfaceDefinition = { ...declared, methods: [] };
+      registry.update_file(declaring, [marker]);
+      expect(registry.get_member_index().get(marker.symbol_id)).toBeUndefined();
+
+      registry.remove_file(declaring);
+
+      expect(registry.get_member_index().get(marker.symbol_id)).toBeUndefined();
+      expect(registry["verify_reverse_indices"]()).toBeNull();
+    });
+
+    it("refuses a member the registry does not hold, because its file is the provenance", () => {
+      const registry = new DefinitionRegistry();
+      const type = make_class_with_members(declaring, declaring_scope, "Lowering", 1, []);
+      const unregistered = method_in(impl_file, impl_scope, "descend", 3);
+      registry.update_file(declaring, [type]);
+
+      expect(() =>
+        registry.attach_members(type.symbol_id, [
+          [unregistered.name, unregistered.symbol_id],
+        ])
+      ).toThrow("which the registry does not hold");
+    });
+
+    it("gives a getter the slot whichever accessor is attached first", () => {
+      const registry = new DefinitionRegistry();
+      const type = make_class_with_members(declaring, declaring_scope, "Job", 1, []);
+      const name = "value" as SymbolName;
+      const getter: MethodDefinition = {
+        ...method_in(declaring, declaring_scope, name, 20),
+        accessor_kind: "getter",
+      };
+      const setter: MethodDefinition = {
+        ...method_in(declaring, declaring_scope, name, 24),
+        accessor_kind: "setter",
+      };
+
+      for (const order of [
+        [getter, setter],
+        [setter, getter],
+      ]) {
+        registry.update_file(declaring, [{ ...type, methods: order }]);
+        expect(registry.get_member_index().get(type.symbol_id)?.get(name)).toBe(
+          getter.symbol_id
+        );
+        expect(registry["verify_reverse_indices"]()).toBeNull();
+      }
+    });
+
+    it("lets the later of two properties hold the name", () => {
+      const registry = new DefinitionRegistry();
+      const type = make_class_with_members(declaring, declaring_scope, "Job", 1, []);
+      const first = type.properties[0];
+      const second: PropertyDefinition = {
+        ...first,
+        symbol_id: property_symbol(first.name, member_location(declaring, 30)),
+        location: member_location(declaring, 30),
+      };
+      registry.update_file(declaring, [{ ...type, properties: [first, second] }]);
+
+      expect(registry.get_member_index().get(type.symbol_id)?.get(first.name)).toBe(
+        second.symbol_id
+      );
+      expect(registry["verify_reverse_indices"]()).toBeNull();
+    });
+
+    it("lets a callable take a name a property holds, and keeps the property as a member the type owns", () => {
+      const registry = new DefinitionRegistry();
+      const type = make_class_with_members(declaring, declaring_scope, "Job", 1, []);
+      const field = type.properties[0];
+      const method = method_in(impl_file, impl_scope, field.name, 3);
+      registry.update_file(declaring, [type]);
+      registry.update_file(impl_file, [method]);
+
+      registry.attach_members(type.symbol_id, new Map([[method.name, method.symbol_id]]));
+
+      expect(registry.get_member_index().get(type.symbol_id)?.get(field.name)).toBe(method.symbol_id);
+      expect(registry.get_member_owner(field.symbol_id)).toBe(type.symbol_id);
+      expect(registry.get(field.symbol_id)).toEqual(field);
+      expect(registry["verify_reverse_indices"]()).toBeNull();
+
+      registry.remove_file(impl_file);
+
+      // The name left with the method's file; the field stays a member the
+      // type owns, reachable through ownership rather than the callable index.
+      expect(registry.get_member_index().get(type.symbol_id)?.has(field.name)).toBe(false);
+      expect(registry.get_member_owner(field.symbol_id)).toBe(type.symbol_id);
+      expect(registry["verify_reverse_indices"]()).toBeNull();
+    });
+
+    it("tears members_by_name down per file", () => {
+      const registry = new DefinitionRegistry();
+      const first = inheritance_file(0);
+      const second = inheritance_file(1);
+      registry.update_file(first.file_id, first.definitions);
+      registry.update_file(second.file_id, second.definitions);
+
+      expect(registry.get_members_by_name("constructor" as SymbolName)).toEqual(
+        new Set([...first.definitions, ...second.definitions].map((def) => def.symbol_id))
+      );
+
+      registry.remove_file(first.file_id);
+
+      expect(registry.get_members_by_name("constructor" as SymbolName)).toEqual(
+        new Set(second.definitions.map((def) => def.symbol_id))
+      );
+      expect(registry.get_members_by_name("Base0_run" as SymbolName)).toEqual(new Set());
+    });
+
+    it("reports a members_by_file entry a write site failed to populate", () => {
+      const registry = new DefinitionRegistry();
+      const file = inheritance_file(0);
+      registry.update_file(file.file_id, file.definitions);
+
+      registry["members"]["members_by_file"].clear();
+
+      expect(registry["verify_reverse_indices"]()).toContain("members_by_file is missing");
+    });
+
+    it("reports a members_by_file name an eviction path left behind", () => {
+      const registry = new DefinitionRegistry();
+      const file = inheritance_file(0);
+      registry.update_file(file.file_id, file.definitions);
+
+      const [type_id] = [...registry["members"]["members_by_file"].get(file.file_id)!.keys()];
+      registry["members"]["members_by_file"]
+        .get(file.file_id)!
+        .get(type_id)!
+        .add("departed" as SymbolName);
+
+      expect(registry["verify_reverse_indices"]()).toBe(
+        `members_by_file["${file.file_id} → ${type_id}"] still holds "departed", which member_index no longer has`
+      );
+    });
+
+    it("reports a members_by_name entry a write site failed to populate", () => {
+      const registry = new DefinitionRegistry();
+      const file = inheritance_file(0);
+      registry.update_file(file.file_id, file.definitions);
+
+      registry["members"]["members_by_name"].clear();
+
+      expect(registry["verify_reverse_indices"]()).toContain("members_by_name is missing");
+    });
+
+    it("reports a member the index holds that no definition can own", () => {
+      const registry = new DefinitionRegistry();
+      const file = inheritance_file(0);
+      registry.update_file(file.file_id, file.definitions);
+      const type_id = file.definitions[0].symbol_id;
+      const member_id = registry
+        .get_member_index()
+        .get(type_id)!
+        .get("Base0_run" as SymbolName)!;
+
+      registry["by_symbol"].delete(member_id);
+
+      expect(registry["verify_reverse_indices"]()).toContain("no file can own it");
+    });
+  });
+
+  describe("get_member_closure", () => {
+    const file = "hierarchy.ts" as FilePath;
+    const scope = `scope:${file}:module` as ScopeId;
+
+    it("returns own members plus the parent-class chain, with the nearest declaration winning", () => {
+      const registry = new DefinitionRegistry();
+      const base = make_class_with_members(file, scope, "Base", 1, []);
+      const child = make_class_with_members(file, scope, "Child", 10, [base.name]);
+      const overriding = method_in(file, `scope:${file}:class:Child:10:0` as ScopeId, base.methods[0].name, 12);
+      const child_with_override: ClassDefinition = { ...child, methods: [...child.methods, overriding] };
+      registry.update_file(file, [base, child_with_override]);
+
+      const closure = registry.get_member_closure(child.symbol_id);
+
+      expect(names_of(closure)).toEqual([
+        "Base_run",
+        "Base_state",
+        "Child_run",
+        "Child_state",
+        "constructor",
+      ]);
+      expect(closure.get(base.methods[0].name)).toBe(overriding.symbol_id);
+      expect(closure.get("constructor" as SymbolName)).toBe(child.constructors![0].symbol_id);
+    });
+
+    it("excludes an implemented interface's signatures and includes a parent interface's for an interface", () => {
+      const registry = new DefinitionRegistry();
+      const parent_interface = interface_with_method(file, scope, "Disposable", 1, "dispose", []);
+      const child_interface = interface_with_method(file, scope, "Closeable", 5, "close", [parent_interface.name]);
+      const implementing = make_class_with_members(file, scope, "Handle", 10, [child_interface.name]);
+      registry.update_file(file, [parent_interface, child_interface, implementing]);
+
+      // `extends` conflates extends and implements, so the class walks no
+      // interface: its closure is its own members only.
+      expect(names_of(registry.get_member_closure(implementing.symbol_id))).toEqual([
+        "Handle_run",
+        "Handle_state",
+        "constructor",
+      ]);
+      // An interface walks its parent interfaces.
+      expect(names_of(registry.get_member_closure(child_interface.symbol_id))).toEqual([
+        "close",
+        "dispose",
+      ]);
+    });
+
+    it("terminates on a cycle in a malformed hierarchy", () => {
+      const registry = new DefinitionRegistry();
+      const left = make_class_with_members(file, scope, "Left", 1, ["Right" as SymbolName]);
+      const right = make_class_with_members(file, scope, "Right", 10, ["Left" as SymbolName]);
+      registry.update_file(file, [left, right]);
+
+      expect(names_of(registry.get_member_closure(left.symbol_id))).toEqual([
+        "Left_run",
+        "Left_state",
+        "Right_run",
+        "Right_state",
+        "constructor",
+      ]);
+    });
+
+    it("survives the eviction of a parent's file", () => {
+      const registry = new DefinitionRegistry();
+      const base_file = "base.ts" as FilePath;
+      const base = make_class_with_members(base_file, `scope:${base_file}:module` as ScopeId, "Base", 1, []);
+      const child = make_class_with_members(file, scope, "Child", 10, [base.name]);
+      registry.update_file(base_file, [base]);
+      registry.update_file(file, [child]);
+      registry.resolve_cross_file_type_inheritance(file, {
+        resolve: (_scope_id: ScopeId, name: SymbolName): SymbolId | null =>
+          name === base.name ? base.symbol_id : null,
+      });
+      expect(names_of(registry.get_member_closure(child.symbol_id))).toEqual([
+        "Base_run",
+        "Base_state",
+        "Child_run",
+        "Child_state",
+        "constructor",
+      ]);
+
+      registry.remove_file(base_file);
+
+      // The edge goes with the parent, so the closure is the child's own
+      // members whether the parent's members or the edge left first.
+      expect(registry["subtype_parents"].get(child.symbol_id)).toBeUndefined();
+      expect(names_of(registry.get_member_closure(child.symbol_id))).toEqual([
+        "Child_run",
+        "Child_state",
+        "constructor",
+      ]);
+    });
+
+    it("keeps a parent class's members and drops an implemented interface's for a class with both", () => {
+      const registry = new DefinitionRegistry();
+      const contract = interface_with_method(file, scope, "Runnable", 1, "start", []);
+      const base = make_class_with_members(file, scope, "Base", 10, []);
+      const child = make_class_with_members(file, scope, "Child", 20, [
+        base.name,
+        contract.name,
+      ]);
+      registry.update_file(file, [contract, base, child]);
+
+      expect(names_of(registry.get_member_closure(child.symbol_id))).toEqual([
+        "Base_run",
+        "Base_state",
+        "Child_run",
+        "Child_state",
+        "constructor",
+      ]);
     });
   });
 });
@@ -2023,10 +2459,11 @@ function count_registry_map_access(
     registry["location_to_symbol"],
     counts
   );
-  registry["member_index"] = count_map_access(registry["member_index"], counts);
-  registry["member_owner"] = count_map_access(registry["member_owner"], counts);
-  registry["owner_members"] = count_map_access(
-    registry["owner_members"],
+  const members = registry["members"];
+  members["member_index"] = count_map_access(members["member_index"], counts);
+  members["member_owner"] = count_map_access(members["member_owner"], counts);
+  members["owner_members"] = count_map_access(
+    members["owner_members"],
     counts
   );
   registry["by_scope"] = count_map_access(registry["by_scope"], counts);
@@ -2042,5 +2479,67 @@ function count_registry_map_access(
     registry["function_collections"],
     counts
   );
+  members["members_by_file"] = count_map_access(
+    members["members_by_file"],
+    counts
+  );
+  members["members_by_name"] = count_map_access(
+    members["members_by_name"],
+    counts
+  );
   return counts;
 }
+
+/** A method defined in `file_id`, the way an `impl` block's method belongs to the impl's file. */
+function method_in(
+  file_id: FilePath,
+  owner_scope: ScopeId,
+  name: string,
+  line: number
+): MethodDefinition {
+  const location = member_location(file_id, line);
+  return {
+    kind: "method",
+    symbol_id: method_symbol(name as SymbolName, location),
+    name: name as SymbolName,
+    defining_scope_id: owner_scope,
+    location,
+    parameters: [],
+    body_scope_id: `${owner_scope}:${name}` as ScopeId,
+    decorators: [],
+  };
+}
+
+function interface_with_method(
+  file_id: FilePath,
+  scope_id: ScopeId,
+  name: string,
+  line: number,
+  method_name: string,
+  extends_names: SymbolName[]
+): InterfaceDefinition {
+  const location = {
+    file_path: file_id,
+    start_line: line,
+    start_column: 0,
+    end_line: line + 3,
+    end_column: 1,
+  };
+  const body_scope = `scope:${file_id}:interface:${name}:${line}:0` as ScopeId;
+  return {
+    kind: "interface",
+    symbol_id: interface_symbol(name as SymbolName, location),
+    name: name as SymbolName,
+    defining_scope_id: scope_id,
+    location,
+    is_exported: true,
+    extends: extends_names,
+    methods: [method_in(file_id, body_scope, method_name, line + 1)],
+    properties: [],
+  };
+}
+
+function names_of(members: ReadonlyMap<SymbolName, SymbolId> | undefined): string[] {
+  return [...(members ?? new Map()).keys()].sort();
+}
+
