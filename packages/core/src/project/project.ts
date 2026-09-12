@@ -447,6 +447,7 @@ export class Project {
         this.types.update_file(
           file_id,
           index_single_file,
+          this.references.get_file_references(file_id),
           this.definitions,
           this.resolutions,
           this.exports,
