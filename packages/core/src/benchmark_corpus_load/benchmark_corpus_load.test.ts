@@ -71,6 +71,46 @@ describe("run_benchmark_arm", () => {
     ).toEqual(true);
   }, 60_000);
 
+  it("counts the failure taxonomy over the same calls the fingerprint's unresolved component reads", async () => {
+    const { fingerprint, failure_taxonomy } = await arm(
+      "forward",
+      0,
+      create_session_id(),
+    );
+    const unresolved = Object.values(failure_taxonomy.by_reason).reduce(
+      (sum, count) => sum + count,
+      0,
+    );
+    // The taxonomy closes over its references, and its unresolved total is
+    // the fingerprint's unresolved_calls count: the two read one registry
+    // over one file set, so a call counted by one and not the other would
+    // be a resolver exit that recorded nothing.
+    expect(failure_taxonomy.resolved + unresolved).toEqual(
+      failure_taxonomy.call_references,
+    );
+    expect(unresolved).toEqual(fingerprint.unresolved_calls.count);
+    expect(failure_taxonomy).toEqual({
+      call_references: 13,
+      resolved: 11,
+      by_reason: {
+        name_not_in_scope: 2,
+        import_unresolved: 0,
+        reexport_chain_unresolved: 0,
+        receiver_type_unknown: 0,
+        method_not_on_type: 0,
+        polymorphic_no_implementations: 0,
+        collection_dispatch_miss: 0,
+        dynamic_dispatch: 0,
+        no_enclosing_class_scope: 0,
+        class_definition_not_found: 0,
+        no_parent_class: 0,
+        member_type_unknown: 0,
+        definition_has_no_body_scope: 0,
+        constructor_target_not_a_class: 0,
+      },
+    });
+  }, 60_000);
+
   it("resolves the corpus root, so a relative root still fingerprints relatively", async () => {
     // An unresolved root leaks absolute paths into every member and makes the
     // fingerprint a function of where the corpus sits on disk.
@@ -250,6 +290,7 @@ describe("diff_ingest_orders", () => {
     const baseline = await arm("forward", 0, session_id);
     const perturbed: typeof baseline = {
       row: { ...baseline.row, ingest_order: "reversed" },
+      failure_taxonomy: baseline.failure_taxonomy,
       fingerprint: {
         ...baseline.fingerprint,
         raw_entry_points: {

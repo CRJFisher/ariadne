@@ -63,6 +63,27 @@ describe("resolve_corpus_predicate", () => {
     expect(predicate.extensions).toEqual([".ts"]);
   });
 
+  it("builds an excluding predicate that walks the root with the config's patterns appended", () => {
+    const predicate = resolve_corpus_predicate(
+      "repository-root-excluding:js_tests, scripts,docs",
+    );
+    expect(predicate.folders).toEqual([]);
+    expect(predicate.extensions).toEqual([]);
+    expect(predicate.excluded_patterns).toEqual(["js_tests", "scripts", "docs"]);
+    expect(predicate.description).toEqual(
+      "Ariadne's discovery walk over the whole repository, gitignore applied, excluding `js_tests`, `scripts`, `docs` — the `exclude` list of the triage project config.",
+    );
+  });
+
+  it("refuses an excluding predicate with an empty pattern", () => {
+    expect(() =>
+      resolve_corpus_predicate("repository-root-excluding:tests,,docs"),
+    ).toThrow("needs at least one non-empty pattern");
+    expect(() => resolve_corpus_predicate("repository-root-excluding:")).toThrow(
+      "needs at least one non-empty pattern",
+    );
+  });
+
   it("refuses an unknown predicate, naming the forms that exist", () => {
     expect(() =>
       parse_corpus_predicate_name("srcc"),
@@ -108,6 +129,18 @@ describe("discover_corpus over the in-repo benchmark corpus", () => {
         .map((file) => path.relative(CORPUS, file))
         .filter((file) => !file.startsWith("src/")),
     ).toEqual(["tools/build_report.ts"]);
+  });
+
+  it("drops every file under an excluded pattern, the way load_project applies a config's exclude list", async () => {
+    const everything = await discover_corpus(CORPUS, "repository-root");
+    const without_tools = await discover_corpus(
+      CORPUS,
+      "repository-root-excluding:tools",
+    );
+    expect(everything.filter((file) => !file.includes("/tools/"))).toEqual(
+      without_tools,
+    );
+    expect(everything.length - without_tools.length).toEqual(1);
   });
 
   it("drops the .js file under a .ts-only predicate", async () => {
