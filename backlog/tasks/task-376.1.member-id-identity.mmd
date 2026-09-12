@@ -1,0 +1,52 @@
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'Trebuchet MS, Verdana, Arial, sans-serif','fontSize':'16px','primaryColor':'#ece4d6','primaryBorderColor':'#c06d4f','primaryTextColor':'#2f3338','secondaryColor':'#fffdf8','secondaryBorderColor':'#d8cfbe','secondaryTextColor':'#2f3338','tertiaryColor':'#fffdf8','tertiaryBorderColor':'#d8cfbe','tertiaryTextColor':'#2f3338','lineColor':'#2f3338','textColor':'#2f3338','clusterBkg':'#fffdf8','clusterBorder':'#d8cfbe','edgeLabelBackground':'#fffdf8'},'flowchart':{'rankSpacing':45,'nodeSpacing':40}}}%%
+flowchart LR
+  SRC["one function written<br/>onto an object<br/>app.method = function ...<br/>short() in a literal"]
+
+  subgraph IDX["indexing one file"]
+    A2["the file indexer<br/>mints it<br/>create_function_id →<br/>function_symbol<br/>create_method_id →<br/>method_symbol<br/>anonymous_function_symbol<br/>TASK-376.1"]
+    A3["the id the file<br/>index holds<br/>index.functions"]
+    B2["the holder's scan<br/>mints it<br/>detect_member_assignment<br/>→ function_symbol or<br/>anonymous_function_symbol<br/>extract_functions_from_object<br/>→ method_symbol or<br/>anonymous_function_symbol<br/>TASK-376.1"]
+    B3["the id the holder<br/>records<br/>named_members and<br/>stored_functions"]
+    A2 --> A3
+    B2 --> B3
+  end
+
+  SRC --> A2
+  SRC --> B2
+
+  SAME{"same kind,<br/>name and<br/>span?"}
+  A3 --> SAME
+  B3 --> SAME
+
+  subgraph RES["project resolution"]
+    OK["an id the<br/>graph declares"]
+    NO["an id nothing<br/>declares"]
+  end
+
+  SAME -- yes --> OK
+  SAME -- no --> NO
+
+  subgraph CG["call graph and entry points"]
+    OKC["the edge lands on<br/>the real function<br/>and its body is walked"]
+    NOC["the edge dangles, and<br/>an anonymous value has<br/>no node at all, so its<br/>own calls are lost too"]
+  end
+
+  OK --> OKC
+  NO --> NOC
+
+  classDef start fill:#fffdf8,stroke:#2f3338,stroke-width:2px,color:#2f3338
+  classDef mint fill:#ece4d6,stroke:#c06d4f,stroke-width:3px,color:#2f3338
+  classDef held fill:#fffdf8,stroke:#c06d4f,stroke-width:1.5px,color:#2f3338
+  classDef gate fill:#ece4d6,stroke:#2f3338,stroke-width:2px,color:#2f3338
+  classDef good fill:#e4e9d5,stroke:#6f7a4f,stroke-width:2px,color:#2f3338
+  classDef bad fill:#f3d9d2,stroke:#a8412a,stroke-width:2px,color:#2f3338
+
+  class SRC start
+  class A2,B2 mint
+  class A3,B3 held
+  class SAME gate
+  class OK,OKC good
+  class NO,NOC bad
+
+  linkStyle 6,8 stroke:#6f7a4f,stroke-width:2.5px
+  linkStyle 7,9 stroke:#a8412a,stroke-width:2.5px
