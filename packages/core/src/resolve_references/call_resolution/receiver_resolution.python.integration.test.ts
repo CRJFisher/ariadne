@@ -9,7 +9,7 @@
 
 import { describe, it, expect, afterAll } from "vitest";
 import { Project } from "../../project/project";
-import type { FilePath, SymbolName } from "@ariadnejs/types";
+import type { CallGraph, FilePath, SymbolName } from "@ariadnejs/types";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
@@ -479,5 +479,165 @@ class Service:
       send_calls.flatMap((c) => c.resolutions.map((r) => r.symbol_id))
     );
     expect(resolved).toEqual(new Set([send_id]));
+  });
+});
+
+/**
+ * The self type is read off the scope tree, so a `self` receiver names its class
+ * whatever the class body holds and wherever in the body the call sits. The
+ * member scan this replaced excluded constructors from its seed, which left a
+ * class whose only other own callable member is `__init__` with no nameable
+ * type.
+ */
+describe("Python self-receiver resolution through the scope's self type (TASK-376.5)", () => {
+  /** The graph node for a member defined in a file, by name and declaration order. */
+  function member_nodes(
+    call_graph: CallGraph,
+    member: string,
+    file: FilePath
+  ) {
+    return Array.from(call_graph.nodes.values())
+      .filter(
+        (n) => n.name === (member as SymbolName) && n.location.file_path === file
+      )
+      .sort((a, b) => a.location.start_line - b.location.start_line);
+  }
+
+  // celery certificate.py:100 — a class that also declares `__init__`, which is
+  // captured into the class's constructors rather than its methods.
+  it("resolves self.method() in a class that also declares a constructor", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "certificate.py": `class Certificate:
+    def __init__(self, cert):
+        self._cert = cert
+
+    def get_id(self):
+        return self._verify()
+
+    def _verify(self):
+        return self._cert
+`,
+    });
+    temp_dirs.push(temp_dir);
+    const call_graph = project.get_call_graph();
+
+    const [verify] = member_nodes(
+      call_graph,
+      "_verify",
+      file_paths["certificate.py"]
+    );
+    expect(verify).toBeDefined();
+    expect(call_graph.entry_points).not.toContain(verify.symbol_id);
+  });
+
+  // The shape with no member the owning class could be read back off at all:
+  // `__init__` is the class's only own member, and the method called on `self` is
+  // inherited. Nothing in this class body names its type except the scope.
+  it("resolves an inherited self.method() in a class whose only own member is __init__", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "certificate.py": `class Base:
+    def helper(self):
+        return 1
+
+
+class Certificate(Base):
+    def __init__(self, cert):
+        self._cert = cert
+        self.helper()
+`,
+    });
+    temp_dirs.push(temp_dir);
+    const call_graph = project.get_call_graph();
+
+    const [helper] = member_nodes(
+      call_graph,
+      "helper",
+      file_paths["certificate.py"]
+    );
+    expect(helper).toBeDefined();
+    expect(call_graph.entry_points).not.toContain(helper.symbol_id);
+  });
+
+  // TASK-374.6 item 1 — a constructor body is not a member body, so no scan seed
+  // covered it.
+  it("resolves self.method() called from a constructor body", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "certificate.py": `class Certificate:
+    def __init__(self, cert):
+        self._cert = cert
+        self._validate()
+
+    def _validate(self):
+        return self._cert
+`,
+    });
+    temp_dirs.push(temp_dir);
+    const call_graph = project.get_call_graph();
+
+    const [validate] = member_nodes(
+      call_graph,
+      "_validate",
+      file_paths["certificate.py"]
+    );
+    expect(validate).toBeDefined();
+    expect(call_graph.entry_points).not.toContain(validate.symbol_id);
+  });
+
+  // A class is declared outside the body that records its name, so a class
+  // attribute named after its own class can only shadow the declaration.
+  // Resolving the recorded name from inside the body would bind `self` to the
+  // attribute.
+  it("resolves self.method() in a class with an attribute named after the class", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "certificate.py": `class Foo:
+    Foo = 5
+
+    def method(self):
+        self.other()
+
+    def other(self):
+        return 1
+`,
+    });
+    temp_dirs.push(temp_dir);
+    const call_graph = project.get_call_graph();
+
+    const [other] = member_nodes(
+      call_graph,
+      "other",
+      file_paths["certificate.py"]
+    );
+    expect(other).toBeDefined();
+    expect(call_graph.entry_points).not.toContain(other.symbol_id);
+  });
+
+  it("does not bind a constructor's self.method() to a same-named method of an unrelated class", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "certificate.py": `class Certificate:
+    def __init__(self, cert):
+        self._cert = cert
+        self._validate()
+
+    def _validate(self):
+        return self._cert
+
+
+class Unrelated:
+    def _validate(self):
+        return None
+`,
+    });
+    temp_dirs.push(temp_dir);
+    const call_graph = project.get_call_graph();
+
+    const validates = member_nodes(
+      call_graph,
+      "_validate",
+      file_paths["certificate.py"]
+    );
+    expect(validates.length).toBe(2);
+
+    expect(call_graph.entry_points).not.toContain(validates[0].symbol_id);
+    expect(call_graph.entry_points).toContain(validates[1].symbol_id);
   });
 });

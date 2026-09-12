@@ -660,3 +660,127 @@ function load(): void {
     expect(entry_point_for(call_graph, "sweep", file)).toBeDefined();
   });
 });
+
+/**
+ * The self type is read off the scope tree, so a `this` receiver names its class
+ * whatever the class body holds and wherever in the body the call sits. Each
+ * case here is a shape that left the type unnameable while it was inferred by
+ * scanning the class's members back through the name-keyed member index.
+ */
+describe("TypeScript this-receiver resolution through the scope's self type (TASK-376.5)", () => {
+  // angular abstract_form.directive.ts:63,68 — the accessor pair lands in the
+  // by-scope index under one name, so whichever accessor that was decided
+  // whether the class could be named at all.
+  it("resolves this.method() in a class whose accessor pair precedes the caller", async () => {
+    const { project, file } = await project_from_inline(`
+export class AbstractFormDirective {
+  private _disabled = false;
+
+  get disabled(): boolean {
+    return this._disabled;
+  }
+
+  set disabled(value: boolean) {
+    this._disabled = value;
+  }
+
+  submit(): void {
+    this.validate();
+  }
+
+  validate(): void {}
+}
+
+new AbstractFormDirective().submit();
+`);
+    assert_member_reachable(project.get_call_graph(), "validate", file);
+  });
+
+  // A scope holds one symbol per name, and TypeScript's declaration merging puts
+  // a namespace beside the class under that one name. Only a type can be what
+  // `this` denotes, so the class is named regardless of which won the slot.
+  it("resolves this.method() in a class merged with a same-named namespace", async () => {
+    const { project, file } = await project_from_inline(`
+class Foo {
+  method(): void {
+    this.other();
+  }
+  other(): void {}
+}
+
+namespace Foo {
+  export const X = 1;
+}
+
+new Foo().method();
+`);
+
+    assert_member_reachable(project.get_call_graph(), "other", file);
+  });
+
+  // TASK-374.6 item 2 — a field initialiser runs in the class body scope, which
+  // the member scan reached only through a member it did not have.
+  it("resolves this.method() inside a class-field initialiser", async () => {
+    const { project, file } = await project_from_inline(`
+export class Config {
+  derived = this.compute();
+
+  compute(): number {
+    return 1;
+  }
+}
+
+new Config();
+`);
+
+    assert_member_reachable(project.get_call_graph(), "compute", file);
+  });
+
+  it("resolves a getter read inside a class-field initialiser", async () => {
+    const { project, file } = await project_from_inline(`
+export class Config {
+  derived = this.base + 1;
+
+  get base(): number {
+    return 1;
+  }
+}
+
+new Config();
+`);
+
+    assert_member_reachable(project.get_call_graph(), "base", file);
+  });
+
+  it("does not bind a field initialiser's this.method() to a same-named method of an unrelated class", async () => {
+    const { project, file } = await project_from_inline(`
+export class Config {
+  derived = this.compute();
+
+  compute(): number {
+    return 1;
+  }
+}
+
+export class Unrelated {
+  compute(): number {
+    return 2;
+  }
+}
+
+new Config();
+`);
+    const call_graph = project.get_call_graph();
+
+    const computes = Array.from(call_graph.nodes.values())
+      .filter(
+        (n) =>
+          n.name === ("compute" as SymbolName) && n.location.file_path === file
+      )
+      .sort((a, b) => a.location.start_line - b.location.start_line);
+    expect(computes.length).toBe(2);
+
+    expect(call_graph.entry_points).not.toContain(computes[0].symbol_id);
+    expect(call_graph.entry_points).toContain(computes[1].symbol_id);
+  });
+});

@@ -47,9 +47,6 @@ describe("Rust Method Handlers", () => {
       scope_depths: new Map(),
       root_scope_id,
       get_scope_id: (_location: Location) => root_scope_id,
-      get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
-        throw new Error("Child scope not found");
-      },
     };
   }
 
