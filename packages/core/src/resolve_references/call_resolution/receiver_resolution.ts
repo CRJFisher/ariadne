@@ -36,7 +36,7 @@ import type {
   ResolutionFailure,
 } from "@ariadnejs/types";
 import { err, ok } from "@ariadnejs/types";
-import { resolve_namespace_export } from "../export_chain_lookup";
+import { resolve_module_member } from "../module_member_lookup";
 import { ScopeRegistry } from "../registries/scope";
 import { DefinitionRegistry } from "../registries/definition";
 import type { TypeRegistry } from "../registries/type";
@@ -337,10 +337,12 @@ function resolve_namespace_member(
     if (!source_file) {
       return null;
     }
-    return resolve_namespace_export(
+    return resolve_module_member(
       source_file,
       property_name,
+      "namespace",
       context.exports,
+      context.definitions,
       context.languages,
       context.modules
     );

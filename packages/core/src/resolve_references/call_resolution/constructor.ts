@@ -17,7 +17,7 @@ import type {
 import { err, ok } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "../registries/definition";
 import type { ResolutionRegistry } from "../resolution_registry";
-import { resolve_namespace_export } from "../export_chain_lookup";
+import { resolve_module_member } from "../module_member_lookup";
 import type { CallResolutionContext } from "./call_resolver";
 import {
   resolve_type_via_path_prefix_rust,
@@ -48,7 +48,15 @@ export function resolve_constructor_call(
       if (namespace_def?.kind === "import" && namespace_def.import_kind === "namespace") {
         const source_file = imports.get_resolved_import_path(namespace_id);
         if (source_file) {
-          class_symbol = resolve_namespace_export(source_file, call_ref.property_chain[1], exports, languages, modules);
+          class_symbol = resolve_module_member(
+            source_file,
+            call_ref.property_chain[1],
+            "namespace",
+            exports,
+            definitions,
+            languages,
+            modules
+          );
         }
       }
     }

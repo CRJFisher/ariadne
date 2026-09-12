@@ -6,7 +6,7 @@ import type {
 } from "@ariadnejs/types";
 import { err, ok } from "@ariadnejs/types";
 import { DefinitionRegistry } from "../registries/definition";
-import { resolve_namespace_export, resolve_named_import } from "../export_chain_lookup";
+import { resolve_module_member } from "../module_member_lookup";
 import { resolve_named_member } from "./collection_dispatch";
 import type { ReceiverResolutionContext } from "./receiver_resolution";
 import { resolve_namespace_scope_member } from "./receiver_resolution";
@@ -36,10 +36,12 @@ export function resolve_method_on_type(
         partial_info: { resolved_receiver_type: receiver_type },
       });
     }
-    const sym = resolve_namespace_export(
+    const sym = resolve_module_member(
       source_file,
       method_name,
+      "namespace",
       context.exports,
+      definitions,
       context.languages,
       context.modules
     );
@@ -80,10 +82,14 @@ export function resolve_method_on_type(
     const source_file = context.imports.get_resolved_import_path(receiver_type);
     if (source_file) {
       const export_name = receiver_def.original_name || receiver_def.name;
-      const actual_type = resolve_named_import(
+      const actual_type = resolve_module_member(
         source_file,
         export_name,
-        definitions
+        receiver_def.import_kind,
+        context.exports,
+        definitions,
+        context.languages,
+        context.modules
       );
       if (actual_type) {
         return resolve_method_on_type(actual_type, method_name, context);
@@ -93,10 +99,12 @@ export function resolve_method_on_type(
     // (e.g. `from training import pipeline` where pipeline is a .py file).
     const submodule_path = context.imports.get_submodule_import_path(receiver_type);
     if (submodule_path) {
-      const sym = resolve_namespace_export(
+      const sym = resolve_module_member(
         submodule_path,
         method_name,
+        "namespace",
         context.exports,
+        definitions,
         context.languages,
         context.modules
       );

@@ -26,12 +26,25 @@ into every scope at write time. A scope binding nothing shares its parent's link
 Chains never cross a file boundary — each file starts at its root scope with no parent — so
 evicting a file drops every link it owns and leaves none dangling.
 
+Two bindings are layered in from descendant `block` scopes, into the enclosing function or
+module — never into another block, which is itself one of the branches being lifted out of.
+
+- **JavaScript/Rust function declarations** fill only a name with no closer binding.
+- **Python imports**, because Python has no block scoping, so `if TYPE_CHECKING: from m
+import C` binds `C` where its unguarded form would. A hoisted import shadows the wildcard
+  layer and everything the scope chain inherits, exactly as its unguarded form would, and
+  loses only to an import the scope writes itself and to its own local definitions.
+
+The block scope itself stays in both cases — it is what keeps two branches' same-named
+bindings apart, and what confines an `except … as e` alias Python deletes at the end of the
+clause.
+
 ### Phase 2: Call Resolution (`call_resolution/`)
 
 Resolves call references to their target definitions using name resolution results + type information:
 
 - **Function calls** → Direct name lookup in scope via Phase 1 results
-- **Method calls** → Receiver type → class definition → member lookup (with polymorphic dispatch). An interface-typed receiver resolves to the interface member the call names *and* every implementation that runs: the member leads the list so "who calls `IFoo.bar`" stays answerable, the implementations follow so entry-point detection reaches the bodies. The interface member has no body scope, so it is never a call-graph node — the attribution is additive.
+- **Method calls** → Receiver type → class definition → member lookup (with polymorphic dispatch). An interface-typed receiver resolves to the interface member the call names _and_ every implementation that runs: the member leads the list so "who calls `IFoo.bar`" stays answerable, the implementations follow so entry-point detection reaches the bodies. The interface member has no body scope, so it is never a call-graph node — the attribution is additive.
 - **Destructured binding receivers** → `const { storage } = options` types `storage` as `options.storage` — the source identifier and property key are captured at index time (`destructured_from` / `destructured_key` on `VariableDefinition`, JS/TS only, identifier initializer only) and `receiver_resolution.ts` types the binding with one property hop off the source's type. A chain of destructurings resolves one hop at a time under a visited-set guard.
 - **Constructor calls** → Type name → class definition → constructor lookup
 - **Rust `::` paths** → The qualifier the author wrote binds the terminal, ahead of any same-name local. `path_resolution.rust.ts` owns the qualifier hops, in order: `Self` substitutes the enclosing impl type; a qualifier naming a type takes the terminal from its member index; a qualifier naming an in-file `mod` block takes it from that body; otherwise the path resolves to a module **file** and the terminal is looked up inside it. When the path names nothing the project holds, `function_call.rust.ts` falls back to a `use` statement in lexical scope that anchors the terminal — named imports first, then a wildcard edge fanned out across the module's whole surface.
@@ -54,7 +67,7 @@ resolve_references/
 ├── resolution_registry.ts        # ResolutionRegistry (thin orchestration wrapper)
 ├── resolution_state.ts           # Immutable state + pure resolution functions
 ├── name_resolution.ts            # Phase 1: scope-based name resolution
-├── export_chain_lookup.ts        # Named/namespace export lookup through re-export chains
+├── module_member_lookup.ts       # One module-member lookup: export chain, then a module-scope definition
 ├── preprocess_references.ts      # Reference preprocessing (marshaller)
 ├── preprocess_references.python.ts  # Python class-instantiation calls → constructor calls
 ├── indirect_reachability.ts      # Functions reachable via collection/reference
