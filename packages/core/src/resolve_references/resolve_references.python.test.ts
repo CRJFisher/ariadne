@@ -940,25 +940,18 @@ describe("Python guarded and function-local imports", () => {
     // finally, `_bootstrap` from the with, `LocalCelery` inside `build`, and
     // `gb.make_app` / `gb._bootstrap` through the namespace import — the
     // underscore name through the module-scope fallback. `os.environ.get` and
-    // the builtin `open` name nothing the project holds. Each construction is
-    // recorded twice on this tree; TASK-376.2 removes the second record.
+    // the builtin `open` name nothing the project holds.
     expect(calls).toEqual([
       [3, "get", "method_not_on_type"],
       [4, "get", "method_not_on_type"],
       [20, "open", "name_not_in_scope"],
-      [20, "open", "name_not_in_scope"],
-      [26, "LocalCelery", "class:guarded_base.py:Celery"],
       [26, "LocalCelery", "class:guarded_base.py:Celery"],
       [27, "send_task", "method:guarded_base.py:send_task"],
       [33, "Celery", "class:guarded_base.py:Celery"],
-      [33, "Celery", "class:guarded_base.py:Celery"],
       [34, "send_task", "method:guarded_base.py:send_task"],
       [35, "make_app", "function:guarded_base.py:make_app"],
-      [35, "make_app", "constructor_target_not_a_class"],
       [36, "_bootstrap", "function:guarded_base.py:_bootstrap"],
-      [36, "_bootstrap", "constructor_target_not_a_class"],
       [37, "shutdown", "function:guarded_base.py:shutdown"],
-      [37, "shutdown", "constructor_target_not_a_class"],
       [38, "make_app", "function:guarded_base.py:make_app"],
       [39, "_bootstrap", "function:guarded_base.py:_bootstrap"],
     ]);
@@ -996,9 +989,7 @@ except ImportError:
       ]);
     expect(calls).toEqual([
       [3, "fast.py"],
-      [3, "constructor_target_not_a_class"],
       [6, "slow.py"],
-      [6, "constructor_target_not_a_class"],
     ]);
 
     const call_graph = project.get_call_graph();
@@ -1127,13 +1118,9 @@ three_only()
         c.resolutions.map((r) => path.basename(r.symbol_id.split(":")[1])).join(",") ||
           c.resolution_failure?.reason,
       ]);
-    // Each call is recorded twice on this tree; TASK-376.2 removes the second
-    // record, so the constructor rows disappear at merge.
     expect(calls).toEqual([
       ["two_only", "compat.py"],
-      ["two_only", "constructor_target_not_a_class"],
       ["three_only", "compat.py"],
-      ["three_only", "constructor_target_not_a_class"],
     ]);
   });
 
