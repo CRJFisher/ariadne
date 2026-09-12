@@ -21,7 +21,8 @@
         "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:21:35:29:1",
         "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:31:35:39:1",
         "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:6:19:9:1": {
       "id": "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:6:19:9:1",
@@ -38,7 +39,8 @@
       "child_ids": [
         "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:7:10:7:11",
         "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:8:11:8:12"
-      ]
+      ],
+      "self_type_name": "Handler"
     },
     "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:7:10:7:11": {
       "id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:7:10:7:11",
@@ -52,7 +54,8 @@
         "end_line": 7,
         "end_column": 11
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:8:11:8:12": {
       "id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:8:11:8:12",
@@ -66,7 +69,8 @@
         "end_line": 8,
         "end_column": 12
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:11:35:19:1": {
       "id": "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:11:35:19:1",
@@ -83,7 +87,8 @@
       "child_ids": [
         "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:12:10:14:3",
         "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:16:11:18:3"
-      ]
+      ],
+      "self_type_name": "HandlerA"
     },
     "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:12:10:14:3": {
       "id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:12:10:14:3",
@@ -97,7 +102,8 @@
         "end_line": 14,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:16:11:18:3": {
       "id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:16:11:18:3",
@@ -111,7 +117,8 @@
         "end_line": 18,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:21:35:29:1": {
       "id": "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:21:35:29:1",
@@ -128,7 +135,8 @@
       "child_ids": [
         "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:22:10:24:3",
         "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:26:11:28:3"
-      ]
+      ],
+      "self_type_name": "HandlerB"
     },
     "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:22:10:24:3": {
       "id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:22:10:24:3",
@@ -142,7 +150,8 @@
         "end_line": 24,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:26:11:28:3": {
       "id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:26:11:28:3",
@@ -156,7 +165,8 @@
         "end_line": 28,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:31:35:39:1": {
       "id": "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:31:35:39:1",
@@ -173,7 +183,8 @@
       "child_ids": [
         "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:32:10:34:3",
         "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:36:11:38:3"
-      ]
+      ],
+      "self_type_name": "HandlerC"
     },
     "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:32:10:34:3": {
       "id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:32:10:34:3",
@@ -187,7 +198,8 @@
         "end_line": 34,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:36:11:38:3": {
       "id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:36:11:38:3",
@@ -201,7 +213,8 @@
         "end_line": 38,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1": {
       "id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
@@ -215,7 +228,8 @@
         "end_line": 47,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {

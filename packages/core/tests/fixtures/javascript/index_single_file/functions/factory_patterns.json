@@ -19,7 +19,8 @@
         "function:<fixtures>/javascript/code/functions/factory_patterns.js:7:20:23:1",
         "function:<fixtures>/javascript/code/functions/factory_patterns.js:26:23:46:1",
         "function:<fixtures>/javascript/code/functions/factory_patterns.js:49:26:70:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/factory_patterns.js:7:20:23:1": {
       "id": "function:<fixtures>/javascript/code/functions/factory_patterns.js:7:20:23:1",
@@ -37,7 +38,8 @@
         "method:<fixtures>/javascript/code/functions/factory_patterns.js:11:12:13:5",
         "method:<fixtures>/javascript/code/functions/factory_patterns.js:14:13:16:5",
         "method:<fixtures>/javascript/code/functions/factory_patterns.js:17:18:21:5"
-      ]
+      ],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/functions/factory_patterns.js:11:12:13:5": {
       "id": "method:<fixtures>/javascript/code/functions/factory_patterns.js:11:12:13:5",
@@ -51,7 +53,8 @@
         "end_line": 13,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/functions/factory_patterns.js:14:13:16:5": {
       "id": "method:<fixtures>/javascript/code/functions/factory_patterns.js:14:13:16:5",
@@ -65,7 +68,8 @@
         "end_line": 16,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/functions/factory_patterns.js:17:18:21:5": {
       "id": "method:<fixtures>/javascript/code/functions/factory_patterns.js:17:18:21:5",
@@ -79,7 +83,8 @@
         "end_line": 21,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/factory_patterns.js:26:23:46:1": {
       "id": "function:<fixtures>/javascript/code/functions/factory_patterns.js:26:23:46:1",
@@ -98,7 +103,8 @@
         "method:<fixtures>/javascript/code/functions/factory_patterns.js:34:14:37:5",
         "method:<fixtures>/javascript/code/functions/factory_patterns.js:38:13:40:5",
         "method:<fixtures>/javascript/code/functions/factory_patterns.js:41:10:44:5"
-      ]
+      ],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/functions/factory_patterns.js:30:14:33:5": {
       "id": "method:<fixtures>/javascript/code/functions/factory_patterns.js:30:14:33:5",
@@ -112,7 +118,8 @@
         "end_line": 33,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/functions/factory_patterns.js:34:14:37:5": {
       "id": "method:<fixtures>/javascript/code/functions/factory_patterns.js:34:14:37:5",
@@ -126,7 +133,8 @@
         "end_line": 37,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/functions/factory_patterns.js:38:13:40:5": {
       "id": "method:<fixtures>/javascript/code/functions/factory_patterns.js:38:13:40:5",
@@ -140,7 +148,8 @@
         "end_line": 40,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/functions/factory_patterns.js:41:10:44:5": {
       "id": "method:<fixtures>/javascript/code/functions/factory_patterns.js:41:10:44:5",
@@ -154,7 +163,8 @@
         "end_line": 44,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/factory_patterns.js:49:26:70:1": {
       "id": "function:<fixtures>/javascript/code/functions/factory_patterns.js:49:26:70:1",
@@ -172,7 +182,8 @@
         "function:<fixtures>/javascript/code/functions/factory_patterns.js:50:15:52:3",
         "function:<fixtures>/javascript/code/functions/factory_patterns.js:54:20:56:3",
         "method:<fixtures>/javascript/code/functions/factory_patterns.js:61:12:68:5"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/factory_patterns.js:50:15:52:3": {
       "id": "function:<fixtures>/javascript/code/functions/factory_patterns.js:50:15:52:3",
@@ -186,7 +197,8 @@
         "end_line": 52,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/factory_patterns.js:54:20:56:3": {
       "id": "function:<fixtures>/javascript/code/functions/factory_patterns.js:54:20:56:3",
@@ -200,7 +212,8 @@
         "end_line": 56,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/functions/factory_patterns.js:61:12:68:5": {
       "id": "method:<fixtures>/javascript/code/functions/factory_patterns.js:61:12:68:5",
@@ -216,7 +229,8 @@
       },
       "child_ids": [
         "block:<fixtures>/javascript/code/functions/factory_patterns.js:62:7:66:7"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/javascript/code/functions/factory_patterns.js:62:7:66:7": {
       "id": "block:<fixtures>/javascript/code/functions/factory_patterns.js:62:7:66:7",
@@ -232,7 +246,8 @@
       },
       "child_ids": [
         "block:<fixtures>/javascript/code/functions/factory_patterns.js:64:14:66:7"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/javascript/code/functions/factory_patterns.js:64:14:66:7": {
       "id": "block:<fixtures>/javascript/code/functions/factory_patterns.js:64:14:66:7",
@@ -246,7 +261,8 @@
         "end_line": 66,
         "end_column": 7
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {
@@ -299,6 +315,87 @@
       },
       "body_scope_id": "function:<fixtures>/javascript/code/functions/factory_patterns.js:7:20:23:1"
     },
+    "method:<fixtures>/javascript/code/functions/factory_patterns.js:11:5:11:11:getName": {
+      "kind": "function",
+      "symbol_id": "method:<fixtures>/javascript/code/functions/factory_patterns.js:11:5:11:11:getName",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/factory_patterns.js",
+        "start_line": 11,
+        "start_column": 5,
+        "end_line": 11,
+        "end_column": 11
+      },
+      "defining_scope_id": "function:<fixtures>/javascript/code/functions/factory_patterns.js:7:20:23:1",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "method:<fixtures>/javascript/code/functions/factory_patterns.js:11:12:13:5"
+    },
+    "method:<fixtures>/javascript/code/functions/factory_patterns.js:14:5:14:12:getEmail": {
+      "kind": "function",
+      "symbol_id": "method:<fixtures>/javascript/code/functions/factory_patterns.js:14:5:14:12:getEmail",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/factory_patterns.js",
+        "start_line": 14,
+        "start_column": 5,
+        "end_line": 14,
+        "end_column": 12
+      },
+      "defining_scope_id": "function:<fixtures>/javascript/code/functions/factory_patterns.js:7:20:23:1",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "method:<fixtures>/javascript/code/functions/factory_patterns.js:14:13:16:5"
+    },
+    "method:<fixtures>/javascript/code/functions/factory_patterns.js:17:5:17:17:updateProfile": {
+      "kind": "function",
+      "symbol_id": "method:<fixtures>/javascript/code/functions/factory_patterns.js:17:5:17:17:updateProfile",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/factory_patterns.js",
+        "start_line": 17,
+        "start_column": 5,
+        "end_line": 17,
+        "end_column": 17
+      },
+      "defining_scope_id": "function:<fixtures>/javascript/code/functions/factory_patterns.js:7:20:23:1",
+      "is_exported": false,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "method:<fixtures>/javascript/code/functions/factory_patterns.js:17:18:21:5",
+            "symbol_id": "parameter:<fixtures>/javascript/code/functions/factory_patterns.js:17:19:17:25:newName",
+            "name": "newName",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/functions/factory_patterns.js",
+              "start_line": 17,
+              "start_column": 19,
+              "end_line": 17,
+              "end_column": 25
+            }
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "method:<fixtures>/javascript/code/functions/factory_patterns.js:17:18:21:5",
+            "symbol_id": "parameter:<fixtures>/javascript/code/functions/factory_patterns.js:17:28:17:35:newEmail",
+            "name": "newEmail",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/functions/factory_patterns.js",
+              "start_line": 17,
+              "start_column": 28,
+              "end_line": 17,
+              "end_column": 35
+            }
+          }
+        ]
+      },
+      "body_scope_id": "method:<fixtures>/javascript/code/functions/factory_patterns.js:17:18:21:5"
+    },
     "function:<fixtures>/javascript/code/functions/factory_patterns.js:26:10:26:22:createCounter": {
       "kind": "function",
       "symbol_id": "function:<fixtures>/javascript/code/functions/factory_patterns.js:26:10:26:22:createCounter",
@@ -335,6 +432,78 @@
         ]
       },
       "body_scope_id": "function:<fixtures>/javascript/code/functions/factory_patterns.js:26:23:46:1"
+    },
+    "method:<fixtures>/javascript/code/functions/factory_patterns.js:30:5:30:13:increment": {
+      "kind": "function",
+      "symbol_id": "method:<fixtures>/javascript/code/functions/factory_patterns.js:30:5:30:13:increment",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/factory_patterns.js",
+        "start_line": 30,
+        "start_column": 5,
+        "end_line": 30,
+        "end_column": 13
+      },
+      "defining_scope_id": "function:<fixtures>/javascript/code/functions/factory_patterns.js:26:23:46:1",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "method:<fixtures>/javascript/code/functions/factory_patterns.js:30:14:33:5"
+    },
+    "method:<fixtures>/javascript/code/functions/factory_patterns.js:34:5:34:13:decrement": {
+      "kind": "function",
+      "symbol_id": "method:<fixtures>/javascript/code/functions/factory_patterns.js:34:5:34:13:decrement",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/factory_patterns.js",
+        "start_line": 34,
+        "start_column": 5,
+        "end_line": 34,
+        "end_column": 13
+      },
+      "defining_scope_id": "function:<fixtures>/javascript/code/functions/factory_patterns.js:26:23:46:1",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "method:<fixtures>/javascript/code/functions/factory_patterns.js:34:14:37:5"
+    },
+    "method:<fixtures>/javascript/code/functions/factory_patterns.js:38:5:38:12:getValue": {
+      "kind": "function",
+      "symbol_id": "method:<fixtures>/javascript/code/functions/factory_patterns.js:38:5:38:12:getValue",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/factory_patterns.js",
+        "start_line": 38,
+        "start_column": 5,
+        "end_line": 38,
+        "end_column": 12
+      },
+      "defining_scope_id": "function:<fixtures>/javascript/code/functions/factory_patterns.js:26:23:46:1",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "method:<fixtures>/javascript/code/functions/factory_patterns.js:38:13:40:5"
+    },
+    "method:<fixtures>/javascript/code/functions/factory_patterns.js:41:5:41:9:reset": {
+      "kind": "function",
+      "symbol_id": "method:<fixtures>/javascript/code/functions/factory_patterns.js:41:5:41:9:reset",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/factory_patterns.js",
+        "start_line": 41,
+        "start_column": 5,
+        "end_line": 41,
+        "end_column": 9
+      },
+      "defining_scope_id": "function:<fixtures>/javascript/code/functions/factory_patterns.js:26:23:46:1",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "method:<fixtures>/javascript/code/functions/factory_patterns.js:41:10:44:5"
     },
     "function:<fixtures>/javascript/code/functions/factory_patterns.js:49:10:49:25:createCalculator": {
       "kind": "function",
@@ -447,6 +616,64 @@
         ]
       },
       "body_scope_id": "function:<fixtures>/javascript/code/functions/factory_patterns.js:54:20:56:3"
+    },
+    "method:<fixtures>/javascript/code/functions/factory_patterns.js:61:5:61:11:compute": {
+      "kind": "function",
+      "symbol_id": "method:<fixtures>/javascript/code/functions/factory_patterns.js:61:5:61:11:compute",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/factory_patterns.js",
+        "start_line": 61,
+        "start_column": 5,
+        "end_line": 61,
+        "end_column": 11
+      },
+      "defining_scope_id": "function:<fixtures>/javascript/code/functions/factory_patterns.js:49:26:70:1",
+      "is_exported": false,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "method:<fixtures>/javascript/code/functions/factory_patterns.js:61:12:68:5",
+            "symbol_id": "parameter:<fixtures>/javascript/code/functions/factory_patterns.js:61:13:61:21:operation",
+            "name": "operation",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/functions/factory_patterns.js",
+              "start_line": 61,
+              "start_column": 13,
+              "end_line": 61,
+              "end_column": 21
+            }
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "method:<fixtures>/javascript/code/functions/factory_patterns.js:61:12:68:5",
+            "symbol_id": "parameter:<fixtures>/javascript/code/functions/factory_patterns.js:61:24:61:24:a",
+            "name": "a",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/functions/factory_patterns.js",
+              "start_line": 61,
+              "start_column": 24,
+              "end_line": 61,
+              "end_column": 24
+            }
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "method:<fixtures>/javascript/code/functions/factory_patterns.js:61:12:68:5",
+            "symbol_id": "parameter:<fixtures>/javascript/code/functions/factory_patterns.js:61:27:61:27:b",
+            "name": "b",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/functions/factory_patterns.js",
+              "start_line": 61,
+              "start_column": 27,
+              "end_line": 61,
+              "end_column": 27
+            }
+          }
+        ]
+      },
+      "body_scope_id": "method:<fixtures>/javascript/code/functions/factory_patterns.js:61:12:68:5"
     }
   },
   "classes": {},

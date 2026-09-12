@@ -19,7 +19,8 @@
         "class:<fixtures>/typescript/code/classes/inheritance.ts:6:23:14:1",
         "class:<fixtures>/typescript/code/classes/inheritance.ts:16:26:28:1",
         "class:<fixtures>/typescript/code/classes/inheritance.ts:30:26:34:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "class:<fixtures>/typescript/code/classes/inheritance.ts:6:23:14:1": {
       "id": "class:<fixtures>/typescript/code/classes/inheritance.ts:6:23:14:1",
@@ -36,7 +37,8 @@
       "child_ids": [
         "constructor:<fixtures>/typescript/code/classes/inheritance.ts:7:14:7:37",
         "method:<fixtures>/typescript/code/classes/inheritance.ts:11:7:13:3"
-      ]
+      ],
+      "self_type_name": "Animal"
     },
     "constructor:<fixtures>/typescript/code/classes/inheritance.ts:7:14:7:37": {
       "id": "constructor:<fixtures>/typescript/code/classes/inheritance.ts:7:14:7:37",
@@ -50,7 +52,8 @@
         "end_line": 7,
         "end_column": 37
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/typescript/code/classes/inheritance.ts:11:7:13:3": {
       "id": "method:<fixtures>/typescript/code/classes/inheritance.ts:11:7:13:3",
@@ -64,7 +67,8 @@
         "end_line": 13,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "class:<fixtures>/typescript/code/classes/inheritance.ts:16:26:28:1": {
       "id": "class:<fixtures>/typescript/code/classes/inheritance.ts:16:26:28:1",
@@ -82,7 +86,8 @@
         "constructor:<fixtures>/typescript/code/classes/inheritance.ts:17:14:19:3",
         "method:<fixtures>/typescript/code/classes/inheritance.ts:21:13:23:3",
         "method:<fixtures>/typescript/code/classes/inheritance.ts:25:8:27:3"
-      ]
+      ],
+      "self_type_name": "Dog"
     },
     "constructor:<fixtures>/typescript/code/classes/inheritance.ts:17:14:19:3": {
       "id": "constructor:<fixtures>/typescript/code/classes/inheritance.ts:17:14:19:3",
@@ -96,7 +101,8 @@
         "end_line": 19,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/typescript/code/classes/inheritance.ts:21:13:23:3": {
       "id": "method:<fixtures>/typescript/code/classes/inheritance.ts:21:13:23:3",
@@ -110,7 +116,8 @@
         "end_line": 23,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/typescript/code/classes/inheritance.ts:25:8:27:3": {
       "id": "method:<fixtures>/typescript/code/classes/inheritance.ts:25:8:27:3",
@@ -124,7 +131,8 @@
         "end_line": 27,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "class:<fixtures>/typescript/code/classes/inheritance.ts:30:26:34:1": {
       "id": "class:<fixtures>/typescript/code/classes/inheritance.ts:30:26:34:1",
@@ -140,7 +148,8 @@
       },
       "child_ids": [
         "method:<fixtures>/typescript/code/classes/inheritance.ts:31:13:33:3"
-      ]
+      ],
+      "self_type_name": "Cat"
     },
     "method:<fixtures>/typescript/code/classes/inheritance.ts:31:13:33:3": {
       "id": "method:<fixtures>/typescript/code/classes/inheritance.ts:31:13:33:3",
@@ -154,7 +163,8 @@
         "end_line": 33,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {},

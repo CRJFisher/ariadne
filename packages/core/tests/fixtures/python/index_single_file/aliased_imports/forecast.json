@@ -15,7 +15,8 @@
         "end_line": 11,
         "end_column": 0
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {},

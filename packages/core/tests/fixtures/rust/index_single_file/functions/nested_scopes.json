@@ -20,7 +20,8 @@
         "function:<fixtures>/rust/code/functions/nested_scopes.rs:12:8:28:1",
         "function:<fixtures>/rust/code/functions/nested_scopes.rs:30:18:60:1",
         "function:<fixtures>/rust/code/functions/nested_scopes.rs:63:19:86:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/functions/nested_scopes.rs:5:10:7:1": {
       "id": "function:<fixtures>/rust/code/functions/nested_scopes.rs:5:10:7:1",
@@ -34,7 +35,8 @@
         "end_line": 7,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/functions/nested_scopes.rs:12:8:28:1": {
       "id": "function:<fixtures>/rust/code/functions/nested_scopes.rs:12:8:28:1",
@@ -48,7 +50,8 @@
         "end_line": 28,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/functions/nested_scopes.rs:30:18:60:1": {
       "id": "function:<fixtures>/rust/code/functions/nested_scopes.rs:30:18:60:1",
@@ -65,7 +68,8 @@
       "child_ids": [
         "function:<fixtures>/rust/code/functions/nested_scopes.rs:35:22:47:5",
         "function:<fixtures>/rust/code/functions/nested_scopes.rs:52:19:55:5"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/functions/nested_scopes.rs:35:22:47:5": {
       "id": "function:<fixtures>/rust/code/functions/nested_scopes.rs:35:22:47:5",
@@ -81,7 +85,8 @@
       },
       "child_ids": [
         "function:<fixtures>/rust/code/functions/nested_scopes.rs:40:27:43:9"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/functions/nested_scopes.rs:40:27:43:9": {
       "id": "function:<fixtures>/rust/code/functions/nested_scopes.rs:40:27:43:9",
@@ -95,7 +100,8 @@
         "end_line": 43,
         "end_column": 9
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/functions/nested_scopes.rs:52:19:55:5": {
       "id": "function:<fixtures>/rust/code/functions/nested_scopes.rs:52:19:55:5",
@@ -109,7 +115,8 @@
         "end_line": 55,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/functions/nested_scopes.rs:63:19:86:1": {
       "id": "function:<fixtures>/rust/code/functions/nested_scopes.rs:63:19:86:1",
@@ -127,7 +134,8 @@
         "block:<fixtures>/rust/code/functions/nested_scopes.rs:70:5:72:5",
         "block:<fixtures>/rust/code/functions/nested_scopes.rs:75:5:78:5",
         "block:<fixtures>/rust/code/functions/nested_scopes.rs:81:5:83:5"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/rust/code/functions/nested_scopes.rs:70:5:72:5": {
       "id": "block:<fixtures>/rust/code/functions/nested_scopes.rs:70:5:72:5",
@@ -141,7 +149,8 @@
         "end_line": 72,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/rust/code/functions/nested_scopes.rs:75:5:78:5": {
       "id": "block:<fixtures>/rust/code/functions/nested_scopes.rs:75:5:78:5",
@@ -158,7 +167,8 @@
       "child_ids": [
         "block:<fixtures>/rust/code/functions/nested_scopes.rs:76:9:76:37",
         "block:<fixtures>/rust/code/functions/nested_scopes.rs:77:9:77:15"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/rust/code/functions/nested_scopes.rs:76:9:76:37": {
       "id": "block:<fixtures>/rust/code/functions/nested_scopes.rs:76:9:76:37",
@@ -172,7 +182,8 @@
         "end_line": 76,
         "end_column": 37
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/rust/code/functions/nested_scopes.rs:77:9:77:15": {
       "id": "block:<fixtures>/rust/code/functions/nested_scopes.rs:77:9:77:15",
@@ -186,7 +197,8 @@
         "end_line": 77,
         "end_column": 15
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/rust/code/functions/nested_scopes.rs:81:5:83:5": {
       "id": "block:<fixtures>/rust/code/functions/nested_scopes.rs:81:5:83:5",
@@ -200,7 +212,8 @@
         "end_line": 83,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {
@@ -301,6 +314,29 @@
       },
       "return_type": "&'static str",
       "body_scope_id": "function:<fixtures>/rust/code/functions/nested_scopes.rs:40:27:43:9"
+    },
+    "function:<fixtures>/rust/code/functions/nested_scopes.rs:52:19:55:5:<anonymous>": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/rust/code/functions/nested_scopes.rs:52:19:55:5:<anonymous>",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/rust/code/functions/nested_scopes.rs",
+        "start_line": 52,
+        "start_column": 19,
+        "end_line": 55,
+        "end_column": 5
+      },
+      "defining_scope_id": "function:<fixtures>/rust/code/functions/nested_scopes.rs:52:19:55:5",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:<fixtures>/rust/code/functions/nested_scopes.rs:52:19:55:5",
+      "callback_context": {
+        "is_callback": false,
+        "receiver_is_external": null,
+        "receiver_location": null
+      }
     },
     "function:<fixtures>/rust/code/functions/nested_scopes.rs:63:1:86:1:complex_nesting": {
       "kind": "function",

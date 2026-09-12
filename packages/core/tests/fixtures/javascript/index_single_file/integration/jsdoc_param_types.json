@@ -17,7 +17,8 @@
       },
       "child_ids": [
         "function:<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js:12:32:14:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js:12:32:14:1": {
       "id": "function:<fixtures>/javascript/code/integration/jsdoc_param_types/build_chunk_graph.js:12:32:14:1",
@@ -31,7 +32,8 @@
         "end_line": 14,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {

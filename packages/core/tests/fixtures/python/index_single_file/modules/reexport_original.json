@@ -18,7 +18,8 @@
       "child_ids": [
         "function:<fixtures>/python/code/modules/reexport_original.py:4:22:6:32",
         "function:<fixtures>/python/code/modules/reexport_original.py:9:23:11:14"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/modules/reexport_original.py:4:22:6:32": {
       "id": "function:<fixtures>/python/code/modules/reexport_original.py:4:22:6:32",
@@ -32,7 +33,8 @@
         "end_line": 6,
         "end_column": 32
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/modules/reexport_original.py:9:23:11:14": {
       "id": "function:<fixtures>/python/code/modules/reexport_original.py:9:23:11:14",
@@ -46,7 +48,8 @@
         "end_line": 11,
         "end_column": 14
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {

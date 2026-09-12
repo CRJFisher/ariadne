@@ -19,7 +19,8 @@
         "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
         "function:<fixtures>/python/code/functions/nested_scopes.py:48:20:51:24",
         "function:<fixtures>/python/code/functions/nested_scopes.py:9:11:11:26"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93": {
       "id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
@@ -36,7 +37,8 @@
       "child_ids": [
         "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
         "block:<fixtures>/python/code/functions/nested_scopes.py:24:5:25:29"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69": {
       "id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
@@ -52,7 +54,8 @@
       },
       "child_ids": [
         "function:<fixtures>/python/code/functions/nested_scopes.py:32:28:35:28"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/nested_scopes.py:48:20:51:24": {
       "id": "function:<fixtures>/python/code/functions/nested_scopes.py:48:20:51:24",
@@ -68,7 +71,8 @@
       },
       "child_ids": [
         "function:<fixtures>/python/code/functions/nested_scopes.py:50:19:50:34"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/nested_scopes.py:32:28:35:28": {
       "id": "function:<fixtures>/python/code/functions/nested_scopes.py:32:28:35:28",
@@ -82,7 +86,8 @@
         "end_line": 35,
         "end_column": 28
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/nested_scopes.py:9:11:11:26": {
       "id": "function:<fixtures>/python/code/functions/nested_scopes.py:9:11:11:26",
@@ -96,7 +101,8 @@
         "end_line": 11,
         "end_column": 26
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/python/code/functions/nested_scopes.py:24:5:25:29": {
       "id": "block:<fixtures>/python/code/functions/nested_scopes.py:24:5:25:29",
@@ -110,7 +116,8 @@
         "end_line": 25,
         "end_column": 29
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/nested_scopes.py:50:19:50:34": {
       "id": "function:<fixtures>/python/code/functions/nested_scopes.py:50:19:50:34",
@@ -124,7 +131,8 @@
         "end_line": 50,
         "end_column": 34
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {

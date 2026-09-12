@@ -17,7 +17,8 @@
       },
       "child_ids": [
         "class:<fixtures>/typescript/code/classes/methods.ts:6:18:35:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "class:<fixtures>/typescript/code/classes/methods.ts:6:18:35:1": {
       "id": "class:<fixtures>/typescript/code/classes/methods.ts:6:18:35:1",
@@ -36,7 +37,8 @@
         "method:<fixtures>/typescript/code/classes/methods.ts:19:14:21:3",
         "method:<fixtures>/typescript/code/classes/methods.ts:24:18:26:3",
         "method:<fixtures>/typescript/code/classes/methods.ts:29:16:34:3"
-      ]
+      ],
+      "self_type_name": "Calculator"
     },
     "method:<fixtures>/typescript/code/classes/methods.ts:12:6:16:3": {
       "id": "method:<fixtures>/typescript/code/classes/methods.ts:12:6:16:3",
@@ -50,7 +52,8 @@
         "end_line": 16,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/typescript/code/classes/methods.ts:19:14:21:3": {
       "id": "method:<fixtures>/typescript/code/classes/methods.ts:19:14:21:3",
@@ -64,7 +67,8 @@
         "end_line": 21,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/typescript/code/classes/methods.ts:24:18:26:3": {
       "id": "method:<fixtures>/typescript/code/classes/methods.ts:24:18:26:3",
@@ -78,7 +82,8 @@
         "end_line": 26,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/typescript/code/classes/methods.ts:29:16:34:3": {
       "id": "method:<fixtures>/typescript/code/classes/methods.ts:29:16:34:3",
@@ -94,7 +99,8 @@
       },
       "child_ids": [
         "block:<fixtures>/typescript/code/classes/methods.ts:30:5:32:5"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/typescript/code/classes/methods.ts:30:5:32:5": {
       "id": "block:<fixtures>/typescript/code/classes/methods.ts:30:5:32:5",
@@ -108,7 +114,8 @@
         "end_line": 32,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {},

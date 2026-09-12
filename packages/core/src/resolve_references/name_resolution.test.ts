@@ -79,7 +79,7 @@ function make_scope(
   id: ScopeId,
   type: ScopeType,
   parent_id: ScopeId | null,
-  child_ids: ScopeId[] = []
+  child_ids: ScopeId[] = [],
 ): LexicalScope {
   return {
     id,
@@ -88,6 +88,7 @@ function make_scope(
     parent_id,
     name: null,
     child_ids,
+    self_type_name: null,
   } as LexicalScope;
 }
 

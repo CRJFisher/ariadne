@@ -23,7 +23,8 @@
         "class:<fixtures>/typescript/code/interfaces/extends.ts:26:48:29:1",
         "class:<fixtures>/typescript/code/interfaces/extends.ts:32:52:34:1",
         "class:<fixtures>/typescript/code/interfaces/extends.ts:36:38:39:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "class:<fixtures>/typescript/code/interfaces/extends.ts:6:17:8:1": {
       "id": "class:<fixtures>/typescript/code/interfaces/extends.ts:6:17:8:1",
@@ -37,7 +38,8 @@
         "end_line": 8,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": "Named"
     },
     "class:<fixtures>/typescript/code/interfaces/extends.ts:10:24:12:1": {
       "id": "class:<fixtures>/typescript/code/interfaces/extends.ts:10:24:12:1",
@@ -51,7 +53,8 @@
         "end_line": 12,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": "Identifiable"
     },
     "class:<fixtures>/typescript/code/interfaces/extends.ts:14:23:17:1": {
       "id": "class:<fixtures>/typescript/code/interfaces/extends.ts:14:23:17:1",
@@ -65,7 +68,8 @@
         "end_line": 17,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": "Timestamped"
     },
     "class:<fixtures>/typescript/code/interfaces/extends.ts:20:32:23:1": {
       "id": "class:<fixtures>/typescript/code/interfaces/extends.ts:20:32:23:1",
@@ -79,7 +83,8 @@
         "end_line": 23,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": "Person"
     },
     "class:<fixtures>/typescript/code/interfaces/extends.ts:26:48:29:1": {
       "id": "class:<fixtures>/typescript/code/interfaces/extends.ts:26:48:29:1",
@@ -93,7 +98,8 @@
         "end_line": 29,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": "Employee"
     },
     "class:<fixtures>/typescript/code/interfaces/extends.ts:32:52:34:1": {
       "id": "class:<fixtures>/typescript/code/interfaces/extends.ts:32:52:34:1",
@@ -107,7 +113,8 @@
         "end_line": 34,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": "Entity"
     },
     "class:<fixtures>/typescript/code/interfaces/extends.ts:36:38:39:1": {
       "id": "class:<fixtures>/typescript/code/interfaces/extends.ts:36:38:39:1",
@@ -121,7 +128,8 @@
         "end_line": 39,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": "User"
     }
   },
   "functions": {},

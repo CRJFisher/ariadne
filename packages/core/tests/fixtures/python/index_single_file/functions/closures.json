@@ -23,7 +23,8 @@
         "function:<fixtures>/python/code/functions/closures.py:62:10:64:27",
         "function:<fixtures>/python/code/functions/closures.py:10:11:12:26",
         "function:<fixtures>/python/code/functions/closures.py:138:18:138:45"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/closures.py:67:26:115:5": {
       "id": "function:<fixtures>/python/code/functions/closures.py:67:26:115:5",
@@ -39,7 +40,8 @@
       },
       "child_ids": [
         "function:<fixtures>/python/code/functions/closures.py:71:18:105:9"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/closures.py:71:18:105:9": {
       "id": "function:<fixtures>/python/code/functions/closures.py:71:18:105:9",
@@ -55,7 +57,8 @@
       },
       "child_ids": [
         "function:<fixtures>/python/code/functions/closures.py:75:22:95:13"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/closures.py:75:22:95:13": {
       "id": "function:<fixtures>/python/code/functions/closures.py:75:22:95:13",
@@ -71,7 +74,8 @@
       },
       "child_ids": [
         "function:<fixtures>/python/code/functions/closures.py:79:28:85:31"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/closures.py:43:27:58:20": {
       "id": "function:<fixtures>/python/code/functions/closures.py:43:27:58:20",
@@ -87,7 +91,8 @@
       },
       "child_ids": [
         "function:<fixtures>/python/code/functions/closures.py:46:18:57:22"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/closures.py:15:19:27:20": {
       "id": "function:<fixtures>/python/code/functions/closures.py:15:19:27:20",
@@ -103,7 +108,8 @@
       },
       "child_ids": [
         "function:<fixtures>/python/code/functions/closures.py:19:18:25:20"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/closures.py:46:18:57:22": {
       "id": "function:<fixtures>/python/code/functions/closures.py:46:18:57:22",
@@ -119,7 +125,8 @@
       },
       "child_ids": [
         "function:<fixtures>/python/code/functions/closures.py:50:20:55:49"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/closures.py:30:22:40:19": {
       "id": "function:<fixtures>/python/code/functions/closures.py:30:22:40:19",
@@ -135,7 +142,8 @@
       },
       "child_ids": [
         "function:<fixtures>/python/code/functions/closures.py:33:17:38:21"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/closures.py:79:28:85:31": {
       "id": "function:<fixtures>/python/code/functions/closures.py:79:28:85:31",
@@ -149,7 +157,8 @@
         "end_line": 85,
         "end_column": 31
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/closures.py:19:18:25:20": {
       "id": "function:<fixtures>/python/code/functions/closures.py:19:18:25:20",
@@ -163,7 +172,8 @@
         "end_line": 25,
         "end_column": 20
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/closures.py:50:20:55:49": {
       "id": "function:<fixtures>/python/code/functions/closures.py:50:20:55:49",
@@ -177,7 +187,8 @@
         "end_line": 55,
         "end_column": 49
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/closures.py:33:17:38:21": {
       "id": "function:<fixtures>/python/code/functions/closures.py:33:17:38:21",
@@ -191,7 +202,8 @@
         "end_line": 38,
         "end_column": 21
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/closures.py:62:10:64:27": {
       "id": "function:<fixtures>/python/code/functions/closures.py:62:10:64:27",
@@ -205,7 +217,8 @@
         "end_line": 64,
         "end_column": 27
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/closures.py:10:11:12:26": {
       "id": "function:<fixtures>/python/code/functions/closures.py:10:11:12:26",
@@ -219,7 +232,8 @@
         "end_line": 12,
         "end_column": 26
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/python/code/functions/closures.py:138:18:138:45": {
       "id": "function:<fixtures>/python/code/functions/closures.py:138:18:138:45",
@@ -233,7 +247,8 @@
         "end_line": 138,
         "end_column": 45
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {

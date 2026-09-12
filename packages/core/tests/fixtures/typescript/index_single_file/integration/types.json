@@ -17,7 +17,8 @@
       },
       "child_ids": [
         "class:<fixtures>/typescript/code/integration/types.ts:6:19:23:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "class:<fixtures>/typescript/code/integration/types.ts:6:19:23:1": {
       "id": "class:<fixtures>/typescript/code/integration/types.ts:6:19:23:1",
@@ -36,7 +37,8 @@
         "method:<fixtures>/typescript/code/integration/types.ts:12:11:14:3",
         "method:<fixtures>/typescript/code/integration/types.ts:16:12:18:3",
         "method:<fixtures>/typescript/code/integration/types.ts:20:14:22:3"
-      ]
+      ],
+      "self_type_name": "User"
     },
     "constructor:<fixtures>/typescript/code/integration/types.ts:7:14:10:6": {
       "id": "constructor:<fixtures>/typescript/code/integration/types.ts:7:14:10:6",
@@ -50,7 +52,8 @@
         "end_line": 10,
         "end_column": 6
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/typescript/code/integration/types.ts:12:11:14:3": {
       "id": "method:<fixtures>/typescript/code/integration/types.ts:12:11:14:3",
@@ -64,7 +67,8 @@
         "end_line": 14,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/typescript/code/integration/types.ts:16:12:18:3": {
       "id": "method:<fixtures>/typescript/code/integration/types.ts:16:12:18:3",
@@ -78,7 +82,8 @@
         "end_line": 18,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/typescript/code/integration/types.ts:20:14:22:3": {
       "id": "method:<fixtures>/typescript/code/integration/types.ts:20:14:22:3",
@@ -92,7 +97,8 @@
         "end_line": 22,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {},

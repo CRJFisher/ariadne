@@ -128,6 +128,7 @@ export function process_scopes(
     type: "module",
     location: file_location,
     child_ids: [],
+    self_type_name: null,
   };
   scopes.set(root_scope_id, root_scope);
 
@@ -174,6 +175,14 @@ export function process_scopes(
     // Extract the scope name from the tree-sitter node
     const scope_name = extract_scope_name(capture.node, scope_type);
 
+    // The scope tree is the only place that can link a body back to the type it
+    // belongs to: a Rust `impl` block whose type is declared in another file
+    // contributes no member definition the fact could be read back off.
+    const self_type_name = extractor.extract_self_type_name(
+      capture.node,
+      scope_type
+    );
+
     // Create the scope with parent reference
     const scope: LexicalScope = {
       id: scope_id,
@@ -182,6 +191,7 @@ export function process_scopes(
       type: scope_type,
       location,
       child_ids: [],
+      self_type_name,
     };
 
     // Update parent's child IDs

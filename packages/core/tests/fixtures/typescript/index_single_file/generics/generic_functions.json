@@ -24,7 +24,8 @@
         "function:<fixtures>/typescript/code/generics/generic_functions.ts:31:17:33:1",
         "function:<fixtures>/typescript/code/generics/generic_functions.ts:35:19:41:1",
         "function:<fixtures>/typescript/code/generics/generic_functions.ts:43:19:51:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/generics/generic_functions.ts:7:21:9:1": {
       "id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:7:21:9:1",
@@ -38,7 +39,8 @@
         "end_line": 9,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/generics/generic_functions.ts:12:20:14:1": {
       "id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:12:20:14:1",
@@ -52,7 +54,8 @@
         "end_line": 14,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/generics/generic_functions.ts:17:44:19:1": {
       "id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:17:44:19:1",
@@ -66,7 +69,8 @@
         "end_line": 19,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/generics/generic_functions.ts:22:51:24:1": {
       "id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:22:51:24:1",
@@ -80,7 +84,8 @@
         "end_line": 24,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/generics/generic_functions.ts:27:18:29:1": {
       "id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:27:18:29:1",
@@ -94,7 +99,8 @@
         "end_line": 29,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/generics/generic_functions.ts:31:17:33:1": {
       "id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:31:17:33:1",
@@ -108,7 +114,8 @@
         "end_line": 33,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/generics/generic_functions.ts:35:19:41:1": {
       "id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:35:19:41:1",
@@ -124,7 +131,8 @@
       },
       "child_ids": [
         "block:<fixtures>/typescript/code/generics/generic_functions.ts:37:3:39:3"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/typescript/code/generics/generic_functions.ts:37:3:39:3": {
       "id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:37:3:39:3",
@@ -138,7 +146,8 @@
         "end_line": 39,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/generics/generic_functions.ts:43:19:51:1": {
       "id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:43:19:51:1",
@@ -154,7 +163,8 @@
       },
       "child_ids": [
         "block:<fixtures>/typescript/code/generics/generic_functions.ts:45:3:49:3"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/typescript/code/generics/generic_functions.ts:45:3:49:3": {
       "id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:45:3:49:3",
@@ -170,7 +180,8 @@
       },
       "child_ids": [
         "block:<fixtures>/typescript/code/generics/generic_functions.ts:46:5:48:5"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/typescript/code/generics/generic_functions.ts:46:5:48:5": {
       "id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:46:5:48:5",
@@ -184,7 +195,8 @@
         "end_line": 48,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {
@@ -598,6 +610,20 @@
       "is_exported": false,
       "initial_value": "[]"
     },
+    "variable:<fixtures>/typescript/code/generics/generic_functions.ts:37:14:37:17:item": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/typescript/code/generics/generic_functions.ts:37:14:37:17:item",
+      "name": "item",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 37,
+        "start_column": 14,
+        "end_line": 37,
+        "end_column": 17
+      },
+      "defining_scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:37:3:39:3",
+      "is_exported": false
+    },
     "variable:<fixtures>/typescript/code/generics/generic_functions.ts:44:9:44:14:result": {
       "kind": "constant",
       "symbol_id": "variable:<fixtures>/typescript/code/generics/generic_functions.ts:44:9:44:14:result",
@@ -612,6 +638,20 @@
       "defining_scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:43:19:51:1",
       "is_exported": false,
       "initial_value": "[]"
+    },
+    "variable:<fixtures>/typescript/code/generics/generic_functions.ts:45:14:45:17:item": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/typescript/code/generics/generic_functions.ts:45:14:45:17:item",
+      "name": "item",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 45,
+        "start_column": 14,
+        "end_line": 45,
+        "end_column": 17
+      },
+      "defining_scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:45:3:49:3",
+      "is_exported": false
     }
   },
   "interfaces": {},

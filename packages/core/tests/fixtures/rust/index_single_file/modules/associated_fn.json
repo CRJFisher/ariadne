@@ -19,7 +19,8 @@
         "class:<fixtures>/rust/code/modules/associated_fn.rs:4:19:6:1",
         "block:<fixtures>/rust/code/modules/associated_fn.rs:8:13:18:1",
         "function:<fixtures>/rust/code/modules/associated_fn.rs:20:9:23:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "class:<fixtures>/rust/code/modules/associated_fn.rs:4:19:6:1": {
       "id": "class:<fixtures>/rust/code/modules/associated_fn.rs:4:19:6:1",
@@ -33,7 +34,8 @@
         "end_line": 6,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": "Parker"
     },
     "block:<fixtures>/rust/code/modules/associated_fn.rs:8:13:18:1": {
       "id": "block:<fixtures>/rust/code/modules/associated_fn.rs:8:13:18:1",
@@ -50,7 +52,8 @@
       "child_ids": [
         "function:<fixtures>/rust/code/modules/associated_fn.rs:11:16:13:5",
         "function:<fixtures>/rust/code/modules/associated_fn.rs:15:14:17:5"
-      ]
+      ],
+      "self_type_name": "Parker"
     },
     "function:<fixtures>/rust/code/modules/associated_fn.rs:11:16:13:5": {
       "id": "function:<fixtures>/rust/code/modules/associated_fn.rs:11:16:13:5",
@@ -64,7 +67,8 @@
         "end_line": 13,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/modules/associated_fn.rs:15:14:17:5": {
       "id": "function:<fixtures>/rust/code/modules/associated_fn.rs:15:14:17:5",
@@ -78,7 +82,8 @@
         "end_line": 17,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/rust/code/modules/associated_fn.rs:20:9:23:1": {
       "id": "function:<fixtures>/rust/code/modules/associated_fn.rs:20:9:23:1",
@@ -92,7 +97,8 @@
         "end_line": 23,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {

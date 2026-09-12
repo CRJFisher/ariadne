@@ -25,7 +25,8 @@
         "method:<fixtures>/javascript/code/classes/dynamic_access.js:67:19:79:3",
         "function:<fixtures>/javascript/code/classes/dynamic_access.js:83:22:92:1",
         "function:<fixtures>/javascript/code/classes/dynamic_access.js:117:40:122:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "class:<fixtures>/javascript/code/classes/dynamic_access.js:6:22:29:1": {
       "id": "class:<fixtures>/javascript/code/classes/dynamic_access.js:6:22:29:1",
@@ -44,7 +45,8 @@
         "method:<fixtures>/javascript/code/classes/dynamic_access.js:11:18:13:3",
         "method:<fixtures>/javascript/code/classes/dynamic_access.js:15:13:17:3",
         "method:<fixtures>/javascript/code/classes/dynamic_access.js:19:13:28:3"
-      ]
+      ],
+      "self_type_name": "ServiceManager"
     },
     "constructor:<fixtures>/javascript/code/classes/dynamic_access.js:7:14:9:3": {
       "id": "constructor:<fixtures>/javascript/code/classes/dynamic_access.js:7:14:9:3",
@@ -58,7 +60,8 @@
         "end_line": 9,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/dynamic_access.js:11:18:13:3": {
       "id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:11:18:13:3",
@@ -72,7 +75,8 @@
         "end_line": 13,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/dynamic_access.js:15:13:17:3": {
       "id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:15:13:17:3",
@@ -86,7 +90,8 @@
         "end_line": 17,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/dynamic_access.js:19:13:28:3": {
       "id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:19:13:28:3",
@@ -102,7 +107,8 @@
       },
       "child_ids": [
         "block:<fixtures>/javascript/code/classes/dynamic_access.js:21:5:26:5"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/javascript/code/classes/dynamic_access.js:21:5:26:5": {
       "id": "block:<fixtures>/javascript/code/classes/dynamic_access.js:21:5:26:5",
@@ -118,7 +124,8 @@
       },
       "child_ids": [
         "function:<fixtures>/javascript/code/classes/dynamic_access.js:22:33:24:7"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/classes/dynamic_access.js:22:33:24:7": {
       "id": "function:<fixtures>/javascript/code/classes/dynamic_access.js:22:33:24:7",
@@ -132,7 +139,8 @@
         "end_line": 24,
         "end_column": 7
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/dynamic_access.js:33:6:35:3": {
       "id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:33:6:35:3",
@@ -146,7 +154,8 @@
         "end_line": 35,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/dynamic_access.js:37:11:39:3": {
       "id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:37:11:39:3",
@@ -160,7 +169,8 @@
         "end_line": 39,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/dynamic_access.js:41:12:51:3": {
       "id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:41:12:51:3",
@@ -177,7 +187,8 @@
       "child_ids": [
         "function:<fixtures>/javascript/code/classes/dynamic_access.js:42:32:44:5",
         "block:<fixtures>/javascript/code/classes/dynamic_access.js:47:5:49:5"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/classes/dynamic_access.js:42:32:44:5": {
       "id": "function:<fixtures>/javascript/code/classes/dynamic_access.js:42:32:44:5",
@@ -191,7 +202,8 @@
         "end_line": 44,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/javascript/code/classes/dynamic_access.js:47:5:49:5": {
       "id": "block:<fixtures>/javascript/code/classes/dynamic_access.js:47:5:49:5",
@@ -205,7 +217,8 @@
         "end_line": 49,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/dynamic_access.js:59:11:61:3": {
       "id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:59:11:61:3",
@@ -219,7 +232,8 @@
         "end_line": 61,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/dynamic_access.js:63:11:65:3": {
       "id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:63:11:65:3",
@@ -233,7 +247,8 @@
         "end_line": 65,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/dynamic_access.js:67:19:79:3": {
       "id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:67:19:79:3",
@@ -249,7 +264,8 @@
       },
       "child_ids": [
         "function:<fixtures>/javascript/code/classes/dynamic_access.js:70:27:76:5"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/classes/dynamic_access.js:70:27:76:5": {
       "id": "function:<fixtures>/javascript/code/classes/dynamic_access.js:70:27:76:5",
@@ -265,7 +281,8 @@
       },
       "child_ids": [
         "block:<fixtures>/javascript/code/classes/dynamic_access.js:71:7:75:7"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/javascript/code/classes/dynamic_access.js:71:7:75:7": {
       "id": "block:<fixtures>/javascript/code/classes/dynamic_access.js:71:7:75:7",
@@ -281,7 +298,8 @@
       },
       "child_ids": [
         "block:<fixtures>/javascript/code/classes/dynamic_access.js:73:14:75:7"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/javascript/code/classes/dynamic_access.js:73:14:75:7": {
       "id": "block:<fixtures>/javascript/code/classes/dynamic_access.js:73:14:75:7",
@@ -295,7 +313,8 @@
         "end_line": 75,
         "end_column": 7
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/classes/dynamic_access.js:83:22:92:1": {
       "id": "function:<fixtures>/javascript/code/classes/dynamic_access.js:83:22:92:1",
@@ -312,7 +331,8 @@
       "child_ids": [
         "function:<fixtures>/javascript/code/classes/dynamic_access.js:84:33:86:3",
         "block:<fixtures>/javascript/code/classes/dynamic_access.js:88:3:90:3"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/classes/dynamic_access.js:84:33:86:3": {
       "id": "function:<fixtures>/javascript/code/classes/dynamic_access.js:84:33:86:3",
@@ -326,7 +346,8 @@
         "end_line": 86,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "block:<fixtures>/javascript/code/classes/dynamic_access.js:88:3:90:3": {
       "id": "block:<fixtures>/javascript/code/classes/dynamic_access.js:88:3:90:3",
@@ -340,7 +361,8 @@
         "end_line": 90,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/classes/dynamic_access.js:117:40:122:1": {
       "id": "function:<fixtures>/javascript/code/classes/dynamic_access.js:117:40:122:1",
@@ -356,7 +378,8 @@
       },
       "child_ids": [
         "function:<fixtures>/javascript/code/classes/dynamic_access.js:118:27:120:3"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/classes/dynamic_access.js:118:27:120:3": {
       "id": "function:<fixtures>/javascript/code/classes/dynamic_access.js:118:27:120:3",
@@ -370,7 +393,8 @@
         "end_line": 120,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {
@@ -392,6 +416,154 @@
       },
       "body_scope_id": "function:<fixtures>/javascript/code/classes/dynamic_access.js:22:33:24:7"
     },
+    "method:<fixtures>/javascript/code/classes/dynamic_access.js:33:3:33:5:add": {
+      "kind": "function",
+      "symbol_id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:33:3:33:5:add",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/dynamic_access.js",
+        "start_line": 33,
+        "start_column": 3,
+        "end_line": 33,
+        "end_column": 5
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/dynamic_access.js:1:1:140:2",
+      "is_exported": false,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:33:6:35:3",
+            "symbol_id": "parameter:<fixtures>/javascript/code/classes/dynamic_access.js:33:7:33:7:a",
+            "name": "a",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/classes/dynamic_access.js",
+              "start_line": 33,
+              "start_column": 7,
+              "end_line": 33,
+              "end_column": 7
+            }
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:33:6:35:3",
+            "symbol_id": "parameter:<fixtures>/javascript/code/classes/dynamic_access.js:33:10:33:10:b",
+            "name": "b",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/classes/dynamic_access.js",
+              "start_line": 33,
+              "start_column": 10,
+              "end_line": 33,
+              "end_column": 10
+            }
+          }
+        ]
+      },
+      "body_scope_id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:33:6:35:3"
+    },
+    "method:<fixtures>/javascript/code/classes/dynamic_access.js:37:3:37:10:multiply": {
+      "kind": "function",
+      "symbol_id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:37:3:37:10:multiply",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/dynamic_access.js",
+        "start_line": 37,
+        "start_column": 3,
+        "end_line": 37,
+        "end_column": 10
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/dynamic_access.js:1:1:140:2",
+      "is_exported": false,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:37:11:39:3",
+            "symbol_id": "parameter:<fixtures>/javascript/code/classes/dynamic_access.js:37:12:37:12:a",
+            "name": "a",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/classes/dynamic_access.js",
+              "start_line": 37,
+              "start_column": 12,
+              "end_line": 37,
+              "end_column": 12
+            }
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:37:11:39:3",
+            "symbol_id": "parameter:<fixtures>/javascript/code/classes/dynamic_access.js:37:15:37:15:b",
+            "name": "b",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/classes/dynamic_access.js",
+              "start_line": 37,
+              "start_column": 15,
+              "end_line": 37,
+              "end_column": 15
+            }
+          }
+        ]
+      },
+      "body_scope_id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:37:11:39:3"
+    },
+    "method:<fixtures>/javascript/code/classes/dynamic_access.js:41:3:41:11:calculate": {
+      "kind": "function",
+      "symbol_id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:41:3:41:11:calculate",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/dynamic_access.js",
+        "start_line": 41,
+        "start_column": 3,
+        "end_line": 41,
+        "end_column": 11
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/dynamic_access.js:1:1:140:2",
+      "is_exported": false,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:41:12:51:3",
+            "symbol_id": "parameter:<fixtures>/javascript/code/classes/dynamic_access.js:41:13:41:21:operation",
+            "name": "operation",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/classes/dynamic_access.js",
+              "start_line": 41,
+              "start_column": 13,
+              "end_line": 41,
+              "end_column": 21
+            }
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:41:12:51:3",
+            "symbol_id": "parameter:<fixtures>/javascript/code/classes/dynamic_access.js:41:24:41:24:a",
+            "name": "a",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/classes/dynamic_access.js",
+              "start_line": 41,
+              "start_column": 24,
+              "end_line": 41,
+              "end_column": 24
+            }
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:41:12:51:3",
+            "symbol_id": "parameter:<fixtures>/javascript/code/classes/dynamic_access.js:41:27:41:27:b",
+            "name": "b",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/classes/dynamic_access.js",
+              "start_line": 41,
+              "start_column": 27,
+              "end_line": 41,
+              "end_column": 27
+            }
+          }
+        ]
+      },
+      "body_scope_id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:41:12:51:3"
+    },
     "function:<fixtures>/javascript/code/classes/dynamic_access.js:42:14:42:31:getOperationMethod": {
       "kind": "function",
       "symbol_id": "function:<fixtures>/javascript/code/classes/dynamic_access.js:42:14:42:31:getOperationMethod",
@@ -409,6 +581,101 @@
         "parameters": []
       },
       "body_scope_id": "function:<fixtures>/javascript/code/classes/dynamic_access.js:42:32:44:5"
+    },
+    "method:<fixtures>/javascript/code/classes/dynamic_access.js:59:3:59:10:getValue": {
+      "kind": "function",
+      "symbol_id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:59:3:59:10:getValue",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/dynamic_access.js",
+        "start_line": 59,
+        "start_column": 3,
+        "end_line": 59,
+        "end_column": 10
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/dynamic_access.js:1:1:140:2",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:59:11:61:3"
+    },
+    "method:<fixtures>/javascript/code/classes/dynamic_access.js:63:3:63:10:setValue": {
+      "kind": "function",
+      "symbol_id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:63:3:63:10:setValue",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/dynamic_access.js",
+        "start_line": 63,
+        "start_column": 3,
+        "end_line": 63,
+        "end_column": 10
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/dynamic_access.js:1:1:140:2",
+      "is_exported": false,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:63:11:65:3",
+            "symbol_id": "parameter:<fixtures>/javascript/code/classes/dynamic_access.js:63:12:63:19:newValue",
+            "name": "newValue",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/classes/dynamic_access.js",
+              "start_line": 63,
+              "start_column": 12,
+              "end_line": 63,
+              "end_column": 19
+            }
+          }
+        ]
+      },
+      "body_scope_id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:63:11:65:3"
+    },
+    "method:<fixtures>/javascript/code/classes/dynamic_access.js:67:3:67:18:performOperation": {
+      "kind": "function",
+      "symbol_id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:67:3:67:18:performOperation",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/dynamic_access.js",
+        "start_line": 67,
+        "start_column": 3,
+        "end_line": 67,
+        "end_column": 18
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/dynamic_access.js:1:1:140:2",
+      "is_exported": false,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:67:19:79:3",
+            "symbol_id": "parameter:<fixtures>/javascript/code/classes/dynamic_access.js:67:20:67:28:operation",
+            "name": "operation",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/classes/dynamic_access.js",
+              "start_line": 67,
+              "start_column": 20,
+              "end_line": 67,
+              "end_column": 28
+            }
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:67:19:79:3",
+            "symbol_id": "parameter:<fixtures>/javascript/code/classes/dynamic_access.js:67:31:67:37:operand",
+            "name": "operand",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/classes/dynamic_access.js",
+              "start_line": 67,
+              "start_column": 31,
+              "end_line": 67,
+              "end_column": 37
+            }
+          }
+        ]
+      },
+      "body_scope_id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:67:19:79:3"
     },
     "function:<fixtures>/javascript/code/classes/dynamic_access.js:70:14:70:26:executeMethod": {
       "kind": "function",
@@ -727,6 +994,20 @@
     }
   },
   "variables": {
+    "variable:<fixtures>/javascript/code/classes/dynamic_access.js:19:42:19:45:args": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/javascript/code/classes/dynamic_access.js:19:42:19:45:args",
+      "name": "args",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/dynamic_access.js",
+        "start_line": 19,
+        "start_column": 42,
+        "end_line": 19,
+        "end_column": 45
+      },
+      "defining_scope_id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:19:13:28:3",
+      "is_exported": false
+    },
     "variable:<fixtures>/javascript/code/classes/dynamic_access.js:20:11:20:17:service": {
       "kind": "constant",
       "symbol_id": "variable:<fixtures>/javascript/code/classes/dynamic_access.js:20:11:20:17:service",
@@ -908,6 +1189,20 @@
       "defining_scope_id": "method:<fixtures>/javascript/code/classes/dynamic_access.js:67:19:79:3",
       "is_exported": false,
       "initial_value": "`${operation}Value`"
+    },
+    "variable:<fixtures>/javascript/code/classes/dynamic_access.js:83:43:83:46:args": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/javascript/code/classes/dynamic_access.js:83:43:83:46:args",
+      "name": "args",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/dynamic_access.js",
+        "start_line": 83,
+        "start_column": 43,
+        "end_line": 83,
+        "end_column": 46
+      },
+      "defining_scope_id": "function:<fixtures>/javascript/code/classes/dynamic_access.js:83:22:92:1",
+      "is_exported": false
     },
     "variable:<fixtures>/javascript/code/classes/dynamic_access.js:95:7:95:13:manager": {
       "kind": "constant",

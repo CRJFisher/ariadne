@@ -17,7 +17,8 @@
       },
       "child_ids": [
         "class:<fixtures>/python/code/asv_bench/benchmarks/frame_ctor.py:6:18:20:12"
-      ]
+      ],
+      "self_type_name": null
     },
     "class:<fixtures>/python/code/asv_bench/benchmarks/frame_ctor.py:6:18:20:12": {
       "id": "class:<fixtures>/python/code/asv_bench/benchmarks/frame_ctor.py:6:18:20:12",
@@ -37,7 +38,8 @@
         "method:<fixtures>/python/code/asv_bench/benchmarks/frame_ctor.py:13:25:14:12",
         "method:<fixtures>/python/code/asv_bench/benchmarks/frame_ctor.py:16:18:17:12",
         "method:<fixtures>/python/code/asv_bench/benchmarks/frame_ctor.py:19:22:20:12"
-      ]
+      ],
+      "self_type_name": "FromScalar"
     },
     "method:<fixtures>/python/code/asv_bench/benchmarks/frame_ctor.py:7:42:8:12": {
       "id": "method:<fixtures>/python/code/asv_bench/benchmarks/frame_ctor.py:7:42:8:12",
@@ -51,7 +53,8 @@
         "end_line": 8,
         "end_column": 12
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/asv_bench/benchmarks/frame_ctor.py:10:45:11:12": {
       "id": "method:<fixtures>/python/code/asv_bench/benchmarks/frame_ctor.py:10:45:11:12",
@@ -65,7 +68,8 @@
         "end_line": 11,
         "end_column": 12
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/asv_bench/benchmarks/frame_ctor.py:13:25:14:12": {
       "id": "method:<fixtures>/python/code/asv_bench/benchmarks/frame_ctor.py:13:25:14:12",
@@ -79,7 +83,8 @@
         "end_line": 14,
         "end_column": 12
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/asv_bench/benchmarks/frame_ctor.py:16:18:17:12": {
       "id": "method:<fixtures>/python/code/asv_bench/benchmarks/frame_ctor.py:16:18:17:12",
@@ -93,7 +98,8 @@
         "end_line": 17,
         "end_column": 12
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/python/code/asv_bench/benchmarks/frame_ctor.py:19:22:20:12": {
       "id": "method:<fixtures>/python/code/asv_bench/benchmarks/frame_ctor.py:19:22:20:12",
@@ -107,7 +113,8 @@
         "end_line": 20,
         "end_column": 12
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {},

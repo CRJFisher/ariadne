@@ -19,7 +19,8 @@
         "function:<fixtures>/typescript/code/functions/function_as_callback.ts:1:15:3:1",
         "function:<fixtures>/typescript/code/functions/function_as_callback.ts:5:17:5:44",
         "function:<fixtures>/typescript/code/functions/function_as_callback.ts:7:14:9:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/functions/function_as_callback.ts:1:15:3:1": {
       "id": "function:<fixtures>/typescript/code/functions/function_as_callback.ts:1:15:3:1",
@@ -33,7 +34,8 @@
         "end_line": 3,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/functions/function_as_callback.ts:5:17:5:44": {
       "id": "function:<fixtures>/typescript/code/functions/function_as_callback.ts:5:17:5:44",
@@ -47,7 +49,8 @@
         "end_line": 5,
         "end_column": 44
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/typescript/code/functions/function_as_callback.ts:7:14:9:1": {
       "id": "function:<fixtures>/typescript/code/functions/function_as_callback.ts:7:14:9:1",
@@ -61,7 +64,8 @@
         "end_line": 9,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {
@@ -130,7 +134,23 @@
       "defining_scope_id": "module:<fixtures>/typescript/code/functions/function_as_callback.ts:1:1:10:0",
       "is_exported": false,
       "signature": {
-        "parameters": []
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/typescript/code/functions/function_as_callback.ts:5:17:5:44",
+            "symbol_id": "parameter:<fixtures>/typescript/code/functions/function_as_callback.ts:5:18:5:18:x",
+            "name": "x",
+            "location": {
+              "file_path": "<fixtures>/typescript/code/functions/function_as_callback.ts",
+              "start_line": 5,
+              "start_column": 18,
+              "end_line": 5,
+              "end_column": 18
+            },
+            "type": "number",
+            "optional": false
+          }
+        ]
       },
       "body_scope_id": "function:<fixtures>/typescript/code/functions/function_as_callback.ts:5:17:5:44"
     },

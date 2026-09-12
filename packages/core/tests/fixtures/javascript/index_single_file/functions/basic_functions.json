@@ -24,7 +24,8 @@
         "function:<fixtures>/javascript/code/functions/basic_functions.js:24:19:26:1",
         "function:<fixtures>/javascript/code/functions/basic_functions.js:28:23:30:1",
         "function:<fixtures>/javascript/code/functions/basic_functions.js:33:14:38:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/basic_functions.js:6:15:9:1": {
       "id": "function:<fixtures>/javascript/code/functions/basic_functions.js:6:15:9:1",
@@ -38,7 +39,8 @@
         "end_line": 9,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/basic_functions.js:11:13:13:1": {
       "id": "function:<fixtures>/javascript/code/functions/basic_functions.js:11:13:13:1",
@@ -52,7 +54,8 @@
         "end_line": 13,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/basic_functions.js:15:18:15:32": {
       "id": "function:<fixtures>/javascript/code/functions/basic_functions.js:15:18:15:32",
@@ -66,7 +69,8 @@
         "end_line": 15,
         "end_column": 32
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/basic_functions.js:17:16:17:33": {
       "id": "function:<fixtures>/javascript/code/functions/basic_functions.js:17:16:17:33",
@@ -80,7 +84,8 @@
         "end_line": 17,
         "end_column": 33
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/basic_functions.js:19:19:22:1": {
       "id": "function:<fixtures>/javascript/code/functions/basic_functions.js:19:19:22:1",
@@ -94,7 +99,8 @@
         "end_line": 22,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/basic_functions.js:24:19:26:1": {
       "id": "function:<fixtures>/javascript/code/functions/basic_functions.js:24:19:26:1",
@@ -108,7 +114,8 @@
         "end_line": 26,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/basic_functions.js:28:23:30:1": {
       "id": "function:<fixtures>/javascript/code/functions/basic_functions.js:28:23:30:1",
@@ -122,7 +129,8 @@
         "end_line": 30,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/basic_functions.js:33:14:38:1": {
       "id": "function:<fixtures>/javascript/code/functions/basic_functions.js:33:14:38:1",
@@ -136,7 +144,8 @@
         "end_line": 38,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {
@@ -235,7 +244,34 @@
       "is_exported": true,
       "export": {},
       "signature": {
-        "parameters": []
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:15:18:15:32",
+            "symbol_id": "parameter:<fixtures>/javascript/code/functions/basic_functions.js:15:19:15:19:a",
+            "name": "a",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+              "start_line": 15,
+              "start_column": 19,
+              "end_line": 15,
+              "end_column": 19
+            }
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:15:18:15:32",
+            "symbol_id": "parameter:<fixtures>/javascript/code/functions/basic_functions.js:15:22:15:22:b",
+            "name": "b",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+              "start_line": 15,
+              "start_column": 22,
+              "end_line": 15,
+              "end_column": 22
+            }
+          }
+        ]
       },
       "body_scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:15:18:15:32"
     },
@@ -254,7 +290,21 @@
       "is_exported": true,
       "export": {},
       "signature": {
-        "parameters": []
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:17:16:17:33",
+            "symbol_id": "parameter:<fixtures>/javascript/code/functions/basic_functions.js:17:17:17:17:n",
+            "name": "n",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+              "start_line": 17,
+              "start_column": 17,
+              "end_line": 17,
+              "end_column": 17
+            }
+          }
+        ]
       },
       "body_scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:17:16:17:33"
     },

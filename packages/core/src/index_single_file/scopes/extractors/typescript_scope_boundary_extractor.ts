@@ -1,4 +1,4 @@
-import type { FilePath, ScopeType } from "@ariadnejs/types";
+import type { FilePath, ScopeType, SymbolName } from "@ariadnejs/types";
 import type Parser from "tree-sitter";
 import { type ScopeBoundaries } from "../boundary_base";
 import { node_to_location } from "../../node_to_location";
@@ -9,6 +9,17 @@ import { JavaScriptTypeScriptScopeBoundaryExtractor } from "./javascript_typescr
  * with the TypeScript-only scope constructs: interfaces, enums, and namespaces.
  */
 export class TypeScriptScopeBoundaryExtractor extends JavaScriptTypeScriptScopeBoundaryExtractor {
+
+  // `typescript.scm` registers a class definition for a declaration only, so no
+  // class expression names a type a lookup can reach — the CommonJS assignment
+  // JavaScript does register included.
+  override extract_self_type_name(
+    node: Parser.SyntaxNode,
+    scope_type: ScopeType,
+  ): SymbolName | null {
+    if (scope_type === "class" && node.parent?.type === "class") return null;
+    return super.extract_self_type_name(node, scope_type);
+  }
 
   extract_boundaries(
     node: Parser.SyntaxNode,

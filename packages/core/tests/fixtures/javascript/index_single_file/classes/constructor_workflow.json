@@ -17,7 +17,8 @@
       },
       "child_ids": [
         "class:<fixtures>/javascript/code/classes/constructor_workflow.js:6:15:31:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "class:<fixtures>/javascript/code/classes/constructor_workflow.js:6:15:31:1": {
       "id": "class:<fixtures>/javascript/code/classes/constructor_workflow.js:6:15:31:1",
@@ -37,7 +38,8 @@
         "method:<fixtures>/javascript/code/classes/constructor_workflow.js:18:11:20:3",
         "method:<fixtures>/javascript/code/classes/constructor_workflow.js:22:16:25:3",
         "method:<fixtures>/javascript/code/classes/constructor_workflow.js:27:17:30:3"
-      ]
+      ],
+      "self_type_name": "Product"
     },
     "constructor:<fixtures>/javascript/code/classes/constructor_workflow.js:7:14:12:3": {
       "id": "constructor:<fixtures>/javascript/code/classes/constructor_workflow.js:7:14:12:3",
@@ -51,7 +53,8 @@
         "end_line": 12,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/constructor_workflow.js:14:10:16:3": {
       "id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:14:10:16:3",
@@ -65,7 +68,8 @@
         "end_line": 16,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/constructor_workflow.js:18:11:20:3": {
       "id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:18:11:20:3",
@@ -79,7 +83,8 @@
         "end_line": 20,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/constructor_workflow.js:22:16:25:3": {
       "id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:22:16:25:3",
@@ -93,7 +98,8 @@
         "end_line": 25,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/javascript/code/classes/constructor_workflow.js:27:17:30:3": {
       "id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:27:17:30:3",
@@ -107,7 +113,8 @@
         "end_line": 30,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {},
