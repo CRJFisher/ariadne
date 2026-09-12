@@ -1,364 +1,584 @@
-<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>type-model-completion — comprehension</title>
+<title>TASK-376 — five type facts, recorded once</title>
+<script>
+  (function () {
+    var root = document.documentElement;
+    var saved = null, nav = null;
+    try { saved = localStorage.getItem('cdocTheme'); nav = localStorage.getItem('cdocNav'); } catch (e) {}
+    var hash = location.hash;
+    var dark;
+    if (hash === '#theme-dark') { dark = true; }
+    else if (hash === '#theme-light') { dark = false; }
+    else if (saved === 'dark' || saved === 'light') { dark = saved === 'dark'; }
+    else { dark = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches; }
+    root.classList.toggle('dark', !!dark);
+    root.classList.toggle('nav-collapsed', nav === 'collapsed');
+  })();
+</script>
+<style>
+:root {
+  color-scheme: light;
+  --ivory: #f7f3ec;
+  --oat: #ece4d6;
+  --paper: #fffdf8;
+  --slate: #2f3338;
+  --ink: #1d2024;
+  --mute: #6c6f73;
+  --faint: #9a9b97;
+  --clay: #c06d4f;
+  --olive: #6f7a4f;
+  --rust: #a8412a;
+  --work: #4a6b8a; /* work / build axis accent */
+  --concept: #7d6699; /* concept / idea axis accent */
+  --line: #d8cfbe;
+  --hair: #e4ddce;
+  --plate: #f7f3ec; /* fixed: backs literal-hex SVG, never themes */
+  --plate-ink: #2f3338; /* fixed: text on --plate */
+  --serif: ui-serif, Georgia, "Times New Roman", serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: "SF Mono", "JetBrains Mono", Menlo, Consolas, ui-monospace, monospace;
+  /* Live sticky-bar heights, rewritten by the nav's ResizeObserver. The seeds
+   * keep every sticky top and scroll-margin-top DEFINED before the first
+   * measurement lands — a var with no value invalidates the whole declaration
+   * and the bars stop stacking. These two are the only measured values that
+   * live in the brand block rather than a JS-mutated live block, because they
+   * must resolve before any script runs. */
+  --nav-h: 0px;
+  --rail-h: 0px;
+}
+html.dark {
+  color-scheme: dark;
+  --ivory: #191715;
+  --oat: #2b2723;
+  --paper: #211e1b;
+  --slate: #e8e0d4;
+  --ink: #f4efe6;
+  --mute: #a9a49c;
+  --faint: #8a857d;
+  --clay: #e0906f;
+  --olive: #9aad76;
+  --rust: #e0765a;
+  --work: #7fa8cd;
+  --concept: #ab92c9;
+  --line: #3a342e;
+  --hair: #2e2925;
+  --plate: #f7f3ec;
+  --plate-ink: #2f3338;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--ivory);
+  color: var(--slate);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+code { font-family: var(--mono); }
+.prose { max-width: 68ch; }
+:focus-visible { outline: 2px solid var(--clay); outline-offset: 2px; border-radius: 4px; }
+
+/* ── cross-doc navigation ─────────────────────────────── */
+.crossdoc {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--ivory);
+  border-bottom: 1px solid var(--line);
+}
+.nav-bar {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 9px clamp(16px, 5vw, 64px);
+}
+.nav-family {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--mute);
+}
+.nav-here {
+  font-family: var(--mono); font-size: 11.5px;
+  padding: 4px 12px; border-radius: 999px;
+  background: var(--slate); color: var(--ivory);
+}
+.nav-spacer { flex: 1 1 auto; }
+.nav-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: var(--mono); font-size: 11.5px; color: var(--slate);
+  background: var(--paper); border: 1px solid var(--line);
+  border-radius: 999px; padding: 4px 12px; cursor: pointer;
+}
+.nav-btn:hover { border-color: var(--mute); }
+.chev {
+  width: 7px; height: 7px; border-right: 1.5px solid var(--mute);
+  border-bottom: 1.5px solid var(--mute); transform: rotate(-135deg) translate(-1px, -1px);
+  transition: transform .24s ease;
+}
+html.nav-collapsed .chev { transform: rotate(45deg) translate(-1px, -1px); }
+.tico {
+  width: 11px; height: 11px; border-radius: 50%;
+  border: 1.5px solid var(--slate);
+  background: linear-gradient(90deg, var(--slate) 0 50%, transparent 50% 100%);
+}
+#nav-rows {
+  display: grid; grid-template-rows: 1fr; opacity: 1; visibility: visible;
+  transition: grid-template-rows .24s ease, opacity .16s ease, visibility 0s linear 0s;
+}
+html.nav-collapsed #nav-rows {
+  grid-template-rows: 0fr; opacity: 0; visibility: hidden;
+  transition: grid-template-rows .24s ease, opacity .16s ease, visibility 0s linear .24s;
+}
+.nav-rows-inner { min-height: 0; overflow: hidden; }
+.nav-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(288px, 1fr));
+  gap: 5px; padding: 2px clamp(16px, 5vw, 64px) 12px;
+}
+.chip {
+  display: flex; align-items: center; gap: 8px; min-width: 0;
+  padding: 5px 11px; border: 1px solid var(--hair); border-radius: 999px;
+  background: var(--paper); text-decoration: none; color: var(--slate);
+}
+a.chip:hover { border-color: var(--clay); }
+.chip.pending { background: transparent; }
+.chip.self { border-color: var(--slate); background: var(--oat); }
+.dot { width: 7px; height: 7px; border-radius: 50%; flex: none; background: var(--faint); }
+.chip.has-doc .dot { background: var(--olive); }
+.chip.self .dot { background: var(--clay); }
+.cid { font-family: var(--mono); font-size: 11px; color: var(--ink); flex: none; }
+.ct {
+  font-size: 12px; color: var(--mute); min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.tag {
+  font-family: var(--mono); font-size: 10.5px; color: var(--faint);
+  margin-left: auto; flex: none; letter-spacing: .04em;
+}
+.chip.has-doc .tag { color: var(--olive); }
+
+/* ── page shell ───────────────────────────────────────── */
+main { padding: 32px clamp(16px, 5vw, 64px) 20px; }
+section { margin-bottom: 46px; scroll-margin-top: calc(var(--nav-h) + var(--rail-h) + 12px); }
+.masthead { border-bottom: 1px solid var(--line); padding-bottom: 20px; }
+.eyebrow {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--mute);
+}
+h1 {
+  font-family: var(--serif); font-weight: 500; font-size: 35px;
+  line-height: 1.14; letter-spacing: -.015em; color: var(--ink);
+  margin: 9px 0 13px;
+}
+.byline { display: flex; flex-wrap: wrap; gap: 6px 8px; }
+.byline span {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .03em; color: var(--mute);
+  border: 1px solid var(--hair); border-radius: 999px; padding: 3px 10px; background: var(--paper);
+}
+.preamble {
+  font-size: 17px; line-height: 1.62; color: var(--ink);
+  margin: 24px 0 34px;
+}
+.preamble code { font-size: 15px; color: var(--ink); }
+.sec-head { margin-bottom: 15px; }
+.kicker {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--clay);
+}
+h2 {
+  font-family: var(--serif); font-weight: 500; font-size: 23px;
+  line-height: 1.25; color: var(--ink); margin-top: 5px; letter-spacing: -.01em;
+}
+h2 code { font-size: 19px; }
+
+/* ── plated figure (the spliced graph keeps its light palette) ── */
+figure.plate {
+  background: var(--plate); border: 1px solid var(--line); border-radius: 14px;
+  padding: 22px; margin: 0;
+}
+.cdoc-mermaid-scope { width: 100%; }
+.cdoc-mermaid-scope svg {
+  display: block; width: 100%; max-width: 100% !important; height: auto;
+  background: transparent !important;
+}
+.cdoc-mermaid-scope svg,
+.cdoc-mermaid-scope svg foreignObject div {
+  font-family: "Trebuchet MS", Verdana, Arial, sans-serif;
+}
+.fig-legend {
+  display: flex; flex-wrap: wrap; gap: 9px 24px;
+  margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--hair);
+}
+.lg { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--plate-ink); }
+.sw { width: 22px; height: 14px; border-radius: 4px; border: 2px solid; flex: none; }
+.sw.edge { height: 0; border-width: 0 0 2.5px 0; border-radius: 0; width: 26px; }
+.plate figcaption { margin-top: 15px; font-size: 13.5px; line-height: 1.6; color: var(--plate-ink); }
+.plate figcaption code { font-size: 12.5px; color: var(--plate-ink); }
+
+/* ── the five facts ───────────────────────────────────── */
+figure.facts { margin: 0; }
+.fact-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
+.fact {
+  display: flex; flex-direction: column;
+  background: var(--paper); border: 1px solid var(--line);
+  border-radius: 12px; padding: 15px 15px 17px;
+}
+.fact-top { display: flex; align-items: baseline; gap: 8px; }
+.fnum { font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; color: var(--clay); }
+.fname { font-family: var(--serif); font-size: 20px; line-height: 1.2; color: var(--ink); }
+.fask {
+  font-size: 12.5px; line-height: 1.45; color: var(--mute);
+  margin-top: 6px; padding-bottom: 12px; border-bottom: 1px solid var(--hair);
+  min-height: 2.9em;
+}
+.fdl dt {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .11em;
+  text-transform: uppercase; color: var(--faint); margin-top: 13px;
+}
+.fdl dd { margin-top: 6px; }
+.pin {
+  display: block; font-family: var(--mono); font-size: 11px; line-height: 1.45;
+  color: var(--slate); border-left: 2px solid var(--clay); padding-left: 8px;
+  margin-bottom: 4px; overflow-wrap: anywhere;
+}
+.pin .r { color: var(--mute); padding-left: 3px; }
+.note { display: block; font-size: 12px; line-height: 1.45; color: var(--mute); margin-top: 7px; }
+.store {
+  display: block; font-size: 12.5px; line-height: 1.45; color: var(--ink);
+  border-left: 2px solid var(--olive); padding-left: 8px;
+}
+.store code { display: block; font-size: 11px; color: var(--mute); margin-top: 3px; overflow-wrap: anywhere; }
+.by { display: flex; flex-wrap: wrap; gap: 5px; }
+.step {
+  font-family: var(--mono); font-size: 11px; padding: 2px 9px; border-radius: 999px;
+  border: 1px solid var(--hair); background: var(--oat); color: var(--slate);
+}
+.step.lead-step { border-color: var(--clay); color: var(--ink); }
+
+.sink-arrows { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; margin-top: 12px; }
+.sink-arrows span { text-align: center; font-family: var(--mono); font-size: 15px; color: var(--clay); }
+.sink {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px;
+  margin-top: 12px; background: var(--slate); border-radius: 11px; padding: 13px 17px;
+}
+.sink-k {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--oat);
+}
+.sink-v { font-family: var(--mono); font-size: 13px; color: var(--ivory); }
+.sink-n { font-size: 13px; color: var(--oat); }
+figure.facts figcaption {
+  margin-top: 16px; font-size: 13.5px; line-height: 1.6; color: var(--mute);
+}
+figure.facts figcaption code { font-size: 12.5px; color: var(--slate); }
+
+/* ── key points ───────────────────────────────────────── */
+.points { list-style: none; }
+.points li {
+  display: grid; grid-template-columns: 1.25rem 1fr; gap: .75rem;
+  margin-bottom: .6rem; font-family: var(--serif); font-size: 16px;
+  line-height: 1.55; color: var(--slate);
+}
+.points .mk { font-family: var(--mono); font-size: 13px; color: var(--rust); }
+.points code { font-size: 13.5px; color: var(--ink); }
+.points b { font-weight: 600; color: var(--ink); }
+
+/* ── provenance ───────────────────────────────────────── */
+.provenance {
+  border-top: 1px solid var(--line); margin: 0 clamp(16px, 5vw, 64px) 48px;
+  padding-top: 18px;
+}
+.prov-label {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--mute); margin-bottom: 10px;
+}
+.files { list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 3px 28px; }
+.files li { font-family: var(--mono); font-size: 11.5px; color: var(--mute); min-width: 0; overflow-wrap: anywhere; }
+.files code { color: var(--slate); }
+.stamp { font-family: var(--mono); font-size: 11px; color: var(--faint); margin-top: 14px; }
+
+@media (max-width: 1180px) {
+  .fact-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sink-arrows { display: none; }
+}
+@media (max-width: 700px) {
+  .fact-grid { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  #nav-rows, html.nav-collapsed #nav-rows, .chev { transition: none; }
+}
+</style>
 </head>
-<body style="margin:0;padding:0;background:#f4f5f7;color:#1c2024;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;line-height:1.55;">
-<div style="max-width:1080px;margin:0 auto;padding:32px 28px 72px 28px;">
+<body>
 
-<!-- ══════════ HEADER ══════════ -->
-<div style="border-bottom:3px solid #1c2024;padding-bottom:18px;margin-bottom:26px;">
-  <div style="font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#6b7280;font-weight:700;">Merged cluster &middot; comprehension doc</div>
-  <h1 style="margin:6px 0 4px 0;font-size:32px;line-height:1.15;letter-spacing:-.02em;">type-model-completion</h1>
-  <div style="font-size:17px;color:#374151;">Record the type facts once, resolve members over one ladder.</div>
-  <div style="margin-top:14px;">
-    <span style="display:inline-block;background:#1c2024;color:#fff;border-radius:3px;padding:3px 9px;font-size:12px;font-weight:700;margin:0 6px 6px 0;">46 plan rows &middot; largest cluster</span>
-    <span style="display:inline-block;background:#e5e7eb;color:#1c2024;border-radius:3px;padding:3px 9px;font-size:12px;font-weight:700;margin:0 6px 6px 0;">5 fault areas merged</span>
-    <span style="display:inline-block;background:#e5e7eb;color:#1c2024;border-radius:3px;padding:3px 9px;font-size:12px;font-weight:700;margin:0 6px 6px 0;">17 ordered sub-tasks</span>
-    <span style="display:inline-block;background:#fde8e8;color:#8a1c1c;border-radius:3px;padding:3px 9px;font-size:12px;font-weight:700;margin:0 6px 6px 0;">LAST in recommended cross-cluster order</span>
+<nav class="crossdoc" id="crossdoc" aria-label="TASK-376 family">
+  <div class="nav-bar">
+    <span class="nav-family">TASK-376 &middot; type model completion</span>
+    <span class="nav-here" aria-current="page">376 &middot; the whole family</span>
+    <span class="nav-spacer"></span>
+    <button class="nav-btn" id="navToggle" type="button" aria-expanded="true" aria-controls="nav-rows">
+      <span id="navToggleLabel">Hide 19 companions</span><span class="chev" aria-hidden="true"></span>
+    </button>
+    <button class="nav-btn" id="themeToggle" type="button" aria-pressed="false">
+      <span class="tico" aria-hidden="true"></span><span id="themeLabel">Dark</span>
+    </button>
   </div>
-</div>
-
-<!-- ══════════ VERDICT ══════════ -->
-<table style="width:100%;border-collapse:separate;border-spacing:14px 0;margin:0 -14px 30px -14px;">
-<tr>
-<td style="width:50%;vertical-align:top;background:#eef7ee;border:1px solid #bcd8bc;border-left:5px solid #3f7d3f;border-radius:5px;padding:16px 18px;">
-  <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#3f7d3f;font-weight:800;">Benefit</div>
-  <div style="font-size:30px;font-weight:800;line-height:1.1;margin:6px 0 4px 0;">~1,300</div>
-  <div style="font-size:14px;color:#2f4f2f;">false unresolved-call / unreachable-function rows removed, across <strong>10 corpora</strong> (angular, rustc, tokio, sqlx, TypeScript, django, pandas, celery, express, mocha) and <strong>4 languages</strong>.</div>
-  <div style="font-size:13px;color:#456045;margin-top:8px;">The single largest recovery available anywhere in the backlog. One sub-task (#6) alone addresses <strong>1,049</strong> of them.</div>
-</td>
-<td style="width:50%;vertical-align:top;background:#fdf2ec;border:1px solid #e6c4ac;border-left:5px solid #b45309;border-radius:5px;padding:16px 18px;">
-  <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#b45309;font-weight:800;">Cost</div>
-  <div style="font-size:30px;font-weight:800;line-height:1.1;margin:6px 0 4px 0;">Highest</div>
-  <div style="font-size:14px;color:#7a3d06;">Touches both pipeline halves — <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">index_single_file/</code> recording and <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">resolve_references/</code> resolution. 12 functions deleted outright; ~100 existing assertions rewritten.</div>
-  <div style="font-size:13px;color:#8a5320;margin-top:8px;">Not divisible into small independent wins after sub-task 7 — the middle of the epic is one gated chain.</div>
-</td>
-</tr>
-</table>
-
-<div style="background:#fff;border:1px solid #d8dbe0;border-radius:5px;padding:16px 20px;margin-bottom:34px;">
-  <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#6b7280;font-weight:800;margin-bottom:6px;">Where it ranks</div>
-  <div style="font-size:15px;">Highest benefit <em>and</em> highest cost. It is placed last not because it is optional but because
-  <strong>its first five sub-tasks are small, independent and de-noise every other cluster's measurement</strong> — while its
-  gated middle (6 &rarr; 8 &rarr; 14/15) is the longest single chain in the run. Fund it when you can commit a whole
-  run to it; otherwise take sub-tasks 1&ndash;4 and 7 as cheap, standalone credit and defer the chain.</div>
-</div>
-
-<!-- ══════════ THE CHANGE ══════════ -->
-<h2 style="font-size:21px;margin:0 0 6px 0;border-top:2px solid #1c2024;padding-top:14px;">What changes</h2>
-<p style="margin:0 0 18px 0;color:#374151;">A receiver-directed call needs five facts. Ariadne records none of them — each is re-derived at the
-point of use, by two or three drifting builders, from raw source text. The five member fault areas <em>are</em> those five facts.</p>
-
-<!-- BEFORE -->
-<div style="background:#fff;border:1px solid #d8dbe0;border-radius:5px;padding:18px 20px;margin-bottom:16px;">
-<div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:800;color:#8a1c1c;margin-bottom:12px;">Before &mdash; five facts, re-derived at the point of use</div>
-
-<table style="width:100%;border-collapse:collapse;font-size:13.5px;">
-<tr style="background:#f7f8fa;">
-  <th style="text-align:left;padding:7px 10px;border-bottom:1px solid #d8dbe0;width:20%;">Fact needed</th>
-  <th style="text-align:left;padding:7px 10px;border-bottom:1px solid #d8dbe0;width:44%;">Derived by (competing builders)</th>
-  <th style="text-align:left;padding:7px 10px;border-bottom:1px solid #d8dbe0;width:36%;">How it fails</th>
-</tr>
-<tr>
-  <td style="padding:8px 10px;border-bottom:1px solid #eceef1;vertical-align:top;"><strong>1. The annotation</strong><br><span style="color:#6b7280;">what a name denotes</span></td>
-  <td style="padding:8px 10px;border-bottom:1px solid #eceef1;vertical-align:top;">6 sites hand raw annotation text to a bare <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">Map</code> lookup, unparsed</td>
-  <td style="padding:8px 10px;border-bottom:1px solid #eceef1;vertical-align:top;color:#8a1c1c;">Resolves only if the text is <em>byte-identical</em> to a declared name. <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">&amp;mut S</code>, <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">Option&lt;T&gt;</code>, <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">F | null</code>, <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">Optional[C]</code> all miss</td>
-</tr>
-<tr>
-  <td style="padding:8px 10px;border-bottom:1px solid #eceef1;vertical-align:top;"><strong>2. The scope's self</strong><br><span style="color:#6b7280;">what <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">self</code>/<code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">this</code> binds to</span></td>
-  <td style="padding:8px 10px;border-bottom:1px solid #eceef1;vertical-align:top;">Not stored. <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">find_class_from_scope</code> runs the member index <em>backwards</em> from the first method it finds</td>
-  <td style="padding:8px 10px;border-bottom:1px solid #eceef1;vertical-align:top;color:#8a1c1c;">Five independently reproduced failure modes; the scan breaks on the first candidate, so each is fatal</td>
-</tr>
-<tr>
-  <td style="padding:8px 10px;border-bottom:1px solid #eceef1;vertical-align:top;"><strong>3. The value</strong><br><span style="color:#6b7280;">what a binding holds</span></td>
-  <td style="padding:8px 10px;border-bottom:1px solid #eceef1;vertical-align:top;">No channel exists — only a type channel and a call-target channel</td>
-  <td style="padding:8px 10px;border-bottom:1px solid #eceef1;vertical-align:top;color:#8a1c1c;"><code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">cls = Parser; cls()</code> &rarr; <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">receiver_type_unknown</code></td>
-</tr>
-<tr>
-  <td style="padding:8px 10px;border-bottom:1px solid #eceef1;vertical-align:top;"><strong>4. The member set</strong></td>
-  <td style="padding:8px 10px;border-bottom:1px solid #eceef1;vertical-align:top;"><strong>3 builders</strong> — one live, one whose maps are dead, one reachable only from tests</td>
-  <td style="padding:8px 10px;border-bottom:1px solid #eceef1;vertical-align:top;color:#8a1c1c;">Live one is per-file <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">set</code>, so a Rust type with impls in several files keeps only the last; enums get no index at all</td>
-</tr>
-<tr>
-  <td style="padding:8px 10px;vertical-align:top;"><strong>5. The subtype graph</strong></td>
-  <td style="padding:8px 10px;vertical-align:top;"><strong>3 builders</strong> — two forward, one inverse, each with a different source of truth</td>
-  <td style="padding:8px 10px;vertical-align:top;color:#8a1c1c;">Drops qualified TS heritage, <em>every</em> Rust trait edge, every base past the first, and every edge whose caller was resolved before the implementer was ingested</td>
-</tr>
-</table>
-
-<div style="margin-top:14px;background:#fdf0f0;border:1px solid #e8bcbc;border-radius:4px;padding:11px 14px;font-size:13.5px;">
-  <strong>All five gaps arrive at one sink:</strong> the member probe in <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">method_lookup.ts:132-138</code>, which reports
-  <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">method_not_on_type</code>. Each builder's gaps are a <em>different population</em> of false positives, which is why the
-  same defect surfaced as five separate fault areas.
-</div>
-</div>
-
-<div style="text-align:center;font-size:26px;color:#6b7280;margin:6px 0 10px 0;">&darr;</div>
-
-<!-- AFTER -->
-<div style="background:#fff;border:1px solid #d8dbe0;border-radius:5px;padding:18px 20px;margin-bottom:30px;">
-<div style="font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:800;color:#3f7d3f;margin-bottom:14px;">After &mdash; five recorded stores, one ladder</div>
-
-<table style="width:100%;border-collapse:separate;border-spacing:8px 0;margin:0 -8px 14px -8px;">
-<tr>
-  <td style="width:20%;vertical-align:top;background:#f3f8f3;border:1px solid #c3ddc3;border-radius:4px;padding:10px 11px;font-size:12.5px;">
-    <div style="font-weight:800;font-size:12px;">1 &middot; Parsed annotations</div>
-    <div style="color:#41603f;margin-top:4px;">One parser + 4 language leaves; one <code style="font-family:ui-monospace,Menlo,monospace;font-size:11px;">resolve_annotation</code>. All 6 raw sites route through it.</div>
-  </td>
-  <td style="width:20%;vertical-align:top;background:#f3f8f3;border:1px solid #c3ddc3;border-radius:4px;padding:10px 11px;font-size:12.5px;">
-    <div style="font-weight:800;font-size:12px;">2 &middot; Scope self type</div>
-    <div style="color:#41603f;margin-top:4px;">One field on <code style="font-family:ui-monospace,Menlo,monospace;font-size:11px;">LexicalScope</code>, set by the 4 boundary extractors. Backward scan deleted.</div>
-  </td>
-  <td style="width:20%;vertical-align:top;background:#f3f8f3;border:1px solid #c3ddc3;border-radius:4px;padding:10px 11px;font-size:12.5px;">
-    <div style="font-weight:800;font-size:12px;">3 &middot; Value channel</div>
-    <div style="color:#41603f;margin-top:4px;">One <code style="font-family:ui-monospace,Menlo,monospace;font-size:11px;">ValueSource</code> union, 4 producers, 4 consumers.</div>
-  </td>
-  <td style="width:20%;vertical-align:top;background:#f3f8f3;border:1px solid #c3ddc3;border-radius:4px;padding:10px 11px;font-size:12.5px;">
-    <div style="font-weight:800;font-size:12px;">4 &middot; Member index</div>
-    <div style="color:#41603f;margin-top:4px;">One index, merged across files with per-file provenance, extended to enums, plus a reverse name index.</div>
-  </td>
-  <td style="width:20%;vertical-align:top;background:#f3f8f3;border:1px solid #c3ddc3;border-radius:4px;padding:10px 11px;font-size:12.5px;">
-    <div style="font-weight:800;font-size:12px;">5 &middot; Heritage graph</div>
-    <div style="color:#41603f;margin-top:4px;">One builder, multi-valued <code style="font-family:ui-monospace,Menlo,monospace;font-size:11px;">parent_types</code>, edges tagged declared/structural, order-independent.</div>
-  </td>
-</tr>
-</table>
-
-<div style="text-align:center;font-size:22px;color:#6b7280;margin:2px 0 10px 0;">&darr;</div>
-
-<div style="background:#f7f8fa;border:1px solid #d8dbe0;border-radius:4px;padding:12px 14px;">
-  <div style="font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#374151;margin-bottom:8px;">The one ladder in <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">method_lookup.ts</code></div>
-  <div style="font-size:13px;font-family:ui-monospace,Menlo,monospace;line-height:1.9;">
-    <span style="background:#e5e7eb;border-radius:3px;padding:2px 7px;">1 import receiver &rarr; module surface</span>
-    <span style="color:#9ca3af;">&rarr;</span>
-    <span style="background:#e5e7eb;border-radius:3px;padding:2px 7px;">2 collection receiver &rarr; collection dispatch</span>
-    <span style="color:#9ca3af;">&rarr;</span>
-    <span style="background:#e5e7eb;border-radius:3px;padding:2px 7px;">3 member probe over the full MRO</span>
-    <span style="color:#9ca3af;">&rarr;</span>
-    <span style="background:#e5e7eb;border-radius:3px;padding:2px 7px;">4 raw member index</span>
-    <span style="color:#9ca3af;">&rarr;</span>
-    <span style="background:#e5e7eb;border-radius:3px;padding:2px 7px;">5 subtype-closure fan-out</span>
-    <span style="color:#9ca3af;">&rarr;</span>
-    <span style="background:#e5e7eb;border-radius:3px;padding:2px 7px;">6 structural conformance</span>
-    <span style="color:#9ca3af;">&rarr;</span>
-    <span style="background:#fde8e8;border-radius:3px;padding:2px 7px;">method_not_on_type</span>
+  <div id="nav-rows">
+    <div class="nav-rows-inner">
+      <div class="nav-grid">
+        <span class="chip self" title="376 — Record the five type facts once and resolve members over a single lookup ladder"><span class="dot" aria-hidden="true"></span><span class="cid">376</span><span class="ct">Record the five type facts once and resolve members over a single lookup ladder</span><span class="tag">this page</span></span>
+        <a class="chip has-doc" href="task-376.1%20-%20Mint-collection-member-ids-that-name-real-definitions.member-id-identity.html" title="376.1 — Mint collection member ids that name real definitions"><span class="dot" aria-hidden="true"></span><span class="cid">376.1</span><span class="ct">Mint collection member ids that name real definitions</span><span class="tag">member id identity</span></a>
+        <a class="chip has-doc" href="task-376.2%20-%20Delete-the-Python-heuristic-constructor-capture-and-stop-the-annotation-clobber.constructor-capture.html" title="376.2 — Delete the Python heuristic constructor capture and stop the annotation clobber"><span class="dot" aria-hidden="true"></span><span class="cid">376.2</span><span class="ct">Delete the Python heuristic constructor capture and stop the annotation clobber</span><span class="tag">constructor capture</span></a>
+        <a class="chip has-doc" href="task-376.3%20-%20Record-the-scope's-self-type-as-LexicalScope.self_type_name.self-type-on-the-scope.html" title="376.3 — Record the scope's self type as LexicalScope.self_type_name"><span class="dot" aria-hidden="true"></span><span class="cid">376.3</span><span class="ct">Record the scope&rsquo;s self type as LexicalScope.self_type_name</span><span class="tag">self type on the scope</span></a>
+        <a class="chip has-doc" href="task-376.4%20-%20Make-the-member-index-complete-enums,-cross-file-union,-reverse-lookup.member-union.html" title="376.4 — Make the member index complete: enums, cross-file union, reverse lookup"><span class="dot" aria-hidden="true"></span><span class="cid">376.4</span><span class="ct">Make the member index complete: enums, cross-file union, reverse lookup</span><span class="tag">member union</span></a>
+        <span class="chip pending" title="376.5 — Resolve self/this through find_self_type and delete the backwards member scan"><span class="dot" aria-hidden="true"></span><span class="cid">376.5</span><span class="ct">Resolve self/this through find_self_type and delete the backwards member scan</span><span class="tag">not yet generated</span></span>
+        <span class="chip pending" title="376.6 — Parse and resolve type annotations through one annotation resolver"><span class="dot" aria-hidden="true"></span><span class="cid">376.6</span><span class="ct">Parse and resolve type annotations through one annotation resolver</span><span class="tag">not yet generated</span></span>
+        <span class="chip pending" title="376.7 — Single-source the heritage graph and publish multi-valued parent_types"><span class="dot" aria-hidden="true"></span><span class="cid">376.7</span><span class="ct">Single-source the heritage graph and publish multi-valued parent_types</span><span class="tag">not yet generated</span></span>
+        <span class="chip pending" title="376.8 — Attach cross-file Rust impl-block methods to their type"><span class="dot" aria-hidden="true"></span><span class="cid">376.8</span><span class="ct">Attach cross-file Rust impl-block methods to their type</span><span class="tag">not yet generated</span></span>
+        <span class="chip pending" title="376.9 — Widen construction and initialiser capture across the four languages"><span class="dot" aria-hidden="true"></span><span class="cid">376.9</span><span class="ct">Widen construction and initialiser capture across the four languages</span><span class="tag">not yet generated</span></span>
+        <span class="chip pending" title="376.10 — Resolve container element types and stop mistyping the container"><span class="dot" aria-hidden="true"></span><span class="cid">376.10</span><span class="ct">Resolve container element types and stop mistyping the container</span><span class="tag">not yet generated</span></span>
+        <span class="chip pending" title="376.11 — Add the single ValueSource channel and its four consumers"><span class="dot" aria-hidden="true"></span><span class="cid">376.11</span><span class="ct">Add the single ValueSource channel and its four consumers</span><span class="tag">not yet generated</span></span>
+        <a class="chip has-doc" href="task-376.12%20-%20Collapse-module-member-lookup-and-fix-guarded-and-function-local-import-bindings.module-member-lookup.html" title="376.12 — Collapse module-member lookup and fix guarded and function-local import bindings"><span class="dot" aria-hidden="true"></span><span class="cid">376.12</span><span class="ct">Collapse module-member lookup and fix guarded and function-local import bindings</span><span class="tag">module member lookup</span></a>
+        <span class="chip pending" title="376.13 — Add ladder rung 5: subtype-closure fan-out on a miss, with the pending-failure index"><span class="dot" aria-hidden="true"></span><span class="cid">376.13</span><span class="ct">Add ladder rung 5: subtype-closure fan-out on a miss, with the pending-failure index</span><span class="tag">not yet generated</span></span>
+        <span class="chip pending" title="376.14 — Infer structural conformance for interfaces no class declares"><span class="dot" aria-hidden="true"></span><span class="cid">376.14</span><span class="ct">Infer structural conformance for interfaces no class declares</span><span class="tag">not yet generated</span></span>
+        <span class="chip pending" title="376.15 — Bind type parameters from call arguments and declared instantiations"><span class="dot" aria-hidden="true"></span><span class="cid">376.15</span><span class="ct">Bind type parameters from call arguments and declared instantiations</span><span class="tag">not yet generated</span></span>
+        <a class="chip has-doc" href="task-376.16%20-%20Emit-a-ResolutionFailure-for-every-dropped-call-reference-and-count-the-failure-taxonomy-per-corpus.failure-ledger.html" title="376.16 — Emit a ResolutionFailure for every dropped call reference and count the failure taxonomy per corpus"><span class="dot" aria-hidden="true"></span><span class="cid">376.16</span><span class="ct">Emit a ResolutionFailure for every dropped call reference and count the failure taxonomy per corpus</span><span class="tag">failure ledger</span></a>
+        <span class="chip pending" title="376.17 — Split symbol_types into value types and callable return types and delete the dead member builders"><span class="dot" aria-hidden="true"></span><span class="cid">376.17</span><span class="ct">Split symbol_types into value types and callable return types and delete the dead member builders</span><span class="tag">not yet generated</span></span>
+        <span class="chip pending" title="376.18 — Re-run the evidence corpora, re-attribute the residue and pin the per-corpus regression suite"><span class="dot" aria-hidden="true"></span><span class="cid">376.18</span><span class="ct">Re-run the evidence corpora, re-attribute the residue and pin the per-corpus regression suite</span><span class="tag">not yet generated</span></span>
+      </div>
+    </div>
   </div>
-  <div style="font-size:13px;color:#374151;margin-top:9px;">After the change, that final rung means <strong>genuinely not statically reachable</strong> — which is what makes it usable as an entry-point signal.</div>
-</div>
-</div>
+</nav>
 
-<!-- ══════════ IMPACT ══════════ -->
-<h2 style="font-size:21px;margin:0 0 6px 0;border-top:2px solid #1c2024;padding-top:14px;">Impact, by fault area</h2>
-<p style="margin:0 0 14px 0;color:#374151;">Evidence rows are real failing call sites in the corpora, not estimates.</p>
+<main>
 
-<table style="width:100%;border-collapse:collapse;font-size:13.5px;background:#fff;border:1px solid #d8dbe0;border-radius:5px;margin-bottom:16px;">
-<tr style="background:#f7f8fa;">
-  <th style="text-align:left;padding:9px 12px;border-bottom:1px solid #d8dbe0;">Member fault area</th>
-  <th style="text-align:right;padding:9px 12px;border-bottom:1px solid #d8dbe0;">Rows</th>
-  <th style="text-align:left;padding:9px 12px;border-bottom:1px solid #d8dbe0;width:52%;">What the merge does to it</th>
-</tr>
-<tr>
-  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;"><code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">receiver_type_inference</code></td>
-  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;text-align:right;font-weight:800;font-size:16px;">1,149</td>
-  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;"><strong>1,049 of them are one defect</strong> — the unparsed annotation string. Six leaves collapse into sub-task 6.</td>
-</tr>
-<tr>
-  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;"><code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">method_lookup</code></td>
-  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;text-align:right;font-weight:800;font-size:16px;">108</td>
-  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;">MRO half merges into the heritage builder; two leaves' premises falsified and replaced by cheaper root causes; 30 rows wait on the <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">module-surface-resolution</code> epic.</td>
-</tr>
-<tr>
-  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;"><code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">polymorphic_dispatch</code></td>
-  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;text-align:right;font-weight:800;font-size:16px;">25</td>
-  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;">Three of four leaf premises refuted by the merge. 20 of the 25 rows land on structural conformance — a 2-row leaf promoted to the group's main mechanism.</td>
-</tr>
-<tr>
-  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;"><code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">scope_construction</code></td>
-  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;text-align:right;font-weight:800;font-size:16px;">22</td>
-  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;">Four leaves collapse into the single <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">self_type_name</code> field; its proposed grammar recapture is rejected as unnecessary.</td>
-</tr>
-<tr>
-  <td style="padding:9px 12px;"><code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">collection_dispatch</code></td>
-  <td style="padding:9px 12px;text-align:right;font-weight:800;font-size:16px;">9</td>
-  <td style="padding:9px 12px;">Becomes one shared producer (element types) rather than its own subsystem; it is <em>narrowed</em>, gaining a guard that removes a wrong edge.</td>
-</tr>
-</table>
+  <header class="masthead">
+    <div class="eyebrow">TASK-376 &middot; type model completion &middot; eighteen steps, seven waves</div>
+    <h1>Five type facts, recorded once</h1>
+    <div class="byline">
+      <span>resolve_references/</span>
+      <span>index_single_file/</span>
+      <span>type_preprocessing/</span>
+      <span>typescript &middot; javascript &middot; python &middot; rust</span>
+      <span>tree @ 279221d4</span>
+    </div>
+  </header>
 
-<table style="width:100%;border-collapse:separate;border-spacing:12px 0;margin:0 -12px 30px -12px;">
-<tr>
-<td style="width:33.33%;vertical-align:top;background:#fff;border:1px solid #d8dbe0;border-radius:5px;padding:13px 15px;">
-  <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#6b7280;font-weight:800;">Secondary payoff</div>
-  <div style="font-size:13.5px;margin-top:5px;">Sub-task 1 also closes <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">entry_point_classification</code>'s five-row leaf, and sub-task 7 (diagnostic completeness) makes sub-tasks 8&ndash;15 <em>measurable</em> for the first time.</div>
-</td>
-<td style="width:33.33%;vertical-align:top;background:#fff;border:1px solid #d8dbe0;border-radius:5px;padding:13px 15px;">
-  <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#6b7280;font-weight:800;">Honestly excluded</div>
-  <div style="font-size:13.5px;margin-top:5px;">Permanent limits stay: WASM instance exports, DI containers keyed on runtime tokens, compiler-injected Rust <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">Drop</code> calls. Success criteria must not target 100%.</div>
-</td>
-<td style="width:33.33%;vertical-align:top;background:#fff;border:1px solid #d8dbe0;border-radius:5px;padding:13px 15px;">
-  <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#6b7280;font-weight:800;">Rows sent elsewhere</div>
-  <div style="font-size:13.5px;margin-top:5px;">11 rows re-homed to <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">module-surface-resolution</code> (loop-head bindings, Rust path resolution) rather than double-counted here.</div>
-</td>
-</tr>
-</table>
+  <p class="preamble prose">A call like <code>obj.method()</code> needs five facts about types that Ariadne never records, so each is guessed again at every use; these eighteen steps record each fact once and resolve every member through a single lookup ladder.</p>
 
-<!-- ══════════ WHY ONE EPIC ══════════ -->
-<h2 style="font-size:21px;margin:0 0 6px 0;border-top:2px solid #1c2024;padding-top:14px;">Why this stays one epic</h2>
-<p style="margin:0 0 14px 0;color:#374151;">The five groups were not merged for convenience. Read together they were designing <strong>one type model in five
-places</strong>, and in four places they designed the <em>same</em> mechanism twice with incompatible shapes. The merge settles each conflict.</p>
+  <!-- ═══════════ LEAD ═══════════ -->
+  <section id="order" data-spine="lead">
+    <div class="sec-head">
+      <div class="kicker">01 &middot; what every step is waiting on</div>
+      <h2>Six steps start now; the other twelve queue behind one chain</h2>
+    </div>
 
-<table style="width:100%;border-collapse:collapse;font-size:13.5px;background:#fff;border:1px solid #d8dbe0;border-radius:5px;margin-bottom:16px;">
-<tr style="background:#f7f8fa;">
-  <th style="text-align:left;padding:9px 12px;border-bottom:1px solid #d8dbe0;width:24%;">Collision</th>
-  <th style="text-align:left;padding:9px 12px;border-bottom:1px solid #d8dbe0;width:40%;">Competing designs</th>
-  <th style="text-align:left;padding:9px 12px;border-bottom:1px solid #d8dbe0;">Settlement</th>
-</tr>
-<tr>
-  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;vertical-align:top;">Where Rust annotations are normalised</td>
-  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;vertical-align:top;">Destructively at index time <span style="color:#6b7280;">(method_lookup)</span> vs. parsed at resolve time <span style="color:#6b7280;">(receiver_type_inference)</span></td>
-  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;vertical-align:top;"><strong>Resolve time.</strong> The index-time strip discards exactly the type arguments two other members need, and unwrapping is a policy decision.</td>
-</tr>
-<tr>
-  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;vertical-align:top;">How a scope names its self type</td>
-  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;vertical-align:top;">Field on the method definition vs. field on the scope</td>
-  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;vertical-align:top;"><strong>The scope field.</strong> A cross-file Rust <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">impl</code> contributes zero definitions, so a definition-carried field cannot exist to be read.</td>
-</tr>
-<tr>
-  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;vertical-align:top;"><code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">registries/type.ts</code> STEP 3</td>
-  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;vertical-align:top;"><span style="color:#8a1c1c;font-weight:700;">Three groups want three different things:</span> delete it, rewrite it, or reshape the maps it writes</td>
-  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;vertical-align:top;"><strong>Delete it.</strong> Heritage resolves once, in the single builder, publishing both directions.</td>
-</tr>
-<tr>
-  <td style="padding:9px 12px;vertical-align:top;">The value channel</td>
-  <td style="padding:9px 12px;vertical-align:top;"><span style="color:#8a1c1c;font-weight:700;">Three designs</span> for one channel — same two consumers, overlapping producers</td>
-  <td style="padding:9px 12px;vertical-align:top;"><strong>One union</strong> in <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">call_resolution/value_source.ts</code>, with the union of all three producer sets.</td>
-</tr>
-</table>
+    <figure class="plate" role="img" aria-label="Dependency graph of the eighteen sub-tasks in seven ranks, one rank per wave. Wave 1 holds six steps that nothing pins: 376.16 failure taxonomy, 376.1 collection member ids, 376.2 Python constructor, 376.3 self_type_name, 376.4 member index union and 376.12 module member lookup; 376.1 and 376.12 have no edges at all. Wave 2 holds 376.5, fed by 376.3, and 376.6, fed by 376.2 through a shared file and by 376.16 through a measurement. Wave 3 is 376.17 alone, after 376.6. Wave 4 holds 376.7, 376.9 and 376.10, all after 376.17. Wave 5 holds 376.11, after 376.17, 376.9 and 376.10, and 376.13, after 376.7 and 376.16. Wave 6 holds 376.8 and 376.14, both after 376.4, 376.7 and 376.13, and 376.15, after 376.6 and 376.11. Wave 7 is 376.18, after 376.8, 376.14 and 376.15 and needing measurements from 376.16, 376.17 and 376.13. The critical path, drawn heavier, runs 376.16, 376.6, 376.17, 376.7, 376.13, then 376.8 and 376.14, then 376.18.">
+      <div class="cdoc-mermaid-scope"><div class="cdoc-mermaid-scope"><svg id="my-svg" width="100%" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="flowchart" style="max-width: 1658.32px; background-color: white;" viewBox="0 0 1658.3160400390625 766" role="graphics-document document" aria-roledescription="flowchart-v2"><style>#my-svg{font-size:16px;fill:#2f3338;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#my-svg .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#my-svg .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#my-svg .error-icon{fill:hsl(218.1818181818, 36.6666666667%, 93.2352941176%);}#my-svg .error-text{fill:rgb(23.5750000002, 18.9750000001, 10.9250000001);stroke:rgb(23.5750000002, 18.9750000001, 10.9250000001);}#my-svg .edge-thickness-normal{stroke-width:1px;}#my-svg .edge-thickness-thick{stroke-width:3.5px;}#my-svg .edge-pattern-solid{stroke-dasharray:0;}#my-svg .edge-thickness-invisible{stroke-width:0;fill:none;}#my-svg .edge-pattern-dashed{stroke-dasharray:3;}#my-svg .edge-pattern-dotted{stroke-dasharray:2;}#my-svg .marker{fill:#2f3338;stroke:#2f3338;}#my-svg .marker.cross{stroke:#2f3338;}#my-svg svg{font-size:16px;}#my-svg p{margin:0;}#my-svg .label{color:#2f3338;}#my-svg .cluster-label text{fill:rgb(23.5750000002, 18.9750000001, 10.9250000001);}#my-svg .cluster-label span{color:rgb(23.5750000002, 18.9750000001, 10.9250000001);}#my-svg .cluster-label span p{background-color:transparent;}#my-svg .label text,#my-svg span{fill:#2f3338;color:#2f3338;}#my-svg .node rect,#my-svg .node circle,#my-svg .node ellipse,#my-svg .node polygon,#my-svg .node path{fill:#ece4d6;stroke:#c06d4f;stroke-width:1px;}#my-svg .rough-node .label text,#my-svg .node .label text,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-anchor:middle;}#my-svg .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#my-svg .rough-node .label,#my-svg .node .label,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-align:center;}#my-svg .node.clickable{cursor:pointer;}#my-svg .root .anchor path{fill:#2f3338!important;stroke-width:0;stroke:#2f3338;}#my-svg .arrowheadPath{fill:#080c13;}#my-svg .edgePath .path{stroke:#2f3338;stroke-width:1px;}#my-svg .flowchart-link{stroke:#2f3338;fill:none;}#my-svg .edgeLabel{background-color:#f7f3ec;text-align:center;}#my-svg .edgeLabel p{background-color:#f7f3ec;}#my-svg .edgeLabel rect{opacity:0.5;background-color:#f7f3ec;fill:#f7f3ec;}#my-svg .labelBkg{background-color:rgba(247, 243, 236, 0.5);}#my-svg .cluster rect{fill:hsl(218.1818181818, 36.6666666667%, 93.2352941176%);stroke:hsl(218.1818181818, 0%, 83.2352941176%);stroke-width:1px;}#my-svg .cluster text{fill:rgb(23.5750000002, 18.9750000001, 10.9250000001);}#my-svg .cluster span{color:rgb(23.5750000002, 18.9750000001, 10.9250000001);}#my-svg div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-size:12px;background:hsl(218.1818181818, 36.6666666667%, 93.2352941176%);border:1px solid hsl(218.1818181818, 0%, 83.2352941176%);border-radius:2px;pointer-events:none;z-index:100;}#my-svg .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#2f3338;}#my-svg rect.text{fill:none;stroke-width:0;}#my-svg .icon-shape,#my-svg .image-shape{background-color:#f7f3ec;text-align:center;}#my-svg .icon-shape p,#my-svg .image-shape p{background-color:#f7f3ec;padding:2px;}#my-svg .icon-shape .label rect,#my-svg .image-shape .label rect{opacity:0.5;background-color:#f7f3ec;fill:#f7f3ec;}#my-svg .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#my-svg .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#my-svg .node .neo-node{stroke:#c06d4f;}#my-svg [data-look="neo"].node rect,#my-svg [data-look="neo"].cluster rect,#my-svg [data-look="neo"].node polygon{stroke:url(#my-svg-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#my-svg [data-look="neo"].node path{stroke:url(#my-svg-gradient);stroke-width:1px;}#my-svg [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#my-svg [data-look="neo"].node .neo-line path{stroke:#c06d4f;filter:none;}#my-svg [data-look="neo"].node circle{stroke:url(#my-svg-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#my-svg [data-look="neo"].node circle .state-start{fill:#000000;}#my-svg [data-look="neo"].icon-shape .icon{fill:url(#my-svg-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#my-svg [data-look="neo"].icon-shape .icon-neo path{stroke:url(#my-svg-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#my-svg :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}#my-svg .ready&gt;*{fill:rgb(228, 233, 213)!important;stroke:rgb(111, 122, 79)!important;stroke-width:2px!important;color:rgb(47, 51, 56)!important;}#my-svg .ready span{fill:rgb(228, 233, 213)!important;stroke:rgb(111, 122, 79)!important;stroke-width:2px!important;color:rgb(47, 51, 56)!important;}#my-svg .ready tspan{fill:rgb(47, 51, 56)!important;}#my-svg .crit&gt;*{fill:rgb(246, 227, 215)!important;stroke:rgb(192, 109, 79)!important;stroke-width:3px!important;color:rgb(47, 51, 56)!important;}#my-svg .crit span{fill:rgb(246, 227, 215)!important;stroke:rgb(192, 109, 79)!important;stroke-width:3px!important;color:rgb(47, 51, 56)!important;}#my-svg .crit tspan{fill:rgb(47, 51, 56)!important;}#my-svg .waits&gt;*{fill:rgb(236, 228, 214)!important;stroke:rgb(179, 165, 140)!important;stroke-width:1.5px!important;color:rgb(47, 51, 56)!important;}#my-svg .waits span{fill:rgb(236, 228, 214)!important;stroke:rgb(179, 165, 140)!important;stroke-width:1.5px!important;color:rgb(47, 51, 56)!important;}#my-svg .waits tspan{fill:rgb(47, 51, 56)!important;}</style><g><marker id="my-svg_flowchart-v2-pointEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-pointStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="4.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-pointEnd-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="11.5" refY="7" markerUnits="userSpaceOnUse" markerWidth="10.5" markerHeight="14" orient="auto"><path d="M 0 0 L 11.5 7 L 0 14 z" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-pointStart-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="1" refY="7" markerUnits="userSpaceOnUse" markerWidth="11.5" markerHeight="14" orient="auto"><polygon points="0,7 11.5,14 11.5,0" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="11" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-1" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleEnd-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refY="5" refX="12.25" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleStart-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-2" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-crossEnd" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="12" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-crossStart" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="-1" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-crossEnd-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="17.7" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5;"/></marker><marker id="my-svg_flowchart-v2-crossStart-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="-3.5" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5; stroke-dasharray: 1, 0;"/></marker><g class="root"><g class="clusters"/><g class="edgePaths"><path d="M551.781,74L551.781,78C551.781,82,551.781,90,551.781,97.333C551.781,104.667,551.781,111.333,551.781,114.667L551.781,118" id="my-svg-L_T3_T5_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style="stroke:#2f3338;stroke-width:1.2px;;;stroke:#2f3338;stroke-width:1.2px" data-edge="true" data-et="edge" data-id="L_T3_T5_0" data-points="W3sieCI6NTUxLjc4MTI1LCJ5Ijo3NH0seyJ4Ijo1NTEuNzgxMjUsInkiOjk4fSx7IngiOjU1MS43ODEyNSwieSI6MTIyfV0=" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd__2f3338)"/><path d="M1245.558,188L1252.558,192C1259.559,196,1273.561,204,1280.562,211.333C1287.563,218.667,1287.563,225.333,1287.563,228.667L1287.563,232" id="my-svg-L_T6_T17_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style="stroke:#2f3338;stroke-width:1.2px;stroke:#c06d4f;stroke-width:2.6px;fill:none;;;stroke:#2f3338;stroke-width:1.2px;stroke:#c06d4f;stroke-width:2.6px;fill:none" data-edge="true" data-et="edge" data-id="L_T6_T17_0" data-points="W3sieCI6MTI0NS41NTc1NjU3ODk0NzM4LCJ5IjoxODh9LHsieCI6MTI4Ny41NjI1LCJ5IjoyMTJ9LHsieCI6MTI4Ny41NjI1LCJ5IjoyMzZ9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd__2f3338)"/><path d="M1203.336,281.517L1153.447,288.931C1103.559,296.345,1003.781,311.172,953.893,321.919C904.004,332.667,904.004,339.333,904.004,342.667L904.004,346" id="my-svg-L_T17_T7_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style="stroke:#2f3338;stroke-width:1.2px;stroke:#c06d4f;stroke-width:2.6px;fill:none;;;stroke:#2f3338;stroke-width:1.2px;stroke:#c06d4f;stroke-width:2.6px;fill:none" data-edge="true" data-et="edge" data-id="L_T17_T7_0" data-points="W3sieCI6MTIwMy4zMzU5Mzc1LCJ5IjoyODEuNTE2NzY4MzM5MjU3MTd9LHsieCI6OTA0LjAwMzkwNjI1LCJ5IjozMjZ9LHsieCI6OTA0LjAwMzkwNjI1LCJ5IjozNTB9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd__2f3338)"/><path d="M1298.807,302L1300.17,306C1301.533,310,1304.258,318,1305.621,325.333C1306.984,332.667,1306.984,339.333,1306.984,342.667L1306.984,346" id="my-svg-L_T17_T9_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style="stroke:#2f3338;stroke-width:1.2px;;;stroke:#2f3338;stroke-width:1.2px" data-edge="true" data-et="edge" data-id="L_T17_T9_0" data-points="W3sieCI6MTI5OC44MDY3NDM0MjEwNTI3LCJ5IjozMDJ9LHsieCI6MTMwNi45ODQzNzUsInkiOjMyNn0seyJ4IjoxMzA2Ljk4NDM3NSwieSI6MzUwfV0=" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd__2f3338)"/><path d="M1371.789,291.301L1393.632,297.084C1415.474,302.867,1459.159,314.434,1481.001,323.55C1502.844,332.667,1502.844,339.333,1502.844,342.667L1502.844,346" id="my-svg-L_T17_T10_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style="stroke:#2f3338;stroke-width:1.2px;;;stroke:#2f3338;stroke-width:1.2px" data-edge="true" data-et="edge" data-id="L_T17_T10_0" data-points="W3sieCI6MTM3MS43ODkwNjI1LCJ5IjoyOTEuMzAwNjYwNDczMjE4MTZ9LHsieCI6MTUwMi44NDM3NSwieSI6MzI2fSx7IngiOjE1MDIuODQzNzUsInkiOjM1MH1d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd__2f3338)"/><path d="M1228.605,302L1221.458,306C1214.312,310,1200.019,318,1192.873,331.5C1185.727,345,1185.727,364,1185.727,383C1185.727,402,1185.727,421,1196.372,434.308C1207.018,447.615,1228.309,455.23,1238.955,459.038L1249.601,462.846" id="my-svg-L_T17_T11_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style="stroke:#2f3338;stroke-width:1.2px;;;stroke:#2f3338;stroke-width:1.2px" data-edge="true" data-et="edge" data-id="L_T17_T11_0" data-points="W3sieCI6MTIyOC42MDQ4NTE5NzM2ODQyLCJ5IjozMDJ9LHsieCI6MTE4NS43MjY1NjI1LCJ5IjozMjZ9LHsieCI6MTE4NS43MjY1NjI1LCJ5IjozODN9LHsieCI6MTE4NS43MjY1NjI1LCJ5Ijo0NDB9LHsieCI6MTI1My4zNjcxODc1LCJ5Ijo0NjQuMTkyNjU2NTAyNzY5NzV9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd__2f3338)"/><path d="M1306.984,416L1306.984,420C1306.984,424,1306.984,432,1309.288,439.446C1311.592,446.892,1316.2,453.783,1318.503,457.229L1320.807,460.675" id="my-svg-L_T9_T11_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style="stroke:#2f3338;stroke-width:1.2px;;;stroke:#2f3338;stroke-width:1.2px" data-edge="true" data-et="edge" data-id="L_T9_T11_0" data-points="W3sieCI6MTMwNi45ODQzNzUsInkiOjQxNn0seyJ4IjoxMzA2Ljk4NDM3NSwieSI6NDQwfSx7IngiOjEzMjMuMDMwNDI3NjMxNTc5LCJ5Ijo0NjR9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd__2f3338)"/><path d="M1502.844,416L1502.844,420C1502.844,424,1502.844,432,1492.401,439.773C1481.957,447.547,1461.071,455.094,1450.628,458.867L1440.185,462.641" id="my-svg-L_T10_T11_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style="stroke:#2f3338;stroke-width:1.2px;;;stroke:#2f3338;stroke-width:1.2px" data-edge="true" data-et="edge" data-id="L_T10_T11_0" data-points="W3sieCI6MTUwMi44NDM3NSwieSI6NDE2fSx7IngiOjE1MDIuODQzNzUsInkiOjQ0MH0seyJ4IjoxNDM2LjQyMjY5NzM2ODQyMSwieSI6NDY0fV0=" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd__2f3338)"/><path d="M937.637,416L941.714,420C945.791,424,953.944,432,960.364,439.449C966.783,446.897,971.469,453.794,973.811,457.243L976.154,460.691" id="my-svg-L_T7_T13_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style="stroke:#2f3338;stroke-width:1.2px;stroke:#c06d4f;stroke-width:2.6px;fill:none;;;stroke:#2f3338;stroke-width:1.2px;stroke:#c06d4f;stroke-width:2.6px;fill:none" data-edge="true" data-et="edge" data-id="L_T7_T13_0" data-points="W3sieCI6OTM3LjYzNzEyOTkzNDIxMDUsInkiOjQxNn0seyJ4Ijo5NjIuMDk3NjU2MjUsInkiOjQ0MH0seyJ4Ijo5NzguNDAxOTMyNTY1Nzg5NSwieSI6NDY0fV0=" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd__2f3338)"/><path d="M1254.434,54.956L1213.831,62.13C1173.229,69.304,1092.025,83.652,1051.423,100.326C1010.82,117,1010.82,136,1010.82,155C1010.82,174,1010.82,193,1010.82,212C1010.82,231,1010.82,250,1010.82,269C1010.82,288,1010.82,307,1010.82,326C1010.82,345,1010.82,364,1010.82,383C1010.82,402,1010.82,421,1010.234,433.843C1009.647,446.687,1008.474,453.373,1007.888,456.717L1007.301,460.06" id="my-svg-L_T16_T13_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style="stroke:#2f3338;stroke-width:1.2px;;;stroke:#2f3338;stroke-width:1.2px" data-edge="true" data-et="edge" data-id="L_T16_T13_0" data-points="W3sieCI6MTI1NC40MzM1OTM3NSwieSI6NTQuOTU1ODAzMTExOTQ1Mjd9LHsieCI6MTAxMC44MjAzMTI1LCJ5Ijo5OH0seyJ4IjoxMDEwLjgyMDMxMjUsInkiOjE1NX0seyJ4IjoxMDEwLjgyMDMxMjUsInkiOjIxMn0seyJ4IjoxMDEwLjgyMDMxMjUsInkiOjI2OX0seyJ4IjoxMDEwLjgyMDMxMjUsInkiOjMyNn0seyJ4IjoxMDEwLjgyMDMxMjUsInkiOjM4M30seyJ4IjoxMDEwLjgyMDMxMjUsInkiOjQ0MH0seyJ4IjoxMDA2LjYwOTc4NjE4NDIxMDUsInkiOjQ2NH1d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd__2f3338)"/><path d="M714.996,73.935L703.846,77.946C692.695,81.957,670.395,89.978,659.244,103.489C648.094,117,648.094,136,648.094,155C648.094,174,648.094,193,648.094,212C648.094,231,648.094,250,648.094,269C648.094,288,648.094,307,648.094,326C648.094,345,648.094,364,648.094,383C648.094,402,648.094,421,648.094,440C648.094,459,648.094,478,648.094,497C648.094,516,648.094,535,649.277,547.871C650.459,560.742,652.825,567.484,654.008,570.855L655.19,574.226" id="my-svg-L_T4_T8_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style="stroke:#2f3338;stroke-width:1.2px;;;stroke:#2f3338;stroke-width:1.2px" data-edge="true" data-et="edge" data-id="L_T4_T8_0" data-points="W3sieCI6NzE0Ljk5NjA5Mzc1LCJ5Ijo3My45MzUxNDQzMjkxMzQ1Mn0seyJ4Ijo2NDguMDkzNzUsInkiOjk4fSx7IngiOjY0OC4wOTM3NSwieSI6MTU1fSx7IngiOjY0OC4wOTM3NSwieSI6MjEyfSx7IngiOjY0OC4wOTM3NSwieSI6MjY5fSx7IngiOjY0OC4wOTM3NSwieSI6MzI2fSx7IngiOjY0OC4wOTM3NSwieSI6MzgzfSx7IngiOjY0OC4wOTM3NSwieSI6NDQwfSx7IngiOjY0OC4wOTM3NSwieSI6NDk3fSx7IngiOjY0OC4wOTM3NSwieSI6NTU0fSx7IngiOjY1Ni41MTQ4MDI2MzE1NzksInkiOjU3OH1d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd__2f3338)"/><path d="M833.559,408.177L818.719,413.481C803.879,418.785,774.199,429.392,759.359,444.196C744.52,459,744.52,478,744.52,497C744.52,516,744.52,535,739.691,548.101C734.862,561.203,725.204,568.406,720.375,572.007L715.547,575.609" id="my-svg-L_T7_T8_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style="stroke:#2f3338;stroke-width:1.2px;;;stroke:#2f3338;stroke-width:1.2px" data-edge="true" data-et="edge" data-id="L_T7_T8_0" data-points="W3sieCI6ODMzLjU1ODU5Mzc1LCJ5Ijo0MDguMTc3MjgwMjk3ODM0ODR9LHsieCI6NzQ0LjUxOTUzMTI1LCJ5Ijo0NDB9LHsieCI6NzQ0LjUxOTUzMTI1LCJ5Ijo0OTd9LHsieCI6NzQ0LjUxOTUzMTI1LCJ5Ijo1NTR9LHsieCI6NzEyLjM0MDI1NDkzNDIxMDUsInkiOjU3OH1d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd__2f3338)"/><path d="M931.633,513.689L903.781,520.408C875.928,527.126,820.224,540.563,786.179,550.942C752.134,561.322,739.748,568.643,733.555,572.304L727.363,575.965" id="my-svg-L_T13_T8_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style="stroke:#2f3338;stroke-width:1.2px;stroke:#c06d4f;stroke-width:2.6px;fill:none;;;stroke:#2f3338;stroke-width:1.2px;stroke:#c06d4f;stroke-width:2.6px;fill:none" data-edge="true" data-et="edge" data-id="L_T13_T8_0" data-points="W3sieCI6OTMxLjYzMjgxMjUsInkiOjUxMy42ODkyNjk4MzI4NzMzfSx7IngiOjc2NC41MTk1MzEyNSwieSI6NTU0fSx7IngiOjcyMy45MTkyMDIzMDI2MzE2LCJ5Ijo1Nzh9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd__2f3338)"/><path d="M806.559,74L806.559,78C806.559,82,806.559,90,806.559,103.5C806.559,117,806.559,136,806.559,155C806.559,174,806.559,193,806.559,212C806.559,231,806.559,250,806.559,269C806.559,288,806.559,307,806.559,326C806.559,345,806.559,364,806.559,383C806.559,402,806.559,421,806.559,440C806.559,459,806.559,478,806.559,497C806.559,516,806.559,535,812.821,548.163C819.084,561.327,831.61,568.654,837.873,572.317L844.136,575.98" id="my-svg-L_T4_T14_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style="stroke:#2f3338;stroke-width:1.2px;;;stroke:#2f3338;stroke-width:1.2px" data-edge="true" data-et="edge" data-id="L_T4_T14_0" data-points="W3sieCI6ODA2LjU1ODU5Mzc1LCJ5Ijo3NH0seyJ4Ijo4MDYuNTU4NTkzNzUsInkiOjk4fSx7IngiOjgwNi41NTg1OTM3NSwieSI6MTU1fSx7IngiOjgwNi41NTg1OTM3NSwieSI6MjEyfSx7IngiOjgwNi41NTg1OTM3NSwieSI6MjY5fSx7IngiOjgwNi41NTg1OTM3NSwieSI6MzI2fSx7IngiOjgwNi41NTg1OTM3NSwieSI6MzgzfSx7IngiOjgwNi41NTg1OTM3NSwieSI6NDQwfSx7IngiOjgwNi41NTg1OTM3NSwieSI6NDk3fSx7IngiOjgwNi41NTg1OTM3NSwieSI6NTU0fSx7IngiOjg0Ny41ODgxOTkwMTMxNTc5LCJ5Ijo1Nzh9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd__2f3338)"/><path d="M904.004,416L904.004,420C904.004,424,904.004,432,904.004,445.5C904.004,459,904.004,478,904.004,497C904.004,516,904.004,535,904.004,547.833C904.004,560.667,904.004,567.333,904.004,570.667L904.004,574" id="my-svg-L_T7_T14_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style="stroke:#2f3338;stroke-width:1.2px;;;stroke:#2f3338;stroke-width:1.2px" data-edge="true" data-et="edge" data-id="L_T7_T14_0" data-points="W3sieCI6OTA0LjAwMzkwNjI1LCJ5Ijo0MTZ9LHsieCI6OTA0LjAwMzkwNjI1LCJ5Ijo0NDB9LHsieCI6OTA0LjAwMzkwNjI1LCJ5Ijo0OTd9LHsieCI6OTA0LjAwMzkwNjI1LCJ5Ijo1NTR9LHsieCI6OTA0LjAwMzkwNjI1LCJ5Ijo1Nzh9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd__2f3338)"/><path d="M1000.82,530L1000.82,534C1000.82,538,1000.82,546,994.601,553.662C988.381,561.324,975.942,568.647,969.722,572.309L963.502,575.971" id="my-svg-L_T13_T14_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style="stroke:#2f3338;stroke-width:1.2px;stroke:#c06d4f;stroke-width:2.6px;fill:none;;;stroke:#2f3338;stroke-width:1.2px;stroke:#c06d4f;stroke-width:2.6px;fill:none" data-edge="true" data-et="edge" data-id="L_T13_T14_0" data-points="W3sieCI6MTAwMC44MjAzMTI1LCJ5Ijo1MzB9LHsieCI6MTAwMC44MjAzMTI1LCJ5Ijo1NTR9LHsieCI6OTYwLjA1NTUwOTg2ODQyMSwieSI6NTc4fV0=" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd__2f3338)"/><path d="M1146.442,188L1141.429,192C1136.416,196,1126.39,204,1121.376,217.5C1116.363,231,1116.363,250,1116.363,269C1116.363,288,1116.363,307,1116.363,326C1116.363,345,1116.363,364,1116.363,383C1116.363,402,1116.363,421,1116.363,440C1116.363,459,1116.363,478,1116.363,497C1116.363,516,1116.363,535,1123.993,548.209C1131.622,561.417,1146.881,568.834,1154.51,572.543L1162.139,576.251" id="my-svg-L_T6_T15_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style="stroke:#2f3338;stroke-width:1.2px;;;stroke:#2f3338;stroke-width:1.2px" data-edge="true" data-et="edge" data-id="L_T6_T15_0" data-points="W3sieCI6MTE0Ni40NDIyMjg2MTg0MjEsInkiOjE4OH0seyJ4IjoxMTE2LjM2MzI4MTI1LCJ5IjoyMTJ9LHsieCI6MTExNi4zNjMyODEyNSwieSI6MjY5fSx7IngiOjExMTYuMzYzMjgxMjUsInkiOjMyNn0seyJ4IjoxMTE2LjM2MzI4MTI1LCJ5IjozODN9LHsieCI6MTExNi4zNjMyODEyNSwieSI6NDQwfSx7IngiOjExMTYuMzYzMjgxMjUsInkiOjQ5N30seyJ4IjoxMTE2LjM2MzI4MTI1LCJ5Ijo1NTR9LHsieCI6MTE2NS43MzY2MzY1MTMxNTgsInkiOjU3OH1d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd__2f3338)"/><path d="M668.094,644L668.094,648C668.094,652,668.094,660,774.39,672.402C880.686,684.803,1093.279,701.607,1199.575,710.009L1305.872,718.41" id="my-svg-L_T8_T18_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style="stroke:#2f3338;stroke-width:1.2px;stroke:#c06d4f;stroke-width:2.6px;fill:none;;;stroke:#2f3338;stroke-width:1.2px;stroke:#c06d4f;stroke-width:2.6px;fill:none" data-edge="true" data-et="edge" data-id="L_T8_T18_0" data-points="W3sieCI6NjY4LjA5Mzc1LCJ5Ijo2NDR9LHsieCI6NjY4LjA5Mzc1LCJ5Ijo2Njh9LHsieCI6MTMwOS44NTkzNzUsInkiOjcxOC43MjU1MzU0NDE1MTU4fV0=" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd__2f3338)"/><path d="M904.004,644L904.004,648C904.004,652,904.004,660,970.984,671.868C1037.965,683.736,1171.926,699.472,1238.906,707.34L1305.887,715.208" id="my-svg-L_T14_T18_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style="stroke:#2f3338;stroke-width:1.2px;stroke:#c06d4f;stroke-width:2.6px;fill:none;;;stroke:#2f3338;stroke-width:1.2px;stroke:#c06d4f;stroke-width:2.6px;fill:none" data-edge="true" data-et="edge" data-id="L_T14_T18_0" data-points="W3sieCI6OTA0LjAwMzkwNjI1LCJ5Ijo2NDR9LHsieCI6OTA0LjAwMzkwNjI1LCJ5Ijo2Njh9LHsieCI6MTMwOS44NTkzNzUsInkiOjcxNS42NzUwNTQ5NDI0MDExfV0=" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd__2f3338)"/><path d="M1233.625,644L1233.625,648C1233.625,652,1233.625,660,1245.705,668.425C1257.784,676.849,1281.944,685.698,1294.024,690.123L1306.103,694.548" id="my-svg-L_T15_T18_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style="stroke:#2f3338;stroke-width:1.2px;;;stroke:#2f3338;stroke-width:1.2px" data-edge="true" data-et="edge" data-id="L_T15_T18_0" data-points="W3sieCI6MTIzMy42MjUsInkiOjY0NH0seyJ4IjoxMjMzLjYyNSwieSI6NjY4fSx7IngiOjEzMDkuODU5Mzc1LCJ5Ijo2OTUuOTIzMzg5NzI4NH1d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd__2f3338)"/><path d="M1078.27,74L1078.27,78C1078.27,82,1078.27,90,1085.365,97.692C1092.46,105.384,1106.65,112.769,1113.745,116.461L1120.84,120.153" id="my-svg-L_T2_T6_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style="stroke:#2f3338;stroke-width:1.2px;stroke:#2f3338;stroke-width:1.4px;stroke-dasharray:9 5;fill:none;;;stroke:#2f3338;stroke-width:1.2px;stroke:#2f3338;stroke-width:1.4px;stroke-dasharray:9 5;fill:none" data-edge="true" data-et="edge" data-id="L_T2_T6_0" data-points="W3sieCI6MTA3OC4yNjk1MzEyNSwieSI6NzR9LHsieCI6MTA3OC4yNjk1MzEyNSwieSI6OTh9LHsieCI6MTEyNC4zODc5NTIzMDI2MzE3LCJ5IjoxMjJ9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd__2f3338)"/><path d="M1345.094,530L1345.094,534C1345.094,538,1345.094,546,1337.865,553.696C1330.636,561.393,1316.179,568.786,1308.95,572.482L1301.721,576.179" id="my-svg-L_T11_T15_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style="stroke:#2f3338;stroke-width:1.2px;stroke:#2f3338;stroke-width:1.4px;stroke-dasharray:9 5;fill:none;;;stroke:#2f3338;stroke-width:1.2px;stroke:#2f3338;stroke-width:1.4px;stroke-dasharray:9 5;fill:none" data-edge="true" data-et="edge" data-id="L_T11_T15_0" data-points="W3sieCI6MTM0NS4wOTM3NSwieSI6NTMwfSx7IngiOjEzNDUuMDkzNzUsInkiOjU1NH0seyJ4IjoxMjk4LjE1OTUzOTQ3MzY4NDIsInkiOjU3OH1d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd__2f3338)"/><path d="M1268.883,74L1261.061,78C1253.239,82,1237.594,90,1227.718,97.428C1217.842,104.856,1213.734,111.712,1211.68,115.141L1209.627,118.569" id="my-svg-L_T16_T6_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style="stroke:#2f3338;stroke-width:1.2px;stroke:#c06d4f;stroke-width:2.6px;stroke-dasharray:2 5;fill:none;;;stroke:#2f3338;stroke-width:1.2px;stroke:#c06d4f;stroke-width:2.6px;stroke-dasharray:2 5;fill:none" data-edge="true" data-et="edge" data-id="L_T16_T6_0" data-points="W3sieCI6MTI2OC44ODM0MjkyNzYzMTU4LCJ5Ijo3NH0seyJ4IjoxMjIxLjk0OTIxODc1LCJ5Ijo5OH0seyJ4IjoxMjA3LjU3MDkyOTI3NjMxNTgsInkiOjEyMn1d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd__2f3338)"/><path d="M1412.402,57.259L1445.388,64.049C1478.374,70.839,1544.345,84.42,1577.331,100.71C1610.316,117,1610.316,136,1610.316,155C1610.316,174,1610.316,193,1610.316,212C1610.316,231,1610.316,250,1610.316,269C1610.316,288,1610.316,307,1610.316,326C1610.316,345,1610.316,364,1610.316,383C1610.316,402,1610.316,421,1610.316,440C1610.316,459,1610.316,478,1610.316,497C1610.316,516,1610.316,535,1610.316,554C1610.316,573,1610.316,592,1610.316,611C1610.316,630,1610.316,649,1587.347,664.422C1564.377,679.845,1518.438,691.689,1495.468,697.612L1472.498,703.534" id="my-svg-L_T16_T18_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style="stroke:#2f3338;stroke-width:1.2px;stroke:#2f3338;stroke-width:1.4px;stroke-dasharray:2 5;fill:none;;;stroke:#2f3338;stroke-width:1.2px;stroke:#2f3338;stroke-width:1.4px;stroke-dasharray:2 5;fill:none" data-edge="true" data-et="edge" data-id="L_T16_T18_0" data-points="W3sieCI6MTQxMi40MDIzNDM3NSwieSI6NTcuMjU5MDYzODQ4OTk2OTh9LHsieCI6MTYxMC4zMTY0MDYyNSwieSI6OTh9LHsieCI6MTYxMC4zMTY0MDYyNSwieSI6MTU1fSx7IngiOjE2MTAuMzE2NDA2MjUsInkiOjIxMn0seyJ4IjoxNjEwLjMxNjQwNjI1LCJ5IjoyNjl9LHsieCI6MTYxMC4zMTY0MDYyNSwieSI6MzI2fSx7IngiOjE2MTAuMzE2NDA2MjUsInkiOjM4M30seyJ4IjoxNjEwLjMxNjQwNjI1LCJ5Ijo0NDB9LHsieCI6MTYxMC4zMTY0MDYyNSwieSI6NDk3fSx7IngiOjE2MTAuMzE2NDA2MjUsInkiOjU1NH0seyJ4IjoxNjEwLjMxNjQwNjI1LCJ5Ijo2MTF9LHsieCI6MTYxMC4zMTY0MDYyNSwieSI6NjY4fSx7IngiOjE0NjguNjI1LCJ5Ijo3MDQuNTMyNTczNTQ4OTAwMX1d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd__2f3338)"/><path d="M1371.789,283.007L1414.877,290.172C1457.965,297.338,1544.141,311.669,1587.229,328.334C1630.316,345,1630.316,364,1630.316,383C1630.316,402,1630.316,421,1630.316,440C1630.316,459,1630.316,478,1630.316,497C1630.316,516,1630.316,535,1630.316,554C1630.316,573,1630.316,592,1630.316,611C1630.316,630,1630.316,649,1604.017,664.718C1577.717,680.437,1525.117,692.873,1498.817,699.092L1472.518,705.31" id="my-svg-L_T17_T18_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style="stroke:#2f3338;stroke-width:1.2px;stroke:#2f3338;stroke-width:1.4px;stroke-dasharray:2 5;fill:none;;;stroke:#2f3338;stroke-width:1.2px;stroke:#2f3338;stroke-width:1.4px;stroke-dasharray:2 5;fill:none" data-edge="true" data-et="edge" data-id="L_T17_T18_0" data-points="W3sieCI6MTM3MS43ODkwNjI1LCJ5IjoyODMuMDA2ODgzNTgzMTEwMTV9LHsieCI6MTYzMC4zMTY0MDYyNSwieSI6MzI2fSx7IngiOjE2MzAuMzE2NDA2MjUsInkiOjM4M30seyJ4IjoxNjMwLjMxNjQwNjI1LCJ5Ijo0NDB9LHsieCI6MTYzMC4zMTY0MDYyNSwieSI6NDk3fSx7IngiOjE2MzAuMzE2NDA2MjUsInkiOjU1NH0seyJ4IjoxNjMwLjMxNjQwNjI1LCJ5Ijo2MTF9LHsieCI6MTYzMC4zMTY0MDYyNSwieSI6NjY4fSx7IngiOjE0NjguNjI1LCJ5Ijo3MDYuMjMwNTkyMjM4NTE1OH1d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd__2f3338)"/><path d="M1070.008,503.072L1166.726,511.56C1263.444,520.048,1456.88,537.024,1553.598,555.012C1650.316,573,1650.316,592,1650.316,611C1650.316,630,1650.316,649,1620.686,664.969C1591.055,680.938,1531.794,693.877,1502.164,700.346L1472.533,706.815" id="my-svg-L_T13_T18_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style="stroke:#2f3338;stroke-width:1.2px;stroke:#2f3338;stroke-width:1.4px;stroke-dasharray:2 5;fill:none;;;stroke:#2f3338;stroke-width:1.2px;stroke:#2f3338;stroke-width:1.4px;stroke-dasharray:2 5;fill:none" data-edge="true" data-et="edge" data-id="L_T13_T18_0" data-points="W3sieCI6MTA3MC4wMDc4MTI1LCJ5Ijo1MDMuMDcxOTE4NzM1MDc3MX0seyJ4IjoxNjUwLjMxNjQwNjI1LCJ5Ijo1NTR9LHsieCI6MTY1MC4zMTY0MDYyNSwieSI6NjExfSx7IngiOjE2NTAuMzE2NDA2MjUsInkiOjY2OH0seyJ4IjoxNDY4LjYyNSwieSI6NzA3LjY2ODQ1MjE1ODMwMDN9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd__2f3338)"/><path d="M898.121,49.2L988.938,57.333C1079.755,65.467,1261.389,81.733,1324.319,96.095C1387.249,110.456,1331.474,122.913,1303.587,129.141L1275.699,135.369" id="my-svg-L_T4_T6_0" class="edge-thickness-invisible edge-pattern-solid" style="stroke:#2f3338;stroke-width:1.2px;stroke:none;stroke-width:0px;fill:none;;;stroke:#2f3338;stroke-width:1.2px;stroke:none;stroke-width:0px;fill:none" data-edge="true" data-et="edge" data-id="L_T4_T6_0" data-points="W3sieCI6ODk4LjEyMTA5Mzc1LCJ5Ijo0OS4yMDAwNzk3ODY0MTc4OTV9LHsieCI6MTQ0My4wMjM0Mzc1LCJ5Ijo5OH0seyJ4IjoxMjc1LjY5OTIxODc1LCJ5IjoxMzUuMzY5MjU0Nzg2NzIxMTR9XQ==" data-look="classic"/></g><g class="edgeLabels"><g class="edgeLabel"><g class="label" data-id="L_T3_T5_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_T6_T17_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_T17_T7_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_T17_T9_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_T17_T10_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_T17_T11_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_T9_T11_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_T10_T11_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_T7_T13_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_T16_T13_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_T4_T8_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_T7_T8_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_T13_T8_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_T4_T14_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_T7_T14_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_T13_T14_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_T6_T15_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_T8_T18_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_T14_T18_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_T15_T18_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_T2_T6_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_T11_T15_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_T16_T6_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_T16_T18_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_T17_T18_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_T13_T18_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_T4_T6_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g></g><g class="nodes"><g class="node default ready" id="my-svg-flowchart-T1-0" data-look="classic" transform="translate(105.7890625, 41)"><rect class="basic label-container" style="fill:#e4e9d5 !important;stroke:#6f7a4f !important;stroke-width:2px !important" x="-97.7890625" y="-33" width="195.578125" height="66"/><g class="label" style="color:#2f3338 !important" transform="translate(-79.7890625, -24)"><rect/><foreignObject width="159.578125" height="48"><div style="color: rgb(47, 51, 56) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#2f3338 !important" class="nodeLabel"><p><b>W1 · 376.1</b><br />collection member ids</p></span></div></foreignObject></g></g><g class="node default ready" id="my-svg-flowchart-T12-1" data-look="classic" transform="translate(340.265625, 41)"><rect class="basic label-container" style="fill:#e4e9d5 !important;stroke:#6f7a4f !important;stroke-width:2px !important" x="-102.6875" y="-33" width="205.375" height="66"/><g class="label" style="color:#2f3338 !important" transform="translate(-84.6875, -24)"><rect/><foreignObject width="169.375" height="48"><div style="color: rgb(47, 51, 56) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#2f3338 !important" class="nodeLabel"><p><b>W1 · 376.12</b><br />module member lookup</p></span></div></foreignObject></g></g><g class="node default ready" id="my-svg-flowchart-T3-2" data-look="classic" transform="translate(551.78125, 41)"><rect class="basic label-container" style="fill:#e4e9d5 !important;stroke:#6f7a4f !important;stroke-width:2px !important" x="-74.828125" y="-33" width="149.65625" height="66"/><g class="label" style="color:#2f3338 !important" transform="translate(-56.828125, -24)"><rect/><foreignObject width="113.65625" height="48"><div style="color: rgb(47, 51, 56) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#2f3338 !important" class="nodeLabel"><p><b>W1 · 376.3</b><br />self_type_name</p></span></div></foreignObject></g></g><g class="node default ready" id="my-svg-flowchart-T4-3" data-look="classic" transform="translate(806.55859375, 41)"><rect class="basic label-container" style="fill:#e4e9d5 !important;stroke:#6f7a4f !important;stroke-width:2px !important" x="-91.5625" y="-33" width="183.125" height="66"/><g class="label" style="color:#2f3338 !important" transform="translate(-73.5625, -24)"><rect/><foreignObject width="147.125" height="48"><div style="color: rgb(47, 51, 56) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#2f3338 !important" class="nodeLabel"><p><b>W1 · 376.4</b><br />member index union</p></span></div></foreignObject></g></g><g class="node default ready" id="my-svg-flowchart-T2-4" data-look="classic" transform="translate(1078.26953125, 41)"><rect class="basic label-container" style="fill:#e4e9d5 !important;stroke:#6f7a4f !important;stroke-width:2px !important" x="-86.078125" y="-33" width="172.15625" height="66"/><g class="label" style="color:#2f3338 !important" transform="translate(-68.078125, -24)"><rect/><foreignObject width="136.15625" height="48"><div style="color: rgb(47, 51, 56) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#2f3338 !important" class="nodeLabel"><p><b>W1 · 376.2</b><br />Python constructor</p></span></div></foreignObject></g></g><g class="node default crit" id="my-svg-flowchart-T16-5" data-look="classic" transform="translate(1333.41796875, 41)"><rect class="basic label-container" style="fill:#f6e3d7 !important;stroke:#c06d4f !important;stroke-width:3px !important" x="-78.984375" y="-33" width="157.96875" height="66"/><g class="label" style="color:#2f3338 !important" transform="translate(-60.984375, -24)"><rect/><foreignObject width="121.96875" height="48"><div style="color: rgb(47, 51, 56) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#2f3338 !important" class="nodeLabel"><p><b>W1 · 376.16</b><br />failure taxonomy</p></span></div></foreignObject></g></g><g class="node default waits" id="my-svg-flowchart-T5-6" data-look="classic" transform="translate(551.78125, 155)"><rect class="basic label-container" style="fill:#ece4d6 !important;stroke:#b3a58c !important;stroke-width:1.5px !important" x="-69.3125" y="-33" width="138.625" height="66"/><g class="label" style="color:#2f3338 !important" transform="translate(-51.3125, -24)"><rect/><foreignObject width="102.625" height="48"><div style="color: rgb(47, 51, 56) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#2f3338 !important" class="nodeLabel"><p><b>W2 · 376.5</b><br />find_self_type</p></span></div></foreignObject></g></g><g class="node default crit" id="my-svg-flowchart-T6-7" data-look="classic" transform="translate(1187.80078125, 155)"><rect class="basic label-container" style="fill:#f6e3d7 !important;stroke:#c06d4f !important;stroke-width:3px !important" x="-87.8984375" y="-33" width="175.796875" height="66"/><g class="label" style="color:#2f3338 !important" transform="translate(-69.8984375, -24)"><rect/><foreignObject width="139.796875" height="48"><div style="color: rgb(47, 51, 56) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#2f3338 !important" class="nodeLabel"><p><b>W2 · 376.6</b><br />annotation resolver</p></span></div></foreignObject></g></g><g class="node default crit" id="my-svg-flowchart-T17-8" data-look="classic" transform="translate(1287.5625, 269)"><rect class="basic label-container" style="fill:#f6e3d7 !important;stroke:#c06d4f !important;stroke-width:3px !important" x="-84.2265625" y="-33" width="168.453125" height="66"/><g class="label" style="color:#2f3338 !important" transform="translate(-66.2265625, -24)"><rect/><foreignObject width="132.453125" height="48"><div style="color: rgb(47, 51, 56) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#2f3338 !important" class="nodeLabel"><p><b>W3 · 376.17</b><br />symbol_types split</p></span></div></foreignObject></g></g><g class="node default crit" id="my-svg-flowchart-T7-9" data-look="classic" transform="translate(904.00390625, 383)"><rect class="basic label-container" style="fill:#f6e3d7 !important;stroke:#c06d4f !important;stroke-width:3px !important" x="-70.4453125" y="-33" width="140.890625" height="66"/><g class="label" style="color:#2f3338 !important" transform="translate(-52.4453125, -24)"><rect/><foreignObject width="104.890625" height="48"><div style="color: rgb(47, 51, 56) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#2f3338 !important" class="nodeLabel"><p><b>W4 · 376.7</b><br />heritage graph</p></span></div></foreignObject></g></g><g class="node default waits" id="my-svg-flowchart-T9-10" data-look="classic" transform="translate(1306.984375, 383)"><rect class="basic label-container" style="fill:#ece4d6 !important;stroke:#b3a58c !important;stroke-width:1.5px !important" x="-92.640625" y="-33" width="185.28125" height="66"/><g class="label" style="color:#2f3338 !important" transform="translate(-74.640625, -24)"><rect/><foreignObject width="149.28125" height="48"><div style="color: rgb(47, 51, 56) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#2f3338 !important" class="nodeLabel"><p><b>W4 · 376.9</b><br />construction capture</p></span></div></foreignObject></g></g><g class="node default waits" id="my-svg-flowchart-T10-11" data-look="classic" transform="translate(1502.84375, 383)"><rect class="basic label-container" style="fill:#ece4d6 !important;stroke:#b3a58c !important;stroke-width:1.5px !important" x="-69.21875" y="-33" width="138.4375" height="66"/><g class="label" style="color:#2f3338 !important" transform="translate(-51.21875, -24)"><rect/><foreignObject width="102.4375" height="48"><div style="color: rgb(47, 51, 56) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#2f3338 !important" class="nodeLabel"><p><b>W4 · 376.10</b><br />element types</p></span></div></foreignObject></g></g><g class="node default waits" id="my-svg-flowchart-T11-12" data-look="classic" transform="translate(1345.09375, 497)"><rect class="basic label-container" style="fill:#ece4d6 !important;stroke:#b3a58c !important;stroke-width:1.5px !important" x="-91.7265625" y="-33" width="183.453125" height="66"/><g class="label" style="color:#2f3338 !important" transform="translate(-73.7265625, -24)"><rect/><foreignObject width="147.453125" height="48"><div style="color: rgb(47, 51, 56) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#2f3338 !important" class="nodeLabel"><p><b>W5 · 376.11</b><br />ValueSource channel</p></span></div></foreignObject></g></g><g class="node default crit" id="my-svg-flowchart-T13-13" data-look="classic" transform="translate(1000.8203125, 497)"><rect class="basic label-container" style="fill:#f6e3d7 !important;stroke:#c06d4f !important;stroke-width:3px !important" x="-69.1875" y="-33" width="138.375" height="66"/><g class="label" style="color:#2f3338 !important" transform="translate(-51.1875, -24)"><rect/><foreignObject width="102.375" height="48"><div style="color: rgb(47, 51, 56) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#2f3338 !important" class="nodeLabel"><p><b>W5 · 376.13</b><br />rung 5 fan-out</p></span></div></foreignObject></g></g><g class="node default crit" id="my-svg-flowchart-T8-14" data-look="classic" transform="translate(668.09375, 611)"><rect class="basic label-container" style="fill:#f6e3d7 !important;stroke:#c06d4f !important;stroke-width:3px !important" x="-76.8515625" y="-33" width="153.703125" height="66"/><g class="label" style="color:#2f3338 !important" transform="translate(-58.8515625, -24)"><rect/><foreignObject width="117.703125" height="48"><div style="color: rgb(47, 51, 56) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#2f3338 !important" class="nodeLabel"><p><b>W6 · 376.8</b><br />Rust impl attach</p></span></div></foreignObject></g></g><g class="node default crit" id="my-svg-flowchart-T14-15" data-look="classic" transform="translate(904.00390625, 611)"><rect class="basic label-container" style="fill:#f6e3d7 !important;stroke:#c06d4f !important;stroke-width:3px !important" x="-102" y="-33" width="204" height="66"/><g class="label" style="color:#2f3338 !important" transform="translate(-84, -24)"><rect/><foreignObject width="168" height="48"><div style="color: rgb(47, 51, 56) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#2f3338 !important" class="nodeLabel"><p><b>W6 · 376.14</b><br />structural conformance</p></span></div></foreignObject></g></g><g class="node default waits" id="my-svg-flowchart-T15-16" data-look="classic" transform="translate(1233.625, 611)"><rect class="basic label-container" style="fill:#ece4d6 !important;stroke:#b3a58c !important;stroke-width:1.5px !important" x="-77.2109375" y="-33" width="154.421875" height="66"/><g class="label" style="color:#2f3338 !important" transform="translate(-59.2109375, -24)"><rect/><foreignObject width="118.421875" height="48"><div style="color: rgb(47, 51, 56) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#2f3338 !important" class="nodeLabel"><p><b>W6 · 376.15</b><br />type parameters</p></span></div></foreignObject></g></g><g class="node default crit" id="my-svg-flowchart-T18-17" data-look="classic" transform="translate(1389.2421875, 725)"><rect class="basic label-container" style="fill:#f6e3d7 !important;stroke:#c06d4f !important;stroke-width:3px !important" x="-79.3828125" y="-33" width="158.765625" height="66"/><g class="label" style="color:#2f3338 !important" transform="translate(-61.3828125, -24)"><rect/><foreignObject width="122.765625" height="48"><div style="color: rgb(47, 51, 56) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#2f3338 !important" class="nodeLabel"><p><b>W7 · 376.18</b><br />corpus validation</p></span></div></foreignObject></g></g></g></g><marker id="my-svg_flowchart-v2-pointEnd__2f3338" class="marker flowchart-v2" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;" stroke="#2f3338" fill="#2f3338"/></marker></g><defs><filter id="my-svg-drop-shadow" height="130%" width="130%"><feDropShadow dx="4" dy="4" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"/></filter></defs><defs><filter id="my-svg-drop-shadow-small" height="150%" width="150%"><feDropShadow dx="2" dy="2" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"/></filter></defs><linearGradient id="my-svg-gradient" gradientUnits="objectBoundingBox" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#c06d4f" stop-opacity="1"/><stop offset="100%" stop-color="hsl(-81.8181818182, 0%, 78.2352941176%)" stop-opacity="1"/></linearGradient></svg></div></div>
 
-<div style="background:#fff7e6;border:1px solid #e5cf9e;border-left:5px solid #b45309;border-radius:5px;padding:15px 18px;margin-bottom:30px;">
-  <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#b45309;font-weight:800;">The tradeoff, stated plainly</div>
-  <div style="font-size:14.5px;margin-top:6px;">Splitting this into two smaller epics would give you two fundable units instead of one — but it would leave
-  <strong>two epics racing on the same two edits</strong>:
-  <code style="font-family:ui-monospace,Menlo,monospace;font-size:12.5px;background:#f3e6cd;border-radius:3px;padding:1px 5px;">registries/type.ts</code> STEP 3
-  (one epic deletes it while the other rewrites it) and
-  <code style="font-family:ui-monospace,Menlo,monospace;font-size:12.5px;background:#f3e6cd;border-radius:3px;padding:1px 5px;">find_class_from_scope</code>
-  (one deletes it while the other still depends on its behaviour). Whichever landed second would be rebasing onto a
-  type model it did not design. The consolidator kept it as one epic to avoid that — the size is the price of not
-  having a merge conflict on the core of the resolver.</div>
-</div>
+      <div class="fig-legend">
+        <span class="lg"><i class="sw" style="background:#e4e9d5;border-color:#6f7a4f" aria-hidden="true"></i>wave 1 &mdash; nothing pins it</span>
+        <span class="lg"><i class="sw" style="background:#f6e3d7;border-color:#c06d4f;border-width:3px" aria-hidden="true"></i>critical path, seven sessions deep</span>
+        <span class="lg"><i class="sw" style="background:#ece4d6;border-color:#b3a58c" aria-hidden="true"></i>waits on an earlier step</span>
+        <span class="lg"><i class="sw edge" style="border-color:#2f3338;border-bottom-style:solid" aria-hidden="true"></i>depends on it</span>
+        <span class="lg"><i class="sw edge" style="border-color:#2f3338;border-bottom-style:dashed" aria-hidden="true"></i>shares a file with it</span>
+        <span class="lg"><i class="sw edge" style="border-color:#2f3338;border-bottom-style:dotted" aria-hidden="true"></i>needs a measurement from it</span>
+      </div>
 
-<!-- ══════════ WORK ORDER ══════════ -->
-<h2 style="font-size:21px;margin:0 0 6px 0;border-top:2px solid #1c2024;padding-top:14px;">Work order &mdash; 17 strictly-ordered sub-tasks</h2>
-<p style="margin:0 0 14px 0;color:#374151;">Each step is independently verifiable, and each de-noises the measurement of the next.</p>
+      <figcaption class="prose">The shape is a critical path seven sessions deep rather than a list of eighteen tasks: six steps wait on nothing, and two of those &mdash; 376.1 and 376.12 &mdash; have nothing waiting on them either.</figcaption>
+    </figure>
+  </section>
 
-<div style="background:#eef7ee;border:1px solid #bcd8bc;border-radius:5px;padding:14px 18px;margin-bottom:14px;">
-  <div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#3f7d3f;font-weight:800;margin-bottom:8px;">Phase A &mdash; five small, mutually independent starters (1, 2, 3, 4, 7)</div>
-  <div style="font-size:13.5px;color:#2f4f2f;margin-bottom:10px;">Each is standalone, testable at a single tier, and lands value on its own. <strong>These can be funded without funding the rest of the epic.</strong></div>
-  <table style="width:100%;border-collapse:collapse;font-size:13.5px;">
-    <tr><td style="padding:5px 8px;width:34px;vertical-align:top;"><span style="display:inline-block;background:#3f7d3f;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;font-weight:800;font-size:12px;">1</span></td><td style="padding:5px 8px;"><strong>Collection member ids name real definitions.</strong> Un-poisons every existing collection consumer; also closes an <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">entry_point_classification</code> leaf.</td></tr>
-    <tr><td style="padding:5px 8px;vertical-align:top;"><span style="display:inline-block;background:#3f7d3f;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;font-weight:800;font-size:12px;">2</span></td><td style="padding:5px 8px;"><strong>Delete the Python heuristic constructor capture</strong> + STEP 1 type-kind guard + merge order. Makes every later Python measurement honest.</td></tr>
-    <tr><td style="padding:5px 8px;vertical-align:top;"><span style="display:inline-block;background:#3f7d3f;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;font-weight:800;font-size:12px;">3</span></td><td style="padding:5px 8px;"><strong>Record <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">LexicalScope.self_type_name</code></strong> — field, extractor method, four overrides. Nothing reads it yet; pure recording change.</td></tr>
-    <tr><td style="padding:5px 8px;vertical-align:top;"><span style="display:inline-block;background:#3f7d3f;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;font-weight:800;font-size:12px;">4</span></td><td style="padding:5px 8px;"><strong>Member-index completeness</strong> — enums indexed, cross-file union with per-file provenance, reverse name index.</td></tr>
-    <tr><td style="padding:5px 8px;vertical-align:top;"><span style="display:inline-block;background:#3f7d3f;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;font-weight:800;font-size:12px;">7</span></td><td style="padding:5px 8px;"><strong>Diagnostic completeness</strong> — emit a failure on every dropped call reference. Cheap, and it is what makes 8&ndash;15 measurable at all.</td></tr>
-  </table>
-</div>
+  <!-- ═══════════ SUPPORT ═══════════ -->
+  <section id="facts" data-spine="support">
+    <div class="sec-head">
+      <div class="kicker">02 &middot; the five facts under the eighteen steps</div>
+      <h2>Each fact is re-derived at every use today; each gets one store</h2>
+    </div>
 
-<div style="background:#fff;border:1px solid #d8dbe0;border-radius:5px;padding:14px 18px;margin-bottom:14px;">
-  <div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#374151;font-weight:800;margin-bottom:8px;">Phase B &mdash; the gated chain</div>
-  <table style="width:100%;border-collapse:collapse;font-size:13.5px;">
-    <tr><td style="padding:5px 8px;width:34px;vertical-align:top;"><span style="display:inline-block;background:#4b5563;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;font-weight:800;font-size:12px;">5</span></td><td style="padding:5px 8px;border-bottom:1px solid #f0f1f3;"><strong><code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">find_self_type</code></strong> — the step that flips the <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">self</code>/<code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">this</code> rows. Deletes the backward scan and its Rust escape hatch. <span style="color:#6b7280;">needs 3</span></td></tr>
-    <tr><td style="padding:5px 8px;vertical-align:top;"><span style="display:inline-block;background:#8a1c1c;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;font-weight:800;font-size:12px;">6</span></td><td style="padding:5px 8px;border-bottom:1px solid #f0f1f3;background:#fdf6f6;"><strong>The annotation resolver</strong> — parser + four language leaves, all six raw call sites re-aimed, the <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">symbol_types</code> split with every read site. <strong style="color:#8a1c1c;">The largest single recovery, the largest single commit, and the gate on 8&ndash;16.</strong></td></tr>
-    <tr><td style="padding:5px 8px;vertical-align:top;"><span style="display:inline-block;background:#4b5563;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;font-weight:800;font-size:12px;">8</span></td><td style="padding:5px 8px;border-bottom:1px solid #f0f1f3;"><strong>Heritage, single-sourced</strong> — TS qualified capture, Rust trait edges, one builder, BFS chain; deletes STEP 3 and four other functions. <span style="color:#6b7280;">gates 14 and 15</span></td></tr>
-    <tr><td style="padding:5px 8px;vertical-align:top;"><span style="display:inline-block;background:#4b5563;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;font-weight:800;font-size:12px;">9</span></td><td style="padding:5px 8px;border-bottom:1px solid #f0f1f3;"><strong>Rust impl-block ownership</strong> — project-level pass attaching cross-file impl methods to their type.</td></tr>
-    <tr><td style="padding:5px 8px;vertical-align:top;"><span style="display:inline-block;background:#4b5563;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;font-weight:800;font-size:12px;">10</span></td><td style="padding:5px 8px;border-bottom:1px solid #f0f1f3;"><strong>Construction &amp; initialiser capture</strong> — construct-target widening, the nested-<code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">new</code> abort, Python's first initialiser extractor, JSDoc <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">@type</code>.</td></tr>
-    <tr><td style="padding:5px 8px;vertical-align:top;"><span style="display:inline-block;background:#4b5563;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;font-weight:800;font-size:12px;">11</span></td><td style="padding:5px 8px;border-bottom:1px solid #f0f1f3;"><strong>Element types</strong> — type arguments consumed for loop/index targets. <span style="color:#8a1c1c;">The container-mistyping removal must land in this same commit or green resolutions regress.</span></td></tr>
-    <tr><td style="padding:5px 8px;vertical-align:top;"><span style="display:inline-block;background:#4b5563;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;font-weight:800;font-size:12px;">12</span></td><td style="padding:5px 8px;border-bottom:1px solid #f0f1f3;"><strong>The value channel</strong> — <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">value_source.ts</code> and its four consumers.</td></tr>
-    <tr><td style="padding:5px 8px;vertical-align:top;"><span style="display:inline-block;background:#4b5563;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;font-weight:800;font-size:12px;">13</span></td><td style="padding:5px 8px;border-bottom:1px solid #f0f1f3;"><strong>Module-surface consumers</strong> — the lookup collapse and guarded-import scope fix. <span style="color:#b45309;">Consumes the <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">module-surface-resolution</code> epic's star edge — sequencing only, the seam is stable.</span></td></tr>
-    <tr><td style="padding:5px 8px;vertical-align:top;"><span style="display:inline-block;background:#4b5563;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;font-weight:800;font-size:12px;">14</span></td><td style="padding:5px 8px;border-bottom:1px solid #f0f1f3;"><strong>The member ladder</strong> — rung 5 subtype-closure fan-out, plus the pending-failure index that makes the graph ingestion-order-independent.</td></tr>
-    <tr><td style="padding:5px 8px;vertical-align:top;"><span style="display:inline-block;background:#4b5563;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;font-weight:800;font-size:12px;">15</span></td><td style="padding:5px 8px;border-bottom:1px solid #f0f1f3;"><strong>Structural conformance</strong> — lazily inferred implements-edges. Carries 20 of <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">polymorphic_dispatch</code>'s 25 rows.</td></tr>
-    <tr><td style="padding:5px 8px;vertical-align:top;"><span style="display:inline-block;background:#4b5563;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;font-weight:800;font-size:12px;">16</span></td><td style="padding:5px 8px;border-bottom:1px solid #f0f1f3;"><strong>Type-parameter binding environment</strong> — a genuine new capability, deliberately last.</td></tr>
-    <tr><td style="padding:5px 8px;vertical-align:top;"><span style="display:inline-block;background:#1c2024;color:#fff;border-radius:50%;width:22px;height:22px;line-height:22px;text-align:center;font-weight:800;font-size:12px;">17</span></td><td style="padding:5px 8px;"><strong>Corpus validation</strong> — full re-run over all ten projects, checking recovery <em>and</em> new false negatives, re-attributing the residue.</td></tr>
-  </table>
-</div>
+    <figure class="facts">
+      <div class="fact-grid">
 
-<div style="background:#f7f8fa;border:1px solid #d8dbe0;border-radius:5px;padding:12px 16px;margin-bottom:30px;font-size:13.5px;">
-  <strong>Dependency summary:</strong>
-  <span style="font-family:ui-monospace,Menlo,monospace;font-size:12.5px;">1, 2, 3, 4, 7 independent</span> &nbsp;&middot;&nbsp;
-  <span style="font-family:ui-monospace,Menlo,monospace;font-size:12.5px;">6 gates 8&ndash;16</span> &nbsp;&middot;&nbsp;
-  <span style="font-family:ui-monospace,Menlo,monospace;font-size:12.5px;">8 gates 14 and 15</span> &nbsp;&middot;&nbsp;
-  <span style="font-family:ui-monospace,Menlo,monospace;font-size:12.5px;">13 waits on module-surface-resolution</span>
-</div>
+        <article class="fact">
+          <div class="fact-top"><span class="fnum">01</span><span class="fname">Annotation</span></div>
+          <div class="fask">what a declared name denotes</div>
+          <dl class="fdl">
+            <dt>re-derived today by</dt>
+            <dd>
+              <span class="pin">resolution_state.ts<span class="r">:134-141</span></span>
+              <span class="pin">registries/type.ts<span class="r">:161, :218, :246</span></span>
+              <span class="pin">receiver_resolution.ts<span class="r">:285, :498, :661</span></span>
+              <span class="note">Six sites hand it raw annotation text with no parse, so it resolves only when the source text is byte-identical to a declared name.</span>
+            </dd>
+            <dt>recorded once in</dt>
+            <dd><span class="store">one annotation resolver<code>type_preprocessing/annotation*.ts</code></span></dd>
+            <dt>landed by</dt>
+            <dd class="by"><span class="step lead-step">376.6</span><span class="step">376.2</span></dd>
+          </dl>
+        </article>
 
-<!-- ══════════ COST ══════════ -->
-<h2 style="font-size:21px;margin:0 0 6px 0;border-top:2px solid #1c2024;padding-top:14px;">Cost and blast radius</h2>
+        <article class="fact">
+          <div class="fact-top"><span class="fnum">02</span><span class="fname">Self type</span></div>
+          <div class="fask">what a scope&rsquo;s <code>self</code> or <code>this</code> binds to</div>
+          <dl class="fdl">
+            <dt>re-derived today by</dt>
+            <dd>
+              <span class="pin">lexical_scope.ts<span class="r">&mdash; no field for it</span></span>
+              <span class="pin">receiver_resolution.ts<span class="r">:738-767</span></span>
+              <span class="note"><code>find_class_from_scope</code> runs the member index backwards and fails four reproduced ways.</span>
+            </dd>
+            <dt>recorded once in</dt>
+            <dd><span class="store">the scope itself<code>LexicalScope.self_type_name</code></span></dd>
+            <dt>landed by</dt>
+            <dd class="by"><span class="step">376.3</span><span class="step">376.5</span></dd>
+          </dl>
+        </article>
 
-<table style="width:100%;border-collapse:separate;border-spacing:12px 0;margin:0 -12px 16px -12px;">
-<tr>
-<td style="width:25%;vertical-align:top;background:#fff;border:1px solid #d8dbe0;border-radius:5px;padding:13px 15px;">
-  <div style="font-size:26px;font-weight:800;">2</div>
-  <div style="font-size:12.5px;color:#4b5563;">pipeline stages touched — recording (<code style="font-family:ui-monospace,Menlo,monospace;font-size:11px;">index_single_file/</code>) and resolution (<code style="font-family:ui-monospace,Menlo,monospace;font-size:11px;">resolve_references/</code>)</div>
-</td>
-<td style="width:25%;vertical-align:top;background:#fff;border:1px solid #d8dbe0;border-radius:5px;padding:13px 15px;">
-  <div style="font-size:26px;font-weight:800;">12</div>
-  <div style="font-size:12.5px;color:#4b5563;">functions, passes and query captures <strong>deleted outright</strong> — the epic is net-subtractive on resolver surface area</div>
-</td>
-<td style="width:25%;vertical-align:top;background:#fff;border:1px solid #d8dbe0;border-radius:5px;padding:13px 15px;">
-  <div style="font-size:26px;font-weight:800;">3</div>
-  <div style="font-size:12.5px;color:#4b5563;">new files: the annotation parser (+4 language leaves), <code style="font-family:ui-monospace,Menlo,monospace;font-size:11px;">value_source.ts</code>, <code style="font-family:ui-monospace,Menlo,monospace;font-size:11px;">structural_conformance.ts</code></div>
-</td>
-<td style="width:25%;vertical-align:top;background:#fff;border:1px solid #d8dbe0;border-radius:5px;padding:13px 15px;">
-  <div style="font-size:26px;font-weight:800;">~100</div>
-  <div style="font-size:12.5px;color:#4b5563;">existing assertions rewritten (60 from one deleted accessor, 20+ deleted with a dead builder) across 15+ insulated suites</div>
-</td>
-</tr>
-</table>
+        <article class="fact">
+          <div class="fact-top"><span class="fnum">03</span><span class="fname">Value</span></div>
+          <div class="fask">what a binding holds</div>
+          <dl class="fdl">
+            <dt>re-derived today by</dt>
+            <dd>
+              <span class="pin">receiver_resolution.ts<span class="r">:303-309</span></span>
+              <span class="pin">constructor.ts<span class="r">:85-97</span></span>
+              <span class="note">No channel at all: there is a type channel and a call-target channel, so class aliases, factory returns and element reads exit as <code>receiver_type_unknown</code> or <code>constructor_target_not_a_class</code>.</span>
+            </dd>
+            <dt>recorded once in</dt>
+            <dd><span class="store">one value channel<code>value_source.ts</code></span></dd>
+            <dt>landed by</dt>
+            <dd class="by"><span class="step">376.11</span><span class="step">376.9</span><span class="step">376.10</span></dd>
+          </dl>
+        </article>
 
-<table style="width:100%;border-collapse:collapse;font-size:13.5px;background:#fff;border:1px solid #d8dbe0;border-radius:5px;margin-bottom:16px;">
-<tr style="background:#f7f8fa;">
-  <th style="text-align:left;padding:9px 12px;border-bottom:1px solid #d8dbe0;width:30%;">Risk</th>
-  <th style="text-align:left;padding:9px 12px;border-bottom:1px solid #d8dbe0;">Shape and mitigation</th>
-</tr>
-<tr>
-  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;vertical-align:top;"><span style="display:inline-block;background:#8a1c1c;color:#fff;border-radius:3px;padding:1px 6px;font-size:11px;font-weight:800;">HIGHEST</span><br>Splitting <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">symbol_types</code></td>
-  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;">The conflation of value type and return type is <em>what makes chained receivers resolve today</em>. Every read site must be re-aimed in the same change or chains regress silently. Existing chain tests are the gate.</td>
-</tr>
-<tr>
-  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;vertical-align:top;">Fan-out precision</td>
-  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;">Making interface annotations resolve hands the resolver far more receivers; rung 5 fans a common name (<code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">save</code>, <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">run</code>) to every subtype. Trades false positives for false negatives — measure edge-count deltas after 6 and again after 14 before assuming pure gain.</td>
-</tr>
-<tr>
-  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;vertical-align:top;">Structural-match floor</td>
-  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;">A one-member interface would match every class with that member. Measure the false-edge rate before fixing the constant; consider requiring &ge;2 methods.</td>
-</tr>
-<tr>
-  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;vertical-align:top;">Incremental correctness</td>
-  <td style="padding:9px 12px;border-bottom:1px solid #eceef1;">The member-index union changes eviction semantics (needs per-file provenance), and the pending-failure index leaks across an incremental session unless evicted on successful re-resolution.</td>
-</tr>
-<tr>
-  <td style="padding:9px 12px;vertical-align:top;">Rust unwrap list</td>
-  <td style="padding:9px 12px;"><code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">Option&lt;T&gt;</code>/<code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">Box&lt;T&gt;</code> unwrap, <code style="font-family:ui-monospace,Menlo,monospace;font-size:12px;">Vec&lt;T&gt;</code> must not. Fixed short list, but the one place a wrong entry produces a false <em>positive</em> rather than a miss.</td>
-</tr>
-</table>
+        <article class="fact">
+          <div class="fact-top"><span class="fnum">04</span><span class="fname">Member set</span></div>
+          <div class="fask">a type&rsquo;s full members</div>
+          <dl class="fdl">
+            <dt>re-derived today by</dt>
+            <dd>
+              <span class="pin">registries/definition.ts<span class="r">:229-279</span></span>
+              <span class="pin">type_preprocessing/member.ts<span class="r">:65-148</span></span>
+              <span class="pin">registries/type.ts<span class="r">:267-314</span></span>
+              <span class="note">Three builders; the live one is written once per type definition, so a type&rsquo;s members come only from its declaring file.</span>
+            </dd>
+            <dt>recorded once in</dt>
+            <dd><span class="store">the provenanced member-index union<code>members_by_name, get_member_closure</code></span></dd>
+            <dt>landed by</dt>
+            <dd class="by"><span class="step">376.4</span><span class="step">376.8</span><span class="step">376.17</span></dd>
+          </dl>
+        </article>
 
-<!-- ══════════ CLOSING ══════════ -->
-<div style="background:#1c2024;color:#f4f5f7;border-radius:5px;padding:18px 22px;">
-  <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:800;color:#9ca3af;">Decision summary</div>
-  <div style="font-size:15px;margin-top:8px;line-height:1.6;">
-  This cluster owns the single defect responsible for more false positives than any other in the run, and fixing it
-  makes <code style="font-family:ui-monospace,Menlo,monospace;font-size:13px;background:#333940;border-radius:3px;padding:1px 5px;">method_not_on_type</code> mean what it claims to mean.
-  It is also the only cluster that cannot be part-funded through its middle: sub-task 6 is one indivisible commit
-  that gates nine others.<br><br>
-  <strong>If you fund one thing here, fund sub-tasks 1, 2, 3, 4 and 7</strong> — small, independent, no dependency on
-  the chain, and they make every other cluster's measurements honest. <strong>If you fund the epic, fund it whole</strong>,
-  because splitting it re-creates the two-epic race on <code style="font-family:ui-monospace,Menlo,monospace;font-size:13px;background:#333940;border-radius:3px;padding:1px 5px;">registries/type.ts</code> STEP 3 and
-  <code style="font-family:ui-monospace,Menlo,monospace;font-size:13px;background:#333940;border-radius:3px;padding:1px 5px;">find_class_from_scope</code> that the consolidation exists to prevent.
-  </div>
-</div>
+        <article class="fact">
+          <div class="fact-top"><span class="fnum">05</span><span class="fname">Subtype graph</span></div>
+          <div class="fask">which types are its subtypes</div>
+          <dl class="fdl">
+            <dt>re-derived today by</dt>
+            <dd>
+              <span class="pin">registries/definition.ts<span class="r">&mdash; heritage half</span></span>
+              <span class="pin">registries/type.ts<span class="r">&mdash; STEP 3</span></span>
+              <span class="note">Two builders plus one registry step, missing qualified TypeScript heritage, dotted Python bases, every Rust trait edge, every structural conformance and every base past the first.</span>
+            </dd>
+            <dt>recorded once in</dt>
+            <dd><span class="store">one heritage builder<code>multi-valued parent_types</code></span></dd>
+            <dt>landed by</dt>
+            <dd class="by"><span class="step lead-step">376.7</span><span class="step">376.14</span><span class="step lead-step">376.13</span></dd>
+          </dl>
+        </article>
 
-<div style="margin-top:22px;font-size:12px;color:#9ca3af;">Source plan: <code style="font-family:ui-monospace,Menlo,monospace;">clusters/type-model-completion/consolidated_plan.md</code> &middot; members: <code style="font-family:ui-monospace,Menlo,monospace;">receiver_type_inference</code>, <code style="font-family:ui-monospace,Menlo,monospace;">method_lookup</code>, <code style="font-family:ui-monospace,Menlo,monospace;">polymorphic_dispatch</code>, <code style="font-family:ui-monospace,Menlo,monospace;">scope_construction</code>, <code style="font-family:ui-monospace,Menlo,monospace;">collection_dispatch</code></div>
+      </div>
 
-</div>
+      <div class="sink-arrows" aria-hidden="true"><span>&darr;</span><span>&darr;</span><span>&darr;</span><span>&darr;</span><span>&darr;</span></div>
+
+      <div class="sink">
+        <span class="sink-k">the sink all five arrive at</span>
+        <span class="sink-v">call_resolution/method_lookup.ts:139-157</span>
+        <span class="sink-n">one ladder over five stores</span>
+      </div>
+
+      <figcaption class="prose">Each fact is guessed by two or three drifting builders whose gaps are different populations of false positives, and every guess lands in the same member lookup.</figcaption>
+    </figure>
+  </section>
+
+  <!-- ═══════════ POINTS ═══════════ -->
+  <section id="settled" data-spine="points">
+    <div class="sec-head">
+      <div class="kicker">03 &middot; already settled</div>
+      <h2>Four things that hold across the whole chain</h2>
+    </div>
+    <ul class="points">
+      <li><span class="mk" aria-hidden="true">&#9642;</span><span>One sub-task &mdash; the annotation resolver, <b>TASK-376.6</b> &mdash; accounts for 1,049 of the 1,149 recorded <code>receiver_type_inference</code> rows on its own.</span></li>
+      <li><span class="mk" aria-hidden="true">&#9642;</span><span>Every corpus figure in this epic is measured by TASK-376.16&rsquo;s harness as an <b>interleaved control and candidate pair</b>, never quoted from the source plan.</span></li>
+      <li><span class="mk" aria-hidden="true">&#9642;</span><span>Three facts the source plan asked for <b>already exist in the tree</b>: collection member ids, enum members and the wildcard export edge.</span></li>
+      <li><span class="mk" aria-hidden="true">&#9642;</span><span>Each step runs as one session in its own worktree and merges back only when <b>its own acceptance criteria pass</b>.</span></li>
+    </ul>
+  </section>
+
+</main>
+
+<footer class="provenance">
+  <div class="prov-label">Sources</div>
+  <ul class="files">
+    <li><code>backlog/tasks/task-376 &mdash; Record the five type facts once&hellip;.md</code> &mdash; root cause, waves, rules</li>
+    <li><code>resolve_references/call_resolution/method_lookup.ts</code> :139-157</li>
+    <li><code>resolve_references/resolution_state.ts</code> :134-141</li>
+    <li><code>resolve_references/registries/type.ts</code> :161, :218, :246, :267-314</li>
+    <li><code>resolve_references/call_resolution/receiver_resolution.ts</code> :285, :303-309, :498, :661, :738-767</li>
+    <li><code>resolve_references/call_resolution/constructor.ts</code> :85-97</li>
+    <li><code>resolve_references/registries/definition.ts</code> :229-279</li>
+    <li><code>resolve_references/type_preprocessing/member.ts</code> :65-148</li>
+  </ul>
+  <div class="stamp">packages/core, citations name the tree at commit 279221d4</div>
+</footer>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var nav = document.getElementById('crossdoc');
+  var navToggle = document.getElementById('navToggle');
+  var navLabel = document.getElementById('navToggleLabel');
+  var themeToggle = document.getElementById('themeToggle');
+  var themeLabel = document.getElementById('themeLabel');
+
+  function syncNav() {
+    var collapsed = root.classList.contains('nav-collapsed');
+    navToggle.setAttribute('aria-expanded', String(!collapsed));
+    navLabel.textContent = (collapsed ? 'Show' : 'Hide') + ' 19 companions';
+  }
+  function syncTheme() {
+    var dark = root.classList.contains('dark');
+    themeToggle.setAttribute('aria-pressed', String(dark));
+    themeLabel.textContent = dark ? 'Light' : 'Dark';
+  }
+
+  navToggle.addEventListener('click', function () {
+    var collapsed = root.classList.toggle('nav-collapsed');
+    try { localStorage.setItem('cdocNav', collapsed ? 'collapsed' : 'expanded'); } catch (e) {}
+    syncNav();
+  });
+  themeToggle.addEventListener('click', function () {
+    var dark = root.classList.toggle('dark');
+    try { localStorage.setItem('cdocTheme', dark ? 'dark' : 'light'); } catch (e) {}
+    syncTheme();
+  });
+
+  function measure() {
+    if (nav) { root.style.setProperty('--nav-h', nav.offsetHeight + 'px'); }
+  }
+  if (window.ResizeObserver && nav) { new ResizeObserver(measure).observe(nav); }
+  syncNav();
+  syncTheme();
+  measure();
+  window.addEventListener('load', function () {
+    measure();
+    if (location.hash) {
+      var target = document.getElementById(location.hash.slice(1));
+      if (target) { target.scrollIntoView(); }
+    }
+  });
+})();
+</script>
 </body>
 </html>

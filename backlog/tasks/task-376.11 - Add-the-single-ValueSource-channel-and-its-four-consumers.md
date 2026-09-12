@@ -7,7 +7,10 @@ created_date: "2026-07-29 09:38"
 labels:
   - plan-export
   - receiver_type_inference
-dependencies: []
+dependencies:
+  - TASK-376.9
+  - TASK-376.10
+  - TASK-376.17
 parent_task_id: TASK-376
 priority: high
 ordinal: 11000
@@ -21,11 +24,11 @@ plan_source_tasks:
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
 
-§7 step 12.
+§7 step 12. Wave 5, beside TASK-376.13. Requires TASK-376.17 (`callable_return_types`), TASK-376.9 (`member_source`, the initialiser call chain, the Python extractor) and TASK-376.10 (the element channel and `index_access`).
 
 ## Root cause
 
-There is a type channel (`TypeRegistry.symbol_types`) and a call-target channel (each `resolve_*`'s `SymbolId[]`), and no answer to "what value does this binding hold?". `resolve_identifier_base` therefore returns `receiver_type_unknown` (`call_resolution/receiver_resolution.ts:282-288`) and `resolve_constructor_call` returns `constructor_target_not_a_class` (`call_resolution/constructor.ts:87-95`) for the same shapes: `mapper_cls = Mapper; mapper_cls()`, `cls = Parser; p = cls()`, `orig = BaseTask.__call__`, `parser = _parser_dispatch(flav)`, `var s = suites[0]`.
+There is a type channel (`TypeRegistry.symbol_types`) and a call-target channel (each `resolve_*`'s `SymbolId[]`), and no answer to "what value does this binding hold?". `resolve_identifier_base` therefore returns `receiver_type_unknown` (`call_resolution/receiver_resolution.ts:303-309`) and `resolve_constructor_call` returns `constructor_target_not_a_class` (`call_resolution/constructor.ts:85-97`) for the same shapes: `mapper_cls = Mapper; mapper_cls()`, `cls = Parser; p = cls()`, `orig = BaseTask.__call__`, `parser = _parser_dispatch(flav)`, `var s = suites[0]`.
 
 ## Work plan
 
@@ -34,10 +37,10 @@ There is a type channel (`TypeRegistry.symbol_types`) and a call-target channel 
    2. **Callee return** — `callable_return_types`, with a `type[X]` / `typeof X` / `Type[X]` head yielding `class_object` and a bare head `instance_of`.
    3. **Qualified member read** — `member_source` where the holder resolves to a namespace import or a class; yields `callable`.
    4. **Local class/function carriers** — a variable with a single class/function assignment, a class attribute with such an initialiser, and a parameter default; yields `class_object` or `callable`. Respect assignment order so a later rebinding does not shadow an earlier call. **Exclude** cross-function carriers (a class passed as an argument, Django's `form_class(**defaults)`): they need interprocedural dataflow.
-2. Consume it at four sites: `receiver_resolution.ts:282-288` (before returning `receiver_type_unknown`; both `instance_of` and `class_object` yield a type, and an `index_access` reference with a literal key takes the **element** value source of the base); `constructor.ts:87-95` (follow a `class_object` before returning `constructor_target_not_a_class`, then continue into `find_constructor_in_class_hierarchy` unchanged); `function_call.ts:148` (the `def.collection_source` branch extends to a `callable` value source); and `indirect_reachability.ts:41-88` (`detect_indirect_reachability` marks a callable reachable from a `property_access` **read** whose value source is `callable`).
+2. Consume it at four sites: `receiver_resolution.ts:303-309` (before returning `receiver_type_unknown`, after the destructured-binding rung at `:286-300`; both `instance_of` and `class_object` yield a type, and an `index_access` reference with a literal key takes the **element** value source of the base); `constructor.ts:85-97` (follow a `class_object` before returning `constructor_target_not_a_class`, then continue into `find_constructor_in_class_hierarchy` at `:148` unchanged); `function_call.ts:143-152` (the `def.collection_source` branch at `:148` extends to a `callable` value source); and `indirect_reachability.ts` `detect_indirect_reachability` (`:98-152`), which marks a callable reachable from a `property_access` **read** whose value source is `callable`, writing through `record_indirect_reachability` (`:37-46`) — the single position-ordered writer TASK-381.11 introduced, so the new evidence stays order-independent.
 3. Keep `callable_instance.python.ts` untouched — a `class_object` value source is distinct from `instance_of` precisely so `x()` on an instance keeps routing to `__call__`.
 4. Claim **no** call edge for a framework-invoked receiver: `c.loop(...)` in celery is a framework-invocation boundary (`Evloop` is registered as the string `'celery.worker.consumer.consumer:Evloop'`, `consumer.py:184`), not a resolver gap.
-5. Add integration tests at the `Project` + `update_file` tier (fixtures under `tests/fixtures/{python,typescript,javascript}/code/integration/`) covering every evidence case for this step: `mapper_cls = Mapper; mapper_cls()` reaching `Mapper.__init__`, with a later rebinding **not** shadowing an earlier call; `cls = Parser; p = cls()` in Python _and_ TypeScript; `def make() -> type[Parser]` then `p = make()(…)`; `p: Parser = make()` (the clobber regression from §7 step 2); Python `self.session = Store()` and class-object-valued class attributes; celery `loops.synloop` reachable via a property-access read with **no** call edge claimed for `c.loop()`; and a cross-function carrier (Django's `form_class(**defaults)`) asserted to stay unresolved by design.
+5. Add integration tests at the `Project` + `update_file` tier (fixtures under `tests/fixtures/{python,typescript,javascript}/code/integration/`) covering every evidence case for this step: `mapper_cls = Mapper; mapper_cls()` reaching `Mapper.__init__`, with a later rebinding **not** shadowing an earlier call; `cls = Parser; p = cls()` in Python _and_ TypeScript; `def make() -> type[Parser]` then `p = make()(…)`; `p: Parser = make()` (the clobber regression from TASK-376.2); Python `self.session = Store()` and class-object-valued class attributes; celery `orig = BaseTask.__call__` + `orig(self, *args)` producing a real edge to `celery/app/task.py:495` instead of the self-edge `orig -> [orig]`; celery `loops.synloop` reachable via a property-access read with **no** call edge claimed for `c.loop()`; and a cross-function carrier (Django's `form_class(**defaults)`) asserted to stay unresolved by design.
 
 <!-- SECTION:DESCRIPTION:END -->
 
@@ -46,10 +49,10 @@ There is a type channel (`TypeRegistry.symbol_types`) and a call-target channel 
 <!-- AC:BEGIN -->
 
 - [ ] #1 One `ValueSource` union and `resolve_value_source` exist in `call_resolution/value_source.ts`, with all four producers in the stated priority order.
-- [ ] #2 All four consumers route through it: `receiver_resolution.ts:282-288`, `constructor.ts:87-95`, `function_call.ts:148`, `indirect_reachability.ts:41-88`.
+- [ ] #2 All four consumers route through it: `receiver_resolution.ts`'s `receiver_type_unknown` exit, `constructor.ts`'s `constructor_target_not_a_class` exit, `function_call.ts`'s `collection_source` branch, and `detect_indirect_reachability` via `record_indirect_reachability`.
 - [ ] #3 Class-alias, factory-return, qualified-member-read and element shapes resolve; cross-function carriers remain excluded and unresolved.
 - [ ] #4 `x()` on an instance still routes to `__call__` (`callable_instance.python.test.ts` green), and no call edge is claimed for celery's `c.loop()`.
-- [ ] #5 Integration tests cover all of this step's evidence cases: `mapper_cls = Mapper`, `cls = Parser` in Python and TypeScript, `def make() -> type[Parser]`, `p: Parser = make()`, `self.session = Store()`, class-object attributes, `loops.synloop`, and the excluded `form_class(**defaults)`.
-- [ ] #6 `indirect_reachability.test.ts` and `constructor.test.ts` stay green.
+- [ ] #5 Integration tests cover all of this step's evidence cases: `mapper_cls = Mapper`, `cls = Parser` in Python and TypeScript, `def make() -> type[Parser]`, `p: Parser = make()`, `self.session = Store()`, class-object attributes, `orig = BaseTask.__call__`, `loops.synloop`, and the excluded `form_class(**defaults)`.
+- [ ] #6 `indirect_reachability.test.ts` (including its order-independence cases) and `constructor.test.ts` stay green.
 
 <!-- AC:END -->
