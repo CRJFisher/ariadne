@@ -46,6 +46,7 @@ Resolves call references to their target definitions using name resolution resul
 - **Function calls** → Direct name lookup in scope via Phase 1 results
 - **Self receivers** (`this`/`self`/`cls`/`Self`) → The scope tree names the type. Each scope that binds a self receiver records it as `LexicalScope.self_type_name`, so `find_self_type` walks up to the nearest scope carrying a name, resolves that name where the scope records it, and checks the result is a class/interface/enum. Reading the declared name — rather than inferring the owner from the members the scope holds — is what lets a body with no members of its own name its type: a constructor-only class, a constructor body, a class-field initialiser, a cross-file Rust `impl`. A `this` in no such scope binds instead to the function collection holding it, either the collection whose member body encloses the call or the enclosing function's own collection (`function View(){ this.lookup() }` with `View.prototype.lookup = fn`).
 - **Method calls** → Receiver type → class definition → member lookup (with polymorphic dispatch). An interface-typed receiver resolves to the interface member the call names _and_ every implementation that runs: the member leads the list so "who calls `IFoo.bar`" stays answerable, the implementations follow so entry-point detection reaches the bodies. The interface member has no body scope, so it is never a call-graph node — the attribution is additive.
+- **Annotated receivers** → A declared annotation types its binding once, when the `TypeRegistry` indexes the file, never again at the call. `type_preprocessing/annotation.ts` parses the text under its language's grammar into a head name chain and type arguments, removing every wrapper that does not change which type's members a receiver reaches: nullish unions (`F | null`, `Optional[C]`, `{X=}`), references and lifetimes (`&'a mut S`), `dyn`/`impl` bounds, quoted forward references, and the fixed Rust set `Option`/`Box`/`Rc`/`Arc`. A container keeps its head (`Vec<T>`, `F[]` → `Array<F>`), with its element as an argument. `TypeRegistry.resolve_annotation` resolves the head: a bare name in lexical scope; a qualified head segment by segment, each hop only out of an import that denotes a whole module (a namespace import, or a named import of a submodule); a Rust `::` head through the Rust path resolver, which the project hands in; an inline `import("./m").X` among the named module's members, recorded as a module path read of the file. A constructor callee chain (`new models.User()`) resolves through the same head resolution. Annotation bindings are keyed by `SymbolId`, so two definitions over one span — a TypeScript parameter property, a Python class-body annotation — each keep their type. Resolved type arguments are recorded beside the type (`get_symbol_type_arguments`), all or nothing.
 - **Destructured binding receivers** → `const { storage } = options` types `storage` as `options.storage` — the source identifier and property key are captured at index time (`destructured_from` / `destructured_key` on `VariableDefinition`, JS/TS only, identifier initializer only) and `receiver_resolution.ts` types the binding with one property hop off the source's type. A chain of destructurings resolves one hop at a time under a visited-set guard.
 - **Constructor calls** → Type name → class definition → constructor lookup
 - **Rust `::` paths** → The qualifier the author wrote binds the terminal, ahead of any same-name local. `path_resolution.rust.ts` owns the qualifier hops, in order: `Self` substitutes the enclosing impl type; a qualifier naming a type takes the terminal from its member index; a qualifier naming an in-file `mod` block takes it from that body; otherwise the path resolves to a module **file** and the terminal is looked up inside it. When the path names nothing the project holds, `function_call.rust.ts` falls back to a `use` statement in lexical scope that anchors the terminal — named imports first, then a wildcard edge fanned out across the module's whole surface.
@@ -94,8 +95,11 @@ resolve_references/
 │   └── receiver_resolution.ts    # Receiver type inference (unified base + property-chain walk)
 ├── type_preprocessing/           # Type metadata extraction from definitions and references
 │   ├── index.ts                  # type_preprocessing barrel
-│   ├── bindings.ts               # Variable/parameter type bindings
-│   ├── constructor_bindings.ts   # Constructor call type bindings
+│   ├── annotation.ts             # Annotation parser (marshaller): text → head name chain + type arguments
+│   ├── annotation.{javascript,python,rust,typescript}.ts  # Per-language annotation grammars
+│   ├── annotation_syntax.ts      # Bracket-aware splitting shared by the grammars
+│   ├── bindings.ts               # Variable/parameter/property/return annotation bindings, keyed by SymbolId
+│   ├── constructor_bindings.ts   # Constructor call name-chain bindings
 │   └── member.ts                 # Type member extraction (methods, properties, enum members)
 └── import_resolution/            # Cross-file import path resolution
     ├── index.ts                  # import_resolution barrel
@@ -110,7 +114,7 @@ resolve_references/
 - **`ResolutionRegistry`** — Thin wrapper coordinating Phase 1 and Phase 2; holds `ResolutionState`
 - **`ResolutionState`** — Immutable state: `{ resolutions_by_scope, resolved_calls_by_file, calls_by_caller_scope, indirect_reachability }`
 - **`DefinitionRegistry`** — Central definition store with indexes by symbol, file, location, scope, member, and type subtypes
-- **`TypeRegistry`** — Resolved type relationships: symbol types, type members, parent classes, implemented interfaces
+- **`TypeRegistry`** — Resolved type relationships: symbol types, symbol type arguments, type members, parent classes, implemented interfaces
 - **`ScopeRegistry`** — Persists scope trees from `SemanticIndex` for cross-file scope lookups
 - **`ExportRegistry`** — Tracks exports per file for import resolution
 - **`ReferenceRegistry`** — Stores raw references per file (source of truth for call resolution)

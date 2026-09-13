@@ -39,6 +39,7 @@ import type {
 } from "@ariadnejs/types";
 import { err, ok } from "@ariadnejs/types";
 import { resolve_module_member } from "../module_member_lookup";
+import { parse_type_annotation, type ParsedTypeAnnotation } from "../type_preprocessing";
 import { ScopeRegistry } from "../registries/scope";
 import { DefinitionRegistry } from "../registries/definition";
 import type { TypeRegistry } from "../registries/type";
@@ -306,7 +307,9 @@ function resolve_identifier_base(
 
   if (!type_id && def) {
     // A type used as a receiver (Type.staticMethod(), Type::associated_function())
-    // is its own type; otherwise fall back to a resolvable type annotation.
+    // is its own type. A declared annotation is not re-read here: the
+    // TypeRegistry resolved it when the file was indexed, and a miss there is
+    // a miss here.
     if (
       def.kind === "class" ||
       def.kind === "interface" ||
@@ -319,15 +322,7 @@ function resolve_identifier_base(
     ) {
       type_id = symbol_id;
     } else if (
-      (def.kind === "variable" ||
-        def.kind === "constant" ||
-        def.kind === "property" ||
-        def.kind === "parameter") &&
-      def.type
-    ) {
-      type_id = context.resolutions.resolve(def.defining_scope_id, def.type);
-    } else if (
-      // Every rung above states a type; this one only says where the value came
+      // The rung above states a type; this one only says where the value came
       // from, so it is consulted last.
       (def.kind === "variable" || def.kind === "constant") &&
       def.destructured_from !== undefined &&
@@ -522,13 +517,13 @@ function walk_property_chain(
     let member_type = context.types.get_symbol_type(member_symbol);
 
     if (!member_type) {
-      let member_def = context.definitions.get(member_symbol);
+      const member_def = context.definitions.get(member_symbol);
 
       // The member index gives a callable the name it shares with a field —
       // Rust's `struct Buf { data: Inner }` beside `fn data(&self)` — because
       // the call position needs the method. A chain position that is not
       // itself a call is a value, so where the callable yields no type the
-      // chain continues through the declared field, which carries one. The
+      // chain continues through the declared field's recorded type. The
       // field is looked up on the type that supplied the member, which
       // inheritance may put above the receiver.
       if (
@@ -542,13 +537,12 @@ function walk_property_chain(
           owner?.kind === "class" || owner?.kind === "interface"
             ? owner.properties.find((property) => property.name === property_name)
             : undefined;
-        if (field?.type) {
-          member_symbol = field.symbol_id;
-          member_def = field;
+        if (field) {
+          member_type = context.types.get_symbol_type(field.symbol_id);
         }
       }
 
-      if (member_def) {
+      if (!member_type && member_def) {
         if (
           member_def.kind === "class" ||
           member_def.kind === "interface" ||
@@ -561,14 +555,6 @@ function walk_property_chain(
           member_def.kind === "import"
         ) {
           member_type = member_symbol;
-        } else if (
-          (member_def.kind === "property" || member_def.kind === "parameter") &&
-          member_def.type
-        ) {
-          member_type = context.resolutions.resolve(
-            member_def.defining_scope_id,
-            member_def.type
-          );
         } else if (member_def.kind === "method") {
           // @language typescript
           // A generic method returning its own type parameter (get<T>(): T) has
@@ -667,13 +653,17 @@ function infer_generic_return_from_type_token(
   if (!call_arguments_at_position) {
     return null;
   }
+  const language = context.languages.get(method_def.location.file_path);
+  if (!language) {
+    return null;
+  }
 
   // The token parameter is the one whose declared type wraps the return-type
   // parameter exactly (token: Type<T> for a method returning T).
   const token_index = method_def.parameters.findIndex(
     (param) =>
       param.type !== undefined &&
-      parse_single_type_argument(param.type) === return_type
+      is_type_token_for(parse_type_annotation(param.type, language), return_type)
   );
   if (token_index < 0) {
     return null;
@@ -689,10 +679,34 @@ function infer_generic_return_from_type_token(
 
 // @language typescript
 /**
+ * Whether a parameter annotation is a token designating `type_parameter`: a
+ * single-argument generic wrapping exactly that parameter (`Type<T>`). An
+ * array of `T` (`T[]`, `Array<T>`) holds values of `T` and designates nothing.
+ */
+function is_type_token_for(
+  annotation: ParsedTypeAnnotation | null,
+  type_parameter: SymbolName
+): boolean {
+  if (!annotation || annotation.arguments.length !== 1) {
+    return false;
+  }
+  if (annotation.head.length === 1 && annotation.head[0] === "Array") {
+    return false;
+  }
+  const [wrapped] = annotation.arguments;
+  return (
+    wrapped.head.length === 1 &&
+    wrapped.head[0] === type_parameter &&
+    wrapped.arguments.length === 0
+  );
+}
+
+// @language typescript
+/**
  * Resolve a type-token argument to the class it designates: a class/type used
  * directly (`injector.get(Service)`) is its own type; a typed token binding
- * (a parameter `token: Type<Service>`) resolves through its `Type<…>`
- * annotation to the wrapped class.
+ * (a parameter `token: Type<Service>`) designates the single type argument its
+ * annotation resolved to.
  */
 function resolve_token_argument_type(
   argument_name: SymbolName,
@@ -719,53 +733,8 @@ function resolve_token_argument_type(
     return symbol_id;
   }
 
-  if (
-    (def.kind === "variable" ||
-      def.kind === "constant" ||
-      def.kind === "parameter" ||
-      def.kind === "property") &&
-    def.type
-  ) {
-    const wrapped_type = parse_single_type_argument(def.type);
-    if (wrapped_type) {
-      return context.resolutions.resolve(def.defining_scope_id, wrapped_type);
-    }
-  }
-
-  return null;
-}
-
-// @language typescript
-/**
- * The single type argument of a `Wrapper<Inner>` annotation (`Type<T>` → `T`),
- * or null when the annotation is not a single-argument generic — no `<…>`, a
- * trailing modifier (`Type<T> | null`), or multiple arguments (`Map<K, V>`).
- */
-function parse_single_type_argument(annotation: SymbolName): SymbolName | null {
-  const open = annotation.indexOf("<");
-  if (open < 0 || !annotation.endsWith(">")) {
-    return null;
-  }
-
-  const inner = annotation.slice(open + 1, -1).trim();
-  if (inner.length === 0) {
-    return null;
-  }
-
-  // Reject multiple top-level arguments (Map<K, V>) while allowing a nested
-  // single argument (Provider<Foo<Bar>>).
-  let depth = 0;
-  for (const char of inner) {
-    if (char === "<") {
-      depth++;
-    } else if (char === ">") {
-      depth--;
-    } else if (char === "," && depth === 0) {
-      return null;
-    }
-  }
-
-  return inner as SymbolName;
+  const type_arguments = context.types.get_symbol_type_arguments(symbol_id);
+  return type_arguments.length === 1 ? type_arguments[0] : null;
 }
 
 /**

@@ -11,7 +11,7 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { make_export_chain_context } from "../resolution_test_helpers";
+import { make_export_chain_context, make_type_resolution_context } from "../resolution_test_helpers";
 import {
   extract_receiver,
   resolve_receiver_type,
@@ -46,6 +46,8 @@ import type {
   NamespaceDefinition,
   VariableDefinition,
   ParameterDefinition,
+  FunctionDefinition,
+  SemanticIndex,
 } from "@ariadnejs/types";
 import {
   class_symbol,
@@ -1085,28 +1087,6 @@ describe("resolve_receiver_type", () => {
   });
 
   describe("property chain walking", () => {
-    it("resolves this.property.method() via type annotation", () => {
-      setup_class_scopes();
-      setup_class_definitions();
-
-      // The property's annotation resolves from the property's own defining
-      // scope, which is the class body.
-      const scope_resolutions = new Map<SymbolName, SymbolId>();
-      scope_resolutions.set("Database" as SymbolName, database_class_id);
-      set_test_resolutions(resolutions, CLASS_SCOPE_ID, scope_resolutions);
-
-      const receiver: ReceiverExpression = {
-        base: { type: "keyword", value: "this" },
-        chain: ["db" as SymbolName],
-        method_name: "query" as SymbolName,
-        scope_id: METHOD_SCOPE_ID,
-      };
-
-      const result = resolve_receiver_type(receiver, context);
-
-      expect(is_ok(result) && result.value).toBe(database_class_id);
-    });
-
     it("resolves this.property.method() via TypeRegistry", () => {
       setup_class_scopes();
       setup_class_definitions();
@@ -1674,59 +1654,71 @@ describe("destructured binding receiver typing", () => {
     scopes.update_file(TEST_FILE, scope_map);
   });
 
-  /** Register the Options/PersistenceStorage types and the `options` parameter. */
+  /**
+   * Register the Options/PersistenceStorage types and the `options` parameter,
+   * and record their annotations through the TypeRegistry the way indexing does.
+   */
   function register_types(binding: Partial<VariableDefinition>): void {
-    definitions.update_file(TEST_FILE, [
-      {
-        kind: "interface",
-        symbol_id: OPTIONS_ID,
-        name: "Options" as SymbolName,
-        defining_scope_id: FILE_SCOPE_ID,
-        location: { ...MOCK_LOCATION, start_line: 1 },
-        is_exported: false,
-        extends: [],
-        methods: [],
-        properties: [
-          {
-            kind: "property",
-            symbol_id: STORAGE_PROP_ID,
-            name: "storage" as SymbolName,
-            defining_scope_id: FILE_SCOPE_ID,
-            location: { ...MOCK_LOCATION, start_line: 2 },
-            type: "PersistenceStorage" as SymbolName,
-            decorators: [],
-          },
-        ],
-      },
-      {
-        kind: "interface",
-        symbol_id: STORAGE_IFACE_ID,
-        name: "PersistenceStorage" as SymbolName,
-        defining_scope_id: FILE_SCOPE_ID,
-        location: { ...MOCK_LOCATION, start_line: 5 },
-        is_exported: false,
-        extends: [],
-        methods: [],
-        properties: [],
-      },
-      {
-        kind: "parameter",
-        symbol_id: OPTIONS_PARAM_ID,
-        name: "options" as SymbolName,
-        defining_scope_id: FILE_SCOPE_ID,
-        location: { ...MOCK_LOCATION, start_line: 10 },
-        type: "Options" as SymbolName,
-      } as ParameterDefinition,
-      {
-        kind: "variable",
-        symbol_id: BINDING_ID,
-        name: (binding.name ?? "storage") as SymbolName,
-        defining_scope_id: FILE_SCOPE_ID,
-        location: { ...MOCK_LOCATION, start_line: 11 },
-        is_exported: false,
-        ...binding,
-      } as VariableDefinition,
-    ]);
+    const options_param: ParameterDefinition = {
+      kind: "parameter",
+      symbol_id: OPTIONS_PARAM_ID,
+      name: "options" as SymbolName,
+      defining_scope_id: FILE_SCOPE_ID,
+      location: { ...MOCK_LOCATION, start_line: 10 },
+      type: "Options" as SymbolName,
+    };
+    const options_iface: InterfaceDefinition = {
+      kind: "interface",
+      symbol_id: OPTIONS_ID,
+      name: "Options" as SymbolName,
+      defining_scope_id: FILE_SCOPE_ID,
+      location: { ...MOCK_LOCATION, start_line: 1 },
+      is_exported: false,
+      extends: [],
+      methods: [],
+      properties: [
+        {
+          kind: "property",
+          symbol_id: STORAGE_PROP_ID,
+          name: "storage" as SymbolName,
+          defining_scope_id: FILE_SCOPE_ID,
+          location: { ...MOCK_LOCATION, start_line: 2 },
+          type: "PersistenceStorage" as SymbolName,
+          decorators: [],
+        },
+      ],
+    };
+    const storage_iface: InterfaceDefinition = {
+      kind: "interface",
+      symbol_id: STORAGE_IFACE_ID,
+      name: "PersistenceStorage" as SymbolName,
+      defining_scope_id: FILE_SCOPE_ID,
+      location: { ...MOCK_LOCATION, start_line: 5 },
+      is_exported: false,
+      extends: [],
+      methods: [],
+      properties: [],
+    };
+    const run_function: FunctionDefinition = {
+      kind: "function",
+      symbol_id: "function:test.ts:10:0:12:1:run" as SymbolId,
+      name: "run" as SymbolName,
+      defining_scope_id: FILE_SCOPE_ID,
+      location: { ...MOCK_LOCATION, start_line: 10 },
+      is_exported: false,
+      signature: { parameters: [options_param] },
+      body_scope_id: FILE_SCOPE_ID,
+    };
+    const binding_def = {
+      kind: "variable",
+      symbol_id: BINDING_ID,
+      name: (binding.name ?? "storage") as SymbolName,
+      defining_scope_id: FILE_SCOPE_ID,
+      location: { ...MOCK_LOCATION, start_line: 11 },
+      is_exported: false,
+      ...binding,
+    } as VariableDefinition;
+    definitions.update_file(TEST_FILE, [options_iface, storage_iface, options_param, binding_def]);
 
     const scope_resolutions = new Map<SymbolName, SymbolId>();
     scope_resolutions.set("options" as SymbolName, OPTIONS_PARAM_ID);
@@ -1734,6 +1726,32 @@ describe("destructured binding receiver typing", () => {
     scope_resolutions.set("PersistenceStorage" as SymbolName, STORAGE_IFACE_ID);
     scope_resolutions.set((binding.name ?? "storage") as SymbolName, BINDING_ID);
     set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
+
+    const index: SemanticIndex = {
+      file_path: TEST_FILE,
+      language: "typescript",
+      root_scope_id: FILE_SCOPE_ID,
+      scopes: new Map(),
+      functions: new Map([[run_function.symbol_id, run_function]]),
+      classes: new Map(),
+      variables: new Map([[BINDING_ID, binding_def]]),
+      interfaces: new Map([
+        [OPTIONS_ID, options_iface],
+        [STORAGE_IFACE_ID, storage_iface],
+      ]),
+      enums: new Map(),
+      namespaces: new Map(),
+      types: new Map(),
+      imported_symbols: new Map(),
+      references: [],
+    };
+    const { exports, languages, modules } = make_export_chain_context();
+    types.update_file(
+      TEST_FILE,
+      index,
+      [],
+      make_type_resolution_context(definitions, resolutions, exports, languages, modules)
+    );
   }
 
   it("types a shorthand destructured binding as the declared type of the property it unpacks", () => {
