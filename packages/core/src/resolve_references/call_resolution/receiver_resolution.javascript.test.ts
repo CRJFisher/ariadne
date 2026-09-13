@@ -62,9 +62,13 @@ describe("JavaScript Self-Reference Resolution Integration", () => {
       );
       expect(user_class).toBeDefined();
 
-      const type_info = project.get_type_info(user_class!.symbol_id);
-      expect(type_info).toBeDefined();
-      expect(type_info!.methods.has("getName" as SymbolName)).toBe(true);
+      const user_members = project.definitions
+        .get_member_index()
+        .get(user_class!.symbol_id);
+      const get_name_id = user_members?.get("getName" as SymbolName);
+      expect(get_name_id).toBe(
+        user_class!.methods.find((m) => m.name === ("getName" as SymbolName))!.symbol_id
+      );
 
       const self_ref_calls = index!.references.filter(
         (r): r is SelfReferenceCall => r.kind === "self_reference_call"
@@ -73,8 +77,6 @@ describe("JavaScript Self-Reference Resolution Integration", () => {
 
       // getName should be referenced via this.getName() in greet
       const referenced = project.resolutions.get_all_referenced_symbols();
-      const get_name_id = type_info!.methods.get("getName" as SymbolName);
-      expect(get_name_id).toBeDefined();
       expect(referenced.has(get_name_id!)).toBe(true);
     });
 
@@ -132,9 +134,12 @@ describe("JavaScript Self-Reference Resolution Integration", () => {
       );
       expect(animal_class).toBeDefined();
 
-      const animal_type_info = project.get_type_info(animal_class!.symbol_id);
-      expect(animal_type_info).toBeDefined();
-      expect(animal_type_info!.methods.has("makeSound" as SymbolName)).toBe(true);
+      const animal_members = project.definitions
+        .get_member_index()
+        .get(animal_class!.symbol_id);
+      expect(animal_members?.get("makeSound" as SymbolName)).toBe(
+        animal_class!.methods.find((m) => m.name === ("makeSound" as SymbolName))!.symbol_id
+      );
 
       // super.makeSound() should be captured as a self_reference_call with keyword=super
       const self_ref_calls = index!.references.filter(
@@ -210,17 +215,15 @@ describe("JavaScript Self-Reference Resolution Integration", () => {
       );
       expect(service_class).toBeDefined();
 
-      const service_type_info = project.get_type_info(service_class!.symbol_id);
-      expect(service_type_info).toBeDefined();
-
       const db_class = Array.from(index!.classes.values()).find(
         (c) => c.name === ("Database" as SymbolName)
       );
       expect(db_class).toBeDefined();
 
-      const db_type_info = project.get_type_info(db_class!.symbol_id);
-      expect(db_type_info).toBeDefined();
-      expect(db_type_info!.methods.has("query" as SymbolName)).toBe(true);
+      const db_members = project.definitions.get_member_index().get(db_class!.symbol_id);
+      expect(db_members?.get("query" as SymbolName)).toBe(
+        db_class!.methods.find((m) => m.name === ("query" as SymbolName))!.symbol_id
+      );
     });
 
     it("should resolve multiple this.method() calls in same class", () => {
@@ -254,18 +257,24 @@ describe("JavaScript Self-Reference Resolution Integration", () => {
       );
       expect(pipeline_class).toBeDefined();
 
-      const type_info = project.get_type_info(pipeline_class!.symbol_id);
-      expect(type_info).toBeDefined();
-      expect(type_info!.methods.has("validate" as SymbolName)).toBe(true);
-      expect(type_info!.methods.has("transform" as SymbolName)).toBe(true);
-      expect(type_info!.methods.has("process" as SymbolName)).toBe(true);
+      const pipeline_members = project.definitions
+        .get_member_index()
+        .get(pipeline_class!.symbol_id);
+      const validate_id = pipeline_members?.get("validate" as SymbolName);
+      const transform_id = pipeline_members?.get("transform" as SymbolName);
+      const process_id = pipeline_members?.get("process" as SymbolName);
+      expect(validate_id).toBe(
+        pipeline_class!.methods.find((m) => m.name === ("validate" as SymbolName))!.symbol_id
+      );
+      expect(transform_id).toBe(
+        pipeline_class!.methods.find((m) => m.name === ("transform" as SymbolName))!.symbol_id
+      );
+      expect(process_id).toBe(
+        pipeline_class!.methods.find((m) => m.name === ("process" as SymbolName))!.symbol_id
+      );
 
       // validate and transform should be referenced via this.validate() and this.transform() in process
       const referenced = project.resolutions.get_all_referenced_symbols();
-      const validate_id = type_info!.methods.get("validate" as SymbolName);
-      const transform_id = type_info!.methods.get("transform" as SymbolName);
-      expect(validate_id).toBeDefined();
-      expect(transform_id).toBeDefined();
       expect(referenced.has(validate_id!)).toBe(true);
       expect(referenced.has(transform_id!)).toBe(true);
     });
@@ -298,8 +307,10 @@ describe("JavaScript Self-Reference Resolution Integration", () => {
 
       expect(base_class).toBeDefined();
 
-      const base_type_info = project.get_type_info(base_class!.symbol_id);
-      const base_helper = base_type_info!.methods.get("helper" as SymbolName);
+      const base_members = project.definitions
+        .get_member_index()
+        .get(base_class!.symbol_id);
+      const base_helper = base_members?.get("helper" as SymbolName);
 
       expect(base_helper).toBeDefined();
 

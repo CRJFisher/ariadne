@@ -7,5 +7,4 @@
 
 export { extract_type_bindings } from "./bindings";
 export { extract_constructor_bindings } from "./constructor_bindings";
-export { extract_type_members, set_member_symbol } from "./member";
 export { parse_type_annotation, type ParsedTypeAnnotation } from "./annotation";

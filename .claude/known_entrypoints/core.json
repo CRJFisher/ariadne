@@ -24,10 +24,6 @@
         "file_path": "packages/core/src/project/project.ts"
       },
       {
-        "name": "get_type_info",
-        "file_path": "packages/core/src/project/project.ts"
-      },
-      {
         "name": "get_derived_data",
         "file_path": "packages/core/src/project/project.ts"
       },

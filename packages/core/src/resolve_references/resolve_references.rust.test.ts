@@ -329,16 +329,32 @@ impl Counter {
       );
       expect(counter_struct).toBeDefined();
 
-      const type_info = project.get_type_info(counter_struct!.symbol_id);
-      expect(type_info).toBeDefined();
-      expect(type_info!.methods.has("set_count" as SymbolName)).toBe(true);
-      expect(type_info!.methods.has("increment" as SymbolName)).toBe(true);
-      expect(type_info!.methods.has("new" as SymbolName)).toBe(true);
+      const counter_members = project.definitions
+        .get_member_index()
+        .get(counter_struct!.symbol_id);
+      expect(
+        project.definitions.get(
+          counter_members?.get("set_count" as SymbolName)!
+        )?.kind
+      ).toBe("method");
+      expect(
+        project.definitions.get(
+          counter_members?.get("increment" as SymbolName)!
+        )?.kind
+      ).toBe("method");
+      expect(
+        project.definitions.get(counter_members?.get("new" as SymbolName)!)
+          ?.kind
+      ).toBe("method");
 
       // set_count should be referenced via self.set_count() in increment
       const referenced = project.resolutions.get_all_referenced_symbols();
-      const set_count_id = type_info!.methods.get("set_count" as SymbolName);
-      expect(set_count_id).toBeDefined();
+      const set_count_id = counter_members?.get("set_count" as SymbolName);
+      expect(set_count_id).toBe(
+        counter_struct!.methods.find(
+          (m) => m.name === ("set_count" as SymbolName)
+        )!.symbol_id
+      );
       expect(referenced.has(set_count_id!)).toBe(true);
     });
   });

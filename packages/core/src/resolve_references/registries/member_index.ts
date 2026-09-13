@@ -221,8 +221,8 @@ export class MemberIndex {
    * `members_by_name`, so a type's members can arrive from more than one file
    * and leave with the file that brought them. Under one name a callable beats
    * a property — this is the callable-member index, and Rust lets a field and
-   * a method share a name — and a getter beats any other accessor, the rule
-   * `set_member_symbol` applies to a type's own declaration. A member that
+   * a method share a name — and a getter beats any other accessor, because a
+   * bare read of the name (`obj.value`) invokes the getter. A member that
    * yields its name to another member leaves its file's provenance, so the
    * provenance always says exactly which names the index holds per file.
    *
@@ -266,8 +266,7 @@ export class MemberIndex {
    * class-body alias rebinding does. A callable displaces whatever holds the
    * name except that a setter or deleter never displaces anything: a read of
    * the name reaches the getter, so the getter keeps the slot whatever the
-   * declaration order — the rule `set_member_symbol` states for a type's own
-   * declaration.
+   * declaration order.
    */
   private member_takes_slot(candidate: SymbolId, held: SymbolId): boolean {
     const candidate_def = this.definitions.get(candidate);

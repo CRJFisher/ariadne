@@ -5,7 +5,6 @@ import type {
   ScopeId,
   SymbolName,
   Language,
-  TypeMemberInfo,
 } from "@ariadnejs/types";
 import type {
   AnyDefinition,
@@ -17,9 +16,7 @@ import type { ExportRegistry } from "./export";
 import {
   extract_type_bindings,
   extract_constructor_bindings,
-  extract_type_members,
   parse_type_annotation,
-  set_member_symbol,
   type ParsedTypeAnnotation,
 } from "../type_preprocessing";
 import type { ResolutionRegistry } from "../resolution_registry";
@@ -57,14 +54,22 @@ export interface TypeResolutionContext {
  * call and never stored.
  */
 interface ExtractedTypeData {
-  /** Annotated symbol → the annotation text it declares, e.g. `p: User | null` */
-  annotation_bindings: Map<SymbolId, SymbolName>;
+  /** Annotated value → the annotation text it declares, e.g. `p: User | null` */
+  value_bindings: ReadonlyMap<SymbolId, SymbolName>;
+  /** Function or method → its declared return annotation text, e.g. `connect(): Conn` */
+  return_bindings: ReadonlyMap<SymbolId, SymbolName>;
   /** Constructed symbol → the name chain it constructs, e.g. `new models.User()` → ["models", "User"] */
-  construction_bindings: Map<LocationKey, readonly SymbolName[]>;
-  /** Type → member metadata, with extends/implements still as names */
-  type_members: Map<SymbolId, TypeMemberInfo>;
+  construction_bindings: ReadonlyMap<LocationKey, readonly SymbolName[]>;
+  /** Every class, interface and enum the file declares, with extends/implements still as names */
+  declared_types: readonly DeclaredType[];
   /** Variable → the function it was initialized from, for return-type inference */
-  call_initializers: Map<SymbolId, SymbolName>;
+  call_initializers: ReadonlyMap<SymbolId, SymbolName>;
+}
+
+/** A type a file declares, and the parent names its declaration writes. */
+interface DeclaredType {
+  readonly symbol_id: SymbolId;
+  readonly extends: readonly SymbolName[];
 }
 
 /** Symbols a file contributed, tracked so remove_file() can evict them. */
@@ -104,8 +109,8 @@ function names_a_type(
 
 /**
  * Project-wide store of resolved type relationships, all keyed by SymbolId:
- * symbol → type, symbol → type arguments, type → members, class → parent,
- * class → interfaces.
+ * value → type, value → type arguments, callable → return type, type →
+ * members, class → parent, class → interfaces.
  *
  * update_file() extracts type names from a file's index and resolves them to
  * SymbolIds in one pass. It must run after ResolutionRegistry.resolve_names()
@@ -114,14 +119,12 @@ function names_a_type(
 export class TypeRegistry {
   private symbol_types: Map<SymbolId, SymbolId> = new Map();
   private symbol_type_arguments: Map<SymbolId, readonly SymbolId[]> = new Map();
+  private callable_return_types: Map<SymbolId, SymbolId> = new Map();
   private resolved_type_members: Map<SymbolId, Map<SymbolName, SymbolId>> =
     new Map();
   private parent_classes: Map<SymbolId, SymbolId> = new Map();
   private implemented_interfaces: Map<SymbolId, SymbolId[]> = new Map();
   private resolved_by_file: Map<FilePath, FileTypeContributions> = new Map();
-
-  /** Held for get_type_members() lookups; set on every update_file() call. */
-  private definitions?: DefinitionRegistry;
 
   /**
    * Extract type names from `file_path`'s index and resolve them to SymbolIds.
@@ -143,7 +146,6 @@ export class TypeRegistry {
     references: readonly SymbolReference[],
     context: TypeResolutionContext
   ): void {
-    this.definitions = context.definitions;
     this.remove_file(file_path);
     const extracted = this.extract_type_data(index, references);
     this.resolve_type_metadata(file_path, index.language, extracted, context);
@@ -153,18 +155,21 @@ export class TypeRegistry {
     index: SemanticIndex,
     references: readonly SymbolReference[]
   ): ExtractedTypeData {
-    const type_bindings_from_defs = extract_type_bindings({
+    const { value_bindings, return_bindings } = extract_type_bindings({
       variables: index.variables,
       functions: index.functions,
       classes: index.classes,
       interfaces: index.interfaces,
-    });
-
-    const type_members = extract_type_members({
-      classes: index.classes,
-      interfaces: index.interfaces,
       enums: index.enums,
     });
+
+    const declared_types: DeclaredType[] = [
+      ...index.classes.values(),
+      ...index.interfaces.values(),
+    ].map((type_def) => ({ symbol_id: type_def.symbol_id, extends: type_def.extends }));
+    for (const enum_def of index.enums.values()) {
+      declared_types.push({ symbol_id: enum_def.symbol_id, extends: [] });
+    }
 
     // A call-initialized variable with no annotation takes its type from the
     // called function's return type (STEP 1.5 of resolve_type_metadata).
@@ -176,9 +181,10 @@ export class TypeRegistry {
     }
 
     return {
-      annotation_bindings: new Map(type_bindings_from_defs),
-      construction_bindings: new Map(extract_constructor_bindings(references)),
-      type_members: new Map(type_members),
+      value_bindings,
+      return_bindings,
+      construction_bindings: extract_constructor_bindings(references),
+      declared_types,
       call_initializers,
     };
   }
@@ -196,7 +202,7 @@ export class TypeRegistry {
     const { definitions, resolutions } = context;
     const resolved_symbols = new Set<SymbolId>();
 
-    // STEP 1: variable/parameter → constructed or annotated type.
+    // STEP 1: variable/parameter/property → constructed or annotated type.
     // One symbol can carry both (`h: Handler = HandlerA()`). The construction
     // names the class that actually runs, which is the edge a call graph wants,
     // so it is tried first: annotating with a Protocol or a base class must not
@@ -209,7 +215,7 @@ export class TypeRegistry {
       if (target_id) constructions.set(target_id, chain);
     }
     const bound_symbols = new Set([
-      ...extracted.annotation_bindings.keys(),
+      ...extracted.value_bindings.keys(),
       ...constructions.keys(),
     ]);
     for (const symbol_id of bound_symbols) {
@@ -226,7 +232,7 @@ export class TypeRegistry {
         continue;
       }
 
-      const annotation_text = extracted.annotation_bindings.get(symbol_id);
+      const annotation_text = extracted.value_bindings.get(symbol_id);
       const annotation = annotation_text
         ? parse_type_annotation(annotation_text, language)
         : null;
@@ -239,6 +245,29 @@ export class TypeRegistry {
         this.resolve_annotation_arguments(scope_id, annotation, file_id, language, context),
         resolved_symbols
       );
+    }
+
+    // STEP 1.2: function/method → declared return type. Recorded apart from
+    // every value type: a method is a member a receiver names, and what calling
+    // it yields is a different type, reached only by the call.
+    for (const [callable_id, return_text] of extracted.return_bindings) {
+      const scope_id = definitions.get_symbol_scope(callable_id);
+      if (!scope_id) continue;
+
+      const return_annotation = parse_type_annotation(return_text, language);
+      if (!return_annotation) continue;
+
+      const return_type_id = this.resolve_annotation(
+        scope_id,
+        return_annotation,
+        file_id,
+        language,
+        context
+      );
+      if (return_type_id && names_a_type(return_type_id, definitions)) {
+        this.callable_return_types.set(callable_id, return_type_id);
+        resolved_symbols.add(callable_id);
+      }
     }
 
     // STEP 1.5: factory pattern — an untyped variable takes the declared return
@@ -286,8 +315,8 @@ export class TypeRegistry {
       );
     }
 
-    // STEP 2: copy each type's already-resolved member map from DefinitionRegistry.
-    for (const type_id of extracted.type_members.keys()) {
+    // STEP 2: copy each declared type's already-resolved member map from DefinitionRegistry.
+    for (const { symbol_id: type_id } of extracted.declared_types) {
       const member_map = definitions.get_member_index().get(type_id);
       if (member_map && member_map.size > 0) {
         this.resolved_type_members.set(type_id, new Map(member_map));
@@ -297,8 +326,8 @@ export class TypeRegistry {
 
     // STEP 3: resolve extends/implements names. The first resolved name is the
     // parent class; any remaining are implemented interfaces.
-    for (const [type_id, member_info] of extracted.type_members) {
-      if (!member_info.extends || member_info.extends.length === 0) {
+    for (const { symbol_id: type_id, extends: parent_names } of extracted.declared_types) {
+      if (parent_names.length === 0) {
         continue;
       }
 
@@ -306,7 +335,7 @@ export class TypeRegistry {
       if (!scope_id) continue;
 
       const resolved_parents: SymbolId[] = [];
-      for (const parent_name of member_info.extends) {
+      for (const parent_name of parent_names) {
         const parent_annotation = parse_type_annotation(parent_name, language);
         const parent_id = parent_annotation
           ? this.resolve_annotation(scope_id, parent_annotation, file_id, language, context)
@@ -508,61 +537,22 @@ export class TypeRegistry {
   }
 
   /**
-   * Type members (methods, properties, extends) for a type, built on demand
-   * from its DefinitionRegistry entry. An enum's associated functions come from
-   * the member index — the definition's own `methods` is optional and the index
-   * is what call resolution reads — while its variants are the properties a
-   * caller can name.
-   */
-  get_type_members(type_id: SymbolId): TypeMemberInfo | undefined {
-    if (!this.definitions) {
-      return undefined;
-    }
-
-    const def = this.definitions.get(type_id);
-    if (!def) return undefined;
-
-    if (def.kind === "class") {
-      const methods = new Map<SymbolName, SymbolId>();
-      for (const m of def.methods) set_member_symbol(methods, m);
-
-      return {
-        methods,
-        properties: new Map(
-          def.properties.map((p) => [p.name as SymbolName, p.symbol_id])
-        ),
-        extends: def.extends ?? [],
-      };
-    } else if (def.kind === "interface") {
-      return {
-        methods: new Map(
-          def.methods.map((m) => [m.name as SymbolName, m.symbol_id])
-        ),
-        properties: new Map(
-          def.properties.map((p) => [p.name as SymbolName, p.symbol_id])
-        ),
-        extends: def.extends ?? [],
-      };
-    } else if (def.kind === "enum") {
-      return {
-        methods: new Map(this.definitions.get_member_index().get(type_id)),
-        properties: new Map(
-          def.members.map((m) => [m.name as SymbolName, m.symbol_id])
-        ),
-        extends: [],
-      };
-    }
-
-    return undefined;
-  }
-
-  /**
-   * Resolved type of a variable/parameter/receiver, or null if unknown.
-   * Populated from explicit annotations, constructor assignments, and inferred
-   * function return types (see resolve_type_metadata).
+   * Resolved type of the value a variable, parameter or property holds, or
+   * null if unknown. Populated from explicit annotations, constructor
+   * assignments, and factory-call initialisers (see resolve_type_metadata).
+   * A function or method holds no value type: what it yields is
+   * get_callable_return_type().
    */
   get_symbol_type(symbol_id: SymbolId): SymbolId | null {
     return this.symbol_types.get(symbol_id) || null;
+  }
+
+  /**
+   * Resolved type a function or method's declared return annotation names, or
+   * null when it declares none or it names nothing that can hold members.
+   */
+  get_callable_return_type(callable_id: SymbolId): SymbolId | null {
+    return this.callable_return_types.get(callable_id) ?? null;
   }
 
   /**
@@ -658,6 +648,7 @@ export class TypeRegistry {
     for (const symbol_id of contributions.resolved_symbols) {
       this.symbol_types.delete(symbol_id);
       this.symbol_type_arguments.delete(symbol_id);
+      this.callable_return_types.delete(symbol_id);
       this.resolved_type_members.delete(symbol_id);
       this.parent_classes.delete(symbol_id);
       this.implemented_interfaces.delete(symbol_id);
@@ -669,6 +660,7 @@ export class TypeRegistry {
   clear(): void {
     this.symbol_types.clear();
     this.symbol_type_arguments.clear();
+    this.callable_return_types.clear();
     this.resolved_type_members.clear();
     this.parent_classes.clear();
     this.implemented_interfaces.clear();

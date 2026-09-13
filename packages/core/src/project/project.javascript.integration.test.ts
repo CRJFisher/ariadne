@@ -690,16 +690,22 @@ describe("Project Integration - JavaScript", () => {
       );
       expect(get_name_call).toBeDefined();
 
-      // Get type info for Product class
-      const type_info = project.get_type_info(product_class!.symbol_id);
-      expect(type_info).toBeDefined();
-      expect(type_info!.methods.size).toBeGreaterThan(0);
+      // Get member index entry for Product class
+      const product_members = project.definitions
+        .get_member_index()
+        .get(product_class!.symbol_id);
+      const get_name_def = product_class!.methods.find(
+        (m) => m.name === ("getName" as SymbolName)
+      )!;
+      expect(product_members?.get("getName" as SymbolName)).toBe(
+        get_name_def.symbol_id
+      );
 
-      // Verify getName method exists in type info
-      const get_name_method_id = type_info!.methods.get(
+      // Verify getName method exists in the member index
+      const get_name_method_id = product_members?.get(
         "getName" as SymbolName
       );
-      expect(get_name_method_id).toBeDefined();
+      expect(get_name_method_id).toBe(get_name_def.symbol_id);
     });
 
     it("should handle prototype methods", async () => {
@@ -1373,14 +1379,17 @@ function process(x) {}
       expect(child_class).toBeDefined();
 
       // Verify extends is correctly populated through the full project pipeline
-      const child_type_info = project.get_type_info(child_class!.symbol_id)!;
-      expect(child_type_info.extends).toEqual(["Base" as SymbolName]);
+      expect(child_class!.extends).toEqual(["Base" as SymbolName]);
 
       // Verify Base.helper is referenced via this.helper() call
-      const base_helper = project.get_type_info(base_class!.symbol_id)!.methods.get(
-        "helper" as SymbolName
+      const base_helper = project.definitions
+        .get_member_index()
+        .get(base_class!.symbol_id)
+        ?.get("helper" as SymbolName);
+      expect(base_helper).toBe(
+        base_class!.methods.find((m) => m.name === ("helper" as SymbolName))!
+          .symbol_id
       );
-      expect(base_helper).toBeDefined();
 
       const referenced = project.resolutions.get_all_referenced_symbols();
       expect(referenced.has(base_helper!)).toBe(true);
@@ -1480,7 +1489,10 @@ export { create_class_id as create_py_class_id } from "./sf_py";
       const cls = Array.from(index!.classes.values()).find(
         (c) => c.name === (class_name as SymbolName)
       );
-      return project.get_type_info(cls!.symbol_id)!.methods.get(method as SymbolName);
+      return project.definitions
+        .get_member_index()
+        .get(cls!.symbol_id)
+        ?.get(method as SymbolName);
     }
 
     it("resolves a this.#method() private call to the private method", () => {

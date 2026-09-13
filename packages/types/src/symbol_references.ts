@@ -1,6 +1,6 @@
 import type { Location } from "./location";
 import type { ScopeId } from "./scopes";
-import type { TypeInfo } from "./type_member_info";
+import type { TypeInfo } from "./type_info";
 import type { SymbolName } from "./symbol";
 import type { CallSiteSyntax } from "./resolution_failure";
 

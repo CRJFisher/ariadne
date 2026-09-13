@@ -23,6 +23,14 @@ function file_path(relative_path: string): FilePath {
   return path.join(FIXTURE_ROOT, relative_path) as FilePath;
 }
 
+function method_names_of(project: Project, type_id: SymbolId): SymbolName[] {
+  const members = project.definitions.get_member_index().get(type_id);
+  return Array.from(members ?? [])
+    .filter(([, id]) => project.definitions.get(id)?.kind === "method")
+    .map(([name]) => name)
+    .sort();
+}
+
 describe("Project Integration - Rust", () => {
   let project: Project;
 
@@ -48,10 +56,7 @@ describe("Project Integration - Rust", () => {
       expect(user_struct).toBeDefined();
 
       // User has 8 impl methods: new, default, get_name, get_email, update_name, activate, deactivate, get_info
-      const type_info = project.get_type_info(user_struct!.symbol_id);
-      expect(type_info).toBeDefined();
-
-      const method_names = Array.from(type_info!.methods.keys()).sort();
+      const method_names = method_names_of(project, user_struct!.symbol_id);
       expect(method_names).toEqual([
         "activate",
         "deactivate",
@@ -878,10 +883,7 @@ describe("Project Integration - Rust", () => {
       );
       expect(product_struct).toBeDefined();
 
-      const type_info = project.get_type_info(product_struct!.symbol_id);
-      expect(type_info).toBeDefined();
-
-      const impl_method_names = Array.from(type_info!.methods.keys()).sort();
+      const impl_method_names = method_names_of(project, product_struct!.symbol_id);
       expect(impl_method_names).toEqual([
         "apply_discount",
         "default",
@@ -912,9 +914,7 @@ describe("Project Integration - Rust", () => {
       const user_struct = structs.find((s) => s.name === ("User" as SymbolName));
       expect(user_struct).toBeDefined();
 
-      const user_type_info = project.get_type_info(user_struct!.symbol_id);
-      expect(user_type_info).toBeDefined();
-      const user_methods = Array.from(user_type_info!.methods.keys()).sort();
+      const user_methods = method_names_of(project, user_struct!.symbol_id);
       expect(user_methods).toEqual([
         "get_age",
         "greet",
@@ -926,9 +926,7 @@ describe("Project Integration - Rust", () => {
       const point_struct = structs.find((s) => s.name === ("Point" as SymbolName));
       expect(point_struct).toBeDefined();
 
-      const point_type_info = project.get_type_info(point_struct!.symbol_id);
-      expect(point_type_info).toBeDefined();
-      const point_methods = Array.from(point_type_info!.methods.keys()).sort();
+      const point_methods = method_names_of(project, point_struct!.symbol_id);
       expect(point_methods).toEqual([
         "distance_from_origin",
         "new",
