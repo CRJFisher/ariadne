@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { make_export_chain_context } from "../resolution_test_helpers";
+import { make_export_chain_context, make_type_resolution_context } from "../resolution_test_helpers";
 import { resolve_function_call } from "./function_call";
 import type { CallResolutionContext } from "./call_resolver";
 import { DefinitionRegistry } from "../registries/definition";
@@ -531,16 +531,7 @@ describe("Function Call Resolution", () => {
         references: [],
       };
       const { exports, languages, modules } = make_export_chain_context();
-      types.update_file(
-        py_file,
-        py_index,
-        [],
-        definitions,
-        resolutions,
-        exports,
-        languages,
-        modules
-      );
+      types.update_file(py_file, py_index, [], make_type_resolution_context(definitions, resolutions, exports, languages, modules));
 
       const call_ref = create_function_call_reference(
         "processor" as SymbolName,
