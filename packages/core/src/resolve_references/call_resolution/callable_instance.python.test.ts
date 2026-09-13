@@ -4,7 +4,7 @@ import { DefinitionRegistry } from "../registries/definition";
 import { TypeRegistry } from "../registries/type";
 import { ResolutionRegistry } from "../resolution_registry";
 import { set_test_resolutions } from "../resolve_references.test";
-import { make_export_chain_context } from "../resolution_test_helpers";
+import { make_export_chain_context, make_type_resolution_context } from "../resolution_test_helpers";
 import {
   variable_symbol,
   constant_symbol,
@@ -149,16 +149,7 @@ describe("resolve_callable_instance", () => {
       module_scope,
       new Map([["Processor" as SymbolName, class_id]])
     );
-    types.update_file(
-      file_path,
-      make_index(new Map([[var_id, var_def]]), new Map([[class_id, class_def]])),
-      [],
-      definitions,
-      resolutions,
-      empty_exports,
-      empty_languages,
-      empty_resolution
-    );
+    types.update_file(file_path, make_index(new Map([[var_id, var_def]]), new Map([[class_id, class_def]])), [], make_type_resolution_context(definitions, resolutions, empty_exports, empty_languages, empty_resolution));
 
     const result = resolve_callable_instance(var_id, definitions, types);
     expect(result).toEqual(call_method_id);
@@ -190,22 +181,13 @@ describe("resolve_callable_instance", () => {
         ["Handler" as SymbolName, derived_id],
       ])
     );
-    types.update_file(
-      file_path,
-      make_index(
+    types.update_file(file_path, make_index(
         new Map([[var_id, var_def]]),
         new Map([
           [base_id, base_def],
           [derived_id, derived_def],
         ])
-      ),
-      [],
-      definitions,
-      resolutions,
-      empty_exports,
-      empty_languages,
-      empty_resolution
-    );
+      ), [], make_type_resolution_context(definitions, resolutions, empty_exports, empty_languages, empty_resolution));
 
     const result = resolve_callable_instance(var_id, definitions, types);
     expect(result).toEqual(call_method_id);
@@ -234,19 +216,10 @@ describe("resolve_callable_instance", () => {
       module_scope,
       new Map([["Processor" as SymbolName, class_id]])
     );
-    types.update_file(
-      file_path,
-      make_index(
+    types.update_file(file_path, make_index(
         new Map([[const_id, const_def]]),
         new Map([[class_id, class_def]])
-      ),
-      [],
-      definitions,
-      resolutions,
-      empty_exports,
-      empty_languages,
-      empty_resolution
-    );
+      ), [], make_type_resolution_context(definitions, resolutions, empty_exports, empty_languages, empty_resolution));
 
     const result = resolve_callable_instance(const_id, definitions, types);
     expect(result).toEqual(call_method_id);
@@ -268,16 +241,7 @@ describe("resolve_callable_instance", () => {
       module_scope,
       new Map([["Plain" as SymbolName, class_id]])
     );
-    types.update_file(
-      file_path,
-      make_index(new Map([[var_id, var_def]]), new Map([[class_id, class_def]])),
-      [],
-      definitions,
-      resolutions,
-      empty_exports,
-      empty_languages,
-      empty_resolution
-    );
+    types.update_file(file_path, make_index(new Map([[var_id, var_def]]), new Map([[class_id, class_def]])), [], make_type_resolution_context(definitions, resolutions, empty_exports, empty_languages, empty_resolution));
 
     const result = resolve_callable_instance(var_id, definitions, types);
     expect(result).toBeUndefined();

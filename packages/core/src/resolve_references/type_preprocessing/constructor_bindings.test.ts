@@ -54,9 +54,7 @@ describe("Constructor Tracking - JavaScript", () => {
 
     const bindings = extract_constructor_bindings(index.references);
 
-    expect(bindings.direct.size).toBe(1);
-    const type_values = Array.from(bindings.direct.values());
-    expect(type_values).toEqual(["User"]);
+    expect(Array.from(bindings.values())).toEqual([["User"]]);
   });
 
   it("binds each of multiple assignments to its class name", () => {
@@ -79,9 +77,7 @@ describe("Constructor Tracking - JavaScript", () => {
 
     const bindings = extract_constructor_bindings(index.references);
 
-    expect(bindings.direct.size).toBe(2);
-    const type_values = Array.from(bindings.direct.values()).sort();
-    expect(type_values).toEqual(["Cat", "Dog"]);
+    expect(Array.from(bindings.values()).sort()).toEqual([["Cat"], ["Dog"]]);
   });
 
   it("binds a constructor assigned to an object property", () => {
@@ -105,9 +101,7 @@ describe("Constructor Tracking - JavaScript", () => {
 
     const bindings = extract_constructor_bindings(index.references);
 
-    expect(bindings.direct.size).toBe(1);
-    const type_values = Array.from(bindings.direct.values());
-    expect(type_values).toEqual(["Service"]);
+    expect(Array.from(bindings.values())).toEqual([["Service"]]);
   });
 
   it("skips a standalone constructor call with no assignment target", () => {
@@ -127,7 +121,7 @@ describe("Constructor Tracking - JavaScript", () => {
 
     const bindings = extract_constructor_bindings(index.references);
 
-    expect(bindings.direct.size).toBe(0);
+    expect(bindings.size).toBe(0);
   });
 
   it("binds a subclass instantiation to the subclass, not its base class", () => {
@@ -148,9 +142,7 @@ describe("Constructor Tracking - JavaScript", () => {
 
     const bindings = extract_constructor_bindings(index.references);
 
-    expect(bindings.direct.size).toBe(1);
-    const type_values = Array.from(bindings.direct.values());
-    expect(type_values).toEqual(["Dog"]);
+    expect(Array.from(bindings.values())).toEqual([["Dog"]]);
   });
 
   it("binds a constructor whose class is never defined", () => {
@@ -169,9 +161,7 @@ describe("Constructor Tracking - JavaScript", () => {
 
     const bindings = extract_constructor_bindings(index.references);
 
-    expect(bindings.direct.size).toBe(1);
-    const type_values = Array.from(bindings.direct.values());
-    expect(type_values).toEqual(["Unknown"]);
+    expect(Array.from(bindings.values())).toEqual([["Unknown"]]);
   });
 
   it("binds a class that declares an explicit constructor to its name", () => {
@@ -193,9 +183,7 @@ describe("Constructor Tracking - JavaScript", () => {
 
     const bindings = extract_constructor_bindings(index.references);
 
-    expect(bindings.direct.size).toBe(1);
-    const type_values = Array.from(bindings.direct.values());
-    expect(type_values).toEqual(["Widget"]);
+    expect(Array.from(bindings.values())).toEqual([["Widget"]]);
   });
 
   it("skips a constructor returned from a factory without assignment", () => {
@@ -217,8 +205,7 @@ describe("Constructor Tracking - JavaScript", () => {
 
     const bindings = extract_constructor_bindings(index.references);
 
-    expect(bindings.direct.size).toBe(0);
-    expect(bindings.namespace_qualified.size).toBe(0);
+    expect(bindings.size).toBe(0);
   });
 });
 
@@ -249,9 +236,7 @@ describe("Constructor Tracking - TypeScript", () => {
 
     const bindings = extract_constructor_bindings(index.references);
 
-    expect(bindings.direct.size).toBe(1);
-    const type_values = Array.from(bindings.direct.values());
-    expect(type_values).toEqual(["User"]);
+    expect(Array.from(bindings.values())).toEqual([["User"]]);
   });
 
   it("binds each of multiple typed assignments to its class name", () => {
@@ -279,9 +264,7 @@ describe("Constructor Tracking - TypeScript", () => {
 
     const bindings = extract_constructor_bindings(index.references);
 
-    expect(bindings.direct.size).toBe(2);
-    const type_values = Array.from(bindings.direct.values()).sort();
-    expect(type_values).toEqual(["ApiService", "DataStore"]);
+    expect(Array.from(bindings.values()).sort()).toEqual([["ApiService"], ["DataStore"]]);
   });
 
   it("binds a constructor assigned to a class field", () => {
@@ -308,9 +291,7 @@ describe("Constructor Tracking - TypeScript", () => {
 
     const bindings = extract_constructor_bindings(index.references);
 
-    expect(bindings.direct.size).toBe(1);
-    const type_values = Array.from(bindings.direct.values());
-    expect(type_values).toEqual(["Database"]);
+    expect(Array.from(bindings.values())).toEqual([["Database"]]);
   });
 
   it("binds a generic class constructor to its base class name", () => {
@@ -332,12 +313,10 @@ describe("Constructor Tracking - TypeScript", () => {
 
     const bindings = extract_constructor_bindings(index.references);
 
-    expect(bindings.direct.size).toBe(1);
-    const type_values = Array.from(bindings.direct.values());
-    expect(type_values).toEqual(["Container"]);
+    expect(Array.from(bindings.values())).toEqual([["Container"]]);
   });
 
-  it("binds a namespace-qualified call to its namespace chain, not direct", () => {
+  it("binds a namespace-qualified call to its full namespace chain", () => {
     const code = `
       import * as models from "./models";
       const user = new models.User("Alice");
@@ -354,13 +333,10 @@ describe("Constructor Tracking - TypeScript", () => {
 
     const bindings = extract_constructor_bindings(index.references);
 
-    expect(bindings.namespace_qualified.size).toBe(1);
-    const chains = Array.from(bindings.namespace_qualified.values());
-    expect(chains).toEqual([["models", "User"]]);
-    expect(bindings.direct.size).toBe(0);
+    expect(Array.from(bindings.values())).toEqual([["models", "User"]]);
   });
 
-  it("routes direct and namespace-qualified calls in one file to separate maps", () => {
+  it("keys direct and namespace-qualified calls in one file by their own chains", () => {
     const code = `
       import * as models from "./models";
       const a = new User();
@@ -378,10 +354,7 @@ describe("Constructor Tracking - TypeScript", () => {
 
     const bindings = extract_constructor_bindings(index.references);
 
-    expect(Array.from(bindings.direct.values())).toEqual(["User"]);
-    expect(Array.from(bindings.namespace_qualified.values())).toEqual([
-      ["models", "User"],
-    ]);
+    expect(Array.from(bindings.values())).toEqual([["User"], ["models", "User"]]);
   });
 });
 
@@ -418,9 +391,7 @@ user = User()
 
     const bindings = await python_bindings(code);
 
-    expect(bindings.direct.size).toBe(1);
-    const type_values = Array.from(bindings.direct.values());
-    expect(type_values).toEqual(["User"]);
+    expect(Array.from(bindings.values())).toEqual([["User"]]);
   });
 
   it("binds each of multiple assignments to its class name", async () => {
@@ -437,9 +408,7 @@ my_cat = Cat()
 
     const bindings = await python_bindings(code);
 
-    expect(bindings.direct.size).toBe(2);
-    const type_values = Array.from(bindings.direct.values()).sort();
-    expect(type_values).toEqual(["Cat", "Dog"]);
+    expect(Array.from(bindings.values()).sort()).toEqual([["Cat"], ["Dog"]]);
   });
 
   it("binds a constructor assigned to an instance attribute", async () => {
@@ -454,9 +423,7 @@ class App:
 
     const bindings = await python_bindings(code);
 
-    expect(bindings.direct.size).toBe(1);
-    const type_values = Array.from(bindings.direct.values());
-    expect(type_values).toEqual(["Service"]);
+    expect(Array.from(bindings.values())).toEqual([["Service"]]);
   });
 
   it("binds a type-annotated assignment to its class name", async () => {
@@ -469,9 +436,7 @@ db: Database = Database()
 
     const bindings = await python_bindings(code);
 
-    expect(bindings.direct.size).toBe(1);
-    const type_values = Array.from(bindings.direct.values());
-    expect(type_values).toEqual(["Database"]);
+    expect(Array.from(bindings.values())).toEqual([["Database"]]);
   });
 
   it("binds a class that defines __init__ to its class name", async () => {
@@ -485,9 +450,7 @@ x = X()
 
     const bindings = await python_bindings(code);
 
-    expect(bindings.direct.size).toBe(1);
-    const type_values = Array.from(bindings.direct.values());
-    expect(type_values).toEqual(["X"]);
+    expect(Array.from(bindings.values())).toEqual([["X"]]);
   });
 });
 
@@ -519,9 +482,7 @@ describe("Constructor Tracking - Rust", () => {
 
     const bindings = extract_constructor_bindings(index.references);
 
-    expect(bindings.direct.size).toBe(1);
-    const type_values = Array.from(bindings.direct.values());
-    expect(type_values).toEqual(["User"]);
+    expect(Array.from(bindings.values())).toEqual([["User"]]);
   });
 
   it("binds each of multiple struct expressions to its struct name", () => {
@@ -552,9 +513,7 @@ describe("Constructor Tracking - Rust", () => {
 
     const bindings = extract_constructor_bindings(index.references);
 
-    expect(bindings.direct.size).toBe(2);
-    const type_values = Array.from(bindings.direct.values()).sort();
-    expect(type_values).toEqual(["Color", "Point"]);
+    expect(Array.from(bindings.values()).sort()).toEqual([["Color"], ["Point"]]);
   });
 
   it("skips a struct expression returned without assignment", () => {
@@ -585,7 +544,7 @@ describe("Constructor Tracking - Rust", () => {
     const bindings = extract_constructor_bindings(index.references);
 
     // `App { db }` is a return expression, not a let/assignment, so it carries no construct_target.
-    expect(bindings.direct.size).toBe(0);
+    expect(bindings.size).toBe(0);
   });
 
   it("binds a Type::new() associated function call to its type name", () => {
@@ -616,9 +575,7 @@ describe("Constructor Tracking - Rust", () => {
 
     const bindings = extract_constructor_bindings(index.references);
 
-    expect(bindings.direct.size).toBe(1);
-    const type_values = Array.from(bindings.direct.values());
-    expect(type_values).toEqual(["Database"]);
+    expect(Array.from(bindings.values())).toEqual([["Database"]]);
   });
 
   it("skips tuple-struct instantiation, which indexes as a function call", () => {
@@ -640,7 +597,7 @@ describe("Constructor Tracking - Rust", () => {
 
     // Only struct-expression syntax (`Point { .. }`) produces a constructor_call
     // reference; `Point(10, 20)` indexes as a function_call.
-    expect(bindings.direct.size).toBe(0);
+    expect(bindings.size).toBe(0);
   });
 });
 
@@ -648,8 +605,7 @@ describe("Constructor Tracking - Edge Cases", () => {
   it("returns empty maps for an empty references array", () => {
     const bindings = extract_constructor_bindings([]);
 
-    expect(bindings.direct.size).toBe(0);
-    expect(bindings.namespace_qualified.size).toBe(0);
+    expect(bindings.size).toBe(0);
   });
 
   it("returns empty maps when no reference is a constructor call", () => {
@@ -673,8 +629,7 @@ describe("Constructor Tracking - Edge Cases", () => {
 
     const bindings = extract_constructor_bindings(index.references);
 
-    expect(bindings.direct.size).toBe(0);
-    expect(bindings.namespace_qualified.size).toBe(0);
+    expect(bindings.size).toBe(0);
   });
 
   it("skips constructor calls that carry no construct_target", () => {
@@ -697,7 +652,6 @@ describe("Constructor Tracking - Edge Cases", () => {
 
     const bindings = extract_constructor_bindings(index.references);
 
-    expect(bindings.direct.size).toBe(0);
-    expect(bindings.namespace_qualified.size).toBe(0);
+    expect(bindings.size).toBe(0);
   });
 });
