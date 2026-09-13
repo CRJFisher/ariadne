@@ -49,3 +49,10 @@ ordinal: 6500
 ## Notes from wave 1
 
 Per-reason rows come from `run_load_benchmark.ts --interleave` (control and candidate side by side, delta column) or `--baseline` (one arm); the predicate for a corpus with a triage config is `repository-root-excluding:<its exclude list>`. The tree these rows compare against is `recorded_failure_taxonomy_baseline.ts`.
+
+## Notes from wave 2
+
+- `extract_type_bindings` (`type_preprocessing/bindings.ts`) is keyed by `SymbolId`, not location: a TypeScript constructor parameter property and a Python class-body annotation are each two definitions over one span, and a location key typed only one of them. The value/return split keeps that key.
+- `TypeRegistry` STEP 1 and STEP 1.5 both write through `record_declared_type(symbol_id, type_id, argument_ids, …)`, which records the type and the all-or-nothing `symbol_type_arguments` together and is never reached for a binding a construction typed. Routing a `return_type` binding into `callable_return_types` is a change to which map that helper writes, not to how annotations resolve.
+- `TypeRegistry.update_file(file, index, references, context: TypeResolutionContext)` reads the file's language from `index.language`; `resolve_annotation` / `resolve_annotation_arguments` take a parsed annotation.
+- `walk_property_chain`'s field-name collision branch reads the field's recorded `symbol_types` entry. It is the place the method-return hop joins.

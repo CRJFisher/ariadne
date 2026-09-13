@@ -1,9 +1,11 @@
 /**
  * Type Preprocessing - Public API
  *
- * Extracts raw type metadata from definitions and references for resolution by TypeRegistry.
+ * Extracts raw type metadata from definitions and references, and parses
+ * annotation text, for resolution by TypeRegistry.
  */
 
 export { extract_type_bindings } from "./bindings";
-export { extract_constructor_bindings, type ConstructorBindings } from "./constructor_bindings";
+export { extract_constructor_bindings } from "./constructor_bindings";
 export { extract_type_members, set_member_symbol } from "./member";
+export { parse_type_annotation, type ParsedTypeAnnotation } from "./annotation";

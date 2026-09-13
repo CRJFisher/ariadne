@@ -303,6 +303,33 @@ function run(injector: Injector, token: Type<Service>): void {
     expect(handle_call?.resolutions.map((r) => r.symbol_id)).toEqual([handle_id]);
   });
 
+  it("infers the generic return when both token annotations are nullable", async () => {
+    const { project, file } = await project_from_inline(`
+class Service {
+  handle(): void {}
+}
+interface Type<T> {}
+class Injector {
+  get<T>(token: Type<T> | null): T {
+    return null as unknown as T;
+  }
+}
+function run(injector: Injector, token: Type<Service> | undefined): void {
+  injector.get(token).handle();
+}
+`);
+    const call_graph = project.get_call_graph();
+
+    const handle_id = method_symbol_id(call_graph, "handle", file);
+    const run_node = Array.from(call_graph.nodes.values()).find(
+      (n) => n.name === ("run" as SymbolName)
+    );
+    const handle_call = run_node?.enclosed_calls.find(
+      (c) => c.name === ("handle" as SymbolName)
+    );
+    expect(handle_call?.resolutions.map((r) => r.symbol_id)).toEqual([handle_id]);
+  });
+
   it("selects the token parameter that binds the return type, not the first parameter", async () => {
     const { project, file } = await project_from_inline(`
 class Service {
@@ -425,17 +452,20 @@ function run(injector: Injector): void {
     expect(handle_call?.resolution_failure?.reason).toBe("member_type_unknown");
   });
 
-  it("does not infer when the parameter is an array of the generic, not a token wrapping it", async () => {
+  it.each([
+    ["T[]", "Service[]"],
+    ["Array<T>", "Array<Service>"],
+  ])("does not infer when the parameter is an array of the generic (%s), not a token wrapping it", async (parameter_type, argument_type) => {
     const { project } = await project_from_inline(`
 class Service {
   handle(): void {}
 }
 class Injector {
-  get<T>(tokens: T[]): T {
+  get<T>(tokens: ${parameter_type}): T {
     return null as unknown as T;
   }
 }
-function run(injector: Injector, tokens: Service[]): void {
+function run(injector: Injector, tokens: ${argument_type}): void {
   injector.get(tokens).handle();
 }
 `);

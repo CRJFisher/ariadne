@@ -1357,6 +1357,6 @@ describe("collection member ids name real definitions", () => {
       }
     }
     expect(phantoms).toEqual([]);
-    expect({ files: files.length, recorded }).toEqual({ files: 33, recorded: 66 });
+    expect({ files: files.length, recorded }).toEqual({ files: 37, recorded: 66 });
   });
 });

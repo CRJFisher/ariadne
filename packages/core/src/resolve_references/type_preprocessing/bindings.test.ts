@@ -12,8 +12,7 @@ import JavaScript from "tree-sitter-javascript";
 import { LANGUAGE_TO_TREESITTER_LANG } from "../../index_single_file/query_code_tree/parsers";
 import Python from "tree-sitter-python";
 import Rust from "tree-sitter-rust";
-import type { Language, FilePath } from "@ariadnejs/types";
-import { location_key } from "@ariadnejs/types";
+import type { Language, FilePath, SymbolId } from "@ariadnejs/types";
 import { build_index_single_file } from "../../index_single_file/index_single_file";
 import type { ParsedFile } from "../../index_single_file/parsed_file";
 import { extract_type_bindings } from "./bindings";
@@ -135,7 +134,7 @@ describe("Type Bindings - TypeScript", () => {
     expect(type_values).toEqual(["number", "string", "void"]);
   });
 
-  it("keys return-type bindings to the function location and parameter bindings to parameter locations", () => {
+  it("keys a return-type binding to the function and a parameter binding to the parameter", () => {
     const code = "function greet(name: string): void {}";
 
     const tree = parser.parse(code);
@@ -158,8 +157,8 @@ describe("Type Bindings - TypeScript", () => {
     const param = func.signature.parameters[0];
     expect(bindings).toEqual(
       new Map([
-        [location_key(func.location), "void"],
-        [location_key(param.location), "string"],
+        [func.symbol_id, "void"],
+        [param.symbol_id, "string"],
       ])
     );
   });
@@ -470,7 +469,7 @@ y = "hello"
     expect(bindings.size).toBe(0);
   });
 
-  it("keys a redefined name to each definition location when shadowed across scopes", () => {
+  it("keys a redefined name to each definition when shadowed across scopes", () => {
     const code = `
 x: int = 1
 def f():
@@ -500,8 +499,8 @@ def f():
     if (!outer || !inner) throw new Error("expected two annotated x definitions");
     expect(bindings).toEqual(
       new Map([
-        [location_key(outer.location), "int"],
-        [location_key(inner.location), "str"],
+        [outer.symbol_id, "int"],
+        [inner.symbol_id, "str"],
       ])
     );
   });
@@ -562,9 +561,31 @@ class User:
       interfaces: index.interfaces,
     });
 
-    expect(bindings.size).toBe(5);
-    const type_values = Array.from(bindings.values()).sort();
-    expect(type_values).toEqual(["bool", "int", "int", "str", "str"]);
+    // A class-body annotation is both a class-scope variable and the class's
+    // property, two definitions over one span; each carries its own binding.
+    const user = Array.from(index.classes.values())[0];
+    const init_parameters = user.constructors?.[0]?.parameters ?? [];
+    const variable_id = (name: string): SymbolId =>
+      Array.from(index.variables.values()).find((v) => v.name === name)!.symbol_id;
+    const property_id = (name: string): SymbolId =>
+      user.properties.find((p) => p.name === name)!.symbol_id;
+    const parameter_id = (name: string): SymbolId =>
+      init_parameters.find((p) => p.name === name)!.symbol_id;
+    expect(bindings).toEqual(
+      new Map<SymbolId, string>([
+        [variable_id("name"), "str"],
+        [variable_id("age"), "int"],
+        [variable_id("is_active"), "bool"],
+        [property_id("name"), "str"],
+        [property_id("age"), "int"],
+        [property_id("is_active"), "bool"],
+        [parameter_id("name"), "str"],
+        [parameter_id("age"), "int"],
+      ])
+    );
+    expect(Array.from(bindings.values()).sort()).toEqual([
+      "bool", "bool", "int", "int", "int", "str", "str", "str",
+    ]);
   });
 
   it("extracts method parameter and return type annotations", () => {

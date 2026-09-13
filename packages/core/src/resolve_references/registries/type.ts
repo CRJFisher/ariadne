@@ -2,6 +2,7 @@ import type {
   SymbolId,
   FilePath,
   LocationKey,
+  ScopeId,
   SymbolName,
   Language,
   TypeMemberInfo,
@@ -17,11 +18,38 @@ import {
   extract_type_bindings,
   extract_constructor_bindings,
   extract_type_members,
+  parse_type_annotation,
   set_member_symbol,
+  type ParsedTypeAnnotation,
 } from "../type_preprocessing";
 import type { ResolutionRegistry } from "../resolution_registry";
 import { resolve_module_member } from "../module_member_lookup";
-import type { ModuleResolutionContext } from "../import_resolution";
+import { resolve_module_path, type ModuleResolutionContext } from "../import_resolution";
+import type { ImportGraph } from "../import_resolution/import_graph";
+
+/**
+ * @language rust
+ * Resolves `module_path::terminal` to the type that path names. Rust's `::`
+ * paths have one resolver, which lives in call resolution — a layer no registry
+ * imports — so the project hands it in.
+ */
+export type RustTypePathResolver = (
+  module_path: readonly SymbolName[],
+  terminal: SymbolName,
+  scope_id: ScopeId,
+  referring_file: FilePath
+) => SymbolId | null;
+
+/** Everything resolving one file's type names reads about the project. */
+export interface TypeResolutionContext {
+  readonly definitions: DefinitionRegistry;
+  readonly resolutions: ResolutionRegistry;
+  readonly exports: ExportRegistry;
+  readonly imports: ImportGraph;
+  readonly languages: ReadonlyMap<FilePath, Language>;
+  readonly modules: ModuleResolutionContext;
+  readonly resolve_rust_type_path: RustTypePathResolver;
+}
 
 /**
  * Type metadata extracted from one file's semantic index, still keyed by name.
@@ -29,12 +57,10 @@ import type { ModuleResolutionContext } from "../import_resolution";
  * call and never stored.
  */
 interface ExtractedTypeData {
-  /** Annotated symbol → the type name it declares, e.g. `p: User` → "User" */
-  annotation_bindings: Map<LocationKey, SymbolName>;
-  /** Constructed symbol → the type name it constructs, e.g. `new User()` → "User" */
-  construction_bindings: Map<LocationKey, SymbolName>;
-  /** Constructor site → namespace chain, e.g. `new models.User()` → ["models", "User"] */
-  namespace_constructor_bindings: Map<LocationKey, readonly SymbolName[]>;
+  /** Annotated symbol → the annotation text it declares, e.g. `p: User | null` */
+  annotation_bindings: Map<SymbolId, SymbolName>;
+  /** Constructed symbol → the name chain it constructs, e.g. `new models.User()` → ["models", "User"] */
+  construction_bindings: Map<LocationKey, readonly SymbolName[]>;
   /** Type → member metadata, with extends/implements still as names */
   type_members: Map<SymbolId, TypeMemberInfo>;
   /** Variable → the function it was initialized from, for return-type inference */
@@ -78,7 +104,8 @@ function names_a_type(
 
 /**
  * Project-wide store of resolved type relationships, all keyed by SymbolId:
- * symbol → type, type → members, class → parent, class → interfaces.
+ * symbol → type, symbol → type arguments, type → members, class → parent,
+ * class → interfaces.
  *
  * update_file() extracts type names from a file's index and resolves them to
  * SymbolIds in one pass. It must run after ResolutionRegistry.resolve_names()
@@ -86,6 +113,7 @@ function names_a_type(
  */
 export class TypeRegistry {
   private symbol_types: Map<SymbolId, SymbolId> = new Map();
+  private symbol_type_arguments: Map<SymbolId, readonly SymbolId[]> = new Map();
   private resolved_type_members: Map<SymbolId, Map<SymbolName, SymbolId>> =
     new Map();
   private parent_classes: Map<SymbolId, SymbolId> = new Map();
@@ -108,34 +136,17 @@ export class TypeRegistry {
    *   a plain call in the index and becomes a constructor call only once its
    *   callee has resolved to a class, so the constructor bindings that type
    *   `x = C()` exist only on the preprocessed side.
-   * @param import_source_resolver - Resolves a namespace import symbol to its
-   *   source file. When absent, namespace-qualified constructor bindings
-   *   (`user = models.User()`) are skipped rather than resolved.
    */
   update_file(
     file_path: FilePath,
     index: SemanticIndex,
     references: readonly SymbolReference[],
-    definitions: DefinitionRegistry,
-    resolutions: ResolutionRegistry,
-    exports: ExportRegistry,
-    languages: ReadonlyMap<FilePath, Language>,
-    modules: ModuleResolutionContext,
-    import_source_resolver?: (import_id: SymbolId) => FilePath | undefined
+    context: TypeResolutionContext
   ): void {
-    this.definitions = definitions;
+    this.definitions = context.definitions;
     this.remove_file(file_path);
     const extracted = this.extract_type_data(index, references);
-    this.resolve_type_metadata(
-      file_path,
-      extracted,
-      definitions,
-      resolutions,
-      exports,
-      languages,
-      modules,
-      import_source_resolver
-    );
+    this.resolve_type_metadata(file_path, index.language, extracted, context);
   }
 
   private extract_type_data(
@@ -148,8 +159,6 @@ export class TypeRegistry {
       classes: index.classes,
       interfaces: index.interfaces,
     });
-
-    const ctor_bindings = extract_constructor_bindings(references);
 
     const type_members = extract_type_members({
       classes: index.classes,
@@ -168,8 +177,7 @@ export class TypeRegistry {
 
     return {
       annotation_bindings: new Map(type_bindings_from_defs),
-      construction_bindings: new Map(ctor_bindings.direct),
-      namespace_constructor_bindings: new Map(ctor_bindings.namespace_qualified),
+      construction_bindings: new Map(extract_constructor_bindings(references)),
       type_members: new Map(type_members),
       call_initializers,
     };
@@ -181,14 +189,11 @@ export class TypeRegistry {
    */
   private resolve_type_metadata(
     file_id: FilePath,
+    language: Language,
     extracted: ExtractedTypeData,
-    definitions: DefinitionRegistry,
-    resolutions: ResolutionRegistry,
-    exports: ExportRegistry,
-    languages: ReadonlyMap<FilePath, Language>,
-    modules: ModuleResolutionContext,
-    import_source_resolver?: (import_id: SymbolId) => FilePath | undefined
+    context: TypeResolutionContext
   ): void {
+    const { definitions, resolutions } = context;
     const resolved_symbols = new Set<SymbolId>();
 
     // STEP 1: variable/parameter → constructed or annotated type.
@@ -198,68 +203,42 @@ export class TypeRegistry {
     // cost the implementation the call reaches. The annotation answers whenever
     // the construction names nothing that can hold members — there is none, or
     // it resolves to a factory function, as `p: Parser = make()` does.
-    const binding_locations = new Set([
+    const constructions = new Map<SymbolId, readonly SymbolName[]>();
+    for (const [loc_key, chain] of extracted.construction_bindings) {
+      const target_id = definitions.get_symbol_at_location(loc_key);
+      if (target_id) constructions.set(target_id, chain);
+    }
+    const bound_symbols = new Set([
       ...extracted.annotation_bindings.keys(),
-      ...extracted.construction_bindings.keys(),
+      ...constructions.keys(),
     ]);
-    for (const loc_key of binding_locations) {
-      const symbol_id = definitions.get_symbol_at_location(loc_key);
-      if (!symbol_id) continue;
-
+    for (const symbol_id of bound_symbols) {
       const scope_id = definitions.get_symbol_scope(symbol_id);
       if (!scope_id) continue;
 
-      const candidates = [
-        extracted.construction_bindings.get(loc_key),
-        extracted.annotation_bindings.get(loc_key),
-      ];
-      for (const type_name of candidates) {
-        if (!type_name) continue;
-        const type_id = resolutions.resolve(scope_id, type_name);
-        if (!type_id || !names_a_type(type_id, definitions)) continue;
-        this.symbol_types.set(symbol_id, type_id);
+      const construction = constructions.get(symbol_id);
+      const constructed_id = construction
+        ? this.resolve_type_head(scope_id, construction, undefined, file_id, language, context)
+        : null;
+      if (constructed_id && names_a_type(constructed_id, definitions)) {
+        this.symbol_types.set(symbol_id, constructed_id);
         resolved_symbols.add(symbol_id);
-        break;
+        continue;
       }
-    }
 
-    // STEP 1b: namespace-qualified constructor, e.g. `user = models.User()`
-    // (chain ["models", "User"]). Reaching the class requires following the
-    // namespace import, so without import_source_resolver the binding is left
-    // unresolved rather than guessed.
-    if (import_source_resolver) {
-      for (const [loc_key, chain] of extracted.namespace_constructor_bindings) {
-        const symbol_id = definitions.get_symbol_at_location(loc_key);
-        if (!symbol_id) continue;
-        // A STEP 1 annotation or direct constructor takes precedence.
-        if (this.symbol_types.has(symbol_id)) continue;
+      const annotation_text = extracted.annotation_bindings.get(symbol_id);
+      const annotation = annotation_text
+        ? parse_type_annotation(annotation_text, language)
+        : null;
+      if (!annotation) continue;
 
-        const scope_id = definitions.get_symbol_scope(symbol_id);
-        if (!scope_id) continue;
-
-        const namespace_id = resolutions.resolve(scope_id, chain[0]);
-        if (!namespace_id) continue;
-
-        const namespace_def = definitions.get(namespace_id);
-        if (namespace_def?.kind !== "import" || namespace_def.import_kind !== "namespace") continue;
-
-        const source_file = import_source_resolver(namespace_id);
-        if (!source_file) continue;
-
-        const class_id = resolve_module_member(
-          source_file,
-          chain[1],
-          "namespace",
-          exports,
-          definitions,
-          languages,
-          modules
-        );
-        if (class_id) {
-          this.symbol_types.set(symbol_id, class_id);
-          resolved_symbols.add(symbol_id);
-        }
-      }
+      const annotated_id = this.resolve_annotation(scope_id, annotation, file_id, language, context);
+      this.record_declared_type(
+        symbol_id,
+        annotated_id && names_a_type(annotated_id, definitions) ? annotated_id : null,
+        this.resolve_annotation_arguments(scope_id, annotation, file_id, language, context),
+        resolved_symbols
+      );
     }
 
     // STEP 1.5: factory pattern — an untyped variable takes the declared return
@@ -279,13 +258,32 @@ export class TypeRegistry {
       const return_type_name = function_def.return_type;
       if (!return_type_name) continue;
 
-      // The return type is declared in the function's own scope, so resolve it there.
-      const function_scope_id = definitions.get_symbol_scope(function_id);
-      const type_id = resolutions.resolve(function_scope_id || scope_id, return_type_name);
-      if (type_id) {
-        this.symbol_types.set(variable_id, type_id);
-        resolved_symbols.add(variable_id);
-      }
+      // The return type is declared where the function is, in whichever file
+      // and language that is, so it is parsed and resolved there.
+      const function_file = function_def.location.file_path;
+      const function_language = context.languages.get(function_file) ?? language;
+      const return_annotation = parse_type_annotation(return_type_name, function_language);
+      if (!return_annotation) continue;
+
+      const function_scope_id = definitions.get_symbol_scope(function_id) ?? scope_id;
+      this.record_declared_type(
+        variable_id,
+        this.resolve_annotation(
+          function_scope_id,
+          return_annotation,
+          function_file,
+          function_language,
+          context
+        ),
+        this.resolve_annotation_arguments(
+          function_scope_id,
+          return_annotation,
+          function_file,
+          function_language,
+          context
+        ),
+        resolved_symbols
+      );
     }
 
     // STEP 2: copy each type's already-resolved member map from DefinitionRegistry.
@@ -309,7 +307,10 @@ export class TypeRegistry {
 
       const resolved_parents: SymbolId[] = [];
       for (const parent_name of member_info.extends) {
-        const parent_id = resolutions.resolve(scope_id, parent_name);
+        const parent_annotation = parse_type_annotation(parent_name, language);
+        const parent_id = parent_annotation
+          ? this.resolve_annotation(scope_id, parent_annotation, file_id, language, context)
+          : null;
         if (parent_id) {
           resolved_parents.push(parent_id);
         }
@@ -328,6 +329,182 @@ export class TypeRegistry {
     if (resolved_symbols.size > 0) {
       this.resolved_by_file.set(file_id, { resolved_symbols });
     }
+  }
+
+  /**
+   * Record what a declared annotation says a symbol holds: its type when the
+   * head resolved, and its type arguments when every one resolved. The two are
+   * independent — `Vec<Enc>` names no project type yet still carries `[Enc]` —
+   * and both describe the annotation, so neither is recorded for a symbol whose
+   * type a construction supplied instead.
+   */
+  private record_declared_type(
+    symbol_id: SymbolId,
+    type_id: SymbolId | null,
+    argument_ids: readonly SymbolId[],
+    resolved_symbols: Set<SymbolId>
+  ): void {
+    if (type_id) {
+      this.symbol_types.set(symbol_id, type_id);
+      resolved_symbols.add(symbol_id);
+    }
+    if (argument_ids.length > 0) {
+      this.symbol_type_arguments.set(symbol_id, argument_ids);
+      resolved_symbols.add(symbol_id);
+    }
+  }
+
+  /**
+   * The definition a parsed annotation's head names, looked up from `scope_id`
+   * in `file_id`. The single route from annotation text to a SymbolId: every
+   * annotation is parsed with `parse_type_annotation` and resolved here.
+   */
+  private resolve_annotation(
+    scope_id: ScopeId,
+    annotation: ParsedTypeAnnotation,
+    file_id: FilePath,
+    language: Language,
+    context: TypeResolutionContext
+  ): SymbolId | null {
+    return this.resolve_type_head(
+      scope_id,
+      annotation.head,
+      annotation.module_specifier,
+      file_id,
+      language,
+      context
+    );
+  }
+
+  /**
+   * The definitions an annotation's type arguments name, in order — `Vec<Enc>`
+   * yields `[Enc]`. All or nothing: a position that does not resolve would
+   * shift every later argument onto the wrong parameter, so any miss yields no
+   * arguments at all.
+   */
+  private resolve_annotation_arguments(
+    scope_id: ScopeId,
+    annotation: ParsedTypeAnnotation,
+    file_id: FilePath,
+    language: Language,
+    context: TypeResolutionContext
+  ): readonly SymbolId[] {
+    const argument_ids: SymbolId[] = [];
+    for (const argument of annotation.arguments) {
+      const argument_id = this.resolve_annotation(scope_id, argument, file_id, language, context);
+      if (!argument_id) {
+        return [];
+      }
+      argument_ids.push(argument_id);
+    }
+    return argument_ids;
+  }
+
+  /**
+   * Resolve a type's name chain — an annotation head or a constructor callee
+   * chain — to the definition it names.
+   *
+   * - A bare name resolves in lexical scope.
+   * - An inline import type (`import("./a").X`) names its module outright, so
+   *   the chain starts among that module's members. Nothing else ties the file
+   *   to that module, so the read is recorded as its dependency.
+   * - A Rust `::` path goes to the Rust path resolver.
+   * - Any other qualified chain (`vfs.FileSystem`, `models.User`) starts from
+   *   its first segment in lexical scope and descends one module per segment.
+   */
+  private resolve_type_head(
+    scope_id: ScopeId,
+    head: readonly SymbolName[],
+    module_specifier: string | undefined,
+    file_id: FilePath,
+    language: Language,
+    context: TypeResolutionContext
+  ): SymbolId | null {
+    if (module_specifier !== undefined) {
+      const module_file = resolve_module_path(
+        module_specifier,
+        file_id,
+        language,
+        context.modules
+      );
+      context.imports.record_module_path_read(file_id, module_file);
+      const first = resolve_module_member(
+        module_file,
+        head[0],
+        "named",
+        context.exports,
+        context.definitions,
+        context.languages,
+        context.modules
+      );
+      return first ? this.descend_modules(first, head.slice(1), context) : null;
+    }
+
+    // @language rust
+    if (language === "rust" && head.length > 1) {
+      return context.resolve_rust_type_path(
+        head.slice(0, -1),
+        head[head.length - 1],
+        scope_id,
+        file_id
+      );
+    }
+
+    const first = context.resolutions.resolve(scope_id, head[0]);
+    return first ? this.descend_modules(first, head.slice(1), context) : null;
+  }
+
+  /**
+   * Follow `segments` from `start`, each one a member of the module the
+   * previous segment names. A segment is only followed out of an import that
+   * denotes a whole module — a namespace import, or a named import that names
+   * a submodule file (`from django.db import models`) — so a qualified name can
+   * never be read as a member of a same-named class or value in scope.
+   */
+  private descend_modules(
+    start: SymbolId,
+    segments: readonly SymbolName[],
+    context: TypeResolutionContext
+  ): SymbolId | null {
+    let current = start;
+    for (const segment of segments) {
+      const module_file = this.module_file_of(current, context);
+      if (!module_file) {
+        return null;
+      }
+      const member = resolve_module_member(
+        module_file,
+        segment,
+        "namespace",
+        context.exports,
+        context.definitions,
+        context.languages,
+        context.modules
+      );
+      if (!member) {
+        return null;
+      }
+      current = member;
+    }
+    return current;
+  }
+
+  /** The module file an import symbol denotes as a whole, or null when it names an item. */
+  private module_file_of(
+    symbol_id: SymbolId,
+    context: TypeResolutionContext
+  ): FilePath | null {
+    const definition = context.definitions.get(symbol_id);
+    if (definition?.kind !== "import") {
+      return null;
+    }
+    if (definition.import_kind === "namespace") {
+      return context.imports.get_resolved_import_path(symbol_id) ?? null;
+    }
+    if (definition.import_kind === "named") {
+      return context.imports.get_submodule_import_path(symbol_id) ?? null;
+    }
+    return null;
   }
 
   /**
@@ -386,6 +563,15 @@ export class TypeRegistry {
    */
   get_symbol_type(symbol_id: SymbolId): SymbolId | null {
     return this.symbol_types.get(symbol_id) || null;
+  }
+
+  /**
+   * The resolved type arguments of a symbol's declared annotation, in order —
+   * `token: Type<Service>` yields `[Service]`. Empty when the annotation is not
+   * generic or any of its arguments names nothing the project holds.
+   */
+  get_symbol_type_arguments(symbol_id: SymbolId): readonly SymbolId[] {
+    return this.symbol_type_arguments.get(symbol_id) ?? [];
   }
 
   /**
@@ -471,6 +657,7 @@ export class TypeRegistry {
 
     for (const symbol_id of contributions.resolved_symbols) {
       this.symbol_types.delete(symbol_id);
+      this.symbol_type_arguments.delete(symbol_id);
       this.resolved_type_members.delete(symbol_id);
       this.parent_classes.delete(symbol_id);
       this.implemented_interfaces.delete(symbol_id);
@@ -481,6 +668,7 @@ export class TypeRegistry {
 
   clear(): void {
     this.symbol_types.clear();
+    this.symbol_type_arguments.clear();
     this.resolved_type_members.clear();
     this.parent_classes.clear();
     this.implemented_interfaces.clear();

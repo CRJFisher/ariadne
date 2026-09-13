@@ -7,6 +7,10 @@
 
 import type { FilePath, Language } from "@ariadnejs/types";
 import { ExportRegistry } from "./registries/export";
+import type { DefinitionRegistry } from "./registries/definition";
+import type { TypeResolutionContext } from "./registries/type";
+import type { ResolutionRegistry } from "./resolution_registry";
+import { ImportGraph } from "./import_resolution/import_graph";
 import type { FileSystemFolder } from "./file_folders";
 import type { ModuleResolutionContext } from "./import_resolution";
 import { create_module_resolution_context } from "./import_resolution";
@@ -44,5 +48,28 @@ export function make_export_chain_context(): {
     exports: new ExportRegistry(),
     languages: new Map<FilePath, Language>(),
     modules: create_module_resolution_context(EMPTY_ROOT_FOLDER, EMPTY_MODULE_SPECIFIER_INDEX),
+  };
+}
+
+/**
+ * The context `TypeRegistry.update_file` resolves against, over the given
+ * registries. The import graph is empty and Rust `::` paths resolve to nothing,
+ * so a unit test that needs either builds its own context.
+ */
+export function make_type_resolution_context(
+  definitions: DefinitionRegistry,
+  resolutions: ResolutionRegistry,
+  exports: ExportRegistry,
+  languages: ReadonlyMap<FilePath, Language>,
+  modules: ModuleResolutionContext
+): TypeResolutionContext {
+  return {
+    definitions,
+    resolutions,
+    exports,
+    imports: new ImportGraph(),
+    languages,
+    modules,
+    resolve_rust_type_path: () => null,
   };
 }
