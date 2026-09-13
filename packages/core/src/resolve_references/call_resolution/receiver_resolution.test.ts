@@ -4,7 +4,7 @@
  * Tests the core functions for resolving receiver expressions:
  * - extract_receiver: Normalizes self-reference and method calls
  * - resolve_receiver_type: Two-phase resolution (base + chain)
- * - find_containing_class_scope: Scope tree walking utility
+ * - find_self_type: The type a self receiver in a scope denotes
  *
  * These unit tests focus on individual function behavior.
  * For full integration tests, see method.test.ts and self_reference.integration.test.ts.
@@ -15,7 +15,7 @@ import { make_export_chain_context } from "../resolution_test_helpers";
 import {
   extract_receiver,
   resolve_receiver_type,
-  find_containing_class_scope,
+  find_self_type,
   type ReceiverExpression,
   type ReceiverResolutionContext,
 } from "./receiver_resolution";
@@ -38,6 +38,9 @@ import type {
   MethodCallReference,
   MethodDefinition,
   ClassDefinition,
+  InterfaceDefinition,
+  EnumDefinition,
+  AnyDefinition,
   PropertyDefinition,
   ImportDefinition,
   NamespaceDefinition,
@@ -48,6 +51,7 @@ import {
   class_symbol,
   method_symbol,
   property_symbol,
+  variable_symbol,
   namespace_symbol,
   is_ok,
   is_err,
@@ -370,18 +374,24 @@ describe("extract_receiver", () => {
   });
 });
 
-describe("find_containing_class_scope", () => {
-  let scopes: ScopeRegistry;
+describe("find_self_type", () => {
+  const CLASS_LOCATION: Location = {
+    file_path: TEST_FILE,
+    start_line: 1,
+    start_column: 0,
+    end_line: 50,
+    end_column: 0,
+  };
+  const MY_CLASS_ID = class_symbol("MyClass" as SymbolName, CLASS_LOCATION);
 
-  beforeEach(() => {
-    scopes = new ScopeRegistry();
-  });
-
-  it("finds class scope when directly inside class", () => {
-    const scope_map = new Map();
+  function make_scope_tree(
+    class_scope: Partial<LexicalScope>
+  ): Map<ScopeId, LexicalScope> {
+    const scope_map = new Map<ScopeId, LexicalScope>();
     scope_map.set(FILE_SCOPE_ID, {
       id: FILE_SCOPE_ID,
-      type: "file",
+      name: null,
+      type: "module",
       location: { file_path: TEST_FILE, start_line: 0, start_column: 0, end_line: 100, end_column: 0 },
       parent_id: null,
       child_ids: [CLASS_SCOPE_ID],
@@ -389,47 +399,17 @@ describe("find_containing_class_scope", () => {
     });
     scope_map.set(CLASS_SCOPE_ID, {
       id: CLASS_SCOPE_ID,
+      name: "MyClass" as SymbolName,
       type: "class",
-      location: { file_path: TEST_FILE, start_line: 1, start_column: 0, end_line: 50, end_column: 0 },
+      location: CLASS_LOCATION,
       parent_id: FILE_SCOPE_ID,
       child_ids: [METHOD_SCOPE_ID],
-      self_type_name: null,
+      self_type_name: "MyClass" as SymbolName,
+      ...class_scope,
     });
     scope_map.set(METHOD_SCOPE_ID, {
       id: METHOD_SCOPE_ID,
-      type: "function",
-      location: { file_path: TEST_FILE, start_line: 2, start_column: 2, end_line: 10, end_column: 2 },
-      parent_id: CLASS_SCOPE_ID,
-      child_ids: [],
-      self_type_name: null,
-    });
-    scopes.update_file(TEST_FILE, scope_map);
-
-    const result = find_containing_class_scope(METHOD_SCOPE_ID, scopes);
-
-    expect(result).toBe(CLASS_SCOPE_ID);
-  });
-
-  it("finds class scope from nested block scope", () => {
-    const scope_map = new Map();
-    scope_map.set(FILE_SCOPE_ID, {
-      id: FILE_SCOPE_ID,
-      type: "file",
-      location: { file_path: TEST_FILE, start_line: 0, start_column: 0, end_line: 100, end_column: 0 },
-      parent_id: null,
-      child_ids: [CLASS_SCOPE_ID],
-      self_type_name: null,
-    });
-    scope_map.set(CLASS_SCOPE_ID, {
-      id: CLASS_SCOPE_ID,
-      type: "class",
-      location: { file_path: TEST_FILE, start_line: 1, start_column: 0, end_line: 50, end_column: 0 },
-      parent_id: FILE_SCOPE_ID,
-      child_ids: [METHOD_SCOPE_ID],
-      self_type_name: null,
-    });
-    scope_map.set(METHOD_SCOPE_ID, {
-      id: METHOD_SCOPE_ID,
+      name: "process" as SymbolName,
       type: "function",
       location: { file_path: TEST_FILE, start_line: 2, start_column: 2, end_line: 20, end_column: 2 },
       parent_id: CLASS_SCOPE_ID,
@@ -438,81 +418,445 @@ describe("find_containing_class_scope", () => {
     });
     scope_map.set(NESTED_SCOPE_ID, {
       id: NESTED_SCOPE_ID,
+      name: null,
       type: "block",
       location: { file_path: TEST_FILE, start_line: 3, start_column: 4, end_line: 10, end_column: 4 },
       parent_id: METHOD_SCOPE_ID,
       child_ids: [],
       self_type_name: null,
     });
-    scopes.update_file(TEST_FILE, scope_map);
+    return scope_map;
+  }
 
-    const result = find_containing_class_scope(NESTED_SCOPE_ID, scopes);
+  function make_type_definition(
+    kind: "class" | "interface" | "enum"
+  ): ClassDefinition | InterfaceDefinition | EnumDefinition {
+    const base = {
+      symbol_id: MY_CLASS_ID,
+      name: "MyClass" as SymbolName,
+      defining_scope_id: FILE_SCOPE_ID,
+      location: CLASS_LOCATION,
+      is_exported: false,
+    };
+    if (kind === "interface") {
+      return { ...base, kind: "interface", extends: [], methods: [], properties: [] };
+    }
+    if (kind === "enum") {
+      return { ...base, kind: "enum", members: [], is_const: false };
+    }
+    return {
+      ...base,
+      kind: "class",
+      extends: [],
+      methods: [],
+      properties: [],
+      decorators: [],
+      constructors: [],
+    };
+  }
 
-    expect(result).toBe(CLASS_SCOPE_ID);
+  /**
+   * The registries `find_self_type` reads: a class-family scope naming
+   * `MyClass`, a method body inside it, a block inside that, and `MyClass`
+   * bound where the class scope can see it. Each case states only what it
+   * varies.
+   */
+  function make_context(overrides: {
+    readonly class_scope?: Partial<LexicalScope>;
+    readonly definition?: AnyDefinition;
+    readonly binding?: SymbolId | null;
+  }): ReceiverResolutionContext {
+    const scopes = new ScopeRegistry();
+    scopes.update_file(TEST_FILE, make_scope_tree(overrides.class_scope ?? {}));
+
+    const definitions = new DefinitionRegistry();
+    definitions.update_file(TEST_FILE, [
+      overrides.definition ?? make_type_definition("class"),
+    ]);
+
+    const resolutions = new ResolutionRegistry();
+    const binding =
+      overrides.binding === undefined ? MY_CLASS_ID : overrides.binding;
+    if (binding) {
+      // Bound where the class is declared — outside the body that records the
+      // name — which is the scope the lookup starts from.
+      set_test_resolutions(
+        resolutions,
+        FILE_SCOPE_ID,
+        new Map([["MyClass" as SymbolName, binding]])
+      );
+    }
+
+    return {
+      ...make_export_chain_context(),
+      scopes,
+      definitions,
+      resolutions,
+      types: new TypeRegistry(),
+      imports: new ImportGraph(),
+    };
+  }
+
+  it("names the type from the class scope enclosing a method body", () => {
+    const result = find_self_type(METHOD_SCOPE_ID, make_context({}));
+
+    expect(result).toEqual({ ok: true, value: MY_CLASS_ID });
   });
 
-  it("returns null when not in a class", () => {
-    const scope_map = new Map();
-    const func_scope_id = "scope:test.ts:standalone:1:0" as ScopeId;
-    scope_map.set(FILE_SCOPE_ID, {
-      id: FILE_SCOPE_ID,
-      type: "file",
-      location: { file_path: TEST_FILE, start_line: 0, start_column: 0, end_line: 100, end_column: 0 },
-      parent_id: null,
-      child_ids: [func_scope_id],
-      self_type_name: null,
-    });
-    scope_map.set(func_scope_id, {
-      id: func_scope_id,
-      type: "function",
-      location: { file_path: TEST_FILE, start_line: 1, start_column: 0, end_line: 10, end_column: 0 },
-      parent_id: FILE_SCOPE_ID,
-      child_ids: [],
-      self_type_name: null,
-    });
-    scopes.update_file(TEST_FILE, scope_map);
+  it("names the type from a block nested inside the method body", () => {
+    const result = find_self_type(NESTED_SCOPE_ID, make_context({}));
 
-    const result = find_containing_class_scope(func_scope_id, scopes);
-
-    expect(result).toBeNull();
+    expect(result).toEqual({ ok: true, value: MY_CLASS_ID });
   });
 
-  it("returns null for file scope", () => {
-    const scope_map = new Map();
-    scope_map.set(FILE_SCOPE_ID, {
-      id: FILE_SCOPE_ID,
-      type: "file",
-      location: { file_path: TEST_FILE, start_line: 0, start_column: 0, end_line: 100, end_column: 0 },
-      parent_id: null,
-      child_ids: [],
-      self_type_name: null,
-    });
-    scopes.update_file(TEST_FILE, scope_map);
+  it("names the type an interface scope records", () => {
+    const result = find_self_type(
+      METHOD_SCOPE_ID,
+      make_context({ definition: make_type_definition("interface") })
+    );
 
-    const result = find_containing_class_scope(FILE_SCOPE_ID, scopes);
-
-    expect(result).toBeNull();
+    expect(result).toEqual({ ok: true, value: MY_CLASS_ID });
   });
 
-  it("returns null for unknown scope", () => {
-    const scope_map = new Map();
-    scope_map.set(FILE_SCOPE_ID, {
-      id: FILE_SCOPE_ID,
-      type: "file",
-      location: { file_path: TEST_FILE, start_line: 0, start_column: 0, end_line: 100, end_column: 0 },
-      parent_id: null,
-      child_ids: [],
-      self_type_name: null,
-    });
-    scopes.update_file(TEST_FILE, scope_map);
+  it("names the type an enum scope records", () => {
+    const result = find_self_type(
+      METHOD_SCOPE_ID,
+      make_context({ definition: make_type_definition("enum") })
+    );
 
+    expect(result).toEqual({ ok: true, value: MY_CLASS_ID });
+  });
+
+  it("fails with no_enclosing_class_scope when no scope names a type", () => {
+    const context = make_context({ class_scope: { self_type_name: null } });
+
+    const result = find_self_type(METHOD_SCOPE_ID, context);
+
+    expect(result).toEqual({
+      ok: false,
+      error: {
+        stage: "receiver_resolution",
+        reason: "no_enclosing_class_scope",
+        partial_info: { last_known_scope: METHOD_SCOPE_ID },
+      },
+    });
+  });
+
+  it("fails with no_enclosing_class_scope for an unknown scope", () => {
     const unknown_scope = "scope:test.ts:unknown:99:99" as ScopeId;
-    const result = find_containing_class_scope(unknown_scope, scopes);
 
-    expect(result).toBeNull();
+    const result = find_self_type(unknown_scope, make_context({}));
+
+    expect(result).toEqual({
+      ok: false,
+      error: {
+        stage: "receiver_resolution",
+        reason: "no_enclosing_class_scope",
+        partial_info: { last_known_scope: unknown_scope },
+      },
+    });
+  });
+
+  it("fails with class_definition_not_found when the recorded name is unresolvable", () => {
+    // A name no binding reaches and no declaration in the lookup scope supplies.
+    const result = find_self_type(
+      METHOD_SCOPE_ID,
+      make_context({
+        class_scope: { self_type_name: "Absent" as SymbolName },
+        binding: null,
+      })
+    );
+
+    expect(result).toEqual({
+      ok: false,
+      error: {
+        stage: "receiver_resolution",
+        reason: "class_definition_not_found",
+        partial_info: { last_known_scope: CLASS_SCOPE_ID },
+      },
+    });
+  });
+
+  it("fails with class_definition_not_found when the recorded name names only a non-type", () => {
+    const variable_id = variable_symbol("MyClass" as SymbolName, CLASS_LOCATION);
+    const variable: VariableDefinition = {
+      kind: "variable",
+      symbol_id: variable_id,
+      name: "MyClass" as SymbolName,
+      defining_scope_id: FILE_SCOPE_ID,
+      location: CLASS_LOCATION,
+      is_exported: false,
+    };
+
+    const result = find_self_type(
+      METHOD_SCOPE_ID,
+      make_context({ definition: variable, binding: variable_id })
+    );
+
+    expect(result).toEqual({
+      ok: false,
+      error: {
+        stage: "receiver_resolution",
+        reason: "class_definition_not_found",
+        partial_info: { last_known_scope: CLASS_SCOPE_ID },
+      },
+    });
+  });
+
+  // @language typescript
+  // A scope holds one symbol per name, and a merged `namespace Foo` can win the
+  // slot from `class Foo`. Only a type can be what `self` denotes, so the type
+  // is asked for by kind.
+  it("names the class when a same-named namespace won the scope's name binding", () => {
+    const namespace_location: Location = {
+      file_path: TEST_FILE,
+      start_line: 60,
+      start_column: 0,
+      end_line: 70,
+      end_column: 0,
+    };
+    const namespace_id = namespace_symbol(
+      "MyClass" as SymbolName,
+      namespace_location
+    );
+    const merged_namespace: NamespaceDefinition = {
+      kind: "namespace",
+      symbol_id: namespace_id,
+      name: "MyClass" as SymbolName,
+      defining_scope_id: FILE_SCOPE_ID,
+      location: namespace_location,
+      is_exported: false,
+    };
+
+    const scopes = new ScopeRegistry();
+    scopes.update_file(TEST_FILE, make_scope_tree({}));
+    const definitions = new DefinitionRegistry();
+    definitions.update_file(TEST_FILE, [
+      make_type_definition("class"),
+      merged_namespace,
+    ]);
+    const resolutions = new ResolutionRegistry();
+    set_test_resolutions(
+      resolutions,
+      FILE_SCOPE_ID,
+      new Map([["MyClass" as SymbolName, namespace_id]])
+    );
+
+    const context: ReceiverResolutionContext = {
+      ...make_export_chain_context(),
+      scopes,
+      definitions,
+      resolutions,
+      types: new TypeRegistry(),
+      imports: new ImportGraph(),
+    };
+
+    const result = find_self_type(METHOD_SCOPE_ID, context);
+
+    expect(result).toEqual({ ok: true, value: MY_CLASS_ID });
+  });
+
+  it("stops at the nearest scope carrying a self type rather than an enclosing one", () => {
+    const inner_location: Location = {
+      file_path: TEST_FILE,
+      start_line: 4,
+      start_column: 4,
+      end_line: 9,
+      end_column: 4,
+    };
+    const inner_id = class_symbol("Inner" as SymbolName, inner_location);
+    const inner_class_scope = "scope:test.ts:Inner:4:4" as ScopeId;
+    const inner_method_scope = "scope:test.ts:Inner.run:5:6" as ScopeId;
+
+    const scope_map = make_scope_tree({});
+    const nested = scope_map.get(NESTED_SCOPE_ID);
+    if (!nested) {
+      throw new Error("nested scope missing from fixture");
+    }
+    scope_map.set(NESTED_SCOPE_ID, { ...nested, child_ids: [inner_class_scope] });
+    scope_map.set(inner_class_scope, {
+      id: inner_class_scope,
+      name: "Inner" as SymbolName,
+      type: "class",
+      location: inner_location,
+      parent_id: NESTED_SCOPE_ID,
+      child_ids: [inner_method_scope],
+      self_type_name: "Inner" as SymbolName,
+    });
+    scope_map.set(inner_method_scope, {
+      id: inner_method_scope,
+      name: "run" as SymbolName,
+      type: "function",
+      location: { file_path: TEST_FILE, start_line: 5, start_column: 6, end_line: 8, end_column: 6 },
+      parent_id: inner_class_scope,
+      child_ids: [],
+      self_type_name: null,
+    });
+
+    const inner_class: ClassDefinition = {
+      kind: "class",
+      symbol_id: inner_id,
+      name: "Inner" as SymbolName,
+      defining_scope_id: NESTED_SCOPE_ID,
+      location: inner_location,
+      is_exported: false,
+      extends: [],
+      methods: [],
+      properties: [],
+      decorators: [],
+      constructors: [],
+    };
+
+    const scopes = new ScopeRegistry();
+    scopes.update_file(TEST_FILE, scope_map);
+    const definitions = new DefinitionRegistry();
+    definitions.update_file(TEST_FILE, [make_type_definition("class"), inner_class]);
+    const resolutions = new ResolutionRegistry();
+    set_test_resolutions(
+      resolutions,
+      FILE_SCOPE_ID,
+      new Map([["MyClass" as SymbolName, MY_CLASS_ID]])
+    );
+    set_test_resolutions(
+      resolutions,
+      NESTED_SCOPE_ID,
+      new Map([["Inner" as SymbolName, inner_id]])
+    );
+
+    const context: ReceiverResolutionContext = {
+      ...make_export_chain_context(),
+      scopes,
+      definitions,
+      resolutions,
+      types: new TypeRegistry(),
+      imports: new ImportGraph(),
+    };
+
+    const result = find_self_type(inner_method_scope, context);
+
+    expect(result).toEqual({ ok: true, value: inner_id });
+  });
+
+  // @language rust
+  // An `impl` block is a `block` scope that names the type it implements. A
+  // cross-file `impl` contributes no member the owning type could be read back
+  // off, so the recorded name is the only route to it.
+  it("names the type a Rust impl block records when the type is declared in another file", () => {
+    const struct_file = "model.rs" as FilePath;
+    const impl_file = "behaviour.rs" as FilePath;
+    const struct_location: Location = {
+      file_path: struct_file,
+      start_line: 0,
+      start_column: 0,
+      end_line: 2,
+      end_column: 1,
+    };
+    const struct_id = class_symbol("S" as SymbolName, struct_location);
+
+    const struct_file_scope = "scope:model.rs:file:0:0" as ScopeId;
+    const impl_file_scope = "scope:behaviour.rs:file:0:0" as ScopeId;
+    const impl_block_scope = "scope:behaviour.rs:block:2:10" as ScopeId;
+    const impl_method_scope = "scope:behaviour.rs:describe:3:4" as ScopeId;
+
+    const scopes = new ScopeRegistry();
+    scopes.update_file(
+      struct_file,
+      new Map<ScopeId, LexicalScope>([
+        [
+          struct_file_scope,
+          {
+            id: struct_file_scope,
+            name: null,
+            type: "module",
+            location: { file_path: struct_file, start_line: 0, start_column: 0, end_line: 10, end_column: 0 },
+            parent_id: null,
+            child_ids: [],
+            self_type_name: null,
+          },
+        ],
+      ])
+    );
+    scopes.update_file(
+      impl_file,
+      new Map<ScopeId, LexicalScope>([
+        [
+          impl_file_scope,
+          {
+            id: impl_file_scope,
+            name: null,
+            type: "module",
+            location: { file_path: impl_file, start_line: 0, start_column: 0, end_line: 10, end_column: 0 },
+            parent_id: null,
+            child_ids: [impl_block_scope],
+            self_type_name: null,
+          },
+        ],
+        [
+          impl_block_scope,
+          {
+            id: impl_block_scope,
+            name: null,
+            type: "block",
+            location: { file_path: impl_file, start_line: 2, start_column: 10, end_line: 6, end_column: 1 },
+            parent_id: impl_file_scope,
+            child_ids: [impl_method_scope],
+            self_type_name: "S" as SymbolName,
+          },
+        ],
+        [
+          impl_method_scope,
+          {
+            id: impl_method_scope,
+            name: "describe" as SymbolName,
+            type: "function",
+            location: { file_path: impl_file, start_line: 3, start_column: 4, end_line: 5, end_column: 5 },
+            parent_id: impl_block_scope,
+            child_ids: [],
+            self_type_name: null,
+          },
+        ],
+      ])
+    );
+
+    const struct_def: ClassDefinition = {
+      kind: "class",
+      symbol_id: struct_id,
+      name: "S" as SymbolName,
+      defining_scope_id: struct_file_scope,
+      location: struct_location,
+      is_exported: true,
+      extends: [],
+      methods: [],
+      properties: [],
+      decorators: [],
+      constructors: [],
+    };
+    const definitions = new DefinitionRegistry();
+    definitions.update_file(struct_file, [struct_def]);
+
+    const resolutions = new ResolutionRegistry();
+    // The `use` that brings `S` into this file binds it in the module scope
+    // above the impl block, which is where the lookup starts.
+    set_test_resolutions(
+      resolutions,
+      impl_file_scope,
+      new Map([["S" as SymbolName, struct_id]])
+    );
+
+    const context: ReceiverResolutionContext = {
+      ...make_export_chain_context(),
+      scopes,
+      definitions,
+      resolutions,
+      types: new TypeRegistry(),
+      imports: new ImportGraph(),
+    };
+
+    const result = find_self_type(impl_method_scope, context);
+
+    expect(result).toEqual({ ok: true, value: struct_id });
   });
 });
-
 describe("resolve_receiver_type", () => {
   let scopes: ScopeRegistry;
   let definitions: DefinitionRegistry;
@@ -552,7 +896,9 @@ describe("resolve_receiver_type", () => {
     });
   });
 
-  function setup_class_scopes(): void {
+  function setup_class_scopes(
+    self_type_name: SymbolName = "MyClass" as SymbolName
+  ): void {
     const scope_map = new Map();
     scope_map.set(FILE_SCOPE_ID, {
       id: FILE_SCOPE_ID,
@@ -564,11 +910,12 @@ describe("resolve_receiver_type", () => {
     });
     scope_map.set(CLASS_SCOPE_ID, {
       id: CLASS_SCOPE_ID,
+      name: "MyClass" as SymbolName,
       type: "class",
       location: { file_path: TEST_FILE, start_line: 1, start_column: 0, end_line: 50, end_column: 0 },
       parent_id: FILE_SCOPE_ID,
       child_ids: [METHOD_SCOPE_ID],
-      self_type_name: null,
+      self_type_name,
     });
     scope_map.set(METHOD_SCOPE_ID, {
       id: METHOD_SCOPE_ID,
@@ -579,6 +926,14 @@ describe("resolve_receiver_type", () => {
       self_type_name: null,
     });
     scopes.update_file(TEST_FILE, scope_map);
+
+    // The class scope names its type; `this` reaches the declaration by
+    // resolving that name from the scope the class is declared in.
+    set_test_resolutions(
+      resolutions,
+      FILE_SCOPE_ID,
+      new Map([["MyClass" as SymbolName, my_class_id]])
+    );
   }
 
   function setup_class_definitions(): void {
@@ -734,7 +1089,8 @@ describe("resolve_receiver_type", () => {
       setup_class_scopes();
       setup_class_definitions();
 
-      // Set up resolution for "Database" type name
+      // The property's annotation resolves from the property's own defining
+      // scope, which is the class body.
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("Database" as SymbolName, database_class_id);
       set_test_resolutions(resolutions, CLASS_SCOPE_ID, scope_resolutions);
@@ -818,46 +1174,11 @@ describe("resolve_receiver_type", () => {
       }
     });
 
-    it("fails with class_definition_not_found if property type cannot be resolved", () => {
-      setup_class_scopes();
-
-      // Create property without type annotation and no TypeRegistry entry
-      const property_no_type: PropertyDefinition = {
-        kind: "property",
-        symbol_id: property_id,
-        name: "db" as SymbolName,
-        defining_scope_id: CLASS_SCOPE_ID,
-        location: { ...MOCK_LOCATION, start_line: 2 },
-        decorators: [],
-        // No type annotation
-      };
-
-      const class_def: ClassDefinition = {
-        kind: "class",
-        symbol_id: my_class_id,
-        name: "MyClass" as SymbolName,
-        defining_scope_id: FILE_SCOPE_ID,
-        location: { ...MOCK_LOCATION, start_line: 1 },
-        is_exported: false,
-        extends: [],
-        methods: [
-          {
-            kind: "method",
-            symbol_id: method_id,
-            name: "process" as SymbolName,
-            defining_scope_id: CLASS_SCOPE_ID,
-            location: { ...MOCK_LOCATION, start_line: 3 },
-            parameters: [],
-            body_scope_id: METHOD_SCOPE_ID,
-            decorators: [],
-          },
-        ],
-        properties: [property_no_type],
-        decorators: [],
-        constructors: [],
-      };
-
-      definitions.update_file(TEST_FILE, [class_def, property_no_type]);
+    it("fails with class_definition_not_found when the class scope names a type nothing supplies", () => {
+      // The class scope names a type that neither a binding nor a declaration in
+      // the lookup scope supplies, which is what the reason reports.
+      setup_class_scopes("Absent" as SymbolName);
+      setup_class_definitions();
 
       const receiver: ReceiverExpression = {
         base: { type: "keyword", value: "this" },
@@ -870,7 +1191,11 @@ describe("resolve_receiver_type", () => {
 
       expect(is_err(result)).toBe(true);
       if (is_err(result)) {
+        expect(result.error.stage).toBe("receiver_resolution");
         expect(result.error.reason).toBe("class_definition_not_found");
+        expect(result.error.partial_info).toEqual({
+          last_known_scope: CLASS_SCOPE_ID,
+        });
       }
     });
   });

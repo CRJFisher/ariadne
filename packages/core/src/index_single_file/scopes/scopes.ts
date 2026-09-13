@@ -256,24 +256,6 @@ export function create_processing_context(
         current = deeper;
       }
     },
-    get_child_scope_with_symbol_name(
-      scope_id: ScopeId,
-      name: SymbolName
-    ): ScopeId {
-      const scope = scopes.get(scope_id);
-      if (!scope) {
-        throw new Error(`Scope with id ${scope_id} not found`);
-      }
-      const matched_scope = scope.child_ids.find(
-        (id) => scopes.get(id)?.name === name
-      );
-      if (!matched_scope) {
-        throw new Error(
-          `Child scope with name ${name} not found in scope ${scope_id}`
-        );
-      }
-      return matched_scope;
-    },
   };
 }
 
