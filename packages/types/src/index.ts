@@ -4,7 +4,7 @@ export * from "./symbol";
 export * from "./type_id";
 export * from "./query";
 export * from "./lexical_scope";
-export * from "./type_member_info";
+export * from "./type_info";
 export * from "./reference_type";
 export * from "./semantic_index";
 export * from "./call_graph";

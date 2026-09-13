@@ -99,10 +99,17 @@ describe("Rust Self-Reference Resolution Integration", () => {
       );
       expect(counter_struct).toBeDefined();
 
-      const type_info = project.get_type_info(counter_struct!.symbol_id);
-      expect(type_info).toBeDefined();
-      expect(type_info!.methods.has("set_count" as SymbolName)).toBe(true);
-      expect(type_info!.methods.has("get_count" as SymbolName)).toBe(true);
+      const counter_members = project.definitions
+        .get_member_index()
+        .get(counter_struct!.symbol_id);
+      const set_count_id = counter_members?.get("set_count" as SymbolName);
+      const get_count_id = counter_members?.get("get_count" as SymbolName);
+      expect(set_count_id).toBe(
+        counter_struct!.methods.find((m) => m.name === ("set_count" as SymbolName))!.symbol_id
+      );
+      expect(get_count_id).toBe(
+        counter_struct!.methods.find((m) => m.name === ("get_count" as SymbolName))!.symbol_id
+      );
 
       // Verify self.set_count() is detected as a self_reference_call
       const self_ref_calls = index!.references.filter(
@@ -115,8 +122,6 @@ describe("Rust Self-Reference Resolution Integration", () => {
 
       // set_count should be referenced via self.set_count() in increment
       const referenced = project.resolutions.get_all_referenced_symbols();
-      const set_count_id = type_info!.methods.get("set_count" as SymbolName);
-      expect(set_count_id).toBeDefined();
       expect(referenced.has(set_count_id!)).toBe(true);
     });
 
@@ -153,18 +158,24 @@ describe("Rust Self-Reference Resolution Integration", () => {
       );
       expect(data_struct).toBeDefined();
 
-      const type_info = project.get_type_info(data_struct!.symbol_id);
-      expect(type_info).toBeDefined();
-      expect(type_info!.methods.has("get_value" as SymbolName)).toBe(true);
-      expect(type_info!.methods.has("update" as SymbolName)).toBe(true);
-      expect(type_info!.methods.has("process" as SymbolName)).toBe(true);
+      const data_members = project.definitions
+        .get_member_index()
+        .get(data_struct!.symbol_id);
+      const get_value_id = data_members?.get("get_value" as SymbolName);
+      const update_id = data_members?.get("update" as SymbolName);
+      const process_id = data_members?.get("process" as SymbolName);
+      expect(get_value_id).toBe(
+        data_struct!.methods.find((m) => m.name === ("get_value" as SymbolName))!.symbol_id
+      );
+      expect(update_id).toBe(
+        data_struct!.methods.find((m) => m.name === ("update" as SymbolName))!.symbol_id
+      );
+      expect(process_id).toBe(
+        data_struct!.methods.find((m) => m.name === ("process" as SymbolName))!.symbol_id
+      );
 
       // Verify get_value and update are referenced via self calls in process
       const referenced = project.resolutions.get_all_referenced_symbols();
-      const get_value_id = type_info!.methods.get("get_value" as SymbolName);
-      const update_id = type_info!.methods.get("update" as SymbolName);
-      expect(get_value_id).toBeDefined();
-      expect(update_id).toBeDefined();
       expect(referenced.has(get_value_id!)).toBe(true);
       expect(referenced.has(update_id!)).toBe(true);
     });
@@ -206,12 +217,12 @@ describe("Rust Self-Reference Resolution Integration", () => {
       );
       expect(builder_struct).toBeDefined();
 
-      const type_info = project.get_type_info(builder_struct!.symbol_id);
-      expect(type_info).toBeDefined();
-
       // validate should be referenced via self.validate() in build
       const referenced = project.resolutions.get_all_referenced_symbols();
-      const validate_id = type_info!.methods.get("validate" as SymbolName);
+      const validate_id = project.definitions
+        .get_member_index()
+        .get(builder_struct!.symbol_id)
+        ?.get("validate" as SymbolName);
       expect(validate_id).toBeDefined();
       expect(referenced.has(validate_id!)).toBe(true);
     });
@@ -310,15 +321,20 @@ describe("Rust Self-Reference Resolution Integration", () => {
       );
       expect(server_struct).toBeDefined();
 
-      const type_info = project.get_type_info(server_struct!.symbol_id);
-      expect(type_info).toBeDefined();
-      expect(type_info!.methods.has("get_host" as SymbolName)).toBe(true);
-      expect(type_info!.methods.has("start" as SymbolName)).toBe(true);
+      const server_members = project.definitions
+        .get_member_index()
+        .get(server_struct!.symbol_id);
+      const get_host_id = server_members?.get("get_host" as SymbolName);
+      const start_id = server_members?.get("start" as SymbolName);
+      expect(get_host_id).toBe(
+        server_struct!.methods.find((m) => m.name === ("get_host" as SymbolName))!.symbol_id
+      );
+      expect(start_id).toBe(
+        server_struct!.methods.find((m) => m.name === ("start" as SymbolName))!.symbol_id
+      );
 
       // self.get_host() in start should be resolved
       const referenced = project.resolutions.get_all_referenced_symbols();
-      const get_host_id = type_info!.methods.get("get_host" as SymbolName);
-      expect(get_host_id).toBeDefined();
       expect(referenced.has(get_host_id!)).toBe(true);
     });
   });
@@ -371,12 +387,12 @@ impl Engine {
     );
     expect(engine_struct).toBeDefined();
 
-    const type_info = project.get_type_info(engine_struct!.symbol_id);
-    expect(type_info).toBeDefined();
-
     // set_running should be referenced via self.set_running() in start
     const referenced = project.resolutions.get_all_referenced_symbols();
-    const set_running_id = type_info!.methods.get("set_running" as SymbolName);
+    const set_running_id = project.definitions
+      .get_member_index()
+      .get(engine_struct!.symbol_id)
+      ?.get("set_running" as SymbolName);
     expect(set_running_id).toBeDefined();
     expect(referenced.has(set_running_id!)).toBe(true);
   });
@@ -412,9 +428,10 @@ describe("Rust self-receiver resolution through the impl block's self type (TASK
       ...index!.enums.values(),
     ].find((c) => c.name === (type_name as SymbolName));
     expect(declaration).toBeDefined();
-    const member_id = project
-      .get_type_info(declaration!.symbol_id)!
-      .methods.get(member as SymbolName);
+    const member_id = project.definitions
+      .get_member_index()
+      .get(declaration!.symbol_id)
+      ?.get(member as SymbolName);
     expect(member_id).toBeDefined();
     return project.resolutions.get_all_referenced_symbols().has(member_id!);
   }

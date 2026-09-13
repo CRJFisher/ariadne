@@ -255,10 +255,17 @@ export function doWork() {
       );
       expect(logger_class).toBeDefined();
 
-      const type_info = project.get_type_info(logger_class!.symbol_id);
-      expect(type_info).toBeDefined();
-      expect(type_info!.methods.has("log" as SymbolName)).toBe(true);
-      expect(type_info!.methods.has("warn" as SymbolName)).toBe(true);
+      const logger_members = project.definitions
+        .get_member_index()
+        .get(logger_class!.symbol_id);
+      expect(
+        project.definitions.get(logger_members?.get("log" as SymbolName)!)
+          ?.kind
+      ).toBe("method");
+      expect(
+        project.definitions.get(logger_members?.get("warn" as SymbolName)!)
+          ?.kind
+      ).toBe("method");
     });
   });
 

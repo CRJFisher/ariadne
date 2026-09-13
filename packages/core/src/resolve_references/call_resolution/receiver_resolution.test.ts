@@ -1115,6 +1115,15 @@ describe("resolve_receiver_type", () => {
       const inner_prop_id = property_symbol("inner", { ...MOCK_LOCATION, start_line: 16 });
 
       // this.db.inner.query(): db is a Middle, and Middle.inner is a Database.
+      const inner_def: PropertyDefinition = {
+        kind: "property",
+        symbol_id: inner_prop_id,
+        name: "inner" as SymbolName,
+        defining_scope_id: CLASS_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 16 },
+        decorators: [],
+      };
+      definitions.update_file("middle.ts" as FilePath, [inner_def]);
       types["symbol_types"] = new Map([
         [property_id, middle_class_id],
         [inner_prop_id, database_class_id],

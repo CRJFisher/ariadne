@@ -173,16 +173,16 @@ describe("TypeRegistry", () => {
     registry = new TypeRegistry();
   });
 
-  describe("get_type_members", () => {
-    it("returns undefined for non-existent type", () => {
+  describe("STEP 2 member maps", () => {
+    it("resolves no member on a type no file declared", () => {
       const file1 = "file1.ts" as FilePath;
       const loc = make_location(file1, 1);
       const class_id = class_symbol("NonExistent", loc);
 
-      expect(registry.get_type_members(class_id)).toBeUndefined();
+      expect(registry.get_type_member(class_id, "foo" as SymbolName)).toBeNull();
     });
 
-    it("retrieves type members by symbol id", () => {
+    it("resolves a declared class's methods and properties by name", () => {
       const file1 = "file1.ts" as FilePath;
       const { id: class_id, def: class_def } = make_class_with_members(
         "MyClass",
@@ -202,13 +202,12 @@ describe("TypeRegistry", () => {
 
       registry.update_file(file1, index, [], make_type_resolution_context(definitions, resolutions, empty_exports, empty_languages, empty_resolution));
 
-      const retrieved = registry.get_type_members(class_id);
-      expect(retrieved?.methods.get("foo" as SymbolName)).toEqual(foo_id);
-      expect(retrieved?.properties.get("bar" as SymbolName)).toEqual(bar_id);
-      expect(retrieved?.extends).toEqual([]);
+      expect(registry.get_type_member(class_id, "foo" as SymbolName)).toEqual(foo_id);
+      expect(registry.get_type_member(class_id, "bar" as SymbolName)).toEqual(bar_id);
+      expect(registry.walk_inheritance_chain(class_id)).toEqual([class_id]);
     });
 
-    it("builds members for an interface from its definition", () => {
+    it("resolves a declared interface's method signatures by name", () => {
       const file1 = "file1.ts" as FilePath;
       const iface_loc = make_location(file1, 1, 0, 5, 1);
       const iface_id = interface_symbol("Greeter", iface_loc);
@@ -244,10 +243,11 @@ describe("TypeRegistry", () => {
 
       registry.update_file(file1, index, [], make_type_resolution_context(definitions, resolutions, empty_exports, empty_languages, empty_resolution));
 
-      const retrieved = registry.get_type_members(iface_id);
-      expect(retrieved?.methods.get("greet" as SymbolName)).toEqual(greet_id);
-      expect(retrieved?.properties.size).toEqual(0);
-      expect(retrieved?.extends).toEqual([]);
+      expect(registry.get_type_member(iface_id, "greet" as SymbolName)).toEqual(greet_id);
+      expect(definitions.get_member_index().get(iface_id)).toEqual(
+        new Map([["greet" as SymbolName, greet_id]])
+      );
+      expect(registry.walk_inheritance_chain(iface_id)).toEqual([iface_id]);
     });
 
     it("keys the constructor into the member index under its name", () => {
@@ -290,7 +290,6 @@ describe("TypeRegistry", () => {
 
       const { definitions, resolutions } = make_mock_registries();
 
-      // Populate definitions registry so get_type_members can look up the class
       definitions.update_file(file1, [class_def]);
 
       registry.update_file(file1, index, [], make_type_resolution_context(definitions, resolutions, empty_exports, empty_languages, empty_resolution));
@@ -312,7 +311,6 @@ describe("TypeRegistry", () => {
 
       const { definitions, resolutions } = make_mock_registries();
 
-      // Populate definitions registry so get_type_members can look up the class
       definitions.update_file(file1, [class_def]);
 
       registry.update_file(file1, index, [], make_type_resolution_context(definitions, resolutions, empty_exports, empty_languages, empty_resolution));
@@ -370,7 +368,6 @@ describe("TypeRegistry", () => {
 
       const { definitions, resolutions } = make_mock_registries();
 
-      // Populate definitions registry so get_type_members can look up the class
       definitions.update_file(file1, [class_def]);
 
       registry.update_file(file1, index, [], make_type_resolution_context(definitions, resolutions, empty_exports, empty_languages, empty_resolution));
@@ -438,6 +435,124 @@ describe("TypeRegistry", () => {
         // Symbol not in registry
         const result = type_registry.get_symbol_type(var_id);
         expect(result).toBeNull();
+      });
+    });
+
+    describe("get_callable_return_type", () => {
+      /**
+       * `class User { clone(): User }`, `function make(): User`, `function
+       * build(): make`, and `const user: User` in one file: two callables
+       * whose returns name a type, one whose return names a function, and one
+       * value.
+       */
+      function load_callables(type_registry: TypeRegistry) {
+        const file1 = "file1.ts" as FilePath;
+        const scope = "module:0:0" as ScopeId;
+        const definitions = new DefinitionRegistry();
+        const resolutions = new ResolutionRegistry();
+
+        const user_loc = make_location(file1, 1, 0, 3, 1);
+        const user_id = class_symbol("User", user_loc);
+        const clone_loc = make_location(file1, 2, 2);
+        const clone_id = method_symbol("clone", clone_loc);
+        const user_def: ClassDefinition = {
+          kind: "class",
+          symbol_id: user_id,
+          name: "User" as SymbolName,
+          location: user_loc,
+          defining_scope_id: scope,
+          is_exported: false,
+          extends: [],
+          methods: [
+            {
+              kind: "method",
+              symbol_id: clone_id,
+              name: "clone" as SymbolName,
+              location: clone_loc,
+              parameters: [],
+              return_type: "User" as SymbolName,
+              defining_scope_id: scope,
+            },
+          ],
+          properties: [],
+          decorators: [],
+          constructors: [],
+        };
+
+        const make_function_returning = (name: string, line: number, return_type: string) => {
+          const location = make_location(file1, line, 0, line, 30);
+          const id = function_symbol(name as SymbolName, location);
+          const def: FunctionDefinition = {
+            kind: "function",
+            symbol_id: id,
+            name: name as SymbolName,
+            location,
+            defining_scope_id: scope,
+            is_exported: false,
+            signature: { parameters: [] },
+            return_type: return_type as SymbolName,
+            body_scope_id: `function:${line}:0` as ScopeId,
+          };
+          return { id, def };
+        };
+        const make_fn = make_function_returning("make", 5, "User");
+        const build_fn = make_function_returning("build", 6, "make");
+        const { id: user_var_id, def: user_var_def } = make_variable_with_type("user", "User", file1, 8);
+
+        definitions.update_file(file1, [user_def, make_fn.def, build_fn.def, user_var_def]);
+        set_test_resolutions(
+          resolutions,
+          scope,
+          new Map([
+            ["User" as SymbolName, user_id],
+            ["make" as SymbolName, make_fn.id],
+          ])
+        );
+        const index = make_test_index(file1, {
+          classes: new Map([[user_id, user_def]]),
+          functions: new Map([
+            [make_fn.id, make_fn.def],
+            [build_fn.id, build_fn.def],
+          ]),
+          variables: new Map([[user_var_id, user_var_def]]),
+        });
+        type_registry.update_file(file1, index, [], make_type_resolution_context(definitions, resolutions, empty_exports, empty_languages, empty_resolution));
+
+        return { file1, user_id, clone_id, make_id: make_fn.id, build_id: build_fn.id, user_var_id };
+      }
+
+      it("records a function's and a method's declared return type apart from every value type", () => {
+        const type_registry = new TypeRegistry();
+        const { user_id, clone_id, make_id, user_var_id } = load_callables(type_registry);
+
+        expect(type_registry.get_callable_return_type(make_id)).toBe(user_id);
+        expect(type_registry.get_callable_return_type(clone_id)).toBe(user_id);
+        expect(type_registry.get_symbol_type(make_id)).toBeNull();
+        expect(type_registry.get_symbol_type(clone_id)).toBeNull();
+        expect(type_registry.get_symbol_type_arguments(make_id)).toEqual([]);
+
+        expect(type_registry.get_symbol_type(user_var_id)).toBe(user_id);
+        expect(type_registry.get_callable_return_type(user_var_id)).toBeNull();
+      });
+
+      it("records no return type for a return annotation naming a function, which holds no members", () => {
+        const type_registry = new TypeRegistry();
+        const { build_id } = load_callables(type_registry);
+
+        expect(type_registry.get_callable_return_type(build_id)).toBeNull();
+      });
+
+      it("evicts return types with their file and on clear", () => {
+        const type_registry = new TypeRegistry();
+        const { file1, clone_id, make_id } = load_callables(type_registry);
+
+        type_registry.remove_file(file1);
+        expect(type_registry.get_callable_return_type(make_id)).toBeNull();
+        expect(type_registry.get_callable_return_type(clone_id)).toBeNull();
+
+        const reloaded = load_callables(type_registry);
+        type_registry.clear();
+        expect(type_registry.get_callable_return_type(reloaded.make_id)).toBeNull();
       });
     });
 

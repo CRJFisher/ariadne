@@ -57,9 +57,12 @@ class User:
       );
       expect(user_class).toBeDefined();
 
-      const type_info = project.get_type_info(user_class!.symbol_id);
-      expect(type_info).toBeDefined();
-      expect(type_info!.methods.has("get_name" as SymbolName)).toBe(true);
+      const user_members = project.definitions
+        .get_member_index()
+        .get(user_class!.symbol_id);
+      expect(user_members?.get("get_name" as SymbolName)).toBe(
+        user_class!.methods.find((m) => m.name === ("get_name" as SymbolName))!.symbol_id
+      );
 
       const self_ref_calls = index!.references.filter(
         (r): r is SelfReferenceCall => r.kind === "self_reference_call"
@@ -93,9 +96,12 @@ class Counter:
       );
       expect(counter_class).toBeDefined();
 
-      const type_info = project.get_type_info(counter_class!.symbol_id);
-      expect(type_info).toBeDefined();
-      expect(type_info!.methods.has("increment" as SymbolName)).toBe(true);
+      const counter_members = project.definitions
+        .get_member_index()
+        .get(counter_class!.symbol_id);
+      expect(counter_members?.get("increment" as SymbolName)).toBe(
+        counter_class!.methods.find((m) => m.name === ("increment" as SymbolName))!.symbol_id
+      );
     });
 
     it("should resolve cls.method() in classmethod", () => {
@@ -121,9 +127,12 @@ class Factory:
       );
       expect(factory_class).toBeDefined();
 
-      const type_info = project.get_type_info(factory_class!.symbol_id);
-      expect(type_info).toBeDefined();
-      expect(type_info!.methods.has("_build" as SymbolName)).toBe(true);
+      const factory_members = project.definitions
+        .get_member_index()
+        .get(factory_class!.symbol_id);
+      expect(factory_members?.get("_build" as SymbolName)).toBe(
+        factory_class!.methods.find((m) => m.name === ("_build" as SymbolName))!.symbol_id
+      );
 
       const self_ref_calls = index!.references.filter(
         (r): r is SelfReferenceCall => r.kind === "self_reference_call"
@@ -161,9 +170,12 @@ class Dog(Animal):
       );
       expect(dog_class).toBeDefined();
 
-      const animal_type_info = project.get_type_info(animal_class!.symbol_id);
-      expect(animal_type_info).toBeDefined();
-      expect(animal_type_info!.methods.has("make_sound" as SymbolName)).toBe(true);
+      const animal_members = project.definitions
+        .get_member_index()
+        .get(animal_class!.symbol_id);
+      expect(animal_members?.get("make_sound" as SymbolName)).toBe(
+        animal_class!.methods.find((m) => m.name === ("make_sound" as SymbolName))!.symbol_id
+      );
     });
 
     it("should handle chained self.property.method() calls", () => {
@@ -196,9 +208,10 @@ class Service:
       );
       expect(db_class).toBeDefined();
 
-      const db_type_info = project.get_type_info(db_class!.symbol_id);
-      expect(db_type_info).toBeDefined();
-      expect(db_type_info!.methods.has("query" as SymbolName)).toBe(true);
+      const db_members = project.definitions.get_member_index().get(db_class!.symbol_id);
+      expect(db_members?.get("query" as SymbolName)).toBe(
+        db_class!.methods.find((m) => m.name === ("query" as SymbolName))!.symbol_id
+      );
     });
   });
 
@@ -233,9 +246,12 @@ class Service:
       );
       expect(service_class).toBeDefined();
 
-      const service_type_info = project.get_type_info(service_class!.symbol_id);
-      expect(service_type_info).toBeDefined();
-      expect(service_type_info!.properties.has("db" as SymbolName)).toBe(true);
+      const service_members = project.definitions
+        .get_member_index()
+        .get(service_class!.symbol_id);
+      expect(service_members?.get("db" as SymbolName)).toBe(
+        service_class!.properties.find((p) => p.name === ("db" as SymbolName))!.symbol_id
+      );
 
       // Verify Database.query is referenced (resolved through self.db.query())
       const db_class = Array.from(index!.classes.values()).find(
@@ -243,9 +259,11 @@ class Service:
       );
       expect(db_class).toBeDefined();
 
-      const db_type_info = project.get_type_info(db_class!.symbol_id);
-      expect(db_type_info).toBeDefined();
-      expect(db_type_info!.methods.has("query" as SymbolName)).toBe(true);
+      const db_members = project.definitions.get_member_index().get(db_class!.symbol_id);
+      const query_method_id = db_members?.get("query" as SymbolName);
+      expect(query_method_id).toBe(
+        db_class!.methods.find((m) => m.name === ("query" as SymbolName))!.symbol_id
+      );
 
       // Verify the self.db.query() call has the correct property chain
       const self_ref_calls = index!.references.filter(
@@ -264,8 +282,6 @@ class Service:
 
       // Verify Database.query is reachable in the call graph
       const referenced = project.resolutions.get_all_referenced_symbols();
-      const query_method_id = db_type_info!.methods.get("query" as SymbolName);
-      expect(query_method_id).toBeDefined();
       expect(referenced.has(query_method_id!)).toBe(true);
     });
 
@@ -299,9 +315,12 @@ class Outer:
       );
       expect(outer_class).toBeDefined();
 
-      const outer_type_info = project.get_type_info(outer_class!.symbol_id);
-      expect(outer_type_info).toBeDefined();
-      expect(outer_type_info!.properties.has("middle" as SymbolName)).toBe(true);
+      const outer_members = project.definitions
+        .get_member_index()
+        .get(outer_class!.symbol_id);
+      expect(outer_members?.get("middle" as SymbolName)).toBe(
+        outer_class!.properties.find((p) => p.name === ("middle" as SymbolName))!.symbol_id
+      );
 
       // Verify Middle has inner property
       const middle_class = Array.from(index!.classes.values()).find(
@@ -309,9 +328,12 @@ class Outer:
       );
       expect(middle_class).toBeDefined();
 
-      const middle_type_info = project.get_type_info(middle_class!.symbol_id);
-      expect(middle_type_info).toBeDefined();
-      expect(middle_type_info!.properties.has("inner" as SymbolName)).toBe(true);
+      const middle_members = project.definitions
+        .get_member_index()
+        .get(middle_class!.symbol_id);
+      expect(middle_members?.get("inner" as SymbolName)).toBe(
+        middle_class!.properties.find((p) => p.name === ("inner" as SymbolName))!.symbol_id
+      );
 
       // Verify the self.middle.inner.do_work() call has the correct property chain
       const self_ref_calls = index!.references.filter(
@@ -361,11 +383,15 @@ class Child(Base):
       expect(base_class).toBeDefined();
       expect(child_class).toBeDefined();
 
-      const base_type_info = project.get_type_info(base_class!.symbol_id);
-      const child_type_info = project.get_type_info(child_class!.symbol_id);
+      const base_members = project.definitions
+        .get_member_index()
+        .get(base_class!.symbol_id);
+      const child_members = project.definitions
+        .get_member_index()
+        .get(child_class!.symbol_id);
 
-      const base_helper = base_type_info!.methods.get("helper" as SymbolName);
-      const child_helper = child_type_info!.methods.get("helper" as SymbolName);
+      const base_helper = base_members?.get("helper" as SymbolName);
+      const child_helper = child_members?.get("helper" as SymbolName);
 
       expect(base_helper).toBeDefined();
       expect(child_helper).toBeDefined();
@@ -401,8 +427,10 @@ class C(B):
       expect(classes).toHaveLength(3);
 
       for (const cls of classes) {
-        const type_info = project.get_type_info(cls.symbol_id);
-        const helper_id = type_info!.methods.get("helper" as SymbolName);
+        const helper_id = project.definitions
+          .get_member_index()
+          .get(cls.symbol_id)
+          ?.get("helper" as SymbolName);
         expect(helper_id).toBeDefined();
         expect(referenced.has(helper_id!)).toBe(true);
       }
@@ -433,8 +461,12 @@ class GrandChild(Child):
       );
       expect(parent_class).toBeDefined();
 
-      const parent_type_info = project.get_type_info(parent_class!.symbol_id);
-      expect(parent_type_info!.methods.has("method" as SymbolName)).toBe(true);
+      const parent_members = project.definitions
+        .get_member_index()
+        .get(parent_class!.symbol_id);
+      expect(parent_members?.get("method" as SymbolName)).toBe(
+        parent_class!.methods.find((m) => m.name === ("method" as SymbolName))!.symbol_id
+      );
     });
   });
 });

@@ -121,14 +121,20 @@ describe("Project Integration - TypeScript", () => {
       );
       expect(user_class).toBeDefined();
 
-      // Get type info for User class
-      const type_info = project.get_type_info(user_class!.symbol_id);
-      expect(type_info).toBeDefined();
-      expect(type_info!.methods.size).toBeGreaterThan(0);
+      // Get member index entry for User class
+      const user_members = project.definitions
+        .get_member_index()
+        .get(user_class!.symbol_id);
+      const get_name_def = user_class!.methods.find(
+        (m) => m.name === ("get_name" as SymbolName)
+      )!;
+      expect(user_members?.get("get_name" as SymbolName)).toBe(
+        get_name_def.symbol_id
+      );
 
-      // Verify get_name method exists in type info
-      const get_name_method_id = type_info!.methods.get("get_name" as SymbolName);
-      expect(get_name_method_id).toBeDefined();
+      // Verify get_name method exists in the member index
+      const get_name_method_id = user_members?.get("get_name" as SymbolName);
+      expect(get_name_method_id).toBe(get_name_def.symbol_id);
     });
   });
 
@@ -280,14 +286,21 @@ describe("Project Integration - TypeScript", () => {
       );
       expect(user_class).toBeDefined();
 
-      // Verify User class has get_name method in type registry
-      const type_info = project.get_type_info(user_class!.symbol_id);
-      expect(type_info).toBeDefined();
-      expect(type_info!.methods.has("get_name" as SymbolName)).toBe(true);
+      // Verify User class has get_name method in the member index
+      const user_members = project.definitions
+        .get_member_index()
+        .get(user_class!.symbol_id);
+      expect(
+        project.definitions.get(user_members?.get("get_name" as SymbolName)!)
+          ?.kind
+      ).toBe("method");
 
       // Get the actual get_name method symbol ID
-      const get_name_method_id = type_info!.methods.get("get_name" as SymbolName);
-      expect(get_name_method_id).toBeDefined();
+      const get_name_method_id = user_members?.get("get_name" as SymbolName);
+      expect(get_name_method_id).toBe(
+        user_class!.methods.find((m) => m.name === ("get_name" as SymbolName))!
+          .symbol_id
+      );
 
       // Verify method definition can be looked up in definition registry
       const get_name_def = project.definitions.get(get_name_method_id!);
@@ -774,8 +787,8 @@ export class TypeRegistry {
       const cls = Array.from(index!.classes.values()).find(
         (c) => c.name === (class_name as SymbolName)
       );
-      const type_info = project.get_type_info(cls!.symbol_id);
-      const id = type_info!.methods.get(method_name as SymbolName);
+      const members = project.definitions.get_member_index().get(cls!.symbol_id);
+      const id = members?.get(method_name as SymbolName);
       if (!id) throw new Error(`no method ${class_name}.${method_name}`);
       return id;
     }
@@ -900,8 +913,8 @@ function run(x: unknown): void {
       const cls = Array.from(index!.classes.values()).find(
         (c) => c.name === (class_name as SymbolName)
       );
-      const type_info = project.get_type_info(cls!.symbol_id);
-      const id = type_info!.methods.get(method_name as SymbolName);
+      const members = project.definitions.get_member_index().get(cls!.symbol_id);
+      const id = members?.get(method_name as SymbolName);
       if (!id) throw new Error(`no method ${class_name}.${method_name}`);
       return id;
     }
@@ -1169,15 +1182,23 @@ function main(): void {
       expect(base_class).toBeDefined();
       expect(child_class).toBeDefined();
 
-      const base_helper = project.get_type_info(base_class!.symbol_id)!.methods.get(
-        "helper" as SymbolName
-      );
-      const child_helper = project.get_type_info(child_class!.symbol_id)!.methods.get(
-        "helper" as SymbolName
-      );
+      const base_helper = project.definitions
+        .get_member_index()
+        .get(base_class!.symbol_id)
+        ?.get("helper" as SymbolName);
+      const child_helper = project.definitions
+        .get_member_index()
+        .get(child_class!.symbol_id)
+        ?.get("helper" as SymbolName);
 
-      expect(base_helper).toBeDefined();
-      expect(child_helper).toBeDefined();
+      expect(base_helper).toBe(
+        base_class!.methods.find((m) => m.name === ("helper" as SymbolName))!
+          .symbol_id
+      );
+      expect(child_helper).toBe(
+        child_class!.methods.find((m) => m.name === ("helper" as SymbolName))!
+          .symbol_id
+      );
 
       // Both should be referenced (neither is an entry point)
       expect(referenced.has(base_helper!)).toBe(true);
@@ -1201,10 +1222,14 @@ function main(): void {
       expect(classes).toHaveLength(3);
 
       for (const cls of classes) {
-        const helper_id = project.get_type_info(cls.symbol_id)!.methods.get(
-          "helper" as SymbolName
+        const helper_id = project.definitions
+          .get_member_index()
+          .get(cls.symbol_id)
+          ?.get("helper" as SymbolName);
+        expect(helper_id).toBe(
+          cls.methods.find((m) => m.name === ("helper" as SymbolName))!
+            .symbol_id
         );
-        expect(helper_id).toBeDefined();
         expect(referenced.has(helper_id!)).toBe(true);
       }
     });
@@ -1254,11 +1279,19 @@ function main(): void {
       );
       expect(parent_class).toBeDefined();
 
-      const parent_type_info = project.get_type_info(parent_class!.symbol_id);
-      const parent_handle_a = parent_type_info!.methods.get("handleA" as SymbolName);
-      const parent_handle_b = parent_type_info!.methods.get("handleB" as SymbolName);
-      expect(parent_handle_a).toBeDefined();
-      expect(parent_handle_b).toBeDefined();
+      const parent_members = project.definitions
+        .get_member_index()
+        .get(parent_class!.symbol_id);
+      const parent_handle_a = parent_members?.get("handleA" as SymbolName);
+      const parent_handle_b = parent_members?.get("handleB" as SymbolName);
+      expect(parent_handle_a).toBe(
+        parent_class!.methods.find((m) => m.name === ("handleA" as SymbolName))!
+          .symbol_id
+      );
+      expect(parent_handle_b).toBe(
+        parent_class!.methods.find((m) => m.name === ("handleB" as SymbolName))!
+          .symbol_id
+      );
 
       // Find child's methods
       const child_index = project.get_index_single_file(child_file);
@@ -1267,11 +1300,19 @@ function main(): void {
       );
       expect(child_class).toBeDefined();
 
-      const child_type_info = project.get_type_info(child_class!.symbol_id);
-      const child_handle_a = child_type_info!.methods.get("handleA" as SymbolName);
-      const child_handle_b = child_type_info!.methods.get("handleB" as SymbolName);
-      expect(child_handle_a).toBeDefined();
-      expect(child_handle_b).toBeDefined();
+      const child_members = project.definitions
+        .get_member_index()
+        .get(child_class!.symbol_id);
+      const child_handle_a = child_members?.get("handleA" as SymbolName);
+      const child_handle_b = child_members?.get("handleB" as SymbolName);
+      expect(child_handle_a).toBe(
+        child_class!.methods.find((m) => m.name === ("handleA" as SymbolName))!
+          .symbol_id
+      );
+      expect(child_handle_b).toBe(
+        child_class!.methods.find((m) => m.name === ("handleB" as SymbolName))!
+          .symbol_id
+      );
 
       // All four methods should be marked as referenced
       // Parent's methods: called directly via this.handleA() in dispatch()
@@ -1357,7 +1398,10 @@ function main(): void {
       const cls = Array.from(index!.classes.values()).find(
         (c) => c.name === (class_name as SymbolName)
       );
-      return project.get_type_info(cls!.symbol_id)!.methods.get(method as SymbolName);
+      return project.definitions
+        .get_member_index()
+        .get(cls!.symbol_id)
+        ?.get(method as SymbolName);
     }
 
     it("resolves a this.#method() private call to the private method", () => {

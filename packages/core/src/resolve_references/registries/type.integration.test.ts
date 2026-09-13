@@ -454,4 +454,83 @@ function prefixed(x) { x.m(); }
       }
     );
   });
+
+  /**
+   * A variable's type and what a callable returns are recorded in two stores:
+   * a hop through a function or method continues on its declared return, a
+   * hop through anything else on the value it holds.
+   */
+  describe("value types and callable return types", () => {
+    it("records a method's return annotation as its return type, never as a value type, and hops through it", async () => {
+      const { project, paths } = await load_project({
+        "a.ts": `class Conn { exec() {} }
+class Engine { connect(): Conn { return new Conn(); } }
+function chained(e: Engine) { e.connect().exec(); }
+`,
+      });
+      const file = paths["a.ts"];
+      const connect = member_of(project, file, "Engine", "connect");
+      expect(project.types.get_callable_return_type(connect)).toEqual(type_named(project, file, "Conn"));
+      expect(project.types.get_symbol_type(connect)).toBeNull();
+      expect(project.types.get_symbol_type(parameter_of(project, file, "chained", "e"))).toEqual(
+        type_named(project, file, "Engine")
+      );
+      expect(project.types.get_callable_return_type(parameter_of(project, file, "chained", "e"))).toBeNull();
+      expect(targets_of(project, file, "exec", 3)).toEqual([member_of(project, file, "Conn", "exec")]);
+    });
+
+    it("hops through a module function's return type reached through a namespace import", async () => {
+      const { project, paths } = await load_project({
+        "conn.ts": `export class Conn { exec() {} }
+export function open(): Conn { return new Conn(); }
+`,
+        "use.ts": `import * as factory from "./conn";
+function use() { factory.open().exec(); }
+`,
+      });
+      const open = [...project.get_index_single_file(paths["conn.ts"])!.functions.values()].find(
+        (definition) => definition.name === "open"
+      )!.symbol_id;
+      expect(project.types.get_callable_return_type(open)).toEqual(type_named(project, paths["conn.ts"], "Conn"));
+      expect(project.types.get_symbol_type(open)).toBeNull();
+      expect(targets_of(project, paths["use.ts"], "exec", 2)).toEqual([
+        member_of(project, paths["conn.ts"], "Conn", "exec"),
+      ]);
+    });
+
+    it("hops through a Rust method's return type on a self receiver", async () => {
+      const { project, paths } = await load_project({
+        "lib.rs": `struct Header;
+impl Header { fn encoded_size(&self) -> usize { 0 } }
+struct Frame { header: Header }
+impl Frame {
+    fn header(&self) -> &Header { &self.header }
+    fn size(&self) -> usize { self.header().encoded_size() }
+}
+`,
+      });
+      const file = paths["lib.rs"];
+      expect(targets_of(project, file, "encoded_size", 6)).toEqual([
+        member_of(project, file, "Header", "encoded_size"),
+      ]);
+    });
+
+    it("hops through a Rust enum method's return type", async () => {
+      const { project, paths } = await load_project({
+        "lib.rs": `struct Parser;
+impl Parser { fn run(&self) {} }
+enum Mode { Fast }
+impl Mode {
+    fn parser(&self) -> Parser { Parser }
+    fn go(&self) { self.parser().run(); }
+}
+`,
+      });
+      const file = paths["lib.rs"];
+      expect(project.types.get_callable_return_type(member_of(project, file, "Mode", "parser"))).toEqual(
+        type_named(project, file, "Parser")
+      );
+      expect(targets_of(project, file, "run", 6)).toEqual([member_of(project, file, "Parser", "run")]);
+    });
+  });
 });

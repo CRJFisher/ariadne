@@ -720,15 +720,6 @@ export class Project {
   }
 
   /**
-   * Get type information for a symbol.
-   * @param symbol_id - The symbol to get type info for
-   * @returns Type member info or undefined if not found
-   */
-  get_type_info(symbol_id: SymbolId) {
-    return this.types.get_type_members(symbol_id);
-  }
-
-  /**
    * Get derived data for a file.
    * @param file_id - The file to get derived data for
    * @returns Derived data object or undefined if file not found

@@ -74,10 +74,12 @@ describe("TypeScript Self-Reference Resolution Integration", () => {
       );
       expect(get_name_call).toBeDefined();
 
-      const type_info = project.get_type_info(user_class!.symbol_id);
-      expect(type_info).toBeDefined();
-      expect(type_info!.methods.size).toBeGreaterThan(0);
-      expect(type_info!.methods.get("getName" as SymbolName)).toBeDefined();
+      const user_members = project.definitions
+        .get_member_index()
+        .get(user_class!.symbol_id);
+      expect(user_members?.get("getName" as SymbolName)).toBe(
+        user_class!.methods.find((m) => m.name === ("getName" as SymbolName))!.symbol_id
+      );
     });
 
     it("should resolve this.property access in constructor", () => {
@@ -106,9 +108,12 @@ describe("TypeScript Self-Reference Resolution Integration", () => {
       );
       expect(counter_class).toBeDefined();
 
-      const type_info = project.get_type_info(counter_class!.symbol_id);
-      expect(type_info).toBeDefined();
-      expect(type_info!.properties.has("count" as SymbolName)).toBe(true);
+      const counter_members = project.definitions
+        .get_member_index()
+        .get(counter_class!.symbol_id);
+      expect(counter_members?.get("count" as SymbolName)).toBe(
+        counter_class!.properties.find((p) => p.name === ("count" as SymbolName))!.symbol_id
+      );
     });
 
     it("should resolve chained this.property.method() calls", () => {
@@ -143,18 +148,22 @@ describe("TypeScript Self-Reference Resolution Integration", () => {
       );
       expect(service_class).toBeDefined();
 
-      const service_type_info = project.get_type_info(service_class!.symbol_id);
-      expect(service_type_info).toBeDefined();
-      expect(service_type_info!.properties.has("db" as SymbolName)).toBe(true);
+      const service_members = project.definitions
+        .get_member_index()
+        .get(service_class!.symbol_id);
+      expect(service_members?.get("db" as SymbolName)).toBe(
+        service_class!.properties.find((p) => p.name === ("db" as SymbolName))!.symbol_id
+      );
 
       const db_class = Array.from(index!.classes.values()).find(
         (c) => c.name === ("Database" as SymbolName)
       );
       expect(db_class).toBeDefined();
 
-      const db_type_info = project.get_type_info(db_class!.symbol_id);
-      expect(db_type_info).toBeDefined();
-      expect(db_type_info!.methods.has("query" as SymbolName)).toBe(true);
+      const db_members = project.definitions.get_member_index().get(db_class!.symbol_id);
+      expect(db_members?.get("query" as SymbolName)).toBe(
+        db_class!.methods.find((m) => m.name === ("query" as SymbolName))!.symbol_id
+      );
     });
 
     it("should resolve this in nested arrow functions (lexical this)", () => {
@@ -192,9 +201,13 @@ describe("TypeScript Self-Reference Resolution Integration", () => {
       );
       expect(event_handler_class).toBeDefined();
 
-      const type_info = project.get_type_info(event_handler_class!.symbol_id);
-      expect(type_info).toBeDefined();
-      expect(type_info!.methods.has("addListener" as SymbolName)).toBe(true);
+      const event_handler_members = project.definitions
+        .get_member_index()
+        .get(event_handler_class!.symbol_id);
+      expect(event_handler_members?.get("addListener" as SymbolName)).toBe(
+        event_handler_class!.methods.find((m) => m.name === ("addListener" as SymbolName))!
+          .symbol_id
+      );
     });
   });
 
@@ -230,9 +243,12 @@ describe("TypeScript Self-Reference Resolution Integration", () => {
       );
       expect(dog_class).toBeDefined();
 
-      const animal_type_info = project.get_type_info(animal_class!.symbol_id);
-      expect(animal_type_info).toBeDefined();
-      expect(animal_type_info!.methods.has("makeSound" as SymbolName)).toBe(true);
+      const animal_members = project.definitions
+        .get_member_index()
+        .get(animal_class!.symbol_id);
+      expect(animal_members?.get("makeSound" as SymbolName)).toBe(
+        animal_class!.methods.find((m) => m.name === ("makeSound" as SymbolName))!.symbol_id
+      );
 
       const self_ref_calls = index!.references.filter(
         (r): r is SelfReferenceCall => r.kind === "self_reference_call"
@@ -314,13 +330,25 @@ describe("TypeScript Self-Reference Resolution Integration", () => {
       expect(middle_class).toBeDefined();
       expect(derived_class).toBeDefined();
 
-      const base_type_info = project.get_type_info(base_class!.symbol_id);
-      const middle_type_info = project.get_type_info(middle_class!.symbol_id);
-      const derived_type_info = project.get_type_info(derived_class!.symbol_id);
+      const base_members = project.definitions
+        .get_member_index()
+        .get(base_class!.symbol_id);
+      const middle_members = project.definitions
+        .get_member_index()
+        .get(middle_class!.symbol_id);
+      const derived_members = project.definitions
+        .get_member_index()
+        .get(derived_class!.symbol_id);
 
-      expect(base_type_info!.methods.has("getValue" as SymbolName)).toBe(true);
-      expect(middle_type_info!.methods.has("getValue" as SymbolName)).toBe(true);
-      expect(derived_type_info!.methods.has("getValue" as SymbolName)).toBe(true);
+      expect(base_members?.get("getValue" as SymbolName)).toBe(
+        base_class!.methods.find((m) => m.name === ("getValue" as SymbolName))!.symbol_id
+      );
+      expect(middle_members?.get("getValue" as SymbolName)).toBe(
+        middle_class!.methods.find((m) => m.name === ("getValue" as SymbolName))!.symbol_id
+      );
+      expect(derived_members?.get("getValue" as SymbolName)).toBe(
+        derived_class!.methods.find((m) => m.name === ("getValue" as SymbolName))!.symbol_id
+      );
     });
   });
 
@@ -350,8 +378,12 @@ describe("TypeScript Self-Reference Resolution Integration", () => {
       );
       expect(config_class).toBeDefined();
 
-      const type_info = project.get_type_info(config_class!.symbol_id);
-      expect(type_info).toBeDefined();
+      const config_members = project.definitions
+        .get_member_index()
+        .get(config_class!.symbol_id);
+      expect(config_members?.get("getInstance" as SymbolName)).toBe(
+        config_class!.methods.find((m) => m.name === ("getInstance" as SymbolName))!.symbol_id
+      );
     });
   });
 
@@ -383,11 +415,15 @@ describe("TypeScript Self-Reference Resolution Integration", () => {
       expect(base_class).toBeDefined();
       expect(child_class).toBeDefined();
 
-      const base_type_info = project.get_type_info(base_class!.symbol_id);
-      const child_type_info = project.get_type_info(child_class!.symbol_id);
+      const base_members = project.definitions
+        .get_member_index()
+        .get(base_class!.symbol_id);
+      const child_members = project.definitions
+        .get_member_index()
+        .get(child_class!.symbol_id);
 
-      const base_helper = base_type_info!.methods.get("helper" as SymbolName);
-      const child_helper = child_type_info!.methods.get("helper" as SymbolName);
+      const base_helper = base_members?.get("helper" as SymbolName);
+      const child_helper = child_members?.get("helper" as SymbolName);
 
       expect(base_helper).toBeDefined();
       expect(child_helper).toBeDefined();
@@ -420,8 +456,10 @@ describe("TypeScript Self-Reference Resolution Integration", () => {
       expect(classes).toHaveLength(3);
 
       for (const cls of classes) {
-        const type_info = project.get_type_info(cls.symbol_id);
-        const helper_id = type_info!.methods.get("helper" as SymbolName);
+        const helper_id = project.definitions
+          .get_member_index()
+          .get(cls.symbol_id)
+          ?.get("helper" as SymbolName);
         expect(helper_id).toBeDefined();
         expect(referenced.has(helper_id!)).toBe(true);
       }
@@ -463,8 +501,12 @@ describe("TypeScript Self-Reference Resolution Integration", () => {
       );
       expect(parent_class).toBeDefined();
 
-      const parent_type_info = project.get_type_info(parent_class!.symbol_id);
-      expect(parent_type_info!.methods.has("method" as SymbolName)).toBe(true);
+      const parent_members = project.definitions
+        .get_member_index()
+        .get(parent_class!.symbol_id);
+      expect(parent_members?.get("method" as SymbolName)).toBe(
+        parent_class!.methods.find((m) => m.name === ("method" as SymbolName))!.symbol_id
+      );
     });
   });
 

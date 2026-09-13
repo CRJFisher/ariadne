@@ -115,14 +115,20 @@ describe("Project Integration - Python", () => {
       );
       expect(product_class).toBeDefined();
 
-      // Get type info for Product class
-      const type_info = project.get_type_info(product_class!.symbol_id);
-      expect(type_info).toBeDefined();
-      expect(type_info!.methods.size).toBeGreaterThan(0);
+      // Get member index entry for Product class
+      const product_members = project.definitions
+        .get_member_index()
+        .get(product_class!.symbol_id);
+      const get_name_def = product_class!.methods.find(
+        (m) => m.name === ("get_name" as SymbolName)
+      )!;
+      expect(product_members?.get("get_name" as SymbolName)).toBe(
+        get_name_def.symbol_id
+      );
 
-      // Verify get_name method exists in type info
-      const get_name_method_id = type_info!.methods.get("get_name" as SymbolName);
-      expect(get_name_method_id).toBeDefined();
+      // Verify get_name method exists in the member index
+      const get_name_method_id = product_members?.get("get_name" as SymbolName);
+      expect(get_name_method_id).toBe(get_name_def.symbol_id);
     });
   });
 
@@ -357,11 +363,6 @@ describe("Project Integration - Python", () => {
       const user_class = classes.find((c) => c.name === ("User" as SymbolName));
       expect(user_class).toBeDefined();
 
-      // Get type info for User class
-      const type_info = project.get_type_info(user_class!.symbol_id);
-      expect(type_info).toBeDefined();
-      if (!type_info) return;
-
       // Verify Python __init__ is keyed into the member index as the constructor
       const user_members = project.definitions
         .get_member_index()
@@ -373,10 +374,15 @@ describe("Project Integration - Python", () => {
       expect(constructor_def?.name).toBe("__init__" as SymbolName);
 
       // Verify instance methods exist
-      expect(type_info.methods.size).toBeGreaterThan(0);
+      const get_info_class_def = user_class!.methods.find(
+        (m) => m.name === ("get_info" as SymbolName)
+      )!;
+      expect(user_members?.get("get_info" as SymbolName)).toBe(
+        get_info_class_def.symbol_id
+      );
 
       // Find get_info method
-      const get_info_method_id = type_info.methods.get("get_info" as SymbolName);
+      const get_info_method_id = user_members?.get("get_info" as SymbolName);
       expect(get_info_method_id).toBeDefined();
 
       // Verify method definition has self parameter
@@ -424,14 +430,21 @@ describe("Project Integration - Python", () => {
       );
       expect(user_class).toBeDefined();
 
-      // Verify User class has get_name method in type registry
-      const type_info = project.get_type_info(user_class!.symbol_id);
-      expect(type_info).toBeDefined();
-      expect(type_info!.methods.has("get_name" as SymbolName)).toBe(true);
+      // Verify User class has get_name method in the member index
+      const user_members = project.definitions
+        .get_member_index()
+        .get(user_class!.symbol_id);
+      expect(
+        project.definitions.get(user_members?.get("get_name" as SymbolName)!)
+          ?.kind
+      ).toBe("method");
 
       // Get the actual get_name method symbol ID
-      const get_name_method_id = type_info!.methods.get("get_name" as SymbolName);
-      expect(get_name_method_id).toBeDefined();
+      const get_name_method_id = user_members?.get("get_name" as SymbolName);
+      expect(get_name_method_id).toBe(
+        user_class!.methods.find((m) => m.name === ("get_name" as SymbolName))!
+          .symbol_id
+      );
 
       // Verify method definition can be looked up
       const get_name_def = project.definitions.get(get_name_method_id!);
@@ -524,13 +537,20 @@ describe("Project Integration - Python", () => {
       );
       expect(product_class).toBeDefined();
 
-      // Verify type info exists
-      const type_info = project.get_type_info(product_class!.symbol_id);
-      expect(type_info).toBeDefined();
-
-      // Verify methods are accessible via type info
-      expect(type_info!.methods.has("get_name" as SymbolName)).toBe(true);
-      expect(type_info!.methods.has("apply_discount" as SymbolName)).toBe(true);
+      // Verify methods are accessible via the member index
+      const product_members = project.definitions
+        .get_member_index()
+        .get(product_class!.symbol_id);
+      expect(
+        project.definitions.get(
+          product_members?.get("get_name" as SymbolName)!
+        )?.kind
+      ).toBe("method");
+      expect(
+        project.definitions.get(
+          product_members?.get("apply_discount" as SymbolName)!
+        )?.kind
+      ).toBe("method");
 
       // Find method call in the file
       const method_call = index!.references.find(
@@ -687,11 +707,6 @@ class Service:
       );
       expect(user_class).toBeDefined();
 
-      // Verify __init__ method exists in type registry as constructor
-      const type_info = project.get_type_info(user_class!.symbol_id);
-      expect(type_info).toBeDefined();
-      if (!type_info) return;
-
       // Verify __init__ is keyed into the member index as the constructor
       const user_members = project.definitions
         .get_member_index()
@@ -699,7 +714,10 @@ class Service:
       expect(user_members?.get("__init__" as SymbolName)).toBeDefined();
 
       // Verify instance methods also exist
-      expect(type_info.methods.size).toBeGreaterThan(0);
+      const method_ids = Array.from(user_members ?? []).filter(
+        ([, id]) => project.definitions.get(id)?.kind === "method"
+      );
+      expect(method_ids.length).toBe(user_class!.methods.length);
     });
 
     it("should index decorated module-level functions and resolve calls to them", async () => {
@@ -1267,15 +1285,23 @@ class Child(Base):
       expect(base_class).toBeDefined();
       expect(child_class).toBeDefined();
 
-      const base_helper = project.get_type_info(base_class!.symbol_id)!.methods.get(
-        "helper" as SymbolName
-      );
-      const child_helper = project.get_type_info(child_class!.symbol_id)!.methods.get(
-        "helper" as SymbolName
-      );
+      const base_helper = project.definitions
+        .get_member_index()
+        .get(base_class!.symbol_id)
+        ?.get("helper" as SymbolName);
+      const child_helper = project.definitions
+        .get_member_index()
+        .get(child_class!.symbol_id)
+        ?.get("helper" as SymbolName);
 
-      expect(base_helper).toBeDefined();
-      expect(child_helper).toBeDefined();
+      expect(base_helper).toBe(
+        base_class!.methods.find((m) => m.name === ("helper" as SymbolName))!
+          .symbol_id
+      );
+      expect(child_helper).toBe(
+        child_class!.methods.find((m) => m.name === ("helper" as SymbolName))!
+          .symbol_id
+      );
 
       // Both should be referenced (neither is an entry point)
       expect(referenced.has(base_helper!)).toBe(true);
@@ -1309,10 +1335,14 @@ class C(B):
       expect(classes).toHaveLength(3);
 
       for (const cls of classes) {
-        const helper_id = project.get_type_info(cls.symbol_id)!.methods.get(
-          "helper" as SymbolName
+        const helper_id = project.definitions
+          .get_member_index()
+          .get(cls.symbol_id)
+          ?.get("helper" as SymbolName);
+        expect(helper_id).toBe(
+          cls.methods.find((m) => m.name === ("helper" as SymbolName))!
+            .symbol_id
         );
-        expect(helper_id).toBeDefined();
         expect(referenced.has(helper_id!)).toBe(true);
       }
     });

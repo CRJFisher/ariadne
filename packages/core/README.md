@@ -158,10 +158,6 @@ Returns the semantic index for a specific file, containing all extracted definit
 
 Looks up a definition by its symbol ID.
 
-##### `get_type_info(symbol_id: SymbolId): TypeMemberInfo | undefined`
-
-Returns type member information for a symbol.
-
 ##### `get_source_code(file_id: FilePath, location: Location): string | undefined`
 
 Extracts source code for a given location range.

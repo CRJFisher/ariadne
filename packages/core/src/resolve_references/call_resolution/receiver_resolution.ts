@@ -303,7 +303,7 @@ function resolve_identifier_base(
     }
   }
 
-  let type_id = context.types.get_symbol_type(symbol_id);
+  let type_id = def ? recorded_hop_type(def, context) : null;
 
   if (!type_id && def) {
     // A type used as a receiver (Type.staticMethod(), Type::associated_function())
@@ -474,6 +474,22 @@ function find_namespace_body_scope(
 }
 
 /**
+ * The type the TypeRegistry recorded for a receiver hop through `def`. A hop
+ * through a function or method continues on what calling it yields —
+ * `e.connect().exec()` looks `exec` up on `connect`'s return type — so it reads
+ * the declared return type; a hop through anything else continues on the value
+ * it holds.
+ */
+function recorded_hop_type(
+  def: AnyDefinition,
+  context: ReceiverResolutionContext
+): SymbolId | null {
+  return def.kind === "function" || def.kind === "method"
+    ? context.types.get_callable_return_type(def.symbol_id)
+    : context.types.get_symbol_type(def.symbol_id);
+}
+
+/**
  * Walk a property chain, resolving each property to its member's type so the next
  * property is looked up on that type, and returning the final type.
  */
@@ -514,11 +530,10 @@ function walk_property_chain(
       });
     }
 
-    let member_type = context.types.get_symbol_type(member_symbol);
+    const member_def = context.definitions.get(member_symbol);
+    let member_type = member_def ? recorded_hop_type(member_def, context) : null;
 
     if (!member_type) {
-      const member_def = context.definitions.get(member_symbol);
-
       // The member index gives a callable the name it shares with a field —
       // Rust's `struct Buf { data: Inner }` beside `fn data(&self)` — because
       // the call position needs the method. A chain position that is not

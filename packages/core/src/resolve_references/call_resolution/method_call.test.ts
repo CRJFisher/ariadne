@@ -10,7 +10,7 @@ import type { FileSystemFolder } from "../file_folders";
 import { make_export_chain_context } from "../resolution_test_helpers";
 import { set_test_resolutions, unwrap } from "../resolve_references.test";
 import { create_method_call_reference } from "../../index_single_file/references/factories";
-import { method_symbol, class_symbol, function_symbol, variable_symbol } from "@ariadnejs/types";
+import { method_symbol, class_symbol, function_symbol, property_symbol, variable_symbol } from "@ariadnejs/types";
 import type {
   SymbolId,
   SymbolName,
@@ -22,6 +22,7 @@ import type {
   Result,
   ResolutionFailure,
   MethodDefinition,
+  PropertyDefinition,
   ClassDefinition,
   VariableDefinition,
 } from "@ariadnejs/types";
@@ -309,7 +310,20 @@ describe("Method Call Resolution", () => {
         location: MOCK_LOCATION,
         is_exported: false,
       };
-      definitions.update_file(TEST_FILE, [var_def]);
+      const setter = (symbol_id: SymbolId, name: string, line: number): MethodDefinition => ({
+        kind: "method",
+        symbol_id,
+        name: name as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: line },
+        parameters: [],
+        return_type: "Builder" as SymbolName,
+      });
+      definitions.update_file(TEST_FILE, [
+        var_def,
+        setter(set_name_id, "setName", 2),
+        setter(set_age_id, "setAge", 3),
+      ]);
 
       types["symbol_types"] = new Map();
       types["symbol_types"].set(builder_symbol_id, builder_class_id);
@@ -320,8 +334,10 @@ describe("Method Call Resolution", () => {
       builder_member_map.set("setAge" as SymbolName, set_age_id);
       types["resolved_type_members"].set(builder_class_id, builder_member_map);
 
-      types["symbol_types"].set(set_name_id, builder_class_id);
-      types["symbol_types"].set(set_age_id, builder_class_id);
+      types["callable_return_types"] = new Map([
+        [set_name_id, builder_class_id],
+        [set_age_id, builder_class_id],
+      ]);
 
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("builder" as SymbolName, builder_symbol_id);
@@ -355,7 +371,7 @@ describe("Method Call Resolution", () => {
         { ...MOCK_LOCATION, start_line: 6 },
         FILE_SCOPE_ID,
         MOCK_RECEIVER_LOCATION,
-        ["builder", "setAge"] as SymbolName[],
+        ["builder", "setName", "setAge"] as SymbolName[],
         false
       );
 
@@ -380,7 +396,7 @@ describe("Method Call Resolution", () => {
       // obj.field.method() where field is an InnerClass instance
       const obj_symbol_id = variable_symbol("obj", MOCK_LOCATION);
       const outer_class_id = class_symbol("OuterClass" as SymbolName, MOCK_LOCATION);
-      const field_symbol_id = variable_symbol("field", {
+      const field_symbol_id = property_symbol("field", {
         ...MOCK_LOCATION,
         start_line: 2,
       });
@@ -401,7 +417,15 @@ describe("Method Call Resolution", () => {
         location: MOCK_LOCATION,
         is_exported: false,
       };
-      definitions.update_file(TEST_FILE, [var_def]);
+      const field_def: PropertyDefinition = {
+        kind: "property",
+        symbol_id: field_symbol_id,
+        name: "field" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 2 },
+        decorators: [],
+      };
+      definitions.update_file(TEST_FILE, [var_def, field_def]);
 
       types["symbol_types"] = new Map();
       types["symbol_types"].set(obj_symbol_id, outer_class_id);
