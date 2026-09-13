@@ -36,7 +36,7 @@ export function resolve_constructor_call(
   call_ref: ConstructorCallReference,
   context: CallResolutionContext
 ): Result<SymbolId[], ResolutionFailure> {
-  const { definitions, scopes, resolutions, exports, imports, languages, modules } =
+  const { definitions, resolutions, exports, imports, languages, modules } =
     context;
   let class_symbol: SymbolId | null = null;
 
@@ -66,7 +66,7 @@ export function resolve_constructor_call(
   // `Self` is never in scope, so its substitution must run before the bare-name
   // lookup would fail.
   if (!class_symbol && call_ref.name === RUST_SELF_TYPE_KEYWORD) {
-    class_symbol = resolve_self_type_rust(call_ref.scope_id, scopes, definitions);
+    class_symbol = resolve_self_type_rust(call_ref.scope_id, context);
   }
 
   if (!class_symbol) {

@@ -78,7 +78,6 @@ describe("Python Builder Configuration", () => {
       scope_depths: new Map(),
       root_scope_id: test_scope_id,
       get_scope_id: (location: Location) => test_scope_id,
-      get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => test_scope_id,
     };
   }
 
@@ -958,7 +957,6 @@ describe("Python Builder Configuration", () => {
           scope_depths: new Map(),
           root_scope_id: module_scope_id,
           get_scope_id: (location: Location) => current_scope,
-          get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => current_scope,
         };
       }
 
@@ -1100,7 +1098,6 @@ describe("Python Builder Configuration", () => {
             scope_depths: new Map(),
             root_scope_id: module_scope_id,
             get_scope_id: (location: Location) => nested_scope_id, // Return nested scope
-            get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => nested_scope_id,
           };
 
           const builder = new DefinitionBuilder(context);
@@ -1199,7 +1196,6 @@ describe("Python Builder Configuration", () => {
             scope_depths: new Map(),
             root_scope_id: module_scope_id,
             get_scope_id: (location: Location) => nested_scope_id, // Return nested scope
-            get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => nested_scope_id,
           };
 
           const builder = new DefinitionBuilder(context);

@@ -381,3 +381,134 @@ impl Engine {
     expect(referenced.has(set_running_id!)).toBe(true);
   });
 });
+
+/**
+ * An `impl` block is a `block` scope that names the type it implements, so a
+ * `self` receiver inside it reads that name rather than being inferred from the
+ * members the block happens to hold. Each case here is a shape the member scan
+ * this replaced could not name.
+ */
+describe("Rust self-receiver resolution through the impl block's self type (TASK-376.5)", () => {
+  const temp_dirs: string[] = [];
+
+  afterAll(() => {
+    for (const dir of temp_dirs) {
+      if (fs.existsSync(dir)) {
+        fs.rmSync(dir, { recursive: true, force: true });
+      }
+    }
+  });
+
+  /** Whether the named member of the named type is reached by some call. */
+  function is_referenced(
+    project: Project,
+    type_name: string,
+    member: string,
+    file: FilePath
+  ): boolean {
+    const index = project.get_index_single_file(file);
+    const declaration = [
+      ...index!.classes.values(),
+      ...index!.enums.values(),
+    ].find((c) => c.name === (type_name as SymbolName));
+    expect(declaration).toBeDefined();
+    const member_id = project
+      .get_type_info(declaration!.symbol_id)!
+      .methods.get(member as SymbolName);
+    expect(member_id).toBeDefined();
+    return project.resolutions.get_all_referenced_symbols().has(member_id!);
+  }
+
+  // sqlx PgCube (sqlx-postgres/src/types/cube.rs) — two chained self hops across
+  // two types, each named by its own impl block.
+  it("resolves self.method().method() across two types' impl blocks", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "lib.rs": "mod cube;\n",
+      "cube.rs": `pub struct PgCube {
+    dims: u8,
+}
+
+impl PgCube {
+    fn header(&self) -> Header {
+        Header { size: self.dims }
+    }
+
+    pub fn total(&self) -> u8 {
+        self.header().encoded_size()
+    }
+}
+
+pub struct Header {
+    size: u8,
+}
+
+impl Header {
+    fn encoded_size(&self) -> u8 {
+        self.size
+    }
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+    const file = file_paths["cube.rs"];
+
+    expect(is_referenced(project, "PgCube", "header", file)).toBe(true);
+    expect(is_referenced(project, "Header", "encoded_size", file)).toBe(true);
+  });
+
+  it("resolves self.method() across two impl blocks on one enum", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "lib.rs": "mod shape;\n",
+      "shape.rs": `pub enum Shape {
+    Square,
+    Round,
+}
+
+impl Shape {
+    fn sides(&self) -> u8 {
+        match self {
+            Shape::Square => 4,
+            Shape::Round => 0,
+        }
+    }
+}
+
+impl Shape {
+    pub fn describe(&self) -> u8 {
+        self.sides()
+    }
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect(is_referenced(project, "Shape", "sides", file_paths["shape.rs"])).toBe(
+      true
+    );
+  });
+
+  it("resolves self.name() to the method when a field shares the name", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "lib.rs": "mod node;\n",
+      "node.rs": `pub struct Node {
+    size: u8,
+}
+
+impl Node {
+    fn size(&self) -> u8 {
+        self.size
+    }
+
+    pub fn report(&self) -> u8 {
+        self.size()
+    }
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect(is_referenced(project, "Node", "size", file_paths["node.rs"])).toBe(
+      true
+    );
+  });
+});

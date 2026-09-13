@@ -1,7 +1,7 @@
 ---
 id: TASK-376.5
 title: "Resolve self/this through find_self_type and delete the backwards member scan"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-07-29 09:38"
 labels:
@@ -48,15 +48,31 @@ This is the step that flips the `self`/`this` rows.
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 `find_self_type` exists, stops at the nearest scope carrying `self_type_name`, and verifies the resolved definition is a class/interface/enum.
-- [ ] #2 `find_class_from_scope`, `find_containing_class_scope` and `get_child_scope_with_symbol_name` are deleted with no remaining callers or test stubs.
-- [ ] #3 `path_resolution.rust.ts`'s `resolve_self_type_rust` routes through `find_self_type`.
-- [ ] #4 All reproduced failure modes clear: getter/setter pair, constructor-only class, constructor body and field initialiser, first-candidate break; and `find_self_type` names the type from a cross-file Rust `impl` scope.
-- [ ] #5 Integration tests cover all of this step's evidence cases: webpack `lib/Module.js` and angular `abstract_form.directive.ts` accessor pairs, celery `certificate.py:100`, the constructor-body and field-initialiser cases, sqlx `PgCube`, the field/method name collision, and express `function View(){ this.lookup() }`.
-- [ ] #6 `receiver_resolution.test.ts`, `constructor.rust.test.ts` and `path_resolution.rust.test.ts` are green with the rewritten cases.
+- [x] #1 `find_self_type` exists, stops at the nearest scope carrying `self_type_name`, and verifies the resolved definition is a class/interface/enum.
+- [x] #2 `find_class_from_scope`, `find_containing_class_scope` and `get_child_scope_with_symbol_name` are deleted with no remaining callers or test stubs.
+- [x] #3 `path_resolution.rust.ts`'s `resolve_self_type_rust` routes through `find_self_type`.
+- [x] #4 All reproduced failure modes clear: getter/setter pair, constructor-only class, constructor body and field initialiser, first-candidate break; and `find_self_type` names the type from a cross-file Rust `impl` scope.
+- [x] #5 Integration tests cover all of this step's evidence cases: webpack `lib/Module.js` and angular `abstract_form.directive.ts` accessor pairs, celery `certificate.py:100`, the constructor-body and field-initialiser cases, sqlx `PgCube`, the field/method name collision, and express `function View(){ this.lookup() }`.
+- [x] #6 `receiver_resolution.test.ts`, `constructor.rust.test.ts` and `path_resolution.rust.test.ts` are green with the rewritten cases.
 
 <!-- AC:END -->
 
 ## Notes from wave 1
 
 `LexicalScope.self_type_name` is set by every boundary extractor: the class-family scope (`type: "class"`, which also covers interface, enum and trait bodies) names its declaration, and a Rust `impl` block — a `type: "block"` scope — names the implemented type (`type_identifier`, or the identifier under a `generic_type`; null for a reference or a path). The Python class scope keeps `name: null` (its capture is the body `block`) while `self_type_name` carries the class; an anonymous class expression records null.
+
+## Implementation notes
+
+### Where the self type name is looked up
+
+The name is resolved from the **parent** of the scope that records it, not from the recording scope. A type is declared outside the body that names it, so a member named after its own class (`class Foo { Foo = 5 }`, a Python class attribute `Foo = 5`) can only shadow the declaration — resolving inside the body binds `self` to the member and drops every `this.m()` edge in the class. Every language agrees: a class/struct/enum's `defining_scope_id` is the scope above its body, including a CommonJS-exported class expression. Starting outside also reaches a Rust `impl`'s `use`, which sits in the module scope above the block.
+
+When the lexical binding is not a class/interface/enum, `find_type_declared_in_scope` (`registries/definition.ts`) asks the lookup scope for a type of that name **by kind**. A scope holds one symbol per name, so TypeScript declaration merging — `class Foo` beside `namespace Foo` — can give the slot to the namespace; only a type can be what `self` denotes, so the type is asked for directly rather than taken from whichever declaration won the name.
+
+### Correction to this task's framing
+
+"This is the step that flips the `self`/`this` rows" overstates it, measured rather than assumed. Reverting the three source files and re-running this step's new integration tests leaves **two** failing: express's `function View(){ this.lookup() }` with `View.prototype.lookup = fn`, and a Python class whose only own member is `__init__` calling an inherited `self.helper()`. The accessor-pair (webpack, angular), constructor-body, field-initialiser, sqlx `PgCube`, Rust enum-with-two-impls and Rust field/method-collision cases all already resolved before this step — wave 1 (TASK-376.3, .4, .12) closed them, and the deleted scan only ever needed **one** ordinary method anywhere in the class to seed its reverse lookup, which every one of those shapes still has. They are kept as regression guards, not as proof of this step.
+
+What this step does change on the capability surface: the two cases above resolve; a cross-file Rust `impl` can name its type (unit tier — the end-to-end `self.method()` edge needs the member half, TASK-376.8); and `class_definition_not_found` now means "this scope names its type and nothing here supplies it", which is actionable, where before it meant "no member happened to seed the scan".
+
+sqlx `PgCube` was re-probed as the description asks: it resolves, and is kept as an insulation case.

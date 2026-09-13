@@ -316,6 +316,32 @@ export class DefinitionRegistry {
     return matches;
   }
 
+  /**
+   * The class, interface or enum named `name` declared directly in `scope_id`.
+   *
+   * A scope holds one symbol per name, so a type declared beside a same-named
+   * non-type — a TypeScript `class Foo` merged with a `namespace Foo` — can lose
+   * that slot to the non-type. A caller that needs the type specifically asks
+   * for it by kind here rather than taking whichever declaration won the name.
+   */
+  find_type_declared_in_scope(
+    file_id: FilePath,
+    scope_id: ScopeId,
+    name: SymbolName
+  ): SymbolId | null {
+    for (const symbol_id of this.by_file.get(file_id) ?? []) {
+      const def = this.by_symbol.get(symbol_id);
+      if (
+        def?.name === name &&
+        def.defining_scope_id === scope_id &&
+        (def.kind === "class" || def.kind === "interface" || def.kind === "enum")
+      ) {
+        return symbol_id;
+      }
+    }
+    return null;
+  }
+
   get_exportable_definitions_in_file(
     file_id: FilePath
   ): ExportableDefinition[] {

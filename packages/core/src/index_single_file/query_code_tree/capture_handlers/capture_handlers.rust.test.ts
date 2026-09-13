@@ -76,9 +76,6 @@ describe("rust_builder", () => {
       scope_depths: new Map(),
       root_scope_id,
       get_scope_id: (_location: Location) => root_scope_id,
-      get_child_scope_with_symbol_name: (scope_id: ScopeId, name: SymbolName) => {
-        throw new Error(`Child scope with name ${name} not found in scope ${scope_id}`);
-      },
     };
   }
 
@@ -440,9 +437,6 @@ impl MyStruct {
         scope_depths: new Map(),
         root_scope_id,
         get_scope_id: (_location: Location) => root_scope_id,
-        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
-          throw new Error(`Child scope with name ${_name} not found in scope ${_scope_id}`);
-        },
       };
 
       const builder = new DefinitionBuilder(context);
@@ -544,9 +538,6 @@ impl MyStruct {
         scope_depths: new Map(),
         root_scope_id,
         get_scope_id: (_location: Location) => root_scope_id,
-        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
-          throw new Error("Child scope not found");
-        },
       };
 
       const builder = new DefinitionBuilder(context);
@@ -599,9 +590,6 @@ impl MyStruct {
         scope_depths: new Map(),
         root_scope_id,
         get_scope_id: (_location: Location) => root_scope_id,
-        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
-          throw new Error("Child scope not found");
-        },
       };
 
       const builder = new DefinitionBuilder(context);
@@ -657,9 +645,6 @@ impl MyStruct {
         scope_depths: new Map(),
         root_scope_id,
         get_scope_id: (_location: Location) => root_scope_id,
-        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
-          throw new Error("Child scope not found");
-        },
       };
 
       const builder = new DefinitionBuilder(context);
@@ -783,9 +768,6 @@ impl MyStruct {
         scope_depths: new Map(),
         root_scope_id,
         get_scope_id: (_location: Location) => root_scope_id,
-        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
-          throw new Error("Child scope not found");
-        },
       };
 
       const builder = new DefinitionBuilder(context);
@@ -1224,9 +1206,6 @@ impl MyStruct {
         scope_depths: new Map(),
         root_scope_id,
         get_scope_id: (_location: Location) => root_scope_id,
-        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
-          throw new Error("Child scope not found");
-        },
       };
 
       const builder = new DefinitionBuilder(context);
@@ -1260,9 +1239,6 @@ impl MyStruct {
         scope_depths: new Map(),
         root_scope_id,
         get_scope_id: (_location: Location) => root_scope_id,
-        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
-          throw new Error("Child scope not found");
-        },
       };
 
       const builder = new DefinitionBuilder(context);
@@ -1297,9 +1273,6 @@ impl MyStruct {
         scope_depths: new Map(),
         root_scope_id,
         get_scope_id: (_location: Location) => root_scope_id,
-        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
-          throw new Error("Child scope not found");
-        },
       };
 
       const builder = new DefinitionBuilder(context);
@@ -1333,9 +1306,6 @@ impl MyStruct {
         scope_depths: new Map(),
         root_scope_id,
         get_scope_id: (_location: Location) => root_scope_id,
-        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
-          throw new Error("Child scope not found");
-        },
       };
 
       const builder = new DefinitionBuilder(context);
@@ -1556,9 +1526,6 @@ impl MyStruct {
         scope_depths: new Map(),
         root_scope_id,
         get_scope_id: (_location: Location) => root_scope_id,
-        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
-          throw new Error("Child scope not found");
-        },
       };
 
       const builder = new DefinitionBuilder(context);
@@ -1608,9 +1575,6 @@ impl MyStruct {
         scope_depths: new Map(),
         root_scope_id,
         get_scope_id: (_location: Location) => root_scope_id,
-        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
-          throw new Error("Child scope not found");
-        },
       };
 
       const builder = new DefinitionBuilder(context);
@@ -1644,9 +1608,6 @@ impl MyStruct {
         scope_depths: new Map(),
         root_scope_id,
         get_scope_id: (_location: Location) => root_scope_id,
-        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
-          throw new Error("Child scope not found");
-        },
       };
 
       const builder = new DefinitionBuilder(context);

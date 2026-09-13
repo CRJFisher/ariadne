@@ -89,7 +89,6 @@ describe("JavaScript Builder Configuration", () => {
       scope_depths: new Map(),
       root_scope_id: test_scope_id,
       get_scope_id: (location: Location) => test_scope_id,
-      get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => test_scope_id,
     };
   }
 
