@@ -192,7 +192,6 @@ export class TypeRegistry {
     context: TypeResolutionContext
   ): void {
     const { resolutions } = context;
-    const definitions = this.definitions;
     const resolved_symbols = new Set<SymbolId>();
 
     // STEP 1: variable/parameter/property → constructed or annotated type.
@@ -204,7 +203,7 @@ export class TypeRegistry {
     // it resolves to a factory function, as `p: Parser = make()` does.
     const constructions = new Map<SymbolId, readonly SymbolName[]>();
     for (const [loc_key, chain] of extracted.construction_bindings) {
-      const target_id = definitions.get_symbol_at_location(loc_key);
+      const target_id = this.definitions.get_symbol_at_location(loc_key);
       if (target_id) constructions.set(target_id, chain);
     }
     const bound_symbols = new Set([
@@ -212,14 +211,14 @@ export class TypeRegistry {
       ...constructions.keys(),
     ]);
     for (const symbol_id of bound_symbols) {
-      const scope_id = definitions.get_symbol_scope(symbol_id);
+      const scope_id = this.definitions.get_symbol_scope(symbol_id);
       if (!scope_id) continue;
 
       const construction = constructions.get(symbol_id);
       const constructed_id = construction
         ? this.resolve_type_head(scope_id, construction, undefined, file_id, language, context)
         : null;
-      if (constructed_id && names_a_type(constructed_id, definitions)) {
+      if (constructed_id && names_a_type(constructed_id, this.definitions)) {
         this.symbol_types.set(symbol_id, constructed_id);
         resolved_symbols.add(symbol_id);
         continue;
@@ -234,7 +233,7 @@ export class TypeRegistry {
       const annotated_id = this.resolve_annotation(scope_id, annotation, file_id, language, context);
       this.record_declared_type(
         symbol_id,
-        annotated_id && names_a_type(annotated_id, definitions) ? annotated_id : null,
+        annotated_id && names_a_type(annotated_id, this.definitions) ? annotated_id : null,
         this.resolve_annotation_arguments(scope_id, annotation, file_id, language, context),
         resolved_symbols
       );
@@ -244,7 +243,7 @@ export class TypeRegistry {
     // every value type: a method is a member a receiver names, and what calling
     // it yields is a different type, reached only by the call.
     for (const [callable_id, return_text] of extracted.return_bindings) {
-      const scope_id = definitions.get_symbol_scope(callable_id);
+      const scope_id = this.definitions.get_symbol_scope(callable_id);
       if (!scope_id) continue;
 
       const return_annotation = parse_type_annotation(return_text, language);
@@ -257,7 +256,7 @@ export class TypeRegistry {
         language,
         context
       );
-      if (return_type_id && names_a_type(return_type_id, definitions)) {
+      if (return_type_id && names_a_type(return_type_id, this.definitions)) {
         this.callable_return_types.set(callable_id, return_type_id);
         resolved_symbols.add(callable_id);
       }
@@ -268,13 +267,13 @@ export class TypeRegistry {
     for (const [variable_id, function_name] of extracted.call_initializers) {
       if (this.symbol_types.has(variable_id)) continue;
 
-      const scope_id = definitions.get_symbol_scope(variable_id);
+      const scope_id = this.definitions.get_symbol_scope(variable_id);
       if (!scope_id) continue;
 
       const function_id = resolutions.resolve(scope_id, function_name);
       if (!function_id) continue;
 
-      const function_def = definitions.get(function_id);
+      const function_def = this.definitions.get(function_id);
       if (!function_def || function_def.kind !== "function") continue;
 
       const return_type_name = function_def.return_type;
@@ -287,7 +286,7 @@ export class TypeRegistry {
       const return_annotation = parse_type_annotation(return_type_name, function_language);
       if (!return_annotation) continue;
 
-      const function_scope_id = definitions.get_symbol_scope(function_id) ?? scope_id;
+      const function_scope_id = this.definitions.get_symbol_scope(function_id) ?? scope_id;
       this.record_declared_type(
         variable_id,
         this.resolve_annotation(
@@ -310,7 +309,7 @@ export class TypeRegistry {
 
     // STEP 2: copy each declared type's already-resolved member map from DefinitionRegistry.
     for (const type_id of extracted.declared_types) {
-      const member_map = definitions.get_member_index().get(type_id);
+      const member_map = this.definitions.get_member_index().get(type_id);
       if (member_map && member_map.size > 0) {
         this.resolved_type_members.set(type_id, new Map(member_map));
         resolved_symbols.add(type_id);
