@@ -121,6 +121,19 @@ export interface MethodDefinition extends Definition {
   // call edges to the getter, and only a getter may hold the member slot for
   // its name.
   readonly accessor_kind?: "getter" | "setter" | "deleter";
+  /**
+   * @language rust
+   * The type an `impl` block names as its self type (`impl S`, `impl Tr for S`),
+   * as written. Set on every method an `impl` block declares, including one
+   * whose type another file declares.
+   */
+  readonly impl_self_type?: SymbolName;
+  /**
+   * @language rust
+   * The trait an `impl Tr for S` block implements, as written. Absent for an
+   * inherent `impl S` block.
+   */
+  readonly impl_trait_name?: SymbolName;
 }
 
 export interface ConstructorDefinition extends Definition {

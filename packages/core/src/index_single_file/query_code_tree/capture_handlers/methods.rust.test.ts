@@ -96,6 +96,112 @@ impl MyStruct {
       expect(classes[0].methods[0].return_type).toBe("String");
     });
 
+    it("records the impl's self type and trait on a method attached to the struct", () => {
+      const code = `struct CacheBuilder {}
+trait DocFolder { fn fold_item(&mut self); }
+impl DocFolder for CacheBuilder {
+    fn fold_item(&mut self) {}
+}`;
+      const tree = parser.parse(code);
+      const struct_node = find_node(tree.rootNode, "type_identifier", "CacheBuilder");
+      const method_node = find_node(find_node(tree.rootNode, "impl_item"), "identifier", "fold_item");
+      const context = create_context();
+      const builder = new DefinitionBuilder(context);
+      RUST_HANDLERS["definition.class"]({
+        category: "definition" as any,
+        entity: "class" as any,
+        node: struct_node,
+        text: "CacheBuilder" as SymbolName,
+        name: "definition.class",
+        location: node_to_location(struct_node, "test.rs" as FilePath),
+      }, builder, context);
+
+      handle_definition_method(
+        {
+          category: "definition" as any,
+          entity: "method" as any,
+          node: method_node,
+          text: "fold_item" as SymbolName,
+          name: "definition.method",
+          location: node_to_location(method_node, "test.rs" as FilePath),
+        },
+        builder,
+        context
+      );
+
+      const result = builder.build();
+      const [method] = Array.from(result.classes.values())[0].methods;
+      expect([method.name, method.impl_self_type, method.impl_trait_name]).toEqual([
+        "fold_item",
+        "CacheBuilder",
+        "DocFolder",
+      ]);
+      expect(result.unattached_impl_methods.size).toBe(0);
+    });
+
+    it("keeps a method unattached, with its parameters, when the file declares no type for the impl", () => {
+      const code = `impl<'hir> LoweringContext<'_, 'hir> {
+    fn lower_qpath(&mut self, depth: usize) {}
+}`;
+      const tree = parser.parse(code);
+      const method_node = find_node(tree.rootNode, "identifier", "lower_qpath");
+      const param_node = find_node(tree.rootNode, "identifier", "depth");
+      const self_node = find_node(tree.rootNode, "self");
+      const context = create_context();
+      const builder = new DefinitionBuilder(context);
+
+      handle_definition_method(
+        {
+          category: "definition" as any,
+          entity: "method" as any,
+          node: method_node,
+          text: "lower_qpath" as SymbolName,
+          name: "definition.method",
+          location: node_to_location(method_node, "test.rs" as FilePath),
+        },
+        builder,
+        context
+      );
+      RUST_HANDLERS["definition.parameter.self"]({
+        category: "definition" as any,
+        entity: "parameter" as any,
+        node: self_node,
+        text: "self" as SymbolName,
+        name: "definition.parameter.self",
+        location: node_to_location(self_node, "test.rs" as FilePath),
+      }, builder, context);
+      RUST_HANDLERS["definition.parameter"]({
+        category: "definition" as any,
+        entity: "parameter" as any,
+        node: param_node,
+        text: "depth" as SymbolName,
+        name: "definition.parameter",
+        location: node_to_location(param_node, "test.rs" as FilePath),
+      }, builder, context);
+
+      const result = builder.build();
+      expect(Array.from(result.classes.values())).toHaveLength(0);
+      const unattached = Array.from(result.unattached_impl_methods.values());
+      expect(
+        unattached.map((method) => ({
+          name: method.name,
+          impl_self_type: method.impl_self_type,
+          impl_trait_name: method.impl_trait_name,
+          parameters: method.parameters.map((parameter) => [parameter.name, parameter.type]),
+        }))
+      ).toEqual([
+        {
+          name: "lower_qpath",
+          impl_self_type: "LoweringContext",
+          impl_trait_name: undefined,
+          parameters: [
+            ["self", "LoweringContext"],
+            ["depth", "usize"],
+          ],
+        },
+      ]);
+    });
+
     it("should skip method when no containing impl block found", () => {
       const code = "fn standalone() {}";
       const tree = parser.parse(code);

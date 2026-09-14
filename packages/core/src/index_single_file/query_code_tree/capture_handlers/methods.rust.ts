@@ -6,6 +6,7 @@
 
 import type { SymbolName } from "@ariadnejs/types";
 import type { DefinitionBuilder } from "../../definitions/definition_builder";
+import type { ImplMethodInput } from "../../definitions/method_input";
 import type { CaptureNode } from "../../capture_types";
 import type { ProcessingContext } from "../../scopes/processing_context";
 import {
@@ -22,6 +23,26 @@ import {
 // ============================================================================
 // METHOD HANDLERS
 // ============================================================================
+
+/**
+ * Attach an impl-block method to the struct or enum this file declares under
+ * its self type, or keep it unattached when the type is declared elsewhere —
+ * the method is indexed either way, carrying the names its type and trait are
+ * resolved by.
+ */
+function add_impl_method(builder: DefinitionBuilder, method_def: ImplMethodInput): void {
+  const struct_id = builder.find_class_by_name(method_def.impl_self_type);
+  if (struct_id) {
+    builder.add_method_to_class(struct_id, method_def);
+    return;
+  }
+  const enum_id = builder.find_enum_by_name(method_def.impl_self_type);
+  if (enum_id) {
+    builder.add_method_to_enum(enum_id, method_def);
+    return;
+  }
+  builder.add_unattached_impl_method(method_def);
+}
 
 export function handle_definition_method(
   capture: CaptureNode,
@@ -43,16 +64,10 @@ export function handle_definition_method(
       return_type: return_type,
       static: is_static || undefined,
       docstring,
+      impl_self_type: impl_info.struct_name,
+      impl_trait_name: impl_info.trait_name,
     };
-    const struct_id = builder.find_class_by_name(impl_info.struct_name);
-    if (struct_id) {
-      builder.add_method_to_class(struct_id, method_def);
-    } else {
-      const enum_id = builder.find_enum_by_name(impl_info.struct_name);
-      if (enum_id) {
-        builder.add_method_to_enum(enum_id, method_def);
-      }
-    }
+    add_impl_method(builder, method_def);
   }
 }
 
@@ -101,16 +116,10 @@ export function handle_definition_method_async(
       return_type: return_type,
       async: true as const,
       docstring,
+      impl_self_type: impl_info.struct_name,
+      impl_trait_name: impl_info.trait_name,
     };
-    const struct_id = builder.find_class_by_name(impl_info.struct_name);
-    if (struct_id) {
-      builder.add_method_to_class(struct_id, method_def);
-    } else {
-      const enum_id = builder.find_enum_by_name(impl_info.struct_name);
-      if (enum_id) {
-        builder.add_method_to_enum(enum_id, method_def);
-      }
-    }
+    add_impl_method(builder, method_def);
   }
 }
 
@@ -133,15 +142,9 @@ export function handle_definition_constructor(
       return_type: return_type,
       static: true as const,
       docstring,
+      impl_self_type: impl_info.struct_name,
+      impl_trait_name: impl_info.trait_name,
     };
-    const struct_id = builder.find_class_by_name(impl_info.struct_name);
-    if (struct_id) {
-      builder.add_method_to_class(struct_id, method_def);
-    } else {
-      const enum_id = builder.find_enum_by_name(impl_info.struct_name);
-      if (enum_id) {
-        builder.add_method_to_enum(enum_id, method_def);
-      }
-    }
+    add_impl_method(builder, method_def);
   }
 }

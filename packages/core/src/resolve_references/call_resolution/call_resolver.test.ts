@@ -71,7 +71,7 @@ describe("resolve_calls_for_files", () => {
 
   beforeEach(() => {
     definitions = new DefinitionRegistry();
-    types = new TypeRegistry();
+    types = new TypeRegistry(definitions);
     scopes = new ScopeRegistry();
     references = new ReferenceRegistry();
     imports = new ImportGraph();
@@ -1491,10 +1491,10 @@ describe("resolved-plus-failed invariant", () => {
   }
 
   it.each([
-    ["typescript", { files: 39, call_references: 103, resolved: 70, failed: 33 }],
+    ["typescript", { files: 43, call_references: 108, resolved: 74, failed: 34 }],
     ["javascript", { files: 37, call_references: 226, resolved: 145, failed: 81 }],
-    ["python", { files: 50, call_references: 274, resolved: 199, failed: 75 }],
-    ["rust", { files: 30, call_references: 158, resolved: 108, failed: 50 }],
+    ["python", { files: 56, call_references: 280, resolved: 204, failed: 76 }],
+    ["rust", { files: 34, call_references: 165, resolved: 115, failed: 50 }],
   ] as const)(
     "ends every call-kind reference of the %s fixture corpus as one CallReference with a target or a reason",
     async (language, expected: CorpusTally) => {

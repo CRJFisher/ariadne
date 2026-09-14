@@ -47,7 +47,7 @@ Phase 2:  Update registries
             └── ImportGraph         (import dependency tracking)
 Phase 2.5: Fix import locations (correct ImportDefinition source locations)
 Phase 3:  Name resolution (lexical scope walk: local → imports → parent)
-Phase 3.5: Cross-file type inheritance resolution
+Phase 3.5: Type heritage (extends/implements/impl-trait names → the subtype graph)
 Phase 3.6: Reference preprocessing (language-specific, e.g., Python class instantiation)
 Phase 4:  Type registry update (resolves type names to SymbolIds)
 Phase 5:  Call resolution (function/method/constructor dispatch using types)

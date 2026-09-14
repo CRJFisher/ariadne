@@ -1,6 +1,8 @@
 import type {
   FilePath,
+  ScopeId,
   SymbolId,
+  SymbolName,
   Language,
   AnyDefinition,
   CallGraph,
@@ -93,7 +95,7 @@ export class Project {
 
   // ===== Project-level registries (aggregated, incrementally updated) =====
   public definitions: DefinitionRegistry = new DefinitionRegistry();
-  public types: TypeRegistry = new TypeRegistry();
+  public types: TypeRegistry = new TypeRegistry(this.definitions);
   public scopes: ScopeRegistry = new ScopeRegistry();
   public exports: ExportRegistry = new ExportRegistry();
   public references: ReferenceRegistry = new ReferenceRegistry();
@@ -332,6 +334,7 @@ export class Project {
         all_definitions.push(...enum_def.methods);
       }
     }
+    all_definitions.push(...index_single_file.unattached_impl_methods.values());
 
     all_definitions.push(...extract_all_parameters(index_single_file));
 
@@ -415,15 +418,40 @@ export class Project {
       modules,
     );
 
-    // Phase 3.5: Cross-file type inheritance resolution
+    const type_resolution_context: TypeResolutionContext = {
+      resolutions: this.resolutions,
+      exports: this.exports,
+      imports: this.imports,
+      languages: this.languages,
+      modules,
+      resolve_rust_type_path: (module_path, terminal, scope_id, referring_file) =>
+        resolve_qualified_path_rust(module_path, terminal, "type", scope_id, referring_file, {
+          definitions: this.definitions,
+          scopes: this.scopes,
+          resolutions: this.resolutions,
+          exports: this.exports,
+          imports: this.imports,
+          languages: this.languages,
+          modules,
+        }),
+    };
+
+    // Phase 3.5: Type heritage — Rust impl methods joined to the type another
+    // file declares, then every file's extends/implements/impl-trait names
+    // resolved into the subtype graph
     const files_needing_call_reresolution = new Set<FilePath>();
+    const resolve_type_name = (scope_id: ScopeId, type_name: SymbolName, file_id: FilePath) =>
+      this.types.resolve_type_name(scope_id, type_name, file_id, type_resolution_context);
     for (const file_id of files) {
-      const parent_files = this.definitions.resolve_cross_file_type_inheritance(
-        file_id,
-        this.resolutions,
-      );
-      for (const parent_file of parent_files) {
-        files_needing_call_reresolution.add(parent_file);
+      this.definitions.attach_impl_methods(file_id, resolve_type_name);
+    }
+    for (const file_id of files) {
+      const changed_parents = this.definitions.resolve_type_heritage(file_id, resolve_type_name);
+      for (const parent_id of changed_parents) {
+        const parent_def = this.definitions.get(parent_id);
+        if (parent_def) {
+          files_needing_call_reresolution.add(parent_def.location.file_path);
+        }
       }
     }
 
@@ -442,24 +470,6 @@ export class Project {
     }
 
     // Phase 4: Type registry
-    const type_resolution_context: TypeResolutionContext = {
-      definitions: this.definitions,
-      resolutions: this.resolutions,
-      exports: this.exports,
-      imports: this.imports,
-      languages: this.languages,
-      modules,
-      resolve_rust_type_path: (module_path, terminal, scope_id, referring_file) =>
-        resolve_qualified_path_rust(module_path, terminal, "type", scope_id, referring_file, {
-          definitions: this.definitions,
-          scopes: this.scopes,
-          resolutions: this.resolutions,
-          exports: this.exports,
-          imports: this.imports,
-          languages: this.languages,
-          modules,
-        }),
-    };
     for (const file_id of files) {
       const index_single_file = this.index_single_filees.get(file_id);
       if (index_single_file) {
@@ -507,6 +517,14 @@ export class Project {
     // a file two module hops away can hold a path that read the deleted file.
     const affected = this.files_affected_by(file_id, dependents);
     affected.delete(file_id);
+    // A parent's call sites dispatched to the deleted file's subtypes, and the
+    // parent's file depends on nothing the deletion touched.
+    for (const parent_id of this.definitions.take_evicted_heritage_parents(file_id)) {
+      const parent_def = this.definitions.get(parent_id);
+      if (parent_def) {
+        affected.add(parent_def.location.file_path);
+      }
+    }
     this.resolve_files(affected, modules);
   }
 

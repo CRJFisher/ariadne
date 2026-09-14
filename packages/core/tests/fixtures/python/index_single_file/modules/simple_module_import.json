@@ -92,6 +92,7 @@
       "import_kind": "namespace"
     }
   },
+  "unattached_impl_methods": {},
   "references": [
     {
       "kind": "variable_reference",

@@ -178,8 +178,8 @@ export class MemberIndex {
   }
 
   /**
-   * A type's own members plus those it inherits, walking `subtype_parents`
-   * (the inheritance edges `DefinitionRegistry` holds) through parents of the
+   * A type's own members plus those it inherits, walking `parents_of` (the
+   * heritage graph `DefinitionRegistry` holds) through parents of the
    * type's own kind only: a class walks its parent classes and an interface
    * its parent interfaces. `ClassDefinition.extends` conflates `extends` with
    * `implements`, and an implemented interface's signatures are not members
@@ -189,7 +189,7 @@ export class MemberIndex {
    */
   get_member_closure(
     type_id: SymbolId,
-    subtype_parents: ReadonlyMap<SymbolId, ReadonlySet<SymbolId>>
+    parents_of: (type_id: SymbolId) => readonly SymbolId[]
   ): ReadonlyMap<SymbolName, SymbolId> {
     const kind = this.definitions.get(type_id)?.kind;
     const closure = new Map<SymbolName, SymbolId>();
@@ -202,7 +202,7 @@ export class MemberIndex {
       for (const [name, member_id] of this.member_index.get(current) ?? []) {
         if (!closure.has(name)) closure.set(name, member_id);
       }
-      for (const parent_id of subtype_parents.get(current) ?? []) {
+      for (const parent_id of parents_of(current)) {
         // A type the registry no longer holds has no kind to match, so an
         // evicted parent is not walked as a same-kind one.
         if (kind !== undefined && this.definitions.get(parent_id)?.kind === kind) {

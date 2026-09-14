@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { DefinitionRegistry } from "./definition";
+import { DefinitionRegistry, type TypeNameResolver } from "./definition";
 import {
   function_symbol,
   variable_symbol,
@@ -1083,217 +1083,294 @@ describe("DefinitionRegistry", () => {
     });
   });
 
-  describe("resolve_cross_file_type_inheritance", () => {
-    it("return parent files when registering new subtypes", () => {
-      const file_a = "parent.ts" as FilePath;
-      const file_b = "child.ts" as FilePath;
-      const root_scope_a = `scope:${file_a}:module` as ScopeId;
-      const root_scope_b = `scope:${file_b}:module` as ScopeId;
+  describe("resolve_type_heritage", () => {
+    const parent_file = "parent.ts" as FilePath;
+    const child_file = "child.ts" as FilePath;
 
-      const parent_class_id = class_symbol("ParentClass", {
-        file_path: file_a,
-        start_line: 1,
-        start_column: 0,
-        end_line: 5,
-        end_column: 1,
-      });
+    function parent_and_child(): { parent: ClassDefinition; child: ClassDefinition } {
+      const parent = make_class_with_members(
+        parent_file,
+        `scope:${parent_file}:module` as ScopeId,
+        "ParentClass",
+        1,
+        []
+      );
+      const child = make_class_with_members(
+        child_file,
+        `scope:${child_file}:module` as ScopeId,
+        "ChildClass",
+        1,
+        ["ParentClass" as SymbolName]
+      );
+      registry.update_file(parent_file, [parent]);
+      registry.update_file(child_file, [child]);
+      return { parent, child };
+    }
 
-      const child_class_id = class_symbol("ChildClass", {
-        file_path: file_b,
-        start_line: 1,
-        start_column: 0,
-        end_line: 5,
-        end_column: 1,
-      });
+    it("returns the parents whose subtype set gained the file's subtypes", () => {
+      const { parent, child } = parent_and_child();
 
-      const parent_class: ClassDefinition = {
-        kind: "class",
-        symbol_id: parent_class_id,
-        name: "ParentClass" as SymbolName,
-        defining_scope_id: root_scope_a,
-        location: {
-          file_path: file_a,
-          start_line: 1,
-          start_column: 0,
-          end_line: 5,
-          end_column: 1,
-        },
-        is_exported: true,
-        methods: [],
-        properties: [],
-        extends: [],
-        decorators: [],
-      };
-
-      const child_class: ClassDefinition = {
-        kind: "class",
-        symbol_id: child_class_id,
-        name: "ChildClass" as SymbolName,
-        defining_scope_id: root_scope_b,
-        location: {
-          file_path: file_b,
-          start_line: 1,
-          start_column: 0,
-          end_line: 5,
-          end_column: 1,
-        },
-        is_exported: true,
-        methods: [],
-        properties: [],
-        extends: ["ParentClass" as SymbolName],
-        decorators: [],
-      };
-      registry.update_file(file_a, [parent_class]);
-      registry.update_file(file_b, [child_class]);
-      const mock_resolutions = {
-        resolve: (_scope_id: ScopeId, name: SymbolName): SymbolId | null => {
-          if (name === "ParentClass") {
-            return parent_class_id;
-          }
-          return null;
-        },
-      };
-
-      const affected_files = registry.resolve_cross_file_type_inheritance(
-        file_b,
-        mock_resolutions
+      const changed = registry.resolve_type_heritage(child_file, (_scope_id, name) =>
+        name === parent.name ? parent.symbol_id : null
       );
 
-      expect(affected_files).toEqual(new Set([file_a]));
-      expect(registry.get_subtypes(parent_class_id)).toEqual(
-        new Set([child_class_id])
+      expect(changed).toEqual(new Set([parent.symbol_id]));
+      expect(new Set(registry.get_subtypes(parent.symbol_id))).toEqual(
+        new Set([child.symbol_id])
+      );
+      expect(registry.get_parent_types(child.symbol_id)).toEqual([parent.symbol_id]);
+    });
+
+    it("returns no parent when the file's heritage names nothing that resolves", () => {
+      parent_and_child();
+
+      expect(registry.resolve_type_heritage(child_file, () => null)).toEqual(new Set());
+      expect(registry.resolve_type_heritage(parent_file, () => null)).toEqual(new Set());
+    });
+
+    it("returns no parent when re-resolving leaves the file's edges as they were", () => {
+      const { parent, child } = parent_and_child();
+      const resolve = (_scope_id: ScopeId, name: SymbolName): SymbolId | null =>
+        name === parent.name ? parent.symbol_id : null;
+
+      expect(registry.resolve_type_heritage(child_file, resolve)).toEqual(
+        new Set([parent.symbol_id])
+      );
+      expect(registry.resolve_type_heritage(child_file, resolve)).toEqual(new Set());
+      expect(registry.get_parent_types(child.symbol_id)).toEqual([parent.symbol_id]);
+    });
+
+    it("returns the parent a re-resolved file no longer extends, and drops the edge", () => {
+      const { parent, child } = parent_and_child();
+      registry.resolve_type_heritage(child_file, (_scope_id, name) =>
+        name === parent.name ? parent.symbol_id : null
+      );
+
+      expect(registry.resolve_type_heritage(child_file, () => null)).toEqual(
+        new Set([parent.symbol_id])
+      );
+      expect(new Set(registry.get_subtypes(parent.symbol_id))).toEqual(new Set());
+      expect(registry.get_parent_types(child.symbol_id)).toEqual([]);
+    });
+
+    it("keys an edge on the definition a qualified parent name resolves to", () => {
+      const visitor_file = "output_ast.ts" as FilePath;
+      const visitor = interface_with_method(
+        visitor_file,
+        `scope:${visitor_file}:module` as ScopeId,
+        "TypeVisitor",
+        1,
+        "visitType",
+        []
+      );
+      const emitter_file = "abstract_emitter.ts" as FilePath;
+      const emitter = make_class_with_members(
+        emitter_file,
+        `scope:${emitter_file}:module` as ScopeId,
+        "AbstractEmitterVisitor",
+        1,
+        ["o.TypeVisitor" as SymbolName]
+      );
+      registry.update_file(visitor_file, [visitor]);
+      registry.update_file(emitter_file, [emitter]);
+      const names_seen: SymbolName[] = [];
+
+      registry.resolve_type_heritage(emitter_file, (_scope_id, name) => {
+        names_seen.push(name);
+        return name === "o.TypeVisitor" ? visitor.symbol_id : null;
+      });
+
+      expect(names_seen).toEqual(["o.TypeVisitor"]);
+      expect(registry.get_parent_types(emitter.symbol_id)).toEqual([visitor.symbol_id]);
+    });
+
+    it("registers both edges for a class implementing two same-named interfaces from different modules", () => {
+      const facade_a_file = "compiler/src/compiler_facade_interface.ts" as FilePath;
+      const facade_b_file = "core/src/compiler/compiler_facade_interface.ts" as FilePath;
+      const facade_a = interface_with_method(
+        facade_a_file,
+        `scope:${facade_a_file}:module` as ScopeId,
+        "CompilerFacade",
+        1,
+        "compilePipe",
+        []
+      );
+      const facade_b = interface_with_method(
+        facade_b_file,
+        `scope:${facade_b_file}:module` as ScopeId,
+        "CompilerFacade",
+        1,
+        "compilePipe",
+        []
+      );
+      const impl_file = "compiler/src/jit_compiler_facade.ts" as FilePath;
+      const impl = make_class_with_members(
+        impl_file,
+        `scope:${impl_file}:module` as ScopeId,
+        "CompilerFacadeImpl",
+        1,
+        ["core.CompilerFacade" as SymbolName, "CompilerFacade" as SymbolName]
+      );
+      registry.update_file(facade_a_file, [facade_a]);
+      registry.update_file(facade_b_file, [facade_b]);
+      registry.update_file(impl_file, [impl]);
+
+      const changed = registry.resolve_type_heritage(impl_file, (_scope_id, name) =>
+        name === "core.CompilerFacade" ? facade_b.symbol_id : facade_a.symbol_id
+      );
+
+      expect(facade_a.symbol_id).not.toEqual(facade_b.symbol_id);
+      expect(changed).toEqual(new Set([facade_a.symbol_id, facade_b.symbol_id]));
+      expect(registry.get_parent_types(impl.symbol_id)).toEqual([
+        facade_b.symbol_id,
+        facade_a.symbol_id,
+      ]);
+      expect(new Set(registry.get_subtypes(facade_a.symbol_id))).toEqual(
+        new Set([impl.symbol_id])
+      );
+      expect(new Set(registry.get_subtypes(facade_b.symbol_id))).toEqual(
+        new Set([impl.symbol_id])
       );
     });
 
-    it("return empty set when no new subtypes are registered", () => {
-      const file_a = "parent.ts" as FilePath;
-      const root_scope_a = `scope:${file_a}:module` as ScopeId;
+    it("orders parent_types as the declaration writes them: class X extends Base implements I", () => {
+      const file_id = "x.ts" as FilePath;
+      const scope_id = `scope:${file_id}:module` as ScopeId;
+      const contract = interface_with_method(file_id, scope_id, "I", 1, "run", []);
+      const base = make_class_with_members(file_id, scope_id, "Base", 10, []);
+      const derived = make_class_with_members(file_id, scope_id, "X", 20, [
+        base.name,
+        contract.name,
+      ]);
+      registry.update_file(file_id, [contract, base, derived]);
 
-      const parent_class_id = class_symbol("ParentClass", {
-        file_path: file_a,
-        start_line: 1,
-        start_column: 0,
-        end_line: 5,
-        end_column: 1,
-      });
+      registry.resolve_type_heritage(file_id, resolve_in_own_scope(registry));
 
-      const parent_class: ClassDefinition = {
-        kind: "class",
-        symbol_id: parent_class_id,
-        name: "ParentClass" as SymbolName,
-        defining_scope_id: root_scope_a,
-        location: {
-          file_path: file_a,
-          start_line: 1,
-          start_column: 0,
-          end_line: 5,
-          end_column: 1,
-        },
-        is_exported: true,
-        methods: [],
-        properties: [],
-        extends: [],
-        decorators: [],
-      };
-
-      registry.update_file(file_a, [parent_class]);
-
-      const mock_resolutions = {
-        resolve: (): SymbolId | null => null,
-      };
-
-      const affected_files = registry.resolve_cross_file_type_inheritance(
-        file_a,
-        mock_resolutions
-      );
-
-      expect(affected_files).toEqual(new Set());
+      expect(registry.get_parent_types(derived.symbol_id)).toEqual([
+        base.symbol_id,
+        contract.symbol_id,
+      ]);
     });
 
-    it("does not return parent file if subtype already registered", () => {
-      const file_a = "parent.ts" as FilePath;
-      const file_b = "child.ts" as FilePath;
-      const root_scope_a = `scope:${file_a}:module` as ScopeId;
-      const root_scope_b = `scope:${file_b}:module` as ScopeId;
-
-      const parent_class_id = class_symbol("ParentClass", {
-        file_path: file_a,
-        start_line: 1,
-        start_column: 0,
-        end_line: 5,
-        end_column: 1,
-      });
-
-      const child_class_id = class_symbol("ChildClass", {
-        file_path: file_b,
-        start_line: 1,
-        start_column: 0,
-        end_line: 5,
-        end_column: 1,
-      });
-
-      const parent_class: ClassDefinition = {
-        kind: "class",
-        symbol_id: parent_class_id,
-        name: "ParentClass" as SymbolName,
-        defining_scope_id: root_scope_a,
-        location: {
-          file_path: file_a,
-          start_line: 1,
-          start_column: 0,
-          end_line: 5,
-          end_column: 1,
-        },
-        is_exported: true,
-        methods: [],
-        properties: [],
-        extends: [],
-        decorators: [],
-      };
-
-      const child_class: ClassDefinition = {
-        kind: "class",
-        symbol_id: child_class_id,
-        name: "ChildClass" as SymbolName,
-        defining_scope_id: root_scope_b,
-        location: {
-          file_path: file_b,
-          start_line: 1,
-          start_column: 0,
-          end_line: 5,
-          end_column: 1,
-        },
-        is_exported: true,
-        methods: [],
-        properties: [],
-        extends: ["ParentClass" as SymbolName],
-        decorators: [],
-      };
-
-      registry.update_file(file_a, [parent_class]);
-      registry.update_file(file_b, [child_class]);
-
-      const mock_resolutions = {
-        resolve: (_scope_id: ScopeId, name: SymbolName): SymbolId | null => {
-          if (name === "ParentClass") {
-            return parent_class_id;
-          }
-          return null;
-        },
-      };
-
-      const first_result = registry.resolve_cross_file_type_inheritance(
-        file_b,
-        mock_resolutions
+    it("keeps a declared parent ahead of a structural one that arrived first", () => {
+      const file_id = "x.ts" as FilePath;
+      const scope_id = `scope:${file_id}:module` as ScopeId;
+      const inferred = interface_with_method(file_id, scope_id, "Disposable", 1, "dispose", []);
+      const base = make_class_with_members(file_id, scope_id, "Base", 10, []);
+      const derived = make_class_with_members(file_id, scope_id, "X", 20, [base.name]);
+      registry.update_file(file_id, [inferred, base, derived]);
+      registry["heritage"].register_subtype(
+        inferred.symbol_id,
+        derived.symbol_id,
+        "structural",
+        file_id
       );
-      expect(first_result).toEqual(new Set([file_a]));
 
-      // Re-resolving the same file registers no new edge, so no parent file is returned.
-      const second_result = registry.resolve_cross_file_type_inheritance(
-        file_b,
-        mock_resolutions
+      registry.resolve_type_heritage(file_id, resolve_in_own_scope(registry));
+
+      expect(registry.get_parent_types(derived.symbol_id)).toEqual([
+        base.symbol_id,
+        inferred.symbol_id,
+      ]);
+      expect(registry["verify_reverse_indices"]()).toBeNull();
+    });
+
+    it("attaches a Rust impl's methods and records its trait edge from a file that declares neither the trait nor the type, and evicts both with that file", () => {
+      const trait_file = "src/fold.rs" as FilePath;
+      const trait_def = interface_with_method(
+        trait_file,
+        `scope:${trait_file}:module` as ScopeId,
+        "DocFolder",
+        1,
+        "fold_item",
+        []
       );
-      expect(second_result).toEqual(new Set());
+      const type_file = "src/cache.rs" as FilePath;
+      const type_def = make_class_with_members(
+        type_file,
+        `scope:${type_file}:module` as ScopeId,
+        "CacheBuilder",
+        1,
+        []
+      );
+      const impl_file = "src/cache_impl.rs" as FilePath;
+      const impl_scope = `scope:${impl_file}:module` as ScopeId;
+      const fold_item: MethodDefinition = {
+        ...method_in(impl_file, impl_scope, "fold_item", 2),
+        impl_self_type: "CacheBuilder" as SymbolName,
+        impl_trait_name: "DocFolder" as SymbolName,
+      };
+      const fold_crate: MethodDefinition = {
+        ...method_in(impl_file, impl_scope, "fold_crate", 5),
+        impl_self_type: "CacheBuilder" as SymbolName,
+        impl_trait_name: "DocFolder" as SymbolName,
+      };
+      registry.update_file(trait_file, [trait_def]);
+      registry.update_file(type_file, [type_def]);
+      registry.update_file(impl_file, [fold_item, fold_crate]);
+
+      const resolve = (_scope_id: ScopeId, name: SymbolName): SymbolId | null =>
+        name === "DocFolder"
+          ? trait_def.symbol_id
+          : name === "CacheBuilder"
+            ? type_def.symbol_id
+            : null;
+
+      registry.attach_impl_methods(impl_file, resolve);
+      const changed = registry.resolve_type_heritage(impl_file, resolve);
+
+      expect(registry.get_member_owner(fold_item.symbol_id)).toBe(type_def.symbol_id);
+      expect(registry.get_member_index().get(type_def.symbol_id)?.get(fold_crate.name)).toBe(
+        fold_crate.symbol_id
+      );
+      expect(changed).toEqual(new Set([trait_def.symbol_id]));
+      expect(registry.get_parent_types(type_def.symbol_id)).toEqual([trait_def.symbol_id]);
+
+      registry.remove_file(impl_file);
+
+      expect(registry.get_parent_types(type_def.symbol_id)).toEqual([]);
+      expect(new Set(registry.get_subtypes(trait_def.symbol_id))).toEqual(new Set());
+      expect(names_of(registry.get_member_index().get(type_def.symbol_id))).toEqual([
+        "CacheBuilder_run",
+        "CacheBuilder_state",
+        "constructor",
+      ]);
+      expect(registry.get_member_owner(fold_item.symbol_id)).toBeUndefined();
+    });
+
+    it("attaches an inherent Rust impl's method and records no edge for it", () => {
+      const type_file = "src/cache.rs" as FilePath;
+      const type_def = make_class_with_members(
+        type_file,
+        `scope:${type_file}:module` as ScopeId,
+        "CacheBuilder",
+        1,
+        []
+      );
+      const impl_file = "src/cache_impl.rs" as FilePath;
+      const build: MethodDefinition = {
+        ...method_in(impl_file, `scope:${impl_file}:module` as ScopeId, "build", 2),
+        impl_self_type: "CacheBuilder" as SymbolName,
+      };
+      registry.update_file(type_file, [type_def]);
+      registry.update_file(impl_file, [build]);
+      registry.attach_impl_methods(impl_file, () => type_def.symbol_id);
+
+      expect(
+        registry.resolve_type_heritage(impl_file, () => type_def.symbol_id)
+      ).toEqual(new Set());
+      expect(registry.get_parent_types(type_def.symbol_id)).toEqual([]);
+      expect(registry.get_member_owner(build.symbol_id)).toBe(type_def.symbol_id);
+    });
+
+    it("records no edge to a parent that is not a class or interface", () => {
+      const { child } = parent_and_child();
+      const helper = named_function(parent_file, "ParentClass" as SymbolName, 40);
+      registry.update_file(parent_file, [helper]);
+
+      registry.resolve_type_heritage(child_file, () => helper.symbol_id);
+
+      expect(registry.get_parent_types(child.symbol_id)).toEqual([]);
     });
   });
 
@@ -1454,7 +1531,7 @@ describe("DefinitionRegistry", () => {
       const func = make_function("foo");
       registry.update_file(file1, [func]);
 
-      expect(registry.get_subtypes(func.symbol_id)).toEqual(new Set());
+      expect(new Set(registry.get_subtypes(func.symbol_id))).toEqual(new Set());
     });
 
     it("stores and returns the function collection for a variable", () => {
@@ -1622,16 +1699,18 @@ describe("DefinitionRegistry", () => {
       const file = inheritance_file(0);
       const [base, child] = file.definitions;
       registry.update_file(file.file_id, file.definitions);
+      registry.resolve_type_heritage(file.file_id, resolve_in_own_scope(registry));
 
-      expect(registry.get_subtypes(base.symbol_id)).toEqual(
+      expect(new Set(registry.get_subtypes(base.symbol_id))).toEqual(
         new Set([child.symbol_id])
       );
 
       registry.remove_file(file.file_id);
 
-      expect(registry.get_subtypes(base.symbol_id)).toEqual(new Set());
-      expect(registry["subtype_parents"].get(child.symbol_id)).toBeUndefined();
-      expect(registry["type_subtypes"].size).toBe(0);
+      expect(new Set(registry.get_subtypes(base.symbol_id))).toEqual(new Set());
+      expect(registry.get_parent_types(child.symbol_id)).toEqual([]);
+      expect(registry["heritage"]["type_subtypes"].size).toBe(0);
+      expect(registry["heritage"]["edges_by_file"].size).toBe(0);
       expect(registry["members"]["owner_members"].size).toBe(0);
     });
 
@@ -1688,11 +1767,46 @@ describe("DefinitionRegistry", () => {
     it("names the reverse index an eviction path left behind", () => {
       const file = inheritance_file(0);
       registry.update_file(file.file_id, file.definitions);
+      registry.resolve_type_heritage(file.file_id, resolve_in_own_scope(registry));
 
-      registry["type_subtypes"].clear();
+      registry["heritage"]["type_subtypes"].clear();
 
       expect(registry["verify_reverse_indices"]()).toContain(
-        "subtype_parents still holds"
+        "parent_types still holds"
+      );
+    });
+
+    it("names a subtype edge its writing file no longer records", () => {
+      const file = inheritance_file(0);
+      registry.update_file(file.file_id, file.definitions);
+      registry.resolve_type_heritage(file.file_id, resolve_in_own_scope(registry));
+
+      registry["heritage"]["edges_by_file"].clear();
+
+      expect(registry["verify_reverse_indices"]()).toContain(
+        "edges_by_file is missing"
+      );
+    });
+
+    it("names a parent_types list that puts a declared parent behind a structural one", () => {
+      const file_id = "x.ts" as FilePath;
+      const scope_id = `scope:${file_id}:module` as ScopeId;
+      const inferred = interface_with_method(file_id, scope_id, "Disposable", 1, "dispose", []);
+      const base = make_class_with_members(file_id, scope_id, "Base", 10, []);
+      const derived = make_class_with_members(file_id, scope_id, "X", 20, [base.name]);
+      registry.update_file(file_id, [inferred, base, derived]);
+      registry.resolve_type_heritage(file_id, resolve_in_own_scope(registry));
+      registry["heritage"].register_subtype(
+        inferred.symbol_id,
+        derived.symbol_id,
+        "structural",
+        file_id
+      );
+
+      registry["heritage"]["parent_types"].get(derived.symbol_id)!.reverse();
+
+      expect(registry["verify_reverse_indices"]()).toContain(
+        "declared parent behind a structural one"
       );
     });
 
@@ -1745,6 +1859,7 @@ describe("DefinitionRegistry", () => {
           for (let index = 0; index < file_count; index++) {
             const file = inheritance_file(index);
             loaded.update_file(file.file_id, file.definitions);
+            loaded.resolve_type_heritage(file.file_id, resolve_in_own_scope(loaded));
             files.push(file);
           }
 
@@ -1757,8 +1872,9 @@ describe("DefinitionRegistry", () => {
           expect(counts.scanned_entries).toBe(0);
           expect(loaded["members"]["member_owner"].size).toBe(0);
           expect(loaded["members"]["owner_members"].size).toBe(0);
-          expect(loaded["type_subtypes"].size).toBe(0);
-          expect(loaded["subtype_parents"].size).toBe(0);
+          expect(loaded["heritage"]["type_subtypes"].size).toBe(0);
+          expect(loaded["heritage"]["parent_types"].size).toBe(0);
+          expect(loaded["heritage"]["edges_by_file"].size).toBe(0);
           expect(loaded["members"]["member_index"].size).toBe(0);
           expect(loaded["members"]["members_by_file"].size).toBe(0);
           expect(loaded["members"]["members_by_name"].size).toBe(0);
@@ -1770,22 +1886,19 @@ describe("DefinitionRegistry", () => {
         expect((highest - lowest) / lowest).toBeLessThanOrEqual(0.25);
       });
 
-      it("scans no map end to end while re-checking a registered cross-file parent", () => {
+      it("scans no map end to end while re-resolving a file whose heritage is unchanged", () => {
         const file = inheritance_file(0);
         const [base, child] = file.definitions;
         registry.update_file(file.file_id, file.definitions);
+        const resolve_base = (): SymbolId | null => base.symbol_id;
+        registry.resolve_type_heritage(file.file_id, resolve_base);
 
         const counts = count_registry_map_access(registry);
-        const affected = registry.resolve_cross_file_type_inheritance(
-          file.file_id,
-          {
-            resolve: (): SymbolId | null => base.symbol_id,
-          }
-        );
+        const changed = registry.resolve_type_heritage(file.file_id, resolve_base);
 
         expect(counts.scanned_entries).toBe(0);
-        expect(affected).toEqual(new Set());
-        expect(registry.get_subtypes(base.symbol_id)).toEqual(
+        expect(changed).toEqual(new Set());
+        expect(new Set(registry.get_subtypes(base.symbol_id))).toEqual(
           new Set([child.symbol_id])
         );
       });
@@ -2122,6 +2235,7 @@ describe("DefinitionRegistry", () => {
       const overriding = method_in(file, `scope:${file}:class:Child:10:0` as ScopeId, base.methods[0].name, 12);
       const child_with_override: ClassDefinition = { ...child, methods: [...child.methods, overriding] };
       registry.update_file(file, [base, child_with_override]);
+      registry.resolve_type_heritage(file, resolve_in_own_scope(registry));
 
       const closure = registry.get_member_closure(child.symbol_id);
 
@@ -2142,6 +2256,7 @@ describe("DefinitionRegistry", () => {
       const child_interface = interface_with_method(file, scope, "Closeable", 5, "close", [parent_interface.name]);
       const implementing = make_class_with_members(file, scope, "Handle", 10, [child_interface.name]);
       registry.update_file(file, [parent_interface, child_interface, implementing]);
+      registry.resolve_type_heritage(file, resolve_in_own_scope(registry));
 
       // `extends` conflates extends and implements, so the class walks no
       // interface: its closure is its own members only.
@@ -2162,6 +2277,7 @@ describe("DefinitionRegistry", () => {
       const left = make_class_with_members(file, scope, "Left", 1, ["Right" as SymbolName]);
       const right = make_class_with_members(file, scope, "Right", 10, ["Left" as SymbolName]);
       registry.update_file(file, [left, right]);
+      registry.resolve_type_heritage(file, resolve_in_own_scope(registry));
 
       expect(names_of(registry.get_member_closure(left.symbol_id))).toEqual([
         "Left_run",
@@ -2179,10 +2295,9 @@ describe("DefinitionRegistry", () => {
       const child = make_class_with_members(file, scope, "Child", 10, [base.name]);
       registry.update_file(base_file, [base]);
       registry.update_file(file, [child]);
-      registry.resolve_cross_file_type_inheritance(file, {
-        resolve: (_scope_id: ScopeId, name: SymbolName): SymbolId | null =>
-          name === base.name ? base.symbol_id : null,
-      });
+      registry.resolve_type_heritage(file, (_scope_id, name) =>
+        name === base.name ? base.symbol_id : null
+      );
       expect(names_of(registry.get_member_closure(child.symbol_id))).toEqual([
         "Base_run",
         "Base_state",
@@ -2195,7 +2310,7 @@ describe("DefinitionRegistry", () => {
 
       // The edge goes with the parent, so the closure is the child's own
       // members whether the parent's members or the edge left first.
-      expect(registry["subtype_parents"].get(child.symbol_id)).toBeUndefined();
+      expect(registry.get_parent_types(child.symbol_id)).toEqual([]);
       expect(names_of(registry.get_member_closure(child.symbol_id))).toEqual([
         "Child_run",
         "Child_state",
@@ -2212,6 +2327,7 @@ describe("DefinitionRegistry", () => {
         contract.name,
       ]);
       registry.update_file(file, [contract, base, child]);
+      registry.resolve_type_heritage(file, resolve_in_own_scope(registry));
 
       expect(names_of(registry.get_member_closure(child.symbol_id))).toEqual([
         "Base_run",
@@ -2368,6 +2484,15 @@ function inheritance_file(index: number): {
   return { file_id, definitions: [base, child] };
 }
 
+/**
+ * Resolves a bare name among the definitions its own scope declares — the
+ * shape same-file heritage takes, without the name resolution a project runs.
+ */
+function resolve_in_own_scope(registry: DefinitionRegistry): TypeNameResolver {
+  return (scope_id, type_name) =>
+    registry.get_scope_definitions(scope_id).get(type_name) ?? null;
+}
+
 function member_ids_of(classes: readonly ClassDefinition[]): SymbolId[] {
   return classes.flatMap((class_def) => [
     ...(class_def.methods ?? []).map((method) => method.symbol_id),
@@ -2467,14 +2592,10 @@ function count_registry_map_access(
     counts
   );
   registry["by_scope"] = count_map_access(registry["by_scope"], counts);
-  registry["type_subtypes"] = count_map_access(
-    registry["type_subtypes"],
-    counts
-  );
-  registry["subtype_parents"] = count_map_access(
-    registry["subtype_parents"],
-    counts
-  );
+  const heritage = registry["heritage"];
+  heritage["type_subtypes"] = count_map_access(heritage["type_subtypes"], counts);
+  heritage["parent_types"] = count_map_access(heritage["parent_types"], counts);
+  heritage["edges_by_file"] = count_map_access(heritage["edges_by_file"], counts);
   registry["function_collections"] = count_map_access(
     registry["function_collections"],
     counts

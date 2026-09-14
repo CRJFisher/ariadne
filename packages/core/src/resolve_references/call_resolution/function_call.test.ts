@@ -73,7 +73,7 @@ describe("Function Call Resolution", () => {
 
   beforeEach(() => {
     definitions = new DefinitionRegistry();
-    types = new TypeRegistry();
+    types = new TypeRegistry(definitions);
     scopes = new ScopeRegistry();
     references = new ReferenceRegistry();
     imports = new ImportGraph();
@@ -528,10 +528,11 @@ describe("Function Call Resolution", () => {
         namespaces: new Map(),
         types: new Map(),
         imported_symbols: new Map(),
+        unattached_impl_methods: new Map(),
         references: [],
       };
       const { exports, languages, modules } = make_export_chain_context();
-      types.update_file(py_file, py_index, [], make_type_resolution_context(definitions, resolutions, exports, languages, modules));
+      types.update_file(py_file, py_index, [], make_type_resolution_context(resolutions, exports, languages, modules));
 
       const call_ref = create_function_call_reference(
         "processor" as SymbolName,

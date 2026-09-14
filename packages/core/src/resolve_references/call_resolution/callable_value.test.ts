@@ -77,7 +77,7 @@ describe("resolve_callable_values", () => {
     context = {
       references: new ReferenceRegistry(),
       scopes: new ScopeRegistry(),
-      types: new TypeRegistry(),
+      types: new TypeRegistry(definitions),
       definitions,
       imports: new ImportGraph(),
       resolutions: new ResolutionRegistry(),

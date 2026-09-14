@@ -322,8 +322,7 @@ function resolve_calls(
 
       resolved_symbols = include_constructors_for_class_symbols(
         resolved_symbols,
-        context.definitions,
-        context.resolutions
+        context.definitions
       );
 
       // Python namespace constructor (`user = models.User(name)`): once the

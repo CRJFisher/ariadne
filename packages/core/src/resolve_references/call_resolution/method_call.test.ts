@@ -70,7 +70,7 @@ describe("Method Call Resolution", () => {
   beforeEach(() => {
     scopes = new ScopeRegistry();
     definitions = new DefinitionRegistry();
-    types = new TypeRegistry();
+    types = new TypeRegistry(definitions);
     resolutions = new ResolutionRegistry();
     imports = new ImportGraph();
     ({ exports, languages, modules } = make_export_chain_context());
@@ -981,6 +981,9 @@ describe("Method Call Resolution", () => {
         handler_b_def,
         param_def,
       ]);
+      definitions.resolve_type_heritage(TEST_FILE, (_scope_id, name) =>
+        name === "Handler" ? interface_id : null
+      );
 
       types["symbol_types"] = new Map();
       types["symbol_types"].set(handler_param_id, interface_id);

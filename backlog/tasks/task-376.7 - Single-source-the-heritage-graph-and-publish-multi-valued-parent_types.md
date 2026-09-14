@@ -1,7 +1,7 @@
 ---
 id: TASK-376.7
 title: "Single-source the heritage graph and publish multi-valued parent_types"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-07-29 09:38"
 labels:
@@ -48,11 +48,20 @@ Gates TASK-376.13, TASK-376.8 and TASK-376.14.
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 `resolve_cross_file_type_inheritance` is the only heritage builder; `register_type_inheritance`, `resolve_type_name_in_scope`, `is_subtype_registered`, `TypeRegistry` STEP 3, `parent_classes` and `implemented_interfaces` are deleted.
-- [ ] #2 `parent_types` is the multi-valued, source-ordered inverse index written by `register_subtype`, `type_subtypes` edges carry `"declared" | "structural"`, and `verify_reverse_indices` covers both.
-- [ ] #3 `walk_inheritance_chain` returns a BFS linearisation and `chain[1]` still serves `super`; `get_type_member` resolves members any number of hops up, through interfaces as well as classes; the `[method_symbol, ...impls]` hit behaviour from TASK-389 is unchanged.
-- [ ] #4 Qualified TypeScript heritage (`implements o.TypeVisitor`, `extends o.Base`), dotted Python bases (`compiler.DDLCompiler`) and Rust trait edges (`impl Tr for S`) are recorded, including for a cross-file impl whose type is declared elsewhere.
-- [ ] #5 Two same-named interfaces from different modules register both edges and stay distinct ids (angular `CompilerFacade`).
-- [ ] #6 Integration tests cover all of this step's evidence cases: angular's three `o.TypeVisitor` implementers, `impl DocFolder for CacheBuilder`, the generic `fn walk<V: Visitor>` fan-out, the Rust trait default-body cross-file override, cross-file base/mixin `self.m()`, `class C(Other, Mid)` two hops up the second base, and the sqlalchemy dotted-base `super()` edge.
+- [x] #1 `resolve_cross_file_type_inheritance` is the only heritage builder; `register_type_inheritance`, `resolve_type_name_in_scope`, `is_subtype_registered`, `TypeRegistry` STEP 3, `parent_classes` and `implemented_interfaces` are deleted.
+- [x] #2 `parent_types` is the multi-valued, source-ordered inverse index written by `register_subtype`, `type_subtypes` edges carry `"declared" | "structural"`, and `verify_reverse_indices` covers both.
+- [x] #3 `walk_inheritance_chain` returns a BFS linearisation and `chain[1]` still serves `super`; `get_type_member` resolves members any number of hops up, through interfaces as well as classes; the `[method_symbol, ...impls]` hit behaviour from TASK-389 is unchanged.
+- [x] #4 Qualified TypeScript heritage (`implements o.TypeVisitor`, `extends o.Base`), dotted Python bases (`compiler.DDLCompiler`) and Rust trait edges (`impl Tr for S`) are recorded, including for a cross-file impl whose type is declared elsewhere.
+- [x] #5 Two same-named interfaces from different modules register both edges and stay distinct ids (angular `CompilerFacade`).
+- [x] #6 Integration tests cover all of this step's evidence cases: angular's three `o.TypeVisitor` implementers, `impl DocFolder for CacheBuilder`, the generic `fn walk<V: Visitor>` fan-out, the Rust trait default-body cross-file override, cross-file base/mixin `self.m()`, `class C(Other, Mid)` two hops up the second base, and the sqlalchemy dotted-base `super()` edge.
 
 <!-- AC:END -->
+
+## Implementation notes
+
+- **Builder.** `DefinitionRegistry.resolve_type_heritage` is the single heritage builder. It was renamed from `resolve_cross_file_type_inheritance` because it now resolves every edge, same-file and Rust included. It runs in Phase 3.5 and resolves each name through `TypeRegistry.resolve_type_name`, the annotation resolver. It returns the parent ids whose subtype sets changed, and `Project` maps those to files for re-resolution.
+- **Graph storage.** The graph moved into `registries/subtype_graph.ts` (`SubtypeGraph`), composed by `DefinitionRegistry` in the same way as `MemberIndex`. An edge in `type_subtypes` carries `{ source: "declared" | "structural", written_by }`. `written_by` records which file wrote the edge, so a Rust `impl Trait for T` in a file that declares neither end is evicted with that file. `edges_by_file` indexes those writers. Evicted edges are held per writing file until its next heritage pass, which lets a dropped `implements` re-dispatch the parent's call sites. `Project.remove_file` drains the same record for a deleted file. `verify()` checks `parent_types` (membership, no duplicates, declared before structural) and `edges_by_file` against `type_subtypes`.
+- **Type registry.** `TypeRegistry` takes the `DefinitionRegistry` in its constructor and reads `get_parent_types`, and `TypeResolutionContext` no longer carries `definitions`. `find_constructor_in_class_hierarchy` walks `get_parent_types` rather than re-resolving `extends` names.
+- **Rust impl methods.** `MethodDefinition` carries `impl_self_type` and `impl_trait_name`. An impl method whose type another file declares is emitted in `SemanticIndex.unattached_impl_methods`, with its parameters, and is persisted. Emitting those methods without attaching them produced false entry points, so `DefinitionRegistry.attach_impl_methods` resolves `impl_self_type` in Phase 3.5 and joins each method to that type's member index and ownership, credited to the impl file. This is TASK-376.8 work-plan step 1. Retrying callers resolved before the impl file arrived stays with TASK-376.8 and TASK-376.13.
+- **Known gap.** A receiver typed by a trait-bound generic (`fn walk<V: Visitor>(v: &mut V)`) stays unresolved, because binding `V` through its bound is TASK-376.15 step 2. The `dyn Visitor` fan-out and the trait's full subtype set are asserted, and the generic form is an `it.todo` in `type.integration.test.ts`.
+- **Fixture corpus.** On the Rust fixture corpus, raw entry points go from 63 to 57. The six trait-impl `process`/`get_name` methods reached through `&dyn Handler`, and the two new `visit_item` impls, drop out. `descend` and `visit` in `integration/impls.rs` are now indexed and genuinely uncalled. The per-corpus tallies in `call_resolver.test.ts` are re-pinned for the new heritage fixtures and the resolved trait dispatches.

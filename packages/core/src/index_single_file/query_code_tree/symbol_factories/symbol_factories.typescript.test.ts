@@ -639,6 +639,13 @@ describe("extract_class_extends", () => {
     expect(class_node).not.toBeNull();
     expect(extract_class_extends(class_node!)).toEqual([]);
   });
+
+  it("keeps a namespace-qualified base as written: class Foo extends o.Base<T>", () => {
+    const root = parse_typescript("class Foo extends o.Base<T> {}");
+    const class_node = find_node_by_type(root, "class_declaration");
+    expect(class_node).not.toBeNull();
+    expect(extract_class_extends(class_node!)).toEqual(["o.Base"]);
+  });
 });
 
 // ============================================================================
@@ -680,6 +687,13 @@ describe("extract_interface_extends", () => {
     expect(iface_node).not.toBeNull();
     expect(extract_interface_extends(iface_node!)).toEqual([]);
   });
+
+  it("keeps namespace-qualified parents as written: interface Foo extends o.Base<T>, o.Other", () => {
+    const root = parse_typescript("interface Foo extends o.Base<T>, o.Other {}");
+    const iface_node = find_node_by_type(root, "interface_declaration");
+    expect(iface_node).not.toBeNull();
+    expect(extract_interface_extends(iface_node!)).toEqual(["o.Base", "o.Other"]);
+  });
 });
 
 // ============================================================================
@@ -713,6 +727,13 @@ describe("extract_implements", () => {
     const class_node = find_node_by_type(root, "class_declaration");
     expect(class_node).not.toBeNull();
     expect(extract_implements(class_node!)).toEqual([]);
+  });
+
+  it("keeps namespace-qualified interfaces as written, in order: implements o.TypeVisitor, o.Visitor<T>, I", () => {
+    const root = parse_typescript("class Foo implements o.TypeVisitor, o.Visitor<T>, I {}");
+    const class_node = find_node_by_type(root, "class_declaration");
+    expect(class_node).not.toBeNull();
+    expect(extract_implements(class_node!)).toEqual(["o.TypeVisitor", "o.Visitor", "I"]);
   });
 });
 

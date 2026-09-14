@@ -20,6 +20,7 @@ import type {
   NamespaceDefinition,
   TypeAliasDefinition,
   ImportDefinition,
+  MethodDefinition,
   SymbolReference,
 } from "@ariadnejs/types";
 import type { SemanticIndex } from "@ariadnejs/types";
@@ -53,6 +54,7 @@ export function to_serializable_semantic_index(
     namespaces: serialize_map(index.namespaces),
     types: serialize_map(index.types),
     imported_symbols: serialize_map(index.imported_symbols),
+    unattached_impl_methods: serialize_map(index.unattached_impl_methods),
     references: index.references,
   };
 }
@@ -128,6 +130,7 @@ export function deserialize_semantic_index(
     namespaces: deserialize_map<SymbolId, NamespaceDefinition>(p.namespaces as [SymbolId, NamespaceDefinition][]),
     types: deserialize_map<SymbolId, TypeAliasDefinition>(p.types as [SymbolId, TypeAliasDefinition][]),
     imported_symbols: deserialize_map<SymbolId, ImportDefinition>(p.imported_symbols as [SymbolId, ImportDefinition][]),
+    unattached_impl_methods: deserialize_map<SymbolId, MethodDefinition>(p.unattached_impl_methods as [SymbolId, MethodDefinition][]),
     references: p.references as readonly SymbolReference[],
   };
 }
@@ -155,6 +158,7 @@ export function validate_semantic_index_shape(parsed: unknown): boolean {
     "namespaces",
     "types",
     "imported_symbols",
+    "unattached_impl_methods",
   ]) {
     if (!Array.isArray(obj[field])) return false;
   }

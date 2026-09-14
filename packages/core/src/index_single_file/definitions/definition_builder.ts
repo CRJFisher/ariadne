@@ -46,6 +46,19 @@ import type {
   NamespaceBuilderState,
   PropertyBuilderState,
 } from "./builder_state";
+import type { ImplMethodInput, MethodInput } from "./method_input";
+
+function find_state_by_name(
+  states: ReadonlyMap<SymbolId, { base: { name?: SymbolName } }>,
+  name: SymbolName
+): SymbolId | undefined {
+  for (const [id, state] of states) {
+    if (state.base.name === name) {
+      return id;
+    }
+  }
+  return undefined;
+}
 
 // ============================================================================
 // Builder Result Type
@@ -66,6 +79,7 @@ export interface BuilderResult {
   types: ReadonlyMap<SymbolId, TypeAliasDefinition>;
   decorators: ReadonlyMap<SymbolId, DecoratorDefinition>;
   imports: ReadonlyMap<SymbolId, ImportDefinition>;
+  unattached_impl_methods: ReadonlyMap<SymbolId, MethodDefinition>;
 }
 
 // ============================================================================
@@ -85,6 +99,10 @@ export class DefinitionBuilder {
   private readonly imports = new Map<SymbolId, ImportDefinition>();
   private readonly types = new Map<SymbolId, TypeAliasDefinition>();
   private readonly decorators = new Map<SymbolId, DecoratorDefinition>();
+
+  // @language rust
+  // Methods of impl blocks whose self type this file declares no definition for.
+  private readonly unattached_impl_methods = new Map<SymbolId, MethodBuilderState>();
 
   // Member functions assigned to a holder across separate statements
   // (`app.method = function () {}`), keyed by the holder identifier name.
@@ -140,6 +158,10 @@ export class DefinitionBuilder {
     for (const [id, state] of this.namespaces) {
       namespaces.set(id, this.build_namespace(state));
     }
+    const unattached_impl_methods = new Map<SymbolId, MethodDefinition>();
+    for (const [id, state] of this.unattached_impl_methods) {
+      unattached_impl_methods.set(id, this.build_method(state));
+    }
 
     return {
       functions,
@@ -151,6 +173,7 @@ export class DefinitionBuilder {
       types: this.types,
       decorators: this.decorators,
       imports: this.imports,
+      unattached_impl_methods,
     };
   }
 
@@ -207,55 +230,8 @@ export class DefinitionBuilder {
     return this;
   }
 
-  add_method_to_class(
-    class_id: SymbolId,
-    definition: {
-      symbol_id: SymbolId;
-      name: SymbolName;
-      location: Location;
-      scope_id: ScopeId;
-      return_type?: SymbolName;
-      access_modifier?: "public" | "private" | "protected";
-      abstract?: boolean;
-      static?: boolean;
-      async?: boolean;
-      generics?: SymbolName[];
-      docstring?: string;
-      accessor_kind?: "getter" | "setter" | "deleter";
-    },
-  ): DefinitionBuilder {
-    const class_state = this.classes.get(class_id);
-    if (!class_state) return this;
-
-    // Abstract methods have no body, so they have no body scope.
-    let body_scope_id: ScopeId | undefined;
-    if (!definition.abstract) {
-      try {
-        body_scope_id = find_body_scope_for_definition(
-          this.context.scopes,
-          definition.name,
-          definition.location
-        );
-      } catch (error) {
-        // If we can't find the body scope, log a warning but continue
-        // This can happen for interface method signatures or other bodyless methods
-        console.warn(
-          `Could not find body scope for method ${definition.name}: ${error}`
-        );
-      }
-    }
-
-    const { scope_id, ...rest } = definition;
-    class_state.methods.set(definition.symbol_id, {
-      base: {
-        kind: "method",
-        defining_scope_id: scope_id,
-        ...rest,
-      },
-      parameters: new Map(),
-      decorators: [],
-      body_scope_id,
-    });
+  add_method_to_class(class_id: SymbolId, definition: MethodInput): DefinitionBuilder {
+    this.classes.get(class_id)?.methods.set(definition.symbol_id, this.method_state(definition));
     return this;
   }
 
@@ -308,78 +284,57 @@ export class DefinitionBuilder {
   // Rust-only: impl-block name lookups and enum methods
   // ==========================================================================
 
-  /**
-   * Find a class ID by name (for languages like Rust where impl blocks reference structs by name)
-   */
+  /** The class named `name` — Rust impl blocks name their struct. */
   find_class_by_name(name: SymbolName): SymbolId | undefined {
-    for (const [id, state] of this.classes.entries()) {
-      if (state.base.name === name) {
-        return id;
-      }
-    }
-    return undefined;
+    return find_state_by_name(this.classes, name);
   }
 
-  /**
-   * Find an interface ID by name (for languages like Rust where impl blocks reference traits by name)
-   */
+  /** The interface named `name` — Rust impl blocks name their trait. */
   find_interface_by_name(name: SymbolName): SymbolId | undefined {
-    for (const [id, state] of this.interfaces.entries()) {
-      if (state.base.name === name) {
-        return id;
-      }
-    }
-    return undefined;
+    return find_state_by_name(this.interfaces, name);
   }
 
-  /**
-   * Find an enum ID by name (for languages like Rust where impl blocks can target enums)
-   */
+  /** The enum named `name` — Rust impl blocks can name an enum. */
   find_enum_by_name(name: SymbolName): SymbolId | undefined {
-    for (const [id, state] of this.enums.entries()) {
-      if (state.base.name === name) {
-        return id;
-      }
-    }
-    return undefined;
+    return find_state_by_name(this.enums, name);
   }
 
   /** Rust enums carry methods through impl blocks. */
-  add_method_to_enum(
-    enum_id: SymbolId,
-    definition: {
-      symbol_id: SymbolId;
-      name: SymbolName;
-      location: Location;
-      scope_id: ScopeId;
-      return_type?: SymbolName;
-      static?: boolean;
-      async?: boolean;
-      docstring?: string;
-    },
-  ): DefinitionBuilder {
+  add_method_to_enum(enum_id: SymbolId, definition: MethodInput): DefinitionBuilder {
     const enum_state = this.enums.get(enum_id);
-    if (!enum_state) return this;
-
-    if (!enum_state.methods) {
-      enum_state.methods = new Map();
+    if (enum_state) {
+      enum_state.methods ??= new Map();
+      enum_state.methods.set(definition.symbol_id, this.method_state(definition));
     }
+    return this;
+  }
 
+  /** A method of an impl block whose self type has no definition in this file. */
+  add_unattached_impl_method(definition: ImplMethodInput): DefinitionBuilder {
+    this.unattached_impl_methods.set(definition.symbol_id, this.method_state(definition));
+    return this;
+  }
+
+  private method_state(definition: MethodInput): MethodBuilderState {
+    // Abstract methods have no body, so they have no body scope.
     let body_scope_id: ScopeId | undefined;
-    try {
-      body_scope_id = find_body_scope_for_definition(
-        this.context.scopes,
-        definition.name,
-        definition.location
-      );
-    } catch (error) {
-      console.warn(
-        `Could not find body scope for enum method ${definition.name}: ${error}`
-      );
+    if (!definition.abstract) {
+      try {
+        body_scope_id = find_body_scope_for_definition(
+          this.context.scopes,
+          definition.name,
+          definition.location
+        );
+      } catch (error) {
+        // A bodyless method (an interface signature) has no body scope to find.
+        console.warn(
+          `Could not find body scope for method ${definition.name}: ${error}`
+        );
+      }
     }
 
     const { scope_id, ...rest } = definition;
-    enum_state.methods.set(definition.symbol_id, {
+    return {
       base: {
         kind: "method",
         defining_scope_id: scope_id,
@@ -388,8 +343,7 @@ export class DefinitionBuilder {
       parameters: new Map(),
       decorators: [],
       body_scope_id,
-    });
-    return this;
+    };
   }
 
   // ==========================================================================
@@ -561,6 +515,12 @@ export class DefinitionBuilder {
         method_state.parameters.set(definition.symbol_id, param_def);
         return this;
       }
+    }
+
+    const unattached_state = this.unattached_impl_methods.get(callable_id);
+    if (unattached_state) {
+      unattached_state.parameters.set(definition.symbol_id, param_def);
+      return this;
     }
 
     // The indexed callable surface is deliberately partial — a parameter whose

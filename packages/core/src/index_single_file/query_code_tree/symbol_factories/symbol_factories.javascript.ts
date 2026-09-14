@@ -448,8 +448,9 @@ export function extract_extends(node: SyntaxNode): SymbolName[] {
             }
           }
         }
-      } else if (clause.type === "identifier") {
-        // JavaScript: class_heritage contains identifier directly
+      } else if (clause.type === "identifier" || clause.type === "member_expression") {
+        // JavaScript: class_heritage holds the base expression directly —
+        // `Base`, or `ns.Base` qualified as written.
         results.push(clause.text as SymbolName);
       }
     }

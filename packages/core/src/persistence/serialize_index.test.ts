@@ -132,6 +132,10 @@ function assert_index_equal(a: SemanticIndex, b: SemanticIndex): void {
   for (const [key, val] of a.imported_symbols) {
     expect(b.imported_symbols.get(key)).toEqual(val);
   }
+  expect(b.unattached_impl_methods.size).toEqual(a.unattached_impl_methods.size);
+  for (const [key, val] of a.unattached_impl_methods) {
+    expect(b.unattached_impl_methods.get(key)).toEqual(val);
+  }
   expect([...b.references]).toEqual([...a.references]);
 }
 
@@ -151,6 +155,7 @@ describe("serialize_semantic_index / deserialize_semantic_index", () => {
         namespaces: new Map(),
         types: new Map(),
         imported_symbols: new Map(),
+        unattached_impl_methods: new Map(),
         references: [],
       };
       const json = serialize_semantic_index(index);
@@ -355,6 +360,7 @@ describe("validate_semantic_index_shape", () => {
       namespaces: [],
       types: [],
       imported_symbols: [],
+      unattached_impl_methods: [],
       references: [],
     };
     expect(validate_semantic_index_shape(valid)).toBe(true);
@@ -385,6 +391,7 @@ describe("validate_semantic_index_shape", () => {
         namespaces: [],
         types: [],
         imported_symbols: [],
+        unattached_impl_methods: [],
         references: [],
       }),
     ).toBe(false);
@@ -405,6 +412,7 @@ describe("validate_semantic_index_shape", () => {
         namespaces: [],
         types: [],
         imported_symbols: [],
+        unattached_impl_methods: [],
         references: [],
       }),
     ).toBe(false);
@@ -425,6 +433,7 @@ describe("validate_semantic_index_shape", () => {
         namespaces: [],
         types: [],
         imported_symbols: [],
+        unattached_impl_methods: [],
         references: "not an array",
       }),
     ).toBe(false);
@@ -450,6 +459,7 @@ describe("validate_semantic_index_shape", () => {
       namespaces: [],
       types: [],
       imported_symbols: [],
+      unattached_impl_methods: [],
       references: [],
     };
     expect(validate_semantic_index_shape(invalid)).toBe(false);

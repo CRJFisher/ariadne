@@ -389,6 +389,13 @@ describe("extract_extends", () => {
       const result = extract_extends(class_node!);
       expect(result).toEqual([]);
     });
+
+    it("keeps a module-qualified base as written: class Foo extends events.EventEmitter", () => {
+      const root = parse_js("class Foo extends events.EventEmitter {}");
+      const class_node = find_node_by_type(root, "class_declaration");
+      expect(class_node).not.toBeNull();
+      expect(extract_extends(class_node!)).toEqual(["events.EventEmitter"]);
+    });
   });
 
   describe("TypeScript class_heritage path", () => {

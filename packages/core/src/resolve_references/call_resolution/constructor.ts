@@ -16,7 +16,6 @@ import type {
 } from "@ariadnejs/types";
 import { err, ok } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "../registries/definition";
-import type { ResolutionRegistry } from "../resolution_registry";
 import { resolve_module_member } from "../module_member_lookup";
 import type { CallResolutionContext } from "./call_resolver";
 import {
@@ -98,11 +97,7 @@ export function resolve_constructor_call(
     });
   }
 
-  let constructor_symbol = find_constructor_in_class_hierarchy(
-    class_def,
-    definitions,
-    resolutions
-  );
+  let constructor_symbol = find_constructor_in_class_hierarchy(class_def, definitions);
 
   // Associated constructors are stored as plain methods, so the hierarchy walk
   // (which reads `ClassDefinition.constructors`) finds nothing; the leaf
@@ -123,8 +118,7 @@ export function resolve_constructor_call(
  */
 export function include_constructors_for_class_symbols(
   resolved_symbols: SymbolId[],
-  definitions: DefinitionRegistry,
-  resolutions: ResolutionRegistry
+  definitions: DefinitionRegistry
 ): SymbolId[] {
   const result = [...resolved_symbols];
 
@@ -133,11 +127,7 @@ export function include_constructors_for_class_symbols(
     if (def?.kind !== "class") continue;
 
     const class_def = def as ClassDefinition;
-    const constructor_sym = find_constructor_in_class_hierarchy(
-      class_def,
-      definitions,
-      resolutions
-    );
+    const constructor_sym = find_constructor_in_class_hierarchy(class_def, definitions);
 
     if (constructor_sym && !result.includes(constructor_sym)) {
       result.push(constructor_sym);
@@ -149,35 +139,24 @@ export function include_constructors_for_class_symbols(
 
 /**
  * Walk the class hierarchy to find the nearest constructor: this class first,
- * then up the extends chain. Returns the first constructor found, or null.
+ * then its parent classes in the heritage graph, in declaration order. Returns
+ * the first constructor found, or null.
  *
- * The `visited` set guards against cycles in a malformed extends chain.
+ * The `visited` set guards against cycles in a malformed hierarchy.
  */
 function find_constructor_in_class_hierarchy(
   class_def: ClassDefinition,
   definitions: DefinitionRegistry,
-  resolutions: ResolutionRegistry,
-  visited?: Set<SymbolId>
+  visited: Set<SymbolId> = new Set()
 ): SymbolId | null {
   if (class_def.constructors && class_def.constructors.length > 0) {
     return class_def.constructors[0].symbol_id;
   }
 
-  if (class_def.extends.length === 0) {
-    return null;
-  }
+  visited.add(class_def.symbol_id);
 
-  const visited_set = visited ?? new Set<SymbolId>();
-  visited_set.add(class_def.symbol_id);
-
-  for (const parent_name of class_def.extends) {
-    const parent_id = resolutions.resolve(
-      class_def.defining_scope_id,
-      parent_name
-    );
-    if (!parent_id) continue;
-
-    if (visited_set.has(parent_id)) continue;
+  for (const parent_id of definitions.get_parent_types(class_def.symbol_id)) {
+    if (visited.has(parent_id)) continue;
 
     const parent_def = find_class_definition(parent_id, definitions);
     if (!parent_def) continue;
@@ -185,8 +164,7 @@ function find_constructor_in_class_hierarchy(
     const constructor_sym = find_constructor_in_class_hierarchy(
       parent_def,
       definitions,
-      resolutions,
-      visited_set
+      visited
     );
     if (constructor_sym) return constructor_sym;
   }
