@@ -224,6 +224,7 @@ export class DefinitionBuilder {
       },
       methods: new Map(),
       properties: new Map(),
+      property_ids_by_name: new Map(),
       constructors: new Map(),
       decorators: [],
     });
@@ -544,8 +545,8 @@ export class DefinitionBuilder {
     docstring?: string;
     function_collection?: FunctionCollection;
     collection_source?: SymbolName;
-    collection_source_key?: SymbolName;
-    initialized_from_call?: SymbolName;
+    member_source?: { holder: SymbolName; member: SymbolName };
+    initialized_from_call?: readonly SymbolName[];
     destructured_from?: SymbolName;
     destructured_key?: SymbolName;
   }): DefinitionBuilder {
@@ -562,7 +563,7 @@ export class DefinitionBuilder {
       docstring: definition.docstring,
       function_collection: definition.function_collection,
       collection_source: definition.collection_source,
-      collection_source_key: definition.collection_source_key,
+      member_source: definition.member_source,
       initialized_from_call: definition.initialized_from_call,
       destructured_from: definition.destructured_from,
       destructured_key: definition.destructured_key,
@@ -625,16 +626,20 @@ export class DefinitionBuilder {
       },
       decorators: [],
     });
+    if (!class_state.property_ids_by_name.has(definition.name)) {
+      class_state.property_ids_by_name.set(definition.name, definition.symbol_id);
+    }
     return this;
   }
 
   // ==========================================================================
-  // Python-only: self-assignment property inference
+  // Python and JavaScript: property inference from an instance assignment
   // ==========================================================================
 
   /**
-   * Add a class property inferred from a `self.<attr> = <rhs>` assignment,
-   * deduped by attribute name within the class.
+   * Add a class property inferred from an instance assignment (Python's
+   * `self.<attr> = …`, a JavaScript constructor's `this.<attr> = …`), deduped
+   * by name within the class.
    *
    * Property symbol_ids are location-based, so the same attribute assigned at
    * two sites would otherwise emit two PropertyDefinitions. First-inserted
@@ -657,12 +662,10 @@ export class DefinitionBuilder {
     const class_state = this.classes.get(class_id);
     if (!class_state) return this;
 
-    const existing = Array.from(class_state.properties.entries()).find(
-      ([, p]) => p.base.name === definition.name
-    );
-    if (!existing) return this.add_property_to_class(class_id, definition);
+    const existing_id = class_state.property_ids_by_name.get(definition.name);
+    const existing_state = existing_id ? class_state.properties.get(existing_id) : undefined;
+    if (!existing_id || !existing_state) return this.add_property_to_class(class_id, definition);
 
-    const [existing_id, existing_state] = existing;
     if (existing_state.base.type === undefined && definition.type !== undefined) {
       class_state.properties.set(existing_id, {
         ...existing_state,

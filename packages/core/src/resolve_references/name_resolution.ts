@@ -338,8 +338,11 @@ function resolve_scope_recursive(
     // must resolve to the binding already in scope — typically an import of
     // the same name (or an inherited outer local). Keep that shadowed binding
     // instead of layering the not-yet-live local over it. Narrowed to the
-    // self-initializer case (`initialized_from_call === name`): every other
-    // shadow still overrides, so ordinary lexical shadowing is unchanged.
+    // self-initializer case, a one-segment `initialized_from_call` naming the
+    // binding: every other shadow still overrides, so ordinary lexical shadowing
+    // is unchanged. A member-call initialiser is not one — `x.f()`'s last segment
+    // is never looked up in scope, and the idiomatic `let x = x.unwrap()` shadow
+    // is followed by uses of the new `x` that the carve-out below would retype.
     //
     // Resolution is scope-keyed, not position-keyed (one binding per name per
     // scope), so this drops the local from the scope map for the *whole* scope:
@@ -419,7 +422,7 @@ function resolve_scope_recursive(
  * outer binding (e.g. an import), not the local.
  *
  * Reads `initialized_from_call`, which the per-language capture handlers
- * (JS/TS/Rust) populate; the same field also drives return-type inference in
+ * (JS/TS/Rust/Python) populate; the same field also drives return-type inference in
  * `registries/type.ts`.
  */
 function is_self_initializer(
@@ -430,7 +433,8 @@ function is_self_initializer(
   const def = context.definitions.get(symbol_id);
   return (
     (def?.kind === "variable" || def?.kind === "constant") &&
-    def.initialized_from_call === name
+    def.initialized_from_call?.length === 1 &&
+    def.initialized_from_call[0] === name
   );
 }
 

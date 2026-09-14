@@ -2617,4 +2617,134 @@ const names = items.map(({id, name}) => name);`;
       expect(guarded!.signature.parameters).toEqual([]);
     });
   });
+
+  describe("Construction and initialiser capture", () => {
+    function index_js(code: string) {
+      const tree = parser.parse(code);
+      const parsed_file = create_parsed_file(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language,
+      );
+      return build_index_single_file(parsed_file, tree, "javascript" as Language);
+    }
+
+    function constructions(result: ReturnType<typeof index_js>) {
+      return result.references
+        .filter((ref): ref is ConstructorCallReference => ref.kind === "constructor_call")
+        .map((ref) => ({ name: ref.name, construct_target: ref.construct_target }));
+    }
+
+    function property_locations(result: ReturnType<typeof index_js>, class_name: string) {
+      const class_def = Array.from(result.classes.values()).find(
+        (c) => c.name === (class_name as SymbolName),
+      );
+      return new Map(class_def?.properties.map((p) => [p.name as string, p.location]));
+    }
+
+    function variable_location(result: ReturnType<typeof index_js>, name: string) {
+      return Array.from(result.variables.values()).find((v) => v.name === (name as SymbolName))
+        ?.location;
+    }
+
+    it("keeps a private name as a chain segment of this.#tm.getTransaction()", () => {
+      const result = index_js(`class Compilation {
+  #tm = new TM();
+  run() { this.#tm.getTransaction(); }
+}`);
+      const call = result.references.find((ref) => ref.name === ("getTransaction" as SymbolName));
+      expect(call && "property_chain" in call ? call.property_chain : undefined).toEqual([
+        "this",
+        "#tm",
+        "getTransaction",
+      ]);
+    });
+
+    it("binds a construction passed as an argument to nothing: const t = new Outer(new Inner(), x)", () => {
+      const result = index_js("function lex(x) { const t = new Outer(new Inner(), x); }");
+      expect(constructions(result)).toEqual([
+        { name: "Outer", construct_target: variable_location(result, "t") },
+        { name: "Inner", construct_target: undefined },
+      ]);
+    });
+
+    it("keys a class-field initialiser construction to the field's definition", () => {
+      const result = index_js(`class A {
+  store = new Store();
+  #tm = new TM();
+}`);
+      const fields = property_locations(result, "A");
+      expect(constructions(result)).toEqual([
+        { name: "Store", construct_target: fields.get("store") },
+        { name: "TM", construct_target: fields.get("#tm") },
+      ]);
+    });
+
+    it("keys this.x = new Y() to the declared field, or to the field the constructor write declares", () => {
+      const result = index_js(`class A {
+  declared;
+  constructor() {
+    this.declared = new Declared();
+    this.promoted = new Promoted();
+  }
+}`);
+      const fields = property_locations(result, "A");
+      expect([...fields.keys()]).toEqual(["declared", "promoted"]);
+      expect(constructions(result)).toEqual([
+        { name: "Declared", construct_target: fields.get("declared") },
+        { name: "Promoted", construct_target: fields.get("promoted") },
+      ]);
+    });
+
+    it("declares a field only from a constructor write the class body does not already name", () => {
+      const result = index_js(`class A {
+  constructor() {
+    this.kept = 1;
+    this.kept = 2;
+    this.value = 3;
+    const helper = function () { this.own = 4; };
+    const handlers = { on() { this.literal = 5; } };
+    const later = () => { this.arrow = 6; };
+  }
+  method() { this.elsewhere = 7; }
+  set value(v) {}
+}`);
+      expect([...property_locations(result, "A").keys()]).toEqual(["kept", "arrow"]);
+    });
+
+    it("records initialized_from_call as the callee chain", () => {
+      const result = index_js(`const i = s.getInfo();
+const router = inject(Router);
+const made = make()();`);
+      const chains = new Map(
+        Array.from(result.variables.values()).map((v) => [v.name, v.initialized_from_call]),
+      );
+      expect(chains).toEqual(
+        new Map<SymbolName, readonly SymbolName[] | undefined>([
+          ["i" as SymbolName, ["s" as SymbolName, "getInfo" as SymbolName]],
+          ["router" as SymbolName, ["inject" as SymbolName]],
+          ["made" as SymbolName, undefined],
+        ]),
+      );
+    });
+
+    it("types a local declarator and a constructor write from their JSDoc @type", () => {
+      const result = index_js(`/** @type {Service} */
+const service = make();
+class A {
+  constructor() {
+    /** @type {Store} */
+    this.store = make();
+  }
+}`);
+      const service = Array.from(result.variables.values()).find(
+        (v) => v.name === ("service" as SymbolName),
+      );
+      const store = Array.from(result.classes.values())[0].properties.find(
+        (p) => p.name === ("store" as SymbolName),
+      );
+      expect([service?.type, store?.type]).toEqual(["Service", "Store"]);
+    });
+  });
 });

@@ -52,8 +52,8 @@ export function make_export_chain_context(): {
 
 /**
  * The context `TypeRegistry.update_file` resolves against, over the given
- * registries. The import graph is empty and Rust `::` paths resolve to nothing,
- * so a unit test that needs either builds its own context.
+ * registries. The import graph is empty, and Rust `::` paths and self receivers
+ * resolve to nothing, so a unit test that needs any of them builds its own context.
  */
 export function make_type_resolution_context(
   resolutions: ResolutionRegistry,
@@ -68,5 +68,6 @@ export function make_type_resolution_context(
     languages,
     modules,
     resolve_rust_type_path: () => null,
+    resolve_self_type: () => null,
   };
 }

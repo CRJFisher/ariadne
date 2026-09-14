@@ -3,9 +3,8 @@
  */
 
 import { describe, it, expect } from "vitest";
-import Parser from "tree-sitter";
-import Rust from "tree-sitter-rust";
 import type { SyntaxNode } from "tree-sitter";
+import { parse_rust, find_node_by_type } from "./test_utils";
 import {
   create_struct_id,
   create_enum_id,
@@ -34,7 +33,6 @@ import {
   find_containing_callable,
   detect_function_collection,
   detect_callback_context,
-  extract_collection_source,
 } from "./symbol_factories.rust";
 import {
   anonymous_function_symbol,
@@ -60,24 +58,6 @@ import { SemanticCategory, SemanticEntity, type CaptureNode } from "../../captur
 
 const file_path = "/test.rs" as FilePath;
 
-function parse_rust(code: string): SyntaxNode {
-  const parser = new Parser();
-  parser.setLanguage(Rust);
-  const tree = parser.parse(code);
-  return tree.rootNode;
-}
-
-function find_node_by_type(root: SyntaxNode, type: string): SyntaxNode | null {
-  if (root.type === type) return root;
-  for (let i = 0; i < root.childCount; i++) {
-    const child = root.child(i);
-    if (child) {
-      const result = find_node_by_type(child, type);
-      if (result) return result;
-    }
-  }
-  return null;
-}
 
 function find_all_nodes_by_type(root: SyntaxNode, type: string): SyntaxNode[] {
   const results: SyntaxNode[] = [];
@@ -1190,36 +1170,3 @@ describe("detect_function_collection", () => {
 
 // ============================================================================
 // extract_collection_source
-// ============================================================================
-
-describe("extract_collection_source", () => {
-  it("extracts derived variable from method call", () => {
-    const code = "let handler = config.get(\"key\");";
-    const root = parse_rust(code);
-    const let_decl = find_node_by_type(root, "let_declaration")!;
-    const pattern = let_decl.childForFieldName("pattern")!;
-
-    const derived = extract_collection_source(pattern);
-    expect(derived).toBe("config");
-  });
-
-  it("extracts derived variable from index expression", () => {
-    const code = "let handler = config[\"key\"];";
-    const root = parse_rust(code);
-    const let_decl = find_node_by_type(root, "let_declaration")!;
-    const pattern = let_decl.childForFieldName("pattern")!;
-
-    const derived = extract_collection_source(pattern);
-    expect(derived).toBe("config");
-  });
-
-  it("returns undefined for plain assignment", () => {
-    const code = "let handler = some_func;";
-    const root = parse_rust(code);
-    const let_decl = find_node_by_type(root, "let_declaration")!;
-    const pattern = let_decl.childForFieldName("pattern")!;
-
-    const derived = extract_collection_source(pattern);
-    expect(derived).toBeUndefined();
-  });
-});

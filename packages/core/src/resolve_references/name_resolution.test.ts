@@ -680,7 +680,7 @@ describe("resolve_names", () => {
         defining_scope_id: inner_scope_id,
         location: { ...MOCK_LOCATION, start_line: 4 },
         is_exported: false,
-        initialized_from_call: "has_flatten" as SymbolName,
+        initialized_from_call: ["has_flatten" as SymbolName],
       };
       definitions.update_file(TEST_FILE, [
         make_function("has_flatten", FILE_SCOPE_ID, outer_func),
@@ -692,6 +692,45 @@ describe("resolve_names", () => {
       expect(
         visible_bindings(result, inner_scope_id).get("has_flatten" as SymbolName)
       ).toBe(outer_func);
+    });
+
+    it("overrides an inherited binding for a local initialised from a method on its own name", () => {
+      const outer_param = variable_symbol("path" as SymbolName, MOCK_LOCATION);
+      const local_var = variable_symbol("path" as SymbolName, {
+        ...MOCK_LOCATION,
+        start_line: 4,
+      });
+      const inner_scope_id = "scope:test.ts:inner:2:0" as ScopeId;
+
+      scopes.update_file(
+        TEST_FILE,
+        new Map([
+          [FILE_SCOPE_ID, make_scope(FILE_SCOPE_ID, "global", null, [inner_scope_id])],
+          [inner_scope_id, make_scope(inner_scope_id, "function", FILE_SCOPE_ID)],
+        ])
+      );
+      const shadowing_local: VariableDefinition = {
+        kind: "variable",
+        symbol_id: local_var,
+        name: "path" as SymbolName,
+        defining_scope_id: inner_scope_id,
+        location: { ...MOCK_LOCATION, start_line: 4 },
+        is_exported: false,
+        initialized_from_call: ["path" as SymbolName, "unwrap" as SymbolName],
+      };
+      const outer: VariableDefinition = {
+        kind: "variable",
+        symbol_id: outer_param,
+        name: "path" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        is_exported: false,
+      };
+      definitions.update_file(TEST_FILE, [outer, shadowing_local]);
+
+      const result = resolve_names(new Set([TEST_FILE]), context);
+
+      expect(visible_bindings(result, inner_scope_id).get("path" as SymbolName)).toBe(local_var);
     });
 
     it("overrides an inherited binding for an ordinary same-named local", () => {

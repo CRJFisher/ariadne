@@ -30,6 +30,8 @@ export interface ClassBuilderState {
   >;
   methods: Map<SymbolId, MethodBuilderState>;
   properties: Map<SymbolId, PropertyBuilderState>;
+  /** The first property added under each name, so an inferred property dedupes without scanning every property. */
+  property_ids_by_name: Map<SymbolName, SymbolId>;
   constructors: Map<SymbolId, ConstructorBuilderState>;
   decorators: DecoratorDefinition[];
 }

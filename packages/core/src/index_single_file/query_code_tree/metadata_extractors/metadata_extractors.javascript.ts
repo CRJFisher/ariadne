@@ -11,6 +11,14 @@ import type { Location, SymbolName, TypeInfo, FilePath } from "@ariadnejs/types"
 import { type_symbol } from "@ariadnejs/types";
 import type { MetadataExtractors, ReceiverInfo } from "./metadata_extractor_types";
 import { node_to_location } from "../../node_to_location";
+import {
+  resolve_this_field_write,
+  written_field_name,
+} from "../symbol_factories/this_field_write.javascript";
+import {
+  extract_jsdoc_return_type,
+  extract_jsdoc_type,
+} from "../symbol_factories/jsdoc_extraction.javascript";
 
 /**
  * The receiver names that mean "the enclosing class", keyed for lookup.
@@ -23,35 +31,6 @@ const SELF_KEYWORDS = new Map<string, "this" | "super">([
   ["this", "this"],
   ["super", "super"],
 ]);
-
-/**
- * JSDoc carries types in a preceding comment rather than the AST, so the type
- * lives on the sibling immediately before the declaration statement.
- */
-function extract_jsdoc_type(node: SyntaxNode): string | undefined {
-  const statement_node = node.type === "variable_declarator" ? node.parent : node;
-  if (!statement_node) return undefined;
-
-  // The comment sits immediately before the declaration among its parent's
-  // children, and asking the node for that neighbour costs one crossing where
-  // enumerating the parent's children to find it costs one per child.
-  const preceding = statement_node.previousSibling;
-  if (!preceding || preceding.type !== "comment") return undefined;
-
-  const text = preceding.text;
-
-  const type_match = text.match(/@type\s*\{([^}]+)\}/);
-  if (type_match) {
-    return type_match[1].trim();
-  }
-
-  const returns_match = text.match(/@returns?\s*\{([^}]+)\}/);
-  if (returns_match) {
-    return returns_match[1].trim();
-  }
-
-  return undefined;
-}
 
 function extract_typescript_type(node: SyntaxNode): string | undefined {
   const type_annotation = node.childForFieldName("type");
@@ -251,7 +230,12 @@ function build_property_chain(
         descend_object(object_node);
       }
 
-      if (property_node && property_node.type === "property_identifier") {
+      // A private name keeps its `#`: that is the key its field is indexed under.
+      if (
+        property_node &&
+        (property_node.type === "property_identifier" ||
+          property_node.type === "private_property_identifier")
+      ) {
         push(property_node.text, call_arguments_of_callee(current));
       }
     } else if (current.type === "subscript_expression") {
@@ -296,6 +280,15 @@ function build_property_chain(
  */
 const CONSTRUCT_TARGET_BY_ANCESTOR = new WeakMap<SyntaxNode, SyntaxNode | null>();
 
+/**
+ * The node naming what a value under `node` is stored in, or null when it is
+ * stored in nothing a construction can type.
+ *
+ * An argument list ends the walk with no target: a value passed to a call
+ * belongs to the callee's parameter, never to the declarator around the call
+ * (`const t = new Tokenizer(new Source(), s)` stores a Tokenizer). The abort is
+ * memoised like any other answer — every node under that argument list gets it.
+ */
 function construct_target_node(node: SyntaxNode): SyntaxNode | null {
   const walked: SyntaxNode[] = [];
   let target: SyntaxNode | null = null;
@@ -310,12 +303,24 @@ function construct_target_node(node: SyntaxNode): SyntaxNode | null {
     walked.push(parent);
 
     const parent_type = parent.type;
+    if (parent_type === "arguments") {
+      break;
+    }
     if (parent_type === "variable_declarator") {
       target = parent.childForFieldName("name");
       break;
     }
     if (parent_type === "assignment_expression") {
-      target = parent.childForFieldName("left");
+      const left = parent.childForFieldName("left");
+      target = left ? assignment_target_node(left) : null;
+      break;
+    }
+    if (parent_type === "field_definition") {
+      target = parent.childForFieldName("property");
+      break;
+    }
+    if (parent_type === "public_field_definition") {
+      target = parent.childForFieldName("name");
       break;
     }
 
@@ -328,12 +333,23 @@ function construct_target_node(node: SyntaxNode): SyntaxNode | null {
   return target;
 }
 
+/**
+ * A write to `this.<name>` inside a class stores into the field definition of
+ * that name, so the target is the field's own name node — the location its
+ * definition is registered at. Every other left side is its own target.
+ */
+function assignment_target_node(left: SyntaxNode): SyntaxNode | null {
+  const field_write = resolve_this_field_write(left);
+  return field_write ? written_field_name(field_write) : left;
+}
+
 export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
   extract_type_from_annotation(
     node: SyntaxNode,
     file_path: FilePath
   ): TypeInfo | undefined {
-    const type_name = extract_typescript_type(node) ?? extract_jsdoc_type(node);
+    const type_name =
+      extract_typescript_type(node) ?? extract_jsdoc_type(node) ?? extract_jsdoc_return_type(node);
 
     if (!type_name) {
       return undefined;
@@ -443,10 +459,10 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
 
   /**
    * `const x = new Y()` fixes x's type to Y without inference, so the assigned
-   * target is the most reliable type signal. Walks up to the enclosing declarator
-   * or assignment.
+   * target is the most reliable type signal. Walks up to the enclosing declarator,
+   * assignment or class field, and stops without a target at an argument list.
    *
-   * The walk is unbounded on purpose. Capping its depth moves 403 of the 7,322
+   * The walk's depth is unbounded on purpose. Capping its depth moves 403 of the 7,322
    * construct targets this corpus resolves, so it changes the reported graph
    * rather than the cost of producing it — see `not_in_scope` in
    * `benchmark_corpus_load/recorded_per_file_rederivation_cost.ts`, whose

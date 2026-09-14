@@ -298,6 +298,13 @@
   property: (private_property_identifier) @definition.field
 )
 
+; A `this.<name> = …` write can declare a field: the handler keeps it only when it
+; sits in the class constructor and the class body declares nothing by that name.
+(assignment_expression
+  left: (member_expression
+    object: (this)
+    property: (property_identifier) @definition.field.assigned))
+
 ; Parameters
 (formal_parameters
   (identifier) @definition.parameter

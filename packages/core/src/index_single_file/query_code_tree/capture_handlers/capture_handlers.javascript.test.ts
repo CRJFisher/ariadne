@@ -134,6 +134,7 @@ describe("JavaScript Builder Configuration", () => {
         "definition.constructor",
         "definition.documentation",
         "definition.field",
+        "definition.field.assigned",
         "definition.function",
         "definition.function.commonjs_export",
         "definition.import",

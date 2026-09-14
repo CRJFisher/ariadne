@@ -506,7 +506,7 @@ describe("resolve_collection_dispatch", () => {
     });
     const { id: alias_id, def: alias_def } = make_var_def("A", {
       collection_source: "Ns" as SymbolName,
-      collection_source_key: "A" as SymbolName,
+      member_source: { holder: "Ns" as SymbolName, member: "A" as SymbolName },
     });
 
     register(definitions, resolutions, [ns_def, alias_def], {
@@ -545,7 +545,7 @@ describe("resolve_collection_dispatch", () => {
     });
     const { id: alias_id, def: alias_def } = make_var_def("A", {
       collection_source: "Ns" as SymbolName,
-      collection_source_key: "A" as SymbolName,
+      member_source: { holder: "Ns" as SymbolName, member: "A" as SymbolName },
     });
 
     register(definitions, resolutions, [ns_def, alias_def], {

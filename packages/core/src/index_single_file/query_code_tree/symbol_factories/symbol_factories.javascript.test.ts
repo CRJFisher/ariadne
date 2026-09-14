@@ -17,17 +17,12 @@ import {
   create_import_id,
   extract_return_type,
   extract_parameter_type,
-  extract_collection_source,
   extract_extends,
-  extract_call_initializer_name,
   detect_callback_context,
   find_containing_callable,
   find_containing_class,
 } from "./symbol_factories.javascript";
-import {
-  extract_collection_source_key,
-  detect_function_collection,
-} from "./function_collection.javascript";
+import { detect_function_collection } from "./function_collection.javascript";
 import { anonymous_function_symbol, function_symbol, method_symbol } from "@ariadnejs/types";
 import type {
   CollectionMember,
@@ -339,28 +334,53 @@ describe("extract_parameter_type", () => {
 });
 
 describe("extract_jsdoc_type", () => {
-  it("should extract type from @type annotation", () => {
-    const comment = "/** @type {string} */";
-    const result = extract_jsdoc_type(comment);
-    expect(result).toBe("string");
+  function name_node(code: string, type: string): SyntaxNode {
+    return find_node_by_type(parse_js(code), type)!;
+  }
+
+  it("reads the @type a JSDoc block declares on a local declarator", () => {
+    expect(extract_jsdoc_type(name_node("/** @type {Service} */\nconst s = make();", "identifier"))).toBe(
+      "Service"
+    );
   });
 
-  it("should extract complex type from @type annotation", () => {
-    const comment = "/** @type {Map<string, number>} */";
-    const result = extract_jsdoc_type(comment);
-    expect(result).toBe("Map<string, number>");
+  it("reads a generic @type from a multi-line block", () => {
+    expect(
+      extract_jsdoc_type(
+        name_node("/**\n * @type {Map<string, number>}\n */\nlet m = make();", "identifier")
+      )
+    ).toBe("Map<string, number>");
   });
 
-  it("should return undefined for comments without type", () => {
-    const comment = "/** Just a comment */";
-    const result = extract_jsdoc_type(comment);
-    expect(result).toBeUndefined();
+  it("reads the @type on an exported declaration, whose block precedes the export", () => {
+    expect(
+      extract_jsdoc_type(name_node("/** @type {Service} */\nexport const s = make();", "identifier"))
+    ).toBe("Service");
   });
 
-  it("should extract type from multi-line JSDoc", () => {
-    const comment = "/**\n * @type {number}\n */";
-    const result = extract_jsdoc_type(comment);
-    expect(result).toBe("number");
+  it("reads the @type on a `this.x = …` write from its property node", () => {
+    const code = "class A { constructor() {\n/** @type {Store} */\nthis.store = make();\n} }";
+    const store = find_all_nodes_by_type(parse_js(code), "property_identifier").find(
+      (node) => node.text === "store"
+    )!;
+    expect(extract_jsdoc_type(store)).toBe("Store");
+  });
+
+  it("reads the @type on a class field", () => {
+    const code = "class A {\n/** @type {Store} */\n#store = make();\n}";
+    expect(extract_jsdoc_type(name_node(code, "private_property_identifier"))).toBe("Store");
+  });
+
+  it("finds no type in a block without an @type tag", () => {
+    expect(
+      extract_jsdoc_type(name_node("/** Just a comment */\nconst s = make();", "identifier"))
+    ).toBeUndefined();
+  });
+
+  it("finds no type in a line comment", () => {
+    expect(
+      extract_jsdoc_type(name_node("// @type {Service}\nconst s = make();", "identifier"))
+    ).toBeUndefined();
   });
 });
 
@@ -467,137 +487,6 @@ describe("extract_extends", () => {
 
 // ============================================================================
 // Value Extraction
-// ============================================================================
-
-describe("extract_call_initializer_name", () => {
-  it("should extract function name from plain call: const x = foo()", () => {
-    const root = parse_js("const x = foo()");
-    const identifier = find_node_by_type(root, "identifier");
-    expect(identifier).not.toBeNull();
-    const result = extract_call_initializer_name(identifier!);
-    expect(result).toBe("foo");
-  });
-
-  it("should extract function name with underscore: const x = get_scope_boundary_extractor()", () => {
-    const root = parse_js("const x = get_scope_boundary_extractor()");
-    const identifier = find_node_by_type(root, "identifier");
-    expect(identifier).not.toBeNull();
-    const result = extract_call_initializer_name(identifier!);
-    expect(result).toBe("get_scope_boundary_extractor");
-  });
-
-  it("should return undefined for method calls: const x = obj.method()", () => {
-    const root = parse_js("const x = obj.method()");
-    const identifier = find_node_by_type(root, "identifier");
-    expect(identifier).not.toBeNull();
-    const result = extract_call_initializer_name(identifier!);
-    expect(result).toBeUndefined();
-  });
-
-  it("should return undefined for method calls with args: const x = config.get('key')", () => {
-    const root = parse_js("const x = config.get('key')");
-    const identifier = find_node_by_type(root, "identifier");
-    expect(identifier).not.toBeNull();
-    const result = extract_call_initializer_name(identifier!);
-    expect(result).toBeUndefined();
-  });
-
-  it("should handle call with arguments: const x = foo(arg1, arg2)", () => {
-    const root = parse_js("const x = foo(arg1, arg2)");
-    const identifier = find_node_by_type(root, "identifier");
-    expect(identifier).not.toBeNull();
-    const result = extract_call_initializer_name(identifier!);
-    expect(result).toBe("foo");
-  });
-
-  it("should return undefined for non-call initializers: const x = 42", () => {
-    const root = parse_js("const x = 42");
-    const identifier = find_node_by_type(root, "identifier");
-    expect(identifier).not.toBeNull();
-    const result = extract_call_initializer_name(identifier!);
-    expect(result).toBeUndefined();
-  });
-
-  it("should return undefined for string initializers: const x = 'hello'", () => {
-    const root = parse_js("const x = 'hello'");
-    const identifier = find_node_by_type(root, "identifier");
-    expect(identifier).not.toBeNull();
-    const result = extract_call_initializer_name(identifier!);
-    expect(result).toBeUndefined();
-  });
-});
-
-// ============================================================================
-// Collection Source Extraction
-// ============================================================================
-
-describe("extract_collection_source", () => {
-  it("should extract source from method call: config.get('key')", () => {
-    const root = parse_js("const handler = config.get('key');");
-    const declarator = find_node_by_type(root, "variable_declarator")!;
-    const name_node = declarator.childForFieldName("name")!;
-    const result = extract_collection_source(name_node);
-    expect(result).toBe("config");
-  });
-
-  it("should extract source from subscript access: config['key']", () => {
-    const root = parse_js("const handler = config['key'];");
-    const declarator = find_node_by_type(root, "variable_declarator")!;
-    const name_node = declarator.childForFieldName("name")!;
-    const result = extract_collection_source(name_node);
-    expect(result).toBe("config");
-  });
-
-  it("should return undefined for plain assignment: const x = 42", () => {
-    const root = parse_js("const x = 42;");
-    const declarator = find_node_by_type(root, "variable_declarator")!;
-    const name_node = declarator.childForFieldName("name")!;
-    const result = extract_collection_source(name_node);
-    expect(result).toBeUndefined();
-  });
-
-  it("should return undefined for plain function call: const x = foo()", () => {
-    const root = parse_js("const x = foo();");
-    const declarator = find_node_by_type(root, "variable_declarator")!;
-    const name_node = declarator.childForFieldName("name")!;
-    const result = extract_collection_source(name_node);
-    expect(result).toBeUndefined();
-  });
-
-  it("should return undefined for plain identifier initializer: const handler = someFunction", () => {
-    const root = parse_ts("const handler = someFunction;");
-    const declaration = root.child(0)!;
-    const declarator = declaration.namedChildren[0]!;
-    const identifier = declarator.childForFieldName("name")!;
-
-    const derived = extract_collection_source(identifier);
-    expect(derived).toBeUndefined();
-  });
-});
-
-describe("extract_collection_source_key", () => {
-  it("extracts the property key of a static member alias: Ns.A", () => {
-    const root = parse_js("const alias = Ns.A;");
-    const declarator = find_node_by_type(root, "variable_declarator")!;
-    const name_node = declarator.childForFieldName("name")!;
-    expect(extract_collection_source_key(name_node)).toBe("A");
-  });
-
-  it("returns undefined for a dynamic get() retrieval", () => {
-    const root = parse_js("const handler = config.get('key');");
-    const declarator = find_node_by_type(root, "variable_declarator")!;
-    const name_node = declarator.childForFieldName("name")!;
-    expect(extract_collection_source_key(name_node)).toBeUndefined();
-  });
-
-  it("returns undefined for a subscript retrieval", () => {
-    const root = parse_js("const handler = config['key'];");
-    const declarator = find_node_by_type(root, "variable_declarator")!;
-    const name_node = declarator.childForFieldName("name")!;
-    expect(extract_collection_source_key(name_node)).toBeUndefined();
-  });
-});
-
 // ============================================================================
 // Function Collection Detection
 // ============================================================================
@@ -1364,6 +1253,6 @@ describe("collection member ids name real definitions", () => {
       }
     }
     expect(phantoms).toEqual([]);
-    expect({ files: files.length, recorded }).toEqual({ files: 37, recorded: 66 });
+    expect({ files: files.length, recorded }).toEqual({ files: 39, recorded: 66 });
   });
 });

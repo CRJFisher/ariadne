@@ -51,8 +51,12 @@ import {
   extract_type_expression,
   detect_callback_context,
   detect_function_collection,
-  extract_collection_source,
 } from "../symbol_factories/symbol_factories.python";
+import {
+  extract_collection_source,
+  extract_initializer_call,
+  extract_member_source,
+} from "../symbol_factories/initializer_sources.python";
 import {
   store_python_docstring,
   consume_python_docstring,
@@ -487,6 +491,8 @@ export function handle_definition_variable(
     initial_value: extract_initial_value(capture.node),
     function_collection,
     collection_source,
+    member_source: extract_member_source(capture.node),
+    initialized_from_call: extract_initializer_call(capture.node),
   });
 }
 

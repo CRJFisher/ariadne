@@ -153,10 +153,10 @@ export function resolve_collection_dispatch(
 
   // A static object-property alias (`var A = Ns.A`) names one member by key, so it
   // dispatches to exactly that member — never the union of everything in `Ns`.
-  if (target_def.collection_source_key) {
+  if (target_def.member_source) {
     return resolve_keyed_alias(
       collection_id,
-      target_def.collection_source_key,
+      target_def.member_source.member,
       call_ref,
       definitions,
       resolutions

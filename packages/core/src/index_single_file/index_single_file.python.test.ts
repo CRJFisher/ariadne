@@ -18,6 +18,8 @@ import type {
   VariableReference,
   AssignmentReference,
   FunctionCallReference,
+  SymbolName,
+  VariableDefinition,
 } from "@ariadnejs/types";
 import { build_index_single_file } from "./index_single_file";
 import type { ParsedFile } from "./parsed_file";
@@ -2933,6 +2935,55 @@ class Factory:
       const index = build_index_single_file(parsed_file, tree, "python");
       const names = Array.from(index.variables.values()).map((v) => v.name as string);
       expect(names).toContain("d");
+    });
+  });
+
+  describe("Initialiser capture", () => {
+    function index_python(code: string) {
+      const tree = parser.parse(code);
+      const parsed_file = create_parsed_file(code, "test.py" as FilePath, tree, "python" as Language);
+      return build_index_single_file(parsed_file, tree, "python" as Language);
+    }
+
+    it("records initialized_from_call as the callee chain and member_source as the attribute read", () => {
+      const result = index_python(`c = connect()
+i = s.get_info()
+router = inject(Router)
+parser = _parser_dispatch(flav)
+p = make()(io)
+orig = BaseTask.__call__
+a, b = pair()
+`);
+      const captured = new Map(
+        Array.from(result.variables.values()).map((v) => [
+          v.name,
+          { initialized_from_call: v.initialized_from_call, member_source: v.member_source },
+        ]),
+      );
+      expect(captured).toEqual(
+        new Map<SymbolName, Pick<VariableDefinition, "initialized_from_call" | "member_source">>([
+          ["c" as SymbolName, { initialized_from_call: ["connect" as SymbolName], member_source: undefined }],
+          [
+            "i" as SymbolName,
+            { initialized_from_call: ["s" as SymbolName, "get_info" as SymbolName], member_source: undefined },
+          ],
+          ["router" as SymbolName, { initialized_from_call: ["inject" as SymbolName], member_source: undefined }],
+          [
+            "parser" as SymbolName,
+            { initialized_from_call: ["_parser_dispatch" as SymbolName], member_source: undefined },
+          ],
+          ["p" as SymbolName, { initialized_from_call: undefined, member_source: undefined }],
+          [
+            "orig" as SymbolName,
+            {
+              initialized_from_call: undefined,
+              member_source: { holder: "BaseTask" as SymbolName, member: "__call__" as SymbolName },
+            },
+          ],
+          ["a" as SymbolName, { initialized_from_call: undefined, member_source: undefined }],
+          ["b" as SymbolName, { initialized_from_call: undefined, member_source: undefined }],
+        ]),
+      );
     });
   });
 });

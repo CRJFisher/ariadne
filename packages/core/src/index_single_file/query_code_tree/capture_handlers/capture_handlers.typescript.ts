@@ -16,11 +16,13 @@ import {
   extract_export_info,
   extract_type_annotation,
   extract_initial_value,
-  extract_collection_source,
-  extract_call_initializer_name,
   extract_accessor_kind,
 } from "../symbol_factories/symbol_factories.javascript";
-import { extract_collection_source_key } from "../symbol_factories/function_collection.javascript";
+import {
+  extract_collection_source,
+  extract_initializer_call,
+  extract_member_source,
+} from "../symbol_factories/initializer_sources.javascript";
 import { extract_destructured_binding } from "../symbol_factories/destructuring.javascript";
 import {
   consume_documentation,
@@ -115,8 +117,8 @@ export function handle_ts_definition_variable(
     : undefined;
 
   const collection_source = extract_collection_source(capture.node);
-  const collection_source_key = extract_collection_source_key(capture.node);
-  const initialized_from_call = extract_call_initializer_name(capture.node);
+  const member_source = extract_member_source(capture.node);
+  const initialized_from_call = extract_initializer_call(capture.node);
   const destructured = extract_destructured_binding(capture.node);
 
   builder.add_variable({
@@ -131,7 +133,7 @@ export function handle_ts_definition_variable(
     docstring,
     function_collection,
     collection_source,
-    collection_source_key,
+    member_source,
     initialized_from_call,
     destructured_from: destructured?.source,
     destructured_key: destructured?.key,

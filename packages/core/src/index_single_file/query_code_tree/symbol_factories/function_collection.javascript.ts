@@ -114,31 +114,6 @@ export function detect_function_collection(
 }
 
 /**
- * The property key of a static object-property alias initializer (`var alias = Ns.A`
- * → "A"), or undefined when the initializer is not a plain member access. A dynamic
- * `get(...)` call or `[...]` subscript returns undefined so the alias stays on the
- * keyless union dispatch path rather than a keyed one.
- */
-export function extract_collection_source_key(node: SyntaxNode): SymbolName | undefined {
-  let target_node = node;
-  if (node.type === "identifier" || node.type === "property_identifier") {
-    target_node = node.parent || node;
-  }
-
-  const value_node =
-    target_node.childForFieldName("value") || target_node.childForFieldName("init");
-  if (!value_node || value_node.type !== "member_expression") {
-    return undefined;
-  }
-
-  const property_node = value_node.childForFieldName("property");
-  if (property_node?.type === "property_identifier") {
-    return property_node.text as SymbolName;
-  }
-  return undefined;
-}
-
-/**
  * Detect a member-assigned function value: `app.method = function () {}` or
  * `Counter.prototype.method = () => {}`. Returns the holder identifier and the
  * property-named member function, or null when the assignment is not a function

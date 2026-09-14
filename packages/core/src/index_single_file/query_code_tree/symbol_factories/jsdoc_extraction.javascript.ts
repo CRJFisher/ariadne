@@ -10,29 +10,64 @@
 import type { SyntaxNode } from "tree-sitter";
 import type { SymbolName } from "@ariadnejs/types";
 
+/** Name nodes a definition capture lands on; the JSDoc documents the declaration around them. */
+const DECLARED_NAME_TYPES = new Set([
+  "identifier",
+  "property_identifier",
+  "private_property_identifier",
+]);
+
 /**
- * Extract type from a JSDoc `@type {TypeName}` tag in a comment string.
- *
- * Sibling: `extract_jsdoc_param_type` handles `@param {T} name` tags; this one
- * handles `@type` for variables and properties.
+ * The type a declaration's JSDoc `@type {T}` tag declares: on a local
+ * declarator (`/** @type {T} *\/ const x = …`), a class field, or a
+ * `this.x = …` write (`/** @type {T} *\/ this.x = …`). `node` is the declaration
+ * or the name node a capture landed on.
  */
-export function extract_jsdoc_type(comment_text: string): SymbolName | undefined {
-  // Handles single-line /** @type {Foo} */ and multi-line ` * @type {Bar}`.
-  const type_match = comment_text.match(/@type\s*\{([^}]+)\}/);
-  if (type_match && type_match[1]) {
-    return type_match[1].trim() as SymbolName;
+export function extract_jsdoc_type(node: SyntaxNode): SymbolName | undefined {
+  return declaration_tag_type(node, /@type\s*\{([^}]+)\}/);
+}
+
+/** The type a declaration's JSDoc `@returns {T}` / `@return {T}` tag declares. */
+export function extract_jsdoc_return_type(node: SyntaxNode): SymbolName | undefined {
+  return declaration_tag_type(node, /@returns?\s*\{([^}]+)\}/);
+}
+
+function declaration_tag_type(node: SyntaxNode, tag: RegExp): SymbolName | undefined {
+  const jsdoc = find_preceding_jsdoc(declaration_statement(node));
+  const type_text = jsdoc?.text.match(tag)?.[1].trim();
+  return type_text ? (type_text as SymbolName) : undefined;
+}
+
+/**
+ * The node a declaration's JSDoc block precedes: the statement a declarator or
+ * assignment sits in, reached from the name node a capture landed on.
+ */
+function declaration_statement(node: SyntaxNode): SyntaxNode {
+  let current = node;
+  if (DECLARED_NAME_TYPES.has(current.type) && current.parent) {
+    current = current.parent;
   }
-  return undefined;
+  if (current.type === "member_expression" && current.parent?.type === "assignment_expression") {
+    current = current.parent;
+  }
+  if (
+    (current.type === "variable_declarator" || current.type === "assignment_expression") &&
+    current.parent
+  ) {
+    current = current.parent;
+  }
+  return current;
 }
 
 /**
  * Find the JSDoc comment immediately preceding a node.
  *
  * Checks the node's own previous siblings and its parent's previous siblings so
- * a comment attached one wrapper level up (e.g. a field_definition) is still
- * found. Returns the comment node, or undefined when there is none.
+ * a comment attached one wrapper level up (e.g. an `export` around a
+ * declaration) is still found. Returns the comment node, or undefined when there
+ * is none.
  */
-export function find_preceding_jsdoc(node: SyntaxNode): SyntaxNode | undefined {
+function find_preceding_jsdoc(node: SyntaxNode): SyntaxNode | undefined {
   let current = node.previousSibling;
 
   while (current && (current.type === "comment" || current.text.trim() === "")) {

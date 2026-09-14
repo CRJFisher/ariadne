@@ -36,7 +36,6 @@ import {
   determine_method_type,
   detect_callback_context,
   detect_function_collection,
-  extract_collection_source,
 } from "./symbol_factories.python";
 import {
   anonymous_function_symbol,
@@ -1172,38 +1171,6 @@ describe("detect_function_collection", () => {
 
 // ============================================================================
 // extract_collection_source
-// ============================================================================
-
-describe("extract_collection_source", () => {
-  it("should extract derived variable from method call", () => {
-    const code = "handler = config.get('key')";
-    const root = parse_python(code);
-    const identifier = find_identifier(root, "handler")!;
-
-    const derived = extract_collection_source(identifier);
-    expect(derived).toBe("config");
-  });
-
-  it("should extract derived variable from subscript", () => {
-    const code = "handler = config['key']";
-    const root = parse_python(code);
-    const identifier = find_identifier(root, "handler")!;
-
-    const derived = extract_collection_source(identifier);
-    expect(derived).toBe("config");
-  });
-
-  it("should return undefined for plain assignment", () => {
-    const code = "handler = some_func";
-    const root = parse_python(code);
-    const identifier = find_identifier(root, "handler")!;
-
-    const derived = extract_collection_source(identifier);
-    expect(derived).toBeUndefined();
-  });
-});
-
-
 describe("Enum base list agreement between the query gate and the builder", () => {
   // `classify_class_bases` decides whether a class is an enum; the
   // `@_enum_base` gate in python.scm decides whether its class-body

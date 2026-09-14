@@ -6,12 +6,13 @@ import { Project } from "../../project/project";
 import type { FilePath, SymbolId, SymbolName } from "@ariadnejs/types";
 
 /**
- * Every annotation form a receiver's type is written in resolves to the type it
- * declares, end to end: index → TypeRegistry → receiver resolution → call edge.
- * Each "does not" case is the insulation beside it — a wrapper or container
- * the annotation grammar must not see through.
+ * Every form a receiver's type is written in — an annotation, a construction,
+ * a call initialiser — resolves to the type it declares, end to end: index →
+ * TypeRegistry → receiver resolution → call edge. Each "does not" case is the
+ * insulation beside it — a wrapper or container the annotation grammar must
+ * not see through.
  */
-describe("annotation resolution through the project pipeline", () => {
+describe("receiver types through the project pipeline", () => {
   const FIXTURES_ROOT = path.resolve(__dirname, "../../../tests/fixtures");
   const temp_dirs: string[] = [];
 
@@ -798,6 +799,172 @@ impl Mode {
         type_named(project, file, "Parser")
       );
       expect(targets_of(project, file, "run", 6)).toEqual([member_of(project, file, "Parser", "run")]);
+    });
+  });
+
+  describe("constructions and call initialisers", () => {
+    /** The 1-based line of the one line of `source` containing `text`. */
+    function line_of(source: string, text: string): number {
+      const lines = source.split("\n");
+      const matches = lines.flatMap((line, index) => (line.includes(text) ? [index + 1] : []));
+      expect(matches.length).toBe(1);
+      return matches[0];
+    }
+
+    function variable_in(project: Project, file: FilePath, name: string, line: number): SymbolId {
+      const found = [...(project.get_index_single_file(file)?.variables.values() ?? [])].find(
+        (definition) => definition.name === name && definition.location.start_line === line
+      );
+      if (!found) throw new Error(`${file} declares no ${name} on line ${line}`);
+      return found.symbol_id;
+    }
+
+    describe("typescript", () => {
+      it("binds a declarator to the outer construction, not one passed as its argument (angular lexer.ts:116)", async () => {
+        const files = read_fixture("typescript", "initialiser_capture");
+        const { project, paths } = await load_project(files);
+        const file = paths["lexer.ts"];
+        expect(
+          targets_of(project, file, "tokenize", line_of(files["lexer.ts"], "tokenizer.tokenize()"))
+        ).toEqual([member_of(project, file, "_Tokenizer", "tokenize")]);
+      });
+
+      it("types a field from its initialiser and from a constructor write to it", async () => {
+        const files = read_fixture("typescript", "initialiser_capture");
+        const { project, paths } = await load_project(files);
+        const file = paths["services.ts"];
+        const source = files["services.ts"];
+        expect(targets_of(project, file, "log", line_of(source, "this.logger.log()"))).toEqual([
+          member_of(project, file, "Logger", "log"),
+        ]);
+        expect(targets_of(project, file, "clear", line_of(source, "this.cache.clear()"))).toEqual([
+          member_of(project, file, "Cache", "clear"),
+        ]);
+      });
+
+      it("types a variable initialised from a method call", async () => {
+        const files = read_fixture("typescript", "initialiser_capture");
+        const { project, paths } = await load_project(files);
+        const file = paths["services.ts"];
+        const describe_calls = files["services.ts"]
+          .split("\n")
+          .flatMap((line, index) => (line.includes("info.describe()") ? [index + 1] : []));
+        expect(describe_calls.map((line) => targets_of(project, file, "describe", line))).toEqual([
+          [member_of(project, file, "Info", "describe")],
+          [member_of(project, file, "Info", "describe")],
+        ]);
+      });
+      it.each([
+        ["callee first", ["registry.ts", "report.ts"]],
+        ["caller first", ["report.ts", "registry.ts"]],
+      ] as const)(
+        "types a method-call initialiser whose callee another file declares, %s",
+        async (_order, order) => {
+          const files = {
+            "registry.ts": `export class Info { describe(): void {} }
+export class Registry { getInfo(): Info { return new Info(); } }
+`,
+            "report.ts": `import { Registry } from "./registry";
+export function report(registry: Registry): void {
+  const info = registry.getInfo();
+  info.describe();
+}
+`,
+          };
+          const { project, paths } = await load_project(files, order);
+          expect(targets_of(project, paths["report.ts"], "describe", 4)).toEqual([
+            member_of(project, paths["registry.ts"], "Info", "describe"),
+          ]);
+        }
+      );
+    });
+
+    describe("javascript", () => {
+      it("resolves a private-name chain and fields a constructor declares by assigning them (webpack Compilation)", async () => {
+        const files = read_fixture("javascript", "initialiser_capture");
+        const { project, paths } = await load_project(files);
+        const file = paths["compilation.js"];
+        const source = files["compilation.js"];
+        expect([
+          targets_of(project, file, "getTransaction", line_of(source, "this.#tm.getTransaction()")),
+          targets_of(project, file, "split", line_of(source, "this.chunk.split()")),
+          targets_of(project, file, "connect", line_of(source, "this.chunkGraph.connect()")),
+        ]).toEqual([
+          [member_of(project, file, "TransactionManager", "getTransaction")],
+          [member_of(project, file, "Chunk", "split")],
+          [member_of(project, file, "ChunkGraph", "connect")],
+        ]);
+      });
+
+      it("types a constructor write and a local declarator from their JSDoc @type", async () => {
+        const files = read_fixture("javascript", "initialiser_capture");
+        const { project, paths } = await load_project(files);
+        const file = paths["jsdoc_types.js"];
+        const source = files["jsdoc_types.js"];
+        const get = member_of(project, file, "Cache", "get");
+        expect([
+          targets_of(project, file, "get", line_of(source, "this.cache.get()")),
+          targets_of(project, file, "get", line_of(source, "  cache.get()")),
+        ]).toEqual([[get], [get]]);
+      });
+    });
+
+    describe("python", () => {
+      it("types a variable from the declared return of the function or method it calls", async () => {
+        const files = read_fixture("python", "initialiser_capture");
+        const { project, paths } = await load_project(files);
+        const file = paths["html.py"];
+        const execute = member_of(project, file, "Connection", "execute");
+        const execute_lines = files["html.py"]
+          .split("\n")
+          .flatMap((line, index) => (line.includes("conn.execute()") ? [index + 1] : []));
+        expect(execute_lines.map((line) => targets_of(project, file, "execute", line))).toEqual([
+          [execute],
+          [execute],
+          [execute],
+        ]);
+      });
+
+      it("does not type a variable from a return annotation that names a type variable (sqlalchemy queue.get)", async () => {
+        const source = `from typing import Generic, TypeVar
+
+_T = TypeVar("_T")
+
+
+class Queue(Generic[_T]):
+    def get(self) -> _T:
+        raise NotImplementedError()
+
+
+def dispose(queue: Queue):
+    conn = queue.get()
+    conn.close()
+`;
+        const { project, paths } = await load_project({ "queue.py": source });
+        const file = paths["queue.py"];
+        const conn = variable_in(project, file, "conn", line_of(source, "conn = queue.get()"));
+        expect(project.types.get_symbol_type(conn)).toBe(null);
+      });
+
+      it("records a type[X] return as a class object, not an instance (pandas _parser_dispatch)", async () => {
+        const files = read_fixture("python", "initialiser_capture");
+        const { project, paths } = await load_project(files);
+        const file = paths["html.py"];
+        const source = files["html.py"];
+        const parser = variable_in(project, file, "parser", line_of(source, "parser = _parser_dispatch"));
+        const factory_product = variable_in(project, file, "p", line_of(source, "p = make()(io)"));
+        expect({
+          parser_type: project.types.get_symbol_type(parser),
+          parser_arguments: project.types.get_symbol_type_arguments(parser),
+          factory_product_type: project.types.get_symbol_type(factory_product),
+        }).toEqual({
+          parser_type: null,
+          parser_arguments: [type_named(project, file, "_HtmlFrameParser")],
+          // `make()(io)` calls what a call returned: no callee chain names it, so
+          // what the class object constructs is left to the value-source step.
+          factory_product_type: null,
+        });
+      });
     });
   });
 });
