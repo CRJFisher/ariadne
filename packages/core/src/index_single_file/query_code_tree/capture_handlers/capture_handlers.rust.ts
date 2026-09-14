@@ -40,10 +40,12 @@ import {
   extract_import_from_extern_crate,
   detect_callback_context,
   detect_function_collection,
-  extract_collection_source,
-  extract_call_initializer_name,
   type ImportInfo,
 } from "../symbol_factories/symbol_factories.rust";
+import {
+  extract_collection_source,
+  extract_initializer_call,
+} from "../symbol_factories/initializer_sources.rust";
 import {
   store_documentation,
   consume_documentation,
@@ -393,7 +395,7 @@ export function handle_definition_variable(
     type: var_type,
     function_collection,
     collection_source,
-    initialized_from_call: extract_call_initializer_name(capture.node),
+    initialized_from_call: extract_initializer_call(capture.node),
   });
 }
 
@@ -428,7 +430,7 @@ export function handle_definition_constant(
     export: export_info.export,
     type: const_type,
     function_collection,
-    initialized_from_call: extract_call_initializer_name(capture.node),
+    initialized_from_call: extract_initializer_call(capture.node),
   });
 }
 
@@ -466,7 +468,7 @@ export function handle_definition_variable_mut(
     type: var_type,
     function_collection,
     collection_source,
-    initialized_from_call: extract_call_initializer_name(capture.node),
+    initialized_from_call: extract_initializer_call(capture.node),
   });
 }
 

@@ -65,7 +65,7 @@ describe("member index built from indexed source", () => {
       ).toEqual({ User: { getName: "method", getEmail: "method" } });
     });
 
-    it("holds only the constructor for a class whose fields are assigned in it", async () => {
+    it("holds the fields a constructor declares by assigning them", async () => {
       expect(
         await member_kinds_of("a.js", `class User {
   constructor() {
@@ -74,7 +74,7 @@ describe("member index built from indexed source", () => {
   }
 }
 `, ["User"])
-      ).toEqual({ User: { constructor: "constructor" } });
+      ).toEqual({ User: { constructor: "constructor", name: "property", email: "property" } });
     });
 
     it("keeps two classes' members apart", async () => {

@@ -18,6 +18,7 @@ import {
   type TypeResolutionContext,
 } from "../resolve_references/registries/type";
 import { resolve_qualified_path_rust } from "../resolve_references/call_resolution/path_resolution.rust";
+import { find_self_type } from "../resolve_references/call_resolution/receiver_resolution";
 import { ScopeRegistry } from "../resolve_references/registries/scope";
 import { ExportRegistry } from "../resolve_references/registries/export";
 import { ReferenceRegistry } from "../resolve_references/registries/reference";
@@ -434,6 +435,18 @@ export class Project {
           languages: this.languages,
           modules,
         }),
+      resolve_self_type: (scope_id) => {
+        const self_type = find_self_type(scope_id, {
+          scopes: this.scopes,
+          definitions: this.definitions,
+          resolutions: this.resolutions,
+          imports: this.imports,
+          exports: this.exports,
+          languages: this.languages,
+          modules,
+        });
+        return self_type.ok ? self_type.value : null;
+      },
     };
 
     // Phase 3.5: Type heritage — Rust impl methods joined to the type another

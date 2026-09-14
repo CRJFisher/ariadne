@@ -28,20 +28,23 @@ import {
   extract_return_type,
   extract_parameter_type,
   extract_property_type,
-  extract_type_annotation,
   extract_initial_value,
   extract_default_value,
   extract_extends,
   detect_callback_context,
-  extract_collection_source,
-  extract_call_initializer_name,
 } from "../symbol_factories/symbol_factories.javascript";
+import {
+  extract_collection_source,
+  extract_initializer_call,
+  extract_member_source,
+} from "../symbol_factories/initializer_sources.javascript";
 import {
   detect_function_collection,
   detect_member_assignment,
-  extract_collection_source_key,
 } from "../symbol_factories/function_collection.javascript";
 import { extract_destructured_binding } from "../symbol_factories/destructuring.javascript";
+import { extract_jsdoc_type } from "../symbol_factories/jsdoc_extraction.javascript";
+import { resolve_this_field_write } from "../symbol_factories/this_field_write.javascript";
 import {
   extract_import_path,
   extract_require_path,
@@ -384,8 +387,8 @@ export function handle_definition_variable(
     : undefined;
 
   const collection_source = extract_collection_source(capture.node);
-  const collection_source_key = extract_collection_source_key(capture.node);
-  const initialized_from_call = extract_call_initializer_name(capture.node);
+  const member_source = extract_member_source(capture.node);
+  const initialized_from_call = extract_initializer_call(capture.node);
   const destructured = extract_destructured_binding(capture.node);
 
   builder.add_variable({
@@ -395,12 +398,12 @@ export function handle_definition_variable(
     location: capture.location,
     scope_id: context.get_scope_id(capture.location),
     is_exported: export_info.is_exported,
-    type: extract_type_annotation(capture.node),
+    type: extract_jsdoc_type(capture.node),
     initial_value: extract_initial_value(capture.node),
     docstring,
     function_collection,
     collection_source,
-    collection_source_key,
+    member_source,
     initialized_from_call,
     destructured_from: destructured?.source,
     destructured_key: destructured?.key,
@@ -441,6 +444,37 @@ export function handle_definition_field(
       initial_value: extract_initial_value(capture.node),
     });
   }
+}
+
+/**
+ * A `this.<name> = …` write in a class constructor declares the field `<name>`
+ * when the class body declares no member by that name — how JavaScript declared
+ * fields before class-field syntax, and still the common form. The write's
+ * JSDoc `@type` types the field; a construction it stores types it through the
+ * construct target, which `resolve_this_field_write` keys to this same node.
+ */
+export function handle_definition_field_assigned(
+  capture: CaptureNode,
+  builder: DefinitionBuilder,
+  context: ProcessingContext
+): void {
+  const target = capture.node.parent;
+  const field_write = target ? resolve_this_field_write(target) : undefined;
+  if (!field_write?.in_constructor || field_write.declared_member) {
+    return;
+  }
+  const class_id = find_containing_class(capture);
+  if (!class_id) {
+    return;
+  }
+
+  builder.add_inferred_property_to_class(class_id, {
+    symbol_id: create_property_id(capture),
+    name: capture.text,
+    location: capture.location,
+    scope_id: context.get_scope_id(capture.location),
+    type: extract_jsdoc_type(capture.node),
+  });
 }
 
 // ============================================================================
@@ -752,6 +786,7 @@ export const JAVASCRIPT_HANDLERS: HandlerRegistry = {
   "definition.parameter": handle_definition_parameter,
   "definition.variable": handle_definition_variable,
   "definition.field": handle_definition_field,
+  "definition.field.assigned": handle_definition_field_assigned,
   "assignment.property": handle_assignment_property,
 
   // Imports

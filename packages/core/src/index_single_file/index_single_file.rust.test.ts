@@ -1579,17 +1579,19 @@ fn main() {
       expect(has_valid_type).toBe(true);
     });
 
-    it("records initialized_from_call for a let bound to a plain function call", () => {
-      // Parity with JS/TS: name resolution reads this to recognise a
-      // self-initializer (`let has_flatten = has_flatten(fields)`). Only bare
-      // function calls populate it; method calls do not.
+    it("records initialized_from_call as the callee chain of a let or const", () => {
+      // Name resolution reads a one-segment chain to recognise a self-initializer
+      // (`let has_flatten = has_flatten(fields)`); the type registry follows the
+      // whole chain to the callee's declared return type.
       const code = `
 const MADE: i32 = make();
 fn build(fields: &[u8]) -> bool {
     let has_flatten = has_flatten(fields);
     let parsed = parse::<i32>();
-    let plain = compute();
     let via_method = config.get();
+    let via_self = self.inner.get();
+    let via_path = Parser::new();
+    let chained = make().finish();
     let literal = 0;
     has_flatten
 }
@@ -1600,29 +1602,26 @@ fn build(fields: &[u8]) -> bool {
 
       const index = build_index_single_file(parsed_file, tree, "rust");
 
-      const vars = new Map(
-        Array.from(index.variables.values()).map((v) => [v.name, v]),
+      const chains = new Map(
+        Array.from(index.variables.values()).map((v) => [v.name, v.initialized_from_call]),
       );
-      expect(vars.get("has_flatten" as SymbolName)?.initialized_from_call).toEqual(
-        "has_flatten" as SymbolName,
+      expect(chains).toEqual(
+        new Map<SymbolName, readonly SymbolName[] | undefined>([
+          ["MADE" as SymbolName, ["make" as SymbolName]],
+          ["has_flatten" as SymbolName, ["has_flatten" as SymbolName]],
+          // Turbofish: the callee is a generic_function wrapping the bare name.
+          ["parsed" as SymbolName, ["parse" as SymbolName]],
+          ["via_method" as SymbolName, ["config" as SymbolName, "get" as SymbolName]],
+          [
+            "via_self" as SymbolName,
+            ["self" as SymbolName, "inner" as SymbolName, "get" as SymbolName],
+          ],
+          // A `::` path is the constructor and path resolvers' to follow.
+          ["via_path" as SymbolName, undefined],
+          ["chained" as SymbolName, undefined],
+          ["literal" as SymbolName, undefined],
+        ]),
       );
-      // Turbofish: the callee is a generic_function wrapping the bare name.
-      expect(vars.get("parsed" as SymbolName)?.initialized_from_call).toEqual(
-        "parse" as SymbolName,
-      );
-      // const items reach the extractor too (parity with let).
-      expect(vars.get("MADE" as SymbolName)?.initialized_from_call).toEqual(
-        "make" as SymbolName,
-      );
-      expect(vars.get("plain" as SymbolName)?.initialized_from_call).toEqual(
-        "compute" as SymbolName,
-      );
-      expect(
-        vars.get("via_method" as SymbolName)?.initialized_from_call,
-      ).toBeUndefined();
-      expect(
-        vars.get("literal" as SymbolName)?.initialized_from_call,
-      ).toBeUndefined();
     });
 
     it("should handle generic types", () => {

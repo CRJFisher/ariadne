@@ -1,7 +1,7 @@
 ---
 id: TASK-376.9
 title: "Widen construction and initialiser capture across the four languages"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-07-29 09:38"
 labels:
@@ -46,12 +46,35 @@ Rust struct-literal and `Cursor::new()` construction and inline chains already r
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 `initialized_from_call` carries the full callee chain in JS, Rust and Python, and Python has an initialiser-call extractor and `member_source` capture.
-- [ ] #2 A nested `new` in an argument list no longer steals the declarator (angular `lexer.ts:116` binds to `_Tokenizer`); class fields and `this.x = new Y()` produce construct targets keyed to the property definition's location; the ancestor memo stays correct under the abort.
-- [ ] #3 `this.#tm.getTransaction()` produces the `#`-prefixed chain segment and resolves against the member index.
-- [ ] #4 STEP 1.5 fires for methods and constructors and for Python, with `type[X]` returns carrying the class-object head.
-- [ ] #5 JSDoc `@type` is consumed for `this.X = …` in a constructor and for a local declarator.
-- [ ] #6 Integration tests cover all of this step's evidence cases: angular `lexer.ts:116`, JS/TS class fields and `this.x = new Y()`, webpack `#`-private chains, method-call initialisers, the pandas `_parser_dispatch` chain, `def make() -> type[Parser]`, and both JSDoc `@type` positions.
-- [ ] #7 The four Python corpora are re-run with the taxonomy harness and no wrong declared-return-type propagation is introduced.
+- [x] #1 `initialized_from_call` carries the full callee chain in JS, Rust and Python, and Python has an initialiser-call extractor and `member_source` capture.
+  Evidence: `VariableDefinition.initialized_from_call: readonly SymbolName[]` and `member_source: { holder, member }`, written by `extract_initializer_call` / `extract_member_source` in `symbol_factories.{javascript,python,rust}.ts`. `index_single_file.{javascript,python,rust}.test.ts` pin `["s","getInfo"]` / `["s","get_info"]`, `["inject"]`, `["self","inner","get"]`, and `orig = BaseTask.__call__` → `{ holder: "BaseTask", member: "__call__" }`.
+- [x] #2 A nested `new` in an argument list no longer steals the declarator (angular `lexer.ts:116` binds to `_Tokenizer`); class fields and `this.x = new Y()` produce construct targets keyed to the property definition's location; the ancestor memo stays correct under the abort.
+  Evidence: `index_single_file.javascript.test.ts` › "Construction and initialiser capture" (exactly one target for `new Outer(new Inner(), x)`; field, `#field`, declared and constructor-declared `this.x` targets equal the property locations); `index_single_file.typescript.test.ts` › "Construction capture" (fields and constructor parameter properties); `type.integration.test.ts` › angular lexer case.
+- [x] #3 `this.#tm.getTransaction()` produces the `#`-prefixed chain segment and resolves against the member index.
+  Evidence: inline chain tests in JS and TS; `type.integration.test.ts` › webpack `Compilation` fixture resolves `getTransaction`.
+- [x] #4 STEP 1.5 fires for methods and constructors and for Python, with `type[X]` returns carrying the class-object head.
+  Evidence: STEP 1.5 resolves the callee chain to a function or method; a constructor definition declares no return annotation (a class call is a construction, typed by STEP 1). `type.integration.test.ts` › Python `html.py` fixture (bare factory, `engine.connect()`, `self.connect()`), `type[_HtmlFrameParser]` recorded as head `type` with argument `[_HtmlFrameParser]` and no instance type, and a `-> _T` TypeVar return that types nothing.
+- [x] #5 JSDoc `@type` is consumed for `this.X = …` in a constructor and for a local declarator.
+  Evidence: one reader in `jsdoc_extraction.javascript.ts`; `symbol_factories.javascript.test.ts` › `extract_jsdoc_type`; `type.integration.test.ts` › `jsdoc_types.js` fixture resolves both positions.
+- [x] #6 Integration tests cover all of this step's evidence cases: angular `lexer.ts:116`, JS/TS class fields and `this.x = new Y()`, webpack `#`-private chains, method-call initialisers, the pandas `_parser_dispatch` chain, `def make() -> type[Parser]`, and both JSDoc `@type` positions.
+  Evidence: `type.integration.test.ts` › "constructions and call initialisers" over `tests/fixtures/{typescript,javascript,python}/code/integration/initialiser_capture/`, plus a cross-file method-call initialiser loaded in both orders.
+- [x] #7 The four Python corpora are re-run with the taxonomy harness and no wrong declared-return-type propagation is introduced.
+  Evidence: django, pandas, celery and sqlalchemy were indexed on the base tree and on this tree and every call reference diffed (a per-call superset of the taxonomy count). No call lost a target in any corpus. Calls resolved: celery +4, sqlalchemy +84, pandas +2,150, django 0; no recorded value type names a non-type definition. The audit found one wrong propagation — a return annotation naming a `TypeVar` or a `Union` alias variable (`-> _T`, `-> ArrayLike`) recorded as the value's type — fixed by guarding STEP 1.5 with `names_a_type` as STEP 1 and STEP 1.2 already were.
 
 <!-- AC:END -->
+
+## Implementation notes
+
+- **Callee chains.** `initialized_from_call` is the callee chain, root first, in JS/TS, Rust and Python; a callee that is not a name chain (`make()(…)`, `a[k]()`, a Rust `::` path) records none. Name resolution's self-initializer carve-out applies to a one-segment chain only: a member call's last segment is never looked up in scope, and `let x = x.unwrap()` is followed by uses of the new binding.
+- **`member_source` replaces `collection_source_key`.** The keyed alias fact was the same holder/member pair, so one field carries it for every language and collection dispatch reads its `member`. Python records it for TASK-376.11's qualified-member-read producer.
+- **STEP 1.5.** The callee resolves from a self receiver (through `resolve_self_type`, which the project hands in as `find_self_type`, since registries never import call resolution), a type's static member, a module import's member, or the type already recorded for a value this file declares. Members come from `DefinitionRegistry.get_member_closure`. A value another file declares is not followed, so the answer is independent of resolution order; a both-orders cross-file test pins it. The recorded type must `names_a_type`.
+- **Construction targets.** `construct_target_node` stops at an `arguments` ancestor (memoised), and types class fields and `this.x` writes at the field definition's name node. `this_field_write.javascript.ts` answers which field a write addresses: a body member, a TypeScript parameter property, or — in JavaScript — the field a constructor write declares (`@definition.field.assigned`) when the body declares none. Declared members are collected once per class body, and the builder dedupes inferred properties through a name index, so a class with many writes indexes in linear time.
+- **Initialiser sources.** `symbol_factories/initializer_sources.{javascript,python,rust}.ts` hold everything a variable's initialiser names — `extract_collection_source`, `extract_member_source`, `extract_initializer_call` — with their tests beside them; `symbol_factories.python.ts` had outgrown the 32 KB tree-sitter file limit with them inline.
+- **JSDoc.** `find_preceding_jsdoc` sits behind `extract_jsdoc_type` / `extract_jsdoc_return_type`, which anchor at the declaration statement; the metadata extractor, `extract_property_type` and the JS variable handler all read through them.
+- **Found, left to their owners.**
+  - `find_self_type` binds `this` inside a plain `function` nested in a method to the class (pre-existing in call resolution; STEP 1.5 follows the same rule).
+  - A dropped subscript in a receiver chain (`df[c].explode()` → `DataFrame.explode`) is pre-existing and more often exposed now that more values carry types — TASK-376.10.
+  - JS methods typed only by JSDoc `@returns` carry no `return_type`, so a method-call initialiser on them stays untyped.
+  - Python `self.x = make()` attributes take no initialiser type — TASK-376.11.
+  - `p = make()(io)` and `parser(io)` on a class object resolve in TASK-376.11.
+  - `definition_builder.ts` sits 5 bytes under the 32 KB limit and needs splitting before it grows again.

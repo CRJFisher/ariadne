@@ -37,6 +37,13 @@ export type RustTypePathResolver = (
   referring_file: FilePath
 ) => SymbolId | null;
 
+/**
+ * The type a `this`/`self`/`cls` receiver denotes at a scope, or null where no
+ * enclosing scope names one. Self-type lookup lives in call resolution — a layer
+ * no registry imports — so the project hands it in.
+ */
+export type SelfTypeResolver = (scope_id: ScopeId) => SymbolId | null;
+
 /** Everything resolving one file's type names reads about the project. */
 export interface TypeResolutionContext {
   readonly resolutions: ResolutionRegistry;
@@ -45,7 +52,11 @@ export interface TypeResolutionContext {
   readonly languages: ReadonlyMap<FilePath, Language>;
   readonly modules: ModuleResolutionContext;
   readonly resolve_rust_type_path: RustTypePathResolver;
+  readonly resolve_self_type: SelfTypeResolver;
 }
+
+/** Receivers that name the enclosing type. `super` names a parent a call dispatches past, so it roots no chain. */
+const SELF_RECEIVERS: ReadonlySet<string> = new Set(["this", "self", "cls"]);
 
 /**
  * Type metadata extracted from one file's semantic index, still keyed by name.
@@ -61,8 +72,8 @@ interface ExtractedTypeData {
   construction_bindings: ReadonlyMap<LocationKey, readonly SymbolName[]>;
   /** Every class, interface and enum the file declares */
   declared_types: readonly SymbolId[];
-  /** Variable → the function it was initialized from, for return-type inference */
-  call_initializers: ReadonlyMap<SymbolId, SymbolName>;
+  /** Untyped variable → the callee chain of its call initialiser, e.g. `s.getInfo()` → ["s", "getInfo"] */
+  call_initializers: ReadonlyMap<SymbolId, readonly SymbolName[]>;
 }
 
 /** Symbols a file contributed, tracked so remove_file() can evict them. */
@@ -165,7 +176,7 @@ export class TypeRegistry {
 
     // A call-initialized variable with no annotation takes its type from the
     // called function's return type (STEP 1.5 of resolve_type_metadata).
-    const call_initializers = new Map<SymbolId, SymbolName>();
+    const call_initializers = new Map<SymbolId, readonly SymbolName[]>();
     for (const variable of index.variables.values()) {
       if (!variable.type && variable.initialized_from_call) {
         call_initializers.set(variable.symbol_id, variable.initialized_from_call);
@@ -191,7 +202,6 @@ export class TypeRegistry {
     extracted: ExtractedTypeData,
     context: TypeResolutionContext
   ): void {
-    const { resolutions } = context;
     const resolved_symbols = new Set<SymbolId>();
 
     // STEP 1: variable/parameter/property → constructed or annotated type.
@@ -263,44 +273,46 @@ export class TypeRegistry {
     }
 
     // STEP 1.5: factory pattern — an untyped variable takes the declared return
-    // type of the function it was initialized from.
-    for (const [variable_id, function_name] of extracted.call_initializers) {
+    // type of the function or method its initialiser calls. It runs after STEP 1,
+    // and in declaration order, so a callee chain can start at a binding this
+    // file has already typed: `const i = s.getInfo()` reads `s`'s annotation,
+    // and `const b = a.get()` reads what `const a = make()` recorded. A
+    // constructor declares no return annotation — calling a class is a
+    // construction, which STEP 1 types.
+    for (const [variable_id, callee_chain] of extracted.call_initializers) {
       if (this.symbol_types.has(variable_id)) continue;
 
       const scope_id = this.definitions.get_symbol_scope(variable_id);
       if (!scope_id) continue;
 
-      const function_id = resolutions.resolve(scope_id, function_name);
-      if (!function_id) continue;
+      const callee = this.resolve_initializer_callee(scope_id, callee_chain, file_id, context);
+      if ((callee?.kind !== "function" && callee?.kind !== "method") || !callee.return_type) {
+        continue;
+      }
 
-      const function_def = this.definitions.get(function_id);
-      if (!function_def || function_def.kind !== "function") continue;
-
-      const return_type_name = function_def.return_type;
-      if (!return_type_name) continue;
-
-      // The return type is declared where the function is, in whichever file
-      // and language that is, so it is parsed and resolved there.
-      const function_file = function_def.location.file_path;
-      const function_language = context.languages.get(function_file) ?? language;
-      const return_annotation = parse_type_annotation(return_type_name, function_language);
+      // The return type is declared where the callee is, in whichever file and
+      // language that is, so it is parsed and resolved there.
+      const callee_file = callee.location.file_path;
+      const callee_language = context.languages.get(callee_file) ?? language;
+      const return_annotation = parse_type_annotation(callee.return_type, callee_language);
       if (!return_annotation) continue;
 
-      const function_scope_id = this.definitions.get_symbol_scope(function_id) ?? scope_id;
+      const callee_scope_id = this.definitions.get_symbol_scope(callee.symbol_id) ?? scope_id;
+      const return_type_id = this.resolve_annotation(
+        callee_scope_id,
+        return_annotation,
+        callee_file,
+        callee_language,
+        context
+      );
       this.record_declared_type(
         variable_id,
-        this.resolve_annotation(
-          function_scope_id,
-          return_annotation,
-          function_file,
-          function_language,
-          context
-        ),
+        return_type_id && names_a_type(return_type_id, this.definitions) ? return_type_id : null,
         this.resolve_annotation_arguments(
-          function_scope_id,
+          callee_scope_id,
           return_annotation,
-          function_file,
-          function_language,
+          callee_file,
+          callee_language,
           context
         ),
         resolved_symbols
@@ -319,6 +331,65 @@ export class TypeRegistry {
     if (resolved_symbols.size > 0) {
       this.resolved_by_file.set(file_id, { resolved_symbols });
     }
+  }
+
+  /**
+   * The definition an initialiser's callee chain names, or null at the first
+   * segment that names nothing to follow.
+   *
+   * The root is a self receiver, looked up as the enclosing type, or a name in
+   * lexical scope. Every later segment is a member of what the segment before it
+   * reached: a module member out of a module import, a static member out of a
+   * type, and out of a value, a member of the type recorded for that value.
+   *
+   * A value's type is read only where this file declares the value. Another
+   * file's value is typed by that file's own update, which may not have run
+   * yet, so following it would make the answer depend on the order files are
+   * resolved in.
+   */
+  private resolve_initializer_callee(
+    scope_id: ScopeId,
+    chain: readonly SymbolName[],
+    file_id: FilePath,
+    context: TypeResolutionContext
+  ): AnyDefinition | null {
+    const [root, ...members] = chain;
+    let current = SELF_RECEIVERS.has(root)
+      ? context.resolve_self_type(scope_id)
+      : context.resolutions.resolve(scope_id, root);
+    for (const member of members) {
+      if (!current) {
+        return null;
+      }
+      current = this.resolve_member(current, member, file_id, context);
+    }
+    return current ? (this.definitions.get(current) ?? null) : null;
+  }
+
+  /**
+   * The member `name` of the module, type or file-local value `holder_id`
+   * denotes. A type's members come from the DefinitionRegistry's member closure,
+   * which every file contributes to before any type update runs, rather than from
+   * `get_type_member`, whose members exist only once the declaring file's own
+   * update has copied them.
+   */
+  private resolve_member(
+    holder_id: SymbolId,
+    name: SymbolName,
+    file_id: FilePath,
+    context: TypeResolutionContext
+  ): SymbolId | null {
+    const holder = this.definitions.get(holder_id);
+    if (holder?.kind === "import") {
+      return this.descend_modules(holder_id, [name], context);
+    }
+    const type_id =
+      holder?.kind === "class" || holder?.kind === "interface" || holder?.kind === "enum"
+        ? holder_id
+        : holder?.location.file_path === file_id
+          ? this.symbol_types.get(holder_id)
+          : undefined;
+    return type_id ? (this.definitions.get_member_closure(type_id).get(name) ?? null) : null;
   }
 
   /**

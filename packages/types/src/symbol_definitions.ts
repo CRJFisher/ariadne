@@ -268,14 +268,20 @@ export interface VariableDefinition extends Definition {
   readonly function_collection?: FunctionCollection;
   readonly collection_source?: SymbolName; // Name of the collection variable this was looked up from (e.g. "config" in "const handler = config.get(...)")
   /**
-   * @language javascript,typescript
-   * Property key accessed on `collection_source` for a static object-property alias
-   * (e.g. "A" in `var alias = Ns.A`). Present only for a plain member access, never a
-   * dynamic `get(...)`/subscript retrieval, so dispatch on the alias is keyed rather
-   * than unioned.
+   * The holder and member a plain member read initialiser names: `{ holder: "Ns",
+   * member: "A" }` for `var alias = Ns.A`, `{ holder: "BaseTask", member: "__call__" }`
+   * for `orig = BaseTask.__call__`. Present only when the holder is a bare
+   * identifier and the member a static name — never a call, a subscript or a
+   * `get(...)` retrieval — so a call on the alias addresses that one member.
    */
-  readonly collection_source_key?: SymbolName;
-  readonly initialized_from_call?: SymbolName; // Name of the function called in initializer (e.g. "getHandler" in "const h = getHandler()")
+  readonly member_source?: { readonly holder: SymbolName; readonly member: SymbolName };
+  /**
+   * The callee chain of the call this binding is initialised from, root first:
+   * `["getHandler"]` for `const h = getHandler()`, `["s", "getInfo"]` for
+   * `const i = s.getInfo()`, `["self", "factory"]` for `p = self.factory()`.
+   * Absent when the callee is not a name chain (`make()(…)`, `a[k]()`).
+   */
+  readonly initialized_from_call?: readonly SymbolName[];
   /**
    * @language javascript,typescript
    * The identifier an object-destructured binding unpacks: "options" in

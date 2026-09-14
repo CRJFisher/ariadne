@@ -553,15 +553,15 @@ describe("JavaScript Metadata Extractors", () => {
       expect(result).toBeUndefined(); // Not assigned to a variable
     });
 
-    it("handle deeply nested constructor", () => {
+    it("gives a construction passed as an argument no target", () => {
       const code = "const result = someFn(anotherFn(new MyClass()));";
       const tree = parser.parse(code);
       const new_expr = tree.rootNode.descendantsOfType("new_expression")[0];
 
       const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_construct_target(new_expr, TEST_FILE);
 
-      expect(result).toBeDefined();
-      expect(result?.start_column).toBe(7); // position of 'result'
+      // `result` holds what someFn returns, not the MyClass passed down to it.
+      expect(result).toBeUndefined();
     });
 
     it("verify multi-line location accuracy", () => {

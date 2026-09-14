@@ -181,6 +181,7 @@ Language-specific features explicitly allowed:
 - `@definition.enum.member` - Enum members
 - `@definition.namespace` - Namespaces
 - `@definition.type_parameter` - Generic type parameters (emitted; no handler currently consumes it — see Validation)
+- `@definition.field.assigned` - The property of a `this.<name> = …` write (JavaScript); its handler declares a field only for a constructor write the class body does not already name
 - `@reference.constructor` - Constructor calls
 - `@reference.constructor.qualified` - Namespace-qualified constructor calls (`new ns.Foo()`)
 - `@assignment.constructor.qualified` - Namespace-qualified constructor with assignment target

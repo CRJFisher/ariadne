@@ -3800,4 +3800,50 @@ const result = items.map((x) =>
       ).toEqual(["return 引数;", "中文", "引数"]);
     });
   });
+
+  describe("Construction capture", () => {
+    function index_ts(code: string) {
+      const tree = parser.parse(code);
+      const parsed_file = create_parsed_file(code, "test.ts" as FilePath, tree, "typescript" as Language);
+      return build_index_single_file(parsed_file, tree, "typescript" as Language);
+    }
+
+    it("keys a field initialiser and a constructor write to the declared field or parameter property", () => {
+      const result = index_ts(`class Service {
+  private helper = new Helper();
+  store: Store;
+  #tm: TM;
+  constructor(private readonly clock: Clock, public queue?: Queue) {
+    this.clock = new Clock();
+    this.queue = new Queue();
+    this.store = new Store();
+    this.#tm = new TM();
+    this.undeclared = 1;
+  }
+  run() { this.#tm.getTransaction(); }
+}`);
+      const fields = new Map(
+        Array.from(result.classes.values())[0].properties.map((p) => [p.name as string, p.location]),
+      );
+      const constructions = result.references
+        .filter((ref): ref is ConstructorCallReference => ref.kind === "constructor_call")
+        .map((ref) => ({ name: ref.name, construct_target: ref.construct_target }));
+
+      // TypeScript declares its fields, so an undeclared write declares none.
+      expect([...fields.keys()]).toEqual(["helper", "store", "#tm", "clock", "queue"]);
+      expect(constructions).toEqual([
+        { name: "Helper", construct_target: fields.get("helper") },
+        { name: "Clock", construct_target: fields.get("clock") },
+        { name: "Queue", construct_target: fields.get("queue") },
+        { name: "Store", construct_target: fields.get("store") },
+        { name: "TM", construct_target: fields.get("#tm") },
+      ]);
+      const call = result.references.find((ref) => ref.name === ("getTransaction" as SymbolName));
+      expect(call && "property_chain" in call ? call.property_chain : undefined).toEqual([
+        "this",
+        "#tm",
+        "getTransaction",
+      ]);
+    });
+  });
 });

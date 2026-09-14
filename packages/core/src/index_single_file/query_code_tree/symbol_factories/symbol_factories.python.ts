@@ -840,66 +840,6 @@ export function detect_function_collection(
   return null;
 }
 
-/**
- * Extract the name of the collection variable this definition was looked up from.
- * Used for collection dispatch - when a variable is assigned from a Map/Dict lookup.
- *
- * Patterns detected:
- * 1. handler = config.get("key")  -> returns "config"
- * 2. handler = config["key"]      -> returns "config"
- */
-export function extract_collection_source(node: SyntaxNode): SymbolName | undefined {
-  // Get initial value node (right side of assignment)
-  let assignment = node;
-  if (node.type === "identifier" || node.type === "attribute") {
-    assignment = node.parent || node;
-  }
-
-  if (assignment.type !== "assignment") {
-    // Try to find parent assignment
-    let current = node.parent;
-    while (current) {
-      if (current.type === "assignment") {
-        assignment = current;
-        break;
-      }
-      current = current.parent;
-    }
-  }
-
-  if (assignment.type !== "assignment") {
-    return undefined;
-  }
-
-  const value_node = assignment.childForFieldName?.("right");
-  if (!value_node) {
-    return undefined;
-  }
-
-  // Case 1: Method call (config.get(...))
-  if (value_node.type === "call") {
-    const function_node = value_node.childForFieldName?.("function");
-    if (function_node?.type === "attribute") {
-      const object_node = function_node.childForFieldName?.("object");
-      const attribute_node = function_node.childForFieldName?.("attribute");
-
-      if (object_node?.type === "identifier" && attribute_node?.text === "get") {
-        return object_node.text as SymbolName;
-      }
-    }
-  }
-
-  // Case 2: Subscript access (config[...])
-  if (value_node.type === "subscript") {
-    const value = value_node.childForFieldName?.("value");
-    if (value?.type === "identifier") {
-      return value.text as SymbolName;
-    }
-  }
-
-  return undefined;
-}
-
 // ============================================================================
 // Internal Helpers
 // ============================================================================

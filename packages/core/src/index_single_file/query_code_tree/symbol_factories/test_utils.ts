@@ -1,4 +1,4 @@
-import { Parser, JavaScript, Python } from "../../../native";
+import { Parser, JavaScript, Python, Rust } from "../../../native";
 import type { SyntaxNode } from "tree-sitter";
 import type { FilePath, SymbolName } from "@ariadnejs/types";
 import {
@@ -32,6 +32,12 @@ export function parse_python(code: string): SyntaxNode {
   parser.setLanguage(Python);
   const tree = parser.parse(code);
   return tree.rootNode;
+}
+
+export function parse_rust(code: string): SyntaxNode {
+  const parser = new Parser();
+  parser.setLanguage(Rust);
+  return parser.parse(code).rootNode;
 }
 
 const python_file_path = "/test.py" as FilePath;

@@ -1045,7 +1045,7 @@ function use() {
 
       const h_var = vars.find(v => v.name === "h")!;
       expect(h_var.kind).toBe("constant");
-      expect(h_var.initialized_from_call).toBe("createHandler");
+      expect(h_var.initialized_from_call).toEqual(["createHandler"]);
     });
 
     it("does not set initialized_from_call for variables with literal initializers", () => {
@@ -1071,10 +1071,10 @@ const extractor = get_scope_boundary_extractor(language);
 
       const extractor_var = vars.find(v => v.name === "extractor")!;
       expect(extractor_var.kind).toBe("constant");
-      expect(extractor_var.initialized_from_call).toBe("get_scope_boundary_extractor");
+      expect(extractor_var.initialized_from_call).toEqual(["get_scope_boundary_extractor"]);
     });
 
-    it("does not set initialized_from_call for method calls on objects", () => {
+    it("records the full callee chain for a method call on an object", () => {
       const code = `
 const result = obj.getSomething();
 `;
@@ -1083,9 +1083,7 @@ const result = obj.getSomething();
 
       const result_var = vars.find(v => v.name === "result")!;
       expect(result_var.kind).toBe("constant");
-      // initialized_from_call tracks direct function calls only; a method call
-      // through property access is not a factory relationship worth recording.
-      expect(result_var.initialized_from_call).toBeUndefined();
+      expect(result_var.initialized_from_call).toEqual(["obj", "getSomething"]);
     });
   });
 

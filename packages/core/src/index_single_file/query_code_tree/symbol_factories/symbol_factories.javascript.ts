@@ -29,7 +29,6 @@ import type { ProcessingContext } from "../../scopes/processing_context";
 import { node_to_location } from "../../node_to_location";
 import {
   extract_jsdoc_type,
-  find_preceding_jsdoc,
   extract_jsdoc_param_type,
 } from "./jsdoc_extraction.javascript";
 
@@ -337,17 +336,7 @@ export function extract_parameter_type(node: SyntaxNode): SymbolName | undefined
  * For JavaScript, this extracts type information from JSDoc @type annotations
  */
 export function extract_property_type(node: SyntaxNode): SymbolName | undefined {
-  // First check for JSDoc comment
-  const jsdoc_comment = find_preceding_jsdoc(node);
-  if (jsdoc_comment) {
-    const type = extract_jsdoc_type(jsdoc_comment.text);
-    if (type) {
-      return type;
-    }
-  }
-
-  // Fall back to standard type annotation (for TypeScript-style annotations if present)
-  return extract_parameter_type(node);
+  return extract_jsdoc_type(node) ?? extract_parameter_type(node);
 }
 
 /**
@@ -457,98 +446,6 @@ export function extract_extends(node: SyntaxNode): SymbolName[] {
   }
 
   return results;
-}
-
-// ============================================================================
-// Collection Source Extraction
-// ============================================================================
-
-/**
- * Extract the name of the collection variable this definition was looked up from.
- * Used for collection dispatch - when a variable is assigned from a Map/Array/Object lookup.
- *
- * Patterns detected:
- * 1. const handler = config.get("key");  -> returns "config"
- * 2. const handler = config["key"];      -> returns "config"
- */
-export function extract_collection_source(node: SyntaxNode): SymbolName | undefined {
-  // Get initial value node (init or value)
-  let target_node = node;
-  if (node.type === "identifier" || node.type === "property_identifier") {
-    target_node = node.parent || node;
-  }
-
-  const value_node =
-    target_node.childForFieldName("value") || target_node.childForFieldName("init");
-
-  if (!value_node) {
-    return undefined;
-  }
-
-  // Case 1: Method call (config.get(...))
-  if (value_node.type === "call_expression") {
-    const function_node = value_node.childForFieldName("function");
-    if (function_node?.type === "member_expression") {
-      const object_node = function_node.childForFieldName("object");
-      if (object_node?.type === "identifier") {
-        return object_node.text as SymbolName;
-      }
-    }
-  }
-
-  // Case 2: Member access (config[...])
-  if (value_node.type === "member_expression" || value_node.type === "subscript_expression") {
-    const object_node = value_node.childForFieldName("object");
-    if (object_node?.type === "identifier") {
-      return object_node.text as SymbolName;
-    }
-  }
-
-  return undefined;
-}
-
-/**
- * Extract the name of the function called to initialize this variable.
- * Used to infer variable types from function return types.
- *
- * Patterns detected:
- * 1. const extractor = get_scope_boundary_extractor();  -> returns "get_scope_boundary_extractor"
- * 2. const x = foo(arg1, arg2);                         -> returns "foo"
- *
- * NOT detected (handled by collection_source instead):
- * - const handler = config.get("key");  -> method calls, use collection_source
- */
-export function extract_call_initializer_name(
-  node: SyntaxNode
-): SymbolName | undefined {
-  // Get initial value node (init or value)
-  let target_node = node;
-  if (node.type === "identifier" || node.type === "property_identifier") {
-    target_node = node.parent || node;
-  }
-
-  const value_node =
-    target_node.childForFieldName("value") ||
-    target_node.childForFieldName("init");
-
-  if (!value_node) {
-    return undefined;
-  }
-
-  // Only handle plain function calls (not method calls)
-  if (value_node.type === "call_expression") {
-    const function_node = value_node.childForFieldName("function");
-
-    // Plain function call: foo()
-    if (function_node?.type === "identifier") {
-      return function_node.text as SymbolName;
-    }
-
-    // Skip method calls (config.get()) - handled by collection_source
-    // function_node.type === "member_expression" means it's a method call
-  }
-
-  return undefined;
 }
 
 // ============================================================================
