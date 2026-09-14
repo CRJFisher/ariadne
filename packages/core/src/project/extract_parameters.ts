@@ -44,5 +44,9 @@ export function extract_all_parameters(
     }
   }
 
+  for (const method of index_single_file.unattached_impl_methods.values()) {
+    params.push(...method.parameters);
+  }
+
   return params;
 }

@@ -39,7 +39,6 @@ export type RustTypePathResolver = (
 
 /** Everything resolving one file's type names reads about the project. */
 export interface TypeResolutionContext {
-  readonly definitions: DefinitionRegistry;
   readonly resolutions: ResolutionRegistry;
   readonly exports: ExportRegistry;
   readonly imports: ImportGraph;
@@ -60,16 +59,10 @@ interface ExtractedTypeData {
   return_bindings: ReadonlyMap<SymbolId, SymbolName>;
   /** Constructed symbol → the name chain it constructs, e.g. `new models.User()` → ["models", "User"] */
   construction_bindings: ReadonlyMap<LocationKey, readonly SymbolName[]>;
-  /** Every class, interface and enum the file declares, with extends/implements still as names */
-  declared_types: readonly DeclaredType[];
+  /** Every class, interface and enum the file declares */
+  declared_types: readonly SymbolId[];
   /** Variable → the function it was initialized from, for return-type inference */
   call_initializers: ReadonlyMap<SymbolId, SymbolName>;
-}
-
-/** A type a file declares, and the parent names its declaration writes. */
-interface DeclaredType {
-  readonly symbol_id: SymbolId;
-  readonly extends: readonly SymbolName[];
 }
 
 /** Symbols a file contributed, tracked so remove_file() can evict them. */
@@ -110,7 +103,8 @@ function names_a_type(
 /**
  * Project-wide store of resolved type relationships, all keyed by SymbolId:
  * value → type, value → type arguments, callable → return type, type →
- * members, class → parent, class → interfaces.
+ * members. Inheritance is read from the heritage graph `DefinitionRegistry`
+ * holds.
  *
  * update_file() extracts type names from a file's index and resolves them to
  * SymbolIds in one pass. It must run after ResolutionRegistry.resolve_names()
@@ -122,9 +116,9 @@ export class TypeRegistry {
   private callable_return_types: Map<SymbolId, SymbolId> = new Map();
   private resolved_type_members: Map<SymbolId, Map<SymbolName, SymbolId>> =
     new Map();
-  private parent_classes: Map<SymbolId, SymbolId> = new Map();
-  private implemented_interfaces: Map<SymbolId, SymbolId[]> = new Map();
   private resolved_by_file: Map<FilePath, FileTypeContributions> = new Map();
+
+  constructor(private readonly definitions: DefinitionRegistry) {}
 
   /**
    * Extract type names from `file_path`'s index and resolve them to SymbolIds.
@@ -163,13 +157,11 @@ export class TypeRegistry {
       enums: index.enums,
     });
 
-    const declared_types: DeclaredType[] = [
-      ...index.classes.values(),
-      ...index.interfaces.values(),
-    ].map((type_def) => ({ symbol_id: type_def.symbol_id, extends: type_def.extends }));
-    for (const enum_def of index.enums.values()) {
-      declared_types.push({ symbol_id: enum_def.symbol_id, extends: [] });
-    }
+    const declared_types = [
+      ...index.classes.keys(),
+      ...index.interfaces.keys(),
+      ...index.enums.keys(),
+    ];
 
     // A call-initialized variable with no annotation takes its type from the
     // called function's return type (STEP 1.5 of resolve_type_metadata).
@@ -199,7 +191,8 @@ export class TypeRegistry {
     extracted: ExtractedTypeData,
     context: TypeResolutionContext
   ): void {
-    const { definitions, resolutions } = context;
+    const { resolutions } = context;
+    const definitions = this.definitions;
     const resolved_symbols = new Set<SymbolId>();
 
     // STEP 1: variable/parameter/property → constructed or annotated type.
@@ -316,42 +309,11 @@ export class TypeRegistry {
     }
 
     // STEP 2: copy each declared type's already-resolved member map from DefinitionRegistry.
-    for (const { symbol_id: type_id } of extracted.declared_types) {
+    for (const type_id of extracted.declared_types) {
       const member_map = definitions.get_member_index().get(type_id);
       if (member_map && member_map.size > 0) {
         this.resolved_type_members.set(type_id, new Map(member_map));
         resolved_symbols.add(type_id);
-      }
-    }
-
-    // STEP 3: resolve extends/implements names. The first resolved name is the
-    // parent class; any remaining are implemented interfaces.
-    for (const { symbol_id: type_id, extends: parent_names } of extracted.declared_types) {
-      if (parent_names.length === 0) {
-        continue;
-      }
-
-      const scope_id = definitions.get_symbol_scope(type_id);
-      if (!scope_id) continue;
-
-      const resolved_parents: SymbolId[] = [];
-      for (const parent_name of parent_names) {
-        const parent_annotation = parse_type_annotation(parent_name, language);
-        const parent_id = parent_annotation
-          ? this.resolve_annotation(scope_id, parent_annotation, file_id, language, context)
-          : null;
-        if (parent_id) {
-          resolved_parents.push(parent_id);
-        }
-      }
-
-      if (resolved_parents.length > 0) {
-        this.parent_classes.set(type_id, resolved_parents[0]);
-        resolved_symbols.add(type_id);
-
-        if (resolved_parents.length > 1) {
-          this.implemented_interfaces.set(type_id, resolved_parents.slice(1));
-        }
       }
     }
 
@@ -381,6 +343,25 @@ export class TypeRegistry {
       this.symbol_type_arguments.set(symbol_id, argument_ids);
       resolved_symbols.add(symbol_id);
     }
+  }
+
+  /**
+   * The definition a type name written in `file_id` names, looked up from
+   * `scope_id`: the text is parsed under the file's language grammar and its
+   * head resolved exactly as an annotation's is, so `o.TypeVisitor`,
+   * `compiler.DDLCompiler` and `Base<T>` all name their terminal definition.
+   */
+  resolve_type_name(
+    scope_id: ScopeId,
+    type_name: SymbolName,
+    file_id: FilePath,
+    context: TypeResolutionContext
+  ): SymbolId | null {
+    const language = context.languages.get(file_id);
+    const annotation = language ? parse_type_annotation(type_name, language) : null;
+    return annotation && language
+      ? this.resolve_annotation(scope_id, annotation, file_id, language, context)
+      : null;
   }
 
   /**
@@ -462,7 +443,7 @@ export class TypeRegistry {
         head[0],
         "named",
         context.exports,
-        context.definitions,
+        this.definitions,
         context.languages,
         context.modules
       );
@@ -506,7 +487,7 @@ export class TypeRegistry {
         segment,
         "namespace",
         context.exports,
-        context.definitions,
+        this.definitions,
         context.languages,
         context.modules
       );
@@ -523,7 +504,7 @@ export class TypeRegistry {
     symbol_id: SymbolId,
     context: TypeResolutionContext
   ): FilePath | null {
-    const definition = context.definitions.get(symbol_id);
+    const definition = this.definitions.get(symbol_id);
     if (definition?.kind !== "import") {
       return null;
     }
@@ -581,60 +562,38 @@ export class TypeRegistry {
   }
 
   /**
-   * Inheritance chain from `class_id` up to its base, most-derived first.
-   * Stops on a cycle so malformed inheritance cannot loop forever.
+   * `class_id` and every type it inherits from, breadth first over the
+   * heritage graph: the type itself, then its direct parents in declaration
+   * order, then theirs. Index 1 is therefore the first base the declaration
+   * names — the one `super` dispatches to. Each type appears once, so a cycle
+   * in a malformed hierarchy terminates.
    */
   walk_inheritance_chain(class_id: SymbolId): readonly SymbolId[] {
     const chain: SymbolId[] = [class_id];
-    const seen = new Set<SymbolId>([class_id]);
-    let current = class_id;
-
-    while (true) {
-      const parent = this.parent_classes.get(current);
-      if (!parent) break;
-
-      if (seen.has(parent)) {
-        console.warn(`Circular inheritance detected: ${class_id} → ${parent}`);
-        break;
+    const seen = new Set<SymbolId>(chain);
+    for (let next = 0; next < chain.length; next++) {
+      for (const parent_id of this.definitions.get_parent_types(chain[next])) {
+        if (!seen.has(parent_id)) {
+          seen.add(parent_id);
+          chain.push(parent_id);
+        }
       }
-
-      chain.push(parent);
-      seen.add(parent);
-      current = parent;
     }
-
     return chain;
   }
 
   /**
-   * Resolve a member by name on `type_id`, walking the inheritance chain and
-   * checking implemented interfaces at each level. Because the chain is walked
-   * most-derived first, an overriding member shadows the inherited one.
+   * Resolve a member by name on `type_id` or anything it inherits from, class
+   * or interface, any number of hops up. The chain is walked nearest first, so
+   * an overriding member shadows the inherited one.
    */
   get_type_member(type_id: SymbolId, member_name: SymbolName): SymbolId | null {
-    const chain = this.walk_inheritance_chain(type_id);
-
-    for (const class_id of chain) {
-      const members = this.resolved_type_members.get(class_id);
-      if (members) {
-        const member_id = members.get(member_name);
-        if (member_id) {
-          return member_id;
-        }
-      }
-
-      const interfaces = this.implemented_interfaces.get(class_id) || [];
-      for (const interface_id of interfaces) {
-        const interface_members = this.resolved_type_members.get(interface_id);
-        if (interface_members) {
-          const member_id = interface_members.get(member_name);
-          if (member_id) {
-            return member_id;
-          }
-        }
+    for (const ancestor_id of this.walk_inheritance_chain(type_id)) {
+      const member_id = this.resolved_type_members.get(ancestor_id)?.get(member_name);
+      if (member_id) {
+        return member_id;
       }
     }
-
     return null;
   }
 
@@ -650,8 +609,6 @@ export class TypeRegistry {
       this.symbol_type_arguments.delete(symbol_id);
       this.callable_return_types.delete(symbol_id);
       this.resolved_type_members.delete(symbol_id);
-      this.parent_classes.delete(symbol_id);
-      this.implemented_interfaces.delete(symbol_id);
     }
 
     this.resolved_by_file.delete(file_path);
@@ -662,8 +619,6 @@ export class TypeRegistry {
     this.symbol_type_arguments.clear();
     this.callable_return_types.clear();
     this.resolved_type_members.clear();
-    this.parent_classes.clear();
-    this.implemented_interfaces.clear();
     this.resolved_by_file.clear();
   }
 }

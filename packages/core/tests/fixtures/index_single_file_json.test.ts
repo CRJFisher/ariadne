@@ -56,6 +56,7 @@ describe("SemanticIndex Serialization", () => {
         namespaces: new Map(),
         types: new Map(),
         imported_symbols: new Map(),
+        unattached_impl_methods: new Map(),
         references: [],
       };
 
@@ -144,6 +145,7 @@ describe("SemanticIndex Serialization", () => {
         namespaces: new Map(),
         types: new Map(),
         imported_symbols: new Map(),
+        unattached_impl_methods: new Map(),
         references: [],
       };
 
@@ -195,6 +197,7 @@ describe("SemanticIndex Serialization", () => {
         namespaces: new Map(),
         types: new Map(),
         imported_symbols: new Map(),
+        unattached_impl_methods: new Map(),
         references: [],
       };
 
@@ -242,6 +245,7 @@ describe("SemanticIndex Serialization", () => {
         namespaces: new Map(),
         types: new Map(),
         imported_symbols: new Map(),
+        unattached_impl_methods: new Map(),
         references: [],
       };
 
@@ -288,6 +292,7 @@ describe("SemanticIndex Serialization", () => {
         namespaces: {},
         types: {},
         imported_symbols: {},
+        unattached_impl_methods: {},
         references: [],
       };
 
@@ -339,6 +344,7 @@ describe("SemanticIndex Serialization", () => {
         namespaces: new Map(),
         types: new Map(),
         imported_symbols: new Map(),
+        unattached_impl_methods: new Map(),
         references: [],
       };
 
@@ -366,6 +372,7 @@ describe("SemanticIndex Serialization", () => {
         namespaces: new Map(),
         types: new Map(),
         imported_symbols: new Map(),
+        unattached_impl_methods: new Map(),
         references: [],
       };
 

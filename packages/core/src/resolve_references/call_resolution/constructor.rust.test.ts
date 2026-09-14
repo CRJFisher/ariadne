@@ -61,7 +61,7 @@ describe("Rust Constructor Resolution", () => {
   function context(): CallResolutionContext {
     return {
       references: new ReferenceRegistry(),
-      types: new TypeRegistry(),
+      types: new TypeRegistry(definitions),
       definitions,
       scopes,
       resolutions,

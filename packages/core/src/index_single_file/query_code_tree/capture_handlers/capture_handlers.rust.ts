@@ -307,25 +307,6 @@ export function handle_definition_field(
 // PARAMETER HANDLERS
 // ============================================================================
 
-/**
- * True when the parameter sits in an impl block whose target type has no
- * definition in this file — the method handler deliberately indexes no method
- * there, so its parameters have no owner to attach to either.
- */
-function impl_target_is_unindexed(
-  capture: CaptureNode,
-  builder: DefinitionBuilder
-): boolean {
-  const impl_info = find_containing_impl(capture);
-  if (!impl_info?.struct_name) {
-    return false;
-  }
-  return (
-    builder.find_class_by_name(impl_info.struct_name) === undefined &&
-    builder.find_enum_by_name(impl_info.struct_name) === undefined
-  );
-}
-
 export function handle_definition_parameter(
   capture: CaptureNode,
   builder: DefinitionBuilder,
@@ -335,9 +316,6 @@ export function handle_definition_parameter(
   const parent_id = find_containing_callable(capture);
 
   if (!parent_id) {
-    return;
-  }
-  if (impl_target_is_unindexed(capture, builder)) {
     return;
   }
 
@@ -362,7 +340,6 @@ export function handle_definition_parameter_self(
   const parent_id = find_containing_callable(capture);
 
   if (!parent_id) return;
-  if (impl_target_is_unindexed(capture, builder)) return;
 
   // Self parameter type is the containing struct/trait name
   const impl_info = find_containing_impl(capture);

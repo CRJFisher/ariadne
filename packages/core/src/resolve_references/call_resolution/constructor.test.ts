@@ -65,7 +65,7 @@ describe("Constructor Call Resolution", () => {
   function context(): CallResolutionContext {
     return {
       references: new ReferenceRegistry(),
-      types: new TypeRegistry(),
+      types: new TypeRegistry(definitions),
       definitions,
       scopes,
       resolutions,
@@ -325,6 +325,9 @@ describe("Constructor Call Resolution", () => {
       scope_resolutions.set("Parent" as SymbolName, parent_id);
       scope_resolutions.set("Child" as SymbolName, child_id);
       set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
+      definitions.resolve_type_heritage(TEST_FILE, (scope_id, name) =>
+        resolutions.resolve(scope_id, name)
+      );
 
       const call_ref = create_constructor_call_reference(
         "Child" as SymbolName,
@@ -361,6 +364,9 @@ describe("Constructor Call Resolution", () => {
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("Orphan" as SymbolName, child_id);
       set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
+      definitions.resolve_type_heritage(TEST_FILE, (scope_id, name) =>
+        resolutions.resolve(scope_id, name)
+      );
 
       const call_ref = create_constructor_call_reference(
         "Orphan" as SymbolName,
@@ -412,6 +418,10 @@ describe("Constructor Call Resolution", () => {
       scope_resolutions.set("ClassA" as SymbolName, class_a_id);
       scope_resolutions.set("ClassB" as SymbolName, class_b_id);
       set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
+      definitions.resolve_type_heritage(TEST_FILE, (scope_id, name) =>
+        resolutions.resolve(scope_id, name)
+      );
+      expect(definitions.get_parent_types(class_a_id)).toEqual([class_b_id]);
 
       const call_ref = create_constructor_call_reference(
         "ClassA" as SymbolName,
@@ -605,7 +615,7 @@ describe("include_constructors_for_class_symbols", () => {
 
     definitions.update_file(TEST_FILE, [class_def, constructor_def]);
 
-    const result = include_constructors_for_class_symbols([class_id], definitions, resolutions);
+    const result = include_constructors_for_class_symbols([class_id], definitions);
     expect(result).toEqual([class_id, constructor_id]);
   });
 
@@ -642,8 +652,7 @@ describe("include_constructors_for_class_symbols", () => {
     // Constructor already in the list
     const result = include_constructors_for_class_symbols(
       [class_id, constructor_id],
-      definitions,
-      resolutions
+      definitions
     );
     expect(result).toEqual([class_id, constructor_id]);
   });
@@ -663,12 +672,12 @@ describe("include_constructors_for_class_symbols", () => {
 
     definitions.update_file(TEST_FILE, [func_def]);
 
-    const result = include_constructors_for_class_symbols([func_id], definitions, resolutions);
+    const result = include_constructors_for_class_symbols([func_id], definitions);
     expect(result).toEqual([func_id]);
   });
 
   it("returns empty array unchanged", () => {
-    const result = include_constructors_for_class_symbols([], definitions, resolutions);
+    const result = include_constructors_for_class_symbols([], definitions);
     expect(result).toEqual([]);
   });
 });

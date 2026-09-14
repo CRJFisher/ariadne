@@ -172,6 +172,40 @@ export function extract_type_parameters(node: SyntaxNode | null): SymbolName[] {
 // ============================================================================
 
 /**
+ * The name one heritage entry writes, as written: bare (`Base`), qualified
+ * through a namespace (`o.TypeVisitor`), or either with its type arguments
+ * dropped (`Base<T>`, `o.Visitor<T>`). Resolving the name is the heritage
+ * builder's job, so every shape is kept rather than filtered here.
+ */
+function heritage_entry_name(node: SyntaxNode): SymbolName | undefined {
+  switch (node.type) {
+  case "identifier":
+  case "type_identifier":
+  case "nested_type_identifier":
+  case "member_expression":
+    return node.text as SymbolName;
+  case "generic_type": {
+    const name = node.namedChildren?.find((child) => child.type !== "type_arguments");
+    return name ? heritage_entry_name(name) : undefined;
+  }
+  default:
+    return undefined;
+  }
+}
+
+/** Every name a heritage clause lists, in the order it lists them. */
+function heritage_clause_names(clause: SyntaxNode): SymbolName[] {
+  const names: SymbolName[] = [];
+  for (const child of clause.namedChildren || []) {
+    const name = heritage_entry_name(child);
+    if (name) {
+      names.push(name);
+    }
+  }
+  return names;
+}
+
+/**
  * Extract interface extends clauses
  */
 export function extract_interface_extends(node: SyntaxNode): SymbolName[] {
@@ -179,23 +213,7 @@ export function extract_interface_extends(node: SyntaxNode): SymbolName[] {
   const extends_clause = node.namedChildren?.find(
     (c) => c.type === "extends_type_clause"
   );
-  if (extends_clause) {
-    const interfaces: SymbolName[] = [];
-    for (const child of extends_clause.namedChildren || []) {
-      if (child.type === "type_identifier") {
-        interfaces.push(child.text as SymbolName);
-      } else if (child.type === "generic_type") {
-        const base_type = child.namedChildren?.find(
-          (c) => c.type === "type_identifier" || c.type === "identifier"
-        );
-        if (base_type) {
-          interfaces.push(base_type.text as SymbolName);
-        }
-      }
-    }
-    return interfaces;
-  }
-  return [];
+  return extends_clause ? heritage_clause_names(extends_clause) : [];
 }
 
 // ============================================================================
@@ -208,34 +226,13 @@ export function extract_interface_extends(node: SyntaxNode): SymbolName[] {
 export function extract_class_extends(node: SyntaxNode): SymbolName[] {
   // Find class_heritage by searching children (it's NOT a field)
   const heritage = node.namedChildren?.find((c) => c.type === "class_heritage");
-
-  if (heritage) {
-    // Find extends_clause within heritage (also not a field)
-    const extends_clause = heritage.namedChildren?.find(
-      (c) => c.type === "extends_clause"
-    );
-
-    if (extends_clause) {
-      // The identifier is accessed via the 'value' field
-      const value_node = extends_clause.childForFieldName?.("value");
-      if (value_node) {
-        if (value_node.type === "identifier" || value_node.type === "type_identifier") {
-          return [value_node.text as SymbolName];
-        }
-        // Handle generic base classes: class Foo extends Bar<T>
-        if (value_node.type === "generic_type") {
-          const base_type = value_node.namedChildren?.find(
-            (c) => c.type === "type_identifier" || c.type === "identifier"
-          );
-          if (base_type) {
-            return [base_type.text as SymbolName];
-          }
-        }
-      }
-    }
-  }
-
-  return [];
+  const extends_clause = heritage?.namedChildren?.find(
+    (c) => c.type === "extends_clause"
+  );
+  // The base is the `value` field; its type arguments are a sibling field.
+  const value_node = extends_clause?.childForFieldName?.("value");
+  const name = value_node ? heritage_entry_name(value_node) : undefined;
+  return name ? [name] : [];
 }
 
 /**
@@ -244,32 +241,10 @@ export function extract_class_extends(node: SyntaxNode): SymbolName[] {
 export function extract_implements(node: SyntaxNode): SymbolName[] {
   // Find class_heritage by searching children (it's NOT a field)
   const heritage = node.namedChildren?.find((c) => c.type === "class_heritage");
-
-  if (heritage) {
-    // Find implements_clause within heritage (also not a field)
-    const implements_clause = heritage.namedChildren?.find(
-      (c) => c.type === "implements_clause"
-    );
-
-    if (implements_clause) {
-      const interfaces: SymbolName[] = [];
-      for (const child of implements_clause.namedChildren || []) {
-        if (child.type === "type_identifier") {
-          interfaces.push(child.text as SymbolName);
-        } else if (child.type === "generic_type") {
-          // Handle generic interfaces: class Foo implements Bar<T>
-          const base_type = child.namedChildren?.find(
-            (c) => c.type === "type_identifier" || c.type === "identifier"
-          );
-          if (base_type) {
-            interfaces.push(base_type.text as SymbolName);
-          }
-        }
-      }
-      return interfaces;
-    }
-  }
-  return [];
+  const implements_clause = heritage?.namedChildren?.find(
+    (c) => c.type === "implements_clause"
+  );
+  return implements_clause ? heritage_clause_names(implements_clause) : [];
 }
 
 // ============================================================================

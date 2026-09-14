@@ -29,6 +29,7 @@ import type {
   NamespaceDefinition,
   TypeAliasDefinition,
   ImportDefinition,
+  MethodDefinition,
   SymbolReference,
 } from "@ariadnejs/types";
 
@@ -114,6 +115,7 @@ export interface SemanticIndexJSON {
 
   /** Import definitions - maps symbol IDs to definitions */
   imported_symbols: Record<string, ImportDefinition>;
+  unattached_impl_methods: Record<string, MethodDefinition>;
 
   /** Symbol references (calls, member access, etc.) */
   references: SymbolReference[];
@@ -144,6 +146,7 @@ export function index_single_file_to_json(
     namespaces: Object.fromEntries(index.namespaces),
     types: Object.fromEntries(index.types),
     imported_symbols: Object.fromEntries(index.imported_symbols),
+    unattached_impl_methods: Object.fromEntries(index.unattached_impl_methods),
     references: [...index.references],
   };
 }
@@ -181,6 +184,7 @@ export function json_to_index_single_file(
     namespaces: record_to_readonly_map<SymbolId, NamespaceDefinition>(json.namespaces),
     types: record_to_readonly_map<SymbolId, TypeAliasDefinition>(json.types),
     imported_symbols: record_to_readonly_map<SymbolId, ImportDefinition>(json.imported_symbols),
+    unattached_impl_methods: record_to_readonly_map<SymbolId, MethodDefinition>(json.unattached_impl_methods),
     references: json.references as readonly SymbolReference[],
   };
 }

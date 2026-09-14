@@ -276,9 +276,9 @@ describe("MemberIndex", () => {
         [parent_run.name, parent_run.symbol_id],
         [parent_only.name, parent_only.symbol_id],
       ]);
-      const subtype_parents = new Map([[child_id, new Set([parent_id])]]);
+      const parent_types = new Map([[child_id, [parent_id]]]);
 
-      const closure = index.get_member_closure(child_id, subtype_parents);
+      const closure = index.get_member_closure(child_id, (id) => parent_types.get(id) ?? []);
 
       expect(names_of(closure)).toEqual(["cleanup", "run"]);
       expect(closure.get("run" as SymbolName)).toBe(child_run.symbol_id);
@@ -293,9 +293,9 @@ describe("MemberIndex", () => {
       ]);
       const index = new MemberIndex(definitions);
       index.attach_members(child_id, [[child_run.name, child_run.symbol_id]]);
-      const subtype_parents = new Map([[child_id, new Set([parent_id])]]);
+      const parent_types = new Map([[child_id, [parent_id]]]);
 
-      const closure = index.get_member_closure(child_id, subtype_parents);
+      const closure = index.get_member_closure(child_id, (id) => parent_types.get(id) ?? []);
 
       expect(names_of(closure)).toEqual(["run"]);
     });
@@ -308,12 +308,12 @@ describe("MemberIndex", () => {
         [parent_id, { ...parent_class, symbol_id: parent_id }],
       ]);
       const index = new MemberIndex(definitions);
-      const subtype_parents = new Map([
-        [child_id, new Set([parent_id])],
-        [parent_id, new Set([child_id])],
+      const parent_types = new Map([
+        [child_id, [parent_id]],
+        [parent_id, [child_id]],
       ]);
 
-      const closure = index.get_member_closure(child_id, subtype_parents);
+      const closure = index.get_member_closure(child_id, (id) => parent_types.get(id) ?? []);
 
       expect(names_of(closure)).toEqual([]);
     });

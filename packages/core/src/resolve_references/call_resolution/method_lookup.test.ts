@@ -67,7 +67,7 @@ describe("resolve_method_on_type", () => {
   beforeEach(() => {
     scopes = new ScopeRegistry();
     definitions = new DefinitionRegistry();
-    types = new TypeRegistry();
+    types = new TypeRegistry(definitions);
     resolutions = new ResolutionRegistry();
     imports = new ImportGraph();
     ({ exports, languages, modules } = make_export_chain_context());
@@ -300,8 +300,8 @@ describe("resolve_method_on_type", () => {
       ]);
 
       // Set up type inheritance index (interface -> implementing classes)
-      definitions["register_subtype"](interface_id, class_a_id);
-      definitions["register_subtype"](interface_id, class_b_id);
+      definitions["heritage"].register_subtype(interface_id, class_a_id, "declared", TEST_FILE);
+      definitions["heritage"].register_subtype(interface_id, class_b_id, "declared", TEST_FILE);
 
       // Setup TypeRegistry to return the interface method
       types["resolved_type_members"] = new Map();
@@ -375,7 +375,7 @@ describe("resolve_method_on_type", () => {
         class_a_def,
         method_a_def,
       ]);
-      definitions["register_subtype"](interface_id, class_a_id);
+      definitions["heritage"].register_subtype(interface_id, class_a_id, "declared", TEST_FILE);
       types["resolved_type_members"] = new Map();
       types["resolved_type_members"].set(
         interface_id,
@@ -510,7 +510,7 @@ describe("resolve_method_on_type", () => {
       ]);
 
       // Set up type subtypes index (Base -> Child)
-      definitions["register_subtype"](base_class_id, child_class_id);
+      definitions["heritage"].register_subtype(base_class_id, child_class_id, "declared", TEST_FILE);
 
       // Setup TypeRegistry to return the base method
       types["resolved_type_members"] = new Map();
@@ -593,7 +593,7 @@ describe("resolve_method_on_type", () => {
       };
 
       definitions.update_file(TEST_FILE, [base_class_def, child_class_def]);
-      definitions["register_subtype"](base_class_id, child_class_id);
+      definitions["heritage"].register_subtype(base_class_id, child_class_id, "declared", TEST_FILE);
 
       const result = resolve_method_on_type(
         base_class_id,
@@ -697,8 +697,8 @@ describe("resolve_method_on_type", () => {
       ]);
 
       // Set up transitive type subtypes index (A -> B -> C)
-      definitions["register_subtype"](class_a_id, class_b_id);
-      definitions["register_subtype"](class_b_id, class_c_id);
+      definitions["heritage"].register_subtype(class_a_id, class_b_id, "declared", TEST_FILE);
+      definitions["heritage"].register_subtype(class_b_id, class_c_id, "declared", TEST_FILE);
 
       // Setup TypeRegistry to return A's method
       types["resolved_type_members"] = new Map();
@@ -769,7 +769,7 @@ describe("resolve_method_on_type", () => {
       ]);
 
       // Set up type subtypes index (Base -> Child)
-      definitions["register_subtype"](base_class_id, child_class_id);
+      definitions["heritage"].register_subtype(base_class_id, child_class_id, "declared", TEST_FILE);
 
       // Setup TypeRegistry
       types["resolved_type_members"] = new Map();
@@ -881,8 +881,8 @@ describe("resolve_method_on_type", () => {
       ]);
 
       // Set up type subtypes index (Base -> Child1, Base -> Child2)
-      definitions["register_subtype"](base_class_id, child1_class_id);
-      definitions["register_subtype"](base_class_id, child2_class_id);
+      definitions["heritage"].register_subtype(base_class_id, child1_class_id, "declared", TEST_FILE);
+      definitions["heritage"].register_subtype(base_class_id, child2_class_id, "declared", TEST_FILE);
 
       // Setup TypeRegistry
       types["resolved_type_members"] = new Map();

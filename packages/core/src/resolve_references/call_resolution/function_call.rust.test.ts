@@ -60,7 +60,7 @@ describe("Rust Qualified-Call Resolution", () => {
 
   beforeEach(() => {
     definitions = new DefinitionRegistry();
-    types = new TypeRegistry();
+    types = new TypeRegistry(definitions);
     scopes = new ScopeRegistry();
     references = new ReferenceRegistry();
     imports = new ImportGraph();

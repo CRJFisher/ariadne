@@ -147,6 +147,7 @@ function make_test_index(
     namespaces: new Map(),
     types: options.types || new Map(),
     imported_symbols: new Map(),
+    unattached_impl_methods: new Map(),
     references: [],
   };
 }
@@ -159,6 +160,27 @@ function make_mock_registries() {
   };
 }
 
+/**
+ * Resolve `file_path`'s heritage into `definitions` as the project's heritage
+ * pass does, each name through `type_registry`'s type-name resolution.
+ */
+function resolve_heritage(
+  definitions: DefinitionRegistry,
+  type_registry: TypeRegistry,
+  file_path: FilePath,
+  resolutions: ResolutionRegistry
+): void {
+  const context = make_type_resolution_context(
+    resolutions,
+    empty_exports,
+    new Map([[file_path, "typescript"]]),
+    empty_resolution
+  );
+  definitions.resolve_type_heritage(file_path, (scope_id, type_name, file_id) =>
+    type_registry.resolve_type_name(scope_id, type_name, file_id, context)
+  );
+}
+
 // Empty export-chain inputs for unit tests that do not follow re-export chains.
 const {
   exports: empty_exports,
@@ -168,9 +190,12 @@ const {
 
 describe("TypeRegistry", () => {
   let registry: TypeRegistry;
+  let definitions: DefinitionRegistry;
+  let resolutions: ResolutionRegistry;
 
   beforeEach(() => {
-    registry = new TypeRegistry();
+    ({ definitions, resolutions } = make_mock_registries());
+    registry = new TypeRegistry(definitions);
   });
 
   describe("STEP 2 member maps", () => {
@@ -196,11 +221,9 @@ describe("TypeRegistry", () => {
       const index = make_test_index(file1, {
         classes: new Map([[class_id, class_def]]),
       });
-
-      const { definitions, resolutions } = make_mock_registries();
       definitions.update_file(file1, [class_def]);
 
-      registry.update_file(file1, index, [], make_type_resolution_context(definitions, resolutions, empty_exports, empty_languages, empty_resolution));
+      registry.update_file(file1, index, [], make_type_resolution_context(resolutions, empty_exports, empty_languages, empty_resolution));
 
       expect(registry.get_type_member(class_id, "foo" as SymbolName)).toEqual(foo_id);
       expect(registry.get_type_member(class_id, "bar" as SymbolName)).toEqual(bar_id);
@@ -237,11 +260,9 @@ describe("TypeRegistry", () => {
       const index = make_test_index(file1, {
         interfaces: new Map([[iface_id, iface_def]]),
       });
-
-      const { definitions, resolutions } = make_mock_registries();
       definitions.update_file(file1, [iface_def]);
 
-      registry.update_file(file1, index, [], make_type_resolution_context(definitions, resolutions, empty_exports, empty_languages, empty_resolution));
+      registry.update_file(file1, index, [], make_type_resolution_context(resolutions, empty_exports, empty_languages, empty_resolution));
 
       expect(registry.get_type_member(iface_id, "greet" as SymbolName)).toEqual(greet_id);
       expect(definitions.get_member_index().get(iface_id)).toEqual(
@@ -288,11 +309,9 @@ describe("TypeRegistry", () => {
         classes: new Map([[class_id, class_def]]),
       });
 
-      const { definitions, resolutions } = make_mock_registries();
-
       definitions.update_file(file1, [class_def]);
 
-      registry.update_file(file1, index, [], make_type_resolution_context(definitions, resolutions, empty_exports, empty_languages, empty_resolution));
+      registry.update_file(file1, index, [], make_type_resolution_context(resolutions, empty_exports, empty_languages, empty_resolution));
 
       const members = definitions.get_member_index().get(class_id);
       expect(members?.get("constructor" as SymbolName)).toEqual(constructor_id);
@@ -309,11 +328,9 @@ describe("TypeRegistry", () => {
         classes: new Map([[class_id, class_def]]),
       });
 
-      const { definitions, resolutions } = make_mock_registries();
-
       definitions.update_file(file1, [class_def]);
 
-      registry.update_file(file1, index, [], make_type_resolution_context(definitions, resolutions, empty_exports, empty_languages, empty_resolution));
+      registry.update_file(file1, index, [], make_type_resolution_context(resolutions, empty_exports, empty_languages, empty_resolution));
 
       const members = definitions.get_member_index().get(class_id);
       expect(members?.get("constructor" as SymbolName)).toBeUndefined();
@@ -366,11 +383,9 @@ describe("TypeRegistry", () => {
         classes: new Map([[class_id, class_def]]),
       });
 
-      const { definitions, resolutions } = make_mock_registries();
-
       definitions.update_file(file1, [class_def]);
 
-      registry.update_file(file1, index, [], make_type_resolution_context(definitions, resolutions, empty_exports, empty_languages, empty_resolution));
+      registry.update_file(file1, index, [], make_type_resolution_context(resolutions, empty_exports, empty_languages, empty_resolution));
 
       const members = definitions.get_member_index().get(class_id);
       expect(members?.get("__init__" as SymbolName)).toEqual(init_id);
@@ -381,8 +396,8 @@ describe("TypeRegistry", () => {
     describe("get_symbol_type", () => {
       it("returns type from explicit annotation", () => {
         const file1 = "file1.ts" as FilePath;
-        const type_registry = new TypeRegistry();
         const definitions = new DefinitionRegistry();
+        const type_registry = new TypeRegistry(definitions);
         const resolutions = new ResolutionRegistry();
 
         // Create User class
@@ -419,7 +434,7 @@ describe("TypeRegistry", () => {
           new Map([["User" as SymbolName, user_class_id]])
         );
 
-        type_registry.update_file(file1, index, [], make_type_resolution_context(definitions, resolutions, empty_exports, empty_languages, empty_resolution));
+        type_registry.update_file(file1, index, [], make_type_resolution_context(resolutions, empty_exports, empty_languages, empty_resolution));
 
         // Test get_symbol_type
         const result = type_registry.get_symbol_type(user_var_id);
@@ -428,7 +443,7 @@ describe("TypeRegistry", () => {
 
       it("returns null for untyped symbols", () => {
         const file1 = "file1.ts" as FilePath;
-        const type_registry = new TypeRegistry();
+        const type_registry = new TypeRegistry(definitions);
 
         const { id: var_id } = make_variable_with_type("x", "number", file1, 1);
 
@@ -445,10 +460,9 @@ describe("TypeRegistry", () => {
        * whose returns name a type, one whose return names a function, and one
        * value.
        */
-      function load_callables(type_registry: TypeRegistry) {
+      function load_callables(type_registry: TypeRegistry, definitions: DefinitionRegistry) {
         const file1 = "file1.ts" as FilePath;
         const scope = "module:0:0" as ScopeId;
-        const definitions = new DefinitionRegistry();
         const resolutions = new ResolutionRegistry();
 
         const user_loc = make_location(file1, 1, 0, 3, 1);
@@ -516,14 +530,14 @@ describe("TypeRegistry", () => {
           ]),
           variables: new Map([[user_var_id, user_var_def]]),
         });
-        type_registry.update_file(file1, index, [], make_type_resolution_context(definitions, resolutions, empty_exports, empty_languages, empty_resolution));
+        type_registry.update_file(file1, index, [], make_type_resolution_context(resolutions, empty_exports, empty_languages, empty_resolution));
 
         return { file1, user_id, clone_id, make_id: make_fn.id, build_id: build_fn.id, user_var_id };
       }
 
       it("records a function's and a method's declared return type apart from every value type", () => {
-        const type_registry = new TypeRegistry();
-        const { user_id, clone_id, make_id, user_var_id } = load_callables(type_registry);
+        const type_registry = new TypeRegistry(definitions);
+        const { user_id, clone_id, make_id, user_var_id } = load_callables(type_registry, definitions);
 
         expect(type_registry.get_callable_return_type(make_id)).toBe(user_id);
         expect(type_registry.get_callable_return_type(clone_id)).toBe(user_id);
@@ -536,21 +550,21 @@ describe("TypeRegistry", () => {
       });
 
       it("records no return type for a return annotation naming a function, which holds no members", () => {
-        const type_registry = new TypeRegistry();
-        const { build_id } = load_callables(type_registry);
+        const type_registry = new TypeRegistry(definitions);
+        const { build_id } = load_callables(type_registry, definitions);
 
         expect(type_registry.get_callable_return_type(build_id)).toBeNull();
       });
 
       it("evicts return types with their file and on clear", () => {
-        const type_registry = new TypeRegistry();
-        const { file1, clone_id, make_id } = load_callables(type_registry);
+        const type_registry = new TypeRegistry(definitions);
+        const { file1, clone_id, make_id } = load_callables(type_registry, definitions);
 
         type_registry.remove_file(file1);
         expect(type_registry.get_callable_return_type(make_id)).toBeNull();
         expect(type_registry.get_callable_return_type(clone_id)).toBeNull();
 
-        const reloaded = load_callables(type_registry);
+        const reloaded = load_callables(type_registry, definitions);
         type_registry.clear();
         expect(type_registry.get_callable_return_type(reloaded.make_id)).toBeNull();
       });
@@ -559,8 +573,8 @@ describe("TypeRegistry", () => {
     describe("walk_inheritance_chain", () => {
       it("returns the full inheritance chain", () => {
         const file1 = "file1.ts" as FilePath;
-        const type_registry = new TypeRegistry();
         const definitions = new DefinitionRegistry();
+        const type_registry = new TypeRegistry(definitions);
         const resolutions = new ResolutionRegistry();
 
         // Create Animal
@@ -632,7 +646,8 @@ describe("TypeRegistry", () => {
           ])
         );
 
-        type_registry.update_file(file1, index, [], make_type_resolution_context(definitions, resolutions, empty_exports, empty_languages, empty_resolution));
+        type_registry.update_file(file1, index, [], make_type_resolution_context(resolutions, empty_exports, empty_languages, empty_resolution));
+        resolve_heritage(definitions, type_registry, file1, resolutions);
 
         const result = type_registry.walk_inheritance_chain(dog_id);
         expect(result).toEqual([dog_id, mammal_id, animal_id]);
@@ -640,8 +655,8 @@ describe("TypeRegistry", () => {
 
       it("includes only the class itself when there is no parent", () => {
         const file1 = "file1.ts" as FilePath;
-        const type_registry = new TypeRegistry();
         const definitions = new DefinitionRegistry();
+        const type_registry = new TypeRegistry(definitions);
         const resolutions = new ResolutionRegistry();
 
         const animal_loc = make_location(file1, 1, 0, 3, 1);
@@ -665,7 +680,7 @@ describe("TypeRegistry", () => {
           classes: new Map([[animal_id, animal_def]]),
         });
 
-        type_registry.update_file(file1, index, [], make_type_resolution_context(definitions, resolutions, empty_exports, empty_languages, empty_resolution));
+        type_registry.update_file(file1, index, [], make_type_resolution_context(resolutions, empty_exports, empty_languages, empty_resolution));
 
         const result = type_registry.walk_inheritance_chain(animal_id);
         expect(result).toEqual([animal_id]);
@@ -673,7 +688,7 @@ describe("TypeRegistry", () => {
 
       it("stops at a cycle in circular inheritance", () => {
         const file1 = "file1.ts" as FilePath;
-        const type_registry = new TypeRegistry();
+        const type_registry = new TypeRegistry(definitions);
 
         // Create artificial circular inheritance
         const class_a_loc = make_location(file1, 1, 0, 3, 1);
@@ -682,22 +697,46 @@ describe("TypeRegistry", () => {
         const class_b_loc = make_location(file1, 5, 0, 7, 1);
         const class_b_id = class_symbol("ClassB", class_b_loc);
 
-        // Manually inject circular inheritance
-        (type_registry as any).parent_classes.set(class_a_id, class_b_id);
-        (type_registry as any).parent_classes.set(class_b_id, class_a_id);
+        definitions["heritage"].register_subtype(class_b_id, class_a_id, "declared", file1);
+        definitions["heritage"].register_subtype(class_a_id, class_b_id, "declared", file1);
 
         const result = type_registry.walk_inheritance_chain(class_a_id);
 
         // Should stop at cycle, not infinite loop
         expect(result).toEqual([class_a_id, class_b_id]);
       });
+
+      it("linearises breadth first: the type, its bases in declaration order, then theirs", () => {
+        const file1 = "file1.py" as FilePath;
+        const type_registry = new TypeRegistry(definitions);
+        const id_of = (name: string, line: number) =>
+          class_symbol(name, make_location(file1, line, 0, line + 1, 1));
+        const c_id = id_of("C", 1);
+        const other_id = id_of("Other", 3);
+        const mid_id = id_of("Mid", 5);
+        const other_base_id = id_of("OtherBase", 7);
+        const mid_base_id = id_of("MidBase", 9);
+        const heritage = definitions["heritage"];
+        heritage.register_subtype(other_id, c_id, "declared", file1);
+        heritage.register_subtype(mid_id, c_id, "declared", file1);
+        heritage.register_subtype(other_base_id, other_id, "declared", file1);
+        heritage.register_subtype(mid_base_id, mid_id, "declared", file1);
+
+        expect(type_registry.walk_inheritance_chain(c_id)).toEqual([
+          c_id,
+          other_id,
+          mid_id,
+          other_base_id,
+          mid_base_id,
+        ]);
+      });
     });
 
     describe("get_type_member", () => {
       it("finds direct members", () => {
         const file1 = "file1.ts" as FilePath;
-        const type_registry = new TypeRegistry();
         const definitions = new DefinitionRegistry();
+        const type_registry = new TypeRegistry(definitions);
         const resolutions = new ResolutionRegistry();
 
         const { id: class_id, def: class_def } = make_class_with_members(
@@ -713,7 +752,7 @@ describe("TypeRegistry", () => {
           classes: new Map([[class_id, class_def]]),
         });
 
-        type_registry.update_file(file1, index, [], make_type_resolution_context(definitions, resolutions, empty_exports, empty_languages, empty_resolution));
+        type_registry.update_file(file1, index, [], make_type_resolution_context(resolutions, empty_exports, empty_languages, empty_resolution));
 
         const result = type_registry.get_type_member(
           class_id,
@@ -724,8 +763,8 @@ describe("TypeRegistry", () => {
 
       it("finds inherited members", () => {
         const file1 = "file1.ts" as FilePath;
-        const type_registry = new TypeRegistry();
         const definitions = new DefinitionRegistry();
+        const type_registry = new TypeRegistry(definitions);
         const resolutions = new ResolutionRegistry();
 
         // Create Animal with speak() method
@@ -787,7 +826,8 @@ describe("TypeRegistry", () => {
           new Map([["Animal" as SymbolName, animal_id]])
         );
 
-        type_registry.update_file(file1, index, [], make_type_resolution_context(definitions, resolutions, empty_exports, empty_languages, empty_resolution));
+        type_registry.update_file(file1, index, [], make_type_resolution_context(resolutions, empty_exports, empty_languages, empty_resolution));
+        resolve_heritage(definitions, type_registry, file1, resolutions);
 
         // Dog should find speak() from Animal
         const result = type_registry.get_type_member(
@@ -799,8 +839,8 @@ describe("TypeRegistry", () => {
 
       it("returns null for non-existent members", () => {
         const file1 = "file1.ts" as FilePath;
-        const type_registry = new TypeRegistry();
         const definitions = new DefinitionRegistry();
+        const type_registry = new TypeRegistry(definitions);
         const resolutions = new ResolutionRegistry();
 
         const { id: class_id, def: class_def } = make_class_with_members(
@@ -813,7 +853,7 @@ describe("TypeRegistry", () => {
           classes: new Map([[class_id, class_def]]),
         });
 
-        type_registry.update_file(file1, index, [], make_type_resolution_context(definitions, resolutions, empty_exports, empty_languages, empty_resolution));
+        type_registry.update_file(file1, index, [], make_type_resolution_context(resolutions, empty_exports, empty_languages, empty_resolution));
 
         const result = type_registry.get_type_member(
           class_id,
@@ -824,8 +864,8 @@ describe("TypeRegistry", () => {
 
       it("prefers direct members over inherited", () => {
         const file1 = "file1.ts" as FilePath;
-        const type_registry = new TypeRegistry();
         const definitions = new DefinitionRegistry();
+        const type_registry = new TypeRegistry(definitions);
         const resolutions = new ResolutionRegistry();
 
         // Create Animal with speak()
@@ -898,7 +938,8 @@ describe("TypeRegistry", () => {
           new Map([["Animal" as SymbolName, animal_id]])
         );
 
-        type_registry.update_file(file1, index, [], make_type_resolution_context(definitions, resolutions, empty_exports, empty_languages, empty_resolution));
+        type_registry.update_file(file1, index, [], make_type_resolution_context(resolutions, empty_exports, empty_languages, empty_resolution));
+        resolve_heritage(definitions, type_registry, file1, resolutions);
 
         // Should return Dog's speak, not Animal's
         const result = type_registry.get_type_member(
@@ -907,6 +948,85 @@ describe("TypeRegistry", () => {
         );
         expect(result).toBe(dog_speak_id);
         expect(result).not.toBe(animal_speak_id);
+      });
+
+      it("finds a member two hops up through an interface, not only one", () => {
+        const file1 = "file1.ts" as FilePath;
+        const type_registry = new TypeRegistry(definitions);
+        const resolutions = new ResolutionRegistry();
+
+        const closeable_loc = make_location(file1, 1, 0, 3, 1);
+        const closeable_id = interface_symbol("Closeable", closeable_loc);
+        const close_loc = make_location(file1, 2, 2);
+        const close_id = method_symbol("close", close_loc);
+        const closeable_def: AnyDefinition = {
+          kind: "interface",
+          symbol_id: closeable_id,
+          name: "Closeable" as SymbolName,
+          location: closeable_loc,
+          defining_scope_id: "module:0:0" as ScopeId,
+          is_exported: false,
+          extends: [],
+          methods: [
+            {
+              kind: "method",
+              symbol_id: close_id,
+              name: "close" as SymbolName,
+              location: close_loc,
+              parameters: [],
+              defining_scope_id: "module:0:0" as ScopeId,
+            },
+          ],
+          properties: [],
+        };
+        const stream_loc = make_location(file1, 5, 0, 6, 1);
+        const stream_id = interface_symbol("Stream", stream_loc);
+        const stream_def: AnyDefinition = {
+          kind: "interface",
+          symbol_id: stream_id,
+          name: "Stream" as SymbolName,
+          location: stream_loc,
+          defining_scope_id: "module:0:0" as ScopeId,
+          is_exported: false,
+          extends: ["Closeable" as SymbolName],
+          methods: [],
+          properties: [],
+        };
+        const { id: file_stream_id, def: file_stream_def } = make_class_with_members(
+          "FileStream",
+          file1
+        );
+        const implementing: ClassDefinition = {
+          ...file_stream_def,
+          location: make_location(file1, 8, 0, 9, 1),
+          extends: ["Stream" as SymbolName],
+        };
+
+        definitions.update_file(file1, [closeable_def, stream_def, implementing]);
+        set_test_resolutions(
+          resolutions,
+          "module:0:0" as ScopeId,
+          new Map([
+            ["Closeable" as SymbolName, closeable_id],
+            ["Stream" as SymbolName, stream_id],
+          ])
+        );
+        const index = make_test_index(file1, {
+          classes: new Map([[file_stream_id, implementing]]),
+          interfaces: new Map([
+            [closeable_id, closeable_def],
+            [stream_id, stream_def],
+          ]),
+        });
+        type_registry.update_file(file1, index, [], make_type_resolution_context(resolutions, empty_exports, empty_languages, empty_resolution));
+        resolve_heritage(definitions, type_registry, file1, resolutions);
+
+        expect(type_registry.walk_inheritance_chain(file_stream_id)).toEqual([
+          file_stream_id,
+          stream_id,
+          closeable_id,
+        ]);
+        expect(type_registry.get_type_member(file_stream_id, "close" as SymbolName)).toBe(close_id);
       });
     });
 
@@ -936,10 +1056,8 @@ describe("TypeRegistry", () => {
   });
 
   describe("remove_file", () => {
-    it("evicts symbol types, type arguments, members, and inheritance for the file", () => {
+    it("evicts symbol types, type arguments and members for the file, leaving heritage to the definitions it came from", () => {
       const file1 = "file1.ts" as FilePath;
-      const definitions = new DefinitionRegistry();
-      const resolutions = new ResolutionRegistry();
 
       const animal_loc = make_location(file1, 1, 0, 5, 1);
       const animal_id = class_symbol("Animal", animal_loc);
@@ -1017,7 +1135,8 @@ describe("TypeRegistry", () => {
         ])
       );
 
-      registry.update_file(file1, index, [], make_type_resolution_context(definitions, resolutions, empty_exports, empty_languages, empty_resolution));
+      registry.update_file(file1, index, [], make_type_resolution_context(resolutions, empty_exports, empty_languages, empty_resolution));
+      resolve_heritage(definitions, registry, file1, resolutions);
 
       expect(registry.get_symbol_type(user_id)).toBe(dog_id);
       expect(registry.get_symbol_type_arguments(kennel_id)).toEqual([animal_id, dog_id]);
@@ -1028,16 +1147,18 @@ describe("TypeRegistry", () => {
 
       expect(registry.get_symbol_type(user_id)).toBeNull();
       expect(registry.get_symbol_type_arguments(kennel_id)).toEqual([]);
-      expect(registry.walk_inheritance_chain(dog_id)).toEqual([dog_id]);
       expect(registry.get_type_member(dog_id, "speak" as SymbolName)).toBeNull();
+      expect(registry.walk_inheritance_chain(dog_id)).toEqual([dog_id, animal_id]);
+
+      definitions.remove_file(file1);
+
+      expect(registry.walk_inheritance_chain(dog_id)).toEqual([dog_id]);
     });
   });
 
   describe("clear", () => {
     it("empties every index", () => {
       const file1 = "file1.ts" as FilePath;
-      const definitions = new DefinitionRegistry();
-      const resolutions = new ResolutionRegistry();
 
       const { id: class_id, def: class_def } = make_class_with_members(
         "User",
@@ -1049,7 +1170,7 @@ describe("TypeRegistry", () => {
       const index = make_test_index(file1, {
         classes: new Map([[class_id, class_def]]),
       });
-      registry.update_file(file1, index, [], make_type_resolution_context(definitions, resolutions, empty_exports, empty_languages, empty_resolution));
+      registry.update_file(file1, index, [], make_type_resolution_context(resolutions, empty_exports, empty_languages, empty_resolution));
 
       registry.clear();
 
@@ -1112,8 +1233,8 @@ describe("STEP 1 type-kind guard and binding order", () => {
   }
 
   it("skips a construction whose callee resolves to a function, because a function is not a type", () => {
-    const registry = new TypeRegistry();
     const { definitions, resolutions } = make_mock_registries();
+    const registry = new TypeRegistry(definitions);
     const { id: make_id, def: make_def } = make_function("make", 1);
     const variable_location = make_location(file, 5, 0, 5, 1);
     const { id: variable_id, def: variable_def } = make_variable("q", variable_location);
@@ -1124,14 +1245,14 @@ describe("STEP 1 type-kind guard and binding order", () => {
       variables: new Map([[variable_id, variable_def]]),
       functions: new Map([[make_id, make_def]]),
     });
-    registry.update_file(file, index, [constructor_call_at("make", variable_location, 5)], make_type_resolution_context(definitions, resolutions, empty_exports, empty_languages, empty_resolution));
+    registry.update_file(file, index, [constructor_call_at("make", variable_location, 5)], make_type_resolution_context(resolutions, empty_exports, empty_languages, empty_resolution));
 
     expect(registry.get_symbol_type(variable_id)).toBeNull();
   });
 
   it("takes the constructed class over a declared annotation, because the construction names what runs", () => {
-    const registry = new TypeRegistry();
     const { definitions, resolutions } = make_mock_registries();
+    const registry = new TypeRegistry(definitions);
     const { id: parser_id, def: parser_def } = make_class_with_members("Parser", file, ["parse"], []);
     const { id: other_id, def: other_def } = make_class_with_members("Other", file, ["other"], []);
     const { id: variable_id, def: variable_def } = make_variable_with_type(
@@ -1161,14 +1282,14 @@ describe("STEP 1 type-kind guard and binding order", () => {
         [other_id, other_def],
       ]),
     });
-    registry.update_file(file, index, [construction], make_type_resolution_context(definitions, resolutions, empty_exports, empty_languages, empty_resolution));
+    registry.update_file(file, index, [construction], make_type_resolution_context(resolutions, empty_exports, empty_languages, empty_resolution));
 
     expect(registry.get_symbol_type(variable_id)).toBe(other_id);
   });
 
   it("takes the declared annotation when the construction names a function", () => {
-    const registry = new TypeRegistry();
     const { definitions, resolutions } = make_mock_registries();
+    const registry = new TypeRegistry(definitions);
     const { id: make_id, def: make_def } = make_function("make", 1);
     const { id: parser_id, def: parser_def } = make_class_with_members("Parser", file, ["parse"], []);
     // `p: Parser = make()`: the initialiser is a factory, not a construction.
@@ -1193,14 +1314,14 @@ describe("STEP 1 type-kind guard and binding order", () => {
       functions: new Map([[make_id, make_def]]),
       classes: new Map([[parser_id, parser_def]]),
     });
-    registry.update_file(file, index, [constructor_call_at("make", variable_def.location, 5)], make_type_resolution_context(definitions, resolutions, empty_exports, empty_languages, empty_resolution));
+    registry.update_file(file, index, [constructor_call_at("make", variable_def.location, 5)], make_type_resolution_context(resolutions, empty_exports, empty_languages, empty_resolution));
 
     expect(registry.get_symbol_type(variable_id)).toBe(parser_id);
   });
 
   it("types a construction whose annotation names nothing resolvable", () => {
-    const registry = new TypeRegistry();
     const { definitions, resolutions } = make_mock_registries();
+    const registry = new TypeRegistry(definitions);
     const { id: parser_id, def: parser_def } = make_class_with_members("Parser", file, ["parse"], []);
     // `a: Optional[Parser] = Parser()` annotates a shape no definition carries.
     const { id: variable_id, def: variable_def } = make_variable_with_type(
@@ -1216,14 +1337,14 @@ describe("STEP 1 type-kind guard and binding order", () => {
       variables: new Map([[variable_id, variable_def]]),
       classes: new Map([[parser_id, parser_def]]),
     });
-    registry.update_file(file, index, [constructor_call_at("Parser", variable_def.location, 5)], make_type_resolution_context(definitions, resolutions, empty_exports, empty_languages, empty_resolution));
+    registry.update_file(file, index, [constructor_call_at("Parser", variable_def.location, 5)], make_type_resolution_context(resolutions, empty_exports, empty_languages, empty_resolution));
 
     expect(registry.get_symbol_type(variable_id)).toBe(parser_id);
   });
 
   it("types a variable from a construction whose callee is a class", () => {
-    const registry = new TypeRegistry();
     const { definitions, resolutions } = make_mock_registries();
+    const registry = new TypeRegistry(definitions);
     const { id: parser_id, def: parser_def } = make_class_with_members("Parser", file, ["parse"], []);
     const variable_location = make_location(file, 5, 0, 5, 1);
     const { id: variable_id, def: variable_def } = make_variable("x", variable_location);
@@ -1234,7 +1355,7 @@ describe("STEP 1 type-kind guard and binding order", () => {
       variables: new Map([[variable_id, variable_def]]),
       classes: new Map([[parser_id, parser_def]]),
     });
-    registry.update_file(file, index, [constructor_call_at("Parser", variable_location, 5)], make_type_resolution_context(definitions, resolutions, empty_exports, empty_languages, empty_resolution));
+    registry.update_file(file, index, [constructor_call_at("Parser", variable_location, 5)], make_type_resolution_context(resolutions, empty_exports, empty_languages, empty_resolution));
 
     expect(registry.get_symbol_type(variable_id)).toBe(parser_id);
   });

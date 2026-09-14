@@ -494,7 +494,7 @@ describe("find_self_type", () => {
       scopes,
       definitions,
       resolutions,
-      types: new TypeRegistry(),
+      types: new TypeRegistry(definitions),
       imports: new ImportGraph(),
     };
   }
@@ -649,7 +649,7 @@ describe("find_self_type", () => {
       scopes,
       definitions,
       resolutions,
-      types: new TypeRegistry(),
+      types: new TypeRegistry(definitions),
       imports: new ImportGraph(),
     };
 
@@ -730,7 +730,7 @@ describe("find_self_type", () => {
       scopes,
       definitions,
       resolutions,
-      types: new TypeRegistry(),
+      types: new TypeRegistry(definitions),
       imports: new ImportGraph(),
     };
 
@@ -850,7 +850,7 @@ describe("find_self_type", () => {
       scopes,
       definitions,
       resolutions,
-      types: new TypeRegistry(),
+      types: new TypeRegistry(definitions),
       imports: new ImportGraph(),
     };
 
@@ -876,7 +876,7 @@ describe("resolve_receiver_type", () => {
   beforeEach(() => {
     scopes = new ScopeRegistry();
     definitions = new DefinitionRegistry();
-    types = new TypeRegistry();
+    types = new TypeRegistry(definitions);
     resolutions = new ResolutionRegistry();
     imports = new ImportGraph();
     context = {
@@ -1013,7 +1013,7 @@ describe("resolve_receiver_type", () => {
       setup_class_definitions();
 
       const base_class_id = class_symbol("Base", { ...MOCK_LOCATION, start_line: 30 });
-      types["parent_classes"] = new Map([[my_class_id, base_class_id]]);
+      definitions["heritage"].register_subtype(base_class_id, my_class_id, "declared", MOCK_LOCATION.file_path);
 
       const receiver: ReceiverExpression = {
         base: { type: "keyword", value: "super" },
@@ -1586,7 +1586,7 @@ describe("re-export chain dereferencing", () => {
     return {
       scopes,
       definitions,
-      types: new TypeRegistry(),
+      types: new TypeRegistry(definitions),
       resolutions,
       imports,
       ...make_export_chain_context(),
@@ -1639,7 +1639,7 @@ describe("destructured binding receiver typing", () => {
   beforeEach(() => {
     scopes = new ScopeRegistry();
     definitions = new DefinitionRegistry();
-    types = new TypeRegistry();
+    types = new TypeRegistry(definitions);
     resolutions = new ResolutionRegistry();
     imports = new ImportGraph();
     context = {
@@ -1752,6 +1752,7 @@ describe("destructured binding receiver typing", () => {
       namespaces: new Map(),
       types: new Map(),
       imported_symbols: new Map(),
+      unattached_impl_methods: new Map(),
       references: [],
     };
     const { exports, languages, modules } = make_export_chain_context();
@@ -1759,7 +1760,7 @@ describe("destructured binding receiver typing", () => {
       TEST_FILE,
       index,
       [],
-      make_type_resolution_context(definitions, resolutions, exports, languages, modules)
+      make_type_resolution_context(resolutions, exports, languages, modules)
     );
   }
 

@@ -7,7 +7,6 @@
 
 import type { FilePath, Language } from "@ariadnejs/types";
 import { ExportRegistry } from "./registries/export";
-import type { DefinitionRegistry } from "./registries/definition";
 import type { TypeResolutionContext } from "./registries/type";
 import type { ResolutionRegistry } from "./resolution_registry";
 import { ImportGraph } from "./import_resolution/import_graph";
@@ -57,14 +56,12 @@ export function make_export_chain_context(): {
  * so a unit test that needs either builds its own context.
  */
 export function make_type_resolution_context(
-  definitions: DefinitionRegistry,
   resolutions: ResolutionRegistry,
   exports: ExportRegistry,
   languages: ReadonlyMap<FilePath, Language>,
   modules: ModuleResolutionContext
 ): TypeResolutionContext {
   return {
-    definitions,
     resolutions,
     exports,
     imports: new ImportGraph(),

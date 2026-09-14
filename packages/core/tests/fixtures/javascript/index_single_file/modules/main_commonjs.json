@@ -142,6 +142,7 @@
       "is_commonjs_require": true
     }
   },
+  "unattached_impl_methods": {},
   "references": [
     {
       "kind": "function_call",

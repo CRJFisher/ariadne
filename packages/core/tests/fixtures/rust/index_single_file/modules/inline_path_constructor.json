@@ -180,6 +180,7 @@
   },
   "types": {},
   "imported_symbols": {},
+  "unattached_impl_methods": {},
   "references": [
     {
       "kind": "variable_reference",

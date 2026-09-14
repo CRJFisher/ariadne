@@ -11,6 +11,7 @@ import type {
   NamespaceDefinition,
   TypeAliasDefinition,
   ImportDefinition,
+  MethodDefinition,
 } from "./symbol_definitions";
 import type { SymbolReference } from "./symbol_references";
 
@@ -35,6 +36,12 @@ export interface SemanticIndex {
   readonly namespaces: ReadonlyMap<SymbolId, NamespaceDefinition>;
   readonly types: ReadonlyMap<SymbolId, TypeAliasDefinition>;
   readonly imported_symbols: ReadonlyMap<SymbolId, ImportDefinition>;
+  /**
+   * @language rust
+   * Methods of `impl` blocks whose self type this file does not declare. Each
+   * carries `impl_self_type`, the name its type is resolved by.
+   */
+  readonly unattached_impl_methods: ReadonlyMap<SymbolId, MethodDefinition>;
 
   /** References */
   readonly references: readonly SymbolReference[];

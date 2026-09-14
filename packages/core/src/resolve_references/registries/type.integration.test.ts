@@ -460,6 +460,273 @@ function prefixed(x) { x.m(); }
    * a hop through a function or method continues on its declared return, a
    * hop through anything else on the value it holds.
    */
+  /**
+   * Heritage names resolve exactly as annotations do, so every shape a
+   * declaration writes its parents in — qualified through a namespace or a
+   * module, generic, a Rust `impl Trait for T` — lands as an edge keyed on the
+   * definition it names, and dispatch walks those edges.
+   */
+  describe("heritage", () => {
+    /** The head of a dispatch list, then the rest as a set: implementations arrive in ingest order. */
+    function head_and_rest(targets: readonly SymbolId[]): [SymbolId | undefined, Set<SymbolId>] {
+      return [targets[0], new Set(targets.slice(1))];
+    }
+
+    it.each([
+      ["interface file first", ["output_ast.ts", "abstract_emitter.ts", "translator.ts", "type_translator.ts"]],
+      ["implementers first", ["type_translator.ts", "translator.ts", "abstract_emitter.ts", "output_ast.ts"]],
+    ])(
+      "presents every `implements o.TypeVisitor` implementer to a TypeVisitor receiver (%s)",
+      async (_order, order) => {
+        const { project, paths } = await load_project(
+          read_fixture("typescript", "heritage_namespace_visitor"),
+          order
+        );
+        const ast = paths["output_ast.ts"];
+        const type_visitor = type_named(project, ast, "TypeVisitor");
+        const expression_visitor = type_named(project, ast, "ExpressionVisitor");
+        const emitter = type_named(project, paths["abstract_emitter.ts"], "AbstractEmitterVisitor");
+        const translator = type_named(project, paths["translator.ts"], "ExpressionTranslatorVisitor");
+        const type_translator = type_named(project, paths["type_translator.ts"], "TypeTranslatorVisitor");
+
+        expect(project.definitions.get_parent_types(emitter)).toEqual([
+          type_named(project, ast, "BaseVisitor"),
+          type_visitor,
+        ]);
+        expect(project.definitions.get_parent_types(translator)).toEqual([expression_visitor, type_visitor]);
+        expect(project.definitions.get_parent_types(type_translator)).toEqual([
+          expression_visitor,
+          type_visitor,
+        ]);
+        expect(head_and_rest(targets_of(project, ast, "visitBuiltinType", 15))).toEqual([
+          member_of(project, ast, "TypeVisitor", "visitBuiltinType"),
+          new Set([
+            member_of(project, paths["abstract_emitter.ts"], "AbstractEmitterVisitor", "visitBuiltinType"),
+            member_of(project, paths["translator.ts"], "ExpressionTranslatorVisitor", "visitBuiltinType"),
+            member_of(project, paths["type_translator.ts"], "TypeTranslatorVisitor", "visitBuiltinType"),
+          ]),
+        ]);
+        expect(targets_of(project, paths["abstract_emitter.ts"], "visitComment", 7)).toEqual([
+          member_of(project, ast, "BaseVisitor", "visitComment"),
+        ]);
+      }
+    );
+
+    it("re-dispatches a parent's call site when another file gains `implements`, drops it, or is deleted", async () => {
+      const visitor = `export interface Visitor {
+  visit(): void;
+}
+export function dispatch(v: Visitor) {
+  v.visit();
+}
+`;
+      const implementing = `import { Visitor } from "./visitor";
+export class Printer implements Visitor {
+  visit(): void {}
+}
+`;
+      const standalone = `export class Printer {
+  visit(): void {}
+}
+`;
+      const { project, paths } = await load_project({ "visitor.ts": visitor, "printer.ts": standalone });
+      const interface_member = member_of(project, paths["visitor.ts"], "Visitor", "visit");
+      expect(targets_of(project, paths["visitor.ts"], "visit", 5)).toEqual([]);
+
+      project.update_file(paths["printer.ts"], implementing);
+
+      expect(targets_of(project, paths["visitor.ts"], "visit", 5)).toEqual([
+        interface_member,
+        member_of(project, paths["printer.ts"], "Printer", "visit"),
+      ]);
+
+      project.update_file(paths["printer.ts"], standalone);
+
+      expect(targets_of(project, paths["visitor.ts"], "visit", 5)).toEqual([]);
+
+      project.update_file(paths["printer.ts"], implementing);
+      project.remove_file(paths["printer.ts"]);
+
+      expect(targets_of(project, paths["visitor.ts"], "visit", 5)).toEqual([]);
+    });
+
+    it.todo(
+      "fans a trait-bound generic receiver, `fn walk<V: Visitor>(v: &mut V)`, out to every `impl Visitor for T` — binding V through its bound is TASK-376.15"
+    );
+
+    it("registers both edges for a class implementing two same-named interfaces from different modules", async () => {
+      const facade = "export interface CompilerFacade {\n  compilePipe(): void;\n}\n";
+      const { project, paths } = await load_project({
+        "compiler/compiler_facade_interface.ts": facade,
+        "core/compiler_facade_interface.ts": facade,
+        "compiler/jit_compiler_facade.ts": `import * as core from "../core/compiler_facade_interface";
+import { CompilerFacade } from "./compiler_facade_interface";
+export class CompilerFacadeImpl implements core.CompilerFacade, CompilerFacade {
+  compilePipe(): void {}
+}
+`,
+      });
+      const core_facade = type_named(project, paths["core/compiler_facade_interface.ts"], "CompilerFacade");
+      const compiler_facade = type_named(project, paths["compiler/compiler_facade_interface.ts"], "CompilerFacade");
+      const impl = type_named(project, paths["compiler/jit_compiler_facade.ts"], "CompilerFacadeImpl");
+
+      expect(core_facade).not.toEqual(compiler_facade);
+      expect(project.definitions.get_parent_types(impl)).toEqual([core_facade, compiler_facade]);
+    });
+
+    it.each([
+      ["trait file first", ["lib.rs", "fold.rs", "visit.rs", "cache.rs"]],
+      ["implementer first", ["cache.rs", "visit.rs", "fold.rs", "lib.rs"]],
+    ])(
+      "records `impl DocFolder for CacheBuilder` once and reaches the override from the trait's default body (%s)",
+      async (_order, order) => {
+        const { project, paths } = await load_project(
+          read_fixture("rust", "heritage_trait_impls"),
+          order
+        );
+        const doc_folder = type_named(project, paths["fold.rs"], "DocFolder");
+        const cache_builder = type_named(project, paths["cache.rs"], "CacheBuilder");
+
+        expect(project.definitions.get_parent_types(cache_builder)).toEqual([doc_folder]);
+        expect(new Set(project.definitions.get_subtypes(doc_folder))).toEqual(new Set([cache_builder]));
+        expect(head_and_rest(targets_of(project, paths["fold.rs"], "fold_item", 11))).toEqual([
+          member_of(project, paths["fold.rs"], "DocFolder", "fold_item"),
+          new Set([member_of(project, paths["cache.rs"], "CacheBuilder", "fold_item")]),
+        ]);
+      }
+    );
+
+    it("fans a trait-typed receiver out to every `impl Visitor for T`", async () => {
+      const { project, paths } = await load_project(read_fixture("rust", "heritage_trait_impls"));
+      const visit = paths["visit.rs"];
+      const visitor = type_named(project, visit, "Visitor");
+      const collector = type_named(project, visit, "Collector");
+      const counter = type_named(project, visit, "Counter");
+
+      expect(new Set(project.definitions.get_subtypes(visitor))).toEqual(new Set([collector, counter]));
+      expect(head_and_rest(targets_of(project, visit, "visit_item", 24))).toEqual([
+        member_of(project, visit, "Visitor", "visit_item"),
+        new Set([
+          member_of(project, visit, "Collector", "visit_item"),
+          member_of(project, visit, "Counter", "visit_item"),
+        ]),
+      ]);
+    });
+
+    it.each([
+      ["type file first", ["types.rs", "impls.rs"]],
+      ["impl file first", ["impls.rs", "types.rs"]],
+    ])("records the trait edge of an impl whose type another file declares (%s)", async (_order, order) => {
+      const read = (name: string) =>
+        fs.readFileSync(path.join(FIXTURES_ROOT, "rust", "code", "integration", name), "utf-8");
+      const { project, paths } = await load_project(
+        { "types.rs": read("types.rs"), "impls.rs": read("impls.rs") },
+        order
+      );
+
+      const lowering = type_named(project, paths["types.rs"], "Lowering");
+      const report = project.definitions.get_member_index().get(lowering)?.get("report" as SymbolName);
+
+      expect(project.definitions.get_parent_types(lowering)).toEqual([
+        type_named(project, paths["types.rs"], "Visit"),
+      ]);
+      expect(report && project.definitions.get(report)?.location.file_path).toEqual(paths["impls.rs"]);
+      expect(targets_of(project, paths["impls.rs"], "report", 17)).toEqual([report]);
+    });
+
+    it.each([
+      ["type, impl, caller", ["s.rs", "impl_s.rs", "main.rs"]],
+      ["impl, type, caller", ["impl_s.rs", "s.rs", "main.rs"]],
+    ])(
+      "resolves a third file's call to a method a cross-file impl declares, and keeps it out of the entry points (%s)",
+      async (_order, order) => {
+        const { project, paths } = await load_project(
+          {
+            "s.rs": "pub struct S {\n    pub val: i32,\n}\n",
+            "impl_s.rs": "use crate::s::S;\nimpl S {\n    pub fn helper(&self) -> i32 {\n        self.val\n    }\n}\n",
+            "main.rs": "mod s;\nmod impl_s;\nuse crate::s::S;\npub fn run(s: S) -> i32 {\n    s.helper()\n}\n",
+          },
+          order
+        );
+        const helper = member_of(project, paths["s.rs"], "S", "helper");
+
+        expect(project.definitions.get(helper)?.location.file_path).toEqual(paths["impl_s.rs"]);
+        expect(targets_of(project, paths["main.rs"], "helper", 5)).toEqual([helper]);
+        expect(project.get_call_graph().entry_points).not.toContain(helper);
+
+        project.remove_file(paths["impl_s.rs"]);
+
+        const s_type = type_named(project, paths["s.rs"], "S");
+        expect([...(project.definitions.get_member_index().get(s_type)?.keys() ?? [])]).toEqual(["val"]);
+      }
+    );
+
+    it.each([
+      ["base first", ["sql/__init__.py", "sql/compiler.py", "dialects/__init__.py", "dialects/pg.py"]],
+      ["subclass first", ["dialects/pg.py", "dialects/__init__.py", "sql/compiler.py", "sql/__init__.py"]],
+    ])(
+      "resolves super() through a dotted base, `class PGDDLCompiler(compiler.DDLCompiler)` (%s)",
+      async (_order, order) => {
+        const { project, paths } = await load_project(
+          read_fixture("python", "heritage_dotted_base"),
+          order
+        );
+        const base_visit = member_of(project, paths["sql/compiler.py"], "DDLCompiler", "visit_create_sequence");
+        const pg_visit = member_of(project, paths["dialects/pg.py"], "PGDDLCompiler", "visit_create_sequence");
+
+        expect(project.definitions.get_parent_types(type_named(project, paths["dialects/pg.py"], "PGDDLCompiler"))).toEqual([
+          type_named(project, paths["sql/compiler.py"], "DDLCompiler"),
+        ]);
+        // super() dispatch over-approximates like any polymorphic class call:
+        // the base method the edge exists for, and the override beside it.
+        expect(targets_of(project, paths["dialects/pg.py"], "visit_create_sequence", 8)).toEqual([
+          base_visit,
+          pg_visit,
+        ]);
+        expect(targets_of(project, paths["sql/compiler.py"], "visit_create_sequence", 10)).toEqual([
+          base_visit,
+          pg_visit,
+        ]);
+      }
+    );
+
+    it.each([
+      ["base first", ["base.py", "widgets.py"]],
+      ["subclasses first", ["widgets.py", "base.py"]],
+    ])(
+      "reaches a subclass override from a base or mixin body, and a member two hops up the second base (%s)",
+      async (_order, order) => {
+        const { project, paths } = await load_project(read_fixture("python", "heritage_mixins"), order);
+        const base = paths["base.py"];
+        const widgets = paths["widgets.py"];
+        const c = type_named(project, widgets, "C");
+
+        expect(project.definitions.get_parent_types(type_named(project, widgets, "Widget"))).toEqual([
+          type_named(project, base, "Base"),
+          type_named(project, base, "Mixin"),
+        ]);
+        expect(new Set(targets_of(project, base, "step", 30))).toEqual(
+          new Set([
+            member_of(project, base, "Base", "step"),
+            member_of(project, base, "Local", "step"),
+            member_of(project, widgets, "Widget", "step"),
+          ])
+        );
+        expect(targets_of(project, base, "hook", 22)).toEqual([
+          member_of(project, base, "Mixin", "hook"),
+          member_of(project, widgets, "Widget", "hook"),
+        ]);
+        expect(project.types.walk_inheritance_chain(c)).toEqual([
+          c,
+          type_named(project, base, "Other"),
+          type_named(project, base, "Mid"),
+          type_named(project, base, "Root"),
+        ]);
+        expect(targets_of(project, widgets, "deep", 19)).toEqual([member_of(project, base, "Root", "deep")]);
+      }
+    );
+  });
+
   describe("value types and callable return types", () => {
     it("records a method's return annotation as its return type, never as a value type, and hops through it", async () => {
       const { project, paths } = await load_project({

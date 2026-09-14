@@ -129,6 +129,7 @@ export function build_index_single_file(
     namespaces: builder_result.namespaces,
     types: builder_result.types,
     imported_symbols: builder_result.imports,
+    unattached_impl_methods: builder_result.unattached_impl_methods,
     references: all_references,
   };
 }

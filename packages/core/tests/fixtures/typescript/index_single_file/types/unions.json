@@ -329,6 +329,7 @@
     }
   },
   "imported_symbols": {},
+  "unattached_impl_methods": {},
   "references": [
     {
       "kind": "type_reference",
