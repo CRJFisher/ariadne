@@ -22,7 +22,7 @@ import {
   extract_collection_source,
   extract_iteration_source,
   extract_initializer_call,
-  extract_member_source,
+  extract_read_source,
 } from "../symbol_factories/initializer_sources.javascript";
 import { extract_destructured_binding } from "../symbol_factories/destructuring.javascript";
 import {
@@ -118,7 +118,6 @@ export function handle_ts_definition_variable(
     : undefined;
 
   const collection_source = extract_collection_source(capture.node);
-  const member_source = extract_member_source(capture.node);
   const initialized_from_call = extract_initializer_call(capture.node);
   const destructured = extract_destructured_binding(capture.node);
   const iterated_from = extract_iteration_source(capture.node);
@@ -135,7 +134,7 @@ export function handle_ts_definition_variable(
     docstring,
     function_collection,
     collection_source,
-    member_source,
+    ...extract_read_source(capture.node),
     initialized_from_call,
     destructured_from: destructured?.source,
     destructured_key: destructured?.key,
@@ -515,6 +514,7 @@ export function handle_ts_definition_field(
       ? extract_parameter_type(capture.node)
       : extract_property_type(capture.node),
     initial_value: initial_value,
+    ...extract_read_source(capture.node),
   });
 }
 
@@ -542,6 +542,7 @@ export function handle_ts_definition_parameter(
     scope_id: context.get_scope_id(capture.location),
     type: extract_parameter_type(capture.node),
     default_value: extract_parameter_default_value(capture.node),
+    ...extract_read_source(capture.node),
     optional: false,
   });
 }
@@ -566,6 +567,7 @@ export function handle_definition_parameter_optional(
     scope_id: context.get_scope_id(capture.location),
     type: extract_parameter_type(capture.node),
     default_value: extract_parameter_default_value(capture.node),
+    ...extract_read_source(capture.node),
     optional: true,
   });
 }

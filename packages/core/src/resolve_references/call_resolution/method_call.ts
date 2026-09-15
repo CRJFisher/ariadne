@@ -35,6 +35,7 @@ import {
   type ReceiverResolutionContext,
 } from "./receiver_resolution";
 import { resolve_method_on_type } from "./method_lookup";
+import { resolve_held_type } from "./value_source";
 import type { ModuleResolutionContext } from "../import_resolution";
 
 /**
@@ -73,7 +74,7 @@ export function resolve_method_call(
   };
 
   const receiver = extract_receiver(call_ref);
-  const receiver_result = resolve_receiver_type(receiver, context);
+  const receiver_result = resolve_receiver_type(receiver, context, resolve_held_type);
 
   if (!receiver_result.ok) {
     return receiver_result;

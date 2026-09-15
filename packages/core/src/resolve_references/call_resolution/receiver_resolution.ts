@@ -103,6 +103,20 @@ export interface ReceiverResolutionContext extends SelfTypeResolutionContext {
   readonly types: TypeRegistry;
 }
 
+/**
+ * The type a receiver through a binding takes from the value the binding holds
+ * (`mapper_cls = Mapper; mapper_cls.create()`), or null. What a binding holds is
+ * `value_source.ts`'s answer, which resolves name chains through this file, so
+ * the caller hands it in rather than this file importing it back.
+ *
+ * @param visited - The bindings already being typed on this resolution.
+ */
+export type HeldValueType = (
+  binding_id: SymbolId,
+  context: ReceiverResolutionContext,
+  visited: Set<SymbolId>
+) => SymbolId | null;
+
 const SELF_REFERENCE_KEYWORDS = new Set(["this", "self", "super", "cls"]);
 
 /**
@@ -166,9 +180,10 @@ export function extract_receiver(
  */
 export function resolve_receiver_type(
   receiver: ReceiverExpression,
-  context: ReceiverResolutionContext
+  context: ReceiverResolutionContext,
+  held_type: HeldValueType
 ): Result<SymbolId, ResolutionFailure> {
-  return resolve_receiver_expression_type(receiver, context, new Set());
+  return resolve_receiver_expression_type(receiver, context, new Set(), held_type);
 }
 
 /**
@@ -179,10 +194,11 @@ export function resolve_receiver_type(
 function resolve_receiver_expression_type(
   receiver: ReceiverExpression,
   context: ReceiverResolutionContext,
-  visited: Set<SymbolId>
+  visited: Set<SymbolId>,
+  held_type: HeldValueType
 ): Result<SymbolId, ResolutionFailure> {
   if (receiver.index_access) {
-    return resolve_index_receiver_type(receiver, receiver.index_access.key_is_literal, context, visited);
+    return resolve_index_receiver_type(receiver, receiver.index_access.key_is_literal, context, visited, held_type);
   }
 
   // A `get(k)` straight off an identifier reads one element of the container it
@@ -201,7 +217,7 @@ function resolve_receiver_expression_type(
     }
   }
 
-  const base_result = resolve_base(receiver.base, receiver.scope_id, context, visited);
+  const base_result = resolve_base(receiver.base, receiver.scope_id, context, visited, held_type);
   if (!base_result.ok) {
     return base_result;
   }
@@ -233,7 +249,8 @@ function resolve_index_receiver_type(
   receiver: ReceiverExpression,
   key_is_literal: boolean,
   context: ReceiverResolutionContext,
-  visited: Set<SymbolId>
+  visited: Set<SymbolId>,
+  held_type: HeldValueType
 ): Result<SymbolId, ResolutionFailure> {
   const names: readonly SymbolName[] = [receiver.base.value as SymbolName, ...receiver.chain];
   const candidates = key_is_literal
@@ -242,7 +259,7 @@ function resolve_index_receiver_type(
       : [names]
     : [];
   for (const container_chain of candidates) {
-    const container_id = resolve_container_binding(container_chain, receiver.scope_id, context, visited);
+    const container_id = resolve_chain_binding(container_chain, receiver.scope_id, context, visited, held_type);
     const element_id = container_id ? resolve_element_type(container_id, "index", context) : null;
     if (element_id) {
       return ok(element_id);
@@ -256,20 +273,25 @@ function resolve_index_receiver_type(
 }
 
 /**
- * The binding a container name chain denotes: the name itself for one segment,
+ * The definition a name chain denotes: the name itself for one segment,
  * otherwise the member the last segment names on the type the rest resolves
- * to (`this._instances`, `self.layers`).
+ * to (`this._instances`, `self.layers`, `loops.synloop`).
+ *
+ * A lone name is looked up lexically even when it spells a self receiver: a
+ * name in value position is whatever its scope binds, so `cls = Parser` binds
+ * `cls` like any other local.
  */
-function resolve_container_binding(
+export function resolve_chain_binding(
   chain: readonly SymbolName[],
   scope_id: ScopeId,
   context: ReceiverResolutionContext,
-  visited: Set<SymbolId>
+  visited: Set<SymbolId>,
+  held_type: HeldValueType
 ): SymbolId | null {
   const [root, ...members] = chain;
   const member_name = members[members.length - 1];
   if (member_name === undefined) {
-    return SELF_REFERENCE_KEYWORDS.has(root) ? null : context.resolutions.resolve(scope_id, root);
+    return context.resolutions.resolve(scope_id, root);
   }
 
   const holder = resolve_receiver_expression_type(
@@ -282,7 +304,8 @@ function resolve_container_binding(
       scope_id,
     },
     context,
-    visited
+    visited,
+    held_type
   );
   return holder.ok ? find_member_symbol(holder.value, member_name, context) : null;
 }
@@ -307,12 +330,13 @@ function resolve_base(
   base: ReceiverExpression["base"],
   scope_id: ScopeId,
   context: ReceiverResolutionContext,
-  visited: Set<SymbolId>
+  visited: Set<SymbolId>,
+  held_type: HeldValueType
 ): Result<SymbolId, ResolutionFailure> {
   if (base.type === "keyword") {
     return resolve_keyword_base(base.value, scope_id, context);
   } else {
-    return resolve_identifier_base(base.value, scope_id, context, visited);
+    return resolve_identifier_base(base.value, scope_id, context, visited, held_type);
   }
 }
 
@@ -408,7 +432,8 @@ function resolve_identifier_base(
   identifier: SymbolName,
   scope_id: ScopeId,
   context: ReceiverResolutionContext,
-  visited: Set<SymbolId>
+  visited: Set<SymbolId>,
+  held_type: HeldValueType
 ): Result<SymbolId, ResolutionFailure> {
   const symbol_id = context.resolutions.resolve(scope_id, identifier);
   if (!symbol_id) {
@@ -453,7 +478,7 @@ function resolve_identifier_base(
       type_id = symbol_id;
     } else if (
       // The rung above states a type; this one only says where the value came
-      // from, so it is consulted last.
+      // from, so it is consulted after it.
       (def.kind === "variable" || def.kind === "constant") &&
       def.destructured_from !== undefined &&
       def.destructured_key !== undefined
@@ -463,11 +488,15 @@ function resolve_identifier_base(
         def.destructured_from,
         def.destructured_key,
         context,
-        visited
+        visited,
+        held_type
       );
-    } else if (def.kind === "variable" || def.kind === "constant") {
-      type_id = resolve_element_binding_type(def, context, visited);
     }
+  }
+
+  if (!type_id) {
+    // What the binding holds, last.
+    type_id = held_type(symbol_id, context, visited);
   }
 
   if (!type_id) {
@@ -514,42 +543,6 @@ function find_member_symbol(
     context.definitions.get_member_index().get(type_id)?.get(property_name) ??
     resolve_namespace_member(type_id, property_name, context)
   );
-}
-
-/**
- * The element type of a binding a container read initialises: a loop or array
- * pattern over the container it iterates (`iterated_from`), or an index or
- * `get(k)` lookup of the collection it names (`collection_source`).
- */
-function resolve_element_binding_type(
-  binding: VariableDefinition,
-  context: ReceiverResolutionContext,
-  visited: Set<SymbolId>
-): SymbolId | null {
-  if (visited.has(binding.symbol_id)) {
-    return null;
-  }
-  visited.add(binding.symbol_id);
-
-  if (binding.iterated_from) {
-    const container_id = resolve_container_binding(
-      binding.iterated_from.container,
-      binding.defining_scope_id,
-      context,
-      visited
-    );
-    return container_id
-      ? resolve_element_type(container_id, binding.iterated_from.yields, context)
-      : null;
-  }
-  if (binding.collection_source) {
-    const container_id = context.resolutions.resolve(
-      binding.defining_scope_id,
-      binding.collection_source
-    );
-    return container_id ? resolve_element_type(container_id, "index", context) : null;
-  }
-  return null;
 }
 
 /**
@@ -678,7 +671,8 @@ function resolve_destructured_property_type(
   source: SymbolName,
   key: SymbolName,
   context: ReceiverResolutionContext,
-  visited: Set<SymbolId>
+  visited: Set<SymbolId>,
+  held_type: HeldValueType
 ): SymbolId | null {
   if (visited.has(binding.symbol_id)) {
     return null;
@@ -689,7 +683,8 @@ function resolve_destructured_property_type(
     source,
     binding.defining_scope_id,
     context,
-    visited
+    visited,
+    held_type
   );
   if (!source_type.ok) {
     return null;

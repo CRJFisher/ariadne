@@ -7,5 +7,6 @@
 
 export { extract_type_bindings } from "./bindings";
 export { extract_constructor_bindings, type ConstructorBindings } from "./constructor_bindings";
+export { class_object_annotation } from "./class_object_shape";
 export { container_element_annotation, type ContainerShape } from "./container_shape";
 export { parse_type_annotation, type ParsedTypeAnnotation } from "./annotation";

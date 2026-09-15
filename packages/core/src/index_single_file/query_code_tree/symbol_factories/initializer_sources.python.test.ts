@@ -1,7 +1,13 @@
 import { describe, it, expect } from "vitest";
-import type { IterationSource } from "@ariadnejs/types";
+import type { IterationSource, SymbolName } from "@ariadnejs/types";
+import type { SyntaxNode } from "tree-sitter";
 import { parse_python, find_node_by_type } from "./test_utils";
-import { extract_collection_source, extract_iteration_source } from "./initializer_sources.python";
+import {
+  extract_collection_source,
+  extract_initializer_result_call,
+  extract_iteration_source,
+  extract_read_source,
+} from "./initializer_sources.python";
 
 // ============================================================================
 
@@ -103,5 +109,69 @@ describe("extract_collection_source", () => {
 
     const derived = extract_collection_source(identifier);
     expect(derived).toBeUndefined();
+  });
+});
+
+describe("extract_initializer_result_call", () => {
+  function result_call(code: string): readonly SymbolName[] | undefined {
+    return extract_initializer_result_call(find_node_by_type(parse_python(code), "identifier")!);
+  }
+
+  it("reads the callee chain of the call whose result the initialiser calls", () => {
+    expect(result_call("p = make()(io)")).toEqual(["make"]);
+    expect(result_call("p = self.factory(kind)(io)")).toEqual(["self", "factory"]);
+  });
+
+  it("has no chain for a single call, a call whose inner callee is a subscript, or a non-call", () => {
+    expect(result_call("p = make(io)")).toBeUndefined();
+    expect(result_call("p = table[kind]()(io)")).toBeUndefined();
+    expect(result_call("p = make")).toBeUndefined();
+  });
+});
+
+describe("extract_read_source", () => {
+  /** The read source of the first identifier named `name` in `code`. */
+  function read_source(code: string, name: string): ReturnType<typeof extract_read_source> {
+    const find = (node: SyntaxNode): SyntaxNode | null =>
+      node.type === "identifier" && node.text === name
+        ? node
+        : node.children.reduce<SyntaxNode | null>((found, child) => found ?? find(child), null);
+    return extract_read_source(find(parse_python(code))!);
+  }
+
+  it("reads the one name an assignment, a class attribute or a parameter default reads", () => {
+    expect({
+      assignment: read_source("mapper_cls = Mapper", "mapper_cls"),
+      attribute: read_source("class Feed:\n    feed_type: type = DefaultFeed", "feed_type"),
+      parameter: read_source("def trace(Info=TraceInfo): pass", "Info"),
+      typed_parameter: read_source("def trace(Info: type = TraceInfo): pass", "Info"),
+    }).toEqual({
+      assignment: { name_source: "Mapper" },
+      attribute: { name_source: "DefaultFeed" },
+      parameter: { name_source: "TraceInfo" },
+      typed_parameter: { name_source: "TraceInfo" },
+    });
+  });
+
+  it("reads the holder and member of an attribute read: BaseTask.__call__", () => {
+    expect({
+      assignment: read_source("orig = BaseTask.__call__", "orig"),
+      attribute: read_source("class Feed:\n    feed_type = feedgenerator.DefaultFeed", "feed_type"),
+      parameter: read_source("def trace(Info=trace.TraceInfo): pass", "Info"),
+    }).toEqual({
+      assignment: { member_source: { holder: "BaseTask", member: "__call__" } },
+      attribute: { member_source: { holder: "feedgenerator", member: "DefaultFeed" } },
+      parameter: { member_source: { holder: "trace", member: "TraceInfo" } },
+    });
+  });
+
+  it("reads nothing from a call, a subscript, a deeper chain, a literal or an unbound name", () => {
+    expect([
+      read_source("p = make()", "p"),
+      read_source("handler = config['key']", "handler"),
+      read_source("handler = a.b.c", "handler"),
+      read_source("retries = 3", "retries"),
+      read_source("def trace(Info): pass", "Info"),
+    ]).toEqual([{}, {}, {}, {}, {}]);
   });
 });

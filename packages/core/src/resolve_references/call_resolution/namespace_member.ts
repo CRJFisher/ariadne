@@ -1,9 +1,10 @@
 /**
  * The member a namespace hop names. A hop is a namespace rather than a type
  * when it is a TypeScript `namespace` block, whose members live in its own body
- * scope, or a namespace import, whose members are the exports of the module it
- * names; a named or default import is followed to the definition it names
- * first. Receiver chain walks and terminal method lookups descend alike.
+ * scope, or an import of a whole module — a namespace import, or a named import
+ * of a submodule file — whose members are that module's exports; a named or
+ * default import is followed to the definition it names first. Receiver chain
+ * walks and terminal method lookups descend alike.
  */
 
 import type { SymbolId, SymbolName, ScopeId, AnyDefinition } from "@ariadnejs/types";
@@ -13,8 +14,10 @@ import type { ReceiverResolutionContext, SelfTypeResolutionContext } from "./rec
 /**
  * Resolve `property_name` against a hop that is a namespace rather than a type:
  * a TypeScript `namespace` block, whose members live in its own body scope, or
- * a namespace import, whose members are the exports of the module it names.
- * Returns null for any other hop kind, leaving the caller's failure intact.
+ * an import of a whole module, whose members are the exports of the module it
+ * names — a namespace import, or a named import naming a submodule file
+ * (`from celery.worker import loops`). Returns null for any other hop kind,
+ * leaving the caller's failure intact.
  */
 export function resolve_namespace_member(
   current: SymbolId,
@@ -31,23 +34,26 @@ export function resolve_namespace_member(
     return resolve_namespace_scope_member(def, property_name, context);
   }
 
-  if (def?.kind === "import" && def.import_kind === "namespace") {
-    const source_file = context.imports.get_resolved_import_path(current);
-    if (!source_file) {
-      return null;
-    }
-    return resolve_module_member(
-      source_file,
-      property_name,
-      "namespace",
-      context.exports,
-      context.definitions,
-      context.languages,
-      context.modules
-    );
+  const module_file =
+    def?.kind !== "import"
+      ? null
+      : def.import_kind === "namespace"
+        ? context.imports.get_resolved_import_path(current)
+        : def.import_kind === "named"
+          ? context.imports.get_submodule_import_path(named)
+          : null;
+  if (!module_file) {
+    return null;
   }
-
-  return null;
+  return resolve_module_member(
+    module_file,
+    property_name,
+    "namespace",
+    context.exports,
+    context.definitions,
+    context.languages,
+    context.modules
+  );
 }
 
 /**

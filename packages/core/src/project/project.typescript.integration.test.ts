@@ -1480,7 +1480,7 @@ function main(): void {
       expect(referenced.has(value!)).toBe(true);
     });
 
-    it("forges an edge only for getters — a non-getter member read creates none", () => {
+    it("forges an edge only for getters — a non-getter member read creates none, and keeps the method it reads reachable", () => {
       const file = file_path("field_read.ts");
       project.update_file(
         file,
@@ -1495,13 +1495,21 @@ function main(): void {
           return [f, m];
         }`
       );
-      const referenced = project.resolutions.get_all_referenced_symbols();
+      const call_targets = new Set(
+        project.resolutions
+          .get_calls_for_file(file)
+          .flatMap((call) => call.resolutions.map((resolution) => resolution.symbol_id))
+      );
       const plain = method_symbol(file, "Box", "plain");
       expect(plain).toBeDefined();
       // Reading a field or a non-getter method as a value must not forge a call
-      // edge — this is what the `accessor_kind === "getter"` guard enforces
-      // (the coarser kind check alone would already reject the field read).
-      expect(referenced.has(plain!)).toBe(false);
+      // edge — this is what the `accessor_kind === "getter"` guard enforces.
+      expect(call_targets.has(plain!)).toBe(false);
+      // The method read as a value is handed somewhere a call can reach it, so
+      // it is indirectly reachable instead.
+      expect(project.resolutions.get_indirect_reachability().get(plain!)?.reason.type).toBe(
+        "function_reference"
+      );
     });
   });
 

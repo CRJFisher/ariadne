@@ -62,6 +62,7 @@ import {
   record_indirect_reachability,
 } from "../indirect_reachability";
 import { resolve_callable_values } from "./callable_value";
+import { resolve_read_value } from "./value_source";
 import { resolve_method_call } from "./method_call";
 import { create_method_call_reference } from "../../index_single_file/references/factories";
 import { resolve_constructor_call, include_constructors_for_class_symbols } from "./constructor";
@@ -165,7 +166,11 @@ export function resolve_calls_for_files(
   const indirect_reachability = detect_indirect_reachability(
     file_references,
     context.definitions,
-    (scope_id, name) => context.resolutions.resolve(scope_id as ScopeId, name)
+    (scope_id, name) => context.resolutions.resolve(scope_id as ScopeId, name),
+    (scope_id, property_chain, read_at) => {
+      const held = resolve_read_value(property_chain, scope_id as ScopeId, read_at, context);
+      return held?.kind === "callable" ? held.symbol_id : null;
+    }
   );
   for (const [symbol_id, entry] of resolve_callable_values(
     file_references,

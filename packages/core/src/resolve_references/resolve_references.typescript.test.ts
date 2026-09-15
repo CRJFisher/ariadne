@@ -638,7 +638,7 @@ describe("Getter reads through non-identifier receivers", () => {
     expect(is_entry_point(cg, "compiler", file)).toEqual(false);
   });
 
-  it("creates no edge from a data-field read or a plain method read", async () => {
+  it("creates no edge from a data-field read or a plain method read, and a method read as a value is reachable", async () => {
     const { project, temp_dir, file_paths } = await setup_project({
       "box.ts": [
         "export class Box {",
@@ -657,7 +657,7 @@ describe("Getter reads through non-identifier receivers", () => {
     const file = file_paths["box.ts"];
     const run = find_caller_node(cg, "run", file);
     expect(run?.enclosed_calls).toEqual([]);
-    expect(is_entry_point(cg, "plain", file)).toEqual(true);
+    expect(is_entry_point(cg, "plain", file)).toEqual(false);
   });
 });
 

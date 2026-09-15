@@ -3,7 +3,9 @@
  *
  * Resolves a constructor call (`new ClassName()`, Python `ClassName()`, Rust
  * `Type::new()` / struct literal) to the class's constructor definition, or the
- * class symbol itself when no explicit constructor exists.
+ * class symbol itself when no explicit constructor exists. A callee that names a
+ * binding holding a class object (`const cls = Parser; new cls()`) constructs
+ * that class.
  */
 
 import type {
@@ -26,6 +28,7 @@ import {
   RUST_SELF_TYPE_KEYWORD,
   resolve_self_type_rust,
 } from "./path_resolution.rust";
+import { resolve_value_source } from "./value_source";
 
 /**
  * Resolve a constructor call to its constructor definition, falling back to the
@@ -87,7 +90,9 @@ export function resolve_constructor_call(
     });
   }
 
-  const class_def = find_class_definition(class_symbol, definitions);
+  const class_def =
+    find_class_definition(class_symbol, definitions) ??
+    find_held_class_definition(class_symbol, call_ref, context);
 
   if (!class_def) {
     return err({
@@ -106,7 +111,20 @@ export function resolve_constructor_call(
     constructor_symbol = find_associated_constructor_rust(call_ref, class_def, definitions);
   }
 
-  return ok([constructor_symbol || class_symbol]);
+  return ok([constructor_symbol || class_def.symbol_id]);
+}
+
+/**
+ * The class a construction's callee binding holds the class object of, where the
+ * callee names a binding rather than the class itself.
+ */
+function find_held_class_definition(
+  callee_symbol: SymbolId,
+  call_ref: ConstructorCallReference,
+  context: CallResolutionContext
+): ClassDefinition | null {
+  const held = resolve_value_source(callee_symbol, call_ref.location, context);
+  return held?.kind === "class_object" ? find_class_definition(held.class_id, context.definitions) : null;
 }
 
 /**

@@ -15,6 +15,7 @@ import type { ExportRegistry } from "./export";
 import {
   extract_type_bindings,
   extract_constructor_bindings,
+  class_object_annotation,
   container_element_annotation,
   parse_type_annotation,
   type ConstructorBindings,
@@ -126,7 +127,7 @@ function names_a_type(
 /**
  * Project-wide store of resolved type relationships, all keyed by SymbolId:
  * value → type, value → type arguments, container → element, callable →
- * return type, type → members. Inheritance is read from the heritage graph `DefinitionRegistry`
+ * return type, callable → returned class object, type → members. Inheritance is read from the heritage graph `DefinitionRegistry`
  * holds.
  *
  * update_file() extracts type names from a file's index and resolves them to
@@ -138,6 +139,7 @@ export class TypeRegistry {
   private symbol_type_arguments: Map<SymbolId, readonly SymbolId[]> = new Map();
   private container_elements: Map<SymbolId, ContainerElement> = new Map();
   private callable_return_types: Map<SymbolId, SymbolId> = new Map();
+  private callable_return_classes: Map<SymbolId, SymbolId> = new Map();
   private resolved_type_members: Map<SymbolId, Map<SymbolName, SymbolId>> =
     new Map();
   private resolved_by_file: Map<FilePath, FileTypeContributions> = new Map();
@@ -292,13 +294,25 @@ export class TypeRegistry {
 
     // STEP 1.2: function/method → declared return type. Recorded apart from
     // every value type: a method is a member a receiver names, and what calling
-    // it yields is a different type, reached only by the call.
+    // it yields is a different type, reached only by the call. A return naming
+    // a class object (`-> type[X]`, `: typeof X`) is recorded apart again: what
+    // calling the callable yields constructs `X` when it is called in turn.
     for (const [callable_id, return_text] of extracted.return_bindings) {
       const scope_id = this.definitions.get_symbol_scope(callable_id);
       if (!scope_id) continue;
 
       const return_annotation = parse_type_annotation(return_text, language);
       if (!return_annotation) continue;
+
+      const returned_class = class_object_annotation(return_annotation, language);
+      if (returned_class) {
+        const class_id = this.resolve_annotation(scope_id, returned_class, file_id, language, context);
+        if (class_id && names_a_type(class_id, this.definitions)) {
+          this.callable_return_classes.set(callable_id, class_id);
+          resolved_symbols.add(callable_id);
+        }
+        continue;
+      }
 
       const return_type_id = this.resolve_annotation(
         scope_id,
@@ -670,6 +684,16 @@ export class TypeRegistry {
   }
 
   /**
+   * The class a function or method's declared return annotation names the
+   * class object of (`-> type[Parser]`, `: typeof Parser`), or null when it
+   * declares no class-object return or the class resolves to nothing that can
+   * hold members.
+   */
+  get_callable_return_class(callable_id: SymbolId): SymbolId | null {
+    return this.callable_return_classes.get(callable_id) ?? null;
+  }
+
+  /**
    * The resolved type arguments of a symbol's declared annotation, in order —
    * `token: Type<Service>` yields `[Service]`. Empty when the annotation is not
    * generic or any of its arguments names nothing the project holds.
@@ -752,6 +776,7 @@ export class TypeRegistry {
       this.symbol_type_arguments.delete(symbol_id);
       this.container_elements.delete(symbol_id);
       this.callable_return_types.delete(symbol_id);
+      this.callable_return_classes.delete(symbol_id);
       this.resolved_type_members.delete(symbol_id);
     }
 
@@ -763,6 +788,7 @@ export class TypeRegistry {
     this.symbol_type_arguments.clear();
     this.container_elements.clear();
     this.callable_return_types.clear();
+    this.callable_return_classes.clear();
     this.resolved_type_members.clear();
     this.resolved_by_file.clear();
   }

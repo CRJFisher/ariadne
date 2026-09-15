@@ -2970,7 +2970,7 @@ first, second = suites
       );
     });
 
-    it("records initialized_from_call as the callee chain and member_source as the attribute read", () => {
+    it("records initialized_from_call as the callee chain, initialized_from_call_result as the called call's chain and member_source as the attribute read", () => {
       const result = index_python(`c = connect()
 i = s.get_info()
 router = inject(Router)
@@ -2982,31 +2982,43 @@ a, b = pair()
       const captured = new Map(
         Array.from(result.variables.values()).map((v) => [
           v.name,
-          { initialized_from_call: v.initialized_from_call, member_source: v.member_source },
+          {
+            initialized_from_call: v.initialized_from_call,
+            initialized_from_call_result: v.initialized_from_call_result,
+            member_source: v.member_source,
+          },
         ]),
       );
       expect(captured).toEqual(
-        new Map<SymbolName, Pick<VariableDefinition, "initialized_from_call" | "member_source">>([
-          ["c" as SymbolName, { initialized_from_call: ["connect" as SymbolName], member_source: undefined }],
+        new Map<SymbolName, Pick<VariableDefinition, "initialized_from_call" | "initialized_from_call_result" | "member_source">>([
+          ["c" as SymbolName, { initialized_from_call: ["connect" as SymbolName], initialized_from_call_result: undefined, member_source: undefined }],
           [
             "i" as SymbolName,
-            { initialized_from_call: ["s" as SymbolName, "get_info" as SymbolName], member_source: undefined },
+            { initialized_from_call: ["s" as SymbolName, "get_info" as SymbolName], initialized_from_call_result: undefined, member_source: undefined },
           ],
-          ["router" as SymbolName, { initialized_from_call: ["inject" as SymbolName], member_source: undefined }],
+          ["router" as SymbolName, { initialized_from_call: ["inject" as SymbolName], initialized_from_call_result: undefined, member_source: undefined }],
           [
             "parser" as SymbolName,
-            { initialized_from_call: ["_parser_dispatch" as SymbolName], member_source: undefined },
+            { initialized_from_call: ["_parser_dispatch" as SymbolName], initialized_from_call_result: undefined, member_source: undefined },
           ],
-          ["p" as SymbolName, { initialized_from_call: undefined, member_source: undefined }],
+          [
+            "p" as SymbolName,
+            {
+              initialized_from_call: undefined,
+              initialized_from_call_result: ["make" as SymbolName],
+              member_source: undefined,
+            },
+          ],
           [
             "orig" as SymbolName,
             {
               initialized_from_call: undefined,
+              initialized_from_call_result: undefined,
               member_source: { holder: "BaseTask" as SymbolName, member: "__call__" as SymbolName },
             },
           ],
-          ["a" as SymbolName, { initialized_from_call: undefined, member_source: undefined }],
-          ["b" as SymbolName, { initialized_from_call: undefined, member_source: undefined }],
+          ["a" as SymbolName, { initialized_from_call: undefined, initialized_from_call_result: undefined, member_source: undefined }],
+          ["b" as SymbolName, { initialized_from_call: undefined, initialized_from_call_result: undefined, member_source: undefined }],
         ]),
       );
     });

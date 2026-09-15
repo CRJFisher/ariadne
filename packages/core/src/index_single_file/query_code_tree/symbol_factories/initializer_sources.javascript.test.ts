@@ -1,11 +1,12 @@
 import { describe, it, expect } from "vitest";
 import type { IterationSource, SymbolName } from "@ariadnejs/types";
+import type { SyntaxNode } from "tree-sitter";
 import { parse_js, find_node_by_type } from "./test_utils";
 import {
   extract_collection_source,
   extract_initializer_call,
   extract_iteration_source,
-  extract_member_source,
+  extract_read_source,
 } from "./initializer_sources.javascript";
 
 // ============================================================================
@@ -94,9 +95,15 @@ describe("extract_initializer_call", () => {
     expect(initializer_call("const p = super.make()")).toBeUndefined();
   });
 
-  it("has no chain for an initialiser that is not a call", () => {
+  it("reads a construction as its constructor's name chain", () => {
+    expect(initializer_call("const p = new cls(io)")).toEqual(["cls"]);
+    expect(initializer_call("const u = new models.User()")).toEqual(["models", "User"]);
+  });
+
+  it("has no chain for an initialiser that is neither a call nor a construction", () => {
     expect(initializer_call("const x = 42")).toBeUndefined();
-    expect(initializer_call("const x = new Foo()")).toBeUndefined();
+    expect(initializer_call("const x = Foo")).toBeUndefined();
+    expect(initializer_call("const x = new (make())()")).toBeUndefined();
   });
 });
 
@@ -148,19 +155,47 @@ describe("extract_collection_source", () => {
 
 // ============================================================================
 // Collection Source Extraction
-describe("extract_member_source", () => {
-  function member_source(code: string): ReturnType<typeof extract_member_source> {
-    const declarator = find_node_by_type(parse_js(code), "variable_declarator")!;
-    return extract_member_source(declarator.childForFieldName("name")!);
+describe("extract_read_source", () => {
+  /** The read source of the first identifier named `name` in `code`. */
+  function read_source(code: string, name: string): ReturnType<typeof extract_read_source> {
+    const find = (node: SyntaxNode): SyntaxNode | null =>
+      (node.type === "identifier" || node.type === "property_identifier") && node.text === name
+        ? node
+        : node.children.reduce<SyntaxNode | null>((found, child) => found ?? find(child), null);
+    return extract_read_source(find(parse_js(code))!);
   }
 
-  it("reads the holder and member of a static member alias: Ns.A", () => {
-    expect(member_source("const alias = Ns.A;")).toEqual({ holder: "Ns", member: "A" });
+  it("reads the one name a declarator, a class field or a parameter default reads", () => {
+    expect({
+      declarator: read_source("const cls = Parser;", "cls"),
+      field: read_source("class Feed { feed_type = DefaultFeed; }", "feed_type"),
+      parameter: read_source("function trace(Info = TraceInfo) {}", "Info"),
+    }).toEqual({
+      declarator: { name_source: "Parser" },
+      field: { name_source: "DefaultFeed" },
+      parameter: { name_source: "TraceInfo" },
+    });
   });
 
-  it("has no member source for a get() retrieval, a subscript, or a deeper chain", () => {
-    expect(member_source("const handler = config.get('key');")).toBeUndefined();
-    expect(member_source("const handler = config['key'];")).toBeUndefined();
-    expect(member_source("const handler = a.b.c;")).toBeUndefined();
+  it("reads the holder and member of a static member read: Ns.A", () => {
+    expect({
+      declarator: read_source("const alias = Ns.A;", "alias"),
+      field: read_source("class Feed { feed_type = feedgenerator.DefaultFeed; }", "feed_type"),
+      parameter: read_source("function trace(Info = trace.TraceInfo) {}", "Info"),
+    }).toEqual({
+      declarator: { member_source: { holder: "Ns", member: "A" } },
+      field: { member_source: { holder: "feedgenerator", member: "DefaultFeed" } },
+      parameter: { member_source: { holder: "trace", member: "TraceInfo" } },
+    });
+  });
+
+  it("reads nothing from a get() retrieval, a subscript, a deeper chain, a call or an array-pattern default", () => {
+    expect([
+      read_source("const handler = config.get('key');", "handler"),
+      read_source("const handler = config['key'];", "handler"),
+      read_source("const handler = a.b.c;", "handler"),
+      read_source("const p = make();", "p"),
+      read_source("const [first = Fallback] = items;", "first"),
+    ]).toEqual([{}, {}, {}, {}, {}]);
   });
 });

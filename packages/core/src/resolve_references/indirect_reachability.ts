@@ -7,6 +7,8 @@
  * - Bound or instance methods read as values via a bare member-name read that
  *   resolves to the method through lexical scope (e.g., `register(self._acquire_connection)`,
  *   `out.write = this.write.bind(this)`, `self._processor = self.process`)
+ * - Functions and methods a member read hands over as a value (e.g.,
+ *   `self.loop = loops.asynloop if hub else loops.synloop`)
  *
  * These callables should not be considered entry points.
  */
@@ -16,12 +18,24 @@ import type { DefinitionRegistry } from "./registries/definition";
 
 type SymbolResolver = (scope_id: string, name: SymbolName) => SymbolId | null;
 
+/**
+ * The function or method a member read names as a value, or null when the read
+ * holds anything else. Value tracking lives in call resolution, which this file
+ * sits below, so the caller hands it in.
+ */
+type MemberReadCallableResolver = (
+  scope_id: string,
+  property_chain: readonly SymbolName[],
+  read_at: Location
+) => SymbolId | null;
+
 interface VariableReadReference {
   kind: string;
   access_type?: string;
   scope_id: string;
   name: SymbolName;
   location: Location;
+  property_chain?: readonly SymbolName[];
 }
 
 /**
@@ -89,21 +103,35 @@ function collection_of(entry: IndirectReachability): string {
 }
 
 /**
- * Detect indirect reachability from variable read references.
+ * Detect indirect reachability from read references.
  *
- * Two cases mark a symbol reachable: reading a function-collection variable
- * (every stored function is reachable) and reading a named function/method as
- * a value (the callable itself is reachable).
+ * Three cases mark a symbol reachable: reading a function-collection variable
+ * (every stored function is reachable), reading a named function/method as a
+ * value, and a member read whose value is a function or method (the callable
+ * itself is reachable, in both).
  */
 export function detect_indirect_reachability(
   file_references: Map<FilePath, readonly VariableReadReference[]>,
   definitions: DefinitionRegistry,
-  resolve: SymbolResolver
+  resolve: SymbolResolver,
+  resolve_member_read_callable: MemberReadCallableResolver
 ): Map<SymbolId, IndirectReachability> {
   const indirect_reachability = new Map<SymbolId, IndirectReachability>();
 
   for (const references of file_references.values()) {
     for (const ref of references) {
+      if (ref.kind === "property_access" && ref.property_chain) {
+        // A member read claims no call: a framework that stores the read
+        // (`self.loop = loops.synloop`) invokes it somewhere no call site names.
+        const callable_id = resolve_member_read_callable(ref.scope_id, ref.property_chain, ref.location);
+        if (callable_id) {
+          record_indirect_reachability(indirect_reachability, callable_id, {
+            reason: { type: "function_reference", read_location: ref.location },
+          });
+        }
+        continue;
+      }
+
       if (ref.kind !== "variable_reference" || ref.access_type !== "read") {
         continue;
       }

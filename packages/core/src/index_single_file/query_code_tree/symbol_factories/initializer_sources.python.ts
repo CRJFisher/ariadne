@@ -1,13 +1,14 @@
 /**
- * What a Python variable's initialiser names: the collection it is looked up
- * from, the member it reads, the callee chain of the call it is initialised
- * from, and — for a binding a `for` loop or tuple unpacking initialises — the
- * container it takes an element of. Resolution follows each to type or
- * dispatch the binding.
+ * What a Python binding's initialiser names: the collection it is looked up
+ * from, the name or member it reads, the callee chain of the call it is
+ * initialised from or of the call whose result it calls, and — for a binding a
+ * `for` loop or tuple unpacking initialises — the container it takes an element
+ * of. A parameter's default names what its initialiser would. Resolution
+ * follows each to type or dispatch the binding.
  */
 
 import type { SyntaxNode } from "tree-sitter";
-import type { IterationSource, SymbolName } from "@ariadnejs/types";
+import type { IterationSource, MemberSource, SymbolName } from "@ariadnejs/types";
 
 /**
  * Extract the name of the collection variable this definition was looked up from.
@@ -87,22 +88,44 @@ export function extract_initializer_call(node: SyntaxNode): readonly SymbolName[
 }
 
 /**
- * The holder and member a plain attribute-read initialiser names:
- * `orig = BaseTask.__call__` → `{ holder: "BaseTask", member: "__call__" }`.
+ * The callee chain of the call whose result a plain `name = call(...)(...)`
+ * initialiser calls in turn: `["make"]` for `p = make()(io)`. A callee of the
+ * inner call that is not an attribute chain rooted at an identifier has no
+ * chain, and neither does a call of anything but a call.
  */
-export function extract_member_source(
-  node: SyntaxNode
-): { holder: SymbolName; member: SymbolName } | undefined {
+export function extract_initializer_result_call(node: SyntaxNode): readonly SymbolName[] | undefined {
   const value_node = bound_value(node);
-  if (value_node?.type !== "attribute") {
+  const callee_node = value_node?.type === "call" ? value_node.childForFieldName("function") : null;
+  if (callee_node?.type !== "call") {
     return undefined;
+  }
+  const inner_callee = callee_node.childForFieldName("function");
+  return inner_callee ? attribute_chain(inner_callee) : undefined;
+}
+
+/**
+ * What an assignment's value or a parameter's default reads as a whole: the one
+ * name of `mapper_cls = Mapper` and `def trace(Info=TraceInfo)`, or the holder
+ * and member of `orig = BaseTask.__call__`. A call, a literal, a subscript or a
+ * longer chain reads neither.
+ */
+export function extract_read_source(node: SyntaxNode): {
+  name_source?: SymbolName;
+  member_source?: MemberSource;
+} {
+  const value_node = bound_value(node) ?? default_value(node);
+  if (value_node?.type === "identifier") {
+    return { name_source: value_node.text as SymbolName };
+  }
+  if (value_node?.type !== "attribute") {
+    return {};
   }
   const holder_node = value_node.childForFieldName("object");
   const member_node = value_node.childForFieldName("attribute");
   if (holder_node?.type !== "identifier" || !member_node) {
-    return undefined;
+    return {};
   }
-  return { holder: holder_node.text as SymbolName, member: member_node.text as SymbolName };
+  return { member_source: { holder: holder_node.text as SymbolName, member: member_node.text as SymbolName } };
 }
 
 /**
@@ -199,6 +222,18 @@ function enumerated(node: SyntaxNode): SyntaxNode | undefined {
   return counted && counted.type !== "keyword_argument" && counted.type !== "list_splat"
     ? counted
     : undefined;
+}
+
+/** The default of the parameter `node` names (`Info` in `Info=TraceInfo`). */
+function default_value(node: SyntaxNode): SyntaxNode | null {
+  const parameter = node.parent;
+  if (
+    (parameter?.type !== "default_parameter" && parameter?.type !== "typed_default_parameter") ||
+    parameter.childForFieldName("name")?.id !== node.id
+  ) {
+    return null;
+  }
+  return parameter.childForFieldName("value");
 }
 
 /** The right-hand side of the assignment whose left side is exactly `node`. */

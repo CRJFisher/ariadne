@@ -1606,6 +1606,67 @@ describe("DefinitionRegistry", () => {
     });
   });
 
+  describe("get_scope_rebindings", () => {
+    const file = "mapper.py" as FilePath;
+    const module_scope = `module:${file}:1:1:9:0` as ScopeId;
+    const function_scope = `function:${file}:3:9:9:0` as ScopeId;
+
+    function at(line: number, column: number): Location {
+      return { file_path: file, start_line: line, start_column: column, end_line: line, end_column: column + 10 };
+    }
+
+    function variable(name: string, scope_id: ScopeId, location: Location): VariableDefinition {
+      return {
+        kind: "variable",
+        symbol_id: variable_symbol(name as SymbolName, location),
+        name: name as SymbolName,
+        defining_scope_id: scope_id,
+        location,
+        is_exported: false,
+      };
+    }
+
+    const later = variable("mapper_cls", function_scope, at(6, 4));
+    const earlier = variable("mapper_cls", function_scope, at(4, 4));
+    const parameter = {
+      kind: "parameter",
+      symbol_id: `parameter:${file}:3:10:3:20:mapper_cls` as SymbolId,
+      name: "mapper_cls" as SymbolName,
+      defining_scope_id: function_scope,
+      location: at(3, 10),
+    } as const;
+    const outer = variable("mapper_cls", module_scope, at(1, 0));
+    const single = variable("parser", function_scope, at(5, 4));
+
+    it("lists every binding of a rebound name in its scope in source order, parameters included", () => {
+      registry.update_file(file, [later, single, outer, earlier, parameter]);
+
+      expect({
+        later: registry.get_scope_rebindings(later.symbol_id),
+        parameter: registry.get_scope_rebindings(parameter.symbol_id),
+      }).toEqual({
+        later: [parameter.symbol_id, earlier.symbol_id, later.symbol_id],
+        parameter: [parameter.symbol_id, earlier.symbol_id, later.symbol_id],
+      });
+    });
+
+    it("holds nothing for a name its scope binds once, whatever an enclosing scope binds", () => {
+      registry.update_file(file, [later, single, outer, earlier]);
+
+      expect({
+        single: registry.get_scope_rebindings(single.symbol_id),
+        outer: registry.get_scope_rebindings(outer.symbol_id),
+      }).toEqual({ single: [], outer: [] });
+    });
+
+    it("forgets a file's rebindings when the file is removed", () => {
+      registry.update_file(file, [later, earlier]);
+      registry.remove_file(file);
+
+      expect(registry.get_scope_rebindings(later.symbol_id)).toEqual([]);
+    });
+  });
+
   /**
    * `fix_import_definition_locations` (project/fix_import_locations.ts) gives
    * every ImportDefinition the location of the definition it names, so N
