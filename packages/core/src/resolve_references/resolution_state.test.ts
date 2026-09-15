@@ -9,6 +9,7 @@ import {
   get_calls_for_file,
   get_all_referenced_symbols,
   get_indirect_reachability,
+  get_files_dispatching_through,
   size,
   remove_files,
   apply_name_resolution,
@@ -73,7 +74,7 @@ function bindings(own: Map<SymbolName, SymbolId>): ScopeResolutions {
 }
 
 describe("create_resolution_state", () => {
-  it("returns a state with five empty maps", () => {
+  it("returns a state with six empty maps", () => {
     const state = create_resolution_state();
 
     expect(state.resolutions_by_scope.size).toBe(0);
@@ -81,6 +82,7 @@ describe("create_resolution_state", () => {
     expect(state.resolved_calls_by_file.size).toBe(0);
     expect(state.calls_by_caller_scope.size).toBe(0);
     expect(state.indirect_reachability.size).toBe(0);
+    expect(state.subtype_dispatch_files.size).toBe(0);
   });
 
   it("returns independent state instances on each call", () => {
@@ -248,6 +250,7 @@ describe("get_all_referenced_symbols", () => {
     const state: ResolutionState = {
       ...create_resolution_state(),
       indirect_reachability: new Map([[symbol_id, entry]]),
+      subtype_dispatch_files: new Map(),
     };
 
     const result = get_all_referenced_symbols(state);
@@ -268,6 +271,7 @@ describe("get_all_referenced_symbols", () => {
     const state: ResolutionState = {
       ...create_resolution_state(),
       indirect_reachability: new Map([[symbol_id, entry]]),
+      subtype_dispatch_files: new Map(),
     };
 
     const result = get_all_referenced_symbols(state);
@@ -297,6 +301,7 @@ describe("get_all_referenced_symbols", () => {
       ...create_resolution_state(),
       resolved_calls_by_file: new Map([[TEST_FILE, [call]]]),
       indirect_reachability: new Map([[indirect, entry]]),
+      subtype_dispatch_files: new Map(),
     };
 
     const result = get_all_referenced_symbols(state);
@@ -357,6 +362,7 @@ describe("get_indirect_reachability", () => {
     const state: ResolutionState = {
       ...create_resolution_state(),
       indirect_reachability: new Map([[symbol_id, entry]]),
+      subtype_dispatch_files: new Map(),
     };
 
     const result = get_indirect_reachability(state);
@@ -423,6 +429,7 @@ describe("remove_files", () => {
       resolved_calls_by_file: new Map(),
       calls_by_caller_scope: new Map(),
       indirect_reachability: new Map(),
+      subtype_dispatch_files: new Map(),
     };
 
     const result = remove_files(state, new Set([FILE_A]));
@@ -647,6 +654,7 @@ describe("remove_files", () => {
       ...create_resolution_state(),
       scope_to_file: new Map([[SCOPE_B, FILE_B]]),
       indirect_reachability: new Map([[symbol_a, entry_a]]),
+      subtype_dispatch_files: new Map(),
     };
 
     const result = remove_files(state, new Set([FILE_A]));
@@ -654,6 +662,96 @@ describe("remove_files", () => {
     expect(result).not.toBe(state);
     expect(result.indirect_reachability.size).toBe(0);
     expect(result.scope_to_file.has(SCOPE_B)).toBe(true);
+  });
+});
+
+describe("the subtype-dispatch index", () => {
+  const SHAPE = "interface:shape.ts:1:0:3:1:Shape" as SymbolId;
+  const WIDGET = "class:widget.ts:1:0:3:1:Widget" as SymbolId;
+
+  function empty_result(files: readonly FilePath[]): CallResolutionResult {
+    return {
+      resolved_calls_by_file: new Map(files.map((file): [FilePath, CallReference[]] => [file, []])),
+      calls_by_caller_scope: new Map(),
+      indirect_reachability: new Map(),
+      subtype_dispatch_files: new Map(),
+    };
+  }
+
+  it("get_files_dispatching_through unions the files of every type asked for", () => {
+    const state: ResolutionState = {
+      ...create_resolution_state(),
+      subtype_dispatch_files: new Map([
+        [SHAPE, new Set([FILE_A])],
+        [WIDGET, new Set([FILE_A, FILE_B])],
+      ]),
+    };
+
+    expect(get_files_dispatching_through(state, [SHAPE])).toEqual(new Set([FILE_A]));
+    expect(get_files_dispatching_through(state, [SHAPE, WIDGET])).toEqual(new Set([FILE_A, FILE_B]));
+    expect(get_files_dispatching_through(state, [])).toEqual(new Set());
+  });
+
+  it("apply_call_resolution merges a pass's entries beside other files' entries", () => {
+    const state = apply_call_resolution(create_resolution_state(), {
+      ...empty_result([FILE_A]),
+      subtype_dispatch_files: new Map([[SHAPE, new Set([FILE_A])]]),
+    });
+
+    const result = apply_call_resolution(state, {
+      ...empty_result([FILE_B]),
+      subtype_dispatch_files: new Map([[SHAPE, new Set([FILE_B])]]),
+    });
+
+    expect(result.subtype_dispatch_files).toEqual(new Map([[SHAPE, new Set([FILE_A, FILE_B])]]));
+  });
+
+  it("apply_call_resolution replaces what a re-resolved file enumerated before, dropping a type left with no file", () => {
+    const state: ResolutionState = {
+      ...create_resolution_state(),
+      subtype_dispatch_files: new Map([
+        [SHAPE, new Set([FILE_A, FILE_B])],
+        [WIDGET, new Set([FILE_A])],
+      ]),
+    };
+
+    // FILE_A resolves again and no longer dispatches through either type.
+    const result = apply_call_resolution(state, empty_result([FILE_A]));
+
+    expect(result.subtype_dispatch_files).toEqual(new Map([[SHAPE, new Set([FILE_B])]]));
+    expect(state.subtype_dispatch_files.get(SHAPE)).toEqual(new Set([FILE_A, FILE_B]));
+  });
+
+  it("remove_files evicts the batch's files from every type, and clones for that alone", () => {
+    const untouched = new Set([FILE_B]);
+    const state: ResolutionState = {
+      ...create_resolution_state(),
+      subtype_dispatch_files: new Map([
+        [SHAPE, new Set([FILE_A, FILE_B])],
+        [WIDGET, new Set([FILE_A])],
+        ["class:other.ts:1:0:3:1:Other" as SymbolId, untouched],
+      ]),
+    };
+
+    const result = remove_files(state, new Set([FILE_A]));
+
+    expect(result).not.toBe(state);
+    expect(result.subtype_dispatch_files).toEqual(
+      new Map([
+        [SHAPE, new Set([FILE_B])],
+        ["class:other.ts:1:0:3:1:Other" as SymbolId, new Set([FILE_B])],
+      ])
+    );
+    expect(result.subtype_dispatch_files.get("class:other.ts:1:0:3:1:Other" as SymbolId)).toBe(untouched);
+  });
+
+  it("remove_files returns the same state when no type holds a file in the batch", () => {
+    const state: ResolutionState = {
+      ...create_resolution_state(),
+      subtype_dispatch_files: new Map([[SHAPE, new Set([FILE_B])]]),
+    };
+
+    expect(remove_files(state, new Set([FILE_A]))).toBe(state);
   });
 });
 
@@ -751,6 +849,7 @@ describe("apply_call_resolution", () => {
       resolved_calls_by_file: new Map([[FILE_A, [call]]]),
       calls_by_caller_scope: new Map([[SCOPE_A, [call]]]),
       indirect_reachability: new Map(),
+      subtype_dispatch_files: new Map(),
     };
 
     const result = apply_call_resolution(state, result_to_apply);
@@ -776,6 +875,7 @@ describe("apply_call_resolution", () => {
       resolved_calls_by_file: new Map(),
       calls_by_caller_scope: new Map(),
       indirect_reachability: new Map([[symbol_id, entry]]),
+      subtype_dispatch_files: new Map(),
     };
 
     const result = apply_call_resolution(state, result_to_apply);
@@ -799,6 +899,7 @@ describe("apply_call_resolution", () => {
       resolved_calls_by_file: new Map(),
       calls_by_caller_scope: new Map(),
       indirect_reachability: new Map([[symbol_id, entry]]),
+      subtype_dispatch_files: new Map(),
     };
 
     const result = apply_call_resolution(state, result_to_apply);
@@ -823,6 +924,7 @@ describe("apply_call_resolution", () => {
       resolved_calls_by_file: new Map([[FILE_A, [call]]]),
       calls_by_caller_scope: new Map([[SCOPE_A, [call]]]),
       indirect_reachability: new Map(),
+      subtype_dispatch_files: new Map(),
     };
 
     const result = apply_call_resolution(state, result_to_apply);

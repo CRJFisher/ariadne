@@ -2285,6 +2285,84 @@ describe("DefinitionRegistry", () => {
     });
   });
 
+  describe("take_changed_member_types", () => {
+    const file = "shapes.ts" as FilePath;
+    const scope = `scope:${file}:module` as ScopeId;
+    const impl_file = "impls.rs" as FilePath;
+    const impl_scope = `scope:${impl_file}:module` as ScopeId;
+
+    /** `type` with its `run` method moved to `line`: a new symbol under the same name. */
+    function with_run_at(type: ClassDefinition, line: number): ClassDefinition {
+      const [run, ...rest] = type.methods;
+      return { ...type, methods: [method_in(file, run.defining_scope_id, run.name, line), ...rest] };
+    }
+
+    it("reports nothing for a file not evicted since it was last asked", () => {
+      const type = make_class_with_members(file, scope, "Square", 1, []);
+      registry.update_file(file, [type]);
+      registry.take_changed_member_types(file);
+
+      expect(registry.take_changed_member_types(file)).toEqual(new Set());
+      expect(registry.take_changed_member_types("never_seen.ts" as FilePath)).toEqual(new Set());
+    });
+
+    it("reports every type a newly registered file contributes members to", () => {
+      const square = make_class_with_members(file, scope, "Square", 1, []);
+      const circle = make_class_with_members(file, scope, "Circle", 10, []);
+
+      registry.update_file(file, [square, circle]);
+
+      expect(registry.take_changed_member_types(file)).toEqual(
+        new Set([square.symbol_id, circle.symbol_id])
+      );
+    });
+
+    it("reports nothing when a re-registration contributes the same members", () => {
+      const type = make_class_with_members(file, scope, "Square", 1, []);
+      registry.update_file(file, [type]);
+      registry.take_changed_member_types(file);
+
+      registry.update_file(file, [type]);
+
+      expect(registry.take_changed_member_types(file)).toEqual(new Set());
+    });
+
+    it("reports a type whose member moved to a new symbol, and not its unchanged neighbour", () => {
+      const square = make_class_with_members(file, scope, "Square", 1, []);
+      const circle = make_class_with_members(file, scope, "Circle", 10, []);
+      registry.update_file(file, [square, circle]);
+      registry.take_changed_member_types(file);
+
+      registry.update_file(file, [with_run_at(square, 4), circle]);
+
+      expect(registry.take_changed_member_types(file)).toEqual(new Set([square.symbol_id]));
+    });
+
+    it("compares against the members before the first eviction, however often the file is re-registered before it is asked", () => {
+      const type = make_class_with_members(file, scope, "Square", 1, []);
+      registry.update_file(file, [type]);
+      registry.take_changed_member_types(file);
+
+      registry.update_file(file, [with_run_at(type, 4)]);
+      registry.update_file(file, [type]);
+
+      expect(registry.take_changed_member_types(file)).toEqual(new Set());
+    });
+
+    it("reports every type a removed file contributed to, including a type another file declares", () => {
+      const type = make_class_with_members(file, scope, "Lowering", 1, []);
+      const attached = method_in(impl_file, impl_scope, "descend", 3);
+      registry.update_file(file, [type]);
+      registry.update_file(impl_file, [attached]);
+      registry.attach_members(type.symbol_id, [[attached.name, attached.symbol_id]]);
+      registry.take_changed_member_types(impl_file);
+
+      registry.remove_file(impl_file);
+
+      expect(registry.take_changed_member_types(impl_file)).toEqual(new Set([type.symbol_id]));
+    });
+  });
+
   describe("get_member_closure", () => {
     const file = "hierarchy.ts" as FilePath;
     const scope = `scope:${file}:module` as ScopeId;

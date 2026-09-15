@@ -161,7 +161,7 @@ describe("Method Call Resolution", () => {
         false
       );
 
-      const resolved = resolve_method_call(
+      const { targets: resolved } = resolve_method_call(
         call_ref,
         scopes,
         definitions,
@@ -215,7 +215,7 @@ describe("Method Call Resolution", () => {
         false
       );
 
-      const resolved = resolve_method_call(
+      const { targets: resolved } = resolve_method_call(
         call_ref,
         scopes,
         definitions,
@@ -272,7 +272,7 @@ describe("Method Call Resolution", () => {
         false
       );
 
-      const resolved = resolve_method_call(
+      const { targets: resolved } = resolve_method_call(
         call_ref,
         scopes,
         definitions,
@@ -352,7 +352,7 @@ describe("Method Call Resolution", () => {
         false
       );
 
-      const resolved_first = resolve_method_call(
+      const { targets: resolved_first } = resolve_method_call(
         first_call,
         scopes,
         definitions,
@@ -375,7 +375,7 @@ describe("Method Call Resolution", () => {
         false
       );
 
-      const resolved_second = resolve_method_call(
+      const { targets: resolved_second } = resolve_method_call(
         second_call,
         scopes,
         definitions,
@@ -453,7 +453,7 @@ describe("Method Call Resolution", () => {
         false
       );
 
-      const resolved = resolve_method_call(
+      const { targets: resolved } = resolve_method_call(
         call_ref,
         scopes,
         definitions,
@@ -528,7 +528,7 @@ describe("Method Call Resolution", () => {
 
       imports["resolved_import_paths"].set(utils_import_id, UTILS_FILE);
 
-      const resolved = resolve_method_call(
+      const { targets: resolved } = resolve_method_call(
         call_ref,
         scopes,
         definitions,
@@ -594,7 +594,7 @@ describe("Method Call Resolution", () => {
         false
       );
 
-      const resolved = resolve_method_call(
+      const { targets: resolved } = resolve_method_call(
         call_ref,
         scopes,
         definitions,
@@ -638,7 +638,7 @@ describe("Method Call Resolution", () => {
         false
       );
 
-      const resolved = resolve_method_call(
+      const { targets: resolved } = resolve_method_call(
         call_ref,
         scopes,
         definitions,
@@ -683,7 +683,7 @@ describe("Method Call Resolution", () => {
         false
       );
 
-      const resolved = resolve_method_call(
+      const { targets: resolved } = resolve_method_call(
         call_ref,
         scopes,
         definitions,
@@ -712,7 +712,7 @@ describe("Method Call Resolution", () => {
         false
       );
 
-      const resolved = resolve_method_call(
+      const { targets: resolved } = resolve_method_call(
         call_ref,
         scopes,
         definitions,
@@ -759,7 +759,7 @@ describe("Method Call Resolution", () => {
         false
       );
 
-      const resolved = resolve_method_call(
+      const { targets: resolved } = resolve_method_call(
         call_ref,
         scopes,
         definitions,
@@ -786,7 +786,7 @@ describe("Method Call Resolution", () => {
         false
       );
 
-      const resolved = resolve_method_call(
+      const { targets: resolved } = resolve_method_call(
         call_ref,
         scopes,
         definitions,
@@ -834,7 +834,7 @@ describe("Method Call Resolution", () => {
         false
       );
 
-      const resolved = resolve_method_call(
+      const { targets: resolved } = resolve_method_call(
         call_ref,
         scopes,
         definitions,
@@ -1001,7 +1001,7 @@ describe("Method Call Resolution", () => {
         false
       );
 
-      const resolved = resolve_method_call(
+      const { targets: resolved } = resolve_method_call(
         call_ref,
         scopes,
         definitions,
@@ -1077,7 +1077,7 @@ describe("Method Call Resolution", () => {
         false
       );
 
-      const resolved = resolve_method_call(
+      const { targets: resolved } = resolve_method_call(
         call_ref,
         scopes,
         definitions,
@@ -1148,7 +1148,7 @@ describe("Method Call Resolution", () => {
         false
       );
 
-      const resolved = resolve_method_call(
+      const { targets: resolved } = resolve_method_call(
         call_ref,
         scopes,
         definitions,

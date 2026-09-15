@@ -91,6 +91,16 @@ export interface ResolutionState {
     SymbolId,
     IndirectReachability
   >;
+
+  /**
+   * Type → the files holding a call, getter read or callable-value read whose
+   * lookup enumerated that type's subtype closure — resolved to its
+   * implementations or overrides, a miss fanned out over them, or a dispatch
+   * that found none. When a type below it gains or loses an edge or a member,
+   * these are the files whose answers changed, wherever they sit in the import
+   * graph.
+   */
+  readonly subtype_dispatch_files: ReadonlyMap<SymbolId, ReadonlySet<FilePath>>;
 }
 
 export interface NameResolutionResult {
@@ -111,6 +121,8 @@ export interface CallResolutionResult {
     SymbolId,
     IndirectReachability
   >;
+  /** Complete for every file the pass resolved: a resolved file absent from it enumerated no subtypes. */
+  readonly subtype_dispatch_files: ReadonlyMap<SymbolId, ReadonlySet<FilePath>>;
 }
 
 // ============================================================================
@@ -124,6 +136,7 @@ export function create_resolution_state(): ResolutionState {
     resolved_calls_by_file: new Map(),
     calls_by_caller_scope: new Map(),
     indirect_reachability: new Map(),
+    subtype_dispatch_files: new Map(),
   };
 }
 
@@ -180,6 +193,22 @@ export function get_all_referenced_symbols(
   return referenced;
 }
 
+/**
+ * The files holding a lookup that enumerated the subtypes of any of `type_ids`.
+ */
+export function get_files_dispatching_through(
+  state: ResolutionState,
+  type_ids: Iterable<SymbolId>
+): Set<FilePath> {
+  const files = new Set<FilePath>();
+  for (const type_id of type_ids) {
+    for (const file_id of state.subtype_dispatch_files.get(type_id) ?? []) {
+      files.add(file_id);
+    }
+  }
+  return files;
+}
+
 export function get_indirect_reachability(
   state: ResolutionState
 ): ReadonlyMap<SymbolId, IndirectReachability> {
@@ -220,13 +249,13 @@ export function size(state: ResolutionState): number {
  * 1,200 files, a single edit to `core/range.ts` — 252 files affected — scanned
  * 11.3M scope entries and cloned 28.5M map entries.
  *
- * The identity return covers all five structures a file can hold state in, not
+ * The identity return covers all six structures a file can hold state in, not
  * the scope scan alone: `resolutions_by_scope` and `calls_by_caller_scope` are
  * keyed by scope and lose entries only for the scopes `scope_to_file` names, so
- * checking the scope scan, `resolved_calls_by_file` and `indirect_reachability`
- * decides all five. A batch that removes an entry from any one of them is
- * cloned; a batch that removes nothing keeps the caller on the state it already
- * had, which is every eviction of a cold load.
+ * checking the scope scan, `resolved_calls_by_file`, `indirect_reachability`
+ * and `subtype_dispatch_files` decides all six. A batch that removes an entry
+ * from any one of them is cloned; a batch that removes nothing keeps the caller
+ * on the state it already had, which is every eviction of a cold load.
  */
 export function remove_files(
   state: ResolutionState,
@@ -257,7 +286,14 @@ export function remove_files(
     }
   }
 
-  if (scopes_to_remove.length === 0 && !removes_calls && !removes_indirect) {
+  const removes_dispatch = holds_any_file(state.subtype_dispatch_files, file_ids);
+
+  if (
+    scopes_to_remove.length === 0 &&
+    !removes_calls &&
+    !removes_indirect &&
+    !removes_dispatch
+  ) {
     return state;
   }
 
@@ -289,7 +325,53 @@ export function remove_files(
     resolved_calls_by_file: new_resolved_calls_by_file,
     calls_by_caller_scope: new_calls_by_caller_scope,
     indirect_reachability: new_indirect_reachability,
+    subtype_dispatch_files: removes_dispatch
+      ? without_files(state.subtype_dispatch_files, file_ids)
+      : state.subtype_dispatch_files,
   };
+}
+
+function holds_any_file(
+  index: ReadonlyMap<SymbolId, ReadonlySet<FilePath>>,
+  file_ids: ReadonlySet<FilePath>
+): boolean {
+  for (const files of index.values()) {
+    if (intersects(files, file_ids)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function intersects(files: ReadonlySet<FilePath>, file_ids: ReadonlySet<FilePath>): boolean {
+  for (const file_id of files) {
+    if (file_ids.has(file_id)) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * `index` with `file_ids` dropped from every type's file set, sharing each set
+ * that loses nothing and dropping each type left with no file.
+ */
+function without_files(
+  index: ReadonlyMap<SymbolId, ReadonlySet<FilePath>>,
+  file_ids: ReadonlySet<FilePath>
+): Map<SymbolId, ReadonlySet<FilePath>> {
+  const result = new Map<SymbolId, ReadonlySet<FilePath>>();
+  for (const [type_id, files] of index) {
+    if (!intersects(files, file_ids)) {
+      result.set(type_id, files);
+      continue;
+    }
+    const kept = new Set([...files].filter((file_id) => !file_ids.has(file_id)));
+    if (kept.size > 0) {
+      result.set(type_id, kept);
+    }
+  }
+  return result;
 }
 
 export function apply_name_resolution(
@@ -332,11 +414,31 @@ export function apply_call_resolution(
     record_indirect_reachability(new_indirect_reachability, fn_id, entry);
   }
 
+  // A pass answers for every file it resolved, so what those files enumerated
+  // before is replaced rather than merged: a call that stopped dispatching
+  // through a type — because it resolved elsewhere, or the file no longer
+  // makes it — leaves that type's entry. A file re-resolved only for its calls
+  // skips `remove_files`, so this is the eviction it gets.
+  const resolved_files = new Set(result.resolved_calls_by_file.keys());
+  const replaces_dispatch = holds_any_file(state.subtype_dispatch_files, resolved_files);
+  let new_subtype_dispatch_files: ReadonlyMap<SymbolId, ReadonlySet<FilePath>> = state.subtype_dispatch_files;
+  if (replaces_dispatch || result.subtype_dispatch_files.size > 0) {
+    const merged = replaces_dispatch
+      ? without_files(state.subtype_dispatch_files, resolved_files)
+      : new Map(state.subtype_dispatch_files);
+    for (const [type_id, files] of result.subtype_dispatch_files) {
+      const held = merged.get(type_id);
+      merged.set(type_id, held ? new Set([...held, ...files]) : files);
+    }
+    new_subtype_dispatch_files = merged;
+  }
+
   return {
     ...state,
     resolved_calls_by_file: new_resolved_calls_by_file,
     calls_by_caller_scope: new_calls_by_caller_scope,
     indirect_reachability: new_indirect_reachability,
+    subtype_dispatch_files: new_subtype_dispatch_files,
   };
 }
 

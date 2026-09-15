@@ -1,6 +1,16 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterAll } from "vitest";
+import * as fs from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
 import { Project } from "./project";
-import type { FilePath, LexicalScope, SymbolName } from "@ariadnejs/types";
+import type {
+  CallReference,
+  FilePath,
+  LexicalScope,
+  ResolutionFailure,
+  SymbolId,
+  SymbolName,
+} from "@ariadnejs/types";
 import type {
   ConstructorCallReference,
   MethodCallReference,
@@ -585,11 +595,13 @@ export class FileStorage implements Storage { sweep(): void {} }
       // Reached through the destructured binding: not an entry point.
       expect(sweep_is_entry_point(project)).toBe(false);
 
-      // Renaming the interface member breaks the property type, so the call no
-      // longer reaches FileStorage.sweep — the consumer must re-resolve.
+      // Renaming the interface leaves the property's annotation naming nothing,
+      // so the call no longer reaches FileStorage.sweep — the consumer must
+      // re-resolve. (Renaming only the member would not break it: a subtype
+      // declaring `sweep` is still reached through the interface.)
       project.update_file(
         "lib.ts" as FilePath,
-        `export interface Storage { flush(): void; }
+        `export interface Store { sweep(): void; }
 `
       );
       expect(sweep_is_entry_point(project)).toBe(true);
@@ -611,6 +623,316 @@ export class FileStorage implements Storage { sweep(): void {} }
           "function load(o: Opts) { const { storage } = o; storage!.sweep(); }\n"
       );
       expect(sweep_is_entry_point(project)).toBe(true);
+    });
+  });
+
+  describe("Dispatch through a subtype closure, whatever order files arrive in", () => {
+    const FIXTURES_ROOT = path.resolve(__dirname, "../../tests/fixtures");
+    const temp_dirs: string[] = [];
+
+    afterAll(() => {
+      for (const dir of temp_dirs) {
+        fs.rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    type Driver = "update_file" | "ingest_file + resolve_corpus";
+    const DRIVERS: readonly Driver[] = ["update_file", "ingest_file + resolve_corpus"];
+
+    /** Every file of a committed `subtype_dispatch` fixture, keyed by file name. */
+    function read_fixture(language: string): Record<string, string> {
+      const root = path.join(FIXTURES_ROOT, language, "code", "integration", "subtype_dispatch");
+      const files: Record<string, string> = {};
+      for (const name of fs.readdirSync(root)) {
+        files[name] = fs.readFileSync(path.join(root, name), "utf-8");
+      }
+      return files;
+    }
+
+    /** Write `files` to a fresh directory and load `order` of them through `driver`. */
+    async function load_project(
+      files: Readonly<Record<string, string>>,
+      order: readonly string[],
+      driver: Driver
+    ): Promise<{ project: Project; paths: Record<string, FilePath> }> {
+      const dir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "subtype-dispatch-")));
+      temp_dirs.push(dir);
+      const paths: Record<string, FilePath> = {};
+      for (const [name, content] of Object.entries(files)) {
+        fs.writeFileSync(path.join(dir, name), content);
+        paths[name] = path.join(dir, name) as FilePath;
+      }
+      const project = new Project();
+      await project.initialize(dir as FilePath);
+      for (const name of order) {
+        if (driver === "update_file") {
+          project.update_file(paths[name], files[name]);
+        } else {
+          project.ingest_file(paths[name], files[name]);
+        }
+      }
+      if (driver !== "update_file") {
+        project.resolve_corpus();
+      }
+      return { project, paths };
+    }
+
+    function permutations<T>(items: readonly T[]): T[][] {
+      if (items.length <= 1) {
+        return [[...items]];
+      }
+      return items.flatMap((item, index) =>
+        permutations([...items.slice(0, index), ...items.slice(index + 1)]).map((rest) => [item, ...rest])
+      );
+    }
+
+    /** Every (order, driver) pair over `names`, labelled for `it.each`. */
+    function order_matrix(names: readonly string[]): [string, Driver, string[]][] {
+      return DRIVERS.flatMap((driver) =>
+        permutations(names).map((order): [string, Driver, string[]] => [order.join(" → "), driver, order])
+      );
+    }
+
+    /** The one call to `name` on 1-based `line` of `file`. */
+    function call_at(project: Project, file: FilePath, name: string, line: number): CallReference {
+      const calls = project.resolutions
+        .get_calls_for_file(file)
+        .filter((call) => call.name === name && call.location.start_line === line);
+      expect(calls.length).toBe(1);
+      return calls[0];
+    }
+
+    /** A call's leading target and the set of targets after it — subtype order follows arrival order. */
+    function head_and_rest(call: CallReference): [SymbolId | undefined, Set<SymbolId>] {
+      const [head, ...rest] = call.resolutions.map((resolution) => resolution.symbol_id);
+      return [head, new Set(rest)];
+    }
+
+    function targets_of(call: CallReference): Set<SymbolId> {
+      return new Set(call.resolutions.map((resolution) => resolution.symbol_id));
+    }
+
+    function type_named(project: Project, file: FilePath, type_name: string): SymbolId {
+      const index = project.get_index_single_file(file);
+      const found = [...(index?.classes.values() ?? []), ...(index?.interfaces.values() ?? [])].find(
+        (def) => def.name === type_name
+      );
+      if (found === undefined) {
+        throw new Error(`${file} declares no type named ${type_name}`);
+      }
+      return found.symbol_id;
+    }
+
+    /** The member the project currently holds under `type_name.member_name`. */
+    function member_of(project: Project, file: FilePath, type_name: string, member_name: string): SymbolId {
+      const member = project.definitions
+        .get_member_index()
+        .get(type_named(project, file, type_name))
+        ?.get(member_name as SymbolName);
+      if (member === undefined) {
+        throw new Error(`${type_name} in ${file} holds no member named ${member_name}`);
+      }
+      return member;
+    }
+
+    const typescript = read_fixture("typescript");
+    const python = read_fixture("python");
+    const rust = read_fixture("rust");
+
+    it.each(order_matrix(["shape.ts", "square.ts", "measure.ts"]))(
+      "reaches a TypeScript implementer through the interface the caller names (%s, %s)",
+      async (_label, driver, order) => {
+        const { project, paths } = await load_project(typescript, order, driver);
+
+        expect(head_and_rest(call_at(project, paths["measure.ts"], "area", 6))).toEqual([
+          member_of(project, paths["shape.ts"], "Shape", "area"),
+          new Set([member_of(project, paths["square.ts"], "Square", "area")]),
+        ]);
+      }
+    );
+
+    it.each(order_matrix(["handler.py", "json_handler.py", "dispatch.py"]))(
+      "fans a Python base-typed miss out to the subclass declaring the member (%s, %s)",
+      async (_label, driver, order) => {
+        const { project, paths } = await load_project(python, order, driver);
+
+        expect(call_at(project, paths["dispatch.py"], "handle", 7).resolutions).toEqual([
+          {
+            symbol_id: member_of(project, paths["json_handler.py"], "JsonHandler", "handle"),
+            confidence: "certain",
+            reason: { type: "direct" },
+          },
+        ]);
+      }
+    );
+
+    it.each(order_matrix(["visitor.rs", "collector.rs", "walk.rs"]))(
+      "reaches a Rust `impl Visitor for T` through a `dyn Visitor` receiver (lib.rs → %s, %s)",
+      async (_label, driver, order) => {
+        const { project, paths } = await load_project(rust, ["lib.rs", ...order], driver);
+
+        expect(head_and_rest(call_at(project, paths["walk.rs"], "visit_item", 6))).toEqual([
+          member_of(project, paths["visitor.rs"], "Visitor", "visit_item"),
+          new Set([member_of(project, paths["collector.rs"], "Collector", "visit_item")]),
+        ]);
+      }
+    );
+
+    it.each(DRIVERS)(
+      "fans a caller that arrived first out to every implementer, including one two hops below the interface (%s)",
+      async (driver) => {
+        const { project, paths } = await load_project(
+          typescript,
+          ["measure.ts", "shape.ts", "square.ts", "circle.ts", "rounded_square.ts"],
+          driver
+        );
+
+        expect(head_and_rest(call_at(project, paths["measure.ts"], "area", 6))).toEqual([
+          member_of(project, paths["shape.ts"], "Shape", "area"),
+          new Set([
+            member_of(project, paths["square.ts"], "Square", "area"),
+            member_of(project, paths["circle.ts"], "Circle", "area"),
+            member_of(project, paths["rounded_square.ts"], "RoundedSquare", "area"),
+          ]),
+        ]);
+      }
+    );
+
+    it.each(DRIVERS)(
+      "fans a trait-typed caller that arrived first out to every Rust implementer (%s)",
+      async (driver) => {
+        const { project, paths } = await load_project(
+          rust,
+          ["lib.rs", "walk.rs", "visitor.rs", "collector.rs", "counter.rs"],
+          driver
+        );
+
+        expect(head_and_rest(call_at(project, paths["walk.rs"], "visit_item", 6))).toEqual([
+          member_of(project, paths["visitor.rs"], "Visitor", "visit_item"),
+          new Set([
+            member_of(project, paths["collector.rs"], "Collector", "visit_item"),
+            member_of(project, paths["counter.rs"], "Counter", "visit_item"),
+          ]),
+        ]);
+      }
+    );
+
+    it.each(DRIVERS)(
+      "resolves an abstract base's hook by fanning the miss out, and never fans a `super` miss out (%s)",
+      async (driver) => {
+        const { project, paths } = await load_project(
+          python,
+          ["dispatch.py", "handler.py", "json_handler.py", "xml_handler.py"],
+          driver
+        );
+        const hooks = new Set([
+          member_of(project, paths["json_handler.py"], "JsonHandler", "handle"),
+          member_of(project, paths["xml_handler.py"], "XmlHandler", "handle"),
+        ]);
+
+        // `handler.handle()` from a caller holding the base, and `self.handle()`
+        // inside the base itself: neither receiver declares the member.
+        expect(targets_of(call_at(project, paths["dispatch.py"], "handle", 7))).toEqual(hooks);
+        expect(targets_of(call_at(project, paths["handler.py"], "handle", 8))).toEqual(hooks);
+
+        // `super()` starts at Handler and dispatches up from it, so neither miss
+        // reaches a subclass: XmlHandler's constructor is not JsonHandler's
+        // base constructor, and JsonHandler.close is not what `super().close()`
+        // inside XmlHandler runs — nor is XmlHandler.close itself.
+        const expected_failure: ResolutionFailure = {
+          stage: "method_lookup",
+          reason: "method_not_on_type",
+          partial_info: {
+            resolved_receiver_type: type_named(project, paths["handler.py"], "Handler"),
+          },
+        };
+        for (const chained of [
+          call_at(project, paths["json_handler.py"], "__init__", 8),
+          call_at(project, paths["xml_handler.py"], "close", 14),
+        ]) {
+          expect(chained.resolutions).toEqual([]);
+          expect(chained.resolution_failure).toEqual(expected_failure);
+        }
+      }
+    );
+
+    it("re-answers a caller when an implementer's members change and its heritage does not", async () => {
+      const { project, paths } = await load_project(typescript, ["shape.ts", "square.ts", "measure.ts"], "update_file");
+      const shape = type_named(project, paths["shape.ts"], "Shape");
+      const shape_area = member_of(project, paths["shape.ts"], "Shape", "area");
+      const measure_area = () => call_at(project, paths["measure.ts"], "area", 6);
+      const square_is_entry_point = () =>
+        project.get_call_graph().entry_points.includes(member_of(project, paths["square.ts"], "Square", "area"));
+      const edit_square = (content: string) => project.update_file(paths["square.ts"], content);
+
+      // A line inside the class body moves `area` to a new symbol while
+      // `Square implements Shape` stays where it was.
+      edit_square(typescript["square.ts"].replace("{\n  area", "{\n  // measured in unit squares\n  area"));
+      expect(head_and_rest(measure_area())).toEqual([
+        shape_area,
+        new Set([member_of(project, paths["square.ts"], "Square", "area")]),
+      ]);
+      expect(square_is_entry_point()).toBe(false);
+
+      // The implementer stops declaring the member.
+      edit_square(typescript["square.ts"].replace("  area(): number {\n    return 4;\n  }\n", ""));
+      const no_implementations: ResolutionFailure = {
+        stage: "method_lookup",
+        reason: "polymorphic_no_implementations",
+        partial_info: { resolved_receiver_type: shape },
+      };
+      expect(measure_area().resolution_failure).toEqual(no_implementations);
+
+      // And declares it again.
+      edit_square(typescript["square.ts"]);
+      expect(head_and_rest(measure_area())).toEqual([
+        shape_area,
+        new Set([member_of(project, paths["square.ts"], "Square", "area")]),
+      ]);
+      expect(square_is_entry_point()).toBe(false);
+    });
+
+    it("keeps the subtype-dispatch index to the files whose calls still dispatch, across an incremental session", async () => {
+      const { project, paths } = await load_project(typescript, ["measure.ts", "shape.ts"], "update_file");
+      const shape = type_named(project, paths["shape.ts"], "Shape");
+      const shape_area = member_of(project, paths["shape.ts"], "Shape", "area");
+      const measure_area = () => call_at(project, paths["measure.ts"], "area", 6);
+      const no_implementations: ResolutionFailure = {
+        stage: "method_lookup",
+        reason: "polymorphic_no_implementations",
+        partial_info: { resolved_receiver_type: shape },
+      };
+
+      // No implementer yet: the call fails, and its file is indexed under Shape.
+      expect(measure_area().resolution_failure).toEqual(no_implementations);
+      expect(project.resolutions.get_files_dispatching_through([shape])).toEqual(
+        new Set([paths["measure.ts"]])
+      );
+
+      // The implementer arrives; the caller re-resolves and stays indexed, so
+      // the next implementer reaches it too.
+      project.update_file(paths["square.ts"], typescript["square.ts"]);
+      const square_area = member_of(project, paths["square.ts"], "Square", "area");
+      expect(head_and_rest(measure_area())).toEqual([shape_area, new Set([square_area])]);
+      expect(project.resolutions.get_files_dispatching_through([shape])).toEqual(
+        new Set([paths["measure.ts"]])
+      );
+
+      // Deleting the implementer re-answers the caller through the same index.
+      project.remove_file(paths["square.ts"]);
+      expect(measure_area().resolution_failure).toEqual(no_implementations);
+
+      // The caller stops dispatching: re-resolving its file evicts its entry.
+      project.update_file(paths["measure.ts"], "export function measure(): number {\n  return 0;\n}\n");
+      expect(project.resolutions.get_files_dispatching_through([shape])).toEqual(new Set());
+
+      // Dispatching again, then deleting the caller, evicts it with the file.
+      project.update_file(paths["measure.ts"], typescript["measure.ts"]);
+      expect(project.resolutions.get_files_dispatching_through([shape])).toEqual(
+        new Set([paths["measure.ts"]])
+      );
+      project.remove_file(paths["measure.ts"]);
+      expect(project.resolutions.get_files_dispatching_through([shape])).toEqual(new Set());
     });
   });
 

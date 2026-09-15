@@ -40,6 +40,10 @@ plan_source_tasks:
 
 TASK-394's eleven `dispose` sites are disposed through `codeEditorContributions.ts`'s `_instances = this._register(new DisposableMap<string, IEditorContribution>())`. TASK-376.10 types a container's element from its annotation or its literal's constructions, but this field has neither: its element is reachable only by binding `_register<T>(o: T): T`'s `T` from the argument and reading the construction's own type arguments. Add that shape to step 5's evidence cases, and replace the annotated stand-in in `tests/fixtures/typescript/code/integration/container_elements/contributions.ts` with the real one.
 
+## Carried from TASK-376.13
+
+TASK-376.13's evidence case `fn walk<V: Visitor>(v: &mut V) { v.visit_item(); }` fanning to every `impl Visitor for T` stops before method lookup: the receiver `v` ends `receiver_type_unknown` because `V` is not bound to its trait bound. TASK-376.13 pins the trait fan-out through a `dyn Visitor` receiver in `tests/fixtures/rust/code/integration/subtype_dispatch/walk.rs` (`project.integration.test.ts` › "Dispatch through a subtype closure, whatever order files arrive in"). When step 2 binds `V` to `Visitor`, add a generic-bound `walk` beside it and assert the same `[Visitor.visit_item, Collector.visit_item, Counter.visit_item]` fan-out, in every arrival order, through the existing order matrix.
+
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

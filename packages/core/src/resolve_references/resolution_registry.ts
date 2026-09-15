@@ -22,6 +22,7 @@ import {
   get_calls_for_file as get_calls_for_file_from_state,
   get_all_referenced_symbols as get_all_referenced_symbols_from_state,
   get_indirect_reachability as get_indirect_reachability_from_state,
+  get_files_dispatching_through as get_files_dispatching_through_from_state,
   size as get_state_size,
   remove_files as remove_files_from_state,
   apply_name_resolution,
@@ -143,6 +144,14 @@ export class ResolutionRegistry {
 
   get_indirect_reachability(): ReadonlyMap<SymbolId, IndirectReachability> {
     return get_indirect_reachability_from_state(this.state);
+  }
+
+  /**
+   * The files holding a resolved call whose lookup enumerated the subtypes of
+   * any of `type_ids` — the files a heritage change under those types re-answers.
+   */
+  get_files_dispatching_through(type_ids: Iterable<SymbolId>): Set<FilePath> {
+    return get_files_dispatching_through_from_state(this.state, type_ids);
   }
 
   resolve(scope_id: ScopeId, name: SymbolName): SymbolId | null {
