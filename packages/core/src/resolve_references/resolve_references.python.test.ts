@@ -501,9 +501,7 @@ def run():
 
       const pg_visit = find_caller_node(cg, "visit_create_sequence", pg);
       const base_visit = find_caller_node(cg, "visit_create_sequence", base);
-      // super() dispatch over-approximates like any polymorphic method call
-      // (call_resolver documents this), so the subclass's own override rides
-      // along with the base method the edge exists for.
+      // super() runs the base method alone, never the subclass's own override.
       expect(
         pg_visit?.enclosed_calls.map((c) => ({
           name: c.name,
@@ -512,7 +510,7 @@ def run():
       ).toEqual([
         {
           name: "visit_create_sequence",
-          targets: [base_visit!.symbol_id, pg_visit!.symbol_id],
+          targets: [base_visit!.symbol_id],
         },
         { name: "super", targets: [] },
       ]);

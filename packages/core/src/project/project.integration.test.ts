@@ -639,9 +639,9 @@ export class FileStorage implements Storage { sweep(): void {} }
     type Driver = "update_file" | "ingest_file + resolve_corpus";
     const DRIVERS: readonly Driver[] = ["update_file", "ingest_file + resolve_corpus"];
 
-    /** Every file of a committed `subtype_dispatch` fixture, keyed by file name. */
-    function read_fixture(language: string): Record<string, string> {
-      const root = path.join(FIXTURES_ROOT, language, "code", "integration", "subtype_dispatch");
+    /** Every file of a committed integration fixture, keyed by file name. */
+    function read_fixture(language: string, fixture: string): Record<string, string> {
+      const root = path.join(FIXTURES_ROOT, language, "code", "integration", fixture);
       const files: Record<string, string> = {};
       for (const name of fs.readdirSync(root)) {
         files[name] = fs.readFileSync(path.join(root, name), "utf-8");
@@ -735,9 +735,9 @@ export class FileStorage implements Storage { sweep(): void {} }
       return member;
     }
 
-    const typescript = read_fixture("typescript");
-    const python = read_fixture("python");
-    const rust = read_fixture("rust");
+    const typescript = read_fixture("typescript", "subtype_dispatch");
+    const python = read_fixture("python", "subtype_dispatch");
+    const rust = read_fixture("rust", "subtype_dispatch");
 
     it.each(order_matrix(["shape.ts", "square.ts", "measure.ts"]))(
       "reaches a TypeScript implementer through the interface the caller names (%s, %s)",
@@ -835,10 +835,11 @@ export class FileStorage implements Storage { sweep(): void {} }
         expect(targets_of(call_at(project, paths["dispatch.py"], "handle", 7))).toEqual(hooks);
         expect(targets_of(call_at(project, paths["handler.py"], "handle", 8))).toEqual(hooks);
 
-        // `super()` starts at Handler and dispatches up from it, so neither miss
-        // reaches a subclass: XmlHandler's constructor is not JsonHandler's
-        // base constructor, and JsonHandler.close is not what `super().close()`
-        // inside XmlHandler runs — nor is XmlHandler.close itself.
+        // `super()` runs what follows the calling class in its method resolution
+        // order, where only Handler follows and declares neither member:
+        // XmlHandler's constructor is not JsonHandler's base constructor, and
+        // JsonHandler.close is not what `super().close()` inside XmlHandler runs
+        // — nor is XmlHandler.close itself.
         const expected_failure: ResolutionFailure = {
           stage: "method_lookup",
           reason: "method_not_on_type",
@@ -853,6 +854,87 @@ export class FileStorage implements Storage { sweep(): void {} }
           expect(chained.resolutions).toEqual([]);
           expect(chained.resolution_failure).toEqual(expected_failure);
         }
+      }
+    );
+
+    it.each(DRIVERS)(
+      "dispatches a TypeScript `super` call to the member the parent declares or inherits, and to nothing below it (%s)",
+      async (driver) => {
+        const { project, paths } = await load_project(
+          read_fixture("typescript", "super_dispatch"),
+          ["article.ts", "comment.ts", "invoice.ts", "model.ts"],
+          driver
+        );
+        const model_save = member_of(project, paths["model.ts"], "Model", "save");
+        const model_validate = member_of(project, paths["model.ts"], "Model", "validate");
+
+        // `Model` declares `save`; `Document` inherits `validate` from `Model`.
+        expect(targets_of(call_at(project, paths["article.ts"], "save", 7))).toEqual(new Set([model_save]));
+        expect(targets_of(call_at(project, paths["invoice.ts"], "validate", 7))).toEqual(new Set([model_validate]));
+
+        // Neither override calls itself and nothing calls the sibling.
+        expect(new Set(project.get_call_graph().entry_points)).toEqual(
+          new Set([
+            member_of(project, paths["article.ts"], "Article", "save"),
+            member_of(project, paths["comment.ts"], "Comment", "save"),
+            member_of(project, paths["invoice.ts"], "Invoice", "validate"),
+            member_of(project, paths["model.ts"], "Document", "render"),
+          ])
+        );
+      }
+    );
+
+    it.each(DRIVERS)(
+      "dispatches a Python `super` call along the method resolution order of every class it can run on, re-answered when a subclass mixes a sibling in (%s)",
+      async (driver) => {
+        const files = read_fixture("python", "super_dispatch");
+        const { project, paths } = await load_project(
+          files,
+          ["article.py", "comment.py", "invoice.py", "model.py", "audited.py", "draft.py"],
+          driver
+        );
+        const model = type_named(project, paths["model.py"], "Model");
+        const document = type_named(project, paths["model.py"], "Document");
+        const model_save = member_of(project, paths["model.py"], "Model", "save");
+        const audited_save = member_of(project, paths["audited.py"], "Audited", "save");
+        const article_save = () => call_at(project, paths["article.py"], "save", 8);
+
+        // On a `Draft(Article, Audited)`, `super().save()` inside `Article` runs
+        // `Audited.save`; on an `Article`, `Model.save`. `Invoice`'s parent
+        // inherits `validate` from `Model`.
+        expect(targets_of(article_save())).toEqual(new Set([model_save, audited_save]));
+        expect(targets_of(call_at(project, paths["invoice.py"], "validate", 8))).toEqual(
+          new Set([member_of(project, paths["model.py"], "Model", "validate")])
+        );
+        expect(project.resolutions.get_files_dispatching_through([model])).toEqual(new Set([paths["article.py"]]));
+        expect(project.resolutions.get_files_dispatching_through([document])).toEqual(new Set([paths["invoice.py"]]));
+
+        // No call edge reaches an override from its own body, and the sibling
+        // nothing mixes in stays an entry point. The Python indexer also records
+        // the `save` in `super().save()` as a name read, which binds to the
+        // enclosing class's own `save` and keeps it out of the entry points.
+        const call_targets = new Set(
+          project.get_all_files().flatMap((file) =>
+            project.resolutions.get_calls_for_file(file).flatMap((call) => call.resolutions.map((r) => r.symbol_id))
+          )
+        );
+        expect(
+          [
+            member_of(project, paths["article.py"], "Article", "save"),
+            member_of(project, paths["invoice.py"], "Invoice", "validate"),
+          ].filter((member) => call_targets.has(member))
+        ).toEqual([]);
+        expect(new Set(project.get_call_graph().entry_points)).toEqual(
+          new Set([
+            member_of(project, paths["comment.py"], "Comment", "save"),
+            member_of(project, paths["model.py"], "Document", "render"),
+          ])
+        );
+
+        // The subclass that mixes the sibling in leaves: the call runs on an
+        // `Article` alone.
+        project.remove_file(paths["draft.py"]);
+        expect(targets_of(article_save())).toEqual(new Set([model_save]));
       }
     );
 

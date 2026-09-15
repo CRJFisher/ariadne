@@ -1566,9 +1566,9 @@ describe("resolved-plus-failed invariant", () => {
   }
 
   it.each([
-    ["typescript", { files: 54, call_references: 143, resolved: 101, failed: 42 }],
+    ["typescript", { files: 58, call_references: 147, resolved: 103, failed: 44 }],
     ["javascript", { files: 44, call_references: 245, resolved: 162, failed: 83 }],
-    ["python", { files: 73, call_references: 342, resolved: 250, failed: 92 }],
+    ["python", { files: 79, call_references: 346, resolved: 252, failed: 94 }],
     ["rust", { files: 40, call_references: 176, resolved: 121, failed: 55 }],
   ] as const)(
     "ends every call-kind reference of the %s fixture corpus as one CallReference with a target or a reason",

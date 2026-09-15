@@ -28,10 +28,11 @@ import type { ExportRegistry } from "../registries/export";
 import type { ImportGraph } from "../import_resolution/import_graph";
 import {
   extract_receiver,
+  find_self_type,
   resolve_receiver_type,
   type ReceiverResolutionContext,
 } from "./receiver_resolution";
-import { resolve_method_on_type, type MethodLookup } from "./method_lookup";
+import { resolve_method_on_type, resolve_super_method, type MethodLookup } from "./method_lookup";
 import { resolve_held_type } from "./value_source";
 import type { ModuleResolutionContext } from "../import_resolution";
 
@@ -80,17 +81,15 @@ export function resolve_method_call(
     return { targets: receiver_result, subtype_closure_of: null };
   }
 
-  // `super().m()` starts at the parent; `super().a.m()` has left it for the
-  // value `a` holds.
-  const receiver_is_super =
-    receiver.base.type === "keyword" &&
-    receiver.base.value === "super" &&
-    receiver.chain.length === 0;
+  // `super().m()` dispatches from the calling class; `super().a.m()` has left
+  // it for the value `a` holds.
+  if (receiver.base.type === "keyword" && receiver.base.value === "super" && receiver.chain.length === 0) {
+    const calling_class = find_self_type(receiver.scope_id, context);
+    if (!calling_class.ok) {
+      return { targets: calling_class, subtype_closure_of: null };
+    }
+    return resolve_super_method(calling_class.value, receiver_result.value, receiver.method_name, definitions);
+  }
 
-  return resolve_method_on_type(
-    receiver_result.value,
-    receiver.method_name,
-    context,
-    receiver_is_super ? "super" : "value"
-  );
+  return resolve_method_on_type(receiver_result.value, receiver.method_name, context);
 }

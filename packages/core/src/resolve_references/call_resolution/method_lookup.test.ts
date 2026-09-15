@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { resolve_method_on_type, type MethodLookup } from "./method_lookup";
+import { resolve_method_on_type, resolve_super_method, type MethodLookup } from "./method_lookup";
 import type { ReceiverResolutionContext } from "./receiver_resolution";
 import { ScopeRegistry } from "../registries/scope";
 import { DefinitionRegistry } from "../registries/definition";
@@ -124,8 +124,7 @@ describe("resolve_method_on_type", () => {
       const { targets: result } = resolve_method_on_type(
         class_id,
         "process" as SymbolName,
-        context,
-        "value"
+        context
       );
 
       expect(unwrap(result)).toEqual([method_id]);
@@ -165,8 +164,7 @@ describe("resolve_method_on_type", () => {
       const { targets: result } = resolve_method_on_type(
         class_id,
         "process" as SymbolName,
-        context,
-        "value"
+        context
       );
 
       expect(unwrap(result)).toEqual([method_id]);
@@ -194,8 +192,7 @@ describe("resolve_method_on_type", () => {
       const { targets: result } = resolve_method_on_type(
         class_id,
         "nonexistent" as SymbolName,
-        context,
-        "value"
+        context
       );
 
       expect(is_err(result)).toBe(true);
@@ -316,8 +313,7 @@ describe("resolve_method_on_type", () => {
       const { targets: result } = resolve_method_on_type(
         interface_id,
         "process" as SymbolName,
-        context,
-        "value"
+        context
       );
 
       expect(unwrap(result)).toEqual([interface_method_id, method_a_id, method_b_id]);
@@ -389,8 +385,7 @@ describe("resolve_method_on_type", () => {
       const { targets: result } = resolve_method_on_type(
         interface_id,
         "process" as SymbolName,
-        context,
-        "value"
+        context
       );
 
       expect(unwrap(result)).toEqual([interface_method_id, method_a_id]);
@@ -434,8 +429,7 @@ describe("resolve_method_on_type", () => {
       const { targets: result } = resolve_method_on_type(
         interface_id,
         "process" as SymbolName,
-        context,
-        "value"
+        context
       );
 
       expect(is_err(result)).toBe(true);
@@ -528,8 +522,7 @@ describe("resolve_method_on_type", () => {
       const { targets: result } = resolve_method_on_type(
         base_class_id,
         "helper" as SymbolName,
-        context,
-        "value"
+        context
       );
 
       expect(unwrap(result)).toEqual([base_method_id, child_method_id]);
@@ -605,8 +598,7 @@ describe("resolve_method_on_type", () => {
       const { targets: result } = resolve_method_on_type(
         base_class_id,
         "__init__" as SymbolName,
-        context,
-        "value"
+        context
       );
 
       expect(unwrap(result)).toEqual([base_ctor_id]);
@@ -718,8 +710,7 @@ describe("resolve_method_on_type", () => {
       const { targets: result } = resolve_method_on_type(
         class_a_id,
         "helper" as SymbolName,
-        context,
-        "value"
+        context
       );
 
       expect(unwrap(result)).toEqual([method_a_id, method_b_id, method_c_id]);
@@ -790,8 +781,7 @@ describe("resolve_method_on_type", () => {
       const { targets: result } = resolve_method_on_type(
         base_class_id,
         "helper" as SymbolName,
-        context,
-        "value"
+        context
       );
 
       // Should return only base method
@@ -904,8 +894,7 @@ describe("resolve_method_on_type", () => {
       const { targets: result } = resolve_method_on_type(
         base_class_id,
         "method" as SymbolName,
-        context,
-        "value"
+        context
       );
 
       expect(unwrap(result)).toEqual([
@@ -993,7 +982,7 @@ describe("resolve_method_on_type", () => {
       subtype(json.symbol_id, pretty.symbol_id);
       subtype(base.symbol_id, silent.symbol_id);
 
-      const lookup = resolve_method_on_type(base.symbol_id, "handle" as SymbolName, context, "value");
+      const lookup = resolve_method_on_type(base.symbol_id, "handle" as SymbolName, context);
 
       expect([...unwrap(lookup.targets)].sort()).toEqual(
         [json_handle.symbol_id, pretty_handle.symbol_id].sort()
@@ -1018,7 +1007,7 @@ describe("resolve_method_on_type", () => {
       register([visitor, collector]);
       subtype(visitor.symbol_id, collector.symbol_id);
 
-      const lookup = resolve_method_on_type(visitor.symbol_id, "visit_item" as SymbolName, context, "value");
+      const lookup = resolve_method_on_type(visitor.symbol_id, "visit_item" as SymbolName, context);
 
       expect(lookup).toEqual({ targets: { ok: true, value: [visit.symbol_id] }, subtype_closure_of: visitor.symbol_id });
     });
@@ -1029,7 +1018,7 @@ describe("resolve_method_on_type", () => {
       register([base, child]);
       subtype(base.symbol_id, child.symbol_id);
 
-      const lookup = resolve_method_on_type(base.symbol_id, "handle" as SymbolName, context, "value");
+      const lookup = resolve_method_on_type(base.symbol_id, "handle" as SymbolName, context);
 
       const expected: MethodLookup = {
         targets: {
@@ -1051,7 +1040,7 @@ describe("resolve_method_on_type", () => {
       register([base, child]);
       subtype(base.symbol_id, child.symbol_id);
 
-      const lookup = resolve_method_on_type(base.symbol_id, "__init__" as SymbolName, context, "value");
+      const lookup = resolve_method_on_type(base.symbol_id, "__init__" as SymbolName, context);
 
       const expected: MethodLookup = {
         targets: {
@@ -1067,15 +1056,97 @@ describe("resolve_method_on_type", () => {
       expect(lookup).toEqual(expected);
     });
 
-    it("never fans a `super` miss out: dispatch from the parent runs up the chain, not down to its subtypes", () => {
+    it("resolves a `super` hit to the member the parent declares alone, where a value receiver fans out to the overrides", () => {
+      const base_save = method_at("Model", "save", 2);
+      const article_save = method_at("Article", "save", 11);
+      const comment_save = method_at("Comment", "save", 21);
+      const base = class_at("Model", 1, { methods: [base_save] });
+      const article = class_at("Article", 10, { methods: [article_save] });
+      const comment = class_at("Comment", 20, { methods: [comment_save] });
+      register([base, article, comment]);
+      subtype(base.symbol_id, article.symbol_id);
+      subtype(base.symbol_id, comment.symbol_id);
+
+      const as_value = resolve_method_on_type(base.symbol_id, "save" as SymbolName, context);
+      const as_super = resolve_super_method(article.symbol_id, base.symbol_id, "save" as SymbolName, definitions);
+
+      expect(as_value.subtype_closure_of).toBe(base.symbol_id);
+      expect([...unwrap(as_value.targets)].sort()).toEqual(
+        [base_save.symbol_id, article_save.symbol_id, comment_save.symbol_id].sort()
+      );
+      const expected: MethodLookup = {
+        targets: { ok: true, value: [base_save.symbol_id] },
+        subtype_closure_of: base.symbol_id,
+      };
+      expect(as_super).toEqual(expected);
+    });
+
+    it("resolves a `super` call to the member a grandparent declares when the parent inherits it", () => {
+      const validate = method_at("Model", "validate", 2);
+      const invoice_validate = method_at("Invoice", "validate", 21);
+      const model = class_at("Model", 1, { methods: [validate] });
+      const document = class_at("Document", 10);
+      const invoice = class_at("Invoice", 20, { methods: [invoice_validate] });
+      register([model, document, invoice]);
+      subtype(model.symbol_id, document.symbol_id);
+      subtype(document.symbol_id, invoice.symbol_id);
+
+      const lookup = resolve_super_method(invoice.symbol_id, document.symbol_id, "validate" as SymbolName, definitions);
+
+      expect(lookup).toEqual({ targets: { ok: true, value: [validate.symbol_id] }, subtype_closure_of: document.symbol_id });
+    });
+
+    it("resolves a `super` call to the sibling a subclass with several bases puts next in its method resolution order", () => {
+      const base_save = method_at("Base", "save", 2);
+      const a_save = method_at("A", "save", 11);
+      const b_save = method_at("B", "save", 21);
+      const base = class_at("Base", 1, { methods: [base_save] });
+      const a = class_at("A", 10, { methods: [a_save] });
+      const b = class_at("B", 20, { methods: [b_save] });
+      const both = class_at("C", 30);
+      register([base, a, b, both]);
+      subtype(base.symbol_id, a.symbol_id);
+      subtype(base.symbol_id, b.symbol_id);
+      subtype(a.symbol_id, both.symbol_id);
+      subtype(b.symbol_id, both.symbol_id);
+
+      // `C(A, B)` linearises to C, A, B, Base: `super().save()` inside `A` runs
+      // `B.save` on a `C`, and `Base.save` on an `A`. Inside `B` it runs
+      // `Base.save` on either.
+      const from_a = resolve_super_method(a.symbol_id, base.symbol_id, "save" as SymbolName, definitions);
+      const from_b = resolve_super_method(b.symbol_id, base.symbol_id, "save" as SymbolName, definitions);
+
+      expect(from_a).toEqual({ targets: { ok: true, value: [base_save.symbol_id, b_save.symbol_id] }, subtype_closure_of: base.symbol_id });
+      expect(from_b).toEqual({ targets: { ok: true, value: [base_save.symbol_id] }, subtype_closure_of: base.symbol_id });
+    });
+
+    it("keeps a parent the calling class names first ahead of a later base's sibling that does not share it", () => {
+      const first_save = method_at("First", "save", 2);
+      const other_save = method_at("Other", "save", 31);
+      const first = class_at("First", 1, { methods: [first_save] });
+      const a = class_at("A", 10, { methods: [method_at("A", "save", 11)] });
+      const other = class_at("Other", 30, { methods: [other_save] });
+      const both = class_at("C", 40);
+      register([first, a, other, both]);
+      subtype(first.symbol_id, a.symbol_id);
+      subtype(a.symbol_id, both.symbol_id);
+      subtype(other.symbol_id, both.symbol_id);
+
+      // `C(A, Other)` with `A(First)` linearises to C, A, First, Other.
+      const lookup = resolve_super_method(a.symbol_id, first.symbol_id, "save" as SymbolName, definitions);
+
+      expect(lookup).toEqual({ targets: { ok: true, value: [first_save.symbol_id] }, subtype_closure_of: first.symbol_id });
+    });
+
+    it("fails a `super` call no class after the calling class declares, never fanning down to the parent's subtypes", () => {
       const close = method_at("JsonHandler", "close", 11);
       const base = class_at("Handler", 1);
       const child = class_at("JsonHandler", 10, { methods: [close] });
       register([base, child]);
       subtype(base.symbol_id, child.symbol_id);
 
-      const as_value = resolve_method_on_type(base.symbol_id, "close" as SymbolName, context, "value");
-      const as_super = resolve_method_on_type(base.symbol_id, "close" as SymbolName, context, "super");
+      const as_value = resolve_method_on_type(base.symbol_id, "close" as SymbolName, context);
+      const as_super = resolve_super_method(child.symbol_id, base.symbol_id, "close" as SymbolName, definitions);
 
       expect(as_value).toEqual({ targets: { ok: true, value: [close.symbol_id] }, subtype_closure_of: base.symbol_id });
       const expected: MethodLookup = {
@@ -1087,7 +1158,7 @@ describe("resolve_method_on_type", () => {
             partial_info: { resolved_receiver_type: base.symbol_id },
           },
         },
-        subtype_closure_of: null,
+        subtype_closure_of: base.symbol_id,
       };
       expect(as_super).toEqual(expected);
     });
@@ -1099,9 +1170,9 @@ describe("resolve_method_on_type", () => {
       register([base]);
       const unknown_id = "unknown:test.ts:1:0:1:10:mystery" as SymbolId;
 
-      const hit = resolve_method_on_type(base.symbol_id, "helper" as SymbolName, context, "value");
-      const constructor_hit = resolve_method_on_type(base.symbol_id, "__init__" as SymbolName, context, "value");
-      const unregistered = resolve_method_on_type(unknown_id, "helper" as SymbolName, context, "value");
+      const hit = resolve_method_on_type(base.symbol_id, "helper" as SymbolName, context);
+      const constructor_hit = resolve_method_on_type(base.symbol_id, "__init__" as SymbolName, context);
+      const unregistered = resolve_method_on_type(unknown_id, "helper" as SymbolName, context);
 
       expect(hit).toEqual({ targets: { ok: true, value: [helper.symbol_id] }, subtype_closure_of: base.symbol_id });
       expect(constructor_hit).toEqual({ targets: { ok: true, value: [ctor.symbol_id] }, subtype_closure_of: null });
@@ -1155,8 +1226,7 @@ describe("resolve_method_on_type", () => {
       const { targets: result } = resolve_method_on_type(
         namespace_import_id,
         "helper" as SymbolName,
-        context_with_resolver,
-        "value"
+        context_with_resolver
       );
 
       expect(unwrap(result)).toEqual([helper_fn_id]);
@@ -1206,8 +1276,7 @@ describe("resolve_method_on_type", () => {
       const { targets: result } = resolve_method_on_type(
         namespace_import_id,
         "private_helper" as SymbolName,
-        context_with_resolver,
-        "value"
+        context_with_resolver
       );
 
       expect(is_err(result)).toBe(true);
@@ -1248,8 +1317,7 @@ describe("resolve_method_on_type", () => {
       const { targets: result } = resolve_method_on_type(
         namespace_import_id,
         "nonexistent" as SymbolName,
-        context_with_resolver,
-        "value"
+        context_with_resolver
       );
 
       expect(is_err(result)).toBe(true);
@@ -1283,8 +1351,7 @@ describe("resolve_method_on_type", () => {
       const { targets: result } = resolve_method_on_type(
         namespace_import_id,
         "helper" as SymbolName,
-        context,
-        "value"
+        context
       );
 
       expect(is_err(result)).toBe(true);
@@ -1341,8 +1408,7 @@ describe("resolve_method_on_type", () => {
       const { targets: result } = resolve_method_on_type(
         var_id,
         "process" as SymbolName,
-        context,
-        "value"
+        context
       );
 
       expect(unwrap(result)).toEqual([method_fn_id]);
@@ -1398,8 +1464,7 @@ describe("resolve_method_on_type", () => {
       const { targets: result } = resolve_method_on_type(
         var_id,
         "external_process" as SymbolName,
-        context,
-        "value"
+        context
       );
 
       expect(unwrap(result)).toEqual([external_fn_id]);
@@ -1445,8 +1510,7 @@ describe("resolve_method_on_type", () => {
       const { targets: result } = resolve_method_on_type(
         var_id,
         "nonexistent" as SymbolName,
-        context,
-        "value"
+        context
       );
 
       expect(is_err(result)).toBe(true);
@@ -1467,8 +1531,7 @@ describe("resolve_method_on_type", () => {
       const { targets: result } = resolve_method_on_type(
         unknown_id,
         "method" as SymbolName,
-        context,
-        "value"
+        context
       );
 
       expect(is_err(result)).toBe(true);
@@ -1523,8 +1586,7 @@ describe("resolve_method_on_type", () => {
       const { targets: result } = resolve_method_on_type(
         class_id,
         "process" as SymbolName,
-        context,
-        "value"
+        context
       );
 
       expect(unwrap(result)).toEqual([method_id_registry]);
@@ -1599,8 +1661,7 @@ describe("resolve_method_on_type", () => {
       const { targets: result } = resolve_method_on_type(
         import_id,
         "update_file" as SymbolName,
-        context_with_resolver,
-        "value"
+        context_with_resolver
       );
 
       expect(unwrap(result)).toEqual([update_method_id]);
@@ -1647,8 +1708,7 @@ describe("resolve_method_on_type", () => {
       const { targets: result } = resolve_method_on_type(
         import_id,
         "render" as SymbolName,
-        context_with_resolver,
-        "value"
+        context_with_resolver
       );
 
       expect(is_err(result)).toBe(true);
@@ -1710,8 +1770,7 @@ describe("resolve_method_on_type", () => {
       const { targets: result } = resolve_method_on_type(
         import_id,
         "some_method" as SymbolName,
-        context_with_resolver,
-        "value"
+        context_with_resolver
       );
 
       expect(is_err(result)).toBe(true);
@@ -1778,8 +1837,7 @@ describe("resolve_method_on_type", () => {
       const { targets: result } = resolve_method_on_type(
         import_id,
         "train" as SymbolName,
-        context_with_resolvers,
-        "value"
+        context_with_resolvers
       );
 
       expect(unwrap(result)).toEqual([train_fn_id]);
@@ -1813,8 +1871,7 @@ describe("resolve_method_on_type", () => {
       const { targets: result } = resolve_method_on_type(
         import_id,
         "do_thing" as SymbolName,
-        context_with_resolver,
-        "value"
+        context_with_resolver
       );
 
       expect(is_err(result)).toBe(true);

@@ -27,17 +27,6 @@ export interface MethodLookup {
 }
 
 /**
- * How the object a call runs on relates to the type the lookup starts at.
- *
- * - `"value"`: the receiver holds an instance of the type or of any subtype, so
- *   a member only a subtype declares can be what runs.
- * - `"super"`: `super` starts the lookup at the parent, and dispatch from there
- *   continues up the inheritance chain — never down to the parent's subtypes,
- *   which include the calling class itself.
- */
-export type ReceiverBinding = "value" | "super";
-
-/**
  * Look up a method on a resolved receiver type, dispatching on receiver kind
  * (namespace/named/default import, object-literal collection, class, interface).
  *
@@ -47,8 +36,7 @@ export type ReceiverBinding = "value" | "super";
 export function resolve_method_on_type(
   receiver_type: SymbolId,
   method_name: SymbolName,
-  context: ReceiverResolutionContext,
-  receiver_binding: ReceiverBinding
+  context: ReceiverResolutionContext
 ): MethodLookup {
   const { definitions, types } = context;
 
@@ -119,7 +107,7 @@ export function resolve_method_on_type(
         context.modules
       );
       if (actual_type) {
-        return resolve_method_on_type(actual_type, method_name, context, receiver_binding);
+        return resolve_method_on_type(actual_type, method_name, context);
       }
     }
     // A named import may point at a submodule file rather than an export
@@ -193,12 +181,8 @@ export function resolve_method_on_type(
     // may — an abstract base calling a hook only its subclasses define, a
     // mixin calling what the classes mixing it in provide. Every subtype that
     // declares it is a runtime target, so `method_not_on_type` is left for a
-    // member no reachable subtype declares either. A `super` miss names a
-    // member the chain above the parent supplies from outside the project
-    // (`super().setUp()` under `unittest.TestCase`), which no subtype of the
-    // parent answers.
-    const fans_out = can_have_subtypes && receiver_binding === "value";
-    const implementations = fans_out
+    // member no reachable subtype declares either.
+    const implementations = can_have_subtypes
       ? resolve_polymorphic_method(receiver_type, method_name, definitions).filter(
           // A constructor runs for exactly one concrete class; a miss never
           // fans a constructor call out to every subclass's constructor.
@@ -215,7 +199,7 @@ export function resolve_method_on_type(
           });
     return {
       targets,
-      subtype_closure_of: fans_out ? receiver_type : null,
+      subtype_closure_of: can_have_subtypes ? receiver_type : null,
     };
   }
 
@@ -264,6 +248,117 @@ export function resolve_method_on_type(
   }
 
   return without_subtype_closure(ok([method_symbol]));
+}
+
+/**
+ * Look up the method a `super` call in `calling_class` runs.
+ *
+ * `super` dispatches to the next class after the calling class in the method
+ * resolution order of the object the call runs on — never down to the parent's
+ * subtypes as a value receiver would, since those include the calling class's
+ * own override and its siblings'. That object is an instance of the calling
+ * class or of any subtype, and a subtype with several bases can put a sibling
+ * between the calling class and its parent: in `class C(A, B)` with `A` and `B`
+ * both under `Base`, `super().save()` inside `A` runs `B.save`. So every
+ * dispatching class contributes the first class after `calling_class` in its
+ * own order that declares the member, and under single inheritance they all
+ * contribute the member the parent declares or inherits.
+ *
+ * The answer reads the calling class's subtype closure and the members of the
+ * classes beside it under `parent`, so it names `parent`'s closure: a subtype
+ * arriving below the calling class, or a sibling's members changing, widens to
+ * `parent` and re-answers the call. `parent` is the receiver the `super` keyword
+ * resolved to, which a failure reports.
+ */
+export function resolve_super_method(
+  calling_class: SymbolId,
+  parent: SymbolId,
+  method_name: SymbolName,
+  definitions: DefinitionRegistry
+): MethodLookup {
+  const member_index = definitions.get_member_index();
+  const orders = new Map<SymbolId, readonly SymbolId[]>();
+  const targets: SymbolId[] = [];
+
+  for (const dispatcher of [calling_class, ...get_transitive_subtypes(calling_class, definitions)]) {
+    const order = method_resolution_order(dispatcher, definitions, orders);
+    const after_calling_class = order.slice(order.indexOf(calling_class) + 1);
+    const runs = after_calling_class
+      .map((class_id) => member_index.get(class_id)?.get(method_name))
+      .find((member_id) => member_id !== undefined);
+    if (runs !== undefined && !targets.includes(runs)) {
+      targets.push(runs);
+    }
+  }
+
+  return {
+    targets:
+      targets.length > 0
+        ? ok(targets)
+        : err({
+            stage: "method_lookup",
+            reason: "method_not_on_type",
+            partial_info: { resolved_receiver_type: parent },
+          }),
+    subtype_closure_of: parent,
+  };
+}
+
+/**
+ * The C3 linearisation of `class_id` over its class bases: the class, then its
+ * ancestors in the order Python's `super` visits them. An interface a class
+ * implements takes no part in dispatch and is left out. A single-inheritance
+ * chain linearises to itself, which is what JavaScript and TypeScript dispatch
+ * through.
+ *
+ * `orders` memoises each class's linearisation for one lookup, and is seeded
+ * with the class alone before its bases are walked, so a cycle in a malformed
+ * heritage graph ends rather than recurring. Bases whose orders conflict — an
+ * inconsistent hierarchy Python itself refuses — keep their remaining classes in
+ * base order.
+ */
+function method_resolution_order(
+  class_id: SymbolId,
+  definitions: DefinitionRegistry,
+  orders: Map<SymbolId, readonly SymbolId[]>
+): readonly SymbolId[] {
+  const memoised = orders.get(class_id);
+  if (memoised) {
+    return memoised;
+  }
+  orders.set(class_id, [class_id]);
+
+  const bases = definitions
+    .get_parent_types(class_id)
+    .filter((parent_id) => definitions.get(parent_id)?.kind === "class");
+  const sequences = [
+    ...bases.map((base_id) => [...method_resolution_order(base_id, definitions, orders)]),
+    [...bases],
+  ];
+  const order: SymbolId[] = [class_id];
+
+  for (;;) {
+    const pending = sequences.filter((sequence) => sequence.length > 0);
+    if (pending.length === 0) {
+      break;
+    }
+    const head =
+      pending
+        .map((sequence) => sequence[0])
+        .find((candidate) => pending.every((sequence) => sequence.indexOf(candidate) <= 0)) ??
+      pending[0][0];
+    if (!order.includes(head)) {
+      order.push(head);
+    }
+    for (const sequence of pending) {
+      if (sequence[0] === head) {
+        sequence.shift();
+      }
+    }
+  }
+
+  orders.set(class_id, order);
+  return order;
 }
 
 /** A lookup whose answer did not enumerate any type's subtypes. */

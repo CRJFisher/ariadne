@@ -678,12 +678,9 @@ export class CompilerFacadeImpl implements core.CompilerFacade, CompilerFacade {
         expect(project.definitions.get_parent_types(type_named(project, paths["dialects/pg.py"], "PGDDLCompiler"))).toEqual([
           type_named(project, paths["sql/compiler.py"], "DDLCompiler"),
         ]);
-        // super() dispatch over-approximates like any polymorphic class call:
-        // the base method the edge exists for, and the override beside it.
-        expect(targets_of(project, paths["dialects/pg.py"], "visit_create_sequence", 8)).toEqual([
-          base_visit,
-          pg_visit,
-        ]);
+        // super() runs the base method and nothing below it; a call on the
+        // base's own `self` fans out to the override beside it.
+        expect(targets_of(project, paths["dialects/pg.py"], "visit_create_sequence", 8)).toEqual([base_visit]);
         expect(targets_of(project, paths["sql/compiler.py"], "visit_create_sequence", 10)).toEqual([
           base_visit,
           pg_visit,
