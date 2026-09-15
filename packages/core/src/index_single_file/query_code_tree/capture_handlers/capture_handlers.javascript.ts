@@ -37,7 +37,7 @@ import {
   extract_collection_source,
   extract_iteration_source,
   extract_initializer_call,
-  extract_member_source,
+  extract_read_source,
 } from "../symbol_factories/initializer_sources.javascript";
 import {
   detect_function_collection,
@@ -308,6 +308,7 @@ export function handle_definition_parameter(
     scope_id: context.get_scope_id(capture.location),
     type: extract_parameter_type(capture.node),
     default_value: extract_default_value(capture.node),
+    ...extract_read_source(capture.node),
   });
 }
 
@@ -388,7 +389,6 @@ export function handle_definition_variable(
     : undefined;
 
   const collection_source = extract_collection_source(capture.node);
-  const member_source = extract_member_source(capture.node);
   const initialized_from_call = extract_initializer_call(capture.node);
   const destructured = extract_destructured_binding(capture.node);
   const iterated_from = extract_iteration_source(capture.node);
@@ -405,7 +405,7 @@ export function handle_definition_variable(
     docstring,
     function_collection,
     collection_source,
-    member_source,
+    ...extract_read_source(capture.node),
     initialized_from_call,
     destructured_from: destructured?.source,
     destructured_key: destructured?.key,
@@ -445,6 +445,7 @@ export function handle_definition_field(
       scope_id: context.get_scope_id(capture.location),
       type: extract_property_type(capture.node),
       initial_value: extract_initial_value(capture.node),
+      ...extract_read_source(capture.node),
     });
   }
 }

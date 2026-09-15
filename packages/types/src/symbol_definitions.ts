@@ -151,6 +151,10 @@ export interface PropertyDefinition extends Definition {
   readonly kind: "property";
   readonly type?: SymbolName;
   readonly initial_value?: string;
+  /** The name a whole-name initialiser reads: "Store" for `store_class = Store`. */
+  readonly name_source?: SymbolName;
+  /** The holder and member a plain member-read initialiser names: `feed_type = feedgenerator.DefaultFeed`. */
+  readonly member_source?: MemberSource;
   readonly readonly?: boolean;
   readonly decorators: readonly DecoratorDefinition[];
   readonly access_modifier?: AccessModifier;
@@ -163,6 +167,10 @@ export interface ParameterDefinition extends Definition {
   readonly kind: "parameter";
   readonly type?: SymbolName;
   readonly default_value?: string;
+  /** The name a whole-name default reads: "TraceInfo" for `Info=TraceInfo`. */
+  readonly name_source?: SymbolName;
+  /** The holder and member a plain member-read default names: `feed=feedgenerator.DefaultFeed`. */
+  readonly member_source?: MemberSource;
   readonly optional?: boolean;
 }
 
@@ -264,6 +272,17 @@ export type CollectionMember =
 export type FunctionCollectionInfo = Omit<FunctionCollection, "collection_id">;
 
 /**
+ * The holder and member an initialiser or default reads as a whole: `BaseTask`
+ * and `__call__` in `orig = BaseTask.__call__`. Recorded only when the holder is
+ * a bare identifier and the member a static name — never a call, a subscript or a
+ * `get(...)` retrieval.
+ */
+export interface MemberSource {
+  readonly holder: SymbolName;
+  readonly member: SymbolName;
+}
+
+/**
  * Variable/constant definition
  */
 export interface VariableDefinition extends Definition {
@@ -274,14 +293,14 @@ export interface VariableDefinition extends Definition {
   readonly docstring?: DocString;
   readonly function_collection?: FunctionCollection;
   readonly collection_source?: SymbolName; // Name of the collection variable this was looked up from (e.g. "config" in "const handler = config.get(...)")
+  /** The name a whole-name initialiser reads: "Mapper" for `mapper_cls = Mapper`. */
+  readonly name_source?: SymbolName;
   /**
    * The holder and member a plain member read initialiser names: `{ holder: "Ns",
    * member: "A" }` for `var alias = Ns.A`, `{ holder: "BaseTask", member: "__call__" }`
-   * for `orig = BaseTask.__call__`. Present only when the holder is a bare
-   * identifier and the member a static name — never a call, a subscript or a
-   * `get(...)` retrieval — so a call on the alias addresses that one member.
+   * for `orig = BaseTask.__call__`. A call on the alias addresses that one member.
    */
-  readonly member_source?: { readonly holder: SymbolName; readonly member: SymbolName };
+  readonly member_source?: MemberSource;
   /**
    * The callee chain of the call this binding is initialised from, root first:
    * `["getHandler"]` for `const h = getHandler()`, `["s", "getInfo"]` for

@@ -19,6 +19,7 @@ import {
   type ReceiverExpression,
   type ReceiverResolutionContext,
 } from "./receiver_resolution";
+import { resolve_held_type } from "./value_source";
 import { ScopeRegistry } from "../registries/scope";
 import { DefinitionRegistry } from "../registries/definition";
 import { TypeRegistry } from "../registries/type";
@@ -1054,7 +1055,7 @@ describe("resolve_receiver_type", () => {
         scope_id: METHOD_SCOPE_ID,
       };
 
-      const result = resolve_receiver_type(receiver, context);
+      const result = resolve_receiver_type(receiver, context, resolve_held_type);
 
       expect(is_ok(result) && result.value).toBe(my_class_id);
     });
@@ -1073,7 +1074,7 @@ describe("resolve_receiver_type", () => {
         scope_id: METHOD_SCOPE_ID,
       };
 
-      const result = resolve_receiver_type(receiver, context);
+      const result = resolve_receiver_type(receiver, context, resolve_held_type);
 
       expect(is_ok(result) && result.value).toBe(base_class_id);
     });
@@ -1089,7 +1090,7 @@ describe("resolve_receiver_type", () => {
         scope_id: METHOD_SCOPE_ID,
       };
 
-      const result = resolve_receiver_type(receiver, context);
+      const result = resolve_receiver_type(receiver, context, resolve_held_type);
 
       expect(is_err(result)).toBe(true);
       if (is_err(result)) {
@@ -1127,7 +1128,7 @@ describe("resolve_receiver_type", () => {
         scope_id: func_scope_id,
       };
 
-      const result = resolve_receiver_type(receiver, context);
+      const result = resolve_receiver_type(receiver, context, resolve_held_type);
 
       expect(is_err(result)).toBe(true);
       if (is_err(result)) {
@@ -1153,7 +1154,7 @@ describe("resolve_receiver_type", () => {
         scope_id: METHOD_SCOPE_ID,
       };
 
-      const result = resolve_receiver_type(receiver, context);
+      const result = resolve_receiver_type(receiver, context, resolve_held_type);
 
       expect(is_ok(result) && result.value).toBe(database_class_id);
     });
@@ -1190,7 +1191,7 @@ describe("resolve_receiver_type", () => {
         scope_id: METHOD_SCOPE_ID,
       };
 
-      const result = resolve_receiver_type(receiver, context);
+      const result = resolve_receiver_type(receiver, context, resolve_held_type);
 
       expect(is_ok(result) && result.value).toBe(database_class_id);
     });
@@ -1206,7 +1207,7 @@ describe("resolve_receiver_type", () => {
         scope_id: METHOD_SCOPE_ID,
       };
 
-      const result = resolve_receiver_type(receiver, context);
+      const result = resolve_receiver_type(receiver, context, resolve_held_type);
 
       expect(is_err(result)).toBe(true);
       if (is_err(result)) {
@@ -1227,7 +1228,7 @@ describe("resolve_receiver_type", () => {
         scope_id: METHOD_SCOPE_ID,
       };
 
-      const result = resolve_receiver_type(receiver, context);
+      const result = resolve_receiver_type(receiver, context, resolve_held_type);
 
       expect(is_err(result)).toBe(true);
       if (is_err(result)) {
@@ -1297,7 +1298,7 @@ describe("resolve_receiver_type", () => {
         scope_id: FILE_SCOPE_ID,
       };
 
-      const result = resolve_receiver_type(receiver, context);
+      const result = resolve_receiver_type(receiver, context, resolve_held_type);
 
       expect(is_ok(result) && result.value).toBe(my_class_id);
     });
@@ -1341,7 +1342,7 @@ describe("resolve_receiver_type", () => {
         scope_id: FILE_SCOPE_ID,
       };
 
-      const result = resolve_receiver_type(receiver, context);
+      const result = resolve_receiver_type(receiver, context, resolve_held_type);
 
       expect(is_ok(result) && result.value).toBe(my_class_id);
     });
@@ -1365,7 +1366,7 @@ describe("resolve_receiver_type", () => {
         scope_id: FILE_SCOPE_ID,
       };
 
-      const result = resolve_receiver_type(receiver, context);
+      const result = resolve_receiver_type(receiver, context, resolve_held_type);
 
       expect(is_err(result)).toBe(true);
       if (is_err(result)) {
@@ -1409,7 +1410,7 @@ describe("resolve_receiver_type", () => {
         scope_id: FILE_SCOPE_ID,
       };
 
-      const result = resolve_receiver_type(receiver, context);
+      const result = resolve_receiver_type(receiver, context, resolve_held_type);
 
       expect(is_err(result)).toBe(true);
       if (is_err(result)) {
@@ -1474,7 +1475,7 @@ describe("resolve_receiver_type", () => {
         scope_id: METHOD_SCOPE_ID,
       };
 
-      const result = resolve_receiver_type(receiver, context);
+      const result = resolve_receiver_type(receiver, context, resolve_held_type);
 
       expect(is_err(result)).toBe(true);
       if (is_err(result)) {
@@ -1655,7 +1656,7 @@ describe("re-export chain dereferencing", () => {
   it("resolves a namespace member through ten re-export hops", () => {
     const context = setup_chain(10, widgets_id);
 
-    const result = resolve_receiver_type(receiver, context);
+    const result = resolve_receiver_type(receiver, context, resolve_held_type);
 
     expect(is_ok(result) && result.value).toBe(inner_class_id);
   });
@@ -1663,7 +1664,7 @@ describe("re-export chain dereferencing", () => {
   it("resolves nothing when the re-export chain is circular", () => {
     const context = setup_chain(3, chain_import(0).symbol_id);
 
-    const result = resolve_receiver_type(receiver, context);
+    const result = resolve_receiver_type(receiver, context, resolve_held_type);
 
     expect(is_err(result) && result.error).toEqual({
       stage: "receiver_resolution",
@@ -1829,7 +1830,8 @@ describe("destructured binding receiver typing", () => {
         method_name: "sweep" as SymbolName,
         scope_id: FILE_SCOPE_ID,
       },
-      context
+      context,
+      resolve_held_type
     );
 
     expect(is_ok(result) && result.value).toBe(STORAGE_IFACE_ID);
@@ -1849,7 +1851,8 @@ describe("destructured binding receiver typing", () => {
         method_name: "sweep" as SymbolName,
         scope_id: FILE_SCOPE_ID,
       },
-      context
+      context,
+      resolve_held_type
     );
 
     expect(is_ok(result) && result.value).toBe(STORAGE_IFACE_ID);
@@ -1879,7 +1882,8 @@ describe("destructured binding receiver typing", () => {
         method_name: "sweep" as SymbolName,
         scope_id: FILE_SCOPE_ID,
       },
-      context
+      context,
+      resolve_held_type
     );
 
     expect(is_err(result) && result.error).toEqual({
@@ -1913,7 +1917,8 @@ describe("destructured binding receiver typing", () => {
         method_name: "sweep" as SymbolName,
         scope_id: FILE_SCOPE_ID,
       },
-      context
+      context,
+      resolve_held_type
     );
 
     expect(is_err(result) && result.error).toEqual({

@@ -29,6 +29,7 @@ import {
   ConstructorDefinition,
   CallbackContext,
   CollectionMember,
+  MemberSource,
 } from "@ariadnejs/types";
 
 import type { CaptureNode } from "../capture_types";
@@ -466,6 +467,8 @@ export class DefinitionBuilder {
       scope_id: ScopeId;
       type?: SymbolName;
       default_value?: string;
+      name_source?: SymbolName;
+      member_source?: MemberSource;
       optional?: boolean;
     }
   ): DefinitionBuilder {
@@ -583,6 +586,8 @@ export class DefinitionBuilder {
       scope_id: ScopeId;
       type?: SymbolName;
       initial_value?: string;
+      name_source?: SymbolName;
+      member_source?: MemberSource;
       access_modifier?: "public" | "private" | "protected";
       static?: boolean;
       readonly?: boolean;

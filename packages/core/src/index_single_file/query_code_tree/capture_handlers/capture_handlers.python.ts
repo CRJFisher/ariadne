@@ -57,7 +57,7 @@ import {
   extract_iteration_source,
   extract_initializer_call,
   extract_initializer_result_call,
-  extract_member_source,
+  extract_read_source,
 } from "../symbol_factories/initializer_sources.python";
 import {
   store_python_docstring,
@@ -253,6 +253,7 @@ export function handle_definition_field(
       scope_id: context.get_scope_id(capture.location),
       type: extract_type_annotation(capture.node),
       initial_value: extract_initial_value(capture.node),
+      ...extract_read_source(capture.node),
     });
   }
 }
@@ -442,6 +443,7 @@ export function handle_definition_parameter(
     scope_id: context.get_scope_id(capture.location),
     type: extract_parameter_type(capture.node),
     default_value: extract_default_value(capture.node),
+    ...extract_read_source(capture.node),
   });
 }
 
@@ -493,7 +495,7 @@ export function handle_definition_variable(
     initial_value: extract_initial_value(capture.node),
     function_collection,
     collection_source,
-    member_source: extract_member_source(capture.node),
+    ...extract_read_source(capture.node),
     initialized_from_call: extract_initializer_call(capture.node),
     initialized_from_call_result: extract_initializer_result_call(capture.node),
     iterated_from: extract_iteration_source(capture.node),

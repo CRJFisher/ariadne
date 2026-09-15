@@ -22,9 +22,11 @@
  *    callee yields: a class object for a declared class-object return
  *    (`-> type[X]`), an instance for a declared return type, and an instance of
  *    the class a class-object binding holds (`p = cls()`).
- * 3. **Qualified member read** — `member_source` holds what the member holds.
- * 4. **Local carriers** — a variable's name initialiser, a class attribute's
- *    name or member-read initialiser, a parameter's default.
+ * 3. **Qualified member read** — a variable's or class attribute's initialiser,
+ *    or a parameter's default, that reads one member of one name
+ *    (`member_source`) holds what the member holds.
+ * 4. **Local carriers** — one that reads one name (`name_source`) holds what
+ *    the name holds.
  *
  * A carrier never crosses a function boundary: a class handed in as an argument
  * (Django's `form_class(**defaults)`) needs interprocedural dataflow, and holds
@@ -32,8 +34,9 @@
  */
 
 import type {
-  AnyDefinition,
   Location,
+  ParameterDefinition,
+  PropertyDefinition,
   ScopeId,
   SymbolId,
   SymbolName,
@@ -49,14 +52,8 @@ export type ValueSource =
   | { readonly kind: "class_object"; readonly class_id: SymbolId }
   | { readonly kind: "callable"; readonly symbol_id: SymbolId };
 
-/** An initialiser or default that reads one name as a whole (`Mapper`). */
-const NAME_READ = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
-
-/**
- * An initialiser or default that reads one name, or one member of one name, as
- * a whole (`Mapper`, `feedgenerator.DefaultFeed`).
- */
-const MEMBER_READ = /^[A-Za-z_$][A-Za-z0-9_$]*(\.[A-Za-z_$][A-Za-z0-9_$]*)?$/;
+/** A definition whose initialiser or default can carry a value into it. */
+type Carrier = VariableDefinition | PropertyDefinition | ParameterDefinition;
 
 /**
  * The value `binding_id` holds where it is read at `read_at`.
@@ -76,9 +73,31 @@ export function resolve_value_source(
   read_at: Location | null,
   context: ReceiverResolutionContext,
   visited: Set<SymbolId> = new Set()
-): ValueSource | undefined {
+): ValueSource | null {
   const reaching = read_at ? reaching_binding(binding_id, read_at, context.definitions) : binding_id;
-  return reaching ? binding_value(reaching, context, visited) : undefined;
+  return reaching ? binding_value(reaching, context, visited) : null;
+}
+
+/**
+ * The type a receiver through `binding_id` takes from what the binding holds: an
+ * instance's type, or the class a class object is — a class object is its own
+ * receiver type, just as a class named directly is (`cls.create()`). Receiver
+ * resolution is handed this as its `HeldValueType`.
+ */
+export function resolve_held_type(
+  binding_id: SymbolId,
+  context: ReceiverResolutionContext,
+  visited: Set<SymbolId>
+): SymbolId | null {
+  const held = resolve_value_source(binding_id, null, context, visited);
+  switch (held?.kind) {
+    case "instance_of":
+      return held.type_id;
+    case "class_object":
+      return held.class_id;
+    default:
+      return null;
+  }
 }
 
 /**
@@ -91,10 +110,10 @@ export function resolve_read_value(
   read_at: Location | null,
   context: ReceiverResolutionContext,
   visited: Set<SymbolId> = new Set()
-): ValueSource | undefined {
-  const symbol_id = resolve_chain_binding(chain, scope_id, context, visited);
+): ValueSource | null {
+  const symbol_id = resolve_chain_binding(chain, scope_id, context, visited, resolve_held_type);
   if (!symbol_id) {
-    return undefined;
+    return null;
   }
   const target = dereference_named_import(symbol_id, context);
   const def = target ? context.definitions.get(target) : undefined;
@@ -110,7 +129,7 @@ export function resolve_read_value(
     case "parameter":
       return resolve_value_source(def.symbol_id, chain.length === 1 ? read_at : null, context, visited);
     default:
-      return undefined;
+      return null;
   }
 }
 
@@ -144,13 +163,13 @@ function binding_value(
   binding_id: SymbolId,
   context: ReceiverResolutionContext,
   visited: Set<SymbolId>
-): ValueSource | undefined {
+): ValueSource | null {
   if (visited.has(binding_id)) {
-    return undefined;
+    return null;
   }
   visited.add(binding_id);
 
-  const def: AnyDefinition | undefined = context.definitions.get(binding_id);
+  const def = context.definitions.get(binding_id);
   switch (def?.kind) {
     case "variable":
     case "constant":
@@ -158,14 +177,13 @@ function binding_value(
         element_value(def, context, visited) ??
         callee_return_value(def, context, visited) ??
         member_read_value(def, context, visited) ??
-        carrier_value(def.initial_value, NAME_READ, def, context, visited)
+        name_read_value(def, context, visited)
       );
     case "property":
-      return carrier_value(def.initial_value, MEMBER_READ, def, context, visited);
     case "parameter":
-      return carrier_value(def.default_value, MEMBER_READ, def, context, visited);
+      return member_read_value(def, context, visited) ?? name_read_value(def, context, visited);
     default:
-      return undefined;
+      return null;
   }
 }
 
@@ -178,14 +196,15 @@ function element_value(
   binding: VariableDefinition,
   context: ReceiverResolutionContext,
   visited: Set<SymbolId>
-): ValueSource | undefined {
+): ValueSource | null {
   let element_id: SymbolId | null = null;
   if (binding.iterated_from) {
     const container_id = resolve_chain_binding(
       binding.iterated_from.container,
       binding.defining_scope_id,
       context,
-      visited
+      visited,
+      resolve_held_type
     );
     element_id = container_id
       ? resolve_element_type(container_id, binding.iterated_from.yields, context)
@@ -194,7 +213,7 @@ function element_value(
     const container_id = context.resolutions.resolve(binding.defining_scope_id, binding.collection_source);
     element_id = container_id ? resolve_element_type(container_id, "index", context) : null;
   }
-  return element_id ? { kind: "instance_of", type_id: element_id } : undefined;
+  return element_id ? { kind: "instance_of", type_id: element_id } : null;
 }
 
 /**
@@ -205,13 +224,17 @@ function callee_return_value(
   binding: VariableDefinition,
   context: ReceiverResolutionContext,
   visited: Set<SymbolId>
-): ValueSource | undefined {
+): ValueSource | null {
+  // @language python
+  // Only a Python initialiser records `initialized_from_call_result`, the inner
+  // callee of `make()(io)`, whose result is called a second time.
   const callee_chain = binding.initialized_from_call ?? binding.initialized_from_call_result;
   if (!callee_chain) {
-    return undefined;
+    return null;
   }
   const callee = resolve_read_value(callee_chain, binding.defining_scope_id, binding.location, context, visited);
-  const result = callee ? call_result(callee, context) : undefined;
+  const result = callee ? call_result(callee, context) : null;
+  // @language python
   return result && binding.initialized_from_call_result ? call_result(result, context) : result;
 }
 
@@ -220,7 +243,7 @@ function callee_return_value(
  * constructs, or what a callable's declared return annotation names. Calling an
  * instance runs its `__call__`, whose result this does not follow.
  */
-function call_result(callee: ValueSource, context: ReceiverResolutionContext): ValueSource | undefined {
+function call_result(callee: ValueSource, context: ReceiverResolutionContext): ValueSource | null {
   switch (callee.kind) {
     case "class_object":
       return { kind: "instance_of", type_id: callee.class_id };
@@ -230,51 +253,42 @@ function call_result(callee: ValueSource, context: ReceiverResolutionContext): V
         return { kind: "class_object", class_id };
       }
       const type_id = context.types.get_callable_return_type(callee.symbol_id);
-      return type_id ? { kind: "instance_of", type_id } : undefined;
+      return type_id ? { kind: "instance_of", type_id } : null;
     }
     case "instance_of":
-      return undefined;
+      return null;
   }
-}
-
-/** Producer 3: what the member a binding's `holder.member` initialiser reads holds. */
-function member_read_value(
-  binding: VariableDefinition,
-  context: ReceiverResolutionContext,
-  visited: Set<SymbolId>
-): ValueSource | undefined {
-  if (!binding.member_source) {
-    return undefined;
-  }
-  const { holder, member } = binding.member_source;
-  return resolve_read_value([holder, member], binding.defining_scope_id, binding.location, context, visited);
 }
 
 /**
- * Producer 4: what a carrier's initialiser or default holds, when that text is a
- * whole name read — `mapper_cls = Mapper`, `feed_type = feedgenerator.DefaultFeed`,
- * `def trace(Info=TraceInfo)`. A call, a literal or an expression holds nothing
- * here: each is another producer's to answer, or no one's.
- *
- * A variable's member read is `member_source`'s, which the indexer records
- * structurally, so only its one-name reads come from the text. A class attribute
- * and a parameter default carry no such field, so their member reads do.
+ * Producer 3: what the member a carrier's `holder.member` initialiser or default
+ * reads holds — `orig = BaseTask.__call__`, `feed_type = feedgenerator.DefaultFeed`.
  */
-function carrier_value(
-  value_text: string | undefined,
-  read_shape: RegExp,
-  carrier: AnyDefinition,
+function member_read_value(
+  carrier: Carrier,
   context: ReceiverResolutionContext,
   visited: Set<SymbolId>
-): ValueSource | undefined {
-  if (value_text === undefined || !read_shape.test(value_text)) {
-    return undefined;
+): ValueSource | null {
+  if (!carrier.member_source) {
+    return null;
   }
-  return resolve_read_value(
-    value_text.split(".") as SymbolName[],
-    carrier.defining_scope_id,
-    carrier.location,
-    context,
-    visited
-  );
+  const { holder, member } = carrier.member_source;
+  return resolve_read_value([holder, member], carrier.defining_scope_id, carrier.location, context, visited);
+}
+
+/**
+ * Producer 4: what the one name a carrier's initialiser or default reads holds —
+ * `mapper_cls = Mapper`, `def trace(Info=TraceInfo)`. A call, a literal or an
+ * expression holds nothing here: each is another producer's to answer, or no
+ * one's.
+ */
+function name_read_value(
+  carrier: Carrier,
+  context: ReceiverResolutionContext,
+  visited: Set<SymbolId>
+): ValueSource | null {
+  if (!carrier.name_source) {
+    return null;
+  }
+  return resolve_read_value([carrier.name_source], carrier.defining_scope_id, carrier.location, context, visited);
 }

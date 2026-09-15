@@ -1,13 +1,14 @@
 /**
- * What a JavaScript/TypeScript variable's initialiser names: the collection it
- * is looked up from, the member it reads, the callee chain of the call it is
- * initialised from, and — for a binding a `for…of` loop or an array pattern
- * initialises — the container it takes an element of. Resolution follows each
- * to type or dispatch the binding.
+ * What a JavaScript/TypeScript binding's initialiser names: the collection it
+ * is looked up from, the name or member it reads, the callee chain of the call
+ * it is initialised from, and — for a binding a `for…of` loop or an array
+ * pattern initialises — the container it takes an element of. A field's
+ * initialiser and a parameter's default name what a declarator's would.
+ * Resolution follows each to type or dispatch the binding.
  */
 
 import type { SyntaxNode } from "tree-sitter";
-import type { IterationSource, SymbolName } from "@ariadnejs/types";
+import type { IterationSource, MemberSource, SymbolName } from "@ariadnejs/types";
 
 /**
  * Extract the name of the collection variable this definition was looked up from.
@@ -66,23 +67,28 @@ export function extract_initializer_call(node: SyntaxNode): readonly SymbolName[
 }
 
 /**
- * The holder and member a plain member-read initialiser names: `var alias = Ns.A`
- * → `{ holder: "Ns", member: "A" }`. A call, a subscript or a chain deeper than one
- * hop names no single member of a bare holder.
+ * What a declarator's, field's or parameter's value reads as a whole: the one
+ * name of `const cls = Parser` and `function trace(Info = TraceInfo)`, or the
+ * holder and member of `var alias = Ns.A`. A call, a subscript or a chain deeper
+ * than one hop reads neither.
  */
-export function extract_member_source(
-  node: SyntaxNode
-): { holder: SymbolName; member: SymbolName } | undefined {
-  const value_node = declarator_value(node);
+export function extract_read_source(node: SyntaxNode): {
+  name_source?: SymbolName;
+  member_source?: MemberSource;
+} {
+  const value_node = parameter_default(node) ?? declarator_value(node);
+  if (value_node?.type === "identifier") {
+    return { name_source: value_node.text as SymbolName };
+  }
   if (value_node?.type !== "member_expression") {
-    return undefined;
+    return {};
   }
   const holder_node = value_node.childForFieldName("object");
   const member_node = value_node.childForFieldName("property");
   if (holder_node?.type !== "identifier" || member_node?.type !== "property_identifier") {
-    return undefined;
+    return {};
   }
-  return { holder: holder_node.text as SymbolName, member: member_node.text as SymbolName };
+  return { member_source: { holder: holder_node.text as SymbolName, member: member_node.text as SymbolName } };
 }
 
 /**
@@ -166,6 +172,23 @@ function pattern_position(pattern: SyntaxNode, element: SyntaxNode): number {
     if (child.type === ",") position++;
   }
   return -1;
+}
+
+/**
+ * The default a JavaScript parameter `node` names takes (`Info = TraceInfo`). A
+ * TypeScript parameter holds its default in its own `value` field, which
+ * `declarator_value` reads.
+ */
+function parameter_default(node: SyntaxNode): SyntaxNode | null {
+  const pattern = node.parent;
+  if (
+    pattern?.type !== "assignment_pattern" ||
+    pattern.parent?.type !== "formal_parameters" ||
+    pattern.childForFieldName("left")?.id !== node.id
+  ) {
+    return null;
+  }
+  return pattern.childForFieldName("right");
 }
 
 function declarator_value(node: SyntaxNode): SyntaxNode | null {

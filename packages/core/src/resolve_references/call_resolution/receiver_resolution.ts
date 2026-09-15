@@ -42,7 +42,6 @@ import { err, ok } from "@ariadnejs/types";
 import { resolve_element_type } from "./container_element";
 import { dereference_named_import, resolve_namespace_member } from "./namespace_member";
 import { infer_generic_return_from_type_token } from "./type_token_return";
-import { resolve_value_source } from "./value_source";
 import { ScopeRegistry } from "../registries/scope";
 import { DefinitionRegistry } from "../registries/definition";
 import type { TypeRegistry } from "../registries/type";
@@ -103,6 +102,20 @@ export interface SelfTypeResolutionContext {
 export interface ReceiverResolutionContext extends SelfTypeResolutionContext {
   readonly types: TypeRegistry;
 }
+
+/**
+ * The type a receiver through a binding takes from the value the binding holds
+ * (`mapper_cls = Mapper; mapper_cls.create()`), or null. What a binding holds is
+ * `value_source.ts`'s answer, which resolves name chains through this file, so
+ * the caller hands it in rather than this file importing it back.
+ *
+ * @param visited - The bindings already being typed on this resolution.
+ */
+export type HeldValueType = (
+  binding_id: SymbolId,
+  context: ReceiverResolutionContext,
+  visited: Set<SymbolId>
+) => SymbolId | null;
 
 const SELF_REFERENCE_KEYWORDS = new Set(["this", "self", "super", "cls"]);
 
@@ -167,9 +180,10 @@ export function extract_receiver(
  */
 export function resolve_receiver_type(
   receiver: ReceiverExpression,
-  context: ReceiverResolutionContext
+  context: ReceiverResolutionContext,
+  held_type: HeldValueType
 ): Result<SymbolId, ResolutionFailure> {
-  return resolve_receiver_expression_type(receiver, context, new Set());
+  return resolve_receiver_expression_type(receiver, context, new Set(), held_type);
 }
 
 /**
@@ -180,10 +194,11 @@ export function resolve_receiver_type(
 function resolve_receiver_expression_type(
   receiver: ReceiverExpression,
   context: ReceiverResolutionContext,
-  visited: Set<SymbolId>
+  visited: Set<SymbolId>,
+  held_type: HeldValueType
 ): Result<SymbolId, ResolutionFailure> {
   if (receiver.index_access) {
-    return resolve_index_receiver_type(receiver, receiver.index_access.key_is_literal, context, visited);
+    return resolve_index_receiver_type(receiver, receiver.index_access.key_is_literal, context, visited, held_type);
   }
 
   // A `get(k)` straight off an identifier reads one element of the container it
@@ -202,7 +217,7 @@ function resolve_receiver_expression_type(
     }
   }
 
-  const base_result = resolve_base(receiver.base, receiver.scope_id, context, visited);
+  const base_result = resolve_base(receiver.base, receiver.scope_id, context, visited, held_type);
   if (!base_result.ok) {
     return base_result;
   }
@@ -234,7 +249,8 @@ function resolve_index_receiver_type(
   receiver: ReceiverExpression,
   key_is_literal: boolean,
   context: ReceiverResolutionContext,
-  visited: Set<SymbolId>
+  visited: Set<SymbolId>,
+  held_type: HeldValueType
 ): Result<SymbolId, ResolutionFailure> {
   const names: readonly SymbolName[] = [receiver.base.value as SymbolName, ...receiver.chain];
   const candidates = key_is_literal
@@ -243,7 +259,7 @@ function resolve_index_receiver_type(
       : [names]
     : [];
   for (const container_chain of candidates) {
-    const container_id = resolve_chain_binding(container_chain, receiver.scope_id, context, visited);
+    const container_id = resolve_chain_binding(container_chain, receiver.scope_id, context, visited, held_type);
     const element_id = container_id ? resolve_element_type(container_id, "index", context) : null;
     if (element_id) {
       return ok(element_id);
@@ -269,7 +285,8 @@ export function resolve_chain_binding(
   chain: readonly SymbolName[],
   scope_id: ScopeId,
   context: ReceiverResolutionContext,
-  visited: Set<SymbolId>
+  visited: Set<SymbolId>,
+  held_type: HeldValueType
 ): SymbolId | null {
   const [root, ...members] = chain;
   const member_name = members[members.length - 1];
@@ -287,7 +304,8 @@ export function resolve_chain_binding(
       scope_id,
     },
     context,
-    visited
+    visited,
+    held_type
   );
   return holder.ok ? find_member_symbol(holder.value, member_name, context) : null;
 }
@@ -312,12 +330,13 @@ function resolve_base(
   base: ReceiverExpression["base"],
   scope_id: ScopeId,
   context: ReceiverResolutionContext,
-  visited: Set<SymbolId>
+  visited: Set<SymbolId>,
+  held_type: HeldValueType
 ): Result<SymbolId, ResolutionFailure> {
   if (base.type === "keyword") {
     return resolve_keyword_base(base.value, scope_id, context);
   } else {
-    return resolve_identifier_base(base.value, scope_id, context, visited);
+    return resolve_identifier_base(base.value, scope_id, context, visited, held_type);
   }
 }
 
@@ -413,7 +432,8 @@ function resolve_identifier_base(
   identifier: SymbolName,
   scope_id: ScopeId,
   context: ReceiverResolutionContext,
-  visited: Set<SymbolId>
+  visited: Set<SymbolId>,
+  held_type: HeldValueType
 ): Result<SymbolId, ResolutionFailure> {
   const symbol_id = context.resolutions.resolve(scope_id, identifier);
   if (!symbol_id) {
@@ -468,17 +488,15 @@ function resolve_identifier_base(
         def.destructured_from,
         def.destructured_key,
         context,
-        visited
+        visited,
+        held_type
       );
     }
   }
 
   if (!type_id) {
-    // What the binding holds, last: a class object is its own receiver type,
-    // just as a class named directly is (`cls.create()`).
-    const held = resolve_value_source(symbol_id, null, context, visited);
-    type_id =
-      held?.kind === "instance_of" ? held.type_id : held?.kind === "class_object" ? held.class_id : null;
+    // What the binding holds, last.
+    type_id = held_type(symbol_id, context, visited);
   }
 
   if (!type_id) {
@@ -653,7 +671,8 @@ function resolve_destructured_property_type(
   source: SymbolName,
   key: SymbolName,
   context: ReceiverResolutionContext,
-  visited: Set<SymbolId>
+  visited: Set<SymbolId>,
+  held_type: HeldValueType
 ): SymbolId | null {
   if (visited.has(binding.symbol_id)) {
     return null;
@@ -664,7 +683,8 @@ function resolve_destructured_property_type(
     source,
     binding.defining_scope_id,
     context,
-    visited
+    visited,
+    held_type
   );
   if (!source_type.ok) {
     return null;
