@@ -1,25 +1,12 @@
 import type { FilePath, SemanticIndex } from "@ariadnejs/types";
 import type { ContentHash } from "./content_hash";
-import { INDEXER_VERSION } from "./indexer_version";
+import { indexer_fingerprint } from "./indexer_fingerprint";
 import { elide_source_path, restore_source_path } from "./source_path_elision";
 import {
   to_serializable_semantic_index,
   deserialize_semantic_index,
   validate_semantic_index_shape,
 } from "./serialize_index";
-
-/**
- * The blob format's own version. Increment it when the bytes on disk change
- * shape; a blob stamped with any other value is ignored and its file re-indexed.
- *
- * It is a separate axis from `INDEXER_VERSION` and the two invalidate
- * independently: this one says a reader cannot parse the blob, the other says a
- * reader can parse it but the index inside describes what a different build of
- * the indexer would have extracted. Collapsing them into one number loses the
- * distinction, and with it the ability to change the format without also
- * claiming every shipped release changes indexing.
- */
-export const CURRENT_SCHEMA_VERSION = 8;
 
 /**
  * One file's cached index together with everything that decides whether it still
@@ -33,9 +20,11 @@ export const CURRENT_SCHEMA_VERSION = 8;
  * loses everything it did.
  */
 export interface CachedIndex {
-  readonly schema_version: number;
-  /** The build of the indexer whose output this is. */
-  readonly indexer_version: string;
+  /**
+   * The indexer build whose output this is. It covers the blob's format too:
+   * this module and the serializer are part of what it hashes.
+   */
+  readonly indexer_fingerprint: string;
   /**
    * The source file this index was built from. Cache filenames are hashes of
    * the source path, so this is what lets a reader confirm it opened the blob it
@@ -53,8 +42,7 @@ export interface CachedIndex {
 /** Serialize one cached index, stamp and all, to a JSON string. */
 export function serialize_cached_index(cached: CachedIndex): string {
   return JSON.stringify({
-    schema_version: cached.schema_version,
-    indexer_version: cached.indexer_version,
+    indexer_fingerprint: cached.indexer_fingerprint,
     source_path: cached.source_path,
     content_hash: cached.content_hash,
     git_blob_hash: cached.git_blob_hash,
@@ -67,7 +55,7 @@ export function serialize_cached_index(cached: CachedIndex): string {
 
 /**
  * Deserialize a cached index, or null when the blob is corrupt, truncated,
- * written by a different schema or indexer version, describes a different source
+ * written by a different indexer build, describes a different source
  * file, or holds a payload that is not index-shaped. Every rejection is an
  * ordinary cache miss and never an error: the file is re-indexed.
  */
@@ -79,8 +67,7 @@ export function deserialize_cached_index(
     const parsed = JSON.parse(json);
     if (parsed === null || typeof parsed !== "object") return null;
 
-    if (parsed.schema_version !== CURRENT_SCHEMA_VERSION) return null;
-    if (parsed.indexer_version !== INDEXER_VERSION) return null;
+    if (parsed.indexer_fingerprint !== indexer_fingerprint()) return null;
     if (parsed.source_path !== expected_source_path) return null;
     if (typeof parsed.content_hash !== "string") return null;
     if (
@@ -92,8 +79,7 @@ export function deserialize_cached_index(
     if (!validate_semantic_index_shape(parsed.index)) return null;
 
     return {
-      schema_version: parsed.schema_version,
-      indexer_version: parsed.indexer_version,
+      indexer_fingerprint: parsed.indexer_fingerprint,
       source_path: parsed.source_path as FilePath,
       git_blob_hash: parsed.git_blob_hash,
       content_hash: parsed.content_hash as ContentHash,

@@ -48,19 +48,5 @@
         "file_path": "packages/core/src/resolve_references/resolution_registry.ts"
       }
     ]
-  },
-  {
-    "source": "python-scope-boundary-extractor",
-    "description": "PythonScopeBoundaryExtractor methods reported as uncalled by the dead-code Stop hook; recorded as known entry points on user instruction without root-cause investigation.",
-    "entrypoints": [
-      {
-        "name": "extract_self_type_name",
-        "file_path": "packages/core/src/index_single_file/scopes/extractors/python_scope_boundary_extractor.ts"
-      },
-      {
-        "name": "extract_boundaries",
-        "file_path": "packages/core/src/index_single_file/scopes/extractors/python_scope_boundary_extractor.ts"
-      }
-    ]
   }
 ]

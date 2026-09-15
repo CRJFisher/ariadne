@@ -1,11 +1,7 @@
 import { describe, it, expect } from "vitest";
 import type { FilePath } from "@ariadnejs/types";
 import type { CachedIndex, PersistenceStorage } from "../persistence";
-import {
-  compute_content_hash,
-  CURRENT_SCHEMA_VERSION,
-  INDEXER_VERSION,
-} from "../persistence";
+import { compute_content_hash, indexer_fingerprint } from "../persistence";
 import type { GitFileState } from "../persistence";
 import { build_index_single_file } from "../index_single_file/index_single_file";
 import { parse_file } from "./parse_file";
@@ -58,8 +54,7 @@ function build_test_index(content: string) {
 
 function cached_index(content: string, git_blob_hash?: string): CachedIndex {
   return {
-    schema_version: CURRENT_SCHEMA_VERSION,
-    indexer_version: INDEXER_VERSION,
+    indexer_fingerprint: indexer_fingerprint(),
     source_path: file,
     content_hash: compute_content_hash(content),
     git_blob_hash,
@@ -183,8 +178,7 @@ describe("write_file_index and read_cached_index", () => {
     );
 
     const read_back = await read_cached_index(storage, file);
-    expect(read_back?.schema_version).toEqual(CURRENT_SCHEMA_VERSION);
-    expect(read_back?.indexer_version).toEqual(INDEXER_VERSION);
+    expect(read_back?.indexer_fingerprint).toEqual(indexer_fingerprint());
     expect(read_back?.source_path).toEqual(file);
     expect(read_back?.content_hash).toEqual(compute_content_hash(content));
     expect(read_back?.git_blob_hash).toEqual("blob-1");
@@ -275,7 +269,7 @@ describe("write_file_index and read_cached_index", () => {
     expect(await read_cached_index(storage, file)).toEqual(null);
   });
 
-  it("returns null on a blob written by another schema version", async () => {
+  it("returns null on a blob written by another indexer build", async () => {
     const storage = memory_storage();
     await write_file_index(
       storage,
@@ -285,23 +279,7 @@ describe("write_file_index and read_cached_index", () => {
       null,
     );
     const raw = JSON.parse(storage.indexes.get(file)!);
-    raw.schema_version = CURRENT_SCHEMA_VERSION + 1;
-    storage.indexes.set(file, JSON.stringify(raw));
-
-    expect(await read_cached_index(storage, file)).toEqual(null);
-  });
-
-  it("returns null on a blob written by another indexer version", async () => {
-    const storage = memory_storage();
-    await write_file_index(
-      storage,
-      file,
-      build_test_index(content),
-      content,
-      null,
-    );
-    const raw = JSON.parse(storage.indexes.get(file)!);
-    raw.indexer_version = `${INDEXER_VERSION}-other`;
+    raw.indexer_fingerprint = `${indexer_fingerprint()}-other`;
     storage.indexes.set(file, JSON.stringify(raw));
 
     expect(await read_cached_index(storage, file)).toEqual(null);

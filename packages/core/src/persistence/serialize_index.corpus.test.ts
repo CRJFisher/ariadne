@@ -27,11 +27,10 @@ import { build_index_single_file } from "../index_single_file/index_single_file"
 import { parse_file } from "../project/parse_file";
 import { compute_content_hash } from "./content_hash";
 import {
-  CURRENT_SCHEMA_VERSION,
   deserialize_cached_index,
   serialize_cached_index,
 } from "./cached_index";
-import { INDEXER_VERSION } from "./indexer_version";
+import { indexer_fingerprint } from "./indexer_fingerprint";
 
 const CORPUS_ROOT = path.join(
   os.homedir(),
@@ -87,8 +86,7 @@ function restore_from_cache(
   index: SemanticIndex,
 ): SemanticIndex {
   const blob = serialize_cached_index({
-    schema_version: CURRENT_SCHEMA_VERSION,
-    indexer_version: INDEXER_VERSION,
+    indexer_fingerprint: indexer_fingerprint(),
     source_path: source_path as FilePath,
     content_hash: compute_content_hash(source_path),
     index,
@@ -143,8 +141,7 @@ describe.skipIf(!corpus_present)("the vs/base slice through both index transport
     const leaking: string[] = [];
     for (const { file, index } of indexes) {
       const blob = serialize_cached_index({
-        schema_version: CURRENT_SCHEMA_VERSION,
-        indexer_version: INDEXER_VERSION,
+        indexer_fingerprint: indexer_fingerprint(),
         source_path: index.file_path,
         content_hash: compute_content_hash(index.file_path),
         index,

@@ -1,10 +1,9 @@
 import type { FilePath } from "@ariadnejs/types";
 import type { CachedIndex, PersistenceStorage } from "../persistence";
 import {
-  CURRENT_SCHEMA_VERSION,
-  INDEXER_VERSION,
   compute_content_hash,
   deserialize_cached_index,
+  indexer_fingerprint,
   serialize_cached_index,
 } from "../persistence";
 import type { GitFileState } from "../persistence";
@@ -22,8 +21,8 @@ import type { Project } from "./project";
 /**
  * Read one file's cached index, or null when nothing usable is stored for it.
  *
- * A blob is the whole cache record: absent, corrupt, written by another schema
- * or indexer version, or describing a different source file all mean the same
+ * A blob is the whole cache record: absent, corrupt, written by another indexer
+ * build, or describing a different source file all mean the same
  * thing here — the file must be re-indexed. Nothing consults a project-wide list
  * first, so a cache an interrupted run left behind is read exactly as far as it
  * got.
@@ -140,8 +139,7 @@ export async function write_file_index(
     await storage.write_index(
       file_path,
       serialize_cached_index({
-        schema_version: CURRENT_SCHEMA_VERSION,
-        indexer_version: INDEXER_VERSION,
+        indexer_fingerprint: indexer_fingerprint(),
         source_path: file_path,
         content_hash: compute_content_hash(content),
         git_blob_hash: blob_hash_for_indexed_content(file_path, git_state),

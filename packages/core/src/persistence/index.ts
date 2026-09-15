@@ -2,9 +2,8 @@ export type { PersistenceStorage } from "./storage";
 export { FileSystemStorage } from "./file_system_storage";
 export type { ContentHash } from "./content_hash";
 export { compute_content_hash } from "./content_hash";
-export { INDEXER_VERSION } from "./indexer_version";
+export { indexer_fingerprint } from "./indexer_fingerprint";
 export {
-  CURRENT_SCHEMA_VERSION,
   type CachedIndex,
   serialize_cached_index,
   deserialize_cached_index,

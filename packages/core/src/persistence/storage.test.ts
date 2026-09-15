@@ -4,7 +4,7 @@ import * as os from "os";
 import * as path from "path";
 import type { PersistenceStorage } from "./storage";
 import { FileSystemStorage } from "./file_system_storage";
-import { INDEXER_VERSION } from "./indexer_version";
+import { indexer_fingerprint } from "./indexer_fingerprint";
 
 /** Shared by sibling persistence tests, so it lives here rather than inline. */
 export class InMemoryStorage implements PersistenceStorage {
@@ -150,10 +150,10 @@ describe("FileSystemStorage - specific behavior", () => {
     expect(entries).toEqual(["indexes"]);
   });
 
-  it("stores blobs under the version of the indexer that wrote them", async () => {
+  it("stores blobs under the fingerprint of the indexer build that wrote them", async () => {
     await storage.write_index("/src/test.ts", "data");
     expect(await fs.readdir(path.join(temp_dir, "indexes"))).toEqual([
-      INDEXER_VERSION,
+      indexer_fingerprint(),
     ]);
   });
 
@@ -174,7 +174,7 @@ describe("FileSystemStorage - specific behavior", () => {
   it("maps a source path to the same cache file on every write", async () => {
     await storage.write_index("/src/test.ts", "v1");
     await storage.write_index("/src/test.ts", "v2");
-    const entries = await fs.readdir(version_dir());
+    const entries = await fs.readdir(fingerprint_dir());
     expect(entries).toEqual(entries.filter((e) => e.endsWith(".json")));
     expect(entries.length).toEqual(1);
   });
@@ -183,14 +183,14 @@ describe("FileSystemStorage - specific behavior", () => {
     await storage.write_index("/src/test.ts", "index_data");
 
     const root_entries = await fs.readdir(temp_dir);
-    const index_entries = await fs.readdir(version_dir());
+    const index_entries = await fs.readdir(fingerprint_dir());
     const all = [...root_entries, ...index_entries];
     expect(all.filter((e) => e.endsWith(".tmp"))).toEqual([]);
   });
 
   it("cleans up the temp file and rethrows when rename fails", async () => {
     const cache_path = path.join(
-      version_dir(),
+      fingerprint_dir(),
       await index_filename_for("/src/collide.ts"),
     );
     await fs.mkdir(cache_path, { recursive: true });
@@ -199,7 +199,7 @@ describe("FileSystemStorage - specific behavior", () => {
       storage.write_index("/src/collide.ts", "data"),
     ).rejects.toThrow();
 
-    const index_entries = await fs.readdir(version_dir());
+    const index_entries = await fs.readdir(fingerprint_dir());
     expect(index_entries.filter((e) => e.endsWith(".tmp"))).toEqual([]);
   });
 
@@ -207,19 +207,19 @@ describe("FileSystemStorage - specific behavior", () => {
   // else ever deletes it, so it would sit in the cache directory forever.
   it("sweep removes a temporary file an interrupted write left behind", async () => {
     await storage.write_index("/src/test.ts", "data");
-    const orphan_tmp = path.join(version_dir(), "abandoned.4f2a91c3.tmp");
+    const orphan_tmp = path.join(fingerprint_dir(), "abandoned.4f2a91c3.tmp");
     await fs.writeFile(orphan_tmp, "half a blob", "utf-8");
 
     await storage.sweep(new Set(["/src/test.ts"]));
 
-    const entries = await fs.readdir(version_dir());
+    const entries = await fs.readdir(fingerprint_dir());
     expect(entries.filter((e) => e.endsWith(".tmp"))).toEqual([]);
     expect(await storage.read_index("/src/test.ts")).toEqual("data");
   });
 
   // A blob written by a build whose indexer this one cannot trust is unreadable
   // rather than stale, so it is deleted outright: no reader, no migration.
-  it("removes a superseded version directory on first use and keeps exactly one", async () => {
+  it("removes another build's fingerprint directory on first use and keeps exactly one", async () => {
     const superseded = path.join(temp_dir, "indexes", "0.0.1-superseded");
     await fs.mkdir(superseded, { recursive: true });
     await fs.writeFile(path.join(superseded, "old.json"), "{}", "utf-8");
@@ -227,7 +227,7 @@ describe("FileSystemStorage - specific behavior", () => {
     await new FileSystemStorage(temp_dir).write_index("/src/test.ts", "data");
 
     expect(await fs.readdir(path.join(temp_dir, "indexes"))).toEqual([
-      INDEXER_VERSION,
+      indexer_fingerprint(),
     ]);
   });
 
@@ -251,8 +251,8 @@ describe("FileSystemStorage - specific behavior", () => {
     expect(await fs.readdir(indexes_root)).toEqual([]);
   });
 
-  function version_dir(): string {
-    return path.join(temp_dir, "indexes", INDEXER_VERSION);
+  function fingerprint_dir(): string {
+    return path.join(temp_dir, "indexes", indexer_fingerprint());
   }
 });
 
@@ -268,7 +268,7 @@ async function index_filename_for(source_path: string): Promise<string> {
     const probe = new FileSystemStorage(probe_dir);
     await probe.write_index(source_path, "probe");
     const entries = await fs.readdir(
-      path.join(probe_dir, "indexes", INDEXER_VERSION),
+      path.join(probe_dir, "indexes", indexer_fingerprint()),
     );
     return entries[0];
   } finally {

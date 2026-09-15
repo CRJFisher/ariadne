@@ -3,11 +3,10 @@ import type { FilePath } from "@ariadnejs/types";
 import type { ContentHash } from "./content_hash";
 import type { CachedIndex } from "./cached_index";
 import {
-  CURRENT_SCHEMA_VERSION,
   serialize_cached_index,
   deserialize_cached_index,
 } from "./cached_index";
-import { INDEXER_VERSION } from "./indexer_version";
+import { indexer_fingerprint } from "./indexer_fingerprint";
 import { parse_file } from "../project/parse_file";
 import { build_index_single_file } from "../index_single_file/index_single_file";
 
@@ -36,8 +35,7 @@ function build(source_path: FilePath, content: string) {
 
 function cached(overrides: Partial<CachedIndex> = {}): CachedIndex {
   return {
-    schema_version: CURRENT_SCHEMA_VERSION,
-    indexer_version: INDEXER_VERSION,
+    indexer_fingerprint: indexer_fingerprint(),
     source_path: file,
     content_hash: "abc123" as ContentHash,
     git_blob_hash: "0".repeat(40),
@@ -52,8 +50,7 @@ describe("cached_index", () => {
       serialize_cached_index(cached()),
       file,
     );
-    expect(restored?.schema_version).toEqual(CURRENT_SCHEMA_VERSION);
-    expect(restored?.indexer_version).toEqual(INDEXER_VERSION);
+    expect(restored?.indexer_fingerprint).toEqual(indexer_fingerprint());
     expect(restored?.source_path).toEqual(file);
     expect(restored?.content_hash).toEqual("abc123");
     expect(restored?.git_blob_hash).toEqual("0".repeat(40));
@@ -97,18 +94,9 @@ describe("cached_index", () => {
 
   // Every rejection below is a cache miss: the file is re-indexed, never served
   // from a blob whose stamp does not vouch for it.
-  it("rejects a blob written by a different schema version", () => {
+  it("rejects a blob written by a different indexer build", () => {
     const json = serialize_cached_index(
-      cached({ schema_version: CURRENT_SCHEMA_VERSION - 1 }),
-    );
-    expect(deserialize_cached_index(json, file)).toEqual(null);
-  });
-
-  // The two axes are independent: a format this build can read still holds an
-  // index a different build of the indexer produced.
-  it("rejects a blob written by a different indexer version", () => {
-    const json = serialize_cached_index(
-      cached({ indexer_version: `${INDEXER_VERSION}-other` }),
+      cached({ indexer_fingerprint: `${indexer_fingerprint()}-other` }),
     );
     expect(deserialize_cached_index(json, file)).toEqual(null);
   });
@@ -134,8 +122,7 @@ describe("cached_index", () => {
 
   it("rejects a blob whose index is not index-shaped", () => {
     const json = JSON.stringify({
-      schema_version: CURRENT_SCHEMA_VERSION,
-      indexer_version: INDEXER_VERSION,
+      indexer_fingerprint: indexer_fingerprint(),
       source_path: file,
       content_hash: "abc123",
       index: { file_path: file },
@@ -147,8 +134,7 @@ describe("cached_index", () => {
   // so a payload that passes it can still make deserialization throw.
   it("rejects an index-shaped blob whose collections hold junk", () => {
     const json = JSON.stringify({
-      schema_version: CURRENT_SCHEMA_VERSION,
-      indexer_version: INDEXER_VERSION,
+      indexer_fingerprint: indexer_fingerprint(),
       source_path: file,
       content_hash: "abc123",
       index: {

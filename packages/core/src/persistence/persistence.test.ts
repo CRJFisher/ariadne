@@ -8,11 +8,8 @@ import {
 import { serialize_semantic_index } from "./serialize_index.test";
 import { InMemoryStorage } from "./storage.test";
 import { FileSystemStorage } from "./file_system_storage";
-import {
-  CURRENT_SCHEMA_VERSION,
-  deserialize_cached_index,
-} from "./cached_index";
-import { INDEXER_VERSION } from "./indexer_version";
+import { deserialize_cached_index } from "./cached_index";
+import { indexer_fingerprint } from "./indexer_fingerprint";
 import { load_project } from "../project/load_project";
 import { execFile } from "child_process";
 import { promisify } from "util";
@@ -724,55 +721,6 @@ describe("Project.save()", () => {
 });
 
 // ============================================================================
-// Schema Version Mismatch Test
-// ============================================================================
-
-describe("Schema version mismatch", () => {
-  let temp_dir: string;
-
-  async function cleanup(): Promise<void> {
-    if (temp_dir) {
-      await fs.rm(temp_dir, { recursive: true, force: true });
-    }
-  }
-
-  it("discards cache when schema version does not match", async () => {
-    temp_dir = await fs.mkdtemp(
-      path.join(os.tmpdir(), "ariadne-schema-test-"),
-    );
-    await fs.writeFile(
-      path.join(temp_dir, "a.ts"),
-      "export function foo() { return 42; }",
-      "utf-8",
-    );
-
-    try {
-      const storage = new InMemoryStorage();
-
-      // First load to populate cache
-      const { project: first } = await load_project({ project_path: temp_dir, storage });
-      const first_stats = first.get_stats();
-
-      // Stamp the cached index with a schema version this build cannot read
-      const a_path = path.join(temp_dir, "a.ts");
-      const blob = JSON.parse((await storage.read_index(a_path))!);
-      blob.schema_version = 999;
-      storage.set_index(a_path, JSON.stringify(blob));
-
-      // Second load should discard cache and re-index
-      const { project: second, cache_hits } = await load_project({
-        project_path: temp_dir,
-        storage,
-      });
-      expect(cache_hits).toEqual(0);
-      expect(second.get_stats()).toEqual(first_stats);
-    } finally {
-      await cleanup();
-    }
-  });
-});
-
-// ============================================================================
 // Git-Accelerated Warm Load Tests
 // ============================================================================
 
@@ -1087,8 +1035,7 @@ describe("load_project + FileSystemStorage", { timeout: 30_000 }, () => {
         const raw = await storage.read_index(source_path);
         expect(raw).not.toBeNull();
         const blob = JSON.parse(raw!);
-        expect(blob.schema_version).toEqual(CURRENT_SCHEMA_VERSION);
-        expect(blob.indexer_version).toEqual(INDEXER_VERSION);
+        expect(blob.indexer_fingerprint).toEqual(indexer_fingerprint());
         expect(blob.source_path).toEqual(source_path);
         expect(typeof blob.content_hash).toEqual("string");
         expect(blob.index.file_path).toEqual(source_path);
@@ -1311,16 +1258,16 @@ describe("interrupted load", () => {
       const storage = new FileSystemStorage(cache_dir);
       await load_project({ project_path: project_dir, storage });
 
-      const version_dir = path.join(cache_dir, "indexes", INDEXER_VERSION);
+      const fingerprint_dir = path.join(cache_dir, "indexes", indexer_fingerprint());
       await fs.writeFile(
-        path.join(version_dir, "killed.9c1e02af.tmp"),
+        path.join(fingerprint_dir, "killed.9c1e02af.tmp"),
         "half a blob",
         "utf-8",
       );
 
       await load_project({ project_path: project_dir, storage });
 
-      const entries = await fs.readdir(version_dir);
+      const entries = await fs.readdir(fingerprint_dir);
       expect(entries.filter((e) => e.endsWith(".tmp"))).toEqual([]);
       expect(entries.length).toEqual(1);
     } finally {
@@ -1330,20 +1277,20 @@ describe("interrupted load", () => {
 });
 
 // ============================================================================
-// Indexer Version
+// Indexer Fingerprint
 // ============================================================================
 
 /**
- * What the indexer-version axis buys a user: they upgrade for a fix to what
- * indexing extracts, and every unchanged file re-indexes instead of replaying
- * the answer the previous build gave.
+ * What the indexer fingerprint buys a user: a build that changes what indexing
+ * extracts re-indexes every unchanged file instead of replaying the answer the
+ * previous build gave.
  *
  * The two arms below differ only in the stamp. Both hold an index that says the
  * file has no functions in it — the stand-in for whatever a previous build got
  * wrong — over source that plainly does. Under this build's stamp the load
  * serves that answer; under any other it re-indexes and reports the function.
  */
-describe("indexer version", { timeout: 30_000 }, () => {
+describe("indexer fingerprint", { timeout: 30_000 }, () => {
   let project_dir = "";
 
   async function cleanup(): Promise<void> {
@@ -1351,7 +1298,7 @@ describe("indexer version", { timeout: 30_000 }, () => {
   }
 
   async function load_with_stale_blob(
-    indexer_version: string,
+    fingerprint: string,
   ): Promise<{ definition_count: number; cache_hits: number }> {
     const storage = new InMemoryStorage();
     const a_path = path.join(project_dir, "a.ts");
@@ -1359,7 +1306,7 @@ describe("indexer version", { timeout: 30_000 }, () => {
     await load_project({ project_path: project_dir, storage });
 
     const blob = JSON.parse((await storage.read_index(a_path))!);
-    blob.indexer_version = indexer_version;
+    blob.indexer_fingerprint = fingerprint;
     blob.index.functions = [];
     blob.index.references = [];
     storage.set_index(a_path, JSON.stringify(blob));
@@ -1372,7 +1319,7 @@ describe("indexer version", { timeout: 30_000 }, () => {
   }
 
   it("re-indexes rather than replaying an index another build produced", async () => {
-    project_dir = await fs.mkdtemp(path.join(os.tmpdir(), "ariadne-version-"));
+    project_dir = await fs.mkdtemp(path.join(os.tmpdir(), "ariadne-fingerprint-"));
     try {
       await fs.writeFile(
         path.join(project_dir, "a.ts"),
@@ -1380,8 +1327,8 @@ describe("indexer version", { timeout: 30_000 }, () => {
         "utf-8",
       );
 
-      const replayed = await load_with_stale_blob(INDEXER_VERSION);
-      const reindexed = await load_with_stale_blob(`${INDEXER_VERSION}-next`);
+      const replayed = await load_with_stale_blob(indexer_fingerprint());
+      const reindexed = await load_with_stale_blob(`${indexer_fingerprint()}-next`);
 
       expect(replayed.cache_hits).toEqual(1);
       expect(replayed.definition_count).toEqual(0);

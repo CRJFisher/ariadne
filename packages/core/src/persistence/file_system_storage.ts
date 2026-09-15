@@ -2,7 +2,7 @@ import { mkdir, readdir, readFile, writeFile, rename, rm } from "fs/promises";
 import { join, dirname } from "path";
 import { createHash } from "crypto";
 import type { PersistenceStorage } from "./storage";
-import { INDEXER_VERSION } from "./indexer_version";
+import { indexer_fingerprint } from "./indexer_fingerprint";
 
 const INDEXES_DIR = "indexes";
 
@@ -25,25 +25,27 @@ function source_path_to_cache_filename(source_path: string): string {
 }
 
 /**
- * Blobs on disk, under `<cache_dir>/indexes/<indexer_version>/`.
+ * Blobs on disk, under `<cache_dir>/indexes/<indexer_fingerprint>/`.
  *
- * The version directory is what gives an upgrade something to enumerate. Blobs
- * written by a superseded build are unreadable, not merely stale, so without a
- * directory to delete them by name every upgrade would leak a full copy of the
- * cache forever — gigabytes per cached checkout of a large repository. On first
- * use every other version directory goes, and so does anything at the cache root
- * that this build does not write.
+ * The fingerprint directory is what gives an indexer change something to
+ * enumerate. Blobs written by a different indexer build are unreadable, not
+ * merely stale, so without a directory to delete them by name every such change
+ * would leak a full copy of the cache forever — gigabytes per cached checkout of
+ * a large repository. On first use every other fingerprint directory goes, and so
+ * does anything at the cache root that this build does not write.
  */
 export class FileSystemStorage implements PersistenceStorage {
   private readonly cache_dir: string;
   private readonly indexes_root: string;
+  private readonly fingerprint: string;
   private readonly indexes_dir: string;
   private superseded_layouts_removed: Promise<void> | null = null;
 
   constructor(cache_dir: string) {
     this.cache_dir = cache_dir;
     this.indexes_root = join(cache_dir, INDEXES_DIR);
-    this.indexes_dir = join(this.indexes_root, INDEXER_VERSION);
+    this.fingerprint = indexer_fingerprint();
+    this.indexes_dir = join(this.indexes_root, this.fingerprint);
   }
 
   async read_index(file_path: string): Promise<string | null> {
@@ -101,17 +103,17 @@ export class FileSystemStorage implements PersistenceStorage {
   /**
    * Delete every cache layout but this build's, once per instance.
    *
-   * Nothing outside the current version directory can be read by this build, so
+   * Nothing outside this build's fingerprint directory can be read by it, so
    * it is deleted outright rather than migrated: a compatibility reader for an
    * older layout would be a second load path maintained forever to serve blobs
    * whose contents this build cannot trust anyway.
    */
   private remove_superseded_layouts(): Promise<void> {
-    this.superseded_layouts_removed ??= this.delete_everything_but_this_version();
+    this.superseded_layouts_removed ??= this.delete_everything_but_this_build();
     return this.superseded_layouts_removed;
   }
 
-  private async delete_everything_but_this_version(): Promise<void> {
+  private async delete_everything_but_this_build(): Promise<void> {
     await rm(join(this.cache_dir, SUPERSEDED_MANIFEST), { force: true });
 
     let entries: string[];
@@ -122,7 +124,7 @@ export class FileSystemStorage implements PersistenceStorage {
     }
     await Promise.all(
       entries
-        .filter((entry) => entry !== INDEXER_VERSION)
+        .filter((entry) => entry !== this.fingerprint)
         .map((entry) =>
           rm(join(this.indexes_root, entry), { recursive: true, force: true }),
         ),
