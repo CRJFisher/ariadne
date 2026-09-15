@@ -263,7 +263,7 @@ describe("Python Metadata Extractors", () => {
 
       const result = PYTHON_METADATA_EXTRACTORS.extract_construct_target(call, TEST_FILE);
 
-      expect(result).toEqual(at(1, 3));
+      expect(result).toEqual({ location: at(1, 3), holds: "value" });
     });
 
     it("extracts the attribute target of a constructor in an attribute assignment", () => {
@@ -272,7 +272,7 @@ describe("Python Metadata Extractors", () => {
 
       const result = PYTHON_METADATA_EXTRACTORS.extract_construct_target(call, TEST_FILE);
 
-      expect(result).toEqual(at(1, 9));
+      expect(result).toEqual({ location: at(1, 9), holds: "value" });
     });
 
     it("extracts the target of a constructor in an annotated assignment", () => {
@@ -281,7 +281,7 @@ describe("Python Metadata Extractors", () => {
 
       const result = PYTHON_METADATA_EXTRACTORS.extract_construct_target(call, TEST_FILE);
 
-      expect(result).toEqual(at(1, 5));
+      expect(result).toEqual({ location: at(1, 5), holds: "value" });
     });
 
     it("extracts the walrus name as the constructor target", () => {
@@ -290,7 +290,51 @@ describe("Python Metadata Extractors", () => {
 
       const result = PYTHON_METADATA_EXTRACTORS.extract_construct_target(call, TEST_FILE);
 
-      expect(result).toEqual(at(5, 7));
+      expect(result).toEqual({ location: at(5, 7), holds: "value" });
+    });
+
+    it("targets the element of the name a list literal or comprehension initialises", () => {
+      for (const code of ["suites = [Suite()]", "suites = [Suite(n) for n in names]"]) {
+        const call = parser.parse(code).rootNode.descendantsOfType("call")[0];
+
+        const result = PYTHON_METADATA_EXTRACTORS.extract_construct_target(call, TEST_FILE);
+
+        expect(result).toEqual({ location: at(1, 6), holds: "element" });
+      }
+    });
+
+    it("targets the outer construction, never one passed to it as an argument", () => {
+      const calls = parser.parse("t = Outer(Inner())").rootNode.descendantsOfType("call");
+
+      expect(calls.map((call) => PYTHON_METADATA_EXTRACTORS.extract_construct_target(call, TEST_FILE))).toEqual([
+        { location: at(1, 1), holds: "value" },
+        undefined,
+      ]);
+    });
+
+    it("types nothing through a list holding anything but calls, a comprehension clause, or a call inside an element", () => {
+      for (const [code, text] of [
+        ["items = [Suite(), layer]", "Suite()"],
+        ["items = [Suite().child()]", "Suite()"],
+        ["xs = [transform(y) for y in Session().all()]", "Session()"],
+        ["xs = [y for y in ys if Check()]", "Check()"],
+      ]) {
+        const call = parser.parse(code).rootNode.descendantsOfType("call").find((node) => node.text === text)!;
+
+        const result = PYTHON_METADATA_EXTRACTORS.extract_construct_target(call, TEST_FILE);
+
+        expect(result).toEqual(undefined);
+      }
+    });
+
+    it("types nothing through an argument list, a dict, set or tuple literal, or a list nested in a list", () => {
+      for (const code of ["d = {'a': Suite()}", "s = {Suite()}", "t = (Suite(),)", "g = [[Suite()]]", "c = Cluster([Suite()])"]) {
+        const call = parser.parse(code).rootNode.descendantsOfType("call").find((node) => node.text === "Suite()")!;
+
+        const result = PYTHON_METADATA_EXTRACTORS.extract_construct_target(call, TEST_FILE);
+
+        expect(result).toEqual(undefined);
+      }
     });
 
     it("returns undefined for a standalone constructor call", () => {

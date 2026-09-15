@@ -1,13 +1,66 @@
 import { describe, it, expect } from "vitest";
-import type { SymbolName } from "@ariadnejs/types";
+import type { IterationSource, SymbolName } from "@ariadnejs/types";
 import { parse_js, find_node_by_type } from "./test_utils";
 import {
   extract_collection_source,
   extract_initializer_call,
+  extract_iteration_source,
   extract_member_source,
 } from "./initializer_sources.javascript";
 
 // ============================================================================
+
+describe("extract_iteration_source", () => {
+  /** The iteration source of the first identifier spelled `name` in `code`. */
+  function iteration_source(code: string, name: string): IterationSource | undefined {
+    const binding = parse_js(code)
+      .descendantsOfType("identifier")
+      .find((node) => node.text === name)!;
+    return extract_iteration_source(binding);
+  }
+
+  it("binds each item a for…of loop iterates, through a name chain rooted at an identifier or `this`", () => {
+    expect(iteration_source("for (const s of suites) {}", "s")).toEqual({
+      container: ["suites"],
+      yields: "item",
+    });
+    expect(iteration_source("for (const c of this._instances) {}", "c")).toEqual({
+      container: ["this", "_instances"],
+      yields: "item",
+    });
+  });
+
+  it("binds a value when the loop iterates values(), and the value half of an entry pair it destructures", () => {
+    expect(iteration_source("for (const c of m.values()) {}", "c")).toEqual({
+      container: ["m"],
+      yields: "value",
+    });
+    expect(iteration_source("for (const [id, c] of this._instances) {}", "c")).toEqual({
+      container: ["this", "_instances"],
+      yields: "entry_value",
+    });
+    expect(iteration_source("for (const [, c] of m.entries()) {}", "c")).toEqual({
+      container: ["m"],
+      yields: "entry_value",
+    });
+  });
+
+  it("binds each item of an array pattern a declarator initialises from a container", () => {
+    expect(iteration_source("const [first, second] = suites;", "second")).toEqual({
+      container: ["suites"],
+      yields: "item",
+    });
+  });
+
+  it("has no source for a key, a for…in loop, an entries() item, or an iterable that is not a name chain", () => {
+    expect(iteration_source("for (const [id, c] of m) {}", "id")).toEqual(undefined);
+    expect(iteration_source("for (const k in obj) {}", "k")).toEqual(undefined);
+    expect(iteration_source("for (const e of m.entries()) {}", "e")).toEqual(undefined);
+    expect(iteration_source("for (const [k, v] of m.values()) {}", "v")).toEqual(undefined);
+    expect(iteration_source("for (const x of make()) {}", "x")).toEqual(undefined);
+    expect(iteration_source("for (const x of xs[0]) {}", "x")).toEqual(undefined);
+  });
+});
 
 describe("extract_initializer_call", () => {
   function initializer_call(code: string): readonly SymbolName[] | undefined {

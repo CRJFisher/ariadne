@@ -202,6 +202,57 @@ describe("extract_receiver", () => {
   });
 
   describe("MethodCallReference extraction", () => {
+    it("carries an index-access receiver and whether its key is a literal from call_site_syntax", () => {
+      const index_ref = (index_key_is_literal: boolean): MethodCallReference => ({
+        kind: "method_call",
+        name: "afterEach" as SymbolName,
+        property_chain: ["suites", "afterEach"] as SymbolName[],
+        scope_id: METHOD_SCOPE_ID,
+        location: MOCK_LOCATION,
+        receiver_location: MOCK_LOCATION,
+        is_optional_chain: false,
+        call_site_syntax: { receiver_kind: "index_access", index_key_is_literal },
+      });
+
+      expect([extract_receiver(index_ref(true)), extract_receiver(index_ref(false))]).toEqual([
+        {
+          base: { type: "identifier", value: "suites" as SymbolName },
+          chain: [],
+          method_name: "afterEach" as SymbolName,
+          scope_id: METHOD_SCOPE_ID,
+          index_access: { key_is_literal: true },
+        },
+        {
+          base: { type: "identifier", value: "suites" as SymbolName },
+          chain: [],
+          method_name: "afterEach" as SymbolName,
+          scope_id: METHOD_SCOPE_ID,
+          index_access: { key_is_literal: false },
+        },
+      ]);
+    });
+
+    it("carries index access on a keyword-rooted chain (`this.items[0].run()`)", () => {
+      const ref: MethodCallReference = {
+        kind: "method_call",
+        name: "run" as SymbolName,
+        property_chain: ["this", "items", "run"] as SymbolName[],
+        scope_id: METHOD_SCOPE_ID,
+        location: MOCK_LOCATION,
+        receiver_location: MOCK_LOCATION,
+        is_optional_chain: false,
+        call_site_syntax: { receiver_kind: "index_access", index_key_is_literal: true },
+      };
+
+      expect(extract_receiver(ref)).toEqual({
+        base: { type: "keyword", value: "this" },
+        chain: ["items" as SymbolName],
+        method_name: "run" as SymbolName,
+        scope_id: METHOD_SCOPE_ID,
+        index_access: { key_is_literal: true },
+      });
+    });
+
     it("extracts obj.method() with identifier base", () => {
       const ref: MethodCallReference = {
         kind: "method_call",

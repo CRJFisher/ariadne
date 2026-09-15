@@ -1,11 +1,13 @@
 /**
  * What a JavaScript/TypeScript variable's initialiser names: the collection it
- * is looked up from, the member it reads, and the callee chain of the call it
- * is initialised from. Resolution follows each to type or dispatch the binding.
+ * is looked up from, the member it reads, the callee chain of the call it is
+ * initialised from, and — for a binding a `for…of` loop or an array pattern
+ * initialises — the container it takes an element of. Resolution follows each
+ * to type or dispatch the binding.
  */
 
 import type { SyntaxNode } from "tree-sitter";
-import type { SymbolName } from "@ariadnejs/types";
+import type { IterationSource, SymbolName } from "@ariadnejs/types";
 
 /**
  * Extract the name of the collection variable this definition was looked up from.
@@ -77,6 +79,89 @@ export function extract_member_source(
     return undefined;
   }
   return { holder: holder_node.text as SymbolName, member: member_node.text as SymbolName };
+}
+
+/**
+ * The container a loop or array-destructuring binding takes an element of:
+ * `for (const x of xs)` and each name of `const [a, b] = xs` hold what iterating
+ * `xs` yields; `for (const v of m.values())` holds a value; `v` in
+ * `for (const [k, v] of m)` or `m.entries()` holds the value half of an entry.
+ * A `for…in` loop binds keys, and a key is never an element.
+ */
+export function extract_iteration_source(node: SyntaxNode): IterationSource | undefined {
+  const parent = node.parent;
+  if (parent?.type === "for_in_statement") {
+    return parent.childForFieldName("left")?.id === node.id
+      ? loop_iteration_source(parent, "whole")
+      : undefined;
+  }
+  if (parent?.type !== "array_pattern") {
+    return undefined;
+  }
+
+  const holder = parent.parent;
+  if (holder?.type === "for_in_statement" && holder.childForFieldName("left")?.id === parent.id) {
+    return pattern_position(parent, node) === 1
+      ? loop_iteration_source(holder, "entry_value")
+      : undefined;
+  }
+  if (holder?.type === "variable_declarator" && holder.childForFieldName("name")?.id === parent.id) {
+    const value_node = holder.childForFieldName("value");
+    const container = value_node ? name_chain(value_node) : undefined;
+    return container ? { container, yields: "item" } : undefined;
+  }
+  return undefined;
+}
+
+/**
+ * What a `for…of` loop's binding holds of its iterable: the whole of each
+ * iteration, or the value half of an entry pair it destructures.
+ */
+function loop_iteration_source(
+  loop: SyntaxNode,
+  binds: "whole" | "entry_value"
+): IterationSource | undefined {
+  const iterable = loop.childForFieldName("right");
+  if (loop.childForFieldName("operator")?.text !== "of" || !iterable) {
+    return undefined;
+  }
+
+  const method = iteration_method(iterable);
+  const container = name_chain(method ? method.receiver : iterable);
+  if (!container) {
+    return undefined;
+  }
+  const called = method?.name;
+  if (binds === "whole") {
+    if (called === undefined) return { container, yields: "item" };
+    return called === "values" ? { container, yields: "value" } : undefined;
+  }
+  return called === undefined || called === "entries"
+    ? { container, yields: "entry_value" }
+    : undefined;
+}
+
+/** A no-argument `values()` or `entries()` call on a receiver, which iterates that receiver's values or entries. */
+function iteration_method(
+  node: SyntaxNode
+): { readonly receiver: SyntaxNode; readonly name: "values" | "entries" } | undefined {
+  if (node.type !== "call_expression" || node.childForFieldName("arguments")?.namedChildCount !== 0) {
+    return undefined;
+  }
+  const callee = node.childForFieldName("function");
+  const receiver = callee?.type === "member_expression" ? callee.childForFieldName("object") : null;
+  const name = callee?.childForFieldName("property")?.text;
+  return receiver && (name === "values" || name === "entries") ? { receiver, name } : undefined;
+}
+
+/** The index `element` takes in an array pattern, counting elided holes (`[, v]` puts `v` at 1). */
+function pattern_position(pattern: SyntaxNode, element: SyntaxNode): number {
+  let position = 0;
+  for (const child of pattern.children) {
+    if (child.id === element.id) return position;
+    if (child.type === ",") position++;
+  }
+  return -1;
 }
 
 function declarator_value(node: SyntaxNode): SyntaxNode | null {

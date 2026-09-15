@@ -171,7 +171,7 @@ describe("JavaScript Metadata Extractors", () => {
 
       const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_construct_target(new_expr, TEST_FILE);
 
-      expect(result).toEqual({ file_path: TEST_FILE, start_line: 1, start_column: 7, end_line: 1, end_column: 9 });
+      expect(result).toEqual({ location: { file_path: TEST_FILE, start_line: 1, start_column: 7, end_line: 1, end_column: 9 }, holds: "value" });
     });
 
     it("takes the assignment left-hand side as target in a property assignment", () => {
@@ -181,7 +181,7 @@ describe("JavaScript Metadata Extractors", () => {
 
       const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_construct_target(new_expr, TEST_FILE);
 
-      expect(result).toEqual({ file_path: TEST_FILE, start_line: 1, start_column: 1, end_line: 1, end_column: 9 });
+      expect(result).toEqual({ location: { file_path: TEST_FILE, start_line: 1, start_column: 1, end_line: 1, end_column: 9 }, holds: "value" });
     });
 
     it("takes the declared variable as target in a let declaration", () => {
@@ -191,7 +191,7 @@ describe("JavaScript Metadata Extractors", () => {
 
       const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_construct_target(new_expr, TEST_FILE);
 
-      expect(result).toEqual({ file_path: TEST_FILE, start_line: 1, start_column: 5, end_line: 1, end_column: 5 });
+      expect(result).toEqual({ location: { file_path: TEST_FILE, start_line: 1, start_column: 5, end_line: 1, end_column: 5 }, holds: "value" });
     });
   });
 
@@ -564,7 +564,7 @@ describe("JavaScript Metadata Extractors", () => {
       expect(result).toBeUndefined();
     });
 
-    it("verify multi-line location accuracy", () => {
+    it("types nothing through an object literal: the property holds the construction, not the declarator", () => {
       const code = `const obj = {
   prop: new MyClass()
 };`;
@@ -573,9 +573,42 @@ describe("JavaScript Metadata Extractors", () => {
 
       const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_construct_target(new_expr, TEST_FILE);
 
-      expect(result).toBeDefined();
-      expect(result?.start_line).toBe(1);
-      expect(result?.start_column).toBe(7); // position of 'obj'
+      expect(result).toEqual(undefined);
+    });
+
+    it("targets the element of the declarator an array literal initialises", () => {
+      const code = `const suites = [
+  new Suite("root"),
+];`;
+      const tree = parser.parse(code);
+      const new_expr = tree.rootNode.descendantsOfType("new_expression")[0];
+
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_construct_target(new_expr, TEST_FILE);
+
+      expect(result).toEqual({
+        location: { file_path: TEST_FILE, start_line: 1, start_column: 7, end_line: 1, end_column: 12 },
+        holds: "element",
+      });
+    });
+
+    it("types nothing through an array that holds anything but constructions, or holds the construction inside an element", () => {
+      for (const code of ["const items = [new Suite(), layer];", "const items = [new Suite().child];"]) {
+        const new_expr = parser.parse(code).rootNode.descendantsOfType("new_expression")[0];
+
+        const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_construct_target(new_expr, TEST_FILE);
+
+        expect(result).toEqual(undefined);
+      }
+    });
+
+    it("types nothing through a nested array literal, whose element is itself an array", () => {
+      const code = "const grid = [[new Cell()]];";
+      const tree = parser.parse(code);
+      const new_expr = tree.rootNode.descendantsOfType("new_expression")[0];
+
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_construct_target(new_expr, TEST_FILE);
+
+      expect(result).toEqual(undefined);
     });
   });
 });

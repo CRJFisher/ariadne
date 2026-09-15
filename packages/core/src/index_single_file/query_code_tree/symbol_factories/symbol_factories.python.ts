@@ -807,6 +807,7 @@ export function detect_function_collection(
         location: node_to_location(value_node, file_path),
         stored_functions: functions,
         stored_references: references,
+        ...(elements_are_identifiers(value_node) && { elements_are_references: true as const }),
       };
     }
   }
@@ -833,6 +834,7 @@ export function detect_function_collection(
         location: node_to_location(value_node, file_path),
         stored_functions: functions,
         stored_references: references,
+        ...(elements_are_identifiers(value_node) && { elements_are_references: true as const }),
       };
     }
   }
@@ -843,6 +845,13 @@ export function detect_function_collection(
 // ============================================================================
 // Internal Helpers
 // ============================================================================
+
+/** Whether every element of a list or tuple literal is a bare name, comments aside. */
+function elements_are_identifiers(sequence_node: SyntaxNode): boolean {
+  return sequence_node.namedChildren.every(
+    (element) => element.type === "identifier" || element.type === "comment"
+  );
+}
 
 /**
  * Extract function SymbolIds from Python list or tuple: [fn1, fn2] or (fn1, fn2)

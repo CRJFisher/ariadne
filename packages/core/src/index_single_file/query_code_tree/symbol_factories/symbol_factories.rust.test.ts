@@ -1166,6 +1166,32 @@ describe("detect_function_collection", () => {
         (result?.stored_references?.length === 0 && result?.stored_functions?.length === 0),
     ).toBe(true);
   });
+
+  it.each([
+    ["an array", "let layers = [root, child];"],
+    ["a vec! macro", "let layers = vec![root, child];"],
+  ])("marks %s whose every element is a bare name as holding references", (_label, code) => {
+    const let_decl = find_node_by_type(parse_rust(code), "let_declaration")!;
+
+    const result = detect_function_collection(let_decl, file_path);
+
+    expect(result?.elements_are_references).toBe(true);
+  });
+
+  it.each([
+    ["an array holding a field read", "let layers = [root, self.child];"],
+    ["an array holding a call", "let layers = [root, make()];"],
+    ["an array holding a closure", "let layers = [root, |x| x];"],
+    ["a vec! macro holding a field read", "let layers = vec![root, a.b];"],
+    ["a vec! macro holding a call", "let layers = vec![root, make()];"],
+  ])("leaves %s unmarked", (_label, code) => {
+    const let_decl = find_node_by_type(parse_rust(code), "let_declaration")!;
+
+    const result = detect_function_collection(let_decl, file_path);
+
+    expect(result).not.toBeNull();
+    expect(result?.elements_are_references).toBeUndefined();
+  });
 });
 
 // ============================================================================

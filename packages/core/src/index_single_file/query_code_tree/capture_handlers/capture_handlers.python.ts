@@ -54,6 +54,7 @@ import {
 } from "../symbol_factories/symbol_factories.python";
 import {
   extract_collection_source,
+  extract_iteration_source,
   extract_initializer_call,
   extract_member_source,
 } from "../symbol_factories/initializer_sources.python";
@@ -493,6 +494,7 @@ export function handle_definition_variable(
     collection_source,
     member_source: extract_member_source(capture.node),
     initialized_from_call: extract_initializer_call(capture.node),
+    iterated_from: extract_iteration_source(capture.node),
   });
 }
 

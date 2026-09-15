@@ -13,6 +13,8 @@
  * Phase 2: Walk the property chain to get the final receiver type
  *   - For each property, look up member on current type
  *   - Get member's type for next iteration
+ *   - A `get(k)` hop, or an index read ending the receiver, takes one element
+ *     of the container binding it reads (container_element.ts)
  *
  * This architecture allows natural composition:
  *   - this.method() → resolve this → class type → lookup method
@@ -31,15 +33,15 @@ import type {
   MethodCallReference,
   SelfReferenceKeyword,
   ChainCallArguments,
-  MethodDefinition,
   VariableDefinition,
   AnyDefinition,
   Result,
   ResolutionFailure,
 } from "@ariadnejs/types";
 import { err, ok } from "@ariadnejs/types";
-import { resolve_module_member } from "../module_member_lookup";
-import { parse_type_annotation, type ParsedTypeAnnotation } from "../type_preprocessing";
+import { resolve_element_type } from "./container_element";
+import { dereference_named_import, resolve_namespace_member } from "./namespace_member";
+import { infer_generic_return_from_type_token } from "./type_token_return";
 import { ScopeRegistry } from "../registries/scope";
 import { DefinitionRegistry } from "../registries/definition";
 import type { TypeRegistry } from "../registries/type";
@@ -66,6 +68,13 @@ export interface ReceiverExpression {
   readonly chain_arguments?: ChainCallArguments;
   readonly method_name: SymbolName;
   readonly scope_id: ScopeId;
+  /**
+   * Present when the receiver is one element read out of the container that
+   * `base` and `chain` name (`suites[0].m()`), with whether the key is a
+   * literal. A string key is written into `chain` as its last segment; a
+   * numeric key is not.
+   */
+  readonly index_access?: { readonly key_is_literal: boolean };
 }
 
 /**
@@ -115,8 +124,15 @@ export function extract_receiver(
       chain: chain.slice(1, -1) as SymbolName[],
       method_name: ref.name,
       scope_id: ref.scope_id,
+      ...(ref.index_access !== undefined && { index_access: ref.index_access }),
     };
   }
+
+  const syntax = ref.call_site_syntax;
+  const index_access =
+    syntax?.receiver_kind === "index_access"
+      ? { key_is_literal: syntax.index_key_is_literal === true }
+      : undefined;
 
   const first_element = chain[0] as string;
   if (SELF_REFERENCE_KEYWORDS.has(first_element)) {
@@ -125,13 +141,11 @@ export function extract_receiver(
       chain: chain.slice(1, -1) as SymbolName[],
       method_name: ref.name,
       scope_id: ref.scope_id,
+      ...(index_access !== undefined && { index_access }),
     };
   }
 
-  const chain_arguments =
-    ref.kind === "method_call" && ref.property_chain_arguments
-      ? ref.property_chain_arguments.slice(1, -1)
-      : undefined;
+  const chain_arguments = ref.property_chain_arguments?.slice(1, -1);
 
   return {
     base: { type: "identifier", value: chain[0] as SymbolName },
@@ -139,6 +153,7 @@ export function extract_receiver(
     ...(chain_arguments !== undefined && { chain_arguments }),
     method_name: ref.name,
     scope_id: ref.scope_id,
+    ...(index_access !== undefined && { index_access }),
   };
 }
 
@@ -153,7 +168,40 @@ export function resolve_receiver_type(
   receiver: ReceiverExpression,
   context: ReceiverResolutionContext
 ): Result<SymbolId, ResolutionFailure> {
-  const base_result = resolve_base(receiver.base, receiver.scope_id, context);
+  return resolve_receiver_expression_type(receiver, context, new Set());
+}
+
+/**
+ * `resolve_receiver_type` carrying the bindings already being typed on this
+ * resolution, so a binding whose container chain starts at itself
+ * (`for (const node of node.children)`) stops rather than recurring.
+ */
+function resolve_receiver_expression_type(
+  receiver: ReceiverExpression,
+  context: ReceiverResolutionContext,
+  visited: Set<SymbolId>
+): Result<SymbolId, ResolutionFailure> {
+  if (receiver.index_access) {
+    return resolve_index_receiver_type(receiver, receiver.index_access.key_is_literal, context, visited);
+  }
+
+  // A `get(k)` straight off an identifier reads one element of the container it
+  // names, whose own type may be nothing the project declares (`Map`).
+  if (receiver.base.type === "identifier" && is_element_get(receiver.chain, receiver.chain_arguments, 0)) {
+    const container_id = context.resolutions.resolve(receiver.scope_id, receiver.base.value);
+    const element_id = container_id ? resolve_element_type(container_id, "index", context) : null;
+    if (element_id) {
+      return walk_property_chain(
+        element_id,
+        receiver.chain.slice(1),
+        receiver.chain_arguments?.slice(1),
+        receiver.scope_id,
+        context
+      );
+    }
+  }
+
+  const base_result = resolve_base(receiver.base, receiver.scope_id, context, visited);
   if (!base_result.ok) {
     return base_result;
   }
@@ -172,17 +220,99 @@ export function resolve_receiver_type(
 }
 
 /**
+ * The type of an element read out of the container a receiver names
+ * (`suites[0].m()`). A non-literal key is left unresolved: the receiver is
+ * the element, never the container, so it is not walked as `suites.m()`.
+ *
+ * `call_site_syntax` does not say whether the key was a string, which the
+ * chain keeps as its last segment, or a number, which it drops. The container
+ * is therefore the whole chain, or — when that names no container — the chain
+ * without the segment a string key wrote.
+ */
+function resolve_index_receiver_type(
+  receiver: ReceiverExpression,
+  key_is_literal: boolean,
+  context: ReceiverResolutionContext,
+  visited: Set<SymbolId>
+): Result<SymbolId, ResolutionFailure> {
+  const names: readonly SymbolName[] = [receiver.base.value as SymbolName, ...receiver.chain];
+  const candidates = key_is_literal
+    ? receiver.chain.length > 0
+      ? [names, names.slice(0, -1)]
+      : [names]
+    : [];
+  for (const container_chain of candidates) {
+    const container_id = resolve_container_binding(container_chain, receiver.scope_id, context, visited);
+    const element_id = container_id ? resolve_element_type(container_id, "index", context) : null;
+    if (element_id) {
+      return ok(element_id);
+    }
+  }
+  return err({
+    stage: "type_inference",
+    reason: "receiver_type_unknown",
+    partial_info: { last_known_scope: receiver.scope_id },
+  });
+}
+
+/**
+ * The binding a container name chain denotes: the name itself for one segment,
+ * otherwise the member the last segment names on the type the rest resolves
+ * to (`this._instances`, `self.layers`).
+ */
+function resolve_container_binding(
+  chain: readonly SymbolName[],
+  scope_id: ScopeId,
+  context: ReceiverResolutionContext,
+  visited: Set<SymbolId>
+): SymbolId | null {
+  const [root, ...members] = chain;
+  const member_name = members[members.length - 1];
+  if (member_name === undefined) {
+    return SELF_REFERENCE_KEYWORDS.has(root) ? null : context.resolutions.resolve(scope_id, root);
+  }
+
+  const holder = resolve_receiver_expression_type(
+    {
+      base: SELF_REFERENCE_KEYWORDS.has(root)
+        ? { type: "keyword", value: root as SelfReferenceKeyword }
+        : { type: "identifier", value: root },
+      chain: members.slice(0, -1),
+      method_name: member_name,
+      scope_id,
+    },
+    context,
+    visited
+  );
+  return holder.ok ? find_member_symbol(holder.value, member_name, context) : null;
+}
+
+/**
+ * Whether chain position `index` is a `get(k)` call — a keyed read of the
+ * container before it. Chain arguments are recorded only when some position
+ * passes an identifier, so a `get` with none recorded is taken as the call.
+ */
+function is_element_get(
+  chain: readonly SymbolName[],
+  chain_arguments: ChainCallArguments | undefined,
+  index: number
+): boolean {
+  return chain[index] === "get" && chain_arguments?.[index] !== null;
+}
+
+/**
  * Resolve the base of a receiver expression to a type
  */
 function resolve_base(
   base: ReceiverExpression["base"],
   scope_id: ScopeId,
-  context: ReceiverResolutionContext
+  context: ReceiverResolutionContext,
+  visited: Set<SymbolId>
 ): Result<SymbolId, ResolutionFailure> {
   if (base.type === "keyword") {
     return resolve_keyword_base(base.value, scope_id, context);
   } else {
-    return resolve_identifier_base(base.value, scope_id, context);
+    return resolve_identifier_base(base.value, scope_id, context, visited);
   }
 }
 
@@ -278,7 +408,7 @@ function resolve_identifier_base(
   identifier: SymbolName,
   scope_id: ScopeId,
   context: ReceiverResolutionContext,
-  visited?: Set<SymbolId>
+  visited: Set<SymbolId>
 ): Result<SymbolId, ResolutionFailure> {
   const symbol_id = context.resolutions.resolve(scope_id, identifier);
   if (!symbol_id) {
@@ -333,8 +463,10 @@ function resolve_identifier_base(
         def.destructured_from,
         def.destructured_key,
         context,
-        visited ?? new Set()
+        visited
       );
+    } else if (def.kind === "variable" || def.kind === "constant") {
+      type_id = resolve_element_binding_type(def, context, visited);
     }
   }
 
@@ -347,130 +479,6 @@ function resolve_identifier_base(
   }
 
   return ok(type_id);
-}
-
-/**
- * Resolve `property_name` against a hop that is a namespace rather than a type:
- * a TypeScript `namespace` block, whose members live in its own body scope, or
- * a namespace import, whose members are the exports of the module it names.
- * Returns null for any other hop kind, leaving the caller's failure intact.
- */
-function resolve_namespace_member(
-  current: SymbolId,
-  property_name: SymbolName,
-  context: ReceiverResolutionContext
-): SymbolId | null {
-  const named = dereference_named_import(current, context);
-  if (!named) {
-    return null;
-  }
-  const def = context.definitions.get(named);
-
-  if (def?.kind === "namespace") {
-    return resolve_namespace_scope_member(def, property_name, context);
-  }
-
-  if (def?.kind === "import" && def.import_kind === "namespace") {
-    const source_file = context.imports.get_resolved_import_path(current);
-    if (!source_file) {
-      return null;
-    }
-    return resolve_module_member(
-      source_file,
-      property_name,
-      "namespace",
-      context.exports,
-      context.definitions,
-      context.languages,
-      context.modules
-    );
-  }
-
-  return null;
-}
-
-/**
- * Follow a named or default import to the definition it names, so a hop
- * written as `import { Ns } from …; Ns.Inner.f()` descends into the namespace
- * itself rather than stopping at the import record. A namespace import is left
- * alone: it denotes the module, which the caller resolves against its exports.
- *
- * Termination is the visited set `ExportRegistry.resolve_export_chain` threads:
- * re-entering a symbol means the chain is circular, so it names no definition
- * and resolves to null rather than to an arbitrary link on the cycle. A chain
- * that merely runs deep is followed to its end.
- */
-function dereference_named_import(
-  symbol_id: SymbolId,
-  context: SelfTypeResolutionContext
-): SymbolId | null {
-  let current = symbol_id;
-  const visited = new Set<SymbolId>([current]);
-
-  for (;;) {
-    const def = context.definitions.get(current);
-    if (def?.kind !== "import" || def.import_kind === "namespace") {
-      return current;
-    }
-    const source_file = context.imports.get_resolved_import_path(current);
-    if (!source_file) {
-      return current;
-    }
-    const imported_name = (def.original_name ?? def.name) as SymbolName;
-    const resolved = context.exports.resolve_export_chain(
-      source_file,
-      imported_name,
-      def.import_kind === "default" ? "default" : "named",
-      context.languages,
-      context.modules
-    );
-    if (!resolved) {
-      return current;
-    }
-    if (visited.has(resolved)) {
-      return null;
-    }
-    visited.add(resolved);
-    current = resolved;
-  }
-}
-
-/**
- * Look a name up in a `namespace` block's own body scope — the members neither
- * the type registry nor the member index records. Shared with the terminal
- * lookup in method_lookup, so a chain hop and a call target descend alike.
- */
-export function resolve_namespace_scope_member(
-  namespace_def: AnyDefinition,
-  member_name: SymbolName,
-  context: ReceiverResolutionContext
-): SymbolId | null {
-  const body_scope_id = find_namespace_body_scope(namespace_def, context);
-  if (!body_scope_id) {
-    return null;
-  }
-  return (
-    context.definitions.get_scope_definitions(body_scope_id).get(member_name) ?? null
-  );
-}
-
-/**
- * The scope a namespace declaration opens: the declaring scope's module-typed
- * child carrying the same name. A `@scope.namespace` capture is stored with
- * ScopeType "module" and keeps the namespace's declared name.
- */
-function find_namespace_body_scope(
-  namespace_def: AnyDefinition,
-  context: ReceiverResolutionContext
-): ScopeId | null {
-  const declaring_scope = context.scopes.get_scope(namespace_def.defining_scope_id);
-  for (const child_id of declaring_scope?.child_ids ?? []) {
-    const child = context.scopes.get_scope(child_id);
-    if (child?.type === "module" && child.name === namespace_def.name) {
-      return child_id;
-    }
-  }
-  return null;
 }
 
 /**
@@ -490,6 +498,61 @@ function recorded_hop_type(
 }
 
 /**
+ * The member `property_name` names on `type_id`: through the TypeRegistry's
+ * resolved members and inheritance, then the member index, which catches
+ * members the TypeRegistry has not resolved a type for, then a namespace's own
+ * members — a TypeScript `namespace` block holds them in its own scope, and a
+ * namespace import in the module it points at.
+ */
+function find_member_symbol(
+  type_id: SymbolId,
+  property_name: SymbolName,
+  context: ReceiverResolutionContext
+): SymbolId | null {
+  return (
+    context.types.get_type_member(type_id, property_name) ??
+    context.definitions.get_member_index().get(type_id)?.get(property_name) ??
+    resolve_namespace_member(type_id, property_name, context)
+  );
+}
+
+/**
+ * The element type of a binding a container read initialises: a loop or array
+ * pattern over the container it iterates (`iterated_from`), or an index or
+ * `get(k)` lookup of the collection it names (`collection_source`).
+ */
+function resolve_element_binding_type(
+  binding: VariableDefinition,
+  context: ReceiverResolutionContext,
+  visited: Set<SymbolId>
+): SymbolId | null {
+  if (visited.has(binding.symbol_id)) {
+    return null;
+  }
+  visited.add(binding.symbol_id);
+
+  if (binding.iterated_from) {
+    const container_id = resolve_container_binding(
+      binding.iterated_from.container,
+      binding.defining_scope_id,
+      context,
+      visited
+    );
+    return container_id
+      ? resolve_element_type(container_id, binding.iterated_from.yields, context)
+      : null;
+  }
+  if (binding.collection_source) {
+    const container_id = context.resolutions.resolve(
+      binding.defining_scope_id,
+      binding.collection_source
+    );
+    return container_id ? resolve_element_type(container_id, "index", context) : null;
+  }
+  return null;
+}
+
+/**
  * Walk a property chain, resolving each property to its member's type so the next
  * property is looked up on that type, and returning the final type.
  */
@@ -504,23 +567,7 @@ function walk_property_chain(
 
   for (let index = 0; index < chain.length; index++) {
     const property_name = chain[index];
-    let member_symbol = context.types.get_type_member(current_type, property_name);
-
-    // The member index catches members the TypeRegistry has not resolved a type for.
-    if (!member_symbol) {
-      const member_index = context.definitions.get_member_index();
-      const type_members = member_index.get(current_type);
-      if (type_members) {
-        member_symbol = type_members.get(property_name) || null;
-      }
-    }
-
-    // A namespace hop resolves through neither: a TypeScript `namespace` block
-    // holds its members in its own scope, and a namespace import holds them in
-    // the module it points at.
-    if (!member_symbol) {
-      member_symbol = resolve_namespace_member(current_type, property_name, context);
-    }
+    const member_symbol = find_member_symbol(current_type, property_name, context);
 
     if (!member_symbol) {
       return err({
@@ -528,6 +575,17 @@ function walk_property_chain(
         reason: "method_not_on_type",
         partial_info: { resolved_receiver_type: current_type },
       });
+    }
+
+    // `this.contributions.get(k)` reads one element of the container member,
+    // whatever the container's own type.
+    const element_id = is_element_get(chain, chain_arguments, index + 1)
+      ? resolve_element_type(member_symbol, "index", context)
+      : null;
+    if (element_id) {
+      current_type = element_id;
+      index++;
+      continue;
     }
 
     const member_def = context.definitions.get(member_symbol);
@@ -645,111 +703,6 @@ function resolve_destructured_property_type(
     context
   );
   return property_type.ok ? property_type.value : null;
-}
-
-// @language typescript
-/**
- * Infer the concrete return type of a generic method whose return type is one
- * of its own type parameters bound by a type-token parameter — the DI shape
- * `get<T>(token: Type<T>): T`. Returns the type the token argument names, or
- * null when the method is not that shape or the argument cannot be resolved
- * (leaving the caller's `member_type_unknown` failure intact).
- */
-function infer_generic_return_from_type_token(
-  method_def: MethodDefinition,
-  call_arguments_at_position: readonly (SymbolName | null)[] | null,
-  scope_id: ScopeId,
-  context: ReceiverResolutionContext
-): SymbolId | null {
-  const return_type = method_def.return_type;
-  if (!return_type || !method_def.generics?.includes(return_type)) {
-    return null;
-  }
-  if (!call_arguments_at_position) {
-    return null;
-  }
-  const language = context.languages.get(method_def.location.file_path);
-  if (!language) {
-    return null;
-  }
-
-  // The token parameter is the one whose declared type wraps the return-type
-  // parameter exactly (token: Type<T> for a method returning T).
-  const token_index = method_def.parameters.findIndex(
-    (param) =>
-      param.type !== undefined &&
-      is_type_token_for(parse_type_annotation(param.type, language), return_type)
-  );
-  if (token_index < 0) {
-    return null;
-  }
-
-  const argument_name = call_arguments_at_position[token_index] ?? null;
-  if (!argument_name) {
-    return null;
-  }
-
-  return resolve_token_argument_type(argument_name, scope_id, context);
-}
-
-// @language typescript
-/**
- * Whether a parameter annotation is a token designating `type_parameter`: a
- * single-argument generic wrapping exactly that parameter (`Type<T>`). An
- * array of `T` (`T[]`, `Array<T>`) holds values of `T` and designates nothing.
- */
-function is_type_token_for(
-  annotation: ParsedTypeAnnotation | null,
-  type_parameter: SymbolName
-): boolean {
-  if (!annotation || annotation.arguments.length !== 1) {
-    return false;
-  }
-  if (annotation.head.length === 1 && annotation.head[0] === "Array") {
-    return false;
-  }
-  const [wrapped] = annotation.arguments;
-  return (
-    wrapped.head.length === 1 &&
-    wrapped.head[0] === type_parameter &&
-    wrapped.arguments.length === 0
-  );
-}
-
-// @language typescript
-/**
- * Resolve a type-token argument to the class it designates: a class/type used
- * directly (`injector.get(Service)`) is its own type; a typed token binding
- * (a parameter `token: Type<Service>`) designates the single type argument its
- * annotation resolved to.
- */
-function resolve_token_argument_type(
-  argument_name: SymbolName,
-  scope_id: ScopeId,
-  context: ReceiverResolutionContext
-): SymbolId | null {
-  const symbol_id = context.resolutions.resolve(scope_id, argument_name);
-  if (!symbol_id) {
-    return null;
-  }
-
-  const def = context.definitions.get(symbol_id);
-  if (!def) {
-    return null;
-  }
-
-  if (
-    def.kind === "class" ||
-    def.kind === "interface" ||
-    def.kind === "enum" ||
-    def.kind === "type" ||
-    def.kind === "type_alias"
-  ) {
-    return symbol_id;
-  }
-
-  const type_arguments = context.types.get_symbol_type_arguments(symbol_id);
-  return type_arguments.length === 1 ? type_arguments[0] : null;
 }
 
 /**

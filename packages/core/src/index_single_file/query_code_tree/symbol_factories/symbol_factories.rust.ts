@@ -706,6 +706,7 @@ export function detect_function_collection(
         location: node_to_location(value_node, file_path),
         stored_functions: functions,
         stored_references: references,
+        ...(elements_are_identifiers(value_node) && { elements_are_references: true as const }),
       };
     }
   }
@@ -725,6 +726,7 @@ export function detect_function_collection(
           location: node_to_location(value_node, file_path),
           stored_functions: functions,
           stored_references: references,
+          ...(elements_are_identifiers(token_tree) && { elements_are_references: true as const }),
         };
       }
     }
@@ -768,6 +770,20 @@ function extract_functions_from_array(
   }
 
   return { functions: function_ids, references };
+}
+
+/**
+ * Whether every element of an array expression, or of a `vec![...]` token tree,
+ * is a bare name. A token tree's elements are its tokens, so only names and the
+ * commas and brackets around them may appear.
+ */
+function elements_are_identifiers(sequence_node: SyntaxNode): boolean {
+  return sequence_node.children.every(
+    (child) =>
+      child.type === "identifier" ||
+      child.type.endsWith("comment") ||
+      (!child.isNamed && [",", "[", "]", "(", ")", "{", "}"].includes(child.type))
+  );
 }
 
 /**

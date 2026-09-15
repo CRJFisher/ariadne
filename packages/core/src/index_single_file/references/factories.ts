@@ -16,6 +16,8 @@ import type {
   SelfReferenceKeyword,
   TypeInfo,
 } from "@ariadnejs/types";
+import type { ConstructTarget } from "../query_code_tree/metadata_extractors/metadata_extractor_types";
+
 
 /**
  * Factory for self-reference calls: this.method(), self.method(), super.method()
@@ -45,7 +47,8 @@ export function create_self_reference_call(
   location: Location,
   scope_id: ScopeId,
   keyword: SelfReferenceKeyword,
-  property_chain: readonly SymbolName[]
+  property_chain: readonly SymbolName[],
+  index_access?: { readonly key_is_literal: boolean }
 ): SelfReferenceCall {
   return {
     kind: "self_reference_call",
@@ -54,6 +57,7 @@ export function create_self_reference_call(
     scope_id,
     keyword,
     property_chain,
+    ...(index_access !== undefined && { index_access }),
   };
 }
 
@@ -78,7 +82,7 @@ export function create_method_call_reference(
   receiver_location: Location,
   property_chain: readonly SymbolName[],
   is_optional_chain: boolean,
-  potential_construct_target?: Location,
+  potential_construct_target?: ConstructTarget,
   call_site_syntax?: CallSiteSyntax,
   property_chain_arguments?: ChainCallArguments
 ): MethodCallReference {
@@ -90,7 +94,12 @@ export function create_method_call_reference(
     receiver_location,
     property_chain,
     is_optional_chain,
-    ...(potential_construct_target !== undefined && { potential_construct_target }),
+    ...(potential_construct_target?.holds === "value" && {
+      potential_construct_target: potential_construct_target.location,
+    }),
+    ...(potential_construct_target?.holds === "element" && {
+      potential_construct_element_of: potential_construct_target.location,
+    }),
     ...(call_site_syntax !== undefined && { call_site_syntax }),
     ...(property_chain_arguments !== undefined && { property_chain_arguments }),
   };
@@ -111,7 +120,7 @@ export function create_function_call_reference(
   name: SymbolName,
   location: Location,
   scope_id: ScopeId,
-  potential_construct_target?: Location,
+  potential_construct_target?: ConstructTarget,
   path_prefix?: readonly SymbolName[]
 ): FunctionCallReference {
   return {
@@ -119,7 +128,12 @@ export function create_function_call_reference(
     name,
     location,
     scope_id,
-    ...(potential_construct_target !== undefined && { potential_construct_target }),
+    ...(potential_construct_target?.holds === "value" && {
+      potential_construct_target: potential_construct_target.location,
+    }),
+    ...(potential_construct_target?.holds === "element" && {
+      potential_construct_element_of: potential_construct_target.location,
+    }),
     ...(path_prefix !== undefined && { path_prefix }),
   };
 }
@@ -158,7 +172,7 @@ export function create_constructor_call_reference(
   name: SymbolName,
   location: Location,
   scope_id: ScopeId,
-  construct_target?: Location,
+  construct_target?: ConstructTarget,
   property_chain?: readonly SymbolName[],
   path_prefix?: readonly SymbolName[]
 ): ConstructorCallReference {
@@ -167,7 +181,10 @@ export function create_constructor_call_reference(
     name,
     location,
     scope_id,
-    ...(construct_target !== undefined && { construct_target }),
+    ...(construct_target?.holds === "value" && { construct_target: construct_target.location }),
+    ...(construct_target?.holds === "element" && {
+      construct_element_of: construct_target.location,
+    }),
     ...(property_chain !== undefined && { property_chain }),
     ...(path_prefix !== undefined && { path_prefix }),
   };

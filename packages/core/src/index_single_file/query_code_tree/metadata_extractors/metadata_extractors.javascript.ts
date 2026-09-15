@@ -7,9 +7,9 @@
  */
 
 import type { SyntaxNode } from "tree-sitter";
-import type { Location, SymbolName, TypeInfo, FilePath } from "@ariadnejs/types";
+import type { SymbolName, TypeInfo, FilePath } from "@ariadnejs/types";
 import { type_symbol } from "@ariadnejs/types";
-import type { MetadataExtractors, ReceiverInfo } from "./metadata_extractor_types";
+import type { ConstructTarget, MetadataExtractors, ReceiverInfo } from "./metadata_extractor_types";
 import { node_to_location } from "../../node_to_location";
 import {
   resolve_this_field_write,
@@ -278,20 +278,35 @@ function build_property_chain(
  * Keyed on the node because a node belongs to exactly one tree and one file,
  * and held weakly because the answer dies with the tree that was indexed.
  */
-const CONSTRUCT_TARGET_BY_ANCESTOR = new WeakMap<SyntaxNode, SyntaxNode | null>();
+const CONSTRUCT_TARGET_BY_ANCESTOR = new WeakMap<SyntaxNode, TargetNode | null>();
+
+/** The node naming a binding, and whether a value under the walk is that binding's value or one of its elements. */
+interface TargetNode {
+  readonly node: SyntaxNode;
+  readonly holds: "value" | "element";
+}
 
 /**
- * The node naming what a value under `node` is stored in, or null when it is
- * stored in nothing a construction can type.
+ * What a value under `node` is stored in, or null when it is stored in nothing
+ * a construction can type.
  *
  * An argument list ends the walk with no target: a value passed to a call
  * belongs to the callee's parameter, never to the declarator around the call
  * (`const t = new Tokenizer(new Source(), s)` stores a Tokenizer). The abort is
  * memoised like any other answer — every node under that argument list gets it.
+ *
+ * A literal between the value and its binding changes what the value is stored
+ * as: an array literal whose every element is a construction holds each as an
+ * element (`const suites = [new Suite()]` holds Suites, and is not one). Any
+ * other literal — an object, a second array, an array holding anything but
+ * constructions (`[new Suite(), layer]`), or a value the array only holds
+ * inside an element (`[new Suite().child]`) — holds it where no binding's
+ * element type reaches. Each ancestor's answer is therefore derived from the
+ * one above it.
  */
-function construct_target_node(node: SyntaxNode): SyntaxNode | null {
+function construct_target_node(node: SyntaxNode): TargetNode | null {
   const walked: SyntaxNode[] = [];
-  let target: SyntaxNode | null = null;
+  let target: TargetNode | null = null;
   let parent = node.parent;
 
   while (parent) {
@@ -300,37 +315,64 @@ function construct_target_node(node: SyntaxNode): SyntaxNode | null {
       target = known;
       break;
     }
+
+    const binding = binding_target_node(parent);
+    if (binding !== undefined) {
+      target = binding ? { node: binding, holds: "value" } : null;
+      CONSTRUCT_TARGET_BY_ANCESTOR.set(parent, target);
+      break;
+    }
+
     walked.push(parent);
-
-    const parent_type = parent.type;
-    if (parent_type === "arguments") {
-      break;
-    }
-    if (parent_type === "variable_declarator") {
-      target = parent.childForFieldName("name");
-      break;
-    }
-    if (parent_type === "assignment_expression") {
-      const left = parent.childForFieldName("left");
-      target = left ? assignment_target_node(left) : null;
-      break;
-    }
-    if (parent_type === "field_definition") {
-      target = parent.childForFieldName("property");
-      break;
-    }
-    if (parent_type === "public_field_definition") {
-      target = parent.childForFieldName("name");
-      break;
-    }
-
     parent = parent.parent;
   }
 
-  for (const ancestor of walked) {
+  for (let index = walked.length - 1; index >= 0; index--) {
+    const ancestor = walked[index];
+    if (ancestor.type === "array") {
+      target =
+        target?.holds === "value" && holds_only_constructions(ancestor)
+          ? { node: target.node, holds: "element" }
+          : null;
+    } else if (
+      ancestor.type === "object" ||
+      (walked[index + 1]?.type === "array" && ancestor.type !== "new_expression")
+    ) {
+      target = null;
+    }
     CONSTRUCT_TARGET_BY_ANCESTOR.set(ancestor, target);
   }
   return target;
+}
+
+function holds_only_constructions(array: SyntaxNode): boolean {
+  return array.namedChildren.every(
+    (element) => element.type === "new_expression" || element.type === "comment"
+  );
+}
+
+/**
+ * The binding a parent stores the value beneath it in: its name node, null
+ * when the parent ends the walk with nothing to type, or undefined when the
+ * parent is transparent and the walk continues above it.
+ */
+function binding_target_node(parent: SyntaxNode): SyntaxNode | null | undefined {
+  switch (parent.type) {
+    case "arguments":
+      return null;
+    case "variable_declarator":
+      return parent.childForFieldName("name");
+    case "assignment_expression": {
+      const left = parent.childForFieldName("left");
+      return left ? assignment_target_node(left) : null;
+    }
+    case "field_definition":
+      return parent.childForFieldName("property");
+    case "public_field_definition":
+      return parent.childForFieldName("name");
+    default:
+      return undefined;
+  }
 }
 
 /**
@@ -471,9 +513,11 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
   extract_construct_target(
     node: SyntaxNode,
     file_path: FilePath
-  ): Location | undefined {
+  ): ConstructTarget | undefined {
     const target = construct_target_node(node);
-    return target ? node_to_location(target, file_path) : undefined;
+    return target
+      ? { location: node_to_location(target.node, file_path), holds: target.holds }
+      : undefined;
   },
 
   /**

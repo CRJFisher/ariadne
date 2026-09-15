@@ -17,6 +17,7 @@ import type {
   ConstructorCallReference,
   PropertyAccessReference,
   SelfReferenceCall,
+  IterationSource,
 } from "@ariadnejs/types";
 import { build_index_single_file } from "./index_single_file";
 import { query_tree } from "./query_code_tree/query_code_tree";
@@ -2727,6 +2728,47 @@ const made = make()();`);
           ["made" as SymbolName, undefined],
         ]),
       );
+    });
+
+    it("records what each loop and array-pattern binding takes from the container it iterates", () => {
+      const result = index_js(`for (const suite of suites) {}
+for (const [id, instance] of this.instances) {}
+for (const pending of pendingById.values()) {}
+const [first] = suites;
+for (const key in lookup) {}`);
+      const sources = new Map(
+        Array.from(result.variables.values()).map((v) => [v.name, v.iterated_from]),
+      );
+      expect(sources).toEqual(
+        new Map<SymbolName, IterationSource | undefined>([
+          ["suite" as SymbolName, { container: ["suites" as SymbolName], yields: "item" }],
+          ["id" as SymbolName, undefined],
+          ["instance" as SymbolName, { container: ["this" as SymbolName, "instances" as SymbolName], yields: "entry_value" }],
+          ["pending" as SymbolName, { container: ["pendingById" as SymbolName], yields: "value" }],
+          ["first" as SymbolName, { container: ["suites" as SymbolName], yields: "item" }],
+          ["key" as SymbolName, undefined],
+        ]),
+      );
+    });
+
+    it("keys an array literal's construction to the declarator's element, never its value", () => {
+      const result = index_js("const suites = [new Suite(\"root\")];");
+      const construction = result.references.find(
+        (ref): ref is ConstructorCallReference => ref.kind === "constructor_call",
+      );
+      expect(construction).toEqual({
+        kind: "constructor_call",
+        name: "Suite" as SymbolName,
+        location: construction!.location,
+        scope_id: construction!.scope_id,
+        construct_element_of: {
+          file_path: "test.js" as FilePath,
+          start_line: 1,
+          start_column: 7,
+          end_line: 1,
+          end_column: 12,
+        },
+      });
     });
 
     it("types a local declarator and a constructor write from their JSDoc @type", () => {

@@ -87,6 +87,7 @@ export function detect_function_collection(
         location: node_to_location(initializer, file_path),
         stored_functions: functions,
         stored_references: references,
+        ...(every_element_is(initializer, "identifier") && { elements_are_references: true as const }),
       };
     }
   }
@@ -264,6 +265,11 @@ function extract_functions_from_array(
   }
 
   return { functions: function_ids, references };
+}
+
+/** Whether every element of a sequence literal is a node of `type`, comments aside. */
+function every_element_is(literal: SyntaxNode, type: string): boolean {
+  return literal.namedChildren.every((element) => element.type === type || element.type === "comment");
 }
 
 /**

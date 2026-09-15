@@ -19,6 +19,7 @@ import type {
   TypeReference,
   PropertyAccessReference,
   AssignmentReference,
+  IterationSource,
 } from "@ariadnejs/types";
 import { build_index_single_file } from "./index_single_file";
 import { query_tree } from "./query_code_tree/query_code_tree";
@@ -3807,6 +3808,38 @@ const result = items.map((x) =>
       const parsed_file = create_parsed_file(code, "test.ts" as FilePath, tree, "typescript" as Language);
       return build_index_single_file(parsed_file, tree, "typescript" as Language);
     }
+
+    it("keys a constructor write's array literal construction to the declared field's element", () => {
+      const result = index_ts(`class CursorCollection {
+  private cursors: Cursor[];
+  constructor() {
+    this.cursors = [new Cursor()];
+  }
+}`);
+      const construction = result.references.find(
+        (ref): ref is ConstructorCallReference => ref.kind === "constructor_call",
+      );
+      const field = Array.from(result.classes.values())[0].properties.find((p) => p.name === "cursors");
+      expect({
+        construct_target: construction?.construct_target,
+        construct_element_of: construction?.construct_element_of,
+      }).toEqual({ construct_target: undefined, construct_element_of: field?.location });
+    });
+
+    it("records what a for…of binding takes from a member container it iterates", () => {
+      const result = index_ts(`class Contributions {
+  dispose_all(): void {
+    for (const [, instance] of this._instances) {
+      instance.dispose();
+    }
+  }
+}`);
+      const instance = Array.from(result.variables.values()).find((v) => v.name === "instance");
+      expect(instance?.iterated_from).toEqual({
+        container: ["this" as SymbolName, "_instances" as SymbolName],
+        yields: "entry_value",
+      });
+    });
 
     it("keys a field initialiser and a constructor write to the declared field or parameter property", () => {
       const result = index_ts(`class Service {

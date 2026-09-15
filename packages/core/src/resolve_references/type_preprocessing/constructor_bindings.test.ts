@@ -52,7 +52,7 @@ describe("Constructor Tracking - JavaScript", () => {
     );
     const index = build_index_single_file(parsed_file, tree, "javascript");
 
-    const bindings = extract_constructor_bindings(index.references);
+    const bindings = extract_constructor_bindings(index.references).values;
 
     expect(Array.from(bindings.values())).toEqual([["User"]]);
   });
@@ -75,7 +75,7 @@ describe("Constructor Tracking - JavaScript", () => {
     );
     const index = build_index_single_file(parsed_file, tree, "javascript");
 
-    const bindings = extract_constructor_bindings(index.references);
+    const bindings = extract_constructor_bindings(index.references).values;
 
     expect(Array.from(bindings.values()).sort()).toEqual([["Cat"], ["Dog"]]);
   });
@@ -99,7 +99,7 @@ describe("Constructor Tracking - JavaScript", () => {
     );
     const index = build_index_single_file(parsed_file, tree, "javascript");
 
-    const bindings = extract_constructor_bindings(index.references);
+    const bindings = extract_constructor_bindings(index.references).values;
 
     expect(Array.from(bindings.values())).toEqual([["Service"]]);
   });
@@ -119,7 +119,7 @@ describe("Constructor Tracking - JavaScript", () => {
     );
     const index = build_index_single_file(parsed_file, tree, "javascript");
 
-    const bindings = extract_constructor_bindings(index.references);
+    const bindings = extract_constructor_bindings(index.references).values;
 
     expect(bindings.size).toBe(0);
   });
@@ -140,7 +140,7 @@ describe("Constructor Tracking - JavaScript", () => {
     );
     const index = build_index_single_file(parsed_file, tree, "javascript");
 
-    const bindings = extract_constructor_bindings(index.references);
+    const bindings = extract_constructor_bindings(index.references).values;
 
     expect(Array.from(bindings.values())).toEqual([["Dog"]]);
   });
@@ -159,7 +159,7 @@ describe("Constructor Tracking - JavaScript", () => {
     );
     const index = build_index_single_file(parsed_file, tree, "javascript");
 
-    const bindings = extract_constructor_bindings(index.references);
+    const bindings = extract_constructor_bindings(index.references).values;
 
     expect(Array.from(bindings.values())).toEqual([["Unknown"]]);
   });
@@ -181,7 +181,7 @@ describe("Constructor Tracking - JavaScript", () => {
     );
     const index = build_index_single_file(parsed_file, tree, "javascript");
 
-    const bindings = extract_constructor_bindings(index.references);
+    const bindings = extract_constructor_bindings(index.references).values;
 
     expect(Array.from(bindings.values())).toEqual([["Widget"]]);
   });
@@ -203,9 +203,26 @@ describe("Constructor Tracking - JavaScript", () => {
     );
     const index = build_index_single_file(parsed_file, tree, "javascript");
 
-    const bindings = extract_constructor_bindings(index.references);
+    const bindings = extract_constructor_bindings(index.references).values;
 
     expect(bindings.size).toBe(0);
+  });
+it("binds an array literal's construction to the element of the array it initialises, never the array", () => {
+    const code = `
+      class Suite {}
+      const suites = [new Suite("root")];
+      const nested = [[new Suite()]];
+      const holder = { suite: new Suite() };
+    `;
+
+    const tree = parser.parse(code);
+    const parsed_file = create_parsed_file(code, "test.js" as FilePath, tree, "javascript");
+    const index = build_index_single_file(parsed_file, tree, "javascript");
+
+    const bindings = extract_constructor_bindings(index.references);
+
+    expect(bindings.values).toEqual(new Map());
+    expect(Array.from(bindings.elements.entries())).toEqual([["test.js:3:13:3:18", [["Suite"]]]]);
   });
 });
 
@@ -234,7 +251,7 @@ describe("Constructor Tracking - TypeScript", () => {
     );
     const index = build_index_single_file(parsed_file, tree, "typescript");
 
-    const bindings = extract_constructor_bindings(index.references);
+    const bindings = extract_constructor_bindings(index.references).values;
 
     expect(Array.from(bindings.values())).toEqual([["User"]]);
   });
@@ -262,7 +279,7 @@ describe("Constructor Tracking - TypeScript", () => {
     );
     const index = build_index_single_file(parsed_file, tree, "typescript");
 
-    const bindings = extract_constructor_bindings(index.references);
+    const bindings = extract_constructor_bindings(index.references).values;
 
     expect(Array.from(bindings.values()).sort()).toEqual([["ApiService"], ["DataStore"]]);
   });
@@ -289,7 +306,7 @@ describe("Constructor Tracking - TypeScript", () => {
     );
     const index = build_index_single_file(parsed_file, tree, "typescript");
 
-    const bindings = extract_constructor_bindings(index.references);
+    const bindings = extract_constructor_bindings(index.references).values;
 
     expect(Array.from(bindings.values())).toEqual([["Database"]]);
   });
@@ -311,7 +328,7 @@ describe("Constructor Tracking - TypeScript", () => {
     );
     const index = build_index_single_file(parsed_file, tree, "typescript");
 
-    const bindings = extract_constructor_bindings(index.references);
+    const bindings = extract_constructor_bindings(index.references).values;
 
     expect(Array.from(bindings.values())).toEqual([["Container"]]);
   });
@@ -331,7 +348,7 @@ describe("Constructor Tracking - TypeScript", () => {
     );
     const index = build_index_single_file(parsed_file, tree, "typescript");
 
-    const bindings = extract_constructor_bindings(index.references);
+    const bindings = extract_constructor_bindings(index.references).values;
 
     expect(Array.from(bindings.values())).toEqual([["models", "User"]]);
   });
@@ -352,7 +369,7 @@ describe("Constructor Tracking - TypeScript", () => {
     );
     const index = build_index_single_file(parsed_file, tree, "typescript");
 
-    const bindings = extract_constructor_bindings(index.references);
+    const bindings = extract_constructor_bindings(index.references).values;
 
     expect(Array.from(bindings.values())).toEqual([["User"], ["models", "User"]]);
   });
@@ -389,7 +406,7 @@ class User:
 user = User()
     `;
 
-    const bindings = await python_bindings(code);
+    const bindings = (await python_bindings(code)).values;
 
     expect(Array.from(bindings.values())).toEqual([["User"]]);
   });
@@ -406,7 +423,7 @@ my_dog = Dog()
 my_cat = Cat()
     `;
 
-    const bindings = await python_bindings(code);
+    const bindings = (await python_bindings(code)).values;
 
     expect(Array.from(bindings.values()).sort()).toEqual([["Cat"], ["Dog"]]);
   });
@@ -421,7 +438,7 @@ class App:
         self.service = Service()
     `;
 
-    const bindings = await python_bindings(code);
+    const bindings = (await python_bindings(code)).values;
 
     expect(Array.from(bindings.values())).toEqual([["Service"]]);
   });
@@ -434,7 +451,7 @@ class Database:
 db: Database = Database()
     `;
 
-    const bindings = await python_bindings(code);
+    const bindings = (await python_bindings(code)).values;
 
     expect(Array.from(bindings.values())).toEqual([["Database"]]);
   });
@@ -448,9 +465,53 @@ class X:
 x = X()
     `;
 
-    const bindings = await python_bindings(code);
+    const bindings = (await python_bindings(code)).values;
 
     expect(Array.from(bindings.values())).toEqual([["X"]]);
+  });
+
+  it("binds a list literal's constructions to the element of the list it initialises, never the list", async () => {
+    const code = `
+class Suite:
+    pass
+
+suites = [Suite("root"), Suite("child")]
+lookup = {"root": Suite()}
+    `;
+
+    const bindings = await python_bindings(code);
+
+    expect(bindings.values).toEqual(new Map());
+    expect(Array.from(bindings.elements.values())).toEqual([[["Suite"], ["Suite"]]]);
+  });
+
+  it("binds no element for a list that also holds a call that is not a construction", async () => {
+    const code = `
+class Suite:
+    pass
+
+def make():
+    pass
+
+mixed = [Suite(), make()]
+    `;
+
+    const bindings = await python_bindings(code);
+
+    expect(bindings).toEqual({ values: new Map(), elements: new Map() });
+  });
+
+  it("binds a namespace call in a list literal to the element by its full chain", async () => {
+    const code = `
+import models
+
+users = [models.User("a")]
+    `;
+
+    const bindings = await python_bindings(code);
+
+    expect(bindings.values).toEqual(new Map());
+    expect(Array.from(bindings.elements.values())).toEqual([[["models", "User"]]]);
   });
 });
 
@@ -480,7 +541,7 @@ describe("Constructor Tracking - Rust", () => {
     );
     const index = build_index_single_file(parsed_file, tree, "rust");
 
-    const bindings = extract_constructor_bindings(index.references);
+    const bindings = extract_constructor_bindings(index.references).values;
 
     expect(Array.from(bindings.values())).toEqual([["User"]]);
   });
@@ -511,7 +572,7 @@ describe("Constructor Tracking - Rust", () => {
     );
     const index = build_index_single_file(parsed_file, tree, "rust");
 
-    const bindings = extract_constructor_bindings(index.references);
+    const bindings = extract_constructor_bindings(index.references).values;
 
     expect(Array.from(bindings.values()).sort()).toEqual([["Color"], ["Point"]]);
   });
@@ -541,7 +602,7 @@ describe("Constructor Tracking - Rust", () => {
     );
     const index = build_index_single_file(parsed_file, tree, "rust");
 
-    const bindings = extract_constructor_bindings(index.references);
+    const bindings = extract_constructor_bindings(index.references).values;
 
     // `App { db }` is a return expression, not a let/assignment, so it carries no construct_target.
     expect(bindings.size).toBe(0);
@@ -573,7 +634,7 @@ describe("Constructor Tracking - Rust", () => {
     );
     const index = build_index_single_file(parsed_file, tree, "rust");
 
-    const bindings = extract_constructor_bindings(index.references);
+    const bindings = extract_constructor_bindings(index.references).values;
 
     expect(Array.from(bindings.values())).toEqual([["Database"]]);
   });
@@ -593,7 +654,7 @@ describe("Constructor Tracking - Rust", () => {
     );
     const index = build_index_single_file(parsed_file, tree, "rust");
 
-    const bindings = extract_constructor_bindings(index.references);
+    const bindings = extract_constructor_bindings(index.references).values;
 
     // Only struct-expression syntax (`Point { .. }`) produces a constructor_call
     // reference; `Point(10, 20)` indexes as a function_call.
@@ -603,9 +664,7 @@ describe("Constructor Tracking - Rust", () => {
 
 describe("Constructor Tracking - Edge Cases", () => {
   it("returns empty maps for an empty references array", () => {
-    const bindings = extract_constructor_bindings([]);
-
-    expect(bindings.size).toBe(0);
+    expect(extract_constructor_bindings([])).toEqual({ values: new Map(), elements: new Map() });
   });
 
   it("returns empty maps when no reference is a constructor call", () => {
@@ -627,9 +686,10 @@ describe("Constructor Tracking - Edge Cases", () => {
     );
     const index = build_index_single_file(parsed_file, tree, "javascript");
 
-    const bindings = extract_constructor_bindings(index.references);
-
-    expect(bindings.size).toBe(0);
+    expect(extract_constructor_bindings(index.references)).toEqual({
+      values: new Map(),
+      elements: new Map(),
+    });
   });
 
   it("skips constructor calls that carry no construct_target", () => {
@@ -650,8 +710,9 @@ describe("Constructor Tracking - Edge Cases", () => {
     );
     const index = build_index_single_file(parsed_file, tree, "typescript");
 
-    const bindings = extract_constructor_bindings(index.references);
-
-    expect(bindings.size).toBe(0);
+    expect(extract_constructor_bindings(index.references)).toEqual({
+      values: new Map(),
+      elements: new Map(),
+    });
   });
 });

@@ -16,6 +16,7 @@ import type {
   Location,
   MethodCallReference,
   FunctionCallReference,
+  ModulePath,
   ScopeId,
   SymbolId,
   SymbolName,
@@ -72,6 +73,22 @@ function method_call(chain: string[]): MethodCallReference {
     location: MOCK_LOCATION,
     receiver_location: MOCK_LOCATION,
     is_optional_chain: false,
+  };
+}
+
+function make_imported_handler(name: string): { id: SymbolId; def: AnyDefinition } {
+  const id = `import:test.ts:1:9:1:20:${name}` as SymbolId;
+  return {
+    id,
+    def: {
+      kind: "import",
+      symbol_id: id,
+      name: name as SymbolName,
+      defining_scope_id: FILE_SCOPE_ID,
+      location: MOCK_LOCATION,
+      import_path: "./handlers" as ModulePath,
+      import_kind: "named",
+    },
   };
 }
 
@@ -231,6 +248,131 @@ describe("resolve_collection_dispatch", () => {
     if (is_ok(result)) {
       expect(result.value).toEqual([stored]);
     }
+  });
+
+  it("drops a stored reference that names a value rather than something callable, keeping imports and classes", () => {
+    const suite_param_id = "parameter:test.ts:6:10:6:15:suite" as SymbolId;
+    const suite_param: AnyDefinition = {
+      kind: "parameter",
+      symbol_id: suite_param_id,
+      name: "suite" as SymbolName,
+      defining_scope_id: FILE_SCOPE_ID,
+      location: MOCK_LOCATION,
+    };
+    const { id: imported_id, def: imported_def } = make_imported_handler("importedHandler");
+    const collection: FunctionCollection = {
+      collection_id: variable_symbol("suites", MOCK_LOCATION),
+      collection_type: "Array",
+      location: MOCK_LOCATION,
+      stored_functions: [],
+      stored_references: ["suite", "importedHandler"] as SymbolName[],
+    };
+    const { id: suites_id, def: suites_def } = make_var_def("suites", {
+      function_collection: collection,
+    });
+    const { id: s_id, def: s_def } = make_var_def("s", {
+      collection_source: "suites" as SymbolName,
+    });
+
+    register(definitions, resolutions, [suites_def, s_def, suite_param, imported_def], {
+      suites: suites_id,
+      s: s_id,
+      suite: suite_param_id,
+      importedHandler: imported_id,
+    });
+
+    const result = resolve_collection_dispatch(
+      method_call(["s", "addTest"]),
+      definitions,
+      resolutions
+    );
+
+    expect(result).toEqual({ ok: true, value: [imported_id] });
+  });
+
+  it("keeps a stored reference naming a class: calling a class constructs it", () => {
+    const class_id = "class:test.ts:2:6:2:11:Suite" as SymbolId;
+    const suite_class: AnyDefinition = {
+      kind: "class",
+      symbol_id: class_id,
+      name: "Suite" as SymbolName,
+      defining_scope_id: FILE_SCOPE_ID,
+      location: MOCK_LOCATION,
+      is_exported: false,
+      extends: [],
+      methods: [],
+      properties: [],
+      decorators: [],
+    };
+    const collection: FunctionCollection = {
+      collection_id: variable_symbol("factories", MOCK_LOCATION),
+      collection_type: "Array",
+      location: MOCK_LOCATION,
+      stored_functions: [],
+      stored_references: ["Suite"] as SymbolName[],
+    };
+    const { id: factories_id, def: factories_def } = make_var_def("factories", {
+      function_collection: collection,
+    });
+    const { id: make_id, def: make_def } = make_var_def("make", {
+      collection_source: "factories" as SymbolName,
+    });
+
+    register(definitions, resolutions, [factories_def, make_def, suite_class], {
+      factories: factories_id,
+      make: make_id,
+      Suite: class_id,
+    });
+
+    expect(resolve_collection_dispatch(function_call("make"), definitions, resolutions)).toEqual({
+      ok: true,
+      value: [class_id],
+    });
+  });
+
+  it("fails with collection_dispatch_miss when every stored reference names a value", () => {
+    const suite_param_id = "parameter:test.ts:6:10:6:15:suite" as SymbolId;
+    const suite_param: AnyDefinition = {
+      kind: "parameter",
+      symbol_id: suite_param_id,
+      name: "suite" as SymbolName,
+      defining_scope_id: FILE_SCOPE_ID,
+      location: MOCK_LOCATION,
+    };
+    const collection: FunctionCollection = {
+      collection_id: variable_symbol("suites", MOCK_LOCATION),
+      collection_type: "Array",
+      location: MOCK_LOCATION,
+      stored_functions: [],
+      stored_references: ["suite"] as SymbolName[],
+    };
+    const { id: suites_id, def: suites_def } = make_var_def("suites", {
+      function_collection: collection,
+    });
+    const { id: s_id, def: s_def } = make_var_def("s", {
+      collection_source: "suites" as SymbolName,
+    });
+
+    register(definitions, resolutions, [suites_def, s_def, suite_param], {
+      suites: suites_id,
+      s: s_id,
+      suite: suite_param_id,
+    });
+
+    const result = resolve_collection_dispatch(
+      method_call(["s", "addTest"]),
+      definitions,
+      resolutions
+    );
+
+    expect(result).toEqual({
+      ok: false,
+      error: {
+        stage: "collection_dispatch",
+        reason: "collection_dispatch_miss",
+        partial_info: { resolved_receiver_type: suites_id },
+      },
+    });
   });
 
   it("fails with collection_dispatch_miss when the collection is empty", () => {

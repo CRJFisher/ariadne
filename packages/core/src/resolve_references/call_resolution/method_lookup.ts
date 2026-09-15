@@ -9,7 +9,7 @@ import { DefinitionRegistry } from "../registries/definition";
 import { resolve_module_member } from "../module_member_lookup";
 import { resolve_named_member } from "./collection_dispatch";
 import type { ReceiverResolutionContext } from "./receiver_resolution";
-import { resolve_namespace_scope_member } from "./receiver_resolution";
+import { resolve_namespace_scope_member } from "./namespace_member";
 
 /**
  * Look up a method on a resolved receiver type, dispatching on receiver kind
