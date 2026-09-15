@@ -18,6 +18,7 @@ import type {
   SymbolReference,
   MethodCallReference,
   CollectionMember,
+  AnyDefinition,
   Result,
   ResolutionFailure,
 } from "@ariadnejs/types";
@@ -213,6 +214,17 @@ function resolve_keyed_alias(
   return ok([target]);
 }
 
+/**
+ * Every function a collection holds: its inline functions, and each stored
+ * identifier that resolves to something callable.
+ *
+ * A stored identifier naming a value that is not callable — the `suite`
+ * parameter in mocha's `var suites = [suite]` — is not a call target. It is the
+ * collection's element, and a call on a binding read out of the collection
+ * resolves against that element's type instead. A class is callable: calling
+ * it constructs. A stored identifier whose definition the registry does not
+ * hold, or that is an import, is kept: what it names cannot be inspected here.
+ */
 function get_collection_functions(
   variable_id: SymbolId,
   definitions: DefinitionRegistry,
@@ -236,7 +248,7 @@ function get_collection_functions(
     if (def) {
       for (const ref_name of collection.stored_references) {
         const resolved_id = resolutions.resolve(def.defining_scope_id, ref_name);
-        if (resolved_id) {
+        if (resolved_id && may_be_callable(definitions.get(resolved_id))) {
           functions.push(resolved_id);
         }
       }
@@ -252,4 +264,14 @@ function get_collection_functions(
   }
 
   return ok(functions);
+}
+
+function may_be_callable(definition: AnyDefinition | undefined): boolean {
+  return (
+    definition === undefined ||
+    definition.kind === "function" ||
+    definition.kind === "method" ||
+    definition.kind === "class" ||
+    definition.kind === "import"
+  );
 }

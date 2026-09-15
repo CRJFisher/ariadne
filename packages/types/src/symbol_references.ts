@@ -71,6 +71,14 @@ export interface SelfReferenceCall extends BaseReference {
   readonly keyword: SelfReferenceKeyword;
   /** Property chain (always starts with keyword) */
   readonly property_chain: readonly SymbolName[];
+  /**
+   * @language javascript,typescript,python
+   * Present when the receiver is one element read out of the chain before the
+   * method (`this.cursors[0].m()`), with whether the key is a literal. Observed
+   * from the same call-site syntax a method call carries; the emitted
+   * `CallReference` still reports this receiver as `self_keyword`.
+   */
+  readonly index_access?: { readonly key_is_literal: boolean };
 }
 
 /**
@@ -121,6 +129,11 @@ export interface MethodCallReference extends BaseReference {
   /** Location of assigned variable when this call may be a class instantiation (e.g. user = models.User()) */
   readonly potential_construct_target?: Location;
   /**
+   * Location of the binding whose sequence literal holds this call as an
+   * element (`users = [models.make()]`)
+   */
+  readonly potential_construct_element_of?: Location;
+  /**
    * Syntactic shape of the call site — a neutral AST observation, not a
    * classifier label. Populated when the receiver AST shape is determinable
    * at index time, and copied onto the emitted `CallReference` during call
@@ -161,6 +174,11 @@ export interface FunctionCallReference extends BaseReference {
   /** Location of variable being assigned if this call may be a class instantiation (e.g. obj = SomeClass()) */
   readonly potential_construct_target?: Location;
   /**
+   * Location of the binding whose sequence literal holds this call as an
+   * element, when the call may be a class instantiation (`objs = [SomeClass()]`)
+   */
+  readonly potential_construct_element_of?: Location;
+  /**
    * Rust scoped-path qualifier that scopes the terminal-name lookup, e.g.
    * ["worker"] for `worker::create()` or ["Parker"] for `Parker::make()`.
    * Held separately from the TypeScript `[namespace, class]` `property_chain`
@@ -196,6 +214,13 @@ export interface ConstructorCallReference extends BaseReference {
   readonly kind: "constructor_call";
   /** Location of the variable being assigned (optional - undefined for standalone calls) */
   readonly construct_target?: Location;
+  /**
+   * Location of the binding whose sequence literal holds this construction as
+   * an element: `suites` in `const suites = [new Suite()]`. The construction
+   * types the container's element, never the container, so a reference carries
+   * this or `construct_target`, not both.
+   */
+  readonly construct_element_of?: Location;
   /** Namespace-qualified constructors: ["models", "User"] for new models.User() */
   readonly property_chain?: readonly SymbolName[];
   /**

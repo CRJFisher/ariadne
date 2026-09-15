@@ -759,7 +759,10 @@ describe("ReferenceBuilder", () => {
     it("should call extract_construct_target for constructor calls", () => {
       const target_location = create_test_location(3, 6);
       const mock_extractors = create_mock_extractors({
-        extract_construct_target: vi.fn((node, file_path) => target_location),
+        extract_construct_target: vi.fn((node, file_path) => ({
+          location: target_location,
+          holds: "value" as const,
+        })),
       });
 
       const builder = new ReferenceBuilder(

@@ -486,9 +486,10 @@ describe("Rust Metadata Extractors", () => {
 
       const result = RUST_METADATA_EXTRACTORS.extract_construct_target(struct_expr, TEST_FILE);
 
-      expect(result).toBeDefined();
-      expect(result?.start_column).toBe(5); // "point"
-      expect(result?.end_column).toBe(9);
+      expect(result).toEqual({
+        location: { file_path: TEST_FILE, start_line: 1, start_column: 5, end_line: 1, end_column: 9 },
+        holds: "value",
+      });
     });
 
     it("should extract target for Vec::new()", () => {
@@ -498,8 +499,10 @@ describe("Rust Metadata Extractors", () => {
 
       const result = RUST_METADATA_EXTRACTORS.extract_construct_target(call_expr, TEST_FILE);
 
-      expect(result).toBeDefined();
-      expect(result?.start_column).toBe(5); // "vec"
+      expect(result).toEqual({
+        location: { file_path: TEST_FILE, start_line: 1, start_column: 5, end_line: 1, end_column: 7 },
+        holds: "value",
+      });
     });
 
     it("should extract target for Box::new()", () => {
@@ -509,8 +512,10 @@ describe("Rust Metadata Extractors", () => {
 
       const result = RUST_METADATA_EXTRACTORS.extract_construct_target(call_expr, TEST_FILE);
 
-      expect(result).toBeDefined();
-      expect(result?.start_column).toBe(5); // "boxed"
+      expect(result).toEqual({
+        location: { file_path: TEST_FILE, start_line: 1, start_column: 5, end_line: 1, end_column: 9 },
+        holds: "value",
+      });
     });
 
     it("should extract target for tuple struct", () => {
@@ -520,8 +525,10 @@ describe("Rust Metadata Extractors", () => {
 
       const result = RUST_METADATA_EXTRACTORS.extract_construct_target(call_expr, TEST_FILE);
 
-      expect(result).toBeDefined();
-      expect(result?.start_column).toBe(5); // "color"
+      expect(result).toEqual({
+        location: { file_path: TEST_FILE, start_line: 1, start_column: 5, end_line: 1, end_column: 9 },
+        holds: "value",
+      });
     });
 
     it("should extract target for enum variant", () => {
@@ -531,8 +538,10 @@ describe("Rust Metadata Extractors", () => {
 
       const result = RUST_METADATA_EXTRACTORS.extract_construct_target(call_expr, TEST_FILE);
 
-      expect(result).toBeDefined();
-      expect(result?.start_column).toBe(5); // "opt"
+      expect(result).toEqual({
+        location: { file_path: TEST_FILE, start_line: 1, start_column: 5, end_line: 1, end_column: 7 },
+        holds: "value",
+      });
     });
 
     it("should extract target from assignment", () => {
@@ -542,8 +551,10 @@ describe("Rust Metadata Extractors", () => {
 
       const result = RUST_METADATA_EXTRACTORS.extract_construct_target(call_expr, TEST_FILE);
 
-      expect(result).toBeDefined();
-      expect(result?.start_column).toBe(1); // "obj"
+      expect(result).toEqual({
+        location: { file_path: TEST_FILE, start_line: 1, start_column: 1, end_line: 1, end_column: 3 },
+        holds: "value",
+      });
     });
 
     it("should extract field assignment target", () => {
@@ -553,9 +564,38 @@ describe("Rust Metadata Extractors", () => {
 
       const result = RUST_METADATA_EXTRACTORS.extract_construct_target(call_expr, TEST_FILE);
 
-      expect(result).toBeDefined();
-      expect(result?.start_column).toBe(1);
-      expect(result?.end_column).toBe(9); // "self.data"
+      expect(result).toEqual({
+        location: { file_path: TEST_FILE, start_line: 1, start_column: 1, end_line: 1, end_column: 9 },
+        holds: "value",
+      });
+    });
+
+    it("should target the element of the binding an array literal initialises", () => {
+      const code = "let layers = [Layer::new()];";
+      const tree = parser.parse(code);
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = RUST_METADATA_EXTRACTORS.extract_construct_target(call_expr, TEST_FILE);
+
+      expect(result).toEqual({
+        location: { file_path: TEST_FILE, start_line: 1, start_column: 5, end_line: 1, end_column: 10 },
+        holds: "element",
+      });
+    });
+
+    it("should type nothing through a tuple or struct literal, or an array holding anything but constructions", () => {
+      for (const code of [
+        "let pair = (Layer::new(), 1);",
+        "let h = Holder { inner: Inner::new() };",
+        "let layers = [Layer::new(), other];",
+      ]) {
+        const tree = parser.parse(code);
+        const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+        const result = RUST_METADATA_EXTRACTORS.extract_construct_target(call_expr, TEST_FILE);
+
+        expect(result).toEqual(undefined);
+      }
     });
 
     it("should return undefined for constructor without assignment", () => {
@@ -586,8 +626,10 @@ describe("Rust Metadata Extractors", () => {
 
       const result = RUST_METADATA_EXTRACTORS.extract_construct_target(build_call, TEST_FILE);
 
-      expect(result).toBeDefined();
-      expect(result?.start_column).toBe(5); // obj
+      expect(result).toEqual({
+        location: { file_path: TEST_FILE, start_line: 1, start_column: 5, end_line: 1, end_column: 7 },
+        holds: "value",
+      });
     });
 
     it("should handle pattern with identifier name field", () => {
@@ -721,8 +763,10 @@ impl MyStruct {
 
       const result = RUST_METADATA_EXTRACTORS.extract_construct_target(call_expr, TEST_FILE);
 
-      expect(result).toBeDefined();
-      expect(result?.start_column).toBe(5); // arc
+      expect(result).toEqual({
+        location: { file_path: TEST_FILE, start_line: 1, start_column: 5, end_line: 1, end_column: 7 },
+        holds: "value",
+      });
     });
   });
 

@@ -27,7 +27,9 @@ const LOCATION_FIELDS = [
   "location",
   "receiver_location",
   "potential_construct_target",
+  "potential_construct_element_of",
   "construct_target",
+  "construct_element_of",
   "target_location",
 ] as const;
 

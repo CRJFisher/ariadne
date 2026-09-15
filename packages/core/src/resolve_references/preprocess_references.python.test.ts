@@ -113,6 +113,45 @@ describe("preprocess_python_references", () => {
     });
   });
 
+  it("carries a list element's instantiation target onto the constructor call as its element target", () => {
+    const class_id = class_symbol("Suite", MOCK_LOCATION);
+    const class_def: ClassDefinition = {
+      kind: "class",
+      symbol_id: class_id,
+      name: "Suite" as SymbolName,
+      defining_scope_id: FILE_SCOPE_ID,
+      location: MOCK_LOCATION,
+      is_exported: false,
+      extends: [],
+      methods: [],
+      properties: [],
+      decorators: [],
+    };
+    definitions.update_file(TEST_FILE, [class_def]);
+    resolutions.set_resolution(FILE_SCOPE_ID, "Suite" as SymbolName, class_id);
+    references.update_file(TEST_FILE, [
+      {
+        kind: "function_call",
+        name: "Suite" as SymbolName,
+        location: CALL_LOCATION,
+        scope_id: FILE_SCOPE_ID,
+        potential_construct_element_of: TARGET_LOCATION,
+      },
+    ]);
+
+    preprocess_python_references(TEST_FILE, references, definitions, resolutions);
+
+    expect(references.get_file_references(TEST_FILE)).toEqual([
+      {
+        kind: "constructor_call",
+        name: "Suite" as SymbolName,
+        location: CALL_LOCATION,
+        scope_id: FILE_SCOPE_ID,
+        construct_element_of: TARGET_LOCATION,
+      },
+    ]);
+  });
+
   it("preserves function_call when callee is a function, not a class", () => {
     const func_id = function_symbol("my_function" as SymbolName, MOCK_LOCATION);
     const func_def: FunctionDefinition = {

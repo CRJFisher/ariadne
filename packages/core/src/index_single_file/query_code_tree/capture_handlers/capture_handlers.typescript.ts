@@ -20,6 +20,7 @@ import {
 } from "../symbol_factories/symbol_factories.javascript";
 import {
   extract_collection_source,
+  extract_iteration_source,
   extract_initializer_call,
   extract_member_source,
 } from "../symbol_factories/initializer_sources.javascript";
@@ -120,6 +121,7 @@ export function handle_ts_definition_variable(
   const member_source = extract_member_source(capture.node);
   const initialized_from_call = extract_initializer_call(capture.node);
   const destructured = extract_destructured_binding(capture.node);
+  const iterated_from = extract_iteration_source(capture.node);
 
   builder.add_variable({
     kind: is_const ? "constant" : "variable",
@@ -137,6 +139,7 @@ export function handle_ts_definition_variable(
     initialized_from_call,
     destructured_from: destructured?.source,
     destructured_key: destructured?.key,
+    iterated_from,
   });
 }
 

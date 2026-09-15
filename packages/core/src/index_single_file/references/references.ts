@@ -222,12 +222,16 @@ function process_method_reference(
   if (receiver_info) {
     // Check if this is a self-reference call (this.method(), self.method(), etc.)
     if (receiver_info.is_self_reference && receiver_info.self_keyword) {
+      const self_syntax = extract_call_site_syntax(capture.node, language);
       return create_self_reference_call(
         method_name,
         location,
         scope_id,
         receiver_info.self_keyword,
-        receiver_info.property_chain
+        receiver_info.property_chain,
+        self_syntax?.receiver_kind === "index_access"
+          ? { key_is_literal: self_syntax.index_key_is_literal === true }
+          : undefined
       );
     }
 
@@ -541,7 +545,7 @@ export class ReferenceBuilder {
           capture.node,
           this.file_path
         );
-        const target_location = construct_target || location;
+        const target_location = construct_target?.location ?? location;
 
         // Extract type information from type annotation (if present)
         const assignment_type = extract_type_info(capture, this.extractors, this.file_path);

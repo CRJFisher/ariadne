@@ -27,6 +27,16 @@ export interface ReceiverInfo {
 }
 
 /**
+ * Where a construction's value is stored: in the binding itself (`value`), or
+ * as an element of the sequence literal the binding holds (`element` —
+ * `suites` in `const suites = [new Suite()]`).
+ */
+export interface ConstructTarget {
+  readonly location: Location;
+  readonly holds: "value" | "element";
+}
+
+/**
  * Language-specific metadata extraction functions
  *
  * Each language implements these functions to extract rich metadata
@@ -58,12 +68,13 @@ export interface MetadataExtractors {
   ): ReceiverInfo | undefined;
 
   /**
-   * Extract constructor call target variable location
+   * The binding a construction's value is stored in, and whether it holds the
+   * value or an element of it
    */
   extract_construct_target(
     node: SyntaxNode,
     file_path: FilePath
-  ): Location | undefined;
+  ): ConstructTarget | undefined;
 
   /**
    * Check if a node represents optional chaining

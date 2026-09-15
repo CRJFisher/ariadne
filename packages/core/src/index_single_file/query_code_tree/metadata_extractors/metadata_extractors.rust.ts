@@ -17,10 +17,13 @@
  */
 
 import type { SyntaxNode } from "tree-sitter";
-import type { Location, SymbolName, TypeInfo, FilePath } from "@ariadnejs/types";
+import type { SymbolName, TypeInfo, FilePath } from "@ariadnejs/types";
 import { type_symbol } from "@ariadnejs/types";
-import type { MetadataExtractors, ReceiverInfo } from "./metadata_extractor_types";
+import type { ConstructTarget, MetadataExtractors, ReceiverInfo } from "./metadata_extractor_types";
 import { node_to_location } from "../../node_to_location";
+
+/** The expressions a Rust construction is written as. */
+const RUST_CONSTRUCTIONS: ReadonlySet<string> = new Set(["call_expression", "struct_expression"]);
 
 /**
  * Extract Rust type from type annotations
@@ -389,7 +392,7 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
   extract_construct_target(
     node: SyntaxNode | null | undefined,
     file_path: FilePath
-  ): Location | undefined {
+  ): ConstructTarget | undefined {
     if (!node) {
       return undefined;
     }
@@ -402,22 +405,20 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
     // Look for parent let_declaration or assignment.
     // Stop at arguments boundaries to avoid matching outer bindings
     // for nested constructor calls (e.g., Outer::new(Inner::new())).
+    // An array literal whose every element is a construction holds each as an
+    // element of what the binding stores (`let layers = [Layer::new()]`); a tuple
+    // or struct literal, or an array holding anything else, holds it where no
+    // element type reaches.
+    let holds: ConstructTarget["holds"] = "value";
+    let child: SyntaxNode = node;
     let parent = node.parent;
     while (parent) {
       if (parent.type === "let_declaration") {
         const pattern = parent.childForFieldName("pattern");
         if (pattern) {
           // For patterns, we want the identifier, not the whole pattern
-          if (pattern.type === "identifier") {
-            return node_to_location(pattern, file_path);
-          }
-          // For more complex patterns, find the main binding
-          const ident = pattern.childForFieldName("name");
-          if (ident) {
-            return node_to_location(ident, file_path);
-          }
-          // For simple cases, use the whole pattern
-          return node_to_location(pattern, file_path);
+          const binding = pattern.type === "identifier" ? pattern : pattern.childForFieldName("name") ?? pattern;
+          return { location: node_to_location(binding, file_path), holds };
         }
         break;
       }
@@ -425,15 +426,29 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
       if (parent.type === "assignment_expression") {
         const left = parent.childForFieldName("left");
         if (left) {
-          return node_to_location(left, file_path);
+          return { location: node_to_location(left, file_path), holds };
         }
         break;
       }
 
-      if (parent.type === "arguments") {
+      if (parent.type === "arguments" || parent.type === "tuple_expression" || parent.type === "field_initializer_list") {
         break;
       }
 
+      if (parent.type === "array_expression") {
+        const direct_element =
+          holds === "value" &&
+          (child.id === node.id ||
+            (RUST_CONSTRUCTIONS.has(child.type) &&
+              node.endIndex <= (child.childForFieldName("arguments")?.startIndex ?? child.endIndex))) &&
+          parent.namedChildren.every((element) => RUST_CONSTRUCTIONS.has(element.type) || element.type.endsWith("comment"));
+        if (!direct_element) {
+          break;
+        }
+        holds = "element";
+      }
+
+      child = parent;
       parent = parent.parent;
     }
 

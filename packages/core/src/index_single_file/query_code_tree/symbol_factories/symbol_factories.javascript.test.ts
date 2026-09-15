@@ -847,6 +847,28 @@ describe("detect_function_collection", () => {
     const result = detect_function_collection(declarator, file_path);
     expect(result).toBeNull();
   });
+
+  it("marks an array literal whose every element is a bare name as holding references", () => {
+    const declarator = parse_ts("const suites = [root, child];").child(0)!.namedChildren[0]!;
+
+    const result = detect_function_collection(declarator, file_path);
+
+    expect(result?.elements_are_references).toBe(true);
+  });
+
+  it.each([
+    ["a spread", "const suites = [root, ...rest];"],
+    ["a call", "const suites = [root, make()];"],
+    ["a member read", "const suites = [root, this.child];"],
+    ["an inline function", "const suites = [root, () => {}];"],
+  ])("leaves an array literal holding %s unmarked", (_label, code) => {
+    const declarator = parse_ts(code).child(0)!.namedChildren[0]!;
+
+    const result = detect_function_collection(declarator, file_path);
+
+    expect(result).not.toBeNull();
+    expect(result?.elements_are_references).toBeUndefined();
+  });
 });
 
 // ============================================================================
@@ -1253,6 +1275,6 @@ describe("collection member ids name real definitions", () => {
       }
     }
     expect(phantoms).toEqual([]);
-    expect({ files: files.length, recorded }).toEqual({ files: 39, recorded: 66 });
+    expect({ files: files.length, recorded }).toEqual({ files: 44, recorded: 66 });
   });
 });

@@ -1,7 +1,6 @@
 import type {
   SymbolId,
   FilePath,
-  LocationKey,
   ScopeId,
   SymbolName,
   Language,
@@ -16,7 +15,10 @@ import type { ExportRegistry } from "./export";
 import {
   extract_type_bindings,
   extract_constructor_bindings,
+  container_element_annotation,
   parse_type_annotation,
+  type ConstructorBindings,
+  type ContainerShape,
   type ParsedTypeAnnotation,
 } from "../type_preprocessing";
 import type { ResolutionRegistry } from "../resolution_registry";
@@ -68,12 +70,22 @@ interface ExtractedTypeData {
   value_bindings: ReadonlyMap<SymbolId, SymbolName>;
   /** Function or method → its declared return annotation text, e.g. `connect(): Conn` */
   return_bindings: ReadonlyMap<SymbolId, SymbolName>;
-  /** Constructed symbol → the name chain it constructs, e.g. `new models.User()` → ["models", "User"] */
-  construction_bindings: ReadonlyMap<LocationKey, readonly SymbolName[]>;
+  /** Binding location → the name chains constructed into it, e.g. `new models.User()` → ["models", "User"] */
+  construction_bindings: ConstructorBindings;
   /** Every class, interface and enum the file declares */
   declared_types: readonly SymbolId[];
   /** Untyped variable → the callee chain of its call initialiser, e.g. `s.getInfo()` → ["s", "getInfo"] */
   call_initializers: ReadonlyMap<SymbolId, readonly SymbolName[]>;
+}
+
+/**
+ * What one element of a container binding holds, and how the container's
+ * iteration relates to it: a sequence yields its elements, a keyed container
+ * yields key/value entries whose value is the element.
+ */
+export interface ContainerElement {
+  readonly shape: ContainerShape;
+  readonly element: SymbolId;
 }
 
 /** Symbols a file contributed, tracked so remove_file() can evict them. */
@@ -113,8 +125,8 @@ function names_a_type(
 
 /**
  * Project-wide store of resolved type relationships, all keyed by SymbolId:
- * value → type, value → type arguments, callable → return type, type →
- * members. Inheritance is read from the heritage graph `DefinitionRegistry`
+ * value → type, value → type arguments, container → element, callable →
+ * return type, type → members. Inheritance is read from the heritage graph `DefinitionRegistry`
  * holds.
  *
  * update_file() extracts type names from a file's index and resolves them to
@@ -124,6 +136,7 @@ function names_a_type(
 export class TypeRegistry {
   private symbol_types: Map<SymbolId, SymbolId> = new Map();
   private symbol_type_arguments: Map<SymbolId, readonly SymbolId[]> = new Map();
+  private container_elements: Map<SymbolId, ContainerElement> = new Map();
   private callable_return_types: Map<SymbolId, SymbolId> = new Map();
   private resolved_type_members: Map<SymbolId, Map<SymbolName, SymbolId>> =
     new Map();
@@ -212,10 +225,11 @@ export class TypeRegistry {
     // the construction names nothing that can hold members — there is none, or
     // it resolves to a factory function, as `p: Parser = make()` does.
     const constructions = new Map<SymbolId, readonly SymbolName[]>();
-    for (const [loc_key, chain] of extracted.construction_bindings) {
+    for (const [loc_key, chain] of extracted.construction_bindings.values) {
       const target_id = this.definitions.get_symbol_at_location(loc_key);
       if (target_id) constructions.set(target_id, chain);
     }
+
     const bound_symbols = new Set([
       ...extracted.value_bindings.keys(),
       ...constructions.keys(),
@@ -224,6 +238,11 @@ export class TypeRegistry {
       const scope_id = this.definitions.get_symbol_scope(symbol_id);
       if (!scope_id) continue;
 
+      const annotation_text = extracted.value_bindings.get(symbol_id);
+      const annotation = annotation_text
+        ? parse_type_annotation(annotation_text, language)
+        : null;
+
       const construction = constructions.get(symbol_id);
       const constructed_id = construction
         ? this.resolve_type_head(scope_id, construction, undefined, file_id, language, context)
@@ -231,22 +250,44 @@ export class TypeRegistry {
       if (constructed_id && names_a_type(constructed_id, this.definitions)) {
         this.symbol_types.set(symbol_id, constructed_id);
         resolved_symbols.add(symbol_id);
-        continue;
+      } else if (annotation) {
+        const annotated_id = this.resolve_annotation(scope_id, annotation, file_id, language, context);
+        this.record_declared_type(
+          symbol_id,
+          annotated_id && names_a_type(annotated_id, this.definitions) ? annotated_id : null,
+          this.resolve_annotation_arguments(scope_id, annotation, file_id, language, context),
+          resolved_symbols
+        );
       }
 
-      const annotation_text = extracted.value_bindings.get(symbol_id);
-      const annotation = annotation_text
-        ? parse_type_annotation(annotation_text, language)
-        : null;
-      if (!annotation) continue;
+      // A container's element is the annotation's to say even where a
+      // construction supplied the type: `new DisposableMap()` names no element.
+      // It is resolved on its own rather than read from the type arguments,
+      // which are all or nothing, and a keyed container's key is most often a
+      // primitive (`Map<string, V>`, `dict[str, V]`) that never resolves.
+      const container = annotation ? container_element_annotation(annotation) : null;
+      if (container) {
+        const element_id = this.resolve_annotation(scope_id, container.element, file_id, language, context);
+        if (element_id && names_a_type(element_id, this.definitions)) {
+          this.container_elements.set(symbol_id, { shape: container.shape, element: element_id });
+          resolved_symbols.add(symbol_id);
+        }
+      }
+    }
 
-      const annotated_id = this.resolve_annotation(scope_id, annotation, file_id, language, context);
-      this.record_declared_type(
-        symbol_id,
-        annotated_id && names_a_type(annotated_id, this.definitions) ? annotated_id : null,
-        this.resolve_annotation_arguments(scope_id, annotation, file_id, language, context),
-        resolved_symbols
-      );
+    // STEP 1.1: a sequence literal's constructions → the binding's element. Like
+    // STEP 1's construction, it names the class that runs, so it replaces what
+    // the binding's annotation says its elements are.
+    for (const [loc_key, chains] of extracted.construction_bindings.elements) {
+      const container_id = this.definitions.get_symbol_at_location(loc_key);
+      const scope_id = container_id ? this.definitions.get_symbol_scope(container_id) : null;
+      if (!container_id || !scope_id) continue;
+
+      const element_id = this.resolve_one_element_type(chains, scope_id, file_id, language, context);
+      if (element_id) {
+        this.container_elements.set(container_id, { shape: "sequence", element: element_id });
+        resolved_symbols.add(container_id);
+      }
     }
 
     // STEP 1.2: function/method → declared return type. Recorded apart from
@@ -413,6 +454,28 @@ export class TypeRegistry {
       this.symbol_type_arguments.set(symbol_id, argument_ids);
       resolved_symbols.add(symbol_id);
     }
+  }
+
+  /**
+   * The one type every construction in a sequence literal names, or null when
+   * one names nothing that can hold members or two name different types — an
+   * element is one type, never a union.
+   */
+  private resolve_one_element_type(
+    chains: readonly (readonly SymbolName[])[],
+    scope_id: ScopeId,
+    file_id: FilePath,
+    language: Language,
+    context: TypeResolutionContext
+  ): SymbolId | null {
+    let element_id: SymbolId | null = null;
+    for (const chain of chains) {
+      const constructed_id = this.resolve_type_head(scope_id, chain, undefined, file_id, language, context);
+      if (!constructed_id || !names_a_type(constructed_id, this.definitions)) return null;
+      if (element_id && element_id !== constructed_id) return null;
+      element_id = constructed_id;
+    }
+    return element_id;
   }
 
   /**
@@ -616,6 +679,16 @@ export class TypeRegistry {
   }
 
   /**
+   * What one element of a container binding holds: from the elements its
+   * sequence literal constructs, or from its annotation's element argument
+   * when the annotation is a container shape (`Suite[]`, `Map<string, V>`).
+   * Null for a binding neither describes.
+   */
+  get_container_element(symbol_id: SymbolId): ContainerElement | null {
+    return this.container_elements.get(symbol_id) ?? null;
+  }
+
+  /**
    * Record a type binding found during call resolution — the escape hatch for
    * bindings that cannot be resolved in update_file() because they depend on
    * which call resolved to which class, known only after call resolution
@@ -677,6 +750,7 @@ export class TypeRegistry {
     for (const symbol_id of contributions.resolved_symbols) {
       this.symbol_types.delete(symbol_id);
       this.symbol_type_arguments.delete(symbol_id);
+      this.container_elements.delete(symbol_id);
       this.callable_return_types.delete(symbol_id);
       this.resolved_type_members.delete(symbol_id);
     }
@@ -687,6 +761,7 @@ export class TypeRegistry {
   clear(): void {
     this.symbol_types.clear();
     this.symbol_type_arguments.clear();
+    this.container_elements.clear();
     this.callable_return_types.clear();
     this.resolved_type_members.clear();
     this.resolved_by_file.clear();

@@ -1167,6 +1167,28 @@ describe("detect_function_collection", () => {
     const result = detect_function_collection(assignment, file_path);
     expect(result).toBeNull();
   });
+
+  it.each([
+    ["list", "suites = [root, child]"],
+    ["tuple", "suites = (root, child)"],
+  ])("marks a %s literal whose every element is a bare name as holding references", (_label, code) => {
+    const result = detect_function_collection(find_assignment(parse_python(code))!, file_path);
+
+    expect(result?.elements_are_references).toBe(true);
+  });
+
+  it.each([
+    ["a list splat", "suites = [root, *rest]"],
+    ["a tuple splat", "suites = (root, *rest)"],
+    ["a call", "suites = [root, make()]"],
+    ["an attribute read", "suites = [root, models.child]"],
+    ["a lambda", "suites = [root, lambda: None]"],
+  ])("leaves a literal holding %s unmarked", (_label, code) => {
+    const result = detect_function_collection(find_assignment(parse_python(code))!, file_path);
+
+    expect(result).not.toBeNull();
+    expect(result?.elements_are_references).toBeUndefined();
+  });
 });
 
 // ============================================================================

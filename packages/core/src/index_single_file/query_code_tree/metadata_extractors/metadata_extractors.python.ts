@@ -6,10 +6,20 @@
  */
 
 import type { SyntaxNode } from "tree-sitter";
-import type { Location, SymbolName, TypeInfo, FilePath, SelfReferenceKeyword } from "@ariadnejs/types";
+import type { SymbolName, TypeInfo, FilePath, SelfReferenceKeyword } from "@ariadnejs/types";
 import { type_symbol } from "@ariadnejs/types";
-import type { MetadataExtractors, ReceiverInfo } from "./metadata_extractor_types";
+import type { ConstructTarget, MetadataExtractors, ReceiverInfo } from "./metadata_extractor_types";
 import { node_to_location } from "../../node_to_location";
+
+/** Literals that hold a value where no binding's element type reaches. */
+const NON_SEQUENCE_LITERALS: ReadonlySet<string> = new Set([
+  "dictionary",
+  "dictionary_comprehension",
+  "set",
+  "set_comprehension",
+  "tuple",
+  "generator_expression",
+]);
 
 function extract_python_type(node: SyntaxNode | null | undefined): string | undefined {
   if (!node) {
@@ -251,41 +261,59 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
    * constructors are ordinary calls, so this walks up from the call node to the
    * enclosing assignment/annotated-assignment/walrus and returns its target,
    * yielding the variable's type without inference (`x = Y()` → `x` is a `Y`).
+   * An argument list ends the walk: a value passed to a call belongs to the
+   * callee (`x = Outer(Inner())` holds an Outer). A list literal whose every
+   * element is a call, or a comprehension whose body is the call, holds it as
+   * an element of what the target stores (`xs = [Y()]` stores Ys). Any other
+   * literal, a list holding anything but calls, a comprehension's `for` or `if`
+   * clause, or a call a list only holds inside an element (`[Y().child]`)
+   * holds it where no element type reaches.
    */
   extract_construct_target(
     node: SyntaxNode | null | undefined,
     file_path: FilePath
-  ): Location | undefined {
+  ): ConstructTarget | undefined {
     if (!node) {
       return undefined;
     }
 
+    // The capture is the call itself or its bare callee name.
+    const call = node.type === "call" ? node : node.parent;
+    let holds: ConstructTarget["holds"] = "value";
+    let child: SyntaxNode = node;
     let parent = node.parent;
     while (parent) {
-      if (parent.type === "assignment") {
-        const left = parent.childForFieldName("left");
-        if (left) {
-          return node_to_location(left, file_path);
-        }
-        break;
+      const target_node =
+        parent.type === "assignment"
+          ? parent.childForFieldName("left")
+          : parent.type === "annotated_assignment"
+            ? parent.childForFieldName("target")
+            : parent.type === "named_expression"
+              ? parent.childForFieldName("name")
+              : undefined;
+      if (target_node !== undefined) {
+        return target_node ? { location: node_to_location(target_node, file_path), holds } : undefined;
       }
 
-      if (parent.type === "annotated_assignment") {
-        const target_node = parent.childForFieldName("target");
-        if (target_node) {
-          return node_to_location(target_node, file_path);
+      if (parent.type === "argument_list") {
+        return undefined;
+      }
+      if (parent.type === "list" || parent.type === "list_comprehension") {
+        const direct_element =
+          holds === "value" &&
+          child.id === call?.id &&
+          (parent.type === "list"
+            ? parent.namedChildren.every((element) => element.type === "call" || element.type === "comment")
+            : parent.childForFieldName("body")?.id === child.id);
+        if (!direct_element) {
+          return undefined;
         }
-        break;
+        holds = "element";
+      } else if (NON_SEQUENCE_LITERALS.has(parent.type)) {
+        return undefined;
       }
 
-      if (parent.type === "named_expression") {
-        const name = parent.childForFieldName("name");
-        if (name) {
-          return node_to_location(name, file_path);
-        }
-        break;
-      }
-
+      child = parent;
       parent = parent.parent;
     }
 

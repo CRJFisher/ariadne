@@ -164,6 +164,36 @@ describe("Reference Factories", () => {
       expect(ref.kind).toBe("function_call");
       expect(Object.keys(ref)).toEqual(["kind", "name", "location", "scope_id"]);
     });
+
+    test("carries where a possible instantiation would be stored: the binding, or its element", () => {
+      const stored = create_function_call_reference(
+        "Suite" as SymbolName,
+        mock_location,
+        mock_scope_id,
+        { location: mock_target_location, holds: "value" }
+      );
+      const element = create_function_call_reference(
+        "Suite" as SymbolName,
+        mock_location,
+        mock_scope_id,
+        { location: mock_target_location, holds: "element" }
+      );
+
+      expect(stored).toEqual({
+        kind: "function_call",
+        name: "Suite",
+        location: mock_location,
+        scope_id: mock_scope_id,
+        potential_construct_target: mock_target_location,
+      });
+      expect(element).toEqual({
+        kind: "function_call",
+        name: "Suite",
+        location: mock_location,
+        scope_id: mock_scope_id,
+        potential_construct_element_of: mock_target_location,
+      });
+    });
   });
 
   describe("create_constructor_call_reference", () => {
@@ -172,7 +202,7 @@ describe("Reference Factories", () => {
         "MyClass" as SymbolName,
         mock_location,
         mock_scope_id,
-        mock_target_location
+        { location: mock_target_location, holds: "value" }
       );
 
       expect(ref).toEqual({
@@ -184,16 +214,21 @@ describe("Reference Factories", () => {
       });
     });
 
-    test("includes construct_target location", () => {
+    test("carries an element target as construct_element_of, never construct_target", () => {
       const ref = create_constructor_call_reference(
-        "Service" as SymbolName,
+        "Suite" as SymbolName,
         mock_location,
         mock_scope_id,
-        mock_target_location
+        { location: mock_target_location, holds: "element" }
       );
 
-      expect(ref.kind).toBe("constructor_call");
-      expect(ref.construct_target).toEqual(mock_target_location);
+      expect(ref).toEqual({
+        kind: "constructor_call",
+        name: "Suite",
+        location: mock_location,
+        scope_id: mock_scope_id,
+        construct_element_of: mock_target_location,
+      });
     });
   });
 
@@ -428,7 +463,7 @@ describe("Reference Factories", () => {
         "Class" as SymbolName,
         mock_location,
         mock_scope_id,
-        mock_target_location
+        { location: mock_target_location, holds: "value" }
       );
       const var_ref = create_variable_reference(
         "x" as SymbolName,

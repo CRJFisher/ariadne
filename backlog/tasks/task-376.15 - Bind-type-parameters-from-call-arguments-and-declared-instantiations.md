@@ -36,6 +36,10 @@ plan_source_tasks:
 4. Add unit tests for unification: a parameter `Type<T>` against argument `Foo` binds `T = Foo`; `Map<K, V>` against `Map<string, Foo>` binds both; an unbound parameter leaves the return unresolved rather than guessing.
 5. Add integration tests (fixtures under `tests/fixtures/{typescript,rust}/code/integration/`) covering every evidence case for this step: angular DI `inject(Router)` / `get(Type<T>)` yielding the injected type's methods; `Provider<Foo<Bar>>` nested-argument resolution; a TypeScript generic factory `create<T>(c: Type<T>): T` whose result receives a method call; a Rust `fn walk<V: Visitor>(v: &mut V) { v.visit_item(); }` binding `V` through its trait bound; and a call whose type parameter cannot be bound, asserting the receiver stays unresolved rather than mis-typed.
 
+## Carried from TASK-376.10
+
+TASK-394's eleven `dispose` sites are disposed through `codeEditorContributions.ts`'s `_instances = this._register(new DisposableMap<string, IEditorContribution>())`. TASK-376.10 types a container's element from its annotation or its literal's constructions, but this field has neither: its element is reachable only by binding `_register<T>(o: T): T`'s `T` from the argument and reading the construction's own type arguments. Add that shape to step 5's evidence cases, and replace the annotated stand-in in `tests/fixtures/typescript/code/integration/container_elements/contributions.ts` with the real one.
+
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria

@@ -29,7 +29,6 @@ import {
   ConstructorDefinition,
   CallbackContext,
   CollectionMember,
-  FunctionCollection,
 } from "@ariadnejs/types";
 
 import type { CaptureNode } from "../capture_types";
@@ -532,41 +531,17 @@ export class DefinitionBuilder {
     return this;
   }
 
-  add_variable(definition: {
-    kind: "variable" | "constant";
-    symbol_id: SymbolId;
-    name: SymbolName;
-    location: Location;
-    scope_id: ScopeId;
-    is_exported?: boolean;
-    export?: ExportMetadata;
-    type?: SymbolName;
-    initial_value?: string;
-    docstring?: string;
-    function_collection?: FunctionCollection;
-    collection_source?: SymbolName;
-    member_source?: { holder: SymbolName; member: SymbolName };
-    initialized_from_call?: readonly SymbolName[];
-    destructured_from?: SymbolName;
-    destructured_key?: SymbolName;
-  }): DefinitionBuilder {
+  add_variable(
+    definition: Omit<VariableDefinition, "defining_scope_id" | "is_exported"> & {
+      scope_id: ScopeId;
+      is_exported?: boolean;
+    }
+  ): DefinitionBuilder {
+    const { scope_id, is_exported, ...variable } = definition;
     this.variables.set(definition.symbol_id, {
-      kind: definition.kind,
-      symbol_id: definition.symbol_id,
-      name: definition.name,
-      location: definition.location,
-      defining_scope_id: definition.scope_id,
-      is_exported: definition.is_exported || false,
-      export: definition.export,
-      type: definition.type,
-      initial_value: definition.initial_value,
-      docstring: definition.docstring,
-      function_collection: definition.function_collection,
-      collection_source: definition.collection_source,
-      member_source: definition.member_source,
-      initialized_from_call: definition.initialized_from_call,
-      destructured_from: definition.destructured_from,
-      destructured_key: definition.destructured_key,
+      ...variable,
+      defining_scope_id: scope_id,
+      is_exported: is_exported || false,
     });
     return this;
   }

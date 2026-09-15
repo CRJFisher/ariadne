@@ -20,6 +20,7 @@ import type {
   FunctionCallReference,
   SymbolName,
   VariableDefinition,
+  IterationSource,
 } from "@ariadnejs/types";
 import { build_index_single_file } from "./index_single_file";
 import type { ParsedFile } from "./parsed_file";
@@ -481,7 +482,7 @@ typed_obj: MyClass = MyClass()
       ]);
     });
 
-    it("carries the enclosing assignment target on a nested call too", () => {
+    it("carries the assignment target on the outer call only, never on one passed to it as an argument", () => {
       const code = `
 wrapper = Wrapper(Inner(data))
 result = process(Factory.create())
@@ -497,8 +498,8 @@ result = process(Factory.create())
             ref.kind === "function_call" || ref.kind === "method_call"
         )
         .map((ref) => ({ kind: ref.kind, name: ref.name, target: ref.potential_construct_target }));
-      // The target is the assignment the call sits in, however deep: `Inner`
-      // and `Wrapper` both land in `wrapper`, and `create` lands in `result`.
+      // A value passed to a call belongs to the callee's parameter: `wrapper`
+      // holds what `Wrapper` builds, never the `Inner` it was given.
       expect(calls).toEqual([
         {
           kind: "function_call",
@@ -508,7 +509,7 @@ result = process(Factory.create())
         {
           kind: "function_call",
           name: "Inner",
-          target: { file_path, start_line: 2, start_column: 1, end_line: 2, end_column: 7 },
+          target: undefined,
         },
         {
           kind: "function_call",
@@ -518,7 +519,7 @@ result = process(Factory.create())
         {
           kind: "method_call",
           name: "create",
-          target: { file_path, start_line: 3, start_column: 1, end_line: 3, end_column: 6 },
+          target: undefined,
         },
       ]);
     });
@@ -2944,6 +2945,30 @@ class Factory:
       const parsed_file = create_parsed_file(code, "test.py" as FilePath, tree, "python" as Language);
       return build_index_single_file(parsed_file, tree, "python" as Language);
     }
+
+    it("records what each loop and unpacking binding takes from the container it iterates", () => {
+      const result = index_python(`for suite in suites:
+    pass
+for name, entry in named.items():
+    pass
+for each in self.named.values():
+    pass
+first, second = suites
+`);
+      const sources = new Map(
+        Array.from(result.variables.values()).map((v) => [v.name, v.iterated_from]),
+      );
+      expect(sources).toEqual(
+        new Map<SymbolName, IterationSource | undefined>([
+          ["suite" as SymbolName, { container: ["suites" as SymbolName], yields: "item" }],
+          ["name" as SymbolName, undefined],
+          ["entry" as SymbolName, { container: ["named" as SymbolName], yields: "entry_value" }],
+          ["each" as SymbolName, { container: ["self" as SymbolName, "named" as SymbolName], yields: "value" }],
+          ["first" as SymbolName, { container: ["suites" as SymbolName], yields: "item" }],
+          ["second" as SymbolName, { container: ["suites" as SymbolName], yields: "item" }],
+        ]),
+      );
+    });
 
     it("records initialized_from_call as the callee chain and member_source as the attribute read", () => {
       const result = index_python(`c = connect()

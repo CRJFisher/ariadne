@@ -14,7 +14,7 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import Parser from "tree-sitter";
 import Rust from "tree-sitter-rust";
-import type { FilePath, Language, SymbolName } from "@ariadnejs/types";
+import type { FilePath, IterationSource, Language, SymbolName } from "@ariadnejs/types";
 import type {
   FunctionCallReference,
   MethodCallReference,
@@ -1577,6 +1577,32 @@ fn main() {
         (t) => t.type_info?.type_name && t.type_info.certainty === "declared",
       );
       expect(has_valid_type).toBe(true);
+    });
+
+    it("records what each for-loop binding takes from the container it iterates", () => {
+      const code = `
+fn forward(layers: Vec<Layer>, named: HashMap<String, Layer>) {
+    for layer in &layers {}
+    for (name, entry) in named.iter() {}
+    for value in named.values() {}
+}
+`;
+      const tree = parser.parse(code);
+      const parsed_file = create_parsed_file(code, "test.rs" as FilePath, tree, "rust");
+
+      const index = build_index_single_file(parsed_file, tree, "rust");
+
+      const sources = new Map(
+        Array.from(index.variables.values()).map((v) => [v.name, v.iterated_from]),
+      );
+      expect(sources).toEqual(
+        new Map<SymbolName, IterationSource | undefined>([
+          ["layer" as SymbolName, { container: ["layers" as SymbolName], yields: "item" }],
+          ["name" as SymbolName, undefined],
+          ["entry" as SymbolName, { container: ["named" as SymbolName], yields: "entry_value" }],
+          ["value" as SymbolName, { container: ["named" as SymbolName], yields: "value" }],
+        ]),
+      );
     });
 
     it("records initialized_from_call as the callee chain of a let or const", () => {

@@ -47,7 +47,12 @@ export function preprocess_python_references(
       name: ref.name,
       location: ref.location,
       scope_id: ref.scope_id,
-      construct_target: ref.potential_construct_target,
+      ...(ref.potential_construct_target !== undefined && {
+        construct_target: ref.potential_construct_target,
+      }),
+      ...(ref.potential_construct_element_of !== undefined && {
+        construct_element_of: ref.potential_construct_element_of,
+      }),
     };
 
     return constructor_ref;

@@ -220,6 +220,13 @@ export interface FunctionCollection {
   readonly location: Location;
   readonly stored_functions: readonly SymbolId[];
   readonly stored_references?: readonly SymbolName[]; // Names of referenced functions (e.g. "handler" in [handler])
+  /**
+   * Present on an `Array` whose every element is a bare name in
+   * `stored_references` (`[suite, child]`), so those names' types are the
+   * element types. A spread, inline function, call, member read or literal
+   * among the elements leaves it absent.
+   */
+  readonly elements_are_references?: true;
   readonly named_members?: readonly CollectionMember[]; // Property name → member function, for `obj.method()` / `this.method()` resolution
 }
 
@@ -305,6 +312,36 @@ export interface VariableDefinition extends Definition {
    * `{ storage: s }`. Present exactly when `destructured_from` is.
    */
   readonly destructured_key?: SymbolName;
+  /**
+   * The container a loop or array-destructuring binding takes one element of:
+   * `{ container: ["suites"], yields: "item" }` for `for (const s of suites)`.
+   * Absent when the iterable is not a name chain rooted at an identifier or a
+   * self receiver — a call other than the `values()`/`items()` forms below, a
+   * subscript, a literal.
+   */
+  readonly iterated_from?: IterationSource;
+}
+
+/**
+ * Which part of a container's iteration a binding holds.
+ *
+ * - `item` — what iterating the container yields: `x` in `for (const x of xs)`,
+ *   `for x in xs`, `for x in &xs` or `xs.iter()`, and each name of
+ *   `const [a, b] = xs`.
+ * - `value` — what iterating its values yields: `for (const v of m.values())`,
+ *   `for v in d.values()`.
+ * - `entry_value` — the value half of an iterated key/value pair: `v` in
+ *   `for (const [k, v] of m)`, `for k, v in d.items()`, `for (k, v) in &m`.
+ */
+export type IterationPart = "item" | "value" | "entry_value";
+
+/**
+ * A container name chain, root first (`["xs"]`, `["this", "_instances"]`,
+ * `["self", "layers"]`), and the part of its iteration a binding holds.
+ */
+export interface IterationSource {
+  readonly container: readonly SymbolName[];
+  readonly yields: IterationPart;
 }
 
 /**
