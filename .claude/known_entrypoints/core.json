@@ -1,7 +1,7 @@
 [
   {
     "source": "public-api-external-callers",
-    "description": "Public API methods on Project, FileSystemStorage, DefinitionRegistry, and ResolutionRegistry that are called from outside packages/core \u2014 via tests in packages/core/src/**/*.test.ts, the MCP package (packages/mcp), or external consumers. The core-only call graph cannot see these cross-package call edges, so they appear as uncalled.",
+    "description": "Public API methods on Project, FileSystemStorage, DefinitionRegistry, and ResolutionRegistry that are called from outside packages/core — via tests in packages/core/src/**/*.test.ts, the MCP package (packages/mcp), or external consumers. The core-only call graph cannot see these cross-package call edges, so they appear as uncalled.",
     "entrypoints": [
       {
         "name": "clear",
@@ -46,6 +46,20 @@
       {
         "name": "get_calls_for_file",
         "file_path": "packages/core/src/resolve_references/resolution_registry.ts"
+      }
+    ]
+  },
+  {
+    "source": "python-scope-boundary-extractor",
+    "description": "PythonScopeBoundaryExtractor methods reported as uncalled by the dead-code Stop hook; recorded as known entry points on user instruction without root-cause investigation.",
+    "entrypoints": [
+      {
+        "name": "extract_self_type_name",
+        "file_path": "packages/core/src/index_single_file/scopes/extractors/python_scope_boundary_extractor.ts"
+      },
+      {
+        "name": "extract_boundaries",
+        "file_path": "packages/core/src/index_single_file/scopes/extractors/python_scope_boundary_extractor.ts"
       }
     ]
   }
