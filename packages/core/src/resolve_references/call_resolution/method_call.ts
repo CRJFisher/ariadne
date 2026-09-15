@@ -15,13 +15,10 @@
  */
 
 import type {
-  SymbolId,
   FilePath,
   Language,
   MethodCallReference,
   SelfReferenceCall,
-  Result,
-  ResolutionFailure,
 } from "@ariadnejs/types";
 import { ScopeRegistry } from "../registries/scope";
 import { DefinitionRegistry } from "../registries/definition";
@@ -34,7 +31,7 @@ import {
   resolve_receiver_type,
   type ReceiverResolutionContext,
 } from "./receiver_resolution";
-import { resolve_method_on_type } from "./method_lookup";
+import { resolve_method_on_type, type MethodLookup } from "./method_lookup";
 import { resolve_held_type } from "./value_source";
 import type { ModuleResolutionContext } from "../import_resolution";
 
@@ -46,10 +43,13 @@ import type { ModuleResolutionContext } from "../import_resolution";
  * 1. Resolve receiver expression to a type
  * 2. Look up method on that type
  *
- * Returns:
+ * `targets` is:
  * - `ok([symbol])`: Concrete method call (user.getName())
  * - `ok([a, b, c])`: Polymorphic method call (handler.process() where handler is an interface)
  * - `err(failure)`: Receiver-resolution or method-lookup failure with a named reason
+ *
+ * `subtype_closure_of` names the type whose subtypes the lookup enumerated; a
+ * receiver that never resolved reached no lookup and enumerated none.
  */
 export function resolve_method_call(
   call_ref: MethodCallReference | SelfReferenceCall,
@@ -61,7 +61,7 @@ export function resolve_method_call(
   exports: ExportRegistry,
   languages: ReadonlyMap<FilePath, Language>,
   modules: ModuleResolutionContext
-): Result<SymbolId[], ResolutionFailure> {
+): MethodLookup {
   const context: ReceiverResolutionContext = {
     scopes,
     definitions,
@@ -77,12 +77,20 @@ export function resolve_method_call(
   const receiver_result = resolve_receiver_type(receiver, context, resolve_held_type);
 
   if (!receiver_result.ok) {
-    return receiver_result;
+    return { targets: receiver_result, subtype_closure_of: null };
   }
+
+  // `super().m()` starts at the parent; `super().a.m()` has left it for the
+  // value `a` holds.
+  const receiver_is_super =
+    receiver.base.type === "keyword" &&
+    receiver.base.value === "super" &&
+    receiver.chain.length === 0;
 
   return resolve_method_on_type(
     receiver_result.value,
     receiver.method_name,
-    context
+    context,
+    receiver_is_super ? "super" : "value"
   );
 }

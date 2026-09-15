@@ -172,6 +172,23 @@ export class SubtypeGraph {
   }
 
   /**
+   * `type_ids` and every type they transitively extend or implement. A cycle
+   * in a malformed graph ends where it meets a type already collected.
+   */
+  get_supertype_closure(type_ids: Iterable<SymbolId>): Set<SymbolId> {
+    const closure = new Set<SymbolId>();
+    const pending = [...type_ids];
+    for (let next = pending.pop(); next !== undefined; next = pending.pop()) {
+      if (closure.has(next)) {
+        continue;
+      }
+      closure.add(next);
+      pending.push(...this.get_parent_types(next));
+    }
+    return closure;
+  }
+
+  /**
    * `parent_types` and `edges_by_file` rebuilt from `type_subtypes`, the
    * forward map they invert, and compared against the live ones: the first
    * divergence found, or null when all three agree. `parent_types` is also

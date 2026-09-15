@@ -89,7 +89,7 @@ describe("resolve_callable_values", () => {
     const handler = make_function("handler", HANDLER_NAME_LOCATION);
     definitions.update_file(TEST_FILE, [handler]);
 
-    const reachable = resolve_callable_values(
+    const { reachable } = resolve_callable_values(
       file_references([
         create_callable_value_reference(
           "handler" as SymbolName,
@@ -117,7 +117,7 @@ describe("resolve_callable_values", () => {
     const unrelated = make_function("handler", HANDLER_NAME_LOCATION);
     definitions.update_file(TEST_FILE, [unrelated]);
 
-    const reachable = resolve_callable_values(
+    const { reachable } = resolve_callable_values(
       file_references([
         create_callable_value_reference(
           "handler" as SymbolName,
@@ -137,7 +137,7 @@ describe("resolve_callable_values", () => {
       make_function("list", HANDLER_NAME_LOCATION),
     ]);
 
-    const reachable = resolve_callable_values(
+    const { reachable } = resolve_callable_values(
       file_references([
         create_callable_value_reference(
           "list" as SymbolName,
@@ -157,7 +157,7 @@ describe("resolve_callable_values", () => {
     const handler = make_function("handler", HANDLER_NAME_LOCATION);
     definitions.update_file(TEST_FILE, [handler]);
 
-    const reachable = resolve_callable_values(
+    const { reachable } = resolve_callable_values(
       file_references([
         create_variable_reference(
           "handler" as SymbolName,
@@ -198,7 +198,7 @@ describe("resolve_callable_values", () => {
       },
     ]);
 
-    const reachable = resolve_callable_values(
+    const { reachable } = resolve_callable_values(
       file_references([
         create_callable_value_reference(
           "Klass" as SymbolName,

@@ -86,6 +86,7 @@ describe("resolve_calls_for_files", () => {
       expect(result.resolved_calls_by_file.size).toBe(0);
       expect(result.calls_by_caller_scope.size).toBe(0);
       expect(result.indirect_reachability.size).toBe(0);
+      expect(result.subtype_dispatch_files.size).toBe(0);
     });
 
     it("returns empty calls for file with no references", () => {
@@ -799,6 +800,80 @@ describe("resolve_calls_for_files", () => {
         { symbol_id: method_id, confidence: "certain", reason: { type: "direct" } },
       ]);
       expect(calls[0].call_site_syntax).toEqual({ receiver_kind: "identifier" });
+      // Widget has no registered definition, so the lookup could not know it
+      // for a class and enumerated no subtypes.
+      expect(result.subtype_dispatch_files).toEqual(new Map());
+    });
+
+    it("records the calling file under a class receiver, whose lookup enumerated its subtypes", () => {
+      const obj_id = variable_symbol("obj", MOCK_LOCATION);
+      const class_id = class_symbol("Widget" as SymbolName, MOCK_LOCATION);
+      const method_id = method_symbol("render" as SymbolName, {
+        ...MOCK_LOCATION,
+        start_line: 3,
+      });
+
+      const var_def: VariableDefinition = {
+        kind: "variable",
+        symbol_id: obj_id,
+        name: "obj" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        is_exported: false,
+      };
+      const class_def: ClassDefinition = {
+        kind: "class",
+        symbol_id: class_id,
+        name: "Widget" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        is_exported: false,
+        extends: [],
+        methods: [],
+        properties: [],
+        decorators: [],
+        constructors: [],
+      };
+      definitions.update_file(TEST_FILE, [var_def, class_def]);
+
+      types["symbol_types"] = new Map([[obj_id, class_id]]);
+      types["resolved_type_members"] = new Map([
+        [class_id, new Map([["render" as SymbolName, method_id]])],
+      ]);
+
+      const scope_map = new Map<ScopeId, LexicalScope>();
+      scope_map.set(FILE_SCOPE_ID, {
+        id: FILE_SCOPE_ID,
+        type: "global",
+        location: MOCK_LOCATION,
+        parent_id: null,
+        name: null,
+        child_ids: [],
+        self_type_name: null,
+      });
+      scopes.update_file(TEST_FILE, scope_map);
+
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, new Map([["obj" as SymbolName, obj_id]]));
+
+      references.update_file(TEST_FILE, [
+        create_method_call_reference(
+          "render" as SymbolName,
+          { ...MOCK_LOCATION, start_line: 10 },
+          FILE_SCOPE_ID,
+          RECEIVER_LOCATION,
+          ["obj", "render"] as SymbolName[],
+          false,
+          undefined,
+          { receiver_kind: "identifier" }
+        ),
+      ]);
+
+      const result = resolve_calls_for_files(new Set([TEST_FILE]), context);
+
+      expect(result.resolved_calls_by_file.get(TEST_FILE)?.[0].resolutions).toEqual([
+        { symbol_id: method_id, confidence: "certain", reason: { type: "direct" } },
+      ]);
+      expect(result.subtype_dispatch_files).toEqual(new Map([[class_id, new Set([TEST_FILE])]]));
     });
 
     it("binds the assigned variable's type when a namespace constructor resolves to a class", () => {
@@ -1491,10 +1566,10 @@ describe("resolved-plus-failed invariant", () => {
   }
 
   it.each([
-    ["typescript", { files: 49, call_references: 142, resolved: 100, failed: 42 }],
+    ["typescript", { files: 54, call_references: 143, resolved: 101, failed: 42 }],
     ["javascript", { files: 44, call_references: 245, resolved: 162, failed: 83 }],
-    ["python", { files: 69, call_references: 336, resolved: 248, failed: 88 }],
-    ["rust", { files: 35, call_references: 175, resolved: 120, failed: 55 }],
+    ["python", { files: 73, call_references: 342, resolved: 250, failed: 92 }],
+    ["rust", { files: 40, call_references: 176, resolved: 121, failed: 55 }],
   ] as const)(
     "ends every call-kind reference of the %s fixture corpus as one CallReference with a target or a reason",
     async (language, expected: CorpusTally) => {

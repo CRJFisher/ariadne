@@ -452,21 +452,21 @@ export class Project {
     // Phase 3.5: Type heritage — Rust impl methods joined to the type another
     // file declares, then every file's extends/implements/impl-trait names
     // resolved into the subtype graph
-    const files_needing_call_reresolution = new Set<FilePath>();
     const resolve_type_name = (scope_id: ScopeId, type_name: SymbolName, file_id: FilePath) =>
       this.types.resolve_type_name(scope_id, type_name, file_id, type_resolution_context);
     for (const file_id of files) {
       this.definitions.attach_impl_methods(file_id, resolve_type_name);
     }
+    const changed_types = new Set<SymbolId>();
     for (const file_id of files) {
-      const changed_parents = this.definitions.resolve_type_heritage(file_id, resolve_type_name);
-      for (const parent_id of changed_parents) {
-        const parent_def = this.definitions.get(parent_id);
-        if (parent_def) {
-          files_needing_call_reresolution.add(parent_def.location.file_path);
-        }
+      for (const parent_id of this.definitions.resolve_type_heritage(file_id, resolve_type_name)) {
+        changed_types.add(parent_id);
+      }
+      for (const type_id of this.definitions.take_changed_member_types(file_id)) {
+        changed_types.add(type_id);
       }
     }
+    const files_needing_call_reresolution = this.files_dispatching_through(changed_types);
 
     // Phase 3.6: Reference preprocessing
     for (const file_id of files) {
@@ -530,15 +530,38 @@ export class Project {
     // a file two module hops away can hold a path that read the deleted file.
     const affected = this.files_affected_by(file_id, dependents);
     affected.delete(file_id);
-    // A parent's call sites dispatched to the deleted file's subtypes, and the
-    // parent's file depends on nothing the deletion touched.
-    for (const parent_id of this.definitions.take_evicted_heritage_parents(file_id)) {
-      const parent_def = this.definitions.get(parent_id);
-      if (parent_def) {
-        affected.add(parent_def.location.file_path);
-      }
+    // A call that dispatched to the deleted file's subtypes, or to a member it
+    // contributed, can sit in a file that depends on nothing the deletion touched.
+    const changed_types = new Set([
+      ...this.definitions.take_evicted_heritage_parents(file_id),
+      ...this.definitions.take_changed_member_types(file_id),
+    ]);
+    for (const caller_file of this.files_dispatching_through(changed_types)) {
+      affected.add(caller_file);
     }
     this.resolve_files(affected, modules);
+  }
+
+  /**
+   * Every file holding a call whose answer a change to `changed_types` alters:
+   * a parent that gained or lost a subtype edge, or a type whose members a file
+   * contributes differently.
+   *
+   * Either change alters the subtype closure of that type and of every type
+   * above it, so a call dispatched through any of them is re-answered. The
+   * caller may import none of the files involved — it names the interface, and
+   * the implementer names it too — which is why the import graph cannot find it
+   * and the resolution state's subtype-dispatch index does. That covers a call
+   * that failed for want of a subtype as well as one that resolved to the
+   * subtypes it saw.
+   */
+  private files_dispatching_through(changed_types: ReadonlySet<SymbolId>): Set<FilePath> {
+    if (changed_types.size === 0) {
+      return new Set();
+    }
+    return this.resolutions.get_files_dispatching_through(
+      this.definitions.get_supertype_closure(changed_types)
+    );
   }
 
   /** Drop every trace of a file from the file-level stores and the registries. */

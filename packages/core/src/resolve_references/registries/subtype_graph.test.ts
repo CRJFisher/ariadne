@@ -48,6 +48,29 @@ describe("SubtypeGraph", () => {
     });
   });
 
+  describe("get_supertype_closure", () => {
+    it("collects the given types and every type they transitively extend or implement", () => {
+      const grandchild = "class:grandchild.ts:1:0:5:1:Grandchild" as SymbolId;
+      graph.register_subtype(base, child, "declared", child_file);
+      graph.register_subtype(contract, base, "declared", child_file);
+      graph.register_subtype(inferred, grandchild, "structural", impl_file);
+
+      expect(graph.get_supertype_closure([child])).toEqual(new Set([child, base, contract]));
+      expect(graph.get_supertype_closure([child, grandchild])).toEqual(
+        new Set([child, base, contract, grandchild, inferred])
+      );
+      expect(graph.get_supertype_closure([contract])).toEqual(new Set([contract]));
+      expect(graph.get_supertype_closure([])).toEqual(new Set());
+    });
+
+    it("ends a cycle in a malformed graph at the first type met twice", () => {
+      graph.register_subtype(base, child, "declared", child_file);
+      graph.register_subtype(child, base, "declared", child_file);
+
+      expect(graph.get_supertype_closure([child])).toEqual(new Set([child, base]));
+    });
+  });
+
   describe("forget_type", () => {
     it("drops the edges a type sits on as a parent and as a subtype, whichever file wrote them", () => {
       graph.register_subtype(base, child, "declared", child_file);

@@ -562,6 +562,20 @@ export class DefinitionRegistry {
     return this.heritage.get_parent_types(type_id);
   }
 
+  /** `type_ids` and every type they transitively extend or implement. */
+  get_supertype_closure(type_ids: Iterable<SymbolId>): Set<SymbolId> {
+    return this.heritage.get_supertype_closure(type_ids);
+  }
+
+  /**
+   * The types whose members `file_id` contributes differently from before the
+   * file was last evicted, read once per eviction. See
+   * `MemberIndex.take_changed_member_types`.
+   */
+  take_changed_member_types(file_id: FilePath): ReadonlySet<SymbolId> {
+    return this.members.take_changed_member_types(file_id);
+  }
+
   get_function_collection(
     variable_id: SymbolId
   ): FunctionCollection | undefined {

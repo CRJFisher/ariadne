@@ -111,6 +111,15 @@ export class MemberIndex {
    */
   private members_by_name: Map<SymbolName, Set<SymbolId>> = new Map();
 
+  /**
+   * File → type → name → member, as the file contributed them before the first
+   * eviction since `take_changed_member_types` last read the file. A file
+   * re-registered twice before its next resolve pass — once for its own facts,
+   * again with its imports repointed — is compared against what its callers
+   * last resolved against, not against its own first re-registration.
+   */
+  private contributions_before_eviction: Map<FilePath, Contributions> = new Map();
+
   constructor(private readonly definitions: ReadonlyMap<SymbolId, AnyDefinition>) {}
 
   /**
@@ -328,6 +337,9 @@ export class MemberIndex {
 
   /** Take back every member name `file_id` holds, type by type. */
   forget_contributed_members(file_id: FilePath): void {
+    if (!this.contributions_before_eviction.has(file_id)) {
+      this.contributions_before_eviction.set(file_id, this.contributions_of(file_id));
+    }
     const by_type = this.members_by_file.get(file_id);
     if (!by_type) return;
     for (const [type_id, names] of by_type) {
@@ -343,6 +355,46 @@ export class MemberIndex {
       if (index && index.size === 0) this.member_index.delete(type_id);
     }
     this.members_by_file.delete(file_id);
+  }
+
+  /**
+   * The types whose members `file_id` contributes differently from before the
+   * file was last evicted — a member added, removed, or moved to a new symbol —
+   * and forget that record. Empty for a file not evicted since it was last
+   * asked, so a file resolved only because it depends on another reports
+   * nothing; a file evicted and not re-registered reports every type it
+   * contributed to.
+   */
+  take_changed_member_types(file_id: FilePath): ReadonlySet<SymbolId> {
+    const before = this.contributions_before_eviction.get(file_id);
+    if (before === undefined) {
+      return new Set();
+    }
+    this.contributions_before_eviction.delete(file_id);
+    const after = this.contributions_of(file_id);
+    const changed = new Set<SymbolId>();
+    for (const type_id of new Set([...before.keys(), ...after.keys()])) {
+      if (!same_members(before.get(type_id), after.get(type_id))) {
+        changed.add(type_id);
+      }
+    }
+    return changed;
+  }
+
+  private contributions_of(file_id: FilePath): Contributions {
+    const contributions: Contributions = new Map();
+    for (const [type_id, names] of this.members_by_file.get(file_id) ?? []) {
+      const index = this.member_index.get(type_id);
+      const members = new Map<SymbolName, SymbolId>();
+      for (const name of names) {
+        const member_id = index?.get(name);
+        if (member_id !== undefined) {
+          members.set(name, member_id);
+        }
+      }
+      contributions.set(type_id, members);
+    }
+    return contributions;
   }
 
   /**
@@ -460,5 +512,24 @@ export class MemberIndex {
     this.owner_members.clear();
     this.members_by_file.clear();
     this.members_by_name.clear();
+    this.contributions_before_eviction.clear();
   }
+}
+
+/** Type → name → member, for the members one file contributes. */
+type Contributions = Map<SymbolId, Map<SymbolName, SymbolId>>;
+
+function same_members(
+  left: ReadonlyMap<SymbolName, SymbolId> | undefined,
+  right: ReadonlyMap<SymbolName, SymbolId> | undefined
+): boolean {
+  if ((left?.size ?? 0) !== (right?.size ?? 0)) {
+    return false;
+  }
+  for (const [name, member_id] of left ?? []) {
+    if (right?.get(name) !== member_id) {
+      return false;
+    }
+  }
+  return true;
 }

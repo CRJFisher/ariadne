@@ -22,8 +22,9 @@
  * What does grow is polymorphic dispatch, and it grows because its answer does.
  * Unresolved call sites — the input — rise linearly with the corpus (exponent
  * 1.013). Resolved call edges rise at 1.310, subtype edges enumerated at 1.726,
- * and the CPU inside `resolve_polymorphic_method` and
- * `resolve_polymorphic_class_method` at 1.881, taking that family from 5.6% of
+ * and the CPU inside the polymorphic pair — an interface's implementations and
+ * a class's overrides, both enumerated by `resolve_polymorphic_method` — at
+ * 1.881, taking that family from 5.6% of
  * the term at 927 files to 22.9% at 8,494. The mean number of subtypes
  * enumerated per expansion goes 4.64 → 6.09 → 16.77: a wider corpus is one in
  * which an interface genuinely has more implementations, so the work of naming
@@ -101,7 +102,7 @@ interface RecordedTermSplit {
   readonly resolve_calls_for_files_ms: number;
   readonly resolve_calls_ms: number;
   readonly resolve_method_call_ms: number;
-  /** `resolve_polymorphic_method` + `resolve_polymorphic_class_method`. */
+  /** Interface-implementation plus class-override expansion, the polymorphic pair. */
   readonly polymorphic_dispatch_ms: number;
   readonly get_transitive_subtypes_ms: number;
   readonly resolve_callback_invocations_ms: number;

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { resolve_method_on_type } from "./method_lookup";
+import { resolve_method_on_type, type MethodLookup } from "./method_lookup";
 import type { ReceiverResolutionContext } from "./receiver_resolution";
 import { ScopeRegistry } from "../registries/scope";
 import { DefinitionRegistry } from "../registries/definition";
@@ -121,10 +121,11 @@ describe("resolve_method_on_type", () => {
         new Map([[("process" as SymbolName), method_id]])
       );
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         class_id,
         "process" as SymbolName,
-        context
+        context,
+        "value"
       );
 
       expect(unwrap(result)).toEqual([method_id]);
@@ -161,10 +162,11 @@ describe("resolve_method_on_type", () => {
 
       definitions.update_file(TEST_FILE, [class_def, method_def]);
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         class_id,
         "process" as SymbolName,
-        context
+        context,
+        "value"
       );
 
       expect(unwrap(result)).toEqual([method_id]);
@@ -189,10 +191,11 @@ describe("resolve_method_on_type", () => {
 
       definitions.update_file(TEST_FILE, [class_def]);
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         class_id,
         "nonexistent" as SymbolName,
-        context
+        context,
+        "value"
       );
 
       expect(is_err(result)).toBe(true);
@@ -310,10 +313,11 @@ describe("resolve_method_on_type", () => {
         new Map([[("process" as SymbolName), interface_method_id]])
       );
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         interface_id,
         "process" as SymbolName,
-        context
+        context,
+        "value"
       );
 
       expect(unwrap(result)).toEqual([interface_method_id, method_a_id, method_b_id]);
@@ -382,10 +386,11 @@ describe("resolve_method_on_type", () => {
         new Map([[("process" as SymbolName), interface_method_id]])
       );
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         interface_id,
         "process" as SymbolName,
-        context
+        context,
+        "value"
       );
 
       expect(unwrap(result)).toEqual([interface_method_id, method_a_id]);
@@ -426,10 +431,11 @@ describe("resolve_method_on_type", () => {
         new Map([[("process" as SymbolName), interface_method_id]])
       );
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         interface_id,
         "process" as SymbolName,
-        context
+        context,
+        "value"
       );
 
       expect(is_err(result)).toBe(true);
@@ -519,10 +525,11 @@ describe("resolve_method_on_type", () => {
         new Map([[("helper" as SymbolName), base_method_id]])
       );
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         base_class_id,
         "helper" as SymbolName,
-        context
+        context,
+        "value"
       );
 
       expect(unwrap(result)).toEqual([base_method_id, child_method_id]);
@@ -595,10 +602,11 @@ describe("resolve_method_on_type", () => {
       definitions.update_file(TEST_FILE, [base_class_def, child_class_def]);
       definitions["heritage"].register_subtype(base_class_id, child_class_id, "declared", TEST_FILE);
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         base_class_id,
         "__init__" as SymbolName,
-        context
+        context,
+        "value"
       );
 
       expect(unwrap(result)).toEqual([base_ctor_id]);
@@ -707,10 +715,11 @@ describe("resolve_method_on_type", () => {
         new Map([[("helper" as SymbolName), method_a_id]])
       );
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         class_a_id,
         "helper" as SymbolName,
-        context
+        context,
+        "value"
       );
 
       expect(unwrap(result)).toEqual([method_a_id, method_b_id, method_c_id]);
@@ -778,10 +787,11 @@ describe("resolve_method_on_type", () => {
         new Map([[("helper" as SymbolName), base_method_id]])
       );
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         base_class_id,
         "helper" as SymbolName,
-        context
+        context,
+        "value"
       );
 
       // Should return only base method
@@ -891,10 +901,11 @@ describe("resolve_method_on_type", () => {
         new Map([[("method" as SymbolName), base_method_id]])
       );
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         base_class_id,
         "method" as SymbolName,
-        context
+        context,
+        "value"
       );
 
       expect(unwrap(result)).toEqual([
@@ -902,6 +913,199 @@ describe("resolve_method_on_type", () => {
         child1_method_id,
         child2_method_id,
       ]);
+    });
+  });
+
+  describe("A miss fanned out over the subtype closure", () => {
+    function at_line(line: number): Location {
+      return { ...MOCK_LOCATION, start_line: line, end_line: line };
+    }
+
+    function method_at(owner: string, name: string, line: number): MethodDefinition {
+      return {
+        kind: "method",
+        symbol_id: method_symbol(name as SymbolName, at_line(line)),
+        name: name as SymbolName,
+        defining_scope_id: `scope:test.ts:${owner}:${line}:0` as ScopeId,
+        location: at_line(line),
+        parameters: [],
+        body_scope_id: `scope:test.ts:${owner}.${name}:${line}:2` as ScopeId,
+        decorators: [],
+      };
+    }
+
+    function constructor_at(owner: string, line: number): ConstructorDefinition {
+      return {
+        kind: "constructor",
+        symbol_id: method_symbol("__init__" as SymbolName, at_line(line)),
+        name: "__init__" as SymbolName,
+        defining_scope_id: `scope:test.ts:${owner}:${line}:0` as ScopeId,
+        location: at_line(line),
+        parameters: [],
+        body_scope_id: `scope:test.ts:${owner}.__init__:${line}:2` as ScopeId,
+      };
+    }
+
+    function class_at(
+      name: string,
+      line: number,
+      members: { methods?: MethodDefinition[]; constructors?: ConstructorDefinition[] } = {}
+    ): ClassDefinition {
+      return {
+        kind: "class",
+        symbol_id: class_symbol(name, at_line(line)),
+        name: name as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: at_line(line),
+        is_exported: false,
+        extends: [],
+        methods: members.methods ?? [],
+        properties: [],
+        decorators: [],
+        constructors: members.constructors ?? [],
+      };
+    }
+
+    function register(defs: readonly (ClassDefinition | InterfaceDefinition)[]): void {
+      definitions.update_file(
+        TEST_FILE,
+        defs.flatMap((def) => [
+          def,
+          ...def.methods,
+          ...(def.kind === "class" ? def.constructors ?? [] : []),
+        ])
+      );
+    }
+
+    function subtype(parent: SymbolId, child: SymbolId): void {
+      definitions["heritage"].register_subtype(parent, child, "declared", TEST_FILE);
+    }
+
+    it("resolves a base-class miss to every transitive subtype declaring the member", () => {
+      const json_handle = method_at("JsonHandler", "handle", 11);
+      const pretty_handle = method_at("PrettyJson", "handle", 21);
+      const base = class_at("Handler", 1);
+      const json = class_at("JsonHandler", 10, { methods: [json_handle] });
+      const pretty = class_at("PrettyJson", 20, { methods: [pretty_handle] });
+      const silent = class_at("Silent", 30);
+      register([base, json, pretty, silent]);
+      subtype(base.symbol_id, json.symbol_id);
+      subtype(json.symbol_id, pretty.symbol_id);
+      subtype(base.symbol_id, silent.symbol_id);
+
+      const lookup = resolve_method_on_type(base.symbol_id, "handle" as SymbolName, context, "value");
+
+      expect([...unwrap(lookup.targets)].sort()).toEqual(
+        [json_handle.symbol_id, pretty_handle.symbol_id].sort()
+      );
+      expect(lookup.subtype_closure_of).toBe(base.symbol_id);
+    });
+
+    it("resolves an interface miss to the implementers declaring the member, with no interface member to lead", () => {
+      const visit = method_at("Collector", "visit_item", 11);
+      const visitor: InterfaceDefinition = {
+        kind: "interface",
+        symbol_id: interface_symbol("Visitor", at_line(1)),
+        name: "Visitor" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: at_line(1),
+        is_exported: false,
+        extends: [],
+        methods: [],
+        properties: [],
+      };
+      const collector = class_at("Collector", 10, { methods: [visit] });
+      register([visitor, collector]);
+      subtype(visitor.symbol_id, collector.symbol_id);
+
+      const lookup = resolve_method_on_type(visitor.symbol_id, "visit_item" as SymbolName, context, "value");
+
+      expect(lookup).toEqual({ targets: { ok: true, value: [visit.symbol_id] }, subtype_closure_of: visitor.symbol_id });
+    });
+
+    it("fails with method_not_on_type when no subtype declares the member either, still naming the closure it read", () => {
+      const base = class_at("Handler", 1);
+      const child = class_at("JsonHandler", 10, { methods: [method_at("JsonHandler", "other", 11)] });
+      register([base, child]);
+      subtype(base.symbol_id, child.symbol_id);
+
+      const lookup = resolve_method_on_type(base.symbol_id, "handle" as SymbolName, context, "value");
+
+      const expected: MethodLookup = {
+        targets: {
+          ok: false,
+          error: {
+            stage: "method_lookup",
+            reason: "method_not_on_type",
+            partial_info: { resolved_receiver_type: base.symbol_id },
+          },
+        },
+        subtype_closure_of: base.symbol_id,
+      };
+      expect(lookup).toEqual(expected);
+    });
+
+    it("never fans a constructor miss out to subclass constructors", () => {
+      const base = class_at("Handler", 1);
+      const child = class_at("JsonHandler", 10, { constructors: [constructor_at("JsonHandler", 11)] });
+      register([base, child]);
+      subtype(base.symbol_id, child.symbol_id);
+
+      const lookup = resolve_method_on_type(base.symbol_id, "__init__" as SymbolName, context, "value");
+
+      const expected: MethodLookup = {
+        targets: {
+          ok: false,
+          error: {
+            stage: "method_lookup",
+            reason: "method_not_on_type",
+            partial_info: { resolved_receiver_type: base.symbol_id },
+          },
+        },
+        subtype_closure_of: base.symbol_id,
+      };
+      expect(lookup).toEqual(expected);
+    });
+
+    it("never fans a `super` miss out: dispatch from the parent runs up the chain, not down to its subtypes", () => {
+      const close = method_at("JsonHandler", "close", 11);
+      const base = class_at("Handler", 1);
+      const child = class_at("JsonHandler", 10, { methods: [close] });
+      register([base, child]);
+      subtype(base.symbol_id, child.symbol_id);
+
+      const as_value = resolve_method_on_type(base.symbol_id, "close" as SymbolName, context, "value");
+      const as_super = resolve_method_on_type(base.symbol_id, "close" as SymbolName, context, "super");
+
+      expect(as_value).toEqual({ targets: { ok: true, value: [close.symbol_id] }, subtype_closure_of: base.symbol_id });
+      const expected: MethodLookup = {
+        targets: {
+          ok: false,
+          error: {
+            stage: "method_lookup",
+            reason: "method_not_on_type",
+            partial_info: { resolved_receiver_type: base.symbol_id },
+          },
+        },
+        subtype_closure_of: null,
+      };
+      expect(as_super).toEqual(expected);
+    });
+
+    it("names the receiver's closure on a class hit, and none for a constructor hit or a receiver that cannot have subtypes", () => {
+      const helper = method_at("Base", "helper", 2);
+      const ctor = constructor_at("Base", 3);
+      const base = class_at("Base", 1, { methods: [helper], constructors: [ctor] });
+      register([base]);
+      const unknown_id = "unknown:test.ts:1:0:1:10:mystery" as SymbolId;
+
+      const hit = resolve_method_on_type(base.symbol_id, "helper" as SymbolName, context, "value");
+      const constructor_hit = resolve_method_on_type(base.symbol_id, "__init__" as SymbolName, context, "value");
+      const unregistered = resolve_method_on_type(unknown_id, "helper" as SymbolName, context, "value");
+
+      expect(hit).toEqual({ targets: { ok: true, value: [helper.symbol_id] }, subtype_closure_of: base.symbol_id });
+      expect(constructor_hit).toEqual({ targets: { ok: true, value: [ctor.symbol_id] }, subtype_closure_of: null });
+      expect(unregistered.subtype_closure_of).toBe(null);
     });
   });
 
@@ -948,10 +1152,11 @@ describe("resolve_method_on_type", () => {
         imports: imports_for_test,
       };
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         namespace_import_id,
         "helper" as SymbolName,
-        context_with_resolver
+        context_with_resolver,
+        "value"
       );
 
       expect(unwrap(result)).toEqual([helper_fn_id]);
@@ -998,10 +1203,11 @@ describe("resolve_method_on_type", () => {
         imports: imports_for_test,
       };
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         namespace_import_id,
         "private_helper" as SymbolName,
-        context_with_resolver
+        context_with_resolver,
+        "value"
       );
 
       expect(is_err(result)).toBe(true);
@@ -1039,10 +1245,11 @@ describe("resolve_method_on_type", () => {
         imports: imports_for_test,
       };
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         namespace_import_id,
         "nonexistent" as SymbolName,
-        context_with_resolver
+        context_with_resolver,
+        "value"
       );
 
       expect(is_err(result)).toBe(true);
@@ -1073,10 +1280,11 @@ describe("resolve_method_on_type", () => {
 
       definitions.update_file(TEST_FILE, [import_def]);
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         namespace_import_id,
         "helper" as SymbolName,
-        context
+        context,
+        "value"
       );
 
       expect(is_err(result)).toBe(true);
@@ -1130,10 +1338,11 @@ describe("resolve_method_on_type", () => {
         stored_references: [],
       });
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         var_id,
         "process" as SymbolName,
-        context
+        context,
+        "value"
       );
 
       expect(unwrap(result)).toEqual([method_fn_id]);
@@ -1186,10 +1395,11 @@ describe("resolve_method_on_type", () => {
       scope_resolutions.set("external_process" as SymbolName, external_fn_id);
       set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         var_id,
         "external_process" as SymbolName,
-        context
+        context,
+        "value"
       );
 
       expect(unwrap(result)).toEqual([external_fn_id]);
@@ -1232,10 +1442,11 @@ describe("resolve_method_on_type", () => {
         stored_references: [],
       });
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         var_id,
         "nonexistent" as SymbolName,
-        context
+        context,
+        "value"
       );
 
       expect(is_err(result)).toBe(true);
@@ -1253,10 +1464,11 @@ describe("resolve_method_on_type", () => {
     it("fails with method_not_on_type for an unregistered receiver type", () => {
       const unknown_id = "unknown:test.ts:1:0:1:10:mystery" as SymbolId;
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         unknown_id,
         "method" as SymbolName,
-        context
+        context,
+        "value"
       );
 
       expect(is_err(result)).toBe(true);
@@ -1308,10 +1520,11 @@ describe("resolve_method_on_type", () => {
         new Map([[("process" as SymbolName), method_id_registry]])
       );
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         class_id,
         "process" as SymbolName,
-        context
+        context,
+        "value"
       );
 
       expect(unwrap(result)).toEqual([method_id_registry]);
@@ -1383,10 +1596,11 @@ describe("resolve_method_on_type", () => {
         imports: imports_for_test,
       };
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         import_id,
         "update_file" as SymbolName,
-        context_with_resolver
+        context_with_resolver,
+        "value"
       );
 
       expect(unwrap(result)).toEqual([update_method_id]);
@@ -1430,10 +1644,11 @@ describe("resolve_method_on_type", () => {
         imports: imports_for_test,
       };
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         import_id,
         "render" as SymbolName,
-        context_with_resolver
+        context_with_resolver,
+        "value"
       );
 
       expect(is_err(result)).toBe(true);
@@ -1492,10 +1707,11 @@ describe("resolve_method_on_type", () => {
         imports: imports_for_test,
       };
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         import_id,
         "some_method" as SymbolName,
-        context_with_resolver
+        context_with_resolver,
+        "value"
       );
 
       expect(is_err(result)).toBe(true);
@@ -1559,10 +1775,11 @@ describe("resolve_method_on_type", () => {
         imports: imports_for_test,
       };
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         import_id,
         "train" as SymbolName,
-        context_with_resolvers
+        context_with_resolvers,
+        "value"
       );
 
       expect(unwrap(result)).toEqual([train_fn_id]);
@@ -1593,10 +1810,11 @@ describe("resolve_method_on_type", () => {
         imports: imports_for_test,
       };
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         import_id,
         "do_thing" as SymbolName,
-        context_with_resolver
+        context_with_resolver,
+        "value"
       );
 
       expect(is_err(result)).toBe(true);
