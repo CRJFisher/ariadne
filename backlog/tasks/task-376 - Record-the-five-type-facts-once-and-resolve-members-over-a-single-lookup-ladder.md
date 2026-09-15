@@ -117,7 +117,7 @@ Each step names what pins it: a dependency (D), a file shared with an earlier or
 **Wave 5** — two steps, disjoint files.
 
 13. **TASK-376.11** — `value_source.ts` and its four consumers. After steps 9, 11, 12 (D). Owns the new file, `receiver_resolution.ts:303-309`, `constructor.ts:85-97`, `function_call.ts:143-152`, `indirect_reachability.ts:98-152`.
-14. **TASK-376.13** — rung 5 and the pending-failure index. After step 10 (D) and step 1 (D: the vocabulary; F: `call_resolver.ts`). Owns `method_lookup.ts:139-237` (F: step 6's import branches), `resolution_state.ts` (`remove_files`, `apply_call_resolution`), `call_resolver.ts:342-448`, `project/project.ts:417-427`. Records the post-rung-5 row (M for step 18). Give its session four hours.
+14. **TASK-376.13** — rung 5 and the subtype-dispatch index (`ResolutionState.subtype_dispatch_files`: every file whose lookup enumerated a type's subtype closure, resolved or not). After step 10 (D) and step 1 (D: the vocabulary; F: `call_resolver.ts`). Owns `method_lookup.ts:139-237` (F: step 6's import branches), `resolution_state.ts` (`remove_files`, `apply_call_resolution`), `call_resolver.ts:342-448`, `project/project.ts:417-427`. Records the post-rung-5 row (M for step 18). Give its session four hours.
 
 **Wave 6** — three steps; steps 15 and 16 both touch Phase 3.5 in `project/project.ts`.
 

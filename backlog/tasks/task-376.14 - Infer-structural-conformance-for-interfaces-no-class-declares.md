@@ -24,7 +24,7 @@ plan_source_tasks:
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
 
-§7 step 15. Wave 6, beside TASK-376.8 and TASK-376.15; shares `project/project.ts` Phase 3.5 with TASK-376.8. Requires TASK-376.4 (`members_by_name`, `get_member_closure`), TASK-376.7 (edge sources) and TASK-376.13 (the pending index). Carries the structural half of TASK-394.
+§7 step 15. Wave 6, beside TASK-376.8 and TASK-376.15; shares `project/project.ts` Phase 3.5 with TASK-376.8. Requires TASK-376.4 (`members_by_name`, `get_member_closure`), TASK-376.7 (edge sources) and TASK-376.13 (the subtype-dispatch index). Carries the structural half of TASK-394.
 
 ## Root cause
 
@@ -38,6 +38,12 @@ The premise that these rows need a _declared_ cross-package `implements` edge is
 4. Calibrate the floor: a one-member interface would match every class with that member name. Measure the false-edge rate on angular, TypeScript and vscode `src/` at `f3fa55c3` before fixing the constant, and consider requiring ≥2 _methods_. vscode is the adversarial corpus: `IDisposable` has 460 declared subtypes and thousands of classes carry a `dispose` member, so the bound must be stated in the module and its fan-out measured there (TASK-394 AC #3). Confirm member-name matching does not create absurd matches on generic container classes (`ExpressionTranslatorVisitor<TFile, TStatement, …>`) and that an inferred edge into a widely-subclassed base does not explode the fan-out (`get_transitive_subtypes` guards cycles with `processed` at `method_lookup.ts:292`).
 5. Adjust `method_lookup.test.ts`'s "fails with `polymorphic_no_implementations` for an interface no class implements" case **at the fixture** — give it a member set no class covers — not at the assertion.
 6. Add integration tests (fixture: a reduced `CompilerFacade` cluster under `tests/fixtures/typescript/code/integration/` with two replica declarations, the accessor, one caller and the impl) covering every evidence case for this step: full member coverage resolves; one member missing does not; coverage available only via a superclass resolves (the `Environment` shape); the duplicated-interface `CompilerFacade` shape resolves with the two interface ids still distinct; the `TcbEnvironment` 6-member shape resolves to its single candidate; a one-member interface does **not** fan out to every class carrying that member name; and the vscode `IEditorContribution` shape — a class satisfying `IDisposable` only structurally — resolves its `dispose()` through the element receiver TASK-376.10 types, with the fan-out bound asserted.
+
+## Carried from TASK-376.13
+
+The index TASK-376.13 landed is `ResolutionState.subtype_dispatch_files`: type → the files whose lookup enumerated that type's subtype closure, whether the lookup resolved or failed. It does not separate failures, so step 3's **pending** interfaces are the interfaces whose dispatches ended `polymorphic_no_implementations` (the failure's `partial_info.resolved_receiver_type`), not the index's keys.
+
+An inferred structural edge changes the interface's subtype closure exactly as a declared edge does. Phase 3.5 re-answers callers from the `changed_types` set (`resolve_type_heritage`'s changed parents and `take_changed_member_types`) through `Project.files_dispatching_through`; every interface that gains or loses an inferred edge — in Phase 3.5 or lazily in step 2 — joins that set, or a caller resolved before the conforming class arrived stays unresolved and resolution depends on file arrival order again. Step 6 includes the interface / conforming class / caller order matrix through `update_file`, as `project.integration.test.ts` › "Dispatch through a subtype closure, whatever order files arrive in" does for declared edges.
 
 <!-- SECTION:DESCRIPTION:END -->
 

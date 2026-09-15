@@ -11,6 +11,7 @@ dependencies:
   - TASK-376.8
   - TASK-376.14
   - TASK-376.15
+  - TASK-376.20
 parent_task_id: TASK-376
 priority: high
 ordinal: 16000
@@ -30,6 +31,10 @@ ordinal: 16000
 4. Record the permanent limitations that success criteria must not target — `wasm-hash.js:141` calling `exports.update()` on a `WebAssembly.Instance` exports object; DI containers keyed by computed runtime tokens in `Map<InjectionToken, InstanceWrapper>`; celery `canvas.py:736` (`.on_error(...)` off an unannotated Python factory); the Rust `Drop` rows, whose destructor call is compiler-injected with no call expression in source — as registry classifier candidates where they are classifiable and as documented residue otherwise.
 5. Pin the achieved per-corpus counts in a corpus-level regression suite: one recorded-measurement row per corpus in `benchmark_corpus_load` and one named end-to-end case per corpus at the `Project` tier — angular `o.TypeVisitor` implementers and `inject(Router)`; rustc `LoweringContext` cross-file impl and trait default-body dispatch; tokio and sqlx `PgCube`; TypeScript `vfs.FileSystem`; django constructor rows; pandas `_parser_dispatch`; celery `certificate.py:100` and `loops.synloop`; express `lib/application.js:294` and the `require` + `mixin` pair; mocha `suites[0].afterEach()`; webpack `lib/Module.js:304`/`:317` and `this.#tm.getTransaction()`.
 6. File the follow-ons this epic deliberately does not close as backlog tasks: making `SELF_REFERENCE_KEYWORDS` (`call_resolution/receiver_resolution.ts:83`) language-aware or preferring an in-scope binding (Rust `this` is an ordinary identifier; JavaScript `self` is a real global, used heavily by webpack); interprocedural dataflow for cross-function class carriers (Django's `form_class(**defaults)`); and whether Python `for` / `while` / `match` clauses should stop opening block scopes, from the measurement TASK-376.12 left open.
+
+## Carried from TASK-376.13
+
+Rung 5 fans a member miss out to every subtype that declares the member, so a member the receiver type gains at run time reads as a miss. django's `Manager = BaseManager.from_queryset(QuerySet)` copies `QuerySet`'s methods onto the generated class, and `Manager` declares no `create`: 65 `objects.create(...)` calls in django's tests reach the one test manager subclass that declares `create`, and that method stops being an entry point. Step 2's literal set difference names it among the removed entry points, and its call-site spot check fails. Route it in step 3 from the measured count: a registry classifier candidate or documented residue under step 4, or a follow-on task under step 6 that models runtime member provision.
 
 <!-- SECTION:DESCRIPTION:END -->
 
