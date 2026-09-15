@@ -107,6 +107,12 @@ export class DefinitionRegistry {
 
   private by_scope: Map<ScopeId, Map<SymbolName, SymbolId>> = new Map();
 
+  /**
+   * Binding → every variable, constant and parameter binding of its name in its
+   * scope, in source order. Only a name its scope binds more than once is held.
+   */
+  private rebindings: Map<SymbolId, readonly SymbolId[]> = new Map();
+
   /** Which types extend or implement which, for polymorphic dispatch and inherited-member lookup. */
   private heritage: SubtypeGraph = new SubtypeGraph();
 
@@ -244,6 +250,8 @@ export class DefinitionRegistry {
     if (anonymous_callables.length > 0) {
       this.anonymous_callables_by_file.set(file_id, anonymous_callables);
     }
+
+    this.index_rebindings(definitions);
 
     for (const def of definitions) {
       if (
@@ -409,6 +417,19 @@ export class DefinitionRegistry {
     return this.by_scope.get(scope_id) ?? new Map();
   }
 
+  /**
+   * Every variable, constant and parameter binding of `symbol_id`'s name in its
+   * scope, in source order, or empty when that binding is the name's only one.
+   *
+   * The scope index holds one symbol per name, chosen by the order definitions
+   * arrive in rather than by position, so a read that several bindings of one
+   * name precede — `mapper_cls = Mapper; mapper_cls(); mapper_cls = Other` —
+   * cannot tell from name resolution which of them reaches it.
+   */
+  get_scope_rebindings(symbol_id: SymbolId): readonly SymbolId[] {
+    return this.rebindings.get(symbol_id) ?? [];
+  }
+
   remove_file(file_id: FilePath): void {
     this.anonymous_callables_by_file.delete(file_id);
 
@@ -474,6 +495,7 @@ export class DefinitionRegistry {
       }
 
       this.by_symbol.delete(symbol_id);
+      this.rebindings.delete(symbol_id);
       this.members.forget_owned_members(symbol_id);
       this.members.forget_member(symbol_id);
       this.function_collections.delete(symbol_id);
@@ -483,6 +505,44 @@ export class DefinitionRegistry {
     this.by_file.delete(file_id);
 
     this.assert_reverse_indices_consistent(`remove_file(${file_id})`);
+  }
+
+  /**
+   * Group one file's variable, constant and parameter bindings by scope and
+   * name, and index every group of more than one. A binding a scope holds twice
+   * over one span — a Python class attribute is also its class's property — is
+   * one binding, which is why properties take no part.
+   */
+  private index_rebindings(definitions: readonly AnyDefinition[]): void {
+    const groups = new Map<string, AnyDefinition[]>();
+    for (const def of definitions) {
+      if (def.kind !== "variable" && def.kind !== "constant" && def.kind !== "parameter") {
+        continue;
+      }
+      const key = `${def.defining_scope_id}\u0000${def.name}`;
+      const group = groups.get(key);
+      if (group) {
+        group.push(def);
+      } else {
+        groups.set(key, [def]);
+      }
+    }
+
+    for (const group of groups.values()) {
+      if (group.length < 2) {
+        continue;
+      }
+      const in_source_order = group
+        .sort((a, b) =>
+          a.location.start_line !== b.location.start_line
+            ? a.location.start_line - b.location.start_line
+            : a.location.start_column - b.location.start_column
+        )
+        .map((def) => def.symbol_id);
+      for (const symbol_id of in_source_order) {
+        this.rebindings.set(symbol_id, in_source_order);
+      }
+    }
   }
 
   size(): number {
@@ -713,6 +773,7 @@ export class DefinitionRegistry {
     this.location_to_symbol.clear();
     this.members.clear();
     this.by_scope.clear();
+    this.rebindings.clear();
     this.heritage.clear();
     this.function_collections.clear();
     this.anonymous_callables_by_file.clear();

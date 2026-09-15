@@ -704,6 +704,7 @@ describe("Fixture corpus invariants", () => {
         "python/code/integration/uses_parsers.py definition.variable@775:776 x2",
         "python/code/integration/uses_parsers.py definition.variable@846:847 x2",
         "python/code/integration/uses_parsers.py definition.variable@924:925 x2",
+        "python/code/integration/value_source/decl_base.py definition.variable@892:901 x2",
       ],
       single_definition_per_range: true,
     },

@@ -46,19 +46,23 @@ export function extract_collection_source(node: SyntaxNode): SymbolName | undefi
 }
 
 /**
- * The callee chain of a declarator's call initialiser, root first:
- * `["get_scope_boundary_extractor"]` for `const e = get_scope_boundary_extractor()`,
- * `["s", "getInfo"]` for `const i = s.getInfo()`, `["this", "#tm", "get"]` for
- * `const t = this.#tm.get()`. A callee that is not a name chain rooted at an
- * identifier or `this` (`make()()`, `a[k]()`, `super.f()`) has no chain.
+ * The callee chain of a declarator's call or construction initialiser, root
+ * first: `["get_scope_boundary_extractor"]` for
+ * `const e = get_scope_boundary_extractor()`, `["s", "getInfo"]` for
+ * `const i = s.getInfo()`, `["this", "#tm", "get"]` for
+ * `const t = this.#tm.get()`, `["cls"]` for `const p = new cls()`. A callee
+ * that is not a name chain rooted at an identifier or `this` (`make()()`,
+ * `a[k]()`, `super.f()`) has no chain.
  */
 export function extract_initializer_call(node: SyntaxNode): readonly SymbolName[] | undefined {
   const value_node = declarator_value(node);
-  if (value_node?.type !== "call_expression") {
-    return undefined;
-  }
-  const function_node = value_node.childForFieldName("function");
-  return function_node ? name_chain(function_node) : undefined;
+  const callee_node =
+    value_node?.type === "call_expression"
+      ? value_node.childForFieldName("function")
+      : value_node?.type === "new_expression"
+        ? value_node.childForFieldName("constructor")
+        : null;
+  return callee_node ? name_chain(callee_node) : undefined;
 }
 
 /**

@@ -1,6 +1,6 @@
 /**
  * TypeScript annotation grammar: nullish unions, `readonly`, `T[]`, `<…>`
- * arguments, dotted heads and inline `import("…")` types.
+ * arguments, dotted heads, `typeof X` and inline `import("…")` types.
  */
 
 import type { SymbolName } from "@ariadnejs/types";
@@ -16,6 +16,10 @@ const NULLISH = new Set(["null", "undefined"]);
 
 const ARRAY = "Array" as SymbolName;
 
+const TYPEOF = "typeof" as SymbolName;
+
+const TYPEOF_PREFIX = "typeof ";
+
 const INLINE_IMPORT = /^import\(\s*(["'])([^"']+)\1\s*\)\s*\.(.+)$/s;
 
 /**
@@ -25,6 +29,8 @@ const INLINE_IMPORT = /^import\(\s*(["'])([^"']+)\1\s*\)\s*\.(.+)$/s;
  * `F | null` and `F | undefined` denote `F`: a member call only runs on the
  * non-nullish arm. `F[]` is `Array<F>`, so the element stays an argument and
  * never becomes the receiver type — `xs.push()` is `Array`'s method.
+ * `typeof X` keeps `typeof` as its head and `X` as its argument, as Python's
+ * `type[X]` does: it denotes the class object `X` names, not an instance.
  */
 export function parse_typescript_annotation(text: string): ParsedTypeAnnotation | null {
   let annotation = text.trim();
@@ -47,6 +53,11 @@ export function parse_typescript_annotation(text: string): ParsedTypeAnnotation 
 
   if (annotation.startsWith("readonly ")) {
     return parse_typescript_annotation(annotation.slice("readonly ".length));
+  }
+
+  if (annotation.startsWith(TYPEOF_PREFIX)) {
+    const operand = parse_qualified_head(annotation.slice(TYPEOF_PREFIX.length).trim(), ".");
+    return operand ? { head: [TYPEOF], arguments: [{ head: operand, arguments: [] }] } : null;
   }
 
   if (annotation.endsWith("?")) {

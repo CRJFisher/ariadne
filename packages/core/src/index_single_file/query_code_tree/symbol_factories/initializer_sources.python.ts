@@ -1,9 +1,9 @@
 /**
  * What a Python variable's initialiser names: the collection it is looked up
  * from, the member it reads, the callee chain of the call it is initialised
- * from, and — for a binding a `for` loop or tuple unpacking initialises — the
- * container it takes an element of. Resolution follows each to type or
- * dispatch the binding.
+ * from or of the call whose result it calls, and — for a binding a `for` loop
+ * or tuple unpacking initialises — the container it takes an element of.
+ * Resolution follows each to type or dispatch the binding.
  */
 
 import type { SyntaxNode } from "tree-sitter";
@@ -84,6 +84,22 @@ export function extract_initializer_call(node: SyntaxNode): readonly SymbolName[
   }
   const function_node = value_node.childForFieldName("function");
   return function_node ? attribute_chain(function_node) : undefined;
+}
+
+/**
+ * The callee chain of the call whose result a plain `name = call(...)(...)`
+ * initialiser calls in turn: `["make"]` for `p = make()(io)`. A callee of the
+ * inner call that is not an attribute chain rooted at an identifier has no
+ * chain, and neither does a call of anything but a call.
+ */
+export function extract_initializer_result_call(node: SyntaxNode): readonly SymbolName[] | undefined {
+  const value_node = bound_value(node);
+  const callee_node = value_node?.type === "call" ? value_node.childForFieldName("function") : null;
+  if (callee_node?.type !== "call") {
+    return undefined;
+  }
+  const inner_callee = callee_node.childForFieldName("function");
+  return inner_callee ? attribute_chain(inner_callee) : undefined;
 }
 
 /**

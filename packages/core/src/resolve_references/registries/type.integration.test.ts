@@ -953,16 +953,23 @@ def dispose(queue: Queue):
         const source = files["html.py"];
         const parser = variable_in(project, file, "parser", line_of(source, "parser = _parser_dispatch"));
         const factory_product = variable_in(project, file, "p", line_of(source, "p = make()(io)"));
+        const dispatch = [...project.get_index_single_file(file)!.functions.values()].find(
+          (definition) => definition.name === "_parser_dispatch"
+        )!.symbol_id;
         expect({
           parser_type: project.types.get_symbol_type(parser),
           parser_arguments: project.types.get_symbol_type_arguments(parser),
           factory_product_type: project.types.get_symbol_type(factory_product),
+          dispatch_return_type: project.types.get_callable_return_type(dispatch),
+          dispatch_return_class: project.types.get_callable_return_class(dispatch),
         }).toEqual({
           parser_type: null,
           parser_arguments: [type_named(project, file, "_HtmlFrameParser")],
-          // `make()(io)` calls what a call returned: no callee chain names it, so
-          // what the class object constructs is left to the value-source step.
+          // What a class object constructs is what the binding holds, not the
+          // type its declaration records: the value source answers it.
           factory_product_type: null,
+          dispatch_return_type: null,
+          dispatch_return_class: type_named(project, file, "_HtmlFrameParser"),
         });
       });
     });

@@ -4,7 +4,9 @@
  * A path-qualified call (`worker::create`) binds through its qualifier first,
  * honouring the author's path over a same-name local. A bare call resolves by
  * name, skips method/constructor definitions (they require a receiver), then
- * falls back to collection dispatch and the Python callable-instance protocol.
+ * follows a binding to what it holds — the functions of the collection it was
+ * read out of, or the callable or class object it carries — and falls back to
+ * the Python callable-instance protocol.
  */
 
 import type {
@@ -19,6 +21,7 @@ import type { ResolutionRegistry } from "../resolution_registry";
 import { resolve_collection_dispatch } from "./collection_dispatch";
 import { resolve_callable_instance } from "./callable_instance.python";
 import { resolve_via_path_prefix_rust } from "./function_call.rust";
+import { resolve_value_source } from "./value_source";
 
 /**
  * Find alternative resolution by skipping method/constructor definitions.
@@ -110,7 +113,8 @@ function find_function_resolution(
  *
  * Handles bare function calls (no receiver):
  * 1. Resolve the name, skipping method/constructor definitions
- * 2. Fall back to collection dispatch if unresolved or collection-sourced
+ * 2. Fall back to collection dispatch if unresolved or collection-sourced;
+ *    otherwise follow a binding holding a callable or a class object to it
  * 3. Fall back to Python callable instance (__call__ method)
  *
  * @returns Resolved symbol_ids on success, or a `ResolutionFailure` describing
@@ -138,7 +142,7 @@ export function resolve_function_call(
     resolved_symbols = [name_result.value];
   }
 
-  // Step 2: Check for collection dispatch
+  // Step 2: Check for collection dispatch, or what the binding holds
   let try_dispatch = resolved_symbols.length === 0;
   if (resolved_symbols.length === 1) {
     const def = context.definitions.get(resolved_symbols[0]);
@@ -148,6 +152,16 @@ export function resolve_function_call(
       def.collection_source
     ) {
       try_dispatch = true;
+    } else {
+      // A class object is called to construct it: the class stands in for
+      // the call, and its constructor joins it once the call is recorded. An
+      // instance is left to the callable-instance step below.
+      const held = resolve_value_source(resolved_symbols[0], ref.location, context);
+      if (held?.kind === "callable") {
+        resolved_symbols = [held.symbol_id];
+      } else if (held?.kind === "class_object") {
+        resolved_symbols = [held.class_id];
+      }
     }
   }
 

@@ -45,7 +45,26 @@ type ReadRef = {
   scope_id: string;
   name: SymbolName;
   location: Location;
+  property_chain?: readonly SymbolName[];
 };
+
+type MemberReadCallableResolver = (
+  scope_id: string,
+  property_chain: readonly SymbolName[],
+  read_at: Location,
+) => SymbolId | null;
+
+const NO_MEMBER_READ_CALLABLES: MemberReadCallableResolver = () => null;
+
+function member_read(chain: readonly string[], location: Location): ReadRef {
+  return {
+    kind: "property_access",
+    scope_id: SCOPE_FILE,
+    name: chain[chain.length - 1] as SymbolName,
+    location,
+    property_chain: chain as SymbolName[],
+  };
+}
 
 function read_ref(
   name: string,
@@ -72,9 +91,10 @@ function run(
   refs: ReadRef[],
   registry: DefinitionRegistry,
   resolve: (scope_id: string, name: SymbolName) => SymbolId | null,
+  resolve_member_read_callable: MemberReadCallableResolver = NO_MEMBER_READ_CALLABLES,
 ): Map<SymbolId, IndirectReachability> {
   const file_references = new Map<FilePath, readonly ReadRef[]>([[TEST_FILE, refs]]);
-  return detect_indirect_reachability(file_references, registry, resolve);
+  return detect_indirect_reachability(file_references, registry, resolve, resolve_member_read_callable);
 }
 
 function make_function_def(name: string, location: Location): FunctionDefinition {
@@ -144,7 +164,7 @@ function mock_definition_registry(
 describe("detect_indirect_reachability", () => {
   it("returns an empty map when there are no references", () => {
     const registry = mock_definition_registry(new Map());
-    const result = detect_indirect_reachability(new Map(), registry, () => null);
+    const result = detect_indirect_reachability(new Map(), registry, () => null, NO_MEMBER_READ_CALLABLES);
     expect(result).toEqual(new Map());
   });
 
@@ -321,6 +341,67 @@ describe("detect_indirect_reachability", () => {
       );
 
       expect(result).toEqual(new Map());
+    });
+  });
+
+  describe("member read detection", () => {
+    const LOOPS_FILE = "loops.py" as FilePath;
+    const synloop = make_function_def("synloop", { ...MOCK_LOCATION, file_path: LOOPS_FILE });
+
+    it("marks the function a member read hands over as a function_reference", () => {
+      const registry = mock_definition_registry(new Map());
+      const read_chains: (readonly SymbolName[])[] = [];
+
+      const result = run(
+        [member_read(["loops", "synloop"], READ_LOCATION)],
+        registry,
+        () => null,
+        (_scope_id, property_chain) => {
+          read_chains.push(property_chain);
+          return synloop.symbol_id;
+        },
+      );
+
+      expect({ result, read_chains }).toEqual({
+        result: new Map<SymbolId, IndirectReachability>([
+          [synloop.symbol_id, { reason: { type: "function_reference", read_location: READ_LOCATION } }],
+        ]),
+        read_chains: [["loops", "synloop"]],
+      });
+    });
+
+    it("marks nothing for a member read that holds no function or method", () => {
+      const registry = mock_definition_registry(new Map());
+
+      const result = run(
+        [member_read(["self", "loop"], READ_LOCATION)],
+        registry,
+        name_resolver({ loop: synloop.symbol_id }),
+        NO_MEMBER_READ_CALLABLES,
+      );
+
+      expect(result).toEqual(new Map());
+    });
+
+    it("records the earlier of a member read and a name read of one function, whichever the walk meets first", () => {
+      const registry = mock_definition_registry(
+        new Map<SymbolId, AnyDefinition>([[synloop.symbol_id, synloop]]),
+      );
+      const name_read_location: Location = { ...READ_LOCATION, start_line: 9, end_line: 9 };
+      const refs = [member_read(["loops", "synloop"], READ_LOCATION), read_ref("synloop", name_read_location)];
+
+      const member_read_first = run(refs, registry, name_resolver({ synloop: synloop.symbol_id }), () => synloop.symbol_id);
+      const name_read_first = run(
+        [...refs].reverse(),
+        registry,
+        name_resolver({ synloop: synloop.symbol_id }),
+        () => synloop.symbol_id,
+      );
+
+      const expected = new Map<SymbolId, IndirectReachability>([
+        [synloop.symbol_id, { reason: { type: "function_reference", read_location: READ_LOCATION } }],
+      ]);
+      expect({ member_read_first, name_read_first }).toEqual({ member_read_first: expected, name_read_first: expected });
     });
   });
 
@@ -519,6 +600,7 @@ describe("the read site recorded as evidence", () => {
       new Map<FilePath, readonly ReadRef[]>(files),
       registry,
       resolve,
+      NO_MEMBER_READ_CALLABLES,
     );
   }
 

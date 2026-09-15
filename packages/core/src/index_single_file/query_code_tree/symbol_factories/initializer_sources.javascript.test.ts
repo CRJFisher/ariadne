@@ -94,9 +94,15 @@ describe("extract_initializer_call", () => {
     expect(initializer_call("const p = super.make()")).toBeUndefined();
   });
 
-  it("has no chain for an initialiser that is not a call", () => {
+  it("reads a construction as its constructor's name chain", () => {
+    expect(initializer_call("const p = new cls(io)")).toEqual(["cls"]);
+    expect(initializer_call("const u = new models.User()")).toEqual(["models", "User"]);
+  });
+
+  it("has no chain for an initialiser that is neither a call nor a construction", () => {
     expect(initializer_call("const x = 42")).toBeUndefined();
-    expect(initializer_call("const x = new Foo()")).toBeUndefined();
+    expect(initializer_call("const x = Foo")).toBeUndefined();
+    expect(initializer_call("const x = new (make())()")).toBeUndefined();
   });
 });
 

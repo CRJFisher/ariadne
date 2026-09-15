@@ -1,7 +1,11 @@
 import { describe, it, expect } from "vitest";
-import type { IterationSource } from "@ariadnejs/types";
+import type { IterationSource, SymbolName } from "@ariadnejs/types";
 import { parse_python, find_node_by_type } from "./test_utils";
-import { extract_collection_source, extract_iteration_source } from "./initializer_sources.python";
+import {
+  extract_collection_source,
+  extract_initializer_result_call,
+  extract_iteration_source,
+} from "./initializer_sources.python";
 
 // ============================================================================
 
@@ -103,5 +107,22 @@ describe("extract_collection_source", () => {
 
     const derived = extract_collection_source(identifier);
     expect(derived).toBeUndefined();
+  });
+});
+
+describe("extract_initializer_result_call", () => {
+  function result_call(code: string): readonly SymbolName[] | undefined {
+    return extract_initializer_result_call(find_node_by_type(parse_python(code), "identifier")!);
+  }
+
+  it("reads the callee chain of the call whose result the initialiser calls", () => {
+    expect(result_call("p = make()(io)")).toEqual(["make"]);
+    expect(result_call("p = self.factory(kind)(io)")).toEqual(["self", "factory"]);
+  });
+
+  it("has no chain for a single call, a call whose inner callee is a subscript, or a non-call", () => {
+    expect(result_call("p = make(io)")).toBeUndefined();
+    expect(result_call("p = table[kind]()(io)")).toBeUndefined();
+    expect(result_call("p = make")).toBeUndefined();
   });
 });

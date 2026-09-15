@@ -285,10 +285,18 @@ export interface VariableDefinition extends Definition {
   /**
    * The callee chain of the call this binding is initialised from, root first:
    * `["getHandler"]` for `const h = getHandler()`, `["s", "getInfo"]` for
-   * `const i = s.getInfo()`, `["self", "factory"]` for `p = self.factory()`.
-   * Absent when the callee is not a name chain (`make()(…)`, `a[k]()`).
+   * `const i = s.getInfo()`, `["self", "factory"]` for `p = self.factory()`,
+   * `["cls"]` for `const p = new cls()`. Absent when the callee is not a name
+   * chain (`make()(…)`, `a[k]()`).
    */
   readonly initialized_from_call?: readonly SymbolName[];
+  /**
+   * @language python
+   * The callee chain of the call whose result this binding's initialiser calls
+   * in turn: `["make"]` for `p = make()(io)`. Where the inner call returns a
+   * class object, the binding holds an instance of that class.
+   */
+  readonly initialized_from_call_result?: readonly SymbolName[];
   /**
    * @language javascript,typescript
    * The identifier an object-destructured binding unpacks: "options" in

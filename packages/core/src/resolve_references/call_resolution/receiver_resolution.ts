@@ -42,6 +42,7 @@ import { err, ok } from "@ariadnejs/types";
 import { resolve_element_type } from "./container_element";
 import { dereference_named_import, resolve_namespace_member } from "./namespace_member";
 import { infer_generic_return_from_type_token } from "./type_token_return";
+import { resolve_value_source } from "./value_source";
 import { ScopeRegistry } from "../registries/scope";
 import { DefinitionRegistry } from "../registries/definition";
 import type { TypeRegistry } from "../registries/type";
@@ -242,7 +243,7 @@ function resolve_index_receiver_type(
       : [names]
     : [];
   for (const container_chain of candidates) {
-    const container_id = resolve_container_binding(container_chain, receiver.scope_id, context, visited);
+    const container_id = resolve_chain_binding(container_chain, receiver.scope_id, context, visited);
     const element_id = container_id ? resolve_element_type(container_id, "index", context) : null;
     if (element_id) {
       return ok(element_id);
@@ -256,11 +257,15 @@ function resolve_index_receiver_type(
 }
 
 /**
- * The binding a container name chain denotes: the name itself for one segment,
+ * The definition a name chain denotes: the name itself for one segment,
  * otherwise the member the last segment names on the type the rest resolves
- * to (`this._instances`, `self.layers`).
+ * to (`this._instances`, `self.layers`, `loops.synloop`).
+ *
+ * A lone name is looked up lexically even when it spells a self receiver: a
+ * name in value position is whatever its scope binds, so `cls = Parser` binds
+ * `cls` like any other local.
  */
-function resolve_container_binding(
+export function resolve_chain_binding(
   chain: readonly SymbolName[],
   scope_id: ScopeId,
   context: ReceiverResolutionContext,
@@ -269,7 +274,7 @@ function resolve_container_binding(
   const [root, ...members] = chain;
   const member_name = members[members.length - 1];
   if (member_name === undefined) {
-    return SELF_REFERENCE_KEYWORDS.has(root) ? null : context.resolutions.resolve(scope_id, root);
+    return context.resolutions.resolve(scope_id, root);
   }
 
   const holder = resolve_receiver_expression_type(
@@ -453,7 +458,7 @@ function resolve_identifier_base(
       type_id = symbol_id;
     } else if (
       // The rung above states a type; this one only says where the value came
-      // from, so it is consulted last.
+      // from, so it is consulted after it.
       (def.kind === "variable" || def.kind === "constant") &&
       def.destructured_from !== undefined &&
       def.destructured_key !== undefined
@@ -465,9 +470,15 @@ function resolve_identifier_base(
         context,
         visited
       );
-    } else if (def.kind === "variable" || def.kind === "constant") {
-      type_id = resolve_element_binding_type(def, context, visited);
     }
+  }
+
+  if (!type_id) {
+    // What the binding holds, last: a class object is its own receiver type,
+    // just as a class named directly is (`cls.create()`).
+    const held = resolve_value_source(symbol_id, null, context, visited);
+    type_id =
+      held?.kind === "instance_of" ? held.type_id : held?.kind === "class_object" ? held.class_id : null;
   }
 
   if (!type_id) {
@@ -514,42 +525,6 @@ function find_member_symbol(
     context.definitions.get_member_index().get(type_id)?.get(property_name) ??
     resolve_namespace_member(type_id, property_name, context)
   );
-}
-
-/**
- * The element type of a binding a container read initialises: a loop or array
- * pattern over the container it iterates (`iterated_from`), or an index or
- * `get(k)` lookup of the collection it names (`collection_source`).
- */
-function resolve_element_binding_type(
-  binding: VariableDefinition,
-  context: ReceiverResolutionContext,
-  visited: Set<SymbolId>
-): SymbolId | null {
-  if (visited.has(binding.symbol_id)) {
-    return null;
-  }
-  visited.add(binding.symbol_id);
-
-  if (binding.iterated_from) {
-    const container_id = resolve_container_binding(
-      binding.iterated_from.container,
-      binding.defining_scope_id,
-      context,
-      visited
-    );
-    return container_id
-      ? resolve_element_type(container_id, binding.iterated_from.yields, context)
-      : null;
-  }
-  if (binding.collection_source) {
-    const container_id = context.resolutions.resolve(
-      binding.defining_scope_id,
-      binding.collection_source
-    );
-    return container_id ? resolve_element_type(container_id, "index", context) : null;
-  }
-  return null;
 }
 
 /**
