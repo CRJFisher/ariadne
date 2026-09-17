@@ -1569,7 +1569,7 @@ describe("resolved-plus-failed invariant", () => {
     ["typescript", { files: 58, call_references: 147, resolved: 103, failed: 44 }],
     ["javascript", { files: 44, call_references: 245, resolved: 162, failed: 83 }],
     ["python", { files: 79, call_references: 346, resolved: 252, failed: 94 }],
-    ["rust", { files: 40, call_references: 176, resolved: 121, failed: 55 }],
+    ["rust", { files: 43, call_references: 181, resolved: 127, failed: 54 }],
   ] as const)(
     "ends every call-kind reference of the %s fixture corpus as one CallReference with a target or a reason",
     async (language, expected: CorpusTally) => {

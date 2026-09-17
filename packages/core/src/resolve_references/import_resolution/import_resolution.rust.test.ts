@@ -546,6 +546,60 @@ describe("resolve_module_path_rust", () => {
       ).toBe("/project/src/deep/mod.rs");
     });
 
+    it("resolves a super-anchored item from a top-level module to the crate root file", () => {
+      expect(
+        resolve_module_path_rust(
+          "super",
+          "/project/src/other.rs" as FilePath,
+          create_module_resolution_context(tree, EMPTY_MODULE_SPECIFIER_INDEX)
+        )
+      ).toBe("/project/src/lib.rs");
+    });
+
+    it("resolves a super-anchored item from a top-level module to main.rs in a binary crate", () => {
+      const binary_tree = create_file_tree("/project", [
+        "src/main.rs",
+        "src/other.rs",
+      ]);
+      expect(
+        resolve_module_path_rust(
+          "super",
+          "/project/src/other.rs" as FilePath,
+          create_module_resolution_context(binary_tree, EMPTY_MODULE_SPECIFIER_INDEX)
+        )
+      ).toBe("/project/src/main.rs");
+    });
+
+    it("leaves a super-anchored item unresolved when a library and a binary root two crates in one directory", () => {
+      const lib_and_bin = create_file_tree("/project", [
+        "src/lib.rs",
+        "src/main.rs",
+        "src/cli.rs",
+      ]);
+      expect(
+        resolve_module_path_rust(
+          "super",
+          "/project/src/cli.rs" as FilePath,
+          create_module_resolution_context(lib_and_bin, EMPTY_MODULE_SPECIFIER_INDEX)
+        )
+      ).toBe("/project/src.rs");
+    });
+
+    it("leaves a super climb that overshoots its crate root out of the crate above it", () => {
+      const nested = create_file_tree("/project", [
+        "crate_b/src/lib.rs",
+        "crate_b/src/crate_a/src/lib.rs",
+        "crate_b/src/crate_a/src/deep/mod.rs",
+      ]);
+      expect(
+        resolve_module_path_rust(
+          "super::super::super",
+          "/project/crate_b/src/crate_a/src/deep/mod.rs" as FilePath,
+          create_module_resolution_context(nested, EMPTY_MODULE_SPECIFIER_INDEX)
+        )
+      ).toBe("/project/crate_b/src.rs");
+    });
+
     it("keeps a flat sibling layout resolving when no 2018-style directory exists", () => {
       const flat_tree = create_file_tree("/project", [
         "src/lib.rs",

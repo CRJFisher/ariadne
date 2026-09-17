@@ -1,7 +1,7 @@
 ---
 id: TASK-376.8
 title: "Attach cross-file Rust impl-block methods to their type"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-07-29 09:38"
 labels:
@@ -43,14 +43,45 @@ A Rust `impl` block whose type is declared in another file contributes zero defi
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 Methods declared in a cross-file Rust `impl` block appear in the target type's member index and are callable from the `impl` block itself and from a third file.
-- [ ] #2 The attachment is per-file provenanced: removing or re-ingesting the impl file removes/does not duplicate exactly its contributions.
-- [ ] #3 Resolution is independent of the order in which the type's file and the impl file are ingested, under the incremental driver and the bulk driver.
-- [ ] #4 Integration tests with Rust fixtures cover all of this step's evidence cases: the two-file `self.method()` shape, the three-file struct/impl/caller shape, the rustc `LoweringContext` shape, and both ingestion orders.
-- [ ] #5 `function_call.rust.test.ts`, `constructor.rust.test.ts` and `path_resolution.rust.test.ts` stay green.
+- [x] #1 Methods declared in a cross-file Rust `impl` block appear in the target type's member index and are callable from the `impl` block itself and from a third file.
+- [x] #2 The attachment is per-file provenanced: removing or re-ingesting the impl file removes/does not duplicate exactly its contributions.
+- [x] #3 Resolution is independent of the order in which the type's file and the impl file are ingested, under the incremental driver and the bulk driver.
+- [x] #4 Integration tests with Rust fixtures cover all of this step's evidence cases: the two-file `self.method()` shape, the three-file struct/impl/caller shape, the rustc `LoweringContext` shape, and both ingestion orders.
+- [x] #5 `function_call.rust.test.ts`, `constructor.rust.test.ts` and `path_resolution.rust.test.ts` stay green.
 
 <!-- AC:END -->
 
 ## Notes from wave 1
 
 `DefinitionRegistry.attach_members(type_id, file, members)` takes an iterable of `[name, symbol_id]` pairs and applies them in order under one rule (`member_takes_slot`: a property never displaces a callable, a setter or deleter never displaces anything, a callable displaces whatever else holds the name). Every member attached must already be registered in `by_symbol` under the file it is defined in — an `impl` block's methods belong to the impl's file — because `verify_reverse_indices` rebuilds `members_by_file` from each held member's defining file and the test suite runs with that check armed. `remove_file` takes back exactly the names the file holds, so the attach pass needs no eviction of its own.
+
+## Implementation notes
+
+Steps 1 and 2 had landed (TASK-376.7's `attach_impl_methods`, TASK-376.13's
+re-resolution), so this task was step 2's confirmation and steps 3-4's tests.
+The confirmation found the defect it was there to find: the rustc evidence case
+did not work.
+
+`rustc_ast_lowering/src/path.rs` reaches `LoweringContext` with `use super::…`,
+and `super` from a top-level module names the crate root. `parent_module_file`
+knew only two layouts — a `mod.rs` and the 2018-style `<dir>.rs` sibling — so it
+answered `src.rs`, a file no crate has. The impl file never resolved its own
+self type, its methods never joined the member index, and every method a
+cross-file `impl` declared this way stayed unreachable, its callers unresolved
+and the methods themselves false entry points. The crate root is now the third
+layout it knows.
+
+Two limits are deliberate, each a miss rather than a guess, because an edge onto
+a real but unrelated file is one no caller can tell from a true one:
+
+- A climb that overshoots its crate does not answer from whatever directory sits
+  above it.
+- A package rooting both a library and a binary in one directory does not answer
+  at all: nothing here says which tree the module descends from.
+
+Beside that, `rust.scm` no longer captures `(super)` as a reference. `super` is
+never an expression in Rust, only a path anchor, so every `use super::…` became
+a call reference with no receiver that resolution could only fail — three across
+the Rust corpus, one of them in a fixture the pinned tally already counted, which
+is why that tally's `failed` falls by one as its file count rises. No resolved
+call changed: 127 with the capture and without it.

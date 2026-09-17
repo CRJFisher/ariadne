@@ -22,10 +22,18 @@ describe("receiver types through the project pipeline", () => {
     }
   });
 
+  /**
+   * The two ways a corpus reaches a project: an edit at a time, and one bulk
+   * load. A cross-file contribution has to survive both, so the tests that care
+   * run under each.
+   */
+  type Driver = "incremental" | "bulk";
+
   /** Write `files` to a fresh directory and load them in `order` (default: as listed). */
   async function load_project(
     files: Readonly<Record<string, string>>,
-    order: readonly string[] = Object.keys(files)
+    order: readonly string[] = Object.keys(files),
+    driver: Driver = "incremental"
   ): Promise<{ project: Project; paths: Record<string, FilePath> }> {
     const dir = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), "annotation-")));
     temp_dirs.push(dir);
@@ -39,7 +47,14 @@ describe("receiver types through the project pipeline", () => {
     const project = new Project();
     await project.initialize(dir as FilePath);
     for (const relative of order) {
-      project.update_file(paths[relative], files[relative]);
+      if (driver === "bulk") {
+        project.ingest_file(paths[relative], files[relative]);
+      } else {
+        project.update_file(paths[relative], files[relative]);
+      }
+    }
+    if (driver === "bulk") {
+      project.resolve_corpus();
     }
     return { project, paths };
   }
@@ -102,6 +117,11 @@ describe("receiver types through the project pipeline", () => {
       ?.get(member as SymbolName);
     if (!member_id) throw new Error(`${type_name} has no member ${member}`);
     return member_id;
+  }
+
+  /** Every name a type's member index holds, sorted so ingestion order cannot show through. */
+  function names_in_member_index(project: Project, type_id: SymbolId): string[] {
+    return [...(project.definitions.get_member_index().get(type_id)?.keys() ?? [])].sort();
   }
 
   /** The parameter `parameter` of the function `function_name` in `file`. */
@@ -615,39 +635,59 @@ export class CompilerFacadeImpl implements core.CompilerFacade, CompilerFacade {
     });
 
     it.each([
-      ["type file first", ["types.rs", "impls.rs"]],
-      ["impl file first", ["impls.rs", "types.rs"]],
-    ])("records the trait edge of an impl whose type another file declares (%s)", async (_order, order) => {
-      const read = (name: string) =>
-        fs.readFileSync(path.join(FIXTURES_ROOT, "rust", "code", "integration", name), "utf-8");
-      const { project, paths } = await load_project(
-        { "types.rs": read("types.rs"), "impls.rs": read("impls.rs") },
-        order
-      );
+      ["incremental, type file first", ["types.rs", "impls.rs"], "incremental"],
+      ["incremental, impl file first", ["impls.rs", "types.rs"], "incremental"],
+      ["bulk, type file first", ["types.rs", "impls.rs"], "bulk"],
+      ["bulk, impl file first", ["impls.rs", "types.rs"], "bulk"],
+    ] as const)(
+      "joins every impl block of a multi-impl file to the type another file declares, and records its trait edge (%s)",
+      async (_name, order, driver) => {
+        const read = (name: string) =>
+          fs.readFileSync(path.join(FIXTURES_ROOT, "rust", "code", "integration", name), "utf-8");
+        const { project, paths } = await load_project(
+          { "types.rs": read("types.rs"), "impls.rs": read("impls.rs") },
+          order,
+          driver
+        );
 
-      const lowering = type_named(project, paths["types.rs"], "Lowering");
-      const report = project.definitions.get_member_index().get(lowering)?.get("report" as SymbolName);
+        const lowering = type_named(project, paths["types.rs"], "Lowering");
+        const report = member_of(project, paths["types.rs"], "Lowering", "report");
 
-      expect(project.definitions.get_parent_types(lowering)).toEqual([
-        type_named(project, paths["types.rs"], "Visit"),
-      ]);
-      expect(report && project.definitions.get(report)?.location.file_path).toEqual(paths["impls.rs"]);
-      expect(targets_of(project, paths["impls.rs"], "report", 17)).toEqual([report]);
-    });
+        expect(project.definitions.get_parent_types(lowering)).toEqual([
+          type_named(project, paths["types.rs"], "Visit"),
+        ]);
+        // Three separate impl blocks in one file, one of them a trait impl.
+        expect(names_in_member_index(project, lowering)).toEqual([
+          "depth",
+          "descend",
+          "report",
+          "visit",
+        ]);
+        expect(project.definitions.get(report)?.location.file_path).toEqual(paths["impls.rs"]);
+        expect(targets_of(project, paths["impls.rs"], "report", 17)).toEqual([report]);
+      }
+    );
 
     it.each([
-      ["type, impl, caller", ["s.rs", "impl_s.rs", "main.rs"]],
-      ["impl, type, caller", ["impl_s.rs", "s.rs", "main.rs"]],
-    ])(
+      ["incremental, type first", ["s.rs", "impl_s.rs", "main.rs"], "incremental"],
+      ["incremental, impl first", ["impl_s.rs", "s.rs", "main.rs"], "incremental"],
+      // The caller between the two: it resolves once against a member index the
+      // impl file has not reached yet, so the impl's arrival has to re-answer it.
+      ["incremental, caller before impl", ["s.rs", "main.rs", "impl_s.rs"], "incremental"],
+      ["bulk, type first", ["s.rs", "impl_s.rs", "main.rs"], "bulk"],
+      ["bulk, impl first", ["impl_s.rs", "s.rs", "main.rs"], "bulk"],
+      ["bulk, caller before impl", ["s.rs", "main.rs", "impl_s.rs"], "bulk"],
+    ] as const)(
       "resolves a third file's call to a method a cross-file impl declares, and keeps it out of the entry points (%s)",
-      async (_order, order) => {
+      async (_name, order, driver) => {
         const { project, paths } = await load_project(
           {
             "s.rs": "pub struct S {\n    pub val: i32,\n}\n",
             "impl_s.rs": "use crate::s::S;\nimpl S {\n    pub fn helper(&self) -> i32 {\n        self.val\n    }\n}\n",
             "main.rs": "mod s;\nmod impl_s;\nuse crate::s::S;\npub fn run(s: S) -> i32 {\n    s.helper()\n}\n",
           },
-          order
+          order,
+          driver
         );
         const helper = member_of(project, paths["s.rs"], "S", "helper");
 
@@ -661,6 +701,87 @@ export class CompilerFacadeImpl implements core.CompilerFacade, CompilerFacade {
         expect([...(project.definitions.get_member_index().get(s_type)?.keys() ?? [])]).toEqual(["val"]);
       }
     );
+
+    it.each([
+      ["incremental, crate root first", ["lib.rs", "path.rs", "visit.rs"], "incremental"],
+      ["incremental, impl file first", ["path.rs", "visit.rs", "lib.rs"], "incremental"],
+      ["bulk, crate root first", ["lib.rs", "path.rs", "visit.rs"], "bulk"],
+      ["bulk, impl file first", ["path.rs", "visit.rs", "lib.rs"], "bulk"],
+    ] as const)(
+      "joins a submodule's impl blocks to the crate-root type they name through `use super::*` (%s)",
+      async (_name, order, driver) => {
+        const { project, paths } = await load_project(
+          read_fixture("rust", "cross_file_impl_lowering"),
+          order,
+          driver
+        );
+        const lowering = type_named(project, paths["lib.rs"], "LoweringContext");
+        const lower_path = member_of(project, paths["lib.rs"], "LoweringContext", "lower_path");
+
+        expect(names_in_member_index(project, lowering)).toEqual([
+          "depth",
+          "lower_crate",
+          "lower_generic_args",
+          "lower_path",
+          "lower_path_segment",
+          "resolve",
+        ]);
+        expect(project.definitions.get(lower_path)?.location.file_path).toEqual(paths["path.rs"]);
+        // The trait the submodule's `impl Resolver for LoweringContext` names
+        // is declared in the crate root beside the type.
+        expect(project.definitions.get_parent_types(lowering)).toEqual([
+          type_named(project, paths["lib.rs"], "Resolver"),
+        ]);
+
+        // The crate root's own method, the impl file's own body, and a third
+        // file that declares neither all reach the cross-file member.
+        expect(targets_of(project, paths["lib.rs"], "lower_path", 19)).toEqual([lower_path]);
+        expect(targets_of(project, paths["path.rs"], "lower_path_segment", 10)).toEqual([
+          member_of(project, paths["lib.rs"], "LoweringContext", "lower_path_segment"),
+        ]);
+        expect(targets_of(project, paths["visit.rs"], "lower_path", 8)).toEqual([lower_path]);
+        expect(project.get_call_graph().entry_points).not.toContain(lower_path);
+      }
+    );
+
+    it("keeps one impl file's contributions to a type when another impl file for it is removed", async () => {
+      const { project, paths } = await load_project({
+        "s.rs": "pub struct S {\n    pub val: i32,\n}\n",
+        "impl_a.rs": "use crate::s::S;\nimpl S {\n    pub fn from_a(&self) -> i32 {\n        self.val\n    }\n}\n",
+        "impl_b.rs": "use crate::s::S;\nimpl S {\n    pub fn from_b(&self) -> i32 {\n        self.val\n    }\n}\n",
+        "main.rs": "mod s;\nmod impl_a;\nmod impl_b;\nuse crate::s::S;\npub fn run(s: S) -> i32 {\n    s.from_a() + s.from_b()\n}\n",
+      });
+      const s_type = type_named(project, paths["s.rs"], "S");
+      const from_b = member_of(project, paths["s.rs"], "S", "from_b");
+
+      expect(names_in_member_index(project, s_type)).toEqual(["from_a", "from_b", "val"]);
+
+      project.remove_file(paths["impl_a.rs"]);
+
+      expect(names_in_member_index(project, s_type)).toEqual(["from_b", "val"]);
+      expect(targets_of(project, paths["main.rs"], "from_b", 6)).toEqual([from_b]);
+    });
+
+    it("takes back exactly the impl file's contributions when it is removed, and does not duplicate them when it is re-ingested", async () => {
+      const files = read_fixture("rust", "cross_file_impl_lowering");
+      const { project, paths } = await load_project(files);
+      const lowering = type_named(project, paths["lib.rs"], "LoweringContext");
+      const attached = names_in_member_index(project, lowering);
+
+      project.update_file(paths["path.rs"], files["path.rs"]);
+      project.update_file(paths["path.rs"], files["path.rs"]);
+
+      expect(names_in_member_index(project, lowering)).toEqual(attached);
+
+      project.remove_file(paths["path.rs"]);
+
+      // The crate root keeps its own declaration; every name path.rs held goes.
+      expect(names_in_member_index(project, lowering)).toEqual(["depth", "lower_crate"]);
+
+      project.update_file(paths["path.rs"], files["path.rs"]);
+
+      expect(names_in_member_index(project, lowering)).toEqual(attached);
+    });
 
     it.each([
       ["base first", ["sql/__init__.py", "sql/compiler.py", "dialects/__init__.py", "dialects/pg.py"]],

@@ -212,7 +212,7 @@ function resolve_from_parent(
   // `use super::Item` names an item of the parent module itself; resolve to
   // that module's own file rather than a module beneath it.
   if (remaining.length === 0) {
-    return parent_module_file(parent_dir, root_folder);
+    return parent_module_file(parent_dir, base_file, root_folder);
   }
 
   return resolve_rust_module_path(parent_dir, remaining, root_folder);
@@ -221,16 +221,44 @@ function resolve_from_parent(
 /**
  * The file backing the module that owns `module_dir`: its `mod.rs`, or the
  * sibling `<module_dir>.rs` a 2018-style crate uses instead.
+ *
+ * A top-level module has neither: its parent is the crate root, which is backed
+ * by `lib.rs`/`main.rs` under that same directory rather than by a file naming
+ * it. So `use super::Item` in `src/path.rs` names an item of `src/lib.rs` —
+ * rustc's own `rustc_ast_lowering/src/path.rs` reaching `LoweringContext` is
+ * this shape.
+ *
+ * That last step answers only for the climbing file's own crate root, and only
+ * where one file backs it. A climb that overshoots its crate lands in whatever
+ * directory sits above, and a package with both a library and a binary roots
+ * two crates in one directory with no way here to say which tree the module
+ * descends from. Both would resolve onto a real, indexed, unrelated file, which
+ * is an edge no caller could tell from a true one — so neither answers, and the
+ * miss stands.
  */
 function parent_module_file(
   module_dir: string,
+  base_file: FilePath,
   root_folder: FileSystemFolder
 ): FilePath {
   const mod_rs = path.join(module_dir, "mod.rs") as FilePath;
   if (has_file_in_tree(mod_rs, root_folder)) {
     return mod_rs;
   }
-  return `${module_dir}.rs` as FilePath;
+  const sibling = `${module_dir}.rs` as FilePath;
+  if (has_file_in_tree(sibling, root_folder)) {
+    return sibling;
+  }
+  if (module_dir === find_rust_crate_root(base_file, root_folder)) {
+    const lib = path.join(module_dir, "lib.rs") as FilePath;
+    const main = path.join(module_dir, "main.rs") as FilePath;
+    const has_lib = has_file_in_tree(lib, root_folder);
+    const has_main = has_file_in_tree(main, root_folder);
+    if (has_lib !== has_main) {
+      return has_lib ? lib : main;
+    }
+  }
+  return sibling;
 }
 
 function resolve_from_current(

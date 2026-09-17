@@ -132,7 +132,10 @@ Every language MUST implement these captures (from common analysis):
 - `@reference.variable.source` - Source in assignments
 - `@reference.variable.target` - Target in assignments
 - `@reference.this` - 'this' keyword
-- `@reference.super` - 'super' keyword
+- `@reference.super` - 'super' keyword, in the languages where `super` is an
+  expression. Rust emits none: there `super` is only a path anchor
+  (`use super::X`, `super::f()`, `pub(super)`), so a capture would name a
+  receiver that no call has.
 - `@reference.type_reference` - Type references
 
 ### Assignments/Returns

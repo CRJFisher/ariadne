@@ -99,7 +99,10 @@
 ; 'this' keyword
 (this) @reference.this
 
-; 'super' keyword
+; 'super' keyword — only where the language makes `super` an expression.
+; Where it is a path anchor instead (Rust's `use super::X`, `super::f()`),
+; leave this out: every occurrence would become a call reference with no
+; receiver, which resolution can only fail.
 (super) @reference.super
 
 ; Type references (in annotations, extends clauses, etc.)

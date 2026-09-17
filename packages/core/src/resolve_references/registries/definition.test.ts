@@ -1363,6 +1363,41 @@ describe("DefinitionRegistry", () => {
       expect(registry.get_member_owner(build.symbol_id)).toBe(type_def.symbol_id);
     });
 
+    it("attaches a cross-file impl's method once however many times the pass runs over the file", () => {
+      const type_file = "src/cache.rs" as FilePath;
+      const type_def = make_class_with_members(
+        type_file,
+        `scope:${type_file}:module` as ScopeId,
+        "CacheBuilder",
+        1,
+        []
+      );
+      const impl_file = "src/cache_impl.rs" as FilePath;
+      const impl_scope = `scope:${impl_file}:module` as ScopeId;
+      const build = (): MethodDefinition => ({
+        ...method_in(impl_file, impl_scope, "build", 2),
+        impl_self_type: "CacheBuilder" as SymbolName,
+      });
+      const resolve = () => type_def.symbol_id;
+      registry.update_file(type_file, [type_def]);
+      registry.update_file(impl_file, [build()]);
+      registry.attach_impl_methods(impl_file, resolve);
+      const attached = names_of(registry.get_member_index().get(type_def.symbol_id));
+
+      // A re-resolve of the same file, and a re-index of it, both land here.
+      registry.attach_impl_methods(impl_file, resolve);
+      registry.update_file(impl_file, [build()]);
+      registry.attach_impl_methods(impl_file, resolve);
+
+      expect(names_of(registry.get_member_index().get(type_def.symbol_id))).toEqual(attached);
+      expect(attached).toEqual([
+        "CacheBuilder_run",
+        "CacheBuilder_state",
+        "build",
+        "constructor",
+      ]);
+    });
+
     it("records no edge to a parent that is not a class or interface", () => {
       const { child } = parent_and_child();
       const helper = named_function(parent_file, "ParentClass" as SymbolName, 40);

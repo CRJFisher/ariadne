@@ -745,9 +745,12 @@
 ; Type references
 (type_identifier) @reference.type
 
-; Self and super
+; Self
+; No @reference.super here, unlike JavaScript and TypeScript: `super` is never
+; an expression in Rust, only a path anchor. Capturing it made every
+; `use super::…` a call reference that receiver resolution could only fail.
+; A `super::f()` call reaches its target through the `::` path resolver.
 (self) @reference.this
-(super) @reference.super
 
 ; Assignments
 (assignment_expression
