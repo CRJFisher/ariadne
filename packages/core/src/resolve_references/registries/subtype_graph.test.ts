@@ -71,6 +71,45 @@ describe("SubtypeGraph", () => {
     });
   });
 
+  describe("get_subtype_closure", () => {
+    it("collects every type transitively below the root, the root excluded", () => {
+      const grandchild = "class:grandchild.ts:1:0:5:1:Grandchild" as SymbolId;
+      graph.register_subtype(contract, base, "declared", child_file);
+      graph.register_subtype(base, child, "declared", child_file);
+      graph.register_subtype(child, grandchild, "structural", impl_file);
+
+      expect(graph.get_subtype_closure(contract)).toEqual(new Set([base, child, grandchild]));
+      expect(graph.get_subtype_closure(child)).toEqual(new Set([grandchild]));
+      expect(graph.get_subtype_closure(grandchild)).toEqual(new Set());
+    });
+
+    it("ends a cycle in a malformed graph at the first type met twice", () => {
+      graph.register_subtype(base, child, "declared", child_file);
+      graph.register_subtype(child, base, "declared", child_file);
+
+      expect(graph.get_subtype_closure(base)).toEqual(new Set([child, base]));
+    });
+  });
+
+  describe("has_declared_subtype", () => {
+    it("answers only for an edge a declaration wrote, so an inferred one leaves the type open", () => {
+      graph.register_subtype(inferred, child, "structural", child_file);
+      graph.register_subtype(contract, base, "declared", child_file);
+
+      expect(graph.has_declared_subtype(inferred)).toBe(false);
+      expect(graph.has_declared_subtype(contract)).toBe(true);
+      expect(graph.has_declared_subtype(child)).toBe(false);
+    });
+
+    it("answers true once a declaration joins the structural edges already held", () => {
+      graph.register_subtype(inferred, child, "structural", child_file);
+      expect(graph.has_declared_subtype(inferred)).toBe(false);
+
+      graph.register_subtype(inferred, base, "declared", child_file);
+      expect(graph.has_declared_subtype(inferred)).toBe(true);
+    });
+  });
+
   describe("forget_type", () => {
     it("drops the edges a type sits on as a parent and as a subtype, whichever file wrote them", () => {
       graph.register_subtype(base, child, "declared", child_file);

@@ -19,6 +19,7 @@ import {
 } from "../resolve_references/registries/type";
 import { resolve_qualified_path_rust } from "../resolve_references/call_resolution/path_resolution.rust";
 import { find_self_type } from "../resolve_references/call_resolution/receiver_resolution";
+import { infer_conformance_to_pending_interfaces } from "../resolve_references/call_resolution/structural_conformance";
 import { ScopeRegistry } from "../resolve_references/registries/scope";
 import { ExportRegistry } from "../resolve_references/registries/export";
 import { ReferenceRegistry } from "../resolve_references/registries/reference";
@@ -465,6 +466,13 @@ export class Project {
       for (const type_id of this.definitions.take_changed_member_types(file_id)) {
         changed_types.add(type_id);
       }
+    }
+    for (const interface_id of infer_conformance_to_pending_interfaces(
+      changed_types,
+      this.resolutions.get_undeclared_interfaces(),
+      this.definitions,
+    )) {
+      changed_types.add(interface_id);
     }
     const files_needing_call_reresolution = this.files_dispatching_through(changed_types);
 

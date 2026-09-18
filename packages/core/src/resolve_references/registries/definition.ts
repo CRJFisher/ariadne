@@ -558,6 +558,16 @@ export class DefinitionRegistry {
    * The types `type_id` directly extends or implements: declared parents first,
    * in the order its declaration writes them, then structural ones.
    */
+  /** Whether any type's own declaration names `type_id` as a parent. See `SubtypeGraph.has_declared_subtype`. */
+  has_declared_subtype(type_id: SymbolId): boolean {
+    return this.heritage.has_declared_subtype(type_id);
+  }
+
+  /** Every type transitively below `type_id`, itself excluded. See `SubtypeGraph.get_subtype_closure`. */
+  get_subtype_closure(type_id: SymbolId): Set<SymbolId> {
+    return this.heritage.get_subtype_closure(type_id);
+  }
+
   get_parent_types(type_id: SymbolId): readonly SymbolId[] {
     return this.heritage.get_parent_types(type_id);
   }
@@ -717,6 +727,33 @@ export class DefinitionRegistry {
     this.assert_reverse_indices_consistent(`resolve_type_heritage(${file_id})`);
 
     return changed_parents;
+  }
+
+  /**
+   * Record that `subtype_id` satisfies `parent_id` without declaring it, for a
+   * conformance a caller inferred from the two types' members.
+   *
+   * The edge is credited to the subtype's own file, because the subtype's
+   * members are what holds it up: re-indexing or deleting that file takes the
+   * edge back and reports the parent as a changed type, so the interface's
+   * callers are re-answered and the conformance is inferred again from whatever
+   * the file now declares. An edge into a type the registry no longer holds, or
+   * between kinds that cannot carry heritage, is refused exactly as a declared
+   * one is.
+   */
+  infer_subtype(parent_id: SymbolId, subtype_id: SymbolId): void {
+    const subtype_file = this.by_symbol.get(subtype_id)?.location.file_path;
+    if (
+      subtype_file === undefined ||
+      parent_id === subtype_id ||
+      !kind_can_be_a_parent_type(this.by_symbol.get(parent_id)) ||
+      !kind_can_be_a_subtype(this.by_symbol.get(subtype_id))
+    ) {
+      return;
+    }
+    this.heritage.register_subtype(parent_id, subtype_id, "structural", subtype_file);
+
+    this.assert_reverse_indices_consistent(`infer_subtype(${parent_id}, ${subtype_id})`);
   }
 
   /**

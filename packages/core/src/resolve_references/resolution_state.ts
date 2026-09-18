@@ -101,6 +101,19 @@ export interface ResolutionState {
    * graph.
    */
   readonly subtype_dispatch_files: ReadonlyMap<SymbolId, ReadonlySet<FilePath>>;
+
+  /**
+   * Interface → the files whose dispatch through it found no class declaring
+   * it. A subset of `subtype_dispatch_files`' keys, kept apart because it is
+   * the only set worth testing a newly-indexed class against for undeclared
+   * conformance: an interface whose declared implementations were found needs
+   * no inferred edge, and asking about it would put one there.
+   *
+   * An interface already answered structurally stays in the set — it still has
+   * no declared implementation — so the second class to conform connects as the
+   * first did, however late it arrives.
+   */
+  readonly undeclared_interface_files: ReadonlyMap<SymbolId, ReadonlySet<FilePath>>;
 }
 
 export interface NameResolutionResult {
@@ -123,6 +136,8 @@ export interface CallResolutionResult {
   >;
   /** Complete for every file the pass resolved: a resolved file absent from it enumerated no subtypes. */
   readonly subtype_dispatch_files: ReadonlyMap<SymbolId, ReadonlySet<FilePath>>;
+  /** The interfaces this pass's dispatches found no declaring class for, by dispatching file. */
+  readonly undeclared_interface_files: ReadonlyMap<SymbolId, ReadonlySet<FilePath>>;
 }
 
 // ============================================================================
@@ -137,6 +152,7 @@ export function create_resolution_state(): ResolutionState {
     calls_by_caller_scope: new Map(),
     indirect_reachability: new Map(),
     subtype_dispatch_files: new Map(),
+    undeclared_interface_files: new Map(),
   };
 }
 
@@ -209,6 +225,14 @@ export function get_files_dispatching_through(
   return files;
 }
 
+/**
+ * Every interface the project dispatches through that no class declares — the
+ * interfaces whose implementations can only be found through their members.
+ */
+export function get_undeclared_interfaces(state: ResolutionState): Iterable<SymbolId> {
+  return state.undeclared_interface_files.keys();
+}
+
 export function get_indirect_reachability(
   state: ResolutionState
 ): ReadonlyMap<SymbolId, IndirectReachability> {
@@ -249,13 +273,14 @@ export function size(state: ResolutionState): number {
  * 1,200 files, a single edit to `core/range.ts` — 252 files affected — scanned
  * 11.3M scope entries and cloned 28.5M map entries.
  *
- * The identity return covers all six structures a file can hold state in, not
+ * The identity return covers all seven structures a file can hold state in, not
  * the scope scan alone: `resolutions_by_scope` and `calls_by_caller_scope` are
  * keyed by scope and lose entries only for the scopes `scope_to_file` names, so
- * checking the scope scan, `resolved_calls_by_file`, `indirect_reachability`
- * and `subtype_dispatch_files` decides all six. A batch that removes an entry
- * from any one of them is cloned; a batch that removes nothing keeps the caller
- * on the state it already had, which is every eviction of a cold load.
+ * checking the scope scan, `resolved_calls_by_file`, `indirect_reachability`,
+ * `subtype_dispatch_files` and `undeclared_interface_files` decides all
+ * seven. A batch that removes an entry from any one of them is cloned; a batch
+ * that removes nothing keeps the caller on the state it already had, which is
+ * every eviction of a cold load.
  */
 export function remove_files(
   state: ResolutionState,
@@ -287,12 +312,14 @@ export function remove_files(
   }
 
   const removes_dispatch = holds_any_file(state.subtype_dispatch_files, file_ids);
+  const removes_undeclared = holds_any_file(state.undeclared_interface_files, file_ids);
 
   if (
     scopes_to_remove.length === 0 &&
     !removes_calls &&
     !removes_indirect &&
-    !removes_dispatch
+    !removes_dispatch &&
+    !removes_undeclared
   ) {
     return state;
   }
@@ -328,6 +355,9 @@ export function remove_files(
     subtype_dispatch_files: removes_dispatch
       ? without_files(state.subtype_dispatch_files, file_ids)
       : state.subtype_dispatch_files,
+    undeclared_interface_files: removes_undeclared
+      ? without_files(state.undeclared_interface_files, file_ids)
+      : state.undeclared_interface_files,
   };
 }
 
@@ -414,32 +444,51 @@ export function apply_call_resolution(
     record_indirect_reachability(new_indirect_reachability, fn_id, entry);
   }
 
-  // A pass answers for every file it resolved, so what those files enumerated
-  // before is replaced rather than merged: a call that stopped dispatching
-  // through a type — because it resolved elsewhere, or the file no longer
-  // makes it — leaves that type's entry. A file re-resolved only for its calls
-  // skips `remove_files`, so this is the eviction it gets.
   const resolved_files = new Set(result.resolved_calls_by_file.keys());
-  const replaces_dispatch = holds_any_file(state.subtype_dispatch_files, resolved_files);
-  let new_subtype_dispatch_files: ReadonlyMap<SymbolId, ReadonlySet<FilePath>> = state.subtype_dispatch_files;
-  if (replaces_dispatch || result.subtype_dispatch_files.size > 0) {
-    const merged = replaces_dispatch
-      ? without_files(state.subtype_dispatch_files, resolved_files)
-      : new Map(state.subtype_dispatch_files);
-    for (const [type_id, files] of result.subtype_dispatch_files) {
-      const held = merged.get(type_id);
-      merged.set(type_id, held ? new Set([...held, ...files]) : files);
-    }
-    new_subtype_dispatch_files = merged;
-  }
 
   return {
     ...state,
     resolved_calls_by_file: new_resolved_calls_by_file,
     calls_by_caller_scope: new_calls_by_caller_scope,
     indirect_reachability: new_indirect_reachability,
-    subtype_dispatch_files: new_subtype_dispatch_files,
+    subtype_dispatch_files: replace_files_in_index(
+      state.subtype_dispatch_files,
+      result.subtype_dispatch_files,
+      resolved_files
+    ),
+    undeclared_interface_files: replace_files_in_index(
+      state.undeclared_interface_files,
+      result.undeclared_interface_files,
+      resolved_files
+    ),
   };
+}
+
+/**
+ * `held` with everything `resolved_files` contributed replaced by what the pass
+ * answered for them, sharing `held` outright when neither side moves.
+ *
+ * A pass answers for every file it resolved, so what those files recorded
+ * before is replaced rather than merged: an entry a file no longer produces —
+ * because its call resolved elsewhere, or the file no longer holds it — leaves
+ * the index. A file re-resolved only for its calls skips `remove_files`, so
+ * this is the eviction it gets.
+ */
+function replace_files_in_index(
+  held: ReadonlyMap<SymbolId, ReadonlySet<FilePath>>,
+  answered: ReadonlyMap<SymbolId, ReadonlySet<FilePath>>,
+  resolved_files: ReadonlySet<FilePath>
+): ReadonlyMap<SymbolId, ReadonlySet<FilePath>> {
+  const replaces = holds_any_file(held, resolved_files);
+  if (!replaces && answered.size === 0) {
+    return held;
+  }
+  const merged = replaces ? without_files(held, resolved_files) : new Map(held);
+  for (const [type_id, files] of answered) {
+    const kept = merged.get(type_id);
+    merged.set(type_id, kept ? new Set([...kept, ...files]) : files);
+  }
+  return merged;
 }
 
 export function clear(): ResolutionState {

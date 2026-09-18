@@ -166,9 +166,49 @@ export class SubtypeGraph {
     return this.type_subtypes.get(type_id)?.keys() ?? [];
   }
 
+  /**
+   * Whether any type's own declaration names `type_id` as a parent.
+   *
+   * The question undeclared conformance turns on: an interface with a declared
+   * implementer has its answer in the source, and an inferred edge must never
+   * shadow one. An edge this graph inferred does not count, so an interface
+   * answered structurally still reports false and stays open to the next class
+   * that conforms.
+   */
+  has_declared_subtype(type_id: SymbolId): boolean {
+    for (const edge of this.type_subtypes.get(type_id)?.values() ?? []) {
+      if (edge.source === "declared") {
+        return true;
+      }
+    }
+    return false;
+  }
+
   /** The types `type_id` directly extends or implements, declared parents first in declaration order. */
   get_parent_types(type_id: SymbolId): readonly SymbolId[] {
     return this.parent_types.get(type_id) ?? [];
+  }
+
+  /**
+   * Every type transitively below `type_id` — for I with A implements I, B
+   * extends A and C extends B, `{A, B, C}`. The root itself is excluded,
+   * because its own members are always read separately from its subtypes'.
+   *
+   * A cycle in a malformed graph ends where it meets a type already collected.
+   */
+  get_subtype_closure(type_id: SymbolId): Set<SymbolId> {
+    const closure = new Set<SymbolId>();
+    const pending = [type_id];
+    for (let next = pending.pop(); next !== undefined; next = pending.pop()) {
+      for (const subtype_id of this.get_subtypes(next)) {
+        if (closure.has(subtype_id)) {
+          continue;
+        }
+        closure.add(subtype_id);
+        pending.push(subtype_id);
+      }
+    }
+    return closure;
   }
 
   /**

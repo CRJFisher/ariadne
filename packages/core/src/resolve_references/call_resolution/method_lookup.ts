@@ -10,6 +10,7 @@ import { resolve_module_member } from "../module_member_lookup";
 import { resolve_named_member } from "./collection_dispatch";
 import type { ReceiverResolutionContext } from "./receiver_resolution";
 import { resolve_namespace_scope_member } from "./namespace_member";
+import { infer_structural_subtypes } from "./structural_conformance";
 
 /**
  * What a method lookup answered, and whose subtypes the answer was read from.
@@ -20,10 +21,29 @@ import { resolve_namespace_scope_member } from "./namespace_member";
  * caller's file or anything the caller imports. `subtype_closure_of` names the
  * type so the project can re-resolve the call when that closure changes.
  */
-export interface MethodLookup {
-  readonly targets: Result<SymbolId[], ResolutionFailure>;
+/**
+ * What a lookup dispatched through, apart from what it answered: the pair every
+ * caller hands to `subtype_dispatch.ts`'s recorder, whether it kept the answer
+ * as a `Result` or unwrapped it.
+ */
+export interface DispatchedThrough {
   /** The receiver type whose subtype closure the answer enumerated, or null when it enumerated none. */
   readonly subtype_closure_of: SymbolId | null;
+  /**
+   * The interface receiver no class in the project declares, or null.
+   *
+   * Set whether or not undeclared conformance then answered the call, because
+   * it says the same thing either way: this interface's implementations can only
+   * be found through their members, so a class arriving later is worth testing
+   * against it. An interface whose declared implementations were found is never
+   * named here, which is what keeps an inferred edge from shadowing a declared
+   * one.
+   */
+  readonly undeclared_interface: SymbolId | null;
+}
+
+export interface MethodLookup extends DispatchedThrough {
+  readonly targets: Result<SymbolId[], ResolutionFailure>;
 }
 
 /**
@@ -200,6 +220,7 @@ export function resolve_method_on_type(
     return {
       targets,
       subtype_closure_of: can_have_subtypes ? receiver_type : null,
+      undeclared_interface: null,
     };
   }
 
@@ -212,7 +233,12 @@ export function resolve_method_on_type(
   }
 
   if (receiver_def?.kind === "interface") {
-    const impls = resolve_polymorphic_method(receiver_type, method_name, definitions);
+    const { targets: impls, declared } = resolve_interface_implementations(
+      receiver_type,
+      method_name,
+      definitions
+    );
+    const undeclared_interface = declared ? null : receiver_type;
     if (impls.length === 0) {
       return {
         targets: err({
@@ -221,6 +247,7 @@ export function resolve_method_on_type(
           partial_info: { resolved_receiver_type: receiver_type },
         }),
         subtype_closure_of: receiver_type,
+        undeclared_interface,
       };
     }
     // The interface member the call names leads the list; the implementations
@@ -229,7 +256,11 @@ export function resolve_method_on_type(
     // edge, while entry-point detection still reaches every implementation.
     // This adds exactly one attribution per interface dispatch; the
     // implementation fan-out is unchanged.
-    return { targets: ok([method_symbol, ...impls]), subtype_closure_of: receiver_type };
+    return {
+      targets: ok([method_symbol, ...impls]),
+      subtype_closure_of: receiver_type,
+      undeclared_interface,
+    };
   }
 
   // Fan a class call out to every subtype override so all possible runtime
@@ -244,10 +275,56 @@ export function resolve_method_on_type(
     return {
       targets: ok([base_method_id, ...overrides]),
       subtype_closure_of: receiver_type,
+      undeclared_interface: null,
     };
   }
 
   return without_subtype_closure(ok([method_symbol]));
+}
+
+/**
+ * Every implementation of `method_name` an interface receiver can run, and
+ * whether the project declares any implementation of the interface at all.
+ *
+ * An interface no class declares is the one place undeclared conformance is
+ * asked about. Where some class names the interface, the source has already
+ * answered which types implement it, and an inferred edge could only add a type
+ * the author did not put there — so a member no declared implementer declares
+ * stays a failure rather than becoming a structural search.
+ *
+ * With nothing declared there is no edge in the source to find, so the members
+ * are read instead: each conforming class is recorded as a `structural` edge and
+ * the fan-out runs again over the closure it just widened. A still empty list is
+ * an interface nothing implements or conforms to.
+ *
+ * The inferred edge is registered rather than used and discarded, so a later
+ * caller reaching the same interface reads it from the subtype graph, and the
+ * project re-answers the calls a closure change touches whether the edge was
+ * declared or inferred.
+ *
+ * `declared` reports what the source says, not what this lookup left behind, so
+ * an interface answered structurally still reports false — which is what keeps
+ * it in the set the next class to arrive is tested against.
+ */
+function resolve_interface_implementations(
+  interface_id: SymbolId,
+  method_name: SymbolName,
+  definitions: DefinitionRegistry
+): { targets: SymbolId[]; declared: boolean } {
+  if (definitions.has_declared_subtype(interface_id)) {
+    return {
+      targets: resolve_polymorphic_method(interface_id, method_name, definitions),
+      declared: true,
+    };
+  }
+
+  for (const subtype_id of infer_structural_subtypes(interface_id, definitions)) {
+    definitions.infer_subtype(interface_id, subtype_id);
+  }
+  return {
+    targets: resolve_polymorphic_method(interface_id, method_name, definitions),
+    declared: false,
+  };
 }
 
 /**
@@ -280,7 +357,7 @@ export function resolve_super_method(
   const orders = new Map<SymbolId, readonly SymbolId[]>();
   const targets: SymbolId[] = [];
 
-  for (const dispatcher of [calling_class, ...get_transitive_subtypes(calling_class, definitions)]) {
+  for (const dispatcher of [calling_class, ...definitions.get_subtype_closure(calling_class)]) {
     const order = method_resolution_order(dispatcher, definitions, orders);
     const after_calling_class = order.slice(order.indexOf(calling_class) + 1);
     const runs = after_calling_class
@@ -301,6 +378,7 @@ export function resolve_super_method(
             partial_info: { resolved_receiver_type: parent },
           }),
     subtype_closure_of: parent,
+    undeclared_interface: null,
   };
 }
 
@@ -363,7 +441,7 @@ function method_resolution_order(
 
 /** A lookup whose answer did not enumerate any type's subtypes. */
 function without_subtype_closure(targets: Result<SymbolId[], ResolutionFailure>): MethodLookup {
-  return { targets, subtype_closure_of: null };
+  return { targets, subtype_closure_of: null, undeclared_interface: null };
 }
 
 /**
@@ -381,7 +459,7 @@ function resolve_polymorphic_method(
   method_name: SymbolName,
   definitions: DefinitionRegistry
 ): SymbolId[] {
-  const all_subtypes = get_transitive_subtypes(type_id, definitions);
+  const all_subtypes = definitions.get_subtype_closure(type_id);
 
   if (all_subtypes.size === 0) {
     return [];
@@ -403,37 +481,6 @@ function resolve_polymorphic_method(
   }
 
   return implementations;
-}
-
-/**
- * Collect the full subtree of subtypes below a type. For I with A implements I,
- * B extends A, C extends B, returns {A, B, C}. The root itself is excluded.
- *
- * `processed` guards against cycles in a malformed inheritance graph.
- */
-function get_transitive_subtypes(
-  type_id: SymbolId,
-  definitions: DefinitionRegistry
-): Set<SymbolId> {
-  const result = new Set<SymbolId>();
-  const to_process = [type_id];
-  const processed = new Set<SymbolId>();
-
-  while (to_process.length > 0) {
-    const current = to_process.pop();
-    if (!current || processed.has(current)) {
-      continue;
-    }
-    processed.add(current);
-
-    const direct_subtypes = definitions.get_subtypes(current);
-    for (const subtype of direct_subtypes) {
-      result.add(subtype);
-      to_process.push(subtype);
-    }
-  }
-
-  return result;
 }
 
 /**

@@ -391,9 +391,26 @@ describe("resolve_method_on_type", () => {
       expect(unwrap(result)).toEqual([interface_method_id, method_a_id]);
     });
 
-    it("fails with polymorphic_no_implementations for an interface no class implements", () => {
+    it("fails with polymorphic_no_implementations for an interface no class implements or conforms to", () => {
       const interface_id = interface_symbol("Handler", MOCK_LOCATION);
       const interface_method_id = method_symbol("process" as SymbolName, MOCK_LOCATION);
+      const interface_flush_id = method_symbol("flush" as SymbolName, {
+        ...MOCK_LOCATION,
+        start_line: 6,
+      });
+      const interface_close_id = method_symbol("close" as SymbolName, {
+        ...MOCK_LOCATION,
+        start_line: 7,
+      });
+      const class_id = class_symbol("Logger", { ...MOCK_LOCATION, start_line: 20 });
+      const class_method_id = method_symbol("process" as SymbolName, {
+        ...MOCK_LOCATION,
+        start_line: 21,
+      });
+      const class_close_id = method_symbol("close" as SymbolName, {
+        ...MOCK_LOCATION,
+        start_line: 24,
+      });
 
       const interface_method_def: MethodDefinition = {
         kind: "method",
@@ -401,6 +418,27 @@ describe("resolve_method_on_type", () => {
         name: "process" as SymbolName,
         defining_scope_id: "scope:test.ts:Handler:1:0" as ScopeId,
         location: MOCK_LOCATION,
+        parameters: [],
+        decorators: [],
+      };
+
+      // Two further members clear the structural floor, so undeclared
+      // conformance is genuinely asked about here and answers with nothing.
+      const interface_flush_def: MethodDefinition = {
+        kind: "method",
+        symbol_id: interface_flush_id,
+        name: "flush" as SymbolName,
+        defining_scope_id: "scope:test.ts:Handler:1:0" as ScopeId,
+        location: { ...MOCK_LOCATION, start_line: 6 },
+        parameters: [],
+        decorators: [],
+      };
+      const interface_close_def: MethodDefinition = {
+        kind: "method",
+        symbol_id: interface_close_id,
+        name: "close" as SymbolName,
+        defining_scope_id: "scope:test.ts:Handler:1:0" as ScopeId,
+        location: { ...MOCK_LOCATION, start_line: 7 },
         parameters: [],
         decorators: [],
       };
@@ -413,11 +451,56 @@ describe("resolve_method_on_type", () => {
         location: MOCK_LOCATION,
         is_exported: false,
         extends: [],
-        methods: [interface_method_def],
+        methods: [interface_method_def, interface_flush_def, interface_close_def],
         properties: [],
       };
 
-      definitions.update_file(TEST_FILE, [interface_def, interface_method_def]);
+      // The class covers `process` and `close` but not `flush`: a member set
+      // no class covers.
+      const class_method_def: MethodDefinition = {
+        kind: "method",
+        symbol_id: class_method_id,
+        name: "process" as SymbolName,
+        defining_scope_id: "scope:test.ts:Logger:20:0" as ScopeId,
+        location: { ...MOCK_LOCATION, start_line: 21 },
+        parameters: [],
+        body_scope_id: "scope:test.ts:Logger.process:21:2" as ScopeId,
+        decorators: [],
+      };
+      const class_close_def: MethodDefinition = {
+        kind: "method",
+        symbol_id: class_close_id,
+        name: "close" as SymbolName,
+        defining_scope_id: "scope:test.ts:Logger:20:0" as ScopeId,
+        location: { ...MOCK_LOCATION, start_line: 24 },
+        parameters: [],
+        body_scope_id: "scope:test.ts:Logger.close:24:2" as ScopeId,
+        decorators: [],
+      };
+
+      const class_def: ClassDefinition = {
+        kind: "class",
+        symbol_id: class_id,
+        name: "Logger" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 20 },
+        is_exported: false,
+        extends: [],
+        methods: [class_method_def, class_close_def],
+        properties: [],
+        decorators: [],
+        constructors: [],
+      };
+
+      definitions.update_file(TEST_FILE, [
+        interface_def,
+        interface_method_def,
+        interface_flush_def,
+        interface_close_def,
+        class_def,
+        class_method_def,
+        class_close_def,
+      ]);
 
       // Setup TypeRegistry to return the interface method
       types["resolved_type_members"] = new Map();
@@ -440,6 +523,216 @@ describe("resolve_method_on_type", () => {
           partial_info: { resolved_receiver_type: interface_id },
         });
       }
+    });
+
+    it("reaches a class that conforms to the interface without declaring it", () => {
+      const interface_id = interface_symbol("Facade", MOCK_LOCATION);
+      const interface_compile_id = method_symbol("compile" as SymbolName, MOCK_LOCATION);
+      const interface_reset_id = method_symbol("reset" as SymbolName, {
+        ...MOCK_LOCATION,
+        start_line: 6,
+      });
+      const interface_flush_id = method_symbol("flush" as SymbolName, {
+        ...MOCK_LOCATION,
+        start_line: 7,
+      });
+      const class_id = class_symbol("FacadeImpl", { ...MOCK_LOCATION, start_line: 20 });
+      const class_compile_id = method_symbol("compile" as SymbolName, {
+        ...MOCK_LOCATION,
+        start_line: 21,
+      });
+      const class_reset_id = method_symbol("reset" as SymbolName, {
+        ...MOCK_LOCATION,
+        start_line: 24,
+      });
+      const class_flush_id = method_symbol("flush" as SymbolName, {
+        ...MOCK_LOCATION,
+        start_line: 27,
+      });
+
+      const interface_method = (
+        symbol_id: SymbolId,
+        name: string,
+        start_line: number
+      ): MethodDefinition => ({
+        kind: "method",
+        symbol_id,
+        name: name as SymbolName,
+        defining_scope_id: "scope:test.ts:Facade:1:0" as ScopeId,
+        location: { ...MOCK_LOCATION, start_line },
+        parameters: [],
+        decorators: [],
+      });
+      const class_method = (
+        symbol_id: SymbolId,
+        name: string,
+        start_line: number
+      ): MethodDefinition => ({
+        kind: "method",
+        symbol_id,
+        name: name as SymbolName,
+        defining_scope_id: "scope:test.ts:FacadeImpl:20:0" as ScopeId,
+        location: { ...MOCK_LOCATION, start_line },
+        parameters: [],
+        body_scope_id: `scope:test.ts:FacadeImpl.${name}:${start_line}:2` as ScopeId,
+        decorators: [],
+      });
+
+      const interface_compile_def = interface_method(interface_compile_id, "compile", 5);
+      const interface_reset_def = interface_method(interface_reset_id, "reset", 6);
+      const interface_flush_def = interface_method(interface_flush_id, "flush", 7);
+      const class_compile_def = class_method(class_compile_id, "compile", 21);
+      const class_reset_def = class_method(class_reset_id, "reset", 24);
+      const class_flush_def = class_method(class_flush_id, "flush", 27);
+
+      const interface_def: InterfaceDefinition = {
+        kind: "interface",
+        symbol_id: interface_id,
+        name: "Facade" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        is_exported: false,
+        extends: [],
+        methods: [interface_compile_def, interface_reset_def, interface_flush_def],
+        properties: [],
+      };
+
+      // Declares neither `implements Facade` nor anything else: only its
+      // members say it is an implementation.
+      const class_def: ClassDefinition = {
+        kind: "class",
+        symbol_id: class_id,
+        name: "FacadeImpl" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 20 },
+        is_exported: false,
+        extends: [],
+        methods: [class_compile_def, class_reset_def, class_flush_def],
+        properties: [],
+        decorators: [],
+        constructors: [],
+      };
+
+      definitions.update_file(TEST_FILE, [
+        interface_def,
+        interface_compile_def,
+        interface_reset_def,
+        interface_flush_def,
+        class_def,
+        class_compile_def,
+        class_reset_def,
+        class_flush_def,
+      ]);
+      types["resolved_type_members"] = new Map();
+      types["resolved_type_members"].set(
+        interface_id,
+        new Map([[("compile" as SymbolName), interface_compile_id]])
+      );
+
+      const lookup = resolve_method_on_type(interface_id, "compile" as SymbolName, context);
+
+      expect(unwrap(lookup.targets)).toEqual([interface_compile_id, class_compile_id]);
+      expect(lookup.subtype_closure_of).toEqual(interface_id);
+      // The conformance is recorded, so the next dispatch reads it off the graph.
+      expect([...definitions.get_subtypes(interface_id)]).toEqual([class_id]);
+      // And the interface is still reported as one no class declares, so a
+      // second class that conforms later is tested against it too.
+      expect(lookup.undeclared_interface).toEqual(interface_id);
+    });
+
+    it("never asks about conformance for an interface a class already declares", () => {
+      const interface_id = interface_symbol("Facade", MOCK_LOCATION);
+      const interface_compile_id = method_symbol("compile" as SymbolName, MOCK_LOCATION);
+      const declarer_id = class_symbol("DeclaredImpl", { ...MOCK_LOCATION, start_line: 10 });
+      const conformer_id = class_symbol("ConformingImpl", { ...MOCK_LOCATION, start_line: 30 });
+
+      const member = (
+        symbol_id: SymbolId,
+        owner: string,
+        name: string,
+        start_line: number,
+        body: boolean
+      ): MethodDefinition => ({
+        kind: "method",
+        symbol_id,
+        name: name as SymbolName,
+        defining_scope_id: `scope:test.ts:${owner}:1:0` as ScopeId,
+        location: { ...MOCK_LOCATION, start_line },
+        parameters: [],
+        ...(body ? { body_scope_id: `scope:test.ts:${owner}.${name}:${start_line}:2` as ScopeId } : {}),
+        decorators: [],
+      });
+
+      const interface_members = [
+        member(interface_compile_id, "Facade", "compile", 5, false),
+        member(method_symbol("reset" as SymbolName, { ...MOCK_LOCATION, start_line: 6 }), "Facade", "reset", 6, false),
+        member(method_symbol("flush" as SymbolName, { ...MOCK_LOCATION, start_line: 7 }), "Facade", "flush", 7, false),
+      ];
+      const conformer_members = [
+        member(method_symbol("compile" as SymbolName, { ...MOCK_LOCATION, start_line: 31 }), "ConformingImpl", "compile", 31, true),
+        member(method_symbol("reset" as SymbolName, { ...MOCK_LOCATION, start_line: 33 }), "ConformingImpl", "reset", 33, true),
+        member(method_symbol("flush" as SymbolName, { ...MOCK_LOCATION, start_line: 35 }), "ConformingImpl", "flush", 35, true),
+      ];
+
+      const interface_def: InterfaceDefinition = {
+        kind: "interface",
+        symbol_id: interface_id,
+        name: "Facade" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        is_exported: false,
+        extends: [],
+        methods: interface_members,
+        properties: [],
+      };
+      // Declares the interface and none of its members: the answer is still in
+      // the source, so conformance is not consulted.
+      const declarer_def: ClassDefinition = {
+        kind: "class",
+        symbol_id: declarer_id,
+        name: "DeclaredImpl" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 10 },
+        is_exported: false,
+        extends: ["Facade" as SymbolName],
+        methods: [],
+        properties: [],
+        decorators: [],
+        constructors: [],
+      };
+      const conformer_def: ClassDefinition = {
+        kind: "class",
+        symbol_id: conformer_id,
+        name: "ConformingImpl" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 30 },
+        is_exported: false,
+        extends: [],
+        methods: conformer_members,
+        properties: [],
+        decorators: [],
+        constructors: [],
+      };
+
+      definitions.update_file(TEST_FILE, [
+        interface_def,
+        ...interface_members,
+        declarer_def,
+        conformer_def,
+        ...conformer_members,
+      ]);
+      definitions["heritage"].register_subtype(interface_id, declarer_id, "declared", TEST_FILE);
+      types["resolved_type_members"] = new Map();
+      types["resolved_type_members"].set(
+        interface_id,
+        new Map([[("compile" as SymbolName), interface_compile_id]])
+      );
+
+      const lookup = resolve_method_on_type(interface_id, "compile" as SymbolName, context);
+
+      expect(is_err(lookup.targets)).toBe(true);
+      expect(lookup.undeclared_interface).toBe(null);
+      expect([...definitions.get_subtypes(interface_id)]).toEqual([declarer_id]);
     });
   });
 
@@ -1009,7 +1302,7 @@ describe("resolve_method_on_type", () => {
 
       const lookup = resolve_method_on_type(visitor.symbol_id, "visit_item" as SymbolName, context);
 
-      expect(lookup).toEqual({ targets: { ok: true, value: [visit.symbol_id] }, subtype_closure_of: visitor.symbol_id });
+      expect(lookup).toEqual({ targets: { ok: true, value: [visit.symbol_id] }, subtype_closure_of: visitor.symbol_id, undeclared_interface: null });
     });
 
     it("fails with method_not_on_type when no subtype declares the member either, still naming the closure it read", () => {
@@ -1030,6 +1323,7 @@ describe("resolve_method_on_type", () => {
           },
         },
         subtype_closure_of: base.symbol_id,
+        undeclared_interface: null,
       };
       expect(lookup).toEqual(expected);
     });
@@ -1052,6 +1346,7 @@ describe("resolve_method_on_type", () => {
           },
         },
         subtype_closure_of: base.symbol_id,
+        undeclared_interface: null,
       };
       expect(lookup).toEqual(expected);
     });
@@ -1077,6 +1372,7 @@ describe("resolve_method_on_type", () => {
       const expected: MethodLookup = {
         targets: { ok: true, value: [base_save.symbol_id] },
         subtype_closure_of: base.symbol_id,
+        undeclared_interface: null,
       };
       expect(as_super).toEqual(expected);
     });
@@ -1093,7 +1389,7 @@ describe("resolve_method_on_type", () => {
 
       const lookup = resolve_super_method(invoice.symbol_id, document.symbol_id, "validate" as SymbolName, definitions);
 
-      expect(lookup).toEqual({ targets: { ok: true, value: [validate.symbol_id] }, subtype_closure_of: document.symbol_id });
+      expect(lookup).toEqual({ targets: { ok: true, value: [validate.symbol_id] }, subtype_closure_of: document.symbol_id, undeclared_interface: null });
     });
 
     it("resolves a `super` call to the sibling a subclass with several bases puts next in its method resolution order", () => {
@@ -1116,8 +1412,8 @@ describe("resolve_method_on_type", () => {
       const from_a = resolve_super_method(a.symbol_id, base.symbol_id, "save" as SymbolName, definitions);
       const from_b = resolve_super_method(b.symbol_id, base.symbol_id, "save" as SymbolName, definitions);
 
-      expect(from_a).toEqual({ targets: { ok: true, value: [base_save.symbol_id, b_save.symbol_id] }, subtype_closure_of: base.symbol_id });
-      expect(from_b).toEqual({ targets: { ok: true, value: [base_save.symbol_id] }, subtype_closure_of: base.symbol_id });
+      expect(from_a).toEqual({ targets: { ok: true, value: [base_save.symbol_id, b_save.symbol_id] }, subtype_closure_of: base.symbol_id, undeclared_interface: null });
+      expect(from_b).toEqual({ targets: { ok: true, value: [base_save.symbol_id] }, subtype_closure_of: base.symbol_id, undeclared_interface: null });
     });
 
     it("keeps a parent the calling class names first ahead of a later base's sibling that does not share it", () => {
@@ -1135,7 +1431,7 @@ describe("resolve_method_on_type", () => {
       // `C(A, Other)` with `A(First)` linearises to C, A, First, Other.
       const lookup = resolve_super_method(a.symbol_id, first.symbol_id, "save" as SymbolName, definitions);
 
-      expect(lookup).toEqual({ targets: { ok: true, value: [first_save.symbol_id] }, subtype_closure_of: first.symbol_id });
+      expect(lookup).toEqual({ targets: { ok: true, value: [first_save.symbol_id] }, subtype_closure_of: first.symbol_id, undeclared_interface: null });
     });
 
     it("fails a `super` call no class after the calling class declares, never fanning down to the parent's subtypes", () => {
@@ -1148,7 +1444,7 @@ describe("resolve_method_on_type", () => {
       const as_value = resolve_method_on_type(base.symbol_id, "close" as SymbolName, context);
       const as_super = resolve_super_method(child.symbol_id, base.symbol_id, "close" as SymbolName, definitions);
 
-      expect(as_value).toEqual({ targets: { ok: true, value: [close.symbol_id] }, subtype_closure_of: base.symbol_id });
+      expect(as_value).toEqual({ targets: { ok: true, value: [close.symbol_id] }, subtype_closure_of: base.symbol_id, undeclared_interface: null });
       const expected: MethodLookup = {
         targets: {
           ok: false,
@@ -1159,6 +1455,7 @@ describe("resolve_method_on_type", () => {
           },
         },
         subtype_closure_of: base.symbol_id,
+        undeclared_interface: null,
       };
       expect(as_super).toEqual(expected);
     });
@@ -1174,8 +1471,8 @@ describe("resolve_method_on_type", () => {
       const constructor_hit = resolve_method_on_type(base.symbol_id, "__init__" as SymbolName, context);
       const unregistered = resolve_method_on_type(unknown_id, "helper" as SymbolName, context);
 
-      expect(hit).toEqual({ targets: { ok: true, value: [helper.symbol_id] }, subtype_closure_of: base.symbol_id });
-      expect(constructor_hit).toEqual({ targets: { ok: true, value: [ctor.symbol_id] }, subtype_closure_of: null });
+      expect(hit).toEqual({ targets: { ok: true, value: [helper.symbol_id] }, subtype_closure_of: base.symbol_id, undeclared_interface: null });
+      expect(constructor_hit).toEqual({ targets: { ok: true, value: [ctor.symbol_id] }, subtype_closure_of: null, undeclared_interface: null });
       expect(unregistered.subtype_closure_of).toBe(null);
     });
   });

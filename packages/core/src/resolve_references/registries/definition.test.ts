@@ -2512,6 +2512,54 @@ describe("DefinitionRegistry", () => {
       ]);
     });
   });
+
+  describe("infer_subtype", () => {
+    const file = "conformance.ts" as FilePath;
+    const class_file = "impl.ts" as FilePath;
+    const scope = `scope:${file}:module` as ScopeId;
+
+    it("records the edge against the subtype's own file, so the file's eviction takes it back", () => {
+      const registry = new DefinitionRegistry();
+      const contract = interface_with_method(file, scope, "Facade", 1, "compile", []);
+      const conformer = make_class_with_members(
+        class_file,
+        `scope:${class_file}:module` as ScopeId,
+        "FacadeImpl",
+        1,
+        []
+      );
+      registry.update_file(file, [contract]);
+      registry.update_file(class_file, [conformer]);
+
+      registry.infer_subtype(contract.symbol_id, conformer.symbol_id);
+
+      expect([...registry.get_subtypes(contract.symbol_id)]).toEqual([conformer.symbol_id]);
+      expect(registry.has_declared_subtype(contract.symbol_id)).toBe(false);
+
+      registry.remove_file(class_file);
+      expect([...registry.get_subtypes(contract.symbol_id)]).toEqual([]);
+      // The parent is reported as changed, so its callers are re-answered.
+      expect(registry.take_evicted_heritage_parents(class_file)).toEqual(
+        new Set([contract.symbol_id])
+      );
+    });
+
+    it("refuses an edge onto itself, onto an unheld type, or from a kind that carries no heritage", () => {
+      const registry = new DefinitionRegistry();
+      const contract = interface_with_method(file, scope, "Facade", 1, "compile", []);
+      const conformer = make_class_with_members(file, scope, "FacadeImpl", 10, []);
+      registry.update_file(file, [contract, conformer]);
+      const unheld = "class:absent.ts:1:0:5:1:Absent" as SymbolId;
+
+      registry.infer_subtype(contract.symbol_id, contract.symbol_id);
+      registry.infer_subtype(contract.symbol_id, unheld);
+      registry.infer_subtype(unheld, conformer.symbol_id);
+      registry.infer_subtype(contract.methods[0].symbol_id, conformer.symbol_id);
+
+      expect([...registry.get_subtypes(contract.symbol_id)]).toEqual([]);
+      expect(registry.get_parent_types(conformer.symbol_id)).toEqual([]);
+    });
+  });
 });
 
 /** Classes per file in `inheritance_file`: one base and one subtype of it. */

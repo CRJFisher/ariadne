@@ -723,6 +723,17 @@ export class FileStorage implements Storage { sweep(): void {} }
       return found.symbol_id;
     }
 
+    /** The top-level function `name` declares in `file`. */
+    function function_named(project: Project, file: FilePath, name: string): SymbolId {
+      const found = [...(project.get_index_single_file(file)?.functions.values() ?? [])].find(
+        (def) => def.name === name
+      );
+      if (found === undefined) {
+        throw new Error(`${file} declares no function named ${name}`);
+      }
+      return found.symbol_id;
+    }
+
     /** The member the project currently holds under `type_name.member_name`. */
     function member_of(project: Project, file: FilePath, type_name: string, member_name: string): SymbolId {
       const member = project.definitions
@@ -1015,6 +1026,339 @@ export class FileStorage implements Storage { sweep(): void {} }
       );
       project.remove_file(paths["measure.ts"]);
       expect(project.resolutions.get_files_dispatching_through([shape])).toEqual(new Set());
+    });
+
+    describe("Dispatch through an interface no class declares against", () => {
+      const conformance = read_fixture("typescript", "structural_conformance");
+
+      const FACADE_CLUSTER = ["core_facade.ts", "facade_impl.ts", "caller.ts"];
+
+      it.each(order_matrix(FACADE_CLUSTER))(
+        "reaches the conforming class through core's replica, whatever order files arrive in (%s, %s)",
+        async (_label, driver, order) => {
+          const { project, paths } = await load_project(conformance, order, driver);
+
+          expect(head_and_rest(call_at(project, paths["caller.ts"], "compileNgModule", 6))).toEqual([
+            member_of(project, paths["core_facade.ts"], "CompilerFacade", "compileNgModule"),
+            new Set([
+              member_of(project, paths["facade_impl.ts"], "CompilerFacadeImpl", "compileNgModule"),
+            ]),
+          ]);
+        }
+      );
+
+      it.each(DRIVERS)(
+        "reaches it through an accessor's return type, where the caller names neither end (%s)",
+        async (driver) => {
+          const { project, paths } = await load_project(
+            conformance,
+            ["core_facade.ts", "accessor.ts", "facade_impl.ts", "accessor_caller.ts"],
+            driver
+          );
+
+          expect(
+            head_and_rest(call_at(project, paths["accessor_caller.ts"], "compileComponent", 9))
+          ).toEqual([
+            member_of(project, paths["core_facade.ts"], "CompilerFacade", "compileComponent"),
+            new Set([
+              member_of(project, paths["facade_impl.ts"], "CompilerFacadeImpl", "compileComponent"),
+            ]),
+          ]);
+        }
+      );
+
+      it.each(DRIVERS)(
+        "leaves a class one member short of the interface out of the fan-out (%s)",
+        async (driver) => {
+          const { project, paths } = await load_project(
+            conformance,
+            [...FACADE_CLUSTER, "near_impl.ts"],
+            driver
+          );
+
+          expect(targets_of(call_at(project, paths["caller.ts"], "compileNgModule", 6))).toEqual(
+            new Set([
+              member_of(project, paths["core_facade.ts"], "CompilerFacade", "compileNgModule"),
+              member_of(project, paths["facade_impl.ts"], "CompilerFacadeImpl", "compileNgModule"),
+            ])
+          );
+        }
+      );
+
+      it.each(DRIVERS)(
+        "keeps the two replica declarations distinct, each reaching the one implementation (%s)",
+        async (driver) => {
+          const { project, paths } = await load_project(
+            conformance,
+            [...FACADE_CLUSTER, "compiler_facade.ts"],
+            driver
+          );
+          const core_facade = type_named(project, paths["core_facade.ts"], "CompilerFacade");
+          const compiler_facade = type_named(project, paths["compiler_facade.ts"], "CompilerFacade");
+          const impl = type_named(project, paths["facade_impl.ts"], "CompilerFacadeImpl");
+
+          // Two ids, and only the one a call dispatches through is asked about:
+          // conformance is inferred where a dispatch needs it, never swept over
+          // every interface the project holds.
+          expect(core_facade).not.toEqual(compiler_facade);
+          expect([...project.definitions.get_subtypes(core_facade)]).toEqual([impl]);
+          expect([...project.definitions.get_subtypes(compiler_facade)]).toEqual([]);
+
+          // The call names core's replica, so core's member leads the answer.
+          expect(head_and_rest(call_at(project, paths["caller.ts"], "compileNgModule", 6))).toEqual([
+            member_of(project, paths["core_facade.ts"], "CompilerFacade", "compileNgModule"),
+            new Set([
+              member_of(project, paths["facade_impl.ts"], "CompilerFacadeImpl", "compileNgModule"),
+            ]),
+          ]);
+        }
+      );
+
+      const ENVIRONMENT_CLUSTER = [
+        "environment.ts",
+        "type_check_environment.ts",
+        "environment_caller.ts",
+      ];
+
+      /** The superclass-coverage assertion, over whatever order has been loaded. */
+      function expect_prelude_reaches_environment(
+        project: Project,
+        paths: Record<string, FilePath>
+      ): void {
+        expect(
+          head_and_rest(call_at(project, paths["environment_caller.ts"], "getPreludeStatements", 6))
+        ).toEqual([
+          member_of(project, paths["environment.ts"], "TcbEnvironment", "getPreludeStatements"),
+          new Set([
+            member_of(
+              project,
+              paths["type_check_environment.ts"],
+              "Environment",
+              "getPreludeStatements"
+            ),
+          ]),
+        ]);
+      }
+
+      it.each(order_matrix(ENVIRONMENT_CLUSTER))(
+        "counts coverage the conforming class's superclass supplies (%s, %s)",
+        async (_label, driver, order) => {
+          const { project, paths } = await load_project(
+            conformance,
+            ["base_environment.ts", ...order],
+            driver
+          );
+
+          // `Environment` declares three of the six members; `BaseEnvironment`
+          // declares the other three and is named by `extends`, not by the
+          // interface.
+          expect_prelude_reaches_environment(project, paths);
+        }
+      );
+
+      // The base's own arrival is the dimension a re-trigger turns on: until it
+      // lands the member closure is three members short and the interface
+      // conforms to nothing, so the closure change has to re-answer a caller
+      // that already failed. It is permuted through every later position rather
+      // than crossed with the matrix above, which covers it arriving first.
+      it.each(
+        DRIVERS.flatMap((driver): [Driver, number][] => [1, 2, 3].map((at) => [driver, at]))
+      )(
+        "counts it whenever the base arrives (%s, base after %d of the other files)",
+        async (driver, at) => {
+          const { project, paths } = await load_project(
+            conformance,
+            [...ENVIRONMENT_CLUSTER.slice(0, at), "base_environment.ts", ...ENVIRONMENT_CLUSTER.slice(at)],
+            driver
+          );
+
+          expect_prelude_reaches_environment(project, paths);
+        }
+      );
+
+      it.each(DRIVERS)(
+        "refuses an interface below the member floor, in a project where conformance answers (%s)",
+        async (driver) => {
+          const { project, paths } = await load_project(
+            conformance,
+            [
+              ...FACADE_CLUSTER,
+              "disposable.ts",
+              "disposable_carriers.ts",
+              "disposable_caller.ts",
+              "token_list.ts",
+              "token_list_carriers.ts",
+              "token_list_caller.ts",
+            ],
+            driver
+          );
+          const failed_dispatch = (receiver: SymbolId): ResolutionFailure => ({
+            stage: "method_lookup",
+            reason: "polymorphic_no_implementations",
+            partial_info: { resolved_receiver_type: receiver },
+          });
+
+          // The control: conformance ran in this project and answered the
+          // facade, so a refusal below is the floor's and not the step's
+          // absence.
+          expect([
+            ...project.definitions.get_subtypes(
+              type_named(project, paths["core_facade.ts"], "CompilerFacade")
+            ),
+          ]).toEqual([type_named(project, paths["facade_impl.ts"], "CompilerFacadeImpl")]);
+
+          // One member, three classes carrying it, none declaring the
+          // interface: the floor is all that stands between the call and a
+          // three-way fan-out to unrelated classes.
+          const disposable = type_named(project, paths["disposable.ts"], "IDisposable");
+          expect(
+            call_at(project, paths["disposable_caller.ts"], "dispose", 6).resolution_failure
+          ).toEqual(failed_dispatch(disposable));
+          expect([...project.definitions.get_subtypes(disposable)]).toEqual([]);
+
+          // Two members — the boundary the floor was calibrated at, where a
+          // two-method floor took 14 false edges on angular's own
+          // `RDomTokenList`.
+          const tokens = type_named(project, paths["token_list.ts"], "RDomTokenList");
+          expect(call_at(project, paths["token_list_caller.ts"], "add", 6).resolution_failure).toEqual(
+            failed_dispatch(tokens)
+          );
+          expect([...project.definitions.get_subtypes(tokens)]).toEqual([]);
+        }
+      );
+
+      it.each(DRIVERS)(
+        "disposes a contribution reached through a keyed container, and bounds the fan-out (%s)",
+        async (driver) => {
+          const { project, paths } = await load_project(
+            conformance,
+            [
+              "editor_contribution.ts",
+              "code_editor_widget.ts",
+              "contribution_disposer.ts",
+              // Classes carrying `dispose` and nothing else the contribution names.
+              "disposable.ts",
+              "disposable_carriers.ts",
+            ],
+            driver
+          );
+          const contribution = type_named(project, paths["editor_contribution.ts"], "IEditorContribution");
+
+          // The receiver is one element of a `Map<string, IEditorContribution>`,
+          // and the class satisfies the interface structurally only.
+          expect(
+            head_and_rest(call_at(project, paths["contribution_disposer.ts"], "dispose", 7))
+          ).toEqual([
+            member_of(project, paths["editor_contribution.ts"], "IEditorContribution", "dispose"),
+            new Set([
+              member_of(project, paths["code_editor_widget.ts"], "FoldingController", "dispose"),
+            ]),
+          ]);
+
+          // The bound: the one class covering all three members, never the
+          // three others carrying `dispose` alone. Those three satisfy the
+          // interface as TypeScript reads it — its other two members are
+          // optional — and conformance still refuses them, because it reads
+          // member names and not optionality.
+          expect([...project.definitions.get_subtypes(contribution)]).toEqual([
+            type_named(project, paths["code_editor_widget.ts"], "FoldingController"),
+          ]);
+        }
+      );
+
+      // The module reads members and nothing else, so the same test has to
+      // answer a protocol and a trait as it answers an interface. What differs
+      // per language is what the indexer puts in the member closure, which is
+      // what these two exercise: Python names the protocol as a base nothing
+      // declares, Rust covers the trait from an inherent `impl` block.
+      it.each(DRIVERS)("answers a Python protocol no class names as a base (%s)", async (driver) => {
+        const { project, paths } = await load_project(
+          read_fixture("python", "structural_conformance"),
+          ["reader.py", "file_reader.py", "reader_caller.py"],
+          driver
+        );
+
+        expect(head_and_rest(call_at(project, paths["reader_caller.py"], "read", 7))).toEqual([
+          member_of(project, paths["reader.py"], "Reader", "read"),
+          new Set([member_of(project, paths["file_reader.py"], "FileReader", "read")]),
+        ]);
+      });
+
+      it.each(DRIVERS)("answers a Rust trait no `impl Trait for T` names (%s)", async (driver) => {
+        const { project, paths } = await load_project(
+          read_fixture("rust", "structural_conformance"),
+          ["lib.rs", "visitor.rs", "collector.rs", "walk.rs"],
+          driver
+        );
+
+        expect(head_and_rest(call_at(project, paths["walk.rs"], "visit_item", 6))).toEqual([
+          member_of(project, paths["visitor.rs"], "Visitor", "visit_item"),
+          new Set([member_of(project, paths["collector.rs"], "Collector", "visit_item")]),
+        ]);
+      });
+
+      it("re-answers a caller when the conforming class arrives after the dispatch failed", async () => {
+        const { project, paths } = await load_project(
+          conformance,
+          ["core_facade.ts", "caller.ts"],
+          "update_file"
+        );
+        const core_facade = type_named(project, paths["core_facade.ts"], "CompilerFacade");
+        const compile_call = () => call_at(project, paths["caller.ts"], "compileNgModule", 6);
+        const no_implementations: ResolutionFailure = {
+          stage: "method_lookup",
+          reason: "polymorphic_no_implementations",
+          partial_info: { resolved_receiver_type: core_facade },
+        };
+
+        // Nothing conforms yet.
+        expect(compile_call().resolution_failure).toEqual(no_implementations);
+
+        // The conforming class arrives in a file the caller does not import and
+        // which imports nothing the caller touches.
+        project.update_file(paths["facade_impl.ts"], conformance["facade_impl.ts"]);
+        expect(head_and_rest(compile_call())).toEqual([
+          member_of(project, paths["core_facade.ts"], "CompilerFacade", "compileNgModule"),
+          new Set([
+            member_of(project, paths["facade_impl.ts"], "CompilerFacadeImpl", "compileNgModule"),
+          ]),
+        ]);
+        // The inferred edge connects the implementation, so it is no longer an
+        // entry point — while the caller nothing calls still is, which is what
+        // makes that absence a connected edge rather than an empty graph.
+        const entry_points = new Set(project.get_call_graph().entry_points);
+        expect(
+          entry_points.has(
+            member_of(project, paths["facade_impl.ts"], "CompilerFacadeImpl", "compileNgModule")
+          )
+        ).toBe(false);
+        expect(entry_points.has(function_named(project, paths["caller.ts"], "compile"))).toBe(true);
+
+        // It stops conforming: the inferred edge leaves with the members that
+        // held it up.
+        project.update_file(
+          paths["facade_impl.ts"],
+          conformance["facade_impl.ts"].replace(
+            / {2}compilePipe\(meta: string\): string \{\n {4}return `pipe:\$\{meta\}`;\n {2}\}\n/,
+            ""
+          )
+        );
+        expect(compile_call().resolution_failure).toEqual(no_implementations);
+        expect([...project.definitions.get_subtypes(core_facade)]).toEqual([]);
+
+        // And conforms again.
+        project.update_file(paths["facade_impl.ts"], conformance["facade_impl.ts"]);
+        expect(head_and_rest(compile_call())).toEqual([
+          member_of(project, paths["core_facade.ts"], "CompilerFacade", "compileNgModule"),
+          new Set([
+            member_of(project, paths["facade_impl.ts"], "CompilerFacadeImpl", "compileNgModule"),
+          ]),
+        ]);
+
+        // Deleting it altogether goes back through the same index.
+        project.remove_file(paths["facade_impl.ts"]);
+        expect(compile_call().resolution_failure).toEqual(no_implementations);
+      });
     });
   });
 

@@ -10,6 +10,7 @@ import {
   get_all_referenced_symbols,
   get_indirect_reachability,
   get_files_dispatching_through,
+  get_undeclared_interfaces,
   size,
   remove_files,
   apply_name_resolution,
@@ -430,6 +431,7 @@ describe("remove_files", () => {
       calls_by_caller_scope: new Map(),
       indirect_reachability: new Map(),
       subtype_dispatch_files: new Map(),
+      undeclared_interface_files: new Map(),
     };
 
     const result = remove_files(state, new Set([FILE_A]));
@@ -675,6 +677,7 @@ describe("the subtype-dispatch index", () => {
       calls_by_caller_scope: new Map(),
       indirect_reachability: new Map(),
       subtype_dispatch_files: new Map(),
+      undeclared_interface_files: new Map(),
     };
   }
 
@@ -752,6 +755,33 @@ describe("the subtype-dispatch index", () => {
     };
 
     expect(remove_files(state, new Set([FILE_A]))).toBe(state);
+  });
+
+  it("keeps the undeclared-interface index apart, and evicts it the same way", () => {
+    const state = apply_call_resolution(create_resolution_state(), {
+      ...empty_result([FILE_A]),
+      subtype_dispatch_files: new Map([
+        [SHAPE, new Set([FILE_A])],
+        [WIDGET, new Set([FILE_A])],
+      ]),
+      undeclared_interface_files: new Map([[SHAPE, new Set([FILE_A])]]),
+    });
+
+    // Only the interface no class declares is offered as a conformance candidate.
+    expect([...get_undeclared_interfaces(state)]).toEqual([SHAPE]);
+
+    // Re-resolving the file with a declared implementer found drops the entry
+    // while the dispatch index keeps its own.
+    const resolved = apply_call_resolution(state, {
+      ...empty_result([FILE_A]),
+      subtype_dispatch_files: new Map([[SHAPE, new Set([FILE_A])]]),
+    });
+    expect([...get_undeclared_interfaces(resolved)]).toEqual([]);
+    expect(resolved.subtype_dispatch_files).toEqual(new Map([[SHAPE, new Set([FILE_A])]]));
+
+    // And an eviction of the only dispatching file empties it.
+    expect([...get_undeclared_interfaces(remove_files(state, new Set([FILE_A])))]).toEqual([]);
+    expect(remove_files(state, new Set([FILE_B]))).toBe(state);
   });
 });
 
@@ -850,6 +880,7 @@ describe("apply_call_resolution", () => {
       calls_by_caller_scope: new Map([[SCOPE_A, [call]]]),
       indirect_reachability: new Map(),
       subtype_dispatch_files: new Map(),
+      undeclared_interface_files: new Map(),
     };
 
     const result = apply_call_resolution(state, result_to_apply);
@@ -876,6 +907,7 @@ describe("apply_call_resolution", () => {
       calls_by_caller_scope: new Map(),
       indirect_reachability: new Map([[symbol_id, entry]]),
       subtype_dispatch_files: new Map(),
+      undeclared_interface_files: new Map(),
     };
 
     const result = apply_call_resolution(state, result_to_apply);
@@ -900,6 +932,7 @@ describe("apply_call_resolution", () => {
       calls_by_caller_scope: new Map(),
       indirect_reachability: new Map([[symbol_id, entry]]),
       subtype_dispatch_files: new Map(),
+      undeclared_interface_files: new Map(),
     };
 
     const result = apply_call_resolution(state, result_to_apply);
@@ -925,6 +958,7 @@ describe("apply_call_resolution", () => {
       calls_by_caller_scope: new Map([[SCOPE_A, [call]]]),
       indirect_reachability: new Map(),
       subtype_dispatch_files: new Map(),
+      undeclared_interface_files: new Map(),
     };
 
     const result = apply_call_resolution(state, result_to_apply);

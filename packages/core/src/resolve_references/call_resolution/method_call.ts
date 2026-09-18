@@ -78,7 +78,7 @@ export function resolve_method_call(
   const receiver_result = resolve_receiver_type(receiver, context, resolve_held_type);
 
   if (!receiver_result.ok) {
-    return { targets: receiver_result, subtype_closure_of: null };
+    return { targets: receiver_result, subtype_closure_of: null, undeclared_interface: null };
   }
 
   // `super().m()` dispatches from the calling class; `super().a.m()` has left
@@ -86,7 +86,7 @@ export function resolve_method_call(
   if (receiver.base.type === "keyword" && receiver.base.value === "super" && receiver.chain.length === 0) {
     const calling_class = find_self_type(receiver.scope_id, context);
     if (!calling_class.ok) {
-      return { targets: calling_class, subtype_closure_of: null };
+      return { targets: calling_class, subtype_closure_of: null, undeclared_interface: null };
     }
     return resolve_super_method(calling_class.value, receiver_result.value, receiver.method_name, definitions);
   }

@@ -56,7 +56,11 @@ import type { ReferenceRegistry } from "../registries/reference";
 import type { ExportRegistry } from "../registries/export";
 import type { ImportGraph } from "../import_resolution/import_graph";
 import type { CallResolutionResult } from "../resolution_state";
-import { record_subtype_dispatch, type SubtypeDispatchFiles } from "./subtype_dispatch";
+import {
+  record_dispatch,
+  record_subtype_dispatch,
+  type SubtypeDispatchFiles,
+} from "./subtype_dispatch";
 import type { ResolutionRegistry } from "../resolution_registry";
 import {
   detect_indirect_reachability,
@@ -104,6 +108,7 @@ export function resolve_calls_for_files(
       calls_by_caller_scope: new Map(),
       indirect_reachability: new Map(),
       subtype_dispatch_files: new Map(),
+      undeclared_interface_files: new Map(),
     };
   }
 
@@ -115,10 +120,8 @@ export function resolve_calls_for_files(
     }
   }
 
-  const { resolved_calls, subtype_dispatch_files } = resolve_calls(
-    file_references,
-    context
-  );
+  const { resolved_calls, subtype_dispatch_files, undeclared_interface_files } =
+    resolve_calls(file_references, context);
 
   const callback_invocations = resolve_callback_invocations(
     file_ids,
@@ -178,9 +181,14 @@ export function resolve_calls_for_files(
   for (const [symbol_id, entry] of callable_values.reachable) {
     record_indirect_reachability(indirect_reachability, symbol_id, entry);
   }
-  for (const [type_id, files] of callable_values.subtype_dispatch_files) {
-    for (const file_id of files) {
-      record_subtype_dispatch(subtype_dispatch_files, type_id, file_id);
+  for (const [held, from_values] of [
+    [subtype_dispatch_files, callable_values.subtype_dispatch_files],
+    [undeclared_interface_files, callable_values.undeclared_interface_files],
+  ] as const) {
+    for (const [type_id, files] of from_values) {
+      for (const file_id of files) {
+        record_subtype_dispatch(held, type_id, file_id);
+      }
     }
   }
 
@@ -189,6 +197,7 @@ export function resolve_calls_for_files(
     calls_by_caller_scope: calls_by_caller,
     indirect_reachability,
     subtype_dispatch_files,
+    undeclared_interface_files,
   };
 }
 
@@ -199,9 +208,14 @@ export function resolve_calls_for_files(
 function resolve_calls(
   file_references: Map<FilePath, readonly SymbolReference[]>,
   context: CallResolutionContext
-): { resolved_calls: CallReference[]; subtype_dispatch_files: SubtypeDispatchFiles } {
+): {
+  resolved_calls: CallReference[];
+  subtype_dispatch_files: SubtypeDispatchFiles;
+  undeclared_interface_files: SubtypeDispatchFiles;
+} {
   const resolved_calls: CallReference[] = [];
   const subtype_dispatch_files: SubtypeDispatchFiles = new Map();
+  const undeclared_interface_files: SubtypeDispatchFiles = new Map();
 
   for (const references of file_references.values()) {
     for (const ref of references) {
@@ -212,7 +226,7 @@ function resolve_calls(
         case "method_call": {
           // Self-reference calls (this/self/super.method()) and receiver method
           // calls (obj.method()) share one resolution path.
-          const { targets: method_result, subtype_closure_of } = resolve_method_call(
+          const method_lookup = resolve_method_call(
             ref,
             context.scopes,
             context.definitions,
@@ -223,12 +237,16 @@ function resolve_calls(
             context.languages,
             context.modules
           );
+          const method_result = method_lookup.targets;
           // Recorded whichever branch below supplies the answer: a collection
           // fallback answers only while the lookup misses, so the lookup's
           // subtype closure still decides it.
-          if (subtype_closure_of !== null) {
-            record_subtype_dispatch(subtype_dispatch_files, subtype_closure_of, ref.location.file_path);
-          }
+          record_dispatch(
+            subtype_dispatch_files,
+            undeclared_interface_files,
+            method_lookup,
+            ref.location.file_path
+          );
 
           // If standard resolution failed, try collection dispatch resolution.
           // Prefer the original method-call failure as the recorded reason —
@@ -302,13 +320,12 @@ function resolve_calls(
             context.languages,
             context.modules
           );
-          if (getter_lookup.subtype_closure_of !== null) {
-            record_subtype_dispatch(
-              subtype_dispatch_files,
-              getter_lookup.subtype_closure_of,
-              ref.location.file_path
-            );
-          }
+          record_dispatch(
+            subtype_dispatch_files,
+            undeclared_interface_files,
+            getter_lookup,
+            ref.location.file_path
+          );
           const getters = (
             is_ok(getter_lookup.targets) ? getter_lookup.targets.value : []
           ).filter((sym) => {
@@ -394,7 +411,7 @@ function resolve_calls(
     }
   }
 
-  return { resolved_calls, subtype_dispatch_files };
+  return { resolved_calls, subtype_dispatch_files, undeclared_interface_files };
 }
 
 /**
