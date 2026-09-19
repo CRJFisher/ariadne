@@ -15,10 +15,13 @@ export class MarkerDecorations implements IEditorContribution {
  *
  * The real field is unannotated and wrapped:
  * `_instances = this._register(new DisposableMap<string, IEditorContribution>())`.
- * Its element is reachable only by binding `_register<T>(o: T): T`'s type
- * parameter from its argument and reading the construction's own type
- * arguments — TASK-376.15's type-parameter environment — so this fixture
- * declares the element where a container annotation states it.
+ * The type-parameter environment binds `_register<T>(o: T): T` from a call's
+ * arguments, but three facts that shape needs are not recorded: a class field
+ * keeps no call initialiser (only a variable does), a construction argument is
+ * not an identifier so it occupies its position as `null`, and a container's
+ * element is read from a binding's own annotation rather than from a bound type
+ * parameter's arguments. Until those land, this fixture declares the element
+ * where a container annotation states it.
  */
 export class CodeEditorContributions {
   private readonly _instances: DisposableMap<string, IEditorContribution> = new DisposableMap();

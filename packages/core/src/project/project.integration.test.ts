@@ -786,6 +786,13 @@ export class FileStorage implements Storage { sweep(): void {} }
           member_of(project, paths["visitor.rs"], "Visitor", "visit_item"),
           new Set([member_of(project, paths["collector.rs"], "Collector", "visit_item")]),
         ]);
+
+        // `fn walk_bounded<V: Visitor>(v: &mut V)` reaches the same closure:
+        // the trait bound is what types a receiver its `dyn` sibling declares.
+        expect(head_and_rest(call_at(project, paths["walk.rs"], "visit_item", 10))).toEqual([
+          member_of(project, paths["visitor.rs"], "Visitor", "visit_item"),
+          new Set([member_of(project, paths["collector.rs"], "Collector", "visit_item")]),
+        ]);
       }
     );
 
@@ -819,6 +826,14 @@ export class FileStorage implements Storage { sweep(): void {} }
         );
 
         expect(head_and_rest(call_at(project, paths["walk.rs"], "visit_item", 6))).toEqual([
+          member_of(project, paths["visitor.rs"], "Visitor", "visit_item"),
+          new Set([
+            member_of(project, paths["collector.rs"], "Collector", "visit_item"),
+            member_of(project, paths["counter.rs"], "Counter", "visit_item"),
+          ]),
+        ]);
+
+        expect(head_and_rest(call_at(project, paths["walk.rs"], "visit_item", 10))).toEqual([
           member_of(project, paths["visitor.rs"], "Visitor", "visit_item"),
           new Set([
             member_of(project, paths["collector.rs"], "Collector", "visit_item"),

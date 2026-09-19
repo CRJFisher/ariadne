@@ -6,6 +6,7 @@ import type {
   ExportMetadata,
   FunctionCollectionInfo,
   FilePath,
+  TypeParameter,
 } from "@ariadnejs/types";
 import {
   class_symbol,
@@ -302,8 +303,8 @@ export function module_path_attribute_target(
   return [...stem, ...enclosing, attribute_value].join("/");
 }
 
-export function extract_generic_parameters(node: SyntaxNode): SymbolName[] {
-  const generics: SymbolName[] = [];
+export function extract_generic_parameters(node: SyntaxNode): TypeParameter[] {
+  const generics: TypeParameter[] = [];
   const type_params = node.childForFieldName?.("type_parameters");
 
   if (type_params) {
@@ -315,13 +316,37 @@ export function extract_generic_parameters(node: SyntaxNode): SymbolName[] {
       ) {
         const name = child.childForFieldName?.("name");
         if (name) {
-          generics.push(name.text as SymbolName);
+          const bound = principal_trait_bound(child);
+          generics.push({
+            name: name.text as SymbolName,
+            ...(bound !== undefined && { bound }),
+          });
         }
       }
     }
   }
 
   return generics;
+}
+
+/**
+ * The trait a `<V: Visitor + Send>` bound list names its parameter by. Auto
+ * traits follow the principal trait by convention, and `?Sized` and lifetimes
+ * constrain the parameter without naming anything a method is called on, so the
+ * first bound that is none of those is the one a receiver reaches members
+ * through — the rule `parse_rust_annotation` applies to `dyn`/`impl` bounds.
+ */
+function principal_trait_bound(type_parameter: SyntaxNode): SymbolName | undefined {
+  const bounds = (type_parameter.children || []).find((child) => child.type === "trait_bounds");
+  if (!bounds) {
+    return undefined;
+  }
+  const written = bounds.text.replace(/^\s*:/, "");
+  const principal = written
+    .split("+")
+    .map((bound) => bound.trim())
+    .find((bound) => bound.length > 0 && !bound.startsWith("?") && !bound.startsWith("'"));
+  return principal as SymbolName | undefined;
 }
 
 export function extract_impl_trait(node: SyntaxNode): SymbolName | undefined {

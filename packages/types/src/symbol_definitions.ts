@@ -63,6 +63,21 @@ export interface Definition {
   readonly export?: ExportMetadata; // Export-specific metadata if exported
 }
 
+/**
+ * One type parameter a generic declaration writes, with the bound that names
+ * the type its values reach members through: Rust's first trait bound
+ * (`<V: Visitor>`), TypeScript's `extends` constraint (`<T extends Base>`).
+ *
+ * The bound is the type a parameter denotes wherever a call site binds it to
+ * nothing, so it is the last entry of a type-parameter environment rather than
+ * the first. A parameter constrained by nothing carries none, and a call on a
+ * receiver it types stays unresolved.
+ */
+export interface TypeParameter {
+  readonly name: SymbolName;
+  readonly bound?: SymbolName;
+}
+
 export interface FunctionDefinition extends Definition {
   readonly kind: "function";
   readonly is_exported: boolean; // Can this symbol be imported from other files?
@@ -70,7 +85,7 @@ export interface FunctionDefinition extends Definition {
   readonly docstring?: DocString;
   readonly decorators?: readonly DecoratorDefinition[];
   readonly return_type?: SymbolName;
-  readonly generics?: SymbolName[];
+  readonly generics?: readonly TypeParameter[];
   readonly body_scope_id: ScopeId; // The scope ID of this function's body
   readonly callback_context?: CallbackContext; // For anonymous functions that are callbacks
   readonly function_collection?: FunctionCollection; // Prototype-style methods assigned as `Fn.prototype.method = ...`
@@ -94,7 +109,7 @@ export interface ClassDefinition extends Definition {
   readonly decorators: readonly DecoratorDefinition[];
   readonly constructors?: readonly ConstructorDefinition[];
   readonly docstring?: readonly DocString[];
-  readonly generics?: SymbolName[];
+  readonly generics?: readonly TypeParameter[];
 }
 
 /** Access modifier for class members */
@@ -109,7 +124,7 @@ export interface MethodDefinition extends Definition {
   readonly return_type?: SymbolName;
   readonly decorators?: readonly DecoratorDefinition[];
   readonly docstring?: DocString;
-  readonly generics?: SymbolName[];
+  readonly generics?: readonly TypeParameter[];
   readonly static?: boolean;
   readonly abstract?: boolean;
   readonly async?: boolean;
@@ -184,7 +199,7 @@ export interface InterfaceDefinition extends Definition {
   readonly extends: readonly SymbolName[];
   readonly methods: readonly MethodDefinition[];
   readonly properties: readonly PropertyDefinition[];
-  readonly generics?: SymbolName[];
+  readonly generics?: readonly TypeParameter[];
 }
 
 export interface DecoratorDefinition extends Definition {
@@ -200,7 +215,7 @@ export interface EnumDefinition extends Definition {
   readonly members: readonly EnumMember[];
   readonly methods?: readonly MethodDefinition[]; // Enum methods (Rust/Java style)
   readonly is_const: boolean; // TypeScript const enum, defaults to false
-  readonly generics?: SymbolName[];
+  readonly generics?: readonly TypeParameter[];
 }
 
 /**
@@ -309,6 +324,14 @@ export interface VariableDefinition extends Definition {
    * chain (`make()(…)`, `a[k]()`).
    */
   readonly initialized_from_call?: readonly SymbolName[];
+  /**
+   * @language typescript
+   * The identifier arguments of that call, positionally aligned to the callee's
+   * parameters, with `null` where an argument is not a bare identifier. A
+   * generic factory's return names a type parameter its arguments are what
+   * bind (`const r = create(Router)`), so typing the binding needs them.
+   */
+  readonly initialized_from_call_arguments?: readonly (SymbolName | null)[];
   /**
    * @language python
    * The callee chain of the call whose result this binding's initialiser calls
@@ -424,7 +447,7 @@ export interface TypeAliasDefinition extends Definition {
   readonly kind: "type" | "type_alias";
   readonly is_exported: boolean;
   readonly type_expression?: SymbolName;
-  readonly generics?: SymbolName[];
+  readonly generics?: readonly TypeParameter[];
 }
 /**
  * Union of all definition types

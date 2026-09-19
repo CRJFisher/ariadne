@@ -182,7 +182,7 @@ describe("rust_builder", () => {
 
       expect(definitions.classes).toHaveLength(1);
       expect(definitions.classes[0].name).toBe("Container");
-      expect(definitions.classes[0].generics).toEqual(["T", "U"]);
+      expect(definitions.classes[0].generics).toEqual([{ name: "T" }, { name: "U" }]);
     });
 
     it("should process tuple struct", () => {
@@ -254,7 +254,7 @@ describe("rust_builder", () => {
 
       expect(definitions.enums).toHaveLength(1);
       expect(definitions.enums[0].name).toBe("Result");
-      expect(definitions.enums[0].generics).toEqual(["T", "E"]);
+      expect(definitions.enums[0].generics).toEqual([{ name: "T" }, { name: "E" }]);
       // Members are objects, extract names
       const member_names = definitions.enums[0].members.map((m: any) =>
         m.name.split(":").pop()
@@ -317,7 +317,7 @@ describe("rust_builder", () => {
 
       expect(definitions.interfaces).toHaveLength(1);
       expect(definitions.interfaces[0].name).toBe("Iterator");
-      expect(definitions.interfaces[0].generics).toEqual(["Item"]);
+      expect(definitions.interfaces[0].generics).toEqual([{ name: "Item" }]);
     });
   });
 
@@ -410,7 +410,7 @@ describe("rust_builder", () => {
 
       expect(definitions.functions).toHaveLength(1);
       expect(definitions.functions[0].name).toBe("compare");
-      expect(definitions.functions[0].generics).toEqual(["T"]);
+      expect(definitions.functions[0].generics).toEqual([{ name: "T", bound: "Ord" }]);
     });
   });
 
@@ -703,7 +703,7 @@ impl MyStruct {
 
       expect(definitions.types).toHaveLength(1);
       expect(definitions.types[0].name).toBe("Result");
-      expect(definitions.types[0].generics).toEqual(["T"]);
+      expect(definitions.types[0].generics).toEqual([{ name: "T" }]);
     });
 
     it("should process module definition", () => {
@@ -846,7 +846,7 @@ impl MyStruct {
         );
         expect(definitions.classes).toHaveLength(1);
         expect(definitions.classes[0].name).toBe("Database");
-        expect(definitions.classes[0].generics).toEqual(["T"]);
+        expect(definitions.classes[0].generics).toEqual([{ name: "T" }]);
       }
     });
 

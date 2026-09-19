@@ -23,6 +23,7 @@ import {
   type SymbolId,
   type SymbolName,
   type TypeAliasDefinition,
+  type TypeParameter,
   type VariableDefinition,
   type ModulePath,
   decorator_symbol,
@@ -206,7 +207,7 @@ export class DefinitionBuilder {
     is_exported?: boolean;
     export?: ExportMetadata;
     extends?: SymbolName[];
-    generics?: SymbolName[];
+    generics?: readonly TypeParameter[];
     docstring?: readonly string[];
   }): DefinitionBuilder {
     this.classes.set(definition.symbol_id, {
@@ -357,7 +358,7 @@ export class DefinitionBuilder {
       name: SymbolName;
       location: Location;
       scope_id: ScopeId;
-      generics?: SymbolName[];
+      generics?: readonly TypeParameter[];
       is_exported?: boolean;
       export?: ExportMetadata;
       docstring?: string;
@@ -667,7 +668,7 @@ export class DefinitionBuilder {
     is_exported?: boolean;
     export?: ExportMetadata;
     extends?: SymbolName[];
-    generics?: SymbolName[];
+    generics?: readonly TypeParameter[];
   }): DefinitionBuilder {
     this.interfaces.set(definition.symbol_id, {
       base: {
@@ -694,7 +695,7 @@ export class DefinitionBuilder {
       name: SymbolName;
       location: Location;
       scope_id: ScopeId;
-      generics?: SymbolName[];
+      generics?: readonly TypeParameter[];
       return_type?: SymbolName;
       docstring?: string;
     }
@@ -753,7 +754,7 @@ export class DefinitionBuilder {
     is_exported?: boolean;
     export?: ExportMetadata;
     type_expression?: SymbolName;
-    generics?: SymbolName[];
+    generics?: readonly TypeParameter[];
   }): DefinitionBuilder {
     this.types.set(definition.symbol_id, {
       ...definition,
@@ -771,7 +772,7 @@ export class DefinitionBuilder {
     is_exported?: boolean;
     export?: ExportMetadata;
     is_const?: boolean;
-    generics?: SymbolName[];
+    generics?: readonly TypeParameter[];
   }): DefinitionBuilder {
     this.enums.set(definition.symbol_id, {
       base: {

@@ -22,6 +22,7 @@ import {
   extract_collection_source,
   extract_iteration_source,
   extract_initializer_call,
+  extract_initializer_call_arguments,
   extract_read_source,
 } from "../symbol_factories/initializer_sources.javascript";
 import { extract_destructured_binding } from "../symbol_factories/destructuring.javascript";
@@ -119,6 +120,7 @@ export function handle_ts_definition_variable(
 
   const collection_source = extract_collection_source(capture.node);
   const initialized_from_call = extract_initializer_call(capture.node);
+  const initialized_from_call_arguments = extract_initializer_call_arguments(capture.node);
   const destructured = extract_destructured_binding(capture.node);
   const iterated_from = extract_iteration_source(capture.node);
 
@@ -136,6 +138,7 @@ export function handle_ts_definition_variable(
     collection_source,
     ...extract_read_source(capture.node),
     initialized_from_call,
+    initialized_from_call_arguments,
     destructured_from: destructured?.source,
     destructured_key: destructured?.key,
     iterated_from,
@@ -355,6 +358,7 @@ export function handle_ts_definition_function(
         : export_info.is_exported,
       export: is_var_bound_expression_name ? undefined : export_info.export,
       return_type: extract_return_type(capture.node),
+      generics: capture.node.parent ? extract_type_parameters(capture.node.parent) : [],
       docstring,
     },
     is_var_bound_expression_name ? undefined : capture

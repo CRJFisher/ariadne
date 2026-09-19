@@ -992,7 +992,7 @@ describe("extract_type_parameters", () => {
     expect(iface_node).not.toBeNull();
 
     const result = extract_type_parameters(iface_node);
-    expect(result).toEqual(["T", "U"]);
+    expect(result).toEqual([{ name: "T" }, { name: "U" }]);
   });
 
   it("should extract single type parameter from a class", () => {
@@ -1002,7 +1002,25 @@ describe("extract_type_parameters", () => {
     expect(class_node).not.toBeNull();
 
     const result = extract_type_parameters(class_node);
-    expect(result).toEqual(["T"]);
+    expect(result).toEqual([{ name: "T" }]);
+  });
+
+  it("carries the type an `extends` constraint bounds a parameter by", () => {
+    const code = "class Container<T extends Base> {}";
+    const root = parse_typescript(code);
+    const class_node = find_node_by_type(root, "class_declaration")!;
+
+    expect(extract_type_parameters(class_node)).toEqual([{ name: "T", bound: "Base" }]);
+  });
+
+  it("carries a generic constraint whole", () => {
+    const code = "class Container<T extends Base<string>> {}";
+    const root = parse_typescript(code);
+    const class_node = find_node_by_type(root, "class_declaration")!;
+
+    expect(extract_type_parameters(class_node)).toEqual([
+      { name: "T", bound: "Base<string>" },
+    ]);
   });
 
   it("should return empty array for interface without type parameters", () => {

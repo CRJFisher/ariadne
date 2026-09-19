@@ -14,6 +14,10 @@ import type {
 } from "@ariadnejs/types";
 import { is_exportable, location_key } from "@ariadnejs/types";
 import { MemberIndex } from "./member_index";
+import {
+  assert_reverse_indices_consistent,
+  first_reverse_index_divergence,
+} from "./reverse_index_invariant";
 import { SubtypeGraph } from "./subtype_graph";
 
 /** The name `anonymous_function_symbol` gives every callable with no name of its own. */
@@ -51,15 +55,6 @@ function is_tighter_span(a: Location, b: Location): boolean {
     return a_lines < b_lines;
   }
   return a.end_column - a.start_column < b.end_column - b.start_column;
-}
-
-/**
- * Read per write rather than cached, so a test can arm and disarm the invariant
- * around the code it measures. Three lookups per indexed file is nothing beside
- * the pass the invariant itself costs.
- */
-function reverse_index_assertions_enabled(): boolean {
-  return process.env.ARIADNE_ASSERT_REGISTRY_INVARIANTS === "1";
 }
 
 /**
@@ -120,6 +115,14 @@ export class DefinitionRegistry {
   private function_collections: Map<SymbolId, FunctionCollection> = new Map();
 
   /**
+   * Body scope → the callable whose body it is. A parameter records the scope
+   * its name is visible in and nothing about what declares it, so this is the
+   * one route from a binding back to the generic declaration whose type
+   * parameters its annotation may name.
+   */
+  private callable_by_body_scope: Map<ScopeId, SymbolId> = new Map();
+
+  /**
    * File → the anonymous functions it declares, which are the callbacks call
    * resolution attributes to whoever passes them.
    *
@@ -147,6 +150,10 @@ export class DefinitionRegistry {
 
       if (def.kind === "function" && def.name === ANONYMOUS_CALLABLE_NAME) {
         anonymous_callables.push(def);
+      }
+
+      if (def.kind === "function") {
+        this.callable_by_body_scope.set(def.body_scope_id, def.symbol_id);
       }
 
       // An ImportDefinition enters neither index, for two separate reasons.
@@ -197,6 +204,9 @@ export class DefinitionRegistry {
           this.members.register_member_owner(method.symbol_id, def.symbol_id);
           const method_loc_key = location_key(method.location);
           this.location_to_symbol.set(method_loc_key, method.symbol_id);
+          if (method.body_scope_id !== undefined) {
+            this.callable_by_body_scope.set(method.body_scope_id, method.symbol_id);
+          }
         }
 
         if (def.kind !== "enum") {
@@ -264,7 +274,7 @@ export class DefinitionRegistry {
       }
     }
 
-    this.assert_reverse_indices_consistent(`update_file(${file_id})`);
+    assert_reverse_indices_consistent(this.members, this.heritage, `update_file(${file_id})`);
   }
 
   /**
@@ -418,6 +428,16 @@ export class DefinitionRegistry {
   }
 
   /**
+   * The function or method whose body `scope_id` is, or null when the scope is
+   * a class body, a block or a module. What a type parameter written inside a
+   * callable stands for is the callable's to say, so a binding annotated with
+   * one reaches its declaration this way.
+   */
+  get_callable_of_body_scope(scope_id: ScopeId): SymbolId | null {
+    return this.callable_by_body_scope.get(scope_id) ?? null;
+  }
+
+  /**
    * Every variable, constant and parameter binding of `symbol_id`'s name in its
    * scope, in source order, or empty when that binding is the name's only one.
    *
@@ -447,7 +467,7 @@ export class DefinitionRegistry {
 
     const symbol_ids = this.by_file.get(file_id);
     if (!symbol_ids) {
-      this.assert_reverse_indices_consistent(`remove_file(${file_id})`);
+      assert_reverse_indices_consistent(this.members, this.heritage, `remove_file(${file_id})`);
       return;
     }
 
@@ -458,6 +478,10 @@ export class DefinitionRegistry {
         // either index and carries the location of a declaration it does not
         // own, so deleting on its behalf would take the declaring file's entry
         // out from under it the moment one importer is evicted.
+        if (def.kind === "function") {
+          this.callable_by_body_scope.delete(def.body_scope_id);
+        }
+
         if (def.kind !== "import") {
           this.location_to_symbol.delete(location_key(def.location));
 
@@ -483,6 +507,9 @@ export class DefinitionRegistry {
             const method_loc_key = location_key(method.location);
             this.location_to_symbol.delete(method_loc_key);
             this.by_symbol.delete(method.symbol_id);
+            if (method.body_scope_id !== undefined) {
+              this.callable_by_body_scope.delete(method.body_scope_id);
+            }
           }
           if (def.kind !== "enum") {
             for (const prop of def.properties) {
@@ -504,7 +531,7 @@ export class DefinitionRegistry {
 
     this.by_file.delete(file_id);
 
-    this.assert_reverse_indices_consistent(`remove_file(${file_id})`);
+    assert_reverse_indices_consistent(this.members, this.heritage, `remove_file(${file_id})`);
   }
 
   /**
@@ -660,7 +687,7 @@ export class DefinitionRegistry {
       this.members.attach_members(type_id, members);
     }
 
-    this.assert_reverse_indices_consistent(`attach_impl_methods(${file_id})`);
+    assert_reverse_indices_consistent(this.members, this.heritage, `attach_impl_methods(${file_id})`);
   }
 
   /**
@@ -724,7 +751,7 @@ export class DefinitionRegistry {
       }
     }
 
-    this.assert_reverse_indices_consistent(`resolve_type_heritage(${file_id})`);
+    assert_reverse_indices_consistent(this.members, this.heritage, `resolve_type_heritage(${file_id})`);
 
     return changed_parents;
   }
@@ -753,7 +780,7 @@ export class DefinitionRegistry {
     }
     this.heritage.register_subtype(parent_id, subtype_id, "structural", subtype_file);
 
-    this.assert_reverse_indices_consistent(`infer_subtype(${parent_id}, ${subtype_id})`);
+    assert_reverse_indices_consistent(this.members, this.heritage, `infer_subtype(${parent_id}, ${subtype_id})`);
   }
 
   /**
@@ -787,35 +814,12 @@ export class DefinitionRegistry {
   }
 
   /**
-   * The composed indexes' own reverse-index checks, chained: the first
-   * divergence found anywhere, or null when everything agrees.
-   *
-   * A write site that populates a forward map and forgets its reverse index
-   * fails silently rather than loudly: eviction under-deletes, the stale
-   * ownership edge outlives the file that produced it, and the call graph moves
-   * an edge onto a symbol that no longer exists. Nothing observable says so.
-   * Rebuilding is what makes that failure speak.
+   * The first place this registry's forward maps and reverse indexes disagree,
+   * or null when they all agree. Public so a test can assert the invariant
+   * directly after the writes it exercises.
    */
-  private verify_reverse_indices(): string | null {
-    return this.members.verify() ?? this.heritage.verify();
-  }
-
-  /**
-   * The invariant as a guard, run after every registry write when
-   * `ARIADNE_ASSERT_REGISTRY_INVARIANTS=1` arms it. It costs a pass over the
-   * whole registry, which a test run can afford and a corpus load cannot, so a
-   * production load leaves it disarmed.
-   */
-  private assert_reverse_indices_consistent(after: string): void {
-    if (!reverse_index_assertions_enabled()) {
-      return;
-    }
-    const divergence = this.verify_reverse_indices();
-    if (divergence !== null) {
-      throw new Error(
-        `DefinitionRegistry reverse index diverged after ${after}: ${divergence}`
-      );
-    }
+  verify_reverse_indices(): string | null {
+    return first_reverse_index_divergence(this.members, this.heritage);
   }
 
   clear(): void {
@@ -827,6 +831,7 @@ export class DefinitionRegistry {
     this.rebindings.clear();
     this.heritage.clear();
     this.function_collections.clear();
+    this.callable_by_body_scope.clear();
     this.anonymous_callables_by_file.clear();
   }
 }

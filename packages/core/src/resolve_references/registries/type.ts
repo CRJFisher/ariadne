@@ -7,11 +7,12 @@ import type {
 } from "@ariadnejs/types";
 import type {
   AnyDefinition,
+  FunctionDefinition,
+  MethodDefinition,
   SemanticIndex,
   SymbolReference,
 } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "./definition";
-import type { ExportRegistry } from "./export";
 import {
   extract_type_bindings,
   extract_constructor_bindings,
@@ -22,23 +23,14 @@ import {
   type ContainerShape,
   type ParsedTypeAnnotation,
 } from "../type_preprocessing";
-import type { ResolutionRegistry } from "../resolution_registry";
-import { resolve_module_member } from "../module_member_lookup";
-import { resolve_module_path, type ModuleResolutionContext } from "../import_resolution";
-import type { ImportGraph } from "../import_resolution/import_graph";
-
-/**
- * @language rust
- * Resolves `module_path::terminal` to the type that path names. Rust's `::`
- * paths have one resolver, which lives in call resolution — a layer no registry
- * imports — so the project hands it in.
- */
-export type RustTypePathResolver = (
-  module_path: readonly SymbolName[],
-  terminal: SymbolName,
-  scope_id: ScopeId,
-  referring_file: FilePath
-) => SymbolId | null;
+import { resolve_annotation_in_environment } from "../type_parameter_environment";
+import {
+  descend_modules,
+  lookup_annotation,
+  lookup_annotation_arguments,
+  lookup_type_head,
+  type AnnotationLookupContext,
+} from "../type_annotation_lookup";
 
 /**
  * The type a `this`/`self`/`cls` receiver denotes at a scope, or null where no
@@ -47,14 +39,11 @@ export type RustTypePathResolver = (
  */
 export type SelfTypeResolver = (scope_id: ScopeId) => SymbolId | null;
 
-/** Everything resolving one file's type names reads about the project. */
-export interface TypeResolutionContext {
-  readonly resolutions: ResolutionRegistry;
-  readonly exports: ExportRegistry;
-  readonly imports: ImportGraph;
-  readonly languages: ReadonlyMap<FilePath, Language>;
-  readonly modules: ModuleResolutionContext;
-  readonly resolve_rust_type_path: RustTypePathResolver;
+/**
+ * Everything resolving one file's type names reads about the project: what any
+ * annotation head is looked up through, and the self type only this pass reads.
+ */
+export interface TypeResolutionContext extends AnnotationLookupContext {
   readonly resolve_self_type: SelfTypeResolver;
 }
 
@@ -75,8 +64,19 @@ interface ExtractedTypeData {
   construction_bindings: ConstructorBindings;
   /** Every class, interface and enum the file declares */
   declared_types: readonly SymbolId[];
-  /** Untyped variable → the callee chain of its call initialiser, e.g. `s.getInfo()` → ["s", "getInfo"] */
-  call_initializers: ReadonlyMap<SymbolId, readonly SymbolName[]>;
+  /**
+   * Untyped variable → the callee chain of its call initialiser, e.g.
+   * `s.getInfo()` → ["s", "getInfo"], with the identifier arguments that call
+   * passes. A generic callee's return names a type parameter its arguments are
+   * what bind, so the chain alone does not type the binding.
+   */
+  call_initializers: ReadonlyMap<SymbolId, CallInitializer>;
+}
+
+/** The call an untyped binding takes its type from: what it calls, and with what. */
+interface CallInitializer {
+  readonly callee_chain: readonly SymbolName[];
+  readonly call_arguments: readonly (SymbolName | null)[] | null;
 }
 
 /**
@@ -191,10 +191,13 @@ export class TypeRegistry {
 
     // A call-initialized variable with no annotation takes its type from the
     // called function's return type (STEP 1.5 of resolve_type_metadata).
-    const call_initializers = new Map<SymbolId, readonly SymbolName[]>();
+    const call_initializers = new Map<SymbolId, CallInitializer>();
     for (const variable of index.variables.values()) {
       if (!variable.type && variable.initialized_from_call) {
-        call_initializers.set(variable.symbol_id, variable.initialized_from_call);
+        call_initializers.set(variable.symbol_id, {
+          callee_chain: variable.initialized_from_call,
+          call_arguments: variable.initialized_from_call_arguments ?? null,
+        });
       }
     }
 
@@ -247,17 +250,39 @@ export class TypeRegistry {
 
       const construction = constructions.get(symbol_id);
       const constructed_id = construction
-        ? this.resolve_type_head(scope_id, construction, undefined, file_id, language, context)
+        ? lookup_type_head(
+          scope_id,
+          construction,
+          undefined,
+          file_id,
+          language,
+          this.definitions,
+          context
+        )
         : null;
       if (constructed_id && names_a_type(constructed_id, this.definitions)) {
         this.symbol_types.set(symbol_id, constructed_id);
         resolved_symbols.add(symbol_id);
       } else if (annotation) {
-        const annotated_id = this.resolve_annotation(scope_id, annotation, file_id, language, context);
+        const annotated_id = lookup_annotation(
+          scope_id,
+          annotation,
+          file_id,
+          language,
+          this.definitions,
+          context
+        );
         this.record_declared_type(
           symbol_id,
           annotated_id && names_a_type(annotated_id, this.definitions) ? annotated_id : null,
-          this.resolve_annotation_arguments(scope_id, annotation, file_id, language, context),
+          lookup_annotation_arguments(
+            scope_id,
+            annotation,
+            file_id,
+            language,
+            this.definitions,
+            context
+          ),
           resolved_symbols
         );
       }
@@ -269,7 +294,14 @@ export class TypeRegistry {
       // primitive (`Map<string, V>`, `dict[str, V]`) that never resolves.
       const container = annotation ? container_element_annotation(annotation) : null;
       if (container) {
-        const element_id = this.resolve_annotation(scope_id, container.element, file_id, language, context);
+        const element_id = lookup_annotation(
+          scope_id,
+          container.element,
+          file_id,
+          language,
+          this.definitions,
+          context
+        );
         if (element_id && names_a_type(element_id, this.definitions)) {
           this.container_elements.set(symbol_id, { shape: container.shape, element: element_id });
           resolved_symbols.add(symbol_id);
@@ -304,9 +336,22 @@ export class TypeRegistry {
       const return_annotation = parse_type_annotation(return_text, language);
       if (!return_annotation) continue;
 
+      // A return naming a type parameter denotes nothing until a call binds it,
+      // and what the parameter is called is the declaration's own business: a
+      // project holding a type literally named `T` must not answer `get<T>(): T`.
+      // Per-call binding is `bind_generic_return`'s, reached from the call site.
+      if (this.return_names_a_type_parameter(callable_id, return_annotation)) continue;
+
       const returned_class = class_object_annotation(return_annotation, language);
       if (returned_class) {
-        const class_id = this.resolve_annotation(scope_id, returned_class, file_id, language, context);
+        const class_id = lookup_annotation(
+          scope_id,
+          returned_class,
+          file_id,
+          language,
+          this.definitions,
+          context
+        );
         if (class_id && names_a_type(class_id, this.definitions)) {
           this.callable_return_classes.set(callable_id, class_id);
           resolved_symbols.add(callable_id);
@@ -314,11 +359,12 @@ export class TypeRegistry {
         continue;
       }
 
-      const return_type_id = this.resolve_annotation(
+      const return_type_id = lookup_annotation(
         scope_id,
         return_annotation,
         file_id,
         language,
+        this.definitions,
         context
       );
       if (return_type_id && names_a_type(return_type_id, this.definitions)) {
@@ -334,8 +380,9 @@ export class TypeRegistry {
     // and `const b = a.get()` reads what `const a = make()` recorded. A
     // constructor declares no return annotation — calling a class is a
     // construction, which STEP 1 types.
-    for (const [variable_id, callee_chain] of extracted.call_initializers) {
+    for (const [variable_id, initializer] of extracted.call_initializers) {
       if (this.symbol_types.has(variable_id)) continue;
+      const callee_chain = initializer.callee_chain;
 
       const scope_id = this.definitions.get_symbol_scope(variable_id);
       if (!scope_id) continue;
@@ -353,21 +400,42 @@ export class TypeRegistry {
       if (!return_annotation) continue;
 
       const callee_scope_id = this.definitions.get_symbol_scope(callee.symbol_id) ?? scope_id;
-      const return_type_id = this.resolve_annotation(
+
+      // A generic factory's return names one of its own type parameters
+      // (`create<T>(c: Type<T>): T`), which denotes nothing until the call's
+      // arguments bind it. What it binds is a type named in the caller's file,
+      // so it resolves there rather than where the callee is declared.
+      const bound_return = this.bind_generic_return(
+        callee,
+        return_annotation,
+        initializer.call_arguments,
+        callee_language,
+        callee_scope_id,
+        scope_id,
+        context
+      );
+      if (bound_return) {
+        this.record_declared_type(variable_id, bound_return, [], resolved_symbols);
+        continue;
+      }
+
+      const return_type_id = lookup_annotation(
         callee_scope_id,
         return_annotation,
         callee_file,
         callee_language,
+        this.definitions,
         context
       );
       this.record_declared_type(
         variable_id,
         return_type_id && names_a_type(return_type_id, this.definitions) ? return_type_id : null,
-        this.resolve_annotation_arguments(
+        lookup_annotation_arguments(
           callee_scope_id,
           return_annotation,
           callee_file,
           callee_language,
+          this.definitions,
           context
         ),
         resolved_symbols
@@ -386,6 +454,83 @@ export class TypeRegistry {
     if (resolved_symbols.size > 0) {
       this.resolved_by_file.set(file_id, { resolved_symbols });
     }
+  }
+
+  /**
+   * Whether a callable's declared return names one of the type parameters in
+   * scope for it — its own, or its owning type's.
+   *
+   * Only a bare head can: `T` is a parameter, while `Box<T>` names `Box`, whose
+   * arguments a member lookup on the recorded type never reads.
+   */
+  private return_names_a_type_parameter(
+    callable_id: SymbolId,
+    return_annotation: ParsedTypeAnnotation
+  ): boolean {
+    if (return_annotation.head.length !== 1 || return_annotation.arguments.length > 0) {
+      return false;
+    }
+    const callable = this.definitions.get(callable_id);
+    if (callable?.kind !== "function" && callable?.kind !== "method") {
+      return false;
+    }
+    const owner_id = this.definitions.get_member_owner(callable_id);
+    const owner = owner_id ? this.definitions.get(owner_id) : undefined;
+    const owner_parameters =
+      owner?.kind === "class" || owner?.kind === "interface" || owner?.kind === "enum"
+        ? (owner.generics ?? [])
+        : [];
+    const returned_name = return_annotation.head[0];
+    return [...(callable.generics ?? []), ...owner_parameters].some(
+      (parameter) => parameter.name === returned_name
+    );
+  }
+
+  /**
+   * The type a generic callable's return denotes for one call, or null when the
+   * callable is not generic, its return names no type parameter, or the call
+   * binds nothing to the one it names.
+   *
+   * Only the call's arguments and the parameters' own bounds are evidence here.
+   * A free function has no receiver whose declared instantiation could say more.
+   */
+  private bind_generic_return(
+    callee: FunctionDefinition | MethodDefinition,
+    return_annotation: ParsedTypeAnnotation,
+    call_arguments: readonly (SymbolName | null)[] | null,
+    callee_language: Language,
+    callee_scope_id: ScopeId,
+    call_scope_id: ScopeId,
+    context: TypeResolutionContext
+  ): SymbolId | null {
+    const callee_parameters = callee.generics ?? [];
+    const type_parameters = new Set<SymbolName>(
+      callee_parameters.map((parameter) => parameter.name)
+    );
+    if (type_parameters.size === 0) {
+      return null;
+    }
+
+    const bound_id = resolve_annotation_in_environment(
+      return_annotation,
+      type_parameters,
+      {
+        call: {
+          parameters:
+            callee.kind === "function" ? callee.signature.parameters : callee.parameters,
+          call_arguments,
+          declaring_language: callee_language,
+          scope_id: call_scope_id,
+        },
+        bounds: { parameters: callee_parameters, scope_id: callee_scope_id },
+      },
+      {
+        definitions: this.definitions,
+        resolutions: context.resolutions,
+        languages: context.languages,
+      }
+    );
+    return bound_id && names_a_type(bound_id, this.definitions) ? bound_id : null;
   }
 
   /**
@@ -436,7 +581,7 @@ export class TypeRegistry {
   ): SymbolId | null {
     const holder = this.definitions.get(holder_id);
     if (holder?.kind === "import") {
-      return this.descend_modules(holder_id, [name], context);
+      return descend_modules(holder_id, [name], this.definitions, context);
     }
     const type_id =
       holder?.kind === "class" || holder?.kind === "interface" || holder?.kind === "enum"
@@ -484,184 +629,20 @@ export class TypeRegistry {
   ): SymbolId | null {
     let element_id: SymbolId | null = null;
     for (const chain of chains) {
-      const constructed_id = this.resolve_type_head(scope_id, chain, undefined, file_id, language, context);
+      const constructed_id = lookup_type_head(
+        scope_id,
+        chain,
+        undefined,
+        file_id,
+        language,
+        this.definitions,
+        context
+      );
       if (!constructed_id || !names_a_type(constructed_id, this.definitions)) return null;
       if (element_id && element_id !== constructed_id) return null;
       element_id = constructed_id;
     }
     return element_id;
-  }
-
-  /**
-   * The definition a type name written in `file_id` names, looked up from
-   * `scope_id`: the text is parsed under the file's language grammar and its
-   * head resolved exactly as an annotation's is, so `o.TypeVisitor`,
-   * `compiler.DDLCompiler` and `Base<T>` all name their terminal definition.
-   */
-  resolve_type_name(
-    scope_id: ScopeId,
-    type_name: SymbolName,
-    file_id: FilePath,
-    context: TypeResolutionContext
-  ): SymbolId | null {
-    const language = context.languages.get(file_id);
-    const annotation = language ? parse_type_annotation(type_name, language) : null;
-    return annotation && language
-      ? this.resolve_annotation(scope_id, annotation, file_id, language, context)
-      : null;
-  }
-
-  /**
-   * The definition a parsed annotation's head names, looked up from `scope_id`
-   * in `file_id`. The single route from annotation text to a SymbolId: every
-   * annotation is parsed with `parse_type_annotation` and resolved here.
-   */
-  private resolve_annotation(
-    scope_id: ScopeId,
-    annotation: ParsedTypeAnnotation,
-    file_id: FilePath,
-    language: Language,
-    context: TypeResolutionContext
-  ): SymbolId | null {
-    return this.resolve_type_head(
-      scope_id,
-      annotation.head,
-      annotation.module_specifier,
-      file_id,
-      language,
-      context
-    );
-  }
-
-  /**
-   * The definitions an annotation's type arguments name, in order — `Vec<Enc>`
-   * yields `[Enc]`. All or nothing: a position that does not resolve would
-   * shift every later argument onto the wrong parameter, so any miss yields no
-   * arguments at all.
-   */
-  private resolve_annotation_arguments(
-    scope_id: ScopeId,
-    annotation: ParsedTypeAnnotation,
-    file_id: FilePath,
-    language: Language,
-    context: TypeResolutionContext
-  ): readonly SymbolId[] {
-    const argument_ids: SymbolId[] = [];
-    for (const argument of annotation.arguments) {
-      const argument_id = this.resolve_annotation(scope_id, argument, file_id, language, context);
-      if (!argument_id) {
-        return [];
-      }
-      argument_ids.push(argument_id);
-    }
-    return argument_ids;
-  }
-
-  /**
-   * Resolve a type's name chain — an annotation head or a constructor callee
-   * chain — to the definition it names.
-   *
-   * - A bare name resolves in lexical scope.
-   * - An inline import type (`import("./a").X`) names its module outright, so
-   *   the chain starts among that module's members. Nothing else ties the file
-   *   to that module, so the read is recorded as its dependency.
-   * - A Rust `::` path goes to the Rust path resolver.
-   * - Any other qualified chain (`vfs.FileSystem`, `models.User`) starts from
-   *   its first segment in lexical scope and descends one module per segment.
-   */
-  private resolve_type_head(
-    scope_id: ScopeId,
-    head: readonly SymbolName[],
-    module_specifier: string | undefined,
-    file_id: FilePath,
-    language: Language,
-    context: TypeResolutionContext
-  ): SymbolId | null {
-    if (module_specifier !== undefined) {
-      const module_file = resolve_module_path(
-        module_specifier,
-        file_id,
-        language,
-        context.modules
-      );
-      context.imports.record_module_path_read(file_id, module_file);
-      const first = resolve_module_member(
-        module_file,
-        head[0],
-        "named",
-        context.exports,
-        this.definitions,
-        context.languages,
-        context.modules
-      );
-      return first ? this.descend_modules(first, head.slice(1), context) : null;
-    }
-
-    // @language rust
-    if (language === "rust" && head.length > 1) {
-      return context.resolve_rust_type_path(
-        head.slice(0, -1),
-        head[head.length - 1],
-        scope_id,
-        file_id
-      );
-    }
-
-    const first = context.resolutions.resolve(scope_id, head[0]);
-    return first ? this.descend_modules(first, head.slice(1), context) : null;
-  }
-
-  /**
-   * Follow `segments` from `start`, each one a member of the module the
-   * previous segment names. A segment is only followed out of an import that
-   * denotes a whole module — a namespace import, or a named import that names
-   * a submodule file (`from django.db import models`) — so a qualified name can
-   * never be read as a member of a same-named class or value in scope.
-   */
-  private descend_modules(
-    start: SymbolId,
-    segments: readonly SymbolName[],
-    context: TypeResolutionContext
-  ): SymbolId | null {
-    let current = start;
-    for (const segment of segments) {
-      const module_file = this.module_file_of(current, context);
-      if (!module_file) {
-        return null;
-      }
-      const member = resolve_module_member(
-        module_file,
-        segment,
-        "namespace",
-        context.exports,
-        this.definitions,
-        context.languages,
-        context.modules
-      );
-      if (!member) {
-        return null;
-      }
-      current = member;
-    }
-    return current;
-  }
-
-  /** The module file an import symbol denotes as a whole, or null when it names an item. */
-  private module_file_of(
-    symbol_id: SymbolId,
-    context: TypeResolutionContext
-  ): FilePath | null {
-    const definition = this.definitions.get(symbol_id);
-    if (definition?.kind !== "import") {
-      return null;
-    }
-    if (definition.import_kind === "namespace") {
-      return context.imports.get_resolved_import_path(symbol_id) ?? null;
-    }
-    if (definition.import_kind === "named") {
-      return context.imports.get_submodule_import_path(symbol_id) ?? null;
-    }
-    return null;
   }
 
   /**

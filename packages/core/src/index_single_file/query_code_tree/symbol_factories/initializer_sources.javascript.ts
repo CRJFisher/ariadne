@@ -67,6 +67,30 @@ export function extract_initializer_call(node: SyntaxNode): readonly SymbolName[
 }
 
 /**
+ * The identifier arguments of the call a declarator is initialised from, in
+ * order, with `null` where an argument is not a bare identifier so a later one
+ * keeps its position: `["Router"]` for `const r = create(Router)`.
+ *
+ * Absent where the initialiser is not a call, and empty where the call takes no
+ * arguments — a generic whose parameters nothing binds and one with no
+ * parameters at all are the same answer to the type registry.
+ */
+export function extract_initializer_call_arguments(
+  node: SyntaxNode
+): readonly (SymbolName | null)[] | undefined {
+  const value_node = declarator_value(node);
+  if (value_node?.type !== "call_expression" && value_node?.type !== "new_expression") {
+    return undefined;
+  }
+  const arguments_node = value_node.childForFieldName("arguments");
+  return arguments_node
+    ? arguments_node.namedChildren.map((argument) =>
+        argument.type === "identifier" ? (argument.text as SymbolName) : null
+      )
+    : undefined;
+}
+
+/**
  * What a declarator's, field's or parameter's value reads as a whole: the one
  * name of `const cls = Parser` and `function trace(Info = TraceInfo)`, or the
  * holder and member of `var alias = Ns.A`. A call, a subscript or a chain deeper

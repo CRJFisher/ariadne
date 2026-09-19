@@ -228,7 +228,7 @@ describe("TypeScript Builder Configuration", () => {
       const type_alias = Array.from(result.types.values())[0];
       expect(type_alias.kind).toBe("type_alias");
       expect(type_alias.name).toBe("Result");
-      expect(type_alias.generics).toEqual(["T", "E"]);
+      expect(type_alias.generics).toEqual([{ name: "T" }, { name: "E" }]);
     });
 
     it("processes exported type alias via integration", () => {
@@ -383,7 +383,7 @@ describe("TypeScript Builder Configuration", () => {
       const cls = Array.from(index.classes.values()).find(c => c.name === "Container")!;
       expect(cls.kind).toBe("class");
       expect(cls.name).toBe("Container");
-      expect(cls.generics).toEqual(["T"]);
+      expect(cls.generics).toEqual([{ name: "T" }]);
     });
 
     it("processes exported class via integration", () => {

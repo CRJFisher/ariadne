@@ -634,6 +634,21 @@ export class CompilerFacadeImpl implements core.CompilerFacade, CompilerFacade {
       ]);
     });
 
+    it("fans a receiver typed by a trait-bounded parameter out to the same implementers", async () => {
+      const { project, paths } = await load_project(read_fixture("rust", "heritage_trait_impls"));
+      const visit = paths["visit.rs"];
+
+      // `pub fn walk<V: Visitor>(v: &mut V)` — `V` names no type until its
+      // bound binds it, so `v` is a receiver only the bound can type.
+      expect(head_and_rest(targets_of(project, visit, "visit_item", 28))).toEqual([
+        member_of(project, visit, "Visitor", "visit_item"),
+        new Set([
+          member_of(project, visit, "Collector", "visit_item"),
+          member_of(project, visit, "Counter", "visit_item"),
+        ]),
+      ]);
+    });
+
     it.each([
       ["incremental, type file first", ["types.rs", "impls.rs"], "incremental"],
       ["incremental, impl file first", ["impls.rs", "types.rs"], "incremental"],

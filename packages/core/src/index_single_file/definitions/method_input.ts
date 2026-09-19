@@ -1,4 +1,4 @@
-import type { Location, ScopeId, SymbolId, SymbolName } from "@ariadnejs/types";
+import type { Location, ScopeId, SymbolId, SymbolName, TypeParameter } from "@ariadnejs/types";
 
 /** What a handler captures about one method. */
 export interface MethodInput {
@@ -11,7 +11,7 @@ export interface MethodInput {
   abstract?: boolean;
   static?: boolean;
   async?: boolean;
-  generics?: SymbolName[];
+  generics?: readonly TypeParameter[];
   docstring?: string;
   accessor_kind?: "getter" | "setter" | "deleter";
   // @language rust

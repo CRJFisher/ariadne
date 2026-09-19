@@ -2016,7 +2016,7 @@ fn pair<T, U>(first: T, second: U) -> (T, U) {
         // Verify generic type parameters (classes use generics field)
         expect(struct_def.generics).toBeDefined();
         expect(Array.isArray(struct_def.generics)).toBe(true);
-        expect(struct_def.generics).toEqual(["T"]);
+        expect(struct_def.generics).toEqual([{ name: "T" }]);
 
         // Verify methods exist
         expect(struct_def.methods).toBeDefined();
@@ -2053,7 +2053,7 @@ fn pair<T, U>(first: T, second: U) -> (T, U) {
       if (identity_func) {
         // Functions use generics field (not type_parameters)
         expect(identity_func.generics).toBeDefined();
-        expect(identity_func.generics).toEqual(["T"]);
+        expect(identity_func.generics).toEqual([{ name: "T" }]);
 
         // Functions use signature.parameters
         expect(identity_func.signature).toBeDefined();
@@ -2074,7 +2074,7 @@ fn pair<T, U>(first: T, second: U) -> (T, U) {
       if (pair_func) {
         expect(pair_func.generics).toBeDefined();
         expect(pair_func.generics?.length).toBe(2);
-        expect(pair_func.generics).toEqual(["T", "U"]);
+        expect(pair_func.generics).toEqual([{ name: "T" }, { name: "U" }]);
 
         expect(pair_func.signature).toBeDefined();
         expect(pair_func.signature.parameters).toBeDefined();
@@ -2409,7 +2409,7 @@ pub type BoxedError = Box<dyn Error>;
         expect(result_type.kind).toBe("type_alias");
         expect(result_type.name).toBe("Result");
         expect(result_type.type_expression).toBe("std::result::Result<T, Error>");
-        expect(result_type.generics).toEqual(expect.arrayContaining(["T"]));
+        expect(result_type.generics).toEqual([{ name: "T" }]);
       }
 
       // Verify public BoxedError type alias
@@ -2501,7 +2501,7 @@ type FnPtr = fn(i32, i32) -> i32;
       expect(result_type?.type_expression).toBe(
         "std::result::Result<T, Error>",
       );
-      expect(result_type?.generics).toEqual(["T"]);
+      expect(result_type?.generics).toEqual([{ name: "T" }]);
 
       // Check Callback (trait object)
       const callback = type_aliases.find((t) => t.name === "Callback");
@@ -2535,19 +2535,19 @@ type GenericRef<'a, T> = &'a T;
       const ref_type = type_aliases.find((t) => t.name === "Ref");
       expect(ref_type).toBeDefined();
       expect(ref_type?.type_expression).toBe("&'a str");
-      expect(ref_type?.generics).toEqual(["'a"]);
+      expect(ref_type?.generics).toEqual([{ name: "'a" }]);
 
       // Check RefPair with multiple lifetimes
       const ref_pair_type = type_aliases.find((t) => t.name === "RefPair");
       expect(ref_pair_type).toBeDefined();
       expect(ref_pair_type?.type_expression).toBe("(&'a str, &'b str)");
-      expect(ref_pair_type?.generics).toEqual(["'a", "'b"]);
+      expect(ref_pair_type?.generics).toEqual([{ name: "'a" }, { name: "'b" }]);
 
       // Check GenericRef with lifetime and type parameter
       const generic_ref_type = type_aliases.find((t) => t.name === "GenericRef");
       expect(generic_ref_type).toBeDefined();
       expect(generic_ref_type?.type_expression).toBe("&'a T");
-      expect(generic_ref_type?.generics).toEqual(["'a", "T"]);
+      expect(generic_ref_type?.generics).toEqual([{ name: "'a" }, { name: "T" }]);
     });
 
     it("should extract type aliases with const generics", () => {
@@ -2600,7 +2600,7 @@ type AsyncFn<'a, T> = Box<dyn Future<Output = Result<T, Box<dyn Error>>> + Send 
       expect(nested_result?.type_expression).toBe(
         "Result<Option<T>, Box<dyn std::error::Error>>",
       );
-      expect(nested_result?.generics).toEqual(["T", "E"]);
+      expect(nested_result?.generics).toEqual([{ name: "T" }, { name: "E" }]);
 
       // Check ComplexCallback
       const complex_callback = type_aliases.find(
@@ -2610,7 +2610,7 @@ type AsyncFn<'a, T> = Box<dyn Future<Output = Result<T, Box<dyn Error>>> + Send 
       expect(complex_callback?.type_expression).toBe(
         "Box<dyn Fn(Result<T, String>) -> Option<T>>",
       );
-      expect(complex_callback?.generics).toEqual(["T"]);
+      expect(complex_callback?.generics).toEqual([{ name: "T" }]);
 
       // Check AsyncFn
       const async_fn = type_aliases.find((t) => t.name === "AsyncFn");
@@ -2618,7 +2618,7 @@ type AsyncFn<'a, T> = Box<dyn Future<Output = Result<T, Box<dyn Error>>> + Send 
       expect(async_fn?.type_expression).toBe(
         "Box<dyn Future<Output = Result<T, Box<dyn Error>>> + Send + 'a>",
       );
-      expect(async_fn?.generics).toEqual(["'a", "T"]);
+      expect(async_fn?.generics).toEqual([{ name: "'a" }, { name: "T" }]);
     });
 
     it("should extract type aliases with trait bounds", () => {
@@ -2642,19 +2642,19 @@ type SerializeFn<T: Serialize + Send + 'static> = Box<dyn Fn(T) -> String>;
       const handler = type_aliases.find((t) => t.name === "Handler");
       expect(handler).toBeDefined();
       expect(handler?.type_expression).toBe("Box<dyn Fn(T)>");
-      expect(handler?.generics).toEqual(["T"]);
+      expect(handler?.generics).toEqual([{ name: "T", bound: "Display" }]);
 
       // Check CompareFn with multiple bounds
       const compare_fn = type_aliases.find((t) => t.name === "CompareFn");
       expect(compare_fn).toBeDefined();
       expect(compare_fn?.type_expression).toBe("fn(&T, &T) -> bool");
-      expect(compare_fn?.generics).toEqual(["T"]);
+      expect(compare_fn?.generics).toEqual([{ name: "T", bound: "PartialOrd" }]);
 
       // Check SerializeFn with multiple bounds including lifetime
       const serialize_fn = type_aliases.find((t) => t.name === "SerializeFn");
       expect(serialize_fn).toBeDefined();
       expect(serialize_fn?.type_expression).toBe("Box<dyn Fn(T) -> String>");
-      expect(serialize_fn?.generics).toEqual(["T"]);
+      expect(serialize_fn?.generics).toEqual([{ name: "T", bound: "Serialize" }]);
     });
   });
 

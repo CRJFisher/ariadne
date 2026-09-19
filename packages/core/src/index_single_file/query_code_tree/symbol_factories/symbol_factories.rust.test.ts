@@ -508,7 +508,7 @@ describe("extract_generic_parameters", () => {
     const root = parse_rust(code);
     const fn_item = find_node_by_type(root, "function_item")!;
     const params = extract_generic_parameters(fn_item);
-    expect(params).toEqual(["T", "U"]);
+    expect(params).toEqual([{ name: "T" }, { name: "U" }]);
   });
 
   it("returns empty array for non-generic function", () => {
@@ -524,7 +524,7 @@ describe("extract_generic_parameters", () => {
     const root = parse_rust(code);
     const fn_item = find_node_by_type(root, "function_item")!;
     const params = extract_generic_parameters(fn_item);
-    expect(params).toEqual(["'a"]);
+    expect(params).toEqual([{ name: "'a" }]);
   });
 
   it("extracts from generic struct", () => {
@@ -532,7 +532,39 @@ describe("extract_generic_parameters", () => {
     const root = parse_rust(code);
     const struct_item = find_node_by_type(root, "struct_item")!;
     const params = extract_generic_parameters(struct_item);
-    expect(params).toEqual(["T"]);
+    expect(params).toEqual([{ name: "T" }]);
+  });
+
+  it("carries the trait a parameter is bounded by", () => {
+    const code = "fn walk<V: Visitor>(v: &mut V) {}";
+    const root = parse_rust(code);
+    const fn_item = find_node_by_type(root, "function_item")!;
+    const params = extract_generic_parameters(fn_item);
+    expect(params).toEqual([{ name: "V", bound: "Visitor" }]);
+  });
+
+  it("names a multi-bound parameter by its principal trait, ahead of the auto traits", () => {
+    const code = "fn walk<V: Visitor + Send + Sync>(v: &mut V) {}";
+    const root = parse_rust(code);
+    const fn_item = find_node_by_type(root, "function_item")!;
+    const params = extract_generic_parameters(fn_item);
+    expect(params).toEqual([{ name: "V", bound: "Visitor" }]);
+  });
+
+  it("skips a `?Sized` relaxation, which names no type a method is called on", () => {
+    const code = "fn hold<T: ?Sized + Visitor>(t: &T) {}";
+    const root = parse_rust(code);
+    const fn_item = find_node_by_type(root, "function_item")!;
+    const params = extract_generic_parameters(fn_item);
+    expect(params).toEqual([{ name: "T", bound: "Visitor" }]);
+  });
+
+  it("carries no bound for a lifetime-only constraint", () => {
+    const code = "fn hold<T: 'static>(t: T) {}";
+    const root = parse_rust(code);
+    const fn_item = find_node_by_type(root, "function_item")!;
+    const params = extract_generic_parameters(fn_item);
+    expect(params).toEqual([{ name: "T" }]);
   });
 });
 

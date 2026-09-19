@@ -5,6 +5,7 @@ import { parse_js, find_node_by_type } from "./test_utils";
 import {
   extract_collection_source,
   extract_initializer_call,
+  extract_initializer_call_arguments,
   extract_iteration_source,
   extract_read_source,
 } from "./initializer_sources.javascript";
@@ -60,6 +61,36 @@ describe("extract_iteration_source", () => {
     expect(iteration_source("for (const [k, v] of m.values()) {}", "v")).toEqual(undefined);
     expect(iteration_source("for (const x of make()) {}", "x")).toEqual(undefined);
     expect(iteration_source("for (const x of xs[0]) {}", "x")).toEqual(undefined);
+  });
+});
+
+describe("extract_initializer_call_arguments", () => {
+  function call_arguments(code: string): readonly (SymbolName | null)[] | undefined {
+    const declarator = find_node_by_type(parse_js(code), "variable_declarator")!;
+    return extract_initializer_call_arguments(declarator.childForFieldName("name")!);
+  }
+
+  it("reads the identifier arguments a call initialiser passes", () => {
+    expect(call_arguments("const r = inject(Router)")).toEqual(["Router"]);
+    expect(call_arguments("const p = make(Key, Value)")).toEqual(["Key", "Value"]);
+  });
+
+  it("holds a non-identifier argument's position open", () => {
+    expect(call_arguments("const r = inject('token', Router)")).toEqual([null, "Router"]);
+    expect(call_arguments("const r = inject(new Key(), Router)")).toEqual([null, "Router"]);
+  });
+
+  it("reads a construction's arguments, which type its parameters the same way", () => {
+    expect(call_arguments("const r = new Holder(Router)")).toEqual(["Router"]);
+  });
+
+  it("reads an empty list for a call that passes nothing", () => {
+    expect(call_arguments("const x = build()")).toEqual([]);
+  });
+
+  it("reads nothing for an initialiser that is not a call", () => {
+    expect(call_arguments("const x = other")).toEqual(undefined);
+    expect(call_arguments("const x = config['key']")).toEqual(undefined);
   });
 });
 

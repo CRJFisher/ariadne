@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { TypeRegistry } from "./type";
+import { lookup_type_name } from "../type_annotation_lookup";
 import { DefinitionRegistry } from "./definition";
 import { ResolutionRegistry } from "../resolution_registry";
 import { set_test_resolutions } from "../resolve_references.test";
@@ -177,7 +178,7 @@ function resolve_heritage(
     empty_resolution
   );
   definitions.resolve_type_heritage(file_path, (scope_id, type_name, file_id) =>
-    type_registry.resolve_type_name(scope_id, type_name, file_id, context)
+    lookup_type_name(scope_id, type_name, file_id, definitions, context)
   );
 }
 

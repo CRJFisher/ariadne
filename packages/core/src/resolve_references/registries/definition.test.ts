@@ -1272,7 +1272,7 @@ describe("DefinitionRegistry", () => {
         base.symbol_id,
         inferred.symbol_id,
       ]);
-      expect(registry["verify_reverse_indices"]()).toBeNull();
+      expect(registry.verify_reverse_indices()).toBeNull();
     });
 
     it("attaches a Rust impl's methods and records its trait edge from a file that declares neither the trait nor the type, and evicts both with that file", () => {
@@ -1840,11 +1840,11 @@ describe("DefinitionRegistry", () => {
           "__getitem__" as SymbolName
         )
       ).toBe(target.symbol_id);
-      expect(registry["verify_reverse_indices"]()).toBeNull();
+      expect(registry.verify_reverse_indices()).toBeNull();
 
       registry.remove_file(file_id);
 
-      expect(registry["verify_reverse_indices"]()).toBeNull();
+      expect(registry.verify_reverse_indices()).toBeNull();
       expect(registry["members"]["owner_members"].size).toBe(0);
       expect(registry.get_member_owner(alias.symbol_id)).toBeUndefined();
     });
@@ -1855,7 +1855,7 @@ describe("DefinitionRegistry", () => {
 
       registry["members"]["owner_members"].delete(file.definitions[0].symbol_id);
 
-      expect(registry["verify_reverse_indices"]()).toContain(
+      expect(registry.verify_reverse_indices()).toContain(
         "owner_members is missing"
       );
     });
@@ -1867,7 +1867,7 @@ describe("DefinitionRegistry", () => {
 
       registry["heritage"]["type_subtypes"].clear();
 
-      expect(registry["verify_reverse_indices"]()).toContain(
+      expect(registry.verify_reverse_indices()).toContain(
         "parent_types still holds"
       );
     });
@@ -1879,7 +1879,7 @@ describe("DefinitionRegistry", () => {
 
       registry["heritage"]["edges_by_file"].clear();
 
-      expect(registry["verify_reverse_indices"]()).toContain(
+      expect(registry.verify_reverse_indices()).toContain(
         "edges_by_file is missing"
       );
     });
@@ -1901,7 +1901,7 @@ describe("DefinitionRegistry", () => {
 
       registry["heritage"]["parent_types"].get(derived.symbol_id)!.reverse();
 
-      expect(registry["verify_reverse_indices"]()).toContain(
+      expect(registry.verify_reverse_indices()).toContain(
         "declared parent behind a structural one"
       );
     });
@@ -2042,7 +2042,7 @@ describe("DefinitionRegistry", () => {
       expect(registry.get_member_index().get(type.symbol_id)?.get(attached.name)).toBe(
         attached.symbol_id
       );
-      expect(registry["verify_reverse_indices"]()).toBeNull();
+      expect(registry.verify_reverse_indices()).toBeNull();
     });
 
     it("evicts exactly the evicted file's members and leaves the declaring file's", () => {
@@ -2056,7 +2056,7 @@ describe("DefinitionRegistry", () => {
         "constructor",
       ]);
       expect(registry.get_members_by_name("descend" as SymbolName)).toEqual(new Set());
-      expect(registry["verify_reverse_indices"]()).toBeNull();
+      expect(registry.verify_reverse_indices()).toBeNull();
     });
 
     it("keeps another file's contribution when the declaring file is re-indexed", () => {
@@ -2067,7 +2067,7 @@ describe("DefinitionRegistry", () => {
       expect(registry.get_member_index().get(type.symbol_id)?.get(attached.name)).toBe(
         attached.symbol_id
       );
-      expect(registry["verify_reverse_indices"]()).toBeNull();
+      expect(registry.verify_reverse_indices()).toBeNull();
     });
 
     it("neither duplicates nor loses members when a file is updated twice", () => {
@@ -2092,7 +2092,7 @@ describe("DefinitionRegistry", () => {
       expect(registry.get_members_by_name("Lowering_state" as SymbolName)).toEqual(
         new Set([type.symbol_id])
       );
-      expect(registry["verify_reverse_indices"]()).toBeNull();
+      expect(registry.verify_reverse_indices()).toBeNull();
     });
 
     it("takes a contribution back from a file that declares nothing of its own", () => {
@@ -2115,7 +2115,7 @@ describe("DefinitionRegistry", () => {
       );
       expect(registry.get_members_by_name(attached.name)).toEqual(new Set());
       expect(registry["members"]["members_by_file"].has(impl_file)).toBe(false);
-      expect(registry["verify_reverse_indices"]()).toBeNull();
+      expect(registry.verify_reverse_indices()).toBeNull();
     });
 
     it("re-indexing the contributing file takes its contribution with it until it is attached again", () => {
@@ -2133,7 +2133,7 @@ describe("DefinitionRegistry", () => {
       expect(registry.get_member_index().get(type.symbol_id)?.get(attached.name)).toBe(
         attached.symbol_id
       );
-      expect(registry["verify_reverse_indices"]()).toBeNull();
+      expect(registry.verify_reverse_indices()).toBeNull();
     });
 
     it("keeps a contribution to a type whose own declaration is evicted", () => {
@@ -2154,7 +2154,7 @@ describe("DefinitionRegistry", () => {
         "descend",
       ]);
       expect(registry.get(type.symbol_id)).toBeUndefined();
-      expect(registry["verify_reverse_indices"]()).toBeNull();
+      expect(registry.verify_reverse_indices()).toBeNull();
     });
 
     it("leaves no member index entry for a type that declares no members", () => {
@@ -2167,7 +2167,7 @@ describe("DefinitionRegistry", () => {
       registry.remove_file(declaring);
 
       expect(registry.get_member_index().get(marker.symbol_id)).toBeUndefined();
-      expect(registry["verify_reverse_indices"]()).toBeNull();
+      expect(registry.verify_reverse_indices()).toBeNull();
     });
 
     it("refuses a member the registry does not hold, because its file is the provenance", () => {
@@ -2204,7 +2204,7 @@ describe("DefinitionRegistry", () => {
         expect(registry.get_member_index().get(type.symbol_id)?.get(name)).toBe(
           getter.symbol_id
         );
-        expect(registry["verify_reverse_indices"]()).toBeNull();
+        expect(registry.verify_reverse_indices()).toBeNull();
       }
     });
 
@@ -2222,7 +2222,7 @@ describe("DefinitionRegistry", () => {
       expect(registry.get_member_index().get(type.symbol_id)?.get(first.name)).toBe(
         second.symbol_id
       );
-      expect(registry["verify_reverse_indices"]()).toBeNull();
+      expect(registry.verify_reverse_indices()).toBeNull();
     });
 
     it("lets a callable take a name a property holds, and keeps the property as a member the type owns", () => {
@@ -2238,7 +2238,7 @@ describe("DefinitionRegistry", () => {
       expect(registry.get_member_index().get(type.symbol_id)?.get(field.name)).toBe(method.symbol_id);
       expect(registry.get_member_owner(field.symbol_id)).toBe(type.symbol_id);
       expect(registry.get(field.symbol_id)).toEqual(field);
-      expect(registry["verify_reverse_indices"]()).toBeNull();
+      expect(registry.verify_reverse_indices()).toBeNull();
 
       registry.remove_file(impl_file);
 
@@ -2246,7 +2246,7 @@ describe("DefinitionRegistry", () => {
       // type owns, reachable through ownership rather than the callable index.
       expect(registry.get_member_index().get(type.symbol_id)?.has(field.name)).toBe(false);
       expect(registry.get_member_owner(field.symbol_id)).toBe(type.symbol_id);
-      expect(registry["verify_reverse_indices"]()).toBeNull();
+      expect(registry.verify_reverse_indices()).toBeNull();
     });
 
     it("tears members_by_name down per file", () => {
@@ -2275,7 +2275,7 @@ describe("DefinitionRegistry", () => {
 
       registry["members"]["members_by_file"].clear();
 
-      expect(registry["verify_reverse_indices"]()).toContain("members_by_file is missing");
+      expect(registry.verify_reverse_indices()).toContain("members_by_file is missing");
     });
 
     it("reports a members_by_file name an eviction path left behind", () => {
@@ -2289,7 +2289,7 @@ describe("DefinitionRegistry", () => {
         .get(type_id)!
         .add("departed" as SymbolName);
 
-      expect(registry["verify_reverse_indices"]()).toBe(
+      expect(registry.verify_reverse_indices()).toBe(
         `members_by_file["${file.file_id} → ${type_id}"] still holds "departed", which member_index no longer has`
       );
     });
@@ -2301,7 +2301,7 @@ describe("DefinitionRegistry", () => {
 
       registry["members"]["members_by_name"].clear();
 
-      expect(registry["verify_reverse_indices"]()).toContain("members_by_name is missing");
+      expect(registry.verify_reverse_indices()).toContain("members_by_name is missing");
     });
 
     it("reports a member the index holds that no definition can own", () => {
@@ -2316,7 +2316,7 @@ describe("DefinitionRegistry", () => {
 
       registry["by_symbol"].delete(member_id);
 
-      expect(registry["verify_reverse_indices"]()).toContain("no file can own it");
+      expect(registry.verify_reverse_indices()).toContain("no file can own it");
     });
   });
 

@@ -41,7 +41,10 @@ import type {
 import { err, ok } from "@ariadnejs/types";
 import { resolve_element_type } from "./container_element";
 import { dereference_named_import, resolve_namespace_member } from "./namespace_member";
-import { infer_generic_return_from_type_token } from "./type_token_return";
+import {
+  infer_generic_return,
+  resolve_type_parameter_annotation,
+} from "./type_parameter_resolution";
 import { ScopeRegistry } from "../registries/scope";
 import { DefinitionRegistry } from "../registries/definition";
 import type { TypeRegistry } from "../registries/type";
@@ -209,6 +212,7 @@ function resolve_receiver_expression_type(
     if (element_id) {
       return walk_property_chain(
         element_id,
+        null,
         receiver.chain.slice(1),
         receiver.chain_arguments?.slice(1),
         receiver.scope_id,
@@ -228,6 +232,9 @@ function resolve_receiver_expression_type(
 
   return walk_property_chain(
     base_result.value,
+    receiver.base.type === "identifier"
+      ? context.resolutions.resolve(receiver.scope_id, receiver.base.value)
+      : null,
     receiver.chain,
     receiver.chain_arguments,
     receiver.scope_id,
@@ -494,6 +501,13 @@ function resolve_identifier_base(
     }
   }
 
+  if (!type_id && def) {
+    // An annotation naming a type parameter (`v: &mut V`) resolved to nothing
+    // when the file was indexed, because `V` denotes no type on its own. What
+    // the declaration bounds it to is the type its members are reached through.
+    type_id = resolve_type_parameter_annotation(def, context);
+  }
+
   if (!type_id) {
     // What the binding holds, last.
     type_id = held_type(symbol_id, context, visited);
@@ -551,12 +565,16 @@ function find_member_symbol(
  */
 function walk_property_chain(
   start_type: SymbolId,
+  start_binding: SymbolId | null,
   chain: readonly SymbolName[],
   chain_arguments: ChainCallArguments | undefined,
   scope_id: ScopeId,
   context: ReceiverResolutionContext
 ): Result<SymbolId, ResolutionFailure> {
   let current_type = start_type;
+  // The binding whose declared annotation described `current_type`, which is
+  // what a generic member reads its owner's type arguments from.
+  let current_binding = start_binding;
 
   for (let index = 0; index < chain.length; index++) {
     const property_name = chain[index];
@@ -577,6 +595,9 @@ function walk_property_chain(
       : null;
     if (element_id) {
       current_type = element_id;
+      // The element is the container's, not what the container binding
+      // declares, so no binding describes the type the walk continues on.
+      current_binding = null;
       index++;
       continue;
     }
@@ -622,13 +643,13 @@ function walk_property_chain(
         ) {
           member_type = member_symbol;
         } else if (member_def.kind === "method") {
-          // @language typescript
-          // A generic method returning its own type parameter (get<T>(): T) has
-          // no resolvable return type until the parameter is bound. When the
-          // binding parameter is a type token (token: Type<T>), infer T from the
-          // call's token argument at this chain position.
-          member_type = infer_generic_return_from_type_token(
+          // A generic method whose return names a type parameter (get<T>(): T)
+          // has no resolvable return type until that parameter is bound. What
+          // binds it is this call's arguments, the receiver's own declared
+          // instantiation, or the parameter's declared bound.
+          member_type = infer_generic_return(
             member_def,
+            current_binding,
             chain_arguments?.[index] ?? null,
             scope_id,
             context
@@ -646,6 +667,7 @@ function walk_property_chain(
     }
 
     current_type = member_type;
+    current_binding = member_symbol;
   }
 
   return ok(current_type);
@@ -692,6 +714,7 @@ function resolve_destructured_property_type(
 
   const property_type = walk_property_chain(
     source_type.value,
+    null,
     [key],
     undefined,
     binding.defining_scope_id,

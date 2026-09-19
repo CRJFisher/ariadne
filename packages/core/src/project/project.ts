@@ -17,6 +17,7 @@ import {
   TypeRegistry,
   type TypeResolutionContext,
 } from "../resolve_references/registries/type";
+import { lookup_type_name } from "../resolve_references/type_annotation_lookup";
 import { resolve_qualified_path_rust } from "../resolve_references/call_resolution/path_resolution.rust";
 import { find_self_type } from "../resolve_references/call_resolution/receiver_resolution";
 import { infer_conformance_to_pending_interfaces } from "../resolve_references/call_resolution/structural_conformance";
@@ -454,7 +455,13 @@ export class Project {
     // file declares, then every file's extends/implements/impl-trait names
     // resolved into the subtype graph
     const resolve_type_name = (scope_id: ScopeId, type_name: SymbolName, file_id: FilePath) =>
-      this.types.resolve_type_name(scope_id, type_name, file_id, type_resolution_context);
+      lookup_type_name(
+        scope_id,
+        type_name,
+        file_id,
+        this.definitions,
+        type_resolution_context
+      );
     for (const file_id of files) {
       this.definitions.attach_impl_methods(file_id, resolve_type_name);
     }

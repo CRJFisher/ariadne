@@ -1,7 +1,7 @@
 ---
 id: TASK-376.15
 title: "Bind type parameters from call arguments and declared instantiations"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-07-29 09:38"
 labels:
@@ -50,10 +50,65 @@ TASK-376.13's evidence case `fn walk<V: Visitor>(v: &mut V) { v.visit_item(); }`
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 A type-parameter environment is bound from call arguments, declared instantiations and `extends`/trait bounds, and the return annotation is resolved in that environment.
-- [ ] #2 The DI type-token shape resolves as one case of the general mechanism, with no single-argument special case remaining.
-- [ ] #3 An unbindable type parameter leaves the receiver unresolved rather than producing a wrong type.
-- [ ] #4 Integration tests cover all of this step's evidence cases: `inject(Router)` / `get(Type<T>)`, `Provider<Foo<Bar>>`, a generic factory result receiver, the Rust `fn walk<V: Visitor>` bound, and the unbindable case.
-- [ ] #5 Unit tests cover unification for `Type<T>`, `Map<K, V>` and the unbound case.
+- [x] #1 A type-parameter environment is bound from call arguments, declared instantiations and `extends`/trait bounds, and the return annotation is resolved in that environment.
+- [x] #2 The DI type-token shape resolves as one case of the general mechanism, with no single-argument special case remaining.
+- [x] #3 An unbindable type parameter leaves the receiver unresolved rather than producing a wrong type.
+- [x] #4 Integration tests cover all of this step's evidence cases: `inject(Router)` / `get(Type<T>)`, `Provider<Foo<Bar>>`, a generic factory result receiver, the Rust `fn walk<V: Visitor>` bound, and the unbindable case.
+- [x] #5 Unit tests cover unification for `Type<T>`, `Map<K, V>` and the unbound case.
 
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+
+### What the capability surface gained
+
+A call on anything a generic produces used to dead-end. Three receiver shapes now resolve:
+
+- a chained hop through a generic member (`injector.get(Router).navigate()`, `provider.get().run()`),
+- a binding a generic factory initialises (`const r = create(Router); r.navigate()`),
+- an identifier whose own annotation names a type parameter (`fn walk<V: Visitor>(v: &mut V) { v.visit_item(); }`), which reaches the bound's members and then fans out over every implementer exactly as a `dyn Visitor` receiver does.
+
+Measured on the committed Rust corpus, the bound alone recovered the one call
+`heritage_trait_impls/visit.rs` had left unresolved — TASK-376.13's carried evidence case —
+taking the corpus from 128 resolved / 54 failed to 129 / 53.
+
+### Mechanism
+
+- `TypeParameter { name, bound? }` replaces the bare `SymbolName[]` of `generics`, so Rust's
+  first trait bound and TypeScript's `extends` constraint survive indexing. TypeScript's plain
+  function declarations record `generics` for the first time; only classes, methods, interfaces
+  and type aliases did before.
+- `type_preprocessing/type_parameter_binding.ts` is the pure unifier: annotation against
+  annotation, binding annotations rather than symbols so `Map<K, V>` against `Map<string, Foo>`
+  binds `V` to a type and `K` to text that names none.
+- `type_parameter_environment.ts` owns the whole sequence — bind the evidence, substitute the
+  annotation, resolve what comes out — with one optional tier per evidence source. All three
+  consumers call it rather than reassembling the steps, which is why the factory, the chained
+  hop and the annotated binding agree by construction rather than by hand-kept copies. It
+  queries the registries for an argument's declaration, which is what keeps it out of the pure
+  `type_preprocessing/`.
+- `call_resolution/type_parameter_resolution.ts` holds the receiver-shaped evidence only: which
+  type parameters are in scope for a receiver, and what its declared instantiation binds, handed
+  to the environment as a binder because the registries never import call resolution.
+- `type_token_return.ts` is deleted. The DI token is now the general rule's third unification
+  case: a one-argument wrapper that is not a container shape, handed a name that designates a
+  type rather than a value.
+
+### Left open
+
+TASK-376.10's carried `_register` shape — vscode's
+`_instances = this._register(new DisposableMap<string, IEditorContribution>())` — is not
+reached, and `tests/fixtures/typescript/code/integration/container_elements/contributions.ts`
+keeps its annotated stand-in. The environment binds `_register<T>(o: T): T` from arguments, but
+three facts it needs are not recorded anywhere: a class field keeps no call initialiser (only a
+variable does), a construction argument is not an identifier so it occupies its position as
+`null`, and a container's element is read from a binding's own annotation rather than from a
+bound type parameter's arguments. Each is its own indexing change; the fixture comment states
+this.
+
+A bound annotation resolves only through a bare head. A qualified one (`a.b.T`) needs the
+annotation resolver the `TypeRegistry` owns, which runs at index time rather than at call time.
+
+<!-- SECTION:NOTES:END -->

@@ -11,6 +11,7 @@ import type {
   SymbolId,
   SymbolName,
   Location,
+  TypeParameter,
 } from "@ariadnejs/types";
 import {
   anonymous_function_symbol,
@@ -146,25 +147,41 @@ export function create_property_id(capture: CaptureNode): SymbolId {
 /**
  * Extract type parameters from a node
  */
-export function extract_type_parameters(node: SyntaxNode | null): SymbolName[] {
+export function extract_type_parameters(node: SyntaxNode | null): TypeParameter[] {
   if (!node) {
     return [];
   }
   const type_params = node.childForFieldName?.("type_parameters");
   if (type_params) {
-    // Extract individual type parameter names
-    const params: SymbolName[] = [];
+    const params: TypeParameter[] = [];
     for (const child of type_params.children || []) {
       if (child.type === "type_parameter") {
         const name_node = child.childForFieldName?.("name");
         if (name_node) {
-          params.push(name_node.text as SymbolName);
+          const bound = extends_constraint(child);
+          params.push({
+            name: name_node.text as SymbolName,
+            ...(bound !== undefined && { bound }),
+          });
         }
       }
     }
     return params;
   }
   return [];
+}
+
+/**
+ * The type a `<T extends Base>` constraint names. The constraint node spells
+ * the `extends` keyword ahead of the type, so the type is its last named child
+ * rather than its text.
+ */
+function extends_constraint(type_parameter: SyntaxNode): SymbolName | undefined {
+  const constraint = type_parameter.childForFieldName?.("constraint");
+  const written = constraint?.namedChildren?.[constraint.namedChildren.length - 1]?.text;
+  return written === undefined || written.length === 0
+    ? undefined
+    : (written as SymbolName);
 }
 
 // ============================================================================
