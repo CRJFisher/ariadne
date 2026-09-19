@@ -24,6 +24,8 @@ export {
 
 export { plan_nested_slices } from "./nested_slice";
 
+export { heap_mb_for, required_heap_mb } from "./heap_requirement";
+
 export { INGEST_ORDERS, type IngestOrder } from "./ingest_order";
 
 export {

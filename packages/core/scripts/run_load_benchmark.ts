@@ -44,6 +44,8 @@ import {
   summarize_peak_rss,
   summarize_wall_seconds,
   write_arm_result,
+  heap_mb_for,
+  required_heap_mb,
   INGEST_ORDERS,
   type ArmRequest,
   type ArmResult,
@@ -63,28 +65,6 @@ import {
   report_recorded_order_independence,
   report_recorded_resolution_eviction,
 } from "./recorded_measurement_report";
-
-/**
- * The heap an arm of this size needs, from measured growth: two same-session
- * vscode arms cost 420.1 MB of settled heap at 200 files and 925.1 MB at 600 —
- * about 1.26 MB per file, with peak RSS a little above that.
- *
- * The parent sizes each child from the same function the child refuses
- * against, so the two can never disagree. A floor set independently of the flag
- * that feeds it is a guard that cannot fire: a 6,144 MB flag yields a 6,192 MB
- * limit, so a 6,000 MB floor passed every arm the CLI could spawn.
- *
- * The coefficient comes from two points and is unverified above 600 files.
- * Re-measure before trusting a full-corpus figure.
- */
-export function required_heap_mb(offered_file_count: number): number {
-  return Math.ceil(400 + 1.4 * offered_file_count);
-}
-
-/** What to give a child: its requirement plus headroom. */
-function heap_mb_for(offered_file_count: number): number {
-  return Math.max(2048, Math.ceil(required_heap_mb(offered_file_count) * 1.25));
-}
 
 /**
  * The files a slice offers, so the child's heap is sized from what it will

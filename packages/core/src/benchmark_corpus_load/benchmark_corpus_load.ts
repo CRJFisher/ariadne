@@ -35,6 +35,7 @@ import {
   type IngestOrder,
 } from "./ingest_order";
 import { nested_slice } from "./nested_slice";
+import { required_heap_mb } from "./heap_requirement";
 import {
   fingerprint_call_graph,
   record_fingerprint,
@@ -306,14 +307,12 @@ function assert_predicate_selected_files(
 /**
  * Refuse an arm the heap cannot hold, before it spends the CPU.
  *
- * The requirement scales with the file count from measured growth — roughly
- * 1.26 MB of settled heap per file, over a 400 MB base — because a single
- * threshold is wrong in both directions: a flat 3,000-file floor refuses a
- * 2,999-file arm that fits comfortably, and passes a 5,000-file arm that does
- * not.
+ * The requirement comes from `required_heap_mb`, the one place the coefficient
+ * lives, so the parent that sizes this child and the child that refuses under
+ * it cannot disagree.
  */
 function assert_heap_is_large_enough(offered_file_count: number): void {
-  const required_mb = Math.ceil(400 + 1.4 * offered_file_count);
+  const required_mb = required_heap_mb(offered_file_count);
   const heap_cap_mb = Math.round(
     v8.getHeapStatistics().heap_size_limit / BYTES_PER_MB,
   );
