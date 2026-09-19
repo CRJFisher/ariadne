@@ -51,7 +51,7 @@ Rung 5 fans a member miss out to every subtype that declares the member, so a me
 - [x] #4 The permanent limitations (WebAssembly exports object, runtime-token DI containers, celery `canvas.py:736`, Rust `Drop`) are recorded as out of scope.
   Evidence: `RECORDED_CORPUS_RESOLUTION.permanent_limitations` holds all four as typed rows with the site, the construct, why no resolver change reaches it, and the registry group it would be classified under; `recorded_corpus_resolution.test.ts` pins them.
 - [x] #5 A corpus-level regression suite pins the achieved per-corpus counts with one recorded row and one named end-to-end case per corpus.
-  Evidence: one recorded row per corpus in `recorded_corpus_resolution.ts`, pinned by `recorded_corpus_resolution.test.ts`; twelve end-to-end cases over the ten corpora in `project/corpus_evidence.integration.test.ts`, of which ten fail on the `a3d5beea` control tree.
+  Evidence: one recorded row per corpus in `recorded_corpus_resolution.ts`, pinned by `recorded_corpus_resolution.test.ts`; twelve end-to-end cases over the ten corpora in `project/project.corpus_evidence.integration.test.ts`, of which ten fail on the `a3d5beea` control tree.
 - [x] #6 The follow-ons (language-aware self-reference keywords, interprocedural cross-function carriers, Python loop-clause scopes) exist as backlog tasks.
   Evidence: TASK-376.25 (language-aware self-reference keywords), TASK-376.26 (cross-function class carriers) and TASK-376.27 (Python loop and match block scopes).
 
@@ -228,7 +228,7 @@ Two of the four already have a `permanent` rule in `.claude/skills/triage/known_
 Two tiers, because a count cannot say which shape moved and a shape cannot say how much of a corpus it covers.
 
 - **`benchmark_corpus_load/recorded_corpus_resolution.ts`** — one row per corpus with the file set, the fingerprint and the taxonomy, plus the refused corpus and the permanent limitations. `recorded_corpus_resolution.test.ts` pins the call-edge and raw-entry-point counts by name, checks each taxonomy closes over its own call references and agrees with its fingerprint, and checks each row measures exactly the file set the baseline measured. `scripts/recorded_measurement_report.ts` now prints the baseline and this record side by side with a delta column under every arm, so a later run sees both records and cannot read the epic's change as a change of the run.
-- **`project/corpus_evidence.integration.test.ts`** — twelve `Project`-tier cases over the ten corpora, each named for its corpus and the file the shape was read from, over the committed fixture directories where the shape needs more than one file. **Ten of the twelve fail on the `a3d5beea` control tree.** The two that pass there — the tokio/sqlx `self.header().encoded_size()` hop and the celery constructor-only class — already answered on the baseline and are pinned as guards rather than claimed as recoveries.
+- **`project/project.corpus_evidence.integration.test.ts`** — twelve `Project`-tier cases over the ten corpora, each named for its corpus and the file the shape was read from, over the committed fixture directories where the shape needs more than one file. **Ten of the twelve fail on the `a3d5beea` control tree.** The two that pass there — the tokio/sqlx `self.header().encoded_size()` hop and the celery constructor-only class — already answered on the baseline and are pinned as guards rather than claimed as recoveries.
 
 ### Follow-ons filed
 
