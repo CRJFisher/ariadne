@@ -64,6 +64,8 @@ export { RECORDED_WORKER_INDEX_DISPATCH } from "./recorded_worker_index_dispatch
 
 export { RECORDED_FAILURE_TAXONOMY_BASELINE } from "./recorded_failure_taxonomy_baseline";
 
+export { RECORDED_CORPUS_RESOLUTION } from "./recorded_corpus_resolution";
+
 export { format_failure_taxonomy_table } from "./failure_taxonomy";
 
 export { compare_fingerprints } from "./call_graph_fingerprint";

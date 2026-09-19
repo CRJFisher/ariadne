@@ -19,6 +19,7 @@ import {
   RECORDED_CORPUS_PASS_COST,
   RECORDED_EVICTION_INDEX_COST,
   RECORDED_EXPORT_DECLARATION_SPACE,
+  RECORDED_CORPUS_RESOLUTION,
   RECORDED_FAILURE_TAXONOMY_BASELINE,
   RECORDED_FULL_CORPUS_BASELINE,
   RECORDED_MEMORY_CONTRACT,
@@ -32,8 +33,14 @@ import {
 } from "../src/benchmark_corpus_load";
 
 /**
- * Where this corpus's call references ended up on the tree TASK-376 started
- * from, beside the arm that just counted them.
+ * Where this corpus's call references ended up on the two trees already on
+ * record, beside the arm that just counted them.
+ *
+ * Both records print together because either alone invites the wrong
+ * comparison: the baseline is the tree TASK-376 started from and the achieved
+ * row is the tree it ended on, and a live arm compared against the baseline
+ * without the achieved row between them reads every change of the epic as a
+ * change of the run.
  *
  * Selected on the corpus, its commit, the predicate and the offered count
  * together: a taxonomy is stated over one file set, and the same corpus under
@@ -44,20 +51,35 @@ import {
  * algorithm; nothing here is a cost.
  */
 export function report_recorded_failure_taxonomy(row: MeasurementRow): void {
-  const recorded = RECORDED_FAILURE_TAXONOMY_BASELINE.rows.find(
-    (candidate) =>
-      candidate.corpus === row.corpus.corpus_name &&
-      candidate.predicate === row.corpus.predicate &&
-      same_commit(candidate.corpus_commit, row.corpus.corpus_commit) &&
-      candidate.file_counts.offered === row.file_counts.offered,
-  );
-  if (recorded === undefined) return;
+  const describes_this_file_set = (candidate: {
+    corpus: string;
+    predicate: string;
+    corpus_commit: string;
+    file_counts: { offered: number };
+  }): boolean =>
+    candidate.corpus === row.corpus.corpus_name &&
+    candidate.predicate === row.corpus.predicate &&
+    same_commit(candidate.corpus_commit, row.corpus.corpus_commit) &&
+    candidate.file_counts.offered === row.file_counts.offered;
+
+  const baseline = RECORDED_FAILURE_TAXONOMY_BASELINE.rows.find(describes_this_file_set);
+  const achieved = RECORDED_CORPUS_RESOLUTION.rows.find(describes_this_file_set);
+  if (baseline === undefined && achieved === undefined) return;
+
   console.log(
-    `\nrecorded failure taxonomy for this file set at ariadne@${RECORDED_FAILURE_TAXONOMY_BASELINE.ariadne_commit} (the TASK-376 baseline — a record, not a comparand for the arms above):`,
+    "\nrecorded failure taxonomy for this file set (records, not comparands for the arms above): " +
+      `baseline is ariadne@${RECORDED_FAILURE_TAXONOMY_BASELINE.ariadne_commit}, the tree TASK-376 started from; ` +
+      `achieved is ariadne@${RECORDED_CORPUS_RESOLUTION.ariadne_commit}, the tree it ended on:`,
   );
-  for (const line of format_failure_taxonomy_table([
-    { label: "recorded", taxonomy: recorded.failure_taxonomy },
-  ])) {
+  const arms = [
+    ...(baseline === undefined
+      ? []
+      : [{ label: "baseline", taxonomy: baseline.failure_taxonomy }]),
+    ...(achieved === undefined
+      ? []
+      : [{ label: "achieved", taxonomy: achieved.failure_taxonomy }]),
+  ];
+  for (const line of format_failure_taxonomy_table(arms)) {
     console.log(`  ${line}`);
   }
 }
