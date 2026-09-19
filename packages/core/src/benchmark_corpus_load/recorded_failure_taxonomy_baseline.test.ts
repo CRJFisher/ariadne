@@ -2,8 +2,7 @@
  * The record is worth keeping only while it stays internally consistent: every
  * taxonomy closes over its own call references and agrees with the
  * fingerprint's unresolved count, every file count closes, every reason is
- * present in every row, and the ten evidence corpora are each either measured
- * or refused with the harness's own words.
+ * present in every row, and all ten evidence corpora are measured.
  */
 
 import { describe, expect, it } from "vitest";
@@ -36,21 +35,20 @@ describe("RECORDED_FAILURE_TAXONOMY_BASELINE", () => {
     });
   });
 
-  it("covers the ten evidence corpora: nine measured, one refused", () => {
+  it("covers all ten evidence corpora, none refused", () => {
     expect(BASELINE.rows.map((row) => row.corpus)).toEqual([
       "angular/angular",
       "rust-lang/rust",
       "tokio-rs/tokio",
       "launchbadge/sqlx",
+      "microsoft/TypeScript",
       "django/django",
       "pandas-dev/pandas",
       "celery/celery",
       "expressjs/express",
       "mochajs/mocha",
     ]);
-    expect(BASELINE.not_measured.map((entry) => entry.corpus)).toEqual([
-      "microsoft/TypeScript",
-    ]);
+    expect(BASELINE.not_measured).toEqual([]);
   });
 
   it("pins each corpus to the commit its checkout was at, and to the triage config's file set", () => {
@@ -65,6 +63,11 @@ describe("RECORDED_FAILURE_TAXONOMY_BASELINE", () => {
       ],
       ["tokio-rs/tokio", "1a2dbbaa21389ad0b9d20f77e869698c5cab5d68", "repository-root"],
       ["launchbadge/sqlx", "1d674f51581598f55436451d5b4b73100cae0b56", "repository-root"],
+      [
+        "microsoft/TypeScript",
+        "cc5c6e2d32e2228fff83a66537bbe6042943054d",
+        "repository-root-excluding:baselines",
+      ],
       [
         "django/django",
         "957d0cee7167757ae221ffde59d2cf0a322e89c7",
@@ -86,6 +89,17 @@ describe("RECORDED_FAILURE_TAXONOMY_BASELINE", () => {
     }
   });
 
+  it("names the one corpus whose load drops files, and how many", () => {
+    // Every other corpus indexes everything it is offered. TypeScript's twenty
+    // are recorded rather than netted: a dropped file is a file whose calls are
+    // absent from the taxonomy the row states.
+    expect(
+      BASELINE.rows
+        .filter((row) => row.file_counts.dropped > 0)
+        .map((row) => [row.corpus, row.file_counts.dropped]),
+    ).toEqual([["microsoft/TypeScript", 20]]);
+  });
+
   it("closes every taxonomy over its call references and agrees with the fingerprint's unresolved count", () => {
     for (const row of BASELINE.rows) {
       const unresolved = unresolved_total(row.failure_taxonomy);
@@ -104,21 +118,8 @@ describe("RECORDED_FAILURE_TAXONOMY_BASELINE", () => {
     }
   });
 
-  it("records the refused corpus with the harness's own refusal and the count that produced it", () => {
-    expect(BASELINE.not_measured).toEqual([
-      {
-        corpus: "microsoft/TypeScript",
-        corpus_commit: "cc5c6e2d32e2228fff83a66537bbe6042943054d",
-        predicate: "repository-root-excluding:baselines",
-        discovered_files: 19783,
-        reason:
-          "Refusing to spawn a 19783-file arm over microsoft/TypeScript: it needs a 35122 MB heap (28097 MB required plus headroom) and this box has 32768 MB of memory. Narrow the predicate, or measure on a box that can hold it; a partial arm is never recorded.",
-      },
-    ]);
-  });
-
   it("records each arm as its own process, with the load the shared box was under", () => {
-    // Nine distinct session ids is what "every arm ran alone, in its own
+    // A distinct session id per row is what "every arm ran alone, in its own
     // process" means; the loadavg and cpu/wall figures are recorded so a
     // reader can see the box was shared, and are never quoted as a cost.
     expect(new Set(BASELINE.rows.map((row) => row.session_id)).size).toEqual(
@@ -137,6 +138,7 @@ describe("RECORDED_FAILURE_TAXONOMY_BASELINE", () => {
       ["rust-lang/rust", 95.2, 77.1, 1.24, [4.7, 4.5, 4.2]],
       ["tokio-rs/tokio", 10.3, 8, 1.3, [6.1, 4.4, 4.1]],
       ["launchbadge/sqlx", 6.1, 4.5, 1.35, [6.5, 4.4, 4.1]],
+      ["microsoft/TypeScript", 100, 49.8, 2.01, [3.2, 3.5, 3.9]],
       ["django/django", 255.3, 239.7, 1.07, [4.8, 4.5, 4.2]],
       ["pandas-dev/pandas", 195.5, 182.4, 1.07, [5.6, 4.4, 4.1]],
       ["celery/celery", 20.9, 18.7, 1.12, [4.4, 3.8, 3.9]],

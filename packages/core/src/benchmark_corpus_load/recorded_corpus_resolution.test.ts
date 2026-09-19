@@ -48,7 +48,7 @@ describe("RECORDED_CORPUS_RESOLUTION", () => {
     });
   });
 
-  it("covers the same ten evidence corpora as the baseline: nine measured, one refused", () => {
+  it("covers the same ten evidence corpora as the baseline, none refused", () => {
     expect(ACHIEVED.rows.map((row) => row.corpus)).toEqual(
       BASELINE.rows.map((row) => row.corpus),
     );
@@ -102,6 +102,7 @@ describe("RECORDED_CORPUS_RESOLUTION", () => {
       ["rust-lang/rust", "96180"],
       ["tokio-rs/tokio", "7762"],
       ["launchbadge/sqlx", "3597"],
+      ["microsoft/TypeScript", "75036"],
       ["django/django", "67102"],
       ["pandas-dev/pandas", "84238"],
       ["celery/celery", "9465"],
@@ -118,6 +119,7 @@ describe("RECORDED_CORPUS_RESOLUTION", () => {
       ["rust-lang/rust", "19732"],
       ["tokio-rs/tokio", "2363"],
       ["launchbadge/sqlx", "1524"],
+      ["microsoft/TypeScript", "758"],
       ["django/django", "2289"],
       ["pandas-dev/pandas", "2085"],
       ["celery/celery", "730"],
@@ -131,12 +133,13 @@ describe("RECORDED_CORPUS_RESOLUTION", () => {
     // resolved count is not comparable term by term. These three hold the same
     // definitions on both trees, so the rise is recovery and nothing else.
     expect(
-      ["angular/angular", "expressjs/express", "mochajs/mocha"].map((corpus) => {
+      ["angular/angular", "microsoft/TypeScript", "expressjs/express", "mochajs/mocha"].map((corpus) => {
         const row = ACHIEVED.rows.find((candidate) => candidate.corpus === corpus);
         return [corpus, baseline_for(corpus).failure_taxonomy.resolved, row!.failure_taxonomy.resolved];
       }),
     ).toEqual([
       ["angular/angular", 148316, 160166],
+      ["microsoft/TypeScript", 91141, 93358],
       ["expressjs/express", 5429, 5436],
       ["mochajs/mocha", 7431, 7485],
     ]);

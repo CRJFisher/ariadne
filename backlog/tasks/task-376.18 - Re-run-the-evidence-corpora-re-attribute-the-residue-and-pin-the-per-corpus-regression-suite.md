@@ -43,7 +43,7 @@ Rung 5 fans a member miss out to every subtype that declares the member, so a me
 <!-- AC:BEGIN -->
 
 - [x] #1 The ten corpora are re-run with the taxonomy harness, and per-reason recovery is reported against the TASK-376.16 baseline, the TASK-376.17 row and the TASK-376.13 row, from arms interleaved in one session.
-  Evidence: `recorded_corpus_resolution.ts` holds nine rows from candidate arms at `038b7daa`; the control arms ran `a3d5beea`, the tree `recorded_failure_taxonomy_baseline.ts` was measured on, from a worktree with `dist` rebuilt. Every pair ran control-then-candidate back to back in one sitting on one box, `~/.ariadne/benchmark-runs/task-376.18/`. The control rows reproduce the baseline's taxonomy exactly on all nine corpora, which is what makes the candidate rows a measurement of this tree rather than of the session. microsoft/TypeScript is refused in the same words as the baseline.
+  Evidence: `recorded_corpus_resolution.ts` holds nine rows from candidate arms at `038b7daa`; the control arms ran `a3d5beea`, the tree `recorded_failure_taxonomy_baseline.ts` was measured on, from a worktree with `dist` rebuilt. Every pair ran control-then-candidate back to back in one sitting on one box, `~/.ariadne/benchmark-runs/task-376.18/`. The control rows reproduce the baseline's taxonomy exactly on all nine corpora, which is what makes the candidate rows a measurement of this tree rather than of the session. microsoft/TypeScript was refused in the same words as the baseline at first; tracing that refusal to the heap guard rather than to the box closed TASK-376.16's last criterion, and both arms are recorded — see `The tenth corpus` below.
 - [x] #2 New false negatives are reported by literal set difference: the resolved-edge set is a superset and the entry-point set a subset of the baseline's, with every removed entry point spot-verified at its call site.
   Evidence: the set difference is in `Set difference, named` below. Neither containment holds literally, and the report says so rather than netting it: 1,124 (angular) to 7,821 (django) caller-to-callee pairs are only in the control, and 2 (tokio) to 43 (django) entry points are only in the candidate. Every one is decomposed by mechanism and the three classes are named. Three removed entry points are spot-verified at their call sites (django `search.py:87`, `csp.py:14`, `json.py:38`).
 - [x] #3 The residue is re-attributed from actual failure reasons, one named site per reason per corpus, routed to its owning fault area.
@@ -90,13 +90,22 @@ Control `a3d5beea` (the tree `recorded_failure_taxonomy_baseline.ts` was measure
 | rust-lang/rust | 3516 | 329884 → 325188 | 78734 → **113204** | 55028 → 64979 | 63810 → **96180** | 16988 → 19732 |
 | tokio-rs/tokio | 790 | 35573 → 34860 | 8114 → **8813** | 7847 → 8841 | 7067 → **7762** | 1797 → 2363 |
 | launchbadge/sqlx | 459 | 18778 → 18564 | 3523 → **4033** | 3453 → 4301 | 2914 → **3597** | 1087 → 1524 |
+| microsoft/TypeScript | 19783 | 152999 → 153090 | 91141 → **93358** | 49897 → 50332 | 72369 → **75036** | 1201 → **758** |
 | django/django | 3012 | 256358 → 202972 | 101669 → 85878 | 35611 → 36234 | 68673 → 67102 | 2494 → **2289** |
 | pandas-dev/pandas | 1510 | 337503 → 244360 | 139826 → 117951 | 33288 → 33288 | 76324 → **84238** | 2298 → **2085** |
 | celery/celery | 418 | 49805 → 35088 | 13140 → 11254 | 7943 → 7943 | 9276 → **9465** | 800 → **730** |
 | expressjs/express | 141 | 14543 → 14543 | 5429 → **5436** | 3094 → 3132 | 5239 → **5250** | 21 → 21 |
 | mochajs/mocha | 534 | 19965 → 19965 | 7431 → **7485** | 5446 → 5565 | 6884 → **6936** | 75 → **71** |
 
-microsoft/TypeScript is refused again in the harness's own words: 19,783 files need a 35,122 MB heap on a 32,768 MB box. The refusal is byte-identical to the baseline's, so the corpus is absent for the same reason and not a new one.
+### The tenth corpus
+
+microsoft/TypeScript had no row on either side of TASK-376. The harness refused it: 19,783 files needed a 35,122 MB heap on a 32,768 MB box. That refusal is not the box — it is the guard. `required_heap_mb` was a two-point fit on file count, and file count does not predict what a load holds: measured, TypeScript peaks at **3,623 MB**, less than angular, which holds a third as many files. Re-fitted above what arms actually cost (`heap_requirement.ts`, `d0c45e18`), the corpus runs under a 14,288 MB cap.
+
+Both arms are recorded. The control ran on a checkout of `a3d5beea` with the heap coefficient changed and nothing else; that a cap cannot move a call graph is demonstrated rather than assumed — angular re-run on that checkout under 5,890 MB instead of 11,652 reproduces the baseline's fingerprint and taxonomy byte for byte. It is the only corpus of the ten whose load drops files: 20 of 19,783.
+
+**It is also the epic's best result.** Raw entry points fall **1,201 → 758, −37%**, the largest proportional reduction of any corpus, with `class_definition_not_found` clearing 833 → 0 and `receiver_type_unknown` −1,708. Exactly **one** entry point is gained, and it is a false edge the control held: `src/harness/fakesHosts.ts:355` `getSourceFile` was reached from `src/testRunner/unittests/programApi.ts:187`, where the receiver is `ts.createProgram(...)` — a `ts.Program`, not the `fakes.CompilerHost` whose same-named method the control resolved it to. TypeScript is the only corpus with zero genuine new false negatives.
+
+Sizing the guard from bytes of source rather than from a file count is TASK-398.
 
 ### Per-reason movement
 
@@ -128,6 +137,7 @@ The literal difference over the complete member lists, per corpus. **Neither con
 | rustc | 6331 | 5631 | 700 | 38701 | 3086 | 5830 | **56** |
 | tokio | 180 | 160 | 20 | 875 | 216 | 782 | **2** |
 | sqlx | 313 | 272 | 41 | 996 | 163 | 600 | **1** |
+| TypeScript | 413 | 209 | 204 | 3080 | 444 | 1 | **1** (a corrected false edge) |
 | django | 7821 | 3902 | 3919 | 6250 | 248 | 43 | 43 |
 | pandas | 898 | 664 | 234 | 8812 | 231 | 18 | 18 |
 | celery | 613 | 61 | 552 | 802 | 80 | 10 | 10 |
@@ -141,7 +151,7 @@ The literal difference over the complete member lists, per corpus. **Neither con
 3. **A `super().m()` call dispatches up the method resolution order instead of fanning down** (TASK-376.20). 2,555 of django's lost callees are `method:` symbols of this shape and 245 of the lost pairs are literal self-edges — a method recorded as calling itself. celery's `backends/cache.py:147:__reduce__ -> backends/filesystem.py:56:__reduce__` and `->` itself are both gone.
 4. **A Rust `.name(...)` call at a call position names the method, not the same-named field** (478 of rustc's 700, and most of tokio's and sqlx's). `tokio/src/fs/dir_builder.rs:94` `builder.recursive(self.recursive)` resolved to the `recursive` **field** on the control and to the `recursive` **method** on this tree.
 
-**Entry points only in the candidate** — the real false negatives — are 25 (angular), 56 (rustc), 43 (django), 18 (pandas), 10 (celery), 2 (tokio), 2 (mocha), 1 (sqlx), 0 (express). They split three ways:
+**Entry points only in the candidate** — the real false negatives — are 25 (angular), 56 (rustc), 43 (django), 18 (pandas), 10 (celery), 2 (tokio), 2 (mocha), 1 (sqlx), 1 (TypeScript, and it is a corrected false edge), 0 (express). They split three ways:
 
 - **Correctly unresolved, owned by the entry-point classifier.** 17 of django's 43 are `as_sqlite` overrides. `django/db/models/sql/compiler.py:575` reaches them through `getattr(node, "as_" + self.connection.vendor)`; the control reached them only through the `super().as_sql()` fan-out that TASK-376.20 removed. They are the registry's `string-keyed-dispatch` rule, not a resolution defect. pandas's 18 (`__hash__`, `_pad_or_backfill`, `_get_common_dtype`) and celery's 10 (`examples/stamping/visitors.py`'s `StampingVisitor` overrides, `schedules.py:178` `__eq__`) are the same shape.
 - **A self type that a closure scope does not inherit.** `tokio/src/sync/oneshot.rs:820` `poll_closed` is reached only from `poll_fn(|cx| self.poll_closed(cx))` at `:734` and `:741`, inside `Sender::closed`. `self` inside the closure no longer names `Sender`. Owner: `scope_construction`.

@@ -26,6 +26,14 @@
  * they already held. Over the nodes both trees hold, tokio gains two entry
  * points and sqlx one; those three are named in the step's task notes.
  *
+ * **microsoft/TypeScript is here for the first time.** It is the largest
+ * corpus of the ten and it went unmeasured through all of TASK-376, refused by
+ * a heap guard that demanded 28,096 MB for its 19,783 files. It peaks at 3,623
+ * MB. It is also the epic's best result: raw entry points fall 1,201 -> 758,
+ * a 37% reduction, with exactly one entry point gained — and that one is a
+ * false edge the control held, `program.getSourceFile(...)` on a `ts.Program`
+ * receiver wrongly reaching `fakes.CompilerHost.getSourceFile`.
+ *
  * The permanent limitations are recorded beside the rows because a success
  * criterion must not target them: each is a construct whose callee is not in
  * the source at all, so no resolver change reaches it.
@@ -277,6 +285,47 @@ export const RECORDED_CORPUS_RESOLUTION: RecordedCorpusResolution = {
       },
     },
     {
+      corpus: "microsoft/TypeScript",
+      corpus_commit: "cc5c6e2d32e2228fff83a66537bbe6042943054d",
+      predicate: "repository-root-excluding:baselines",
+      file_counts: { discovered: 19783, offered: 19783, indexed: 19763, dropped: 20 },
+      session_id: "Chucks-iMac.local-15635-2026-09-19T13-53-32-350Z",
+      heap_cap_mb: 14288,
+      cpu_seconds: 103.5,
+      wall_seconds: 84.3,
+      cpu_per_wall: 1.23,
+      loadavg_at_start: [5.3, 4.5, 4.2],
+      fingerprint: {
+        nodes: "50332/4551130978db5ae6",
+        call_edges: "75036/a918b8412d3781f1",
+        unresolved_calls: "59732/079e1d193185c9ff",
+        raw_entry_points: "758/e76d74254f09d1eb",
+        indirect_reachability_keys: "19055/942e69ca0eb90ce4",
+        dropped_files: "20/35096e8b3b7b6ea5",
+        indirect_reachability_evidence: "19055/8e5b27b066fda8b2",
+      },
+      failure_taxonomy: {
+        call_references: 153090,
+        resolved: 93358,
+        by_reason: {
+          name_not_in_scope: 31826,
+          import_unresolved: 0,
+          reexport_chain_unresolved: 0,
+          receiver_type_unknown: 15471,
+          method_not_on_type: 2027,
+          polymorphic_no_implementations: 7764,
+          collection_dispatch_miss: 264,
+          dynamic_dispatch: 0,
+          no_enclosing_class_scope: 250,
+          class_definition_not_found: 0,
+          no_parent_class: 141,
+          member_type_unknown: 1429,
+          definition_has_no_body_scope: 0,
+          constructor_target_not_a_class: 560,
+        },
+      },
+    },
+    {
       corpus: "django/django",
       corpus_commit: "957d0cee7167757ae221ffde59d2cf0a322e89c7",
       predicate: "repository-root-excluding:js_tests,scripts,docs",
@@ -482,16 +531,7 @@ export const RECORDED_CORPUS_RESOLUTION: RecordedCorpusResolution = {
       },
     },
   ],
-  not_measured: [
-    {
-      corpus: "microsoft/TypeScript",
-      corpus_commit: "cc5c6e2d32e2228fff83a66537bbe6042943054d",
-      predicate: "repository-root-excluding:baselines",
-      discovered_files: 19783,
-      reason:
-        "Refusing to spawn a 19783-file arm over microsoft/TypeScript: it needs a 35122 MB heap (28097 MB required plus headroom) and this box has 32768 MB of memory. Narrow the predicate, or measure on a box that can hold it; a partial arm is never recorded.",
-    },
-  ],
+  not_measured: [],
   /**
    * Four constructs whose callee is not in the corpus source. No change to
    * annotation, self type, value, member set or subtype closure reaches any of

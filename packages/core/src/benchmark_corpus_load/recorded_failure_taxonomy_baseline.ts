@@ -27,11 +27,15 @@
  * figure is quoted as a cost, and no ratio is ever taken between two rows here.
  *
  * A corpus the harness refuses is recorded under `not_measured` with the
- * refusal, never as a partial number. The refusal is the heap the harness would
- * have to hand the arm, against the memory the box has; `required_heap_mb` is a
- * two-point linear fit unverified above 600 files and over-provisions at corpus
- * scale, so re-fitting it against a measured floor is a third way to obtain a
- * refused row, beside a larger box and a narrower predicate.
+ * refusal, never as a partial number. Nothing is refused now. microsoft/TypeScript
+ * was, for as long as `required_heap_mb` demanded 28,096 MB of a 32,768 MB box
+ * for its 19,783 files; re-fitted against what arms actually cost (TASK-398's
+ * root cause), the corpus runs under a 14,288 MB cap and peaks at 3,623 MB. Its
+ * row was measured later than the other nine, on this same tree — a3d5beea,
+ * whose tree is 279221d4's carrying TASK-376.16 — with the heap guard re-fitted
+ * and nothing else changed. That a cap cannot move a call graph is demonstrated
+ * rather than assumed: angular re-run here under 5,890 MB instead of 11,652
+ * reproduces this record's fingerprint and taxonomy byte for byte.
  */
 
 import type { FailureTaxonomy } from "./failure_taxonomy";
@@ -259,6 +263,47 @@ export const RECORDED_FAILURE_TAXONOMY_BASELINE: RecordedFailureTaxonomyBaseline
       },
     },
     {
+      corpus: "microsoft/TypeScript",
+      corpus_commit: "cc5c6e2d32e2228fff83a66537bbe6042943054d",
+      predicate: "repository-root-excluding:baselines",
+      file_counts: { discovered: 19783, offered: 19783, indexed: 19763, dropped: 20 },
+      session_id: "Chucks-iMac.local-96583-2026-09-19T13-46-06-336Z",
+      heap_cap_mb: 14288,
+      cpu_seconds: 100,
+      wall_seconds: 49.8,
+      cpu_per_wall: 2.01,
+      loadavg_at_start: [3.2, 3.5, 3.9],
+      fingerprint: {
+        nodes: "49897/9be994f3ddd8b29a",
+        call_edges: "72369/328de5f9cdbe1747",
+        unresolved_calls: "61858/7738f13ca296cb8c",
+        raw_entry_points: "1201/2531acb17071860d",
+        indirect_reachability_keys: "18672/0e4210ea4d6aed8b",
+        dropped_files: "20/35096e8b3b7b6ea5",
+        indirect_reachability_evidence: "18672/28108d99cdeaadad",
+      },
+      failure_taxonomy: {
+        call_references: 152999,
+        resolved: 91141,
+        by_reason: {
+          name_not_in_scope: 31921,
+          import_unresolved: 0,
+          reexport_chain_unresolved: 0,
+          receiver_type_unknown: 17179,
+          method_not_on_type: 2060,
+          polymorphic_no_implementations: 7102,
+          collection_dispatch_miss: 275,
+          dynamic_dispatch: 0,
+          no_enclosing_class_scope: 120,
+          class_definition_not_found: 833,
+          no_parent_class: 86,
+          member_type_unknown: 1715,
+          definition_has_no_body_scope: 0,
+          constructor_target_not_a_class: 567,
+        },
+      },
+    },
+    {
       corpus: "django/django",
       corpus_commit: "957d0cee7167757ae221ffde59d2cf0a322e89c7",
       predicate: "repository-root-excluding:js_tests,scripts,docs",
@@ -464,14 +509,5 @@ export const RECORDED_FAILURE_TAXONOMY_BASELINE: RecordedFailureTaxonomyBaseline
       },
     },
   ],
-  not_measured: [
-    {
-      corpus: "microsoft/TypeScript",
-      corpus_commit: "cc5c6e2d32e2228fff83a66537bbe6042943054d",
-      predicate: "repository-root-excluding:baselines",
-      discovered_files: 19783,
-      reason:
-        "Refusing to spawn a 19783-file arm over microsoft/TypeScript: it needs a 35122 MB heap (28097 MB required plus headroom) and this box has 32768 MB of memory. Narrow the predicate, or measure on a box that can hold it; a partial arm is never recorded.",
-    },
-  ],
+  not_measured: [],
 };
