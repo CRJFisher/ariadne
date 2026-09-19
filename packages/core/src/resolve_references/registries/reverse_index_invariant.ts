@@ -13,14 +13,8 @@
  * arms it.
  */
 
-/**
- * A composed index that checks its own forward map against its own reverse one,
- * naming the first place they disagree. `MemberIndex` and `SubtypeGraph` each
- * satisfy it; the invariant needs nothing else of them.
- */
-interface SelfVerifyingIndex {
-  verify(): string | null;
-}
+import type { MemberIndex } from "./member_index";
+import type { SubtypeGraph } from "./subtype_graph";
 
 /**
  * Read per write rather than cached, so a test can arm and disarm the invariant
@@ -36,8 +30,8 @@ function reverse_index_assertions_enabled(): boolean {
  * found in either, or null when everything agrees.
  */
 export function first_reverse_index_divergence(
-  members: SelfVerifyingIndex,
-  heritage: SelfVerifyingIndex
+  members: MemberIndex,
+  heritage: SubtypeGraph
 ): string | null {
   return members.verify() ?? heritage.verify();
 }
@@ -48,8 +42,8 @@ export function first_reverse_index_divergence(
  * divergence reports which one left the indexes disagreeing.
  */
 export function assert_reverse_indices_consistent(
-  members: SelfVerifyingIndex,
-  heritage: SelfVerifyingIndex,
+  members: MemberIndex,
+  heritage: SubtypeGraph,
   after: string
 ): void {
   if (!reverse_index_assertions_enabled()) {
