@@ -432,6 +432,7 @@ describe("remove_files", () => {
       indirect_reachability: new Map(),
       subtype_dispatch_files: new Map(),
       undeclared_interface_files: new Map(),
+      class_arguments_by_callee: new Map(),
     };
 
     const result = remove_files(state, new Set([FILE_A]));
@@ -678,6 +679,7 @@ describe("the subtype-dispatch index", () => {
       indirect_reachability: new Map(),
       subtype_dispatch_files: new Map(),
       undeclared_interface_files: new Map(),
+      class_arguments_by_callee: new Map(),
     };
   }
 
@@ -881,6 +883,7 @@ describe("apply_call_resolution", () => {
       indirect_reachability: new Map(),
       subtype_dispatch_files: new Map(),
       undeclared_interface_files: new Map(),
+      class_arguments_by_callee: new Map(),
     };
 
     const result = apply_call_resolution(state, result_to_apply);
@@ -908,6 +911,7 @@ describe("apply_call_resolution", () => {
       indirect_reachability: new Map([[symbol_id, entry]]),
       subtype_dispatch_files: new Map(),
       undeclared_interface_files: new Map(),
+      class_arguments_by_callee: new Map(),
     };
 
     const result = apply_call_resolution(state, result_to_apply);
@@ -933,6 +937,7 @@ describe("apply_call_resolution", () => {
       indirect_reachability: new Map([[symbol_id, entry]]),
       subtype_dispatch_files: new Map(),
       undeclared_interface_files: new Map(),
+      class_arguments_by_callee: new Map(),
     };
 
     const result = apply_call_resolution(state, result_to_apply);
@@ -959,6 +964,7 @@ describe("apply_call_resolution", () => {
       indirect_reachability: new Map(),
       subtype_dispatch_files: new Map(),
       undeclared_interface_files: new Map(),
+      class_arguments_by_callee: new Map(),
     };
 
     const result = apply_call_resolution(state, result_to_apply);

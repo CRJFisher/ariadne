@@ -24,6 +24,7 @@ import {
   extract_initializer_call_arguments,
   extract_read_source,
 } from "../symbol_factories/initializer_sources.javascript";
+import { extract_returned_name_chain } from "../symbol_factories/returned_name_chain.javascript";
 import { extract_destructured_binding } from "../symbol_factories/destructuring.javascript";
 import {
   consume_documentation,
@@ -357,6 +358,7 @@ export function handle_ts_definition_function(
         : export_info.is_exported,
       export: is_var_bound_expression_name ? undefined : export_info.export,
       return_type: extract_return_type(capture.node),
+      returned_name_chain: extract_returned_name_chain(capture.node),
       generics: capture.node.parent ? extract_type_parameters(capture.node.parent) : [],
       docstring,
     },
@@ -472,6 +474,7 @@ export function handle_ts_definition_method(
       async: is_async_method(capture.node),
       accessor_kind: extract_accessor_kind(capture.node),
       return_type: extract_return_type(capture.node),
+      returned_name_chain: extract_returned_name_chain(capture.node),
       generics: parent ? extract_type_parameters(parent) : [],
       docstring,
     },

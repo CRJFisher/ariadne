@@ -89,6 +89,18 @@ export interface FunctionDefinition extends Definition {
   readonly body_scope_id: ScopeId; // The scope ID of this function's body
   readonly callback_context?: CallbackContext; // For anonymous functions that are callbacks
   readonly function_collection?: FunctionCollection; // Prototype-style methods assigned as `Fn.prototype.method = ...`
+  /**
+   * The name chain every value-bearing `return` in the body returns, root
+   * first: `["self", "form_class"]` for `def get_form_class(self): return
+   * self.form_class`. A binding this callable's call initialises holds what
+   * that chain holds, which is how a class reaches a construction site through
+   * the function that was called to fetch it.
+   *
+   * Absent when a `return` carries a value that is not a name chain, when two
+   * returns name different chains, and when the body returns no value — one
+   * class or none, never a union.
+   */
+  readonly returned_name_chain?: readonly SymbolName[];
 }
 
 export interface FunctionSignature {
@@ -136,6 +148,18 @@ export interface MethodDefinition extends Definition {
   // call edges to the getter, and only a getter may hold the member slot for
   // its name.
   readonly accessor_kind?: "getter" | "setter" | "deleter";
+  /**
+   * The name chain every value-bearing `return` in the body returns, root
+   * first: `["self", "form_class"]` for `def get_form_class(self): return
+   * self.form_class`. A binding this callable's call initialises holds what
+   * that chain holds, which is how a class reaches a construction site through
+   * the function that was called to fetch it.
+   *
+   * Absent when a `return` carries a value that is not a name chain, when two
+   * returns name different chains, and when the body returns no value — one
+   * class or none, never a union.
+   */
+  readonly returned_name_chain?: readonly SymbolName[];
   /**
    * @language rust
    * The type an `impl` block names as its self type (`impl S`, `impl Tr for S`),

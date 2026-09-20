@@ -14,6 +14,7 @@ export interface MethodInput {
   generics?: readonly TypeParameter[];
   docstring?: string;
   accessor_kind?: "getter" | "setter" | "deleter";
+  returned_name_chain?: readonly SymbolName[];
   // @language rust
   impl_self_type?: SymbolName;
   // @language rust

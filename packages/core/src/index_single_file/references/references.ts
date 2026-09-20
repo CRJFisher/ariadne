@@ -40,6 +40,7 @@ import {
   create_type_reference,
   create_assignment_reference,
 } from "./factories";
+import { extract_call_arguments } from "./call_arguments";
 
 import type { SyntaxNode } from "tree-sitter";
 
@@ -415,7 +416,8 @@ export class ReferenceBuilder {
           location,
           scope_id,
           potential_construct_target,
-          path_prefix
+          path_prefix,
+          extract_call_arguments(capture.node)
         );
         break;
       }

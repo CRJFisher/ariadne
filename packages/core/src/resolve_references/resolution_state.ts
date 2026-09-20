@@ -24,6 +24,13 @@ import type {
   IndirectReachability,
 } from "@ariadnejs/types";
 import { record_indirect_reachability } from "./indirect_reachability";
+import {
+  holds_any_file as class_arguments_hold_any_file,
+  carried_class,
+  replace_files_in_class_arguments,
+  without_files_in_class_arguments,
+  type ClassArgumentsByCallee,
+} from "./call_resolution/carried_class";
 
 // ============================================================================
 // Types
@@ -114,6 +121,14 @@ export interface ResolutionState {
    * first did, however late it arrives.
    */
   readonly undeclared_interface_files: ReadonlyMap<SymbolId, ReadonlySet<FilePath>>;
+
+  /**
+   * Callee → the call sites handing one of its parameters a class. The evidence
+   * that types a factory's parameter is written by its callers, so it is
+   * indexed by the callee whose body reads it rather than by the file holding
+   * it.
+   */
+  readonly class_arguments_by_callee: ClassArgumentsByCallee;
 }
 
 export interface NameResolutionResult {
@@ -138,6 +153,8 @@ export interface CallResolutionResult {
   readonly subtype_dispatch_files: ReadonlyMap<SymbolId, ReadonlySet<FilePath>>;
   /** The interfaces this pass's dispatches found no declaring class for, by dispatching file. */
   readonly undeclared_interface_files: ReadonlyMap<SymbolId, ReadonlySet<FilePath>>;
+  /** Complete for every file the pass resolved: the classes its call sites hand to each callee. */
+  readonly class_arguments_by_callee: ClassArgumentsByCallee;
 }
 
 // ============================================================================
@@ -153,6 +170,7 @@ export function create_resolution_state(): ResolutionState {
     indirect_reachability: new Map(),
     subtype_dispatch_files: new Map(),
     undeclared_interface_files: new Map(),
+    class_arguments_by_callee: new Map(),
   };
 }
 
@@ -233,6 +251,22 @@ export function get_undeclared_interfaces(state: ResolutionState): Iterable<Symb
   return state.undeclared_interface_files.keys();
 }
 
+/**
+ * The class every resolved call site hands `callee_id`'s parameter at
+ * `position`, or null where they name no class or more than one.
+ */
+export function get_carried_class(
+  state: ResolutionState,
+  callee_id: SymbolId,
+  position: number
+): SymbolId | null {
+  return carried_class(state.class_arguments_by_callee, callee_id, position);
+}
+
+export function get_class_arguments(state: ResolutionState): ClassArgumentsByCallee {
+  return state.class_arguments_by_callee;
+}
+
 export function get_indirect_reachability(
   state: ResolutionState
 ): ReadonlyMap<SymbolId, IndirectReachability> {
@@ -273,14 +307,14 @@ export function size(state: ResolutionState): number {
  * 1,200 files, a single edit to `core/range.ts` — 252 files affected — scanned
  * 11.3M scope entries and cloned 28.5M map entries.
  *
- * The identity return covers all seven structures a file can hold state in, not
+ * The identity return covers all eight structures a file can hold state in, not
  * the scope scan alone: `resolutions_by_scope` and `calls_by_caller_scope` are
  * keyed by scope and lose entries only for the scopes `scope_to_file` names, so
  * checking the scope scan, `resolved_calls_by_file`, `indirect_reachability`,
- * `subtype_dispatch_files` and `undeclared_interface_files` decides all
- * seven. A batch that removes an entry from any one of them is cloned; a batch
- * that removes nothing keeps the caller on the state it already had, which is
- * every eviction of a cold load.
+ * `subtype_dispatch_files`, `undeclared_interface_files` and
+ * `class_arguments_by_callee` decides all eight. A batch that removes an entry
+ * from any one of them is cloned; a batch that removes nothing keeps the caller
+ * on the state it already had, which is every eviction of a cold load.
  */
 export function remove_files(
   state: ResolutionState,
@@ -313,13 +347,18 @@ export function remove_files(
 
   const removes_dispatch = holds_any_file(state.subtype_dispatch_files, file_ids);
   const removes_undeclared = holds_any_file(state.undeclared_interface_files, file_ids);
+  const removes_class_arguments = class_arguments_hold_any_file(
+    state.class_arguments_by_callee,
+    file_ids
+  );
 
   if (
     scopes_to_remove.length === 0 &&
     !removes_calls &&
     !removes_indirect &&
     !removes_dispatch &&
-    !removes_undeclared
+    !removes_undeclared &&
+    !removes_class_arguments
   ) {
     return state;
   }
@@ -358,6 +397,9 @@ export function remove_files(
     undeclared_interface_files: removes_undeclared
       ? without_files(state.undeclared_interface_files, file_ids)
       : state.undeclared_interface_files,
+    class_arguments_by_callee: removes_class_arguments
+      ? without_files_in_class_arguments(state.class_arguments_by_callee, file_ids)
+      : state.class_arguments_by_callee,
   };
 }
 
@@ -459,6 +501,11 @@ export function apply_call_resolution(
     undeclared_interface_files: replace_files_in_index(
       state.undeclared_interface_files,
       result.undeclared_interface_files,
+      resolved_files
+    ),
+    class_arguments_by_callee: replace_files_in_class_arguments(
+      state.class_arguments_by_callee,
+      result.class_arguments_by_callee,
       resolved_files
     ),
   };

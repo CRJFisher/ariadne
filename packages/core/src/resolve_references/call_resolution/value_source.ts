@@ -28,10 +28,19 @@
  *    (`member_source`) holds what the member holds.
  * 4. **Local carriers** — one that reads one name (`name_source`) holds what
  *    the name holds.
+ * 5. **Carried arguments** — a parameter every resolved call site hands the
+ *    same class holds that class object (`build(MyForm)` against
+ *    `def build(cls, **kw)`).
  *
- * A carrier never crosses a function boundary: a class handed in as an argument
- * (Django's `form_class(**defaults)`) needs interprocedural dataflow, and holds
- * nothing here.
+ * Two of these cross a call edge, one in each direction, and both are one hop.
+ * A binding a call initialises takes the name chain the callee returns where no
+ * annotation states a type (`form_class = self.get_form_class()` against
+ * `def get_form_class(self): return self.form_class`), so a class reaches the
+ * caller that constructs it. A parameter takes the class its call sites hand
+ * it, so a class reaches the factory that constructs it. Neither unions: a
+ * callee whose returns disagree records no chain, and a parameter reached from
+ * two classes answers nothing, so a missing edge is never replaced by a wrong
+ * one.
  */
 
 import type {
@@ -182,8 +191,13 @@ function binding_value(
         name_read_value(def, context, visited)
       );
     case "property":
-    case "parameter":
       return member_read_value(def, context, visited) ?? name_read_value(def, context, visited);
+    case "parameter":
+      return (
+        member_read_value(def, context, visited) ??
+        name_read_value(def, context, visited) ??
+        carried_argument_value(def, context)
+      );
     default:
       return null;
   }
@@ -241,12 +255,12 @@ function callee_return_value(
     scope_id: binding.defining_scope_id,
   };
   const callee = resolve_read_value(callee_chain, binding.defining_scope_id, binding.location, context, visited);
-  const result = callee ? call_result(callee, call, context) : null;
+  const result = callee ? call_result(callee, call, context, visited) : null;
   // @language python
   // The outer call of `make()(io)` records no arguments of its own, so only its
   // scope carries over to the second hop.
   return result && binding.initialized_from_call_result
-    ? call_result(result, { call_arguments: null, scope_id: call.scope_id }, context)
+    ? call_result(result, { call_arguments: null, scope_id: call.scope_id }, context, visited)
     : result;
 }
 
@@ -260,13 +274,14 @@ interface CallSite {
  * What calling `callee` yields: an instance of the class a class object
  * constructs, or what a callable's declared return annotation names — the type
  * the registry resolved for it, else the one a generic return stands for at
- * this call. Calling an instance runs its `__call__`, whose result this does
- * not follow.
+ * this call, else what the name chain its body returns holds. Calling an
+ * instance runs its `__call__`, whose result this does not follow.
  */
 function call_result(
   callee: ValueSource,
   call: CallSite,
-  context: ReceiverResolutionContext
+  context: ReceiverResolutionContext,
+  visited: Set<SymbolId>
 ): ValueSource | null {
   switch (callee.kind) {
     case "class_object":
@@ -279,11 +294,36 @@ function call_result(
       const type_id =
         context.types.get_callable_return_type(callee.symbol_id) ??
         generic_return_type(callee.symbol_id, call, context);
-      return type_id ? { kind: "instance_of", type_id } : null;
+      return type_id
+        ? { kind: "instance_of", type_id }
+        : returned_chain_value(callee.symbol_id, context, visited);
     }
     case "instance_of":
       return null;
   }
+}
+
+/**
+ * What the name chain `callee_id`'s body returns holds, read where the body
+ * reads it. A declaration that states its return type has already answered, so
+ * this is what types a binding initialised by an accessor written without one —
+ * `form_class = self.get_form_class()` against `def get_form_class(self):
+ * return self.form_class`.
+ */
+function returned_chain_value(
+  callee_id: SymbolId,
+  context: ReceiverResolutionContext,
+  visited: Set<SymbolId>
+): ValueSource | null {
+  const callee = context.definitions.get(callee_id);
+  if (callee?.kind !== "function" && callee?.kind !== "method") {
+    return null;
+  }
+  const { returned_name_chain, body_scope_id } = callee;
+  if (!returned_name_chain || !body_scope_id) {
+    return null;
+  }
+  return resolve_read_value(returned_name_chain, body_scope_id, null, context, visited);
 }
 
 /**
@@ -319,6 +359,42 @@ function member_read_value(
   }
   const { holder, member } = carrier.member_source;
   return resolve_read_value([holder, member], carrier.defining_scope_id, carrier.location, context, visited);
+}
+
+/**
+ * Producer 5: the class object a parameter holds because every resolved call
+ * site of the callable declaring it hands that same class to its position —
+ * `build(MyForm)` typing `cls` inside `def build(cls, **kw)`.
+ *
+ * The evidence is written by the callers and read here, in the callee's own
+ * body, which is why a change to a call site re-answers the declaring file
+ * rather than the calling one. A function only: a method's declared positions
+ * lead with its receiver, which no argument list binds, so the evidence names
+ * none of them.
+ */
+function carried_argument_value(
+  parameter: ParameterDefinition,
+  context: ReceiverResolutionContext
+): ValueSource | null {
+  if (!context.scopes.get_scope(parameter.defining_scope_id)) {
+    return null;
+  }
+  const body_scope = context.scopes.find_enclosing_function_scope(parameter.defining_scope_id);
+  const callable_id = context.definitions.get_callable_of_body_scope(body_scope);
+  const callable = callable_id ? context.definitions.get(callable_id) : undefined;
+  if (!callable_id || callable?.kind !== "function") {
+    return null;
+  }
+
+  const position = callable.signature.parameters.findIndex(
+    (declared) => declared.symbol_id === parameter.symbol_id
+  );
+  if (position < 0) {
+    return null;
+  }
+
+  const class_id = context.resolutions.get_carried_class(callable_id, position);
+  return class_id ? { kind: "class_object", class_id } : null;
 }
 
 /**

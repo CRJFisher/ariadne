@@ -363,6 +363,7 @@ export class DefinitionBuilder {
       export?: ExportMetadata;
       docstring?: string;
       return_type?: SymbolName;
+      returned_name_chain?: readonly SymbolName[];
     },
     capture?: CaptureNode
   ): DefinitionBuilder {
@@ -394,6 +395,7 @@ export class DefinitionBuilder {
         is_exported: definition.is_exported,
         export: definition.export,
         docstring: definition.docstring,
+        returned_name_chain: definition.returned_name_chain,
       },
       signature: {
         parameters: new Map(),

@@ -121,13 +121,15 @@ export function create_function_call_reference(
   location: Location,
   scope_id: ScopeId,
   potential_construct_target?: ConstructTarget,
-  path_prefix?: readonly SymbolName[]
+  path_prefix?: readonly SymbolName[],
+  call_arguments?: readonly (SymbolName | null)[]
 ): FunctionCallReference {
   return {
     kind: "function_call",
     name,
     location,
     scope_id,
+    ...(call_arguments !== undefined && { call_arguments }),
     ...(potential_construct_target?.holds === "value" && {
       potential_construct_target: potential_construct_target.location,
     }),

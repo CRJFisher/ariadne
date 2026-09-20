@@ -10,10 +10,12 @@ import type { FilePath, IndirectReachability, Location, SymbolId, SymbolName } f
  * receiver, construction, bare call or member read that consumes it. Every case
  * is an evidence shape — sqlalchemy's `mapper_cls = Mapper`, pandas'
  * `_parser_dispatch` factory, celery's `orig = BaseTask.__call__`,
- * `Info=TraceInfo` and `loops.synloop`, django's class-object attributes — and
- * each shape the channel deliberately leaves alone is asserted beside them:
- * a rebinding after the read, a class handed in as an argument, a
- * framework-invoked receiver, an instance called through `__call__`.
+ * `Info=TraceInfo` and `loops.synloop`, django's class-object attributes, a
+ * class carried into a factory as an argument and back out of an accessor as a
+ * return — and each shape the channel deliberately leaves alone is asserted
+ * beside them: a rebinding after the read, a parameter two call sites hand
+ * different classes, an accessor whose returns disagree, a framework-invoked
+ * receiver, an instance called through `__call__`.
  */
 describe("value sources through the project pipeline", () => {
   const FIXTURES_ROOT = path.resolve(__dirname, "../../../tests/fixtures");
@@ -138,6 +140,20 @@ describe("value sources through the project pipeline", () => {
     return found.symbol_id;
   }
 
+  /** The parameter named `name` of the function `function_name` that `file` declares. */
+  function parameter_of(
+    { project, paths }: LoadedFixture,
+    file: string,
+    function_name: string,
+    name: string
+  ): SymbolId {
+    const found = [...(project.get_index_single_file(paths[file])?.functions.values() ?? [])]
+      .find((definition) => definition.name === function_name)
+      ?.signature.parameters.find((parameter) => parameter.name === name);
+    if (!found) throw new Error(`${file} declares no ${function_name}(${name})`);
+    return found.symbol_id;
+  }
+
   /** The binding named `name` that `file` declares on the one line containing `text`. */
   function binding_on_line(fixture: LoadedFixture, file: string, name: string, text: string): SymbolId {
     const line = line_of(fixture.sources[file], text);
@@ -253,7 +269,7 @@ describe("value sources through the project pipeline", () => {
       });
     });
 
-    it("leaves `form_class(**defaults)` at its binding: a class handed in as an argument, then rebound under conditions", async () => {
+    it("leaves `form_class(**defaults)` at its binding, rebound under conditions several times before the read", async () => {
       const fixture = await load_fixture("python");
       const formfield = [...fixture.project.get_index_single_file(fixture.paths["fields.py"])!.classes.values()]
         .find((definition) => definition.name === "Field")!
@@ -382,7 +398,7 @@ export function go(): void {
       );
     });
 
-    it("leaves a construction through an unannotated parameter unresolved", async () => {
+    it("constructs the class every call site hands an unannotated parameter", async () => {
       const fixture = await load_sources({
         "build.ts": `class Parser { parse(): void {} }
 export function build(cls: any): void {
@@ -397,12 +413,264 @@ export function run(): void { build(Parser); }
         construction: call_on_line(fixture, "build.ts", "cls", "new cls()"),
         instance: call_on_line(fixture, "build.ts", "parse", "p.parse()"),
       }).toEqual({
-        construction: {
-          targets: [],
-          failed_at: "constructor_lookup/constructor_target_not_a_class",
-        },
-        instance: { targets: [], failed_at: "type_inference/receiver_type_unknown" },
+        construction: resolved_to(class_of(fixture, "build.ts", "Parser")),
+        instance: resolved_to(member_of(fixture, "build.ts", "Parser", "parse")),
       });
+    });
+
+    it("constructs the class the accessor a binding calls returns", async () => {
+      const fixture = await load_sources({
+        "view.ts": `class MyForm { save(): void {} }
+export class View {
+  formClass = MyForm;
+  getFormClass() { return this.formClass; }
+  build(): void {
+    const formClass = this.getFormClass();
+    const form = new formClass();
+    form.save();
+  }
+}
+`,
+      });
+
+      expect({
+        construction: call_on_line(fixture, "view.ts", "formClass", "new formClass()"),
+        instance: call_on_line(fixture, "view.ts", "save", "form.save()"),
+      }).toEqual({
+        construction: resolved_to(class_of(fixture, "view.ts", "MyForm")),
+        instance: resolved_to(member_of(fixture, "view.ts", "MyForm", "save")),
+      });
+    });
+  });
+
+  describe("classes carried across a call edge", () => {
+    it("constructs the class a factory's every call site passes", async () => {
+      const fixture = await load_sources({
+        "factory.py": `class MyForm:
+    def save(self):
+        pass
+
+
+def build(cls, **kw):
+    return cls(**kw)
+
+
+def one():
+    return build(MyForm)
+
+
+def two():
+    return build(MyForm)
+`,
+      });
+
+      expect(call_on_line(fixture, "factory.py", "cls", "return cls(**kw)")).toEqual(
+        resolved_to(class_of(fixture, "factory.py", "MyForm"))
+      );
+    });
+
+    it("leaves a parameter two call sites hand different classes unresolved", async () => {
+      const fixture = await load_sources({
+        "factory.py": `class Draft:
+    pass
+
+
+class Final:
+    pass
+
+
+def build(cls):
+    return cls()
+
+
+def one():
+    return build(Draft)
+
+
+def two():
+    return build(Final)
+`,
+      });
+
+      expect(call_on_line(fixture, "factory.py", "cls", "return cls()")).toEqual(
+        resolved_to(parameter_of(fixture, "factory.py", "build", "cls"))
+      );
+    });
+
+    it("constructs the class django's form-class accessor hands back", async () => {
+      const fixture = await load_sources({
+        "forms.py": `class MyForm:
+    def save(self):
+        pass
+`,
+        "views.py": `from forms import MyForm
+
+
+class FormView:
+    form_class = MyForm
+
+    def get_form_class(self):
+        return self.form_class
+
+    def get_form(self, **defaults):
+        form_class = self.get_form_class()
+        return form_class(**defaults)
+`,
+      });
+
+      expect(call_on_line(fixture, "views.py", "form_class", "return form_class(**defaults)")).toEqual(
+        resolved_to(class_of(fixture, "forms.py", "MyForm"))
+      );
+    });
+
+    it("leaves a binding unresolved where the accessor's two returns disagree", async () => {
+      const fixture = await load_sources({
+        "views.py": `class Draft:
+    pass
+
+
+class Final:
+    pass
+
+
+class FormView:
+    draft = Draft
+    final = Final
+
+    def get_form_class(self, drafting):
+        if drafting:
+            return self.draft
+        return self.final
+
+    def get_form(self, drafting):
+        form_class = self.get_form_class(drafting)
+        return form_class()
+`,
+      });
+
+      expect(call_on_line(fixture, "views.py", "form_class", "return form_class()")).toEqual(
+        resolved_to(
+          binding_on_line(fixture, "views.py", "form_class", "form_class = self.get_form_class(drafting)")
+        )
+      );
+    });
+
+    it("re-answers the factory when an edit changes which class a call site passes", async () => {
+      const fixture = await load_sources({
+        "lib.py": `class Draft:
+    pass
+
+
+class Final:
+    pass
+
+
+def build(cls):
+    return cls()
+`,
+        "caller.py": `from lib import build, Draft
+
+
+def use():
+    return build(Draft)
+`,
+      });
+
+      expect(call_on_line(fixture, "lib.py", "cls", "return cls()")).toEqual(
+        resolved_to(class_of(fixture, "lib.py", "Draft"))
+      );
+
+      const edited = `from lib import build, Final
+
+
+def use():
+    return build(Final)
+`;
+      fixture.project.update_file(fixture.paths["caller.py"], edited);
+      const after: LoadedFixture = {
+        ...fixture,
+        sources: { ...fixture.sources, "caller.py": edited },
+      };
+
+      expect(call_on_line(after, "lib.py", "cls", "return cls()")).toEqual(
+        resolved_to(class_of(after, "lib.py", "Final"))
+      );
+    });
+
+    it("takes the factory's answer back when an edit stops a call site passing a class", async () => {
+      const fixture = await load_sources({
+        "lib.py": `class Draft:
+    pass
+
+
+def build(cls):
+    return cls()
+`,
+        "caller.py": `from lib import build, Draft
+
+
+def use():
+    return build(Draft)
+`,
+      });
+
+      expect(call_on_line(fixture, "lib.py", "cls", "return cls()")).toEqual(
+        resolved_to(class_of(fixture, "lib.py", "Draft"))
+      );
+
+      const edited = `from lib import build
+
+
+def use():
+    return build(1)
+`;
+      fixture.project.update_file(fixture.paths["caller.py"], edited);
+      const after: LoadedFixture = {
+        ...fixture,
+        sources: { ...fixture.sources, "caller.py": edited },
+      };
+
+      expect(call_on_line(after, "lib.py", "cls", "return cls()")).toEqual(
+        resolved_to(parameter_of(after, "lib.py", "build", "cls"))
+      );
+    });
+
+    it("leaves a method's parameters unanswered, since its declared positions lead with the receiver", async () => {
+      const fixture = await load_sources({
+        "m.py": `class Draft:
+    pass
+
+
+class Final:
+    pass
+
+
+class Runner:
+    def run(self, first, second):
+        return first()
+
+
+runner = Runner()
+run = runner.run
+
+
+def use():
+    return run(Draft, Final)
+`,
+      });
+
+      const run_method = fixture.project.definitions.get(
+        member_of(fixture, "m.py", "Runner", "run")
+      );
+      const first =
+        run_method?.kind === "method"
+          ? run_method.parameters.find((parameter) => parameter.name === "first")
+          : undefined;
+      if (!first) throw new Error("Runner.run declares no first");
+
+      expect(call_on_line(fixture, "m.py", "first", "return first()")).toEqual(
+        resolved_to(first.symbol_id)
+      );
     });
   });
 });

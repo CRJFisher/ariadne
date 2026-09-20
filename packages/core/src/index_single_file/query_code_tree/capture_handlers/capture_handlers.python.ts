@@ -59,6 +59,7 @@ import {
   extract_initializer_result_call,
   extract_read_source,
 } from "../symbol_factories/initializer_sources.python";
+import { extract_returned_name_chain } from "../symbol_factories/returned_name_chain.python";
 import {
   store_python_docstring,
   consume_python_docstring,
@@ -201,6 +202,7 @@ export function handle_definition_method(
         location: capture.location,
         scope_id: context.get_scope_id(capture.location),
         return_type: extract_return_type(capture.node.parent || capture.node),
+        returned_name_chain: extract_returned_name_chain(capture.node.parent || capture.node),
         ...method_type,
         accessor_kind,
         async: is_async,
@@ -391,6 +393,7 @@ export function handle_definition_function(
       is_exported: export_info.is_exported,
       export: export_info.export,
       return_type: extract_return_type(capture.node.parent || capture.node),
+      returned_name_chain: extract_returned_name_chain(capture.node.parent || capture.node),
       docstring,
     },
     capture

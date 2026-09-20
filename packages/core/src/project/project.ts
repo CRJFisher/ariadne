@@ -56,6 +56,14 @@ export interface ClassifyOptions extends TraceCallGraphOptions {
 }
 
 /**
+ * How many times one resolve may answer files again because a carried class
+ * changed a parameter's type. Each round can only add call sites, so a corpus
+ * settles in one or two; the bound stops a pathological chain of factories from
+ * running the pass over the project repeatedly.
+ */
+const CARRIER_RESOLUTION_ROUNDS = 4;
+
+/**
  * Main coordinator for the entire processing pipeline.
  *
  * Manages:
@@ -405,7 +413,13 @@ export class Project {
     files: Set<FilePath>,
     modules: ModuleResolutionContext,
   ): void {
-    if (files.size === 0) {
+    // An eviction drops the call sites that typed a factory's parameter without
+    // any pass answering for them, so the callees they typed are answered again
+    // even where the eviction reached no file this resolve was called with.
+    const evicted_carrier_files = this.files_declaring(
+      this.resolutions.take_evicted_carrier_callees(),
+    );
+    if (files.size === 0 && evicted_carrier_files.size === 0) {
       return;
     }
 
@@ -501,17 +515,45 @@ export class Project {
     // Pass the same exports/languages/resolution instances handed to
     // resolve_names above, so namespace re-export following sees the current
     // export graph rather than a stale snapshot.
-    this.resolutions.resolve_calls_for_files(
-      new Set([...files, ...files_needing_call_reresolution]),
-      this.references,
-      this.scopes,
-      this.types,
-      this.definitions,
-      this.imports,
-      this.exports,
-      this.languages,
-      modules,
-    );
+    //
+    // A class handed to a factory as an argument types that factory's
+    // parameter, so a pass that changes what a call site passes changes an
+    // answer inside the callee — a file the pass need not have touched, and one
+    // no import edge leads to from the caller. Those files are answered again,
+    // and again while doing so keeps changing a carrier: each round can only
+    // add call sites to the index, so the rounds run out on their own and the
+    // bound is a guard rather than the terminating condition.
+    let pending = new Set([
+      ...files,
+      ...files_needing_call_reresolution,
+      ...evicted_carrier_files,
+    ]);
+    for (let round = 0; pending.size > 0 && round < CARRIER_RESOLUTION_ROUNDS; round += 1) {
+      const changed_carriers = this.resolutions.resolve_calls_for_files(
+        pending,
+        this.references,
+        this.scopes,
+        this.types,
+        this.definitions,
+        this.imports,
+        this.exports,
+        this.languages,
+        modules,
+      );
+      pending = this.files_declaring(changed_carriers);
+    }
+  }
+
+  /** The files declaring `symbol_ids` — where a carrier-typed parameter is read. */
+  private files_declaring(symbol_ids: ReadonlySet<SymbolId>): Set<FilePath> {
+    const files = new Set<FilePath>();
+    for (const symbol_id of symbol_ids) {
+      const file_path = this.definitions.get(symbol_id)?.location.file_path;
+      if (file_path && this.index_single_filees.has(file_path)) {
+        files.add(file_path);
+      }
+    }
+    return files;
   }
 
   /**

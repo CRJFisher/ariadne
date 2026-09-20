@@ -228,7 +228,7 @@ function declarator_value(node: SyntaxNode): SyntaxNode | null {
  * carries call arguments and subscripts, which a name the type registry looks up
  * cannot hold, so a chain with either has no names here.
  */
-function name_chain(node: SyntaxNode): SymbolName[] | undefined {
+export function name_chain(node: SyntaxNode): SymbolName[] | undefined {
   if (node.type === "identifier" || node.type === "this") {
     return [node.text as SymbolName];
   }

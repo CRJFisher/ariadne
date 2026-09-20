@@ -39,6 +39,7 @@ import {
   extract_initializer_call,
   extract_read_source,
 } from "../symbol_factories/initializer_sources.javascript";
+import { extract_returned_name_chain } from "../symbol_factories/returned_name_chain.javascript";
 import {
   detect_function_collection,
   detect_member_assignment,
@@ -114,6 +115,7 @@ export function handle_definition_method(
         location: capture.location,
         scope_id: context.get_scope_id(capture.location),
         return_type: extract_return_type(capture.node),
+        returned_name_chain: extract_returned_name_chain(capture.node),
         accessor_kind: extract_accessor_kind(capture.node),
         docstring,
       },
@@ -232,6 +234,7 @@ export function handle_definition_function(
       is_exported: is_exported,
       export: export_metadata,
       docstring,
+      returned_name_chain: extract_returned_name_chain(capture.node),
     },
     body_capture
   );
@@ -265,6 +268,7 @@ export function handle_definition_function_commonjs_export(
       is_exported: true,
       export: {},
       docstring,
+      returned_name_chain: extract_returned_name_chain(capture.node),
     },
     capture
   );

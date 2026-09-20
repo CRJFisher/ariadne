@@ -187,6 +187,17 @@ export interface FunctionCallReference extends BaseReference {
    * @language rust
    */
   readonly path_prefix?: readonly SymbolName[];
+  /**
+   * The call's positional arguments, one entry per argument in source order,
+   * naming the argument where it is a bare identifier and `null` where it is
+   * anything else — a literal, an expression, a keyword or spread argument —
+   * so a later argument still sits at its own index.
+   *
+   * A class named here types the parameter it binds, which is how a class
+   * reaches a construction site inside the factory it was handed to
+   * (`build(MyForm)` against `def build(cls, **kw): return cls(**kw)`).
+   */
+  readonly call_arguments?: readonly (SymbolName | null)[];
 }
 
 /**

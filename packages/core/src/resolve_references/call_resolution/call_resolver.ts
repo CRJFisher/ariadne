@@ -61,6 +61,10 @@ import {
   record_subtype_dispatch,
   type SubtypeDispatchFiles,
 } from "./subtype_dispatch";
+import {
+  gather_class_arguments,
+  type GatheredClassArguments,
+} from "./carried_class";
 import type { ResolutionRegistry } from "../resolution_registry";
 import {
   detect_indirect_reachability,
@@ -109,6 +113,7 @@ export function resolve_calls_for_files(
       indirect_reachability: new Map(),
       subtype_dispatch_files: new Map(),
       undeclared_interface_files: new Map(),
+      class_arguments_by_callee: new Map(),
     };
   }
 
@@ -120,8 +125,12 @@ export function resolve_calls_for_files(
     }
   }
 
-  const { resolved_calls, subtype_dispatch_files, undeclared_interface_files } =
-    resolve_calls(file_references, context);
+  const {
+    resolved_calls,
+    subtype_dispatch_files,
+    undeclared_interface_files,
+    class_arguments_by_callee,
+  } = resolve_calls(file_references, context);
 
   const callback_invocations = resolve_callback_invocations(
     file_ids,
@@ -198,6 +207,7 @@ export function resolve_calls_for_files(
     indirect_reachability,
     subtype_dispatch_files,
     undeclared_interface_files,
+    class_arguments_by_callee,
   };
 }
 
@@ -212,10 +222,12 @@ function resolve_calls(
   resolved_calls: CallReference[];
   subtype_dispatch_files: SubtypeDispatchFiles;
   undeclared_interface_files: SubtypeDispatchFiles;
+  class_arguments_by_callee: GatheredClassArguments;
 } {
   const resolved_calls: CallReference[] = [];
   const subtype_dispatch_files: SubtypeDispatchFiles = new Map();
   const undeclared_interface_files: SubtypeDispatchFiles = new Map();
+  const class_arguments_by_callee: GatheredClassArguments = new Map();
 
   for (const references of file_references.values()) {
     for (const ref of references) {
@@ -368,6 +380,13 @@ function resolve_calls(
         context.definitions
       );
 
+      // A class named as an argument is the only evidence that types the
+      // parameter it binds, and it is written here, in the caller's file,
+      // while the construction that reads it sits in the callee's.
+      if (ref.kind === "function_call") {
+        gather_class_arguments(class_arguments_by_callee, ref, resolved_symbols, context);
+      }
+
       // Python namespace constructor (`user = models.User(name)`): once the
       // call resolves to a class, bind the assigned variable's type so later
       // method calls on it can resolve.
@@ -411,7 +430,12 @@ function resolve_calls(
     }
   }
 
-  return { resolved_calls, subtype_dispatch_files, undeclared_interface_files };
+  return {
+    resolved_calls,
+    subtype_dispatch_files,
+    undeclared_interface_files,
+    class_arguments_by_callee,
+  };
 }
 
 /**

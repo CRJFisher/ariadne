@@ -245,7 +245,8 @@ function bound_value(node: SyntaxNode): SyntaxNode | null {
   return assignment.childForFieldName("right");
 }
 
-function attribute_chain(node: SyntaxNode): SymbolName[] | undefined {
+/** The names a Python attribute chain reads, root first: `["self", "form_class"]`. */
+export function attribute_chain(node: SyntaxNode): SymbolName[] | undefined {
   if (node.type === "identifier") {
     return [node.text as SymbolName];
   }
