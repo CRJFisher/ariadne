@@ -3,9 +3,9 @@
  * build_index_single_file, so these tests exercise it through that indexer.
  * Every case asserts both maps: an annotation lands in exactly one of the value
  * bindings and the return bindings.
- * A binding exists only where the indexer captured a type annotation: for
- * example, TypeScript top-level variable annotations are not indexed, so those
- * cases yield no binding rather than a resolved type.
+ * A binding exists only where the indexer captured a type annotation: JavaScript
+ * writes none outside JSDoc, so those cases yield no binding rather than a
+ * resolved type.
  */
 
 import { describe, it, expect, beforeAll } from "vitest";
@@ -334,7 +334,7 @@ describe("Type Bindings - TypeScript", () => {
     expect(sorted_texts(return_bindings)).toEqual([]);
   });
 
-  it("produces no binding for top-level variable annotations, which the indexer does not capture", () => {
+  it("binds a top-level variable's declared annotation, whichever keyword declares it", () => {
     const code = `
       const x: number = 42;
       let name: string = "hello";
@@ -357,7 +357,7 @@ describe("Type Bindings - TypeScript", () => {
       enums: index.enums,
     });
 
-    expect(value_bindings.size).toBe(0);
+    expect(sorted_texts(value_bindings)).toEqual(["number", "string"]);
     expect(return_bindings.size).toBe(0);
   });
 

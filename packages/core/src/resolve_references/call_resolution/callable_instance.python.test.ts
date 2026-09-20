@@ -102,6 +102,25 @@ function make_typed_variable(
   };
 }
 
+/** A binding no declaration types, as a factory call's product is. */
+function make_untyped_variable(
+  name: string,
+  line: number
+): { id: SymbolId; def: VariableDefinition } {
+  const id = variable_symbol(name, location(line));
+  return {
+    id,
+    def: {
+      kind: "variable",
+      symbol_id: id,
+      name: name as SymbolName,
+      location: location(line),
+      defining_scope_id: module_scope,
+      is_exported: false,
+    },
+  };
+}
+
 function make_index(
   variables: Map<SymbolId, VariableDefinition>,
   classes: Map<SymbolId, ClassDefinition>
@@ -171,6 +190,41 @@ describe("resolve_callable_instance", () => {
 
     const result = resolve_callable_instance(var_id, null, context());
     expect(result).toEqual(call_method_id);
+  });
+
+  it("resolves through the instance the caller's value-source walk found, where no declaration types the binding", () => {
+    const { id: class_id, def: class_def } = make_class("Processor", 1, [
+      "__call__",
+    ]);
+    const call_method_id = class_def.methods[0].symbol_id;
+    const { id: var_id, def: var_def } = make_untyped_variable("processor", 10);
+
+    definitions.update_file(file_path, [class_def, var_def]);
+    set_test_resolutions(
+      resolutions,
+      module_scope,
+      new Map([["Processor" as SymbolName, class_id]])
+    );
+    types.update_file(file_path, make_index(new Map([[var_id, var_def]]), new Map([[class_id, class_def]])), [], make_type_resolution_context(resolutions, empty_exports, empty_languages, empty_resolution));
+
+    expect(types.get_symbol_type(var_id)).toBeNull();
+    expect(
+      resolve_callable_instance(var_id, { kind: "instance_of", type_id: class_id }, context())
+    ).toEqual(call_method_id);
+  });
+
+  it("resolves nothing through a class object the walk found, which a call constructs rather than dispatching to __call__", () => {
+    const { id: class_id, def: class_def } = make_class("Processor", 1, [
+      "__call__",
+    ]);
+    const { id: var_id, def: var_def } = make_untyped_variable("processor", 10);
+
+    definitions.update_file(file_path, [class_def, var_def]);
+    types.update_file(file_path, make_index(new Map([[var_id, var_def]]), new Map([[class_id, class_def]])), [], make_type_resolution_context(resolutions, empty_exports, empty_languages, empty_resolution));
+
+    expect(
+      resolve_callable_instance(var_id, { kind: "class_object", class_id }, context())
+    ).toBeUndefined();
   });
 
   it("resolves an instance call to a __call__ inherited from a base class", () => {

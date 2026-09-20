@@ -47,9 +47,10 @@ function type_parameters_of(def: AnyDefinition | undefined): readonly TypeParame
  *
  * Two call shapes ask it. A chained call through a generic member
  * (`injector.get(Router).navigate()`) binds from the receiver's instantiation
- * as well as the call's arguments; a binding a generic factory initialises
- * (`const r = create(Router)`) has no receiver, and its arguments are all the
- * evidence there is.
+ * as well as the call's arguments; a binding a generic call initialises
+ * (`const r = create(Router)`) carries no receiver into the inference, so its
+ * arguments are all the evidence there is — even where the initialising call
+ * had a receiver of its own (`const r = injector.get()`).
  *
  * Returns null when the callable is not generic, when its return names no type
  * parameter, or when nothing at the call site binds the one it names, leaving

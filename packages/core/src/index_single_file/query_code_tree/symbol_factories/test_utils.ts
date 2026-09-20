@@ -2,7 +2,7 @@ import { Parser, JavaScript, Python, Rust } from "../../../native";
 import type { SyntaxNode } from "tree-sitter";
 import type { FilePath, Language, SemanticIndex, SymbolName } from "@ariadnejs/types";
 import { build_index_single_file } from "../../index_single_file";
-import { LANGUAGE_TO_TREESITTER_LANG } from "../parsers";
+import { grammar_for_dialect } from "../parsers";
 import {
   SemanticCategory,
   SemanticEntity,
@@ -98,7 +98,7 @@ export function index_source(
   file_path: FilePath
 ): SemanticIndex {
   const parser = new Parser();
-  parser.setLanguage(LANGUAGE_TO_TREESITTER_LANG.get(lang)!);
+  parser.setLanguage(grammar_for_dialect(lang, file_path.endsWith(".tsx")));
   const tree = parser.parse(code);
   const lines = code.split("\n");
   return build_index_single_file(
