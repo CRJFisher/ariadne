@@ -461,6 +461,109 @@ describe("resolve_module_path_python", () => {
     });
   });
 
+  describe("a project's declared source root", () => {
+    it("resolves a package under lib/ from a test tree that is its sibling", () => {
+      const tree = create_file_tree("/project", [
+        "lib/sqlalchemy/__init__.py",
+        "test/__init__.py",
+        "test/dialect/__init__.py",
+        "test/dialect/mysql/__init__.py",
+        "test/dialect/mysql/test_types.py",
+      ]);
+
+      const result = resolve_module_path_python(
+        "sqlalchemy",
+        "/project/test/dialect/mysql/test_types.py" as FilePath,
+        tree
+      );
+
+      expect(result).toBe("/project/lib/sqlalchemy/__init__.py");
+    });
+
+    it("resolves a dotted submodule under the source root", () => {
+      const tree = create_file_tree("/project", [
+        "lib/sqlalchemy/__init__.py",
+        "lib/sqlalchemy/dialects/__init__.py",
+        "lib/sqlalchemy/dialects/mysql/base.py",
+        "test/__init__.py",
+        "test/test_types.py",
+      ]);
+
+      const result = resolve_module_path_python(
+        "sqlalchemy.dialects.mysql.base",
+        "/project/test/test_types.py" as FilePath,
+        tree
+      );
+
+      expect(result).toBe("/project/lib/sqlalchemy/dialects/mysql/base.py");
+    });
+
+    it("resolves a package under src/, the other conventional source root", () => {
+      const tree = create_file_tree("/project", [
+        "src/mypackage/__init__.py",
+        "tests/__init__.py",
+        "tests/test_main.py",
+      ]);
+
+      const result = resolve_module_path_python(
+        "mypackage",
+        "/project/tests/test_main.py" as FilePath,
+        tree
+      );
+
+      expect(result).toBe("/project/src/mypackage/__init__.py");
+    });
+
+    it("yields to the project root, which a dotted import is rooted at", () => {
+      const tree = create_file_tree("/project", [
+        "mypackage/__init__.py",
+        "lib/mypackage/__init__.py",
+        "tests/__init__.py",
+        "tests/test_main.py",
+      ]);
+
+      const result = resolve_module_path_python(
+        "mypackage",
+        "/project/tests/test_main.py" as FilePath,
+        tree
+      );
+
+      expect(result).toBe("/project/mypackage/__init__.py");
+    });
+
+    it("leaves a project with no source root to the search it already had", () => {
+      const tree = create_file_tree("/project", [
+        "shared/utils.py",
+        "package_a/caller.py",
+        ".git/.gitkeep",
+      ]);
+
+      const result = resolve_module_path_python(
+        "shared.utils",
+        "/project/package_a/caller.py" as FilePath,
+        tree
+      );
+
+      expect(result).toBe("/project/shared/utils.py");
+    });
+
+    it("claims nothing for a name the source root does not hold", () => {
+      const tree = create_file_tree("/project", [
+        "lib/sqlalchemy/__init__.py",
+        "test/__init__.py",
+        "test/test_types.py",
+      ]);
+
+      const result = resolve_module_path_python(
+        "elsewhere",
+        "/project/test/test_types.py" as FilePath,
+        tree
+      );
+
+      expect(result).toBe("/project/elsewhere.py");
+    });
+  });
+
   describe("edge cases", () => {
     it("avoids path duplication when module name matches directory name", () => {
       const tree = create_file_tree("/project", [

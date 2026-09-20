@@ -294,24 +294,6 @@ function keyed(x: Map<Missing, F>) {}
       expect(project.types.get_symbol_type_arguments(parameter_of(project, file, "keyed", "x"))).toEqual([]);
     });
 
-    it("carries a factory return annotation's type arguments onto the variable it initialises", async () => {
-      const { project, paths } = await load_project({
-        "a.ts": `export class F { m() {} }
-class G {}
-function make(): Map<G, F> { return new Map(); }
-const made = make();
-`,
-      });
-      const file = paths["a.ts"];
-      const made = [...project.get_index_single_file(file)!.variables.values()].find(
-        (variable) => variable.name === "made"
-      )!.symbol_id;
-      expect(project.types.get_symbol_type_arguments(made)).toEqual([
-        type_named(project, file, "G"),
-        type_named(project, file, "F"),
-      ]);
-    });
-
     it("re-derives an annotation's type and arguments when its file is edited", async () => {
       const first = `export class F { m() {} }
 export class G { m() {} }
@@ -1097,7 +1079,10 @@ def dispose(queue: Queue):
           dispatch_return_class: project.types.get_callable_return_class(dispatch),
         }).toEqual({
           parser_type: null,
-          parser_arguments: [type_named(project, file, "_HtmlFrameParser")],
+          // A `type[X]` return names the class it yields rather than
+          // instantiating a head with it, so the class is the whole fact and
+          // is recorded as the return class below.
+          parser_arguments: [],
           // What a class object constructs is what the binding holds, not the
           // type its declaration records: the value source answers it.
           factory_product_type: null,

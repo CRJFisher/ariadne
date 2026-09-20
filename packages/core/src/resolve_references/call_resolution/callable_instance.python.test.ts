@@ -3,6 +3,9 @@ import { resolve_callable_instance } from "./callable_instance.python";
 import { DefinitionRegistry } from "../registries/definition";
 import { TypeRegistry } from "../registries/type";
 import { ResolutionRegistry } from "../resolution_registry";
+import { ScopeRegistry } from "../registries/scope";
+import { ImportGraph } from "../import_resolution/import_graph";
+import type { ReceiverResolutionContext } from "./receiver_resolution";
 import { set_test_resolutions } from "../resolve_references.test";
 import { make_export_chain_context, make_type_resolution_context } from "../resolution_test_helpers";
 import {
@@ -132,6 +135,20 @@ describe("resolve_callable_instance", () => {
     resolutions = new ResolutionRegistry();
   });
 
+  /** The registries the protocol reads, over whatever this test has populated. */
+  function context(): ReceiverResolutionContext {
+    return {
+      scopes: new ScopeRegistry(),
+      definitions,
+      resolutions,
+      types,
+      imports: new ImportGraph(),
+      exports: empty_exports,
+      languages: empty_languages,
+      modules: empty_resolution,
+    };
+  }
+
   it("resolves an instance call to the class __call__ method", () => {
     const { id: class_id, def: class_def } = make_class("Processor", 1, [
       "__call__",
@@ -152,7 +169,7 @@ describe("resolve_callable_instance", () => {
     );
     types.update_file(file_path, make_index(new Map([[var_id, var_def]]), new Map([[class_id, class_def]])), [], make_type_resolution_context(resolutions, empty_exports, empty_languages, empty_resolution));
 
-    const result = resolve_callable_instance(var_id, definitions, types);
+    const result = resolve_callable_instance(var_id, null, context());
     expect(result).toEqual(call_method_id);
   });
 
@@ -193,7 +210,7 @@ describe("resolve_callable_instance", () => {
         ])
       ), [], make_type_resolution_context(resolutions, empty_exports, empty_languages, empty_resolution));
 
-    const result = resolve_callable_instance(var_id, definitions, types);
+    const result = resolve_callable_instance(var_id, null, context());
     expect(result).toEqual(call_method_id);
   });
 
@@ -225,7 +242,7 @@ describe("resolve_callable_instance", () => {
         new Map([[class_id, class_def]])
       ), [], make_type_resolution_context(resolutions, empty_exports, empty_languages, empty_resolution));
 
-    const result = resolve_callable_instance(const_id, definitions, types);
+    const result = resolve_callable_instance(const_id, null, context());
     expect(result).toEqual(call_method_id);
   });
 
@@ -247,7 +264,7 @@ describe("resolve_callable_instance", () => {
     );
     types.update_file(file_path, make_index(new Map([[var_id, var_def]]), new Map([[class_id, class_def]])), [], make_type_resolution_context(resolutions, empty_exports, empty_languages, empty_resolution));
 
-    const result = resolve_callable_instance(var_id, definitions, types);
+    const result = resolve_callable_instance(var_id, null, context());
     expect(result).toBeUndefined();
   });
 
@@ -260,7 +277,7 @@ describe("resolve_callable_instance", () => {
 
     definitions.update_file(file_path, [var_def]);
 
-    const result = resolve_callable_instance(var_id, definitions, types);
+    const result = resolve_callable_instance(var_id, null, context());
     expect(result).toBeUndefined();
   });
 
@@ -279,14 +296,14 @@ describe("resolve_callable_instance", () => {
 
     definitions.update_file(file_path, [func_def]);
 
-    const result = resolve_callable_instance(func_id, definitions, types);
+    const result = resolve_callable_instance(func_id, null, context());
     expect(result).toBeUndefined();
   });
 
   it("returns undefined for a symbol absent from the definition registry", () => {
     const unknown_id = "variable:processor.py:1:0:1:10:missing" as SymbolId;
 
-    const result = resolve_callable_instance(unknown_id, definitions, types);
+    const result = resolve_callable_instance(unknown_id, null, context());
     expect(result).toBeUndefined();
   });
 });

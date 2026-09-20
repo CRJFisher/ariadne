@@ -7,8 +7,6 @@ import type {
 } from "@ariadnejs/types";
 import type {
   AnyDefinition,
-  FunctionDefinition,
-  MethodDefinition,
   SemanticIndex,
   SymbolReference,
 } from "@ariadnejs/types";
@@ -23,32 +21,12 @@ import {
   type ContainerShape,
   type ParsedTypeAnnotation,
 } from "../type_preprocessing";
-import { resolve_annotation_in_environment } from "../type_parameter_environment";
 import {
-  descend_modules,
   lookup_annotation,
   lookup_annotation_arguments,
   lookup_type_head,
   type AnnotationLookupContext,
 } from "../type_annotation_lookup";
-
-/**
- * The type a `this`/`self`/`cls` receiver denotes at a scope, or null where no
- * enclosing scope names one. Self-type lookup lives in call resolution — a layer
- * no registry imports — so the project hands it in.
- */
-export type SelfTypeResolver = (scope_id: ScopeId) => SymbolId | null;
-
-/**
- * Everything resolving one file's type names reads about the project: what any
- * annotation head is looked up through, and the self type only this pass reads.
- */
-export interface TypeResolutionContext extends AnnotationLookupContext {
-  readonly resolve_self_type: SelfTypeResolver;
-}
-
-/** Receivers that name the enclosing type. `super` names a parent a call dispatches past, so it roots no chain. */
-const SELF_RECEIVERS: ReadonlySet<string> = new Set(["this", "self", "cls"]);
 
 /**
  * Type metadata extracted from one file's semantic index, still keyed by name.
@@ -64,19 +42,6 @@ interface ExtractedTypeData {
   construction_bindings: ConstructorBindings;
   /** Every class, interface and enum the file declares */
   declared_types: readonly SymbolId[];
-  /**
-   * Untyped variable → the callee chain of its call initialiser, e.g.
-   * `s.getInfo()` → ["s", "getInfo"], with the identifier arguments that call
-   * passes. A generic callee's return names a type parameter its arguments are
-   * what bind, so the chain alone does not type the binding.
-   */
-  call_initializers: ReadonlyMap<SymbolId, CallInitializer>;
-}
-
-/** The call an untyped binding takes its type from: what it calls, and with what. */
-interface CallInitializer {
-  readonly callee_chain: readonly SymbolName[];
-  readonly call_arguments: readonly (SymbolName | null)[] | null;
 }
 
 /**
@@ -127,7 +92,8 @@ function names_a_type(
 /**
  * Project-wide store of resolved type relationships, all keyed by SymbolId:
  * value → type, value → type arguments, container → element, callable →
- * return type, callable → returned class object, type → members. Inheritance is read from the heritage graph `DefinitionRegistry`
+ * return type, callable → return type arguments, callable → returned class
+ * object, type → members. Inheritance is read from the heritage graph `DefinitionRegistry`
  * holds.
  *
  * update_file() extracts type names from a file's index and resolves them to
@@ -164,7 +130,7 @@ export class TypeRegistry {
     file_path: FilePath,
     index: SemanticIndex,
     references: readonly SymbolReference[],
-    context: TypeResolutionContext
+    context: AnnotationLookupContext
   ): void {
     this.remove_file(file_path);
     const extracted = this.extract_type_data(index, references);
@@ -189,24 +155,11 @@ export class TypeRegistry {
       ...index.enums.keys(),
     ];
 
-    // A call-initialized variable with no annotation takes its type from the
-    // called function's return type (STEP 1.5 of resolve_type_metadata).
-    const call_initializers = new Map<SymbolId, CallInitializer>();
-    for (const variable of index.variables.values()) {
-      if (!variable.type && variable.initialized_from_call) {
-        call_initializers.set(variable.symbol_id, {
-          callee_chain: variable.initialized_from_call,
-          call_arguments: variable.initialized_from_call_arguments ?? null,
-        });
-      }
-    }
-
     return {
       value_bindings,
       return_bindings,
       construction_bindings: extract_constructor_bindings(references),
       declared_types,
-      call_initializers,
     };
   }
 
@@ -218,7 +171,7 @@ export class TypeRegistry {
     file_id: FilePath,
     language: Language,
     extracted: ExtractedTypeData,
-    context: TypeResolutionContext
+    context: AnnotationLookupContext
   ): void {
     const resolved_symbols = new Set<SymbolId>();
 
@@ -339,7 +292,7 @@ export class TypeRegistry {
       // A return naming a type parameter denotes nothing until a call binds it,
       // and what the parameter is called is the declaration's own business: a
       // project holding a type literally named `T` must not answer `get<T>(): T`.
-      // Per-call binding is `bind_generic_return`'s, reached from the call site.
+      // Per-call binding is the value source's, reached from the call site.
       if (this.return_names_a_type_parameter(callable_id, return_annotation)) continue;
 
       const returned_class = class_object_annotation(return_annotation, language);
@@ -371,75 +324,6 @@ export class TypeRegistry {
         this.callable_return_types.set(callable_id, return_type_id);
         resolved_symbols.add(callable_id);
       }
-    }
-
-    // STEP 1.5: factory pattern — an untyped variable takes the declared return
-    // type of the function or method its initialiser calls. It runs after STEP 1,
-    // and in declaration order, so a callee chain can start at a binding this
-    // file has already typed: `const i = s.getInfo()` reads `s`'s annotation,
-    // and `const b = a.get()` reads what `const a = make()` recorded. A
-    // constructor declares no return annotation — calling a class is a
-    // construction, which STEP 1 types.
-    for (const [variable_id, initializer] of extracted.call_initializers) {
-      if (this.symbol_types.has(variable_id)) continue;
-      const callee_chain = initializer.callee_chain;
-
-      const scope_id = this.definitions.get_symbol_scope(variable_id);
-      if (!scope_id) continue;
-
-      const callee = this.resolve_initializer_callee(scope_id, callee_chain, file_id, context);
-      if ((callee?.kind !== "function" && callee?.kind !== "method") || !callee.return_type) {
-        continue;
-      }
-
-      // The return type is declared where the callee is, in whichever file and
-      // language that is, so it is parsed and resolved there.
-      const callee_file = callee.location.file_path;
-      const callee_language = context.languages.get(callee_file) ?? language;
-      const return_annotation = parse_type_annotation(callee.return_type, callee_language);
-      if (!return_annotation) continue;
-
-      const callee_scope_id = this.definitions.get_symbol_scope(callee.symbol_id) ?? scope_id;
-
-      // A generic factory's return names one of its own type parameters
-      // (`create<T>(c: Type<T>): T`), which denotes nothing until the call's
-      // arguments bind it. What it binds is a type named in the caller's file,
-      // so it resolves there rather than where the callee is declared.
-      const bound_return = this.bind_generic_return(
-        callee,
-        return_annotation,
-        initializer.call_arguments,
-        callee_language,
-        callee_scope_id,
-        scope_id,
-        context
-      );
-      if (bound_return) {
-        this.record_declared_type(variable_id, bound_return, [], resolved_symbols);
-        continue;
-      }
-
-      const return_type_id = lookup_annotation(
-        callee_scope_id,
-        return_annotation,
-        callee_file,
-        callee_language,
-        this.definitions,
-        context
-      );
-      this.record_declared_type(
-        variable_id,
-        return_type_id && names_a_type(return_type_id, this.definitions) ? return_type_id : null,
-        lookup_annotation_arguments(
-          callee_scope_id,
-          return_annotation,
-          callee_file,
-          callee_language,
-          this.definitions,
-          context
-        ),
-        resolved_symbols
-      );
     }
 
     // STEP 2: copy each declared type's already-resolved member map from DefinitionRegistry.
@@ -487,112 +371,6 @@ export class TypeRegistry {
   }
 
   /**
-   * The type a generic callable's return denotes for one call, or null when the
-   * callable is not generic, its return names no type parameter, or the call
-   * binds nothing to the one it names.
-   *
-   * Only the call's arguments and the parameters' own bounds are evidence here.
-   * A free function has no receiver whose declared instantiation could say more.
-   */
-  private bind_generic_return(
-    callee: FunctionDefinition | MethodDefinition,
-    return_annotation: ParsedTypeAnnotation,
-    call_arguments: readonly (SymbolName | null)[] | null,
-    callee_language: Language,
-    callee_scope_id: ScopeId,
-    call_scope_id: ScopeId,
-    context: TypeResolutionContext
-  ): SymbolId | null {
-    const callee_parameters = callee.generics ?? [];
-    const type_parameters = new Set<SymbolName>(
-      callee_parameters.map((parameter) => parameter.name)
-    );
-    if (type_parameters.size === 0) {
-      return null;
-    }
-
-    const bound_id = resolve_annotation_in_environment(
-      return_annotation,
-      type_parameters,
-      {
-        call: {
-          parameters:
-            callee.kind === "function" ? callee.signature.parameters : callee.parameters,
-          call_arguments,
-          declaring_language: callee_language,
-          scope_id: call_scope_id,
-        },
-        bounds: { parameters: callee_parameters, scope_id: callee_scope_id },
-      },
-      {
-        definitions: this.definitions,
-        resolutions: context.resolutions,
-        languages: context.languages,
-      }
-    );
-    return bound_id && names_a_type(bound_id, this.definitions) ? bound_id : null;
-  }
-
-  /**
-   * The definition an initialiser's callee chain names, or null at the first
-   * segment that names nothing to follow.
-   *
-   * The root is a self receiver, looked up as the enclosing type, or a name in
-   * lexical scope. Every later segment is a member of what the segment before it
-   * reached: a module member out of a module import, a static member out of a
-   * type, and out of a value, a member of the type recorded for that value.
-   *
-   * A value's type is read only where this file declares the value. Another
-   * file's value is typed by that file's own update, which may not have run
-   * yet, so following it would make the answer depend on the order files are
-   * resolved in.
-   */
-  private resolve_initializer_callee(
-    scope_id: ScopeId,
-    chain: readonly SymbolName[],
-    file_id: FilePath,
-    context: TypeResolutionContext
-  ): AnyDefinition | null {
-    const [root, ...members] = chain;
-    let current = SELF_RECEIVERS.has(root)
-      ? context.resolve_self_type(scope_id)
-      : context.resolutions.resolve(scope_id, root);
-    for (const member of members) {
-      if (!current) {
-        return null;
-      }
-      current = this.resolve_member(current, member, file_id, context);
-    }
-    return current ? (this.definitions.get(current) ?? null) : null;
-  }
-
-  /**
-   * The member `name` of the module, type or file-local value `holder_id`
-   * denotes. A type's members come from the DefinitionRegistry's member closure,
-   * which every file contributes to before any type update runs, rather than from
-   * `get_type_member`, whose members exist only once the declaring file's own
-   * update has copied them.
-   */
-  private resolve_member(
-    holder_id: SymbolId,
-    name: SymbolName,
-    file_id: FilePath,
-    context: TypeResolutionContext
-  ): SymbolId | null {
-    const holder = this.definitions.get(holder_id);
-    if (holder?.kind === "import") {
-      return descend_modules(holder_id, [name], this.definitions, context);
-    }
-    const type_id =
-      holder?.kind === "class" || holder?.kind === "interface" || holder?.kind === "enum"
-        ? holder_id
-        : holder?.location.file_path === file_id
-          ? this.symbol_types.get(holder_id)
-          : undefined;
-    return type_id ? (this.definitions.get_member_closure(type_id).get(name) ?? null) : null;
-  }
-
-  /**
    * Record what a declared annotation says a symbol holds: its type when the
    * head resolved, and its type arguments when every one resolved. The two are
    * independent — `Vec<Enc>` names no project type yet still carries `[Enc]` —
@@ -625,7 +403,7 @@ export class TypeRegistry {
     scope_id: ScopeId,
     file_id: FilePath,
     language: Language,
-    context: TypeResolutionContext
+    context: AnnotationLookupContext
   ): SymbolId | null {
     let element_id: SymbolId | null = null;
     for (const chain of chains) {

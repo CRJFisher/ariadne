@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { parse_python, make_capture, find_string_node } from "./test_utils";
+import { parse_python, make_capture, find_string_node, index_source } from "./test_utils";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import type { SyntaxNode } from "tree-sitter";
@@ -1218,5 +1218,40 @@ describe("Enum base list agreement between the query gate and the builder", () =
 
     expect(query_bases).toEqual("Enum|IntEnum|Flag|IntFlag|StrEnum");
     expect(factory_bases).toEqual(query_bases);
+  });
+});
+
+/**
+ * A local binding's declared annotation is the evidence type-parameter binding
+ * reads when the value a generic call is given is held in an annotated
+ * assignment rather than passed as a parameter. It reaches that reader only
+ * from the definition's `type`.
+ */
+describe("a local binding's declared annotation (Python)", () => {
+  function declared_bindings(code: string) {
+    const index = index_source(code, "python", "locals.py" as FilePath);
+    return [...index.variables.values()].map((def) => ({
+      name: def.name,
+      kind: def.kind,
+      type: def.type,
+    }));
+  }
+
+  it("records the generic annotation a binding declares", () => {
+    expect(declared_bindings("class Router: pass\nrouters: list[Router] = []")).toEqual([
+      { name: "routers", kind: "variable", type: "list[Router]" },
+    ]);
+  });
+
+  it("records the annotation a single-valued binding declares", () => {
+    expect(declared_bindings("class Router: pass\nsingle: Router = Router()")).toEqual([
+      { name: "single", kind: "variable", type: "Router" },
+    ]);
+  });
+
+  it("records no type for a binding that declares no annotation", () => {
+    expect(declared_bindings("class Router: pass\ninferred = Router()")).toEqual([
+      { name: "inferred", kind: "variable", type: undefined },
+    ]);
   });
 });

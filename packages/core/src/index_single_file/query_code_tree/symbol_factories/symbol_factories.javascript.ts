@@ -339,17 +339,6 @@ export function extract_property_type(node: SyntaxNode): SymbolName | undefined 
   return extract_jsdoc_type(node) ?? extract_parameter_type(node);
 }
 
-/**
- * Extract type annotation
- */
-export function extract_type_annotation(node: SyntaxNode): SymbolName | undefined {
-  const type_annotation = node.childForFieldName("type");
-  if (type_annotation) {
-    return type_annotation.text as SymbolName;
-  }
-  return undefined;
-}
-
 // ============================================================================
 // Value Extraction
 // ============================================================================

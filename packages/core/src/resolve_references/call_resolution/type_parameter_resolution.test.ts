@@ -212,6 +212,28 @@ function run(injector: Injector, tokens: Service[]): void {
     ]);
   });
 
+  it("reads the element of a sequence a local constant declares", async () => {
+    const { project, file } = await project_from_inline(`
+class Service {
+  handle(): void {}
+}
+class Injector {
+  first<T>(tokens: T[]): T {
+    return tokens[0];
+  }
+}
+function run(injector: Injector): void {
+  const tokens: Service[] = [];
+  injector.first(tokens).handle();
+}
+`);
+    const call_graph = project.get_call_graph();
+
+    expect(call_in(call_graph, "run", "handle")?.resolutions.map((r) => r.symbol_id)).toEqual([
+      member_id(call_graph, "handle", file),
+    ]);
+  });
+
   it("resolves across a file boundary when the token class is imported", async () => {
     const { project, paths } = await load_project({
       "service.ts": `
@@ -371,6 +393,28 @@ function use(provider: Provider<Foo>): void {
     ]);
   });
 
+  it("resolves a method returning the type argument a local constant was declared with", async () => {
+    const { project, file } = await project_from_inline(`
+class Foo {
+  run(): void {}
+}
+class Provider<T> {
+  get(): T {
+    return null as unknown as T;
+  }
+}
+function use(): void {
+  const provider: Provider<Foo> = new Provider<Foo>();
+  provider.get().run();
+}
+`);
+    const call_graph = project.get_call_graph();
+
+    expect(call_in(call_graph, "use", "run")?.resolutions.map((r) => r.symbol_id)).toEqual([
+      member_id(call_graph, "run", file),
+    ]);
+  });
+
   it("reads the head of a nested type argument", async () => {
     const { project, file } = await project_from_inline(`
 class Bar {}
@@ -486,6 +530,34 @@ pub fn walk<V: Visitor>(v: &mut V) {
 
     // The bound types the receiver as the trait, and trait-typed dispatch then
     // fans out to the implementer, exactly as a `dyn Visitor` receiver does.
+    expect(call_in(call_graph, "walk", "visit_item")?.resolutions.map((r) => r.symbol_id)).toEqual([
+      member_of(project, file, "Visitor", "visit_item"),
+      member_of(project, file, "Collector", "visit_item"),
+    ]);
+  });
+
+  it("reaches the bound's members from a Rust local annotated with the parameter", async () => {
+    const { project, file } = await project_from_inline(
+      `
+pub trait Visitor {
+    fn visit_item(&mut self);
+}
+
+pub struct Collector {}
+
+impl Visitor for Collector {
+    fn visit_item(&mut self) {}
+}
+
+pub fn walk<V: Visitor>(v: V) {
+    let mut inner: V = v;
+    inner.visit_item();
+}
+`,
+      "rs"
+    );
+    const call_graph = project.get_call_graph();
+
     expect(call_in(call_graph, "walk", "visit_item")?.resolutions.map((r) => r.symbol_id)).toEqual([
       member_of(project, file, "Visitor", "visit_item"),
       member_of(project, file, "Collector", "visit_item"),

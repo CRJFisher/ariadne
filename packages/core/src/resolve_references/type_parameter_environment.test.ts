@@ -58,6 +58,13 @@ function make<T extends Visitor>(token: Type<T>): T {
 function call_site(routers: Array<Router>, names: Array<string>) {
   return [first_of(routers), first_of(names)];
 }
+
+const held: Array<Router> = [];
+let mutable: Router = new Router();
+
+class Holder {
+  owned: Array<Router> = [];
+}
 `;
 
 interface Loaded {
@@ -108,18 +115,36 @@ function type_named(index: SemanticIndex, name: string): SymbolId {
   return def.symbol_id;
 }
 
-/**
- * The parameter `name` of `call_site`, standing for an argument whose own
- * declaration carries the annotation. A parameter rather than a local, because
- * a variable's declared annotation is held by the `TypeRegistry` as a resolved
- * type rather than written on the definition.
- */
+/** The parameter `name` of `call_site`, standing for an argument at a call in its body. */
 function argument_named(index: SemanticIndex, name: string): AnyDefinition {
   const def = function_named(index, "call_site").signature.parameters.find(
     (candidate) => candidate.name === (name as SymbolName)
   );
   if (!def) {
     throw new Error(`no parameter named ${name}`);
+  }
+  return def;
+}
+
+/** The local binding `name`, whose declared kind is the `const`/`let` it was written with. */
+function binding_named(index: SemanticIndex, name: string): AnyDefinition {
+  const def = [...index.variables.values()].find(
+    (candidate) => candidate.name === (name as SymbolName)
+  );
+  if (!def) {
+    throw new Error(`no binding named ${name}`);
+  }
+  return def;
+}
+
+/** The field `name` of class `Holder`. */
+function property_named(index: SemanticIndex, name: string): AnyDefinition {
+  const holder = [...index.classes.values()].find(
+    (candidate) => candidate.name === ("Holder" as SymbolName)
+  );
+  const def = holder?.properties.find((candidate) => candidate.name === (name as SymbolName));
+  if (!def) {
+    throw new Error(`no property named ${name}`);
   }
   return def;
 }
@@ -291,13 +316,42 @@ describe("the receiver's declared instantiation", () => {
 });
 
 describe("the annotation a value binding declares", () => {
+  const ARRAY_OF_ROUTER = {
+    head: ["Array"],
+    arguments: [{ head: ["Router"], arguments: [] }],
+  };
+
   it("is parsed under its own file's grammar", async () => {
     const { project, index } = await load();
 
-    expect(declared_annotation(argument_named(index, "routers"), context_of(project))).toEqual({
-      head: ["Array"],
-      arguments: [{ head: ["Router"], arguments: [] }],
+    expect(declared_annotation(argument_named(index, "routers"), context_of(project))).toEqual(
+      ARRAY_OF_ROUTER
+    );
+  });
+
+  it("is read from a constant, which declares its annotation as a parameter does", async () => {
+    const { project, index } = await load();
+
+    expect(declared_annotation(binding_named(index, "held"), context_of(project))).toEqual(
+      ARRAY_OF_ROUTER
+    );
+  });
+
+  it("is read from a mutable variable", async () => {
+    const { project, index } = await load();
+
+    expect(declared_annotation(binding_named(index, "mutable"), context_of(project))).toEqual({
+      head: ["Router"],
+      arguments: [],
     });
+  });
+
+  it("is read from a property", async () => {
+    const { project, index } = await load();
+
+    expect(declared_annotation(property_named(index, "owned"), context_of(project))).toEqual(
+      ARRAY_OF_ROUTER
+    );
   });
 
   it("is nothing for a definition that declares no value", async () => {

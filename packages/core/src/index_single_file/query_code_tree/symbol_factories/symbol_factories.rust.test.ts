@@ -4,7 +4,7 @@
 
 import { describe, it, expect } from "vitest";
 import type { SyntaxNode } from "tree-sitter";
-import { parse_rust, find_node_by_type } from "./test_utils";
+import { parse_rust, find_node_by_type, index_source } from "./test_utils";
 import {
   create_struct_id,
   create_enum_id,
@@ -1228,3 +1228,38 @@ describe("detect_function_collection", () => {
 
 // ============================================================================
 // extract_collection_source
+
+/**
+ * A local binding's declared annotation is the evidence type-parameter binding
+ * reads when the value a generic call is given is held in a `let` rather than
+ * passed as a parameter. It reaches that reader only from the definition's
+ * `type`.
+ */
+describe("a local binding's declared annotation (Rust)", () => {
+  function declared_bindings(code: string) {
+    const index = index_source(code, "rust", "locals.rs" as FilePath);
+    return [...index.variables.values()].map((def) => ({
+      name: def.name,
+      kind: def.kind,
+      type: def.type,
+    }));
+  }
+
+  it("records the generic annotation a local declares", () => {
+    expect(
+      declared_bindings("struct Router {}\nfn main() { let routers: Vec<Router> = Vec::new(); }")
+    ).toEqual([{ name: "routers", kind: "variable", type: "Vec<Router>" }]);
+  });
+
+  it("records the annotation a constant declares", () => {
+    expect(declared_bindings("const LIMIT: u32 = 3;")).toEqual([
+      { name: "LIMIT", kind: "constant", type: "u32" },
+    ]);
+  });
+
+  it("records no type for a local that declares no annotation", () => {
+    expect(declared_bindings("struct Router {}\nfn main() { let inferred = Router {}; }")).toEqual([
+      { name: "inferred", kind: "variable", type: undefined },
+    ]);
+  });
+});

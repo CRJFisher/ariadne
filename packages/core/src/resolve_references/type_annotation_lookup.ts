@@ -185,7 +185,7 @@ export function lookup_type_head(
  * file (`from django.db import models`) — so a qualified name can never be read
  * as a member of a same-named class or value in scope.
  */
-export function descend_modules(
+function descend_modules(
   start: SymbolId,
   segments: readonly SymbolName[],
   definitions: DefinitionRegistry,

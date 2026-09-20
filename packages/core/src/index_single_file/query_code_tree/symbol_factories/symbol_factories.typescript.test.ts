@@ -29,7 +29,7 @@ import {
   is_static_method,
   is_async_method,
   extract_return_type,
-  extract_property_type,
+  extract_declared_type,
   extract_parameter_type,
   extract_parameter_default_value,
   find_containing_callable,
@@ -56,6 +56,7 @@ import type {
   SymbolId,
   SymbolName,
 } from "@ariadnejs/types";
+import { index_source } from "./test_utils";
 import { node_to_location } from "../../node_to_location";
 import { SemanticCategory, SemanticEntity, type CaptureNode } from "../../capture_types";
 
@@ -1076,17 +1077,17 @@ describe("extract_return_type", () => {
 });
 
 // ============================================================================
-// extract_property_type
+// extract_declared_type
 // ============================================================================
 
-describe("extract_property_type", () => {
+describe("extract_declared_type", () => {
   it("should extract type from a class property", () => {
     const code = "class Foo { count: number = 0; }";
     const root = parse_typescript(code);
     const prop_node = find_property_name_node(root, "count")!;
     expect(prop_node).not.toBeNull();
 
-    const result = extract_property_type(prop_node);
+    const result = extract_declared_type(prop_node);
     expect(result).toBe("number");
   });
 
@@ -1096,7 +1097,7 @@ describe("extract_property_type", () => {
     const prop_node = find_property_name_node(root, "items")!;
     expect(prop_node).not.toBeNull();
 
-    const result = extract_property_type(prop_node);
+    const result = extract_declared_type(prop_node);
     expect(result).toBe("Map<string, number[]>");
   });
 
@@ -1106,7 +1107,7 @@ describe("extract_property_type", () => {
     const prop_node = find_property_name_node(root, "count")!;
     expect(prop_node).not.toBeNull();
 
-    const result = extract_property_type(prop_node);
+    const result = extract_declared_type(prop_node);
     expect(result).toBeUndefined();
   });
 });
@@ -1378,6 +1379,41 @@ describe("collection member ids name real definitions (TypeScript)", () => {
         end_line: 1,
         end_column: 42,
       }),
+    ]);
+  });
+});
+
+/**
+ * A local binding's declared annotation is the evidence type-parameter binding
+ * reads when the value a generic call is given is held in a `const` rather than
+ * passed as a parameter. It reaches that reader only from the definition's
+ * `type`, so the indexer has to write it there.
+ */
+describe("a local binding's declared annotation (TypeScript)", () => {
+  function declared_bindings(code: string) {
+    const index = index_source(code, "typescript", "locals.ts" as FilePath);
+    return [...index.variables.values()].map((def) => ({
+      name: def.name,
+      kind: def.kind,
+      type: def.type,
+    }));
+  }
+
+  it("records the generic annotation a constant declares", () => {
+    expect(declared_bindings("class Router {}\nconst routers: Array<Router> = [];")).toEqual([
+      { name: "routers", kind: "constant", type: "Array<Router>" },
+    ]);
+  });
+
+  it("records the annotation a mutable variable declares", () => {
+    expect(declared_bindings("class Router {}\nlet single: Router = new Router();")).toEqual([
+      { name: "single", kind: "variable", type: "Router" },
+    ]);
+  });
+
+  it("records no type for a binding that declares no annotation", () => {
+    expect(declared_bindings("class Router {}\nconst inferred = new Router();")).toEqual([
+      { name: "inferred", kind: "constant", type: undefined },
     ]);
   });
 });

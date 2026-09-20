@@ -382,14 +382,18 @@ export function extract_type_expression(node: SyntaxNode): string | undefined {
 }
 
 /**
- * Extract property type
+ * The annotation the node declaring `node` writes after it.
+ *
+ * TypeScript states a declared type in one place whatever is being declared —
+ * the `type` field of the property, parameter or variable declarator that owns
+ * the name — so properties, parameters and locals all read it here. The
+ * annotation node carries its colon; the type itself is the child past it.
  */
-export function extract_property_type(
+export function extract_declared_type(
   node: SyntaxNode
 ): SymbolName | undefined {
   const type_annotation = node.parent?.childForFieldName?.("type");
   if (type_annotation) {
-    // Skip the colon and get the actual type
     for (const child of type_annotation.children || []) {
       if (child.type !== ":") {
         return child.text as SymbolName;
@@ -424,7 +428,7 @@ export function extract_parameter_type(
   }
 
   // For regular parameters, use the standard extraction
-  return extract_property_type(node);
+  return extract_declared_type(node);
 }
 
 /**

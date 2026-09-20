@@ -1,6 +1,8 @@
 import { Parser, JavaScript, Python, Rust } from "../../../native";
 import type { SyntaxNode } from "tree-sitter";
-import type { FilePath, SymbolName } from "@ariadnejs/types";
+import type { FilePath, Language, SemanticIndex, SymbolName } from "@ariadnejs/types";
+import { build_index_single_file } from "../../index_single_file";
+import { LANGUAGE_TO_TREESITTER_LANG } from "../parsers";
 import {
   SemanticCategory,
   SemanticEntity,
@@ -84,4 +86,31 @@ function find_node(
 /** Find a string node (for docstrings). */
 export function find_string_node(root: SyntaxNode): SyntaxNode | null {
   return find_node(root, (n) => n.type === "string");
+}
+
+/**
+ * Index one source string as a whole file, so a test can assert what the
+ * definition builder recorded rather than what a single extractor returned.
+ */
+export function index_source(
+  code: string,
+  lang: Language,
+  file_path: FilePath
+): SemanticIndex {
+  const parser = new Parser();
+  parser.setLanguage(LANGUAGE_TO_TREESITTER_LANG.get(lang)!);
+  const tree = parser.parse(code);
+  const lines = code.split("\n");
+  return build_index_single_file(
+    {
+      file_path,
+      file_lines: lines.length,
+      file_end_column: lines[lines.length - 1]?.length ?? 0,
+      tree,
+      lang,
+      source: code,
+    },
+    tree,
+    lang
+  );
 }

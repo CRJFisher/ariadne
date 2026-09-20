@@ -17,7 +17,7 @@
 
 import type { IterationPart, SymbolId } from "@ariadnejs/types";
 import type { ContainerShape } from "../type_preprocessing";
-import type { ReceiverResolutionContext } from "./receiver_resolution";
+import type { HeldValueType, ReceiverResolutionContext } from "./receiver_resolution";
 
 /** How a binding reads its container: by index or key, or by one part of iterating it. */
 export type ElementRead = "index" | IterationPart;
@@ -25,17 +25,27 @@ export type ElementRead = "index" | IterationPart;
 /**
  * The type an element `read` out of `container_id` holds, or null when the
  * container's element is unknown or the read does not yield an element.
+ *
+ * @param held_type - What a binding holds, for a literal's elements that no
+ *   declaration types. Handed in because the value source resolves name chains
+ *   through this layer, so the value import runs one way.
+ * @param visited - The bindings already being typed on this resolution, so a
+ *   literal whose element leads back to its own container stops.
  */
 export function resolve_element_type(
   container_id: SymbolId,
   read: ElementRead,
-  context: ReceiverResolutionContext
+  context: ReceiverResolutionContext,
+  held_type: HeldValueType,
+  visited: Set<SymbolId>
 ): SymbolId | null {
   const recorded = context.types.get_container_element(container_id);
   if (recorded) {
     return reads_element(recorded.shape, read) ? recorded.element : null;
   }
-  return reads_element("sequence", read) ? literal_element_type(container_id, context) : null;
+  return reads_element("sequence", read)
+    ? literal_element_type(container_id, context, held_type, visited)
+    : null;
 }
 
 function reads_element(shape: ContainerShape, read: ElementRead): boolean {
@@ -52,13 +62,16 @@ function reads_element(shape: ContainerShape, read: ElementRead): boolean {
 
 /**
  * The one type every element of a container's array literal holds, each
- * element a binding named in the literal and typed in its own right. A literal
- * holding anything but names (`[new Suite(), layer]`), an untyped element, or
- * two elements of different types leave the element unknown.
+ * element a binding named in the literal and typed in its own right — what its
+ * declaration states, else what it holds. A literal holding anything but names
+ * (`[new Suite(), layer]`), an untyped element, or two elements of different
+ * types leave the element unknown.
  */
 function literal_element_type(
   container_id: SymbolId,
-  context: ReceiverResolutionContext
+  context: ReceiverResolutionContext,
+  held_type: HeldValueType,
+  visited: Set<SymbolId>
 ): SymbolId | null {
   const collection = context.definitions.get_function_collection(container_id);
   const container_def = context.definitions.get(container_id);
@@ -78,7 +91,13 @@ function literal_element_type(
       container_def.defining_scope_id,
       element_name
     );
-    const element_type = element_binding ? context.types.get_symbol_type(element_binding) : null;
+    // Each element is typed on its own branch of the walk: a literal naming one
+    // binding twice (`[a, a]`) must answer the same type both times, which a
+    // shared visited set would refuse the second time round.
+    const element_type = element_binding
+      ? (context.types.get_symbol_type(element_binding) ??
+        held_type(element_binding, context, new Set(visited)))
+      : null;
     if (!element_type || (element_id && element_id !== element_type)) {
       return null;
     }

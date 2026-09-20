@@ -19,6 +19,7 @@
 
 import type {
   AnyDefinition,
+  FunctionDefinition,
   MethodDefinition,
   ScopeId,
   SymbolId,
@@ -40,36 +41,42 @@ function type_parameters_of(def: AnyDefinition | undefined): readonly TypeParame
 }
 
 /**
- * Infer the concrete return type of a generic method whose declared return
- * names one of the type parameters in scope for it — the method's own, or its
- * owning type's.
+ * Infer the concrete return type of a generic callable whose declared return
+ * names one of the type parameters in scope for it — the callable's own, or,
+ * for a method, its owning type's.
  *
- * Returns null when the method is not generic, when its return names no type
+ * Two call shapes ask it. A chained call through a generic member
+ * (`injector.get(Router).navigate()`) binds from the receiver's instantiation
+ * as well as the call's arguments; a binding a generic factory initialises
+ * (`const r = create(Router)`) has no receiver, and its arguments are all the
+ * evidence there is.
+ *
+ * Returns null when the callable is not generic, when its return names no type
  * parameter, or when nothing at the call site binds the one it names, leaving
- * the caller's `member_type_unknown` failure intact. Guessing instead would
- * type the receiver as something the source never said it was.
+ * the caller's failure intact. Guessing instead would type the receiver as
+ * something the source never said it was.
  */
 export function infer_generic_return(
-  method_def: MethodDefinition,
+  callee: FunctionDefinition | MethodDefinition,
   receiver_binding: SymbolId | null,
   call_arguments_at_position: readonly (SymbolName | null)[] | null,
   scope_id: ScopeId,
   context: ReceiverResolutionContext
 ): SymbolId | null {
-  const return_type = method_def.return_type;
+  const return_type = callee.return_type;
   if (!return_type) {
     return null;
   }
 
-  const language = context.languages.get(method_def.location.file_path);
+  const language = context.languages.get(callee.location.file_path);
   if (!language) {
     return null;
   }
 
-  const owner_id = context.definitions.get_member_owner(method_def.symbol_id) ?? null;
+  const owner_id = context.definitions.get_member_owner(callee.symbol_id) ?? null;
   const owner = owner_id ? context.definitions.get(owner_id) : undefined;
   const owner_parameters = type_parameters_of(owner);
-  const own_parameters = method_def.generics ?? [];
+  const own_parameters = callee.generics ?? [];
 
   // A method re-declaring a name its owning type also declares introduces its
   // own parameter, and the receiver's instantiation of the type's parameter
@@ -91,14 +98,15 @@ export function infer_generic_return(
     return null;
   }
 
-  const declaring_scope = context.definitions.get_symbol_scope(method_def.symbol_id);
+  const declaring_scope = context.definitions.get_symbol_scope(callee.symbol_id);
 
   return resolve_annotation_in_environment(
     return_annotation,
     type_parameters,
     {
       call: {
-        parameters: method_def.parameters,
+        parameters:
+          callee.kind === "function" ? callee.signature.parameters : callee.parameters,
         call_arguments: call_arguments_at_position,
         declaring_language: language,
         scope_id,

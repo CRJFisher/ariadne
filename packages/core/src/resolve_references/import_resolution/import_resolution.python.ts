@@ -11,6 +11,36 @@ import type { FileSystemFolder } from "../file_folders";
 import { has_file_in_tree } from "../file_folders";
 
 /**
+ * The directory names a src-layout project puts its importable packages under.
+ *
+ * Closed, because the search is structural: any directory holding a package
+ * whose name matches the import would otherwise claim it, and a test tree or a
+ * vendored copy would answer imports the source never rooted there.
+ */
+const SOURCE_ROOT_DIRECTORIES = ["src", "lib"] as const;
+
+/**
+ * The file `parts` names under `base` — a module file or a package's
+ * `__init__.py` — or undefined where neither is in the tree.
+ */
+function module_file_under(
+  base: string,
+  parts: readonly string[],
+  root_folder: FileSystemFolder
+): FilePath | undefined {
+  const module_path = path.join(base, ...parts);
+  for (const candidate of [`${module_path}.py`, path.join(module_path, "__init__.py")]) {
+    const relative = path.isAbsolute(candidate)
+      ? path.relative(root_folder.path, candidate)
+      : candidate;
+    if (has_file_in_tree(relative as FilePath, root_folder)) {
+      return candidate as FilePath;
+    }
+  }
+  return undefined;
+}
+
+/**
  * Resolve a named import that refers to a submodule file rather than a name
  * exported by the package. For `from training import pipeline`, the import
  * resolves to `training/__init__.py`, but `pipeline` may be a sibling file
@@ -22,20 +52,7 @@ export function resolve_submodule_path_python(
   import_name: string,
   root_folder: FileSystemFolder
 ): FilePath | undefined {
-  const source_dir = path.dirname(resolved_source_file);
-  const candidates = [
-    path.join(source_dir, import_name + ".py"),
-    path.join(source_dir, import_name, "__init__.py"),
-  ];
-  for (const candidate of candidates) {
-    const relative = path.isAbsolute(candidate)
-      ? path.relative(root_folder.path, candidate)
-      : candidate;
-    if (has_file_in_tree(relative as FilePath, root_folder)) {
-      return candidate as FilePath;
-    }
-  }
-  return undefined;
+  return module_file_under(path.dirname(resolved_source_file), [import_name], root_folder);
 }
 
 /**
@@ -72,28 +89,29 @@ function resolve_relative_python(
     target_dir = path.dirname(target_dir);
   }
 
-  const file_path = path.join(target_dir, ...module_path.split("."));
+  const parts = module_path.split(".");
 
-  const candidates = [`${file_path}.py`, path.join(file_path, "__init__.py")];
-
-  for (const candidate of candidates) {
-    const relative_candidate = path.isAbsolute(candidate)
-      ? path.relative(root_folder.path, candidate)
-      : candidate;
-    if (has_file_in_tree(relative_candidate as FilePath, root_folder)) {
-      return candidate as FilePath;
-    }
-  }
-
-  return `${file_path}.py` as FilePath;
+  return (
+    module_file_under(target_dir, parts, root_folder) ??
+    (`${path.join(target_dir, ...parts)}.py` as FilePath)
+  );
 }
 
 /**
- * Resolve a dotted absolute Python import. The importing file's own directory
- * is checked first to mirror Python putting sys.path[0] (the script directory)
- * ahead of everything else, so sibling modules win over same-named modules
- * elsewhere in the tree. Resolution then falls through to the project root and,
- * for standalone scripts in subdirectories, up to three parent directories.
+ * Resolve a dotted absolute Python import, trying each root an interpreter
+ * would have on `sys.path`, in the order it would have them.
+ *
+ * The importing file's own directory comes first, mirroring `sys.path[0]`, so a
+ * sibling module wins over a same-named module elsewhere in the tree. Then the
+ * project root, where a dotted import is rooted. Then the project's declared
+ * source root — the `src/` or `lib/` directory a src-layout project installs
+ * its packages from, which is a sibling of the importing file's tree rather
+ * than an ancestor of it, so nothing else in this search reaches it. Last, and
+ * only for a standalone script in a subdirectory, up to three directories above
+ * the project root.
+ *
+ * When no root answers, the project-root path is returned so callers get a
+ * stable target.
  */
 function resolve_absolute_python(
   absolute_path: string,
@@ -103,37 +121,26 @@ function resolve_absolute_python(
   const base_dir = path.dirname(base_file);
   const parts = absolute_path.split(".");
 
-  const local_file_path = path.join(base_dir, ...parts);
-  const local_candidates = [
-    `${local_file_path}.py`,
-    path.join(local_file_path, "__init__.py"),
-  ];
-
-  for (const candidate of local_candidates) {
-    const relative_candidate = path.isAbsolute(candidate)
-      ? path.relative(root_folder.path, candidate)
-      : candidate;
-    if (has_file_in_tree(relative_candidate as FilePath, root_folder)) {
-      return candidate as FilePath;
-    }
+  const local = module_file_under(base_dir, parts, root_folder);
+  if (local) {
+    return local;
   }
 
-  const project_root = find_python_project_root(
-    base_dir,
-    absolute_path,
-    root_folder
-  );
+  const project_root = find_python_project_root(base_dir, absolute_path, root_folder);
 
-  let file_path = path.join(project_root, ...parts);
+  const at_project_root = module_file_under(project_root, parts, root_folder);
+  if (at_project_root) {
+    return at_project_root;
+  }
 
-  const candidates = [`${file_path}.py`, path.join(file_path, "__init__.py")];
-
-  for (const candidate of candidates) {
-    const relative_candidate = path.isAbsolute(candidate)
-      ? path.relative(root_folder.path, candidate)
-      : candidate;
-    if (has_file_in_tree(relative_candidate as FilePath, root_folder)) {
-      return candidate as FilePath;
+  for (const source_root of SOURCE_ROOT_DIRECTORIES) {
+    const in_source_root = module_file_under(
+      path.join(project_root, source_root),
+      parts,
+      root_folder
+    );
+    if (in_source_root) {
+      return in_source_root;
     }
   }
 
@@ -145,19 +152,9 @@ function resolve_absolute_python(
       break;
     }
 
-    file_path = path.join(search_root, ...parts);
-    const search_candidates = [
-      `${file_path}.py`,
-      path.join(file_path, "__init__.py"),
-    ];
-
-    for (const candidate of search_candidates) {
-      const relative_candidate = path.isAbsolute(candidate)
-        ? path.relative(root_folder.path, candidate)
-        : candidate;
-      if (has_file_in_tree(relative_candidate as FilePath, root_folder)) {
-        return candidate as FilePath;
-      }
+    const above = module_file_under(search_root, parts, root_folder);
+    if (above) {
+      return above;
     }
 
     search_root = path.dirname(search_root);

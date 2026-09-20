@@ -268,6 +268,22 @@ def post():
     ]);
   });
 
+  it("sqlalchemy: a test tree reaches the package its project installs from lib/", async () => {
+    // test/dialect/mysql/test_types.py — `from sqlalchemy import …` where the
+    // package sits at lib/sqlalchemy, a sibling of test/ rather than an
+    // ancestor of the importing file.
+    const files = read_fixture("python", "src_layout_package");
+    const { project, paths } = await load_project(files);
+    const test_file = paths[path.join("test", "dialect", "mysql", "test_types.py")];
+
+    expect(targets_of(project, test_file, "FLOAT", 8)).toEqual(["base.py:FLOAT"]);
+    expect(targets_of(project, test_file, "Float", 9)).toEqual(["types.py:Float"]);
+    // A construction resolves to the constructor the class declares, which for
+    // `Column` is the `__init__` written in the package's own `__init__.py`.
+    expect(targets_of(project, test_file, "Column", 10)).toEqual(["__init__.py:__init__"]);
+    expect(all_targets_of(project, test_file, "eq_")).toEqual(["__init__.py:eq_"]);
+  });
+
   it("express: methods assigned onto an exported object are reached through the object", async () => {
     // lib/application.js:294 — `app.engine = function engine(…)`, dispatched
     // as `app.engine(…)` after the object has been exported whole.

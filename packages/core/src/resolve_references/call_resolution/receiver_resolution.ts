@@ -208,7 +208,9 @@ function resolve_receiver_expression_type(
   // names, whose own type may be nothing the project declares (`Map`).
   if (receiver.base.type === "identifier" && is_element_get(receiver.chain, receiver.chain_arguments, 0)) {
     const container_id = context.resolutions.resolve(receiver.scope_id, receiver.base.value);
-    const element_id = container_id ? resolve_element_type(container_id, "index", context) : null;
+    const element_id = container_id
+      ? resolve_element_type(container_id, "index", context, held_type, visited)
+      : null;
     if (element_id) {
       return walk_property_chain(
         element_id,
@@ -216,7 +218,9 @@ function resolve_receiver_expression_type(
         receiver.chain.slice(1),
         receiver.chain_arguments?.slice(1),
         receiver.scope_id,
-        context
+        context,
+        visited,
+        held_type
       );
     }
   }
@@ -238,7 +242,9 @@ function resolve_receiver_expression_type(
     receiver.chain,
     receiver.chain_arguments,
     receiver.scope_id,
-    context
+    context,
+    visited,
+    held_type
   );
 }
 
@@ -267,7 +273,9 @@ function resolve_index_receiver_type(
     : [];
   for (const container_chain of candidates) {
     const container_id = resolve_chain_binding(container_chain, receiver.scope_id, context, visited, held_type);
-    const element_id = container_id ? resolve_element_type(container_id, "index", context) : null;
+    const element_id = container_id
+      ? resolve_element_type(container_id, "index", context, held_type, visited)
+      : null;
     if (element_id) {
       return ok(element_id);
     }
@@ -569,7 +577,9 @@ function walk_property_chain(
   chain: readonly SymbolName[],
   chain_arguments: ChainCallArguments | undefined,
   scope_id: ScopeId,
-  context: ReceiverResolutionContext
+  context: ReceiverResolutionContext,
+  visited: Set<SymbolId>,
+  held_type: HeldValueType
 ): Result<SymbolId, ResolutionFailure> {
   let current_type = start_type;
   // The binding whose declared annotation described `current_type`, which is
@@ -591,7 +601,7 @@ function walk_property_chain(
     // `this.contributions.get(k)` reads one element of the container member,
     // whatever the container's own type.
     const element_id = is_element_get(chain, chain_arguments, index + 1)
-      ? resolve_element_type(member_symbol, "index", context)
+      ? resolve_element_type(member_symbol, "index", context, held_type, visited)
       : null;
     if (element_id) {
       current_type = element_id;
@@ -656,6 +666,13 @@ function walk_property_chain(
           );
         }
       }
+
+      if (!member_type) {
+        // What the member binding holds, last — as it is for a base receiver.
+        // A module member a call initialises (`a.svc.run()` over
+        // `export const svc = make()`) is typed by nothing it declares.
+        member_type = held_type(member_symbol, context, visited);
+      }
     }
 
     if (!member_type) {
@@ -718,7 +735,9 @@ function resolve_destructured_property_type(
     [key],
     undefined,
     binding.defining_scope_id,
-    context
+    context,
+    visited,
+    held_type
   );
   return property_type.ok ? property_type.value : null;
 }

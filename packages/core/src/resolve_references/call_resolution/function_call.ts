@@ -21,7 +21,7 @@ import type { ResolutionRegistry } from "../resolution_registry";
 import { resolve_collection_dispatch } from "./collection_dispatch";
 import { resolve_callable_instance } from "./callable_instance.python";
 import { resolve_via_path_prefix_rust } from "./function_call.rust";
-import { resolve_value_source } from "./value_source";
+import { resolve_value_source, type ValueSource } from "./value_source";
 
 /**
  * Find alternative resolution by skipping method/constructor definitions.
@@ -144,6 +144,9 @@ export function resolve_function_call(
 
   // Step 2: Check for collection dispatch, or what the binding holds
   let try_dispatch = resolved_symbols.length === 0;
+  // Kept for step 3: an instance the binding holds is what dispatches through
+  // `__call__`, and the walk that found it runs once.
+  let held_value: ValueSource | null = null;
   if (resolved_symbols.length === 1) {
     const def = context.definitions.get(resolved_symbols[0]);
     if (
@@ -156,11 +159,11 @@ export function resolve_function_call(
       // A class object is called to construct it: the class stands in for
       // the call, and its constructor joins it once the call is recorded. An
       // instance is left to the callable-instance step below.
-      const held = resolve_value_source(resolved_symbols[0], ref.location, context);
-      if (held?.kind === "callable") {
-        resolved_symbols = [held.symbol_id];
-      } else if (held?.kind === "class_object") {
-        resolved_symbols = [held.class_id];
+      held_value = resolve_value_source(resolved_symbols[0], ref.location, context);
+      if (held_value?.kind === "callable") {
+        resolved_symbols = [held_value.symbol_id];
+      } else if (held_value?.kind === "class_object") {
+        resolved_symbols = [held_value.class_id];
       }
     }
   }
@@ -182,11 +185,7 @@ export function resolve_function_call(
     resolved_symbols.length === 1 &&
     context.languages.get(ref.location.file_path) === "python"
   ) {
-    const call_method = resolve_callable_instance(
-      resolved_symbols[0],
-      context.definitions,
-      context.types
-    );
+    const call_method = resolve_callable_instance(resolved_symbols[0], held_value, context);
     if (call_method) {
       resolved_symbols = [call_method];
     }

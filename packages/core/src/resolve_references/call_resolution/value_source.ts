@@ -20,8 +20,9 @@
  *    (`collection_source`, `iterated_from`) holds one element.
  * 2. **Callee return** — a binding a call initialises holds what calling the
  *    callee yields: a class object for a declared class-object return
- *    (`-> type[X]`), an instance for a declared return type, and an instance of
- *    the class a class-object binding holds (`p = cls()`).
+ *    (`-> type[X]`), an instance for a declared return type, an instance of the
+ *    type a generic return stands for at this call (`create(Router)`), and an
+ *    instance of the class a class-object binding holds (`p = cls()`).
  * 3. **Qualified member read** — a variable's or class attribute's initialiser,
  *    or a parameter's default, that reads one member of one name
  *    (`member_source`) holds what the member holds.
@@ -45,6 +46,7 @@ import type {
 import { resolve_element_type } from "./container_element";
 import { dereference_named_import } from "./namespace_member";
 import { resolve_chain_binding, type ReceiverResolutionContext } from "./receiver_resolution";
+import { infer_generic_return } from "./type_parameter_resolution";
 import type { DefinitionRegistry } from "../registries/definition";
 
 export type ValueSource =
@@ -207,11 +209,13 @@ function element_value(
       resolve_held_type
     );
     element_id = container_id
-      ? resolve_element_type(container_id, binding.iterated_from.yields, context)
+      ? resolve_element_type(container_id, binding.iterated_from.yields, context, resolve_held_type, visited)
       : null;
   } else if (binding.collection_source) {
     const container_id = context.resolutions.resolve(binding.defining_scope_id, binding.collection_source);
-    element_id = container_id ? resolve_element_type(container_id, "index", context) : null;
+    element_id = container_id
+      ? resolve_element_type(container_id, "index", context, resolve_held_type, visited)
+      : null;
   }
   return element_id ? { kind: "instance_of", type_id: element_id } : null;
 }
@@ -232,18 +236,38 @@ function callee_return_value(
   if (!callee_chain) {
     return null;
   }
+  const call: CallSite = {
+    call_arguments: binding.initialized_from_call_arguments ?? null,
+    scope_id: binding.defining_scope_id,
+  };
   const callee = resolve_read_value(callee_chain, binding.defining_scope_id, binding.location, context, visited);
-  const result = callee ? call_result(callee, context) : null;
+  const result = callee ? call_result(callee, call, context) : null;
   // @language python
-  return result && binding.initialized_from_call_result ? call_result(result, context) : result;
+  // The outer call of `make()(io)` records no arguments of its own, so only its
+  // scope carries over to the second hop.
+  return result && binding.initialized_from_call_result
+    ? call_result(result, { call_arguments: null, scope_id: call.scope_id }, context)
+    : result;
+}
+
+/** What one call says about the type its callee returns: its arguments, and where they resolve. */
+interface CallSite {
+  readonly call_arguments: readonly (SymbolName | null)[] | null;
+  readonly scope_id: ScopeId;
 }
 
 /**
  * What calling `callee` yields: an instance of the class a class object
- * constructs, or what a callable's declared return annotation names. Calling an
- * instance runs its `__call__`, whose result this does not follow.
+ * constructs, or what a callable's declared return annotation names — the type
+ * the registry resolved for it, else the one a generic return stands for at
+ * this call. Calling an instance runs its `__call__`, whose result this does
+ * not follow.
  */
-function call_result(callee: ValueSource, context: ReceiverResolutionContext): ValueSource | null {
+function call_result(
+  callee: ValueSource,
+  call: CallSite,
+  context: ReceiverResolutionContext
+): ValueSource | null {
   switch (callee.kind) {
     case "class_object":
       return { kind: "instance_of", type_id: callee.class_id };
@@ -252,12 +276,33 @@ function call_result(callee: ValueSource, context: ReceiverResolutionContext): V
       if (class_id) {
         return { kind: "class_object", class_id };
       }
-      const type_id = context.types.get_callable_return_type(callee.symbol_id);
+      const type_id =
+        context.types.get_callable_return_type(callee.symbol_id) ??
+        generic_return_type(callee.symbol_id, call, context);
       return type_id ? { kind: "instance_of", type_id } : null;
     }
     case "instance_of":
       return null;
   }
+}
+
+/**
+ * The type a generic callable's return denotes for this one call —
+ * `create<T>(token: Type<T>): T` called as `create(Router)` yields `Router`.
+ * The registry records no return type for such a callable: what the parameter
+ * is called is the declaration's business, and only the call's arguments and
+ * the parameter's own bound say what it stands for here.
+ */
+function generic_return_type(
+  callee_id: SymbolId,
+  call: CallSite,
+  context: ReceiverResolutionContext
+): SymbolId | null {
+  const callee = context.definitions.get(callee_id);
+  if (callee?.kind !== "function" && callee?.kind !== "method") {
+    return null;
+  }
+  return infer_generic_return(callee, null, call.call_arguments, call.scope_id, context);
 }
 
 /**

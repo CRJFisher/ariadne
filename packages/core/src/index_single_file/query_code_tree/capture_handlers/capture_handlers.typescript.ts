@@ -14,7 +14,6 @@ import { JAVASCRIPT_HANDLERS } from "./capture_handlers.javascript";
 import {
   create_variable_id,
   extract_export_info,
-  extract_type_annotation,
   extract_initial_value,
   extract_accessor_kind,
 } from "../symbol_factories/symbol_factories.javascript";
@@ -37,7 +36,7 @@ import {
   extract_type_parameters,
   extract_return_type,
   create_property_signature_id,
-  extract_property_type,
+  extract_declared_type,
   is_readonly_property,
   create_type_alias_id,
   extract_type_expression,
@@ -131,7 +130,7 @@ export function handle_ts_definition_variable(
     location: capture.location,
     scope_id: context.get_scope_id(capture.location),
     is_exported: export_info.is_exported,
-    type: extract_type_annotation(capture.node),
+    type: extract_declared_type(capture.node),
     initial_value: extract_initial_value(capture.node),
     docstring,
     function_collection,
@@ -204,7 +203,7 @@ export function handle_definition_interface_property(
     symbol_id: prop_id,
     name: capture.text,
     location: capture.location,
-    type: extract_property_type(capture.node),
+    type: extract_declared_type(capture.node),
     scope_id: context.get_scope_id(capture.location),
   });
 }
@@ -516,7 +515,7 @@ export function handle_ts_definition_field(
     abstract: is_abstract_method(capture.node),
     type: is_param_property
       ? extract_parameter_type(capture.node)
-      : extract_property_type(capture.node),
+      : extract_declared_type(capture.node),
     initial_value: initial_value,
     ...extract_read_source(capture.node),
   });

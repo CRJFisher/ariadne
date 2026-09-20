@@ -349,6 +349,39 @@ def map_twice():
       });
     });
 
+    it("types a module member a factory call initialises, reached as a chain hop", async () => {
+      const fixture = await load_sources({
+        "svc.ts": `export class Svc { run(): void {} }
+export function make(): Svc { return new Svc(); }
+export const svc = make();
+`,
+        "app.ts": `import * as registry from "./svc";
+export function go(): void { registry.svc.run(); }
+`,
+      });
+
+      expect(call_on_line(fixture, "app.ts", "run", "registry.svc.run()")).toEqual(
+        resolved_to(member_of(fixture, "svc.ts", "Svc", "run"))
+      );
+    });
+
+    it("types a sequence literal's element when one factory binding fills it twice", async () => {
+      const fixture = await load_sources({
+        "suites.ts": `class Suite { run(): void {} }
+function make(): Suite { return new Suite(); }
+export function go(): void {
+  const suite = make();
+  const suites = [suite, suite];
+  suites[0].run();
+}
+`,
+      });
+
+      expect(call_on_line(fixture, "suites.ts", "run", "suites[0].run()")).toEqual(
+        resolved_to(member_of(fixture, "suites.ts", "Suite", "run"))
+      );
+    });
+
     it("leaves a construction through an unannotated parameter unresolved", async () => {
       const fixture = await load_sources({
         "build.ts": `class Parser { parse(): void {} }

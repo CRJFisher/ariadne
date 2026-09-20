@@ -13,13 +13,12 @@ import type {
 import { build_index_single_file } from "../index_single_file/index_single_file";
 import type { SemanticIndex } from "@ariadnejs/types";
 import { DefinitionRegistry } from "../resolve_references/registries/definition";
+import { TypeRegistry } from "../resolve_references/registries/type";
 import {
-  TypeRegistry,
-  type TypeResolutionContext,
-} from "../resolve_references/registries/type";
-import { lookup_type_name } from "../resolve_references/type_annotation_lookup";
+  lookup_type_name,
+  type AnnotationLookupContext,
+} from "../resolve_references/type_annotation_lookup";
 import { resolve_qualified_path_rust } from "../resolve_references/call_resolution/path_resolution.rust";
-import { find_self_type } from "../resolve_references/call_resolution/receiver_resolution";
 import { infer_conformance_to_pending_interfaces } from "../resolve_references/call_resolution/structural_conformance";
 import { ScopeRegistry } from "../resolve_references/registries/scope";
 import { ExportRegistry } from "../resolve_references/registries/export";
@@ -421,7 +420,7 @@ export class Project {
       modules,
     );
 
-    const type_resolution_context: TypeResolutionContext = {
+    const type_resolution_context: AnnotationLookupContext = {
       resolutions: this.resolutions,
       exports: this.exports,
       imports: this.imports,
@@ -437,18 +436,6 @@ export class Project {
           languages: this.languages,
           modules,
         }),
-      resolve_self_type: (scope_id) => {
-        const self_type = find_self_type(scope_id, {
-          scopes: this.scopes,
-          definitions: this.definitions,
-          resolutions: this.resolutions,
-          imports: this.imports,
-          exports: this.exports,
-          languages: this.languages,
-          modules,
-        });
-        return self_type.ok ? self_type.value : null;
-      },
     };
 
     // Phase 3.5: Type heritage — Rust impl methods joined to the type another
