@@ -127,3 +127,41 @@ describe("a `let` written without a value", () => {
     expect(extract_collection_source(declared("let h; h = config.get(k);", "h"))).toEqual("config");
   });
 });
+
+describe("a value read through what does not change it", () => {
+  /** The read source of the `let` of `name` in `fn f(<receiver>) { <body> }`. */
+  function read_source(receiver: string, body: string, name: string) {
+    const binding = parse_rust(`fn f(${receiver}) { ${body} }`)
+      .descendantsOfType("identifier")
+      .find((node) => node.text === name)!;
+    return extract_read_source(binding);
+  }
+
+  it("reads the argument of ManuallyDrop::new and the Pin unwrappings, bare or through a standard path", () => {
+    for (const value of [
+      "ManuallyDrop::new(self)",
+      "mem::ManuallyDrop::new(self)",
+      "std::mem::ManuallyDrop::new(self)",
+      "Pin::into_inner(self)",
+      "Pin::get_mut(self)",
+      "unsafe { Pin::into_inner_unchecked(self) }",
+      "std::pin::Pin::get_unchecked_mut(self)",
+    ]) {
+      expect(read_source("self", `let me = ${value};`, "me")).toEqual({ name_source: "self" });
+    }
+  });
+
+  it("reads `self.get_mut()` as `self` only under a receiver declared `Pin<…>`", () => {
+    expect(read_source("self: Pin<&mut Self>", "let me = self.get_mut();", "me")).toEqual({ name_source: "self" });
+    expect(read_source("self: std::pin::Pin<&mut Self>", "let me = unsafe { self.get_unchecked_mut() };", "me")).toEqual({
+      name_source: "self",
+    });
+    expect(read_source("&mut self", "let me = self.get_mut();", "me")).toEqual({});
+    expect(read_source("self: Pin<&mut Self>", "let me = self.inner.get_mut();", "me")).toEqual({});
+  });
+
+  it("reads nothing through a path that is not the standard library's, or an unsafe block of several statements", () => {
+    expect(read_source("self", "let me = widgets::Pin::into_inner(self);", "me")).toEqual({});
+    expect(read_source("self", "let me = unsafe { touch(); self };", "me")).toEqual({});
+  });
+});

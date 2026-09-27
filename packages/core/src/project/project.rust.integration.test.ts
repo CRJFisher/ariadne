@@ -441,6 +441,49 @@ describe("Project Integration - Rust", () => {
     });
   });
 
+  describe("Standard-library re-borrows of the receiver", () => {
+    it("holds the receiver through ManuallyDrop::new, the Pin unwrappings and a pinned receiver's get_mut", () => {
+      const file = file_path("self_reference/reborrow.rs");
+      project.update_file(
+        file,
+        [
+          "use std::mem;",
+          "use std::pin::Pin;",
+          "struct Conn;",
+          "impl Conn {",
+          "    fn flush(&self) {}",
+          "    fn poll(self: Pin<&mut Self>) { let me = unsafe { self.get_unchecked_mut() }; me.flush(); }",
+          "    fn close(self) { let me = mem::ManuallyDrop::new(self); me.flush(); }",
+          "    fn finish(self: Pin<Box<Self>>) { let this = Pin::into_inner(self); this.flush(); }",
+          "    fn plain(&mut self) { let this = self.get_mut(); this.flush(); }",
+          "}",
+        ].join("\n")
+      );
+
+      const conn = Array.from(project.get_index_single_file(file)!.classes.values()).find(
+        (c) => c.name === ("Conn" as SymbolName)
+      )!;
+      const flush = project.definitions.get_member_index().get(conn.symbol_id)?.get("flush" as SymbolName);
+
+      // On a `&mut self` receiver `get_mut` would be Conn's own method, which
+      // Conn does not declare, so nothing says what it returns.
+      const flush_calls = project.resolutions
+        .get_calls_for_file(file)
+        .filter((call) => call.name === ("flush" as SymbolName))
+        .map((call) => ({
+          line: call.location.start_line,
+          targets: call.resolutions.map((r) => r.symbol_id),
+          reason: call.resolution_failure?.reason,
+        }));
+      expect(flush_calls).toEqual([
+        { line: 6, targets: [flush!], reason: undefined },
+        { line: 7, targets: [flush!], reason: undefined },
+        { line: 8, targets: [flush!], reason: undefined },
+        { line: 9, targets: [], reason: "receiver_type_unknown" },
+      ]);
+    });
+  });
+
   describe("Self-reference keywords", () => {
     it("resolves a `this` binding as the local it is: Rust has no `this` keyword", () => {
       const file = file_path("self_reference/this_binding.rs");

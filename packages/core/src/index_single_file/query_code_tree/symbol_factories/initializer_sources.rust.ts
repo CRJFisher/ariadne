@@ -3,7 +3,9 @@
  * the one name it reads, and the callee chain of the call it is initialised
  * from — and, for a binding a `for` loop initialises, the container it takes an
  * element of. A `let` declared without a value names what every later
- * assignment to it agrees on.
+ * assignment to it agrees on, and each value is read through what does not
+ * change it: an `unsafe` block, and the standard-library calls that return
+ * their own argument (`let me = Pin::into_inner(self)` reads `self`).
  * Resolution follows each to type or dispatch the binding.
  */
 
@@ -99,9 +101,84 @@ function let_values(node: SyntaxNode): readonly SyntaxNode[] {
   const declaration = node.type === "identifier" ? (node.parent ?? node) : node;
   if (declaration.type === "const_item") {
     const value = declaration.childForFieldName("value");
-    return value ? [value] : [];
+    return value ? [held_expression(value)] : [];
   }
-  return written_values(declaration);
+  return written_values(declaration).map(held_expression);
+}
+
+/**
+ * Standard-library calls that hand back the value they are given, or a
+ * wrapper that derefs to it: `ManuallyDrop::new(self)` and the `Pin`
+ * unwrappings. `std` is in no corpus, so nothing else can say what they
+ * return, and without this `let me = Pin::into_inner(self)` holds nothing.
+ */
+const RETURNS_ITS_ARGUMENT: ReadonlyMap<string, ReadonlySet<string>> = new Map([
+  ["ManuallyDrop", new Set(["new"])],
+  ["Pin", new Set(["into_inner", "into_inner_unchecked", "get_mut", "get_unchecked_mut"])],
+]);
+
+const STANDARD_PATH_SEGMENTS: ReadonlySet<string> = new Set(["std", "core", "mem", "pin"]);
+
+/** `Pin`'s methods that return what a `self: Pin<&mut Self>` receiver points at. */
+const PIN_UNWRAPPING_METHODS: ReadonlySet<string> = new Set(["get_mut", "get_unchecked_mut"]);
+
+/**
+ * The expression whose value `value` holds, seen through what does not change
+ * it: an `unsafe { … }` block ending in one expression, and the
+ * standard-library calls that return their own argument.
+ */
+function held_expression(value: SyntaxNode): SyntaxNode {
+  if (value.type === "unsafe_block") {
+    const block = value.namedChildren.find((child) => child.type === "block");
+    const statements = block?.namedChildren.filter((child) => !child.type.endsWith("comment")) ?? [];
+    const last = statements[statements.length - 1];
+    return statements.length === 1 && last.type !== "expression_statement" ? held_expression(last) : value;
+  }
+  if (value.type !== "call_expression") {
+    return value;
+  }
+  const callee = value.childForFieldName("function");
+  const call_arguments = value.childForFieldName("arguments")?.namedChildren ?? [];
+  if (callee?.type === "scoped_identifier" && call_arguments.length === 1 && returns_its_argument(callee.text)) {
+    return held_expression(call_arguments[0]);
+  }
+  const receiver = callee?.type === "field_expression" ? callee.childForFieldName("value") : null;
+  const method = callee?.childForFieldName("field")?.text;
+  return receiver?.type === "self" &&
+    method !== undefined &&
+    PIN_UNWRAPPING_METHODS.has(method) &&
+    call_arguments.length === 0 &&
+    receiver_is_pinned(value)
+    ? receiver
+    : value;
+}
+
+/** Whether a `::` path names one of the `RETURNS_ITS_ARGUMENT` calls, bare or through a standard path. */
+function returns_its_argument(path: string): boolean {
+  const segments = path.split("::").map((segment) => segment.trim());
+  const [type_name, function_name] = segments.slice(-2);
+  return (
+    segments.length >= 2 &&
+    segments.slice(0, -2).every((segment) => STANDARD_PATH_SEGMENTS.has(segment)) &&
+    RETURNS_ITS_ARGUMENT.get(type_name)?.has(function_name) === true
+  );
+}
+
+/**
+ * Whether the function enclosing `node` declares its receiver `self: Pin<…>`.
+ * Method lookup on a pinned receiver reaches `Pin`'s own `get_mut` before
+ * anything the pointee declares; on a `&mut self` receiver the same call is the
+ * pointee's, and says nothing about what it returns.
+ */
+function receiver_is_pinned(node: SyntaxNode): boolean {
+  let function_item: SyntaxNode | null = node.parent;
+  while (function_item && function_item.type !== "function_item" && function_item.type !== "closure_expression") {
+    function_item = function_item.parent;
+  }
+  const receiver = function_item?.type === "function_item" ? function_item.childForFieldName("parameters")?.namedChildren[0] : undefined;
+  const declared = receiver?.type === "parameter" && receiver.childForFieldName("pattern")?.type === "self" ? receiver.childForFieldName("type") : null;
+  const head = declared?.type === "generic_type" ? declared.childForFieldName("type")?.text : undefined;
+  return head !== undefined && returns_its_argument(`${head}::get_mut`);
 }
 
 /**
