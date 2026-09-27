@@ -31,6 +31,7 @@ import {
   extract_jsdoc_type,
   extract_jsdoc_param_type,
 } from "./jsdoc_extraction.javascript";
+import { argument_position } from "./argument_position";
 
 export {
   analyze_export_statement,
@@ -492,6 +493,7 @@ export function detect_callback_context(
           is_callback: true,
           receiver_is_external: null, // Will be classified during resolution
           receiver_location: node_to_location(call_node, file_path),
+          argument_index: argument_position(current, node),
         };
       }
     }
@@ -504,5 +506,6 @@ export function detect_callback_context(
     is_callback: false,
     receiver_is_external: null,
     receiver_location: null,
+    argument_index: null,
   };
 }

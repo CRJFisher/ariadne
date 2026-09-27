@@ -1,5 +1,6 @@
 import type { SyntaxNode } from "tree-sitter";
 import type { CallbackContext, FilePath } from "@ariadnejs/types";
+import { argument_position } from "./argument_position";
 
 /**
  * Determine whether a closure is passed as an argument to a function call.
@@ -28,6 +29,7 @@ export function detect_callback_context(
             end_line: call_node.endPosition.row + 1,
             end_column: call_node.endPosition.column,
           },
+          argument_index: argument_position(current, node),
         };
       }
     }
@@ -39,5 +41,6 @@ export function detect_callback_context(
     is_callback: false,
     receiver_is_external: null,
     receiver_location: null,
+    argument_index: null,
   };
 }

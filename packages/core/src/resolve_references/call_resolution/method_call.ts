@@ -15,17 +15,9 @@
  */
 
 import type {
-  FilePath,
-  Language,
   MethodCallReference,
   SelfReferenceCall,
 } from "@ariadnejs/types";
-import { ScopeRegistry } from "../registries/scope";
-import { DefinitionRegistry } from "../registries/definition";
-import type { ResolutionRegistry } from "../resolution_registry";
-import type { TypeRegistry } from "../registries/type";
-import type { ExportRegistry } from "../registries/export";
-import type { ImportGraph } from "../import_resolution/import_graph";
 import {
   extract_receiver,
   find_self_type,
@@ -34,7 +26,6 @@ import {
 } from "./receiver_resolution";
 import { resolve_method_on_type, resolve_super_method, type MethodLookup } from "./method_lookup";
 import { resolve_held_type } from "./value_source";
-import type { ModuleResolutionContext } from "../import_resolution";
 
 /**
  * Resolve a method call to zero, one, or more symbols
@@ -54,26 +45,8 @@ import type { ModuleResolutionContext } from "../import_resolution";
  */
 export function resolve_method_call(
   call_ref: MethodCallReference | SelfReferenceCall,
-  scopes: ScopeRegistry,
-  definitions: DefinitionRegistry,
-  types: TypeRegistry,
-  resolutions: ResolutionRegistry,
-  imports: ImportGraph,
-  exports: ExportRegistry,
-  languages: ReadonlyMap<FilePath, Language>,
-  modules: ModuleResolutionContext
+  context: ReceiverResolutionContext
 ): MethodLookup {
-  const context: ReceiverResolutionContext = {
-    scopes,
-    definitions,
-    types,
-    resolutions,
-    imports,
-    exports,
-    languages,
-    modules,
-  };
-
   const receiver = extract_receiver(call_ref, context);
   const receiver_result = resolve_receiver_type(receiver, context, resolve_held_type);
 
@@ -88,7 +61,7 @@ export function resolve_method_call(
     if (!calling_class.ok) {
       return { targets: calling_class, subtype_closure_of: null, undeclared_interface: null };
     }
-    return resolve_super_method(calling_class.value, receiver_result.value, receiver.method_name, definitions);
+    return resolve_super_method(calling_class.value, receiver_result.value, receiver.method_name, context.definitions);
   }
 
   return resolve_method_on_type(receiver_result.value, receiver.method_name, context);

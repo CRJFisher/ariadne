@@ -511,6 +511,16 @@ describe("extract_generic_parameters", () => {
     expect(params).toEqual([{ name: "T" }, { name: "U" }]);
   });
 
+  it("takes a parameter's bound from its `where` clause when the list writes none", () => {
+    const code = "fn with<F, T, V: Visitor>(f: F) -> T where F: FnOnce(&mut Self) -> T + Send, Vec<T>: Debug, V: Clone {}";
+    const fn_item = find_node_by_type(parse_rust(code), "function_item")!;
+    expect(extract_generic_parameters(fn_item)).toEqual([
+      { name: "F", bound: "FnOnce(&mut Self) -> T" },
+      { name: "T" },
+      { name: "V", bound: "Visitor" },
+    ]);
+  });
+
   it("returns empty array for non-generic function", () => {
     const code = "fn bar(x: i32) {}";
     const root = parse_rust(code);

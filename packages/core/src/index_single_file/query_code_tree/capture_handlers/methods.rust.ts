@@ -4,13 +4,14 @@
  * Separated from main capture_handlers.rust.ts to keep file sizes manageable.
  */
 
-import type { SymbolName } from "@ariadnejs/types";
+import type { SymbolName, TypeParameter } from "@ariadnejs/types";
 import type { DefinitionBuilder } from "../../definitions/definition_builder";
 import type { ImplMethodInput } from "../../definitions/method_input";
 import type { CaptureNode } from "../../capture_types";
 import type { ProcessingContext } from "../../scopes/processing_context";
 import {
   create_method_id,
+  extract_generic_parameters,
   extract_return_type,
   find_containing_impl,
   find_containing_trait,
@@ -44,6 +45,12 @@ function add_impl_method(builder: DefinitionBuilder, method_def: ImplMethodInput
   builder.add_unattached_impl_method(method_def);
 }
 
+/** The type parameters a method declares, with the bounds its `where` clause writes. */
+function method_generics(capture: CaptureNode): readonly TypeParameter[] | undefined {
+  const generics = extract_generic_parameters(capture.node.parent || capture.node);
+  return generics.length > 0 ? generics : undefined;
+}
+
 export function handle_definition_method(
   capture: CaptureNode,
   builder: DefinitionBuilder,
@@ -64,6 +71,7 @@ export function handle_definition_method(
       return_type: return_type,
       static: is_static || undefined,
       docstring,
+      generics: method_generics(capture),
       impl_self_type: impl_info.struct_name,
       impl_trait_name: impl_info.trait_name,
     };
@@ -116,6 +124,7 @@ export function handle_definition_method_async(
       return_type: return_type,
       async: true as const,
       docstring,
+      generics: method_generics(capture),
       impl_self_type: impl_info.struct_name,
       impl_trait_name: impl_info.trait_name,
     };
@@ -142,6 +151,7 @@ export function handle_definition_constructor(
       return_type: return_type,
       static: true as const,
       docstring,
+      generics: method_generics(capture),
       impl_self_type: impl_info.struct_name,
       impl_trait_name: impl_info.trait_name,
     };

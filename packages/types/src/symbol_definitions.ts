@@ -26,6 +26,13 @@ export interface CallbackContext {
 
   /** Location of the call expression that receives this callback */
   readonly receiver_location: Location | null;
+
+  /**
+   * The callback's position among the receiving call's arguments, or null when
+   * it is not itself one of them but is written inside one. What the callee
+   * declares at this position is what types the callback's parameters.
+   */
+  readonly argument_index: number | null;
 }
 
 // eslint-disable-next-line @typescript-eslint/naming-convention

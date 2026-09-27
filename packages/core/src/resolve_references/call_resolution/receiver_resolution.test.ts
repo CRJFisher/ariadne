@@ -60,6 +60,7 @@ import {
   is_ok,
   is_err,
 } from "@ariadnejs/types";
+import { ReferenceRegistry } from "../registries/reference";
 
 // Test fixtures
 const TEST_FILE = "test.ts" as FilePath;
@@ -128,6 +129,7 @@ describe("extract_receiver", () => {
     }
 
     return {
+      references: new ReferenceRegistry(),
       ...make_export_chain_context(),
       languages: new Map([[TEST_FILE, language]]),
       scopes,
@@ -728,6 +730,7 @@ describe("find_self_type", () => {
     }
 
     return {
+      references: new ReferenceRegistry(),
       ...make_export_chain_context(),
       scopes,
       definitions,
@@ -883,6 +886,7 @@ describe("find_self_type", () => {
     );
 
     const context: ReceiverResolutionContext = {
+      references: new ReferenceRegistry(),
       ...make_export_chain_context(),
       scopes,
       definitions,
@@ -964,6 +968,7 @@ describe("find_self_type", () => {
     );
 
     const context: ReceiverResolutionContext = {
+      references: new ReferenceRegistry(),
       ...make_export_chain_context(),
       scopes,
       definitions,
@@ -1084,6 +1089,7 @@ describe("find_self_type", () => {
     );
 
     const context: ReceiverResolutionContext = {
+      references: new ReferenceRegistry(),
       ...make_export_chain_context(),
       scopes,
       definitions,
@@ -1118,6 +1124,7 @@ describe("resolve_receiver_type", () => {
     resolutions = new ResolutionRegistry();
     imports = new ImportGraph();
     context = {
+      references: new ReferenceRegistry(),
       scopes,
       definitions,
       types,
@@ -1822,6 +1829,7 @@ describe("re-export chain dereferencing", () => {
     );
 
     return {
+      references: new ReferenceRegistry(),
       scopes,
       definitions,
       types: new TypeRegistry(definitions),
@@ -1881,6 +1889,7 @@ describe("destructured binding receiver typing", () => {
     resolutions = new ResolutionRegistry();
     imports = new ImportGraph();
     context = {
+      references: new ReferenceRegistry(),
       scopes,
       definitions,
       types,

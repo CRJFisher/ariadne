@@ -341,12 +341,11 @@ class Config:
       expect(names).toContain("definition.class");
     });
 
-    it("should capture lambda as closure scope", () => {
+    it("captures a lambda as a closure scope, with its parameters", () => {
       const code = "mapper = lambda x: x * 2";
       const names = unique_capture_names("python", Python, code);
       expect(names).toContain("scope.closure");
-      // Note: lambda parameters use lambda_parameters node, not captured as definition.parameter
-      expect(names).not.toContain("definition.parameter");
+      expect(names).toContain("definition.parameter");
     });
 
     it("should capture from-import with multiple names", () => {

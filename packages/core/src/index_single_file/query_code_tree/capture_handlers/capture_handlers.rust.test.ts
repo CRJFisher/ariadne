@@ -846,7 +846,7 @@ impl MyStruct {
         );
         expect(definitions.classes).toHaveLength(1);
         expect(definitions.classes[0].name).toBe("Database");
-        expect(definitions.classes[0].generics).toEqual([{ name: "T" }]);
+        expect(definitions.classes[0].generics).toEqual([{ name: "T", bound: "Clone" }]);
       }
     });
 

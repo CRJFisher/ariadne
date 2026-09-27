@@ -32,6 +32,10 @@
  * 5. **Carried arguments** — a parameter every resolved call site hands the
  *    same class holds that class object (`build(MyForm)` against
  *    `def build(cls, **kw)`).
+ * 6. **Callback parameters** — a parameter of a callback passed as an argument
+ *    holds an instance of what the callee's function-typed parameter hands it
+ *    at that position (`self.with_res(r, |this| …)` against
+ *    `f: impl FnOnce(&mut Self) -> T`).
  *
  * Two of these cross a call edge, one in each direction, and both are one hop.
  * A binding a call initialises takes the name chain the callee returns where no
@@ -45,7 +49,13 @@
  */
 
 import type {
+  FunctionCallReference,
+  Language,
   Location,
+  MethodCallReference,
+  MethodDefinition,
+  FunctionDefinition,
+  SelfReferenceCall,
   ParameterDefinition,
   PropertyDefinition,
   ScopeId,
@@ -64,6 +74,14 @@ import {
 } from "./receiver_resolution";
 import { infer_generic_return } from "./type_parameter_resolution";
 import type { DefinitionRegistry } from "../registries/definition";
+import { resolve_annotation_in_environment } from "../type_parameter_environment";
+import { lookup_annotation } from "../type_annotation_lookup";
+import {
+  callable_parameter_annotations,
+  parse_type_annotation,
+  type ParsedTypeAnnotation,
+} from "../type_preprocessing";
+import { resolve_qualified_path_rust } from "./path_resolution.rust";
 
 export type ValueSource =
   | { readonly kind: "instance_of"; readonly type_id: SymbolId }
@@ -230,7 +248,8 @@ function binding_value(
       return (
         member_read_value(def, context, visited) ??
         name_read_value(def, context, visited) ??
-        carried_argument_value(def, context)
+        carried_argument_value(def, context) ??
+        callback_parameter_value(def, context, visited)
       );
     default:
       return null;
@@ -446,4 +465,172 @@ function name_read_value(
     return null;
   }
   return resolve_read_value([carrier.name_source], carrier.defining_scope_id, carrier.location, context, visited);
+}
+
+/** A call a callback can be passed to, whose callee declares what the callback receives. */
+type ReceivingCall = FunctionCallReference | MethodCallReference | SelfReferenceCall;
+
+/**
+ * Producer 6: the instance a callback's parameter receives from the callee it
+ * is passed to — `this` in `self.with_res(r, |this| this.parse())` against
+ * `fn with_res<T>(&mut self, r: Restrictions, f: impl FnOnce(&mut Self) -> T)`.
+ *
+ * The callee's declaration says what it hands the callback, as a function type
+ * at the callback's argument position, read positionally against the
+ * callback's own parameters. A parameter that declares its own annotation is
+ * the `TypeRegistry`'s to type, and one the callee declares nothing for holds
+ * nothing.
+ */
+function callback_parameter_value(
+  parameter: ParameterDefinition,
+  context: ReceiverResolutionContext,
+  visited: Set<SymbolId>
+): ValueSource | null {
+  if (parameter.type !== undefined || !context.scopes.get_scope(parameter.defining_scope_id)) {
+    return null;
+  }
+  const body_scope = context.scopes.find_enclosing_function_scope(parameter.defining_scope_id);
+  const callback_id = context.definitions.get_callable_of_body_scope(body_scope);
+  const callback = callback_id ? context.definitions.get(callback_id) : undefined;
+  const passed = callback?.kind === "function" ? callback.callback_context : undefined;
+  if (callback?.kind !== "function" || !passed?.receiver_location || passed.argument_index === null) {
+    return null;
+  }
+  const position = callback.signature.parameters.findIndex((declared) => declared.symbol_id === parameter.symbol_id);
+  const call = receiving_call(passed.receiver_location, context);
+  const callee = call ? call_target(call, context, visited) : null;
+  if (!call || !callee || position < 0) {
+    return null;
+  }
+
+  const language = context.languages.get(callee.location.file_path);
+  const declared = callee.kind === "function" ? callee.signature.parameters : callee.parameters;
+  const offset = receiver_offset(callee, declared, call, language, context, visited);
+  const function_type = declared[passed.argument_index + offset]?.type;
+  if (!language || function_type === undefined) {
+    return null;
+  }
+  const bound = callee.generics?.find((generic) => generic.name === function_type)?.bound;
+  const handed = callable_parameter_annotations(bound ?? function_type, language)?.[position];
+  const type_id = handed ? handed_type(handed, callee, declared.slice(offset), call, language, context) : null;
+  return type_id ? { kind: "instance_of", type_id } : null;
+}
+
+/** The call written at `location` that a callback can be passed to. */
+function receiving_call(location: Location, context: ReceiverResolutionContext): ReceivingCall | null {
+  for (const ref of context.references.get_file_references(location.file_path)) {
+    if (
+      (ref.kind === "function_call" || ref.kind === "method_call" || ref.kind === "self_reference_call") &&
+      ref.location.start_line === location.start_line &&
+      ref.location.start_column === location.start_column
+    ) {
+      return ref;
+    }
+  }
+  return null;
+}
+
+/** The function or method `call` reaches through the name chain it is written with. */
+function call_target(
+  call: ReceivingCall,
+  context: ReceiverResolutionContext,
+  visited: Set<SymbolId>
+): FunctionDefinition | MethodDefinition | null {
+  const chain = callee_chain(call);
+  const callee = resolve_read_value(chain, call.scope_id, null, context, visited);
+  const def = callee?.kind === "callable" ? context.definitions.get(callee.symbol_id) : undefined;
+  return def?.kind === "function" || def?.kind === "method" ? def : null;
+}
+
+function callee_chain(call: ReceivingCall): readonly SymbolName[] {
+  return call.kind === "function_call" ? [...(call.path_prefix ?? []), call.name] : call.property_chain;
+}
+
+/**
+ * How many declared positions lead the argument list: one where the callee
+ * declares its receiver as a parameter (Rust's `self`, a Python method's first)
+ * and the call supplies it implicitly by calling through an instance; none for a
+ * path call or a call through the class (`Base.method(self, cb)`), which pass
+ * the receiver as an argument.
+ */
+function receiver_offset(
+  callee: FunctionDefinition | MethodDefinition,
+  declared: readonly ParameterDefinition[],
+  call: ReceivingCall,
+  language: Language | undefined,
+  context: ReceiverResolutionContext,
+  visited: Set<SymbolId>
+): number {
+  const declares_receiver =
+    callee.kind === "method" &&
+    ((language === "rust" && declared[0]?.name === "self") || (language === "python" && !callee.static));
+  if (!declares_receiver || call.kind === "function_call") {
+    return 0;
+  }
+  const holder = call.property_chain.slice(0, -1);
+  const through_class =
+    holder.length > 0 && resolve_read_value(holder, call.scope_id, null, context, visited)?.kind === "class_object";
+  return through_class ? 0 : 1;
+}
+
+/**
+ * The type the annotation `handed` names in the callee's own scope, where its
+ * names are written. One naming the callee's type parameters is bound by the
+ * call's arguments, else by the parameters' declared bounds, and names nothing
+ * where neither binds it — never an unrelated type spelled `T`. Any other
+ * resolves as a declared annotation does, so Rust's `Self` is the callee's impl
+ * type.
+ */
+function handed_type(
+  handed: string,
+  callee: FunctionDefinition | MethodDefinition,
+  positional: readonly ParameterDefinition[],
+  call: ReceivingCall,
+  language: Language,
+  context: ReceiverResolutionContext
+): SymbolId | null {
+  const annotation = parse_type_annotation(handed, language);
+  if (!annotation) {
+    return null;
+  }
+  const scope_id = callee.body_scope_id ?? callee.defining_scope_id;
+  const generics = callee.generics ?? [];
+  const type_parameters = new Set(generics.map((generic) => generic.name));
+  if (names_type_parameter(annotation, type_parameters)) {
+    return resolve_annotation_in_environment(
+      annotation,
+      type_parameters,
+      {
+        call: {
+          parameters: positional,
+          call_arguments: call_argument_names(call),
+          declaring_language: language,
+          scope_id: call.scope_id,
+        },
+        bounds: { parameters: generics, scope_id },
+      },
+      context
+    );
+  }
+  const found = lookup_annotation(scope_id, annotation, callee.location.file_path, language, context.definitions, {
+    ...context,
+    resolve_rust_type_path: (module_path, terminal, path_scope_id, referring_file) =>
+      resolve_qualified_path_rust(module_path, terminal, "type", path_scope_id, referring_file, context),
+  });
+  return found ? dereference_named_import(found, context) : null;
+}
+
+function names_type_parameter(annotation: ParsedTypeAnnotation, type_parameters: ReadonlySet<SymbolName>): boolean {
+  return (
+    (annotation.head.length === 1 && type_parameters.has(annotation.head[0])) ||
+    annotation.arguments.some((argument) => names_type_parameter(argument, type_parameters))
+  );
+}
+
+function call_argument_names(call: ReceivingCall): readonly (SymbolName | null)[] | null {
+  if (call.kind === "function_call") {
+    return call.call_arguments ?? null;
+  }
+  const chain_arguments = call.kind === "method_call" ? call.property_chain_arguments : undefined;
+  return chain_arguments?.[chain_arguments.length - 1] ?? null;
 }

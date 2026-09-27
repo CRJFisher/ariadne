@@ -1043,6 +1043,7 @@ describe("resolve_calls_for_files", () => {
           is_callback: true,
           receiver_is_external: false,
           receiver_location,
+          argument_index: 0,
         },
       };
       definitions.update_file(TEST_FILE, [callback_def]);
@@ -1134,6 +1135,7 @@ describe("resolve_calls_for_files", () => {
           is_callback: true,
           receiver_is_external: null,
           receiver_location: arrow_receiver_location,
+          argument_index: 0,
         },
       };
       const expression_def: FunctionDefinition = {
@@ -1149,6 +1151,7 @@ describe("resolve_calls_for_files", () => {
           is_callback: true,
           receiver_is_external: null,
           receiver_location: expression_receiver_location,
+          argument_index: 0,
         },
       };
       definitions.update_file(TEST_FILE, [arrow_def, expression_def]);
@@ -1403,6 +1406,7 @@ function install_callback_file(
         is_callback: true,
         receiver_is_external: false,
         receiver_location,
+        argument_index: 0,
       },
     });
 

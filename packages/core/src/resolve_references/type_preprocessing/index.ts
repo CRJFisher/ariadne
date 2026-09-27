@@ -10,6 +10,7 @@ export { extract_constructor_bindings, type ConstructorBindings } from "./constr
 export { class_object_annotation } from "./class_object_shape";
 export { container_element_annotation, type ContainerShape } from "./container_shape";
 export { parse_type_annotation, type ParsedTypeAnnotation } from "./annotation";
+export { callable_parameter_annotations } from "./callable_shape";
 export {
   bind_type_parameter_bounds,
   substitute_type_parameters,

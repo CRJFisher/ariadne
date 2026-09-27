@@ -306,6 +306,7 @@ export function module_path_attribute_target(
 export function extract_generic_parameters(node: SyntaxNode): TypeParameter[] {
   const generics: TypeParameter[] = [];
   const type_params = node.childForFieldName?.("type_parameters");
+  const where_bounds = where_clause_bounds(node);
 
   if (type_params) {
     for (const child of type_params.children || []) {
@@ -316,7 +317,9 @@ export function extract_generic_parameters(node: SyntaxNode): TypeParameter[] {
       ) {
         const name = child.childForFieldName?.("name");
         if (name) {
-          const bound = principal_trait_bound(child);
+          const inline = child.children.find((part) => part.type === "trait_bounds");
+          const bound =
+            (inline ? principal_trait_bound(inline) : undefined) ?? where_bounds.get(name.text);
           generics.push({
             name: name.text as SymbolName,
             ...(bound !== undefined && { bound }),
@@ -330,17 +333,33 @@ export function extract_generic_parameters(node: SyntaxNode): TypeParameter[] {
 }
 
 /**
- * The trait a `<V: Visitor + Send>` bound list names its parameter by. Auto
+ * The principal bound each type parameter a `where` clause constrains takes:
+ * `where F: FnOnce(&mut Self) -> T` bounds `F` as `<F: FnOnce(&mut Self) -> T>`
+ * would. A predicate on anything but a bare parameter name (`Vec<T>: Debug`)
+ * bounds no one parameter.
+ */
+function where_clause_bounds(node: SyntaxNode): ReadonlyMap<string, SymbolName> {
+  const bounds = new Map<string, SymbolName>();
+  const where_clause = node.children?.find((child) => child.type === "where_clause");
+  for (const predicate of where_clause?.namedChildren ?? []) {
+    const left = predicate.childForFieldName("left");
+    const trait_bounds = predicate.childForFieldName("bounds");
+    const bound = trait_bounds ? principal_trait_bound(trait_bounds) : undefined;
+    if (left?.type === "type_identifier" && bound !== undefined && !bounds.has(left.text)) {
+      bounds.set(left.text, bound);
+    }
+  }
+  return bounds;
+}
+
+/**
+ * The trait a `: Visitor + Send` bound list names its parameter by. Auto
  * traits follow the principal trait by convention, and `?Sized` and lifetimes
  * constrain the parameter without naming anything a method is called on, so the
  * first bound that is none of those is the one a receiver reaches members
  * through — the rule `parse_rust_annotation` applies to `dyn`/`impl` bounds.
  */
-function principal_trait_bound(type_parameter: SyntaxNode): SymbolName | undefined {
-  const bounds = (type_parameter.children || []).find((child) => child.type === "trait_bounds");
-  if (!bounds) {
-    return undefined;
-  }
+function principal_trait_bound(bounds: SyntaxNode): SymbolName | undefined {
   const written = bounds.text.replace(/^\s*:/, "");
   const principal = written
     .split("+")

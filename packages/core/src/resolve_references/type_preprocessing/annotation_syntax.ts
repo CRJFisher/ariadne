@@ -159,3 +159,23 @@ export function unwrap_enclosing(text: string, open: "(" | "{"): string | null {
   }
   return null;
 }
+
+/**
+ * The text inside the bracket pair `text` opens at `open_index`, and what
+ * follows its closer — `Fn(&mut Self) -> T` opened at its `(` yields
+ * `&mut Self` and `-> T` — or null when that bracket never closes.
+ */
+export function bracketed_at(
+  text: string,
+  open_index: number
+): { readonly inner: string; readonly rest: string } | null {
+  let open_depth: number | null = null;
+  for (const { index, depth, kind } of scan_structure(text)) {
+    if (kind === "open" && index === open_index) {
+      open_depth = depth;
+    } else if (kind === "close" && open_depth !== null && depth === open_depth) {
+      return { inner: text.slice(open_index + 1, index).trim(), rest: text.slice(index + 1).trim() };
+    }
+  }
+  return null;
+}

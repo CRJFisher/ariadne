@@ -1149,6 +1149,46 @@ describe("Project Integration - JavaScript", () => {
     });
   });
 
+  describe("Callback parameters", () => {
+    function calls_to(file: FilePath, class_name: string, method_name: string) {
+      const owner = Array.from(project.get_index_single_file(file)!.classes.values()).find(
+        (c) => c.name === (class_name as SymbolName)
+      )!;
+      const target = project.definitions.get_member_index().get(owner.symbol_id)!.get(method_name as SymbolName)!;
+      const calls = project.resolutions
+        .get_calls_for_file(file)
+        .filter((call) => call.name === (method_name as SymbolName))
+        .map((call) => ({
+          line: call.location.start_line,
+          targets: call.resolutions.map((r) => r.symbol_id),
+          reason: call.resolution_failure?.reason,
+        }));
+      return { target, calls };
+    }
+
+    it("types a callback's parameter from the JSDoc function type its callee declares", () => {
+      const file = file_path("callback_parameters/jsdoc.js");
+      project.update_file(
+        file,
+        [
+          "class Foo { m() {} }",
+          "/** @param {function(Foo): void} cb */",
+          "function apply(cb) {}",
+          "/** @param {(f: Foo) => void} cb */",
+          "function arrow(cb) {}",
+          "apply(function (f) { f.m(); });",
+          "arrow((f) => f.m());",
+        ].join("\n")
+      );
+
+      const { target, calls } = calls_to(file, "Foo", "m");
+      expect(calls).toEqual([
+        { line: 6, targets: [target], reason: undefined },
+        { line: 7, targets: [target], reason: undefined },
+      ]);
+    });
+  });
+
   describe("Self-reference keywords", () => {
     function calls_named(file: FilePath, name: string) {
       return project.resolutions

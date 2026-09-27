@@ -48,6 +48,7 @@ import {
 import { ScopeRegistry } from "../registries/scope";
 import { DefinitionRegistry } from "../registries/definition";
 import type { TypeRegistry } from "../registries/type";
+import type { ReferenceRegistry } from "../registries/reference";
 import type { ExportRegistry } from "../registries/export";
 import type { ResolutionRegistry } from "../resolution_registry";
 import type { ImportGraph } from "../import_resolution/import_graph";
@@ -100,10 +101,12 @@ export interface SelfTypeResolutionContext {
 
 /**
  * Registries needed to infer the type of a receiver expression and look up
- * methods on that type (phases 1 and 2 of receiver resolution).
+ * methods on that type (phases 1 and 2 of receiver resolution). The references
+ * are what a callback's parameter is typed from: the call it is passed to.
  */
 export interface ReceiverResolutionContext extends SelfTypeResolutionContext {
   readonly types: TypeRegistry;
+  readonly references: ReferenceRegistry;
 }
 
 /**

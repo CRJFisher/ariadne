@@ -830,6 +830,13 @@ describe("extract_export_info (Python visibility via naming conventions)", () =>
 
 describe("detect_callback_context", () => {
   describe("direct function call patterns", () => {
+    it("records a positional lambda's position, and none for one passed by keyword", () => {
+      const positional = detect_callback_context(find_lambda(parse_python("registry.each(key, lambda f: f.m())"))!, file_path);
+      expect(positional.argument_index).toEqual(1);
+      const keyword = detect_callback_context(find_lambda(parse_python("registry.each(key, cb=lambda f: f.m())"))!, file_path);
+      expect(keyword.argument_index).toEqual(null);
+    });
+
     it("should detect callback in map(lambda x: ...)", () => {
       const code = "result = list(map(lambda x: x * 2, items))";
       const root = parse_python(code);

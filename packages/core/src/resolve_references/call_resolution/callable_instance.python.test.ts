@@ -29,6 +29,7 @@ import type {
   Location,
 } from "@ariadnejs/types";
 import { create_module_resolution_context } from "../import_resolution";
+import { ReferenceRegistry } from "../registries/reference";
 
 const file_path = "processor.py" as FilePath;
 const module_scope = "module:0:0" as ScopeId;
@@ -157,6 +158,7 @@ describe("resolve_callable_instance", () => {
   /** The registries the protocol reads, over whatever this test has populated. */
   function context(): ReceiverResolutionContext {
     return {
+      references: new ReferenceRegistry(),
       scopes: new ScopeRegistry(),
       definitions,
       resolutions,

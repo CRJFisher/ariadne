@@ -240,14 +240,7 @@ function resolve_calls(
           // calls (obj.method()) share one resolution path.
           const method_lookup = resolve_method_call(
             ref,
-            context.scopes,
-            context.definitions,
-            context.types,
-            context.resolutions,
-            context.imports,
-            context.exports,
-            context.languages,
-            context.modules
+            context
           );
           const method_result = method_lookup.targets;
           // Recorded whichever branch below supplies the answer: a collection
@@ -323,14 +316,7 @@ function resolve_calls(
           );
           const getter_lookup = resolve_method_call(
             getter_call,
-            context.scopes,
-            context.definitions,
-            context.types,
-            context.resolutions,
-            context.imports,
-            context.exports,
-            context.languages,
-            context.modules
+            context
           );
           record_dispatch(
             subtype_dispatch_files,

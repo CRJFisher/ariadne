@@ -28,6 +28,7 @@ import type {
 } from "@ariadnejs/types";
 import { create_module_resolution_context } from "../import_resolution";
 import type { ModuleResolutionContext } from "../import_resolution";
+import { ReferenceRegistry } from "../registries/reference";
 
 const TEST_FILE = "test.ts" as FilePath;
 const FILE_SCOPE_ID = "scope:test.ts:file:0:0" as ScopeId;
@@ -163,14 +164,7 @@ describe("Method Call Resolution", () => {
 
       const { targets: resolved } = resolve_method_call(
         call_ref,
-        scopes,
-        definitions,
-        types,
-        resolutions,
-        imports,
-        exports,
-        languages,
-        modules
+        { scopes, definitions, types, resolutions, imports, exports, languages, modules, references: new ReferenceRegistry() }
       );
 
       expect(unwrap(resolved)).toEqual([method_id]);
@@ -217,14 +211,7 @@ describe("Method Call Resolution", () => {
 
       const { targets: resolved } = resolve_method_call(
         call_ref,
-        scopes,
-        definitions,
-        types,
-        resolutions,
-        imports,
-        exports,
-        languages,
-        modules
+        { scopes, definitions, types, resolutions, imports, exports, languages, modules, references: new ReferenceRegistry() }
       );
 
       expect(unwrap(resolved)).toEqual([method_id]);
@@ -274,14 +261,7 @@ describe("Method Call Resolution", () => {
 
       const { targets: resolved } = resolve_method_call(
         call_ref,
-        scopes,
-        definitions,
-        types,
-        resolutions,
-        imports,
-        exports,
-        languages,
-        modules
+        { scopes, definitions, types, resolutions, imports, exports, languages, modules, references: new ReferenceRegistry() }
       );
 
       expect(unwrap(resolved)).toEqual([method_id]);
@@ -354,14 +334,7 @@ describe("Method Call Resolution", () => {
 
       const { targets: resolved_first } = resolve_method_call(
         first_call,
-        scopes,
-        definitions,
-        types,
-        resolutions,
-        imports,
-        exports,
-        languages,
-        modules
+        { scopes, definitions, types, resolutions, imports, exports, languages, modules, references: new ReferenceRegistry() }
       );
 
       expect(unwrap(resolved_first)).toEqual([set_name_id]);
@@ -377,14 +350,7 @@ describe("Method Call Resolution", () => {
 
       const { targets: resolved_second } = resolve_method_call(
         second_call,
-        scopes,
-        definitions,
-        types,
-        resolutions,
-        imports,
-        exports,
-        languages,
-        modules
+        { scopes, definitions, types, resolutions, imports, exports, languages, modules, references: new ReferenceRegistry() }
       );
 
       expect(unwrap(resolved_second)).toEqual([set_age_id]);
@@ -455,14 +421,7 @@ describe("Method Call Resolution", () => {
 
       const { targets: resolved } = resolve_method_call(
         call_ref,
-        scopes,
-        definitions,
-        types,
-        resolutions,
-        imports,
-        exports,
-        languages,
-        modules
+        { scopes, definitions, types, resolutions, imports, exports, languages, modules, references: new ReferenceRegistry() }
       );
 
       expect(unwrap(resolved)).toEqual([method_id]);
@@ -530,14 +489,7 @@ describe("Method Call Resolution", () => {
 
       const { targets: resolved } = resolve_method_call(
         call_ref,
-        scopes,
-        definitions,
-        types,
-        resolutions,
-        imports,
-        exports,
-        languages,
-        modules
+        { scopes, definitions, types, resolutions, imports, exports, languages, modules, references: new ReferenceRegistry() }
       );
 
       expect(unwrap(resolved)).toEqual([helper_id]);
@@ -596,14 +548,7 @@ describe("Method Call Resolution", () => {
 
       const { targets: resolved } = resolve_method_call(
         call_ref,
-        scopes,
-        definitions,
-        types,
-        resolutions,
-        imports,
-        exports,
-        languages,
-        modules
+        { scopes, definitions, types, resolutions, imports, exports, languages, modules, references: new ReferenceRegistry() }
       );
 
       const error = unwrap_err(resolved);
@@ -640,14 +585,7 @@ describe("Method Call Resolution", () => {
 
       const { targets: resolved } = resolve_method_call(
         call_ref,
-        scopes,
-        definitions,
-        types,
-        resolutions,
-        imports,
-        exports,
-        languages,
-        modules
+        { scopes, definitions, types, resolutions, imports, exports, languages, modules, references: new ReferenceRegistry() }
       );
 
       const error = unwrap_err(resolved);
@@ -685,14 +623,7 @@ describe("Method Call Resolution", () => {
 
       const { targets: resolved } = resolve_method_call(
         call_ref,
-        scopes,
-        definitions,
-        types,
-        resolutions,
-        imports,
-        exports,
-        languages,
-        modules
+        { scopes, definitions, types, resolutions, imports, exports, languages, modules, references: new ReferenceRegistry() }
       );
 
       const error = unwrap_err(resolved);
@@ -714,14 +645,7 @@ describe("Method Call Resolution", () => {
 
       const { targets: resolved } = resolve_method_call(
         call_ref,
-        scopes,
-        definitions,
-        types,
-        resolutions,
-        imports,
-        exports,
-        languages,
-        modules
+        { scopes, definitions, types, resolutions, imports, exports, languages, modules, references: new ReferenceRegistry() }
       );
 
       const error = unwrap_err(resolved);
@@ -761,14 +685,7 @@ describe("Method Call Resolution", () => {
 
       const { targets: resolved } = resolve_method_call(
         call_ref,
-        scopes,
-        definitions,
-        types,
-        resolutions,
-        imports,
-        exports,
-        languages,
-        modules
+        { scopes, definitions, types, resolutions, imports, exports, languages, modules, references: new ReferenceRegistry() }
       );
 
       const error = unwrap_err(resolved);
@@ -788,14 +705,7 @@ describe("Method Call Resolution", () => {
 
       const { targets: resolved } = resolve_method_call(
         call_ref,
-        scopes,
-        definitions,
-        types,
-        resolutions,
-        imports,
-        exports,
-        languages,
-        modules
+        { scopes, definitions, types, resolutions, imports, exports, languages, modules, references: new ReferenceRegistry() }
       );
 
       const error = unwrap_err(resolved);
@@ -836,14 +746,7 @@ describe("Method Call Resolution", () => {
 
       const { targets: resolved } = resolve_method_call(
         call_ref,
-        scopes,
-        definitions,
-        types,
-        resolutions,
-        imports,
-        exports,
-        languages,
-        modules
+        { scopes, definitions, types, resolutions, imports, exports, languages, modules, references: new ReferenceRegistry() }
       );
 
       const error = unwrap_err(resolved);
@@ -1003,14 +906,7 @@ describe("Method Call Resolution", () => {
 
       const { targets: resolved } = resolve_method_call(
         call_ref,
-        scopes,
-        definitions,
-        types,
-        resolutions,
-        imports,
-        exports,
-        languages,
-        modules
+        { scopes, definitions, types, resolutions, imports, exports, languages, modules, references: new ReferenceRegistry() }
       );
 
       expect([...unwrap(resolved)].sort()).toEqual(
@@ -1079,14 +975,7 @@ describe("Method Call Resolution", () => {
 
       const { targets: resolved } = resolve_method_call(
         call_ref,
-        scopes,
-        definitions,
-        types,
-        resolutions,
-        imports,
-        exports,
-        languages,
-        modules
+        { scopes, definitions, types, resolutions, imports, exports, languages, modules, references: new ReferenceRegistry() }
       );
 
       expect(unwrap(resolved)).toEqual([method_id]);
@@ -1150,14 +1039,7 @@ describe("Method Call Resolution", () => {
 
       const { targets: resolved } = resolve_method_call(
         call_ref,
-        scopes,
-        definitions,
-        types,
-        resolutions,
-        imports,
-        exports,
-        languages,
-        modules
+        { scopes, definitions, types, resolutions, imports, exports, languages, modules, references: new ReferenceRegistry() }
       );
 
       const error = unwrap_err(resolved);

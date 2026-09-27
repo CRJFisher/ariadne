@@ -30,6 +30,7 @@ import {
 } from "@ariadnejs/types";
 import type { CaptureNode } from "../../capture_types";
 import { node_to_location } from "../../node_to_location";
+import { argument_position } from "./argument_position";
 
 // ============================================================================
 // Symbol ID Creation
@@ -757,6 +758,7 @@ export function detect_callback_context(
           is_callback: true,
           receiver_is_external: null,
           receiver_location: node_to_location(call_node, file_path),
+          argument_index: argument_position(current, node),
         };
       }
     }
@@ -768,6 +770,7 @@ export function detect_callback_context(
     is_callback: false,
     receiver_is_external: null,
     receiver_location: null,
+    argument_index: null,
   };
 }
 

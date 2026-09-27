@@ -393,6 +393,29 @@
   )
 )
 
+; Lambda parameters belong to the lambda's anonymous function, as a def's do to it
+(lambda_parameters
+  (identifier) @definition.parameter
+)
+
+(lambda_parameters
+  (default_parameter
+    name: (identifier) @definition.parameter
+  )
+)
+
+(lambda_parameters
+  (list_splat_pattern
+    (identifier) @definition.parameter
+  )
+)
+
+(lambda_parameters
+  (dictionary_splat_pattern
+    (identifier) @definition.parameter
+  )
+)
+
 ; *args and **kwargs
 (parameters
   (list_splat_pattern

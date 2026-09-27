@@ -2420,6 +2420,18 @@ doubled = list(map(lambda x: x * 2, numbers))`;
       expect(lambda.callback_context!.receiver_location?.start_line).toBe(2);
     });
 
+    it("indexes a lambda's parameters as its own, defaults and splats included", () => {
+      const code = "apply(lambda f, k=2, *rest, **options: f.m())";
+      const tree = parser.parse(code);
+      const index = build_index_single_file(
+        create_parsed_file(code, "lambda_parameters.py" as FilePath, tree, "python" as Language),
+        tree,
+        "python" as Language
+      );
+      const lambda = Array.from(index.functions.values()).find((f) => f.name === "<anonymous>")!;
+      expect(lambda.signature.parameters.map((parameter) => parameter.name)).toEqual(["f", "k", "rest", "options"]);
+    });
+
     it("should detect callback context for lambda in filter", () => {
       const code = `numbers = [1, 2, 3, 4, 5]
 evens = list(filter(lambda x: x % 2 == 0, numbers))`;

@@ -34,6 +34,7 @@ const no_callback: CallbackContext = {
   is_callback: false,
   receiver_is_external: null,
   receiver_location: null,
+  argument_index: null,
 };
 
 describe("detect_callback_context", () => {
@@ -51,6 +52,7 @@ describe("detect_callback_context", () => {
         end_line: 1,
         end_column: 30,
       },
+      argument_index: 0,
     });
   });
 
@@ -70,7 +72,15 @@ describe("detect_callback_context", () => {
         end_line: 1,
         end_column: 39,
       },
+      argument_index: 0,
     });
+  });
+
+  it("records the closure's position among the call's arguments, and none for a closure written inside an argument", () => {
+    const second = detect_callback_context(find_closure(parse_rust("fn main() { self.with_res(r, |this| this.parse()); }")), file_path);
+    expect(second.argument_index).toEqual(1);
+    const inside = detect_callback_context(find_closure(parse_rust("fn main() { run([|x| x]); }")), file_path);
+    expect(inside.argument_index).toEqual(null);
   });
 
   it("returns the no-callback context for a closure bound to a variable", () => {
@@ -108,6 +118,7 @@ describe("detect_callback_context", () => {
         end_line: 1,
         end_column: 31,
       },
+      argument_index: 0,
     });
   });
 

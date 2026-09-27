@@ -441,6 +441,57 @@ describe("Project Integration - Rust", () => {
     });
   });
 
+  describe("Callback parameters", () => {
+    function calls_to(file: FilePath, class_name: string, method_name: string) {
+      const owner = Array.from(project.get_index_single_file(file)!.classes.values()).find(
+        (c) => c.name === (class_name as SymbolName)
+      )!;
+      const target = project.definitions.get_member_index().get(owner.symbol_id)!.get(method_name as SymbolName)!;
+      const calls = project.resolutions
+        .get_calls_for_file(file)
+        .filter((call) => call.name === (method_name as SymbolName))
+        .map((call) => ({
+          line: call.location.start_line,
+          targets: call.resolutions.map((r) => r.symbol_id),
+          reason: call.resolution_failure?.reason,
+        }));
+      return { target, calls };
+    }
+
+    it("types a closure parameter from the callee's `impl Fn*`, inline and `where` bounds", () => {
+      const file = file_path("callback_parameters/with_res.rs");
+      project.update_file(
+        file,
+        [
+          "struct Parser;",
+          "impl Parser {",
+          "    fn with_res<T>(&mut self, r: u32, f: impl FnOnce(&mut Self) -> T) -> T { f(self) }",
+          "    fn with_inline<F: FnMut(&mut Self)>(&mut self, mut f: F) { f(self) }",
+          "    fn with_where<F, T>(&mut self, f: F) -> T where F: FnOnce(&mut Self) -> T { f(self) }",
+          "    fn parse(&mut self) {}",
+          "    fn go(&mut self) {",
+          "        self.with_res(1, |this| this.parse());",
+          "        self.with_inline(|this| this.parse());",
+          "        self.with_where(|this| this.parse());",
+          "        self.with_res(1, |this: &mut Other| this.parse());",
+          "    }",
+          "}",
+          "struct Other;",
+        ].join("\n")
+      );
+
+      // A closure parameter annotated in its own right is the annotation's,
+      // which names a type declaring no `parse`.
+      const { target, calls } = calls_to(file, "Parser", "parse");
+      expect(calls).toEqual([
+        { line: 8, targets: [target], reason: undefined },
+        { line: 9, targets: [target], reason: undefined },
+        { line: 10, targets: [target], reason: undefined },
+        { line: 11, targets: [], reason: "method_not_on_type" },
+      ]);
+    });
+  });
+
   describe("Standard-library re-borrows of the receiver", () => {
     it("holds the receiver through ManuallyDrop::new, the Pin unwrappings and a pinned receiver's get_mut", () => {
       const file = file_path("self_reference/reborrow.rs");

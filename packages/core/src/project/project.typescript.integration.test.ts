@@ -309,6 +309,54 @@ describe("Project Integration - TypeScript", () => {
     });
   });
 
+  describe("Callback parameters", () => {
+    function calls_to(file: FilePath, class_name: string, method_name: string) {
+      const owner = Array.from(project.get_index_single_file(file)!.classes.values()).find(
+        (c) => c.name === (class_name as SymbolName)
+      )!;
+      const target = project.definitions.get_member_index().get(owner.symbol_id)!.get(method_name as SymbolName)!;
+      const calls = project.resolutions
+        .get_calls_for_file(file)
+        .filter((call) => call.name === (method_name as SymbolName))
+        .map((call) => ({
+          line: call.location.start_line,
+          targets: call.resolutions.map((r) => r.symbol_id),
+          reason: call.resolution_failure?.reason,
+        }));
+      return { target, calls };
+    }
+
+    it("types an arrow's parameter from the function type its callee declares at that position", () => {
+      const file = file_path("callback_parameters/arrows.ts");
+      project.update_file(
+        file,
+        [
+          "class Foo { m() {} }",
+          "class Registry { each(key: string, cb: (item: Foo, index: number) => void) {} }",
+          "function apply(cb: ((f: Foo) => void) | undefined) {}",
+          "function map<T>(items: T[], cb: (x: T) => void) {}",
+          "function unbound<T>(cb: (x: T) => void) {}",
+          "const registry = new Registry();",
+          "const foos: Foo[] = [];",
+          "apply((f) => f.m());",
+          "registry.each('k', (item) => item.m());",
+          "map(foos, (x) => x.m());",
+          "unbound((x) => x.m());",
+        ].join("\n")
+      );
+
+      // `unbound`'s `T` is bound by nothing at this call, so its callback's
+      // parameter holds nothing.
+      const { target, calls } = calls_to(file, "Foo", "m");
+      expect(calls).toEqual([
+        { line: 8, targets: [target], reason: undefined },
+        { line: 9, targets: [target], reason: undefined },
+        { line: 10, targets: [target], reason: undefined },
+        { line: 11, targets: [], reason: "receiver_type_unknown" },
+      ]);
+    });
+  });
+
   describe("Self-reference keywords", () => {
     it("resolves a capture of `this` through a cast or a non-null assertion as the receiver it holds", () => {
       const file = file_path("self_reference/capture.ts");

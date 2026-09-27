@@ -1294,6 +1294,52 @@ def process():
 
   });
 
+  describe("Callback parameters", () => {
+    function calls_to(file: FilePath, class_name: string, method_name: string) {
+      const owner = Array.from(project.get_index_single_file(file)!.classes.values()).find(
+        (c) => c.name === (class_name as SymbolName)
+      )!;
+      const target = project.definitions.get_member_index().get(owner.symbol_id)!.get(method_name as SymbolName)!;
+      const calls = project.resolutions
+        .get_calls_for_file(file)
+        .filter((call) => call.name === (method_name as SymbolName))
+        .map((call) => ({
+          line: call.location.start_line,
+          targets: call.resolutions.map((r) => r.symbol_id),
+          reason: call.resolution_failure?.reason,
+        }));
+      return { target, calls };
+    }
+
+    it("types a lambda's parameter from the Callable its callee declares, past a method's own receiver", () => {
+      const file = file_path("callback_parameters/lambdas.py");
+      project.update_file(
+        file,
+        [
+          "from typing import Callable, Optional",
+          "class Foo:",
+          "    def m(self): pass",
+          "class Registry:",
+          "    def each(self, cb: Callable[[Foo], None]): pass",
+          "def apply(cb: Optional[Callable[[Foo], None]]): pass",
+          "registry = Registry()",
+          "apply(lambda f: f.m())",
+          "registry.each(lambda f: f.m())",
+          "Registry.each(registry, lambda f: f.m())",
+        ].join("\n")
+      );
+
+      // Through the class the receiver is an argument, so the lambda is the
+      // second one and still lands on `cb`.
+      const { target, calls } = calls_to(file, "Foo", "m");
+      expect(calls).toEqual([
+        { line: 8, targets: [target], reason: undefined },
+        { line: 9, targets: [target], reason: undefined },
+        { line: 10, targets: [target], reason: undefined },
+      ]);
+    });
+  });
+
   describe("Polymorphic Protocol Resolution (Task 11.158)", () => {
     it("should mark Protocol implementations as called when possible", async () => {
       const source = load_source("classes/polymorphic_protocol.py");

@@ -96,14 +96,7 @@ function resolve_callable_value(
         ref.property_chain,
         false
       ),
-      context.scopes,
-      context.definitions,
-      context.types,
-      context.resolutions,
-      context.imports,
-      context.exports,
-      context.languages,
-      context.modules
+      context
     );
     return { targets: is_ok(targets) ? targets.value : [], ...dispatched };
   }

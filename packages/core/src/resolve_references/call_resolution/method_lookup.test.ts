@@ -37,6 +37,7 @@ import {
   is_ok,
   is_err,
 } from "@ariadnejs/types";
+import { ReferenceRegistry } from "../registries/reference";
 
 // Test fixtures
 const TEST_FILE = "test.ts" as FilePath;
@@ -72,6 +73,7 @@ describe("resolve_method_on_type", () => {
     imports = new ImportGraph();
     ({ exports, languages, modules } = make_export_chain_context());
     context = {
+      references: new ReferenceRegistry(),
       scopes,
       definitions,
       types,

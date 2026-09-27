@@ -992,6 +992,15 @@ describe("detect_callback_context", () => {
     expect(result.receiver_location).not.toBeNull();
   });
 
+  it("records the callback's position among the call's arguments, through parentheses", () => {
+    const second = detect_callback_context(find_arrow_function(parse_js("registry.each(key, (item) => item.m());"))!, file_path);
+    expect(second.argument_index).toEqual(1);
+    const wrapped = detect_callback_context(find_arrow_function(parse_js("apply(((f) => f.m()));"))!, file_path);
+    expect(wrapped.argument_index).toEqual(0);
+    const inside = detect_callback_context(find_arrow_function(parse_js("apply({ run: (f) => f.m() });"))!, file_path);
+    expect(inside.argument_index).toEqual(null);
+  });
+
   it("should detect arrow function as callback in standalone call", () => {
     const root = parse_js("setTimeout(() => {}, 100);");
     const arrow_node = find_arrow_function(root)!;
