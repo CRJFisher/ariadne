@@ -1,14 +1,17 @@
 /**
- * What a JavaScript/TypeScript binding's initialiser names: the collection it
- * is looked up from, the name or member it reads, the callee chain of the call
- * it is initialised from, and — for a binding a `for…of` loop or an array
- * pattern initialises — the container it takes an element of. A field's
- * initialiser and a parameter's default name what a declarator's would.
+ * What a JavaScript/TypeScript binding's value names: the collection it is
+ * looked up from, the name or member it reads, the callee chain of the call it
+ * is initialised from, and — for a binding a `for…of` loop or an array pattern
+ * initialises — the container it takes an element of. A field's initialiser and
+ * a parameter's default name what a declarator's would, and a declarator
+ * written without a value names what every later assignment to it agrees on.
  * Resolution follows each to type or dispatch the binding.
  */
 
 import type { SyntaxNode } from "tree-sitter";
 import type { IterationSource, MemberSource, SymbolName } from "@ariadnejs/types";
+import { agreed } from "./agreed_fact";
+import { written_values } from "./binding_writes.javascript";
 
 /**
  * Extract the name of the collection variable this definition was looked up from.
@@ -19,15 +22,16 @@ import type { IterationSource, MemberSource, SymbolName } from "@ariadnejs/types
  * 2. const handler = config["key"];      -> returns "config"
  */
 export function extract_collection_source(node: SyntaxNode): SymbolName | undefined {
-  const value_node = declarator_value(node);
-  if (!value_node) {
-    return undefined;
-  }
+  return agreed(binding_values(node), collection_read);
+}
 
+function collection_read(value_node: SyntaxNode): SymbolName | undefined {
   // Case 1: Method call (config.get(...))
   if (value_node.type === "call_expression") {
     const function_node = value_node.childForFieldName("function");
-    if (function_node?.type === "member_expression") {
+    // Only `get` reads one entry; any other method's result is its own value,
+    // not an element of the receiver (`A.children(n)` is no member of `A`).
+    if (function_node?.type === "member_expression" && function_node.childForFieldName("property")?.text === "get") {
       const object_node = function_node.childForFieldName("object");
       if (object_node?.type === "identifier") {
         return object_node.text as SymbolName;
@@ -56,11 +60,14 @@ export function extract_collection_source(node: SyntaxNode): SymbolName | undefi
  * `a[k]()`, `super.f()`) has no chain.
  */
 export function extract_initializer_call(node: SyntaxNode): readonly SymbolName[] | undefined {
-  const value_node = declarator_value(node);
+  return agreed(binding_values(node), called_chain);
+}
+
+function called_chain(value_node: SyntaxNode): readonly SymbolName[] | undefined {
   const callee_node =
-    value_node?.type === "call_expression"
+    value_node.type === "call_expression"
       ? value_node.childForFieldName("function")
-      : value_node?.type === "new_expression"
+      : value_node.type === "new_expression"
         ? value_node.childForFieldName("constructor")
         : null;
   return callee_node ? name_chain(callee_node) : undefined;
@@ -78,8 +85,11 @@ export function extract_initializer_call(node: SyntaxNode): readonly SymbolName[
 export function extract_initializer_call_arguments(
   node: SyntaxNode
 ): readonly (SymbolName | null)[] | undefined {
-  const value_node = declarator_value(node);
-  if (value_node?.type !== "call_expression" && value_node?.type !== "new_expression") {
+  return agreed(binding_values(node), call_arguments);
+}
+
+function call_arguments(value_node: SyntaxNode): readonly (SymbolName | null)[] | undefined {
+  if (value_node.type !== "call_expression" && value_node.type !== "new_expression") {
     return undefined;
   }
   const arguments_node = value_node.childForFieldName("arguments");
@@ -100,14 +110,18 @@ export function extract_read_source(node: SyntaxNode): {
   name_source?: SymbolName;
   member_source?: MemberSource;
 } {
-  const value_node = parameter_default(node) ?? declarator_value(node);
-  if (value_node?.type === "identifier") {
+  const default_value = parameter_default(node);
+  return agreed(default_value ? [default_value] : binding_values(node), whole_read) ?? {};
+}
+
+function whole_read(value_node: SyntaxNode): { name_source?: SymbolName; member_source?: MemberSource } {
+  if (value_node.type === "identifier") {
     return { name_source: value_node.text as SymbolName };
   }
-  if (value_node && unwrap_value_preserving(value_node).type === "this") {
+  if (unwrap_value_preserving(value_node).type === "this") {
     return { name_source: "this" as SymbolName };
   }
-  if (value_node?.type !== "member_expression") {
+  if (value_node.type !== "member_expression") {
     return {};
   }
   const holder_node = value_node.childForFieldName("object");
@@ -227,7 +241,7 @@ function pattern_position(pattern: SyntaxNode, element: SyntaxNode): number {
 /**
  * The default a JavaScript parameter `node` names takes (`Info = TraceInfo`). A
  * TypeScript parameter holds its default in its own `value` field, which
- * `declarator_value` reads.
+ * `binding_values` reads.
  */
 function parameter_default(node: SyntaxNode): SyntaxNode | null {
   const pattern = node.parent;
@@ -241,13 +255,23 @@ function parameter_default(node: SyntaxNode): SyntaxNode | null {
   return pattern.childForFieldName("right");
 }
 
-function declarator_value(node: SyntaxNode): SyntaxNode | null {
+/**
+ * Every value written into the binding `node` names: a declarator's initialiser
+ * or its later assignments (`binding_writes.javascript.ts`), a field's
+ * initialiser, a TypeScript parameter's default.
+ */
+function binding_values(node: SyntaxNode): readonly SyntaxNode[] {
   const declarator =
     node.type === "identifier" || node.type === "property_identifier"
       ? (node.parent ?? node)
       : node;
-  return declarator.childForFieldName("value") ?? declarator.childForFieldName("init");
+  if (declarator.type === "variable_declarator") {
+    return written_values(declarator);
+  }
+  const value = declarator.childForFieldName("value") ?? declarator.childForFieldName("init");
+  return value ? [value] : [];
 }
+
 
 /**
  * A callee's names alone, root first. A receiver's `build_property_chain` also

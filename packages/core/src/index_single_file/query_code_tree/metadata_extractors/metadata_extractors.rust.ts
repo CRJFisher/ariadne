@@ -21,6 +21,8 @@ import type { SymbolName, TypeInfo, FilePath } from "@ariadnejs/types";
 import { self_reference_keyword, type_symbol } from "@ariadnejs/types";
 import type { ConstructTarget, MetadataExtractors, ReceiverInfo } from "./metadata_extractor_types";
 import { node_to_location } from "../../node_to_location";
+import { agreed } from "../symbol_factories/agreed_fact";
+import { declaration_written_by, written_values } from "../symbol_factories/binding_writes.rust";
 
 /** The expressions a Rust construction is written as. */
 const RUST_CONSTRUCTIONS: ReadonlySet<string> = new Set(["call_expression", "struct_expression"]);
@@ -423,7 +425,8 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
       if (parent.type === "assignment_expression") {
         const left = parent.childForFieldName("left");
         if (left) {
-          return { location: node_to_location(left, file_path), holds };
+          const declared = left.type === "identifier" ? constructed_declaration(left) : null;
+          return { location: node_to_location(declared ?? left, file_path), holds };
         }
         break;
       }
@@ -608,3 +611,26 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
       : undefined;
   },
 };
+
+/**
+ * The name of the `let` a construction assigned to `left` types: the one
+ * declared without a value that `left` writes, when every write into it
+ * constructs through the same callee (`let this; this = Foo::new();`). Where
+ * the writes construct different things, or anything else writes it, the
+ * construction types nothing a definition stands at.
+ */
+function constructed_declaration(left: SyntaxNode): SyntaxNode | null {
+  const declared = declaration_written_by(left);
+  const constructs = declared ? agreed(written_values(declared), construction_callee) : undefined;
+  return constructs === undefined ? null : declared;
+}
+
+function construction_callee(value: SyntaxNode): string | undefined {
+  const callee =
+    value.type === "call_expression"
+      ? value.childForFieldName("function")
+      : value.type === "struct_expression"
+        ? value.childForFieldName("name")
+        : null;
+  return callee?.text;
+}

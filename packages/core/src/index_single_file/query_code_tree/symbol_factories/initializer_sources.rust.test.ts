@@ -112,3 +112,18 @@ describe("extract_read_source", () => {
     ]).toEqual([{}, {}, {}]);
   });
 });
+
+describe("a `let` written without a value", () => {
+  /** The first identifier spelled `name` in `fn f() { <body> }`: the `let`'s own name. */
+  function declared(body: string, name: string) {
+    return parse_rust(`fn f() { ${body} }`)
+      .descendantsOfType("identifier")
+      .find((node) => node.text === name)!;
+  }
+
+  it("names what every later assignment agrees on, and nothing they disagree on", () => {
+    expect(extract_read_source(declared("let this; this = self;", "this"))).toEqual({ name_source: "self" });
+    expect(extract_read_source(declared("let this; this = self; this = other;", "this"))).toEqual({});
+    expect(extract_collection_source(declared("let h; h = config.get(k);", "h"))).toEqual("config");
+  });
+});

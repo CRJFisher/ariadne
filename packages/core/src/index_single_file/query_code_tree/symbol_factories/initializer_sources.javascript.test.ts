@@ -149,6 +149,12 @@ describe("extract_collection_source", () => {
     expect(result).toBe("config");
   });
 
+  it("reads no collection from a method call other than get: const args = A.children(n)", () => {
+    const root = parse_js("const args = A.children(n);");
+    const declarator = find_node_by_type(root, "variable_declarator")!;
+    expect(extract_collection_source(declarator.childForFieldName("name")!)).toBeUndefined();
+  });
+
   it("should extract source from subscript access: config['key']", () => {
     const root = parse_js("const handler = config['key'];");
     const declarator = find_node_by_type(root, "variable_declarator")!;
@@ -235,5 +241,29 @@ describe("extract_read_source", () => {
       read_source("const p = make();", "p"),
       read_source("const [first = Fallback] = items;", "first"),
     ]).toEqual([{}, {}, {}, {}, {}]);
+  });
+});
+
+describe("a declarator written without a value", () => {
+  /** The first identifier spelled `name` in `code`: the declarator's own name. */
+  function declared(code: string, name: string): SyntaxNode {
+    return parse_js(code)
+      .descendantsOfType("identifier")
+      .find((node) => node.text === name)!;
+  }
+
+  it("names what every later assignment agrees on", () => {
+    expect(extract_read_source(declared("var self; self = this;", "self"))).toEqual({
+      name_source: "this" as SymbolName,
+    });
+    const constructed = declared("let p; if (c) { p = new Parser(a); } else { p = new Parser(b); }", "p");
+    expect(extract_initializer_call(constructed)).toEqual(["Parser"]);
+    expect(extract_initializer_call_arguments(constructed)).toEqual(undefined);
+    expect(extract_collection_source(declared("let h; h = config.get(k);", "h"))).toEqual("config");
+  });
+
+  it("names nothing its assignments disagree on", () => {
+    expect(extract_read_source(declared("var self; self = this; self = other;", "self"))).toEqual({});
+    expect(extract_initializer_call(declared("let p; p = new Parser(); p = new Lexer();", "p"))).toEqual(undefined);
   });
 });

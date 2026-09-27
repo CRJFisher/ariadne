@@ -1,12 +1,16 @@
 /**
- * What a Rust `let`/`const` initialiser names: the collection it is looked up
- * from and the callee chain of the call it is initialised from — and, for a
- * binding a `for` loop initialises, the container it takes an element of.
+ * What a Rust `let`/`const` value names: the collection it is looked up from,
+ * the one name it reads, and the callee chain of the call it is initialised
+ * from — and, for a binding a `for` loop initialises, the container it takes an
+ * element of. A `let` declared without a value names what every later
+ * assignment to it agrees on.
  * Resolution follows each to type or dispatch the binding.
  */
 
 import type { SyntaxNode } from "tree-sitter";
 import type { IterationSource, SymbolName } from "@ariadnejs/types";
+import { agreed } from "./agreed_fact";
+import { written_values } from "./binding_writes.rust";
 
 /**
  * Extract the name of the collection variable this definition was looked up from.
@@ -17,41 +21,27 @@ import type { IterationSource, SymbolName } from "@ariadnejs/types";
  * 2. let handler = config["key"];      -> returns "config"
  */
 export function extract_collection_source(node: SyntaxNode): SymbolName | undefined {
-  // Get initial value node (right side of assignment)
-  let assignment = node;
-  if (node.type === "identifier") {
-    assignment = node.parent || node;
-  }
+  return agreed(let_values(node), collection_read);
+}
 
-  // Handle let_declaration: let x = ...
-  if (assignment.type === "let_declaration" || assignment.type === "const_item") {
-    const value_node = assignment.childForFieldName?.("value");
-    if (!value_node) return undefined;
-
-    // Case 1: Method call (config.get(...))
-    if (value_node.type === "call_expression") {
-      const function_node = value_node.childForFieldName?.("function");
-      if (function_node?.type === "field_expression") {
-        const value = function_node.childForFieldName?.("value");
-        const field = function_node.childForFieldName?.("field");
-        
-        if (value?.type === "identifier" && field?.text === "get") {
-          return value.text as SymbolName;
-        }
+function collection_read(value_node: SyntaxNode): SymbolName | undefined {
+  // Case 1: Method call (config.get(...))
+  if (value_node.type === "call_expression") {
+    const function_node = value_node.childForFieldName("function");
+    if (function_node?.type === "field_expression") {
+      const value = function_node.childForFieldName("value");
+      const field = function_node.childForFieldName("field");
+      if (value?.type === "identifier" && field?.text === "get") {
+        return value.text as SymbolName;
       }
     }
+  }
 
-    // Case 2: Index access (config["key"])
-    if (value_node.type === "index_expression") {
-      let operand = value_node.childForFieldName?.("operand");
-      if (!operand) {
-        // Fallback to first child if field name is not available
-        operand = value_node.child(0) || null;
-      }
-
-      if (operand?.type === "identifier") {
-        return operand.text as SymbolName;
-      }
+  // Case 2: Index access (config["key"])
+  if (value_node.type === "index_expression") {
+    const operand = value_node.childForFieldName("operand") ?? value_node.child(0);
+    if (operand?.type === "identifier") {
+      return operand.text as SymbolName;
     }
   }
 
@@ -69,16 +59,13 @@ export function extract_collection_source(node: SyntaxNode): SymbolName | undefi
 export function extract_initializer_call(
   node: SyntaxNode
 ): readonly SymbolName[] | undefined {
-  const assignment = node.type === "identifier" ? (node.parent ?? node) : node;
-  if (assignment.type !== "let_declaration" && assignment.type !== "const_item") {
+  return agreed(let_values(node), called_chain);
+}
+
+function called_chain(value_node: SyntaxNode): readonly SymbolName[] | undefined {
+  if (value_node.type !== "call_expression") {
     return undefined;
   }
-
-  const value_node = assignment.childForFieldName("value");
-  if (value_node?.type !== "call_expression") {
-    return undefined;
-  }
-
   let function_node = value_node.childForFieldName("function");
   // Turbofish `x::<T>()` wraps the callee in a generic_function; the chain is its
   // `function` child.
@@ -94,14 +81,27 @@ export function extract_initializer_call(
  * one name.
  */
 export function extract_read_source(node: SyntaxNode): { name_source?: SymbolName } {
-  const assignment = node.type === "identifier" ? (node.parent ?? node) : node;
-  if (assignment.type !== "let_declaration" && assignment.type !== "const_item") {
-    return {};
-  }
-  const value_node = assignment.childForFieldName("value");
-  return value_node?.type === "identifier" || value_node?.type === "self"
+  return agreed(let_values(node), whole_read) ?? {};
+}
+
+function whole_read(value_node: SyntaxNode): { name_source?: SymbolName } {
+  return value_node.type === "identifier" || value_node.type === "self"
     ? { name_source: value_node.text as SymbolName }
     : {};
+}
+
+/**
+ * Every value written into the `let` or `const` `node` declares or names: a
+ * `const`'s value, a `let`'s initialiser, or the later assignments to a `let`
+ * declared without one (`binding_writes.rust.ts`).
+ */
+function let_values(node: SyntaxNode): readonly SyntaxNode[] {
+  const declaration = node.type === "identifier" ? (node.parent ?? node) : node;
+  if (declaration.type === "const_item") {
+    const value = declaration.childForFieldName("value");
+    return value ? [value] : [];
+  }
+  return written_values(declaration);
 }
 
 /**

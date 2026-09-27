@@ -398,6 +398,49 @@ describe("Project Integration - Rust", () => {
     });
   });
 
+  describe("Bindings declared without a value", () => {
+    it("types a `let` from the construction every later assignment agrees on", () => {
+      const file = file_path("declared_without_value/deferred.rs");
+      project.update_file(
+        file,
+        [
+          "struct Foo;",
+          "impl Foo {",
+          "    fn new() -> Foo { Foo }",
+          "    fn run(&self) {}",
+          "    fn again(&self) { let other; other = self; other.run(); }",
+          "}",
+          "struct Bar;",
+          "impl Bar {",
+          "    fn new() -> Bar { Bar }",
+          "    fn run(&self) {}",
+          "}",
+          "fn same(c: bool) { let this; if c { this = Foo::new(); } else { this = Foo::new(); } this.run(); }",
+          "fn differ(c: bool) { let this; if c { this = Foo::new(); } else { this = Bar::new(); } this.run(); }",
+        ].join("\n")
+      );
+
+      const foo = Array.from(project.get_index_single_file(file)!.classes.values()).find(
+        (c) => c.name === ("Foo" as SymbolName)
+      )!;
+      const foo_run = project.definitions.get_member_index().get(foo.symbol_id)?.get("run" as SymbolName);
+
+      const run_calls = project.resolutions
+        .get_calls_for_file(file)
+        .filter((call) => call.name === ("run" as SymbolName))
+        .map((call) => ({
+          line: call.location.start_line,
+          targets: call.resolutions.map((r) => r.symbol_id),
+          reason: call.resolution_failure?.reason,
+        }));
+      expect(run_calls).toEqual([
+        { line: 5, targets: [foo_run!], reason: undefined },
+        { line: 12, targets: [foo_run!], reason: undefined },
+        { line: 13, targets: [], reason: "receiver_type_unknown" },
+      ]);
+    });
+  });
+
   describe("Self-reference keywords", () => {
     it("resolves a `this` binding as the local it is: Rust has no `this` keyword", () => {
       const file = file_path("self_reference/this_binding.rs");

@@ -1218,6 +1218,91 @@ describe("Project Integration - JavaScript", () => {
     });
   });
 
+  describe("Bindings declared without a value", () => {
+    function run_targets(file: FilePath, name: string) {
+      return project.resolutions
+        .get_calls_for_file(file)
+        .filter((call) => call.name === (name as SymbolName))
+        .map((call) => ({
+          line: call.location.start_line,
+          targets: call.resolutions.map((r) => r.symbol_id),
+          reason: call.resolution_failure?.reason,
+        }));
+    }
+
+    function method_of(file: FilePath, class_name: string, method_name: string): SymbolId {
+      const owner = Array.from(project.get_index_single_file(file)!.classes.values()).find(
+        (c) => c.name === (class_name as SymbolName)
+      )!;
+      return owner.methods.find((m) => m.name === (method_name as SymbolName))!.symbol_id;
+    }
+
+    it("holds the receiver a later `self = this` captures", () => {
+      const file = file_path("declared_without_value/capture.js");
+      project.update_file(
+        file,
+        ["class Widget {", "  m() {", "    var self;", "    self = this;", "    self.n();", "  }", "  n() {}", "}"].join("\n")
+      );
+
+      expect(run_targets(file, "n")).toEqual([
+        { line: 5, targets: [method_of(file, "Widget", "n")], reason: undefined },
+      ]);
+    });
+
+    it("holds the instance every branch constructs, and nothing where the branches disagree", () => {
+      const file = file_path("declared_without_value/branches.js");
+      project.update_file(
+        file,
+        [
+          "class Parser { parse() {} }",
+          "class Lexer { parse() {} }",
+          "function same(c) {",
+          "  let p;",
+          "  if (c) { p = new Parser(); } else { p = new Parser(); }",
+          "  p.parse();",
+          "}",
+          "function differ(c) {",
+          "  let p;",
+          "  if (c) { p = new Parser(); } else { p = new Lexer(); }",
+          "  p.parse();",
+          "}",
+        ].join("\n")
+      );
+
+      expect(run_targets(file, "parse")).toEqual([
+        { line: 6, targets: [method_of(file, "Parser", "parse")], reason: undefined },
+        { line: 11, targets: [], reason: "receiver_type_unknown" },
+      ]);
+    });
+
+    it("holds nothing when a nested function writes the binding, and ignores a write to a same-named inner binding", () => {
+      const file = file_path("declared_without_value/scopes.js");
+      project.update_file(
+        file,
+        [
+          "class Parser { parse() {} }",
+          "class Lexer { parse() {} }",
+          "function nested() {",
+          "  var p;",
+          "  function init() { p = new Parser(); }",
+          "  p.parse();",
+          "}",
+          "function shadowed() {",
+          "  let p;",
+          "  const reset = () => { let p; p = new Lexer(); };",
+          "  p = new Parser();",
+          "  p.parse();",
+          "}",
+        ].join("\n")
+      );
+
+      expect(run_targets(file, "parse")).toEqual([
+        { line: 6, targets: [], reason: "receiver_type_unknown" },
+        { line: 12, targets: [method_of(file, "Parser", "parse")], reason: undefined },
+      ]);
+    });
+  });
+
   describe("Shadowing", () => {
     it("should resolve to local definition when it shadows import", async () => {
       const source = load_source("modules/shadowing.js");
