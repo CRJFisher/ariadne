@@ -62,6 +62,7 @@ Interleaved arms, control `2db9442e`, both builds checked current by TASK-376.31
 | --- | ---: | --- |
 | webpack `folder:lib` | 15201 → 15199 | +1 from a later write; 3 false fan-outs over `A` removed (56 false edges gone) |
 | vscode `folder-ts:src/vs/base` | 32648 → 32632 | 16 false fan-outs removed, e.g. `toOrig.slice()` reached 10 `win32` members in the control; `event.test.ts` edges move from a variable to `Emitter.event` |
+| rustc (376.18's predicate) | 113067 → 113074 | +7, no edge lost: the three `only_control` edges are ordinals renumbered in `run_test`, which gained `output`/`status` |
 
 The declared-without-value bindings these corpora hold (574 in webpack `lib/`, 388 in vscode `vs/base`) are mostly JSDoc- or annotation-typed already, or written from calls whose return type nothing states, so the new reading adds little on its own. The `get` restriction is the larger effect, and it removes false edges.
 <!-- SECTION:NOTES:END -->

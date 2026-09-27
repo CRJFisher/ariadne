@@ -1,9 +1,12 @@
 ---
 id: TASK-376.29
-title: Hold the receiver through the standard-library calls that re-borrow or unwrap it
-status: To Do
+title: >-
+  Hold the receiver through the standard-library calls that re-borrow or unwrap
+  it
+status: Done
 assignee: []
 created_date: '2026-09-27 18:55'
+updated_date: '2026-09-27 21:37'
 labels:
   - receiver_type_inference
 dependencies:
@@ -38,8 +41,31 @@ TASK-376.25 measured these as tokio's only five lost edges. Across tokio's sourc
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 A Rust `let` initialised through `unsafe { … }`, `ManuallyDrop::new(x)`, or a `Pin` unwrapping path call records the sources of the expression inside.
-- [ ] #2 `self.get_mut()` and `self.get_unchecked_mut()` read as `self` only in a method whose `self` is declared `Pin<…>`. A `self.inner.get_mut()`, or the same call on a `&mut self` receiver, records the call as it did before.
-- [ ] #3 `Project`-tier integration tests cover `ManuallyDrop::new(self)`, `Pin::into_inner(self)`, `unsafe { self.get_unchecked_mut() }` under a `Pin` receiver, and the `&mut self` negative.
-- [ ] #4 Per-reason recovery is measured on tokio and rustc against TASK-376.25's candidate row.
+- [x] #1 A Rust `let` initialised through `unsafe { … }`, `ManuallyDrop::new(x)`, or a `Pin` unwrapping path call records the sources of the expression inside.
+- [x] #2 `self.get_mut()` and `self.get_unchecked_mut()` read as `self` only in a method whose `self` is declared `Pin<…>`. A `self.inner.get_mut()`, or the same call on a `&mut self` receiver, records the call as it did before.
+- [x] #3 `Project`-tier integration tests cover `ManuallyDrop::new(self)`, `Pin::into_inner(self)`, `unsafe { self.get_unchecked_mut() }` under a `Pin` receiver, and the `&mut self` negative.
+- [x] #4 Per-reason recovery is measured on tokio and rustc against TASK-376.25's candidate row.
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+## What the capability surface gained
+
+A Rust binding that holds the receiver through the standard library is typed as the receiver: `let me = mem::ManuallyDrop::new(self)`, `let this = Pin::into_inner(self)` (and `get_mut`, `get_unchecked_mut`, `into_inner_unchecked`, bare or through `std`/`core`/`mem`/`pin`), and `let me = unsafe { self.get_unchecked_mut() }` or `self.get_mut()` in a method whose receiver is declared `self: Pin<…>`. On a `&mut self` receiver the same `self.get_mut()` is the pointee's own method and is left as it was, as is `self.inner.get_mut()`.
+
+## Mechanism
+
+`initializer_sources.rust.ts` reads every written value through `held_expression` before any fact is taken from it: an `unsafe` block ending in one expression, `RETURNS_ITS_ARGUMENT` path calls, and the two `Pin` methods under a pinned receiver. It composes with TASK-376.30's written values, so a later assignment is read the same way.
+
+## Measured
+
+Interleaved arms, control `7740c7ce` (TASK-376.30), builds guarded by TASK-376.31.
+
+| Corpus | Resolved | Reasons |
+| --- | ---: | --- |
+| tokio (`repository-root`) | 8945 → 8952 (+7) | `receiver_type_unknown` −42; `member_type_unknown` +30, `method_not_on_type` +5; 5 edges gained, none lost |
+| rustc (376.18's predicate) | 113074 → 113076 (+2) | `receiver_type_unknown` −18; `method_not_on_type` +16; 2 edges gained, none lost |
+
+Most newly typed receivers stop one hop later. In tokio they reach a field the enclosing type does not type (`me.inner.poll()`), and in rustc they call `ManuallyDrop`'s own methods on the wrapper, which the enclosing type does not declare. Both failures are honest: they name the type the binding holds.
+<!-- SECTION:NOTES:END -->
