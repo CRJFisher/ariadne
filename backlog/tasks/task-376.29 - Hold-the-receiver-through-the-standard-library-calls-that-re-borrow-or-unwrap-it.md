@@ -67,5 +67,5 @@ Interleaved arms, control `7740c7ce` (TASK-376.30), builds guarded by TASK-376.3
 | tokio (`repository-root`) | 8945 → 8952 (+7) | `receiver_type_unknown` −42; `member_type_unknown` +30, `method_not_on_type` +5; 5 edges gained, none lost |
 | rustc (376.18's predicate) | 113074 → 113076 (+2) | `receiver_type_unknown` −18; `method_not_on_type` +16; 2 edges gained, none lost |
 
-Most newly typed receivers stop one hop later. In tokio they reach a field the enclosing type does not type (`me.inner.poll()`), and in rustc they call `ManuallyDrop`'s own methods on the wrapper, which the enclosing type does not declare. Both failures are honest: they name the type the binding holds.
+Most newly typed receivers stop one hop later, now naming the enclosing type rather than no type. In rustc the sites are mostly `alloc`'s `let me = ManuallyDrop::new(self); me.len()` idiom on `Vec`, `Rc` and `Arc`, whose method lookup then ends `method_not_on_type` even though `Vec` declares `len`. Why the lookup misses on those generic `impl` blocks was not investigated here. It is a member-lookup question, not a receiver one.
 <!-- SECTION:NOTES:END -->
