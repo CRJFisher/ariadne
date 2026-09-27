@@ -49,6 +49,7 @@ import type {
   CallRefDiagnostic,
   ReferenceSiteDiagnostic,
 } from "@ariadnejs/types";
+import { self_reference_keyword } from "@ariadnejs/types";
 
 import { log_info, log_warn } from "../logging";
 import {
@@ -139,6 +140,7 @@ export function extract_entry_point_diagnostics(
     project.references,
     lines_by_file,
     call_refs_by_file_line,
+    languages,
     declaration_keys,
   );
 
@@ -376,16 +378,6 @@ function build_call_refs_by_file_line(
 const IDENTIFIER_KEY = /^[A-Za-z_$][\w$]*$/;
 
 /**
- * Reference kinds that are mentions rather than calls.
- *
- * A caller that carries no call-paren syntax — a getter read, a bare-name
- * callback registration, a dict or list registration value — produces one of
- * these and nothing on the call channel. The call-shaped kinds are deliberately
- * absent: those already arrive as `ariadne_call_refs`.
- */
-const SELF_KEYWORDS: ReadonlySet<string> = new Set(["this", "self", "super", "cls"]);
-
-/**
  * Index every non-call reference in the indexed corpus by the name it reaches.
  *
  * One pass over the registry the indexer already filled — structured, keyed on
@@ -397,11 +389,13 @@ function build_reference_index(
   references: ReferenceRegistry,
   lines_by_file: ReadonlyMap<FilePath, string[]>,
   call_refs_by_file_line: ReadonlyMap<FilePath, Map<number, CallReference[]>>,
+  languages: ReadonlyMap<FilePath, Language>,
   declaration_keys: ReadonlySet<string>,
 ): Map<string, ReferenceSiteDiagnostic[]> {
   const index = new Map<string, Map<string, ReferenceSiteDiagnostic>>();
 
   for (const file_path of lines_by_file.keys()) {
+    const language = languages.get(file_path);
     const by_line = call_refs_by_file_line.get(file_path);
     const file_references = references.get_file_references(file_path);
 
@@ -497,7 +491,7 @@ function build_reference_index(
               ...location,
               reference_kind: "property_access",
               access_type: ref.access_type,
-              receiver_kind: receiver_kind_of(ref.property_chain),
+              receiver_kind: receiver_kind_of(ref.property_chain, language),
             }
           : {
               ...location,
@@ -515,13 +509,17 @@ function build_reference_index(
 
 /**
  * An empty chain reads as `identifier`: the reference is not on the enclosing
- * instance, which is the only distinction this field is consulted for.
+ * instance, which is the only distinction this field is consulted for. A head
+ * is `self` only where the file's language spells a self receiver with it.
  */
 function receiver_kind_of(
   property_chain: readonly SymbolName[],
+  language: Language | undefined,
 ): "self" | "identifier" {
   const head = property_chain[0] as string | undefined;
-  return head !== undefined && SELF_KEYWORDS.has(head) ? "self" : "identifier";
+  return head !== undefined && language !== undefined && self_reference_keyword(language, head) !== null
+    ? "self"
+    : "identifier";
 }
 
 /**

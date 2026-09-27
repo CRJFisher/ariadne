@@ -89,6 +89,22 @@ export function extract_initializer_call(
 }
 
 /**
+ * The one name a `let`/`const` initialiser reads as a whole: `let this = self`,
+ * `let parser = base`. Anything else — a call, a reference, a path — reads no
+ * one name.
+ */
+export function extract_read_source(node: SyntaxNode): { name_source?: SymbolName } {
+  const assignment = node.type === "identifier" ? (node.parent ?? node) : node;
+  if (assignment.type !== "let_declaration" && assignment.type !== "const_item") {
+    return {};
+  }
+  const value_node = assignment.childForFieldName("value");
+  return value_node?.type === "identifier" || value_node?.type === "self"
+    ? { name_source: value_node.text as SymbolName }
+    : {};
+}
+
+/**
  * The container a `for` loop's binding takes an element of: `l` in
  * `for l in &layers`, `layers.iter()` or `layers` holds what iterating `layers`
  * yields; `for v in m.values()` holds a value; `v` in `for (k, v) in &m` or

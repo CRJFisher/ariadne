@@ -74,7 +74,7 @@ export function resolve_method_call(
     modules,
   };
 
-  const receiver = extract_receiver(call_ref);
+  const receiver = extract_receiver(call_ref, context);
   const receiver_result = resolve_receiver_type(receiver, context, resolve_held_type);
 
   if (!receiver_result.ok) {

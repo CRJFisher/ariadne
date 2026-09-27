@@ -116,7 +116,7 @@ describe("Rust Self-Reference Resolution Integration", () => {
         (r): r is SelfReferenceCall => r.kind === "self_reference_call"
       );
       const set_count_call = self_ref_calls.find(
-        (c) => c.name === ("set_count" as SymbolName) && c.keyword === "self"
+        (c) => c.name === ("set_count" as SymbolName) && c.property_chain[0] === "self"
       );
       expect(set_count_call).toBeDefined();
 
@@ -275,7 +275,7 @@ describe("Rust Self-Reference Resolution Integration", () => {
         (r): r is SelfReferenceCall => r.kind === "self_reference_call"
       );
       const draw_call = self_ref_calls.find(
-        (c) => c.name === ("draw" as SymbolName) && c.keyword === "self"
+        (c) => c.name === ("draw" as SymbolName) && c.property_chain[0] === "self"
       );
       expect(draw_call).toBeDefined();
     });

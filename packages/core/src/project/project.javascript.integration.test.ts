@@ -1149,6 +1149,75 @@ describe("Project Integration - JavaScript", () => {
     });
   });
 
+  describe("Self-reference keywords", () => {
+    function calls_named(file: FilePath, name: string) {
+      return project.resolutions
+        .get_calls_for_file(file)
+        .filter((call) => call.name === (name as SymbolName))
+        .map((call) => ({
+          line: call.location.start_line,
+          targets: call.resolutions.map((r) => r.symbol_id),
+          failure: call.resolution_failure,
+        }));
+    }
+
+    function method_of(file: FilePath, class_name: string, method_name: string): SymbolId {
+      const owner = Array.from(project.get_index_single_file(file)!.classes.values()).find(
+        (c) => c.name === (class_name as SymbolName)
+      )!;
+      return owner.methods.find((m) => m.name === (method_name as SymbolName))!.symbol_id;
+    }
+
+    it("resolves `self` through the binding it names, not through the enclosing class", () => {
+      const file = file_path("self_reference/capture.js");
+      project.update_file(
+        file,
+        [
+          "class Other {",
+          "  n() {}",
+          "}",
+          "class Widget {",
+          "  m() {",
+          "    var self = this;",
+          "    self.n();",
+          "  }",
+          "  k() {",
+          "    var self = new Other();",
+          "    self.n();",
+          "  }",
+          "  n() {}",
+          "}",
+        ].join("\n")
+      );
+
+      // `var self = this` reaches Widget.n because `self` holds `this`; a `self`
+      // holding an Other reaches Other.n, which the enclosing class never would.
+      expect(calls_named(file, "n")).toEqual([
+        { line: 7, targets: [method_of(file, "Widget", "n")], failure: undefined },
+        { line: 11, targets: [method_of(file, "Other", "n")], failure: undefined },
+      ]);
+    });
+
+    it("reads a module-level `self` as the global it is, not as a class receiver", () => {
+      const file = file_path("self_reference/worker.js");
+      project.update_file(file, "function onMessage() {\n  self.postMessage();\n}\n");
+
+      expect(calls_named(file, "postMessage")).toEqual([
+        {
+          line: 2,
+          targets: [],
+          failure: {
+            stage: "name_resolution",
+            reason: "name_not_in_scope",
+            partial_info: { last_known_scope: project.get_index_single_file(file)!.references.find(
+              (r) => r.name === ("postMessage" as SymbolName)
+            )!.scope_id },
+          },
+        },
+      ]);
+    });
+  });
+
   describe("Shadowing", () => {
     it("should resolve to local definition when it shadows import", async () => {
       const source = load_source("modules/shadowing.js");

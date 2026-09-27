@@ -1022,7 +1022,6 @@ impl MyStruct {
         receiver_location: expect.objectContaining({ start_column: 1, end_column: 4 }),
         property_chain: ["self", "method"],
         is_self_reference: true,
-        self_keyword: "self",
       });
     });
 
@@ -1036,7 +1035,6 @@ impl MyStruct {
       expect(result).toBeDefined();
       expect(result!.property_chain).toEqual(["vec", "push"]);
       expect(result!.is_self_reference).toBe(false);
-      expect(result!.self_keyword).toBeUndefined();
     });
 
     it("should handle nested self field access", () => {
@@ -1049,7 +1047,6 @@ impl MyStruct {
       expect(result).toBeDefined();
       expect(result!.property_chain).toEqual(["self", "data", "process"]);
       expect(result!.is_self_reference).toBe(true);
-      expect(result!.self_keyword).toBe("self");
     });
 
     it("should return undefined for standalone function calls", () => {
@@ -1084,7 +1081,6 @@ impl MyStruct {
       expect(result).toBeDefined();
       expect(result!.property_chain).toEqual(["self", "value"]);
       expect(result!.is_self_reference).toBe(true);
-      expect(result!.self_keyword).toBe("self");
     });
   });
 

@@ -398,6 +398,81 @@ describe("Project Integration - Rust", () => {
     });
   });
 
+  describe("Self-reference keywords", () => {
+    it("resolves a `this` binding as the local it is: Rust has no `this` keyword", () => {
+      const file = file_path("self_reference/this_binding.rs");
+      project.update_file(
+        file,
+        [
+          "struct Foo;",
+          "impl Foo {",
+          "    fn new() -> Foo { Foo }",
+          "    fn run(&self) {}",
+          "}",
+          "struct Bar;",
+          "impl Bar {",
+          "    fn go(&self) { let this = Foo::new(); this.run(); }",
+          "}",
+          "fn main() { let this = Foo::new(); this.run(); }",
+        ].join("\n")
+      );
+
+      const foo = Array.from(project.get_index_single_file(file)!.classes.values()).find(
+        (c) => c.name === ("Foo" as SymbolName)
+      )!;
+      const foo_run = project.definitions.get_member_index().get(foo.symbol_id)?.get("run" as SymbolName);
+
+      // Inside `impl Bar` the keyword reading would dispatch against Bar; at
+      // module level it would find no enclosing impl at all.
+      const run_calls = project.resolutions
+        .get_calls_for_file(file)
+        .filter((call) => call.name === ("run" as SymbolName))
+        .map((call) => ({
+          line: call.location.start_line,
+          targets: call.resolutions.map((r) => r.symbol_id),
+          failure: call.resolution_failure,
+        }));
+      expect(run_calls).toEqual([
+        { line: 8, targets: [foo_run!], failure: undefined },
+        { line: 10, targets: [foo_run!], failure: undefined },
+      ]);
+    });
+
+    it("types a binding annotated `Self`, a call returning `Self` and a `let this = self` as the enclosing impl type", () => {
+      const file = file_path("self_reference/self_annotation.rs");
+      project.update_file(
+        file,
+        [
+          "struct Guard;",
+          "struct Inner;",
+          "impl Guard {",
+          "    fn skip_drop(self) -> Inner { Inner }",
+          "    fn arm(&mut self) -> &mut Self { self }",
+          "    fn fire(&mut self) {}",
+          "    pub fn map(this: Self) -> Inner { this.skip_drop() }",
+          "    fn reborrow(&mut self) { let this = self; this.fire(); }",
+          "}",
+          "fn main(mut g: Guard) { g.arm().fire(); }",
+        ].join("\n")
+      );
+
+      const guard = Array.from(project.get_index_single_file(file)!.classes.values()).find(
+        (c) => c.name === ("Guard" as SymbolName)
+      )!;
+      const members = project.definitions.get_member_index().get(guard.symbol_id)!;
+
+      const targets = project.resolutions
+        .get_calls_for_file(file)
+        .filter((call) => call.name === ("skip_drop" as SymbolName) || call.name === ("fire" as SymbolName))
+        .map((call) => ({ name: call.name, targets: call.resolutions.map((r) => r.symbol_id) }));
+      expect(targets).toEqual([
+        { name: "skip_drop", targets: [members.get("skip_drop" as SymbolName)!] },
+        { name: "fire", targets: [members.get("fire" as SymbolName)!] },
+        { name: "fire", targets: [members.get("fire" as SymbolName)!] },
+      ]);
+    });
+  });
+
   describe("Shadowing", () => {
     it("should resolve to local definition when it shadows import", async () => {
       const utils_source = load_source("modules/utils.rs");

@@ -189,9 +189,7 @@ function extract_type_info(
  * Distinguishes between self-reference calls (this.method()) and regular method calls (obj.method()).
  *
  * Handles patterns like:
- * - `this.method()` → SelfReferenceCall with keyword: 'this'
- * - `self.method()` → SelfReferenceCall with keyword: 'self'
- * - `super.method()` → SelfReferenceCall with keyword: 'super'
+ * - `this.method()`, `self.method()`, `super.method()` → SelfReferenceCall
  * - `obj.method()` → MethodCallReference with receiver: obj
  * - `a.b.c()` → MethodCallReference with chain: ['a', 'b', 'c']
  */
@@ -222,13 +220,12 @@ function process_method_reference(
   // Route to appropriate factory based on receiver type
   if (receiver_info) {
     // Check if this is a self-reference call (this.method(), self.method(), etc.)
-    if (receiver_info.is_self_reference && receiver_info.self_keyword) {
+    if (receiver_info.is_self_reference) {
       const self_syntax = extract_call_site_syntax(capture.node, language);
       return create_self_reference_call(
         method_name,
         location,
         scope_id,
-        receiver_info.self_keyword,
         receiver_info.property_chain,
         self_syntax?.receiver_kind === "index_access"
           ? { key_is_literal: self_syntax.index_key_is_literal === true }
@@ -563,12 +560,11 @@ export class ReferenceBuilder {
       }
 
       case ReferenceKind.SUPER_CALL:
-        // Super calls are handled as self-reference calls with 'super' keyword
+        // Super calls are handled as self-reference calls rooted at `super`
         reference = create_self_reference_call(
           reference_name,
           location,
           scope_id,
-          "super",
           ["super" as SymbolName, reference_name]
         );
         break;

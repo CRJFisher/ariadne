@@ -8,18 +8,6 @@ import type { SyntaxNode } from "tree-sitter";
  */
 
 /**
- * Identifier texts that denote a self-reference keyword. `self`/`cls` are kept
- * alongside `this`/`super` so a TS identifier spelled like a Python self
- * receiver classifies identically across languages.
- */
-const SELF_KEYWORD_TEXTS: ReadonlySet<string> = new Set([
-  "this",
-  "super",
-  "self",
-  "cls",
-]);
-
-/**
  * Classify a method-call receiver node.
  *
  * Navigates one layer: for `call_expression`, resolves to the `function`
@@ -88,9 +76,6 @@ function receiver_kind_from_node(receiver: SyntaxNode): ReceiverKind {
   }
 
   if (receiver.type === "this" || receiver.type === "super") {
-    return "self_keyword";
-  }
-  if (receiver.type === "identifier" && SELF_KEYWORD_TEXTS.has(receiver.text)) {
     return "self_keyword";
   }
 

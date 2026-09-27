@@ -92,9 +92,9 @@ export function extract_initializer_call_arguments(
 
 /**
  * What a declarator's, field's or parameter's value reads as a whole: the one
- * name of `const cls = Parser` and `function trace(Info = TraceInfo)`, or the
- * holder and member of `var alias = Ns.A`. A call, a subscript or a chain deeper
- * than one hop reads neither.
+ * name of `const cls = Parser`, `function trace(Info = TraceInfo)` and `var self
+ * = this`, or the holder and member of `var alias = Ns.A`. A call, a subscript or
+ * a chain deeper than one hop reads neither.
  */
 export function extract_read_source(node: SyntaxNode): {
   name_source?: SymbolName;
@@ -103,6 +103,9 @@ export function extract_read_source(node: SyntaxNode): {
   const value_node = parameter_default(node) ?? declarator_value(node);
   if (value_node?.type === "identifier") {
     return { name_source: value_node.text as SymbolName };
+  }
+  if (value_node && unwrap_value_preserving(value_node).type === "this") {
+    return { name_source: "this" as SymbolName };
   }
   if (value_node?.type !== "member_expression") {
     return {};
@@ -113,6 +116,29 @@ export function extract_read_source(node: SyntaxNode): {
     return {};
   }
   return { member_source: { holder: holder_node.text as SymbolName, member: member_node.text as SymbolName } };
+}
+
+/**
+ * The expression beneath parentheses, `!`, `as` and `satisfies`: each hands on
+ * the value it wraps, so `const self = this as any` captures `this` itself, and
+ * a call through it dispatches on that value whatever type the cast states.
+ */
+function unwrap_value_preserving(node: SyntaxNode): SyntaxNode {
+  let current = node;
+  for (;;) {
+    const inner =
+      current.type === "parenthesized_expression"
+        ? current.namedChildren[0]
+        : current.type === "non_null_expression" ||
+            current.type === "as_expression" ||
+            current.type === "satisfies_expression"
+          ? current.namedChildren[0]
+          : undefined;
+    if (!inner) {
+      return current;
+    }
+    current = inner;
+  }
 }
 
 /**

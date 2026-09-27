@@ -9,15 +9,16 @@
  * resolution, the exports and the import graph, which is why this is a leaf of
  * `resolve_references` rather than part of that folder.
  *
- * A head is a name chain, and which of three routes it takes is the language's
+ * A head is a name chain, and which of four routes it takes is the language's
  * business: a bare name resolves in lexical scope, an inline import type names
- * its module outright, a Rust `::` path goes to the Rust path resolver, and any
- * other qualified chain descends one module per segment. Descending is the rule
+ * its module outright, a Rust `::` path or bare `Self` goes to the Rust path
+ * resolver, and any other qualified chain descends one module per segment. Descending is the rule
  * that keeps `models.User` from ever being read as a member of a class called
  * `models` that happens to be in scope.
  */
 
 import type { FilePath, Language, ScopeId, SymbolId, SymbolName } from "@ariadnejs/types";
+import { RUST_SELF_TYPE_NAME } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "./registries/definition";
 import type { ExportRegistry } from "./registries/export";
 import type { ResolutionRegistry } from "./resolution_registry";
@@ -136,7 +137,7 @@ export function lookup_annotation_arguments(
  * - An inline import type (`import("./a").X`) names its module outright, so the
  *   chain starts among that module's members. Nothing else ties the file to that
  *   module, so the read is recorded as its dependency.
- * - A Rust `::` path goes to the Rust path resolver.
+ * - A Rust `::` path, or a bare `Self`, goes to the Rust path resolver.
  * - Any other qualified chain (`vfs.FileSystem`, `models.User`) starts from its
  *   first segment in lexical scope and descends one module per segment.
  */
@@ -165,7 +166,9 @@ export function lookup_type_head(
   }
 
   // @language rust
-  if (language === "rust" && head.length > 1) {
+  // A bare `Self` binds nowhere: it names the enclosing impl type, which only
+  // the path resolver reads.
+  if (language === "rust" && (head.length > 1 || head[0] === RUST_SELF_TYPE_NAME)) {
     return context.resolve_rust_type_path(
       head.slice(0, -1),
       head[head.length - 1],

@@ -1,4 +1,4 @@
-import type { Location } from "./location";
+import type { Language, Location } from "./location";
 import type { ScopeId } from "./scopes";
 import type { TypeInfo } from "./type_info";
 import type { SymbolName } from "./symbol";
@@ -51,25 +51,27 @@ interface BaseReference {
  * class Builder {
  *   process() { this.build_class(node); }
  * }
- * // → SelfReferenceCall { keyword: 'this', property_chain: ['this', 'build_class'] }
+ * // → SelfReferenceCall { property_chain: ['this', 'build_class'] }
  *
  * @example Python
  * class IndexBuilder:
  *   def process(self):
  *     self.build_class(node)
- * // → SelfReferenceCall { keyword: 'self', property_chain: ['self', 'build_class'] }
+ * // → SelfReferenceCall { property_chain: ['self', 'build_class'] }
  *
  * @example Super call
  * class Child extends Parent {
  *   process() { super.process(); }
  * }
- * // → SelfReferenceCall { keyword: 'super', property_chain: ['super', 'process'] }
+ * // → SelfReferenceCall { property_chain: ['super', 'process'] }
  */
 export interface SelfReferenceCall extends BaseReference {
   readonly kind: "self_reference_call";
-  /** Self-reference keyword used */
-  readonly keyword: SelfReferenceKeyword;
-  /** Property chain (always starts with keyword) */
+  /**
+   * Property chain, headed by the self-reference keyword the indexer saw.
+   * Whether that head still denotes the receiver is the resolver's question: a
+   * scope can rebind a Python `self`.
+   */
   readonly property_chain: readonly SymbolName[];
   /**
    * @language javascript,typescript,python
@@ -88,6 +90,49 @@ export interface SelfReferenceCall extends BaseReference {
  * - `cls` — @language python
  */
 export type SelfReferenceKeyword = "this" | "self" | "super" | "cls";
+
+/**
+ * The words each language spells a self receiver with. A word is a keyword in
+ * one language and an ordinary identifier in another — Rust has no `this`, and
+ * JavaScript's `self` is the worker and window global — so the set is the
+ * language's, never a union across languages.
+ */
+const SELF_REFERENCE_KEYWORDS_BY_LANGUAGE: Readonly<
+  Record<Language, ReadonlySet<SelfReferenceKeyword>>
+> = {
+  typescript: new Set(["this", "super"]),
+  javascript: new Set(["this", "super"]),
+  python: new Set(["self", "cls", "super"]),
+  rust: new Set(["self"]),
+};
+
+/** The self-reference keyword `name` spells in `language`, or null when it spells none there. */
+export function self_reference_keyword(
+  language: Language,
+  name: string
+): SelfReferenceKeyword | null {
+  const keywords = SELF_REFERENCE_KEYWORDS_BY_LANGUAGE[language];
+  return keywords.has(name as SelfReferenceKeyword) ? (name as SelfReferenceKeyword) : null;
+}
+
+/**
+ * @language rust
+ * The name a Rust `impl`/`trait` body gives its own type — `Self::new()`, `fn
+ * map(this: Self)`, `-> &mut Self`. It is a type position's word, never a
+ * receiver's, so it names the enclosing type wherever it appears and binds
+ * nowhere.
+ */
+export const RUST_SELF_TYPE_NAME = "Self" as SymbolName;
+
+/**
+ * Whether a scope can rebind `language`'s self-reference words. Python's are
+ * conventions — `self`, `cls` and `super` are ordinary names a local or a free
+ * function's parameter can take. Every other language reserves them, so a
+ * binding one of them has is the receiver itself.
+ */
+export function self_reference_is_bindable(language: Language): boolean {
+  return language === "python";
+}
 
 /**
  * Positional call-argument identifier names, aligned index-for-index with a

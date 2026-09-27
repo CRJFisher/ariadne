@@ -451,6 +451,72 @@ describe("Project Integration - Python", () => {
       expect(get_name_def).toBeDefined();
       expect(get_name_def!.location.file_path).toContain("user_class.py");
     });
+
+    it("resolves a binding that holds `self` or names a class, whatever it is spelled", () => {
+      const file = file_path("self_reference/bindings.py");
+      project.update_file(
+        file,
+        [
+          "class Parser:",
+          "    def parse(self):",
+          "        me = self",
+          "        me.reset()",
+          "    def reset(self):",
+          "        pass",
+          "    @staticmethod",
+          "    def create():",
+          "        pass",
+          "",
+          "cls = Parser",
+          "cls.create()",
+        ].join("\n")
+      );
+
+      const parser = Array.from(project.get_index_single_file(file)!.classes.values()).find(
+        (c) => c.name === ("Parser" as SymbolName)
+      )!;
+      const method = (name: string) =>
+        parser.methods.find((m) => m.name === (name as SymbolName))!.symbol_id;
+
+      // `me` holds the receiver its method binds; a module-level `cls` is a
+      // local naming Parser, with no enclosing class to read a keyword against.
+      const targets = project.resolutions
+        .get_calls_for_file(file)
+        .filter((call) => call.name === ("reset" as SymbolName) || call.name === ("create" as SymbolName))
+        .map((call) => ({ name: call.name, targets: call.resolutions.map((r) => r.symbol_id) }));
+      expect(targets).toEqual([
+        { name: "reset", targets: [method("reset")] },
+        { name: "create", targets: [method("create")] },
+      ]);
+    });
+
+    it("resolves a later parameter spelled `cls` through what it holds, not the enclosing class", () => {
+      const file = file_path("self_reference/registry.py");
+      project.update_file(
+        file,
+        [
+          "class Plugin:",
+          "    def setup(self):",
+          "        pass",
+          "",
+          "class Registry:",
+          "    def setup(self):",
+          "        pass",
+          "    def register(self, cls: Plugin):",
+          "        cls.setup()",
+        ].join("\n")
+      );
+
+      const plugin_setup = Array.from(project.get_index_single_file(file)!.classes.values())
+        .find((c) => c.name === ("Plugin" as SymbolName))!
+        .methods.find((m) => m.name === ("setup" as SymbolName))!.symbol_id;
+
+      const targets = project.resolutions
+        .get_calls_for_file(file)
+        .filter((call) => call.name === ("setup" as SymbolName))
+        .map((call) => call.resolutions.map((r) => r.symbol_id));
+      expect(targets).toEqual([[plugin_setup]]);
+    });
   });
 
   describe("Shadowing", () => {

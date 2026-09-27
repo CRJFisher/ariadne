@@ -46,6 +46,7 @@ import {
   extract_collection_source,
   extract_iteration_source,
   extract_initializer_call,
+  extract_read_source,
 } from "../symbol_factories/initializer_sources.rust";
 import {
   store_documentation,
@@ -397,6 +398,7 @@ export function handle_definition_variable(
     function_collection,
     collection_source,
     initialized_from_call: extract_initializer_call(capture.node),
+    ...extract_read_source(capture.node),
     iterated_from: extract_iteration_source(capture.node),
   });
 }
@@ -433,6 +435,7 @@ export function handle_definition_constant(
     type: const_type,
     function_collection,
     initialized_from_call: extract_initializer_call(capture.node),
+    ...extract_read_source(capture.node),
   });
 }
 
@@ -471,6 +474,7 @@ export function handle_definition_variable_mut(
     function_collection,
     collection_source,
     initialized_from_call: extract_initializer_call(capture.node),
+    ...extract_read_source(capture.node),
     iterated_from: extract_iteration_source(capture.node),
   });
 }

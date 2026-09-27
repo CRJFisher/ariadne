@@ -27,7 +27,8 @@
  *    or a parameter's default, that reads one member of one name
  *    (`member_source`) holds what the member holds.
  * 4. **Local carriers** — one that reads one name (`name_source`) holds what
- *    the name holds.
+ *    the name holds; a self receiver read as a value (`var self = this`) holds
+ *    what the receiver denotes.
  * 5. **Carried arguments** — a parameter every resolved call site hands the
  *    same class holds that class object (`build(MyForm)` against
  *    `def build(cls, **kw)`).
@@ -48,13 +49,19 @@ import type {
   ParameterDefinition,
   PropertyDefinition,
   ScopeId,
+  SelfReferenceKeyword,
   SymbolId,
   SymbolName,
   VariableDefinition,
 } from "@ariadnejs/types";
 import { resolve_element_type } from "./container_element";
 import { dereference_named_import } from "./namespace_member";
-import { resolve_chain_binding, type ReceiverResolutionContext } from "./receiver_resolution";
+import {
+  read_self_reference,
+  resolve_chain_binding,
+  resolve_keyword_base,
+  type ReceiverResolutionContext,
+} from "./receiver_resolution";
 import { infer_generic_return } from "./type_parameter_resolution";
 import type { DefinitionRegistry } from "../registries/definition";
 
@@ -122,6 +129,10 @@ export function resolve_read_value(
   context: ReceiverResolutionContext,
   visited: Set<SymbolId> = new Set()
 ): ValueSource | null {
+  const keyword = chain.length === 1 ? read_self_reference(chain[0], scope_id, context) : null;
+  if (keyword) {
+    return self_reference_value(keyword, scope_id, context);
+  }
   const symbol_id = resolve_chain_binding(chain, scope_id, context, visited, resolve_held_type);
   if (!symbol_id) {
     return null;
@@ -142,6 +153,29 @@ export function resolve_read_value(
     default:
       return null;
   }
+}
+
+/**
+ * What a self receiver read as a value holds — `var self = this` captures an
+ * instance of the enclosing type, Python's `cls` is the class object itself.
+ * A bare `super` is no receiver: JavaScript cannot read it as a value, and
+ * Python's is the builtin, which reaches the parent only when called.
+ */
+function self_reference_value(
+  keyword: SelfReferenceKeyword,
+  scope_id: ScopeId,
+  context: ReceiverResolutionContext
+): ValueSource | null {
+  if (keyword === "super") {
+    return null;
+  }
+  const type_id = resolve_keyword_base(keyword, scope_id, context);
+  if (!type_id.ok) {
+    return null;
+  }
+  return keyword === "cls"
+    ? { kind: "class_object", class_id: type_id.value }
+    : { kind: "instance_of", type_id: type_id.value };
 }
 
 /**

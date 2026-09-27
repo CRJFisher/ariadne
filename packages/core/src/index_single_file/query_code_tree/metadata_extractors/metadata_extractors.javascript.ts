@@ -8,7 +8,7 @@
 
 import type { SyntaxNode } from "tree-sitter";
 import type { SymbolName, TypeInfo, FilePath } from "@ariadnejs/types";
-import { type_symbol } from "@ariadnejs/types";
+import { self_reference_keyword, type_symbol } from "@ariadnejs/types";
 import type { ConstructTarget, MetadataExtractors, ReceiverInfo } from "./metadata_extractor_types";
 import { node_to_location } from "../../node_to_location";
 import {
@@ -19,18 +19,6 @@ import {
   extract_jsdoc_return_type,
   extract_jsdoc_type,
 } from "../symbol_factories/jsdoc_extraction.javascript";
-
-/**
- * The receiver names that mean "the enclosing class", keyed for lookup.
- *
- * A Map, not an object literal: a chain rooted at a plain identifier such as
- * `toString` or `valueOf` would read `Object.prototype`'s member out of a
- * literal and be misread as a self-reference call.
- */
-const SELF_KEYWORDS = new Map<string, "this" | "super">([
-  ["this", "this"],
-  ["super", "super"],
-]);
 
 function extract_typescript_type(node: SyntaxNode): string | undefined {
   const type_annotation = node.childForFieldName("type");
@@ -451,7 +439,6 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
             ? ["this" as SymbolName, property_name as SymbolName]
             : ["this" as SymbolName],
           is_self_reference: true,
-          self_keyword: "this",
         };
       }
 
@@ -462,7 +449,6 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
             ? ["super" as SymbolName, property_name as SymbolName]
             : ["super" as SymbolName],
           is_self_reference: true,
-          self_keyword: "super",
         };
       }
 
@@ -474,7 +460,8 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
         : [object_node.text as SymbolName]);
 
       // A self keyword can sit at the root of a nested chain (this.data.items.push()).
-      const keyword = SELF_KEYWORDS.get(chain[0]);
+      // TypeScript shares this extractor and spells its self receivers the same way.
+      const keyword = self_reference_keyword("javascript", chain[0]);
 
       // Carry chain arguments only when an intermediate position is a call with
       // an identifier argument — the raw material for generic-return inference.
@@ -490,8 +477,7 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
       return {
         receiver_location: node_to_location(object_node, file_path),
         property_chain: chain,
-        is_self_reference: keyword !== undefined,
-        ...(keyword ? { self_keyword: keyword } : {}),
+        is_self_reference: keyword !== null,
         ...(has_inference_argument ? { property_chain_arguments } : {}),
       };
     }

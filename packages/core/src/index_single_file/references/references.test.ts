@@ -365,7 +365,7 @@ describe("ReferenceBuilder", () => {
       expect(references[0].name).toBe("super");
       expect(references[0].kind).toBe("self_reference_call");
       if (references[0].kind === "self_reference_call") {
-        expect(references[0].keyword).toBe("super");
+        expect(references[0].property_chain[0]).toBe("super");
       }
     });
 
@@ -405,7 +405,6 @@ describe("ReferenceBuilder", () => {
         receiver_location: create_test_location(10, 5),
         property_chain: ["this" as SymbolName, "build_class" as SymbolName],
         is_self_reference: true,
-        self_keyword: "this",
       };
 
       const mock_extractors = create_mock_extractors({
@@ -438,7 +437,7 @@ describe("ReferenceBuilder", () => {
 
       // Use type narrowing to access SelfReferenceCall-specific fields
       if (ref.kind === "self_reference_call") {
-        expect(ref.keyword).toBe("this");
+        expect(ref.property_chain[0]).toBe("this");
         expect(ref.property_chain).toEqual(["this", "build_class"]);
         expect(ref.name).toBe("build_class");
       }
@@ -449,7 +448,6 @@ describe("ReferenceBuilder", () => {
         receiver_location: create_test_location(5, 2),
         property_chain: ["self" as SymbolName, "process_data" as SymbolName],
         is_self_reference: true,
-        self_keyword: "self",
       };
 
       const mock_extractors = create_mock_extractors({
@@ -475,7 +473,7 @@ describe("ReferenceBuilder", () => {
 
       expect(ref.kind).toBe("self_reference_call");
       if (ref.kind === "self_reference_call") {
-        expect(ref.keyword).toBe("self");
+        expect(ref.property_chain[0]).toBe("self");
         expect(ref.property_chain).toEqual(["self", "process_data"]);
       }
     });
@@ -485,7 +483,6 @@ describe("ReferenceBuilder", () => {
         receiver_location: create_test_location(8, 4),
         property_chain: ["super" as SymbolName, "init" as SymbolName],
         is_self_reference: true,
-        self_keyword: "super",
       };
 
       const mock_extractors = create_mock_extractors({
@@ -511,7 +508,7 @@ describe("ReferenceBuilder", () => {
 
       expect(ref.kind).toBe("self_reference_call");
       if (ref.kind === "self_reference_call") {
-        expect(ref.keyword).toBe("super");
+        expect(ref.property_chain[0]).toBe("super");
       }
     });
 
@@ -520,7 +517,6 @@ describe("ReferenceBuilder", () => {
         receiver_location: create_test_location(12, 8),
         property_chain: ["cls" as SymbolName, "class_method" as SymbolName],
         is_self_reference: true,
-        self_keyword: "cls",
       };
 
       const mock_extractors = create_mock_extractors({
@@ -546,7 +542,7 @@ describe("ReferenceBuilder", () => {
 
       expect(ref.kind).toBe("self_reference_call");
       if (ref.kind === "self_reference_call") {
-        expect(ref.keyword).toBe("cls");
+        expect(ref.property_chain[0]).toBe("cls");
       }
     });
 

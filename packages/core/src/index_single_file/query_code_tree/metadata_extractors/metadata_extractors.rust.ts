@@ -18,7 +18,7 @@
 
 import type { SyntaxNode } from "tree-sitter";
 import type { SymbolName, TypeInfo, FilePath } from "@ariadnejs/types";
-import { type_symbol } from "@ariadnejs/types";
+import { self_reference_keyword, type_symbol } from "@ariadnejs/types";
 import type { ConstructTarget, MetadataExtractors, ReceiverInfo } from "./metadata_extractor_types";
 import { node_to_location } from "../../node_to_location";
 
@@ -330,7 +330,6 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
             ? ["self" as SymbolName, field_name as SymbolName]
             : ["self" as SymbolName],
           is_self_reference: true,
-          self_keyword: "self",
         };
       }
 
@@ -342,14 +341,12 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
         ? [value_text as SymbolName, field_name as SymbolName]
         : [value_text as SymbolName]);
 
-      // Detect self at root of nested chain
-      const is_self = property_chain[0] === "self";
+      const keyword = self_reference_keyword("rust", property_chain[0]);
 
       return {
         receiver_location: node_to_location(value_node, file_path),
         property_chain,
-        is_self_reference: is_self,
-        ...(is_self ? { self_keyword: "self" as const } : {}),
+        is_self_reference: keyword !== null,
       };
     }
 

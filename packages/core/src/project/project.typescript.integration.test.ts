@@ -309,6 +309,36 @@ describe("Project Integration - TypeScript", () => {
     });
   });
 
+  describe("Self-reference keywords", () => {
+    it("resolves a capture of `this` through a cast or a non-null assertion as the receiver it holds", () => {
+      const file = file_path("self_reference/capture.ts");
+      project.update_file(
+        file,
+        [
+          "class Widget {",
+          "  m() {",
+          "    const self = this as any;",
+          "    self.n();",
+          "    const that = this!;",
+          "    that.n();",
+          "  }",
+          "  n() {}",
+          "}",
+        ].join("\n")
+      );
+
+      const widget = Array.from(project.get_index_single_file(file)!.classes.values())[0];
+      const n = widget.methods.find((m) => m.name === ("n" as SymbolName))!.symbol_id;
+      const targets = project.resolutions
+        .get_calls_for_file(file)
+        .map((call) => ({ line: call.location.start_line, targets: call.resolutions.map((r) => r.symbol_id) }));
+      expect(targets).toEqual([
+        { line: 4, targets: [n] },
+        { line: 6, targets: [n] },
+      ]);
+    });
+  });
+
   describe("Shadowing", () => {
     it("should resolve to local definition when it shadows import", async () => {
       const utils_source = load_source("utils.ts");

@@ -70,7 +70,7 @@ class User:
       expect(self_ref_calls.length).toBeGreaterThan(0);
 
       const get_name_call = self_ref_calls.find(
-        (c) => c.name === ("get_name" as SymbolName) && c.keyword === "self"
+        (c) => c.name === ("get_name" as SymbolName) && c.property_chain[0] === "self"
       );
       expect(get_name_call).toBeDefined();
     });
@@ -138,7 +138,7 @@ class Factory:
         (r): r is SelfReferenceCall => r.kind === "self_reference_call"
       );
       const cls_call = self_ref_calls.find(
-        (c) => c.name === ("_build" as SymbolName) && c.keyword === "cls"
+        (c) => c.name === ("_build" as SymbolName) && c.property_chain[0] === "cls"
       );
       expect(cls_call).toBeDefined();
     });
@@ -272,7 +272,7 @@ class Service:
 
       const db_query_call = self_ref_calls.find(
         (c) =>
-          c.keyword === "self" &&
+          c.property_chain[0] === "self" &&
           c.property_chain.length === 3 &&
           c.property_chain[0] === "self" &&
           c.property_chain[1] === "db" &&
@@ -342,7 +342,7 @@ class Outer:
 
       const deep_call = self_ref_calls.find(
         (c) =>
-          c.keyword === "self" &&
+          c.property_chain[0] === "self" &&
           c.property_chain.length === 4 &&
           c.property_chain[0] === "self" &&
           c.property_chain[1] === "middle" &&

@@ -279,7 +279,6 @@ describe("JavaScript Metadata Extractors", () => {
         receiver_location: { file_path: TEST_FILE, start_line: 1, start_column: 1, end_line: 1, end_column: 4 },
         property_chain: ["this", "method"],
         is_self_reference: true,
-        self_keyword: "this",
       });
     });
 
@@ -316,11 +315,10 @@ describe("JavaScript Metadata Extractors", () => {
         receiver_location: { file_path: TEST_FILE, start_line: 1, start_column: 1, end_line: 1, end_column: 5 },
         property_chain: ["super", "process"],
         is_self_reference: true,
-        self_keyword: "super",
       });
     });
 
-    it("omits self_keyword for a regular object receiver", () => {
+    it("marks a regular object receiver as no self-reference", () => {
       const code = "obj.getName()";
       const tree = parser.parse(code);
       const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
@@ -359,7 +357,6 @@ describe("JavaScript Metadata Extractors", () => {
         receiver_location: { file_path: TEST_FILE, start_line: 1, start_column: 1, end_line: 1, end_column: 15 },
         property_chain: ["this", "data", "items", "push"],
         is_self_reference: true,
-        self_keyword: "this",
       });
     });
 
@@ -953,7 +950,6 @@ describe("TYPESCRIPT_METADATA_EXTRACTORS", () => {
 
       expect(result).toBeDefined();
       expect(result!.is_self_reference).toBe(true);
-      expect(result!.self_keyword).toBe("this");
       expect(result!.property_chain).toEqual(["this", "method"]);
     });
   });

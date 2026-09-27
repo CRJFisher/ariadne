@@ -220,6 +220,13 @@ describe("extract_read_source", () => {
     });
   });
 
+  it("reads `this` as the name a capture of the receiver reads, through parentheses", () => {
+    expect([
+      read_source("class W { m() { var self = this; } }", "self"),
+      read_source("class W { m() { const that = (this); } }", "that"),
+    ]).toEqual([{ name_source: "this" }, { name_source: "this" }]);
+  });
+
   it("reads nothing from a get() retrieval, a subscript, a deeper chain, a call or an array-pattern default", () => {
     expect([
       read_source("const handler = config.get('key');", "handler"),

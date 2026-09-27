@@ -6,8 +6,8 @@
  */
 
 import type { SyntaxNode } from "tree-sitter";
-import type { SymbolName, TypeInfo, FilePath, SelfReferenceKeyword } from "@ariadnejs/types";
-import { type_symbol } from "@ariadnejs/types";
+import type { SymbolName, TypeInfo, FilePath } from "@ariadnejs/types";
+import { self_reference_keyword, type_symbol } from "@ariadnejs/types";
 import type { ConstructTarget, MetadataExtractors, ReceiverInfo } from "./metadata_extractor_types";
 import { node_to_location } from "../../node_to_location";
 
@@ -190,28 +190,16 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
       const attr_name = attr_node?.text;
       const object_text = object_node.text;
 
-      if (object_node.type === "identifier") {
-        if (object_text === "self") {
-          return {
-            receiver_location: node_to_location(object_node, file_path),
-            property_chain: attr_name
-              ? ["self" as SymbolName, attr_name as SymbolName]
-              : ["self" as SymbolName],
-            is_self_reference: true,
-            self_keyword: "self",
-          };
-        }
-
-        if (object_text === "cls") {
-          return {
-            receiver_location: node_to_location(object_node, file_path),
-            property_chain: attr_name
-              ? ["cls" as SymbolName, attr_name as SymbolName]
-              : ["cls" as SymbolName],
-            is_self_reference: true,
-            self_keyword: "cls",
-          };
-        }
+      const direct_keyword =
+        object_node.type === "identifier" ? self_reference_keyword("python", object_text) : null;
+      if (direct_keyword) {
+        return {
+          receiver_location: node_to_location(object_node, file_path),
+          property_chain: attr_name
+            ? [direct_keyword as SymbolName, attr_name as SymbolName]
+            : [direct_keyword as SymbolName],
+          is_self_reference: true,
+        };
       }
 
       if (object_node.type === "call" && object_node.text.startsWith("super()")) {
@@ -221,7 +209,6 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
             ? ["super" as SymbolName, attr_name as SymbolName]
             : ["super" as SymbolName],
           is_self_reference: true,
-          self_keyword: "super",
         };
       }
 
@@ -229,18 +216,12 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
       const chain = PYTHON_METADATA_EXTRACTORS.extract_property_chain(target_node);
 
       if (chain && chain.length > 0) {
-        const SELF_KEYWORDS: Record<string, SelfReferenceKeyword> = {
-          self: "self",
-          cls: "cls",
-          super: "super",
-        };
-        const keyword = SELF_KEYWORDS[chain[0]];
+        const keyword = self_reference_keyword("python", chain[0]);
 
         return {
           receiver_location: node_to_location(object_node, file_path),
           property_chain: chain,
-          is_self_reference: keyword !== undefined,
-          ...(keyword ? { self_keyword: keyword } : {}),
+          is_self_reference: keyword !== null,
         };
       }
 

@@ -12,7 +12,41 @@ import {
   is_property_access,
   is_type_reference,
   is_assignment,
+  self_reference_is_bindable,
+  self_reference_keyword,
 } from "./symbol_references";
+import type { Language } from "./location";
+
+describe("self_reference_keyword", () => {
+  const HEADS = ["this", "self", "super", "cls", "Self", "toString"] as const;
+
+  function keywords_of(language: Language) {
+    return HEADS.map((head) => self_reference_keyword(language, head));
+  }
+
+  it("spells a TypeScript or JavaScript self receiver `this` or `super`, never `self`", () => {
+    expect([keywords_of("typescript"), keywords_of("javascript")]).toEqual([
+      ["this", null, "super", null, null, null],
+      ["this", null, "super", null, null, null],
+    ]);
+  });
+
+  it("spells a Python self receiver `self`, `cls` or `super`", () => {
+    expect(keywords_of("python")).toEqual([null, "self", "super", "cls", null, null]);
+  });
+
+  it("spells a Rust self receiver `self` only: Rust has no `this`", () => {
+    expect(keywords_of("rust")).toEqual([null, "self", null, null, null, null]);
+  });
+});
+
+describe("self_reference_is_bindable", () => {
+  it("lets a scope rebind Python's self-reference words and no other language's", () => {
+    const languages: Language[] = ["typescript", "javascript", "python", "rust"];
+    expect(languages.map(self_reference_is_bindable)).toEqual([false, false, true, false]);
+  });
+});
+
 describe("Symbol Reference Type Guards", () => {
   const base_ref = {
     name: "test" as any,

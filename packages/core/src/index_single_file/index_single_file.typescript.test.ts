@@ -3184,7 +3184,7 @@ export class TypeRegistry {
 
       expect(method_call).toBeDefined();
       if (method_call) {
-        expect(method_call.keyword).toBe("this");
+        expect(method_call.property_chain[0]).toBe("this");
       }
     });
   });
@@ -3368,7 +3368,7 @@ const result = items.map((x) =>
           r.kind === "self_reference_call" && r.name === ("#open" as SymbolName),
       );
       expect(call).toBeDefined();
-      expect(call!.keyword).toBe("this");
+      expect(call!.property_chain[0]).toBe("this");
     });
 
     it("indexes computed-key methods (member-expression and identifier keys) and captures calls from their bodies", () => {

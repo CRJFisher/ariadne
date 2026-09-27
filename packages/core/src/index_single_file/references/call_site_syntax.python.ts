@@ -1,22 +1,10 @@
-import type { CallSiteSyntax, ReceiverKind } from "@ariadnejs/types";
+import { self_reference_keyword, type CallSiteSyntax, type ReceiverKind } from "@ariadnejs/types";
 import type { SyntaxNode } from "tree-sitter";
 
 /**
  * Python call-site syntax extraction, keyed to the Python grammar's node types
  * (`call`, `attribute`, `subscript`, …).
  */
-
-/**
- * Identifier texts that denote a self-reference keyword. `this`/`super` are
- * kept alongside `self`/`cls` so a Python identifier spelled like a TS self
- * receiver classifies identically across languages.
- */
-const SELF_KEYWORD_TEXTS: ReadonlySet<string> = new Set([
-  "this",
-  "super",
-  "self",
-  "cls",
-]);
 
 /**
  * Classify a method-call receiver node.
@@ -50,7 +38,7 @@ function receiver_kind_from_node(receiver: SyntaxNode): ReceiverKind {
     return "parenthesized";
   }
 
-  if (receiver.type === "identifier" && SELF_KEYWORD_TEXTS.has(receiver.text)) {
+  if (receiver.type === "identifier" && self_reference_keyword("python", receiver.text)) {
     return "self_keyword";
   }
 

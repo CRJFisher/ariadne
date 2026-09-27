@@ -34,6 +34,7 @@ import type {
   Location,
   FilePath,
   ModulePath,
+  Language,
   LexicalScope,
   SelfReferenceCall,
   MethodCallReference,
@@ -76,18 +77,207 @@ const MOCK_LOCATION: Location = {
 };
 
 describe("extract_receiver", () => {
+  const FREE_FUNCTION_SCOPE_ID = "scope:test.ts:helper:30:0" as ScopeId;
+
+  /**
+   * The registries `extract_receiver` reads: a method body inside a class scope
+   * that records a self type, and a free function beside the class, in a file
+   * of `language`. Each of `bindings` is bound by name in its defining scope.
+   */
+  function extract_context(
+    language: Language,
+    bindings: readonly (VariableDefinition | ParameterDefinition)[] = []
+  ): ReceiverResolutionContext {
+    const scope = (
+      id: ScopeId,
+      type: LexicalScope["type"],
+      parent_id: ScopeId | null,
+      self_type_name: SymbolName | null
+    ): LexicalScope => ({
+      id,
+      name: null,
+      type,
+      location: MOCK_LOCATION,
+      parent_id,
+      child_ids: [],
+      self_type_name,
+    });
+    const scopes = new ScopeRegistry();
+    scopes.update_file(
+      TEST_FILE,
+      new Map([
+        [FILE_SCOPE_ID, scope(FILE_SCOPE_ID, "module", null, null)],
+        [CLASS_SCOPE_ID, scope(CLASS_SCOPE_ID, "class", FILE_SCOPE_ID, "MyClass" as SymbolName)],
+        [METHOD_SCOPE_ID, scope(METHOD_SCOPE_ID, "method", CLASS_SCOPE_ID, null)],
+        [FREE_FUNCTION_SCOPE_ID, scope(FREE_FUNCTION_SCOPE_ID, "function", FILE_SCOPE_ID, null)],
+      ])
+    );
+
+    const definitions = new DefinitionRegistry();
+    definitions.update_file(TEST_FILE, [...bindings]);
+
+    const resolutions = new ResolutionRegistry();
+    const bindings_by_scope = new Map<ScopeId, Map<SymbolName, SymbolId>>();
+    for (const binding of bindings) {
+      const scope_bindings = bindings_by_scope.get(binding.defining_scope_id) ?? new Map();
+      scope_bindings.set(binding.name, binding.symbol_id);
+      bindings_by_scope.set(binding.defining_scope_id, scope_bindings);
+    }
+    for (const [scope_id, scope_bindings] of bindings_by_scope) {
+      set_test_resolutions(resolutions, scope_id, scope_bindings);
+    }
+
+    return {
+      ...make_export_chain_context(),
+      languages: new Map([[TEST_FILE, language]]),
+      scopes,
+      definitions,
+      resolutions,
+      types: new TypeRegistry(definitions),
+      imports: new ImportGraph(),
+    };
+  }
+
+  function parameter(
+    name: string,
+    defining_scope_id: ScopeId,
+    start_column: number = MOCK_LOCATION.start_column
+  ): ParameterDefinition {
+    return {
+      kind: "parameter",
+      symbol_id: `parameter:${TEST_FILE}:2:${start_column}:2:14:${name}` as SymbolId,
+      name: name as SymbolName,
+      defining_scope_id,
+      location: { ...MOCK_LOCATION, start_column, end_column: start_column + name.length },
+    };
+  }
+
+  function variable(name: string, defining_scope_id: ScopeId): VariableDefinition {
+    return {
+      kind: "variable",
+      symbol_id: variable_symbol(name as SymbolName, MOCK_LOCATION),
+      name: name as SymbolName,
+      defining_scope_id,
+      location: MOCK_LOCATION,
+      is_exported: false,
+    };
+  }
+
+  function method_call(head: string, scope_id: ScopeId): MethodCallReference {
+    return {
+      kind: "method_call",
+      name: "run" as SymbolName,
+      property_chain: [head, "run"] as SymbolName[],
+      scope_id,
+      location: MOCK_LOCATION,
+      receiver_location: MOCK_LOCATION,
+      is_optional_chain: false,
+    };
+  }
+
+  describe("self-reference keyword per language and scope", () => {
+    it("reads Rust `this` as an identifier: Rust has no such keyword", () => {
+      const receiver = extract_receiver(method_call("this", METHOD_SCOPE_ID), extract_context("rust"));
+
+      expect(receiver.base).toEqual({ type: "identifier", value: "this" as SymbolName });
+    });
+
+    it("reads JavaScript `self` as an identifier: it is the worker and window global", () => {
+      const receiver = extract_receiver(method_call("self", METHOD_SCOPE_ID), extract_context("javascript"));
+
+      expect(receiver.base).toEqual({ type: "identifier", value: "self" as SymbolName });
+    });
+
+    it("reads each language's own keywords as keywords", () => {
+      const bases = (
+        [
+          ["typescript", "this"],
+          ["typescript", "super"],
+          ["javascript", "this"],
+          ["python", "self"],
+          ["python", "cls"],
+          ["rust", "self"],
+        ] as const
+      ).map(([language, head]) =>
+        extract_receiver(method_call(head, METHOD_SCOPE_ID), extract_context(language)).base
+      );
+
+      expect(bases).toEqual([
+        { type: "keyword", value: "this" },
+        { type: "keyword", value: "super" },
+        { type: "keyword", value: "this" },
+        { type: "keyword", value: "self" },
+        { type: "keyword", value: "cls" },
+        { type: "keyword", value: "self" },
+      ]);
+    });
+
+    it("keeps the keyword reading for a method's receiver parameter", () => {
+      const context = extract_context("python", [parameter("self", METHOD_SCOPE_ID)]);
+
+      const receiver = extract_receiver(method_call("self", METHOD_SCOPE_ID), context);
+
+      expect(receiver.base).toEqual({ type: "keyword", value: "self" });
+    });
+
+    it("reads a later parameter spelled like a receiver as that parameter", () => {
+      // `def register(self, cls)`: `cls` is the class handed in, not the receiver.
+      const context = extract_context("python", [
+        parameter("self", METHOD_SCOPE_ID, 15),
+        parameter("cls", METHOD_SCOPE_ID, 21),
+      ]);
+
+      const receiver = extract_receiver(method_call("cls", METHOD_SCOPE_ID), context);
+
+      expect(receiver.base).toEqual({ type: "identifier", value: "cls" as SymbolName });
+    });
+
+    it("reads a reserved keyword as the receiver whatever binds it", () => {
+      // A Rust `impl … for &mut W` records no self type, so its `self`
+      // parameter sits in no self-typed scope; `self` is still the receiver.
+      const context = extract_context("rust", [parameter("self", FREE_FUNCTION_SCOPE_ID)]);
+
+      const receiver = extract_receiver(method_call("self", FREE_FUNCTION_SCOPE_ID), context);
+
+      expect(receiver.base).toEqual({ type: "keyword", value: "self" });
+    });
+
+    it("reads a keyword the scope binds to a local as that local", () => {
+      const context = extract_context("python", [variable("cls", METHOD_SCOPE_ID)]);
+
+      const receiver = extract_receiver(method_call("cls", METHOD_SCOPE_ID), context);
+
+      expect(receiver.base).toEqual({ type: "identifier", value: "cls" as SymbolName });
+    });
+
+    it("reads a free function's `self` parameter as that parameter", () => {
+      const context = extract_context("python", [parameter("self", FREE_FUNCTION_SCOPE_ID)]);
+      const ref: SelfReferenceCall = {
+        kind: "self_reference_call",
+        name: "run" as SymbolName,
+        property_chain: ["self", "run"] as SymbolName[],
+        scope_id: FREE_FUNCTION_SCOPE_ID,
+        location: MOCK_LOCATION,
+      };
+
+      expect(extract_receiver(ref, context).base).toEqual({
+        type: "identifier",
+        value: "self" as SymbolName,
+      });
+    });
+  });
+
   describe("SelfReferenceCall extraction", () => {
     it("extracts this.method() with no property chain", () => {
       const ref: SelfReferenceCall = {
         kind: "self_reference_call",
         name: "process" as SymbolName,
-        keyword: "this",
         property_chain: ["this", "process"] as SymbolName[],
         scope_id: METHOD_SCOPE_ID,
         location: MOCK_LOCATION,
       };
 
-      const result = extract_receiver(ref);
+      const result = extract_receiver(ref, extract_context("typescript"));
 
       expect(result).toEqual({
         base: { type: "keyword", value: "this" },
@@ -101,13 +291,12 @@ describe("extract_receiver", () => {
       const ref: SelfReferenceCall = {
         kind: "self_reference_call",
         name: "query" as SymbolName,
-        keyword: "this",
         property_chain: ["this", "db", "query"] as SymbolName[],
         scope_id: METHOD_SCOPE_ID,
         location: MOCK_LOCATION,
       };
 
-      const result = extract_receiver(ref);
+      const result = extract_receiver(ref, extract_context("typescript"));
 
       expect(result).toEqual({
         base: { type: "keyword", value: "this" },
@@ -121,13 +310,12 @@ describe("extract_receiver", () => {
       const ref: SelfReferenceCall = {
         kind: "self_reference_call",
         name: "process" as SymbolName,
-        keyword: "self",
         property_chain: ["self", "process"] as SymbolName[],
         scope_id: METHOD_SCOPE_ID,
         location: MOCK_LOCATION,
       };
 
-      const result = extract_receiver(ref);
+      const result = extract_receiver(ref, extract_context("python"));
 
       expect(result).toEqual({
         base: { type: "keyword", value: "self" },
@@ -141,13 +329,12 @@ describe("extract_receiver", () => {
       const ref: SelfReferenceCall = {
         kind: "self_reference_call",
         name: "process" as SymbolName,
-        keyword: "super",
         property_chain: ["super", "process"] as SymbolName[],
         scope_id: METHOD_SCOPE_ID,
         location: MOCK_LOCATION,
       };
 
-      const result = extract_receiver(ref);
+      const result = extract_receiver(ref, extract_context("typescript"));
 
       expect(result).toEqual({
         base: { type: "keyword", value: "super" },
@@ -161,13 +348,12 @@ describe("extract_receiver", () => {
       const ref: SelfReferenceCall = {
         kind: "self_reference_call",
         name: "create" as SymbolName,
-        keyword: "cls",
         property_chain: ["cls", "create"] as SymbolName[],
         scope_id: METHOD_SCOPE_ID,
         location: MOCK_LOCATION,
       };
 
-      const result = extract_receiver(ref);
+      const result = extract_receiver(ref, extract_context("python"));
 
       expect(result).toEqual({
         base: { type: "keyword", value: "cls" },
@@ -181,13 +367,12 @@ describe("extract_receiver", () => {
       const ref: SelfReferenceCall = {
         kind: "self_reference_call",
         name: "execute" as SymbolName,
-        keyword: "this",
         property_chain: ["this", "config", "database", "connection", "execute"] as SymbolName[],
         scope_id: METHOD_SCOPE_ID,
         location: MOCK_LOCATION,
       };
 
-      const result = extract_receiver(ref);
+      const result = extract_receiver(ref, extract_context("typescript"));
 
       expect(result).toEqual({
         base: { type: "keyword", value: "this" },
@@ -215,7 +400,8 @@ describe("extract_receiver", () => {
         call_site_syntax: { receiver_kind: "index_access", index_key_is_literal },
       });
 
-      expect([extract_receiver(index_ref(true)), extract_receiver(index_ref(false))]).toEqual([
+      const context = extract_context("typescript");
+      expect([extract_receiver(index_ref(true), context), extract_receiver(index_ref(false), context)]).toEqual([
         {
           base: { type: "identifier", value: "suites" as SymbolName },
           chain: [],
@@ -245,7 +431,7 @@ describe("extract_receiver", () => {
         call_site_syntax: { receiver_kind: "index_access", index_key_is_literal: true },
       };
 
-      expect(extract_receiver(ref)).toEqual({
+      expect(extract_receiver(ref, extract_context("typescript"))).toEqual({
         base: { type: "keyword", value: "this" },
         chain: ["items" as SymbolName],
         method_name: "run" as SymbolName,
@@ -265,7 +451,7 @@ describe("extract_receiver", () => {
         is_optional_chain: false,
       };
 
-      const result = extract_receiver(ref);
+      const result = extract_receiver(ref, extract_context("typescript"));
 
       expect(result).toEqual({
         base: { type: "identifier", value: "obj" as SymbolName },
@@ -286,7 +472,7 @@ describe("extract_receiver", () => {
         is_optional_chain: false,
       };
 
-      const result = extract_receiver(ref);
+      const result = extract_receiver(ref, extract_context("typescript"));
 
       expect(result).toEqual({
         base: { type: "identifier", value: "service" as SymbolName },
@@ -308,7 +494,7 @@ describe("extract_receiver", () => {
         is_optional_chain: false,
       };
 
-      const result = extract_receiver(ref);
+      const result = extract_receiver(ref, extract_context("typescript"));
 
       expect(result).toEqual({
         base: { type: "identifier", value: "injector" as SymbolName },
@@ -319,7 +505,7 @@ describe("extract_receiver", () => {
       });
     });
 
-    it("detects 'this' in method_call and treat as keyword", () => {
+    it("reads a 'this' head of a method_call as a keyword", () => {
       // this.property.method() is indexed as method_call, yet 'this' is a keyword base.
       const ref: MethodCallReference = {
         kind: "method_call",
@@ -331,7 +517,7 @@ describe("extract_receiver", () => {
         is_optional_chain: false,
       };
 
-      const result = extract_receiver(ref);
+      const result = extract_receiver(ref, extract_context("typescript"));
 
       expect(result).toEqual({
         base: { type: "keyword", value: "this" },
@@ -341,7 +527,7 @@ describe("extract_receiver", () => {
       });
     });
 
-    it("detects 'self' in method_call and treat as keyword", () => {
+    it("reads a Python 'self' head of a method_call as a keyword", () => {
       const ref: MethodCallReference = {
         kind: "method_call",
         name: "query" as SymbolName,
@@ -352,7 +538,7 @@ describe("extract_receiver", () => {
         is_optional_chain: false,
       };
 
-      const result = extract_receiver(ref);
+      const result = extract_receiver(ref, extract_context("python"));
 
       expect(result).toEqual({
         base: { type: "keyword", value: "self" },
@@ -362,7 +548,7 @@ describe("extract_receiver", () => {
       });
     });
 
-    it("detects 'super' in method_call and treat as keyword", () => {
+    it("reads a 'super' head of a method_call as a keyword", () => {
       const ref: MethodCallReference = {
         kind: "method_call",
         name: "query" as SymbolName,
@@ -373,7 +559,7 @@ describe("extract_receiver", () => {
         is_optional_chain: false,
       };
 
-      const result = extract_receiver(ref);
+      const result = extract_receiver(ref, extract_context("typescript"));
 
       expect(result).toEqual({
         base: { type: "keyword", value: "super" },
@@ -383,7 +569,7 @@ describe("extract_receiver", () => {
       });
     });
 
-    it("detects 'cls' in method_call and treat as keyword", () => {
+    it("reads a Python 'cls' head of a method_call as a keyword", () => {
       const ref: MethodCallReference = {
         kind: "method_call",
         name: "create" as SymbolName,
@@ -394,7 +580,7 @@ describe("extract_receiver", () => {
         is_optional_chain: false,
       };
 
-      const result = extract_receiver(ref);
+      const result = extract_receiver(ref, extract_context("python"));
 
       expect(result).toEqual({
         base: { type: "keyword", value: "cls" },
@@ -416,7 +602,7 @@ describe("extract_receiver", () => {
         is_optional_chain: false,
       };
 
-      const result = extract_receiver(ref);
+      const result = extract_receiver(ref, extract_context("typescript"));
 
       expect(result).toEqual({
         base: { type: "identifier", value: "thisService" as SymbolName },

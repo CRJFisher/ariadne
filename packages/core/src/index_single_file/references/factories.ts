@@ -13,7 +13,6 @@ import type {
   Location,
   SymbolName,
   ScopeId,
-  SelfReferenceKeyword,
   TypeInfo,
 } from "@ariadnejs/types";
 import type { ConstructTarget } from "../query_code_tree/metadata_extractors/metadata_extractor_types";
@@ -28,7 +27,6 @@ import type { ConstructTarget } from "../query_code_tree/metadata_extractors/met
  *   'build_class',
  *   location,
  *   scope_id,
- *   'this',
  *   ['this', 'build_class']
  * )
  *
@@ -38,7 +36,6 @@ import type { ConstructTarget } from "../query_code_tree/metadata_extractors/met
  *   'process_data',
  *   location,
  *   scope_id,
- *   'self',
  *   ['self', 'process_data']
  * )
  */
@@ -46,7 +43,6 @@ export function create_self_reference_call(
   name: SymbolName,
   location: Location,
   scope_id: ScopeId,
-  keyword: SelfReferenceKeyword,
   property_chain: readonly SymbolName[],
   index_access?: { readonly key_is_literal: boolean }
 ): SelfReferenceCall {
@@ -55,7 +51,6 @@ export function create_self_reference_call(
     name,
     location,
     scope_id,
-    keyword,
     property_chain,
     ...(index_access !== undefined && { index_access }),
   };

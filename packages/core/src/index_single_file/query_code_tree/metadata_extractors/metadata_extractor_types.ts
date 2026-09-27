@@ -1,21 +1,19 @@
 import type { SyntaxNode } from "tree-sitter";
-import type { Location, SymbolName, TypeInfo, FilePath, SelfReferenceKeyword, ChainCallArguments } from "@ariadnejs/types";
+import type { Location, SymbolName, TypeInfo, FilePath, ChainCallArguments } from "@ariadnejs/types";
 
 /**
  * Receiver information for method calls and property access
  *
  * Contains information about the receiver object in member access expressions,
- * including whether it's a self-reference keyword (this, self, super, cls).
+ * including whether its head is a self-reference keyword of the file's language.
  */
 export interface ReceiverInfo {
   /** Location of the receiver object */
   readonly receiver_location: Location;
   /** Property access chain */
   readonly property_chain: readonly SymbolName[];
-  /** Whether the receiver is a self-reference keyword */
+  /** Whether the chain's head is a self-reference keyword of the file's language */
   readonly is_self_reference: boolean;
-  /** The self-reference keyword used (if is_self_reference is true) */
-  readonly self_keyword?: SelfReferenceKeyword;
   /**
    * Positional call arguments per property-chain position, aligned to
    * `property_chain`. Present only when a chain position is an invoked call

@@ -525,13 +525,13 @@ describe("Semantic Index - JavaScript", () => {
       // Self-reference calls have property_chain instead
       expect(this_call).toBeDefined();
       if (this_call) {
-        expect(this_call.keyword).toBe("this");
+        expect(this_call.property_chain[0]).toBe("this");
         expect(this_call.property_chain).toContain("doSomething");
       }
 
       expect(super_call).toBeDefined();
       if (super_call) {
-        expect(super_call.keyword).toBe("super");
+        expect(super_call.property_chain[0]).toBe("super");
         expect(super_call.property_chain).toContain("parentMethod");
       }
     });
@@ -2311,7 +2311,7 @@ const names = items.map(({id, name}) => name);`;
           r.kind === "self_reference_call" && r.name === ("#open" as SymbolName),
       );
       expect(call).toBeDefined();
-      expect(call!.keyword).toBe("this");
+      expect(call!.property_chain[0]).toBe("this");
     });
 
     it("indexes computed-key methods (member-expression and identifier keys) and captures calls from their bodies", () => {

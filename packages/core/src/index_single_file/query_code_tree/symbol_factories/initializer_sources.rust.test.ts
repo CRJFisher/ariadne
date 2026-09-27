@@ -1,7 +1,11 @@
 import { describe, it, expect } from "vitest";
 import type { IterationSource } from "@ariadnejs/types";
 import { parse_rust, find_node_by_type } from "./test_utils";
-import { extract_collection_source, extract_iteration_source } from "./initializer_sources.rust";
+import {
+  extract_collection_source,
+  extract_iteration_source,
+  extract_read_source,
+} from "./initializer_sources.rust";
 
 // ============================================================================
 
@@ -84,5 +88,27 @@ describe("extract_collection_source", () => {
 
     const derived = extract_collection_source(pattern);
     expect(derived).toBeUndefined();
+  });
+});
+
+describe("extract_read_source", () => {
+  function read_source_of(code: string) {
+    const let_decl = find_node_by_type(parse_rust(code), "let_declaration")!;
+    return extract_read_source(let_decl.childForFieldName("pattern")!);
+  }
+
+  it("reads the one name a `let` initialiser names, `self` included", () => {
+    expect([
+      read_source_of("fn f(&mut self) { let this = self; }"),
+      read_source_of("let parser = base;"),
+    ]).toEqual([{ name_source: "self" }, { name_source: "base" }]);
+  });
+
+  it("reads no name from a call, a reference or a path", () => {
+    expect([
+      read_source_of("fn f(&mut self) { let this = self.get_mut(); }"),
+      read_source_of("fn f(&mut self) { let this = &mut *self; }"),
+      read_source_of("let d = Foo::DEFAULT;"),
+    ]).toEqual([{}, {}, {}]);
   });
 });

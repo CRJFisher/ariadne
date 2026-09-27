@@ -467,7 +467,6 @@ describe("Python Metadata Extractors", () => {
         receiver_location: at(1, 4),
         property_chain: ["self", "method"],
         is_self_reference: true,
-        self_keyword: "self",
       });
     });
 
@@ -479,7 +478,6 @@ describe("Python Metadata Extractors", () => {
 
       expect(result?.property_chain).toEqual(["self", "db", "query"]);
       expect(result?.is_self_reference).toBe(true);
-      expect(result?.self_keyword).toBe("self");
     });
 
     it("parses the full chain of a deeply nested self.a.b.c()", () => {
@@ -490,7 +488,6 @@ describe("Python Metadata Extractors", () => {
 
       expect(result?.property_chain).toEqual(["self", "a", "b", "c"]);
       expect(result?.is_self_reference).toBe(true);
-      expect(result?.self_keyword).toBe("self");
     });
 
     it("flags cls.factory.create() as a cls self-reference", () => {
@@ -501,7 +498,6 @@ describe("Python Metadata Extractors", () => {
 
       expect(result?.property_chain).toEqual(["cls", "factory", "create"]);
       expect(result?.is_self_reference).toBe(true);
-      expect(result?.self_keyword).toBe("cls");
     });
 
     it("does not flag obj.attr.method() as a self-reference", () => {
@@ -512,7 +508,6 @@ describe("Python Metadata Extractors", () => {
 
       expect(result?.property_chain).toEqual(["obj", "attr", "method"]);
       expect(result?.is_self_reference).toBe(false);
-      expect(result?.self_keyword).toBeUndefined();
     });
 
     it("flags super().method() as a super self-reference", () => {
@@ -523,7 +518,6 @@ describe("Python Metadata Extractors", () => {
 
       expect(result?.property_chain).toEqual(["super", "method"]);
       expect(result?.is_self_reference).toBe(true);
-      expect(result?.self_keyword).toBe("super");
     });
 
     it("does not flag a simple obj.method() as a self-reference", () => {
@@ -571,7 +565,6 @@ describe("Python Metadata Extractors", () => {
         receiver_location: at(1, 4),
         property_chain: ["self", "value"],
         is_self_reference: true,
-        self_keyword: "self",
       });
     });
   });

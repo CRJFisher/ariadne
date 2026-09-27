@@ -53,6 +53,7 @@ import type {
   FilePath,
   Language,
 } from "@ariadnejs/types";
+import { RUST_SELF_TYPE_NAME } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "../registries/definition";
 import type { ScopeRegistry } from "../registries/scope";
 import type { ExportRegistry } from "../registries/export";
@@ -65,23 +66,19 @@ import {
   type SelfTypeResolutionContext,
 } from "./receiver_resolution";
 
+// `Self` is neither an anchor nor a binding — it stands for the enclosing
+// `impl`/`trait` type — so it is substituted before any anchor is read, and
+// never joins `PATH_ANCHORS`.
 const PATH_ANCHORS: ReadonlySet<string> = new Set(["crate", "self", "super"]);
 
 /**
- * The keyword a Rust associated function uses to name its own impl type, e.g.
- * `Self::new()`. `Self` is neither an anchor nor a binding — it stands for the
- * enclosing `impl`/`trait` type — so it is substituted before any anchor is
- * read, and never joins `PATH_ANCHORS`.
- */
-export const RUST_SELF_TYPE_KEYWORD = "Self" as SymbolName;
-
-/**
  * What the terminal of a qualified path is allowed to be: a callable for a call
- * site, a type for a constructor. A callable terminal may additionally be an
- * associated item of a type named by the path's last segment; a type terminal
- * never is, because the type terminals that reach here are struct/enum names
- * found through modules, and a variant or associated type resolves as a member
- * of its owner rather than as a path terminal.
+ * site, a type for a constructor or an annotation. A callable terminal may
+ * additionally be an associated item of a type named by the path's last
+ * segment; a type terminal never is, because the type terminals that reach here
+ * are a bare `Self` or struct/enum names found through modules, and a variant or
+ * associated type resolves as a member of its owner rather than as a path
+ * terminal.
  */
 type RustTerminalKind = "callable" | "type";
 
@@ -125,7 +122,9 @@ export function is_callable_definition(
 }
 
 /**
- * Resolve `<module_path>::<terminal>` to the definition it names.
+ * Resolve `<module_path>::<terminal>` to the definition it names. A bare `Self`
+ * in type position (`fn map(this: Self)`, `-> Self`) is the one path with no
+ * qualifier, and names the enclosing impl type.
  *
  * Returns null on a miss; callers then fall back to their own bare-name paths.
  */
@@ -137,13 +136,17 @@ export function resolve_qualified_path_rust(
   referring_file: FilePath,
   context: RustPathResolutionContext
 ): SymbolId | null {
-  if (module_path.length === 0) return null;
+  if (module_path.length === 0) {
+    return terminal === RUST_SELF_TYPE_NAME && terminal_kind === "type"
+      ? resolve_self_type_rust(scope_id, context)
+      : null;
+  }
 
   // `Self` stands for the enclosing impl type, which is a symbol rather than a
   // name any later hop could look up, so it is resolved here and its member
   // taken directly. Substitution runs first: `Self` binds nowhere, so every
   // hop below would miss.
-  if (module_path[0] === RUST_SELF_TYPE_KEYWORD) {
+  if (module_path[0] === RUST_SELF_TYPE_NAME) {
     // A `Self` path names an associated item of the impl type directly, so a
     // deeper path has no meaning here; a type terminal (`Self::new()`) is
     // substituted at the constructor call site instead.
@@ -280,7 +283,7 @@ function resolve_via_module_file(
  * resolves it here instead of through the scope map. Rust's `Self` is exactly
  * the self type every language's `self`/`this` reads, so the walk is shared.
  */
-export function resolve_self_type_rust(
+function resolve_self_type_rust(
   scope_id: ScopeId,
   context: SelfTypeResolutionContext
 ): SymbolId | null {

@@ -254,7 +254,7 @@ describe("TypeScript Self-Reference Resolution Integration", () => {
         (r): r is SelfReferenceCall => r.kind === "self_reference_call"
       );
       const super_call = self_ref_calls.find(
-        (c) => c.name === ("makeSound" as SymbolName) && c.keyword === "super"
+        (c) => c.name === ("makeSound" as SymbolName) && c.property_chain[0] === "super"
       );
       expect(super_call).toBeDefined();
     });
@@ -487,7 +487,7 @@ describe("TypeScript Self-Reference Resolution Integration", () => {
       const index = project.get_index_single_file(file);
       const super_calls = index!.references.filter(
         (r): r is SelfReferenceCall =>
-          r.kind === "self_reference_call" && r.keyword === "super"
+          r.kind === "self_reference_call" && r.property_chain[0] === "super"
       );
 
       expect(super_calls.length).toBeGreaterThan(0);

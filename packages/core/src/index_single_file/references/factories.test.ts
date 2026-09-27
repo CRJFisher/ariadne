@@ -45,7 +45,6 @@ describe("Reference Factories", () => {
         "method" as SymbolName,
         mock_location,
         mock_scope_id,
-        "this",
         ["this" as SymbolName, "method" as SymbolName]
       );
 
@@ -54,7 +53,6 @@ describe("Reference Factories", () => {
         name: "method",
         location: mock_location,
         scope_id: mock_scope_id,
-        keyword: "this",
         property_chain: ["this", "method"],
       });
     });
@@ -64,12 +62,11 @@ describe("Reference Factories", () => {
         "process_data" as SymbolName,
         mock_location,
         mock_scope_id,
-        "self",
         ["self" as SymbolName, "process_data" as SymbolName]
       );
 
       expect(ref.kind).toBe("self_reference_call");
-      expect(ref.keyword).toBe("self");
+      expect(ref.property_chain[0]).toBe("self");
       expect(ref.name).toBe("process_data");
       expect(ref.property_chain).toEqual(["self", "process_data"]);
     });
@@ -79,12 +76,11 @@ describe("Reference Factories", () => {
         "parent_method" as SymbolName,
         mock_location,
         mock_scope_id,
-        "super",
         ["super" as SymbolName, "parent_method" as SymbolName]
       );
 
       expect(ref.kind).toBe("self_reference_call");
-      expect(ref.keyword).toBe("super");
+      expect(ref.property_chain[0]).toBe("super");
     });
 
     test("creates valid SelfReferenceCall with cls keyword", () => {
@@ -92,12 +88,11 @@ describe("Reference Factories", () => {
         "class_method" as SymbolName,
         mock_location,
         mock_scope_id,
-        "cls",
         ["cls" as SymbolName, "class_method" as SymbolName]
       );
 
       expect(ref.kind).toBe("self_reference_call");
-      expect(ref.keyword).toBe("cls");
+      expect(ref.property_chain[0]).toBe("cls");
     });
   });
 
@@ -443,7 +438,6 @@ describe("Reference Factories", () => {
         "method" as SymbolName,
         mock_location,
         mock_scope_id,
-        "this",
         ["this" as SymbolName, "method" as SymbolName]
       );
       const method_ref = create_method_call_reference(

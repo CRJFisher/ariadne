@@ -24,10 +24,6 @@ import {
   resolve_type_via_path_prefix_rust,
   find_associated_constructor_rust,
 } from "./constructor.rust";
-import {
-  RUST_SELF_TYPE_KEYWORD,
-  resolve_self_type_rust,
-} from "./path_resolution.rust";
 import { resolve_value_source } from "./value_source";
 
 /**
@@ -64,20 +60,13 @@ export function resolve_constructor_call(
     }
   }
 
-  // @language rust
-  // `Self` is never in scope, so its substitution must run before the bare-name
-  // lookup would fail.
-  if (!class_symbol && call_ref.name === RUST_SELF_TYPE_KEYWORD) {
-    class_symbol = resolve_self_type_rust(call_ref.scope_id, context);
-  }
-
   if (!class_symbol) {
     class_symbol = resolutions.resolve(call_ref.scope_id, call_ref.name as SymbolName);
   }
 
-  // Inline full-path constructors are never bound by a bare name, so path
-  // resolution runs only after the bare-name miss; the leaf self-guards on
-  // `path_prefix`, leaving the TS/Python `new ClassName()` path untouched.
+  // Inline full-path constructors and a Rust `Self` are never bound by a bare
+  // name, so path resolution runs only after the bare-name miss; the path
+  // resolver substitutes the enclosing impl type for a lone `Self`.
   if (!class_symbol) {
     class_symbol = resolve_type_via_path_prefix_rust(call_ref, context);
   }

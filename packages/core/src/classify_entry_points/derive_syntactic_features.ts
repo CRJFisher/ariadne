@@ -17,8 +17,9 @@ export function derive_syntactic_features(
   const index_key_is_literal = call_ref.call_site_syntax?.index_key_is_literal;
   return {
     is_new_expression: call_ref.call_type === "constructor",
-    // Core emits `receiver_kind: "self_keyword"` for this/self/super/cls, so
-    // super is isolated by a textual check on the call-site line instead.
+    // Core emits `receiver_kind: "self_keyword"` for `super` and the language's
+    // other self receivers alike, so super is isolated by a textual check on the
+    // call-site line instead.
     is_super_call: /\bsuper\s*\./.test(source_line),
     is_optional_chain: /\?\./.test(source_line),
     is_awaited: /\bawait\s/.test(source_line),

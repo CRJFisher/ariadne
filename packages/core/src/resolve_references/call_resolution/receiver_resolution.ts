@@ -6,8 +6,8 @@
  * and regular method calls (obj.method()) through a two-phase approach:
  *
  * Phase 1: Resolve the base of the receiver expression
- *   - Self-reference keywords (this, self, super, cls) → the type the enclosing
- *     scope names as its self type
+ *   - A self-reference keyword of the file's language that its scope binds to
+ *     nothing else → the type the enclosing scope names as its self type
  *   - Identifiers → resolve in scope, get type
  *
  * Phase 2: Walk the property chain to get the final receiver type
@@ -38,7 +38,7 @@ import type {
   Result,
   ResolutionFailure,
 } from "@ariadnejs/types";
-import { err, ok } from "@ariadnejs/types";
+import { err, ok, self_reference_is_bindable, self_reference_keyword } from "@ariadnejs/types";
 import { resolve_element_type } from "./container_element";
 import { dereference_named_import, resolve_namespace_member } from "./namespace_member";
 import {
@@ -120,58 +120,113 @@ export type HeldValueType = (
   visited: Set<SymbolId>
 ) => SymbolId | null;
 
-const SELF_REFERENCE_KEYWORDS = new Set(["this", "self", "super", "cls"]);
-
 /**
  * Normalize a SelfReferenceCall or MethodCallReference into a ReceiverExpression.
  *
- * Both carry a flat property_chain of `[base, ...properties, method_name]`. The base is
- * a self-reference keyword for self_reference_call, and either a keyword or an
- * identifier for method_call — `this.property.method()` is frequently indexed as
- * method_call, so a leading keyword there is still a keyword base, not an identifier.
+ * Both carry a flat property_chain of `[base, ...properties, method_name]`. Whether
+ * the base is a self receiver is `read_self_reference`'s answer for either kind:
+ * `this.property.method()` is frequently indexed as method_call, and a
+ * self_reference_call's head can still be a name its scope rebinds.
  */
 export function extract_receiver(
-  ref: SelfReferenceCall | MethodCallReference
+  ref: SelfReferenceCall | MethodCallReference,
+  context: SelfTypeResolutionContext
 ): ReceiverExpression {
   const chain = ref.property_chain;
+  const head = chain[0];
+  const keyword = read_self_reference(head, ref.scope_id, context);
+  const base: ReceiverExpression["base"] = keyword
+    ? { type: "keyword", value: keyword }
+    : { type: "identifier", value: head };
 
-  if (ref.kind === "self_reference_call") {
-    return {
-      base: { type: "keyword", value: ref.keyword },
-      chain: chain.slice(1, -1) as SymbolName[],
-      method_name: ref.name,
-      scope_id: ref.scope_id,
-      ...(ref.index_access !== undefined && { index_access: ref.index_access }),
-    };
-  }
-
-  const syntax = ref.call_site_syntax;
+  const syntax = ref.kind === "method_call" ? ref.call_site_syntax : undefined;
   const index_access =
-    syntax?.receiver_kind === "index_access"
-      ? { key_is_literal: syntax.index_key_is_literal === true }
-      : undefined;
-
-  const first_element = chain[0] as string;
-  if (SELF_REFERENCE_KEYWORDS.has(first_element)) {
-    return {
-      base: { type: "keyword", value: first_element as SelfReferenceKeyword },
-      chain: chain.slice(1, -1) as SymbolName[],
-      method_name: ref.name,
-      scope_id: ref.scope_id,
-      ...(index_access !== undefined && { index_access }),
-    };
-  }
-
-  const chain_arguments = ref.property_chain_arguments?.slice(1, -1);
+    ref.kind === "self_reference_call"
+      ? ref.index_access
+      : syntax?.receiver_kind === "index_access"
+        ? { key_is_literal: syntax.index_key_is_literal === true }
+        : undefined;
+  // Chain arguments feed generic-return inference through an identifier base's
+  // declared instantiation, which a self receiver never has.
+  const chain_arguments =
+    ref.kind === "method_call" && !keyword ? ref.property_chain_arguments?.slice(1, -1) : undefined;
 
   return {
-    base: { type: "identifier", value: chain[0] as SymbolName },
+    base,
     chain: chain.slice(1, -1) as SymbolName[],
     ...(chain_arguments !== undefined && { chain_arguments }),
     method_name: ref.name,
     scope_id: ref.scope_id,
     ...(index_access !== undefined && { index_access }),
   };
+}
+
+/**
+ * The self receiver `name` denotes when read in `scope_id`, or null when it
+ * names an ordinary binding.
+ *
+ * The word must be a self-reference keyword in the file's language: Rust has no
+ * `this`, and JavaScript's `self` is a global — both are ordinary names there
+ * (`let this = Foo::new()`, `var self = this`). A reserved keyword is the
+ * receiver wherever it appears. Python's are conventions a scope can rebind, so
+ * a binding the scope chain holds for the name wins — `cls = Parser`, a free
+ * function's `self` — unless that binding is the receiver itself: the first
+ * parameter of a method declared directly in a class body, which is what the
+ * keyword reading already names, with the type the class records. A later
+ * parameter spelled the same (`def register(self, cls)`) is an ordinary
+ * argument and wins like any other binding.
+ */
+export function read_self_reference(
+  name: SymbolName,
+  scope_id: ScopeId,
+  context: SelfTypeResolutionContext
+): SelfReferenceKeyword | null {
+  const scope = context.scopes.get_scope(scope_id);
+  const language = scope ? context.languages.get(scope.location.file_path) : undefined;
+  const keyword = language ? self_reference_keyword(language, name) : null;
+  if (!language || !keyword) {
+    return null;
+  }
+  if (!self_reference_is_bindable(language)) {
+    return keyword;
+  }
+  const binding_id = context.resolutions.resolve(scope_id, name);
+  return binding_id === null || is_receiver_parameter(binding_id, context) ? keyword : null;
+}
+
+/**
+ * Whether `binding_id` is the first parameter of a callable declared directly
+ * in a scope that records a self type — the position the receiver is bound
+ * through. Parameters share their callable's scope, so the receiver is the one
+ * no other parameter of that scope precedes.
+ */
+function is_receiver_parameter(
+  binding_id: SymbolId,
+  context: SelfTypeResolutionContext
+): boolean {
+  const binding = context.definitions.get(binding_id);
+  if (binding?.kind !== "parameter") {
+    return false;
+  }
+  const callable_scope = context.scopes.get_scope(binding.defining_scope_id);
+  const holder_scope = callable_scope?.parent_id
+    ? context.scopes.get_scope(callable_scope.parent_id)
+    : undefined;
+  if (holder_scope?.self_type_name == null) {
+    return false;
+  }
+  const { start_line, start_column } = binding.location;
+  for (const sibling_id of context.definitions.get_scope_definitions(binding.defining_scope_id).values()) {
+    const sibling = context.definitions.get(sibling_id);
+    if (
+      sibling?.kind === "parameter" &&
+      (sibling.location.start_line < start_line ||
+        (sibling.location.start_line === start_line && sibling.location.start_column < start_column))
+    ) {
+      return false;
+    }
+  }
+  return true;
 }
 
 /**
@@ -309,11 +364,10 @@ export function resolve_chain_binding(
     return context.resolutions.resolve(scope_id, root);
   }
 
+  const keyword = read_self_reference(root, scope_id, context);
   const holder = resolve_receiver_expression_type(
     {
-      base: SELF_REFERENCE_KEYWORDS.has(root)
-        ? { type: "keyword", value: root as SelfReferenceKeyword }
-        : { type: "identifier", value: root },
+      base: keyword ? { type: "keyword", value: keyword } : { type: "identifier", value: root },
       chain: members.slice(0, -1),
       method_name: member_name,
       scope_id,
@@ -356,9 +410,11 @@ function resolve_base(
 }
 
 /**
- * Resolve a self-reference keyword to its type
+ * The type a self-reference keyword read in `scope_id` denotes: the enclosing
+ * type, its parent for `super`, or the function collection a `this` with no
+ * enclosing type binds to.
  */
-function resolve_keyword_base(
+export function resolve_keyword_base(
   keyword: SelfReferenceKeyword,
   scope_id: ScopeId,
   context: ReceiverResolutionContext
