@@ -702,8 +702,18 @@ so passing `--slice` to either is refused rather than ignored.
 
 `--worker-width <n>` fixes the width pass A dispatches at, so a width-one arm
 and a full-width arm are comparable. Without it the width comes from the box's
-cores and load average, which is what a real load does. Every arm boots the
-worker from `dist`, so `npm run build` runs before a measurement.
+cores and load average, which is what a real load does.
+
+Every arm boots its indexing workers from the checkout's built `packages/core`,
+and core reads `@ariadnejs/types` from its build too, so an arm measures its own
+tree only when both builds match their source. `assert_builds_current`
+(`build_freshness.ts`) checks each arm's checkout before its process starts, and
+both checkouts before an interleaved run's first arm. It asks the checkout's own
+TypeScript whether a `tsc -b --dry` would build either package, which compares
+content, so a file a `git checkout` only touched still counts as built. It also
+compares the query files byte for byte against their copies in `dist`. A stale
+checkout is refused with the `npm run build` commands that bring it current,
+types first.
 
 Each arm runs in its own process, sized by `required_heap_mb` plus a quarter —
 12,292 MB required and 15,365 MB given, for the 8,494-file corpus — and an arm

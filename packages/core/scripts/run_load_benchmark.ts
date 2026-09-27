@@ -26,6 +26,7 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import {
+  assert_builds_current,
   assert_rows_comparable,
   cite_row,
   compare_fingerprints,
@@ -216,6 +217,13 @@ function spawn_arm(
         `Arm "${request.arm}" names ${request.ariadne_repo_path} as its checkout, but ${script} does not exist there. An arm must run the tree it reports.`,
       ),
     );
+  }
+  // The arm's workers index with the checkout's built core, against its built
+  // types; a build that does not match the source would run another tree.
+  try {
+    assert_builds_current(request.ariadne_repo_path);
+  } catch (error) {
+    return Promise.reject(error);
   }
 
   return new Promise((resolve, reject) => {
@@ -431,6 +439,10 @@ async function run_interleaved(context: RunContext, slice: SliceSize): Promise<v
   // from it.
   const control_repo = flag("control-repo", find_ariadne_repo_root());
   const candidate_repo = flag("candidate-repo", find_ariadne_repo_root());
+  // Checked before the first arm too, so a stale candidate is refused before
+  // the control arm ahead of it spends the session.
+  assert_builds_current(control_repo);
+  assert_builds_current(candidate_repo);
   const control: ArmResult[] = [];
   const candidate: ArmResult[] = [];
 
