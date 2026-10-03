@@ -38,6 +38,8 @@ import type { EntryPointDiagnosis } from "./entry_point.js";
  * - `polymorphic_dispatch`       interface receiver, no implementations.
  * - `collection_dispatch`        value-in-collection / dynamic key.
  * - `coverage_config`            call sites live in excluded (unindexed) files.
+ * - `outside_indexed_corpus`     the callee is defined where no indexed file can hold it: an
+ *                                unresolved import, or a name the language binds itself.
  * - `entry_point_classification` resolution succeeded but the function is still flagged.
  * - `other`                      escape hatch; carries `description`, `needs_judgement`.
  */
@@ -51,6 +53,7 @@ export type AriadneFaultArea =
   | "polymorphic_dispatch"
   | "collection_dispatch"
   | "coverage_config"
+  | "outside_indexed_corpus"
   | "entry_point_classification"
   | "other";
 
@@ -58,7 +61,8 @@ export type AriadneFaultArea =
  * Repo-relative POSIX path of the core module that owns each fault area — the
  * fix-routing target the `plan` engine sends a group to. Separate from the value
  * list so a core IA refactor updates only this map. `other` has no owning module
- * (escape hatch) and maps to the empty string.
+ * (escape hatch) and maps to the empty string, as does `outside_indexed_corpus`:
+ * no change to Ariadne makes an indexed file hold a callee it does not contain.
  *
  * Being a `Record<AriadneFaultArea, string>`, a new area added to the union is a
  * missing-key compile error here until its folder is named.
@@ -77,6 +81,7 @@ export const ARIADNE_FAULT_AREA_FOLDER: Record<AriadneFaultArea, string> = {
   collection_dispatch:
     "packages/core/src/resolve_references/call_resolution/collection_dispatch.ts",
   coverage_config: "packages/core/src/project",
+  outside_indexed_corpus: "",
   entry_point_classification: "packages/core/src/classify_entry_points",
   other: "",
 };
@@ -142,7 +147,8 @@ export interface DeriveFaultAreaInput {
  */
 const REASON_TO_AREA: Record<ResolutionFailureReason, AriadneFaultArea> = {
   name_not_in_scope: "name_resolution",
-  import_unresolved: "import_resolution",
+  import_unresolved: "outside_indexed_corpus",
+  callee_is_a_language_global: "outside_indexed_corpus",
   reexport_chain_unresolved: "import_resolution",
   receiver_type_unknown: "receiver_type_inference",
   method_not_on_type: "receiver_type_inference", // default; stage `method_lookup` overrides

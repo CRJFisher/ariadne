@@ -1517,6 +1517,7 @@ describe("resolve_method_on_type", () => {
 
       const imports_for_test = new ImportGraph();
       imports_for_test["resolved_import_paths"].set(namespace_import_id, UTILS_FILE);
+      languages.set(UTILS_FILE, "typescript");
       const context_with_resolver: ReceiverResolutionContext = {
         ...context,
         imports: imports_for_test,
@@ -1567,6 +1568,7 @@ describe("resolve_method_on_type", () => {
 
       const imports_for_test = new ImportGraph();
       imports_for_test["resolved_import_paths"].set(namespace_import_id, UTILS_FILE);
+      languages.set(UTILS_FILE, "typescript");
       const context_with_resolver: ReceiverResolutionContext = {
         ...context,
         imports: imports_for_test,
@@ -1608,6 +1610,7 @@ describe("resolve_method_on_type", () => {
 
       const imports_for_test = new ImportGraph();
       imports_for_test["resolved_import_paths"].set(namespace_import_id, UTILS_FILE);
+      languages.set(UTILS_FILE, "typescript");
       const context_with_resolver: ReceiverResolutionContext = {
         ...context,
         imports: imports_for_test,
@@ -1658,7 +1661,10 @@ describe("resolve_method_on_type", () => {
         expect(result.error).toEqual({
           stage: "import_resolution",
           reason: "import_unresolved",
-          partial_info: { resolved_receiver_type: namespace_import_id },
+          partial_info: {
+            resolved_receiver_type: namespace_import_id,
+            import_specifier: "./utils",
+          },
         });
       }
     });
@@ -1952,6 +1958,7 @@ describe("resolve_method_on_type", () => {
 
       const imports_for_test = new ImportGraph();
       imports_for_test["resolved_import_paths"].set(import_id, IMPORT_GRAPH_FILE);
+      languages.set(IMPORT_GRAPH_FILE, "typescript");
       const context_with_resolver: ReceiverResolutionContext = {
         ...context,
         imports: imports_for_test,
@@ -1999,6 +2006,7 @@ describe("resolve_method_on_type", () => {
 
       const imports_for_test = new ImportGraph();
       imports_for_test["resolved_import_paths"].set(import_id, IMPORT_GRAPH_FILE);
+      languages.set(IMPORT_GRAPH_FILE, "typescript");
       const context_with_resolver: ReceiverResolutionContext = {
         ...context,
         imports: imports_for_test,
@@ -2061,6 +2069,7 @@ describe("resolve_method_on_type", () => {
 
       const imports_for_test = new ImportGraph();
       imports_for_test["resolved_import_paths"].set(import_id, IMPORT_GRAPH_FILE);
+      languages.set(IMPORT_GRAPH_FILE, "typescript");
       const context_with_resolver: ReceiverResolutionContext = {
         ...context,
         imports: imports_for_test,
@@ -2128,6 +2137,8 @@ describe("resolve_method_on_type", () => {
       const imports_for_test = new ImportGraph();
       imports_for_test["resolved_import_paths"].set(import_id, "/project/training/__init__.py" as FilePath);
       imports_for_test["submodule_import_paths"].set(import_id, PIPELINE_FILE);
+      languages.set("/project/training/__init__.py" as FilePath, "python");
+      languages.set(PIPELINE_FILE, "python");
       const context_with_resolvers: ReceiverResolutionContext = {
         ...context,
         imports: imports_for_test,
@@ -2162,6 +2173,7 @@ describe("resolve_method_on_type", () => {
 
       const imports_for_test = new ImportGraph();
       imports_for_test["resolved_import_paths"].set(import_id, IMPORT_GRAPH_FILE);
+      languages.set(IMPORT_GRAPH_FILE, "typescript");
       const context_with_resolver: ReceiverResolutionContext = {
         ...context,
         imports: imports_for_test,

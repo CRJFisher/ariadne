@@ -22,6 +22,7 @@ import { resolve_collection_dispatch } from "./collection_dispatch";
 import { resolve_callable_instance } from "./callable_instance.python";
 import { resolve_via_path_prefix_rust } from "./function_call.rust";
 import { resolve_value_source, type ValueSource } from "./value_source";
+import { unbound_name_failure } from "./outside_corpus";
 
 /**
  * Find alternative resolution by skipping method/constructor definitions.
@@ -36,11 +37,16 @@ function find_function_resolution(
 ): Result<SymbolId, ResolutionFailure> {
   const initial = resolver.resolve(ref.scope_id, ref.name);
   if (!initial) {
-    return err({
-      stage: "name_resolution",
-      reason: "name_not_in_scope",
-      partial_info: { last_known_scope: ref.scope_id },
-    });
+    // A path-qualified call is bound by its head (`fs` in `fs::read`), never by
+    // the terminal, so the head is the name whose absence explains the failure.
+    return err(
+      unbound_name_failure(
+        ref.path_prefix?.[0] ?? ref.name,
+        ref.scope_id,
+        "name_resolution",
+        context
+      )
+    );
   }
 
   const def = context.definitions.get(initial);

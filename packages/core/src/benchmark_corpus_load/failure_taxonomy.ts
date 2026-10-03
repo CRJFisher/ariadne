@@ -30,6 +30,7 @@ import type { CallSource } from "./call_graph_fingerprint";
  */
 export const RESOLUTION_FAILURE_REASONS = [
   "name_not_in_scope",
+  "callee_is_a_language_global",
   "import_unresolved",
   "reexport_chain_unresolved",
   "receiver_type_unknown",

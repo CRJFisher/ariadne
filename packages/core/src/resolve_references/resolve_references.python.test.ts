@@ -8,6 +8,7 @@
 import { describe, it, expect, afterAll } from "vitest";
 import { Project } from "../project/project";
 import {
+  call_outcomes,
   find_caller_node,
   is_entry_point,
 } from "./resolve_references.test";
@@ -937,12 +938,12 @@ describe("Python guarded and function-local imports", () => {
     // if/elif/else, `make_app` from the try and its except, `shutdown` from the
     // finally, `_bootstrap` from the with, `LocalCelery` inside `build`, and
     // `gb.make_app` / `gb._bootstrap` through the namespace import — the
-    // underscore name through the module-scope fallback. `os.environ.get` and
-    // the builtin `open` name nothing the project holds.
+    // underscore name through the module-scope fallback. `os.environ.get` goes
+    // through a module the project does not index, and `open` is a builtin.
     expect(calls).toEqual([
-      [3, "get", "method_not_on_type"],
-      [4, "get", "method_not_on_type"],
-      [20, "open", "name_not_in_scope"],
+      [3, "get", "import_unresolved"],
+      [4, "get", "import_unresolved"],
+      [20, "open", "callee_is_a_language_global"],
       [26, "LocalCelery", "class:guarded_base.py:Celery"],
       [27, "send_task", "method:guarded_base.py:send_task"],
       [33, "Celery", "class:guarded_base.py:Celery"],
@@ -1358,5 +1359,71 @@ def run():
     expect(
       is_entry_point(project.get_call_graph(), "start", file_paths["app.py"])
     ).toEqual(false);
+  });
+});
+
+describe("Callees outside the indexed corpus", () => {
+  it("names the unindexed module, or the language, instead of blaming the type or the scope", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "mypkg.py": `def helper(x):
+    return x
+`,
+      "main.py": `import os
+import numpy as np
+from collections import OrderedDict
+from mypkg import helper
+from missing import render
+
+
+def run(p):
+    os.getcwd()
+    os.path.dirname(p)
+    np.arange(3)
+    OrderedDict()
+    render(p)
+    helper(p)
+    len(p)
+    print(p)
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect(call_outcomes(project, file_paths["main.py"])).toEqual([
+      { name: "getcwd", outcome: "import_unresolved", import_target_file: null, import_specifier: "os" },
+      { name: "dirname", outcome: "import_unresolved", import_target_file: null, import_specifier: "os" },
+      { name: "arange", outcome: "import_unresolved", import_target_file: null, import_specifier: "numpy" },
+      { name: "OrderedDict", outcome: "import_unresolved", import_target_file: null, import_specifier: "collections" },
+      { name: "render", outcome: "import_unresolved", import_target_file: null, import_specifier: "missing" },
+      { name: "helper", outcome: "resolved", import_target_file: null, import_specifier: null },
+      { name: "len", outcome: "callee_is_a_language_global", import_target_file: null, import_specifier: null },
+      { name: "print", outcome: "callee_is_a_language_global", import_target_file: null, import_specifier: null },
+    ]);
+  });
+
+  it("names the module of an import guarded by try, and resolves a local definition over a builtin", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "main.py": `try:
+    from yaml import safe_load
+except ImportError:
+    safe_load = None
+
+
+def print(x):
+    return x
+
+
+def run(text):
+    safe_load(text)
+    print(text)
+    input(text)
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect(call_outcomes(project, file_paths["main.py"])).toEqual([
+      { name: "safe_load", outcome: "import_unresolved", import_target_file: null, import_specifier: "yaml" },
+      { name: "print", outcome: "resolved", import_target_file: null, import_specifier: null },
+      { name: "input", outcome: "callee_is_a_language_global", import_target_file: null, import_specifier: null },
+    ]);
   });
 });

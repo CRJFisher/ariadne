@@ -90,3 +90,5 @@ export {
 } from "./compare_measurements";
 
 export { read_arm_result, write_arm_result } from "./arm_result_file";
+
+export { RECORDED_OUTSIDE_CORPUS_ATTRIBUTION } from "./recorded_outside_corpus_attribution";

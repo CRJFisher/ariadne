@@ -123,6 +123,7 @@ export const RECORDED_FAILURE_TAXONOMY_BASELINE: RecordedFailureTaxonomyBaseline
         resolved: 148316,
         by_reason: {
           name_not_in_scope: 148164,
+          callee_is_a_language_global: 0,
           import_unresolved: 0,
           reexport_chain_unresolved: 0,
           receiver_type_unknown: 61449,
@@ -164,6 +165,7 @@ export const RECORDED_FAILURE_TAXONOMY_BASELINE: RecordedFailureTaxonomyBaseline
         resolved: 78734,
         by_reason: {
           name_not_in_scope: 91009,
+          callee_is_a_language_global: 0,
           import_unresolved: 0,
           reexport_chain_unresolved: 0,
           receiver_type_unknown: 101003,
@@ -205,6 +207,7 @@ export const RECORDED_FAILURE_TAXONOMY_BASELINE: RecordedFailureTaxonomyBaseline
         resolved: 8114,
         by_reason: {
           name_not_in_scope: 14258,
+          callee_is_a_language_global: 0,
           import_unresolved: 0,
           reexport_chain_unresolved: 0,
           receiver_type_unknown: 8404,
@@ -246,6 +249,7 @@ export const RECORDED_FAILURE_TAXONOMY_BASELINE: RecordedFailureTaxonomyBaseline
         resolved: 3523,
         by_reason: {
           name_not_in_scope: 8879,
+          callee_is_a_language_global: 0,
           import_unresolved: 0,
           reexport_chain_unresolved: 0,
           receiver_type_unknown: 4570,
@@ -287,6 +291,7 @@ export const RECORDED_FAILURE_TAXONOMY_BASELINE: RecordedFailureTaxonomyBaseline
         resolved: 91141,
         by_reason: {
           name_not_in_scope: 31921,
+          callee_is_a_language_global: 0,
           import_unresolved: 0,
           reexport_chain_unresolved: 0,
           receiver_type_unknown: 17179,
@@ -328,6 +333,7 @@ export const RECORDED_FAILURE_TAXONOMY_BASELINE: RecordedFailureTaxonomyBaseline
         resolved: 101669,
         by_reason: {
           name_not_in_scope: 49789,
+          callee_is_a_language_global: 0,
           import_unresolved: 0,
           reexport_chain_unresolved: 0,
           receiver_type_unknown: 19120,
@@ -369,6 +375,7 @@ export const RECORDED_FAILURE_TAXONOMY_BASELINE: RecordedFailureTaxonomyBaseline
         resolved: 139826,
         by_reason: {
           name_not_in_scope: 106426,
+          callee_is_a_language_global: 0,
           import_unresolved: 0,
           reexport_chain_unresolved: 0,
           receiver_type_unknown: 26161,
@@ -410,6 +417,7 @@ export const RECORDED_FAILURE_TAXONOMY_BASELINE: RecordedFailureTaxonomyBaseline
         resolved: 13140,
         by_reason: {
           name_not_in_scope: 20089,
+          callee_is_a_language_global: 0,
           import_unresolved: 0,
           reexport_chain_unresolved: 0,
           receiver_type_unknown: 6664,
@@ -451,6 +459,7 @@ export const RECORDED_FAILURE_TAXONOMY_BASELINE: RecordedFailureTaxonomyBaseline
         resolved: 5429,
         by_reason: {
           name_not_in_scope: 5458,
+          callee_is_a_language_global: 0,
           import_unresolved: 0,
           reexport_chain_unresolved: 0,
           receiver_type_unknown: 2825,
@@ -492,6 +501,7 @@ export const RECORDED_FAILURE_TAXONOMY_BASELINE: RecordedFailureTaxonomyBaseline
         resolved: 7431,
         by_reason: {
           name_not_in_scope: 8793,
+          callee_is_a_language_global: 0,
           import_unresolved: 0,
           reexport_chain_unresolved: 0,
           receiver_type_unknown: 1871,

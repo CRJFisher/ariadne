@@ -41,6 +41,7 @@ import type {
 import { err, ok, self_reference_is_bindable, self_reference_keyword } from "@ariadnejs/types";
 import { resolve_element_type } from "./container_element";
 import { dereference_named_import, resolve_namespace_member } from "./namespace_member";
+import { unbound_name_failure, unindexed_import_receiver_failure } from "./outside_corpus";
 import {
   infer_generic_return,
   resolve_type_parameter_annotation,
@@ -511,11 +512,7 @@ function resolve_identifier_base(
 ): Result<SymbolId, ResolutionFailure> {
   const symbol_id = context.resolutions.resolve(scope_id, identifier);
   if (!symbol_id) {
-    return err({
-      stage: "name_resolution",
-      reason: "name_not_in_scope",
-      partial_info: { last_known_scope: scope_id },
-    });
+    return err(unbound_name_failure(identifier, scope_id, "name_resolution", context));
   }
 
   const def = context.definitions.get(symbol_id);
@@ -650,11 +647,13 @@ function walk_property_chain(
     const member_symbol = find_member_symbol(current_type, property_name, context);
 
     if (!member_symbol) {
-      return err({
-        stage: "receiver_resolution",
-        reason: "method_not_on_type",
-        partial_info: { resolved_receiver_type: current_type },
-      });
+      return err(
+        unindexed_import_receiver_failure(current_type, context) ?? {
+          stage: "receiver_resolution",
+          reason: "method_not_on_type",
+          partial_info: { resolved_receiver_type: current_type },
+        }
+      );
     }
 
     // `this.contributions.get(k)` reads one element of the container member,

@@ -77,15 +77,45 @@ It resolves no additional call. What it changes is what every future measurement
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 A call whose receiver is bound by an import that resolved to no indexed file fails `import_unresolved`, in every one of the four languages, and no longer fails `method_not_on_type`.
-- [ ] #2 A call whose name is bound by an import that resolved to no indexed file fails `import_unresolved` and no longer fails `name_not_in_scope`.
-- [ ] #3 `partial_info.import_target_file` names only a file the corpus indexed; an unresolved module is carried as its specifier instead.
-- [ ] #4 `callee_is_a_language_global` exists in `ResolutionFailureReason`, `RESOLUTION_FAILURE_REASONS` and `REASON_TO_AREA`, and `len`, `print`, `console`, `JSON`, `Ok`, `Some` and `require` fail under it rather than under `name_not_in_scope`.
-- [ ] #5 Both reasons route to a fault area with no owning module, so the plan engine stops routing them to `name_resolution` and `import_resolution`.
-- [ ] #6 Integration tests at the `Project` tier cover, per language, an out-of-corpus namespace import, an out-of-corpus named import, a language global, and an in-corpus control that still resolves.
+- [x] #1 A call whose receiver is bound by an import that resolved to no indexed file fails `import_unresolved`, in every one of the four languages, and no longer fails `method_not_on_type`.
+  Evidence: `unindexed_import_receiver_failure` (`call_resolution/outside_corpus.ts`) and `resolve_method_on_type` (`method_lookup.ts`) fail `import_unresolved`, stage `import_resolution`, when the receiver's import names no indexed file. Project-tier tests, one per language: `os.getcwd()`, `os.path.dirname(p)`, `np.arange(3)` (Python, `resolve_references.python.test.ts` "Callees outside the indexed corpus"), `fs.readFileSync(p)` (TypeScript and JavaScript), `std::fs::read` (Rust). On the nine corpora the control arm held `import_unresolved` at 0 everywhere and the candidate holds it at 619 (express) to 45,513 (pandas); pandas `method_not_on_type` falls 38,835 -> 3,557.
+- [x] #2 A call whose name is bound by an import that resolved to no indexed file fails `import_unresolved` and no longer fails `name_not_in_scope`.
+  Evidence: `unbound_name_failure` (`outside_corpus.ts`) resolves a name's binding through the scope chain, including Python's hoisted `try`/`if` imports, and fails `import_unresolved` at stage `name_resolution` / `constructor_lookup` when its module names no indexed file. Tests: `render` from `some-missing-pkg` (TypeScript, JavaScript), `from missing import render` and `OrderedDict()` (Python), `render` from `missing_crate` (Rust), and a guarded `from yaml import safe_load` (Python).
+- [x] #3 `partial_info.import_target_file` names only a file the corpus indexed; an unresolved module is carried as its specifier instead.
+  Evidence: `indexed_import_file` (`outside_corpus.ts`) returns a path only when `languages` holds it; the three `import_target_file` sites in `method_lookup.ts` read it, and an unresolved module is carried as `partial_info.import_specifier` (`resolution_failure.ts`). Tests pin `import_target_file: null, import_specifier: "os" | "numpy" | "fs" | "std"` for unindexed modules and `import_target_file` equal to the indexed `local.ts` for a member an indexed module lacks; a module that arrives after its caller reports `./later` as a specifier, then resolves.
+- [x] #4 `callee_is_a_language_global` exists in `ResolutionFailureReason`, `RESOLUTION_FAILURE_REASONS` and `REASON_TO_AREA`, and `len`, `print`, `console`, `JSON`, `Ok`, `Some` and `require` fail under it rather than under `name_not_in_scope`.
+  Evidence: `callee_is_a_language_global` is in `ResolutionFailureReason`, `RESOLUTION_FAILURE_REASONS` and `REASON_TO_AREA`; the per-language sets live in `packages/types/src/language_globals.ts` (`is_language_global`, tested in `language_globals.test.ts`). Project-tier tests assert `len` and `print` (Python), `console`, `JSON` and `require` (JavaScript, TypeScript), `Some`, `drop` and `Vec` (Rust; `Ok` is in the Rust set and pinned in `language_globals.test.ts`) fail under it. A local definition or an import of the same name wins over the global.
+- [x] #5 Both reasons route to a fault area with no owning module, so the plan engine stops routing them to `name_resolution` and `import_resolution`.
+  Evidence: `ARIADNE_FAULT_AREA_FOLDER.outside_indexed_corpus` is the empty string, and `REASON_TO_AREA` maps `import_unresolved` and `callee_is_a_language_global` to it; `ariadne_fault_area.test.ts` pins both routes and that no reason with an owner reaches it. `import_resolution` keeps only `reexport_chain_unresolved`.
+- [x] #6 Integration tests at the `Project` tier cover, per language, an out-of-corpus namespace import, an out-of-corpus named import, a language global, and an in-corpus control that still resolves.
+  Evidence: per language, `resolve_references.{python,javascript,typescript,rust}.test.ts` each carry a "Callees outside the indexed corpus" suite at the `Project` tier: an out-of-corpus namespace import, an out-of-corpus named import, a language global, and an in-corpus control (`helper`, `local`) that still resolves. `npx vitest run` in `packages/core`: 236 files, 5,406 tests pass; `packages/types` and `.claude/skills/plan` suites pass.
 - [ ] #7 The nine evidence corpora are re-run: resolved calls, the call-edge fingerprint and the raw-entry-point fingerprint are **unchanged** against `RECORDED_CORPUS_RESOLUTION`, and the two reasons account for the shares TASK-376.18 measured (angular ~65.7% of `name_not_in_scope`, pandas ~60% of `method_not_on_type`, django ~38% and ~28%).
+  Evidence (unticked, see below): the three fingerprint-level figures hold; the angular and django shares do not.
 
 <!-- AC:END -->
+
+## Measurement
+
+`run_load_benchmark.ts --baseline` over the ten corpora of `RECORDED_CORPUS_RESOLUTION` (nine plus mocha), same commits and predicates, control arm a worktree at `0dceea99` and candidate arm this tree, one box. The control is the tree the step started from rather than `038b7daa`, because TASK-376.19-24 moved `RECORDED_CORPUS_RESOLUTION`'s resolved counts (celery 11,254 -> 11,357); an unchanged check against that row would measure those steps. The row is `RECORDED_OUTSIDE_CORPUS_ATTRIBUTION` in `recorded_outside_corpus_attribution.ts`, pinned by its test.
+
+**Unchanged on all ten corpora:** call references, resolved calls, the call-edge fingerprint and the raw-entry-point fingerprint (count and hash), and every reason outside the four this step relabels.
+
+| Corpus | `name_not_in_scope` | `method_not_on_type` | `callee_is_a_language_global` | `import_unresolved` |
+| --- | --- | --- | --- | --- |
+| angular | 148,000 -> 119,640 | 5,580 -> 1,260 | 13,477 | 19,203 |
+| rustc | 77,962 -> 48,380 | 19,603 -> 19,213 | 25,384 | 4,588 |
+| tokio | 13,967 -> 7,177 | 905 -> 905 | 3,210 | 3,580 |
+| sqlx | 8,327 -> 4,097 | 516 -> 475 | 2,697 | 1,574 |
+| TypeScript | 31,827 -> 26,588 | 2,077 -> 1,969 | 4,723 | 624 |
+| django | 30,428 -> 8,368 | 62,679 -> 57,195 | 17,740 | 9,804 |
+| pandas | 60,553 -> 19,336 | 38,835 -> 3,557 | 30,982 | 45,513 |
+| celery | 11,046 -> 1,906 | 4,502 -> 2,280 | 4,626 | 6,736 |
+| express | 5,442 -> 4,576 | 527 -> 49 | 725 | 619 |
+
+Shares that hold: pandas's pytest and numpy receivers (60% of `method_not_on_type` in TASK-376.18) leave it, 91% moved to `import_unresolved`; rustc's prelude (27.7% of `name_not_in_scope`) is covered, `callee_is_a_language_global` equals 32.6% of the control's `name_not_in_scope`; django's builtins and stdlib (28%) are covered, `name_not_in_scope` falls 72%; sqlx's and tokio's prelude shares (26%, 28%) are covered: `callee_is_a_language_global` is 32% and 23% of their control `name_not_in_scope`, with a further 19% and 26% now `import_unresolved` for unindexed `std` paths.
+
+**Shares that do not hold, and why.** Angular's 65.7% Jasmine share of `name_not_in_scope` is untouched: `expect`, `it`, `toBe` are bound by no declaration or import in the file set and are not a language's own words, so under this task's design (`callee_is_a_language_global` is the language's set, not a test framework's) they remain `name_not_in_scope`. Only 19% of angular's control `name_not_in_scope` moved. Django's 38% `unittest` share of `method_not_on_type` is untouched for a different reason: the receiver is `self`, typed as the test class, and the member is missing because the class's base is an import of an unindexed module, which is neither shape of AC #1 (receiver bound by an import) nor AC #2. Meeting AC #7 as written needs either a test-framework global set (which breaks the contract that a reason is an observation, not a classification) or a base-class-through-unresolved-import route into `import_unresolved`; neither is in the Work plan.
+
 
 ## Evidence
 

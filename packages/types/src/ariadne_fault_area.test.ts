@@ -53,9 +53,31 @@ describe("derive_fault_area — (stage, reason) table", () => {
       stage: "import_resolution",
       reason: "import_unresolved",
       expected: {
-        area: "import_resolution",
+        area: "outside_indexed_corpus",
         resolution_stage: "import_resolution",
         resolution_reason: "import_unresolved",
+        language: undefined,
+        needs_judgement: false,
+      },
+    },
+    {
+      stage: "name_resolution",
+      reason: "import_unresolved",
+      expected: {
+        area: "outside_indexed_corpus",
+        resolution_stage: "name_resolution",
+        resolution_reason: "import_unresolved",
+        language: undefined,
+        needs_judgement: false,
+      },
+    },
+    {
+      stage: "name_resolution",
+      reason: "callee_is_a_language_global",
+      expected: {
+        area: "outside_indexed_corpus",
+        resolution_stage: "name_resolution",
+        resolution_reason: "callee_is_a_language_global",
         language: undefined,
         needs_judgement: false,
       },
@@ -312,7 +334,7 @@ describe("derive_fault_area — precedence: resolution_failure beats diagnosis",
         has_uncaptured_indexed_grep_hit: false,
       }),
     ).toEqual({
-      area: "import_resolution",
+      area: "outside_indexed_corpus",
       resolution_stage: "import_resolution",
       resolution_reason: "import_unresolved",
       language: undefined,
@@ -395,9 +417,9 @@ describe("ARIADNE_FAULT_AREA_FOLDER and the area enumeration", () => {
     expect(Object.keys(ARIADNE_FAULT_AREA_FOLDER).sort()).toEqual([...ARIADNE_FAULT_AREAS].sort());
   });
 
-  test("every non-other area maps to a non-empty repo-relative path; other maps to empty", () => {
+  test("every owned area maps to a non-empty repo-relative path; other and outside_indexed_corpus map to empty", () => {
     for (const area of ARIADNE_FAULT_AREAS) {
-      if (area === "other") {
+      if (area === "other" || area === "outside_indexed_corpus") {
         expect(ARIADNE_FAULT_AREA_FOLDER[area]).toEqual("");
       } else {
         expect(ARIADNE_FAULT_AREA_FOLDER[area].startsWith("packages/core/src/")).toEqual(true);
@@ -405,7 +427,7 @@ describe("ARIADNE_FAULT_AREA_FOLDER and the area enumeration", () => {
     }
   });
 
-  test("the enumeration is the 10 folder-anchored areas plus other", () => {
+  test("the enumeration is the 9 folder-anchored areas plus outside_indexed_corpus and other", () => {
     expect([...ARIADNE_FAULT_AREAS].sort()).toEqual(
       [
         "collection_dispatch",
@@ -415,6 +437,7 @@ describe("ARIADNE_FAULT_AREA_FOLDER and the area enumeration", () => {
         "method_lookup",
         "name_resolution",
         "other",
+        "outside_indexed_corpus",
         "polymorphic_dispatch",
         "receiver_type_inference",
         "scope_construction",

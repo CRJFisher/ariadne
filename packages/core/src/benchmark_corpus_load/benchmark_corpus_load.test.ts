@@ -93,7 +93,8 @@ describe("run_benchmark_arm", () => {
       call_references: 13,
       resolved: 11,
       by_reason: {
-        name_not_in_scope: 2,
+        name_not_in_scope: 0,
+        callee_is_a_language_global: 2,
         import_unresolved: 0,
         reexport_chain_unresolved: 0,
         receiver_type_unknown: 0,

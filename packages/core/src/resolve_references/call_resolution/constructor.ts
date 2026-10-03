@@ -25,6 +25,7 @@ import {
   find_associated_constructor_rust,
 } from "./constructor.rust";
 import { resolve_value_source } from "./value_source";
+import { unbound_name_failure } from "./outside_corpus";
 
 /**
  * Resolve a constructor call to its constructor definition, falling back to the
@@ -76,11 +77,14 @@ export function resolve_constructor_call(
   }
 
   if (!class_symbol) {
-    return err({
-      stage: "constructor_lookup",
-      reason: "name_not_in_scope",
-      partial_info: { last_known_scope: call_ref.scope_id },
-    });
+    return err(
+      unbound_name_failure(
+        (call_ref.property_chain?.[0] ?? call_ref.name) as SymbolName,
+        call_ref.scope_id,
+        "constructor_lookup",
+        context
+      )
+    );
   }
 
   const reached = new Set<SymbolId>();
