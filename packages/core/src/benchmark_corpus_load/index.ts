@@ -22,13 +22,18 @@ export {
   same_commit,
 } from "./corpus_predicate";
 
-export { plan_nested_slices } from "./nested_slice";
+export { plan_nested_slices, select_offered_files } from "./nested_slice";
 
 export { assert_builds_current } from "./build_freshness";
 
 export { heap_mb_for, required_heap_mb } from "./heap_requirement";
 
-export { INGEST_ORDERS, type IngestOrder } from "./ingest_order";
+export {
+  INGEST_ORDERS,
+  measure_file_sizes,
+  total_bytes,
+  type IngestOrder,
+} from "./ingest_order";
 
 export {
   create_session_id,
@@ -51,6 +56,8 @@ export { RECORDED_FULL_CORPUS_BASELINE } from "./recorded_full_corpus_baseline";
 export { RECORDED_EXPORT_DECLARATION_SPACE } from "./recorded_export_declaration_space";
 
 export { RECORDED_ORDER_INDEPENDENCE } from "./recorded_order_independence";
+
+export { RECORDED_HEAP_REQUIREMENT } from "./recorded_heap_requirement";
 
 export { RECORDED_MEMORY_CONTRACT } from "./recorded_memory_contract";
 
