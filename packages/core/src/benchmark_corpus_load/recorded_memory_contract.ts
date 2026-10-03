@@ -181,6 +181,19 @@ export interface RecordedMemoryContract {
   readonly other_corpus: OtherCorpusRow;
 
   /**
+   * What the benchmark harness gives an arm over this file set, which is a
+   * ceiling fitted over bytes of source and not the floor above. Stated beside
+   * the floor because the two answer different questions: the floor is what a
+   * user must pass, the requirement is what the harness refuses to start under.
+   */
+  readonly harness_sizing: {
+    readonly offered_bytes: number;
+    readonly required_heap_mb: number;
+    readonly arm_cap_mb: number;
+    readonly why: string;
+  };
+
+  /**
    * The audit behind "Ariadne sets no heap flag": what was searched and what
    * was found, so the claim is checkable rather than asserted.
    */
@@ -443,6 +456,13 @@ export const RECORDED_MEMORY_CONTRACT: RecordedMemoryContract = {
       "The 6,144 MB floor is stated for `src/` and is NOT known to be sufficient here. This file set retains 5,562.95 MB, which would leave 581 MB of collector working set under a 6,144 MB ceiling, and `src/` died with 97.9 MB. Both arms ran at 22,645 MB; the floor for this corpus is unmeasured. The one file dropped here is the scope-tree invariant of TASK-387, not a memory effect: both arms index 12,653 of 12,654 and report one identical fingerprint.",
   },
 
+  harness_sizing: {
+    offered_bytes: 109947285,
+    required_heap_mb: 12379,
+    arm_cap_mb: 15474,
+    why: "The requirement is 320 MB plus 115 MB per MiB of source, a line fitted 2% above every measured arm and binding at angular, whose peak RSS is 121 MB per MiB against this corpus's 55. It is 2.13x this corpus's measured peak and 2.0x its 6,144 MB floor; the arm cap is the requirement plus a quarter. A user starting the CLI needs the floor, not this figure.",
+  },
+
   no_heap_flag_in_ariadne: {
     searched: [
       "--max-old-space-size",
@@ -453,7 +473,7 @@ export const RECORDED_MEMORY_CONTRACT: RecordedMemoryContract = {
     ],
     matches_in_shipped_code: 0,
     matches_in_the_harness: [
-      "packages/core/scripts/run_load_benchmark.ts sizes each arm's child process from `required_heap_mb`",
+      "packages/core/scripts/run_load_benchmark.ts sizes each arm's child process from `required_heap_mb` of the bytes of source the arm will hold",
       "packages/core/src/benchmark_corpus_load/benchmark_corpus_load.ts refuses an arm the heap cannot hold and names the flag to re-run with",
     ],
     why: "Setting the ceiling from inside Ariadne needs a re-exec or a NODE_OPTIONS hand-off, which is a second execution path, and it would cover the CLI while leaving the MCP server and the library consumer with neither the flag nor the guarantee.",

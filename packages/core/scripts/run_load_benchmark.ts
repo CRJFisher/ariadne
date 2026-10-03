@@ -64,6 +64,7 @@ import {
   report_recorded_export_declaration_space,
   report_recorded_failure_taxonomy,
   report_recorded_full_corpus_baseline,
+  report_recorded_heap_requirement,
   report_recorded_memory_contract,
   report_recorded_worker_index_dispatch,
   report_recorded_name_table,
@@ -430,6 +431,7 @@ async function run_baseline(context: RunContext): Promise<void> {
     { label: "baseline", taxonomy: result.failure_taxonomy },
   ]);
   report_recorded_failure_taxonomy(result.row);
+  report_recorded_heap_requirement(result.row.file_counts.offered);
 }
 
 async function run_interleaved(context: RunContext, slice: SliceSize): Promise<void> {
@@ -506,6 +508,7 @@ async function run_interleaved(context: RunContext, slice: SliceSize): Promise<v
   report_recorded_full_corpus_baseline(control[0].row.file_counts.offered);
   report_recorded_export_declaration_space(control[0].row.file_counts.offered);
   report_recorded_memory_contract(control[0].row.file_counts.offered);
+  report_recorded_heap_requirement(control[0].row.file_counts.offered);
   report_recorded_worker_index_dispatch(control[0].row.file_counts.offered);
 }
 

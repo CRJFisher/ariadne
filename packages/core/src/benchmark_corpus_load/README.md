@@ -715,12 +715,21 @@ compares the query files byte for byte against their copies in `dist`. A stale
 checkout is refused with the `npm run build` commands that bring it current,
 types first.
 
-Each arm runs in its own process, sized by `required_heap_mb` plus a quarter —
-12,292 MB required and 15,365 MB given, for the 8,494-file corpus — and an arm
-whose own ceiling is below that requirement refuses to start rather than dying
-after hours. The requirement is a linear model fitted to two small-slice points
-and it over-provisions at corpus scale: the measured floor for vscode's `src/`
-is 6,144 MB, and node's 4,144 MB default is what the corpus dies at.
+Each arm runs in its own process, sized by `required_heap_mb` of the bytes of
+source the arm will hold, plus a quarter — 12,379 MB required and 15,474 MB
+given for vscode's `src/` (104.9 MiB over 8,494 files) — and an arm whose own
+ceiling is below that requirement refuses to start rather than dying after
+hours. The parent and the child sum the same files through `select_offered_files`
+and `total_bytes` and read one `required_heap_mb`, so a cap the parent grants is
+one the child accepts.
+
+The requirement is a ceiling, not an estimate. Peak RSS correlates 0.96 with
+bytes of source and 0.70 with file count (`RECORDED_HEAP_REQUIREMENT`), so the
+fit moved from files to bytes; it binds at angular, whose peak is 121 MB per MiB
+of source against vscode's 55, and sits 1.3x to 2.1x above every other arm. It
+therefore over-provisions vscode's `src/`, whose measured floor is 6,144 MB:
+the harness gives that arm more than the CLI user needs, and node's 4,144 MB
+default is still what the corpus dies at.
 
 ### A second checkout for the candidate arm
 

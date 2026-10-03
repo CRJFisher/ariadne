@@ -57,6 +57,8 @@ export { RECORDED_EXPORT_DECLARATION_SPACE } from "./recorded_export_declaration
 
 export { RECORDED_ORDER_INDEPENDENCE } from "./recorded_order_independence";
 
+export { RECORDED_HEAP_REQUIREMENT } from "./recorded_heap_requirement";
+
 export { RECORDED_MEMORY_CONTRACT } from "./recorded_memory_contract";
 
 export { RECORDED_CACHE_RESUMPTION } from "./recorded_cache_resumption";

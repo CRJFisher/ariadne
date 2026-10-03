@@ -8,6 +8,7 @@
  */
 
 import { describe, expect, it } from "vitest";
+import { heap_mb_for, required_heap_mb } from "./heap_requirement";
 import { RECORDED_MEMORY_CONTRACT } from "./recorded_memory_contract";
 import { RECORDED_ORDER_INDEPENDENCE } from "./recorded_order_independence";
 import { round_to_hundredth } from "./round_measurement";
@@ -247,5 +248,21 @@ describe("RECORDED_MEMORY_CONTRACT", () => {
       expect(entry.claim.length).toBeGreaterThan(0);
       expect(entry.reason.length).toBeGreaterThan(0);
     }
+  });
+
+  it("states the harness's sizing from the function that sizes it, not as a second copy", () => {
+    const sizing = RECORD.harness_sizing;
+    expect([sizing.required_heap_mb, sizing.arm_cap_mb]).toEqual([
+      required_heap_mb(sizing.offered_bytes),
+      heap_mb_for(sizing.offered_bytes),
+    ]);
+  });
+
+  it("sizes the harness above the measured floor and above the peak the floor ran at", () => {
+    const sizing = RECORD.harness_sizing;
+    expect([
+      sizing.required_heap_mb > RECORD.required_old_space_mb,
+      sizing.required_heap_mb > RECORD.completing[0].peak_rss_mb.mean,
+    ]).toEqual([true, true]);
   });
 });

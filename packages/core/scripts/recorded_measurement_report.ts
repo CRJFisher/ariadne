@@ -22,12 +22,14 @@ import {
   RECORDED_CORPUS_RESOLUTION,
   RECORDED_FAILURE_TAXONOMY_BASELINE,
   RECORDED_FULL_CORPUS_BASELINE,
+  RECORDED_HEAP_REQUIREMENT,
   RECORDED_MEMORY_CONTRACT,
   RECORDED_WORKER_INDEX_DISPATCH,
   RECORDED_NAME_TABLE_MEMORY,
   RECORDED_ORDER_INDEPENDENCE,
   RECORDED_RESOLUTION_EVICTION_COST,
   format_failure_taxonomy_table,
+  required_heap_mb,
   same_commit,
   type MeasurementRow,
 } from "../src/benchmark_corpus_load";
@@ -120,6 +122,27 @@ export function report_recorded_memory_contract(offered_file_count: number): voi
       `\n  live heap ${record.live_heap_mb.mean} MB (${record.live_heap_mb.observations.length} runs, spread ${record.live_heap_mb.spread_percent}%), ${record.live_heap_headroom_below_default_ceiling_mb} MB below that ceiling, so what is missing is collector working set` +
       `\n  peak RSS ${smaller.peak_rss_mb.mean} MB at ${smaller.heap_flag_mb} against ${larger.peak_rss_mb.mean} MB at ${larger.heap_flag_mb} over one live set — the RSS-to-heap ratio is ${record.rss_to_live_heap.map((row) => `${row.ratio}x`).join(" and ")}, not a constant` +
       `\n  the smaller ceiling costs ${record.cost_of_the_smaller_ceiling}x the CPU and reports the same graph; Ariadne sets no heap flag itself`,
+  );
+}
+
+/**
+ * What this file set's heap was sized from, and what it peaked at under it.
+ *
+ * Printed for an arm over a corpus that was re-run when the requirement moved
+ * from file count to bytes of source, because the cap an arm was just given is
+ * a function of those bytes and a reader judging its peak RSS needs the figure
+ * the cap came from. The bytes and the requirement travel between machines;
+ * the peaks do not, so they are marked as a record.
+ */
+export function report_recorded_heap_requirement(offered_file_count: number): void {
+  const recorded = RECORDED_HEAP_REQUIREMENT.rerun.find(
+    (row) => row.offered_files === offered_file_count,
+  );
+  if (recorded === undefined) return;
+  console.log(
+    `\nrecorded heap sizing for this file set (${RECORDED_HEAP_REQUIREMENT.machine}, ariadne@${RECORDED_HEAP_REQUIREMENT.rerun_ariadne_commit} — not a comparand for the arms above):` +
+      `\n  ${recorded.corpus} ${recorded.predicate}: ${recorded.offered_bytes} bytes of source over ${recorded.offered_files} files need ${required_heap_mb(recorded.offered_bytes)} MB of heap` +
+      `\n  peak RSS ${recorded.peak_rss_mb} MB at a ${recorded.heap_cap_mb} MB cap, against ${recorded.control.peak_rss_mb} MB at the control arm's ${recorded.control.heap_cap_mb} MB cap, over one call graph`,
   );
 }
 
