@@ -56,14 +56,18 @@ Record each fact once in the store that owns it, and give member lookup one ladd
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 All eighteen sub-tasks land in the wave order of the Implementation Plan, each verified by its own criteria before the next wave starts.
-- [ ] #2 Every call-kind reference emitted by the index ends as either a resolved call or a recorded `ResolutionFailure`, with the `resolved + failed == call references` invariant asserted in the resolver tier and a per-reason taxonomy reported by the corpus harness (TASK-376.16), before any recovery step lands.
-- [ ] #3 Every row of the source plan's §1 probe matrix that reads `receiver_type_unknown`, `member_type_unknown`, `constructor_target_not_a_class` or `polymorphic_no_implementations` today resolves, except the documented permanent limitations.
+- [x] #1 All eighteen sub-tasks land in the wave order of the Implementation Plan, each verified by its own criteria before the next wave starts.
+      Evidence: all eighteen sub-tasks (TASK-376.1 to TASK-376.18) are `Done` with every one of their own criteria ticked. The merge log holds the wave order: TASK-376.16, .1, .2, .3, .4, .12 merge first (`ff490892` to `fd24216d`); .5 and .6 follow (`2818cf0d`, `47fc5be1`); TASK-376.17 lands after .6 (`94a2a259`); .7 and .9 follow it (`339a58a1`, `f78c4706`); .10, .11 and .13 follow those (`555f74bc`, `9265c4c4`, `d835aca6`); .14, .15 and the TASK-376.8 confirmation land after .13 (`4d1b126c`, `930fc83b`, `5908e83b`); TASK-376.18 lands last (`7671d944`). TASK-376.8's pass was written inside TASK-376.7's and TASK-376.13's commits and its own step confirmed it after TASK-376.13, as its notes record.
+- [x] #2 Every call-kind reference emitted by the index ends as either a resolved call or a recorded `ResolutionFailure`, with the `resolved + failed == call references` invariant asserted in the resolver tier and a per-reason taxonomy reported by the corpus harness (TASK-376.16), before any recovery step lands.
+      Evidence: `call_resolver.test.ts` › "resolved-plus-failed invariant" asserts `resolved + failed == call references` over the committed fixture corpus at the resolver tier. The per-reason taxonomy is reported by `run_load_benchmark.ts --interleave` and recorded per corpus in `recorded_failure_taxonomy_baseline.ts`, measured on `a3d5beea`. None of the recovery steps (TASK-376.1, .2, .3, .4, .5, .6, .7, .9, .10, .11, .12, .13, .17) is an ancestor of `a3d5beea`, so the baseline precedes every recovery step. All ten close-out arms close over their call references (`resolved + failed == call_references`), which `read_arm_result` enforces on read.
+- [x] #3 Every row of the source plan's §1 probe matrix that reads `receiver_type_unknown`, `member_type_unknown`, `constructor_target_not_a_class` or `polymorphic_no_implementations` today resolves, except the documented permanent limitations.
+      Evidence: the probe matrix's rows are the five facts' probes in the source plan's §1: each annotation form (Rust `&S`, `&mut S`, `Option<Enc>`, `Box<dyn Emit>`, `impl Emit`; TypeScript `F | null`; Python `Optional[C]`, `Union[C, None]`, `"C"`; JSDoc `{X=}`, `{X|null}`, `{import("./a").X}`) is a passing case in `annotation.{typescript,python,rust}.test.ts` and `type.integration.test.ts`; the four self-type failure modes, the cross-file Rust `impl`, the enum `impl` blocks, the value rows (`mapper_cls = Mapper`, `cls = Parser`, `make()` returning `type[Parser]`, `orig = BaseTask.__call__`, `_parser_dispatch`, `suites[0]`) in `receiver_resolution.*.integration.test.ts`, `value_source.test.ts`, `container_element.test.ts` and `project.corpus_evidence.integration.test.ts`; and the subtype-graph rows (qualified heritage, bases past the first, Rust trait edges, structural conformance, the six ingestion orders) in `type.integration.test.ts` and `project.integration.test.ts`. The full suite is green on the merged tree (`235` files, `5383` tests), so every one of those passes. The four permanent limitations stay out of scope as `RECORDED_CORPUS_RESOLUTION.permanent_limitations` records them. The vscode `_register(new DisposableMap<…>())` field is TASK-394's shape, not a matrix row, and is carried under #4.
 - [ ] #4 Integration tests (with the fixtures the sub-tasks add) cover every evidence case in the cluster: angular qualified heritage, the CompilerFacade replicas and DI injection, rustc cross-file impl and trait default bodies, sqlx PgCube enum impls, django constructor rows, pandas `_parser_dispatch`, celery constructor-only class / `orig = BaseTask.__call__` / `loops.synloop`, express named member-assigned functions and the mixin pair, mocha element access, webpack accessor pairs and `#`-private chains, and the vscode generic-container dispose shape.
 - [x] #5 The full pipeline is re-run over angular, rustc, tokio, sqlx, TypeScript, django, pandas, celery, express and mocha, with per-failure-reason recovery, new false negatives and call-edge deltas reported against the TASK-376.16 baseline and against the TASK-376.17 and TASK-376.13 measurement rows (TASK-376.18).
 - [x] #6 The residue is re-attributed from actual failure reasons rather than the original leaf split, and the permanent limitations (WebAssembly exports object, runtime-token DI containers, celery `canvas.py:736`, Rust `Drop`) are recorded as out of scope.
 - [x] #7 A corpus-level regression suite pins the achieved per-corpus counts with one recorded row and one named end-to-end case per corpus, and the follow-ons (language-aware self-reference keywords, interprocedural cross-function carriers, Python loop-clause scopes) exist as backlog tasks.
-- [ ] #8 The insulated suites stay green (`method_lookup.test.ts`, `call_resolver.test.ts`, `collection_dispatch.test.ts`, `constructor*.test.ts`, `path_resolution.rust.test.ts`, `indirect_reachability.test.ts`, `scopes.test.ts`, `preprocess_references.python.test.ts`, the `benchmark_corpus_load` fingerprint guards, the `classify_entry_points` suite), with fixture-level rather than assertion-level adjustments where the graph legitimately changes.
+- [x] #8 The insulated suites stay green (`method_lookup.test.ts`, `call_resolver.test.ts`, `collection_dispatch.test.ts`, `constructor*.test.ts`, `path_resolution.rust.test.ts`, `indirect_reachability.test.ts`, `scopes.test.ts`, `preprocess_references.python.test.ts`, the `benchmark_corpus_load` fingerprint guards, the `classify_entry_points` suite), with fixture-level rather than assertion-level adjustments where the graph legitimately changes.
+      Evidence: `cd packages/core && npx tsc --noEmit && npx vitest run` passes on `5acc366a`: 235 files, 5383 tests, 1 todo. Run separately, the named insulated suites (`method_lookup`, `call_resolver`, `collection_dispatch`, `constructor*`, `path_resolution.rust`, `indirect_reachability`, `scopes`, `preprocess_references.python`, all of `benchmark_corpus_load/` including the fingerprint guards, all of `classify_entry_points/`) pass: 73 files, 929 tests. Over the epic's commits, none of those nine test files has an `expect` assertion line removed; the 40 lines removed from `method_lookup.test.ts` are the `resolve_method_on_type` call signature, its `register_subtype` setup, and one case title ("…implements or conforms to"); the case's fixture, not its assertion, carries the structural-conformance change.
 
 <!-- AC:END -->
 
@@ -132,3 +136,88 @@ Each step names what pins it: a dependency (D), a file shared with an earlier or
 The critical path is steps 1 → 8 → 9 → 10 → 14 → 15/16 → 18, seven sessions deep; the widest wave is six.
 
 <!-- SECTION:PLAN:END -->
+
+<!-- SECTION:NOTES:BEGIN -->
+
+## Close-out measurement
+
+### Method
+
+Ten corpora, each run as an interleaved control, candidate, control, candidate quartet by `run_load_benchmark.ts --interleave` in one session on one box (Darwin 24.6.0, 6 CPUs, 32,768 MB, node v22.22.1). The control is `038b7daa`, the tree TASK-376.18 recorded its achieved row on, checked out beside this tree with its `node_modules` and `dist` rebuilt; the four harness files that size an arm's heap (`benchmark_corpus_load.ts`, `heap_requirement.ts`, `ingest_order.ts`, `nested_slice.ts`) are this tree's, so the control measures TypeScript under the guard TASK-376.18 introduced. The candidate is `5acc366a`, the merged tree. The corpora are the checkouts under `~/.ariadne/triage-entrypoints/repos/`, at TASK-376.18's commits and predicates; the arms are in `~/.ariadne/benchmark-runs/task-376-close-out/`.
+
+Two properties make the figures a measurement of the tree rather than of the session. Each arm's two runs agree on all seven fingerprint components and on the taxonomy, on all ten corpora. Each control arm reproduces TASK-376.18's recorded row exactly (all seven components and every taxonomy count), so the recorded rows below are restated from this session's control arms and the candidate columns are deltas against them.
+
+### TASK-376.18's achieved row, restated, against the merged tree
+
+| Corpus     |       Call refs |                     Resolved |                   Call edges |         Raw entry points |
+| ---------- | --------------: | ---------------------------: | ---------------------------: | -----------------------: |
+| angular    | 378862 → 379504 | 160166 → **171504** (+11338) | 158057 → **168723** (+10666) |   3096 → **2893** (-203) |
+| rustc      |      325188 (=) |  113204 → **114580** (+1376) |    96180 → **97911** (+1731) | 19732 → **19479** (-253) |
+| tokio      |       34860 (=) |       8813 → **8980** (+167) |       7762 → **7895** (+133) |    2363 → **2339** (-24) |
+| sqlx       |       18564 (=) |        4033 → **4085** (+52) |       3597 → **3699** (+102) |    1524 → **1461** (-63) |
+| TypeScript | 153090 → 153149 |     93358 → **93835** (+477) |     75036 → **75611** (+575) |      758 → **727** (-31) |
+| django     | 202972 → 203049 |     85878 → **86126** (+248) |      67102 → **67057** (-45) |    2289 → **2279** (-10) |
+| pandas     | 244360 → 244338 |    117951 → **117915** (-36) |      84238 → **84168** (-70) |      2085 → **2085** (=) |
+| celery     |   35088 → 35090 |     11254 → **11357** (+103) |        9465 → **9549** (+84) |      730 → **717** (-13) |
+| express    |       14543 (=) |                     5436 (=) |                     5250 (=) |                   21 (=) |
+| mocha      |       19965 (=) |         7485 → **7487** (+2) |         6936 → **6938** (+2) |         71 → **70** (-1) |
+
+The left of each cell is `recorded_corpus_resolution.ts` as pinned: the regression suite's call-edge and raw-entry-point rows hold the left-hand figures, and they remain the rows a later change is judged against. The nodes held are identical on both trees on every corpus.
+
+### Per-reason recovery against the achieved row
+
+Only the reasons that moved by any amount on some corpus; `0` is no movement. A reason rising is not a regression by itself: a receiver that stops failing at `receiver_type_unknown` fails later, at `member_type_unknown`, `method_not_on_type` or `polymorphic_no_implementations`.
+
+| Corpus     | `name_not_in_scope` | `receiver_type_unknown` | `method_not_on_type` | `member_type_unknown` | `polymorphic_no_implementations` | `collection_dispatch_miss` | `no_enclosing_class_scope` | `class_definition_not_found` | `constructor_target_not_a_class` | `no_parent_class` |
+| ---------- | ------------------: | ----------------------: | -------------------: | --------------------: | -------------------------------: | -------------------------: | -------------------------: | ---------------------------: | -------------------------------: | ----------------: |
+| angular    |                 +21 |              **-12220** |                  +71 |                  +867 |                             +581 |                         +6 |                        -22 |                            0 |                                0 |                 0 |
+| rustc      |                 +63 |                    -476 |                 +283 |             **-1195** |                               +4 |                         +1 |                        -43 |                          -13 |                                0 |                 0 |
+| tokio      |                  +4 |                     -58 |                  +39 |                   -86 |                               +2 |                          0 |                         -1 |                          -63 |                                0 |                -4 |
+| sqlx       |                  +7 |                     -43 |                  +49 |                   -57 |                                0 |                          0 |                         -8 |                            0 |                                0 |                 0 |
+| TypeScript |                  +1 |               **-1138** |                  +50 |                  +117 |                             +573 |                          0 |                        -11 |                            0 |                              -10 |                 0 |
+| django     |                 -49 |                    -169 |                 +183 |                  -123 |                                0 |                        +22 |                        -35 |                            0 |                                0 |                 0 |
+| pandas     |            **-568** |                **+654** |                  -26 |                    -1 |                                0 |                          0 |                        -45 |                            0 |                                0 |                 0 |
+| celery     |                  -3 |                    -124 |                  +18 |                   +41 |                                0 |                          0 |                        -33 |                            0 |                                0 |                 0 |
+| express    |                   0 |                       0 |                    0 |                     0 |                                0 |                          0 |                          0 |                            0 |                                0 |                 0 |
+| mocha      |                   0 |                     +54 |                    0 |                     0 |                                0 |                          0 |                        -56 |                            0 |                                0 |                 0 |
+
+`import_unresolved`, `reexport_chain_unresolved`, `dynamic_dispatch` and `definition_has_no_body_scope` do not move on any corpus. angular is the recovery: `receiver_type_unknown` falls by 12,220 and 11,338 more calls resolve, with the unresolved remainder moving to `member_type_unknown` (+867) and `polymorphic_no_implementations` (+581) because a receiver that now has a type reaches the member lookup. rustc, TypeScript, tokio and sqlx recover the same way at smaller scale. pandas does not recover: 654 more call references fail at `receiver_type_unknown` while 568 fewer fail at `name_not_in_scope`, and `resolved` falls by 36.
+
+### Set difference, named
+
+The literal difference over the complete member lists, candidate against the achieved row. Neither containment TASK-376.18 stated holds literally on every corpus, and the report does not net it.
+
+| Corpus     | Edge pairs only in the achieved row | Edge pairs only now | Entry points only in the achieved row | Entry points only now |
+| ---------- | ----------------------------------: | ------------------: | ------------------------------------: | --------------------: |
+| angular    |                                   5 |               10671 |                                   203 |                     0 |
+| rustc      |                                 401 |                2132 |                                   310 |                **57** |
+| tokio      |                                   0 |                 133 |                                    24 |                     0 |
+| sqlx       |                                   0 |                 102 |                                    63 |                     0 |
+| TypeScript |                                  89 |                 664 |                                    31 |                     0 |
+| django     |                                 542 |                 497 |                                    10 |                     0 |
+| pandas     |                                 129 |                  59 |                                     0 |                     0 |
+| celery     |                                  12 |                  96 |                                    13 |                     0 |
+| express    |                                   0 |                   0 |                                     0 |                     0 |
+| mocha      |                                  80 |                  82 |                                     1 |                     0 |
+
+**Entry points gained: 57, all on rustc.** Every other corpus gains none. A sampled site is `compiler/rustc_borrowck/src/lib.rs:1385`, `this.report_move_out_while_borrowed(...)`, where `this` is a closure parameter in `each_borrow_involving_path(..., |this, …| …)`: the closure receives `&mut Self` from its callee's bound, and the receiver is no longer read as `self`. This is the `|this|` idiom TASK-376.25 recorded as the cost of reading a self keyword by language, and it is the callback-parameter typing TASK-376.28 begins; other sampled gained entry points (`conflict_errors.rs:1824` `explanation.is_explained()`, a local bound from a method's return) have a different cause that is not attributed here.
+
+**Edges only in the achieved row, by mechanism.** The corpora where the count is non-zero, split by what the control edge's callee became:
+
+- **A call through a callable-valued local now reaches the function it holds, not the binding.** 80 of mocha's 80 (`doc.spec.cjs:102` → `runReporter`, a `const` binding), 296 of django's 542, 64 of TypeScript's 89, 12 of celery's 12, 5 of angular's 5, 11 of pandas's 129, 2 of rustc's 401. mocha, django and TypeScript gain function-kind edges (80, 370 and 63); celery's 12 and pandas's 11 (`nb_looper = generate_apply_looper(...)`, `depr_func = deprecate(...)`) are factory results with no function to retarget to, so those edges are lost and no entry point changes.
+- **A `self`/`this` fan-out narrows to the receiver's own closure.** django 131, TypeScript 19, pandas 18: the same caller keeps an edge to the same-named member, on fewer subtypes.
+- **A call with no same-named edge left from its caller.** rustc 392 (the closure `|this|` receivers above), django 111, pandas 99, TypeScript 6.
+- **A method recorded as calling itself.** 5 on rustc, 4 on django, 1 on pandas, each a self-edge the achieved row held.
+
+**Entry points only in the achieved row (removed), spot-verified at their call sites.** angular removes 203; sampled: `top-level-banner.component.spec.ts:106` `component.close()`, `search-history.service.spec.ts:105` `service.removeItem(bItem)`. TypeScript: `src/harness/vfsUtil.ts:1262` `getBuiltLocal(host, ignoreCase).shadow()`, `src/harness/sourceMapRecorder.ts:65` `jsFile.lineStarts` (the getter). django: `django/db/migrations/operations/fields.py:103` `state.add_field(...)`, `tests/migrations/test_autodetector.py:4029` `to_state.get_concrete_model_key(...)`. mocha: `lib/interfaces/common.js:133` `suite.markOnly()`. Every sampled removal is a real call.
+
+### Residue and the two earlier measurement rows
+
+The residue's composition is TASK-376.18's: the dominant share on every corpus is a callee outside the indexed file set, and the reasons that are the resolver's moved by the amounts above. The re-attribution table in TASK-376.18 stands; the only reason whose owner this measurement changes is the 57 rustc entry points, owned by `receiver_type_inference` (the callee-declared closure-parameter type). TASK-376.17's post-annotation row and TASK-376.13's post-rung-5 row were measured on angular, django, rustc and pandas against different controls and a different call universe, so no delta is taken across them; the achieved row is the one both end on.
+
+### What is left open
+
+- **#4 is not ticked.** Every evidence case in the criterion has a passing integration test except the vscode generic-container dispose shape as the corpus writes it. `container_elements/contributions.ts` annotates its field and says why: `container_element.test.ts` › "typescript (vscode DisposableMap)" resolves `instance.dispose()` and `this._instances.get(id)!.dispose()` against `IEditorContribution` only because the field is declared `DisposableMap<string, IEditorContribution>`. Probed on this tree with the real field `_instances = this._register(new DisposableMap<string, IEditorContribution>())`: the `for (const [, instance] of this._instances)` dispose call fails `type_inference/receiver_type_unknown` and `this._instances.get(id)!.dispose()` fails `type_inference/member_type_unknown`. Dropping `_register` still leaves the iteration failing. TASK-376.15 records the three indexing facts the shape needs (a class field keeps no call initialiser, a construction argument that is not an identifier occupies its position as `null`, and a container's element is read from a binding's own annotation, not from a bound type parameter's arguments), and TASK-394, still `To Do`, carries all eleven sites.
+- **pandas** resolves 36 fewer calls than the achieved row and gains 654 `receiver_type_unknown`, with no entry point changing; the 70 lost edges are in the mechanism list above.
+
+<!-- SECTION:NOTES:END -->
