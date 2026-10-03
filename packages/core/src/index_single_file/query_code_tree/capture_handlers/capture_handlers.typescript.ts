@@ -39,6 +39,7 @@ import {
   create_property_signature_id,
   extract_declared_type,
   is_readonly_property,
+  is_optional_member_signature,
   create_type_alias_id,
   extract_type_expression,
   create_enum_id,
@@ -187,6 +188,7 @@ export function handle_definition_interface_method(
     scope_id: context.get_scope_id(capture.location),
     generics: extract_type_parameters(capture.node.parent),
     return_type: extract_return_type(capture.node),
+    optional: is_optional_member_signature(capture.node) || undefined,
   });
 }
 
@@ -206,6 +208,7 @@ export function handle_definition_interface_property(
     location: capture.location,
     type: extract_declared_type(capture.node),
     scope_id: context.get_scope_id(capture.location),
+    optional: is_optional_member_signature(capture.node) || undefined,
   });
 }
 

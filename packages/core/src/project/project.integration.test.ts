@@ -1270,13 +1270,37 @@ export class FileStorage implements Storage { sweep(): void {} }
             ]),
           ]);
 
-          // The bound: the one class covering all three members, never the
-          // three others carrying `dispose` alone. Those three satisfy the
-          // interface as TypeScript reads it — its other two members are
-          // optional — and conformance still refuses them, because it reads
-          // member names and not optionality.
+          // The bound: the one class carrying all three of the interface's
+          // methods. `HoverController` and the three unrelated carriers declare
+          // the one mandatory method and satisfy the interface as TypeScript
+          // reads it, but one shared method name identifies nothing — the
+          // method floor counts the methods a class carries, optional ones
+          // included, so a `dispose`-only contribution and a `dispose`-only
+          // cache are the same evidence and both are refused.
           expect([...project.definitions.get_subtypes(contribution)]).toEqual([
             type_named(project, paths["code_editor_widget.ts"], "FoldingController"),
+          ]);
+        }
+      );
+
+      it.each(DRIVERS)(
+        "answers through an interface whose optional member the conforming class leaves out (%s)",
+        async (driver) => {
+          const { project, paths } = await load_project(
+            conformance,
+            ["build_program_host.ts", "configured_project.ts", "build_program_reader.ts"],
+            driver
+          );
+
+          // `ConfiguredProject` declares the three mandatory methods and not
+          // `getBuildInfo?`, which is all the interface asks of it.
+          expect(
+            head_and_rest(call_at(project, paths["build_program_reader.ts"], "readFile", 6))
+          ).toEqual([
+            member_of(project, paths["build_program_host.ts"], "ReadBuildProgramHost", "readFile"),
+            new Set([
+              member_of(project, paths["configured_project.ts"], "ConfiguredProject", "readFile"),
+            ]),
           ]);
         }
       );
@@ -1285,7 +1309,8 @@ export class FileStorage implements Storage { sweep(): void {} }
       // answer a protocol and a trait as it answers an interface. What differs
       // per language is what the indexer puts in the member closure, which is
       // what these two exercise: Python names the protocol as a base nothing
-      // declares, Rust covers the trait from an inherent `impl` block.
+      // declares, Rust covers the trait from an inherent `impl` block and leaves
+      // out the trait method that has a default body.
       it.each(DRIVERS)("answers a Python protocol no class names as a base (%s)", async (driver) => {
         const { project, paths } = await load_project(
           read_fixture("python", "structural_conformance"),

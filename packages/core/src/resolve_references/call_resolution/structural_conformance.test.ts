@@ -31,9 +31,15 @@ interface Declared {
 let next_line = 1;
 
 /** A method named `name` on the type declared at `owner_scope`. */
-function method(file: FilePath, owner_scope: ScopeId, name: string): MethodDefinition {
+function method(
+  file: FilePath,
+  owner_scope: ScopeId,
+  name: string,
+  optional?: boolean
+): MethodDefinition {
   const location = location_at(file, next_line++);
   return {
+    optional,
     kind: "method",
     symbol_id: method_symbol(name as SymbolName, location),
     name: name as SymbolName,
@@ -45,9 +51,15 @@ function method(file: FilePath, owner_scope: ScopeId, name: string): MethodDefin
   };
 }
 
-function property(file: FilePath, owner_scope: ScopeId, name: string): PropertyDefinition {
+function property(
+  file: FilePath,
+  owner_scope: ScopeId,
+  name: string,
+  optional?: boolean
+): PropertyDefinition {
   const location = location_at(file, next_line++);
   return {
+    optional,
     kind: "property",
     symbol_id: property_symbol(name as SymbolName, location),
     name: name as SymbolName,
@@ -57,18 +69,28 @@ function property(file: FilePath, owner_scope: ScopeId, name: string): PropertyD
   };
 }
 
-/** An interface declaring `methods` as methods and `properties` as properties. */
+/**
+ * An interface declaring `methods` as methods and `properties` as properties,
+ * each of `optional`'s names marked as a member a conforming type may leave out.
+ */
 function declare_interface(
   file: FilePath,
   name: string,
   methods: readonly string[],
-  options: { readonly properties?: readonly string[]; readonly extends?: readonly string[] } = {}
+  options: {
+    readonly properties?: readonly string[];
+    readonly extends?: readonly string[];
+    readonly optional?: readonly string[];
+  } = {}
 ): Declared {
   const location = location_at(file, next_line++);
   const type_id = interface_symbol(name as SymbolName, location);
   const scope_id = `scope:${file}:${name}` as ScopeId;
-  const members = methods.map((member) => method(file, scope_id, member));
-  const props = (options.properties ?? []).map((member) => property(file, scope_id, member));
+  const optional = new Set(options.optional ?? []);
+  const members = methods.map((member) => method(file, scope_id, member, optional.has(member) || undefined));
+  const props = (options.properties ?? []).map((member) =>
+    property(file, scope_id, member, optional.has(member) || undefined)
+  );
   const definition: InterfaceDefinition = {
     kind: "interface",
     symbol_id: type_id,
@@ -267,6 +289,71 @@ describe("structural conformance", () => {
       load([shape, without_property, with_property]);
 
       expect(infer_structural_subtypes(shape.type_id, definitions)).toEqual([with_property.type_id]);
+    });
+  });
+
+  describe("optional members", () => {
+    it("matches a class leaving out an optional method, once the methods it carries clear the floor", () => {
+      const host = declare_interface(
+        FILE,
+        "ReadBuildProgramHost",
+        ["useCaseSensitiveFileNames", "getCurrentDirectory", "readFile", "getBuildInfo"],
+        { optional: ["getBuildInfo"] }
+      );
+      const project = declare_class(FILE, "ConfiguredProject", [
+        "useCaseSensitiveFileNames",
+        "getCurrentDirectory",
+        "readFile",
+      ]);
+      load([host, project]);
+
+      expect(infer_structural_subtypes(host.type_id, definitions)).toEqual([project.type_id]);
+    });
+
+    it("counts the optional methods a class carries toward the floor, never the ones it leaves out", () => {
+      // vscode's `IEditorContribution`: one mandatory method, two optional.
+      const contribution = declare_interface(
+        FILE,
+        "IEditorContribution",
+        ["dispose", "saveViewState", "restoreViewState"],
+        { optional: ["saveViewState", "restoreViewState"] }
+      );
+      const folding = declare_class(FILE, "FoldingController", [
+        "dispose",
+        "saveViewState",
+        "restoreViewState",
+      ]);
+      const dispose_only = declare_class(FILE, "HoverController", ["dispose"]);
+      const one_optional = declare_class(FILE, "LinkDetector", ["dispose", "saveViewState"]);
+      load([contribution, folding, dispose_only, one_optional]);
+
+      expect(infer_structural_subtypes(contribution.type_id, definitions)).toEqual([folding.type_id]);
+    });
+
+    it("lets a class leave out an optional property and still requires a mandatory one", () => {
+      const shape = declare_interface(FILE, "Serializer", ["encode", "decode", "reset"], {
+        properties: ["format", "label"],
+        optional: ["label"],
+      });
+      const without_optional = declare_class(FILE, "JsonSerializer", ["encode", "decode", "reset"], {
+        properties: ["format"],
+      });
+      const without_mandatory = declare_class(FILE, "RawSerializer", ["encode", "decode", "reset"], {
+        properties: ["label"],
+      });
+      load([shape, without_optional, without_mandatory]);
+
+      expect(infer_structural_subtypes(shape.type_id, definitions)).toEqual([without_optional.type_id]);
+    });
+
+    it("never matches an interface whose members are all optional", () => {
+      const hooks = declare_interface(FILE, "LifecycleHooks", ["onInit", "onChange", "onDestroy"], {
+        optional: ["onInit", "onChange", "onDestroy"],
+      });
+      const component = declare_class(FILE, "Component", ["onInit", "onChange", "onDestroy"]);
+      load([hooks, component]);
+
+      expect(infer_structural_subtypes(hooks.type_id, definitions)).toEqual([]);
     });
   });
 

@@ -180,6 +180,12 @@ export interface MethodDefinition extends Definition {
    * inherent `impl S` block.
    */
   readonly impl_trait_name?: SymbolName;
+  /**
+   * Set on an interface member a conforming type may leave out: a TypeScript
+   * optional signature (`saveViewState?(): string`) or a Rust trait method with
+   * a default body. Structural conformance requires only the members without it.
+   */
+  readonly optional?: boolean;
 }
 
 export interface ConstructorDefinition extends Definition {
@@ -204,6 +210,8 @@ export interface PropertyDefinition extends Definition {
   readonly readonly?: boolean;
   readonly decorators: readonly DecoratorDefinition[];
   readonly access_modifier?: AccessModifier;
+  /** Set on a TypeScript optional property signature (`label?: string`); see `MethodDefinition.optional`. */
+  readonly optional?: boolean;
 }
 
 /**

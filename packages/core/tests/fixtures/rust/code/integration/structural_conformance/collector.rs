@@ -1,4 +1,4 @@
-// The type covering the trait from an inherent impl block only - collector.rs
+// The type covering the trait's required methods from an inherent impl block only - collector.rs
 
 pub struct Collector {
     seen: usize,

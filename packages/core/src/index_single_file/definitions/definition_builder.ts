@@ -700,6 +700,7 @@ export class DefinitionBuilder {
       generics?: readonly TypeParameter[];
       return_type?: SymbolName;
       docstring?: string;
+      optional?: boolean;
     }
   ): DefinitionBuilder {
     const interface_state = this.interfaces.get(interface_id);
@@ -715,6 +716,7 @@ export class DefinitionBuilder {
         return_type: definition.return_type,
         generics: definition.generics,
         docstring: definition.docstring,
+        optional: definition.optional,
       },
       parameters: new Map(),
       decorators: [],
@@ -730,6 +732,7 @@ export class DefinitionBuilder {
       location: Location;
       type?: SymbolName;
       scope_id: ScopeId;
+      optional?: boolean;
     }
   ): DefinitionBuilder {
     const interface_state = this.interfaces.get(interface_id);
@@ -743,6 +746,7 @@ export class DefinitionBuilder {
       defining_scope_id: definition.scope_id,
       location: definition.location,
       decorators: [],
+      optional: definition.optional,
     });
     return this;
   }

@@ -100,6 +100,7 @@ export function handle_definition_method_default(
         scope_id: context.get_scope_id(capture.location),
         return_type: return_type,
         docstring,
+        optional: true,
       });
     }
   }

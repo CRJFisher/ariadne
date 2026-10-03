@@ -1,5 +1,4 @@
 export * from "./location";
-export * from "./member_info";
 export * from "./symbol";
 export * from "./type_id";
 export * from "./query";

@@ -189,6 +189,27 @@ describe("TypeScript Builder Configuration", () => {
       expect(name_prop.kind).toBe("property");
       expect(name_prop.type).toBe("string");
     });
+    it("records which interface members a conforming type may leave out", () => {
+      const code = `interface IEditorContribution {
+  dispose(): void;
+  saveViewState?(): string;
+  label: string;
+  readonly hint?: string;
+}`;
+      const index = build_index_from_code(code);
+      const iface = Array.from(index.interfaces.values()).find(i => i.name === "IEditorContribution")!;
+      const optional_by_name = new Map<string, boolean>(
+        [...iface.methods, ...iface.properties].map((member) => [member.name, member.optional === true])
+      );
+      expect(optional_by_name).toEqual(
+        new Map([
+          ["dispose", false],
+          ["saveViewState", true],
+          ["label", false],
+          ["hint", true],
+        ])
+      );
+    });
   });
 
   describe("Type alias handling", () => {

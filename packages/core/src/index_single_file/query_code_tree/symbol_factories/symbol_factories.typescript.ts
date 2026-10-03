@@ -311,6 +311,14 @@ export function is_readonly_property(node: SyntaxNode): boolean {
 }
 
 /**
+ * Whether an interface member signature is marked optional: the `?` after its
+ * name, in `saveViewState?(): string` and `label?: string` alike.
+ */
+export function is_optional_member_signature(name_node: SyntaxNode): boolean {
+  return name_node.parent?.children.some((child) => child.type === "?") ?? false;
+}
+
+/**
  * Check if method is abstract
  */
 export function is_abstract_method(node: SyntaxNode): boolean {

@@ -1557,6 +1557,7 @@ impl MyStruct {
       expect(interfaces[0].methods).toHaveLength(1);
       expect(interfaces[0].methods[0].name).toBe("fmt");
       expect(interfaces[0].methods[0].return_type).toBe("String");
+      expect(interfaces[0].methods[0].optional).toBeUndefined();
     });
   });
 

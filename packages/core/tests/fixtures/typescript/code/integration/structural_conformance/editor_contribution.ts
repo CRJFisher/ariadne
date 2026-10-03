@@ -1,7 +1,6 @@
 // The contribution interface: declares `dispose` without extending IDisposable - editor_contribution.ts
-// vscode's shape verbatim, optional markers included: conformance reads member
-// names only, so all three are required of a conforming class (see
-// `structural_conformance.ts` on what that costs).
+// vscode's shape verbatim, optional markers included: one mandatory method and
+// two optional ones, so only a class carrying all three clears the method floor.
 
 export interface IEditorContribution {
   dispose(): void;
