@@ -1,0 +1,7 @@
+{
+  "key": "once",
+  "run_id": "20261003T152935Z-75872507",
+  "scope": "once",
+  "step_id": "task_376_24",
+  "summary": "TASK-376.24's code and tests were already in the tree; I measured AC4 and ticked all four criteria with evidence in the task doc, committed as 416ff087. **What already held.** TypeScript locals alrea\u2026"
+}
