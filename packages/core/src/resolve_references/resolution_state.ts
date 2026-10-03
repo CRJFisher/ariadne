@@ -50,6 +50,13 @@ import {
  */
 export interface ScopeResolutions {
   readonly own: ReadonlyMap<SymbolName, SymbolId>;
+  /**
+   * Names `own` binds through imports written under several sibling branches of
+   * one guard, whose branches disagree on the symbol: every distinct target in
+   * source order, the first being the one `own` holds. Absent for a scope with
+   * no such name.
+   */
+  readonly branch_bindings?: ReadonlyMap<SymbolName, readonly SymbolId[]>;
   readonly parent: ScopeResolutions | null;
 }
 
@@ -71,6 +78,20 @@ export function lookup_in_scope_chain(
     }
   }
   return null;
+}
+
+/** Every symbol `name` is bound to by the nearest scope binding it: one, or each branch's when sibling branches disagree. */
+export function lookup_all_in_scope_chain(
+  node: ScopeResolutions,
+  name: SymbolName
+): readonly SymbolId[] {
+  for (let n: ScopeResolutions | null = node; n !== null; n = n.parent) {
+    const hit = n.own.get(name);
+    if (hit !== undefined) {
+      return n.branch_bindings?.get(name) ?? [hit];
+    }
+  }
+  return [];
 }
 
 export interface ResolutionState {
@@ -185,6 +206,15 @@ export function resolve(
 ): SymbolId | null {
   const node = state.resolutions_by_scope.get(scope_id);
   return node === undefined ? null : lookup_in_scope_chain(node, name);
+}
+
+export function resolve_all(
+  state: ResolutionState,
+  scope_id: ScopeId,
+  name: SymbolName
+): readonly SymbolId[] {
+  const node = state.resolutions_by_scope.get(scope_id);
+  return node === undefined ? [] : lookup_all_in_scope_chain(node, name);
 }
 
 export function get_calls_by_caller_scope(

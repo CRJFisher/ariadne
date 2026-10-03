@@ -44,14 +44,14 @@ const TARGET_LOCATION: Location = {
 };
 
 class MockResolutionRegistry {
-  private resolutions: Map<string, SymbolId> = new Map();
+  private resolutions: Map<string, readonly SymbolId[]> = new Map();
 
-  set_resolution(scope_id: ScopeId, name: SymbolName, symbol_id: SymbolId): void {
-    this.resolutions.set(`${scope_id}:${name}`, symbol_id);
+  set_resolution(scope_id: ScopeId, name: SymbolName, ...symbol_ids: SymbolId[]): void {
+    this.resolutions.set(`${scope_id}:${name}`, symbol_ids);
   }
 
-  resolve(scope_id: ScopeId, name: SymbolName): SymbolId | null {
-    return this.resolutions.get(`${scope_id}:${name}`) ?? null;
+  resolve_all(scope_id: ScopeId, name: SymbolName): readonly SymbolId[] {
+    return this.resolutions.get(`${scope_id}:${name}`) ?? [];
   }
 }
 
@@ -187,6 +187,85 @@ describe("preprocess_python_references", () => {
     const updated_refs = references.get_file_references(TEST_FILE);
     expect(updated_refs.length).toBe(1);
     expect(updated_refs[0]).toEqual(func_call);
+  });
+
+  describe("a name that sibling branches bind to different symbols", () => {
+    const WRITER_LOCATION: Location = { ...MOCK_LOCATION, start_line: 2 };
+    const WRITER_117_LOCATION: Location = { ...MOCK_LOCATION, start_line: 3 };
+    const FACTORY_LOCATION: Location = { ...MOCK_LOCATION, start_line: 4 };
+
+    function class_definition(name: string, location: Location): ClassDefinition {
+      return {
+        kind: "class",
+        symbol_id: class_symbol(name as SymbolName, location),
+        name: name as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location,
+        is_exported: false,
+        extends: [],
+        methods: [],
+        properties: [],
+        decorators: [],
+      };
+    }
+
+    const call: FunctionCallReference = {
+      kind: "function_call",
+      name: "writer" as SymbolName,
+      location: CALL_LOCATION,
+      scope_id: FILE_SCOPE_ID,
+    };
+
+    it("converts the call to a constructor_call when every branch binds a class", () => {
+      const first = class_definition("StataWriter", WRITER_LOCATION);
+      const second = class_definition("StataWriter117", WRITER_117_LOCATION);
+      definitions.update_file(TEST_FILE, [first, second]);
+      resolutions.set_resolution(
+        FILE_SCOPE_ID,
+        "writer" as SymbolName,
+        first.symbol_id,
+        second.symbol_id
+      );
+      references.update_file(TEST_FILE, [call]);
+
+      preprocess_python_references(TEST_FILE, references, definitions, resolutions);
+
+      expect(references.get_file_references(TEST_FILE)).toEqual([
+        {
+          kind: "constructor_call",
+          name: "writer" as SymbolName,
+          location: CALL_LOCATION,
+          scope_id: FILE_SCOPE_ID,
+        },
+      ]);
+    });
+
+    it("leaves the call a function_call when one branch binds a function", () => {
+      const writer = class_definition("StataWriter", WRITER_LOCATION);
+      const factory: FunctionDefinition = {
+        kind: "function",
+        symbol_id: function_symbol("make_writer" as SymbolName, FACTORY_LOCATION),
+        name: "make_writer" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: FACTORY_LOCATION,
+        is_exported: false,
+        signature: { parameters: [] },
+        decorators: [],
+        body_scope_id: FILE_SCOPE_ID,
+      };
+      definitions.update_file(TEST_FILE, [writer, factory]);
+      resolutions.set_resolution(
+        FILE_SCOPE_ID,
+        "writer" as SymbolName,
+        writer.symbol_id,
+        factory.symbol_id
+      );
+      references.update_file(TEST_FILE, [call]);
+
+      preprocess_python_references(TEST_FILE, references, definitions, resolutions);
+
+      expect(references.get_file_references(TEST_FILE)).toEqual([call]);
+    });
   });
 
   it("leaves method_call references unchanged", () => {

@@ -214,6 +214,9 @@ function resolve_scope_recursive(
   /** Names this scope binds through an import it writes itself, which a hoisted one never displaces. */
   const own_import_names = new Set<SymbolName>();
 
+  /** Every symbol each name takes from the hoisted imports, in the order the branches are written. */
+  const hoisted_targets = new Map<SymbolName, SymbolId[]>();
+
   for (const imp_def of import_defs) {
     let resolved: SymbolId | null = null;
 
@@ -322,6 +325,17 @@ function resolve_scope_recursive(
         if (own_import_names.has(imp_def.name)) {
           continue;
         }
+        // Another branch binding the same name: the first branch keeps `own`,
+        // and every branch whose symbol differs is recorded beside it, since
+        // which branch ran is not knowable here.
+        const bound = hoisted_targets.get(imp_def.name);
+        if (bound) {
+          if (!bound.includes(resolved)) {
+            bound.push(resolved);
+          }
+          continue;
+        }
+        hoisted_targets.set(imp_def.name, [resolved]);
       } else {
         own_import_names.add(imp_def.name);
       }
@@ -380,6 +394,15 @@ function resolve_scope_recursive(
     }
   }
 
+  // Only a name whose binding is still the first hoisted one keeps its branches:
+  // a local definition or an import the scope writes itself replaced it above.
+  const branch_bindings = new Map<SymbolName, readonly SymbolId[]>();
+  for (const [name, targets] of hoisted_targets) {
+    if (targets.length > 1 && own.get(name) === targets[0]) {
+      branch_bindings.set(name, targets);
+    }
+  }
+
   // A scope that binds nothing of its own sees exactly what its parent sees, so
   // it shares the parent's link rather than adding an empty one. Most block
   // scopes bind nothing, so this is what keeps the chain short enough for the
@@ -387,7 +410,9 @@ function resolve_scope_recursive(
   const node: ScopeResolutions =
     own.size === 0
       ? (parent_node ?? EMPTY_SCOPE_RESOLUTIONS)
-      : { own, parent: parent_node };
+      : branch_bindings.size === 0
+        ? { own, parent: parent_node }
+        : { own, branch_bindings, parent: parent_node };
 
   result.resolutions_by_scope.set(scope_id, node);
   result.scope_to_file.set(scope_id, file_path);
@@ -483,43 +508,33 @@ function collect_hoisted_functions(
 /**
  * Collect the imports declared in descendant block scopes that bind in
  * `scope_id`. Descends only through `block` scopes and stops at any nested
- * function/method/constructor/class scope — those bind their own imports. When
- * a name is imported in blocks at different depths, or in sibling branches of
- * one guard, the first reached wins; the branch that actually runs is not
- * knowable here, and every branch's own scope still binds its own import.
+ * function/method/constructor/class scope — those bind their own imports. A
+ * name imported in several blocks, at any depth or in sibling branches of one
+ * guard, yields every one of those imports in source order: which branch
+ * actually runs is not knowable here, so the caller binds the first and records
+ * the rest beside it. Every branch's own scope still binds its own import.
  */
 function collect_hoisted_imports(
   scope_id: ScopeId,
   context: NameResolutionContext
 ): ImportDefinition[] {
-  const hoisted = new Map<SymbolName, ImportDefinition>();
-  // A wildcard edge's `name` is the module path's last segment — a display
-  // name it never binds under — so several of them share one key while binding
-  // disjoint surfaces. They bypass the dedup entirely; the wildcard layer
-  // resolves per-exported-name conflicts on its own.
-  const wildcards: ImportDefinition[] = [];
   const scope = context.scopes.get_scope(scope_id);
   if (!scope?.child_ids) {
     return [];
   }
 
+  const hoisted: ImportDefinition[] = [];
   for (const child_id of scope.child_ids) {
     const child = context.scopes.get_scope(child_id);
     if (child?.type !== "block") {
       continue;
     }
 
-    for (const imp_def of [
+    hoisted.push(
       ...context.imports.get_scope_imports(child_id),
-      ...collect_hoisted_imports(child_id, context),
-    ]) {
-      if (imp_def.import_kind === "wildcard") {
-        wildcards.push(imp_def);
-      } else if (!hoisted.has(imp_def.name)) {
-        hoisted.set(imp_def.name, imp_def);
-      }
-    }
+      ...collect_hoisted_imports(child_id, context)
+    );
   }
 
-  return [...wildcards, ...hoisted.values()];
+  return hoisted;
 }

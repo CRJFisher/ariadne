@@ -1087,6 +1087,185 @@ else:
     ).toEqual(["a.py"]);
   });
 
+  it("reaches every constructor the branches of pandas's to_stata dispatch import under one name", async () => {
+    const stata_fixture = path.join(FIXTURES, "stata_writer_dispatch");
+    const sources = {
+      "pandas/__init__.py": "",
+      "pandas/io/__init__.py": "",
+      "pandas/core/__init__.py": "",
+      "pandas/io/stata.py": fs.readFileSync(path.join(stata_fixture, "pandas", "io", "stata.py"), "utf-8"),
+      "pandas/core/frame.py": fs.readFileSync(path.join(stata_fixture, "pandas", "core", "frame.py"), "utf-8"),
+    };
+    const { project, temp_dir, file_paths } = await setup_project(sources);
+    temp_dirs.push(temp_dir);
+
+    // `statawriter` is bound three times, once per version branch, and the call
+    // after the chain constructs whichever the version selected: the
+    // `__init__` of StataWriter (line 7), StataWriter117 (17) and
+    // StataWriterUTF8 (23).
+    const call = project.resolutions
+      .get_calls_for_file(file_paths["pandas/core/frame.py"])
+      .find((c) => c.name === ("statawriter" as SymbolName));
+    expect(
+      call!.resolutions
+        .map((r) => {
+          const parts = r.symbol_id.split(":");
+          return `${parts[0]}:${path.basename(parts[1])}:${parts[2]}`;
+        })
+        .sort()
+    ).toEqual([
+      "method:stata.py:17",
+      "method:stata.py:23",
+      "method:stata.py:7",
+    ]);
+  });
+
+  it("reaches every branch's function when if/else imports one name from different modules", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "fast.py": `def dumps(value):
+    return value
+`,
+      "slow.py": `def dumps(value):
+    return value
+`,
+      "app.py": `if FLAG:
+    from fast import dumps
+else:
+    from slow import dumps
+
+dumps(1)
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    const call = project.resolutions
+      .get_calls_for_file(file_paths["app.py"])
+      .find((c) => c.name === ("dumps" as SymbolName));
+    expect(
+      call!.resolutions.map((r) => path.basename(r.symbol_id.split(":")[1])).sort()
+    ).toEqual(["fast.py", "slow.py"]);
+
+    const call_graph = project.get_call_graph();
+    expect(is_entry_point(call_graph, "dumps", file_paths["fast.py"])).toEqual(false);
+    expect(is_entry_point(call_graph, "dumps", file_paths["slow.py"])).toEqual(false);
+  });
+
+  it("reaches every branch's function when try, except and finally import one name from different modules", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "fast.py": `def dumps(value):
+    return value
+`,
+      "slow.py": `def dumps(value):
+    return value
+`,
+      "last.py": `def dumps(value):
+    return value
+`,
+      "app.py": `try:
+    from fast import dumps
+except ImportError:
+    from slow import dumps
+finally:
+    from last import dumps
+
+dumps(1)
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    const call = project.resolutions
+      .get_calls_for_file(file_paths["app.py"])
+      .find((c) => c.name === ("dumps" as SymbolName));
+    expect(
+      call!.resolutions.map((r) => path.basename(r.symbol_id.split(":")[1])).sort()
+    ).toEqual(["fast.py", "last.py", "slow.py"]);
+  });
+
+  it("answers a call once when the branches import the one symbol", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "fast.py": `def dumps(value):
+    return value
+`,
+      "app.py": `if FLAG:
+    from fast import dumps
+else:
+    from fast import dumps
+
+dumps(1)
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    const call = project.resolutions
+      .get_calls_for_file(file_paths["app.py"])
+      .find((c) => c.name === ("dumps" as SymbolName));
+    expect(
+      call!.resolutions.map((r) => path.basename(r.symbol_id.split(":")[1]))
+    ).toEqual(["fast.py"]);
+  });
+
+  it("keeps a scope's own import ahead of every branch's hoisted import", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "direct.py": `def load():
+    return 0
+`,
+      "one.py": `def load():
+    return 1
+`,
+      "two.py": `def load():
+    return 2
+`,
+      "app.py": `from direct import load
+
+if FLAG:
+    from one import load
+else:
+    from two import load
+
+load()
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    const call = project.resolutions
+      .get_calls_for_file(file_paths["app.py"])
+      .find((c) => c.name === ("load" as SymbolName));
+    expect(
+      call!.resolutions.map((r) => path.basename(r.symbol_id.split(":")[1]))
+    ).toEqual(["direct.py"]);
+  });
+
+  it("keeps a call in one branch on that branch's import when the other branches bind the name too", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "fast.py": `def dumps(value):
+    return value
+`,
+      "slow.py": `def dumps(value):
+    return value
+`,
+      "app.py": `if FLAG:
+    from fast import dumps
+    dumps(1)
+else:
+    from slow import dumps
+    dumps(2)
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    const calls = project.resolutions
+      .get_calls_for_file(file_paths["app.py"])
+      .filter((c) => c.name === ("dumps" as SymbolName))
+      .map((c) => [
+        c.location.start_line,
+        c.resolutions.map((r) => path.basename(r.symbol_id.split(":")[1])).join(","),
+      ]);
+    expect(calls).toEqual([
+      [3, "fast.py"],
+      [6, "slow.py"],
+    ]);
+  });
+
   it("binds every branch's wildcard surface when two guarded star imports share a display name", async () => {
     const { project, temp_dir, file_paths } = await setup_project({
       "py2/compat.py": `def two_only():

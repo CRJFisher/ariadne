@@ -18,6 +18,7 @@ import {
   type ResolutionState,
   create_resolution_state,
   resolve as resolve_in_state,
+  resolve_all as resolve_all_in_state,
   get_calls_by_caller_scope as get_calls_by_caller_scope_from_state,
   get_calls_for_file as get_calls_for_file_from_state,
   get_all_referenced_symbols as get_all_referenced_symbols_from_state,
@@ -217,6 +218,10 @@ export class ResolutionRegistry {
 
   resolve(scope_id: ScopeId, name: SymbolName): SymbolId | null {
     return resolve_in_state(this.state, scope_id, name);
+  }
+
+  resolve_all(scope_id: ScopeId, name: SymbolName): readonly SymbolId[] {
+    return resolve_all_in_state(this.state, scope_id, name);
   }
 
   clear(): void {
