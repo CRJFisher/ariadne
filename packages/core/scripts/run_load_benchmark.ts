@@ -25,6 +25,7 @@ import { spawn } from "node:child_process";
 import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
+import type { FilePath } from "@ariadnejs/types";
 import {
   assert_builds_current,
   assert_rows_comparable,
@@ -36,14 +37,17 @@ import {
   find_ariadne_repo_root,
   format_citation,
   format_failure_taxonomy_table,
+  measure_file_sizes,
   measure_speedup_against_control,
   parse_corpus_predicate_name,
   plan_nested_slices,
   read_arm_result,
   run_benchmark_arm,
+  select_offered_files,
   summarize_cpu_seconds,
   summarize_peak_rss,
   summarize_wall_seconds,
+  total_bytes,
   write_arm_result,
   heap_mb_for,
   required_heap_mb,
@@ -68,16 +72,6 @@ import {
 } from "./recorded_measurement_report";
 
 /**
- * The files a slice offers, so the child's heap is sized from what it will
- * hold. The parent walks the corpus once for this: sizing a full arm from
- * another corpus's count gave a 30,000-file corpus a heap the child then
- * refused, after the parent had already committed the session to it.
- */
-function offered_count_for(slice: SliceSize, discovered_count: number): number {
-  return slice === "full" ? discovered_count : slice;
-}
-
-/**
  * Refuse a heap the box cannot back before the child spends an hour reaching
  * it. V8 does not reserve old space up front, so a flag past physical memory
  * is accepted and the arm dies to the OOM killer at the end of the load; the
@@ -88,11 +82,12 @@ function assert_heap_fits_the_box(
   heap_mb: number,
   corpus_name: string,
   offered_file_count: number,
+  offered_bytes: number,
 ): void {
   const total_mb = Math.round(os.totalmem() / (1024 * 1024));
   if (heap_mb <= total_mb) return;
   throw new Error(
-    `Refusing to spawn a ${offered_file_count}-file arm over ${corpus_name}: it needs a ${heap_mb} MB heap (${required_heap_mb(offered_file_count)} MB required plus headroom) and this box has ${total_mb} MB of memory. ` +
+    `Refusing to spawn a ${offered_file_count}-file, ${offered_bytes}-byte arm over ${corpus_name}: it needs a ${heap_mb} MB heap (${required_heap_mb(offered_bytes)} MB required plus headroom) and this box has ${total_mb} MB of memory. ` +
       "Narrow the predicate, or measure on a box that can hold it; a partial arm is never recorded.",
   );
 }
@@ -280,21 +275,26 @@ interface RunContext {
   readonly corpus_root: string;
   readonly corpus_commit: string;
   readonly predicate: ReturnType<typeof parse_corpus_predicate_name>;
-  /** What the predicate's walk found, so a full arm's heap is sized from it. */
-  readonly discovered_count: number;
+  /** What the predicate's walk found, so an arm's heap is sized from the bytes it will hold. */
+  readonly discovered: readonly FilePath[];
   readonly seed: number;
   readonly worker_width: number | "from_machine";
 }
 
-/** Spawn one arm sized for what it will be offered. */
-function spawn_sized_arm(
+/**
+ * Spawn one arm sized for the bytes of source it will be offered. The parent
+ * selects and sums the same files the child will, through the same functions,
+ * so a cap the parent grants is one the child's own refusal accepts.
+ */
+async function spawn_sized_arm(
   context: RunContext,
   request: ArmRequest,
   out: string,
 ): Promise<ArmResult> {
-  const offered = offered_count_for(request.slice_size, context.discovered_count);
-  const heap_mb = heap_mb_for(offered);
-  assert_heap_fits_the_box(heap_mb, context.corpus_name, offered);
+  const offered = select_offered_files(context.discovered, request.slice_size);
+  const offered_bytes = total_bytes(await measure_file_sizes(offered));
+  const heap_mb = heap_mb_for(offered_bytes);
+  assert_heap_fits_the_box(heap_mb, context.corpus_name, offered.length, offered_bytes);
   return spawn_arm(request, out, heap_mb);
 }
 
@@ -534,7 +534,7 @@ function report_cost_per_file(
 }
 
 async function run_slices(context: RunContext): Promise<void> {
-  const discovered = await discover_corpus(context.corpus_root, context.predicate);
+  const discovered = context.discovered;
   const sizes = plan_nested_slices(discovered);
   console.log(`nested slices over ${discovered.length} discovered files: ${sizes.join(", ")}`);
 
@@ -710,7 +710,7 @@ async function main(): Promise<void> {
   );
   fs.mkdirSync(run_dir, { recursive: true });
 
-  const discovered_count = (await discover_corpus(corpus_root, predicate)).length;
+  const discovered = await discover_corpus(corpus_root, predicate);
   const context: RunContext = {
     session_id,
     run_dir,
@@ -718,14 +718,14 @@ async function main(): Promise<void> {
     corpus_root,
     corpus_commit,
     predicate,
-    discovered_count,
+    discovered,
     seed,
     worker_width,
   };
 
   console.log(`session ${session_id}`);
   console.log(`results in ${run_dir}`);
-  console.log(`${discovered_count} files discovered under ${predicate}`);
+  console.log(`${discovered.length} files discovered under ${predicate}`);
 
   if (mode === "interleave") {
     await run_interleaved(context, slice);

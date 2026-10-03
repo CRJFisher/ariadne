@@ -32,10 +32,11 @@ import { is_in_test_dir } from "../project/test_dir_patterns";
 import {
   measure_file_sizes,
   order_files,
+  total_bytes,
   type IngestOrder,
 } from "./ingest_order";
-import { nested_slice } from "./nested_slice";
-import { required_heap_mb } from "./heap_requirement";
+import { select_offered_files } from "./nested_slice";
+import { heap_holds, required_heap_mb } from "./heap_requirement";
 import {
   fingerprint_call_graph,
   record_fingerprint,
@@ -130,18 +131,12 @@ export async function run_benchmark_arm(
   const discovered = await discover_corpus(corpus_root, request.predicate);
   assert_pinned_file_count(corpus, discovered.length);
 
-  const offered =
-    request.slice_size === "full"
-      ? discovered
-      : nested_slice(discovered, request.slice_size);
+  const offered = select_offered_files(discovered, request.slice_size);
 
   assert_predicate_selected_files(offered.length, request, corpus_root);
-  assert_heap_is_large_enough(offered.length);
 
-  const file_sizes =
-    request.ingest_order === "descending_size"
-      ? await measure_file_sizes(offered)
-      : new Map<never, never>();
+  const file_sizes = await measure_file_sizes(offered);
+  assert_heap_is_large_enough(offered.length, total_bytes(file_sizes));
 
   const ordered = order_files(offered, request.ingest_order, {
     file_sizes,
@@ -311,14 +306,17 @@ function assert_predicate_selected_files(
  * lives, so the parent that sizes this child and the child that refuses under
  * it cannot disagree.
  */
-function assert_heap_is_large_enough(offered_file_count: number): void {
-  const required_mb = required_heap_mb(offered_file_count);
+function assert_heap_is_large_enough(
+  offered_file_count: number,
+  offered_bytes: number,
+): void {
   const heap_cap_mb = Math.round(
     v8.getHeapStatistics().heap_size_limit / BYTES_PER_MB,
   );
-  if (heap_cap_mb >= required_mb) return;
+  if (heap_holds(offered_bytes, heap_cap_mb)) return;
+  const required_mb = required_heap_mb(offered_bytes);
   throw new Error(
-    `Refusing to start a ${offered_file_count}-file arm: it needs about ${required_mb} MB of heap and this process has ${heap_cap_mb} MB. ` +
+    `Refusing to start a ${offered_file_count}-file, ${offered_bytes}-byte arm: it needs about ${required_mb} MB of heap and this process has ${heap_cap_mb} MB. ` +
       `The run would die part-way through after spending the CPU. Re-run with --max-old-space-size=${Math.ceil(required_mb * 1.25)}.`,
   );
 }

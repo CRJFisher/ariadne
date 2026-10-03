@@ -67,6 +67,13 @@ export async function measure_file_sizes(
   return sizes;
 }
 
+/** The bytes of source a file set holds, which is what an arm's heap is sized from. */
+export function total_bytes(file_sizes: ReadonlyMap<FilePath, number>): number {
+  let total = 0;
+  for (const size of file_sizes.values()) total += size;
+  return total;
+}
+
 export function order_files(
   files: readonly FilePath[],
   order: IngestOrder,

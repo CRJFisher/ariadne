@@ -38,6 +38,16 @@ export function nested_slice(
   return path_sorted_files.slice(0, size);
 }
 
+/** The files an arm of this slice size is offered. */
+export function select_offered_files(
+  path_sorted_files: readonly FilePath[],
+  slice_size: number | "full",
+): readonly FilePath[] {
+  return slice_size === "full"
+    ? path_sorted_files
+    : nested_slice(path_sorted_files, slice_size);
+}
+
 /**
  * The slice sizes this corpus can actually supply, plus the full corpus.
  *
