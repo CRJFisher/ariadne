@@ -1,5 +1,5 @@
 ---
-id: TASK-376.31
+id: TASK-399
 title: Refuse a measured arm whose built packages are older than their source
 status: Done
 assignee: []
@@ -8,7 +8,6 @@ updated_date: '2026-09-27 19:03'
 labels:
   - measurement
 dependencies: []
-parent_task_id: TASK-376
 priority: medium
 ---
 

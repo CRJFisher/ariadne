@@ -71,7 +71,7 @@ A parameter annotated in its own right keeps its annotation. A type parameter no
 
 ## Measured
 
-Interleaved arms, control `c36c50eb` (TASK-376.29), builds guarded by TASK-376.31. The guard refused the first attempt because the candidate's `core` build was stale, and the arms below ran after a rebuild.
+Interleaved arms, control `c36c50eb` (TASK-376.29), builds guarded by TASK-399. The guard refused the first attempt because the candidate's `core` build was stale, and the arms below ran after a rebuild.
 
 | Corpus | Resolved | Edges | Raw entry points |
 | --- | ---: | ---: | ---: |

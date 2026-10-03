@@ -56,7 +56,7 @@ The assignment is captured as an `AssignmentReference`, but no resolver reads it
 
 ## Measured
 
-Interleaved arms, control `2db9442e`, both builds checked current by TASK-376.31's guard.
+Interleaved arms, control `2db9442e`, both builds checked current by TASK-399's guard.
 
 | Corpus | Resolved | Notes |
 | --- | ---: | --- |

@@ -60,7 +60,7 @@ A Rust binding that holds the receiver through the standard library is typed as 
 
 ## Measured
 
-Interleaved arms, control `7740c7ce` (TASK-376.30), builds guarded by TASK-376.31.
+Interleaved arms, control `7740c7ce` (TASK-376.30), builds guarded by TASK-399.
 
 | Corpus | Resolved | Reasons |
 | --- | ---: | --- |
