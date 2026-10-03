@@ -69,7 +69,27 @@
 )
 
 ; Block scopes
-; Only capture standalone blocks (if/for/while/try/except/etc.)
+; Python has no block scoping: every name a block binds belongs to the
+; enclosing function or module. The scopes stay because name lookup keeps one
+; binding per name per scope, and the last one wins; a block scope is what keeps
+; a block's rebinding from replacing the binding the code around it reads.
+;   if / elif / else, try / except / finally, with
+;       two branches' same-named locals stay apart, a guarded def's body is
+;       confined, and `except ... as e` binds an alias deleted at the clause's
+;       end. Import bindings are hoisted into the enclosing scope.
+;   for / while
+;       a target or body assignment does not replace a same-named binding made
+;       before the loop, and two loops' same-named targets stay two bindings
+;       (`for callback in ...` three times in one test method). Without them
+;       django, pandas and celery resolve 5, 8 and 0 fewer calls, lose 22, 9
+;       and 3 call edges (gaining 11, 2 and 1) and django gains 2 raw entry
+;       points.
+;   match / case
+;       a case body's assignments, held apart in the same way. They hold almost
+;       nothing (django: 27 scopes, 6 bindings; pandas: 4 scopes, none; celery:
+;       none), and the figures above measure all four captures removed
+;       together, so they stay with for / while. Capture patterns are not
+;       recorded as bindings (4 in django, none in pandas or celery).
 (for_statement) @scope.block
 (while_statement) @scope.block
 (with_statement) @scope.block
