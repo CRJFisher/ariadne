@@ -10,7 +10,7 @@ import type { ReferenceRegistry } from "./registries/reference";
 import type { DefinitionRegistry } from "./registries/definition";
 
 interface NameResolver {
-  resolve(scope_id: ScopeId, name: SymbolName): SymbolId | null;
+  resolve_all(scope_id: ScopeId, name: SymbolName): readonly SymbolId[];
 }
 
 /**
@@ -20,7 +20,9 @@ interface NameResolver {
  * captures every instantiation as a `function_call`. Rewriting the ones whose
  * callee resolves to a class into `constructor_call` lets constructor type
  * binding and call resolution treat them uniformly with `new`-based languages,
- * instead of each stage re-deriving the class/function distinction.
+ * instead of each stage re-deriving the class/function distinction. A name that
+ * sibling branches bind to different symbols is rewritten only when every one is
+ * a class; otherwise the call stays a function call, which reaches each branch.
  *
  * Mutates `references`; reads `definitions` and `resolutions`.
  */
@@ -36,11 +38,13 @@ export function preprocess_python_references(
   const updated_refs = file_refs.map((ref): SymbolReference => {
     if (ref.kind !== "function_call") return ref;
 
-    const resolved = resolutions.resolve(ref.scope_id, ref.name);
-    if (!resolved) return ref;
-
-    const def = definitions.get(resolved);
-    if (!def || def.kind !== "class") return ref;
+    const targets = resolutions.resolve_all(ref.scope_id, ref.name);
+    if (
+      targets.length === 0 ||
+      !targets.every((target) => definitions.get(target)?.kind === "class")
+    ) {
+      return ref;
+    }
 
     const constructor_ref: ConstructorCallReference = {
       kind: "constructor_call",

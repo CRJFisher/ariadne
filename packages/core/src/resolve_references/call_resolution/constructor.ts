@@ -16,7 +16,7 @@ import type {
   Result,
   ResolutionFailure,
 } from "@ariadnejs/types";
-import { err, ok } from "@ariadnejs/types";
+import { err, is_ok, ok } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "../registries/definition";
 import { resolve_module_member } from "../module_member_lookup";
 import type { CallResolutionContext } from "./call_resolver";
@@ -60,8 +60,11 @@ export function resolve_constructor_call(
     }
   }
 
+  // A name sibling branches bind to different classes constructs each of them.
+  let class_symbols: readonly SymbolId[] = class_symbol ? [class_symbol] : [];
   if (!class_symbol) {
-    class_symbol = resolutions.resolve(call_ref.scope_id, call_ref.name as SymbolName);
+    class_symbols = resolutions.resolve_all(call_ref.scope_id, call_ref.name as SymbolName);
+    class_symbol = class_symbols[0] ?? null;
   }
 
   // Inline full-path constructors and a Rust `Self` are never bound by a bare
@@ -69,6 +72,7 @@ export function resolve_constructor_call(
   // resolver substitutes the enclosing impl type for a lone `Self`.
   if (!class_symbol) {
     class_symbol = resolve_type_via_path_prefix_rust(call_ref, context);
+    class_symbols = class_symbol ? [class_symbol] : [];
   }
 
   if (!class_symbol) {
@@ -79,6 +83,33 @@ export function resolve_constructor_call(
     });
   }
 
+  const reached = new Set<SymbolId>();
+  let first_failure: ResolutionFailure | null = null;
+  for (const symbol of class_symbols) {
+    const result = resolve_class_constructor(symbol, call_ref, context);
+    if (is_ok(result)) {
+      reached.add(result.value);
+    } else {
+      first_failure ??= result.error;
+    }
+  }
+  if (reached.size === 0 && first_failure) {
+    return err(first_failure);
+  }
+  return ok([...reached]);
+}
+
+/**
+ * The constructor `class_symbol` is constructed through, or the class itself
+ * when it declares none. `class_symbol` names a class, or a binding holding a
+ * class object.
+ */
+function resolve_class_constructor(
+  class_symbol: SymbolId,
+  call_ref: ConstructorCallReference,
+  context: CallResolutionContext
+): Result<SymbolId, ResolutionFailure> {
+  const { definitions } = context;
   const class_def =
     find_class_definition(class_symbol, definitions) ??
     find_held_class_definition(class_symbol, call_ref, context);
@@ -100,7 +131,7 @@ export function resolve_constructor_call(
     constructor_symbol = find_associated_constructor_rust(call_ref, class_def, definitions);
   }
 
-  return ok([constructor_symbol || class_def.symbol_id]);
+  return ok(constructor_symbol || class_def.symbol_id);
 }
 
 /**

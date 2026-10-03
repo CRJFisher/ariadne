@@ -33,7 +33,12 @@ module — never into another block, which is itself one of the branches being l
 - **Python imports**, because Python has no block scoping, so `if TYPE_CHECKING: from m
 import C` binds `C` where its unguarded form would. A hoisted import shadows the wildcard
   layer and everything the scope chain inherits, exactly as its unguarded form would, and
-  loses only to an import the scope writes itself and to its own local definitions.
+  loses only to an import the scope writes itself and to its own local definitions. When
+  sibling branches of one guard (`if`/`elif`/`else`, `try`/`except`/`finally`) bind one name to
+  different symbols, the scope binds the first branch's in `own` and records every branch's in
+  `ScopeResolutions.branch_bindings`; `resolve_all` reads them, a bare call fans out to each
+  (`StataWriter`, `StataWriter117` and `StataWriterUTF8` chosen by version), and a call that
+  names classes only is rewritten to a constructor call when every branch binds a class.
 
 The block scope itself stays in both cases — it is what keeps two branches' same-named
 bindings apart, and what confines an `except … as e` alias Python deletes at the end of the

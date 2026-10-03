@@ -112,7 +112,8 @@ function find_function_resolution(
  * Resolve a function call to zero, one, or more symbols.
  *
  * Handles bare function calls (no receiver):
- * 1. Resolve the name, skipping method/constructor definitions
+ * 1. Resolve the name, skipping method/constructor definitions; a name that
+ *    sibling branches bind to different symbols resolves to each of them
  * 2. Fall back to collection dispatch if unresolved or collection-sourced;
  *    otherwise follow a binding holding a callable or a class object to it
  * 3. Fall back to Python callable instance (__call__ method)
@@ -140,6 +141,12 @@ export function resolve_function_call(
   let resolved_symbols: SymbolId[] = [];
   if (is_ok(name_result)) {
     resolved_symbols = [name_result.value];
+    // A name sibling branches bind to different symbols is reached through
+    // every one of them: which branch ran is not knowable here.
+    const branch_targets = resolver.resolve_all(ref.scope_id, ref.name);
+    if (branch_targets.length > 1 && branch_targets[0] === name_result.value) {
+      resolved_symbols = [...branch_targets];
+    }
   }
 
   // Step 2: Check for collection dispatch, or what the binding holds
