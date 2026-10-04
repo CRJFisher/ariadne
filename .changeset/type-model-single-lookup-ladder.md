@@ -73,15 +73,24 @@ tokens, a `.on_error(...)` call off an unannotated Python factory, and Rust
 `Drop`, whose destructor call is compiler-injected with no call expression in
 source. They are recorded as permanent limitations rather than targets.
 
-## Types
+## Breaking
 
-`@ariadnejs/types` bumps in lockstep (linked release). Added:
-`ResolutionFailure` and its per-reason union, `AriadneFaultArea` with the
-reason-to-area mapping, and `LexicalScope.self_type_name`. `parent_types` is
-multi-valued. The single `symbol_types` map is split into value types and
-callable return types. `TypeMemberInfo` is removed along with the three member
-builders that fed it.
+- **`TypeRegistry.get_type_members` is removed, along with `TypeMemberInfo`.** Read
+  a type's members from `DefinitionRegistry.get_member_closure(type_id)`, which
+  holds the complete set the lookup ladder consults. `TypeRegistry` gains
+  `get_callable_return_type`, `get_callable_return_class`,
+  `get_container_element` and `get_symbol_type_arguments` for the facts it keeps.
+- **`ResolutionFailure` carries every unresolved call.** A call-kind reference
+  that does not resolve is no longer simply absent from the resolved set; its
+  reason is recorded, and `resolved + failed == call references`.
 
-Cached per-file indexes are keyed on an indexer-build fingerprint, so this
-release's bump retires every blob written by the previous indexer and re-indexes
-each file once.
+## Added
+
+`@ariadnejs/types` bumps in lockstep (linked release). Added: `ResolutionFailure`
+and its per-reason union, `AriadneFaultArea` with the reason-to-area mapping, and
+`LexicalScope.self_type_name`. Inside the registries, `parent_types` is
+multi-valued and the single `symbol_types` map is split into value types and
+callable return types; neither is part of the public surface.
+
+Cached per-file indexes written by the previous indexer are discarded, and each
+file is re-indexed once.

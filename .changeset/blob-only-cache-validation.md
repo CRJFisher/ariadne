@@ -11,5 +11,5 @@ built from earlier content. Validity now rests on comparing the file's current
 blob hash to the blob the entry was built from, and an index built from dirty or
 untracked content no longer claims a blob at all.
 
-The cache schema version is bumped, so existing caches are discarded and the next
-load re-indexes once.
+Caches written before this release are discarded, and the next load re-indexes
+once.

@@ -45,6 +45,5 @@ Upgrade steps:
 - Pre-run-namespaced state (a flat `<project>_triage.json`): delete it by hand;
   the run-namespaced layout is rebuilt on the next run.
 
-The persistence-cache schema version (`packages/core/src/persistence/cache_manifest.ts`)
-bumps from 1 → 2; pre-bump caches in `~/.ariadne/cache/<slug>/manifest.json`
-auto-invalidate on first read after upgrade.
+Per-file index caches written by an earlier release are discarded on first read
+after upgrade, and each file is re-indexed once.

@@ -24,9 +24,8 @@ the symbol survives; the list below is what changed for a consumer.
   false-entry-point failure the pipeline exists to remove. Narrow the corpus
   with `files`, `folders` and `exclude` instead.
 - **`profiler` is no longer exported.** The profiling module stays internal.
-- **`TypeKind` is removed** from `@ariadnejs/types`, along with the
-  `AnalysisError` and `AnalysisPhase` types and the `errors` module that held
-  them. Error reporting flows through `Result`.
+- **`@ariadnejs/types` drops its pre-1.0 call-graph model and its helper
+  functions.** The list is in the types changeset below.
 
 ## Added
 

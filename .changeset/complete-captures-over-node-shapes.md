@@ -32,7 +32,7 @@ call-graph nodes, and drops the entry-point false-positive rate from 32.4% to
 
 Two changes need attention on upgrade:
 
-- `CURRENT_SCHEMA_VERSION` moves to 5, so an existing on-disk index is
-  discarded and the project re-indexes cold on first run.
+- An existing on-disk index is discarded, because the indexer that wrote it
+  extracts less than this one, and the project re-indexes cold on first run.
 - `SymbolReference` gains `CallableValueReference` and `accessor_kind` gains
   `"deleter"`. Consumers switching exhaustively over either need a new arm.

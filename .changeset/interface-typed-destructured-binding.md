@@ -20,6 +20,5 @@ member has no body scope, so it is never a call-graph node and the change is
 additive: attributions are added, never moved, and entry-point detection still
 reaches every implementation.
 
-`VariableDefinition` gains the two provenance fields. The cache entry's
-validity is stamped with the package version, so this release's bump is what
-retires blobs written by the previous indexer and re-indexes each file once.
+`VariableDefinition` gains the two provenance fields. Cached indexes written by
+the previous indexer are discarded, and each file is re-indexed once.
