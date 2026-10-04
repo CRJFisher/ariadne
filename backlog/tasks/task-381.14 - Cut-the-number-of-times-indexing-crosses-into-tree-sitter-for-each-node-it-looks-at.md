@@ -1,7 +1,7 @@
 ---
 id: TASK-381.14
 title: "Cut the number of times indexing crosses into tree-sitter for each node it looks at"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-08-24 09:07"
 labels:
@@ -69,3 +69,11 @@ This is profiled and not prototyped, and the risk should be stated rather than d
 - [x] #5 #5 Query objects remain compiled once per dialect per process, and no change is made to parser buffer sizing — measured at 0.008% of the corpus run, and a fixed 32 KB buffer makes tree-sitter throw `Invalid argument` on `vs/base/browser/dom.ts`. MEASURED: over 1,200 files both trees compile **2 queries for 2 dialects** (`typescript`, `javascript`) and call `Query.captures` once per file, so captures are already extracted in one batch. `project.ts`, `query_code_tree.ts` and `native.ts` are byte-identical to the control commit, so the per-project buffer still grows to twice the longest file's length and query compilation still routes through `COMPILED_QUERY_CACHE`.
 
 <!-- AC:END -->
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+
+## Final Summary
+
+Landed in `ff2bba11`, `87d94d30`, `4d3528b8`, `2b13f344`, `6a335165`. Every acceptance criterion is ticked against the measurements recorded in the criterion text and in the task's `RECORDED_*` rows (`packages/core/src/benchmark_corpus_load/`); a criterion whose original figure was refuted carries its replacement and the reason.
+
+<!-- SECTION:FINAL_SUMMARY:END -->
