@@ -1,7 +1,7 @@
 ---
 id: TASK-381.13
 title: "Stop the per-file passes re-deriving scope containment and enum membership they already hold"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-08-24 09:07"
 labels:
@@ -36,12 +36,20 @@ Bounding `extract_construct_target`'s parent-chain walk: it changes 403 of 7,322
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 #1 `get_scope_id` descends from `root_scope_id` through `child_ids`; the linear scan and the `Malformed scope tree` throw are both gone, and >= 100,000 real lookups over the vscode corpus return the same `ScopeId` the scan returned (124,862 verified in the prototype).
-- [ ] #2 #1a `scopes.test.ts`'s `Malformed scope tree` test (line 834) is deleted with its reason recorded — the invariant it asserts is unreachable by construction under a root-descent, because a scope not reachable from `root_scope_id` through `child_ids` is never visited — and every other test in `scopes.test.ts` stays green unmodified.
-- [ ] #3 #2 `SemanticCategory` and `SemanticEntity` membership is tested against module-scoped Sets, and `node_to_location` binds `startPosition` and `endPosition` once each.
-- [ ] #4 #3 Combined saving is >= 4 ms/file on a 160-file size-stratified sample of the corpus, against a reconstructed 4.9-5.9 ms/file band, with each component reported separately against its measured value (3.145 to 0.867 ms/file for the descent, 1.76 microseconds per capture for the normalisation).
-- [ ] #5 #4 A full-corpus run records the combined CPU saving in seconds against the immediately preceding full-corpus baseline; the saving is >= 25 s, and if it is below that the gap between it and the 4 ms/file sample figure is explained rather than the task closed — the parser buffer, estimated at 0.39-0.41 ms/file, measured 0.008% of the corpus run, and that failure mode is what this criterion exists to catch.
-- [ ] #6 #5 The six-number fingerprint is byte-identical before and after at n=200 and n=1,200: this batch changes no answer.
-- [ ] #7 #6 Bounding `extract_construct_target`'s parent-chain walk is recorded as out of scope in the module, citing the harness row that measured it (403 of 7,322 resolved construct targets move).
+- [x] #1 #1 `get_scope_id` descends from `root_scope_id` through `child_ids`; the linear scan and the `Malformed scope tree` throw are both gone, and >= 100,000 real lookups over the vscode corpus return the same `ScopeId` the scan returned (124,862 verified in the prototype).
+- [x] #2 #1a `scopes.test.ts`'s `Malformed scope tree` test (line 834) is deleted with its reason recorded — the invariant it asserts is unreachable by construction under a root-descent, because a scope not reachable from `root_scope_id` through `child_ids` is never visited — and every other test in `scopes.test.ts` stays green unmodified.
+- [x] #3 #2 `SemanticCategory` and `SemanticEntity` membership is tested against module-scoped Sets, and `node_to_location` binds `startPosition` and `endPosition` once each.
+- [x] #4 #3 Combined saving is >= 4 ms/file on a 160-file size-stratified sample of the corpus, against a reconstructed 4.9-5.9 ms/file band, with each component reported separately against its measured value (3.145 to 0.867 ms/file for the descent, 1.76 microseconds per capture for the normalisation).
+- [x] #5 #4 A full-corpus run records the combined CPU saving in seconds against the immediately preceding full-corpus baseline; the saving is >= 25 s, and if it is below that the gap between it and the 4 ms/file sample figure is explained rather than the task closed — the parser buffer, estimated at 0.39-0.41 ms/file, measured 0.008% of the corpus run, and that failure mode is what this criterion exists to catch.
+- [x] #6 #5 The six-number fingerprint is byte-identical before and after at n=200 and n=1,200: this batch changes no answer.
+- [x] #7 #6 Bounding `extract_construct_target`'s parent-chain walk is recorded as out of scope in the module, citing the harness row that measured it (403 of 7,322 resolved construct targets move).
 
 <!-- AC:END -->
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+
+## Final Summary
+
+Landed in `4779d9a4`, `36b8b09d`, `4be67581`, `cdad9682`. Every acceptance criterion is ticked against the measurements recorded in the criterion text and in the task's `RECORDED_*` rows (`packages/core/src/benchmark_corpus_load/`); a criterion whose original figure was refuted carries its replacement and the reason.
+
+<!-- SECTION:FINAL_SUMMARY:END -->
