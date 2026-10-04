@@ -1,7 +1,7 @@
 ---
 id: TASK-376.27
 title: Measure whether a Python loop or match clause needs a block scope at all
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-09-19 13:40'
 labels:
@@ -93,3 +93,11 @@ The literal set difference names the cost. Deleting the captures moves bindings,
 
 `name_not_in_scope` falls by less than `receiver_type_unknown` rises (-6 against +12, -8 against +16): the references that stop failing on the name fail on the receiver instead. No reason recovers net resolved calls, and the removal costs 5, 8 and 0 resolved calls while moving 33, 11 and 4 call edges. `match` and `case` were measured only jointly with `for` and `while`; they hold 6 bindings across the three corpora, so any isolated effect is bounded by that.
 <!-- SECTION:NOTES:END -->
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+
+## Final Summary
+
+Measurement task, decision recorded: the four Python scopes (`for`, `while`, `match`, `case`) stay, because removing them recovers no resolved call and moves call edges on all three corpora; `queries/python.scm`'s header states what each confines. Landed in `e2d5167e` and `ef3f13e4`; merged by `5acc366a`.
+
+<!-- SECTION:FINAL_SUMMARY:END -->
