@@ -1,7 +1,7 @@
 ---
 id: TASK-381.18
 title: "Attribute an arrow callback's invocation to the function that passes it, not to the callback itself"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-08-25 10:55"
 labels:
@@ -101,12 +101,12 @@ one.
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 A synthetic callback invocation is attributed to the function whose body holds the receiver call, for arrow functions and `function` expressions alike. On the probe file above, `dead_with_arrow -> <anonymous>@10` is reported and `<anonymous>@10 -> <anonymous>@10` is not.
-- [ ] #2 No call graph reports an anonymous callable as its own caller through a callback invocation. Over the 200-file `folder-ts:src/vs/base` slice at f3fa55c3 the count goes from 782 to 0, while the 159 named-caller self-edges — genuine recursion — are untouched.
-- [ ] #3 Deleting the only function that passes an arrow callback makes that callback, and anything only it calls, reachable from nothing. Asserted on the probe file: with `dead_with_arrow` removed, `helper_from_arrow` is reported.
-- [ ] #4 A regression test in `call_resolver.test.ts` pins the arrow and `function`-expression forms side by side, so the two cannot diverge again without a failure.
-- [ ] #5 The seven-number fingerprint over the in-repo `packages/core/benchmark_corpus` moves only in the components this fix should move, and the committed member list in `call_graph_fingerprint.corpus.test.ts` is re-derived from the corpus source rather than pasted from a run.
-- [ ] #6 `Could not find body scope for anonymous function` is either fixed or filed as its own task with its own evidence; it is not left as an unexplained warning on the corpus.
+- [x] #1 A synthetic callback invocation is attributed to the function whose body holds the receiver call, for arrow functions and `function` expressions alike. On the probe file above, `dead_with_arrow -> <anonymous>@10` is reported and `<anonymous>@10 -> <anonymous>@10` is not.
+- [x] #2 No call graph reports an anonymous callable as its own caller through a callback invocation. Over the 200-file `folder-ts:src/vs/base` slice at f3fa55c3 the count goes from 782 to 0, while the 159 named-caller self-edges — genuine recursion — are untouched.
+- [x] #3 Deleting the only function that passes an arrow callback makes that callback, and anything only it calls, reachable from nothing. Asserted on the probe file: with `dead_with_arrow` removed, `helper_from_arrow` is reported.
+- [x] #4 A regression test in `call_resolver.test.ts` pins the arrow and `function`-expression forms side by side, so the two cannot diverge again without a failure.
+- [x] #5 The seven-number fingerprint over the in-repo `packages/core/benchmark_corpus` moves only in the components this fix should move, and the committed member list in `call_graph_fingerprint.corpus.test.ts` is re-derived from the corpus source rather than pasted from a run.
+- [x] #6 `Could not find body scope for anonymous function` is either fixed or filed as its own task with its own evidence; it is not left as an unexplained warning on the corpus.
 
 <!-- AC:END -->
 
@@ -234,3 +234,11 @@ scope-opens-after-the-definition shape and the nested-callback case. All four
 were run against the pre-fix tree first: three fail there.
 
 <!-- SECTION:NOTES:END -->
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+
+## Final Summary
+
+Landed in `50dfbcb8`, `fd4e06cf`. Every acceptance criterion is ticked against the measurements recorded in the criterion text and in the task's `RECORDED_*` rows (`packages/core/src/benchmark_corpus_load/`); a criterion whose original figure was refuted carries its replacement and the reason.
+
+<!-- SECTION:FINAL_SUMMARY:END -->
