@@ -1,7 +1,7 @@
 ---
 id: TASK-381.9
 title: "Stamp each cache blob with its own validity so an interrupted index resumes instead of restarting"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-08-24 09:07"
 labels:
@@ -34,20 +34,20 @@ Three things leave with the manifest and two invariants have to be written down.
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 #1 `cache_manifest.ts` and its test are deleted, and no `read_manifest` or `write_manifest` remains on the `PersistenceStorage` contract.
-- [ ] #2 #2 Each blob carries `{schema_version, indexer_version, source_path, content_hash, git_blob_hash?}`, `indexer_version` is sourced from the package version, a mismatch on either version axis independently rejects the blob, and blobs live under `<cache>/indexes/<indexer_version>/`.
-- [ ] #3 #2a The manifest-era cache layout is deleted outright on first run of the new build — no reader, no migration, no fallback path (NO BACKWARDS COMPATIBILITY); a test proves a pre-existing `manifest.json` and its blobs are removed rather than orphaned forever.
-- [ ] #4 #3 `deserialize_cached_index` returns null rather than throwing on corrupt, non-index-shaped, or wrong-`source_path` payloads.
-- [ ] #5 #4 `kill -9` eight seconds into a 200-file load, then restart: every blob written before the kill is a cache hit — 160 of 160 measured, against 0 of 160 on an interleaved control arm from the tree immediately before — 0 orphan `.tmp` files remain, and the fingerprint matches an uninterrupted cold load byte for byte AT THE SAME INGEST ORDER. Cross-order equality is TASK-381.11's criterion, not this one.
-- [ ] #6 #5 The source path is stored once per blob and elided from every `SymbolReference` record. REFUTED IN ITS FIGURES, MET IN ITS MECHANISM: blob bytes over a 120-blob sample fall 83.96 -> 49.56 MB (1.694x), NOT to the 32 MB budgeted, and no elision of the path could have reached it — removing the path from the whole blob, definitions and scopes included, floors at 38.21 MB on this tree. The 68.56 MB the target was set against is a smaller index than this tree produces. `JSON.parse` falls 208.1 -> 174.3 ms, meeting the 175 ms bound, and the 205.4 ms control figure reproduces to 1.3%.
-- [ ] #7 #6 Warm cache hits equal the number of files offered minus the number dropped, at n=50, 200, 400 and 800 — measured 50/200/400/800 hits against an empty dropped set at every size, so the ceiling this criterion was written against (92.9% on a tree with drops) no longer binds.
-- [ ] #8 #7 A full cache that matches nothing costs <= +6% CPU against cold. MEASURED +2.94% at 1.21 ms per rejected blob, five reps interleaved A,B,A,B in one process at 800 files, against a control that indexes and writes the same 800 blobs and reads none. A control that writes nothing reads +25.4%, because it charges the rejection with the cost of populating a cache.
-- [ ] #9 #8 Orphan blobs are swept only on a full-corpus load, and a test proves a folder-scoped load deletes nothing outside its own scope.
-- [ ] #10 #8a Superseded `<cache>/indexes/<indexer_version>/` directories are removed on first use and the current one is retained — TASK-378 AC #3 carried forward — and a test proves an upgrade leaves exactly one version directory.
-- [ ] #11 #8b The chosen cache granularity (per-project or global) is stated in the persistence module documentation — TASK-378 AC #5 carried forward — since the sweep behaviour follows from it.
-- [ ] #12 #9 A test proves the indexer-version effect end to end: with a warm cache and unchanged source, a change to indexing produces changed output rather than replaying the stale index.
-- [ ] #13 #10 TASK-378 is closed as superseded, with each of its six acceptance criteria mapped to the criterion here that carries it, so no follow-up re-adds a manifest to carry the same axis; and `persistence/*.test.ts` and the cache-restore paths in `project/project.test.ts` stay green.
-- [ ] #14 #11 The `fsync` claim is removed from the atomicity comment: the blob is atomic for readers and not durable across power loss, and the comment says exactly that.
+- [x] #1 #1 `cache_manifest.ts` and its test are deleted, and no `read_manifest` or `write_manifest` remains on the `PersistenceStorage` contract.
+- [x] #2 #2 Each blob carries `{schema_version, indexer_version, source_path, content_hash, git_blob_hash?}`, `indexer_version` is sourced from the package version, a mismatch on either version axis independently rejects the blob, and blobs live under `<cache>/indexes/<indexer_version>/`.
+- [x] #3 #2a The manifest-era cache layout is deleted outright on first run of the new build — no reader, no migration, no fallback path (NO BACKWARDS COMPATIBILITY); a test proves a pre-existing `manifest.json` and its blobs are removed rather than orphaned forever.
+- [x] #4 #3 `deserialize_cached_index` returns null rather than throwing on corrupt, non-index-shaped, or wrong-`source_path` payloads.
+- [x] #5 #4 `kill -9` eight seconds into a 200-file load, then restart: every blob written before the kill is a cache hit — 160 of 160 measured, against 0 of 160 on an interleaved control arm from the tree immediately before — 0 orphan `.tmp` files remain, and the fingerprint matches an uninterrupted cold load byte for byte AT THE SAME INGEST ORDER. Cross-order equality is TASK-381.11's criterion, not this one.
+- [x] #6 #5 The source path is stored once per blob and elided from every `SymbolReference` record. REFUTED IN ITS FIGURES, MET IN ITS MECHANISM: blob bytes over a 120-blob sample fall 83.96 -> 49.56 MB (1.694x), NOT to the 32 MB budgeted, and no elision of the path could have reached it — removing the path from the whole blob, definitions and scopes included, floors at 38.21 MB on this tree. The 68.56 MB the target was set against is a smaller index than this tree produces. `JSON.parse` falls 208.1 -> 174.3 ms, meeting the 175 ms bound, and the 205.4 ms control figure reproduces to 1.3%.
+- [x] #7 #6 Warm cache hits equal the number of files offered minus the number dropped, at n=50, 200, 400 and 800 — measured 50/200/400/800 hits against an empty dropped set at every size, so the ceiling this criterion was written against (92.9% on a tree with drops) no longer binds.
+- [x] #8 #7 A full cache that matches nothing costs <= +6% CPU against cold. MEASURED +2.94% at 1.21 ms per rejected blob, five reps interleaved A,B,A,B in one process at 800 files, against a control that indexes and writes the same 800 blobs and reads none. A control that writes nothing reads +25.4%, because it charges the rejection with the cost of populating a cache.
+- [x] #9 #8 Orphan blobs are swept only on a full-corpus load, and a test proves a folder-scoped load deletes nothing outside its own scope.
+- [x] #10 #8a Superseded `<cache>/indexes/<indexer_version>/` directories are removed on first use and the current one is retained — TASK-378 AC #3 carried forward — and a test proves an upgrade leaves exactly one version directory.
+- [x] #11 #8b The chosen cache granularity (per-project or global) is stated in the persistence module documentation — TASK-378 AC #5 carried forward — since the sweep behaviour follows from it.
+- [x] #12 #9 A test proves the indexer-version effect end to end: with a warm cache and unchanged source, a change to indexing produces changed output rather than replaying the stale index.
+- [x] #13 #10 TASK-378 is closed as superseded, with each of its six acceptance criteria mapped to the criterion here that carries it, so no follow-up re-adds a manifest to carry the same axis; and `persistence/*.test.ts` and the cache-restore paths in `project/project.test.ts` stay green.
+- [x] #14 #11 The `fsync` claim is removed from the atomicity comment: the blob is atomic for readers and not durable across power loss, and the comment says exactly that.
 
 <!-- AC:END -->
 
@@ -116,3 +116,11 @@ and scope collections. Taking those is a larger change than this criterion
 specifies and is left open.
 
 <!-- SECTION:NOTES:END -->
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+
+## Final Summary
+
+Landed in `743d963c`. Every acceptance criterion is ticked against the measurements recorded in the criterion text and in the task's `RECORDED_*` rows (`packages/core/src/benchmark_corpus_load/`); a criterion whose original figure was refuted carries its replacement and the reason.
+
+<!-- SECTION:FINAL_SUMMARY:END -->
