@@ -1,7 +1,7 @@
 ---
 id: TASK-381.3
 title: "Index DefinitionRegistry's ownership backwards so evicting a file costs its own symbols, not the project's"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-08-24 09:07"
 labels:
@@ -30,11 +30,19 @@ One measurement caveat the earlier plan elided. The 1.981x figure at n=1,200 was
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 #1 `member_owner` and `type_subtypes` each have a reverse index, neither full-scan loop remains in `remove_file`, and `is_subtype_registered` reads the child's own parents from the reverse index rather than walking every parent set in the project.
-- [ ] #2 #2 Every site writing `member_owner` or `type_subtypes` writes the reverse index, and an assertion-mode invariant that rebuilds both from scratch and compares runs in the test suite.
-- [ ] #3 #3 Scanned entries over a 1,200-file load fall from 2,178,985,276 to <= 50,000, against a keyed cost measured at 24,295 for the same evictions.
-- [ ] #4 #4 Keyed map operations per evicted symbol at n=200, 600 and 1,200 are flat within 25% (keyed cost measured at 4,693 / 12,174 / 24,295 in total, exactly linear at 2.00x for 2.0x the files), and a counter asserts zero full-map iterations occur in any `DefinitionRegistry` eviction path.
-- [ ] #5 #5 Whole-load CPU at n=200, 600 and 1,200 on the incremental driver is measured with interleaved arms in separate processes and recorded in the harness as cpu_user with cpu/wall and loadavg — no minimum ratio is asserted here, because the 1.981x figure was measured between two arms that both carry the two-phase driver and is asserted in TASK-381.4 AC #7.
-- [ ] #6 #6 The six-number fingerprint is byte-identical at n=200, 600 and 1,200 — the prototype was byte-identical on entry points, nodes and edges at all three.
+- [x] #1 #1 `member_owner` and `type_subtypes` each have a reverse index, neither full-scan loop remains in `remove_file`, and `is_subtype_registered` reads the child's own parents from the reverse index rather than walking every parent set in the project.
+- [x] #2 #2 Every site writing `member_owner` or `type_subtypes` writes the reverse index, and an assertion-mode invariant that rebuilds both from scratch and compares runs in the test suite.
+- [x] #3 #3 Scanned entries over a 1,200-file load fall from 2,178,985,276 to <= 50,000, against a keyed cost measured at 24,295 for the same evictions.
+- [x] #4 #4 Keyed map operations per evicted symbol at n=200, 600 and 1,200 are flat within 25% (keyed cost measured at 4,693 / 12,174 / 24,295 in total, exactly linear at 2.00x for 2.0x the files), and a counter asserts zero full-map iterations occur in any `DefinitionRegistry` eviction path.
+- [x] #5 #5 Whole-load CPU at n=200, 600 and 1,200 on the incremental driver is measured with interleaved arms in separate processes and recorded in the harness as cpu_user with cpu/wall and loadavg — no minimum ratio is asserted here, because the 1.981x figure was measured between two arms that both carry the two-phase driver and is asserted in TASK-381.4 AC #7.
+- [x] #6 #6 The six-number fingerprint is byte-identical at n=200, 600 and 1,200 — the prototype was byte-identical on entry points, nodes and edges at all three.
 
 <!-- AC:END -->
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+
+## Final Summary
+
+Landed in `f02a7583`, `39f6c190`, `7a7a4f0f`. Every acceptance criterion is ticked against the measurements recorded in the criterion text and in the task's `RECORDED_*` rows (`packages/core/src/benchmark_corpus_load/`); a criterion whose original figure was refuted carries its replacement and the reason.
+
+<!-- SECTION:FINAL_SUMMARY:END -->
