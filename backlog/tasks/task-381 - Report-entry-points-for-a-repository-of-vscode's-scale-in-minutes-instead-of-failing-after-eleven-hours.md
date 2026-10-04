@@ -58,7 +58,7 @@ The capability improves rather than merely getting faster. Nothing is lost — t
 
 TASK-381.1 is Done and merged into the integration branch. Every other sub-task is To Do: the figures in the description and the acceptance criteria were measured on composed prototype patches, and each sub-task re-measures its own criterion on landed code when it lands. The prototype patches are on this machine under `~/.ariadne/perf-investigation-2026-08-23/patches/`. `phase3/` is empty, so TASK-381.8 and TASK-381.11 have no reference patch. Commit 0eb9b449 (TASK-375) rewrote `registries/export.ts` and `project/project.ts` after the patches were cut and deleted `Project.resolve_all()`, so a patch touching either file is merged by hand against the current tree, never applied.
 
-`task-381 - Index-the-bodies-of-Rust-cfg-macro-blocks-so-the-items-they-publish-exist.md` carries the same `TASK-381` id as this epic. It is a TASK-375 follow-up, not part of this epic, and is excluded from this order.
+`task-400 - Index-the-bodies-of-Rust-cfg-macro-blocks-so-the-items-they-publish-exist.md` is a TASK-375 follow-up, not part of this epic, and is excluded from this order.
 
 ### Rules for every step
 
