@@ -111,6 +111,9 @@ export class DefinitionRegistry {
   /** Which types extend or implement which, for polymorphic dispatch and inherited-member lookup. */
   private heritage: SubtypeGraph = new SubtypeGraph();
 
+  /** Parents that gained a structural subtype since the last `take_inferred_parents`. */
+  private inferred_parents: Set<SymbolId> = new Set();
+
   /** Variable SymbolId → the function collection (Map/Array/Object of functions) it holds, for collection dispatch. */
   private function_collections: Map<SymbolId, FunctionCollection> = new Map();
 
@@ -778,9 +781,23 @@ export class DefinitionRegistry {
     ) {
       return;
     }
-    this.heritage.register_subtype(parent_id, subtype_id, "structural", subtype_file);
+    if (this.heritage.register_subtype(parent_id, subtype_id, "structural", subtype_file)) {
+      this.inferred_parents.add(parent_id);
+    }
 
     assert_reverse_indices_consistent(this.members, this.heritage, `infer_subtype(${parent_id}, ${subtype_id})`);
+  }
+
+  /**
+   * The parents that gained a structural subtype, read once. An edge inferred
+   * while calls resolve widens the subtype closure of its parent and of every
+   * type above it, so a call that dispatched through any of them before the edge
+   * existed holds an answer that depends on what was resolved first.
+   */
+  take_inferred_parents(): ReadonlySet<SymbolId> {
+    const taken = this.inferred_parents;
+    this.inferred_parents = new Set();
+    return taken;
   }
 
   /**

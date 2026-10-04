@@ -25,6 +25,7 @@ project/
 ├── project.ts                        # Project class (main orchestrator)
 ├── load_project.ts                   # Project construction from a path (discovery + cache orchestration)
 ├── project_cache_strategy.ts         # Cache read/write policy; sole owner of content-hash computation and blob writes
+├── find_files_affected_by_change.ts  # Files whose resolutions a changed file's surface reaches, through the barrel chain
 ├── file_loading.ts                   # Source file discovery and ignore rules
 ├── parse_file.ts                     # Parse-phase language dispatch (grammar selection → ParsedFile)
 ├── parallel_index.ts                 # Pass A across worker threads: ordered SemanticIndex delivery

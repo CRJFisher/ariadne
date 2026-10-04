@@ -1043,6 +1043,24 @@ export class FileStorage implements Storage { sweep(): void {} }
       expect(project.resolutions.get_files_dispatching_through([shape])).toEqual(new Set());
     });
 
+    describe("Dispatch through a parent of an interface no class declares against", () => {
+      const through_supertype = read_fixture("typescript", "structural_conformance_through_a_supertype");
+
+      it.each(order_matrix(Object.keys(through_supertype)))(
+        "reaches the class inferred below the child, whatever order files arrive in (%s, %s)",
+        async (_label, driver, order) => {
+          const { project, paths } = await load_project(through_supertype, order, driver);
+
+          expect(targets_of(call_at(project, paths["via_base.ts"], "run", 8))).toEqual(
+            new Set([
+              member_of(project, paths["contract.ts"], "Base", "run"),
+              member_of(project, paths["impl.ts"], "Impl", "run"),
+            ])
+          );
+        }
+      );
+    });
+
     describe("Dispatch through an interface no class declares against", () => {
       const conformance = read_fixture("typescript", "structural_conformance");
 

@@ -24,6 +24,7 @@ import { ScopeRegistry } from "../resolve_references/registries/scope";
 import { ExportRegistry } from "../resolve_references/registries/export";
 import { ReferenceRegistry } from "../resolve_references/registries/reference";
 import { ImportGraph } from "../resolve_references/import_resolution/import_graph";
+import { find_files_affected_by_change } from "./find_files_affected_by_change";
 import { ResolutionRegistry } from "../resolve_references/resolution_registry";
 import { preprocess_references } from "../resolve_references/preprocess_references";
 import { trace_call_graph } from "../trace_call_graph/trace_call_graph";
@@ -62,6 +63,13 @@ export interface ClassifyOptions extends TraceCallGraphOptions {
  * running the pass over the project repeatedly.
  */
 const CARRIER_RESOLUTION_ROUNDS = 4;
+
+/**
+ * How many times one resolve may answer files again because resolving calls
+ * inferred a structural subtype. Each round can only add edges, so the rounds
+ * run out on their own; the bound is a guard.
+ */
+const INFERENCE_RESOLUTION_ROUNDS = 4;
 
 /**
  * Main coordinator for the entire processing pipeline.
@@ -171,7 +179,7 @@ export class Project {
 
     this.populate_registries(file_id, index_single_file, modules);
     this.fix_import_locations_for_file(file_id, index_single_file);
-    this.resolve_files(this.files_affected_by(file_id, dependents), modules);
+    this.resolve_files(find_files_affected_by_change(this.imports, file_id, dependents), modules);
   }
 
   /**
@@ -195,7 +203,7 @@ export class Project {
 
     this.populate_registries(file_id, cached_index, modules);
     this.fix_import_locations_for_file(file_id, cached_index);
-    this.resolve_files(this.files_affected_by(file_id, dependents), modules);
+    this.resolve_files(find_files_affected_by_change(this.imports, file_id, dependents), modules);
   }
 
   /**
@@ -523,11 +531,37 @@ export class Project {
     // and again while doing so keeps changing a carrier: each round can only
     // add call sites to the index, so the rounds run out on their own and the
     // bound is a guard rather than the terminating condition.
-    let pending = new Set([
-      ...files,
-      ...files_needing_call_reresolution,
-      ...evicted_carrier_files,
-    ]);
+    //
+    // Edges inferred above are already in `changed_types`; the ones to answer
+    // for are those inferred while calls resolve.
+    this.definitions.take_inferred_parents();
+    this.resolve_calls_until_carriers_settle(
+      new Set([...files, ...files_needing_call_reresolution, ...evicted_carrier_files]),
+      modules,
+    );
+
+    // A structural subtype inferred by a dispatch widens the closure of its
+    // parent and of every type above it, and a call that dispatched through
+    // one of them earlier in this pass read the narrower closure. Which calls
+    // those are depends on the order files were resolved in, so they are
+    // answered again against the closure the pass left behind.
+    for (let round = 0; round < INFERENCE_RESOLUTION_ROUNDS; round += 1) {
+      const inferred_parents = this.definitions.take_inferred_parents();
+      if (inferred_parents.size === 0) {
+        break;
+      }
+      this.resolve_calls_until_carriers_settle(
+        this.files_dispatching_through(inferred_parents),
+        modules,
+      );
+    }
+  }
+
+  private resolve_calls_until_carriers_settle(
+    files: Set<FilePath>,
+    modules: ModuleResolutionContext,
+  ): void {
+    let pending = files;
     for (let round = 0; pending.size > 0 && round < CARRIER_RESOLUTION_ROUNDS; round += 1) {
       const changed_carriers = this.resolutions.resolve_calls_for_files(
         pending,
@@ -572,7 +606,7 @@ export class Project {
 
     // Re-resolve every file the deletion can reach, not just direct dependents:
     // a file two module hops away can hold a path that read the deleted file.
-    const affected = this.files_affected_by(file_id, dependents);
+    const affected = find_files_affected_by_change(this.imports, file_id, dependents);
     affected.delete(file_id);
     // A call that dispatched to the deleted file's subtypes, or to a member it
     // contributed, can sit in a file that depends on nothing the deletion touched.
@@ -621,44 +655,6 @@ export class Project {
     this.references.remove_file(file_id);
     this.imports.remove_file(file_id);
     this.resolutions.remove_file(file_id);
-  }
-
-  /**
-   * Every file whose resolutions a change to `file_id` can alter: the file
-   * itself, its direct dependents, and — transitively — the dependents of any
-   * dependent that puts the changed file's surface onward rather than importing
-   * one name out of it. That second hop is the barrel chain, where a leaf's
-   * names reach consumers only through re-exporting files, and the Rust `mod`
-   * chain, where `crate::a::b::item` reaches through `a.rs` into `b.rs`.
-   *
-   * Only importers are carried across that hop: a file that reached the changed
-   * file through a `::` path already holds a direct edge to every module file
-   * its path read, so it is a leaf of this walk rather than another hub.
-   */
-  private files_affected_by(
-    file_id: FilePath,
-    dependents: Set<FilePath>,
-  ): Set<FilePath> {
-    const affected_files = new Set([file_id, ...dependents]);
-    const frontier = [...dependents].map((dependent) => ({
-      file: dependent,
-      source: file_id,
-    }));
-
-    for (let next = frontier.pop(); next !== undefined; next = frontier.pop()) {
-      const { file, source } = next;
-      if (!this.imports.forwards_surface_of(file, source)) {
-        continue;
-      }
-      for (const dependent of this.imports.get_importing_dependents(file)) {
-        if (!affected_files.has(dependent)) {
-          affected_files.add(dependent);
-          frontier.push({ file: dependent, source: file });
-        }
-      }
-    }
-
-    return affected_files;
   }
 
   /**

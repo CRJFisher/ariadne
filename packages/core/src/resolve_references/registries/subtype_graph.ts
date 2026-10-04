@@ -57,20 +57,22 @@ export class SubtypeGraph {
    * held keeps its source and writer. A declared parent goes ahead of every
    * structural one, so a declaration's own order survives an inferred edge
    * arriving first.
+   *
+   * @returns Whether the edge is new.
    */
   register_subtype(
     parent_id: SymbolId,
     subtype_id: SymbolId,
     source: SubtypeEdgeSource,
     written_by: FilePath
-  ): void {
+  ): boolean {
     let subtypes = this.type_subtypes.get(parent_id);
     if (!subtypes) {
       subtypes = new Map();
       this.type_subtypes.set(parent_id, subtypes);
     }
     if (subtypes.has(subtype_id)) {
-      return;
+      return false;
     }
     subtypes.set(subtype_id, { source, written_by });
 
@@ -100,6 +102,7 @@ export class SubtypeGraph {
       written.set(subtype_id, written_parents);
     }
     written_parents.add(parent_id);
+    return true;
   }
 
   /**

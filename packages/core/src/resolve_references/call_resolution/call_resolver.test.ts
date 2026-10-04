@@ -1570,7 +1570,7 @@ describe("resolved-plus-failed invariant", () => {
   }
 
   it.each([
-    ["typescript", { files: 81, call_references: 156, resolved: 108, failed: 48 }],
+    ["typescript", { files: 85, call_references: 158, resolved: 110, failed: 48 }],
     ["javascript", { files: 44, call_references: 245, resolved: 163, failed: 82 }],
     ["python", { files: 97, call_references: 364, resolved: 264, failed: 100 }],
     ["rust", { files: 47, call_references: 183, resolved: 132, failed: 51 }],
