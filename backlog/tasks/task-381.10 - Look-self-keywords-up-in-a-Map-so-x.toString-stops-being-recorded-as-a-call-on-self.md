@@ -1,7 +1,7 @@
 ---
 id: TASK-381.10
 title: "Look self-keywords up in a Map so x.toString() stops being recorded as a call on self"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-08-24 09:07"
 labels:
@@ -29,11 +29,11 @@ It also corrupts the persistence cache today. `JSON.stringify` silently drops a 
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 #1 `SELF_KEYWORDS` is a module-scoped `Map` read with `.get()`, and no object-literal index remains in `extract_receiver_info`.
-- [ ] #2 #2 A regression test asserts `toString.padStart(2)` yields `is_self_reference: false`, covering `toString`, `valueOf`, `constructor` and `hasOwnProperty`.
-- [ ] #3 #3 No `SemanticIndex` field holds a function value: `structuredClone` of the `SemanticIndex` returned by `build_index_single_file` succeeds for every discovered file, against 5 that throw `function toString() { [native code] } could not be cloned` today. The 5 repo-relative paths are listed in the task so the fix is checkable against them individually.
-- [ ] #4 #4 A cold index and a cache-restored index of the same file produce identical reference records, asserted over the `vs/base` 200-file slice.
-- [ ] #5 #5 `metadata_extractors.javascript.test.ts` stays green.
+- [x] #1 #1 `SELF_KEYWORDS` is a module-scoped `Map` read with `.get()`, and no object-literal index remains in `extract_receiver_info`.
+- [x] #2 #2 A regression test asserts `toString.padStart(2)` yields `is_self_reference: false`, covering `toString`, `valueOf`, `constructor` and `hasOwnProperty`.
+- [x] #3 #3 No `SemanticIndex` field holds a function value: `structuredClone` of the `SemanticIndex` returned by `build_index_single_file` succeeds for every discovered file, against 5 that throw `function toString() { [native code] } could not be cloned` today. The 5 repo-relative paths are listed in the task so the fix is checkable against them individually.
+- [x] #4 #4 A cold index and a cache-restored index of the same file produce identical reference records, asserted over the `vs/base` 200-file slice.
+- [x] #5 #5 `metadata_extractors.javascript.test.ts` stays green.
 
 <!-- AC:END -->
 
@@ -127,3 +127,11 @@ run against the pre-fix tree before being trusted on this one: ten rows fail
 there and name the same six files.
 
 <!-- SECTION:NOTES:END -->
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+
+## Final Summary
+
+Landed in `7b15e428`, `15289fc8`, `711c1070`. Every acceptance criterion is ticked against the measurements recorded in the criterion text and in the task's `RECORDED_*` rows (`packages/core/src/benchmark_corpus_load/`); a criterion whose original figure was refuted carries its replacement and the reason.
+
+<!-- SECTION:FINAL_SUMMARY:END -->
