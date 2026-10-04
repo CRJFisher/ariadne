@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- SPDX-License-Identifier: Apache-2.0 -->
 <!-- Parent overview for TASK-190 (self-repair entry-point pipeline). Sibling companions re-scanned from backlog/tasks/.
-     Sources: task-190 - ...md (description + 5-phase architecture); task-190.36 - ...md (reconcile-registry drift loop-closure).
+     Sources: task-190 - ...md (description + 5-phase architecture); task-190.42 - ...md (reconcile-registry drift loop-closure).
      Links only to companions present on disk; every other direct sub-task is a non-link "not yet generated" chip. -->
 <html lang="en">
 <head>
@@ -99,7 +99,7 @@
     <a href="task-190.33 - Enforce-human-owns-registry-in-repo-not-just-via-harness-classifier.enforcement.html"><span class="dot"></span> 190.33 · registry enforcement</a>
     <a href="task-190.34 - Give-plan-a-permanent-limitation-concept-distinct-from-interim-workaround.taxonomy-split.html"><span class="dot"></span> 190.34 · taxonomy split</a>
     <a href="task-190.35 - Purge-the-classifier-kind-discriminant-flatten-ClassifierSpec-to-builtin-only.flatten-plan.html"><span class="dot"></span> 190.35 · flatten classifier</a>
-    <a href="task-190.36 - Reconcile-registry-auto-fixes-classifier-drift-via-opus-fixer-agents.loop-closure.html"><span class="dot"></span> 190.36 · loop closure</a>
+    <a href="task-190.42 - Reconcile-registry-auto-fixes-classifier-drift-via-opus-fixer-agents.loop-closure.html"><span class="dot"></span> 190.42 · loop closure</a>
     <span class="pending">190.37 drift skips non-wip <span class="tag">not yet generated</span></span>
     <span class="pending">190.38 dunder methods <span class="tag">not yet generated</span></span>
     <span class="pending">190.39 reconcile safety <span class="tag">not yet generated</span></span>
@@ -207,8 +207,8 @@
   </div>
 
   <div class="callout">
-    <span class="k">Where TASK-190.36 lands</span>
-    <p>190.36 closes the drift loop the reconcile surface opened: once a permanent rule keeps missing cases, one <b>opus fixer agent per drifted rule</b> repairs its <code>check_&lt;group_id&gt;.ts</code> — capturing the misses, or escalating cases that belong to a different limitation.</p>
+    <span class="k">Where TASK-190.42 lands</span>
+    <p>190.42 closes the drift loop the reconcile surface opened: once a permanent rule keeps missing cases, one <b>opus fixer agent per drifted rule</b> repairs its <code>check_&lt;group_id&gt;.ts</code> — capturing the misses, or escalating cases that belong to a different limitation.</p>
   </div>
 
   <h2>The sub-tasks, by thread</h2>
@@ -304,8 +304,8 @@
         <span class="ttl">Enforce human-owns-registry in-repo via a PreToolUse ask-hook</span>
         <span class="doc">→ enforcement.html</span>
       </a>
-      <a class="tcard has" href="task-190.36 - Reconcile-registry-auto-fixes-classifier-drift-via-opus-fixer-agents.loop-closure.html">
-        <span class="id"><span>190.36</span><span class="st todo">To Do</span></span>
+      <a class="tcard has" href="task-190.42 - Reconcile-registry-auto-fixes-classifier-drift-via-opus-fixer-agents.loop-closure.html">
+        <span class="id"><span>190.42</span><span class="st todo">To Do</span></span>
         <span class="ttl">Reconcile-registry auto-fixes classifier drift via opus fixer agents</span>
         <span class="doc">→ loop-closure.html</span>
       </a>
@@ -359,7 +359,7 @@
   </div>
 
   <footer>
-    TASK-190 · 23 direct sub-tasks · sources <code>task-190 - ...md</code>, <code>task-190.36 - ...md</code> · generated 2026-07-18
+    TASK-190 · 23 direct sub-tasks · sources <code>task-190 - ...md</code>, <code>task-190.42 - ...md</code> · generated 2026-07-18
   </footer>
 </main>
 </body>

@@ -1,5 +1,5 @@
 ---
-id: TASK-190.36
+id: TASK-190.42
 title: "Reconcile-registry auto-fixes classifier drift via opus fixer agents"
 status: Done
 assignee: []

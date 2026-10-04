@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!-- SPDX-License-Identifier: Apache-2.0 -->
-<!-- Companion for TASK-190.36 (Done) — reconcile-registry closes the classifier-drift loop by dispatching one opus classifier-fixer agent per drifted rule.
-     Built against: task-190.36 description + AC (status Done); packages/types/src/known_issues.ts:64-73 (as-built DriftEvidence: project, run_id, entry_index, evidence_excerpt);
+<!-- Companion for TASK-190.42 (Done) — reconcile-registry closes the classifier-drift loop by dispatching one opus classifier-fixer agent per drifted rule.
+     Built against: task-190.42 description + AC (status Done); packages/types/src/known_issues.ts:64-73 (as-built DriftEvidence: project, run_id, entry_index, evidence_excerpt);
      .claude/skills/triage/scripts/reconcile_registry.ts:293-374 (drift_dedup_key NUL-join + detect_drift_proposals);
      .claude/skills/triage/src/known_issues_registry.ts:290-313 (validate_drift_evidence — rejects malformed rows at load, non-integer entry_index);
      .claude/agents/classifier-fixer.md (as-built fixer: fixability triage → captured / fixable-in-ariadne / mis-classified / skipped; get_entry_context --project --run-id --entry --enriched);
@@ -12,7 +12,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TASK-190.36 — reconcile-registry closes the classifier-drift loop</title>
+<title>TASK-190.42 — reconcile-registry closes the classifier-drift loop</title>
 <style>
   :root{
     --ivory:#f7f3ec; --slate:#2b2a28; --clay:#b9794f; --olive:#6c7a4a;
@@ -155,7 +155,7 @@
 
 <nav class="cross">
   <div class="inner">
-    <span class="brand">TASK&nbsp;190.36</span>
+    <span class="brand">TASK&nbsp;190.42</span>
     <span class="here">● loop closure</span>
     <a href="task-190 - Build-self-repair-pipeline-with-Claude-Code-native-architecture.overview.html"><span class="dot"></span> 190 · overview</a>
     <a href="task-190.29 - Close-the-human-directed-registry-write-gap-sanctioned-agent-path-and-reconcile-fixed-name-mode.companion.html"><span class="dot todo"></span> 190.29 · registry hand-off</a>
@@ -196,7 +196,7 @@
 
   <div class="provenance prose">
     <span class="plabel">Grounded in the as-built sources</span>
-    <code>task-190.36</code> (Done) · <code>packages/types/src/known_issues.ts:64-73</code> · <code>reconcile_registry.ts:293-374</code> · <code>known_issues_registry.ts:290-313</code> · <code>.claude/agents/classifier-fixer.md</code> · <code>reconcile-registry/SKILL.md</code> step 4 · <code>check_untyped-attribute-receiver.ts:30-53</code> · <code>.claude/rules/classifier-lifecycle.md</code>
+    <code>task-190.42</code> (Done) · <code>packages/types/src/known_issues.ts:64-73</code> · <code>reconcile_registry.ts:293-374</code> · <code>known_issues_registry.ts:290-313</code> · <code>.claude/agents/classifier-fixer.md</code> · <code>reconcile-registry/SKILL.md</code> step 4 · <code>check_untyped-attribute-receiver.ts:30-53</code> · <code>.claude/rules/classifier-lifecycle.md</code>
   </div>
 
   <h2 id="where">Where this link sits in the self-repair chain</h2>
@@ -222,7 +222,7 @@
         <text x="361" y="125" text-anchor="middle" font-size="9" fill="#5f594f">append drift_evidence[]</text>
         <!-- fixer dispatch (the closing link) -->
         <rect x="518" y="62" width="232" height="86" rx="11" fill="#f0dcc9" stroke="#b9794f" stroke-width="2.4"/>
-        <text x="634" y="82" text-anchor="middle" font-size="8.5" fill="#a8472f" letter-spacing="1">190.36 · CLOSES THE LOOP</text>
+        <text x="634" y="82" text-anchor="middle" font-size="8.5" fill="#a8472f" letter-spacing="1">190.42 · CLOSES THE LOOP</text>
         <text x="634" y="102" text-anchor="middle" font-size="12" fill="#2b2a28">classifier-fixer dispatch</text>
         <text x="634" y="120" text-anchor="middle" font-size="9" fill="#5f594f">one opus agent</text>
         <text x="634" y="132" text-anchor="middle" font-size="9" fill="#5f594f">per drifted rule</text>
@@ -372,7 +372,7 @@
     </div>
     <div class="divider">
       <span class="arw">→</span>
-      <span class="lbl">190.36 closes it</span>
+      <span class="lbl">190.42 closes it</span>
     </div>
     <div class="pane">
       <p class="panetitle pln">As built — dispatch, fixability gate, then a three-way fork</p>
@@ -558,8 +558,8 @@
   </div>
 
   <footer>
-    TASK-190.36 · <b>Done</b> · reconcile-registry closes the classifier-drift loop by dispatching one opus classifier-fixer agent per drifted rule · grounded in
-    <code>task-190.36</code> (description + AC), <code>packages/types/src/known_issues.ts:64-73</code>, <code>reconcile_registry.ts:293-374</code>, <code>known_issues_registry.ts:290-313</code>, <code>.claude/agents/classifier-fixer.md</code>, <code>reconcile-registry/SKILL.md</code> step 4, <code>check_untyped-attribute-receiver.ts:30-53</code>, <code>.claude/rules/classifier-lifecycle.md</code>
+    TASK-190.42 · <b>Done</b> · reconcile-registry closes the classifier-drift loop by dispatching one opus classifier-fixer agent per drifted rule · grounded in
+    <code>task-190.42</code> (description + AC), <code>packages/types/src/known_issues.ts:64-73</code>, <code>reconcile_registry.ts:293-374</code>, <code>known_issues_registry.ts:290-313</code>, <code>.claude/agents/classifier-fixer.md</code>, <code>reconcile-registry/SKILL.md</code> step 4, <code>check_untyped-attribute-receiver.ts:30-53</code>, <code>.claude/rules/classifier-lifecycle.md</code>
   </footer>
 </main>
 
@@ -568,8 +568,8 @@
 const SIBLINGS = [
   { id: "190", title: "self-repair pipeline (overview)", status: "present",
     files: [{ label: "190 · overview", href: "task-190 - Build-self-repair-pipeline-with-Claude-Code-native-architecture.overview.html" }] },
-  { id: "190.36", title: "reconcile-registry auto-fixes drift", status: "current",
-    files: [{ label: "190.36 · loop closure", href: "task-190.36 - Reconcile-registry-auto-fixes-classifier-drift-via-opus-fixer-agents.loop-closure.html" }] },
+  { id: "190.42", title: "reconcile-registry auto-fixes drift", status: "current",
+    files: [{ label: "190.42 · loop closure", href: "task-190.42 - Reconcile-registry-auto-fixes-classifier-drift-via-opus-fixer-agents.loop-closure.html" }] },
   { id: "190.29", title: "registry write hand-off", status: "present",
     files: [{ label: "190.29 · registry hand-off", href: "task-190.29 - Close-the-human-directed-registry-write-gap-sanctioned-agent-path-and-reconcile-fixed-name-mode.companion.html" }] },
   { id: "190.32", title: "classifier authoring flow", status: "present",
