@@ -1,7 +1,7 @@
 ---
 id: TASK-381
 title: "Report entry points for a repository of vscode's scale in minutes instead of failing after eleven hours"
-status: To Do
+status: In Progress
 assignee: []
 created_date: "2026-08-24 09:07"
 labels:
