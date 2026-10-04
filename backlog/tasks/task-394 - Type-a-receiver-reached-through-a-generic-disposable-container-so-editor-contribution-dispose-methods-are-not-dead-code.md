@@ -89,5 +89,6 @@ Two facts stop task-389's repair from reaching them:
 - [ ] #2 All 11 sites listed above have at least one incoming resolved call edge over vscode's `src/` at `f3fa55c3` and are absent from the raw entry-point set.
 - [ ] #3 Whatever structural-satisfaction rule is adopted (if any) states its fan-out bound in the module and is measured over this corpus: `IDisposable` has 460 direct declared subtypes here, so an unbounded structural rule is refused rather than shipped.
 - [ ] #4 The node set is unchanged and the resolved-edge count only rises, as in TASK-389: this repair adds attributions, it never removes one.
+- [ ] #5 An integration test indexes the corpus's real field shape, `_instances = this._register(new DisposableMap<string, IEditorContribution>())`, without declaring the field's type: `for (const [, instance] of this._instances)` and `this._instances.get(id)!.dispose()` both resolve against `IEditorContribution`. Today they fail `receiver_type_unknown` and `member_type_unknown`; TASK-376.15 records the three indexing facts the shape needs (a class field keeps no call initialiser, a construction argument that is not an identifier occupies its position as `null`, and a container's element is read from a binding's own annotation, not from a bound type parameter's arguments).
 
 <!-- AC:END -->
