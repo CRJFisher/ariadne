@@ -3,7 +3,7 @@ id: TASK-376.24
 title: >-
   Record a variable's declared annotation so type parameters bind through a
   local binding
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-09-19 11:36"
 labels:
@@ -92,3 +92,11 @@ Spot-verified at the call site in the corpus source. Gained angular edges: `date
 
 The harness cannot establish ground truth for the 10,337 gained angular pairs; the sample is the check.
 <!-- SECTION:NOTES:END -->
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+
+## Final Summary
+
+A TypeScript `const` or `let` that writes an annotation records it as its definition's `type`, so type-parameter binding sees through a local binding and the `let pipe: DatePipe;` test idiom types its receiver. Resolved calls rise by 11,033 on angular and 261 on TypeScript with no resolved edge lost. Landed in `e912fb6b` (the gap), `9d9673e8` and `416ff087`; merged by `73dcf981`.
+
+<!-- SECTION:FINAL_SUMMARY:END -->
