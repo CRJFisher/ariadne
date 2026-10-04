@@ -11,6 +11,11 @@ import { resolve_named_member } from "./collection_dispatch";
 import type { ReceiverResolutionContext } from "./receiver_resolution";
 import { resolve_namespace_scope_member } from "./namespace_member";
 import { infer_structural_subtypes } from "./structural_conformance";
+import {
+  import_unresolved_failure,
+  indexed_import_file,
+  unindexed_base_failure,
+} from "./outside_corpus";
 
 /**
  * What a method lookup answered, and whose subtypes the answer was read from.
@@ -63,13 +68,13 @@ export function resolve_method_on_type(
   const receiver_def = definitions.get(receiver_type);
 
   if (receiver_def?.kind === "import" && receiver_def.import_kind === "namespace") {
-    const source_file = context.imports.get_resolved_import_path(receiver_type);
+    const source_file = indexed_import_file(receiver_def, context);
     if (!source_file) {
-      return without_subtype_closure(err({
-        stage: "import_resolution",
-        reason: "import_unresolved",
-        partial_info: { resolved_receiver_type: receiver_type },
-      }));
+      return without_subtype_closure(err(
+        import_unresolved_failure(receiver_def, "import_resolution", {
+          resolved_receiver_type: receiver_type,
+        })
+      ));
     }
     const sym = resolve_module_member(
       source_file,
@@ -114,7 +119,7 @@ export function resolve_method_on_type(
   // A named/default import is a stand-in for the class it points at; follow it
   // to the terminal definition and resolve the method there.
   if (receiver_def?.kind === "import" && (receiver_def.import_kind === "named" || receiver_def.import_kind === "default")) {
-    const source_file = context.imports.get_resolved_import_path(receiver_type);
+    const source_file = indexed_import_file(receiver_def, context);
     if (source_file) {
       const export_name = receiver_def.original_name || receiver_def.name;
       const actual_type = resolve_module_member(
@@ -133,7 +138,7 @@ export function resolve_method_on_type(
     // A named import may point at a submodule file rather than an export
     // (e.g. `from training import pipeline` where pipeline is a .py file).
     const submodule_path = context.imports.get_submodule_import_path(receiver_type);
-    if (submodule_path) {
+    if (submodule_path && context.languages.has(submodule_path)) {
       const sym = resolve_module_member(
         submodule_path,
         method_name,
@@ -167,11 +172,11 @@ export function resolve_method_on_type(
         },
       }));
     }
-    return without_subtype_closure(err({
-      stage: "import_resolution",
-      reason: "import_unresolved",
-      partial_info: { resolved_receiver_type: receiver_type },
-    }));
+    return without_subtype_closure(err(
+      import_unresolved_failure(receiver_def, "import_resolution", {
+        resolved_receiver_type: receiver_type,
+      })
+    ));
   }
 
   const fn_collection = definitions.get_function_collection(receiver_type);
@@ -212,11 +217,13 @@ export function resolve_method_on_type(
     const targets: Result<SymbolId[], ResolutionFailure> =
       implementations.length > 0
         ? ok(implementations)
-        : err({
-            stage: "method_lookup",
-            reason: "method_not_on_type",
-            partial_info: { resolved_receiver_type: receiver_type },
-          });
+        : err(
+            (receiver_def?.kind === "class" ? unindexed_base_failure(receiver_type, context) : null) ?? {
+              stage: "method_lookup",
+              reason: "method_not_on_type",
+              partial_info: { resolved_receiver_type: receiver_type },
+            }
+          );
     return {
       targets,
       subtype_closure_of: can_have_subtypes ? receiver_type : null,

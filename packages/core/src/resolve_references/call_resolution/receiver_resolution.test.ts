@@ -1784,8 +1784,10 @@ describe("re-export chain dereferencing", () => {
     const resolutions = new ResolutionRegistry();
     const imports = new ImportGraph();
     const links = new Map<FilePath, SymbolId>();
+    const chain_context = make_export_chain_context();
 
     for (let hop = 0; hop < hops; hop++) {
+      chain_context.languages.set(barrel_file(hop + 1), "typescript");
       const import_def = chain_import(hop);
       definitions.update_file(import_def.location.file_path, [import_def]);
       imports["resolved_import_paths"].set(
@@ -1835,7 +1837,7 @@ describe("re-export chain dereferencing", () => {
       types: new TypeRegistry(definitions),
       resolutions,
       imports,
-      ...make_export_chain_context(),
+      ...chain_context,
       exports: new ImportChainExports(links),
     };
   }

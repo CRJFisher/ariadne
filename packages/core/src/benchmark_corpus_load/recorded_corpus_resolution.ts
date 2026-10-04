@@ -145,6 +145,7 @@ export const RECORDED_CORPUS_RESOLUTION: RecordedCorpusResolution = {
         resolved: 160166,
         by_reason: {
           name_not_in_scope: 147979,
+          callee_is_a_language_global: 0,
           import_unresolved: 0,
           reexport_chain_unresolved: 0,
           receiver_type_unknown: 51249,
@@ -186,6 +187,7 @@ export const RECORDED_CORPUS_RESOLUTION: RecordedCorpusResolution = {
         resolved: 113204,
         by_reason: {
           name_not_in_scope: 77899,
+          callee_is_a_language_global: 0,
           import_unresolved: 0,
           reexport_chain_unresolved: 0,
           receiver_type_unknown: 85841,
@@ -227,6 +229,7 @@ export const RECORDED_CORPUS_RESOLUTION: RecordedCorpusResolution = {
         resolved: 8813,
         by_reason: {
           name_not_in_scope: 13963,
+          callee_is_a_language_global: 0,
           import_unresolved: 0,
           reexport_chain_unresolved: 0,
           receiver_type_unknown: 8251,
@@ -268,6 +271,7 @@ export const RECORDED_CORPUS_RESOLUTION: RecordedCorpusResolution = {
         resolved: 4033,
         by_reason: {
           name_not_in_scope: 8320,
+          callee_is_a_language_global: 0,
           import_unresolved: 0,
           reexport_chain_unresolved: 0,
           receiver_type_unknown: 4592,
@@ -309,6 +313,7 @@ export const RECORDED_CORPUS_RESOLUTION: RecordedCorpusResolution = {
         resolved: 93358,
         by_reason: {
           name_not_in_scope: 31826,
+          callee_is_a_language_global: 0,
           import_unresolved: 0,
           reexport_chain_unresolved: 0,
           receiver_type_unknown: 15471,
@@ -350,6 +355,7 @@ export const RECORDED_CORPUS_RESOLUTION: RecordedCorpusResolution = {
         resolved: 85878,
         by_reason: {
           name_not_in_scope: 30477,
+          callee_is_a_language_global: 0,
           import_unresolved: 0,
           reexport_chain_unresolved: 0,
           receiver_type_unknown: 20899,
@@ -391,6 +397,7 @@ export const RECORDED_CORPUS_RESOLUTION: RecordedCorpusResolution = {
         resolved: 117951,
         by_reason: {
           name_not_in_scope: 61121,
+          callee_is_a_language_global: 0,
           import_unresolved: 0,
           reexport_chain_unresolved: 0,
           receiver_type_unknown: 24809,
@@ -432,6 +439,7 @@ export const RECORDED_CORPUS_RESOLUTION: RecordedCorpusResolution = {
         resolved: 11254,
         by_reason: {
           name_not_in_scope: 11049,
+          callee_is_a_language_global: 0,
           import_unresolved: 0,
           reexport_chain_unresolved: 0,
           receiver_type_unknown: 7062,
@@ -473,6 +481,7 @@ export const RECORDED_CORPUS_RESOLUTION: RecordedCorpusResolution = {
         resolved: 5436,
         by_reason: {
           name_not_in_scope: 5442,
+          callee_is_a_language_global: 0,
           import_unresolved: 0,
           reexport_chain_unresolved: 0,
           receiver_type_unknown: 2979,
@@ -514,6 +523,7 @@ export const RECORDED_CORPUS_RESOLUTION: RecordedCorpusResolution = {
         resolved: 7485,
         by_reason: {
           name_not_in_scope: 8739,
+          callee_is_a_language_global: 0,
           import_unresolved: 0,
           reexport_chain_unresolved: 0,
           receiver_type_unknown: 2045,

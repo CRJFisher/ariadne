@@ -514,9 +514,9 @@ function collect_hoisted_functions(
  * actually runs is not knowable here, so the caller binds the first and records
  * the rest beside it. Every branch's own scope still binds its own import.
  */
-function collect_hoisted_imports(
+export function collect_hoisted_imports(
   scope_id: ScopeId,
-  context: NameResolutionContext
+  context: Pick<NameResolutionContext, "scopes" | "imports">
 ): ImportDefinition[] {
   const scope = context.scopes.get_scope(scope_id);
   if (!scope?.child_ids) {

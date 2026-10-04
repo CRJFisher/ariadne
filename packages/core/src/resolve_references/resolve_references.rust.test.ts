@@ -7,8 +7,9 @@
 
 import { describe, it, expect, afterAll } from "vitest";
 import { Project } from "../project/project";
+import { call_outcomes } from "./resolve_references.test";
 import { load_project } from "../project/load_project";
-import type { FilePath, SymbolName } from "@ariadnejs/types";
+import type { FilePath, ResolutionFailureReason, SymbolName } from "@ariadnejs/types";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
@@ -94,14 +95,15 @@ function expect_rust_call_resolves_to(
 function expect_rust_call_unresolved(
   project: Project,
   caller_file: FilePath,
-  call_name: string
+  call_name: string,
+  reason: ResolutionFailureReason = "name_not_in_scope"
 ): void {
   const call = project.resolutions
     .get_calls_for_file(caller_file)
     .find((c) => c.name === (call_name as SymbolName));
   expect(call).toBeDefined();
   expect(call!.resolutions).toEqual([]);
-  expect(call!.resolution_failure?.reason).toEqual("name_not_in_scope");
+  expect(call!.resolution_failure?.reason).toEqual(reason);
 }
 
 const temp_dirs: string[] = [];
@@ -1578,7 +1580,8 @@ pub fn run() {
       expect_rust_call_unresolved(
         project,
         file_paths["src/lib.rs"],
-        "read_to_string"
+        "read_to_string",
+        "callee_is_a_language_global"
       );
     });
 
@@ -2366,5 +2369,38 @@ pub mod app;
         file_paths["src/helpers.rs"]
       );
     });
+  });
+});
+
+describe("Callees outside the indexed corpus", () => {
+  it("names the unindexed module, or the language, instead of blaming the scope", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "src/helpers.rs": `pub fn helper() {}
+`,
+      "src/lib.rs": `mod helpers;
+use std::fs;
+use missing_crate::render;
+use crate::helpers::helper;
+
+pub fn run() {
+    fs::read("a");
+    render();
+    helper();
+    let v = Some(1);
+    drop(v);
+    Vec::new();
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect(call_outcomes(project, file_paths["src/lib.rs"])).toEqual([
+      { name: "read", outcome: "import_unresolved", import_target_file: null, import_specifier: "std" },
+      { name: "render", outcome: "import_unresolved", import_target_file: null, import_specifier: "missing_crate" },
+      { name: "helper", outcome: "resolved", import_target_file: null, import_specifier: null },
+      { name: "Some", outcome: "callee_is_a_language_global", import_target_file: null, import_specifier: null },
+      { name: "drop", outcome: "callee_is_a_language_global", import_target_file: null, import_specifier: null },
+      { name: "Vec", outcome: "callee_is_a_language_global", import_target_file: null, import_specifier: null },
+    ]);
   });
 });

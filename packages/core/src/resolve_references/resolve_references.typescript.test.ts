@@ -8,6 +8,7 @@
 import { describe, it, expect, afterAll } from "vitest";
 import { Project } from "../project/project";
 import {
+  call_outcomes,
   find_caller_node,
   is_entry_point,
 } from "./resolve_references.test";
@@ -1262,7 +1263,8 @@ export function run(): number {
       .find((c) => c.name === ("render" as SymbolName));
     expect(call).toBeDefined();
     expect(call!.resolutions).toEqual([]);
-    expect(call!.resolution_failure?.reason).toEqual("name_not_in_scope");
+    expect(call!.resolution_failure?.reason).toEqual("import_unresolved");
+    expect(call!.resolution_failure?.partial_info.import_specifier).toEqual("@vendor/ui");
   });
 
   it("resolves a two-statement named re-export through to the origin definition", async () => {
@@ -1407,5 +1409,124 @@ export function name_of(target: string): string {
     expect(shapes[0]).toContain(
       "edge function:consumer_b.ts:3:17:3:23:name_of -> method:singleton.ts:6:3:6:10:basename"
     );
+  });
+});
+
+describe("Callees outside the indexed corpus", () => {
+  it("names the unindexed module, or the language, instead of blaming the type or the scope", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "local.ts": `export function local(p: string): void {}
+`,
+      "main.ts": `import * as fs from "fs";
+import { render } from "some-missing-pkg";
+import { local } from "./local";
+
+export function run(p: string): void {
+  fs.readFileSync(p);
+  render(p);
+  local(p);
+  console.log(p);
+  JSON.stringify(p);
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect(call_outcomes(project, file_paths["main.ts"])).toEqual([
+      { name: "readFileSync", outcome: "import_unresolved", import_target_file: null, import_specifier: "fs" },
+      { name: "render", outcome: "import_unresolved", import_target_file: null, import_specifier: "some-missing-pkg" },
+      { name: "local", outcome: "resolved", import_target_file: null, import_specifier: null },
+      { name: "log", outcome: "callee_is_a_language_global", import_target_file: null, import_specifier: null },
+      { name: "stringify", outcome: "callee_is_a_language_global", import_target_file: null, import_specifier: null },
+    ]);
+  });
+
+  it("names the unindexed module for a default import used as a receiver", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "main.ts": `import express from "express";
+
+export function run(): void {
+  express.json();
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect(call_outcomes(project, file_paths["main.ts"])).toEqual([
+      { name: "json", outcome: "import_unresolved", import_target_file: null, import_specifier: "express" },
+    ]);
+  });
+
+  it("keeps method_not_on_type for a member an indexed module lacks, naming the indexed file", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "local.ts": `export function local(p: string): void {}
+`,
+      "main.ts": `import * as mod from "./local";
+
+export function run(): void {
+  mod.absent();
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect(call_outcomes(project, file_paths["main.ts"])).toEqual([
+      { name: "absent", outcome: "method_not_on_type", import_target_file: file_paths["local.ts"], import_specifier: null },
+    ]);
+  });
+
+  it("resolves a call through a module that arrives after its caller", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "main.ts": `import { later } from "./later";
+
+export function run(): void {
+  later();
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+    expect(call_outcomes(project, file_paths["main.ts"])).toEqual([
+      { name: "later", outcome: "import_unresolved", import_target_file: null, import_specifier: "./later" },
+    ]);
+
+    const later_path = path.join(temp_dir, "later.ts") as FilePath;
+    project.update_file(later_path, `export function later(): void {}
+`);
+
+    expect(call_outcomes(project, file_paths["main.ts"])).toEqual([
+      { name: "later", outcome: "resolved", import_target_file: null, import_specifier: null },
+    ]);
+  });
+
+  it("fails import_unresolved through a base bound by an unindexed import, and keeps method_not_on_type when every base is indexed", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "base.ts": `export class Base {
+  known(): void {}
+}
+`,
+      "main.ts": `import { Component } from "some-missing-pkg";
+import { Base } from "./base";
+
+export class Widget extends Component {
+  draw(): void {
+    this.render();
+  }
+}
+
+export class Child extends Base {
+  run(): void {
+    this.known();
+    this.absent();
+  }
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect(call_outcomes(project, file_paths["main.ts"])).toEqual([
+      { name: "render", outcome: "import_unresolved", import_target_file: null, import_specifier: "some-missing-pkg" },
+      { name: "known", outcome: "resolved", import_target_file: null, import_specifier: null },
+      { name: "absent", outcome: "method_not_on_type", import_target_file: null, import_specifier: null },
+    ]);
   });
 });

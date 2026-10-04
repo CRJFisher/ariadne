@@ -33,6 +33,9 @@ export type ResolutionFailureStage =
  */
 export type ResolutionFailureReason =
   | "name_not_in_scope"
+  /** The scope chain binds the name nowhere, and the file's language binds it without a declaration. */
+  | "callee_is_a_language_global"
+  /** The call reaches an import whose module names no file the project indexed. */
   | "import_unresolved"
   | "reexport_chain_unresolved"
   | "receiver_type_unknown"
@@ -61,7 +64,10 @@ export interface ResolutionFailure {
   readonly reason: ResolutionFailureReason;
   readonly partial_info: {
     readonly resolved_receiver_type?: SymbolId;
+    /** The module file an import resolved to; set only when the project indexed that file. */
     readonly import_target_file?: FilePath;
+    /** The module an import names, as the import wrote it; set when no indexed file answers it. */
+    readonly import_specifier?: string;
     readonly last_known_scope?: ScopeId;
   };
 }

@@ -29,6 +29,7 @@ describe("ResolutionFailure diagnostics", () => {
   test("All ResolutionFailureReason values are usable", () => {
     const reasons: ResolutionFailureReason[] = [
       "name_not_in_scope",
+      "callee_is_a_language_global",
       "import_unresolved",
       "reexport_chain_unresolved",
       "receiver_type_unknown",
@@ -43,7 +44,7 @@ describe("ResolutionFailure diagnostics", () => {
       "definition_has_no_body_scope",
       "constructor_target_not_a_class",
     ];
-    expect(reasons).toHaveLength(14);
+    expect(reasons).toHaveLength(15);
   });
 
   test("ResolutionFailure.partial_info accepts optional fields", () => {
@@ -58,6 +59,7 @@ describe("ResolutionFailure diagnostics", () => {
       partial_info: {
         resolved_receiver_type: "User" as SymbolId,
         import_target_file: "src/users.ts" as FilePath,
+        import_specifier: "./users",
         last_known_scope: "scope_1" as ScopeId,
       },
     };
@@ -65,5 +67,6 @@ describe("ResolutionFailure diagnostics", () => {
     expect(minimal.partial_info).toEqual({});
     expect(full.partial_info.resolved_receiver_type).toBe("User");
     expect(full.partial_info.import_target_file).toBe("src/users.ts");
+    expect(full.partial_info.import_specifier).toBe("./users");
   });
 });

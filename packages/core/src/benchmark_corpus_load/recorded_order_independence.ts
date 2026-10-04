@@ -495,6 +495,7 @@ export const RECORDED_ORDER_INDEPENDENCE: RecordedOrderIndependence = {
       resolved: 553928,
       by_reason: {
         name_not_in_scope: 165901,
+        callee_is_a_language_global: 0,
         receiver_type_unknown: 163174,
         member_type_unknown: 59544,
         method_not_on_type: 23339,
@@ -515,6 +516,7 @@ export const RECORDED_ORDER_INDEPENDENCE: RecordedOrderIndependence = {
       resolved: 557036,
       by_reason: {
         name_not_in_scope: 165901,
+        callee_is_a_language_global: 0,
         receiver_type_unknown: 158233,
         member_type_unknown: 60065,
         method_not_on_type: 24660,

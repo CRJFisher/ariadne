@@ -8,6 +8,7 @@
 import { describe, it, expect, afterAll, beforeAll } from "vitest";
 import { Project } from "../project/project";
 import {
+  call_outcomes,
   find_caller_node,
   is_entry_point,
 } from "./resolve_references.test";
@@ -708,7 +709,7 @@ export function build(fields) {
         [37, "engine"],
         [38, "render"],
       ]);
-      expect(calls[0].resolution_failure?.reason).toEqual("name_not_in_scope");
+      expect(calls[0].resolution_failure?.reason).toEqual("callee_is_a_language_global");
 
       /** The call graph holds a node only for a callable the definition store carries. */
       const node_at = (start_line: number) =>
@@ -1016,5 +1017,70 @@ describe("Cross-file require and mixin", () => {
     expect(cg.indirect_reachability?.get(engine!.symbol_id)?.reason.type).toEqual("collection_read");
     expect(is_entry_point(cg, "engine", application)).toEqual(false);
     expect(is_entry_point(cg, "set", application)).toEqual(false);
+  });
+});
+
+describe("Callees outside the indexed corpus", () => {
+  it("names the unindexed module, or the language, instead of blaming the type or the scope", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "local.js": `exports.local = function local(p) {};
+`,
+      "main.js": `const fs = require("fs");
+const { render } = require("some-missing-pkg");
+const { local } = require("./local");
+
+function run(p) {
+  fs.readFileSync(p);
+  render(p);
+  local(p);
+  console.log(p);
+  JSON.stringify(p);
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect(call_outcomes(project, file_paths["main.js"])).toEqual([
+      { name: "require", outcome: "callee_is_a_language_global", import_target_file: null, import_specifier: null },
+      { name: "require", outcome: "callee_is_a_language_global", import_target_file: null, import_specifier: null },
+      { name: "require", outcome: "callee_is_a_language_global", import_target_file: null, import_specifier: null },
+      { name: "readFileSync", outcome: "import_unresolved", import_target_file: null, import_specifier: "fs" },
+      { name: "render", outcome: "import_unresolved", import_target_file: null, import_specifier: "some-missing-pkg" },
+      { name: "local", outcome: "resolved", import_target_file: null, import_specifier: null },
+      { name: "log", outcome: "callee_is_a_language_global", import_target_file: null, import_specifier: null },
+      { name: "stringify", outcome: "callee_is_a_language_global", import_target_file: null, import_specifier: null },
+    ]);
+  });
+
+  it("fails import_unresolved through a base bound by an unindexed import, and keeps method_not_on_type when every base is indexed", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "base.js": `export class Base {
+  known() {}
+}
+`,
+      "main.js": `import { Component } from "some-missing-pkg";
+import { Base } from "./base";
+
+export class Widget extends Component {
+  draw() {
+    this.render();
+  }
+}
+
+export class Child extends Base {
+  run() {
+    this.known();
+    this.absent();
+  }
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect(call_outcomes(project, file_paths["main.js"])).toEqual([
+      { name: "render", outcome: "import_unresolved", import_target_file: null, import_specifier: "some-missing-pkg" },
+      { name: "known", outcome: "resolved", import_target_file: null, import_specifier: null },
+      { name: "absent", outcome: "method_not_on_type", import_target_file: null, import_specifier: null },
+    ]);
   });
 });

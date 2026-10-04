@@ -486,6 +486,7 @@ describe("Method Call Resolution", () => {
       );
 
       imports["resolved_import_paths"].set(utils_import_id, UTILS_FILE);
+      languages.set(UTILS_FILE, "typescript");
 
       const { targets: resolved } = resolve_method_call(
         call_ref,

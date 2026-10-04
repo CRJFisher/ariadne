@@ -9,6 +9,7 @@ import { Project } from "../project/project";
 import type {
   CallGraph,
   FilePath,
+  ResolutionFailureReason,
   Result,
   ScopeId,
   SymbolId,
@@ -52,6 +53,24 @@ export function set_test_resolutions(
     own: resolutions,
     parent: null,
   });
+}
+
+/** What one call resolved to, or the reason it did not, with the module the failure names. */
+export interface CallOutcome {
+  readonly name: string;
+  readonly outcome: "resolved" | ResolutionFailureReason;
+  readonly import_target_file: FilePath | null;
+  readonly import_specifier: string | null;
+}
+
+/** The outcome of every call in `file`, in source order. Imported by the per-language suites. */
+export function call_outcomes(project: Project, file: FilePath): CallOutcome[] {
+  return project.resolutions.get_calls_for_file(file).map((call) => ({
+    name: call.name,
+    outcome: call.resolutions.length > 0 ? "resolved" : call.resolution_failure!.reason,
+    import_target_file: call.resolution_failure?.partial_info.import_target_file ?? null,
+    import_specifier: call.resolution_failure?.partial_info.import_specifier ?? null,
+  }));
 }
 
 /** Locate the CallableNode for a caller function defined in a given file. */
