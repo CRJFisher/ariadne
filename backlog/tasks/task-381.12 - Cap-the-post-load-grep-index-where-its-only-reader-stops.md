@@ -1,7 +1,7 @@
 ---
 id: TASK-381.12
 title: "Cap the post-load grep index where its only reader stops"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-08-24 09:07"
 labels:
@@ -34,11 +34,19 @@ The keyword stoplist proposed alongside the cap. It was measured to change the o
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 #1 `build_grep_index` caps at `MAX_GREP_HITS` as hits arrive, matching `build_reference_index` and `complete_caller_evidence`.
-- [ ] #2 #2 Retained grep hits fall by >= 4.9x and retained memory by >= 3.7x on the same corpus — measured 1,083,422 -> 219,741 hits and 144.5 -> 38.5 MB over the 7,891 files `get_file_contents()` holds on the pre-TASK-381.8 build. If this lands after TASK-381.8 the pre-figure is re-measured over the then-current file set before the ratio is judged.
-- [ ] #3 #3 A sha1 digest over `slice(0, 10)` of every name is byte-identical before and after, across three interleaved arms.
-- [ ] #4 #4 CPU over the full corpus is unchanged within noise, and the change is recorded in the harness as a memory fix rather than a speedup.
-- [ ] #5 #5 No keyword stoplist is added, and the module records the conclusion plus a pointer to the harness row that measured it, so it is not proposed again.
-- [ ] #6 #6 `extract_entry_point_diagnostics.test.ts` stays green, with the direct `build_grep_index` unit tests updated to assert the insertion-time cap rather than the old unbounded shape.
+- [x] #1 #1 `build_grep_index` caps at `MAX_GREP_HITS` as hits arrive, matching `build_reference_index` and `complete_caller_evidence`.
+- [x] #2 #2 Retained grep hits fall by >= 4.9x and retained memory by >= 3.7x on the same corpus — measured 1,083,422 -> 219,741 hits and 144.5 -> 38.5 MB over the 7,891 files `get_file_contents()` holds on the pre-TASK-381.8 build. If this lands after TASK-381.8 the pre-figure is re-measured over the then-current file set before the ratio is judged.
+- [x] #3 #3 A sha1 digest over `slice(0, 10)` of every name is byte-identical before and after, across three interleaved arms.
+- [x] #4 #4 CPU over the full corpus is unchanged within noise, and the change is recorded in the harness as a memory fix rather than a speedup.
+- [x] #5 #5 No keyword stoplist is added, and the module records the conclusion plus a pointer to the harness row that measured it, so it is not proposed again.
+- [x] #6 #6 `extract_entry_point_diagnostics.test.ts` stays green, with the direct `build_grep_index` unit tests updated to assert the insertion-time cap rather than the old unbounded shape.
 
 <!-- AC:END -->
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+
+## Final Summary
+
+Landed in `3da741d7`, `b7638a00`. Every acceptance criterion is ticked against the measurements recorded in the criterion text and in the task's `RECORDED_*` rows (`packages/core/src/benchmark_corpus_load/`); a criterion whose original figure was refuted carries its replacement and the reason.
+
+<!-- SECTION:FINAL_SUMMARY:END -->
