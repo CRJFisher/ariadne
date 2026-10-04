@@ -11,7 +11,11 @@ import { resolve_named_member } from "./collection_dispatch";
 import type { ReceiverResolutionContext } from "./receiver_resolution";
 import { resolve_namespace_scope_member } from "./namespace_member";
 import { infer_structural_subtypes } from "./structural_conformance";
-import { import_unresolved_failure, indexed_import_file } from "./outside_corpus";
+import {
+  import_unresolved_failure,
+  indexed_import_file,
+  unindexed_base_failure,
+} from "./outside_corpus";
 
 /**
  * What a method lookup answered, and whose subtypes the answer was read from.
@@ -213,11 +217,13 @@ export function resolve_method_on_type(
     const targets: Result<SymbolId[], ResolutionFailure> =
       implementations.length > 0
         ? ok(implementations)
-        : err({
-            stage: "method_lookup",
-            reason: "method_not_on_type",
-            partial_info: { resolved_receiver_type: receiver_type },
-          });
+        : err(
+            (receiver_def?.kind === "class" ? unindexed_base_failure(receiver_type, context) : null) ?? {
+              stage: "method_lookup",
+              reason: "method_not_on_type",
+              partial_info: { resolved_receiver_type: receiver_type },
+            }
+          );
     return {
       targets,
       subtype_closure_of: can_have_subtypes ? receiver_type : null,

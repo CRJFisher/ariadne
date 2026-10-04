@@ -1426,4 +1426,51 @@ def run(text):
       { name: "input", outcome: "callee_is_a_language_global", import_target_file: null, import_specifier: null },
     ]);
   });
+
+  it("fails import_unresolved through a base bound by an unindexed import, and keeps method_not_on_type when every base is indexed", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "base.py": `class Base:
+    def known(self):
+        return 1
+`,
+      "main.py": `import unittest
+from base import Base
+
+
+class Case(unittest.TestCase):
+    def check(self):
+        self.assertEqual(1, 1)
+
+
+class Child(Base):
+    def run(self):
+        self.known()
+        self.absent()
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect(call_outcomes(project, file_paths["main.py"])).toEqual([
+      { name: "assertEqual", outcome: "import_unresolved", import_target_file: null, import_specifier: "unittest" },
+      { name: "known", outcome: "resolved", import_target_file: null, import_specifier: null },
+      { name: "absent", outcome: "method_not_on_type", import_target_file: null, import_specifier: null },
+    ]);
+  });
+
+  it("fails import_unresolved through a named import of an unindexed base", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "main.py": `from unittest import TestCase
+
+
+class Case(TestCase):
+    def check(self):
+        self.assertTrue(True)
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect(call_outcomes(project, file_paths["main.py"])).toEqual([
+      { name: "assertTrue", outcome: "import_unresolved", import_target_file: null, import_specifier: "unittest" },
+    ]);
+  });
 });

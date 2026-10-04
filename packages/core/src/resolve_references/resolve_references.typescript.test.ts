@@ -1497,4 +1497,36 @@ export function run(): void {
       { name: "later", outcome: "resolved", import_target_file: null, import_specifier: null },
     ]);
   });
+
+  it("fails import_unresolved through a base bound by an unindexed import, and keeps method_not_on_type when every base is indexed", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "base.ts": `export class Base {
+  known(): void {}
+}
+`,
+      "main.ts": `import { Component } from "some-missing-pkg";
+import { Base } from "./base";
+
+export class Widget extends Component {
+  draw(): void {
+    this.render();
+  }
+}
+
+export class Child extends Base {
+  run(): void {
+    this.known();
+    this.absent();
+  }
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect(call_outcomes(project, file_paths["main.ts"])).toEqual([
+      { name: "render", outcome: "import_unresolved", import_target_file: null, import_specifier: "some-missing-pkg" },
+      { name: "known", outcome: "resolved", import_target_file: null, import_specifier: null },
+      { name: "absent", outcome: "method_not_on_type", import_target_file: null, import_specifier: null },
+    ]);
+  });
 });

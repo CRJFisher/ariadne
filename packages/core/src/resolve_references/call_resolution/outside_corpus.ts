@@ -10,6 +10,7 @@
  */
 
 import type {
+  AnyDefinition,
   FilePath,
   ImportDefinition,
   Language,
@@ -20,6 +21,7 @@ import type {
   SymbolName,
 } from "@ariadnejs/types";
 import { is_language_global } from "@ariadnejs/types";
+import { parse_type_annotation } from "../type_preprocessing/annotation";
 import type { ImportGraph } from "../import_resolution/import_graph";
 import { collect_hoisted_imports } from "../name_resolution";
 import type { ResolutionRegistry } from "../resolution_registry";
@@ -131,6 +133,15 @@ function find_import_binding(
   return null;
 }
 
+function binding_of_name(
+  name: SymbolName,
+  scope_id: ScopeId,
+  bound: SymbolId | null,
+  context: OutsideCorpusContext
+): AnyDefinition | null {
+  return bound ? (context.definitions.get(bound) ?? null) : find_import_binding(name, scope_id, context);
+}
+
 /**
  * Why `name`, read in `scope_id`, binds nothing a call can resolve through.
  *
@@ -146,9 +157,7 @@ export function unbound_name_failure(
   context: OutsideCorpusContext
 ): ResolutionFailure {
   const bound = context.resolutions.resolve(scope_id, name);
-  const binding = bound
-    ? context.definitions.get(bound)
-    : find_import_binding(name, scope_id, context);
+  const binding = binding_of_name(name, scope_id, bound, context);
   if (binding?.kind === "import" && names_no_indexed_file(binding, context)) {
     return import_unresolved_failure(binding, stage, { last_known_scope: scope_id });
   }
@@ -167,4 +176,49 @@ export function unbound_name_failure(
     reason: "name_not_in_scope",
     partial_info: { last_known_scope: scope_id },
   };
+}
+
+/**
+ * The unindexed import `class_id`'s inheritance chain reaches, as a failure, or
+ * null when every base the chain names is indexed or bound by nothing an import
+ * binds.
+ *
+ * A method the indexed classes of the chain lack may live in a base whose module
+ * the project does not hold (`unittest.TestCase`), so the miss is the import's
+ * and not the type's. The chain is walked through the bases that resolved to a
+ * class; each class's own heritage names are read where the class is declared.
+ */
+export function unindexed_base_failure(
+  class_id: SymbolId,
+  context: OutsideCorpusContext
+): ResolutionFailure | null {
+  const visited = new Set<SymbolId>();
+  const pending = [class_id];
+  for (let current = pending.shift(); current !== undefined; current = pending.shift()) {
+    if (visited.has(current)) {
+      continue;
+    }
+    visited.add(current);
+    const def = context.definitions.get(current);
+    if (def?.kind !== "class") {
+      continue;
+    }
+    const language = language_of_scope(def.defining_scope_id, context);
+    for (const base_name of def.extends) {
+      const head =
+        language === undefined ? undefined : parse_type_annotation(base_name, language)?.head[0];
+      if (head === undefined) {
+        continue;
+      }
+      const bound = context.resolutions.resolve(def.defining_scope_id, head);
+      const binding = binding_of_name(head, def.defining_scope_id, bound, context);
+      if (binding?.kind === "import" && names_no_indexed_file(binding, context)) {
+        return import_unresolved_failure(binding, "import_resolution", {
+          resolved_receiver_type: class_id,
+        });
+      }
+    }
+    pending.push(...context.definitions.get_parent_types(current));
+  }
+  return null;
 }
