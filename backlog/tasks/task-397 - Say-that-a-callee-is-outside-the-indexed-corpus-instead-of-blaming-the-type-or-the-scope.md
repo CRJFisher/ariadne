@@ -3,7 +3,7 @@ id: TASK-397
 title: >-
   Say that a callee is outside the indexed corpus instead of blaming the type or
   the scope
-status: To Do
+status: Done
 assignee: []
 labels:
   - name_resolution
@@ -163,3 +163,17 @@ export function f(p: string): void {
 Both receivers are indexed as `variable:` definitions — `variable:…m.py:1:8:1:9:os` and `variable:…m.ts:1:13:1:14:fs` — which is the single fact that makes `method_lookup.ts:65` unreachable in both languages.
 
 The corpus-scale shares are in TASK-376.18's `Residue, re-attributed` section and in `~/.ariadne/benchmark-runs/task-376.18/residue/`.
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+
+## Final Summary
+
+**What a user can now do.** Read an unresolved call's failure reason as a statement about the pipeline rather than about the corpus boundary. A callee the indexed file set does not contain (`os.getcwd()`, `np.arange(3)`, `fs.readFileSync(p)`, a method inherited from an unindexed base such as `unittest.TestCase`) fails `import_unresolved`, carrying the module specifier; a language global (`len`, `console`, `Some`) fails `callee_is_a_language_global`. Both route to the `outside_indexed_corpus` fault area, which owns no module, so the fix-planning engine no longer receives them as `name_resolution` or `import_resolution` work. `name_not_in_scope` and `method_not_on_type` now count only what the resolver could have bound.
+
+**What did not change.** Resolution. Call references, resolved calls, the call-edge fingerprint and the raw-entry-point fingerprint are equal to the pinned values on all ten corpora.
+
+**Known limit.** Angular's Jasmine share (`expect`, `it`; 119,640 of 148,000 `name_not_in_scope`) stays there: no import binds those names, and separating them would need a test-framework global set, which the reason contract forbids.
+
+**Landed in:** `a152848c` (the two reasons, the import-branch fix, the language-global sets), `d7f54fc1` (the unindexed-base route), `f8b5afd7` and `7ce5ca2a` (the stated shares and the Jasmine limit), `84fa8938` (the ten-corpus re-measurement and the ticked criteria); merged by `2262104b`.
+
+<!-- SECTION:FINAL_SUMMARY:END -->
