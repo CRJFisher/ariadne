@@ -3,7 +3,7 @@ id: TASK-376.21
 title: >-
   Fold every if/elif/else branch's guarded import into the enclosing scope, not
   just the first
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-09-17 20:29'
 labels:
@@ -36,3 +36,11 @@ Measured on TASK-376.12's candidate tree (`fc26d312`) against the epic's startin
 - [x] #3 collect_hoisted_imports's existing precedence rules (a scope's own import beats a hoisted one, a nested branch's import does not answer a call in a sibling branch) are preserved for the single-branch case.
   Evidence: the existing `resolve_references.python.test.ts` cases "keeps a scope's own import ahead of one hoisted out of a guard clause", "does not let a nested branch's import answer a call in a sibling branch", "lets a function-local guarded import shadow a same-named module-level import" and "keeps each branch's call on its own import …" pass unchanged; two added cases ("keeps a scope's own import ahead of every branch's hoisted import", "keeps a call in one branch on that branch's import when the other branches bind the name too") pass on the tree before and after. `cd packages/core && npx tsc --noEmit && npx vitest run`: clean typecheck, 5,371 tests passing across 234 files after the pinned fixture tally was updated.
 <!-- AC:END -->
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+
+## Final Summary
+
+Every sibling branch of an if/elif/else (or try/except) chain that binds one name now answers a call made after the chain: the call fans out to each branch's target (pandas's `to_stata` reaches `StataWriter`, `StataWriter117` and `StataWriterUTF8`). Single-branch precedence is unchanged. Landed in `79f2baa4` and `ab6c6ed1`; merged by `b5e80c41`.
+
+<!-- SECTION:FINAL_SUMMARY:END -->
