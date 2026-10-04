@@ -65,4 +65,21 @@ describe("RECORDED_DIAGNOSTICS_BASELINE", () => {
     expect(new Set(both_causes_present).size).toEqual(3);
     expect(new Set(file_iteration_sorted_only).size).toEqual(3);
   });
+
+  it("records one canonical hash over every order of the landed-tree remeasurement", () => {
+    // Membership is a function of the corpus; emission order is not, so the
+    // emitted hashes must differ while the canonical one is single-valued.
+    const { remeasured_on_landed_tree: landed } = RECORDED_DIAGNOSTICS_BASELINE;
+    expect(landed.indexed + landed.dropped).toEqual(landed.file_count);
+    expect(Object.keys(landed.diag_hash_by_order).sort()).toEqual([
+      "descending_size",
+      "forward",
+      "reversed",
+      "shuffled",
+    ]);
+    expect(landed.canonical_hash).toMatch(/^[0-9a-f]{16}$/);
+    const emitted = Object.values(landed.diag_hash_by_order);
+    expect(new Set(emitted).size).toEqual(emitted.length);
+    expect(emitted).not.toContain(landed.canonical_hash);
+  });
 });

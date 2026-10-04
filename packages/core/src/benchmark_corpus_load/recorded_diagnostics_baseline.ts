@@ -87,7 +87,35 @@ export interface RecordedDiagnosticsBaseline {
     readonly both_causes_present: readonly string[];
     readonly file_iteration_sorted_only: readonly string[];
   };
+  /**
+   * The same property taken again with this harness's own `--orders` mode on
+   * the landed tree, because the hashes above cannot be recomputed: they came
+   * from a probe, and the duplicate-reference repair moved the payload.
+   */
+  readonly remeasured_on_landed_tree: RemeasuredDiagnosticsOrders;
   readonly note: string;
+}
+
+interface RemeasuredDiagnosticsOrders {
+  readonly citation: string;
+  /** The harness's nested slice, not the probe's stratified one. */
+  readonly predicate: string;
+  readonly file_count: number;
+  readonly indexed: number;
+  readonly dropped: number;
+  readonly shuffle_seed: number;
+  readonly entry_point_count: number;
+  /** One digest set, identical across every order below. */
+  readonly agreed_components: Readonly<Record<string, RecordedComponentValue>>;
+  /** The one value that holds across every order. */
+  readonly canonical_hash: string;
+  /**
+   * `diag_hash` per order. These DIFFER while `canonical_hash` holds: the
+   * payload's membership is a function of the corpus, and the emission order
+   * of its evidence lists is not. The superseded criterion asserted one
+   * `diag_hash`; this record says that no longer holds.
+   */
+  readonly diag_hash_by_order: Readonly<Record<string, string>>;
 }
 
 export const RECORDED_DIAGNOSTICS_BASELINE: RecordedDiagnosticsBaseline = {
@@ -124,6 +152,33 @@ export const RECORDED_DIAGNOSTICS_BASELINE: RecordedDiagnosticsBaseline = {
   diag_hashes_before_repair: {
     both_causes_present: ["e400117d", "4f101d0c", "83090f60"],
     file_iteration_sorted_only: ["d7561cac", "c3ea5e17", "8ac5650e"],
+  },
+  remeasured_on_landed_tree: {
+    citation:
+      "microsoft/vscode@f3fa55c3 · folder-ts:src/vs/base · 200 of 479 files · ariadne@0cdc1296 · " +
+      "Darwin 24.6.0 x64 · node v22.22.1",
+    predicate: "folder-ts:src/vs/base, first 200 path-sorted files (nested_slice)",
+    file_count: 200,
+    indexed: 200,
+    dropped: 0,
+    shuffle_seed: 7,
+    entry_point_count: 1325,
+    agreed_components: {
+      nodes: { count: 5778, hash: "61888849a7477f16" },
+      call_edges: { count: 13849, hash: "6f8cbf634e0d90f9" },
+      unresolved_calls: { count: 6835, hash: "c990dbda540b36c2" },
+      raw_entry_points: { count: 1325, hash: "62309d683f1e3fa9" },
+      indirect_reachability_keys: { count: 1393, hash: "e70cbb6a4a9dfea3" },
+      dropped_files: { count: 0, hash: "e3b0c44298fc1c14" },
+      indirect_reachability_evidence: { count: 1393, hash: "4c755453ab355850" },
+    },
+    canonical_hash: "d4a42769520154e1",
+    diag_hash_by_order: {
+      forward: "1fabd4b1072e57e5",
+      reversed: "a649d22f7e9b8f08",
+      descending_size: "3c2b1dac58f2b2e6",
+      shuffled: "05250523977f6b77",
+    },
   },
   note:
     "The slice's 180 indexed and 20 dropped files were identical in every order and arm, so the " +
