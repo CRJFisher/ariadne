@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { FilePath } from "@ariadnejs/types";
-import type { ImportGraph } from "../resolve_references/import_resolution/import_graph";
+import { ImportGraph } from "../resolve_references/import_resolution/import_graph";
 import { find_files_affected_by_change } from "./find_files_affected_by_change";
 
 const leaf = "leaf.ts" as FilePath;
@@ -8,15 +8,23 @@ const barrel = "barrel.ts" as FilePath;
 const consumer = "consumer.ts" as FilePath;
 const unrelated = "unrelated.ts" as FilePath;
 
-/** A graph where `consumer` imports `barrel`, which re-exports `leaf`. */
-function barrel_chain(
-  forwards: ReadonlySet<FilePath>,
-): Pick<ImportGraph, "forwards_surface_of" | "get_importing_dependents"> {
-  const importers = new Map<FilePath, FilePath[]>([[barrel, [consumer]]]);
-  return {
-    forwards_surface_of: (file: FilePath) => forwards.has(file),
-    get_importing_dependents: (file: FilePath) => new Set(importers.get(file) ?? []),
-  };
+/** A graph where `consumer` imports `barrel`, which re-exports `leaf` when `forwards` holds it. */
+class BarrelChain extends ImportGraph {
+  constructor(private readonly forwards: ReadonlySet<FilePath>) {
+    super();
+  }
+
+  override forwards_surface_of(file: FilePath): boolean {
+    return this.forwards.has(file);
+  }
+
+  override get_importing_dependents(file: FilePath): Set<FilePath> {
+    return file === barrel ? new Set([consumer]) : new Set();
+  }
+}
+
+function barrel_chain(forwards: ReadonlySet<FilePath>): ImportGraph {
+  return new BarrelChain(forwards);
 }
 
 describe("find_files_affected_by_change", () => {

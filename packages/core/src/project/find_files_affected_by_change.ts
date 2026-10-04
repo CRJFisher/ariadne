@@ -14,7 +14,7 @@ import type { ImportGraph } from "../resolve_references/import_resolution/import
  * its path read, so it is a leaf of this walk rather than another hub.
  */
 export function find_files_affected_by_change(
-  imports: Pick<ImportGraph, "forwards_surface_of" | "get_importing_dependents">,
+  imports: ImportGraph,
   file_id: FilePath,
   dependents: Set<FilePath>,
 ): Set<FilePath> {
