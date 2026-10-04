@@ -18,8 +18,10 @@
  * whose module names no indexed file (`os`, `numpy`, `fs`, `std`). A test
  * framework's own words (Jasmine's `expect` and `it`, mocha's `describe`) are
  * bound by no declaration and no import, and the language does not define
- * them, so they stay in `name_not_in_scope`; a `self` receiver whose base class
- * is an unindexed import (django's `assertEqual`) stays in `method_not_on_type`.
+ * them, so they stay in `name_not_in_scope`. A `self` receiver whose class
+ * inherits from a base bound by an unindexed import (django's `assertEqual`
+ * from `unittest.TestCase`) is `import_unresolved`, and stays in
+ * `method_not_on_type` only while every base the chain names is indexed.
  */
 
 import type { FailureTaxonomy } from "./failure_taxonomy";
@@ -77,10 +79,10 @@ export const RECORDED_OUTSIDE_CORPUS_ATTRIBUTION: RecordedOutsideCorpusAttributi
         by_reason: {
           name_not_in_scope: 119640,
           callee_is_a_language_global: 13477,
-          import_unresolved: 19203,
+          import_unresolved: 19226,
           reexport_chain_unresolved: 0,
           receiver_type_unknown: 39029,
-          method_not_on_type: 1260,
+          method_not_on_type: 1237,
           polymorphic_no_implementations: 1892,
           collection_dispatch_miss: 337,
           dynamic_dispatch: 0,
@@ -124,10 +126,10 @@ export const RECORDED_OUTSIDE_CORPUS_ATTRIBUTION: RecordedOutsideCorpusAttributi
         by_reason: {
           name_not_in_scope: 48380,
           callee_is_a_language_global: 25384,
-          import_unresolved: 4588,
+          import_unresolved: 4618,
           reexport_chain_unresolved: 0,
           receiver_type_unknown: 85365,
-          method_not_on_type: 19213,
+          method_not_on_type: 19183,
           polymorphic_no_implementations: 254,
           collection_dispatch_miss: 293,
           dynamic_dispatch: 0,
@@ -265,10 +267,10 @@ export const RECORDED_OUTSIDE_CORPUS_ATTRIBUTION: RecordedOutsideCorpusAttributi
         by_reason: {
           name_not_in_scope: 26588,
           callee_is_a_language_global: 4723,
-          import_unresolved: 624,
+          import_unresolved: 625,
           reexport_chain_unresolved: 0,
           receiver_type_unknown: 14333,
-          method_not_on_type: 1969,
+          method_not_on_type: 1968,
           polymorphic_no_implementations: 8337,
           collection_dispatch_miss: 264,
           dynamic_dispatch: 0,
@@ -312,10 +314,10 @@ export const RECORDED_OUTSIDE_CORPUS_ATTRIBUTION: RecordedOutsideCorpusAttributi
         by_reason: {
           name_not_in_scope: 8368,
           callee_is_a_language_global: 17740,
-          import_unresolved: 9804,
+          import_unresolved: 41331,
           reexport_chain_unresolved: 0,
           receiver_type_unknown: 20730,
-          method_not_on_type: 57195,
+          method_not_on_type: 25668,
           polymorphic_no_implementations: 0,
           collection_dispatch_miss: 264,
           dynamic_dispatch: 0,
@@ -359,10 +361,10 @@ export const RECORDED_OUTSIDE_CORPUS_ATTRIBUTION: RecordedOutsideCorpusAttributi
         by_reason: {
           name_not_in_scope: 19336,
           callee_is_a_language_global: 30982,
-          import_unresolved: 45513,
+          import_unresolved: 45619,
           reexport_chain_unresolved: 0,
           receiver_type_unknown: 25463,
-          method_not_on_type: 3557,
+          method_not_on_type: 3451,
           polymorphic_no_implementations: 1,
           collection_dispatch_miss: 41,
           dynamic_dispatch: 0,
@@ -406,10 +408,10 @@ export const RECORDED_OUTSIDE_CORPUS_ATTRIBUTION: RecordedOutsideCorpusAttributi
         by_reason: {
           name_not_in_scope: 1906,
           callee_is_a_language_global: 4626,
-          import_unresolved: 6736,
+          import_unresolved: 6790,
           reexport_chain_unresolved: 0,
           receiver_type_unknown: 6938,
-          method_not_on_type: 2280,
+          method_not_on_type: 2226,
           polymorphic_no_implementations: 0,
           collection_dispatch_miss: 13,
           dynamic_dispatch: 0,
@@ -500,10 +502,10 @@ export const RECORDED_OUTSIDE_CORPUS_ATTRIBUTION: RecordedOutsideCorpusAttributi
         by_reason: {
           name_not_in_scope: 6551,
           callee_is_a_language_global: 1852,
-          import_unresolved: 1181,
+          import_unresolved: 1194,
           reexport_chain_unresolved: 0,
           receiver_type_unknown: 2099,
-          method_not_on_type: 241,
+          method_not_on_type: 228,
           polymorphic_no_implementations: 0,
           collection_dispatch_miss: 21,
           dynamic_dispatch: 0,
