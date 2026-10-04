@@ -76,6 +76,38 @@ interface RecordedCorrection {
   readonly measured: string;
 }
 
+/**
+ * What the post-load grep passes cost, measured to decide whether they join the
+ * pool. They are two textual passes: the indexed one (`build_grep_index`, inside
+ * the synchronous `extract_entry_point_diagnostics`) and the residue one
+ * (`complete_caller_evidence`, already async because it reads the filesystem).
+ */
+interface RecordedPostLoadGrepCost {
+  readonly citation: string;
+  /** The load ran at the width the rule computed for this box's load. */
+  readonly load_worker_width: number;
+  readonly load_wall_s: number;
+  readonly load_cpu_s: number;
+  /** `include_tests: false`, so not the harness's 17,563 raw entry points. */
+  readonly entry_points: number;
+  readonly extract_wall_s: number;
+  readonly extract_cpu_s: number;
+  /** `build_grep_index` alone over the loaded corpus, three reps, one process. */
+  readonly build_grep_index_wall_s: readonly number[];
+  readonly build_grep_index_cpu_s: readonly number[];
+  readonly names_indexed: number;
+  /** Files in discovered-minus-indexed over the `src` predicate: nothing to grep. */
+  readonly residue_files_over_src: number;
+  /** The same pass over the repository root, 4,160 residue files, two runs. */
+  readonly residue_over_repository_root_wall_s: readonly number[];
+  readonly residue_over_repository_root_cpu_s: readonly number[];
+  /** Share of the post-load wall this pass is, against the recorded pooled load. */
+  readonly build_grep_index_share_of_pooled_end_to_end_wall: number;
+  /** Ceiling on what dispatching it at width five could save, in wall seconds. */
+  readonly ceiling_saving_wall_s: number;
+  readonly decision: string;
+}
+
 export interface RecordedWorkerIndexDispatch {
   readonly corpus: string;
   readonly corpus_commit: string;
@@ -144,6 +176,8 @@ export interface RecordedWorkerIndexDispatch {
   readonly full_corpus_fingerprint: Readonly<Record<string, string>>;
   readonly diag_hash: string;
   readonly canonical_hash: string;
+
+  readonly post_load_grep: RecordedPostLoadGrepCost;
 
   readonly corrections: readonly RecordedCorrection[];
 }
@@ -326,6 +360,27 @@ export const RECORDED_WORKER_INDEX_DISPATCH: RecordedWorkerIndexDispatch = {
   diag_hash: "d08f8e814597b4bb",
   canonical_hash: "834cc16d32aef077",
 
+  post_load_grep: {
+    citation:
+      "microsoft/vscode@f3fa55c3 · src · 8,494 of 8,494 files · ariadne@3f36ac16 · Darwin 24.6.0 x64 · node v22.22.1 · loadavg 5.3 on 6 cores, so every wall figure is contended",
+    load_worker_width: 1,
+    load_wall_s: 315.61,
+    load_cpu_s: 370.9,
+    entry_points: 11759,
+    extract_wall_s: 156.88,
+    extract_cpu_s: 162.97,
+    build_grep_index_wall_s: [15.99, 16.01, 16.69],
+    build_grep_index_cpu_s: [25.84, 17.07, 26.28],
+    names_indexed: 51882,
+    residue_files_over_src: 0,
+    residue_over_repository_root_wall_s: [13.19, 10.26],
+    residue_over_repository_root_cpu_s: [21.26, 10.24],
+    build_grep_index_share_of_pooled_end_to_end_wall: 0.0675,
+    ceiling_saving_wall_s: 12.8,
+    decision:
+      "NOT MIGRATED, and the criterion is withdrawn. The indexed grep pass is 16.0 s inside a 156.9 s extract phase — the other ~141 s of that phase is not grep and is not decomposed here — and against the recorded pooled load of 79.65 s it is 6.75% of the end-to-end wall; dispatching it at width five could save at most 12.8 s (5.4%) before shipping the corpus's ~105 MiB of source to the workers and a 51,882-name map back, at a memory contract whose pooled transport already needed string sharing to complete at 6,144 MB. The residue pass has nothing to grep over `src/` (zero residue files) and is already async. Paying for them is a public-API change — Project.get_call_graph and Project.get_classified_entry_points become async and every caller in packages/mcp changes — so no shim, no second mechanism: the pool indexes files and nothing else, and the grep passes stay synchronous.",
+  },
+
   corrections: [
     {
       claim:
@@ -334,8 +389,7 @@ export const RECORDED_WORKER_INDEX_DISPATCH: RecordedWorkerIndexDispatch = {
         "It nearly doubles what the corpus retains. A built index shares each symbol id between the map that keys it, the definition that carries it and every reference that names it, and each id embeds the file's absolute path; JSON.parse hands back a copy per occurrence. Over 1,200 files, 507.1 MB built directly against 971.3 MB round-tripped. Sharing the repeated strings on the way in takes it to 460.7 MB — BELOW the directly-built figure, because the table also collapses duplicates the built index never shared.",
     },
     {
-      claim:
-        "A JSON.parse reviver is the way to share those strings.",
+      claim: "A JSON.parse reviver is the way to share those strings.",
       measured:
         "A reviver is called for every node in the document, numbers and locations included, and takes the parse off its fast path: 86.6 s of main-thread deserialize against 18.3 s unshared, which pushed the pooled wall from 83.2 to 132.9 s and gave the whole win back. Walking the parsed document reaches the same strings for 24.9 s.",
     },
@@ -346,8 +400,7 @@ export const RECORDED_WORKER_INDEX_DISPATCH: RecordedWorkerIndexDispatch = {
         "It does not reproduce here. At loadavg 7.3 on six cores a width-five arm ran 141.55 s of wall against 327.17 s for the width-one arm the rule computes, at 281.78 s of CPU against 274.86 s — faster in wall and level in CPU. What it is doing is claiming six of twelve runnable threads instead of two of eight, which is taking a larger share of a box someone else is using rather than doing less work. The width rule is kept because that share is not this load's to take, and the criterion is met because the width it computes under contention IS one.",
     },
     {
-      claim:
-        "The pool's efficiency at full corpus is 3.2 on four cores.",
+      claim: "The pool's efficiency at full corpus is 3.2 on four cores.",
       measured:
         "4.95 back-solved from this box's achieved wall, on six cores at width five. The share measurement left the per-file READ on the main thread — 20.15 s of the serial arm's 227.41 s — and the worker reads its own file, so the pool moves more than the share names.",
     },

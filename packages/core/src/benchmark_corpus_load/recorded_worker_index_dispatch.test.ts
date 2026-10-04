@@ -96,19 +96,19 @@ describe("RECORDED_WORKER_INDEX_DISPATCH", () => {
     expect(pooled).toHaveLength(2);
     expect(mean(serial.map((arm) => arm.wall_s))).toBeCloseTo(
       RECORD.serial_wall_s,
-      1,
+      1
     );
     expect(mean(pooled.map((arm) => arm.wall_s))).toBeCloseTo(
       RECORD.achieved_wall_s,
-      1,
+      1
     );
     expect(mean(serial.map((arm) => arm.cpu_s))).toBeCloseTo(
       RECORD.serial_cpu_s,
-      1,
+      1
     );
     expect(mean(pooled.map((arm) => arm.cpu_s))).toBeCloseTo(
       RECORD.pooled_cpu_s,
-      1,
+      1
     );
   });
 
@@ -128,7 +128,7 @@ describe("RECORDED_WORKER_INDEX_DISPATCH", () => {
   it("spends more CPU than the serial arm, inside what the criterion permits", () => {
     expect(RECORD.cpu_ratio).toBeCloseTo(
       RECORD.pooled_cpu_s / RECORD.serial_cpu_s,
-      3,
+      3
     );
     expect(RECORD.cpu_ratio).toBeGreaterThan(1);
     expect(RECORD.cpu_ratio).toBeLessThan(RECORD.cpu_ratio_permitted);
@@ -138,32 +138,32 @@ describe("RECORDED_WORKER_INDEX_DISPATCH", () => {
     const pooled = arms_named("pool-w5");
     for (const arm of pooled) expect(arm.main_deserialize_s).toBeGreaterThan(0);
     expect(
-      mean(pooled.map((arm) => arm.main_deserialize_s / arm.wall_s)),
+      mean(pooled.map((arm) => arm.main_deserialize_s / arm.wall_s))
     ).toBeCloseTo(RECORD.main_deserialize_share_of_wall, 2);
   });
 
   it("records the width its own rule computes at each load it saw", () => {
     for (const reading of RECORD.width_on_this_box) {
       expect(compute_worker_width(RECORD.cpu_count, reading.loadavg)).toBe(
-        reading.computed_width,
+        reading.computed_width
       );
     }
   });
 
   it("computes a width of one under contention, which is what makes the contended arm the width-one arm", () => {
     const contended = RECORD.arms.find(
-      (arm) => arm.arm === "contended-computed",
+      (arm) => arm.arm === "contended-computed"
     );
     expect(contended?.worker_width).toBe(1);
     expect(
-      compute_worker_width(RECORD.cpu_count, contended?.loadavg_at_start ?? 0),
+      compute_worker_width(RECORD.cpu_count, contended?.loadavg_at_start ?? 0)
     ).toBe(1);
   });
 
   it("reports the same call graph as the serial arm at every size and width", () => {
-    expect(RECORD.fingerprint_agreement.map((row) => row.offered_files)).toEqual(
-      [200, 1200, 8494],
-    );
+    expect(
+      RECORD.fingerprint_agreement.map((row) => row.offered_files)
+    ).toEqual([200, 1200, 8494]);
     for (const row of RECORD.fingerprint_agreement) {
       expect(row.identical_to_serial).toBe(true);
       expect(row.widths).toEqual([5, 1]);
@@ -172,7 +172,7 @@ describe("RECORDED_WORKER_INDEX_DISPATCH", () => {
 
   it("reports the fingerprint this corpus already has on record", () => {
     const full_corpus = RECORDED_ORDER_INDEPENDENCE.slices.find(
-      (slice) => slice.offered_files === RECORD.discovered_files,
+      (slice) => slice.offered_files === RECORD.discovered_files
     );
     const agreed = full_corpus?.agreed_components;
     expect(agreed).toBeDefined();
@@ -180,7 +180,7 @@ describe("RECORDED_WORKER_INDEX_DISPATCH", () => {
 
     for (const [component, digest] of Object.entries(agreed)) {
       expect(RECORD.full_corpus_fingerprint[component]).toBe(
-        `${digest.count}/${digest.hash}`,
+        `${digest.count}/${digest.hash}`
       );
     }
     expect(RECORD.canonical_hash).toBe(full_corpus?.agreed_canonical_hash);
@@ -188,7 +188,7 @@ describe("RECORDED_WORKER_INDEX_DISPATCH", () => {
 
   it("keeps the retention arms it drew its transport conclusion from", () => {
     const by_transport = new Map(
-      RECORD.retention.map((arm) => [arm.transport, arm]),
+      RECORD.retention.map((arm) => [arm.transport, arm])
     );
     const direct = by_transport.get("built directly");
     const json = by_transport.get("JSON");
@@ -199,19 +199,19 @@ describe("RECORDED_WORKER_INDEX_DISPATCH", () => {
       expect(arm.live_heap_mb.length).toBeGreaterThanOrEqual(2);
     }
     expect(mean(json?.live_heap_mb ?? [])).toBeGreaterThan(
-      mean(direct?.live_heap_mb ?? []),
+      mean(direct?.live_heap_mb ?? [])
     );
     expect(mean(shared?.live_heap_mb ?? [])).toBeLessThan(
-      mean(direct?.live_heap_mb ?? []),
+      mean(direct?.live_heap_mb ?? [])
     );
   });
 
   it("retains less over the whole corpus than the serial load it replaces", () => {
     expect(RECORD.corpus_live_heap_mb_unshared).toBeGreaterThan(
-      RECORD.serial_live_heap_mb,
+      RECORD.serial_live_heap_mb
     );
     expect(RECORD.corpus_live_heap_mb_shared).toBeLessThan(
-      RECORD.serial_live_heap_mb,
+      RECORD.serial_live_heap_mb
     );
   });
 
@@ -221,5 +221,20 @@ describe("RECORDED_WORKER_INDEX_DISPATCH", () => {
       expect(correction.claim.length).toBeGreaterThan(0);
       expect(correction.measured.length).toBeGreaterThan(0);
     }
+  });
+
+  it("derives the post-load grep share from its own arms", () => {
+    const grep = RECORD.post_load_grep;
+    const grep_wall_s = mean(grep.build_grep_index_wall_s);
+    const end_to_end_s = RECORD.achieved_wall_s + 0.54 + grep.extract_wall_s;
+    expect(grep.build_grep_index_wall_s.length).toBeGreaterThanOrEqual(3);
+    expect(grep_wall_s / end_to_end_s).toBeCloseTo(
+      grep.build_grep_index_share_of_pooled_end_to_end_wall,
+      2
+    );
+    expect(grep_wall_s * 0.8).toBeCloseTo(grep.ceiling_saving_wall_s, 0);
+    expect(
+      grep.build_grep_index_wall_s.every((s) => s < grep.extract_wall_s)
+    ).toBe(true);
   });
 });

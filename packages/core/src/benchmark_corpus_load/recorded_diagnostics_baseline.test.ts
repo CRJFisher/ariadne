@@ -20,22 +20,25 @@ describe("RECORDED_DIAGNOSTICS_BASELINE", () => {
       file_count: 200,
       orders: ["forward", "reversed", "seeded-shuffle"],
     });
-    expect(RECORDED_DIAGNOSTICS_BASELINE.predicate).toContain("mulberry32 seed 1");
+    expect(RECORDED_DIAGNOSTICS_BASELINE.predicate).toContain(
+      "mulberry32 seed 1"
+    );
     expect(RECORDED_DIAGNOSTICS_BASELINE.ariadne_commit).toContain("12458246");
   });
 
   it("closes the file counts over the slice", () => {
     expect(
-      RECORDED_DIAGNOSTICS_BASELINE.indexed + RECORDED_DIAGNOSTICS_BASELINE.dropped,
+      RECORDED_DIAGNOSTICS_BASELINE.indexed +
+        RECORDED_DIAGNOSTICS_BASELINE.dropped
     ).toEqual(RECORDED_DIAGNOSTICS_BASELINE.file_count);
   });
 
   it("reports every raw entry point as a reported one", () => {
     // Extraction enriches the raw set one-to-one; a count drift between the
     // two would mean entries were lost between trace and report.
-    expect(RECORDED_DIAGNOSTICS_BASELINE.recorded.reported_entry_points.count).toEqual(
-      RECORDED_DIAGNOSTICS_BASELINE.recorded.raw_entry_points.count,
-    );
+    expect(
+      RECORDED_DIAGNOSTICS_BASELINE.recorded.reported_entry_points.count
+    ).toEqual(RECORDED_DIAGNOSTICS_BASELINE.recorded.raw_entry_points.count);
   });
 
   it("keeps the recorded hashes in the probe's own 16-hex width", () => {

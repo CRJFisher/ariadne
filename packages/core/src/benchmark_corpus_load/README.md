@@ -573,6 +573,17 @@ A width of one is the same dispatch code with one worker, so there is no serial
 path beside the pooled one — and at loadavg 7.26 the rule computes one, which is
 what makes a contended run the width-one arm.
 
+The pool indexes files and nothing else; the two post-load grep passes stay
+synchronous, and that is measured rather than assumed. Over vscode's `src/` the
+indexed pass (`build_grep_index`) is **16.0 s of wall** inside a 156.9 s extract
+phase — 6.75% of the end-to-end wall against the recorded pooled load, at most
+12.8 s of it recoverable at width five — and the residue pass has no files to
+read there. Dispatching either would make `Project.get_call_graph` and
+`Project.get_classified_entry_points` async for a saving inside the noise of a
+contended run, so `RECORDED_WORKER_INDEX_DISPATCH.post_load_grep` holds the
+decision. The same measurement says the other 140.9 s of that phase is not grep; it is
+not decomposed here.
+
 Three findings the step was not written against travel with it.
 
 **The JSON transport nearly doubles what the corpus retains.** A built index

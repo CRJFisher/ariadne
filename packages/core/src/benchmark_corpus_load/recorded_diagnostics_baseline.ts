@@ -157,7 +157,8 @@ export const RECORDED_DIAGNOSTICS_BASELINE: RecordedDiagnosticsBaseline = {
     citation:
       "microsoft/vscode@f3fa55c3 · folder-ts:src/vs/base · 200 of 479 files · ariadne@0cdc1296 · " +
       "Darwin 24.6.0 x64 · node v22.22.1",
-    predicate: "folder-ts:src/vs/base, first 200 path-sorted files (nested_slice)",
+    predicate:
+      "folder-ts:src/vs/base, first 200 path-sorted files (nested_slice)",
     file_count: 200,
     indexed: 200,
     dropped: 0,
