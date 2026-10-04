@@ -3,7 +3,7 @@ id: TASK-376.22
 title: >-
   Search a package's declared source root, not just its ancestors, when
   resolving absolute Python imports
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-09-17 20:29'
 labels:
@@ -36,3 +36,11 @@ This is import-root discovery, not member lookup or binding — outside every la
 - [x] #3 A project with no declared source root (the common case) is unaffected: the existing ancestor and topmost-package-parent search still runs unchanged.
   Evidence: the source-root step sits after the local-directory and project-root steps and before the above-root climb, so it is reached only when both earlier roots missed; nothing earlier changed. `import_resolution.python.test.ts` › "leaves a project with no source root to the search it already had" and › "yields to the project root" pin it, and every pre-existing case in that file passes unmodified. `cd packages/core && npx tsc --noEmit` is clean and `npx vitest run` passes 234 files, 5,363 tests (1 todo). MEASURED over sqlalchemy `aa1a5575` (`repository-root-excluding:examples,tools`, 583 files, 583 indexed, 0 dropped), control and candidate interleaved A,B,A,B in one session by `run_load_benchmark.ts --interleave`, control being this tree with `SOURCE_ROOT_DIRECTORIES` emptied in a throwaway worktree (the harness therefore labels both arms `ariadne@5de273e3`, and its noise-floor note is that artefact; the fingerprints differ, so the arms are not the same tree): call references 188,836 → 189,240; resolved 33,653 → 117,038 (+83,385); `name_not_in_scope` 106,884 → 39,463 (−67,421); `receiver_type_unknown` 31,608 → 20,017; `method_not_on_type` 14,647 → 10,062; `member_type_unknown` 1,687 → 2,363 (+676, calls that now reach a receiver and fail there); raw entry points 3,943 → 3,614 (329 removed, none added); call edges 27,743 → 81,477, with 844 control-only edges whose targets are parameters, classes and variables (for example `assert_warns` → `callable_`, `go` → `A` in `test_memusage.py`); those were not investigated here. CPU 233.05 s control against 231.15 s candidate, 1.01x.
 <!-- AC:END -->
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+
+## Final Summary
+
+Absolute Python imports resolve against a project's `src/` or `lib/` source root, so sqlalchemy's `test/` tree reaches `lib/sqlalchemy`. A project with no such root keeps the search it had. A `package_dir` declared in `setup.cfg`/`pyproject.toml` is not read; no corpus shape needed it. Landed in `781793de` and `91886a7f`; merged by `2d437dd3`.
+
+<!-- SECTION:FINAL_SUMMARY:END -->
