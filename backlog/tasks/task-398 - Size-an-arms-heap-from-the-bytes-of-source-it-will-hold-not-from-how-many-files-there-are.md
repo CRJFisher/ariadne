@@ -3,7 +3,7 @@ id: TASK-398
 title: >-
   Size an arm's heap from the bytes of source it will hold, not from how many
   files there are
-status: To Do
+status: Done
 assignee: []
 labels:
   - benchmark
@@ -67,3 +67,17 @@ An order of magnitude between TypeScript's 0.18 MB/file and express's 1.78. Type
   Evidence: re-run with `--baseline` on `13c237d9`, each corpus beside a control arm of the same tree under the previous fit's cap as its flag. All ten controls match their re-run on every one of the seven fingerprint components and the file counts; only `heap_cap_mb` and `peak_rss_mb` (and CPU, which varies run to run) differ — `RECORDED_HEAP_REQUIREMENT.rerun`, pinned by `recorded_heap_requirement.test.ts`. **The literal comparison against `RECORDED_CORPUS_RESOLUTION` does not hold, and is not a sizing effect**: only express matches it; the other nine differ in call edges and unresolved calls (and eight in raw entry points) because TASK-376.25, .26, .28, .29, .30 and .23 landed after that record was taken at `038b7daa`; the control arms, on the same tree under the previous cap, report the same fingerprints as the re-run, which is what isolates the cap. That record was not rewritten. Peak RSS under the new caps: angular 2,803, rust 3,295, TypeScript 2,455, django 1,586, pandas 1,890, tokio 494, celery 498, sqlx 410, mocha 290, express 267 MB, each below `required_heap_mb` for its file set.
 
 <!-- AC:END -->
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+
+## Final Summary
+
+**What a user can now do.** Measure a corpus the previous guard refused. An arm's required heap is `ceil(320 + 115 * MiB of discovered source)` and its cap is `max(2048, 1.25 * required)`, so microsoft/TypeScript needs 4,753 MB (peak 3,623 MB) instead of the 28,096 MB the file-count fit demanded, and sits above every one of the eleven measured arms. Parent and child read one function, `required_heap_mb`, and a test pins them to the same value for every recorded file set. `RECORDED_MEMORY_CONTRACT` and the README state what a user without a heap flag is given, vscode's `src/` included.
+
+**What did not change.** Any fingerprint or taxonomy. Each corpus re-ran beside a control of the same tree under the previous cap: all seven fingerprint components and the file counts match on all ten; only `heap_cap_mb` and `peak_rss_mb` moved.
+
+**Known limit.** Criterion #5's literal comparison against `RECORDED_CORPUS_RESOLUTION` does not hold, and the criterion's evidence says so: nine corpora differ from that record because TASK-376.23, .25, .26, .28, .29 and .30 landed after it was taken. The same-tree control arms isolate the cap, which is what the criterion exists to show.
+
+**Landed in:** `13c237d9` (bytes-fitted sizing), `bc4bfc5d` (the ten re-runs and the restated contract), `aa4ae19a` (the ticked criteria); merged by `0dceea99`.
+
+<!-- SECTION:FINAL_SUMMARY:END -->
