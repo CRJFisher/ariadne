@@ -28,12 +28,12 @@ Entry-point membership was never at risk here — `detect_entry_points` is a pur
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 #1 `build_lines_by_file`, `build_grep_index` and `build_reference_index` all iterate one path-sorted file list produced at a single source, and no ordered read in `extract_entry_point_diagnostics` depends on a Map's insertion history.
-- [ ] #2 #2 `build_call_refs_by_name`'s per-name list is sorted by (file, line, column) before `find_matching_call_refs` applies `MAX_DIAGNOSTICS_PER_ENTRY`, so the fifty retained are the earliest fifty call sites in the project under every ingest order.
+- [x] #1 #1 `build_lines_by_file`, `build_grep_index` and `build_reference_index` all iterate one path-sorted file list produced at a single source, and no ordered read in `extract_entry_point_diagnostics` depends on a Map's insertion history.
+- [x] #2 #2 `build_call_refs_by_name`'s per-name list is sorted by (file, line, column) before `find_matching_call_refs` applies `MAX_DIAGNOSTICS_PER_ENTRY`, so the fifty retained are the earliest fifty call sites in the project under every ingest order.
 - [ ] #3 #3 Forward, reversed and seeded-shuffle ingest of the harness's named slice (recorded by file set, corpus commit f3fa55c3, Ariadne commit, and shuffle seed) each produce diag hash `1b02e8f53c9e6b6c` and canonical hash `4d88be1462914be3` under the harness's pinned hash functions, matching the pre-change forward-order baseline over the same set.
-- [ ] #4 #4 `MAX_GREP_HITS` still caps at 10 and `MAX_DIAGNOSTICS_PER_ENTRY` at 50; which hits survive each cap is a function of the corpus alone.
-- [ ] #5 #5 The two diagnostics tests that fail today pass — both named by file and test title in the task — and `extract_entry_point_diagnostics.test.ts` stays green.
-- [ ] #6 #6 The resulting six-number fingerprint is recorded in the TASK-381.1 harness as this epic's first guard baseline, with its input predicate and Ariadne commit named.
+- [x] #4 #4 `MAX_GREP_HITS` still caps at 10 and `MAX_DIAGNOSTICS_PER_ENTRY` at 50; which hits survive each cap is a function of the corpus alone.
+- [x] #5 #5 The two diagnostics tests that fail today pass — both named by file and test title in the task — and `extract_entry_point_diagnostics.test.ts` stays green.
+- [x] #6 #6 The resulting six-number fingerprint is recorded in the TASK-381.1 harness as this epic's first guard baseline, with its input predicate and Ariadne commit named.
 
 <!-- AC:END -->
 
