@@ -73,6 +73,8 @@ export { RECORDED_TREE_SITTER_CROSSINGS } from "./recorded_tree_sitter_crossings
 
 export { RECORDED_WORKER_INDEX_DISPATCH } from "./recorded_worker_index_dispatch";
 
+export { RECORDED_FINAL_CORPUS_ROW } from "./recorded_final_corpus_row";
+
 export { RECORDED_FAILURE_TAXONOMY_BASELINE } from "./recorded_failure_taxonomy_baseline";
 
 export { RECORDED_CORPUS_RESOLUTION } from "./recorded_corpus_resolution";

@@ -67,6 +67,7 @@ import {
   report_recorded_heap_requirement,
   report_recorded_memory_contract,
   report_recorded_worker_index_dispatch,
+  report_recorded_final_corpus_row,
   report_recorded_name_table,
   report_recorded_order_independence,
   report_recorded_resolution_eviction,
@@ -510,6 +511,7 @@ async function run_interleaved(context: RunContext, slice: SliceSize): Promise<v
   report_recorded_memory_contract(control[0].row.file_counts.offered);
   report_recorded_heap_requirement(control[0].row.file_counts.offered);
   report_recorded_worker_index_dispatch(control[0].row.file_counts.offered);
+  report_recorded_final_corpus_row(control[0].row.file_counts.offered);
 }
 
 /**
@@ -653,6 +655,7 @@ async function run_orders(context: RunContext, slice: SliceSize): Promise<void> 
   );
 
   report_recorded_order_independence(baseline.row.file_counts.offered);
+  report_recorded_final_corpus_row(baseline.row.file_counts.offered);
 }
 
 async function main(): Promise<void> {

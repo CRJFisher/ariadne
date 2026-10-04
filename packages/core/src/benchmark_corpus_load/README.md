@@ -611,6 +611,34 @@ claiming six of twelve runnable threads instead of two of eight — taking a
 larger share of a box someone else is using rather than doing less work — which
 is why the width rule is kept.
 
+## The closing row
+
+`RECORDED_FINAL_CORPUS_ROW` holds what the whole stack does over every file of
+vscode's `src/` on one tree in one session, one arm at a time, at ariadne@665a1d09
+on Darwin 24.6.0 x64, node v22.22.1, six cores and 32 GiB.
+
+All 8,494 files index with an empty dropped set, and forward, reversed,
+descending-size and seeded-shuffle ingest (seed 7) agree on all seven components —
+nodes 202,719, call edges 1,550,739, unresolved 356,225, raw entry points 11,757,
+indirect keys and evidence 32,087, dropped 0 — and on one diagnostics
+`canonical_hash`, `76462ec1aa241b99`. The emitted `diag_hash` takes four values.
+On the tree before the commit that made them agree the same probe moved call
+edges across 1,550,682 / 1,550,229 / 1,550,279 / 1,550,441 and raw entry points
+across 11,759 / 11,758 / 11,759 / 11,760, so the silence above is not vacuous.
+
+A cold load at width one — the pool's single-worker form, which is this tree's
+serial load — costs **421.0 s of CPU**, mean of five processes, CV 1.88%. The
+pooled load at width five costs 485.2 s of CPU and 219.9 s of wall, and that wall
+is **contended**: the load average read 2.0 to 3.4 on this box whenever none of the
+session's arms was running, 3.3 to 5.5 at the start of every pooled arm and 15.7 at
+the end of one, so it is a figure about this box that afternoon and not a budget.
+
+`--max-old-space-size=4144` dies with `Reached heap limit` after 483.1 and 495.8 s
+of CPU; `6144` completes at 5,704.3 MB peak RSS (mean of two, spread 0.74%) over
+a 3,905.4 MB live heap, to the identical fingerprint. A load killed after 101 of
+200 blobs of `src/vs/base` restarts onto all 101, indexes the other 99 and
+reports a graph identical to an uninterrupted cold load's.
+
 ## Memory
 
 ### The contract
@@ -788,8 +816,10 @@ different algorithm over a five-component fingerprint and can never be
 recomputed here, so they are a record of one run rather than a value to compare
 a current digest with.
 
-`RECORDED_ORDER_INDEPENDENCE` is the live one, and its digests **are**
-comparable with a current run because they came from this harness. Over
+`RECORDED_ORDER_INDEPENDENCE` is the live one. Its digests came from this
+harness, over the tree TASK-381.11 landed on; later work on type resolution moved
+the graph, so the current tree's digests are in `RECORDED_FINAL_CORPUS_ROW` and
+these are the record of what the probe showed then. Over
 vscode's `src/` the four orders now agree on all seven components — nodes
 201,595, resolved call edges 1,077,986, unresolved 420,958, entry points 17,563,
 indirect reachability 29,378 keys and 29,378 evidence tuples, dropped files 0 —

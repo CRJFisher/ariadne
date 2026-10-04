@@ -88,7 +88,7 @@ interface RecordedPostLoadGrepCost {
   readonly load_worker_width: number;
   readonly load_wall_s: number;
   readonly load_cpu_s: number;
-  /** `include_tests: false`, so not the harness's 17,563 raw entry points. */
+  /** The raw entry points of the tree measured, which later work moved; see `RECORDED_FINAL_CORPUS_ROW`. */
   readonly entry_points: number;
   readonly extract_wall_s: number;
   readonly extract_cpu_s: number;

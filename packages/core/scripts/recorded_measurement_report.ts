@@ -25,6 +25,7 @@ import {
   RECORDED_HEAP_REQUIREMENT,
   RECORDED_MEMORY_CONTRACT,
   RECORDED_WORKER_INDEX_DISPATCH,
+  RECORDED_FINAL_CORPUS_ROW,
   RECORDED_NAME_TABLE_MEMORY,
   RECORDED_ORDER_INDEPENDENCE,
   RECORDED_RESOLUTION_EVICTION_COST,
@@ -363,5 +364,29 @@ export function report_recorded_worker_index_dispatch(
       `\n  CPU ${record.pooled_cpu_s} s against ${record.serial_cpu_s} s serial — ${record.cpu_ratio}x, inside the ${record.cpu_ratio_permitted}x permitted; no CPU reduction is claimed` +
       `\n  main-thread deserialize is ${(record.main_deserialize_share_of_wall * 100).toFixed(1)}% of that wall and the pool cannot remove it` +
       `\n  ${record.memory_contract_at_6144}`,
+  );
+}
+
+/**
+ * The epic's closing row: what the whole stack did over every file of the
+ * corpus on one tree, one arm at a time. Printed beside any arm over the same
+ * file set so a reader can see what the arm above it is being held to.
+ */
+export function report_recorded_final_corpus_row(
+  offered_file_count: number,
+): void {
+  const row = RECORDED_FINAL_CORPUS_ROW;
+  if (offered_file_count !== row.discovered_files) return;
+
+  console.log(
+    `\nrecorded closing row for this file set (ariadne@${row.ariadne_commit}, ${row.machine}, ${row.node_version}, ${row.cpu_count} cores, session ${row.session_id}):` +
+      `\n  ${row.indexed_files} of ${row.discovered_files} indexed, ${row.dropped_files} dropped; four orders at seed ${row.seed} agree on ` +
+      Object.entries(row.agreed_components)
+        .map(([name, digest]) => `${name} ${digest.count}/${digest.hash}`)
+        .join(", ") +
+      ` and on canonical hash ${row.canonical_hash}` +
+      `\n  serial CPU ${row.serial_cpu_s.mean} s, mean of ${row.serial_cpu_s.observations.length}, CV ${row.serial_cpu_s.cv_percent}%` +
+      `\n  pooled wall ${row.pooled.wall_s_mean} s at width ${row.pooled.worker_width} — CONTENDED, not an idle-box figure` +
+      `\n  4,144 MB dies; 6,144 MB completes at ${row.memory.completed_at_6144.peak_rss_mb_mean} MB peak RSS (mean of 2) over a ${row.memory.completed_at_6144.live_heap_mb_mean} MB live heap`,
   );
 }
