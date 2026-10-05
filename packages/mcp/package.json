@@ -36,6 +36,9 @@
   ],
   "author": "Chuck",
   "license": "ISC",
+  "engines": {
+    "node": ">=22.13.0"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/CRJFisher/ariadne.git",
