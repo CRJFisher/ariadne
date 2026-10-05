@@ -15,6 +15,7 @@ npm run changeset
 ```
 
 This will prompt you to:
+
 1. Select which packages have changed
 2. Choose the type of change (major/minor/patch)
 3. Write a summary of the changes
@@ -28,6 +29,7 @@ npm run version
 ```
 
 This will:
+
 - Update package versions based on changesets
 - Update package.json files
 - Generate/update CHANGELOG files
@@ -44,6 +46,7 @@ npm run release
 ## Configuration
 
 Our monorepo is configured with:
+
 - **Linked packages**: `@ariadnejs/core` and `@ariadnejs/types` are linked, meaning they'll always be released together with the same version
 - **Access**: Public packages on npm
 - **Base branch**: `main`
@@ -58,6 +61,7 @@ Our monorepo is configured with:
 ## GitHub Actions
 
 The repository includes GitHub Actions that:
+
 - **PR Check**: Comments on PRs about missing changesets
 - **Release Process**: All-in-one workflow that:
   - Creates "Version Packages" PRs when changesets are detected

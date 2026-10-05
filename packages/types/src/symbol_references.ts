@@ -1,7 +1,8 @@
-import type { Location } from "./common";
+import type { Language, Location } from "./location";
 import type { ScopeId } from "./scopes";
-import type { TypeInfo } from "./index_single_file";
-import type { SymbolName, SymbolId } from "./symbol";
+import type { TypeInfo } from "./type_info";
+import type { SymbolName } from "./symbol";
+import type { CallSiteSyntax } from "./resolution_failure";
 
 /**
  * Discriminated union of all reference types, dispatched via `ref.kind`.
@@ -19,6 +20,7 @@ export type SymbolReference =
   | ConstructorCallReference
   | VariableReference
   | PropertyAccessReference
+  | CallableValueReference
   | TypeReference
   | AssignmentReference;
 
@@ -49,32 +51,104 @@ interface BaseReference {
  * class Builder {
  *   process() { this.build_class(node); }
  * }
- * // → SelfReferenceCall { keyword: 'this', property_chain: ['this', 'build_class'] }
+ * // → SelfReferenceCall { property_chain: ['this', 'build_class'] }
  *
  * @example Python
  * class IndexBuilder:
  *   def process(self):
  *     self.build_class(node)
- * // → SelfReferenceCall { keyword: 'self', property_chain: ['self', 'build_class'] }
+ * // → SelfReferenceCall { property_chain: ['self', 'build_class'] }
  *
  * @example Super call
  * class Child extends Parent {
  *   process() { super.process(); }
  * }
- * // → SelfReferenceCall { keyword: 'super', property_chain: ['super', 'process'] }
+ * // → SelfReferenceCall { property_chain: ['super', 'process'] }
  */
 export interface SelfReferenceCall extends BaseReference {
   readonly kind: "self_reference_call";
-  /** Self-reference keyword used */
-  readonly keyword: SelfReferenceKeyword;
-  /** Property chain (always starts with keyword) */
+  /**
+   * Property chain, headed by the self-reference keyword the indexer saw.
+   * Whether that head still denotes the receiver is the resolver's question: a
+   * scope can rebind a Python `self`.
+   */
   readonly property_chain: readonly SymbolName[];
+  /**
+   * @language javascript,typescript,python
+   * Present when the receiver is one element read out of the chain before the
+   * method (`this.cursors[0].m()`), with whether the key is a literal. Observed
+   * from the same call-site syntax a method call carries; the emitted
+   * `CallReference` still reports this receiver as `self_keyword`.
+   */
+  readonly index_access?: { readonly key_is_literal: boolean };
 }
 
 /**
- * Self-reference keywords across all supported languages
+ * Self-reference keywords across all supported languages.
+ * - `this` / `super` — @language javascript,typescript
+ * - `self` — @language python,rust
+ * - `cls` — @language python
  */
 export type SelfReferenceKeyword = "this" | "self" | "super" | "cls";
+
+/**
+ * The words each language spells a self receiver with. A word is a keyword in
+ * one language and an ordinary identifier in another — Rust has no `this`, and
+ * JavaScript's `self` is the worker and window global — so the set is the
+ * language's, never a union across languages.
+ */
+const SELF_REFERENCE_KEYWORDS_BY_LANGUAGE: Readonly<
+  Record<Language, ReadonlySet<SelfReferenceKeyword>>
+> = {
+  typescript: new Set(["this", "super"]),
+  javascript: new Set(["this", "super"]),
+  python: new Set(["self", "cls", "super"]),
+  rust: new Set(["self"]),
+};
+
+/** The self-reference keyword `name` spells in `language`, or null when it spells none there. */
+export function self_reference_keyword(
+  language: Language,
+  name: string
+): SelfReferenceKeyword | null {
+  const keywords = SELF_REFERENCE_KEYWORDS_BY_LANGUAGE[language];
+  return keywords.has(name as SelfReferenceKeyword) ? (name as SelfReferenceKeyword) : null;
+}
+
+/**
+ * @language rust
+ * The name a Rust `impl`/`trait` body gives its own type — `Self::new()`, `fn
+ * map(this: Self)`, `-> &mut Self`. It is a type position's word, never a
+ * receiver's, so it names the enclosing type wherever it appears and binds
+ * nowhere.
+ */
+export const RUST_SELF_TYPE_NAME = "Self" as SymbolName;
+
+/**
+ * Whether a scope can rebind `language`'s self-reference words. Python's are
+ * conventions — `self`, `cls` and `super` are ordinary names a local or a free
+ * function's parameter can take. Every other language reserves them, so a
+ * binding one of them has is the receiver itself.
+ */
+export function self_reference_is_bindable(language: Language): boolean {
+  return language === "python";
+}
+
+/**
+ * Positional call-argument identifier names, aligned index-for-index with a
+ * `property_chain`. Entry `i` holds the bare-identifier argument names of the
+ * call invoked at chain position `i`, or `null` when that position is not an
+ * invoked call. Within a call's entry, a `null` element is a non-identifier
+ * argument (literal, expression, spread) kept to preserve positional index so a
+ * later parameter still aligns to its argument.
+ *
+ * @example injector.get(Token).method()
+ * // property_chain:            ["injector", "get", "method"]
+ * // property_chain_arguments:  [null, ["Token"], []]
+ *
+ * @language javascript,typescript
+ */
+export type ChainCallArguments = readonly (readonly (SymbolName | null)[] | null)[];
 
 /**
  * Regular method call: obj.method(), receiver.getName()
@@ -99,6 +173,30 @@ export interface MethodCallReference extends BaseReference {
   readonly is_optional_chain: boolean;
   /** Location of assigned variable when this call may be a class instantiation (e.g. user = models.User()) */
   readonly potential_construct_target?: Location;
+  /**
+   * Location of the binding whose sequence literal holds this call as an
+   * element (`users = [models.make()]`)
+   */
+  readonly potential_construct_element_of?: Location;
+  /**
+   * Syntactic shape of the call site — a neutral AST observation, not a
+   * classifier label. Populated when the receiver AST shape is determinable
+   * at index time, and copied onto the emitted `CallReference` during call
+   * resolution. Consumers (including the auto-classifier in
+   * `.claude/skills/triage`) compose it with `resolution_failure`
+   * and other signals; core stores only the observation.
+   */
+  readonly call_site_syntax?: CallSiteSyntax;
+  /**
+   * Positional call arguments per chain position, index-aligned to
+   * `property_chain`. Present only when at least one chain position is an
+   * invoked call carrying identifier arguments (omitted otherwise). Drives
+   * TypeScript generic-return-type inference from `Type<T>` token arguments in
+   * chained receivers (`injector.get(Token).method()`).
+   *
+   * @language javascript,typescript
+   */
+  readonly property_chain_arguments?: ChainCallArguments;
 }
 
 /**
@@ -120,6 +218,31 @@ export interface FunctionCallReference extends BaseReference {
   readonly kind: "function_call";
   /** Location of variable being assigned if this call may be a class instantiation (e.g. obj = SomeClass()) */
   readonly potential_construct_target?: Location;
+  /**
+   * Location of the binding whose sequence literal holds this call as an
+   * element, when the call may be a class instantiation (`objs = [SomeClass()]`)
+   */
+  readonly potential_construct_element_of?: Location;
+  /**
+   * Rust scoped-path qualifier that scopes the terminal-name lookup, e.g.
+   * ["worker"] for `worker::create()` or ["Parker"] for `Parker::make()`.
+   * Held separately from the TypeScript `[namespace, class]` `property_chain`
+   * convention: this is the module/type path that disambiguates the terminal
+   * (including against a local shadow), not a namespace-class pair.
+   * @language rust
+   */
+  readonly path_prefix?: readonly SymbolName[];
+  /**
+   * The call's positional arguments, one entry per argument in source order,
+   * naming the argument where it is a bare identifier and `null` where it is
+   * anything else — a literal, an expression, a keyword or spread argument —
+   * so a later argument still sits at its own index.
+   *
+   * A class named here types the parameter it binds, which is how a class
+   * reaches a construction site inside the factory it was handed to
+   * (`build(MyForm)` against `def build(cls, **kw): return cls(**kw)`).
+   */
+  readonly call_arguments?: readonly (SymbolName | null)[];
 }
 
 /**
@@ -147,8 +270,24 @@ export interface ConstructorCallReference extends BaseReference {
   readonly kind: "constructor_call";
   /** Location of the variable being assigned (optional - undefined for standalone calls) */
   readonly construct_target?: Location;
+  /**
+   * Location of the binding whose sequence literal holds this construction as
+   * an element: `suites` in `const suites = [new Suite()]`. The construction
+   * types the container's element, never the container, so a reference carries
+   * this or `construct_target`, not both.
+   */
+  readonly construct_element_of?: Location;
   /** Namespace-qualified constructors: ["models", "User"] for new models.User() */
   readonly property_chain?: readonly SymbolName[];
+  /**
+   * Rust full type path of an associated constructor, e.g.
+   * ["crate","runtime","Driver"] for `crate::runtime::Driver::new()` or
+   * ["Cell"] for `Cell::<u8>::new()`. Held separately from `property_chain`,
+   * whose two TypeScript-oriented consumers bake in a `[namespace, class]`
+   * index convention; this is a type-last path that scopes the terminal lookup.
+   * @language rust
+   */
+  readonly path_prefix?: readonly SymbolName[];
 }
 
 /**
@@ -189,6 +328,28 @@ export interface PropertyAccessReference extends BaseReference {
   readonly access_type: "property" | "index";
   /** Whether this uses optional chaining (obj?.field) */
   readonly is_optional_chain: boolean;
+}
+
+/**
+ * Callable read in value position: a function or method handed somewhere by
+ * name rather than invoked — a framework registration argument
+ * (`app.get('/users', user.list)`), an object-literal value
+ * (`{ handler: user.list }`), or a named function expression passed as an
+ * argument. No call site ever references the callable, so this reference is
+ * the only evidence it is reachable; call resolution records it as indirect
+ * reachability, never as a call edge.
+ *
+ * @language javascript,typescript
+ */
+export interface CallableValueReference extends BaseReference {
+  readonly kind: "callable_value";
+  /**
+   * Chain from receiver to the named callable (`["user", "list"]`); length 1
+   * for a bare name, including a named function expression's own name.
+   */
+  readonly property_chain: readonly SymbolName[];
+  /** Present when the chain has a receiver the resolver can type. */
+  readonly receiver_location?: Location;
 }
 
 /**
@@ -258,41 +419,4 @@ export function is_type_reference(ref: SymbolReference): ref is TypeReference {
 
 export function is_assignment(ref: SymbolReference): ref is AssignmentReference {
   return ref.kind === "assignment";
-}
-
-// ============================================================================
-// Resolution Types
-// ============================================================================
-
-/**
- * Confidence level for symbol resolution
- */
-export type ResolutionConfidence =
-  | "certain"    // Definite resolution (direct or all polymorphic implementations)
-  | "probable"   // High-confidence heuristic match
-  | "possible";  // Lower-confidence candidate
-
-/**
- * Structured reason for resolution
- *
- * Discriminated union allows type-safe analysis and serialization.
- */
-export type ResolutionReason =
-  | { type: "direct" }
-  | { type: "interface_implementation"; interface_id: SymbolId }
-  | { type: "collection_member"; collection_id: SymbolId; access_pattern?: string }
-  | { type: "heuristic_match"; score: number };
-
-/**
- * Single resolution candidate with metadata
- */
-export interface Resolution {
-  /** Resolved symbol identifier */
-  symbol_id: SymbolId;
-
-  /** Confidence level for this resolution */
-  confidence: ResolutionConfidence;
-
-  /** Structured reason explaining why this symbol was selected */
-  reason: ResolutionReason;
 }

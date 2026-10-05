@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
-        node-version: [20.x, 22.x]
+        node-version: [22.x]
         
     steps:
       - uses: actions/checkout@v4
@@ -25,14 +25,18 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 10
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Lint
+        run: pnpm run lint
+
       - name: Build
         run: pnpm build
+
+      - name: Typecheck
+        run: pnpm run typecheck
 
       - name: Check file sizes
         run: pnpm run check:size
@@ -40,15 +44,23 @@ jobs:
       - name: Run tests
         run: pnpm test
 
+      - name: Run root-level script tests (e.g. check-commit-message)
+        run: pnpm exec vitest run scripts/
+
+      - name: Run triage skill tests (registry guard, reconcile)
+        run: cd .claude/skills/triage && pnpm exec vitest run
+
+      - name: Run hook tests
+        run: pnpm exec vitest run .claude/hooks/
+
+      - name: Validate commit message convention
+        # Permissive validator — only intervenes when a commit subject's scope
+        # looks task-shaped (e.g. `fix(190.16.42):`). See
+        # `.claude/rules/commit-convention.md`.
+        run: node --import tsx scripts/check-commit-message.ts --ci
+
       - name: Check packages
         run: |
           pnpm --filter @ariadnejs/types pack --pack-destination /tmp
           pnpm --filter @ariadnejs/core pack --pack-destination /tmp
           pnpm --filter @ariadnejs/mcp pack --pack-destination /tmp
-
-      - name: Self-analysis validation
-        # Run validation but don't fail the build yet (accuracy improvements in progress)
-        continue-on-error: true
-        run: |
-          echo "🔍 Running Ariadne self-analysis validation..."
-          pnpm exec tsx packages/core/agent-validation/ci-validation.ts || echo "⚠️ Validation thresholds not met (expected during development)"

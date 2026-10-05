@@ -3,9 +3,9 @@ id: task-100.11.4
 title: Create immutable ProjectCallGraphData with update functions
 status: Done
 assignee:
-  - '@chuck'
-created_date: '2025-08-04 14:17'
-updated_date: '2025-08-04 15:03'
+  - "@chuck"
+created_date: "2025-08-04 14:17"
+updated_date: "2025-08-04 15:03"
 labels:
   - immutable
   - refactoring

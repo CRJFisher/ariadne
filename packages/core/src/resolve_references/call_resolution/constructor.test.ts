@@ -1,30 +1,32 @@
-/**
- * Tests for Constructor Call Resolution
- *
- * Verifies that resolve_constructor_call() correctly:
- * 1. Resolves constructor calls to the constructor symbol
- * 2. Falls back to class symbol when no explicit constructor exists
- * 3. Returns empty array for unresolved cases
- */
-
 import { describe, it, expect, beforeEach } from "vitest";
-import { resolve_constructor_call, find_constructor_in_class_hierarchy, include_constructors_for_class_symbols } from "./constructor";
+import { resolve_constructor_call, include_constructors_for_class_symbols } from "./constructor";
 import { DefinitionRegistry } from "../registries/definition";
-import { ResolutionRegistry } from "../resolve_references";
-import { set_test_resolutions } from "../resolve_references.test";
+import { ScopeRegistry } from "../registries/scope";
+import { ResolutionRegistry } from "../resolution_registry";
+import { ExportRegistry } from "../registries/export";
+import { ImportGraph } from "../import_resolution/import_graph";
+import { ReferenceRegistry } from "../registries/reference";
+import { TypeRegistry } from "../registries/type";
+import type { CallResolutionContext } from "./call_resolver";
+import type { FileSystemFolder } from "../file_folders";
+import { make_export_chain_context } from "../resolution_test_helpers";
+import { set_test_resolutions, unwrap } from "../resolve_references.test";
 import { create_constructor_call_reference } from "../../index_single_file/references/factories";
-import { class_symbol } from "@ariadnejs/types";
+import { class_symbol, is_err } from "@ariadnejs/types";
 import type {
   SymbolId,
   SymbolName,
   ScopeId,
   Location,
   FilePath,
+  Language,
   MethodDefinition,
   ClassDefinition,
   ConstructorDefinition,
   FunctionDefinition,
 } from "@ariadnejs/types";
+import { create_module_resolution_context } from "../import_resolution";
+import type { ModuleResolutionContext } from "../import_resolution";
 
 // Test fixtures
 const TEST_FILE = "test.ts" as FilePath;
@@ -44,22 +46,42 @@ const MOCK_LOCATION: Location = {
 
 describe("Constructor Call Resolution", () => {
   let definitions: DefinitionRegistry;
+  let scopes: ScopeRegistry;
   let resolutions: ResolutionRegistry;
+  let exports: ExportRegistry;
+  let imports: ImportGraph;
+  let languages: Map<FilePath, Language>;
+  let modules: ModuleResolutionContext;
 
   beforeEach(() => {
     definitions = new DefinitionRegistry();
+    scopes = new ScopeRegistry();
     resolutions = new ResolutionRegistry();
+    imports = new ImportGraph();
+    ({ exports, languages, modules } = make_export_chain_context());
   });
 
+  /** The slice of CallResolutionContext constructor resolution reads. */
+  function context(): CallResolutionContext {
+    return {
+      references: new ReferenceRegistry(),
+      types: new TypeRegistry(definitions),
+      definitions,
+      scopes,
+      resolutions,
+      exports,
+      imports,
+      languages,
+      modules,
+    };
+  }
+
   describe("Resolves to constructor symbol", () => {
-    it("should resolve constructor call to explicit constructor symbol", () => {
-      // Setup: class MyClass { constructor() {} }
-      //        const obj = new MyClass();
+    it("resolves a constructor call to the explicit constructor symbol", () => {
       const class_id = class_symbol("MyClass", MOCK_LOCATION);
       const constructor_id =
         "constructor:test.ts:2:2:4:3:constructor" as SymbolId;
 
-      // Create constructor definition
       const constructor_def: ConstructorDefinition = {
         kind: "constructor",
         symbol_id: constructor_id,
@@ -88,36 +110,30 @@ describe("Constructor Call Resolution", () => {
         methods: [],
         properties: [],
         decorators: [],
-        constructors: [constructor_def], // Constructor in separate array
+        constructors: [constructor_def],
       };
 
       definitions.update_file(TEST_FILE, [class_def, constructor_def]);
 
-      // Set up resolution registry to resolve 'MyClass' in scope
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("MyClass" as SymbolName, class_id);
       set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
-      // Create constructor call: new MyClass()
       const call_ref = create_constructor_call_reference(
         "MyClass" as SymbolName,
         MOCK_LOCATION,
         FILE_SCOPE_ID
       );
 
-      // Act
       const resolved = resolve_constructor_call(
         call_ref,
-        definitions,
-        resolutions
+        context()
       );
 
-      // Assert - should resolve to constructor symbol, not class symbol
-      expect(resolved).toEqual([constructor_id]);
+      expect(unwrap(resolved)).toEqual([constructor_id]);
     });
 
-    it("should resolve constructor with parameters", () => {
-      // Setup: class User { constructor(name: string, age: number) {} }
+    it("resolves a constructor that has parameters", () => {
       const class_id = class_symbol("User", MOCK_LOCATION);
       const constructor_id =
         "constructor:test.ts:2:2:5:3:constructor" as SymbolId;
@@ -166,37 +182,29 @@ describe("Constructor Call Resolution", () => {
 
       definitions.update_file(TEST_FILE, [class_def, constructor_def]);
 
-      // Set up resolution
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("User" as SymbolName, class_id);
       set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
-      // Create constructor call: new User("Alice", 30)
       const call_ref = create_constructor_call_reference(
         "User" as SymbolName,
         MOCK_LOCATION,
         FILE_SCOPE_ID
       );
 
-      // Act
       const resolved = resolve_constructor_call(
         call_ref,
-        definitions,
-        resolutions
+        context()
       );
 
-      // Assert
-      expect(resolved).toEqual([constructor_id]);
+      expect(unwrap(resolved)).toEqual([constructor_id]);
     });
   });
 
   describe("Falls back to class symbol", () => {
-    it("should return class symbol when no explicit constructor exists", () => {
-      // Setup: class SimpleClass { }
-      //        const obj = new SimpleClass();
+    it("returns the class symbol when no explicit constructor exists", () => {
       const class_id = class_symbol("SimpleClass", MOCK_LOCATION);
 
-      // Create class definition WITHOUT constructor
       const class_def: ClassDefinition = {
         kind: "class",
         symbol_id: class_id,
@@ -208,35 +216,29 @@ describe("Constructor Call Resolution", () => {
         methods: [],
         properties: [],
         decorators: [],
-        // No constructor field - undefined
       };
 
       definitions.update_file(TEST_FILE, [class_def]);
 
-      // Set up resolution
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("SimpleClass" as SymbolName, class_id);
       set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
-      // Create constructor call: new SimpleClass()
       const call_ref = create_constructor_call_reference(
         "SimpleClass" as SymbolName,
         MOCK_LOCATION,
         FILE_SCOPE_ID
       );
 
-      // Act
       const resolved = resolve_constructor_call(
         call_ref,
-        definitions,
-        resolutions
+        context()
       );
 
-      // Assert - falls back to class symbol
-      expect(resolved).toEqual([class_id]);
+      expect(unwrap(resolved)).toEqual([class_id]);
     });
 
-    it("should return class symbol when constructor array is empty", () => {
+    it("returns the class symbol when the constructor array is empty", () => {
       const class_id = class_symbol("EmptyClass", MOCK_LOCATION);
 
       const class_def: ClassDefinition = {
@@ -250,7 +252,7 @@ describe("Constructor Call Resolution", () => {
         methods: [],
         properties: [],
         decorators: [],
-        constructors: [], // Empty constructor array
+        constructors: [],
       };
 
       definitions.update_file(TEST_FILE, [class_def]);
@@ -267,17 +269,177 @@ describe("Constructor Call Resolution", () => {
 
       const resolved = resolve_constructor_call(
         call_ref,
-        definitions,
-        resolutions
+        context()
       );
 
-      expect(resolved).toEqual([class_id]);
+      expect(unwrap(resolved)).toEqual([class_id]);
+    });
+  });
+
+  describe("Inherited constructor (hierarchy walk)", () => {
+    it("resolves to the parent constructor when the child declares none", () => {
+      const parent_id = class_symbol("Parent", MOCK_LOCATION);
+      const child_id = class_symbol("Child", { ...MOCK_LOCATION, start_line: 10 });
+      const parent_ctor_id = "constructor:test.ts:2:2:4:3:constructor" as SymbolId;
+
+      const parent_ctor: ConstructorDefinition = {
+        kind: "constructor",
+        symbol_id: parent_ctor_id,
+        name: "__init__" as SymbolName,
+        defining_scope_id: PARENT_CLASS_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 2 },
+        parameters: [],
+        body_scope_id: PARENT_CONSTRUCTOR_SCOPE_ID,
+      };
+
+      const parent_def: ClassDefinition = {
+        kind: "class",
+        symbol_id: parent_id,
+        name: "Parent" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        is_exported: false,
+        extends: [],
+        methods: [],
+        properties: [],
+        decorators: [],
+        constructors: [parent_ctor],
+      };
+
+      const child_def: ClassDefinition = {
+        kind: "class",
+        symbol_id: child_id,
+        name: "Child" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 10 },
+        is_exported: false,
+        extends: ["Parent" as SymbolName],
+        methods: [],
+        properties: [],
+        decorators: [],
+      };
+
+      definitions.update_file(TEST_FILE, [parent_def, parent_ctor, child_def]);
+
+      const scope_resolutions = new Map<SymbolName, SymbolId>();
+      scope_resolutions.set("Parent" as SymbolName, parent_id);
+      scope_resolutions.set("Child" as SymbolName, child_id);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
+      definitions.resolve_type_heritage(TEST_FILE, (scope_id, name) =>
+        resolutions.resolve(scope_id, name)
+      );
+
+      const call_ref = create_constructor_call_reference(
+        "Child" as SymbolName,
+        MOCK_LOCATION,
+        FILE_SCOPE_ID
+      );
+
+      const resolved = resolve_constructor_call(
+        call_ref,
+        context()
+      );
+
+      expect(unwrap(resolved)).toEqual([parent_ctor_id]);
+    });
+
+    it("falls back to the class symbol when the extended parent is unresolvable", () => {
+      const child_id = class_symbol("Orphan", MOCK_LOCATION);
+
+      const child_def: ClassDefinition = {
+        kind: "class",
+        symbol_id: child_id,
+        name: "Orphan" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        is_exported: false,
+        extends: ["NonExistent" as SymbolName],
+        methods: [],
+        properties: [],
+        decorators: [],
+      };
+
+      definitions.update_file(TEST_FILE, [child_def]);
+
+      const scope_resolutions = new Map<SymbolName, SymbolId>();
+      scope_resolutions.set("Orphan" as SymbolName, child_id);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
+      definitions.resolve_type_heritage(TEST_FILE, (scope_id, name) =>
+        resolutions.resolve(scope_id, name)
+      );
+
+      const call_ref = create_constructor_call_reference(
+        "Orphan" as SymbolName,
+        MOCK_LOCATION,
+        FILE_SCOPE_ID
+      );
+
+      const resolved = resolve_constructor_call(
+        call_ref,
+        context()
+      );
+
+      expect(unwrap(resolved)).toEqual([child_id]);
+    });
+
+    it("terminates on a cyclic extends chain and falls back to the class symbol", () => {
+      const class_a_id = class_symbol("ClassA", MOCK_LOCATION);
+      const class_b_id = class_symbol("ClassB", { ...MOCK_LOCATION, start_line: 10 });
+
+      const class_a: ClassDefinition = {
+        kind: "class",
+        symbol_id: class_a_id,
+        name: "ClassA" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        is_exported: false,
+        extends: ["ClassB" as SymbolName],
+        methods: [],
+        properties: [],
+        decorators: [],
+      };
+
+      const class_b: ClassDefinition = {
+        kind: "class",
+        symbol_id: class_b_id,
+        name: "ClassB" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 10 },
+        is_exported: false,
+        extends: ["ClassA" as SymbolName],
+        methods: [],
+        properties: [],
+        decorators: [],
+      };
+
+      definitions.update_file(TEST_FILE, [class_a, class_b]);
+
+      const scope_resolutions = new Map<SymbolName, SymbolId>();
+      scope_resolutions.set("ClassA" as SymbolName, class_a_id);
+      scope_resolutions.set("ClassB" as SymbolName, class_b_id);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
+      definitions.resolve_type_heritage(TEST_FILE, (scope_id, name) =>
+        resolutions.resolve(scope_id, name)
+      );
+      expect(definitions.get_parent_types(class_a_id)).toEqual([class_b_id]);
+
+      const call_ref = create_constructor_call_reference(
+        "ClassA" as SymbolName,
+        MOCK_LOCATION,
+        FILE_SCOPE_ID
+      );
+
+      const resolved = resolve_constructor_call(
+        call_ref,
+        context()
+      );
+
+      expect(unwrap(resolved)).toEqual([class_a_id]);
     });
   });
 
   describe("Unresolved Cases", () => {
-    it("should return empty array when class not found in scope", () => {
-      // Class name not resolved - e.g., undefined class or missing import
+    it("fails with name_not_in_scope when the class name does not resolve", () => {
       set_test_resolutions(resolutions, FILE_SCOPE_ID, new Map());
 
       const call_ref = create_constructor_call_reference(
@@ -288,16 +450,17 @@ describe("Constructor Call Resolution", () => {
 
       const resolved = resolve_constructor_call(
         call_ref,
-        definitions,
-        resolutions
+        context()
       );
 
-      expect(resolved).toEqual([]);
+      expect(resolved.ok).toBe(false);
+      if (is_err(resolved)) {
+        expect(resolved.error.stage).toBe("constructor_lookup");
+        expect(resolved.error.reason).toBe("name_not_in_scope");
+      }
     });
 
-    it("should return empty array when symbol is not a class", () => {
-      // Setup: function NotAClass() {}
-      //        new NotAClass(); // <- this should fail
+    it("fails with constructor_target_not_a_class when the name resolves to a function", () => {
       const func_id = "function:test.ts:1:0:3:1:NotAClass" as SymbolId;
 
       const func_def: FunctionDefinition = {
@@ -327,23 +490,22 @@ describe("Constructor Call Resolution", () => {
 
       const resolved = resolve_constructor_call(
         call_ref,
-        definitions,
-        resolutions
+        context()
       );
 
-      // Function is not a class, so resolution fails
-      expect(resolved).toEqual([]);
+      expect(resolved.ok).toBe(false);
+      if (is_err(resolved)) {
+        expect(resolved.error.stage).toBe("constructor_lookup");
+        expect(resolved.error.reason).toBe("constructor_target_not_a_class");
+      }
     });
 
-    it("should return empty array when definition not found", () => {
-      // Symbol resolves but has no definition in registry
+    it("fails when the resolved symbol has no definition in the registry", () => {
       const unknown_id = "class:test.ts:1:0:1:10:Unknown" as SymbolId;
 
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("Unknown" as SymbolName, unknown_id);
       set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
-
-      // Don't add definition to registry
 
       const call_ref = create_constructor_call_reference(
         "Unknown" as SymbolName,
@@ -353,21 +515,21 @@ describe("Constructor Call Resolution", () => {
 
       const resolved = resolve_constructor_call(
         call_ref,
-        definitions,
-        resolutions
+        context()
       );
 
-      expect(resolved).toEqual([]);
+      expect(resolved.ok).toBe(false);
+      if (is_err(resolved)) {
+        expect(resolved.error.stage).toBe("constructor_lookup");
+        expect(resolved.error.reason).toBe("constructor_target_not_a_class");
+      }
     });
   });
 
-  describe("Bug fix verification: constructor in separate field", () => {
-    it("should NOT find constructor when stored in methods array (old bug behavior)", () => {
-      // This test verifies the bug is fixed: constructors should NOT be looked up in methods
+  describe("Constructor stored outside the constructors array", () => {
+    it("does not treat a method named `constructor` as the constructor", () => {
       const class_id = class_symbol("BuggyClass", MOCK_LOCATION);
 
-      // Create a method named "constructor" in the methods array
-      // This is NOT how constructors should be stored
       const fake_constructor_method: MethodDefinition = {
         kind: "method",
         symbol_id: "method:test.ts:2:2:4:3:constructor" as SymbolId,
@@ -386,10 +548,9 @@ describe("Constructor Call Resolution", () => {
         location: MOCK_LOCATION,
         is_exported: false,
         extends: [],
-        methods: [fake_constructor_method], // WRONG: constructor in methods
+        methods: [fake_constructor_method],
         properties: [],
         decorators: [],
-        // No constructor field
       };
 
       definitions.update_file(TEST_FILE, [class_def]);
@@ -406,200 +567,12 @@ describe("Constructor Call Resolution", () => {
 
       const resolved = resolve_constructor_call(
         call_ref,
-        definitions,
-        resolutions
+        context()
       );
 
-      // Should NOT find the "constructor" in methods array
-      // Should fall back to class symbol
-      expect(resolved).toEqual([class_id]);
-      expect(resolved).not.toContain(fake_constructor_method.symbol_id);
+      expect(unwrap(resolved)).toEqual([class_id]);
+      expect(unwrap(resolved)).not.toContain(fake_constructor_method.symbol_id);
     });
-  });
-});
-
-describe("find_constructor_in_class_hierarchy", () => {
-  let definitions: DefinitionRegistry;
-  let resolutions: ResolutionRegistry;
-
-  beforeEach(() => {
-    definitions = new DefinitionRegistry();
-    resolutions = new ResolutionRegistry();
-  });
-
-  it("returns direct constructor when class has one", () => {
-    const class_id = class_symbol("MyClass", MOCK_LOCATION);
-    const constructor_id = "constructor:test.ts:2:2:4:3:constructor" as SymbolId;
-
-    const constructor_def: ConstructorDefinition = {
-      kind: "constructor",
-      symbol_id: constructor_id,
-      name: "constructor" as SymbolName,
-      defining_scope_id: CLASS_SCOPE_ID,
-      location: { ...MOCK_LOCATION, start_line: 2 },
-      parameters: [],
-      body_scope_id: CONSTRUCTOR_SCOPE_ID,
-    };
-
-    const class_def: ClassDefinition = {
-      kind: "class",
-      symbol_id: class_id,
-      name: "MyClass" as SymbolName,
-      defining_scope_id: FILE_SCOPE_ID,
-      location: MOCK_LOCATION,
-      is_exported: false,
-      extends: [],
-      methods: [],
-      properties: [],
-      decorators: [],
-      constructors: [constructor_def],
-    };
-
-    definitions.update_file(TEST_FILE, [class_def, constructor_def]);
-
-    const result = find_constructor_in_class_hierarchy(class_def, definitions, resolutions);
-    expect(result).toBe(constructor_id);
-  });
-
-  it("walks up to parent when child has no constructor", () => {
-    const parent_id = class_symbol("Parent", MOCK_LOCATION);
-    const child_id = class_symbol("Child", { ...MOCK_LOCATION, start_line: 10 });
-    const parent_ctor_id = "constructor:test.ts:2:2:4:3:constructor" as SymbolId;
-
-    const parent_ctor: ConstructorDefinition = {
-      kind: "constructor",
-      symbol_id: parent_ctor_id,
-      name: "__init__" as SymbolName,
-      defining_scope_id: PARENT_CLASS_SCOPE_ID,
-      location: { ...MOCK_LOCATION, start_line: 2 },
-      parameters: [],
-      body_scope_id: PARENT_CONSTRUCTOR_SCOPE_ID,
-    };
-
-    const parent_def: ClassDefinition = {
-      kind: "class",
-      symbol_id: parent_id,
-      name: "Parent" as SymbolName,
-      defining_scope_id: FILE_SCOPE_ID,
-      location: MOCK_LOCATION,
-      is_exported: false,
-      extends: [],
-      methods: [],
-      properties: [],
-      decorators: [],
-      constructors: [parent_ctor],
-    };
-
-    const child_def: ClassDefinition = {
-      kind: "class",
-      symbol_id: child_id,
-      name: "Child" as SymbolName,
-      defining_scope_id: FILE_SCOPE_ID,
-      location: { ...MOCK_LOCATION, start_line: 10 },
-      is_exported: false,
-      extends: ["Parent" as SymbolName],
-      methods: [],
-      properties: [],
-      decorators: [],
-      // No constructors
-    };
-
-    definitions.update_file(TEST_FILE, [parent_def, parent_ctor, child_def]);
-
-    // Set up resolution: "Parent" resolves to parent_id in FILE_SCOPE_ID
-    const scope_resolutions = new Map<SymbolName, SymbolId>();
-    scope_resolutions.set("Parent" as SymbolName, parent_id);
-    set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
-
-    const result = find_constructor_in_class_hierarchy(child_def, definitions, resolutions);
-    expect(result).toBe(parent_ctor_id);
-  });
-
-  it("returns null when no constructor in hierarchy", () => {
-    const class_id = class_symbol("NoCtorClass", MOCK_LOCATION);
-
-    const class_def: ClassDefinition = {
-      kind: "class",
-      symbol_id: class_id,
-      name: "NoCtorClass" as SymbolName,
-      defining_scope_id: FILE_SCOPE_ID,
-      location: MOCK_LOCATION,
-      is_exported: false,
-      extends: [],
-      methods: [],
-      properties: [],
-      decorators: [],
-    };
-
-    definitions.update_file(TEST_FILE, [class_def]);
-
-    const result = find_constructor_in_class_hierarchy(class_def, definitions, resolutions);
-    expect(result).toBeNull();
-  });
-
-  it("handles missing parent gracefully", () => {
-    const child_id = class_symbol("Orphan", MOCK_LOCATION);
-
-    const child_def: ClassDefinition = {
-      kind: "class",
-      symbol_id: child_id,
-      name: "Orphan" as SymbolName,
-      defining_scope_id: FILE_SCOPE_ID,
-      location: MOCK_LOCATION,
-      is_exported: false,
-      extends: ["NonExistent" as SymbolName],
-      methods: [],
-      properties: [],
-      decorators: [],
-    };
-
-    definitions.update_file(TEST_FILE, [child_def]);
-    // "NonExistent" is not in resolutions
-
-    const result = find_constructor_in_class_hierarchy(child_def, definitions, resolutions);
-    expect(result).toBeNull();
-  });
-
-  it("handles cycles in class hierarchy", () => {
-    const class_a_id = class_symbol("ClassA", MOCK_LOCATION);
-    const class_b_id = class_symbol("ClassB", { ...MOCK_LOCATION, start_line: 10 });
-
-    const class_a: ClassDefinition = {
-      kind: "class",
-      symbol_id: class_a_id,
-      name: "ClassA" as SymbolName,
-      defining_scope_id: FILE_SCOPE_ID,
-      location: MOCK_LOCATION,
-      is_exported: false,
-      extends: ["ClassB" as SymbolName],
-      methods: [],
-      properties: [],
-      decorators: [],
-    };
-
-    const class_b: ClassDefinition = {
-      kind: "class",
-      symbol_id: class_b_id,
-      name: "ClassB" as SymbolName,
-      defining_scope_id: FILE_SCOPE_ID,
-      location: { ...MOCK_LOCATION, start_line: 10 },
-      is_exported: false,
-      extends: ["ClassA" as SymbolName],
-      methods: [],
-      properties: [],
-      decorators: [],
-    };
-
-    definitions.update_file(TEST_FILE, [class_a, class_b]);
-
-    const scope_resolutions = new Map<SymbolName, SymbolId>();
-    scope_resolutions.set("ClassA" as SymbolName, class_a_id);
-    scope_resolutions.set("ClassB" as SymbolName, class_b_id);
-    set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
-
-    // Should not infinite loop — returns null
-    const result = find_constructor_in_class_hierarchy(class_a, definitions, resolutions);
-    expect(result).toBeNull();
   });
 });
 
@@ -642,7 +615,7 @@ describe("include_constructors_for_class_symbols", () => {
 
     definitions.update_file(TEST_FILE, [class_def, constructor_def]);
 
-    const result = include_constructors_for_class_symbols([class_id], definitions, resolutions);
+    const result = include_constructors_for_class_symbols([class_id], definitions);
     expect(result).toEqual([class_id, constructor_id]);
   });
 
@@ -679,8 +652,7 @@ describe("include_constructors_for_class_symbols", () => {
     // Constructor already in the list
     const result = include_constructors_for_class_symbols(
       [class_id, constructor_id],
-      definitions,
-      resolutions
+      definitions
     );
     expect(result).toEqual([class_id, constructor_id]);
   });
@@ -700,12 +672,12 @@ describe("include_constructors_for_class_symbols", () => {
 
     definitions.update_file(TEST_FILE, [func_def]);
 
-    const result = include_constructors_for_class_symbols([func_id], definitions, resolutions);
+    const result = include_constructors_for_class_symbols([func_id], definitions);
     expect(result).toEqual([func_id]);
   });
 
   it("returns empty array unchanged", () => {
-    const result = include_constructors_for_class_symbols([], definitions, resolutions);
+    const result = include_constructors_for_class_symbols([], definitions);
     expect(result).toEqual([]);
   });
 });

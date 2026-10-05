@@ -6,6 +6,7 @@ import {
   create_constructor_call_reference,
   create_variable_reference,
   create_property_access_reference,
+  create_callable_value_reference,
   create_type_reference,
   create_assignment_reference,
 } from "./factories";
@@ -44,7 +45,6 @@ describe("Reference Factories", () => {
         "method" as SymbolName,
         mock_location,
         mock_scope_id,
-        "this",
         ["this" as SymbolName, "method" as SymbolName]
       );
 
@@ -53,7 +53,6 @@ describe("Reference Factories", () => {
         name: "method",
         location: mock_location,
         scope_id: mock_scope_id,
-        keyword: "this",
         property_chain: ["this", "method"],
       });
     });
@@ -63,12 +62,11 @@ describe("Reference Factories", () => {
         "process_data" as SymbolName,
         mock_location,
         mock_scope_id,
-        "self",
         ["self" as SymbolName, "process_data" as SymbolName]
       );
 
       expect(ref.kind).toBe("self_reference_call");
-      expect(ref.keyword).toBe("self");
+      expect(ref.property_chain[0]).toBe("self");
       expect(ref.name).toBe("process_data");
       expect(ref.property_chain).toEqual(["self", "process_data"]);
     });
@@ -78,12 +76,11 @@ describe("Reference Factories", () => {
         "parent_method" as SymbolName,
         mock_location,
         mock_scope_id,
-        "super",
         ["super" as SymbolName, "parent_method" as SymbolName]
       );
 
       expect(ref.kind).toBe("self_reference_call");
-      expect(ref.keyword).toBe("super");
+      expect(ref.property_chain[0]).toBe("super");
     });
 
     test("creates valid SelfReferenceCall with cls keyword", () => {
@@ -91,12 +88,11 @@ describe("Reference Factories", () => {
         "class_method" as SymbolName,
         mock_location,
         mock_scope_id,
-        "cls",
         ["cls" as SymbolName, "class_method" as SymbolName]
       );
 
       expect(ref.kind).toBe("self_reference_call");
-      expect(ref.keyword).toBe("cls");
+      expect(ref.property_chain[0]).toBe("cls");
     });
   });
 
@@ -163,6 +159,36 @@ describe("Reference Factories", () => {
       expect(ref.kind).toBe("function_call");
       expect(Object.keys(ref)).toEqual(["kind", "name", "location", "scope_id"]);
     });
+
+    test("carries where a possible instantiation would be stored: the binding, or its element", () => {
+      const stored = create_function_call_reference(
+        "Suite" as SymbolName,
+        mock_location,
+        mock_scope_id,
+        { location: mock_target_location, holds: "value" }
+      );
+      const element = create_function_call_reference(
+        "Suite" as SymbolName,
+        mock_location,
+        mock_scope_id,
+        { location: mock_target_location, holds: "element" }
+      );
+
+      expect(stored).toEqual({
+        kind: "function_call",
+        name: "Suite",
+        location: mock_location,
+        scope_id: mock_scope_id,
+        potential_construct_target: mock_target_location,
+      });
+      expect(element).toEqual({
+        kind: "function_call",
+        name: "Suite",
+        location: mock_location,
+        scope_id: mock_scope_id,
+        potential_construct_element_of: mock_target_location,
+      });
+    });
   });
 
   describe("create_constructor_call_reference", () => {
@@ -171,7 +197,7 @@ describe("Reference Factories", () => {
         "MyClass" as SymbolName,
         mock_location,
         mock_scope_id,
-        mock_target_location
+        { location: mock_target_location, holds: "value" }
       );
 
       expect(ref).toEqual({
@@ -183,16 +209,21 @@ describe("Reference Factories", () => {
       });
     });
 
-    test("includes construct_target location", () => {
+    test("carries an element target as construct_element_of, never construct_target", () => {
       const ref = create_constructor_call_reference(
-        "Service" as SymbolName,
+        "Suite" as SymbolName,
         mock_location,
         mock_scope_id,
-        mock_target_location
+        { location: mock_target_location, holds: "element" }
       );
 
-      expect(ref.kind).toBe("constructor_call");
-      expect(ref.construct_target).toEqual(mock_target_location);
+      expect(ref).toEqual({
+        kind: "constructor_call",
+        name: "Suite",
+        location: mock_location,
+        scope_id: mock_scope_id,
+        construct_element_of: mock_target_location,
+      });
     });
   });
 
@@ -279,6 +310,27 @@ describe("Reference Factories", () => {
 
       expect(ref.kind).toBe("property_access");
       expect(ref.is_optional_chain).toBe(true);
+    });
+  });
+
+  describe("create_callable_value_reference", () => {
+    test("builds a callable value reference carrying its property chain", () => {
+      const ref = create_callable_value_reference(
+        "list" as SymbolName,
+        mock_location,
+        mock_scope_id,
+        ["user" as SymbolName, "list" as SymbolName],
+        mock_receiver_location
+      );
+
+      expect(ref).toEqual({
+        kind: "callable_value",
+        name: "list" as SymbolName,
+        location: mock_location,
+        scope_id: mock_scope_id,
+        property_chain: ["user" as SymbolName, "list" as SymbolName],
+        receiver_location: mock_receiver_location,
+      });
     });
   });
 
@@ -386,7 +438,6 @@ describe("Reference Factories", () => {
         "method" as SymbolName,
         mock_location,
         mock_scope_id,
-        "this",
         ["this" as SymbolName, "method" as SymbolName]
       );
       const method_ref = create_method_call_reference(
@@ -406,7 +457,7 @@ describe("Reference Factories", () => {
         "Class" as SymbolName,
         mock_location,
         mock_scope_id,
-        mock_target_location
+        { location: mock_target_location, holds: "value" }
       );
       const var_ref = create_variable_reference(
         "x" as SymbolName,

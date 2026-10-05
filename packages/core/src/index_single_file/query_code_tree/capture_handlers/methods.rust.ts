@@ -4,21 +4,52 @@
  * Separated from main capture_handlers.rust.ts to keep file sizes manageable.
  */
 
-import type { SymbolName } from "@ariadnejs/types";
-import type { DefinitionBuilder } from "../../definitions/definitions";
-import type { CaptureNode, ProcessingContext } from "../../index_single_file";
+import type { SymbolName, TypeParameter } from "@ariadnejs/types";
+import type { DefinitionBuilder } from "../../definitions/definition_builder";
+import type { ImplMethodInput } from "../../definitions/method_input";
+import type { CaptureNode } from "../../capture_types";
+import type { ProcessingContext } from "../../scopes/processing_context";
 import {
   create_method_id,
+  extract_generic_parameters,
   extract_return_type,
   find_containing_impl,
   find_containing_trait,
   is_associated_function,
-  consume_documentation,
 } from "../symbol_factories/symbol_factories.rust";
+import {
+  consume_documentation,
+} from "../symbol_factories/documentation_state.rust";
 
 // ============================================================================
 // METHOD HANDLERS
 // ============================================================================
+
+/**
+ * Attach an impl-block method to the struct or enum this file declares under
+ * its self type, or keep it unattached when the type is declared elsewhere —
+ * the method is indexed either way, carrying the names its type and trait are
+ * resolved by.
+ */
+function add_impl_method(builder: DefinitionBuilder, method_def: ImplMethodInput): void {
+  const struct_id = builder.find_class_by_name(method_def.impl_self_type);
+  if (struct_id) {
+    builder.add_method_to_class(struct_id, method_def);
+    return;
+  }
+  const enum_id = builder.find_enum_by_name(method_def.impl_self_type);
+  if (enum_id) {
+    builder.add_method_to_enum(enum_id, method_def);
+    return;
+  }
+  builder.add_unattached_impl_method(method_def);
+}
+
+/** The type parameters a method declares, with the bounds its `where` clause writes. */
+function method_generics(capture: CaptureNode): readonly TypeParameter[] | undefined {
+  const generics = extract_generic_parameters(capture.node.parent || capture.node);
+  return generics.length > 0 ? generics : undefined;
+}
 
 export function handle_definition_method(
   capture: CaptureNode,
@@ -40,48 +71,11 @@ export function handle_definition_method(
       return_type: return_type,
       static: is_static || undefined,
       docstring,
+      generics: method_generics(capture),
+      impl_self_type: impl_info.struct_name,
+      impl_trait_name: impl_info.trait_name,
     };
-    const struct_id = builder.find_class_by_name(impl_info.struct_name);
-    if (struct_id) {
-      builder.add_method_to_class(struct_id, method_def, capture);
-    } else {
-      const enum_id = builder.find_enum_by_name(impl_info.struct_name);
-      if (enum_id) {
-        builder.add_method_to_enum(enum_id, method_def, capture);
-      }
-    }
-  }
-}
-
-export function handle_definition_method_associated(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const method_id = create_method_id(capture);
-  const impl_info = find_containing_impl(capture);
-  const return_type = extract_return_type(capture.node.parent || capture.node);
-  const docstring = consume_documentation(capture.location);
-
-  if (impl_info?.struct_name) {
-    const method_def = {
-      symbol_id: method_id,
-      name: capture.text,
-      location: capture.location,
-      scope_id: context.get_scope_id(capture.location),
-      return_type: return_type,
-      static: true as const,
-      docstring,
-    };
-    const struct_id = builder.find_class_by_name(impl_info.struct_name);
-    if (struct_id) {
-      builder.add_method_to_class(struct_id, method_def, capture);
-    } else {
-      const enum_id = builder.find_enum_by_name(impl_info.struct_name);
-      if (enum_id) {
-        builder.add_method_to_enum(enum_id, method_def, capture);
-      }
-    }
+    add_impl_method(builder, method_def);
   }
 }
 
@@ -106,6 +100,7 @@ export function handle_definition_method_default(
         scope_id: context.get_scope_id(capture.location),
         return_type: return_type,
         docstring,
+        optional: true,
       });
     }
   }
@@ -130,16 +125,11 @@ export function handle_definition_method_async(
       return_type: return_type,
       async: true as const,
       docstring,
+      generics: method_generics(capture),
+      impl_self_type: impl_info.struct_name,
+      impl_trait_name: impl_info.trait_name,
     };
-    const struct_id = builder.find_class_by_name(impl_info.struct_name);
-    if (struct_id) {
-      builder.add_method_to_class(struct_id, method_def, capture);
-    } else {
-      const enum_id = builder.find_enum_by_name(impl_info.struct_name);
-      if (enum_id) {
-        builder.add_method_to_enum(enum_id, method_def, capture);
-      }
-    }
+    add_impl_method(builder, method_def);
   }
 }
 
@@ -162,15 +152,10 @@ export function handle_definition_constructor(
       return_type: return_type,
       static: true as const,
       docstring,
+      generics: method_generics(capture),
+      impl_self_type: impl_info.struct_name,
+      impl_trait_name: impl_info.trait_name,
     };
-    const struct_id = builder.find_class_by_name(impl_info.struct_name);
-    if (struct_id) {
-      builder.add_method_to_class(struct_id, method_def, capture);
-    } else {
-      const enum_id = builder.find_enum_by_name(impl_info.struct_name);
-      if (enum_id) {
-        builder.add_method_to_enum(enum_id, method_def, capture);
-      }
-    }
+    add_impl_method(builder, method_def);
   }
 }

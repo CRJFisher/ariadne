@@ -1,9 +1,3 @@
-/**
- * Unit Tests for Resolution State
- *
- * Tests the pure query and update functions that operate on ResolutionState.
- */
-
 import { describe, it, expect } from "vitest";
 import {
   create_resolution_state,
@@ -12,13 +6,18 @@ import {
   type CallResolutionResult,
   resolve,
   get_calls_by_caller_scope,
+  get_calls_for_file,
   get_all_referenced_symbols,
   get_indirect_reachability,
+  get_files_dispatching_through,
+  get_undeclared_interfaces,
   size,
-  remove_file,
+  remove_files,
   apply_name_resolution,
   apply_call_resolution,
   clear,
+  lookup_in_scope_chain,
+  type ScopeResolutions,
 } from "./resolution_state";
 import { function_symbol } from "@ariadnejs/types";
 import type {
@@ -28,9 +27,9 @@ import type {
   FilePath,
   Location,
   CallReference,
+  IndirectReachability,
+  IndirectReachabilityReason,
 } from "@ariadnejs/types";
-import type { IndirectReachabilityEntry } from "./indirect_reachability";
-import type { IndirectReachabilityReason } from "@ariadnejs/types";
 
 const TEST_FILE = "test.ts" as FilePath;
 const FILE_A = "a.ts" as FilePath;
@@ -62,7 +61,6 @@ const MOCK_LOCATION_B: Location = {
   end_column: 10,
 };
 
-// Helper for creating mock collection IDs
 const MOCK_COLLECTION_ID = "variable:test.ts:1:0:1:10:handlers" as SymbolId;
 const MOCK_COLLECTION_ID_A = "variable:a.ts:1:0:1:10:handlers" as SymbolId;
 const MOCK_COLLECTION_ID_B = "variable:b.ts:1:0:1:10:handlers" as SymbolId;
@@ -71,13 +69,38 @@ const MOCK_COLLECTION_ID_B = "variable:b.ts:1:0:1:10:handlers" as SymbolId;
 // Query Function Tests
 // ============================================================================
 
+/** A scope binding these names and inheriting nothing — the shape state stores. */
+function bindings(own: Map<SymbolName, SymbolId>): ScopeResolutions {
+  return { own, parent: null };
+}
+
+describe("create_resolution_state", () => {
+  it("returns a state with six empty maps", () => {
+    const state = create_resolution_state();
+
+    expect(state.resolutions_by_scope.size).toBe(0);
+    expect(state.scope_to_file.size).toBe(0);
+    expect(state.resolved_calls_by_file.size).toBe(0);
+    expect(state.calls_by_caller_scope.size).toBe(0);
+    expect(state.indirect_reachability.size).toBe(0);
+    expect(state.subtype_dispatch_files.size).toBe(0);
+  });
+
+  it("returns independent state instances on each call", () => {
+    const first = create_resolution_state();
+    const second = create_resolution_state();
+
+    expect(first.resolutions_by_scope).not.toBe(second.resolutions_by_scope);
+  });
+});
+
 describe("resolve", () => {
-  it("should return SymbolId when resolution exists", () => {
+  it("returns the SymbolId when a resolution exists", () => {
     const symbol_id = function_symbol("greet" as SymbolName, MOCK_LOCATION);
     const state: ResolutionState = {
       ...create_resolution_state(),
       resolutions_by_scope: new Map([
-        [SCOPE_A, new Map([["greet" as SymbolName, symbol_id]])],
+        [SCOPE_A, bindings(new Map([["greet" as SymbolName, symbol_id]]))],
       ]),
     };
 
@@ -86,7 +109,7 @@ describe("resolve", () => {
     expect(result).toBe(symbol_id);
   });
 
-  it("should return null when scope not found", () => {
+  it("returns null when the scope is not found", () => {
     const state = create_resolution_state();
 
     const result = resolve(state, SCOPE_A, "greet" as SymbolName);
@@ -94,12 +117,12 @@ describe("resolve", () => {
     expect(result).toBeNull();
   });
 
-  it("should return null when name not found in scope", () => {
+  it("returns null when the name is not found in the scope", () => {
     const symbol_id = function_symbol("greet" as SymbolName, MOCK_LOCATION);
     const state: ResolutionState = {
       ...create_resolution_state(),
       resolutions_by_scope: new Map([
-        [SCOPE_A, new Map([["greet" as SymbolName, symbol_id]])],
+        [SCOPE_A, bindings(new Map([["greet" as SymbolName, symbol_id]]))],
       ]),
     };
 
@@ -110,7 +133,7 @@ describe("resolve", () => {
 });
 
 describe("get_calls_by_caller_scope", () => {
-  it("should return calls for existing scope", () => {
+  it("returns the calls for an existing scope", () => {
     const symbol_id = function_symbol("helper" as SymbolName, MOCK_LOCATION);
     const call: CallReference = {
       call_type: "function",
@@ -129,7 +152,7 @@ describe("get_calls_by_caller_scope", () => {
     expect(result).toEqual([call]);
   });
 
-  it("should return empty array when scope has no calls", () => {
+  it("returns an empty array when the scope has no calls", () => {
     const state = create_resolution_state();
 
     const result = get_calls_by_caller_scope(state, SCOPE_A);
@@ -139,7 +162,7 @@ describe("get_calls_by_caller_scope", () => {
 });
 
 describe("get_all_referenced_symbols", () => {
-  it("should return empty set for empty state", () => {
+  it("returns an empty set for empty state", () => {
     const state = create_resolution_state();
 
     const result = get_all_referenced_symbols(state);
@@ -147,7 +170,7 @@ describe("get_all_referenced_symbols", () => {
     expect(result.size).toBe(0);
   });
 
-  it("should collect symbols from resolved calls", () => {
+  it("collects symbols from resolved calls", () => {
     const symbol_a = function_symbol("funcA" as SymbolName, MOCK_LOCATION);
     const symbol_b = function_symbol("funcB" as SymbolName, MOCK_LOCATION);
 
@@ -175,12 +198,10 @@ describe("get_all_referenced_symbols", () => {
 
     const result = get_all_referenced_symbols(state);
 
-    expect(result.size).toBe(2);
-    expect(result.has(symbol_a)).toBe(true);
-    expect(result.has(symbol_b)).toBe(true);
+    expect(result).toEqual(new Set([symbol_a, symbol_b]));
   });
 
-  it("should collect symbols from multi-candidate resolutions", () => {
+  it("collects symbols from multi-candidate resolutions", () => {
     const other_file = "other.ts" as FilePath;
     const other_location: Location = {
       file_path: other_file,
@@ -190,7 +211,6 @@ describe("get_all_referenced_symbols", () => {
       end_column: 10,
     };
 
-    // Use different names to ensure different symbol IDs
     const symbol_a = function_symbol("overloadedA" as SymbolName, MOCK_LOCATION);
     const symbol_b = function_symbol("overloadedB" as SymbolName, other_location);
 
@@ -214,59 +234,114 @@ describe("get_all_referenced_symbols", () => {
 
     const result = get_all_referenced_symbols(state);
 
-    expect(result.size).toBe(2);
-    expect(result.has(symbol_a)).toBe(true);
-    expect(result.has(symbol_b)).toBe(true);
+    expect(result).toEqual(new Set([symbol_a, symbol_b]));
   });
 
-  it("should include indirectly reachable symbols", () => {
+  it("includes indirectly reachable symbols", () => {
     const symbol_id = function_symbol("callback" as SymbolName, MOCK_LOCATION);
     const reason: IndirectReachabilityReason = {
       type: "collection_read",
       collection_id: MOCK_COLLECTION_ID,
       read_location: MOCK_LOCATION,
     };
-    const entry: IndirectReachabilityEntry = {
-      function_id: symbol_id,
+    const entry: IndirectReachability = {
       reason,
     };
 
     const state: ResolutionState = {
       ...create_resolution_state(),
       indirect_reachability: new Map([[symbol_id, entry]]),
+      subtype_dispatch_files: new Map(),
     };
 
     const result = get_all_referenced_symbols(state);
 
-    expect(result.size).toBe(1);
-    expect(result.has(symbol_id)).toBe(true);
+    expect(result).toEqual(new Set([symbol_id]));
   });
 
-  it("should include function_reference indirect reachability entries", () => {
+  it("includes function_reference indirect reachability entries", () => {
     const symbol_id = function_symbol("doubler" as SymbolName, MOCK_LOCATION);
     const reason: IndirectReachabilityReason = {
       type: "function_reference",
       read_location: MOCK_LOCATION,
     };
-    const entry: IndirectReachabilityEntry = {
-      function_id: symbol_id,
+    const entry: IndirectReachability = {
       reason,
     };
 
     const state: ResolutionState = {
       ...create_resolution_state(),
       indirect_reachability: new Map([[symbol_id, entry]]),
+      subtype_dispatch_files: new Map(),
     };
 
     const result = get_all_referenced_symbols(state);
 
-    expect(result.size).toBe(1);
-    expect(result.has(symbol_id)).toBe(true);
+    expect(result).toEqual(new Set([symbol_id]));
+  });
+
+  it("unions symbols from resolved calls and indirect reachability", () => {
+    const called = function_symbol("called" as SymbolName, MOCK_LOCATION);
+    const indirect = function_symbol("indirect" as SymbolName, MOCK_LOCATION);
+
+    const call: CallReference = {
+      call_type: "function",
+      name: "called" as SymbolName,
+      location: MOCK_LOCATION,
+      scope_id: SCOPE_A,
+      resolutions: [{ symbol_id: called, confidence: "certain", reason: { type: "direct" } }],
+    };
+    const entry: IndirectReachability = {
+      reason: {
+        type: "function_reference",
+        read_location: MOCK_LOCATION,
+      },
+    };
+
+    const state: ResolutionState = {
+      ...create_resolution_state(),
+      resolved_calls_by_file: new Map([[TEST_FILE, [call]]]),
+      indirect_reachability: new Map([[indirect, entry]]),
+      subtype_dispatch_files: new Map(),
+    };
+
+    const result = get_all_referenced_symbols(state);
+
+    expect(result).toEqual(new Set([called, indirect]));
+  });
+});
+
+describe("get_calls_for_file", () => {
+  it("returns the resolved calls for a tracked file", () => {
+    const symbol_a = function_symbol("funcA" as SymbolName, MOCK_LOCATION_A);
+    const call: CallReference = {
+      call_type: "function",
+      name: "funcA" as SymbolName,
+      location: MOCK_LOCATION_A,
+      scope_id: SCOPE_A,
+      resolutions: [{ symbol_id: symbol_a, confidence: "certain", reason: { type: "direct" } }],
+    };
+    const state: ResolutionState = {
+      ...create_resolution_state(),
+      resolved_calls_by_file: new Map([[FILE_A, [call]]]),
+    };
+
+    const result = get_calls_for_file(state, FILE_A);
+
+    expect(result).toEqual([call]);
+  });
+
+  it("returns an empty array for an untracked file", () => {
+    const state = create_resolution_state();
+
+    const result = get_calls_for_file(state, FILE_A);
+
+    expect(result).toEqual([]);
   });
 });
 
 describe("get_indirect_reachability", () => {
-  it("should return empty map for empty state", () => {
+  it("returns an empty map for empty state", () => {
     const state = create_resolution_state();
 
     const result = get_indirect_reachability(state);
@@ -274,21 +349,21 @@ describe("get_indirect_reachability", () => {
     expect(result.size).toBe(0);
   });
 
-  it("should return indirect reachability map", () => {
+  it("returns the indirect reachability map", () => {
     const symbol_id = function_symbol("callback" as SymbolName, MOCK_LOCATION);
     const reason: IndirectReachabilityReason = {
       type: "collection_read",
       collection_id: MOCK_COLLECTION_ID,
       read_location: MOCK_LOCATION,
     };
-    const entry: IndirectReachabilityEntry = {
-      function_id: symbol_id,
+    const entry: IndirectReachability = {
       reason,
     };
 
     const state: ResolutionState = {
       ...create_resolution_state(),
       indirect_reachability: new Map([[symbol_id, entry]]),
+      subtype_dispatch_files: new Map(),
     };
 
     const result = get_indirect_reachability(state);
@@ -299,7 +374,7 @@ describe("get_indirect_reachability", () => {
 });
 
 describe("size", () => {
-  it("should return 0 for empty state", () => {
+  it("returns 0 for empty state", () => {
     const state = create_resolution_state();
 
     const result = size(state);
@@ -307,7 +382,7 @@ describe("size", () => {
     expect(result).toBe(0);
   });
 
-  it("should count resolutions across all scopes", () => {
+  it("counts resolutions across all scopes", () => {
     const symbol_a = function_symbol("funcA" as SymbolName, MOCK_LOCATION);
     const symbol_b = function_symbol("funcB" as SymbolName, MOCK_LOCATION);
     const symbol_c = function_symbol("funcC" as SymbolName, MOCK_LOCATION);
@@ -315,13 +390,15 @@ describe("size", () => {
     const state: ResolutionState = {
       ...create_resolution_state(),
       resolutions_by_scope: new Map([
-        [SCOPE_A, new Map([["funcA" as SymbolName, symbol_a]])],
+        [SCOPE_A, bindings(new Map([["funcA" as SymbolName, symbol_a]]))],
         [
           SCOPE_B,
-          new Map([
-            ["funcB" as SymbolName, symbol_b],
-            ["funcC" as SymbolName, symbol_c],
-          ]),
+          bindings(
+            new Map([
+              ["funcB" as SymbolName, symbol_b],
+              ["funcC" as SymbolName, symbol_c],
+            ])
+          ),
         ],
       ]),
     };
@@ -336,15 +413,15 @@ describe("size", () => {
 // Update Function Tests
 // ============================================================================
 
-describe("remove_file", () => {
-  it("should remove resolutions for file's scopes", () => {
+describe("remove_files", () => {
+  it("removes resolutions for the file's scopes", () => {
     const symbol_a = function_symbol("funcA" as SymbolName, MOCK_LOCATION_A);
     const symbol_b = function_symbol("funcB" as SymbolName, MOCK_LOCATION_B);
 
     const state: ResolutionState = {
       resolutions_by_scope: new Map([
-        [SCOPE_A, new Map([["funcA" as SymbolName, symbol_a]])],
-        [SCOPE_B, new Map([["funcB" as SymbolName, symbol_b]])],
+        [SCOPE_A, bindings(new Map([["funcA" as SymbolName, symbol_a]]))],
+        [SCOPE_B, bindings(new Map([["funcB" as SymbolName, symbol_b]]))],
       ]),
       scope_to_file: new Map([
         [SCOPE_A, FILE_A],
@@ -353,9 +430,12 @@ describe("remove_file", () => {
       resolved_calls_by_file: new Map(),
       calls_by_caller_scope: new Map(),
       indirect_reachability: new Map(),
+      subtype_dispatch_files: new Map(),
+      undeclared_interface_files: new Map(),
+      class_arguments_by_callee: new Map(),
     };
 
-    const result = remove_file(state, FILE_A);
+    const result = remove_files(state, new Set([FILE_A]));
 
     expect(result.resolutions_by_scope.has(SCOPE_A)).toBe(false);
     expect(result.resolutions_by_scope.has(SCOPE_B)).toBe(true);
@@ -363,7 +443,7 @@ describe("remove_file", () => {
     expect(result.scope_to_file.has(SCOPE_B)).toBe(true);
   });
 
-  it("should remove resolved calls for file", () => {
+  it("removes resolved calls for the file", () => {
     const symbol_a = function_symbol("funcA" as SymbolName, MOCK_LOCATION_A);
 
     const call: CallReference = {
@@ -380,12 +460,12 @@ describe("remove_file", () => {
       resolved_calls_by_file: new Map([[FILE_A, [call]]]),
     };
 
-    const result = remove_file(state, FILE_A);
+    const result = remove_files(state, new Set([FILE_A]));
 
     expect(result.resolved_calls_by_file.has(FILE_A)).toBe(false);
   });
 
-  it("should remove calls_by_caller_scope for file's scopes", () => {
+  it("removes calls_by_caller_scope for the file's scopes", () => {
     const symbol_a = function_symbol("helper" as SymbolName, MOCK_LOCATION_A);
 
     const call: CallReference = {
@@ -402,12 +482,12 @@ describe("remove_file", () => {
       calls_by_caller_scope: new Map([[SCOPE_A, [call]]]),
     };
 
-    const result = remove_file(state, FILE_A);
+    const result = remove_files(state, new Set([FILE_A]));
 
     expect(result.calls_by_caller_scope.has(SCOPE_A)).toBe(false);
   });
 
-  it("should remove indirect_reachability entries from file", () => {
+  it("removes indirect_reachability entries from the file", () => {
     const symbol_a = function_symbol("callbackA" as SymbolName, MOCK_LOCATION_A);
     const symbol_b = function_symbol("callbackB" as SymbolName, MOCK_LOCATION_B);
 
@@ -421,12 +501,10 @@ describe("remove_file", () => {
       collection_id: MOCK_COLLECTION_ID_B,
       read_location: MOCK_LOCATION_B,
     };
-    const entry_a: IndirectReachabilityEntry = {
-      function_id: symbol_a,
+    const entry_a: IndirectReachability = {
       reason: reason_a,
     };
-    const entry_b: IndirectReachabilityEntry = {
-      function_id: symbol_b,
+    const entry_b: IndirectReachability = {
       reason: reason_b,
     };
 
@@ -438,13 +516,13 @@ describe("remove_file", () => {
       ]),
     };
 
-    const result = remove_file(state, FILE_A);
+    const result = remove_files(state, new Set([FILE_A]));
 
     expect(result.indirect_reachability.has(symbol_a)).toBe(false);
     expect(result.indirect_reachability.has(symbol_b)).toBe(true);
   });
 
-  it("should remove function_reference indirect_reachability entries from file", () => {
+  it("removes function_reference indirect_reachability entries from the file", () => {
     const symbol_a = function_symbol("doublerA" as SymbolName, MOCK_LOCATION_A);
     const symbol_b = function_symbol("doublerB" as SymbolName, MOCK_LOCATION_B);
 
@@ -456,12 +534,10 @@ describe("remove_file", () => {
       type: "function_reference",
       read_location: MOCK_LOCATION_B,
     };
-    const entry_a: IndirectReachabilityEntry = {
-      function_id: symbol_a,
+    const entry_a: IndirectReachability = {
       reason: reason_a,
     };
-    const entry_b: IndirectReachabilityEntry = {
-      function_id: symbol_b,
+    const entry_b: IndirectReachability = {
       reason: reason_b,
     };
 
@@ -473,24 +549,24 @@ describe("remove_file", () => {
       ]),
     };
 
-    const result = remove_file(state, FILE_A);
+    const result = remove_files(state, new Set([FILE_A]));
 
     expect(result.indirect_reachability.has(symbol_a)).toBe(false);
     expect(result.indirect_reachability.has(symbol_b)).toBe(true);
   });
 
-  it("should not mutate original state", () => {
+  it("does not mutate the original state", () => {
     const symbol_a = function_symbol("funcA" as SymbolName, MOCK_LOCATION_A);
 
     const state: ResolutionState = {
       ...create_resolution_state(),
       resolutions_by_scope: new Map([
-        [SCOPE_A, new Map([["funcA" as SymbolName, symbol_a]])],
+        [SCOPE_A, bindings(new Map([["funcA" as SymbolName, symbol_a]]))],
       ]),
       scope_to_file: new Map([[SCOPE_A, FILE_A]]),
     };
 
-    const result = remove_file(state, FILE_A);
+    const result = remove_files(state, new Set([FILE_A]));
 
     // Original state unchanged
     expect(state.resolutions_by_scope.has(SCOPE_A)).toBe(true);
@@ -499,24 +575,234 @@ describe("remove_file", () => {
     // Result has file removed
     expect(result.resolutions_by_scope.has(SCOPE_A)).toBe(false);
   });
-});
 
-describe("apply_name_resolution", () => {
-  it("should merge new resolutions into state", () => {
+  it("removes every file in the batch in one pass", () => {
     const symbol_a = function_symbol("funcA" as SymbolName, MOCK_LOCATION_A);
     const symbol_b = function_symbol("funcB" as SymbolName, MOCK_LOCATION_B);
 
     const state: ResolutionState = {
       ...create_resolution_state(),
       resolutions_by_scope: new Map([
-        [SCOPE_A, new Map([["funcA" as SymbolName, symbol_a]])],
+        [SCOPE_A, bindings(new Map([["funcA" as SymbolName, symbol_a]]))],
+        [SCOPE_B, bindings(new Map([["funcB" as SymbolName, symbol_b]]))],
+      ]),
+      scope_to_file: new Map([
+        [SCOPE_A, FILE_A],
+        [SCOPE_B, FILE_B],
+      ]),
+    };
+
+    const result = remove_files(state, new Set([FILE_A, FILE_B]));
+
+    expect(result.resolutions_by_scope.size).toBe(0);
+    expect(result.scope_to_file.size).toBe(0);
+  });
+
+  it("returns the same state when the batch removes nothing", () => {
+    const symbol_a = function_symbol("funcA" as SymbolName, MOCK_LOCATION_A);
+
+    const state: ResolutionState = {
+      ...create_resolution_state(),
+      resolutions_by_scope: new Map([
+        [SCOPE_A, bindings(new Map([["funcA" as SymbolName, symbol_a]]))],
+      ]),
+      scope_to_file: new Map([[SCOPE_A, FILE_A]]),
+    };
+
+    const result = remove_files(state, new Set([FILE_B]));
+
+    expect(result).toBe(state);
+  });
+
+  it("clones when only a resolved_calls_by_file entry is affected", () => {
+    const symbol_a = function_symbol("funcA" as SymbolName, MOCK_LOCATION_A);
+
+    const call: CallReference = {
+      call_type: "function",
+      name: "funcA" as SymbolName,
+      location: MOCK_LOCATION_A,
+      scope_id: SCOPE_A,
+      resolutions: [
+        { symbol_id: symbol_a, confidence: "certain", reason: { type: "direct" } },
+      ],
+    };
+
+    // FILE_B owns no scope and no indirect entry, so the scope scan alone would
+    // report nothing to remove while its resolved calls are still in state.
+    const state: ResolutionState = {
+      ...create_resolution_state(),
+      scope_to_file: new Map([[SCOPE_A, FILE_A]]),
+      resolved_calls_by_file: new Map([[FILE_B, [call]]]),
+    };
+
+    const result = remove_files(state, new Set([FILE_B]));
+
+    expect(result).not.toBe(state);
+    expect(result.resolved_calls_by_file.has(FILE_B)).toBe(false);
+    expect(result.scope_to_file.has(SCOPE_A)).toBe(true);
+  });
+
+  it("clones when only an indirect_reachability entry is affected", () => {
+    const symbol_a = function_symbol("callbackA" as SymbolName, MOCK_LOCATION_A);
+
+    const entry_a: IndirectReachability = {
+      reason: {
+        type: "collection_read",
+        collection_id: MOCK_COLLECTION_ID_A,
+        read_location: MOCK_LOCATION_A,
+      },
+    };
+
+    const state: ResolutionState = {
+      ...create_resolution_state(),
+      scope_to_file: new Map([[SCOPE_B, FILE_B]]),
+      indirect_reachability: new Map([[symbol_a, entry_a]]),
+      subtype_dispatch_files: new Map(),
+    };
+
+    const result = remove_files(state, new Set([FILE_A]));
+
+    expect(result).not.toBe(state);
+    expect(result.indirect_reachability.size).toBe(0);
+    expect(result.scope_to_file.has(SCOPE_B)).toBe(true);
+  });
+});
+
+describe("the subtype-dispatch index", () => {
+  const SHAPE = "interface:shape.ts:1:0:3:1:Shape" as SymbolId;
+  const WIDGET = "class:widget.ts:1:0:3:1:Widget" as SymbolId;
+
+  function empty_result(files: readonly FilePath[]): CallResolutionResult {
+    return {
+      resolved_calls_by_file: new Map(files.map((file): [FilePath, CallReference[]] => [file, []])),
+      calls_by_caller_scope: new Map(),
+      indirect_reachability: new Map(),
+      subtype_dispatch_files: new Map(),
+      undeclared_interface_files: new Map(),
+      class_arguments_by_callee: new Map(),
+    };
+  }
+
+  it("get_files_dispatching_through unions the files of every type asked for", () => {
+    const state: ResolutionState = {
+      ...create_resolution_state(),
+      subtype_dispatch_files: new Map([
+        [SHAPE, new Set([FILE_A])],
+        [WIDGET, new Set([FILE_A, FILE_B])],
+      ]),
+    };
+
+    expect(get_files_dispatching_through(state, [SHAPE])).toEqual(new Set([FILE_A]));
+    expect(get_files_dispatching_through(state, [SHAPE, WIDGET])).toEqual(new Set([FILE_A, FILE_B]));
+    expect(get_files_dispatching_through(state, [])).toEqual(new Set());
+  });
+
+  it("apply_call_resolution merges a pass's entries beside other files' entries", () => {
+    const state = apply_call_resolution(create_resolution_state(), {
+      ...empty_result([FILE_A]),
+      subtype_dispatch_files: new Map([[SHAPE, new Set([FILE_A])]]),
+    });
+
+    const result = apply_call_resolution(state, {
+      ...empty_result([FILE_B]),
+      subtype_dispatch_files: new Map([[SHAPE, new Set([FILE_B])]]),
+    });
+
+    expect(result.subtype_dispatch_files).toEqual(new Map([[SHAPE, new Set([FILE_A, FILE_B])]]));
+  });
+
+  it("apply_call_resolution replaces what a re-resolved file enumerated before, dropping a type left with no file", () => {
+    const state: ResolutionState = {
+      ...create_resolution_state(),
+      subtype_dispatch_files: new Map([
+        [SHAPE, new Set([FILE_A, FILE_B])],
+        [WIDGET, new Set([FILE_A])],
+      ]),
+    };
+
+    // FILE_A resolves again and no longer dispatches through either type.
+    const result = apply_call_resolution(state, empty_result([FILE_A]));
+
+    expect(result.subtype_dispatch_files).toEqual(new Map([[SHAPE, new Set([FILE_B])]]));
+    expect(state.subtype_dispatch_files.get(SHAPE)).toEqual(new Set([FILE_A, FILE_B]));
+  });
+
+  it("remove_files evicts the batch's files from every type, and clones for that alone", () => {
+    const untouched = new Set([FILE_B]);
+    const state: ResolutionState = {
+      ...create_resolution_state(),
+      subtype_dispatch_files: new Map([
+        [SHAPE, new Set([FILE_A, FILE_B])],
+        [WIDGET, new Set([FILE_A])],
+        ["class:other.ts:1:0:3:1:Other" as SymbolId, untouched],
+      ]),
+    };
+
+    const result = remove_files(state, new Set([FILE_A]));
+
+    expect(result).not.toBe(state);
+    expect(result.subtype_dispatch_files).toEqual(
+      new Map([
+        [SHAPE, new Set([FILE_B])],
+        ["class:other.ts:1:0:3:1:Other" as SymbolId, new Set([FILE_B])],
+      ])
+    );
+    expect(result.subtype_dispatch_files.get("class:other.ts:1:0:3:1:Other" as SymbolId)).toBe(untouched);
+  });
+
+  it("remove_files returns the same state when no type holds a file in the batch", () => {
+    const state: ResolutionState = {
+      ...create_resolution_state(),
+      subtype_dispatch_files: new Map([[SHAPE, new Set([FILE_B])]]),
+    };
+
+    expect(remove_files(state, new Set([FILE_A]))).toBe(state);
+  });
+
+  it("keeps the undeclared-interface index apart, and evicts it the same way", () => {
+    const state = apply_call_resolution(create_resolution_state(), {
+      ...empty_result([FILE_A]),
+      subtype_dispatch_files: new Map([
+        [SHAPE, new Set([FILE_A])],
+        [WIDGET, new Set([FILE_A])],
+      ]),
+      undeclared_interface_files: new Map([[SHAPE, new Set([FILE_A])]]),
+    });
+
+    // Only the interface no class declares is offered as a conformance candidate.
+    expect([...get_undeclared_interfaces(state)]).toEqual([SHAPE]);
+
+    // Re-resolving the file with a declared implementer found drops the entry
+    // while the dispatch index keeps its own.
+    const resolved = apply_call_resolution(state, {
+      ...empty_result([FILE_A]),
+      subtype_dispatch_files: new Map([[SHAPE, new Set([FILE_A])]]),
+    });
+    expect([...get_undeclared_interfaces(resolved)]).toEqual([]);
+    expect(resolved.subtype_dispatch_files).toEqual(new Map([[SHAPE, new Set([FILE_A])]]));
+
+    // And an eviction of the only dispatching file empties it.
+    expect([...get_undeclared_interfaces(remove_files(state, new Set([FILE_A])))]).toEqual([]);
+    expect(remove_files(state, new Set([FILE_B]))).toBe(state);
+  });
+});
+
+describe("apply_name_resolution", () => {
+  it("merges new resolutions into state", () => {
+    const symbol_a = function_symbol("funcA" as SymbolName, MOCK_LOCATION_A);
+    const symbol_b = function_symbol("funcB" as SymbolName, MOCK_LOCATION_B);
+
+    const state: ResolutionState = {
+      ...create_resolution_state(),
+      resolutions_by_scope: new Map([
+        [SCOPE_A, bindings(new Map([["funcA" as SymbolName, symbol_a]]))],
       ]),
       scope_to_file: new Map([[SCOPE_A, FILE_A]]),
     };
 
     const result_to_apply: NameResolutionResult = {
       resolutions_by_scope: new Map([
-        [SCOPE_B, new Map([["funcB" as SymbolName, symbol_b]])],
+        [SCOPE_B, bindings(new Map([["funcB" as SymbolName, symbol_b]]))],
       ]),
       scope_to_file: new Map([[SCOPE_B, FILE_B]]),
     };
@@ -529,40 +815,43 @@ describe("apply_name_resolution", () => {
     expect(result.scope_to_file.size).toBe(2);
   });
 
-  it("should overwrite existing scope resolutions", () => {
+  it("overwrites existing scope resolutions", () => {
     const symbol_old = function_symbol("funcOld" as SymbolName, MOCK_LOCATION_A);
     const symbol_new = function_symbol("funcNew" as SymbolName, MOCK_LOCATION_A);
 
     const state: ResolutionState = {
       ...create_resolution_state(),
       resolutions_by_scope: new Map([
-        [SCOPE_A, new Map([["func" as SymbolName, symbol_old]])],
+        [SCOPE_A, bindings(new Map([["func" as SymbolName, symbol_old]]))],
       ]),
       scope_to_file: new Map([[SCOPE_A, FILE_A]]),
     };
 
     const result_to_apply: NameResolutionResult = {
       resolutions_by_scope: new Map([
-        [SCOPE_A, new Map([["func" as SymbolName, symbol_new]])],
+        [SCOPE_A, bindings(new Map([["func" as SymbolName, symbol_new]]))],
       ]),
       scope_to_file: new Map([[SCOPE_A, FILE_A]]),
     };
 
     const result = apply_name_resolution(state, result_to_apply);
 
-    expect(result.resolutions_by_scope.get(SCOPE_A)!.get("func" as SymbolName)).toBe(
-      symbol_new
-    );
+    expect(
+      lookup_in_scope_chain(
+        result.resolutions_by_scope.get(SCOPE_A)!,
+        "func" as SymbolName
+      )
+    ).toBe(symbol_new);
   });
 
-  it("should not mutate original state", () => {
+  it("does not mutate the original state", () => {
     const symbol_b = function_symbol("funcB" as SymbolName, MOCK_LOCATION_B);
 
     const state = create_resolution_state();
 
     const result_to_apply: NameResolutionResult = {
       resolutions_by_scope: new Map([
-        [SCOPE_B, new Map([["funcB" as SymbolName, symbol_b]])],
+        [SCOPE_B, bindings(new Map([["funcB" as SymbolName, symbol_b]]))],
       ]),
       scope_to_file: new Map([[SCOPE_B, FILE_B]]),
     };
@@ -575,7 +864,7 @@ describe("apply_name_resolution", () => {
 });
 
 describe("apply_call_resolution", () => {
-  it("should merge resolved calls into state", () => {
+  it("merges resolved calls into state", () => {
     const symbol_a = function_symbol("funcA" as SymbolName, MOCK_LOCATION_A);
 
     const call: CallReference = {
@@ -592,6 +881,9 @@ describe("apply_call_resolution", () => {
       resolved_calls_by_file: new Map([[FILE_A, [call]]]),
       calls_by_caller_scope: new Map([[SCOPE_A, [call]]]),
       indirect_reachability: new Map(),
+      subtype_dispatch_files: new Map(),
+      undeclared_interface_files: new Map(),
+      class_arguments_by_callee: new Map(),
     };
 
     const result = apply_call_resolution(state, result_to_apply);
@@ -600,15 +892,14 @@ describe("apply_call_resolution", () => {
     expect(result.calls_by_caller_scope.get(SCOPE_A)).toEqual([call]);
   });
 
-  it("should merge indirect reachability into state", () => {
+  it("merges indirect reachability into state", () => {
     const symbol_id = function_symbol("callback" as SymbolName, MOCK_LOCATION_A);
     const reason: IndirectReachabilityReason = {
       type: "collection_read",
       collection_id: MOCK_COLLECTION_ID_A,
       read_location: MOCK_LOCATION_A,
     };
-    const entry: IndirectReachabilityEntry = {
-      function_id: symbol_id,
+    const entry: IndirectReachability = {
       reason,
     };
 
@@ -618,6 +909,9 @@ describe("apply_call_resolution", () => {
       resolved_calls_by_file: new Map(),
       calls_by_caller_scope: new Map(),
       indirect_reachability: new Map([[symbol_id, entry]]),
+      subtype_dispatch_files: new Map(),
+      undeclared_interface_files: new Map(),
+      class_arguments_by_callee: new Map(),
     };
 
     const result = apply_call_resolution(state, result_to_apply);
@@ -625,14 +919,13 @@ describe("apply_call_resolution", () => {
     expect(result.indirect_reachability.get(symbol_id)).toBe(entry);
   });
 
-  it("should merge function_reference indirect reachability into state", () => {
+  it("merges function_reference indirect reachability into state", () => {
     const symbol_id = function_symbol("doubler" as SymbolName, MOCK_LOCATION_A);
     const reason: IndirectReachabilityReason = {
       type: "function_reference",
       read_location: MOCK_LOCATION_A,
     };
-    const entry: IndirectReachabilityEntry = {
-      function_id: symbol_id,
+    const entry: IndirectReachability = {
       reason,
     };
 
@@ -642,6 +935,9 @@ describe("apply_call_resolution", () => {
       resolved_calls_by_file: new Map(),
       calls_by_caller_scope: new Map(),
       indirect_reachability: new Map([[symbol_id, entry]]),
+      subtype_dispatch_files: new Map(),
+      undeclared_interface_files: new Map(),
+      class_arguments_by_callee: new Map(),
     };
 
     const result = apply_call_resolution(state, result_to_apply);
@@ -649,7 +945,7 @@ describe("apply_call_resolution", () => {
     expect(result.indirect_reachability.get(symbol_id)).toBe(entry);
   });
 
-  it("should not mutate original state", () => {
+  it("does not mutate the original state", () => {
     const symbol_a = function_symbol("funcA" as SymbolName, MOCK_LOCATION_A);
 
     const call: CallReference = {
@@ -666,6 +962,9 @@ describe("apply_call_resolution", () => {
       resolved_calls_by_file: new Map([[FILE_A, [call]]]),
       calls_by_caller_scope: new Map([[SCOPE_A, [call]]]),
       indirect_reachability: new Map(),
+      subtype_dispatch_files: new Map(),
+      undeclared_interface_files: new Map(),
+      class_arguments_by_callee: new Map(),
     };
 
     const result = apply_call_resolution(state, result_to_apply);
@@ -676,7 +975,7 @@ describe("apply_call_resolution", () => {
 });
 
 describe("clear", () => {
-  it("should return empty state", () => {
+  it("returns an empty state", () => {
     const result = clear();
 
     expect(result.resolutions_by_scope.size).toBe(0);

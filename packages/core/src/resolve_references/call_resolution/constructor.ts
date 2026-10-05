@@ -1,113 +1,166 @@
 /**
  * Constructor Call Resolution
  *
- * Resolves constructor calls and enriches class-resolving calls with
- * constructor references. Handles:
- * - Direct constructor calls: new ClassName(), ClassName() (Python)
- * - Inherited constructors: SubClass() where parent has __init__
- * - Post-resolution enrichment: any call resolving to a class symbol
- *   also references the constructor
- *
- * Integration points:
- * - Uses ResolutionRegistry for EAGER O(1) class name resolution
- * - Uses DefinitionRegistry to look up class definitions and constructors
+ * Resolves a constructor call (`new ClassName()`, Python `ClassName()`, Rust
+ * `Type::new()` / struct literal) to the class's constructor definition, or the
+ * class symbol itself when no explicit constructor exists. A callee that names a
+ * binding holding a class object (`const cls = Parser; new cls()`) constructs
+ * that class.
  */
 
 import type {
   SymbolId,
   SymbolName,
-  FilePath,
   ConstructorCallReference,
   ClassDefinition,
+  Result,
+  ResolutionFailure,
 } from "@ariadnejs/types";
+import { err, is_ok, ok } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "../registries/definition";
-import type { ResolutionRegistry } from "../resolve_references";
-import { resolve_namespace_export } from "./method_lookup";
+import { resolve_module_member } from "../module_member_lookup";
+import type { CallResolutionContext } from "./call_resolver";
+import {
+  resolve_type_via_path_prefix_rust,
+  find_associated_constructor_rust,
+} from "./constructor.rust";
+import { resolve_value_source } from "./value_source";
+import { unbound_name_failure } from "./outside_corpus";
 
 /**
- * Resolve a constructor call to zero, one, or more symbols
- *
- * EAGER approach: Uses pre-computed resolutions from ResolutionRegistry.
- *
- * Steps:
- * 1. If property_chain is set: resolve namespace → class via import path
- * 2. Otherwise: resolve class name using EAGER resolution
- * 3. Verify it's a class definition
- * 4. Return constructor symbol if exists, otherwise class symbol
- *
- * @param call_ref - Constructor call reference from semantic index
- * @param definitions - Definition registry for class lookup
- * @param resolutions - Resolution registry with eager resolutions
- * @param import_source_resolver - Optional resolver mapping a namespace import symbol to its source file
- * @returns Array of resolved constructor/class symbol_ids (empty if resolution fails)
+ * Resolve a constructor call to its constructor definition, falling back to the
+ * class symbol when the class declares no explicit constructor.
  */
 export function resolve_constructor_call(
   call_ref: ConstructorCallReference,
-  definitions: DefinitionRegistry,
-  resolutions: ResolutionRegistry,
-  import_source_resolver?: (import_id: SymbolId) => FilePath | undefined
-): SymbolId[] {
+  context: CallResolutionContext
+): Result<SymbolId[], ResolutionFailure> {
+  const { definitions, resolutions, exports, imports, languages, modules } =
+    context;
   let class_symbol: SymbolId | null = null;
 
   // Namespace-qualified constructor: property_chain = [namespace, class_name] — need both parts
-  if (call_ref.property_chain && call_ref.property_chain.length > 1 && import_source_resolver) {
+  if (call_ref.property_chain && call_ref.property_chain.length > 1) {
     const namespace_id = resolutions.resolve(call_ref.scope_id, call_ref.property_chain[0]);
     if (namespace_id) {
       const namespace_def = definitions.get(namespace_id);
       if (namespace_def?.kind === "import" && namespace_def.import_kind === "namespace") {
-        const source_file = import_source_resolver(namespace_id);
+        const source_file = imports.get_resolved_import_path(namespace_id);
         if (source_file) {
-          class_symbol = resolve_namespace_export(source_file, call_ref.property_chain[1], definitions);
+          class_symbol = resolve_module_member(
+            source_file,
+            call_ref.property_chain[1],
+            "namespace",
+            exports,
+            definitions,
+            languages,
+            modules
+          );
         }
       }
     }
   }
 
-  // Simple constructor: new ClassName()
+  // A name sibling branches bind to different classes constructs each of them.
+  let class_symbols: readonly SymbolId[] = class_symbol ? [class_symbol] : [];
   if (!class_symbol) {
-    class_symbol = resolutions.resolve(call_ref.scope_id, call_ref.name as SymbolName);
+    class_symbols = resolutions.resolve_all(call_ref.scope_id, call_ref.name as SymbolName);
+    class_symbol = class_symbols[0] ?? null;
+  }
+
+  // Inline full-path constructors and a Rust `Self` are never bound by a bare
+  // name, so path resolution runs only after the bare-name miss; the path
+  // resolver substitutes the enclosing impl type for a lone `Self`.
+  if (!class_symbol) {
+    class_symbol = resolve_type_via_path_prefix_rust(call_ref, context);
+    class_symbols = class_symbol ? [class_symbol] : [];
   }
 
   if (!class_symbol) {
-    return [];
+    return err(
+      unbound_name_failure(
+        (call_ref.property_chain?.[0] ?? call_ref.name) as SymbolName,
+        call_ref.scope_id,
+        "constructor_lookup",
+        context
+      )
+    );
   }
 
-  // Verify it's actually a class and get constructor
-  const class_def = find_class_definition(class_symbol, definitions);
-
-  if (!class_def) {
-    return [];
+  const reached = new Set<SymbolId>();
+  let first_failure: ResolutionFailure | null = null;
+  for (const symbol of class_symbols) {
+    const result = resolve_class_constructor(symbol, call_ref, context);
+    if (is_ok(result)) {
+      reached.add(result.value);
+    } else {
+      first_failure ??= result.error;
+    }
   }
-
-  // Walk class hierarchy for constructor, fall back to class symbol
-  const constructor_symbol = find_constructor_in_class_hierarchy(
-    class_def,
-    definitions,
-    resolutions
-  );
-
-  return [constructor_symbol || class_symbol];
+  if (reached.size === 0 && first_failure) {
+    return err(first_failure);
+  }
+  return ok([...reached]);
 }
 
 /**
- * Post-resolution enrichment: add constructor references for class symbols.
+ * The constructor `class_symbol` is constructed through, or the class itself
+ * when it declares none. `class_symbol` names a class, or a binding holding a
+ * class object.
+ */
+function resolve_class_constructor(
+  class_symbol: SymbolId,
+  call_ref: ConstructorCallReference,
+  context: CallResolutionContext
+): Result<SymbolId, ResolutionFailure> {
+  const { definitions } = context;
+  const class_def =
+    find_class_definition(class_symbol, definitions) ??
+    find_held_class_definition(class_symbol, call_ref, context);
+
+  if (!class_def) {
+    return err({
+      stage: "constructor_lookup",
+      reason: "constructor_target_not_a_class",
+      partial_info: { resolved_receiver_type: class_symbol },
+    });
+  }
+
+  let constructor_symbol = find_constructor_in_class_hierarchy(class_def, definitions);
+
+  // Associated constructors are stored as plain methods, so the hierarchy walk
+  // (which reads `ClassDefinition.constructors`) finds nothing; the leaf
+  // self-guards on `path_prefix` and links the `new` member directly.
+  if (!constructor_symbol) {
+    constructor_symbol = find_associated_constructor_rust(call_ref, class_def, definitions);
+  }
+
+  return ok(constructor_symbol || class_def.symbol_id);
+}
+
+/**
+ * The class a construction's callee binding holds the class object of, where the
+ * callee names a binding rather than the class itself.
+ */
+function find_held_class_definition(
+  callee_symbol: SymbolId,
+  call_ref: ConstructorCallReference,
+  context: CallResolutionContext
+): ClassDefinition | null {
+  const held = resolve_value_source(callee_symbol, call_ref.location, context);
+  return held?.kind === "class_object" ? find_class_definition(held.class_id, context.definitions) : null;
+}
+
+/**
+ * Add constructor references for any resolved symbol that is a class.
  *
- * When any call resolution (method_call, function_call, constructor_call)
- * resolves to a class symbol, this function ensures the class's constructor
- * is also included in the resolved symbols. This handles cases like:
- * - module.ClassName() → resolves to class, should also reference __init__
- * - <Component /> (JSX) → resolves to class, should also reference constructor
- * - SubClass() (no own __init__) → should reference parent's __init__
- *
- * @param resolved_symbols - Symbols resolved by the primary resolution step
- * @param definitions - Definition registry for class/constructor lookup
- * @param resolutions - Resolution registry for resolving parent class names
- * @returns Enriched symbol array with constructors added for class symbols
+ * A call resolving to a class symbol (e.g. `module.ClassName()`, JSX `<Component />`)
+ * should also reach the class's constructor so the constructor is not surfaced as an
+ * unreachable entry point.
  */
 export function include_constructors_for_class_symbols(
   resolved_symbols: SymbolId[],
-  definitions: DefinitionRegistry,
-  resolutions: ResolutionRegistry
+  definitions: DefinitionRegistry
 ): SymbolId[] {
   const result = [...resolved_symbols];
 
@@ -116,11 +169,7 @@ export function include_constructors_for_class_symbols(
     if (def?.kind !== "class") continue;
 
     const class_def = def as ClassDefinition;
-    const constructor_sym = find_constructor_in_class_hierarchy(
-      class_def,
-      definitions,
-      resolutions
-    );
+    const constructor_sym = find_constructor_in_class_hierarchy(class_def, definitions);
 
     if (constructor_sym && !result.includes(constructor_sym)) {
       result.push(constructor_sym);
@@ -131,49 +180,25 @@ export function include_constructors_for_class_symbols(
 }
 
 /**
- * Walk the class hierarchy to find the nearest constructor.
+ * Walk the class hierarchy to find the nearest constructor: this class first,
+ * then its parent classes in the heritage graph, in declaration order. Returns
+ * the first constructor found, or null.
  *
- * Checks the given class first, then walks up the extends chain
- * to find an inherited constructor. Handles:
- * - Direct constructors: class has own __init__ / constructor
- * - Inherited constructors: parent class has the constructor
- * - Cycle protection: prevents infinite loops in malformed hierarchies
- *
- * @param class_def - Class definition to start from
- * @param definitions - Definition registry for parent class lookup
- * @param resolutions - Resolution registry for resolving parent class names
- * @param visited - Set of visited class SymbolIds for cycle protection
- * @returns Constructor SymbolId or null if no constructor found in hierarchy
+ * The `visited` set guards against cycles in a malformed hierarchy.
  */
-export function find_constructor_in_class_hierarchy(
+function find_constructor_in_class_hierarchy(
   class_def: ClassDefinition,
   definitions: DefinitionRegistry,
-  resolutions: ResolutionRegistry,
-  visited?: Set<SymbolId>
+  visited: Set<SymbolId> = new Set()
 ): SymbolId | null {
-  // Check this class's own constructors
   if (class_def.constructors && class_def.constructors.length > 0) {
     return class_def.constructors[0].symbol_id;
   }
 
-  // No own constructor — walk up extends chain
-  if (class_def.extends.length === 0) {
-    return null;
-  }
+  visited.add(class_def.symbol_id);
 
-  const visited_set = visited ?? new Set<SymbolId>();
-  visited_set.add(class_def.symbol_id);
-
-  for (const parent_name of class_def.extends) {
-    // Resolve parent class name in the class's defining scope
-    const parent_id = resolutions.resolve(
-      class_def.defining_scope_id,
-      parent_name
-    );
-    if (!parent_id) continue;
-
-    // Cycle protection
-    if (visited_set.has(parent_id)) continue;
+  for (const parent_id of definitions.get_parent_types(class_def.symbol_id)) {
+    if (visited.has(parent_id)) continue;
 
     const parent_def = find_class_definition(parent_id, definitions);
     if (!parent_def) continue;
@@ -181,8 +206,7 @@ export function find_constructor_in_class_hierarchy(
     const constructor_sym = find_constructor_in_class_hierarchy(
       parent_def,
       definitions,
-      resolutions,
-      visited_set
+      visited
     );
     if (constructor_sym) return constructor_sym;
   }
@@ -190,14 +214,7 @@ export function find_constructor_in_class_hierarchy(
   return null;
 }
 
-/**
- * Find class definition from DefinitionRegistry.
- *
- * @param class_symbol - Class symbol ID
- * @param definitions - Definition registry
- * @returns ClassDefinition or null if not found or not a class
- */
-export function find_class_definition(
+function find_class_definition(
   class_symbol: SymbolId,
   definitions: DefinitionRegistry
 ): ClassDefinition | null {

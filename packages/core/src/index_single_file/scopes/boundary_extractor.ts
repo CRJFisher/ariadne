@@ -1,7 +1,7 @@
 import type { Language } from "@ariadnejs/types";
 import { PythonScopeBoundaryExtractor } from "./extractors/python_scope_boundary_extractor";
 import { TypeScriptScopeBoundaryExtractor } from "./extractors/typescript_scope_boundary_extractor";
-import { JavaScriptScopeBoundaryExtractor } from "./extractors/javascript_scope_boundary_extractor";
+import { JavaScriptTypeScriptScopeBoundaryExtractor } from "./extractors/javascript_typescript_scope_boundary_extractor";
 import { RustScopeBoundaryExtractor } from "./extractors/rust_scope_boundary_extractor";
 import { type ScopeBoundaryExtractor } from "./boundary_base";
 
@@ -17,7 +17,7 @@ export function get_scope_boundary_extractor(
     case "typescript":
       return new TypeScriptScopeBoundaryExtractor();
     case "javascript":
-      return new JavaScriptScopeBoundaryExtractor();
+      return new JavaScriptTypeScriptScopeBoundaryExtractor();
     case "rust":
       return new RustScopeBoundaryExtractor();
     default:

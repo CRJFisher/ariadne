@@ -1,20 +1,6 @@
-/**
- * Python Reference Preprocessing
- *
- * Preprocesses Python references to convert class instantiation calls
- * to constructor calls.
- *
- * Python uses function call syntax for class instantiation (MyClass()).
- * This converts such calls to constructor_call references when the
- * callee resolves to a class definition, enabling:
- * - Proper type binding via extract_constructor_bindings()
- * - Uniform handling in resolve_calls() without special cases
- */
-
 import type {
   FilePath,
   SymbolReference,
-  FunctionCallReference,
   ConstructorCallReference,
   ScopeId,
   SymbolName,
@@ -24,22 +10,21 @@ import type { ReferenceRegistry } from "./registries/reference";
 import type { DefinitionRegistry } from "./registries/definition";
 
 interface NameResolver {
-  resolve(scope_id: ScopeId, name: SymbolName): SymbolId | null;
+  resolve_all(scope_id: ScopeId, name: SymbolName): readonly SymbolId[];
 }
 
 /**
- * Preprocess Python references to convert class instantiation calls
- * to constructor calls.
+ * Rewrite Python class-instantiation calls into constructor calls.
  *
- * For each function_call reference:
- * 1. Resolve the callee name to a symbol
- * 2. Check if the symbol is a class definition
- * 3. If so, convert to constructor_call with construct_target
+ * Python instantiates with plain call syntax (`MyClass()`), so the indexer
+ * captures every instantiation as a `function_call`. Rewriting the ones whose
+ * callee resolves to a class into `constructor_call` lets constructor type
+ * binding and call resolution treat them uniformly with `new`-based languages,
+ * instead of each stage re-deriving the class/function distinction. A name that
+ * sibling branches bind to different symbols is rewritten only when every one is
+ * a class; otherwise the call stays a function call, which reaches each branch.
  *
- * @param file_path - File being processed
- * @param references - Reference registry (will be mutated)
- * @param definitions - Definition registry (read-only)
- * @param resolutions - Resolution registry (read-only)
+ * Mutates `references`; reads `definitions` and `resolutions`.
  */
 export function preprocess_python_references(
   file_path: FilePath,
@@ -51,31 +36,31 @@ export function preprocess_python_references(
   if (file_refs.length === 0) return;
 
   const updated_refs = file_refs.map((ref): SymbolReference => {
-    // Only process function_call references
     if (ref.kind !== "function_call") return ref;
 
-    const func_ref = ref as FunctionCallReference;
+    const targets = resolutions.resolve_all(ref.scope_id, ref.name);
+    if (
+      targets.length === 0 ||
+      !targets.every((target) => definitions.get(target)?.kind === "class")
+    ) {
+      return ref;
+    }
 
-    // Resolve the callee name
-    const resolved = resolutions.resolve(ref.scope_id, ref.name);
-    if (!resolved) return ref;
-
-    // Check if it's a class definition
-    const def = definitions.get(resolved);
-    if (!def || def.kind !== "class") return ref;
-
-    // Convert to constructor_call
     const constructor_ref: ConstructorCallReference = {
       kind: "constructor_call",
       name: ref.name,
       location: ref.location,
       scope_id: ref.scope_id,
-      construct_target: func_ref.potential_construct_target,
+      ...(ref.potential_construct_target !== undefined && {
+        construct_target: ref.potential_construct_target,
+      }),
+      ...(ref.potential_construct_element_of !== undefined && {
+        construct_element_of: ref.potential_construct_element_of,
+      }),
     };
 
     return constructor_ref;
   });
 
-  // Update the registry with preprocessed references
   references.update_file(file_path, updated_refs);
 }

@@ -1,0 +1,681 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TASK-376.12 — one lookup for an imported name</title>
+<script>
+  (function () {
+    var root = document.documentElement;
+    var saved = null, nav = null;
+    try { saved = localStorage.getItem('cdocTheme'); nav = localStorage.getItem('cdocNav'); } catch (e) {}
+    var hash = location.hash;
+    var dark;
+    if (hash === '#theme-dark') { dark = true; }
+    else if (hash === '#theme-light') { dark = false; }
+    else if (saved === 'dark' || saved === 'light') { dark = saved === 'dark'; }
+    else { dark = window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches; }
+    root.classList.toggle('dark', !!dark);
+    root.classList.toggle('nav-collapsed', nav === 'collapsed');
+  })();
+</script>
+<style>
+:root {
+  color-scheme: light;
+  --ivory: #f7f3ec;
+  --oat: #ece4d6;
+  --paper: #fffdf8;
+  --slate: #2f3338;
+  --ink: #1d2024;
+  --mute: #6c6f73;
+  --faint: #9a9b97;
+  --clay: #c06d4f;
+  --olive: #6f7a4f;
+  --rust: #a8412a;
+  --work: #4a6b8a; /* work / build axis accent */
+  --concept: #7d6699; /* concept / idea axis accent */
+  --line: #d8cfbe;
+  --hair: #e4ddce;
+  --plate: #f7f3ec; /* fixed: backs literal-hex SVG, never themes */
+  --plate-ink: #2f3338; /* fixed: text on --plate */
+  --serif: ui-serif, Georgia, "Times New Roman", serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: "SF Mono", "JetBrains Mono", Menlo, Consolas, ui-monospace, monospace;
+  /* Live sticky-bar heights, rewritten by the nav's ResizeObserver. The seeds
+   * keep every sticky top and scroll-margin-top DEFINED before the first
+   * measurement lands — a var with no value invalidates the whole declaration
+   * and the bars stop stacking. These two are the only measured values that
+   * live in the brand block rather than a JS-mutated live block, because they
+   * must resolve before any script runs. */
+  --nav-h: 0px;
+  --rail-h: 0px;
+}
+html.dark {
+  color-scheme: dark;
+  --ivory: #191715;
+  --oat: #2b2723;
+  --paper: #211e1b;
+  --slate: #e8e0d4;
+  --ink: #f4efe6;
+  --mute: #a9a49c;
+  --faint: #8a857d;
+  --clay: #e0906f;
+  --olive: #9aad76;
+  --rust: #e0765a;
+  --work: #7fa8cd;
+  --concept: #ab92c9;
+  --line: #3a342e;
+  --hair: #2e2925;
+  --plate: #f7f3ec;
+  --plate-ink: #2f3338;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--ivory);
+  color: var(--slate);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+.prose { max-width: 68ch; }
+
+/* ── cross-doc navigation ─────────────────────────────── */
+.crossdoc {
+  position: sticky; top: 0; z-index: 10;
+  background: var(--ivory);
+  border-bottom: 1px solid var(--line);
+}
+.nav-bar {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  padding: 9px clamp(16px, 5vw, 64px);
+}
+.nav-family {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--mute);
+}
+.nav-here {
+  font-family: var(--mono); font-size: 11.5px;
+  padding: 4px 12px; border-radius: 999px;
+  background: var(--slate); color: var(--ivory);
+}
+.nav-spacer { flex: 1 1 auto; }
+.nav-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: var(--mono); font-size: 11.5px; color: var(--slate);
+  background: var(--paper); border: 1px solid var(--line);
+  border-radius: 999px; padding: 4px 12px; cursor: pointer;
+}
+.nav-btn:hover { border-color: var(--mute); }
+.nav-btn:focus-visible { outline: 2px solid var(--clay); outline-offset: 2px; }
+.chev {
+  width: 7px; height: 7px; border-right: 1.5px solid var(--mute);
+  border-bottom: 1.5px solid var(--mute); transform: rotate(45deg) translate(-1px, -1px);
+  transition: transform .24s ease;
+}
+html.nav-collapsed .chev { transform: rotate(-135deg) translate(-1px, -1px); }
+.tico {
+  width: 11px; height: 11px; border-radius: 50%;
+  border: 1.5px solid var(--slate);
+  background: linear-gradient(90deg, var(--slate) 0 50%, transparent 50% 100%);
+}
+#nav-rows {
+  display: grid; grid-template-rows: 1fr; opacity: 1; visibility: visible;
+  transition: grid-template-rows .24s ease, opacity .16s ease, visibility 0s linear 0s;
+}
+html.nav-collapsed #nav-rows {
+  grid-template-rows: 0fr; opacity: 0; visibility: hidden;
+  transition: grid-template-rows .24s ease, opacity .16s ease, visibility 0s linear .24s;
+}
+.nav-rows-inner { min-height: 0; overflow: hidden; }
+.nav-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(288px, 1fr));
+  gap: 5px; padding: 2px clamp(16px, 5vw, 64px) 12px;
+}
+.chip {
+  display: flex; align-items: center; gap: 8px; min-width: 0;
+  padding: 5px 11px; border: 1px solid var(--hair); border-radius: 999px;
+  background: var(--paper); text-decoration: none; color: var(--slate);
+}
+a.chip:hover { border-color: var(--clay); }
+a.chip:focus-visible { outline: 2px solid var(--clay); outline-offset: 2px; }
+.chip.pending { background: transparent; }
+.chip.self { border-color: var(--slate); background: var(--oat); }
+.dot { width: 7px; height: 7px; border-radius: 50%; flex: none; background: var(--faint); }
+.chip.has-doc .dot { background: var(--olive); }
+.chip.self .dot { background: var(--clay); }
+.cid { font-family: var(--mono); font-size: 11px; color: var(--ink); flex: none; }
+.ct {
+  font-size: 12px; color: var(--mute); min-width: 0;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.tag {
+  font-family: var(--mono); font-size: 10.5px; color: var(--faint);
+  margin-left: auto; flex: none; letter-spacing: .04em;
+}
+.chip.has-doc .tag { color: var(--olive); }
+
+/* ── page shell ───────────────────────────────────────── */
+main { padding: 34px clamp(16px, 5vw, 64px) 20px; }
+.identity { border-bottom: 1px solid var(--line); padding-bottom: 20px; }
+.eyebrow {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--mute);
+}
+h1 {
+  font-family: var(--serif); font-weight: 500; font-size: 34px;
+  line-height: 1.14; letter-spacing: -.015em; color: var(--ink);
+  margin: 8px 0 12px;
+}
+.byline { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+.stat {
+  font-family: var(--mono); font-size: 11px; color: var(--mute);
+  border: 1px solid var(--hair); border-radius: 999px; padding: 3px 10px;
+}
+.preamble {
+  font-size: 17px; line-height: 1.62; color: var(--slate);
+  margin: 24px 0 34px;
+}
+.preamble code { font-family: var(--mono); font-size: 15px; color: var(--ink); }
+
+section { margin-bottom: 44px; scroll-margin-top: calc(var(--nav-h) + var(--rail-h) + 12px); }
+.sec-kicker {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--clay);
+}
+h2 {
+  font-family: var(--serif); font-weight: 500; font-size: 23px;
+  color: var(--ink); margin: 6px 0 16px; letter-spacing: -.01em;
+}
+figure.diagram {
+  padding: 22px; border: 1px solid var(--line); border-radius: 14px;
+  background: var(--paper);
+}
+figcaption {
+  font-size: 14px; line-height: 1.6; color: var(--mute);
+  margin-top: 16px; border-top: 1px solid var(--hair); padding-top: 12px;
+}
+figcaption code { font-family: var(--mono); font-size: 12.5px; color: var(--slate); }
+
+/* ── before / after pair ──────────────────────────────── */
+.stage-band {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--mute);
+  background: var(--oat); border-radius: 8px;
+  padding: 8px 14px; margin-bottom: 18px;
+}
+.ba-grid { display: grid; grid-template-columns: 1fr auto 1fr; gap: 18px; align-items: start; }
+.ba-title {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--ink); margin-bottom: 10px;
+}
+.ba-title.after { color: var(--olive); }
+.ba-arrow {
+  align-self: center; display: flex; flex-direction: column; align-items: center; gap: 6px;
+  color: var(--mute); font-family: var(--mono); font-size: 20px;
+}
+.ba-rule { width: 1px; height: 120px; background: var(--line); }
+svg.fig { display: block; width: 100%; height: auto; }
+
+/* ── legend ───────────────────────────────────────────── */
+.legend {
+  display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center;
+  margin-top: 18px; font-size: 12.5px; color: var(--mute);
+}
+.legend > span { display: inline-flex; align-items: center; gap: 7px; }
+.sw { width: 20px; height: 13px; border-radius: 4px; border: 1.5px solid var(--mute); background: var(--oat); flex: none; }
+.sw.added { border-color: var(--olive); }
+.sw.removed { border-color: var(--rust); }
+.sw.attn { border-color: var(--clay); }
+.sw.dash { border-style: dashed; background: transparent; }
+.legend .lg { display: inline; }
+.legend code { font-family: var(--mono); font-size: 11.5px; color: var(--slate); }
+
+/* ── support layout ───────────────────────────────────── */
+.support-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 24px; align-items: start; }
+.code-panel {
+  border: 1px solid var(--line); border-radius: 12px;
+  background: var(--oat); overflow: hidden;
+}
+.file-label {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .08em;
+  color: var(--mute); padding: 9px 14px; border-bottom: 1px solid var(--line);
+}
+.code-pre {
+  font-family: var(--mono); font-size: 13px; line-height: 1.75;
+  color: var(--ink); padding: 12px 0 14px; white-space: pre; overflow-x: auto;
+}
+.cl { display: block; padding: 0 14px; border-left: 3px solid transparent; }
+.cl.hl { background: var(--paper); border-left-color: var(--clay); }
+.kw { color: var(--concept); }
+.mod { color: var(--olive); }
+.cmt { color: var(--mute); }
+.pins { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+.pin {
+  display: block; min-width: 0; overflow-wrap: anywhere; line-height: 1.5;
+  font-family: var(--mono); font-size: 11.5px; color: var(--slate);
+  border-left: 3px solid var(--clay); padding-left: 9px;
+}
+.pin-range { color: var(--mute); font-size: 10.5px; white-space: nowrap; padding-left: 6px; }
+
+/* ── key points ───────────────────────────────────────── */
+.points { list-style: none; }
+.points li {
+  display: grid; grid-template-columns: 1.25rem 1fr; gap: .75rem;
+  margin-bottom: .6rem; font-family: var(--serif); font-size: 16px;
+  line-height: 1.55; color: var(--slate);
+}
+.points .mk { font-family: var(--mono); font-size: 13px; color: var(--rust); }
+.points code { font-family: var(--mono); font-size: 13.5px; color: var(--ink); }
+.points b { font-weight: 600; color: var(--ink); }
+
+/* ── provenance ───────────────────────────────────────── */
+.provenance {
+  border-top: 1px solid var(--line); margin: 0 clamp(16px, 5vw, 64px) 48px;
+  padding-top: 18px;
+}
+.prov-label {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--mute); margin-bottom: 10px;
+}
+.files { list-style: none; display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 3px 28px; }
+.files li { font-family: var(--mono); font-size: 11.5px; color: var(--mute); min-width: 0; overflow-wrap: anywhere; }
+.files code { font-family: var(--mono); color: var(--slate); }
+.stamp { font-family: var(--mono); font-size: 11px; color: var(--faint); margin-top: 14px; }
+
+@media (max-width: 1000px) {
+  .ba-grid { grid-template-columns: 1fr; }
+  .ba-arrow { flex-direction: row; }
+  .ba-rule { width: 120px; height: 1px; }
+  .support-grid { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  #nav-rows, html.nav-collapsed #nav-rows, .chev { transition: none; }
+}
+</style>
+</head>
+<body>
+
+<nav class="crossdoc" id="crossdoc" aria-label="TASK-376 family">
+  <div class="nav-bar">
+    <span class="nav-family">TASK-376 · type-model completion</span>
+    <span class="nav-here" aria-current="page">376.12 · module member lookup</span>
+    <span class="nav-spacer"></span>
+    <button class="nav-btn" id="navToggle" type="button" aria-expanded="true" aria-controls="nav-rows">
+      <span id="navToggleLabel">Hide 19 pages</span><span class="chev" aria-hidden="true"></span>
+    </button>
+    <button class="nav-btn" id="themeToggle" type="button" aria-pressed="false">
+      <span class="tico" aria-hidden="true"></span><span id="themeLabel">Dark</span>
+    </button>
+  </div>
+  <div id="nav-rows">
+    <div class="nav-rows-inner">
+      <div class="nav-grid">
+        <a class="chip has-doc" href="task-376%20-%20Record-the-five-type-facts-once-and-resolve-members-over-a-single-lookup-ladder.overview.html" title="376 — Record the five type facts once and resolve members over a single lookup ladder"><span class="dot" aria-hidden="true"></span><span class="cid">376</span><span class="ct">Record the five type facts once and resolve members over a single lookup ladder</span><span class="tag">overview</span></a>
+        <span class="chip pending" title="376.1 — Mint collection member ids that name real definitions"><span class="dot" aria-hidden="true"></span><span class="cid">376.1</span><span class="ct">Mint collection member ids that name real definitions</span><span class="tag">not yet generated</span></span>
+        <span class="chip pending" title="376.2 — Delete the Python heuristic constructor capture and stop the annotation clobber"><span class="dot" aria-hidden="true"></span><span class="cid">376.2</span><span class="ct">Delete the Python heuristic constructor capture and stop the annotation clobber</span><span class="tag">not yet generated</span></span>
+        <span class="chip pending" title="376.3 — Record the scope's self type as LexicalScope.self_type_name"><span class="dot" aria-hidden="true"></span><span class="cid">376.3</span><span class="ct">Record the scope's self type as LexicalScope.self_type_name</span><span class="tag">not yet generated</span></span>
+        <span class="chip pending" title="376.4 — Make the member index complete: enums, cross-file union, reverse lookup"><span class="dot" aria-hidden="true"></span><span class="cid">376.4</span><span class="ct">Make the member index complete: enums, cross-file union, reverse lookup</span><span class="tag">not yet generated</span></span>
+        <span class="chip pending" title="376.5 — Resolve self/this through find_self_type and delete the backwards member scan"><span class="dot" aria-hidden="true"></span><span class="cid">376.5</span><span class="ct">Resolve self/this through find_self_type and delete the backwards member scan</span><span class="tag">not yet generated</span></span>
+        <span class="chip pending" title="376.6 — Parse and resolve type annotations through one annotation resolver"><span class="dot" aria-hidden="true"></span><span class="cid">376.6</span><span class="ct">Parse and resolve type annotations through one annotation resolver</span><span class="tag">not yet generated</span></span>
+        <span class="chip pending" title="376.7 — Single-source the heritage graph and publish multi-valued parent_types"><span class="dot" aria-hidden="true"></span><span class="cid">376.7</span><span class="ct">Single-source the heritage graph and publish multi-valued parent_types</span><span class="tag">not yet generated</span></span>
+        <span class="chip pending" title="376.8 — Attach cross-file Rust impl-block methods to their type"><span class="dot" aria-hidden="true"></span><span class="cid">376.8</span><span class="ct">Attach cross-file Rust impl-block methods to their type</span><span class="tag">not yet generated</span></span>
+        <span class="chip pending" title="376.9 — Widen construction and initialiser capture across the four languages"><span class="dot" aria-hidden="true"></span><span class="cid">376.9</span><span class="ct">Widen construction and initialiser capture across the four languages</span><span class="tag">not yet generated</span></span>
+        <span class="chip pending" title="376.10 — Resolve container element types and stop mistyping the container"><span class="dot" aria-hidden="true"></span><span class="cid">376.10</span><span class="ct">Resolve container element types and stop mistyping the container</span><span class="tag">not yet generated</span></span>
+        <span class="chip pending" title="376.11 — Add the single ValueSource channel and its four consumers"><span class="dot" aria-hidden="true"></span><span class="cid">376.11</span><span class="ct">Add the single ValueSource channel and its four consumers</span><span class="tag">not yet generated</span></span>
+        <span class="chip self" title="376.12 — Collapse module-member lookup and fix guarded and function-local import bindings"><span class="dot" aria-hidden="true"></span><span class="cid">376.12</span><span class="ct">Collapse module-member lookup and fix guarded and function-local import bindings</span><span class="tag">this page</span></span>
+        <span class="chip pending" title="376.13 — Add ladder rung 5: subtype-closure fan-out on a miss, with the pending-failure index"><span class="dot" aria-hidden="true"></span><span class="cid">376.13</span><span class="ct">Add ladder rung 5: subtype-closure fan-out on a miss, with the pending-failure index</span><span class="tag">not yet generated</span></span>
+        <span class="chip pending" title="376.14 — Infer structural conformance for interfaces no class declares"><span class="dot" aria-hidden="true"></span><span class="cid">376.14</span><span class="ct">Infer structural conformance for interfaces no class declares</span><span class="tag">not yet generated</span></span>
+        <span class="chip pending" title="376.15 — Bind type parameters from call arguments and declared instantiations"><span class="dot" aria-hidden="true"></span><span class="cid">376.15</span><span class="ct">Bind type parameters from call arguments and declared instantiations</span><span class="tag">not yet generated</span></span>
+        <span class="chip pending" title="376.16 — Emit a ResolutionFailure for every dropped call reference and count the failure taxonomy per corpus"><span class="dot" aria-hidden="true"></span><span class="cid">376.16</span><span class="ct">Emit a ResolutionFailure for every dropped call reference and count the failure taxonomy per corpus</span><span class="tag">not yet generated</span></span>
+        <span class="chip pending" title="376.17 — Split symbol_types into value types and callable return types and delete the dead member builders"><span class="dot" aria-hidden="true"></span><span class="cid">376.17</span><span class="ct">Split symbol_types into value types and callable return types and delete the dead member builders</span><span class="tag">not yet generated</span></span>
+        <span class="chip pending" title="376.18 — Re-run the evidence corpora, re-attribute the residue and pin the per-corpus regression suite"><span class="dot" aria-hidden="true"></span><span class="cid">376.18</span><span class="ct">Re-run the evidence corpora, re-attribute the residue and pin the per-corpus regression suite</span><span class="tag">not yet generated</span></span>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<main>
+
+  <header class="identity">
+    <div class="eyebrow">TASK-376.12 · call resolution · wave 1</div>
+    <h1>One lookup for an imported name</h1>
+    <div class="byline">
+      <span class="stat">resolve_references/</span>
+      <span class="stat">index_single_file/</span>
+      <span class="stat">python · javascript · rust</span>
+      <span class="stat">tree @ 279221d4</span>
+    </div>
+  </header>
+
+  <p class="preamble prose">Ariadne asks what an imported name points at two different ways, so the same call resolves from one caller and not another; this step leaves one answer, and stops Python imports under <code>if</code> or <code>try</code> from hiding from the rest of the file.</p>
+
+  <!-- ═══════════ LEAD ═══════════ -->
+  <section id="one-question" data-spine="lead">
+    <div class="sec-kicker">Call resolution &#183; what an import points at</div>
+    <h2>One question, two unequal answers</h2>
+
+    <figure class="diagram" role="img" aria-label="Before and after: four import-shaped callers reach two unequal lookups today, and one resolve_module_member with three tiers after this step.">
+      <div class="stage-band">resolve_references/ · call resolution · the receiver is already resolved to an import</div>
+
+      <div class="ba-grid">
+
+        <div>
+          <div class="ba-title">Current</div>
+          <svg class="fig" viewBox="0 0 580 344" role="img" aria-label="Current: four callers reach resolve_namespace_export and the strictly weaker resolve_named_import.">
+            <defs>
+              <marker id="ar-mute-c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--mute)"/></marker>
+              <marker id="ar-clay-c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--clay)"/></marker>
+            </defs>
+
+            <text x="6" y="20" font-family="var(--mono)" font-size="10.5" letter-spacing="1.4" fill="var(--mute)">CALLER</text>
+            <text x="344" y="20" font-family="var(--mono)" font-size="10.5" letter-spacing="1.4" fill="var(--mute)">LOOKUP</text>
+
+            <!-- edges -->
+            <path d="M238,60 C286,60 300,58 338,58" fill="none" stroke="var(--mute)" stroke-width="1.5" marker-end="url(#ar-mute-c)"/>
+            <path d="M238,130 C286,130 302,100 338,88" fill="none" stroke="var(--mute)" stroke-width="1.5" marker-end="url(#ar-mute-c)"/>
+            <path d="M238,200 C286,200 304,192 338,190" fill="none" stroke="var(--mute)" stroke-width="1.5" marker-end="url(#ar-mute-c)"/>
+            <text x="250" y="186" font-family="var(--mono)" font-size="10.5" fill="var(--mute)">first</text>
+            <path d="M238,270 C286,270 300,288 338,296" fill="none" stroke="var(--mute)" stroke-width="1.5" marker-end="url(#ar-mute-c)"/>
+            <path d="M215,174 L215,166 L300,166 L300,120 L420,120 L420,100" fill="none" stroke="var(--clay)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#ar-clay-c)"/>
+            <text x="430" y="116" font-family="var(--mono)" font-size="10.5" fill="var(--clay)">submodule only</text>
+
+            <!-- callers -->
+            <g>
+              <rect x="6" y="34" width="232" height="52" rx="9" fill="var(--oat)" stroke="var(--mute)" stroke-width="1.5"/>
+              <text x="18" y="56" font-family="var(--mono)" font-size="11" fill="var(--ink)">method_lookup.ts :30-57</text>
+              <text x="18" y="74" font-family="var(--sans)" font-size="10.5" fill="var(--mute)">namespace import</text>
+            </g>
+            <g>
+              <rect x="6" y="104" width="232" height="52" rx="9" fill="var(--oat)" stroke="var(--mute)" stroke-width="1.5"/>
+              <text x="18" y="126" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">receiver_resolution.ts :320-434</text>
+              <text x="18" y="144" font-family="var(--sans)" font-size="10.5" fill="var(--mute)">namespace hops</text>
+            </g>
+            <g>
+              <rect x="6" y="174" width="232" height="52" rx="9" fill="var(--oat)" stroke="var(--mute)" stroke-width="1.5"/>
+              <text x="18" y="196" font-family="var(--mono)" font-size="11" fill="var(--ink)">method_lookup.ts :79-132</text>
+              <text x="18" y="214" font-family="var(--sans)" font-size="10.5" fill="var(--mute)">named / default import</text>
+            </g>
+            <g>
+              <rect x="6" y="244" width="232" height="52" rx="9" fill="var(--oat)" stroke="var(--mute)" stroke-width="1.5"/>
+              <text x="18" y="266" font-family="var(--mono)" font-size="11" fill="var(--ink)">method_lookup.ts :61-75</text>
+              <text x="18" y="284" font-family="var(--sans)" font-size="10.5" fill="var(--mute)">namespace definition</text>
+            </g>
+
+            <!-- lookups -->
+            <g>
+              <rect x="344" y="30" width="230" height="68" rx="9" fill="var(--clay)" fill-opacity="0.13" stroke="var(--clay)" stroke-width="1.75"/>
+              <text x="356" y="54" font-family="var(--mono)" font-size="11" fill="var(--ink)">resolve_namespace_export</text>
+              <text x="356" y="72" font-family="var(--sans)" font-size="10.5" fill="var(--mute)">follows re-export chains</text>
+              <text x="356" y="88" font-family="var(--sans)" font-size="10.5" fill="var(--mute)">and wildcard edges</text>
+            </g>
+            <g>
+              <rect x="344" y="140" width="230" height="104" rx="9" fill="var(--rust)" fill-opacity="0.12" stroke="var(--rust)" stroke-width="1.75"/>
+              <text x="356" y="164" font-family="var(--mono)" font-size="11" fill="var(--ink)">resolve_named_import</text>
+              <text x="356" y="182" font-family="var(--sans)" font-size="10.5" fill="var(--mute)">same-file exported definitions only</text>
+              <line x1="356" y1="194" x2="562" y2="194" stroke="var(--rust)" stroke-width="1" stroke-opacity="0.4"/>
+              <text x="356" y="212" font-family="var(--mono)" font-size="10.5" fill="var(--rust)">skips re-exports :48-49</text>
+              <text x="356" y="230" font-family="var(--mono)" font-size="10.5" fill="var(--rust)">requires is_exported :50</text>
+            </g>
+            <g>
+              <rect x="344" y="272" width="230" height="58" rx="9" fill="var(--oat)" stroke="var(--mute)" stroke-width="1.5"/>
+              <text x="356" y="296" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">resolve_namespace_scope_member</text>
+              <text x="356" y="314" font-family="var(--sans)" font-size="10.5" fill="var(--mute)">the namespace block's own body scope</text>
+            </g>
+          </svg>
+        </div>
+
+        <div class="ba-arrow" aria-hidden="true">
+          <div class="ba-rule"></div>
+          <div>&rarr;</div>
+          <div class="ba-rule"></div>
+        </div>
+
+        <div>
+          <div class="ba-title after">Planned</div>
+          <svg class="fig" viewBox="0 0 580 344" role="img" aria-label="Planned: all four callers reach one resolve_module_member answering in three tiers, with the namespace body-scope lookup falling through to it on a miss.">
+            <defs>
+              <marker id="ar-mute-p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--mute)"/></marker>
+              <marker id="ar-olive-p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--olive)"/></marker>
+            </defs>
+
+            <text x="6" y="20" font-family="var(--mono)" font-size="10.5" letter-spacing="1.4" fill="var(--mute)">CALLER</text>
+            <text x="344" y="20" font-family="var(--mono)" font-size="10.5" letter-spacing="1.4" fill="var(--mute)">LOOKUP</text>
+
+            <!-- edges -->
+            <path d="M238,60 C292,60 312,108 338,138" fill="none" stroke="var(--mute)" stroke-width="1.5" marker-end="url(#ar-mute-p)"/>
+            <path d="M238,130 C292,130 306,148 338,162" fill="none" stroke="var(--mute)" stroke-width="1.5" marker-end="url(#ar-mute-p)"/>
+            <path d="M238,200 C292,200 306,190 338,186" fill="none" stroke="var(--mute)" stroke-width="1.5" marker-end="url(#ar-mute-p)"/>
+            <path d="M238,270 C292,270 312,242 338,212" fill="none" stroke="var(--mute)" stroke-width="1.5" marker-end="url(#ar-mute-p)"/>
+            <path d="M459,272 L459,242" fill="none" stroke="var(--olive)" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#ar-olive-p)"/>
+            <text x="470" y="262" font-family="var(--mono)" font-size="10.5" fill="var(--olive)">on a miss</text>
+
+            <!-- callers -->
+            <g>
+              <rect x="6" y="34" width="232" height="52" rx="9" fill="var(--oat)" stroke="var(--mute)" stroke-width="1.5"/>
+              <text x="18" y="56" font-family="var(--mono)" font-size="11" fill="var(--ink)">method_lookup.ts :30-57</text>
+              <text x="18" y="74" font-family="var(--sans)" font-size="10.5" fill="var(--mute)">namespace import</text>
+            </g>
+            <g>
+              <rect x="6" y="104" width="232" height="52" rx="9" fill="var(--oat)" stroke="var(--mute)" stroke-width="1.5"/>
+              <text x="18" y="126" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">receiver_resolution.ts :320-434</text>
+              <text x="18" y="144" font-family="var(--sans)" font-size="10.5" fill="var(--mute)">namespace hops</text>
+            </g>
+            <g>
+              <rect x="6" y="174" width="232" height="52" rx="9" fill="var(--oat)" stroke="var(--mute)" stroke-width="1.5"/>
+              <text x="18" y="196" font-family="var(--mono)" font-size="11" fill="var(--ink)">method_lookup.ts :79-132</text>
+              <text x="18" y="214" font-family="var(--sans)" font-size="10.5" fill="var(--mute)">named / default import</text>
+            </g>
+            <g>
+              <rect x="6" y="244" width="232" height="52" rx="9" fill="var(--oat)" stroke="var(--mute)" stroke-width="1.5"/>
+              <text x="18" y="266" font-family="var(--mono)" font-size="11" fill="var(--ink)">method_lookup.ts :61-75</text>
+              <text x="18" y="284" font-family="var(--sans)" font-size="10.5" fill="var(--mute)">namespace definition</text>
+            </g>
+
+            <!-- one lookup, three tiers -->
+            <g>
+              <rect x="344" y="110" width="230" height="128" rx="9" fill="var(--olive)" fill-opacity="0.15" stroke="var(--olive)" stroke-width="1.75"/>
+              <text x="356" y="136" font-family="var(--mono)" font-size="11" fill="var(--ink)">resolve_module_member</text>
+              <line x1="356" y1="150" x2="562" y2="150" stroke="var(--olive)" stroke-width="1" stroke-opacity="0.45"/>
+              <text x="356" y="176" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">1 &#183; keyed export chain</text>
+              <text x="356" y="200" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">2 &#183; wildcard fan-out</text>
+              <text x="356" y="224" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">3 &#183; module-scope definition</text>
+            </g>
+            <g>
+              <rect x="344" y="272" width="230" height="58" rx="9" fill="var(--oat)" stroke="var(--mute)" stroke-width="1.5"/>
+              <text x="356" y="296" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">resolve_namespace_scope_member</text>
+              <text x="356" y="314" font-family="var(--sans)" font-size="10.5" fill="var(--mute)">the namespace block's own body scope</text>
+            </g>
+          </svg>
+        </div>
+
+      </div>
+
+      <div class="legend">
+        <span><i class="sw added" aria-hidden="true"></i><span class="lg">added</span></span>
+        <span><i class="sw removed" aria-hidden="true"></i><span class="lg">removed &mdash; <code>resolve_namespace_export</code>, <code>resolve_named_import</code></span></span>
+        <span><i class="sw attn" aria-hidden="true"></i><span class="lg">the stronger of the two lookups today</span></span>
+        <span><i class="sw" aria-hidden="true"></i><span class="lg">unchanged</span></span>
+        <span><i class="sw dash" aria-hidden="true"></i><span class="lg">conditional edge</span></span>
+      </div>
+
+      <figcaption class="prose">The same name resolves through one caller and is dropped through another, because <code>resolve_named_import</code> never follows the re-export chain and the wildcard edges that <code>resolve_namespace_export</code> walks.</figcaption>
+    </figure>
+  </section>
+
+  <!-- ═══════════ SUPPORT ═══════════ -->
+  <section id="guarded-import" data-spine="support">
+    <div class="sec-kicker">Python · where the binding lands</div>
+    <h2>A guarded import binds where nothing looks</h2>
+
+    <div class="support-grid">
+
+      <figure class="diagram" role="img" aria-label="Scope tree: the guarded import binds inside a block child scope, and the module-level lookup only walks up, so it fails with name_not_in_scope.">
+        <svg class="fig" viewBox="0 0 660 264" role="img" aria-label="Today the Celery import binds inside block:if STATIC, and the module-level call walks up and out to name_not_in_scope; after this step the binding lands in the module scope and the call resolves.">
+          <defs>
+            <marker id="ar-rust-s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--rust)"/></marker>
+            <marker id="ar-olive-s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--olive)"/></marker>
+          </defs>
+
+          <!-- module scope container -->
+          <g>
+            <text x="10" y="27" font-family="var(--mono)" font-size="10.5" fill="var(--mute)">module scope &#183; app/tasks.py</text>
+            <rect x="8" y="36" width="470" height="214" rx="12" fill="var(--ivory)" stroke="var(--faint)" stroke-width="1.5"/>
+          </g>
+
+          <!-- after-position of the binding -->
+          <g>
+            <rect x="24" y="46" width="270" height="42" rx="8" fill="var(--olive)" fill-opacity="0.15" stroke="var(--olive)" stroke-width="1.5" stroke-dasharray="4 3"/>
+            <text x="38" y="63" font-family="var(--mono)" font-size="10.5" fill="var(--ink)">Celery</text>
+            <text x="38" y="79" font-family="var(--sans)" font-size="10.5" fill="var(--olive)">binds here after this step</text>
+          </g>
+
+          <!-- the block scope -->
+          <g>
+            <rect x="24" y="94" width="270" height="140" rx="10" fill="var(--rust)" fill-opacity="0.10" stroke="var(--rust)" stroke-width="1.5" stroke-dasharray="5 3"/>
+            <text x="38" y="116" font-family="var(--mono)" font-size="11" fill="var(--ink)">block:if STATIC:</text>
+            <text x="38" y="132" font-family="var(--sans)" font-size="10.5" fill="var(--rust)">not a Python scope</text>
+            <text x="38" y="200" font-family="var(--mono)" font-size="10.5" fill="var(--olive)">if &#183; elif &#183; else &#183; try</text>
+            <text x="38" y="214" font-family="var(--mono)" font-size="10.5" fill="var(--olive)">except &#183; finally &#183; with</text>
+            <text x="38" y="228" font-family="var(--mono)" font-size="10.5" fill="var(--olive)">no longer open scopes</text>
+          </g>
+
+          <!-- the import binding -->
+          <g>
+            <rect x="40" y="140" width="214" height="42" rx="8" fill="var(--clay)" fill-opacity="0.15" stroke="var(--clay)" stroke-width="1.5"/>
+            <text x="54" y="159" font-family="var(--mono)" font-size="11" fill="var(--ink)">Celery</text>
+            <text x="54" y="175" font-family="var(--sans)" font-size="10.5" fill="var(--mute)">import binding &#183; from pkg.base</text>
+          </g>
+
+          <!-- the call -->
+          <g>
+            <rect x="318" y="140" width="150" height="46" rx="8" fill="var(--oat)" stroke="var(--mute)" stroke-width="1.5"/>
+            <text x="330" y="160" font-family="var(--mono)" font-size="11" fill="var(--ink)">Celery(__name__)</text>
+            <text x="330" y="176" font-family="var(--sans)" font-size="10.5" fill="var(--mute)">call at module level</text>
+          </g>
+
+          <!-- the failure -->
+          <g>
+            <rect x="512" y="44" width="144" height="48" rx="8" fill="var(--rust)" fill-opacity="0.12" stroke="var(--rust)" stroke-width="1.75"/>
+            <text x="524" y="64" font-family="var(--mono)" font-size="11" fill="var(--ink)">name_not_in_scope</text>
+            <text x="524" y="80" font-family="var(--sans)" font-size="10.5" fill="var(--rust)">no binding found</text>
+          </g>
+
+          <!-- today's failing walk, drawn over the surfaces it crosses -->
+          <path d="M400,140 L400,84 L496,84 L496,68 L508,68" fill="none" stroke="var(--rust)" stroke-width="1.75" marker-end="url(#ar-rust-s)"/>
+          <text x="500" y="112" font-family="var(--mono)" font-size="10.5" fill="var(--rust)">lookup walks up,</text>
+          <text x="500" y="126" font-family="var(--mono)" font-size="10.5" fill="var(--rust)">never down into a block</text>
+
+          <!-- after this step: the binding lifts out, and the call resolves -->
+          <path d="M254,152 L272,152 L272,92" fill="none" stroke="var(--olive)" stroke-width="1.75" stroke-dasharray="5 4" marker-end="url(#ar-olive-s)"/>
+          <path d="M318,158 L306,158 L306,68 L298,68" fill="none" stroke="var(--olive)" stroke-width="1.75" marker-end="url(#ar-olive-s)"/>
+          <text x="314" y="110" font-family="var(--mono)" font-size="10.5" fill="var(--olive)">resolves</text>
+        </svg>
+
+        <div class="legend">
+          <span><i class="sw removed" aria-hidden="true"></i><span class="lg">today's failure</span></span>
+          <span><i class="sw attn" aria-hidden="true"></i><span class="lg">the import binding</span></span>
+          <span><i class="sw added dash" aria-hidden="true"></i><span class="lg">after this step</span></span>
+        </div>
+
+        <figcaption class="prose">The query treats <code>if</code> as a scope, so the guarded import binds one level below the module scope the call searches, and a name lookup only ever walks up.</figcaption>
+      </figure>
+
+      <div>
+        <div class="code-panel">
+          <div class="file-label">app/tasks.py</div>
+<pre class="code-pre"><span class="cl hl"><span class="kw">if</span> STATIC:</span><span class="cl hl">    <span class="kw">from</span> <span class="mod">pkg.base</span> <span class="kw">import</span> Celery</span><span class="cl"><span class="kw">else</span>:</span><span class="cl">    <span class="kw">from</span> <span class="mod">pkg.local</span> <span class="kw">import</span> Celery</span><span class="cl">&#160;</span><span class="cl">app = Celery(__name__)</span></pre>
+        </div>
+        <div class="pins">
+          <span class="pin"><span class="pin-path">index_single_file/query_code_tree/queries/python.scm</span><span class="pin-range">:73-83</span></span>
+          <span class="pin"><span class="pin-path">index_single_file/scopes/extractors/python_scope_boundary_extractor.ts</span><span class="pin-range">:170-181</span></span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ═══════════ POINTS ═══════════ -->
+  <section id="also-true" data-spine="points">
+    <div class="sec-kicker">Also true of this step</div>
+    <h2>Held at the edges</h2>
+    <ul class="points">
+      <li><span class="mk" aria-hidden="true">&#9642;</span><span><code>for</code>, <code>while</code>, <code>match</code>, <code>case</code> and the comprehension scopes still open scopes; whether the loop clauses deserve the same change is measured in TASK-376.18.</span></li>
+      <li><span class="mk" aria-hidden="true">&#9642;</span><span>Member aliases captured from class bodies rely on <b>conditional lifting</b>, so that path is re-checked once the guard clauses stop opening scopes.</span></li>
+      <li><span class="mk" aria-hidden="true">&#9642;</span><span>Express mixes one module's methods into another at runtime, and those mixed-in methods must stay <b>reachable across the file boundary</b>.</span></li>
+      <li><span class="mk" aria-hidden="true">&#9642;</span><span>The module-receiver call sites are re-measured with the failure-taxonomy harness, and the Rust <code>TestRequest::new</code> sites are confirmed already resolved.</span></li>
+      <li><span class="mk" aria-hidden="true">&#9642;</span><span>This step has <b>no dependencies</b>: the wildcard export edge it relies on landed already with TASK-375.</span></li>
+    </ul>
+  </section>
+
+</main>
+
+<footer class="provenance">
+  <div class="prov-label">Read to build this page</div>
+  <ul class="files">
+    <li><code>backlog/tasks/task-376.12 &mdash; Collapse module-member lookup&hellip;.md</code></li>
+    <li><code>resolve_references/export_chain_lookup.ts</code> :14-58</li>
+    <li><code>resolve_references/call_resolution/method_lookup.ts</code> :30-132</li>
+    <li><code>resolve_references/call_resolution/receiver_resolution.ts</code> :320-434</li>
+    <li><code>resolve_references/registries/export.ts</code> :178-184, :611-658</li>
+    <li><code>index_single_file/query_code_tree/queries/python.scm</code> :71-89, :317-335</li>
+    <li><code>index_single_file/scopes/extractors/python_scope_boundary_extractor.ts</code> :170-181</li>
+    <li><code>resolve_references/registries/definition.ts</code> :401-424</li>
+    <li><code>resolve_references/indirect_reachability.ts</code> :159-220</li>
+  </ul>
+  <div class="stamp">packages/core, working tree at commit 279221d4</div>
+</footer>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var nav = document.getElementById('crossdoc');
+  var navToggle = document.getElementById('navToggle');
+  var navLabel = document.getElementById('navToggleLabel');
+  var themeToggle = document.getElementById('themeToggle');
+  var themeLabel = document.getElementById('themeLabel');
+
+  function syncNav() {
+    var collapsed = root.classList.contains('nav-collapsed');
+    navToggle.setAttribute('aria-expanded', String(!collapsed));
+    navLabel.textContent = (collapsed ? 'Show' : 'Hide') + ' 19 pages';
+  }
+  function syncTheme() {
+    var dark = root.classList.contains('dark');
+    themeToggle.setAttribute('aria-pressed', String(dark));
+    themeLabel.textContent = dark ? 'Light' : 'Dark';
+  }
+
+  navToggle.addEventListener('click', function () {
+    var collapsed = root.classList.toggle('nav-collapsed');
+    try { localStorage.setItem('cdocNav', collapsed ? 'collapsed' : 'expanded'); } catch (e) {}
+    syncNav();
+  });
+  themeToggle.addEventListener('click', function () {
+    var dark = root.classList.toggle('dark');
+    try { localStorage.setItem('cdocTheme', dark ? 'dark' : 'light'); } catch (e) {}
+    syncTheme();
+  });
+
+  function measure() {
+    if (nav) { root.style.setProperty('--nav-h', nav.offsetHeight + 'px'); }
+  }
+  if (window.ResizeObserver && nav) { new ResizeObserver(measure).observe(nav); }
+  syncNav();
+  syncTheme();
+  measure();
+  window.addEventListener('load', function () {
+    measure();
+    if (location.hash) {
+      var target = document.getElementById(location.hash.slice(1));
+      if (target) { target.scrollIntoView(); }
+    }
+  });
+})();
+</script>
+</body>
+</html>

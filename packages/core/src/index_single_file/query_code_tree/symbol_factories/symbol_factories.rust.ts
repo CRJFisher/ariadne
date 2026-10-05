@@ -6,7 +6,7 @@ import type {
   ExportMetadata,
   FunctionCollectionInfo,
   FilePath,
-  Location,
+  TypeParameter,
 } from "@ariadnejs/types";
 import {
   class_symbol,
@@ -22,7 +22,7 @@ import {
   module_symbol,
   anonymous_function_symbol,
 } from "@ariadnejs/types";
-import type { CaptureNode } from "../../index_single_file";
+import type { CaptureNode } from "../../capture_types";
 import { node_to_location } from "../../node_to_location";
 export { detect_callback_context } from "./callback.rust";
 export {
@@ -214,9 +214,99 @@ export function extract_export_info(node: SyntaxNode): {
   };
 }
 
-export function extract_generic_parameters(node: SyntaxNode): SymbolName[] {
-  const generics: SymbolName[] = [];
+/** Node types that may sit between an outer attribute and the item it annotates. */
+const ATTRIBUTE_RUN_NODE_TYPES: ReadonlySet<string> = new Set([
+  "attribute_item",
+  "line_comment",
+  "block_comment",
+]);
+
+/**
+ * The file a `#[path = "…"] mod x;` declaration names.
+ *
+ * Outer attributes are siblings preceding the item they annotate, not children
+ * of it, so the search walks backwards over the run immediately before the node.
+ * Comments are named siblings too and are legal between an attribute and its
+ * item, so the walk steps over them rather than stopping.
+ */
+export function extract_module_path_attribute(
+  node: SyntaxNode
+): string | undefined {
+  for (
+    let sibling = node.previousNamedSibling;
+    sibling && ATTRIBUTE_RUN_NODE_TYPES.has(sibling.type);
+    sibling = sibling.previousNamedSibling
+  ) {
+    const attribute = sibling.namedChild(0);
+    if (attribute?.type !== "attribute") continue;
+    if (attribute.namedChild(0)?.text !== "path") continue;
+
+    const value = attribute.namedChild(1);
+    if (value?.type !== "string_literal") continue;
+    const content = value.namedChild(0);
+    if (content?.type === "string_content") {
+      return content.text;
+    }
+  }
+
+  return undefined;
+}
+
+/** Names of the inline `mod` blocks a node sits inside, outermost first. */
+function enclosing_inline_modules(node: SyntaxNode): string[] {
+  const enclosing: string[] = [];
+  for (let ancestor = node.parent; ancestor; ancestor = ancestor.parent) {
+    if (ancestor.type !== "mod_item") continue;
+    const ancestor_name = ancestor.childForFieldName("name")?.text;
+    if (ancestor_name) {
+      enclosing.unshift(ancestor_name);
+    }
+  }
+  return enclosing;
+}
+
+/**
+ * The `::` path a bodyless `mod x;` declaration names, anchored at the declaring
+ * file. A declaration nested in an inline `mod y { … }` block names `y`'s
+ * submodule, so the chain of enclosing inline modules is part of the path.
+ */
+export function module_declaration_path(node: SyntaxNode, name: string): string {
+  return ["self", ...enclosing_inline_modules(node), name].join("::");
+}
+
+/**
+ * The file a `#[path = "…"]` declaration names, spelled relative to the
+ * directory the declaring file sits in.
+ *
+ * Rust resolves a top-level declaration's `#[path]` against that directory
+ * directly. One nested in an inline `mod` block resolves against the declaring
+ * module's own directory — `<dir>/<file stem>/<enclosing blocks>/`, with the stem
+ * dropped for a `mod.rs`/`lib.rs`/`main.rs` file, which owns the directory it sits
+ * in. Prefixing the chain onto the value keeps one spelling for both shapes, so
+ * the resolver always joins onto the declaring file's directory.
+ */
+export function module_path_attribute_target(
+  node: SyntaxNode,
+  attribute_value: string,
+  file_path: string
+): string {
+  const enclosing = enclosing_inline_modules(node);
+  if (enclosing.length === 0) {
+    return attribute_value;
+  }
+
+  const file_name = file_path.split("/").pop() ?? "";
+  const owns_its_directory =
+    file_name === "mod.rs" || file_name === "lib.rs" || file_name === "main.rs";
+  const stem = owns_its_directory ? [] : [file_name.replace(/\.rs$/, "")];
+
+  return [...stem, ...enclosing, attribute_value].join("/");
+}
+
+export function extract_generic_parameters(node: SyntaxNode): TypeParameter[] {
+  const generics: TypeParameter[] = [];
   const type_params = node.childForFieldName?.("type_parameters");
+  const where_bounds = where_clause_bounds(node);
 
   if (type_params) {
     for (const child of type_params.children || []) {
@@ -227,13 +317,55 @@ export function extract_generic_parameters(node: SyntaxNode): SymbolName[] {
       ) {
         const name = child.childForFieldName?.("name");
         if (name) {
-          generics.push(name.text as SymbolName);
+          const inline = child.children.find((part) => part.type === "trait_bounds");
+          const bound =
+            (inline ? principal_trait_bound(inline) : undefined) ?? where_bounds.get(name.text);
+          generics.push({
+            name: name.text as SymbolName,
+            ...(bound !== undefined && { bound }),
+          });
         }
       }
     }
   }
 
   return generics;
+}
+
+/**
+ * The principal bound each type parameter a `where` clause constrains takes:
+ * `where F: FnOnce(&mut Self) -> T` bounds `F` as `<F: FnOnce(&mut Self) -> T>`
+ * would. A predicate on anything but a bare parameter name (`Vec<T>: Debug`)
+ * bounds no one parameter.
+ */
+function where_clause_bounds(node: SyntaxNode): ReadonlyMap<string, SymbolName> {
+  const bounds = new Map<string, SymbolName>();
+  const where_clause = node.children?.find((child) => child.type === "where_clause");
+  for (const predicate of where_clause?.namedChildren ?? []) {
+    const left = predicate.childForFieldName("left");
+    const trait_bounds = predicate.childForFieldName("bounds");
+    const bound = trait_bounds ? principal_trait_bound(trait_bounds) : undefined;
+    if (left?.type === "type_identifier" && bound !== undefined && !bounds.has(left.text)) {
+      bounds.set(left.text, bound);
+    }
+  }
+  return bounds;
+}
+
+/**
+ * The trait a `: Visitor + Send` bound list names its parameter by. Auto
+ * traits follow the principal trait by convention, and `?Sized` and lifetimes
+ * constrain the parameter without naming anything a method is called on, so the
+ * first bound that is none of those is the one a receiver reaches members
+ * through — the rule `parse_rust_annotation` applies to `dyn`/`impl` bounds.
+ */
+function principal_trait_bound(bounds: SyntaxNode): SymbolName | undefined {
+  const written = bounds.text.replace(/^\s*:/, "");
+  const principal = written
+    .split("+")
+    .map((bound) => bound.trim())
+    .find((bound) => bound.length > 0 && !bound.startsWith("?") && !bound.startsWith("'"));
+  return principal as SymbolName | undefined;
 }
 
 export function extract_impl_trait(node: SyntaxNode): SymbolName | undefined {
@@ -465,6 +597,15 @@ export function is_associated_function(node: SyntaxNode): boolean {
   return true;
 }
 
+function has_ancestor_of_type(node: SyntaxNode, type: string): boolean {
+  let ancestor = node.parent;
+  while (ancestor) {
+    if (ancestor.type === type) return true;
+    ancestor = ancestor.parent;
+  }
+  return false;
+}
+
 export function find_containing_callable(
   capture: CaptureNode
 ): SymbolId | undefined {
@@ -534,10 +675,13 @@ export function find_containing_callable(
       }
     }
 
-    // Trait method signatures (function_signature_item in traits)
+    // Trait method signatures (function_signature_item in traits). A signature
+    // outside a trait — an `extern "C"` block declaration — is indexed by no
+    // handler, so it owns nothing its parameters could attach to.
     if (node.type === "function_signature_item") {
       const name_node = node.childForFieldName?.("name");
       if (!name_node) return undefined;
+      if (!has_ancestor_of_type(node, "trait_item")) return undefined;
 
       // Use full function_signature_item node location to match create_method_id
       return method_symbol(name_node.text as SymbolName, {
@@ -564,46 +708,6 @@ export function find_containing_callable(
   }
 
   return undefined;
-}
-
-// ============================================================================
-// Documentation State Management
-// ============================================================================
-
-const pending_documentation = new Map<number, string>();
-
-/**
- * Store a Rust doc comment (///) for association with the next definition.
- * Consecutive comments on adjacent lines are concatenated.
- */
-export function store_documentation(comment: string, end_line: number): void {
-  const prev = pending_documentation.get(end_line - 1);
-  if (prev !== undefined) {
-    pending_documentation.delete(end_line - 1);
-    pending_documentation.set(end_line, prev + "\n" + comment);
-  } else {
-    pending_documentation.set(end_line, comment);
-  }
-}
-
-/**
- * Consume the documentation comment preceding the definition at the given location.
- * Checks for a comment ending 1 or 2 lines before the definition starts.
- */
-export function consume_documentation(location: Location): string | undefined {
-  const def_start_line = location.start_line;
-  for (const end_line of [def_start_line - 1, def_start_line - 2]) {
-    const doc = pending_documentation.get(end_line);
-    if (doc !== undefined) {
-      pending_documentation.delete(end_line);
-      return doc;
-    }
-  }
-  return undefined;
-}
-
-export function reset_documentation_state(): void {
-  pending_documentation.clear();
 }
 
 /**
@@ -646,6 +750,7 @@ export function detect_function_collection(
         location: node_to_location(value_node, file_path),
         stored_functions: functions,
         stored_references: references,
+        ...(elements_are_identifiers(value_node) && { elements_are_references: true as const }),
       };
     }
   }
@@ -665,6 +770,7 @@ export function detect_function_collection(
           location: node_to_location(value_node, file_path),
           stored_functions: functions,
           stored_references: references,
+          ...(elements_are_identifiers(token_tree) && { elements_are_references: true as const }),
         };
       }
     }
@@ -711,6 +817,20 @@ function extract_functions_from_array(
 }
 
 /**
+ * Whether every element of an array expression, or of a `vec![...]` token tree,
+ * is a bare name. A token tree's elements are its tokens, so only names and the
+ * commas and brackets around them may appear.
+ */
+function elements_are_identifiers(sequence_node: SyntaxNode): boolean {
+  return sequence_node.children.every(
+    (child) =>
+      child.type === "identifier" ||
+      child.type.endsWith("comment") ||
+      (!child.isNamed && [",", "[", "]", "(", ")", "{", "}"].includes(child.type))
+  );
+}
+
+/**
  * Extract function SymbolIds from Rust macro invocation.
  * Searches for closure_expression nodes within the macro.
  */
@@ -742,52 +862,3 @@ function extract_functions_from_macro(
   return { functions: function_ids, references };
 }
 
-/**
- * Extract the name of the collection variable this definition was looked up from.
- * Used for collection dispatch - when a variable is assigned from a Map/HashMap lookup.
- *
- * Patterns detected:
- * 1. let handler = config.get("key");  -> returns "config"
- * 2. let handler = config["key"];      -> returns "config"
- */
-export function extract_collection_source(node: SyntaxNode): SymbolName | undefined {
-  // Get initial value node (right side of assignment)
-  let assignment = node;
-  if (node.type === "identifier") {
-    assignment = node.parent || node;
-  }
-
-  // Handle let_declaration: let x = ...
-  if (assignment.type === "let_declaration" || assignment.type === "const_item") {
-    const value_node = assignment.childForFieldName?.("value");
-    if (!value_node) return undefined;
-
-    // Case 1: Method call (config.get(...))
-    if (value_node.type === "call_expression") {
-      const function_node = value_node.childForFieldName?.("function");
-      if (function_node?.type === "field_expression") {
-        const value = function_node.childForFieldName?.("value");
-        const field = function_node.childForFieldName?.("field");
-        
-        if (value?.type === "identifier" && field?.text === "get") {
-          return value.text as SymbolName;
-        }
-      }
-    }
-
-    // Case 2: Index access (config["key"])
-    if (value_node.type === "index_expression") {
-      let operand = value_node.childForFieldName?.("operand");
-      if (!operand) {
-        // Fallback to first child if field name is not available
-        operand = value_node.child(0) || null;
-      }
-      
-      if (operand?.type === "identifier") {
-        return operand.text as SymbolName;
-      }
-    }
-  }
-
-  return undefined;
-}

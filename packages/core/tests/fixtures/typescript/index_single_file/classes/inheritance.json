@@ -19,7 +19,8 @@
         "class:<fixtures>/typescript/code/classes/inheritance.ts:6:23:14:1",
         "class:<fixtures>/typescript/code/classes/inheritance.ts:16:26:28:1",
         "class:<fixtures>/typescript/code/classes/inheritance.ts:30:26:34:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "class:<fixtures>/typescript/code/classes/inheritance.ts:6:23:14:1": {
       "id": "class:<fixtures>/typescript/code/classes/inheritance.ts:6:23:14:1",
@@ -34,29 +35,14 @@
         "end_column": 1
       },
       "child_ids": [
-        "method:<fixtures>/typescript/code/classes/inheritance.ts:7:14:7:37",
+        "constructor:<fixtures>/typescript/code/classes/inheritance.ts:7:14:7:37",
         "method:<fixtures>/typescript/code/classes/inheritance.ts:11:7:13:3"
-      ]
-    },
-    "method:<fixtures>/typescript/code/classes/inheritance.ts:7:14:7:37": {
-      "id": "method:<fixtures>/typescript/code/classes/inheritance.ts:7:14:7:37",
-      "parent_id": "class:<fixtures>/typescript/code/classes/inheritance.ts:6:23:14:1",
-      "name": "constructor",
-      "type": "method",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/classes/inheritance.ts",
-        "start_line": 7,
-        "start_column": 14,
-        "end_line": 7,
-        "end_column": 37
-      },
-      "child_ids": [
-        "constructor:<fixtures>/typescript/code/classes/inheritance.ts:7:14:7:37"
-      ]
+      ],
+      "self_type_name": "Animal"
     },
     "constructor:<fixtures>/typescript/code/classes/inheritance.ts:7:14:7:37": {
       "id": "constructor:<fixtures>/typescript/code/classes/inheritance.ts:7:14:7:37",
-      "parent_id": "method:<fixtures>/typescript/code/classes/inheritance.ts:7:14:7:37",
+      "parent_id": "class:<fixtures>/typescript/code/classes/inheritance.ts:6:23:14:1",
       "name": "constructor",
       "type": "constructor",
       "location": {
@@ -66,7 +52,8 @@
         "end_line": 7,
         "end_column": 37
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/typescript/code/classes/inheritance.ts:11:7:13:3": {
       "id": "method:<fixtures>/typescript/code/classes/inheritance.ts:11:7:13:3",
@@ -80,7 +67,8 @@
         "end_line": 13,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "class:<fixtures>/typescript/code/classes/inheritance.ts:16:26:28:1": {
       "id": "class:<fixtures>/typescript/code/classes/inheritance.ts:16:26:28:1",
@@ -95,30 +83,15 @@
         "end_column": 1
       },
       "child_ids": [
-        "method:<fixtures>/typescript/code/classes/inheritance.ts:17:14:19:3",
+        "constructor:<fixtures>/typescript/code/classes/inheritance.ts:17:14:19:3",
         "method:<fixtures>/typescript/code/classes/inheritance.ts:21:13:23:3",
         "method:<fixtures>/typescript/code/classes/inheritance.ts:25:8:27:3"
-      ]
-    },
-    "method:<fixtures>/typescript/code/classes/inheritance.ts:17:14:19:3": {
-      "id": "method:<fixtures>/typescript/code/classes/inheritance.ts:17:14:19:3",
-      "parent_id": "class:<fixtures>/typescript/code/classes/inheritance.ts:16:26:28:1",
-      "name": "constructor",
-      "type": "method",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/classes/inheritance.ts",
-        "start_line": 17,
-        "start_column": 14,
-        "end_line": 19,
-        "end_column": 3
-      },
-      "child_ids": [
-        "constructor:<fixtures>/typescript/code/classes/inheritance.ts:17:14:19:3"
-      ]
+      ],
+      "self_type_name": "Dog"
     },
     "constructor:<fixtures>/typescript/code/classes/inheritance.ts:17:14:19:3": {
       "id": "constructor:<fixtures>/typescript/code/classes/inheritance.ts:17:14:19:3",
-      "parent_id": "method:<fixtures>/typescript/code/classes/inheritance.ts:17:14:19:3",
+      "parent_id": "class:<fixtures>/typescript/code/classes/inheritance.ts:16:26:28:1",
       "name": "constructor",
       "type": "constructor",
       "location": {
@@ -128,7 +101,8 @@
         "end_line": 19,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/typescript/code/classes/inheritance.ts:21:13:23:3": {
       "id": "method:<fixtures>/typescript/code/classes/inheritance.ts:21:13:23:3",
@@ -142,7 +116,8 @@
         "end_line": 23,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "method:<fixtures>/typescript/code/classes/inheritance.ts:25:8:27:3": {
       "id": "method:<fixtures>/typescript/code/classes/inheritance.ts:25:8:27:3",
@@ -156,7 +131,8 @@
         "end_line": 27,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "class:<fixtures>/typescript/code/classes/inheritance.ts:30:26:34:1": {
       "id": "class:<fixtures>/typescript/code/classes/inheritance.ts:30:26:34:1",
@@ -172,7 +148,8 @@
       },
       "child_ids": [
         "method:<fixtures>/typescript/code/classes/inheritance.ts:31:13:33:3"
-      ]
+      ],
+      "self_type_name": "Cat"
     },
     "method:<fixtures>/typescript/code/classes/inheritance.ts:31:13:33:3": {
       "id": "method:<fixtures>/typescript/code/classes/inheritance.ts:31:13:33:3",
@@ -186,7 +163,8 @@
         "end_line": 33,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {},
@@ -209,6 +187,9 @@
       "export": {
         "is_reexport": false
       },
+      "docstring": [
+        "/**\n * Class inheritance and abstract classes\n * Tests: abstract class, extends, method overriding\n */"
+      ],
       "methods": [
         {
           "kind": "method",
@@ -399,7 +380,7 @@
               "optional": false
             }
           ],
-          "body_scope_id": "method:<fixtures>/typescript/code/classes/inheritance.ts:17:14:19:3"
+          "body_scope_id": "constructor:<fixtures>/typescript/code/classes/inheritance.ts:17:14:19:3"
         }
       ],
       "decorators": []
@@ -456,6 +437,7 @@
   "namespaces": {},
   "types": {},
   "imported_symbols": {},
+  "unattached_impl_methods": {},
   "references": [
     {
       "kind": "type_reference",
@@ -524,7 +506,10 @@
         "console",
         "log"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -538,106 +523,6 @@
       },
       "scope_id": "method:<fixtures>/typescript/code/classes/inheritance.ts:11:7:13:3",
       "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "log",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/classes/inheritance.ts",
-        "start_line": 12,
-        "start_column": 5,
-        "end_line": 12,
-        "end_column": 15
-      },
-      "scope_id": "method:<fixtures>/typescript/code/classes/inheritance.ts:11:7:13:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/classes/inheritance.ts",
-        "start_line": 12,
-        "start_column": 5,
-        "end_line": 12,
-        "end_column": 11
-      },
-      "property_chain": [
-        "console",
-        "log"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "console",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/classes/inheritance.ts",
-        "start_line": 12,
-        "start_column": 5,
-        "end_line": 12,
-        "end_column": 11
-      },
-      "scope_id": "method:<fixtures>/typescript/code/classes/inheritance.ts:11:7:13:3",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "log",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/classes/inheritance.ts",
-        "start_line": 12,
-        "start_column": 5,
-        "end_line": 12,
-        "end_column": 15
-      },
-      "scope_id": "method:<fixtures>/typescript/code/classes/inheritance.ts:11:7:13:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/classes/inheritance.ts",
-        "start_line": 12,
-        "start_column": 5,
-        "end_line": 12,
-        "end_column": 11
-      },
-      "property_chain": [
-        "console",
-        "log"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "console",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/classes/inheritance.ts",
-        "start_line": 12,
-        "start_column": 5,
-        "end_line": 12,
-        "end_column": 11
-      },
-      "scope_id": "method:<fixtures>/typescript/code/classes/inheritance.ts:11:7:13:3",
-      "access_type": "read"
-    },
-    {
-      "kind": "method_call",
-      "name": "log",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/classes/inheritance.ts",
-        "start_line": 12,
-        "start_column": 5,
-        "end_line": 12,
-        "end_column": 56
-      },
-      "scope_id": "method:<fixtures>/typescript/code/classes/inheritance.ts:11:7:13:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/classes/inheritance.ts",
-        "start_line": 12,
-        "start_column": 5,
-        "end_line": 12,
-        "end_column": 11
-      },
-      "property_chain": [
-        "console",
-        "log"
-      ],
-      "optional_chaining": false
     },
     {
       "kind": "variable_reference",
@@ -679,17 +564,29 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "log",
+      "kind": "property_access",
+      "name": "name",
       "location": {
         "file_path": "<fixtures>/typescript/code/classes/inheritance.ts",
         "start_line": 12,
-        "start_column": 13,
+        "start_column": 20,
         "end_line": 12,
-        "end_column": 15
+        "end_column": 28
       },
       "scope_id": "method:<fixtures>/typescript/code/classes/inheritance.ts:11:7:13:3",
-      "access_type": "read"
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/classes/inheritance.ts",
+        "start_line": 12,
+        "start_column": 20,
+        "end_line": 12,
+        "end_column": 23
+      },
+      "property_chain": [
+        "this",
+        "name"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",
@@ -866,7 +763,10 @@
         "console",
         "log"
       ],
-      "optional_chaining": false
+      "is_optional_chain": false,
+      "call_site_syntax": {
+        "receiver_kind": "identifier"
+      }
     },
     {
       "kind": "variable_reference",
@@ -880,106 +780,6 @@
       },
       "scope_id": "method:<fixtures>/typescript/code/classes/inheritance.ts:25:8:27:3",
       "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "log",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/classes/inheritance.ts",
-        "start_line": 26,
-        "start_column": 5,
-        "end_line": 26,
-        "end_column": 15
-      },
-      "scope_id": "method:<fixtures>/typescript/code/classes/inheritance.ts:25:8:27:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/classes/inheritance.ts",
-        "start_line": 26,
-        "start_column": 5,
-        "end_line": 26,
-        "end_column": 11
-      },
-      "property_chain": [
-        "console",
-        "log"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "console",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/classes/inheritance.ts",
-        "start_line": 26,
-        "start_column": 5,
-        "end_line": 26,
-        "end_column": 11
-      },
-      "scope_id": "method:<fixtures>/typescript/code/classes/inheritance.ts:25:8:27:3",
-      "access_type": "read"
-    },
-    {
-      "kind": "property_access",
-      "name": "log",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/classes/inheritance.ts",
-        "start_line": 26,
-        "start_column": 5,
-        "end_line": 26,
-        "end_column": 15
-      },
-      "scope_id": "method:<fixtures>/typescript/code/classes/inheritance.ts:25:8:27:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/classes/inheritance.ts",
-        "start_line": 26,
-        "start_column": 5,
-        "end_line": 26,
-        "end_column": 11
-      },
-      "property_chain": [
-        "console",
-        "log"
-      ],
-      "access_type": "property",
-      "is_optional_chain": false
-    },
-    {
-      "kind": "variable_reference",
-      "name": "console",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/classes/inheritance.ts",
-        "start_line": 26,
-        "start_column": 5,
-        "end_line": 26,
-        "end_column": 11
-      },
-      "scope_id": "method:<fixtures>/typescript/code/classes/inheritance.ts:25:8:27:3",
-      "access_type": "read"
-    },
-    {
-      "kind": "method_call",
-      "name": "log",
-      "location": {
-        "file_path": "<fixtures>/typescript/code/classes/inheritance.ts",
-        "start_line": 26,
-        "start_column": 5,
-        "end_line": 26,
-        "end_column": 47
-      },
-      "scope_id": "method:<fixtures>/typescript/code/classes/inheritance.ts:25:8:27:3",
-      "receiver_location": {
-        "file_path": "<fixtures>/typescript/code/classes/inheritance.ts",
-        "start_line": 26,
-        "start_column": 5,
-        "end_line": 26,
-        "end_column": 11
-      },
-      "property_chain": [
-        "console",
-        "log"
-      ],
-      "optional_chaining": false
     },
     {
       "kind": "variable_reference",
@@ -1021,17 +821,29 @@
       "access_type": "read"
     },
     {
-      "kind": "variable_reference",
-      "name": "log",
+      "kind": "property_access",
+      "name": "name",
       "location": {
         "file_path": "<fixtures>/typescript/code/classes/inheritance.ts",
         "start_line": 26,
-        "start_column": 13,
+        "start_column": 20,
         "end_line": 26,
-        "end_column": 15
+        "end_column": 28
       },
       "scope_id": "method:<fixtures>/typescript/code/classes/inheritance.ts:25:8:27:3",
-      "access_type": "read"
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/classes/inheritance.ts",
+        "start_line": 26,
+        "start_column": 20,
+        "end_line": 26,
+        "end_column": 23
+      },
+      "property_chain": [
+        "this",
+        "name"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
     },
     {
       "kind": "variable_reference",

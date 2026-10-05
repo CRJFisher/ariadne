@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Change A · 349.5 — Inline-full-path Rust constructor type walking</title>
+<style>
+  :root{
+    --ivory:#f7f3ec; --slate:#2b2a28; --clay:#b9794f; --olive:#6c7a4a;
+    --oat:#e7ddc9; --rust:#a8472f; --paper:#fffdf8;
+    --g100:#efeae1; --g200:#ddd6c8; --g400:#9a9387; --g600:#5f594f;
+    --ink:#1f1e1c; --code:#26241f; --codeink:#e8e1d2;
+    --serif:ui-serif,Georgia,"Times New Roman",serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --r:12px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ivory);color:var(--slate);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased}
+  nav.cross{position:sticky;top:0;z-index:10;background:var(--ivory);border-bottom:1px solid var(--g200);padding:9px 0}
+  nav.cross .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  nav.cross .brand{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--clay);margin-right:6px}
+  nav.cross a,nav.cross span.pending,nav.cross span.cur{font-family:var(--mono);font-size:11px;text-decoration:none;border-radius:999px;padding:4px 10px;border:1px solid var(--g200)}
+  nav.cross a{color:var(--g600);background:var(--paper)}
+  nav.cross a:hover{border-color:var(--clay);color:var(--slate)}
+  nav.cross span.cur{color:var(--slate);background:#fbf2ef;border-color:var(--clay)}
+  nav.cross span.pending{color:var(--g400);background:transparent;border-style:dashed}
+  nav.cross span.pending .tag{font-size:8.5px;letter-spacing:.04em;color:var(--g400);margin-left:5px}
+  nav.toc{position:sticky;top:42px;z-index:9;background:var(--ivory);border-bottom:1px solid var(--g200);padding:8px 0}
+  nav.toc .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  nav.toc .brand{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--g600);margin-right:6px}
+  nav.toc a{font-family:var(--mono);font-size:11px;text-decoration:none;color:var(--g600);border:1px solid var(--g200);background:var(--paper);border-radius:999px;padding:3px 10px}
+  nav.toc a:hover,nav.toc a.active{border-color:var(--clay);color:var(--slate);background:#fbf2ef}
+  main{width:90%;max-width:1600px;margin:0 auto;padding:26px 0 80px}
+  .prose{max-width:72ch}
+  .eyebrow{font-family:var(--mono);text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--clay);margin:0 0 10px}
+  h1{font-family:var(--serif);font-weight:600;font-size:32px;line-height:1.12;margin:0 0 12px;letter-spacing:-.01em;max-width:28ch}
+  h2{font-family:var(--serif);font-weight:600;font-size:22px;margin:50px 0 6px;letter-spacing:-.01em;scroll-margin-top:96px}
+  h3{font-family:var(--mono);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--g600);margin:20px 0 8px}
+  p{margin:0 0 10px}
+  code{font-family:var(--mono);font-size:.85em;background:var(--g100);border-radius:5px;padding:1px 5px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 2px}
+  .chip{font-family:var(--mono);font-size:11.5px;background:var(--paper);border:1px solid var(--g200);border-radius:999px;padding:4px 11px;color:var(--g600)}
+  .chip strong{color:var(--slate);font-weight:600}
+  .chip.rust strong{color:var(--rust)} .chip.olive strong{color:var(--olive)} .chip.clay strong{color:var(--clay)}
+  .cap{font-size:13.5px;color:var(--g600);margin:8px 2px 0}
+  .cap b{color:var(--slate);font-weight:600}
+  .callout{border-left:4px solid var(--clay);background:var(--paper);border-radius:0 var(--r) var(--r) 0;padding:14px 18px;margin:18px 0;max-width:94ch}
+  .callout.olive{border-left-color:var(--olive)} .callout.rust{border-left-color:var(--rust)} .callout.slate{border-left-color:var(--slate);background:var(--slate);color:var(--ivory)}
+  .callout .k{font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;font-size:10.5px;color:var(--clay);margin:0 0 6px;display:block}
+  .callout.olive .k{color:var(--olive)} .callout.rust .k{color:var(--rust)} .callout.slate .k{color:#c9a25a}
+  .callout p{margin:0;font-size:14px}
+  .callout.slate code{background:rgba(255,255,255,.13);color:#f3e9d6}
+  .callout.slate b{color:#fff}
+  .ba{display:grid;grid-template-columns:1fr auto 1fr;gap:0;align-items:stretch;margin:14px 0}
+  .ba .panel{background:var(--paper);border:1px solid var(--g200);padding:16px}
+  .ba .panel:first-child{border-radius:var(--r) 0 0 var(--r)}
+  .ba .panel:last-child{border-radius:0 var(--r) var(--r) 0;border-left:none}
+  .ba .arrow{display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--ivory);padding:0 4px}
+  .ba .arrow .ar{font-family:var(--mono);font-size:20px;color:var(--clay)}
+  .ba .arrow .arl{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--g600);writing-mode:vertical-rl;margin-top:6px}
+  .ba .ttl{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;margin:0 0 10px}
+  .ba .ttl.cur{color:var(--rust)} .ba .ttl.plan{color:var(--olive)}
+  .ba svg{width:100%;height:auto;display:block}
+  .legend{display:flex;flex-wrap:wrap;gap:16px;font-family:var(--mono);font-size:11px;color:var(--g600);margin:12px 2px 0}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend i{width:13px;height:13px;border-radius:4px;display:inline-block;border:1px solid rgba(0,0,0,.12)}
+  .legend i.edge{width:18px;height:0;border-radius:0;border-top:2px solid var(--olive)}
+  .legend i.fail{width:18px;height:0;border-radius:0;border-top:2px solid var(--rust)}
+  .diagram{background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);padding:18px;margin:14px 0}
+  .diagram svg{width:100%;height:auto;display:block}
+  .fieldtbl{border:1px solid var(--g200);background:var(--paper);border-radius:var(--r);overflow:hidden;margin:16px 0}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{text-align:left;padding:9px 13px;border-bottom:1px solid var(--g200);vertical-align:top}
+  th{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--g600);background:var(--paper)}
+  td.in code{font-size:.92em}
+  td.now{font-family:var(--mono);font-size:11.5px;color:var(--rust)}
+  td.now b{color:var(--rust)}
+  td.after{font-family:var(--mono);font-size:11.5px;color:var(--olive)}
+  td.after b{color:var(--olive)}
+  td.seg{font-family:var(--mono);font-size:11.5px;color:var(--clay)}
+  td.seg b{color:var(--clay)}
+  tr:last-child td{border-bottom:none}
+  .code{background:var(--code);border-radius:var(--r);overflow:hidden;margin:14px 0;border:1px solid #1a1815}
+  .code .fl{font-family:var(--mono);font-size:10.5px;color:#b9b0a0;background:#1c1a16;padding:8px 14px;border-bottom:1px solid #000;letter-spacing:.03em}
+  .code pre{margin:0;padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:12px;line-height:1.62;color:var(--codeink)}
+  .code .kw{color:#c98a5a} .code .str{color:#9bb06a} .code .cm{color:#6f685c} .code .fn{color:#d8c98a}
+  .code .hl{background:rgba(168,71,47,.22);display:inline-block;width:100%}
+  .code .ok{background:rgba(108,122,74,.20);display:inline-block;width:100%}
+  .acs{display:grid;gap:7px;margin:14px 0;padding:0;list-style:none}
+  .acs li{display:grid;grid-template-columns:26px 1fr;gap:10px;align-items:start;font-size:13.5px;background:var(--paper);border:1px solid var(--g200);border-radius:9px;padding:10px 13px}
+  .acs .n{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--ivory);background:var(--olive);border-radius:6px;width:24px;height:22px;display:flex;align-items:center;justify-content:center}
+  .acs li.risk .n{background:var(--rust)}
+  .acs li.partial .n{background:var(--clay)}
+  .acs code{font-size:.9em}
+  @media(max-width:860px){.ba{grid-template-columns:1fr}.ba .arrow{flex-direction:row;padding:8px 0}.ba .arrow .arl{writing-mode:horizontal-tb;margin:0 0 0 6px}.ba .panel:last-child{border-left:1px solid var(--g200);border-radius:0 0 var(--r) var(--r)}.ba .panel:first-child{border-radius:var(--r) var(--r) 0 0}}
+  footer{font-family:var(--mono);font-size:10.5px;color:var(--g400);margin-top:56px;border-top:1px solid var(--g200);padding-top:14px;line-height:1.7}
+</style>
+</head>
+<body>
+
+<nav class="cross">
+  <div class="inner">
+    <span class="brand">task-349 · name_resolution</span>
+    <a href="task-349 - Resolve-the-name_resolution-false-positive-cluster-across-three-independent-root-causes.overview.html">Epic overview</a>
+    <a href="task-349.1 - Reduce-Rust-qualified-call-references-to-their-terminal-name-and-carry-the-path-prefix.rust-qualified-paths.html">A1 · Producer + fn calls</a>
+    <a href="task-349.4 - Link-Rust-associated-new-constructors-and-substitute-Self-so-Type-new-resolves-to-the-constructor.constructor-linking.html">A4 · Constructor linking</a>
+    <span class="cur">A5 · Inline-path types</span>
+    <a href="task-349.2 - Make-is_exported-govern-implicit-visibility-only-—-let-explicit-named-imports-bind-regardless.python-underscore-imports.html">B · Python imports</a>
+    <a href="task-349.3 - Apply-two-small-Phase-1-corrections-self-initializer-ordering-and-siblinghoist-propagation.same-file-binding-gaps.html">C · Same-file gaps</a>
+  </div>
+</nav>
+<nav class="toc">
+  <div class="inner">
+    <span class="brand">on this page</span>
+    <a href="#crux">The unbound type</a>
+    <a href="#shape">Type-last prefix</a>
+    <a href="#shared">Shared resolver</a>
+    <a href="#boundary">In-scope only</a>
+    <a href="#collision">Disambiguation</a>
+    <a href="#ac">Acceptance</a>
+  </div>
+</nav>
+
+<main>
+
+  <p class="eyebrow">Change A · sub-task 349.5 · status Done · builds on 349.1 + 349.4</p>
+  <h1>An inline full path writes the type name only in the call — so <code>Driver</code> binds by walking its module</h1>
+
+  <div class="meta">
+    <span class="chip rust"><strong>crate::runtime::Driver::new()</strong> type never imported</span>
+    <span class="chip"><strong>path_prefix</strong> is type-last</span>
+    <span class="chip clay"><strong>1</strong> resolver branch</span>
+    <span class="chip olive"><strong>shares</strong> 349.1's path resolver</span>
+  </div>
+  <p class="cap prose">349.4 binds an <code>in-scope</code> type's constructor; this closes the remaining case — a type written inline as a full path that no bare name carries in scope — by resolving its immediate module qualifier and looking the type up in that module's body.</p>
+
+  <section id="crux">
+    <h2>The crux: an inline type path places no bare type name in scope</h2>
+    <p class="cap prose">After 349.1 + 349.4 a <code>use</code>-imported <code>Parker::new()</code> resolves; <code>crate::runtime::Driver::new()</code> writes the type path inline — <code>Driver</code> is never imported, so the bare lookup misses and the type stays unbound until the module qualifier is walked.</p>
+
+    <div class="ba">
+      <div class="panel">
+        <p class="ttl cur">Current — bare-name lookup of Driver misses</p>
+        <svg viewBox="0 0 320 252" role="img" aria-label="Current flow: an inline full-path constructor reaches resolve_constructor_call with name Driver and a path_prefix; the bare-name resolve of Driver in scope misses because the type is never imported, so the constructor cannot bind and new is a false entry point">
+          <defs><marker id="ahf" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#a8472f"/></marker></defs>
+          <rect x="40" y="6" width="240" height="34" rx="8" fill="#e7ddc9" stroke="#b9794f" stroke-width="1.4"/>
+          <text x="160" y="22" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#2b2a28">crate::runtime::Driver::new()</text>
+          <text x="160" y="34" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">Driver never imported</text>
+          <line x1="160" y1="40" x2="160" y2="60" stroke="#a8472f" stroke-width="1.4" marker-end="url(#ahf)"/>
+          <rect x="34" y="64" width="252" height="40" rx="8" fill="#fffdf8" stroke="#ddd6c8"/>
+          <text x="160" y="80" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">name "Driver" · prefix present</text>
+          <text x="160" y="96" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#5f594f">["crate","runtime","Driver"]</text>
+          <line x1="160" y1="104" x2="160" y2="124" stroke="#a8472f" stroke-width="1.4" marker-end="url(#ahf)"/>
+          <rect x="34" y="128" width="252" height="40" rx="8" fill="#fffdf8" stroke="#ddd6c8"/>
+          <text x="160" y="144" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">resolutions.resolve(scope, "Driver")</text>
+          <text x="160" y="160" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" font-weight="700" fill="#a8472f">misses — type unbound</text>
+          <line x1="160" y1="168" x2="160" y2="188" stroke="#a8472f" stroke-width="1.4" marker-end="url(#ahf)"/>
+          <rect x="34" y="192" width="252" height="34" rx="8" fill="#fffdf8" stroke="#ddd6c8"/>
+          <text x="160" y="207" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">constructor cannot bind</text>
+          <text x="160" y="218" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">new() is a false entry point</text>
+          <line x1="160" y1="226" x2="160" y2="244" stroke="#a8472f" stroke-width="1.6" marker-end="url(#ahf)"/>
+          <rect x="58" y="246" width="204" height="6" rx="3" fill="#a8472f"/>
+        </svg>
+      </div>
+      <div class="arrow"><span class="ar">&rarr;</span><span class="arl">349.5</span></div>
+      <div class="panel">
+        <p class="ttl plan">Built — resolve the immediate module qualifier in scope</p>
+        <svg viewBox="0 0 320 252" role="img" aria-label="Built flow: when the bare-name resolve misses and a path_prefix is present, resolve_type_via_module_path takes runtime as the type's immediate module qualifier, resolves it in scope, requires it to be a mod namespace, looks Driver up in that module's body, then links new via the 349.4 member index">
+          <defs><marker id="aho" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6c7a4a"/></marker></defs>
+          <rect x="40" y="6" width="240" height="34" rx="8" fill="#e7ddc9" stroke="#b9794f" stroke-width="1.4"/>
+          <text x="160" y="22" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#2b2a28">crate::runtime::Driver::new()</text>
+          <text x="160" y="34" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">path_prefix is type-last</text>
+          <line x1="160" y1="40" x2="160" y2="60" stroke="#6c7a4a" stroke-width="1.4" marker-end="url(#aho)"/>
+          <rect x="34" y="64" width="252" height="40" rx="8" fill="#fffdf8" stroke="#ddd6c8"/>
+          <text x="160" y="80" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#2b2a28">bare resolve misses + prefix present</text>
+          <text x="160" y="96" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" font-weight="700" fill="#6c7a4a">→ resolve_type_via_module_path</text>
+          <line x1="160" y1="104" x2="160" y2="124" stroke="#6c7a4a" stroke-width="1.4" marker-end="url(#aho)"/>
+          <rect x="34" y="128" width="252" height="40" rx="8" fill="#f0ece2" stroke="#7a4636"/>
+          <text x="160" y="143" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#2b2a28">qualifier = prefix[len-2] = "runtime"</text>
+          <text x="160" y="158" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" font-weight="700" fill="#7a4636">resolve in scope → require mod</text>
+          <line x1="160" y1="168" x2="160" y2="188" stroke="#6c7a4a" stroke-width="1.4" marker-end="url(#aho)"/>
+          <rect x="34" y="192" width="252" height="34" rx="8" fill="#eef0e6" stroke="#5b6840"/>
+          <text x="160" y="207" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#2b2a28">Driver in mod body → new() via 349.4</text>
+          <text x="160" y="218" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8" fill="#5f594f">member-index link · new() reachable</text>
+          <line x1="160" y1="226" x2="160" y2="244" stroke="#6c7a4a" stroke-width="1.6" marker-end="url(#aho)"/>
+          <rect x="58" y="246" width="204" height="6" rx="3" fill="#6c7a4a"/>
+        </svg>
+      </div>
+    </div>
+    <div class="legend">
+      <span><i class="fail"></i> type unbound, new() a false entry point</span>
+      <span><i class="edge"></i> bound via the module qualifier</span>
+      <span>resolver: <code>call_resolution/constructor.ts</code></span>
+    </div>
+  </section>
+
+  <section id="shape">
+    <h2>The prefix is type-last — the qualifier is the segment <em>before</em> the type</h2>
+    <p class="cap prose">A constructor's <code>path_prefix</code> keeps the full type path: the final segment <em>is</em> the type (carried also as <code>name</code>), and the type's immediate module qualifier is the second-to-last segment — that single qualifier is resolved in scope, not every leading segment.</p>
+    <div class="fieldtbl">
+      <table>
+        <thead><tr><th>Constructor call</th><th>name (terminal type)</th><th>path_prefix (type-last)</th><th>qualifier = prefix[len-2]</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="in"><code>crate::runtime::Driver::new()</code><br><span style="font-size:11px;color:var(--g400)">inline full path · resolves</span></td>
+            <td class="after"><b>"Driver"</b></td>
+            <td class="seg">["crate","runtime","Driver"]</td>
+            <td class="seg"><b>"runtime"</b> → mod body holds Driver</td>
+          </tr>
+          <tr>
+            <td class="in"><code>crate::alpha::Driver::new()</code><br><span style="font-size:11px;color:var(--g400)">disambiguated</span></td>
+            <td class="after"><b>"Driver"</b></td>
+            <td class="seg">["crate","alpha","Driver"]</td>
+            <td class="seg"><b>"alpha"</b> → alpha's Driver, not beta's</td>
+          </tr>
+          <tr>
+            <td class="in"><code>crate::a::b::Driver::new()</code><br><span style="font-size:11px;color:var(--g400)">intermediate mod not in scope</span></td>
+            <td class="after"><b>"Driver"</b></td>
+            <td class="seg">["crate","a","b","Driver"]</td>
+            <td class="now"><b>"b"</b> unresolved in scope → bail</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="code">
+      <div class="fl">constructor.ts — resolve_type_via_module_path (the built branch, after the bare-name miss)</div>
+<pre><span class="cm">// resolve_constructor_call, after the simple in-scope lookup misses:</span>
+<span class="kw">if</span> (!class_symbol &amp;&amp; call_ref.path_prefix &amp;&amp; call_ref.path_prefix.length &gt; 0) {
+  class_symbol = <span class="fn">resolve_type_via_module_path</span>(call_ref, definitions, scopes, resolutions);
+}
+
+<span class="cm">// the branch — type-last prefix, immediate-module qualifier only:</span>
+<span class="ok">  <span class="kw">const</span> prefix = <span class="fn">normalize_path_prefix</span>(call_ref.path_prefix ?? []);  <span class="cm">// drop crate/self/super</span>
+  <span class="kw">if</span> (prefix.length &lt; 2) <span class="kw">return</span> null;              <span class="cm">// need [module, Type]</span>
+  <span class="kw">const</span> type_name = call_ref.name;                  <span class="cm">// last segment = the type</span>
+  <span class="kw">const</span> qualifier = prefix[prefix.length - 2];      <span class="cm">// segment BEFORE the type</span>
+  <span class="kw">const</span> qualifier_id = resolutions.<span class="fn">resolve</span>(call_ref.scope_id, qualifier);
+  <span class="kw">if</span> (!qualifier_id) <span class="kw">return</span> null;              <span class="cm">// qualifier not in scope → bail</span>
+  <span class="kw">if</span> (definitions.<span class="fn">get</span>(qualifier_id)?.kind !== <span class="str">"namespace"</span>) <span class="kw">return</span> null; <span class="cm">// must be a Rust `mod`</span>
+  <span class="kw">return</span> <span class="fn">resolve_in_module_body</span>(qualifier, ...defining_scope_id, type_name, scopes, definitions);</span>
+</pre>
+    </div>
+    <p class="cap prose">A lone leading <code>crate</code> / <code>self</code> / <code>super</code> is stripped by <code>normalize_path_prefix</code> so the path does not die on a literal anchor segment; the qualifier must then resolve to a <code>mod</code> (namespace) in scope or the branch returns <code>null</code>.</p>
+  </section>
+
+  <section id="shared">
+    <h2>One shared resolver — type-last for constructors, terminal-last for function calls</h2>
+    <p class="cap prose">The path-resolution helpers 349.1 wrote for function calls now live in <code>path_resolution.ts</code> and serve both callers; the callers differ only in which prefix segment names the qualifier, then both hand the same terminal to <code>resolve_in_module_body</code>.</p>
+    <div class="diagram">
+      <svg viewBox="0 0 780 250" role="img" aria-label="Shared resolver: function_call.ts is terminal-last so its qualifier is the last prefix segment with the terminal in ref.name; constructor.ts is type-last so its qualifier is the second-to-last segment with the type as the last segment; both call the shared normalize_path_prefix and resolve_in_module_body in path_resolution.ts">
+        <defs>
+          <marker id="s-ok" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6c7a4a"/></marker>
+          <marker id="s-cl" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#b9794f"/></marker>
+        </defs>
+        <g font-family="ui-monospace,monospace">
+          <rect x="14" y="20" width="248" height="74" rx="9" fill="#fffdf8" stroke="#ddd6c8" stroke-width="1.4"/>
+          <text x="138" y="40" text-anchor="middle" font-size="9.5" font-weight="700" fill="#2b2a28">function_call.ts</text>
+          <text x="138" y="56" text-anchor="middle" font-size="8.5" fill="#5f594f">terminal-last · worker::create</text>
+          <text x="138" y="70" text-anchor="middle" font-size="8.5" fill="#b9794f">name = create · prefix ["worker"]</text>
+          <text x="138" y="84" text-anchor="middle" font-size="8.5" fill="#5b6840">qualifier = prefix[len-1] = worker</text>
+
+          <rect x="14" y="156" width="248" height="74" rx="9" fill="#fffdf8" stroke="#ddd6c8" stroke-width="1.4"/>
+          <text x="138" y="176" text-anchor="middle" font-size="9.5" font-weight="700" fill="#2b2a28">constructor.ts</text>
+          <text x="138" y="192" text-anchor="middle" font-size="8.5" fill="#5f594f">type-last · runtime::Driver::new</text>
+          <text x="138" y="206" text-anchor="middle" font-size="8.5" fill="#b9794f">name = Driver · prefix [..,runtime,Driver]</text>
+          <text x="138" y="220" text-anchor="middle" font-size="8.5" fill="#5b6840">qualifier = prefix[len-2] = runtime</text>
+
+          <line x1="262" y1="57" x2="316" y2="100" stroke="#b9794f" stroke-width="1.5" marker-end="url(#s-cl)"/>
+          <line x1="262" y1="193" x2="316" y2="148" stroke="#b9794f" stroke-width="1.5" marker-end="url(#s-cl)"/>
+
+          <rect x="318" y="92" width="210" height="64" rx="10" fill="#f0ece2" stroke="#7a4636" stroke-width="1.6"/>
+          <text x="423" y="112" text-anchor="middle" font-size="9.5" font-weight="700" fill="#7a4636">path_resolution.ts (shared)</text>
+          <text x="423" y="128" text-anchor="middle" font-size="8.5" fill="#5f594f">normalize_path_prefix</text>
+          <text x="423" y="142" text-anchor="middle" font-size="8.5" fill="#5f594f">resolve_in_module_body · is_callable</text>
+
+          <line x1="528" y1="124" x2="582" y2="124" stroke="#6c7a4a" stroke-width="1.6" marker-end="url(#s-ok)"/>
+
+          <rect x="584" y="92" width="182" height="64" rx="10" fill="#eef0e6" stroke="#5b6840" stroke-width="1.6"/>
+          <text x="675" y="114" text-anchor="middle" font-size="9.5" font-weight="700" fill="#5b6840">terminal in mod body</text>
+          <text x="675" y="130" text-anchor="middle" font-size="8.5" fill="#5f594f">find mod child scope,</text>
+          <text x="675" y="143" text-anchor="middle" font-size="8.5" fill="#5f594f">look terminal up in it</text>
+        </g>
+      </svg>
+    </div>
+    <div class="legend">
+      <span><i style="background:#fffdf8;border-color:#ddd6c8"></i> caller picks its qualifier segment</span>
+      <span><i style="background:#f0ece2;border-color:#7a4636"></i> shared helper (qualifier-agnostic)</span>
+      <span><i class="edge"></i> terminal bound in the module body</span>
+    </div>
+    <div class="callout olive">
+      <span class="k">extraction · path_resolution.ts</span>
+      <p><code>function_call.ts</code> now imports <code>normalize_path_prefix</code>, <code>resolve_in_module_body</code> and <code>is_callable_definition</code> from the shared module with identical behaviour; the helpers take explicit <code>scopes</code> + <code>definitions</code> registries so the constructor resolver reuses them without threading the full <code>CallResolutionContext</code>. The function-call import-anchor branch (<code>use mod::terminal</code>) stays local to <code>function_call.ts</code>.</p>
+    </div>
+  </section>
+
+  <section id="boundary">
+    <h2>The walk is in-scope only — a separate-file <code>mod foo;</code> bails</h2>
+    <p class="cap prose">The resolvable shape is an inline <code>mod runtime { … }</code> in the caller's file, whose body scope holds the type; a sibling-file type declared only via <code>mod gadget;</code> with no <code>use</code> has no in-scope body, so the walk bails to <code>import_resolution</code> rather than fabricate a cross-file edge.</p>
+    <div class="diagram">
+      <svg viewBox="0 0 780 252" role="img" aria-label="In-scope boundary: an inline mod runtime block in the caller's file gives a child module scope whose body holds Driver, so the qualifier resolves and the type binds; a separate-file mod gadget declared with no use of Gadget gives no in-scope module body, so resolve_in_module_body finds no child scope and the walk returns null, leaving the call for import_resolution">
+        <defs>
+          <marker id="b-ok" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6c7a4a"/></marker>
+          <marker id="b-rs" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#a8472f"/></marker>
+        </defs>
+        <g font-family="ui-monospace,monospace">
+          <text x="14" y="16" font-size="9" font-weight="700" fill="#5b6840">RESOLVES — inline mod</text>
+          <rect x="14" y="24" width="232" height="50" rx="9" fill="#fffdf8" stroke="#ddd6c8"/>
+          <text x="130" y="44" text-anchor="middle" font-size="9" fill="#2b2a28">mod runtime { struct Driver }</text>
+          <text x="130" y="60" text-anchor="middle" font-size="8" fill="#5f594f">same file → child module scope</text>
+          <line x1="246" y1="49" x2="296" y2="49" stroke="#6c7a4a" stroke-width="1.5" marker-end="url(#b-ok)"/>
+          <rect x="298" y="24" width="214" height="50" rx="9" fill="#f0ece2" stroke="#7a4636" stroke-width="1.4"/>
+          <text x="405" y="44" text-anchor="middle" font-size="8.5" fill="#2b2a28">runtime resolves to a `mod`</text>
+          <text x="405" y="60" text-anchor="middle" font-size="8.5" fill="#5f594f">body scope holds Driver</text>
+          <line x1="512" y1="49" x2="562" y2="49" stroke="#6c7a4a" stroke-width="1.6" marker-end="url(#b-ok)"/>
+          <rect x="564" y="24" width="202" height="50" rx="9" fill="#eef0e6" stroke="#5b6840" stroke-width="1.6"/>
+          <text x="665" y="44" text-anchor="middle" font-size="9" font-weight="700" fill="#5b6840">type bound → new()</text>
+          <text x="665" y="60" text-anchor="middle" font-size="8" fill="#5f594f">new() reachable</text>
+
+          <line x1="390" y1="92" x2="390" y2="118" stroke="#9a9387" stroke-width="1" stroke-dasharray="3 3"/>
+
+          <text x="14" y="146" font-size="9" font-weight="700" fill="#a8472f">BAILS — separate file, no use</text>
+          <rect x="14" y="154" width="232" height="62" rx="9" fill="#fffdf8" stroke="#ddd6c8"/>
+          <text x="130" y="174" text-anchor="middle" font-size="9" fill="#2b2a28">mod gadget;  (no use Gadget)</text>
+          <text x="130" y="190" text-anchor="middle" font-size="8" fill="#5f594f">Gadget lives in gadget.rs</text>
+          <text x="130" y="204" text-anchor="middle" font-size="8" fill="#a8472f">no in-scope module body to walk</text>
+          <line x1="246" y1="185" x2="296" y2="185" stroke="#a8472f" stroke-width="1.5" stroke-dasharray="4 3" marker-end="url(#b-rs)"/>
+          <rect x="298" y="160" width="214" height="50" rx="9" fill="#f7ece9" stroke="#a8472f" stroke-width="1.4"/>
+          <text x="405" y="180" text-anchor="middle" font-size="8.5" fill="#2b2a28">resolve_in_module_body</text>
+          <text x="405" y="196" text-anchor="middle" font-size="8.5" font-weight="700" fill="#a8472f">no child scope → null</text>
+          <line x1="512" y1="185" x2="562" y2="185" stroke="#a8472f" stroke-width="1.6" stroke-dasharray="4 3" marker-end="url(#b-rs)"/>
+          <rect x="564" y="160" width="202" height="50" rx="9" fill="#f7ece9" stroke="#a8472f" stroke-width="1.5"/>
+          <text x="665" y="180" text-anchor="middle" font-size="9" font-weight="700" fill="#a8472f">walk returns [] — no edge</text>
+          <text x="665" y="196" text-anchor="middle" font-size="8" fill="#5f594f">import_resolution's job</text>
+        </g>
+      </svg>
+    </div>
+    <div class="legend">
+      <span><i class="edge"></i> inline mod body → type bound</span>
+      <span><i class="fail"></i> separate-file hop → bail, no fabricated edge</span>
+      <span>negative fixture: <code>uses_separate_gadget.rs</code> + <code>gadget.rs</code></span>
+    </div>
+    <div class="callout">
+      <span class="k">how AC #1's "cross-file" is realized</span>
+      <p>The root-cause shape — a type reached only via an inline path — is the in-scope inline-<code>mod</code> block; a separate-file <code>mod gadget;</code> hop is pinned as a negative case resolving to <code>[]</code>. A cross-file re-export hop bails by design.</p>
+    </div>
+  </section>
+
+  <section id="collision">
+    <h2>Disambiguation — the lookup is scoped to one module's body, never a global scan</h2>
+    <p class="cap prose">Two in-scope modules each exposing a <code>Driver</code> resolve to the correct one because the type is looked up in the specific module body its qualifier names — <code>alpha</code> for one call, <code>beta</code> for the other — never a collapsed global name map.</p>
+    <div class="diagram">
+      <svg viewBox="0 0 780 224" role="img" aria-label="Disambiguation: module alpha holds its own Driver and module beta holds its own Driver; the call crate alpha Driver new resolves the qualifier alpha and looks Driver up in alpha's module body, while crate beta Driver new resolves qualifier beta and looks Driver up in beta's body, so each call binds its own module's type with no global name collision">
+        <defs>
+          <marker id="d-a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6c7a4a"/></marker>
+          <marker id="d-b" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#b9794f"/></marker>
+        </defs>
+        <g font-family="ui-monospace,monospace">
+          <rect x="20" y="22" width="216" height="44" rx="8" fill="#eef0e6" stroke="#5b6840" stroke-width="1.3"/>
+          <text x="128" y="42" text-anchor="middle" font-size="9.5" fill="#2b2a28">mod alpha { struct Driver }</text>
+          <text x="128" y="56" text-anchor="middle" font-size="8" fill="#5f594f">alpha's body holds its own Driver</text>
+          <rect x="20" y="150" width="216" height="44" rx="8" fill="#f6efe7" stroke="#b9794f" stroke-width="1.3"/>
+          <text x="128" y="170" text-anchor="middle" font-size="9.5" fill="#2b2a28">mod beta { struct Driver }</text>
+          <text x="128" y="184" text-anchor="middle" font-size="8" fill="#5f594f">beta's body holds its own Driver</text>
+
+          <rect x="300" y="22" width="232" height="44" rx="8" fill="#e7ddc9" stroke="#b9794f" stroke-width="1.4"/>
+          <text x="416" y="42" text-anchor="middle" font-size="9.5" fill="#2b2a28">crate::alpha::Driver::new()</text>
+          <text x="416" y="56" text-anchor="middle" font-size="8" fill="#5f594f">qualifier = alpha</text>
+          <rect x="300" y="150" width="232" height="44" rx="8" fill="#e7ddc9" stroke="#b9794f" stroke-width="1.4"/>
+          <text x="416" y="170" text-anchor="middle" font-size="9.5" fill="#2b2a28">crate::beta::Driver::new()</text>
+          <text x="416" y="184" text-anchor="middle" font-size="8" fill="#5f594f">qualifier = beta</text>
+
+          <line x1="300" y1="44" x2="240" y2="44" stroke="#6c7a4a" stroke-width="1.6" marker-end="url(#d-a)"/>
+          <line x1="300" y1="172" x2="240" y2="172" stroke="#b9794f" stroke-width="1.6" marker-end="url(#d-b)"/>
+
+          <line x1="532" y1="44" x2="586" y2="44" stroke="#6c7a4a" stroke-width="1.6" marker-end="url(#d-a)"/>
+          <line x1="532" y1="172" x2="586" y2="172" stroke="#b9794f" stroke-width="1.6" marker-end="url(#d-b)"/>
+          <rect x="588" y="22" width="178" height="44" rx="9" fill="#eef0e6" stroke="#5b6840" stroke-width="1.6"/>
+          <text x="677" y="42" text-anchor="middle" font-size="9" font-weight="700" fill="#5b6840">alpha's Driver::new</text>
+          <text x="677" y="56" text-anchor="middle" font-size="8" fill="#5f594f">scoped to alpha's body</text>
+          <rect x="588" y="150" width="178" height="44" rx="9" fill="#f6efe7" stroke="#b9794f" stroke-width="1.6"/>
+          <text x="677" y="170" text-anchor="middle" font-size="9" font-weight="700" fill="#7a4636">beta's Driver::new</text>
+          <text x="677" y="184" text-anchor="middle" font-size="8" fill="#5f594f">scoped to beta's body</text>
+        </g>
+      </svg>
+    </div>
+    <div class="legend">
+      <span><i style="background:#eef0e6;border-color:#5b6840"></i> alpha qualifier → alpha's Driver</span>
+      <span><i style="background:#f6efe7;border-color:#b9794f"></i> beta qualifier → beta's Driver</span>
+      <span>fixture: <code>ambiguous_path_constructor.rs</code></span>
+    </div>
+    <div class="callout">
+      <span class="k">why a module-scoped lookup is the guard</span>
+      <p>The type binds through the module's scope definitions, not its file-level exports — so the <code>alpha</code>/<code>beta</code> structs need not be <code>pub</code>, and each call's qualifier names one specific <code>mod</code> body, never a collapsed global name map.</p>
+    </div>
+  </section>
+
+  <section id="ac">
+    <h2>Acceptance — what proves the change</h2>
+    <ol class="acs">
+      <li><span class="n">1</span><div><b>Inline full path:</b> <code>crate::runtime::Driver::new()</code> (type not imported) resolves to exactly the <code>new</code> member; <code>resolve(scope,"Driver")</code> is confirmed <code>null</code> and <code>new</code> is absent from <code>entry_points</code> — over a <b>unit-struct</b> fixture so the flip is observable.</div></li>
+      <li><span class="n">2</span><div><b>Anchors:</b> <code>normalize_path_prefix</code> strips a leading <code>crate</code> / <code>self</code> / <code>super</code> and the type's immediate module is walked; deeper nesting whose intermediate module is not in scope bails, matching the function-call resolver.</div></li>
+      <li class="risk"><span class="n">3</span><div><b>Disambiguation:</b> <code>alpha</code> and <code>beta</code> each expose a <code>Driver</code>; each call resolves to its own module's Driver-derived target via the qualifier — a collapsed walk would bind <code>beta</code>'s call to <code>alpha</code>'s target.</div></li>
+      <li><span class="n">4</span><div><b>Gated:</b> 349.4's in-scope <code>Parker::new()</code> and the TS <code>property_chain</code> branch stay green (full suite, 2849 tests); the branch bails when the qualifier is unresolved or resolves to a non-namespace.</div></li>
+      <li class="partial"><span class="n">5</span><div><b>Fixtures:</b> evidence shapes reproduced and verified end-to-end, with the separate-file <code>uses_separate_gadget.rs</code>/<code>gadget.rs</code> negative case pinning the bail; the literal corpus flip is a corpus-rerun step outside this repo.</div></li>
+    </ol>
+    <div class="callout slate">
+      <span class="k">how 349.5 closes Change A</span>
+      <p>349.1 carries the terminal name plus the type-last <code>path_prefix</code> and resolves qualified <b>function</b> calls; 349.4 links Rust <code>new()</code> for an <b>in-scope</b> type; <b>349.5</b> reuses 349.1's shared resolver for the inline full path, binding its type via the module qualifier. Every in-scope Change-A constructor form now binds.</p>
+    </div>
+  </section>
+
+  <footer>
+    task-349.5 · Done · builds on 349.1 + 349.4 · resolver: call_resolution/constructor.ts → resolve_type_via_module_path · shared helpers: call_resolution/path_resolution.ts (normalize_path_prefix · resolve_in_module_body · is_callable_definition) · type-last qualifier = path_prefix[len-2], must be a `mod` namespace in scope · in-scope-only walk; separate-file mod bails to import_resolution · fixtures: inline_path_constructor.rs · ambiguous_path_constructor.rs · uses_separate_gadget.rs + gadget.rs
+  </footer>
+
+</main>
+
+<script>
+  (function(){
+    var links = Array.prototype.slice.call(document.querySelectorAll('nav.toc a'));
+    var map = {};
+    links.forEach(function(a){ map[a.getAttribute('href').slice(1)] = a; });
+    var obs = new IntersectionObserver(function(es){
+      es.forEach(function(e){
+        if(e.isIntersecting){
+          links.forEach(function(l){ l.classList.remove('active'); });
+          var a = map[e.target.id]; if(a) a.classList.add('active');
+        }
+      });
+    }, {rootMargin:'-15% 0px -75% 0px'});
+    document.querySelectorAll('main section[id]').forEach(function(s){ obs.observe(s); });
+  })();
+</script>
+</body>
+</html>

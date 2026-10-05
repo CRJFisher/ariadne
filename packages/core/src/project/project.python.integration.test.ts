@@ -115,14 +115,20 @@ describe("Project Integration - Python", () => {
       );
       expect(product_class).toBeDefined();
 
-      // Get type info for Product class
-      const type_info = project.get_type_info(product_class!.symbol_id);
-      expect(type_info).toBeDefined();
-      expect(type_info!.methods.size).toBeGreaterThan(0);
+      // Get member index entry for Product class
+      const product_members = project.definitions
+        .get_member_index()
+        .get(product_class!.symbol_id);
+      const get_name_def = product_class!.methods.find(
+        (m) => m.name === ("get_name" as SymbolName)
+      )!;
+      expect(product_members?.get("get_name" as SymbolName)).toBe(
+        get_name_def.symbol_id
+      );
 
-      // Verify get_name method exists in type info
-      const get_name_method_id = type_info!.methods.get("get_name" as SymbolName);
-      expect(get_name_method_id).toBeDefined();
+      // Verify get_name method exists in the member index
+      const get_name_method_id = product_members?.get("get_name" as SymbolName);
+      expect(get_name_method_id).toBe(get_name_def.symbol_id);
     });
   });
 
@@ -357,27 +363,26 @@ describe("Project Integration - Python", () => {
       const user_class = classes.find((c) => c.name === ("User" as SymbolName));
       expect(user_class).toBeDefined();
 
-      // Get type info for User class
-      const type_info = project.get_type_info(user_class!.symbol_id);
-      expect(type_info).toBeDefined();
-      if (!type_info) return;
+      // Verify Python __init__ is keyed into the member index as the constructor
+      const user_members = project.definitions
+        .get_member_index()
+        .get(user_class!.symbol_id);
+      const init_id = user_members?.get("__init__" as SymbolName);
+      expect(init_id).toBeDefined();
 
-      // Verify Python __init__ is captured as constructor
-      expect(type_info.constructor).toBeDefined();
-      if (!type_info.constructor) return;
-
-      // Verify the constructor is the __init__ method
-      const constructor_def = project.definitions.get(type_info.constructor);
-      expect(constructor_def).toBeDefined();
-      if (constructor_def && constructor_def.kind === "method") {
-        expect(constructor_def.name).toBe("__init__");
-      }
+      const constructor_def = project.definitions.get(init_id!);
+      expect(constructor_def?.name).toBe("__init__" as SymbolName);
 
       // Verify instance methods exist
-      expect(type_info.methods.size).toBeGreaterThan(0);
+      const get_info_class_def = user_class!.methods.find(
+        (m) => m.name === ("get_info" as SymbolName)
+      )!;
+      expect(user_members?.get("get_info" as SymbolName)).toBe(
+        get_info_class_def.symbol_id
+      );
 
       // Find get_info method
-      const get_info_method_id = type_info.methods.get("get_info" as SymbolName);
+      const get_info_method_id = user_members?.get("get_info" as SymbolName);
       expect(get_info_method_id).toBeDefined();
 
       // Verify method definition has self parameter
@@ -425,19 +430,92 @@ describe("Project Integration - Python", () => {
       );
       expect(user_class).toBeDefined();
 
-      // Verify User class has get_name method in type registry
-      const type_info = project.get_type_info(user_class!.symbol_id);
-      expect(type_info).toBeDefined();
-      expect(type_info!.methods.has("get_name" as SymbolName)).toBe(true);
+      // Verify User class has get_name method in the member index
+      const user_members = project.definitions
+        .get_member_index()
+        .get(user_class!.symbol_id);
+      expect(
+        project.definitions.get(user_members?.get("get_name" as SymbolName)!)
+          ?.kind
+      ).toBe("method");
 
       // Get the actual get_name method symbol ID
-      const get_name_method_id = type_info!.methods.get("get_name" as SymbolName);
-      expect(get_name_method_id).toBeDefined();
+      const get_name_method_id = user_members?.get("get_name" as SymbolName);
+      expect(get_name_method_id).toBe(
+        user_class!.methods.find((m) => m.name === ("get_name" as SymbolName))!
+          .symbol_id
+      );
 
       // Verify method definition can be looked up
       const get_name_def = project.definitions.get(get_name_method_id!);
       expect(get_name_def).toBeDefined();
       expect(get_name_def!.location.file_path).toContain("user_class.py");
+    });
+
+    it("resolves a binding that holds `self` or names a class, whatever it is spelled", () => {
+      const file = file_path("self_reference/bindings.py");
+      project.update_file(
+        file,
+        [
+          "class Parser:",
+          "    def parse(self):",
+          "        me = self",
+          "        me.reset()",
+          "    def reset(self):",
+          "        pass",
+          "    @staticmethod",
+          "    def create():",
+          "        pass",
+          "",
+          "cls = Parser",
+          "cls.create()",
+        ].join("\n")
+      );
+
+      const parser = Array.from(project.get_index_single_file(file)!.classes.values()).find(
+        (c) => c.name === ("Parser" as SymbolName)
+      )!;
+      const method = (name: string) =>
+        parser.methods.find((m) => m.name === (name as SymbolName))!.symbol_id;
+
+      // `me` holds the receiver its method binds; a module-level `cls` is a
+      // local naming Parser, with no enclosing class to read a keyword against.
+      const targets = project.resolutions
+        .get_calls_for_file(file)
+        .filter((call) => call.name === ("reset" as SymbolName) || call.name === ("create" as SymbolName))
+        .map((call) => ({ name: call.name, targets: call.resolutions.map((r) => r.symbol_id) }));
+      expect(targets).toEqual([
+        { name: "reset", targets: [method("reset")] },
+        { name: "create", targets: [method("create")] },
+      ]);
+    });
+
+    it("resolves a later parameter spelled `cls` through what it holds, not the enclosing class", () => {
+      const file = file_path("self_reference/registry.py");
+      project.update_file(
+        file,
+        [
+          "class Plugin:",
+          "    def setup(self):",
+          "        pass",
+          "",
+          "class Registry:",
+          "    def setup(self):",
+          "        pass",
+          "    def register(self, cls: Plugin):",
+          "        cls.setup()",
+        ].join("\n")
+      );
+
+      const plugin_setup = Array.from(project.get_index_single_file(file)!.classes.values())
+        .find((c) => c.name === ("Plugin" as SymbolName))!
+        .methods.find((m) => m.name === ("setup" as SymbolName))!.symbol_id;
+
+      const targets = project.resolutions
+        .get_calls_for_file(file)
+        .filter((call) => call.name === ("setup" as SymbolName))
+        .map((call) => call.resolutions.map((r) => r.symbol_id));
+      expect(targets).toEqual([[plugin_setup]]);
     });
   });
 
@@ -525,13 +603,20 @@ describe("Project Integration - Python", () => {
       );
       expect(product_class).toBeDefined();
 
-      // Verify type info exists
-      const type_info = project.get_type_info(product_class!.symbol_id);
-      expect(type_info).toBeDefined();
-
-      // Verify methods are accessible via type info
-      expect(type_info!.methods.has("get_name" as SymbolName)).toBe(true);
-      expect(type_info!.methods.has("apply_discount" as SymbolName)).toBe(true);
+      // Verify methods are accessible via the member index
+      const product_members = project.definitions
+        .get_member_index()
+        .get(product_class!.symbol_id);
+      expect(
+        project.definitions.get(
+          product_members?.get("get_name" as SymbolName)!
+        )?.kind
+      ).toBe("method");
+      expect(
+        project.definitions.get(
+          product_members?.get("apply_discount" as SymbolName)!
+        )?.kind
+      ).toBe("method");
 
       // Find method call in the file
       const method_call = index!.references.find(
@@ -688,16 +773,17 @@ class Service:
       );
       expect(user_class).toBeDefined();
 
-      // Verify __init__ method exists in type registry as constructor
-      const type_info = project.get_type_info(user_class!.symbol_id);
-      expect(type_info).toBeDefined();
-      if (!type_info) return;
-
-      // Verify __init__ is captured as constructor
-      expect(type_info.constructor).toBeDefined();
+      // Verify __init__ is keyed into the member index as the constructor
+      const user_members = project.definitions
+        .get_member_index()
+        .get(user_class!.symbol_id);
+      expect(user_members?.get("__init__" as SymbolName)).toBeDefined();
 
       // Verify instance methods also exist
-      expect(type_info.methods.size).toBeGreaterThan(0);
+      const method_ids = Array.from(user_members ?? []).filter(
+        ([, id]) => project.definitions.get(id)?.kind === "method"
+      );
+      expect(method_ids.length).toBe(user_class!.methods.length);
     });
 
     it("should index decorated module-level functions and resolve calls to them", async () => {
@@ -1208,6 +1294,52 @@ def process():
 
   });
 
+  describe("Callback parameters", () => {
+    function calls_to(file: FilePath, class_name: string, method_name: string) {
+      const owner = Array.from(project.get_index_single_file(file)!.classes.values()).find(
+        (c) => c.name === (class_name as SymbolName)
+      )!;
+      const target = project.definitions.get_member_index().get(owner.symbol_id)!.get(method_name as SymbolName)!;
+      const calls = project.resolutions
+        .get_calls_for_file(file)
+        .filter((call) => call.name === (method_name as SymbolName))
+        .map((call) => ({
+          line: call.location.start_line,
+          targets: call.resolutions.map((r) => r.symbol_id),
+          reason: call.resolution_failure?.reason,
+        }));
+      return { target, calls };
+    }
+
+    it("types a lambda's parameter from the Callable its callee declares, past a method's own receiver", () => {
+      const file = file_path("callback_parameters/lambdas.py");
+      project.update_file(
+        file,
+        [
+          "from typing import Callable, Optional",
+          "class Foo:",
+          "    def m(self): pass",
+          "class Registry:",
+          "    def each(self, cb: Callable[[Foo], None]): pass",
+          "def apply(cb: Optional[Callable[[Foo], None]]): pass",
+          "registry = Registry()",
+          "apply(lambda f: f.m())",
+          "registry.each(lambda f: f.m())",
+          "Registry.each(registry, lambda f: f.m())",
+        ].join("\n")
+      );
+
+      // Through the class the receiver is an argument, so the lambda is the
+      // second one and still lands on `cb`.
+      const { target, calls } = calls_to(file, "Foo", "m");
+      expect(calls).toEqual([
+        { line: 8, targets: [target], reason: undefined },
+        { line: 9, targets: [target], reason: undefined },
+        { line: 10, targets: [target], reason: undefined },
+      ]);
+    });
+  });
+
   describe("Polymorphic Protocol Resolution (Task 11.158)", () => {
     it("should mark Protocol implementations as called when possible", async () => {
       const source = load_source("classes/polymorphic_protocol.py");
@@ -1265,15 +1397,23 @@ class Child(Base):
       expect(base_class).toBeDefined();
       expect(child_class).toBeDefined();
 
-      const base_helper = project.get_type_info(base_class!.symbol_id)!.methods.get(
-        "helper" as SymbolName
-      );
-      const child_helper = project.get_type_info(child_class!.symbol_id)!.methods.get(
-        "helper" as SymbolName
-      );
+      const base_helper = project.definitions
+        .get_member_index()
+        .get(base_class!.symbol_id)
+        ?.get("helper" as SymbolName);
+      const child_helper = project.definitions
+        .get_member_index()
+        .get(child_class!.symbol_id)
+        ?.get("helper" as SymbolName);
 
-      expect(base_helper).toBeDefined();
-      expect(child_helper).toBeDefined();
+      expect(base_helper).toBe(
+        base_class!.methods.find((m) => m.name === ("helper" as SymbolName))!
+          .symbol_id
+      );
+      expect(child_helper).toBe(
+        child_class!.methods.find((m) => m.name === ("helper" as SymbolName))!
+          .symbol_id
+      );
 
       // Both should be referenced (neither is an entry point)
       expect(referenced.has(base_helper!)).toBe(true);
@@ -1307,10 +1447,14 @@ class C(B):
       expect(classes).toHaveLength(3);
 
       for (const cls of classes) {
-        const helper_id = project.get_type_info(cls.symbol_id)!.methods.get(
-          "helper" as SymbolName
+        const helper_id = project.definitions
+          .get_member_index()
+          .get(cls.symbol_id)
+          ?.get("helper" as SymbolName);
+        expect(helper_id).toBe(
+          cls.methods.find((m) => m.name === ("helper" as SymbolName))!
+            .symbol_id
         );
-        expect(helper_id).toBeDefined();
         expect(referenced.has(helper_id!)).toBe(true);
       }
     });
@@ -1764,4 +1908,124 @@ class C(B):
     });
   });
 
+});
+
+/**
+ * A Python construction is recorded once, only when the callee is a class,
+ * and the variable it lands in takes the class as its type; a plain call is a
+ * call, whatever scope it sits in; and a declared annotation beats whatever
+ * the initializer was inferred to construct.
+ */
+describe("Python constructions and plain calls", () => {
+  const PARSERS = "integration/parsers.py";
+  const USES = "integration/uses_parsers.py";
+
+  // A resolution is only evidence if it names which definition answered: the
+  // class in parsers.py and uses_parsers.py's own import alias for it share the
+  // trailing name, so kind and file are what tell them apart.
+  function name_target(symbol_id: string): string {
+    const parts = symbol_id.split(":");
+    const kind = parts[0];
+    const name = parts[parts.length - 1];
+    const file = path.basename(parts.slice(1, parts.length - 5).join(":"));
+    return `${kind} ${file}:${name}`;
+  }
+
+  interface CallShape {
+    readonly line: number;
+    readonly name: string;
+    readonly call_type: "function" | "method" | "constructor";
+    readonly outcome: string;
+  }
+
+  async function load(): Promise<{ project: Project; calls: CallShape[] }> {
+    const project = new Project();
+    await project.initialize(FIXTURE_ROOT as FilePath);
+    project.update_file(file_path(PARSERS), load_source(PARSERS));
+    project.update_file(file_path(USES), load_source(USES));
+    const calls = project.resolutions
+      .get_calls_for_file(file_path(USES))
+      .map((call) => ({
+        line: call.location.start_line,
+        name: call.name as string,
+        call_type: call.call_type,
+        outcome:
+          call.resolutions.length > 0
+            ? call.resolutions.map((resolution) => name_target(resolution.symbol_id)).join(",")
+            : (call.resolution_failure?.reason ?? "silent"),
+      }))
+      .sort((left, right) => left.line - right.line || left.name.localeCompare(right.name));
+    return { project, calls };
+  }
+
+  it("records each call once: constructions as constructor calls to the class, plain calls as function calls", async () => {
+    const { calls } = await load();
+    // `helper(1)` at module level and `helper(2)` inside a method are plain
+    // calls and nothing else; `Parser()` inside `__init__` and in `build` is
+    // one constructor call each, to the class (which declares no `__init__`);
+    // `dispatch(flavor)` and `make()` are the factory calls and carry no
+    // constructor edge. No call in the file fails as a construction of a
+    // non-class.
+    expect(calls).toEqual([
+      { line: 15, name: "helper", call_type: "function", outcome: "function parsers.py:helper" },
+      { line: 20, name: "Parser", call_type: "constructor", outcome: "class parsers.py:Parser" },
+      { line: 23, name: "helper", call_type: "function", outcome: "function parsers.py:helper" },
+      { line: 24, name: "dispatch", call_type: "function", outcome: "function parsers.py:dispatch" },
+      { line: 25, name: "close", call_type: "method", outcome: "receiver_type_unknown" },
+      { line: 30, name: "make", call_type: "function", outcome: "function parsers.py:make" },
+      { line: 31, name: "parse", call_type: "method", outcome: "method parsers.py:parse" },
+      { line: 32, name: "Parser", call_type: "constructor", outcome: "class parsers.py:Parser" },
+      { line: 33, name: "close", call_type: "method", outcome: "method parsers.py:close" },
+      { line: 34, name: "Parser", call_type: "constructor", outcome: "class parsers.py:Parser" },
+      { line: 35, name: "close", call_type: "method", outcome: "method parsers.py:close" },
+      // `w: Parser = Wrapper().build()`: `construct_target` walks up to the
+      // enclosing assignment, so a construction anywhere inside the initialiser
+      // claims it, and `w` takes `Wrapper` rather than the declared `Parser`.
+      // Pre-existing — the same shape mistypes without an annotation too — and
+      // pinned here because it is what distinguishes the binding order.
+      { line: 40, name: "build", call_type: "method", outcome: "receiver_type_unknown" },
+      { line: 40, name: "Wrapper", call_type: "constructor", outcome: "class parsers.py:Wrapper" },
+      { line: 41, name: "parse", call_type: "method", outcome: "method_not_on_type" },
+    ]);
+  });
+
+  it("types the constructed and annotated variables as the class, so their method calls resolve", async () => {
+    const { project } = await load();
+    const uses_index = project.get_index_single_file(file_path(USES));
+    const parsers_index = project.get_index_single_file(file_path(PARSERS));
+    const parser_class_id = Array.from(parsers_index!.classes.values()).find(
+      (definition) => definition.name === ("Parser" as SymbolName)
+    )!.symbol_id;
+
+    const type_of = (name: string) => {
+      const variable = Array.from(uses_index!.variables.values()).find(
+        (definition) => definition.name === (name as SymbolName)
+      );
+      return variable ? project.types.get_symbol_type(variable.symbol_id) : undefined;
+    };
+
+    // `p: Parser = make()` takes the declared annotation, because `make` is a
+    // factory and names no type; `x = Parser()` and
+    // `a: Optional[Parser] = Parser()` both take the constructed class, the one
+    // whose methods actually run. Nothing types `parser = dispatch(flavor)`:
+    // the factory declares no return type, and TASK-376.11's value channel is
+    // where that receiver gains one.
+    const wrapper_class_id = Array.from(parsers_index!.classes.values()).find(
+      (definition) => definition.name === ("Wrapper" as SymbolName)
+    )!.symbol_id;
+
+    expect({
+      p: type_of("p"),
+      x: type_of("x"),
+      a: type_of("a"),
+      parser: type_of("parser"),
+      w: type_of("w"),
+    }).toEqual({
+      p: parser_class_id,
+      x: parser_class_id,
+      a: parser_class_id,
+      parser: null,
+      w: wrapper_class_id,
+    });
+  });
 });

@@ -6,10 +6,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   show_call_graph_neighborhood,
   show_call_graph_neighborhood_schema,
-  parse_symbol_ref,
-  find_node_by_symbol_ref,
-  build_callers_index,
-  paths_match,
 } from "./show_call_graph_neighborhood";
 import type { Project } from "@ariadnejs/core";
 import type {
@@ -18,6 +14,8 @@ import type {
   SymbolId,
   FilePath,
   SymbolName,
+  ScopeId,
+  FunctionDefinition,
 } from "@ariadnejs/types";
 
 /**
@@ -31,14 +29,14 @@ function create_mock_node(
   end_line: number,
   enclosed_calls: CallableNode["enclosed_calls"] = [],
   is_test = false
-): CallableNode {
+): CallableNode & { definition: FunctionDefinition } {
   const symbol_id = id as SymbolId;
   return {
     symbol_id,
     name: name as SymbolName,
     definition: {
       symbol_id,
-      name,
+      name: name as SymbolName,
       kind: "function",
       location: {
         file_path: file_path as FilePath,
@@ -47,10 +45,12 @@ function create_mock_node(
         end_line,
         end_column: 1,
       },
-      scope_id: "scope:module" as any,
+      is_exported: false,
+      defining_scope_id: "scope:module" as ScopeId,
+      body_scope_id: "scope:module#body" as ScopeId,
       signature: {
         parameters: [],
-        return_type: "void",
+        return_type: "void" as SymbolName,
       },
     },
     location: {
@@ -161,388 +161,19 @@ describe("show_call_graph_neighborhood_schema", () => {
   });
 });
 
-describe("paths_match", () => {
-  it("should match exact paths", () => {
-    expect(paths_match("src/utils.ts", "src/utils.ts")).toBe(true);
-  });
-
-  it("should match relative path against absolute path", () => {
-    expect(paths_match("/project/src/utils.ts", "src/utils.ts")).toBe(true);
-    expect(paths_match("src/utils.ts", "/project/src/utils.ts")).toBe(true);
-  });
-
-  it("should NOT match partial path segments", () => {
-    // "ared/utils.ts" should NOT match "shared/utils.ts"
-    // because "ared" is not a complete path segment
-    expect(paths_match("ared/utils.ts", "shared/utils.ts")).toBe(false);
-    expect(paths_match("andlers.ts", "handlers.ts")).toBe(false);
-  });
-
-  it("should match filename at path boundary", () => {
-    // "utils.ts" at a path boundary (after /) SHOULD match
-    // This supports relative path matching like "utils.ts" matching "src/utils.ts"
-    expect(paths_match("utils.ts", "src/utils.ts")).toBe(true);
-  });
-
-  it("should match at path boundaries", () => {
-    // "utils.ts" at start of longer path (no prefix char) should match
-    expect(paths_match("utils.ts", "utils.ts")).toBe(true);
-    // "src/utils.ts" ending longer path should match
-    expect(paths_match("/project/src/utils.ts", "src/utils.ts")).toBe(true);
-  });
-
-  it("should handle Windows-style path separators", () => {
-    expect(paths_match("C:\\project\\src\\utils.ts", "src\\utils.ts")).toBe(true);
-  });
-});
-
-describe("parse_symbol_ref", () => {
-  it("should parse standard format", () => {
-    const result = parse_symbol_ref("src/handlers.ts:15#handle_request");
-    expect(result).toEqual({
-      file_path: "src/handlers.ts",
-      line: 15,
-      name: "handle_request",
-    });
-  });
-
-  it("should handle Windows paths with colons", () => {
-    const result = parse_symbol_ref("C:/Users/foo/bar.ts:10#my_func");
-    expect(result).toEqual({
-      file_path: "C:/Users/foo/bar.ts",
-      line: 10,
-      name: "my_func",
-    });
-  });
-
-  it("should handle deep paths", () => {
-    const result = parse_symbol_ref(
-      "packages/core/src/utils/helpers.ts:42#helper_func"
-    );
-    expect(result).toEqual({
-      file_path: "packages/core/src/utils/helpers.ts",
-      line: 42,
-      name: "helper_func",
-    });
-  });
-
-  it("should handle names with underscores", () => {
-    const result = parse_symbol_ref("test.ts:1#__private_method__");
-    expect(result).toEqual({
-      file_path: "test.ts",
-      line: 1,
-      name: "__private_method__",
-    });
-  });
-
-  it("should throw on missing hash", () => {
-    expect(() => parse_symbol_ref("test.ts:1")).toThrow("missing '#'");
-  });
-
-  it("should throw on missing colon before line", () => {
-    expect(() => parse_symbol_ref("test.ts#foo")).toThrow("missing ':'");
-  });
-
-  it("should throw on non-numeric line", () => {
-    expect(() => parse_symbol_ref("test.ts:abc#foo")).toThrow("not a number");
-  });
-});
-
-describe("find_node_by_symbol_ref", () => {
-  it("should find node by exact match", () => {
-    const node = create_mock_node(
-      "symbol:foo",
-      "foo",
-      "src/utils.ts",
-      10,
-      20
-    );
-    const call_graph: CallGraph = {
-      nodes: new Map([[node.symbol_id, node]]),
-      entry_points: [node.symbol_id],
-    };
-
-    const result = find_node_by_symbol_ref(call_graph, {
-      file_path: "src/utils.ts",
-      line: 10,
-      name: "foo",
-    });
-
-    expect(result).toBe(node);
-  });
-
-  it("should match relative path against absolute path", () => {
-    const node = create_mock_node(
-      "symbol:foo",
-      "foo",
-      "/Users/me/project/src/utils.ts",
-      10,
-      20
-    );
-    const call_graph: CallGraph = {
-      nodes: new Map([[node.symbol_id, node]]),
-      entry_points: [node.symbol_id],
-    };
-
-    const result = find_node_by_symbol_ref(call_graph, {
-      file_path: "src/utils.ts",
-      line: 10,
-      name: "foo",
-    });
-
-    expect(result).toBe(node);
-  });
-
-  it("should return undefined when not found", () => {
-    const node = create_mock_node(
-      "symbol:foo",
-      "foo",
-      "src/utils.ts",
-      10,
-      20
-    );
-    const call_graph: CallGraph = {
-      nodes: new Map([[node.symbol_id, node]]),
-      entry_points: [node.symbol_id],
-    };
-
-    const result = find_node_by_symbol_ref(call_graph, {
-      file_path: "src/utils.ts",
-      line: 10,
-      name: "bar", // Wrong name
-    });
-
-    expect(result).toBeUndefined();
-  });
-
-  it("should return undefined when line doesn't match", () => {
-    const node = create_mock_node(
-      "symbol:foo",
-      "foo",
-      "src/utils.ts",
-      10,
-      20
-    );
-    const call_graph: CallGraph = {
-      nodes: new Map([[node.symbol_id, node]]),
-      entry_points: [node.symbol_id],
-    };
-
-    const result = find_node_by_symbol_ref(call_graph, {
-      file_path: "src/utils.ts",
-      line: 11, // Wrong line
-      name: "foo",
-    });
-
-    expect(result).toBeUndefined();
-  });
-});
-
-describe("build_callers_index", () => {
-  it("should build empty index for no calls", () => {
-    const node = create_mock_node("symbol:foo", "foo", "test.ts", 1, 5);
-    const call_graph: CallGraph = {
-      nodes: new Map([[node.symbol_id, node]]),
-      entry_points: [node.symbol_id],
-    };
-
-    const index = build_callers_index(call_graph);
-
-    expect(index.size).toBe(0);
-  });
-
-  it("should map callee to caller", () => {
-    const callee = create_mock_node("symbol:callee", "callee", "test.ts", 1, 5);
-    const caller = create_mock_node(
-      "symbol:caller",
-      "caller",
-      "test.ts",
-      10,
-      20,
-      [
-        {
-          name: "callee" as SymbolName,
-          location: {} as any,
-          scope_id: "scope:caller" as any,
-          call_type: "function",
-          resolutions: [{ symbol_id: callee.symbol_id, confidence: "certain" as any, reason: { type: "direct" } }],
-        },
-      ]
-    );
-
-    const call_graph: CallGraph = {
-      nodes: new Map([
-        [callee.symbol_id, callee],
-        [caller.symbol_id, caller],
-      ]),
-      entry_points: [caller.symbol_id],
-    };
-
-    const index = build_callers_index(call_graph);
-
-    expect(index.has(callee.symbol_id)).toBe(true);
-    expect(index.get(callee.symbol_id)?.has(caller.symbol_id)).toBe(true);
-  });
-
-  it("should handle multiple callers", () => {
-    const callee = create_mock_node("symbol:callee", "callee", "test.ts", 1, 5);
-    const caller1 = create_mock_node(
-      "symbol:caller1",
-      "caller1",
-      "test.ts",
-      10,
-      20,
-      [
-        {
-          name: "callee" as SymbolName,
-          location: {} as any,
-          scope_id: "scope:caller1" as any,
-          call_type: "function",
-          resolutions: [{ symbol_id: callee.symbol_id, confidence: "certain" as any, reason: { type: "direct" } }],
-        },
-      ]
-    );
-    const caller2 = create_mock_node(
-      "symbol:caller2",
-      "caller2",
-      "test.ts",
-      30,
-      40,
-      [
-        {
-          name: "callee" as SymbolName,
-          location: {} as any,
-          scope_id: "scope:caller2" as any,
-          call_type: "function",
-          resolutions: [{ symbol_id: callee.symbol_id, confidence: "certain" as any, reason: { type: "direct" } }],
-        },
-      ]
-    );
-
-    const call_graph: CallGraph = {
-      nodes: new Map([
-        [callee.symbol_id, callee],
-        [caller1.symbol_id, caller1],
-        [caller2.symbol_id, caller2],
-      ]),
-      entry_points: [caller1.symbol_id, caller2.symbol_id],
-    };
-
-    const index = build_callers_index(call_graph);
-
-    expect(index.get(callee.symbol_id)?.size).toBe(2);
-    expect(index.get(callee.symbol_id)?.has(caller1.symbol_id)).toBe(true);
-    expect(index.get(callee.symbol_id)?.has(caller2.symbol_id)).toBe(true);
-  });
-
-  it("should preserve genuine recursive self-calls", () => {
-    // A function that calls itself (genuine recursion)
-    const recursive_func = create_mock_node(
-      "symbol:factorial",
-      "factorial",
-      "test.ts",
-      1,
-      10,
-      [
-        {
-          name: "factorial" as SymbolName,
-          location: {} as any,
-          scope_id: "scope:factorial" as any,
-          call_type: "function",
-          // NOT a callback invocation - genuine recursive call
-          resolutions: [{ symbol_id: "symbol:factorial" as SymbolId, confidence: "certain" as any, reason: { type: "direct" } }],
-        },
-      ]
-    );
-
-    const call_graph: CallGraph = {
-      nodes: new Map([[recursive_func.symbol_id, recursive_func]]),
-      entry_points: [recursive_func.symbol_id],
-    };
-
-    const index = build_callers_index(call_graph);
-
-    // Genuine recursion should be preserved in the callers index
-    expect(index.has(recursive_func.symbol_id)).toBe(true);
-    expect(index.get(recursive_func.symbol_id)?.has(recursive_func.symbol_id)).toBe(true);
-  });
-
-  it("should filter callback invocation self-calls", () => {
-    // An anonymous callback that appears to call itself due to scope resolution artifacts
-    const callback_func = create_mock_node(
-      "symbol:anonymous_callback",
-      "<anonymous>",
-      "test.ts",
-      5,
-      15,
-      [
-        {
-          name: "<anonymous>" as SymbolName,
-          location: {} as any,
-          scope_id: "scope:callback" as any,
-          call_type: "function",
-          // This IS a callback invocation - should be filtered
-          is_callback_invocation: true,
-          resolutions: [{ symbol_id: "symbol:anonymous_callback" as SymbolId, confidence: "certain" as any, reason: { type: "direct" } }],
-        },
-      ]
-    );
-
-    const call_graph: CallGraph = {
-      nodes: new Map([[callback_func.symbol_id, callback_func]]),
-      entry_points: [callback_func.symbol_id],
-    };
-
-    const index = build_callers_index(call_graph);
-
-    // Callback self-call should be filtered out
-    expect(index.has(callback_func.symbol_id)).toBe(false);
-  });
-
-  it("should preserve non-self callback invocations", () => {
-    // A callback that calls another function (not itself)
-    const target_func = create_mock_node("symbol:target", "target", "test.ts", 1, 5);
-    const callback_func = create_mock_node(
-      "symbol:callback",
-      "<anonymous>",
-      "test.ts",
-      10,
-      20,
-      [
-        {
-          name: "target" as SymbolName,
-          location: {} as any,
-          scope_id: "scope:callback" as any,
-          call_type: "function",
-          is_callback_invocation: true,
-          resolutions: [{ symbol_id: target_func.symbol_id, confidence: "certain" as any, reason: { type: "direct" } }],
-        },
-      ]
-    );
-
-    const call_graph: CallGraph = {
-      nodes: new Map([
-        [target_func.symbol_id, target_func],
-        [callback_func.symbol_id, callback_func],
-      ]),
-      entry_points: [callback_func.symbol_id],
-    };
-
-    const index = build_callers_index(call_graph);
-
-    // Non-self callback invocations should be preserved
-    expect(index.has(target_func.symbol_id)).toBe(true);
-    expect(index.get(target_func.symbol_id)?.has(callback_func.symbol_id)).toBe(true);
-  });
-});
 
 describe("show_call_graph_neighborhood", () => {
-  let mock_project: Project;
+  let mock_project: Pick<Project, "get_call_graph">;
+  const TEST_PROJECT_PATH = "/test_project";
+  const call_show = (
+    request: Parameters<typeof show_call_graph_neighborhood>[1],
+    project_path: string = TEST_PROJECT_PATH,
+  ) => show_call_graph_neighborhood(mock_project, request, project_path);
 
   beforeEach(() => {
     mock_project = {
       get_call_graph: vi.fn(),
-    } as unknown as Project;
+    };
   });
 
   it("should throw error for invalid symbol_ref format", async () => {
@@ -553,7 +184,7 @@ describe("show_call_graph_neighborhood", () => {
     vi.mocked(mock_project.get_call_graph).mockReturnValue(mock_call_graph);
 
     await expect(
-      show_call_graph_neighborhood(mock_project, {
+      call_show({
         symbol_ref: "invalid",
         show_full_signature: true,
       })
@@ -568,7 +199,7 @@ describe("show_call_graph_neighborhood", () => {
     vi.mocked(mock_project.get_call_graph).mockReturnValue(mock_call_graph);
 
     await expect(
-      show_call_graph_neighborhood(mock_project, {
+      call_show({
         symbol_ref: "test.ts:1#foo",
         show_full_signature: true,
       })
@@ -589,7 +220,7 @@ describe("show_call_graph_neighborhood", () => {
     };
     vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
 
-    const result = await show_call_graph_neighborhood(mock_project, {
+    const result = await call_show({
       symbol_ref: "src/utils.ts:10#foo",
       show_full_signature: true,
     });
@@ -612,7 +243,7 @@ describe("show_call_graph_neighborhood", () => {
     };
     vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
 
-    const result = await show_call_graph_neighborhood(mock_project, {
+    const result = await call_show({
       symbol_ref: "src/utils.ts:10#foo",
       show_full_signature: true,
     });
@@ -634,7 +265,7 @@ describe("show_call_graph_neighborhood", () => {
     };
     vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
 
-    const result = await show_call_graph_neighborhood(mock_project, {
+    const result = await call_show({
       symbol_ref: "src/utils.ts:10#foo",
       show_full_signature: true,
     });
@@ -676,7 +307,7 @@ describe("show_call_graph_neighborhood", () => {
     };
     vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
 
-    const result = await show_call_graph_neighborhood(mock_project, {
+    const result = await call_show({
       symbol_ref: "test.ts:1#callee",
       show_full_signature: true,
     });
@@ -720,7 +351,7 @@ describe("show_call_graph_neighborhood", () => {
     };
     vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
 
-    const result = await show_call_graph_neighborhood(mock_project, {
+    const result = await call_show({
       symbol_ref: "test.ts:10#caller",
       show_full_signature: true,
     });
@@ -754,7 +385,7 @@ describe("show_call_graph_neighborhood", () => {
     };
     vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
 
-    const result = await show_call_graph_neighborhood(mock_project, {
+    const result = await call_show({
       symbol_ref: "test.ts:1#recursive",
       callees_depth: 3,
       show_full_signature: true,
@@ -806,7 +437,7 @@ describe("show_call_graph_neighborhood", () => {
     vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
 
     // With depth 1, should only show c1
-    const result_depth1 = await show_call_graph_neighborhood(mock_project, {
+    const result_depth1 = await call_show({
       symbol_ref: "test.ts:1#target",
       callers_depth: 1,
       show_full_signature: true,
@@ -815,7 +446,7 @@ describe("show_call_graph_neighborhood", () => {
     expect(result_depth1).not.toContain("c2(): void");
 
     // With depth 2, should show c1 and c2
-    const result_depth2 = await show_call_graph_neighborhood(mock_project, {
+    const result_depth2 = await call_show({
       symbol_ref: "test.ts:1#target",
       callers_depth: 2,
       show_full_signature: true,
@@ -825,6 +456,55 @@ describe("show_call_graph_neighborhood", () => {
     expect(result_depth2).not.toContain("c3(): void");
   });
 
+  it("respects callees_depth limit across a multi-level chain", async () => {
+    // Chain: target -> h1 -> h2
+    const h2 = create_mock_node("symbol:h2", "h2", "test.ts", 30, 35);
+    const h1 = create_mock_node("symbol:h1", "h1", "test.ts", 20, 25, [
+      {
+        name: "h2" as SymbolName,
+        location: {} as any,
+        scope_id: "scope:h1" as any,
+        call_type: "function",
+        resolutions: [{ symbol_id: h2.symbol_id, confidence: "certain" as any, reason: { type: "direct" } }],
+      },
+    ]);
+    const target = create_mock_node("symbol:target", "target", "test.ts", 1, 5, [
+      {
+        name: "h1" as SymbolName,
+        location: {} as any,
+        scope_id: "scope:target" as any,
+        call_type: "function",
+        resolutions: [{ symbol_id: h1.symbol_id, confidence: "certain" as any, reason: { type: "direct" } }],
+      },
+    ]);
+
+    const call_graph: CallGraph = {
+      nodes: new Map([
+        [target.symbol_id, target],
+        [h1.symbol_id, h1],
+        [h2.symbol_id, h2],
+      ]),
+      entry_points: [target.symbol_id],
+    };
+    vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
+
+    const result_depth1 = await call_show({
+      symbol_ref: "test.ts:1#target",
+      callees_depth: 1,
+      show_full_signature: true,
+    });
+    expect(result_depth1).toContain("h1(): void");
+    expect(result_depth1).not.toContain("h2(): void");
+
+    const result_depth2 = await call_show({
+      symbol_ref: "test.ts:1#target",
+      callees_depth: 2,
+      show_full_signature: true,
+    });
+    expect(result_depth2).toContain("h1(): void");
+    expect(result_depth2).toContain("h2(): void");
+  });
+
   it("should show just name when show_full_signature is false", async () => {
     const node_id = "symbol:my_func" as SymbolId;
     const node: CallableNode = {
@@ -832,7 +512,7 @@ describe("show_call_graph_neighborhood", () => {
       name: "my_func" as SymbolName,
       definition: {
         symbol_id: node_id,
-        name: "my_func",
+        name: "my_func" as SymbolName,
         kind: "function",
         location: {
           file_path: "test.ts" as FilePath,
@@ -841,10 +521,27 @@ describe("show_call_graph_neighborhood", () => {
           end_line: 10,
           end_column: 1,
         },
-        scope_id: "scope:module" as any,
+        is_exported: false,
+        defining_scope_id: "scope:module" as ScopeId,
+        body_scope_id: "scope:module#body" as ScopeId,
         signature: {
-          parameters: [{ name: "x", type: "number" }],
-          return_type: "string",
+          parameters: [
+            {
+              kind: "parameter",
+              symbol_id: "symbol:my_func#x" as SymbolId,
+              name: "x" as SymbolName,
+              defining_scope_id: "scope:module#body" as ScopeId,
+              location: {
+                file_path: "test.ts" as FilePath,
+                start_line: 1,
+                start_column: 0,
+                end_line: 1,
+                end_column: 1,
+              },
+              type: "number" as SymbolName,
+            },
+          ],
+          return_type: "string" as SymbolName,
         },
       },
       location: {
@@ -864,7 +561,7 @@ describe("show_call_graph_neighborhood", () => {
     };
     vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
 
-    const result = await show_call_graph_neighborhood(mock_project, {
+    const result = await call_show({
       symbol_ref: "test.ts:1#my_func",
       show_full_signature: false,
     });
@@ -881,7 +578,7 @@ describe("show_call_graph_neighborhood", () => {
     };
     vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
 
-    const result = await show_call_graph_neighborhood(mock_project, {
+    const result = await call_show({
       symbol_ref: "test.ts:1#foo",
       show_full_signature: true,
     });
@@ -923,7 +620,7 @@ describe("show_call_graph_neighborhood", () => {
     };
     vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
 
-    const result = await show_call_graph_neighborhood(mock_project, {
+    const result = await call_show({
       symbol_ref: "test.ts:1#func_a",
       callers_depth: 3,
       callees_depth: 3,
@@ -943,7 +640,7 @@ describe("show_call_graph_neighborhood", () => {
     };
     vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
 
-    const result = await show_call_graph_neighborhood(mock_project, {
+    const result = await call_show({
       symbol_ref: "test.ts:1#foo",
       callers_depth: null,
       callees_depth: null,
@@ -1003,7 +700,7 @@ describe("show_call_graph_neighborhood", () => {
     };
     vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
 
-    const result = await show_call_graph_neighborhood(mock_project, {
+    const result = await call_show({
       symbol_ref: "test.ts:10#target",
       show_full_signature: true,
     });
@@ -1054,7 +751,7 @@ describe("show_call_graph_neighborhood", () => {
     };
     vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
 
-    const result = await show_call_graph_neighborhood(mock_project, {
+    const result = await call_show({
       symbol_ref: "test.ts:10#target",
       show_full_signature: true,
     });
@@ -1080,7 +777,7 @@ describe("show_call_graph_neighborhood", () => {
       };
       vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
 
-      const result = await show_call_graph_neighborhood(mock_project, {
+      const result = await call_show({
         symbol_ref: "stats.py:10#calculate",
         show_full_signature: true,
       });
@@ -1096,7 +793,7 @@ describe("show_call_graph_neighborhood", () => {
       };
       vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
 
-      const result = await show_call_graph_neighborhood(mock_project, {
+      const result = await call_show({
         symbol_ref: "stats.py:10#calculate",
         show_full_signature: true,
       });
@@ -1116,7 +813,7 @@ describe("show_call_graph_neighborhood", () => {
       };
       vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
 
-      const result = await show_call_graph_neighborhood(mock_project, {
+      const result = await call_show({
         symbol_ref: "stats.py:10#calculate",
         show_full_signature: true,
       });
@@ -1136,12 +833,71 @@ describe("show_call_graph_neighborhood", () => {
       };
       vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
 
-      const result = await show_call_graph_neighborhood(mock_project, {
+      const result = await call_show({
         symbol_ref: "stats.py:10#calculate",
         show_full_signature: true,
       });
 
       expect(result).not.toContain("Docstring:");
+    });
+  });
+
+  describe("symbol_ref project-root guard", () => {
+    it("throws a project-aware error when symbol_ref file_path is absolute and outside the project root", async () => {
+      const empty_call_graph: CallGraph = {
+        nodes: new Map(),
+        entry_points: [],
+      };
+      vi.mocked(mock_project.get_call_graph).mockReturnValue(empty_call_graph);
+
+      await expect(
+        call_show(
+          {
+            symbol_ref: "/tmp/elsewhere/foo.ts:10#bar",
+            show_full_signature: true,
+          },
+          "/test_project",
+        ),
+      ).rejects.toThrow(
+        /symbol_ref file path '\/tmp\/elsewhere\/foo\.ts' is outside the loaded project root '\/test_project'/,
+      );
+    });
+
+    it("does not trigger the project-root guard for relative symbol_ref paths", async () => {
+      const empty_call_graph: CallGraph = {
+        nodes: new Map(),
+        entry_points: [],
+      };
+      vi.mocked(mock_project.get_call_graph).mockReturnValue(empty_call_graph);
+
+      await expect(
+        call_show({
+          symbol_ref: "src/foo.ts:10#bar",
+          show_full_signature: true,
+        }),
+      ).rejects.toThrow(/Could not find callable/);
+    });
+
+    it("accepts an absolute symbol_ref file_path inside the project root", async () => {
+      const node = create_mock_node(
+        "symbol:foo",
+        "foo",
+        "/test_project/src/utils.ts",
+        10,
+        20,
+      );
+      const call_graph: CallGraph = {
+        nodes: new Map([[node.symbol_id, node]]),
+        entry_points: [node.symbol_id],
+      };
+      vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
+
+      const result = await call_show({
+        symbol_ref: "/test_project/src/utils.ts:10#foo",
+        show_full_signature: true,
+      });
+
+      expect(result).toContain("Call graph for: foo(): void");
     });
   });
 });

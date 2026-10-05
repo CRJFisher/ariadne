@@ -1,0 +1,7 @@
+[
+  {
+    "source": "skill-fs-empirical-baseline",
+    "description": "Ariadne flags no uncalled entry points in packages/skill-fs: the public surface (atomic_write_file, atomic_update_registry, error_code) is fully consumed inside the package's indexed graph. Deliberately empty so any newly flagged export blocks until it is deleted as dead code or whitelisted here as new public API.",
+    "entrypoints": []
+  }
+]

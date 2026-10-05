@@ -12,9 +12,7 @@ import type {
   SymbolName,
   Location,
   ScopeId,
-  ModulePath,
   CallbackContext,
-  FunctionCollectionInfo,
   FilePath,
 } from "@ariadnejs/types";
 import {
@@ -26,14 +24,16 @@ import {
   property_symbol,
   variable_symbol,
 } from "@ariadnejs/types";
-import type { CaptureNode } from "../../index_single_file";
-import type { ProcessingContext } from "../../index_single_file";
+import type { CaptureNode } from "../../capture_types";
+import type { ProcessingContext } from "../../scopes/processing_context";
 import { node_to_location } from "../../node_to_location";
+import {
+  extract_jsdoc_type,
+  extract_jsdoc_param_type,
+} from "./jsdoc_extraction.javascript";
+import { argument_position } from "./argument_position";
 
-// Re-export export analysis functions
 export {
-  find_export_specifiers,
-  extract_export_specifier_info,
   analyze_export_statement,
   extract_export_info,
 } from "./exports.javascript";
@@ -204,7 +204,16 @@ export function find_containing_callable(capture: CaptureNode): SymbolId {
         const location = node_to_location(name_node, capture.location.file_path);
         return function_symbol(name_node.text as SymbolName, location);
       } else {
-        // Anonymous function/arrow function - use location-based anonymous symbol
+        // A nameless arrow/function expression in declarator position was
+        // minted as a function under the declarator's name; the parameter's
+        // owner id must agree with that, not with a location-keyed anonymous.
+        const declarator_name = bound_callable_name_node(node);
+        if (declarator_name) {
+          return function_symbol(
+            declarator_name.text as SymbolName,
+            node_to_location(declarator_name, capture.location.file_path)
+          );
+        }
         const location = node_to_location(node, capture.location.file_path);
         return anonymous_function_symbol(location);
       }
@@ -217,6 +226,60 @@ export function find_containing_callable(capture: CaptureNode): SymbolId {
   }
   // Default to anonymous function
   return anonymous_function_symbol(capture.location);
+}
+
+/**
+ * The identifier a nameless callable is bound to, when its position gives it
+ * one: `const f = (…) => …` (the declarator name) or
+ * `exports.f = function (…) {}` / `module.exports.f = …` (the property name
+ * the CommonJS-export capture indexes it under). The whole-module
+ * `module.exports = function (…) {}` binds no name and returns null, so the
+ * caller falls back to an anonymous symbol.
+ */
+export function bound_callable_name_node(fn_node: SyntaxNode): SyntaxNode | null {
+  const parent = fn_node.parent;
+
+  if (parent?.type === "variable_declarator") {
+    const name = parent.childForFieldName("name");
+    return name?.type === "identifier" ? name : null;
+  }
+
+  if (
+    parent?.type === "assignment_expression" &&
+    parent.childForFieldName("right")?.id === fn_node.id
+  ) {
+    const left = parent.childForFieldName("left");
+    if (left?.type !== "member_expression") {
+      return null;
+    }
+    const property = left.childForFieldName("property");
+    const object = left.childForFieldName("object");
+    if (property?.type !== "property_identifier") {
+      return null;
+    }
+    if (object?.text === "module" && property.text === "exports") {
+      return null;
+    }
+    return is_commonjs_exports_base(object) ? property : null;
+  }
+
+  return null;
+}
+
+/**
+ * The CommonJS exports bag as an assignment base: the bare `exports`
+ * identifier or the `module.exports` member expression.
+ */
+function is_commonjs_exports_base(node: SyntaxNode | null): boolean {
+  if (!node) return false;
+  if (node.type === "identifier") return node.text === "exports";
+  if (node.type === "member_expression") {
+    return (
+      node.childForFieldName("object")?.text === "module" &&
+      node.childForFieldName("property")?.text === "exports"
+    );
+  }
+  return false;
 }
 
 // ============================================================================
@@ -235,61 +298,38 @@ export function extract_return_type(node: SyntaxNode): SymbolName | undefined {
 }
 
 /**
+ * Accessor kind for a method definition, read from the `get` / `set` keyword
+ * token that precedes the name on a class accessor. `undefined` for ordinary
+ * methods. The name node's parent is the `method_definition`. Shared by JS and
+ * TS — the accessor grammar is identical in both.
+ */
+export function extract_accessor_kind(
+  node: SyntaxNode
+): "getter" | "setter" | undefined {
+  const parent = node.parent;
+  if (parent) {
+    for (const child of parent.children || []) {
+      if (child.type === "get") return "getter";
+      if (child.type === "set") return "setter";
+    }
+  }
+  return undefined;
+}
+
+/**
  * Extract parameter type
+ *
+ * A structural TypeScript annotation wins when present. Pure JavaScript has no
+ * such annotation, so the type may live only in the enclosing function's JSDoc
+ * `@param {T} name` tag — fall back to that so the parameter's declared type
+ * survives indexing and a method call on the parameter can resolve its receiver.
  */
 export function extract_parameter_type(node: SyntaxNode): SymbolName | undefined {
   const type_node = node.childForFieldName("type");
   if (type_node) {
     return type_node.text as SymbolName;
   }
-  return undefined;
-}
-
-/**
- * Extract type from JSDoc comment
- * Looks for @type {TypeName} annotations in JSDoc comments
- */
-export function extract_jsdoc_type(comment_text: string): SymbolName | undefined {
-  // Match @type {TypeName} pattern
-  // Handles single-line: /** @type {Foo} */
-  // Handles multi-line:  /**
-  //                       * @type {Bar}
-  //                       */
-  const type_match = comment_text.match(/@type\s*\{([^}]+)\}/);
-  if (type_match && type_match[1]) {
-    return type_match[1].trim() as SymbolName;
-  }
-  return undefined;
-}
-
-/**
- * Find JSDoc comment immediately preceding a node
- * Returns the comment node if found, undefined otherwise
- */
-export function find_preceding_jsdoc(node: SyntaxNode): SyntaxNode | undefined {
-  // Look for comment nodes among previous siblings
-  let current = node.previousSibling;
-
-  // Skip whitespace and newlines
-  while (current && (current.type === "comment" || current.text.trim() === "")) {
-    if (current.type === "comment" && current.text.startsWith("/**")) {
-      return current;
-    }
-    current = current.previousSibling;
-  }
-
-  // Also check parent's previous siblings (for field_definition nodes)
-  if (node.parent) {
-    current = node.parent.previousSibling;
-    while (current && (current.type === "comment" || current.text.trim() === "")) {
-      if (current.type === "comment" && current.text.startsWith("/**")) {
-        return current;
-      }
-      current = current.previousSibling;
-    }
-  }
-
-  return undefined;
+  return extract_jsdoc_param_type(node);
 }
 
 /**
@@ -297,28 +337,7 @@ export function find_preceding_jsdoc(node: SyntaxNode): SyntaxNode | undefined {
  * For JavaScript, this extracts type information from JSDoc @type annotations
  */
 export function extract_property_type(node: SyntaxNode): SymbolName | undefined {
-  // First check for JSDoc comment
-  const jsdoc_comment = find_preceding_jsdoc(node);
-  if (jsdoc_comment) {
-    const type = extract_jsdoc_type(jsdoc_comment.text);
-    if (type) {
-      return type;
-    }
-  }
-
-  // Fall back to standard type annotation (for TypeScript-style annotations if present)
-  return extract_parameter_type(node);
-}
-
-/**
- * Extract type annotation
- */
-export function extract_type_annotation(node: SyntaxNode): SymbolName | undefined {
-  const type_annotation = node.childForFieldName("type");
-  if (type_annotation) {
-    return type_annotation.text as SymbolName;
-  }
-  return undefined;
+  return extract_jsdoc_type(node) ?? extract_parameter_type(node);
 }
 
 // ============================================================================
@@ -357,126 +376,6 @@ export function extract_default_value(node: SyntaxNode): string | undefined {
   }
   // Fallback to checking node itself
   return extract_initial_value(node);
-}
-
-// ============================================================================
-// Import Extraction
-// ============================================================================
-
-/**
- * Extract import path from import statement
- */
-export function extract_import_path(node: SyntaxNode | null | undefined): ModulePath {
-  if (!node) {
-    return "" as ModulePath;
-  }
-  // Use childForFieldName without optional chaining - it exists on SyntaxNode
-  const source = node.childForFieldName("source");
-  if (source) {
-    // Remove quotes from the string literal
-    const text = source.text;
-    return text.slice(1, -1) as ModulePath;
-  }
-  return "" as ModulePath;
-}
-
-/**
- * Extract module path from require() call
- * For CommonJS: const x = require('./module')
- */
-export function extract_require_path(node: SyntaxNode | null | undefined): ModulePath {
-  if (!node || node.type !== "string") {
-    return "" as ModulePath;
-  }
-  // Remove quotes from the string literal
-  const text = node.text;
-  return text.slice(1, -1) as ModulePath;
-}
-
-/**
- * Extract original name for aliased imports
- */
-export function extract_original_name(
-  node: SyntaxNode | null,
-  local_name: SymbolName
-): SymbolName | undefined {
-  if (!node) {
-    return undefined;
-  }
-
-  // Find import_clause as a child (not a field in JavaScript grammar)
-  let import_clause: SyntaxNode | null = null;
-  for (const child of node.children || []) {
-    if (child.type === "import_clause") {
-      import_clause = child;
-      break;
-    }
-  }
-
-  if (import_clause) {
-    // Find named_imports as a child (not a field)
-    let named_imports: SyntaxNode | null = null;
-    for (const child of import_clause.children || []) {
-      if (child.type === "named_imports") {
-        named_imports = child;
-        break;
-      }
-    }
-
-    if (named_imports) {
-      for (const child of named_imports.children || []) {
-        if (child.type === "import_specifier") {
-          const alias = child.childForFieldName("alias"); // alias IS a field
-          if (alias?.text === local_name) {
-            const name = child.childForFieldName("name"); // name IS a field
-            return name?.text as SymbolName;
-          }
-        }
-      }
-    }
-  }
-  return undefined;
-}
-
-/**
- * Check if this is a default import
- * Default import: import formatDate from './utils'
- * Structure: import_clause contains a direct identifier child (not inside named_imports)
- */
-export function is_default_import(node: SyntaxNode, name: SymbolName): boolean {
-  // Find import_clause as a child (not a field in JavaScript grammar)
-  let import_clause: SyntaxNode | null = null;
-  for (const child of node.children || []) {
-    if (child.type === "import_clause") {
-      import_clause = child;
-      break;
-    }
-  }
-
-  if (import_clause) {
-    // Check if import_clause has a direct identifier child (the default import)
-    // This identifier is NOT inside named_imports or namespace_import
-    for (const child of import_clause.children || []) {
-      if (child.type === "identifier" && child.text === name) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
-/**
- * Check if this is a namespace import
- */
-export function is_namespace_import(node: SyntaxNode): boolean {
-  // Find import_clause child (may not have a field name)
-  const import_clause = node.children.find(c => c.type === "import_clause");
-  if (import_clause) {
-    // Check if it contains a namespace_import child
-    const namespace_import = import_clause.children.find(c => c.type === "namespace_import");
-    return namespace_import !== undefined;
-  }
-  return false;
 }
 
 // ============================================================================
@@ -528,8 +427,9 @@ export function extract_extends(node: SyntaxNode): SymbolName[] {
             }
           }
         }
-      } else if (clause.type === "identifier") {
-        // JavaScript: class_heritage contains identifier directly
+      } else if (clause.type === "identifier" || clause.type === "member_expression") {
+        // JavaScript: class_heritage holds the base expression directly —
+        // `Base`, or `ns.Base` qualified as written.
         results.push(clause.text as SymbolName);
       }
     }
@@ -539,143 +439,21 @@ export function extract_extends(node: SyntaxNode): SymbolName[] {
 }
 
 // ============================================================================
-// Documentation State Management
-// ============================================================================
-
-/**
- * Map to track pending documentation comments by line number
- * Key: end line of comment, Value: comment text
- */
-const pending_documentation = new Map<number, string>();
-
-/**
- * Store documentation comment for association with next definition
- */
-export function store_documentation(comment: string, end_line: number): void {
-  pending_documentation.set(end_line, comment);
-}
-
-/**
- * Consume documentation for a definition at the given location
- * Returns the documentation if found within 1-2 lines before the definition
- */
-export function consume_documentation(location: Location): string | undefined {
-  const def_start_line = location.start_line;
-
-  // Check for comment ending 1 or 2 lines before definition
-  for (const end_line of [def_start_line - 1, def_start_line - 2]) {
-    const doc = pending_documentation.get(end_line);
-    if (doc) {
-      pending_documentation.delete(end_line);
-      return doc;
-    }
-  }
-
-  return undefined;
-}
-
-/**
- * Reset documentation state between file indexing passes to prevent cross-file contamination
- */
-export function reset_documentation_state(): void {
-  pending_documentation.clear();
-}
-
-// ============================================================================
-// Collection Source Extraction
-// ============================================================================
-
-/**
- * Extract the name of the collection variable this definition was looked up from.
- * Used for collection dispatch - when a variable is assigned from a Map/Array/Object lookup.
- *
- * Patterns detected:
- * 1. const handler = config.get("key");  -> returns "config"
- * 2. const handler = config["key"];      -> returns "config"
- */
-export function extract_collection_source(node: SyntaxNode): SymbolName | undefined {
-  // Get initial value node (init or value)
-  let target_node = node;
-  if (node.type === "identifier" || node.type === "property_identifier") {
-    target_node = node.parent || node;
-  }
-
-  const value_node =
-    target_node.childForFieldName("value") || target_node.childForFieldName("init");
-
-  if (!value_node) {
-    return undefined;
-  }
-
-  // Case 1: Method call (config.get(...))
-  if (value_node.type === "call_expression") {
-    const function_node = value_node.childForFieldName("function");
-    if (function_node?.type === "member_expression") {
-      const object_node = function_node.childForFieldName("object");
-      if (object_node?.type === "identifier") {
-        return object_node.text as SymbolName;
-      }
-    }
-  }
-
-  // Case 2: Member access (config[...])
-  if (value_node.type === "member_expression" || value_node.type === "subscript_expression") {
-    const object_node = value_node.childForFieldName("object");
-    if (object_node?.type === "identifier") {
-      return object_node.text as SymbolName;
-    }
-  }
-
-  return undefined;
-}
-
-/**
- * Extract the name of the function called to initialize this variable.
- * Used to infer variable types from function return types.
- *
- * Patterns detected:
- * 1. const extractor = get_scope_boundary_extractor();  -> returns "get_scope_boundary_extractor"
- * 2. const x = foo(arg1, arg2);                         -> returns "foo"
- *
- * NOT detected (handled by collection_source instead):
- * - const handler = config.get("key");  -> method calls, use collection_source
- */
-export function extract_call_initializer_name(
-  node: SyntaxNode
-): SymbolName | undefined {
-  // Get initial value node (init or value)
-  let target_node = node;
-  if (node.type === "identifier" || node.type === "property_identifier") {
-    target_node = node.parent || node;
-  }
-
-  const value_node =
-    target_node.childForFieldName("value") ||
-    target_node.childForFieldName("init");
-
-  if (!value_node) {
-    return undefined;
-  }
-
-  // Only handle plain function calls (not method calls)
-  if (value_node.type === "call_expression") {
-    const function_node = value_node.childForFieldName("function");
-
-    // Plain function call: foo()
-    if (function_node?.type === "identifier") {
-      return function_node.text as SymbolName;
-    }
-
-    // Skip method calls (config.get()) - handled by collection_source
-    // function_node.type === "member_expression" means it's a method call
-  }
-
-  return undefined;
-}
-
-// ============================================================================
 // Callback Detection
 // ============================================================================
+
+/** The node types that own a body, so an ancestor walk that reaches one has left the argument position. */
+const CALLABLE_BOUNDARY_TYPES = new Set([
+  "function",
+  "function_expression",
+  "function_declaration",
+  "arrow_function",
+  "generator_function",
+  "generator_function_declaration",
+  "method_definition",
+  "class_body",
+  "class_static_block",
+]);
 
 /**
  * Detect if an anonymous function node is being passed as a callback to another function.
@@ -683,6 +461,12 @@ export function extract_call_initializer_name(
  * - is_callback: true if the function is in call expression arguments
  * - receiver_location: location of the call expression receiving this callback
  * - receiver_is_external: null (will be classified during resolution phase)
+ *
+ * A callable is an argument of the call it is written directly inside, so the
+ * walk stops at the first enclosing callable: a function merely written in
+ * another callback's body — `register(function () { app.m = function () {} })` —
+ * is not itself passed to `register`, and calling it one would put an edge in
+ * the graph for a call nothing makes.
  */
 export function detect_callback_context(
   node: SyntaxNode,
@@ -693,6 +477,9 @@ export function detect_callback_context(
   const MAX_DEPTH = 5; // Limit upward traversal
 
   while (current && depth < MAX_DEPTH) {
+    if (CALLABLE_BOUNDARY_TYPES.has(current.type)) {
+      break;
+    }
     // Check if we're in an arguments node
     if (current.type === "arguments") {
       // Check if the parent of arguments is a call_expression or new_expression
@@ -706,6 +493,7 @@ export function detect_callback_context(
           is_callback: true,
           receiver_is_external: null, // Will be classified during resolution
           receiver_location: node_to_location(call_node, file_path),
+          argument_index: argument_position(current, node),
         };
       }
     }
@@ -718,223 +506,6 @@ export function detect_callback_context(
     is_callback: false,
     receiver_is_external: null,
     receiver_location: null,
+    argument_index: null,
   };
-}
-
-// ============================================================================
-// Function Collection Detection
-// ============================================================================
-
-/**
- * Detect if a variable declaration contains a function collection (Map/Array/Object with functions).
- * Returns collection metadata if detected, null otherwise.
- *
- * Patterns detected:
- * - const CONFIG = new Map([["key", handler], ...])
- * - const handlers = [fn1, fn2, fn3]
- * - const config = { success: handler1, error: handler2 }
- */
-export function detect_function_collection(
-  node: SyntaxNode,
-  file_path: FilePath
-): FunctionCollectionInfo | null {
-  // Get the variable declarator node (contains name and initializer)
-  let declarator = node;
-  if (node.type === "variable_declaration") {
-    declarator = node.namedChildren?.[0] ?? node;
-  }
-
-  // Get the initializer (value being assigned)
-  let initializer = declarator.childForFieldName?.("value") || declarator.childForFieldName?.("init");
-  if (!initializer) return null;
-
-  // Unwrap "as const" assertions (as_expression in tree-sitter TypeScript)
-  // e.g., `const HANDLERS = { ... } as const;`
-  if (initializer.type === "as_expression") {
-    // The first child is the actual value, second is the type
-    initializer = initializer.namedChildren?.[0] ?? initializer;
-  }
-
-  // Check for new Map([...]) or new Set([...])
-  if (initializer.type === "new_expression") {
-    const constructor_node = initializer.childForFieldName?.("constructor");
-    if (
-      constructor_node?.text === "Map" ||
-      constructor_node?.text === "Set"
-    ) {
-      const args = initializer.childForFieldName?.("arguments");
-      const { functions, references } = extract_functions_from_collection_args(args, file_path);
-      if (functions.length > 0 || references.length > 0) {
-
-        return {
-          collection_type: constructor_node.text as "Map" | "Set",
-          location: node_to_location(initializer, file_path),
-          stored_functions: functions,
-          stored_references: references,
-        };
-      }
-    }
-  }
-
-  // Check for array literal: [fn1, fn2, ...]
-  if (initializer.type === "array") {
-    const { functions, references } = extract_functions_from_array(initializer, file_path);
-    if (functions.length > 0 || references.length > 0) {
-      return {
-        collection_type: "Array",
-        location: node_to_location(initializer, file_path),
-        stored_functions: functions,
-        stored_references: references,
-      };
-    }
-  }
-
-  // Check for object literal: { key: fn, ... }
-  if (initializer.type === "object") {
-    const { functions, references } = extract_functions_from_object(initializer, file_path);
-    if (functions.length > 0 || references.length > 0) {
-      return {
-        collection_type: "Object",
-        location: node_to_location(initializer, file_path),
-        stored_functions: functions,
-        stored_references: references,
-      };
-    }
-  }
-
-  return null;
-}
-
-/**
- * Extract function SymbolIds from Map/Set constructor arguments.
- * For Map: new Map([["key", fn], ...])
- * For Set: new Set([fn1, fn2, ...])
- */
-function extract_functions_from_collection_args(
-  args: SyntaxNode | null | undefined,
-  file_path: FilePath
-): { functions: SymbolId[]; references: SymbolName[] } {
-  if (!args) return { functions: [], references: [] };
-
-  const function_ids: SymbolId[] = [];
-  const references: SymbolName[] = [];
-
-  // Traverse all descendants looking for arrow_function or function_expression nodes
-  function visit(node: SyntaxNode) {
-
-    if (
-      node.type === "arrow_function" ||
-      node.type === "function_expression" ||
-      node.type === "function"
-    ) {
-      const location = node_to_location(node, file_path);
-      function_ids.push(anonymous_function_symbol(location));
-    } else if (node.type === "identifier") {
-      // Capture variable references (potential functions)
-      // Check if parent is array (Map entry) or arguments
-      if (node.parent?.type === "array" || node.parent?.type === "arguments") {
-         references.push(node.text as SymbolName);
-      }
-    }
-
-    for (let i = 0; i < node.namedChildCount; i++) {
-      const child = node.namedChild(i);
-      if (child) visit(child);
-    }
-  }
-
-  visit(args);
-  return { functions: function_ids, references };
-}
-
-/**
- * Extract function SymbolIds from array literal: [fn1, fn2, fn3]
- */
-function extract_functions_from_array(
-  array_node: SyntaxNode,
-  file_path: FilePath
-): { functions: SymbolId[]; references: SymbolName[] } {
-  const function_ids: SymbolId[] = [];
-  const references: SymbolName[] = [];
-
-  for (let i = 0; i < array_node.namedChildCount; i++) {
-    const element = array_node.namedChild(i);
-    if (!element) continue;
-
-    // Handle spread elements: [...OTHER_ARRAY]
-    if (element.type === "spread_element") {
-      const spread_arg = element.namedChildren[0];
-      if (spread_arg?.type === "identifier") {
-        references.push(spread_arg.text as SymbolName);
-      }
-      continue;
-    }
-
-    if (
-      element.type === "arrow_function" ||
-      element.type === "function_expression" ||
-      element.type === "function"
-    ) {
-      const location = node_to_location(element, file_path);
-      function_ids.push(anonymous_function_symbol(location));
-    } else if (element.type === "identifier") {
-      references.push(element.text as SymbolName);
-    }
-  }
-
-  return { functions: function_ids, references };
-}
-
-/**
- * Extract function SymbolIds from object literal: { key: fn, ... }
- */
-function extract_functions_from_object(
-  obj_node: SyntaxNode,
-  file_path: FilePath
-): { functions: SymbolId[]; references: SymbolName[] } {
-  const function_ids: SymbolId[] = [];
-  const references: SymbolName[] = [];
-
-  for (let i = 0; i < obj_node.namedChildCount; i++) {
-    const child = obj_node.namedChild(i);
-    if (!child) continue;
-
-    // Handle spread elements: { ...OTHER_HANDLERS }
-    if (child.type === "spread_element") {
-      const spread_arg = child.namedChildren[0];
-      if (spread_arg?.type === "identifier") {
-        references.push(spread_arg.text as SymbolName);
-      }
-      continue;
-    }
-
-    // Handle shorthand method definitions: { method() { ... } }
-    if (child.type === "method_definition") {
-      const name_node = child.childForFieldName("name");
-      if (name_node) {
-        const location = node_to_location(child, file_path);
-        function_ids.push(method_symbol(name_node.text, location));
-      }
-      continue;
-    }
-
-    // Handle pair nodes: { key: value }
-    if (child.type !== "pair") continue;
-
-    const value = child.childForFieldName?.("value");
-    if (!value) continue;
-
-    if (
-      value.type === "arrow_function" ||
-      value.type === "function_expression" ||
-      value.type === "function"
-    ) {
-      const location = node_to_location(value, file_path);
-      function_ids.push(anonymous_function_symbol(location));
-    } else if (value.type === "identifier") {
-      references.push(value.text as SymbolName);
-    }
-  }
-
-  return { functions: function_ids, references };
 }

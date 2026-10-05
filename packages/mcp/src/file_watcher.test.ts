@@ -19,11 +19,15 @@ vi.mock("fs/promises", () => ({
   unlink: vi.fn(() => Promise.resolve()),
 }));
 
-vi.mock("./logger", () => ({
-  log_debug: vi.fn(),
-  log_warn: vi.fn(),
-  log_error: vi.fn(),
-}));
+vi.mock("@ariadnejs/core", async (import_original) => {
+  const actual = await import_original<typeof import("@ariadnejs/core")>();
+  return {
+    ...actual,
+    log_debug: vi.fn(),
+    log_warn: vi.fn(),
+    log_error: vi.fn(),
+  };
+});
 
 const PROJECT_PATH = "/fake/project";
 
@@ -177,7 +181,7 @@ describe("file_watcher", () => {
       create_file_watcher({ project_path: PROJECT_PATH, debounce_ms: 50 }, callbacks);
       fake_watcher.emit("ready");
 
-      const extensions = [".ts", ".tsx", ".js", ".jsx", ".py", ".rs", ".go"];
+      const extensions = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".py", ".rs"];
       for (const ext of extensions) {
         fake_watcher.emit("add", `/fake/project/file${ext}`);
       }
@@ -185,6 +189,28 @@ describe("file_watcher", () => {
       await vi.advanceTimersByTimeAsync(50);
 
       expect(on_add).toHaveBeenCalledTimes(extensions.length);
+    });
+
+    it("ignores a file no grammar parses", async () => {
+      const on_add = vi.fn();
+      const callbacks: FileWatcherCallbacks = {
+        on_change: vi.fn(),
+        on_add,
+        on_delete: vi.fn(),
+      };
+
+      vi.mocked(fs.readFile).mockResolvedValue("code");
+
+      create_file_watcher({ project_path: PROJECT_PATH, debounce_ms: 50 }, callbacks);
+      fake_watcher.emit("ready");
+
+      for (const ext of [".go", ".java", ".cpp"]) {
+        fake_watcher.emit("add", `/fake/project/file${ext}`);
+      }
+
+      await vi.advanceTimersByTimeAsync(50);
+
+      expect(on_add).not.toHaveBeenCalled();
     });
 
     it("should debounce rapid file changes", async () => {

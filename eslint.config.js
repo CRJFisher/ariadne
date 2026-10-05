@@ -3,6 +3,7 @@ import tseslint from "@typescript-eslint/eslint-plugin";
 import tsparser from "@typescript-eslint/parser";
 import importPlugin from "eslint-plugin-import";
 import unusedImports from "eslint-plugin-unused-imports";
+import globals from "globals";
 
 export default [
   js.configs.recommended,
@@ -15,15 +16,7 @@ export default [
         sourceType: "module"
       },
       globals: {
-        console: "readonly",
-        process: "readonly",
-        Buffer: "readonly",
-        __dirname: "readonly",
-        __filename: "readonly",
-        global: "readonly",
-        module: "readonly",
-        require: "readonly",
-        exports: "readonly"
+        ...globals.node
       }
     },
     plugins: {
@@ -44,7 +37,7 @@ export default [
 
       // Auto-fixable unused imports detection
       "unused-imports/no-unused-imports": "error",
-      "unused-imports/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+      "unused-imports/no-unused-vars": ["error", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
 
       "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/no-non-null-assertion": "error",
@@ -215,7 +208,7 @@ export default [
     }
   },
   {
-    files: [".claude/skills/self-repair-pipeline/**/*.ts"],
+    files: [".claude/skills/triage/**/*.ts"],
     languageOptions: {
       globals: {
         // Node.js globals for analysis scripts
@@ -227,6 +220,40 @@ export default [
     }
   },
   {
+    // TASK-363: every runtime use of tree-sitter and the grammar packages must
+    // route through the process-global loader (packages/core/src/native.ts) so
+    // a re-evaluated module registry reuses one set of native class identities.
+    // Type-only imports are erased at compile time and stay allowed. The loader
+    // itself and test files (which build throwaway parsers) are exempt. Dev
+    // scripts are covered too, so nothing outside the loader requires the
+    // packages directly.
+    files: ["packages/core/src/**/*.ts", "packages/core/scripts/**/*.ts"],
+    ignores: [
+      "packages/core/src/native.ts",
+      "**/*.test.ts",
+      "**/*.spec.ts"
+    ],
+    rules: {
+      "@typescript-eslint/no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            "tree-sitter",
+            "tree-sitter-javascript",
+            "tree-sitter-python",
+            "tree-sitter-rust",
+            "tree-sitter-typescript"
+          ].map((name) => ({
+            name,
+            message:
+              "Import tree-sitter and grammar packages through the process-global loader at packages/core/src/native.ts (TASK-363). Type-only imports are allowed.",
+            allowTypeImports: true
+          }))
+        }
+      ]
+    }
+  },
+  {
     ignores: [
       "node_modules/**",
       "dist/**",
@@ -234,11 +261,25 @@ export default [
       "*.js", // Ignore JS files in root
       "packages/*/dist/**",
       "packages/*/node_modules/**",
-      "**/tests/fixtures/**/*.js", // Ignore JavaScript fixture files
+      // Fixture corpus — the per-language sample code Ariadne parses, not
+      // project source. It must keep its own ecosystem's conventions
+      // (camelCase members, `var`, dynamic imports) or the parser tests stop
+      // exercising real-world input. Harness code at the fixtures root
+      // (fixture_helpers.ts, index_single_file_json.ts) is source, and stays linted.
+      "**/tests/fixtures/*/**",
+      // The benchmark guard corpus is the same kind of thing: sample code the
+      // fingerprint mechanism is run against, shaped so that all seven
+      // components are non-empty. `duplicate_exports.js` exports one name twice
+      // ON PURPOSE, so indexing throws and the file lands in `dropped_files` —
+      // the only source of that component. It sits outside `tests/` because
+      // `is_in_test_dir` would mark every file in it a test file and collapse
+      // its entry points to zero, so the exemption follows the corpus rather
+      // than the path.
+      "packages/core/benchmark_corpus/**",
       "**/.claude/hooks/**", // Ignore Claude hook files
-      "**/.claude/skills/self-repair-pipeline/templates/**", // Ignore templates
-      "**/.claude/skills/self-repair-pipeline/reference/**", // Ignore reference docs
-      "**/.claude/skills/self-repair-pipeline/examples/**", // Ignore examples
+      "**/.claude/skills/triage/templates/**", // Ignore templates
+      "**/.claude/skills/triage/reference/**", // Ignore reference docs
+      "**/.claude/skills/triage/examples/**", // Ignore examples
       "**/.clinic/**", // Ignore clinic profiler output
       "test_*.ts", // Ignore root-level test/debug scripts
       "debug_*.ts" // Ignore root-level debug scripts

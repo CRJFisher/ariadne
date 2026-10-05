@@ -10,18 +10,22 @@
  *   npm run generate-fixtures -- --file path/to/file.ts
  */
 
+import type TreeSitter from "tree-sitter";
+
 import fs from "fs";
 import path from "path";
 import { glob } from "glob";
-import Parser from "tree-sitter";
-import TypeScript from "tree-sitter-typescript";
-import JavaScript from "tree-sitter-javascript";
-import Python from "tree-sitter-python";
-import Rust from "tree-sitter-rust";
+import {
+  Parser,
+  TypeScript,
+  JavaScript,
+  Python,
+  Rust,
+} from "../src/native";
 import type { Language, FilePath } from "@ariadnejs/types";
 import { build_index_single_file } from "../src/index_single_file/index_single_file";
 import { write_index_single_file_fixture } from "../tests/fixtures/index_single_file_json";
-import type { ParsedFile } from "../src/index_single_file/file_utils";
+import type { ParsedFile } from "../src/index_single_file/parsed_file";
 
 // Language parsers
 const parsers = {
@@ -61,7 +65,7 @@ const EXT_TO_LANG: Record<string, Language> = {
 function create_parsed_file(
   code: string,
   file_path: FilePath,
-  tree: Parser.Tree,
+  tree: TreeSitter.Tree,
   language: Language
 ): ParsedFile {
   const lines = code.split("\n");
@@ -71,6 +75,7 @@ function create_parsed_file(
     file_end_column: lines[lines.length - 1]?.length || 0,
     tree,
     lang: language,
+    source: code,
   };
 }
 

@@ -44,6 +44,9 @@ coverage/
 # Claude AI specific
 .claude/settings.local.json
 .claude/worktrees.local.md
+.claude/worktrees/
+.claude/.worktree-hydrated
+.claude/scheduled_tasks.lock
 CLAUDE.local.md
 .cursorrules
 
@@ -61,7 +64,4 @@ docs/tmp/
 .security-key
 logs/security/
 
-# Self-repair pipeline ephemeral state
-.claude/self-repair-pipeline-state/analysis_output/
-.claude/self-repair-pipeline-state/triage_state/
-
+.test_failures_*

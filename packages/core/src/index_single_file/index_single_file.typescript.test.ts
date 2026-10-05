@@ -6,17 +6,20 @@ import { describe, it, expect, beforeAll } from "vitest";
 import { readFileSync } from "fs";
 import { join } from "path";
 import Parser from "tree-sitter";
-import TypeScript from "tree-sitter-typescript";
+import { LANGUAGE_TO_TREESITTER_LANG } from "./query_code_tree/parsers";
 import type {
   Language,
   FilePath,
+  SymbolName,
   FunctionCallReference,
   MethodCallReference,
+  CallableValueReference,
   ConstructorCallReference,
   SelfReferenceCall,
   TypeReference,
   PropertyAccessReference,
   AssignmentReference,
+  IterationSource,
 } from "@ariadnejs/types";
 import { build_index_single_file } from "./index_single_file";
 import { query_tree } from "./query_code_tree/query_code_tree";
@@ -40,6 +43,7 @@ function create_parsed_file(
     file_end_column: lines[lines.length - 1]?.length || 0,
     tree,
     lang: language,
+    source: code,
   };
 }
 
@@ -48,7 +52,48 @@ describe("Semantic Index - TypeScript", () => {
 
   beforeAll(() => {
     parser = new Parser();
-    parser.setLanguage(TypeScript.typescript);
+    parser.setLanguage(LANGUAGE_TO_TREESITTER_LANG.get("typescript")!);
+  });
+
+  describe("Variable-bound named function expression", () => {
+    it("registers the outer var name in the enclosing scope and the inner name in the function scope", () => {
+      const code = `var X = function X(): number {
+  return 1;
+};`;
+
+      const tree = parser.parse(code);
+      const parsed_file = create_parsed_file(
+        code,
+        "test.ts" as FilePath,
+        tree,
+        "typescript" as Language,
+      );
+      const index = build_index_single_file(
+        parsed_file,
+        tree,
+        "typescript" as Language,
+      );
+
+      const file_scope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "module" && s.parent_id === null,
+      );
+      expect(file_scope).toBeDefined();
+      const file_scope_id = file_scope!.id;
+
+      const function_scope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "function",
+      );
+      expect(function_scope).toBeDefined();
+
+      // Two function definitions named `X`: the outer var binding lives in the
+      // enclosing (module) scope so intra-file calls resolve; the inner
+      // expression name lives in the function scope for self-reference.
+      const x_scopes = Array.from(index.functions.values())
+        .filter((f) => f.name === ("X" as SymbolName))
+        .map((f) => f.defining_scope_id)
+        .sort();
+      expect(x_scopes).toEqual([file_scope_id, function_scope!.id].sort());
+    });
   });
 
   describe("Basic TypeScript features", () => {
@@ -700,7 +745,10 @@ describe("Semantic Index - TypeScript", () => {
       });
     });
 
-    it("should handle generic constructors", () => {
+    it("emits one constructor reference per `new` site, type arguments or not", () => {
+      // Explicit type arguments do not make a second call. Three sites, three
+      // references: a duplicate here would double the call-site multiplicity a
+      // call graph reports for every generic construction in a corpus.
       const code = `
         class Container<T> {
           constructor(public value: T) {}
@@ -728,17 +776,46 @@ describe("Semantic Index - TypeScript", () => {
         (r): r is ConstructorCallReference => r.kind === "constructor_call",
       );
 
-      // Should have at least 3 constructor calls
-      expect(constructor_refs.length).toBeGreaterThanOrEqual(3);
-
-      // Check that the Container constructor calls have metadata
-      const container_refs = constructor_refs.filter(
-        (r) => r.name === "Container",
-      );
-      expect(container_refs.length).toBeGreaterThanOrEqual(3);
-      container_refs.forEach((ref) => {
+      expect(constructor_refs.length).toEqual(3);
+      expect(
+        constructor_refs.map((ref) => ref.location.start_line).sort(),
+      ).toEqual([6, 7, 8]);
+      constructor_refs.forEach((ref) => {
+        expect(ref.name).toEqual("Container");
         expect(ref.construct_target).toBeDefined();
       });
+    });
+
+    it("emits one call reference per call site, type arguments or not", () => {
+      const code = `
+        function identity<T>(value: T): T {
+          return value;
+        }
+
+        const explicit = identity<number>(1);
+        const inferred = identity(2);
+      `;
+
+      const tree = parser.parse(code);
+      const parsed_file = create_parsed_file(
+        code,
+        "test.ts" as FilePath,
+        tree,
+        "typescript" as Language,
+      );
+      const index = build_index_single_file(
+        parsed_file,
+        tree,
+        "typescript" as Language,
+      );
+
+      const calls = index.references.filter(
+        (r): r is FunctionCallReference =>
+          r.kind === "function_call" && r.name === "identity",
+      );
+
+      expect(calls.length).toEqual(2);
+      expect(calls.map((ref) => ref.location.start_line).sort()).toEqual([6, 7]);
     });
 
     it("should extract method resolution metadata for all receiver patterns", () => {
@@ -3107,7 +3184,7 @@ export class TypeRegistry {
 
       expect(method_call).toBeDefined();
       if (method_call) {
-        expect(method_call.keyword).toBe("this");
+        expect(method_call.property_chain[0]).toBe("this");
       }
     });
   });
@@ -3266,4 +3343,540 @@ const result = items.map((x) =>
     });
   });
 
+  describe("Member reference capture gaps (task-351)", () => {
+    function build_index(code: string) {
+      const tree = parser.parse(code);
+      return build_index_single_file(
+        create_parsed_file(code, "test.ts" as FilePath, tree, "typescript" as Language),
+        tree,
+        "typescript" as Language
+      );
+    }
+
+    function methods_of(index: ReturnType<typeof build_index>) {
+      return Array.from(index.classes.values()).flatMap((c) => c.methods ?? []);
+    }
+
+    it("captures this.#method() private call as a self-reference call", () => {
+      const code = `class Vault {
+        #open() { return 1; }
+        run() { return this.#open(); }
+      }`;
+      const index = build_index(code);
+      const call = index.references.find(
+        (r): r is SelfReferenceCall =>
+          r.kind === "self_reference_call" && r.name === ("#open" as SymbolName),
+      );
+      expect(call).toBeDefined();
+      expect(call!.property_chain[0]).toBe("this");
+    });
+
+    it("indexes computed-key methods (member-expression and identifier keys) and captures calls from their bodies", () => {
+      const computed_key = "run";
+      const code = `const ${computed_key} = "run";
+      class Bag {
+        helper() { return 1; }
+        [Symbol.iterator]() { this.helper(); }
+        [${computed_key}]() { this.helper(); }
+      }`;
+      const index = build_index(code);
+      const methods = methods_of(index);
+
+      // Member-expression key: [Symbol.iterator]
+      const symbol_iterator = methods.find(
+        (m) => m.name === ("[Symbol.iterator]" as SymbolName),
+      );
+      expect(symbol_iterator).toBeDefined();
+      expect(symbol_iterator!.body_scope_id).toBeDefined();
+
+      // Identifier/variable key: [run]
+      const identifier_key = methods.find(
+        (m) => m.name === (`[${computed_key}]` as SymbolName),
+      );
+      expect(identifier_key).toBeDefined();
+      expect(identifier_key!.body_scope_id).toBeDefined();
+
+      // The `this.helper()` call inside the computed method body is captured AND
+      // attributed to that method's body scope (proving the body is a real scope).
+      const body_calls = index.references.filter(
+        (r): r is SelfReferenceCall =>
+          r.kind === "self_reference_call" && r.name === ("helper" as SymbolName),
+      );
+      expect(
+        body_calls.some((c) => c.scope_id === symbol_iterator!.body_scope_id),
+      ).toBe(true);
+      expect(
+        body_calls.some((c) => c.scope_id === identifier_key!.body_scope_id),
+      ).toBe(true);
+    });
+
+    it("flags accessor_kind on getter and setter definitions", () => {
+      const code = `class Box {
+        get value() { return 1; }
+        set value(v: number) {}
+        plain() { return 2; }
+      }`;
+      const methods = methods_of(build_index(code));
+      const getter = methods.find((m) => m.accessor_kind === "getter");
+      const setter = methods.find((m) => m.accessor_kind === "setter");
+      const plain = methods.find((m) => m.name === ("plain" as SymbolName));
+      expect(getter).toBeDefined();
+      expect(getter!.name).toBe("value");
+      expect(setter).toBeDefined();
+      expect(plain).toBeDefined();
+      expect(plain!.accessor_kind).toBeUndefined();
+    });
+
+    function property_accesses(code: string) {
+      return build_index(code)
+        .references.filter(
+          (r): r is PropertyAccessReference => r.kind === "property_access"
+        )
+        .map((r) => ({
+          name: r.name,
+          property_chain: r.property_chain,
+          access_type: r.access_type,
+          is_optional_chain: r.is_optional_chain,
+        }));
+    }
+
+    it("mints one property access for a this-rooted member read", () => {
+      const code = "class A { argsTypes = 1; m() { const a = this.argsTypes; return a; } }";
+      expect(property_accesses(code)).toEqual([
+        {
+          name: "argsTypes" as SymbolName,
+          property_chain: ["this", "argsTypes"],
+          access_type: "property",
+          is_optional_chain: false,
+        },
+      ]);
+    });
+
+    it("mints one property access per member expression in a nested this-rooted chain", () => {
+      const code = "class A { m() { const b = this.helper.rootFieldMap; return b; } }";
+      expect(property_accesses(code)).toEqual([
+        {
+          name: "helper" as SymbolName,
+          property_chain: ["this", "helper"],
+          access_type: "property",
+          is_optional_chain: false,
+        },
+        {
+          name: "rootFieldMap" as SymbolName,
+          property_chain: ["this", "helper", "rootFieldMap"],
+          access_type: "property",
+          is_optional_chain: false,
+        },
+      ]);
+    });
+
+    it("mints one property access per member expression in an identifier-rooted chain", () => {
+      const code = "function m(ctx: Ctx) { return ctx.dmmf.typeAndModelMap; }";
+      expect(property_accesses(code)).toEqual([
+        {
+          name: "dmmf" as SymbolName,
+          property_chain: ["ctx", "dmmf"],
+          access_type: "property",
+          is_optional_chain: false,
+        },
+        {
+          name: "typeAndModelMap" as SymbolName,
+          property_chain: ["ctx", "dmmf", "typeAndModelMap"],
+          access_type: "property",
+          is_optional_chain: false,
+        },
+      ]);
+    });
+
+    it("mints one property access for a plain identifier receiver", () => {
+      const code = "function m(obj: Obj) { return obj.x; }";
+      expect(property_accesses(code)).toEqual([
+        {
+          name: "x" as SymbolName,
+          property_chain: ["obj", "x"],
+          access_type: "property",
+          is_optional_chain: false,
+        },
+      ]);
+    });
+
+    it("mints no property access for a call-rooted member read", () => {
+      const code = "function m() { return getHelper().jsDoc; }";
+      expect(property_accesses(code)).toEqual([]);
+    });
+
+    it("grounds a member read on a nominal cast, whatever the cast wraps", () => {
+      // The chain extractor stops at a cast to a named type and uses that name
+      // as the chain's base, so the read resolves against the cast type even
+      // when the operand is a call the guard could not otherwise ground.
+      expect(
+        property_accesses("function m() { return (lookup('w') as Widget).label; }")
+      ).toEqual([
+        {
+          name: "label" as SymbolName,
+          property_chain: ["Widget", "label"],
+          access_type: "property",
+          is_optional_chain: false,
+        },
+      ]);
+      expect(
+        property_accesses("function m() { return (<Widget>lookup('w')).label; }")
+      ).toEqual([
+        {
+          name: "label" as SymbolName,
+          property_chain: ["Widget", "label"],
+          access_type: "property",
+          is_optional_chain: false,
+        },
+      ]);
+      // A structural cast names no type to bind to, so the call under it
+      // leaves the chain ungrounded.
+      expect(
+        property_accesses(
+          "function m() { return (lookup('w') as { label: string }).label; }"
+        )
+      ).toEqual([]);
+    });
+
+    it("mints no property access for the callee of a member call", () => {
+      const code = "class A { run() {} m() { this.run(); } }";
+      const index = build_index(code);
+      expect(
+        index.references.filter((r) => r.kind === "property_access")
+      ).toEqual([]);
+      expect(
+        index.references
+          .filter(
+            (r): r is SelfReferenceCall => r.kind === "self_reference_call"
+          )
+          .map((r) => r.name)
+      ).toEqual(["run"]);
+    });
+
+    it("mints one method call reference for a tagged template call", () => {
+      const code = "function m(qr: QueryRunner) { return qr.sql`SELECT 1`; }";
+      const index = build_index(code);
+      expect(
+        index.references
+          .filter((r): r is MethodCallReference => r.kind === "method_call")
+          .map((r) => ({ name: r.name, property_chain: r.property_chain }))
+      ).toEqual([
+        {
+          name: "sql" as SymbolName,
+          property_chain: ["qr", "sql"],
+        },
+      ]);
+      expect(
+        index.references.filter((r) => r.kind === "property_access")
+      ).toEqual([]);
+    });
+
+    it("keeps the member read of a bind receiver as a property access without a callee read", () => {
+      const code = "class A { write() {} out = this.write.bind(this); }";
+      const index = build_index(code);
+      expect(
+        index.references
+          .filter(
+            (r): r is PropertyAccessReference => r.kind === "property_access"
+          )
+          .map((r) => r.property_chain)
+      ).toEqual([["this", "write"]]);
+    });
+
+    it("indexes a member-expression argument as a callable value", () => {
+      const code = "app.get('/users', user.list);";
+      const index = build_index(code);
+      expect(
+        index.references
+          .filter(
+            (r): r is CallableValueReference => r.kind === "callable_value"
+          )
+          .map((r) => ({ name: r.name, property_chain: r.property_chain }))
+      ).toEqual([
+        { name: "list" as SymbolName, property_chain: ["user", "list"] },
+      ]);
+    });
+
+    it("indexes no callable value for bare identifier or literal arguments", () => {
+      const code = "run(plain, 1, 's');";
+      const index = build_index(code);
+      expect(
+        index.references.filter((r) => r.kind === "callable_value")
+      ).toEqual([]);
+    });
+  });
+
+  describe("Parameters of callables the source binds by position", () => {
+    function index_ts(code: string) {
+      const tree = parser.parse(code);
+      const parsed_file = create_parsed_file(
+        code,
+        "test.ts" as FilePath,
+        tree,
+        "typescript" as Language,
+      );
+      return build_index_single_file(parsed_file, tree, "typescript" as Language);
+    }
+
+    function parameter_names(code: string, function_name: string): string[] {
+      const fn = Array.from(index_ts(code).functions.values()).find(
+        (f) => (f.name as string) === function_name,
+      );
+      return Array.from(fn!.signature.parameters.values()).map((p) => p.name);
+    }
+
+    function variable_names(code: string): string[] {
+      return Array.from(index_ts(code).variables.values())
+        .map((v) => v.name as string)
+        .sort();
+    }
+
+    it("binds an object-literal method's parameters on an anonymous callable, not a named node", () => {
+      const callables = Array.from(
+        index_ts("const obj = { updateProfile(name: string, email: string) {} };").functions.values(),
+      );
+      expect(callables.map((f) => f.name as string)).toEqual(["<anonymous>"]);
+      expect(
+        Array.from(callables[0].signature.parameters.values()).map((p) => p.name),
+      ).toEqual(["name", "email"]);
+    });
+
+    it("binds the parameters of a declarator-assigned arrow", () => {
+      expect(parameter_names("const f = (p: number) => p;", "f")).toEqual(["p"]);
+    });
+
+    it("binds a for-of and a for-in loop head by name", () => {
+      expect(variable_names("for (const a of xs) { a.m(); }")).toContain("a");
+      expect(variable_names("for (const b in o) { o[b]; }")).toContain("b");
+    });
+
+    it("binds each identifier of a destructured declarator by name", () => {
+      expect(
+        variable_names("const { c } = o;\nconst [d] = xs;\nconst { ...r } = o;"),
+      ).toEqual(["c", "d", "r"]);
+    });
+
+    function destructuring_provenance(
+      code: string,
+      name: string,
+    ): { destructured_from: string | undefined; destructured_key: string | undefined } {
+      const variable = Array.from(index_ts(code).variables.values()).find(
+        (v) => (v.name as string) === name,
+      );
+      return {
+        destructured_from: variable!.destructured_from as string | undefined,
+        destructured_key: variable!.destructured_key as string | undefined,
+      };
+    }
+
+    it("records the source and key of a destructured declarator on the variable", () => {
+      expect(
+        destructuring_provenance("const { storage } = options;", "storage"),
+      ).toEqual({ destructured_from: "options", destructured_key: "storage" });
+    });
+
+    it("records provenance for each binding of a multi-name destructured declarator", () => {
+      const code = "const { project_path, storage } = options;";
+      expect(destructuring_provenance(code, "project_path")).toEqual({
+        destructured_from: "options",
+        destructured_key: "project_path",
+      });
+      expect(destructuring_provenance(code, "storage")).toEqual({
+        destructured_from: "options",
+        destructured_key: "storage",
+      });
+    });
+
+    it("records the source key rather than the local name when the binding is renamed", () => {
+      expect(
+        destructuring_provenance("const { storage: s } = options;", "s"),
+      ).toEqual({ destructured_from: "options", destructured_key: "storage" });
+    });
+
+    it("records no destructuring provenance for a nested pattern", () => {
+      expect(
+        destructuring_provenance("const { inner: { storage } } = options;", "storage"),
+      ).toEqual({ destructured_from: undefined, destructured_key: undefined });
+    });
+
+    it("records no destructuring provenance when the initializer carries a non-null assertion", () => {
+      expect(
+        destructuring_provenance("const { storage } = options!;", "storage"),
+      ).toEqual({ destructured_from: undefined, destructured_key: undefined });
+    });
+
+    it("records no destructuring provenance when the initializer is a call", () => {
+      expect(
+        destructuring_provenance("const { storage } = make();", "storage"),
+      ).toEqual({ destructured_from: undefined, destructured_key: undefined });
+    });
+
+    // A default-valued binding parses as object_assignment_pattern, which no
+    // `.scm` query matches, so the name is never indexed at all — a capture
+    // gap recorded by TASK-395, not a provenance decision.
+    it("binds no name at all for a default-valued destructured binding", () => {
+      expect(variable_names("const { storage = fb } = options;")).toEqual([]);
+    });
+
+    it("binds each identifier of a destructured parameter by name", () => {
+      expect(variable_names("function f({ g }, [h]) { return g + h; }")).toEqual([
+        "g",
+        "h",
+      ]);
+    });
+
+    it("binds each identifier of a type-annotated destructured parameter by name", () => {
+      expect(variable_names("function f({ g }: T) { return g; }")).toEqual(["g"]);
+    });
+  });
+
+  describe("Capture text", () => {
+    function capture_texts(code: string): { text: string; span: string }[] {
+      const tree = parser.parse(code);
+      const parsed_file = create_parsed_file(
+        code,
+        "test.ts" as FilePath,
+        tree,
+        "typescript" as Language,
+      );
+      const captures = query_tree("typescript", tree, "test.ts");
+      const index = build_index_single_file(
+        parsed_file,
+        tree,
+        "typescript" as Language,
+      );
+      // The index keeps no capture list, so the same query is re-read here and
+      // the two are lined up by position.
+      expect(index.references.length).toBeGreaterThan(0);
+      return captures
+        .filter((capture) => !capture.name.startsWith("_"))
+        .map((capture) => ({
+          text: capture.node.text,
+          span: `${capture.node.startPosition.row}:${capture.node.startPosition.column}-${capture.node.endPosition.row}:${capture.node.endPosition.column}`,
+        }));
+    }
+
+    // A capture's text is sliced out of the parsed source between the two
+    // Points its location already read, which holds only while a Point's column
+    // counts the same units a JavaScript string index does.
+    it("reads a capture's text as the source between its Points, past non-ASCII text", () => {
+      const code = [
+        "const grüße = 'café';",
+        "const emoji = '🚀🌟';",
+        "const combining = 'étude';",
+        "function 中文(引数: string) { return 引数; }",
+        "中文(grüße);",
+      ].join("\n");
+
+      const captures = capture_texts(code);
+      const lines = code.split("\n");
+
+      for (const { text, span } of captures) {
+        const [start, end] = span.split("-");
+        const [start_row, start_column] = start.split(":").map(Number);
+        const [end_row, end_column] = end.split(":").map(Number);
+        let offset = 0;
+        for (let row = 0; row < start_row; row++) offset += lines[row].length + 1;
+        let end_offset = 0;
+        for (let row = 0; row < end_row; row++) end_offset += lines[row].length + 1;
+        expect(
+          code.slice(offset + start_column, end_offset + end_column),
+        ).toEqual(text);
+      }
+    });
+
+    it("names a non-ASCII function and its call by the same symbol", () => {
+      const code = "function 中文(引数: string) { return 引数; }\n中文('café');";
+      const tree = parser.parse(code);
+      const index = build_index_single_file(
+        create_parsed_file(code, "test.ts" as FilePath, tree, "typescript"),
+        tree,
+        "typescript" as Language,
+      );
+      expect(
+        Array.from(index.functions.values()).map((f) => f.name as string),
+      ).toEqual(["中文"]);
+      expect(
+        [...new Set(index.references.map((r) => r.name as string))].sort(),
+      ).toEqual(["return 引数;", "中文", "引数"]);
+    });
+  });
+
+  describe("Construction capture", () => {
+    function index_ts(code: string) {
+      const tree = parser.parse(code);
+      const parsed_file = create_parsed_file(code, "test.ts" as FilePath, tree, "typescript" as Language);
+      return build_index_single_file(parsed_file, tree, "typescript" as Language);
+    }
+
+    it("keys a constructor write's array literal construction to the declared field's element", () => {
+      const result = index_ts(`class CursorCollection {
+  private cursors: Cursor[];
+  constructor() {
+    this.cursors = [new Cursor()];
+  }
+}`);
+      const construction = result.references.find(
+        (ref): ref is ConstructorCallReference => ref.kind === "constructor_call",
+      );
+      const field = Array.from(result.classes.values())[0].properties.find((p) => p.name === "cursors");
+      expect({
+        construct_target: construction?.construct_target,
+        construct_element_of: construction?.construct_element_of,
+      }).toEqual({ construct_target: undefined, construct_element_of: field?.location });
+    });
+
+    it("records what a for…of binding takes from a member container it iterates", () => {
+      const result = index_ts(`class Contributions {
+  dispose_all(): void {
+    for (const [, instance] of this._instances) {
+      instance.dispose();
+    }
+  }
+}`);
+      const instance = Array.from(result.variables.values()).find((v) => v.name === "instance");
+      expect(instance?.iterated_from).toEqual({
+        container: ["this" as SymbolName, "_instances" as SymbolName],
+        yields: "entry_value",
+      });
+    });
+
+    it("keys a field initialiser and a constructor write to the declared field or parameter property", () => {
+      const result = index_ts(`class Service {
+  private helper = new Helper();
+  store: Store;
+  #tm: TM;
+  constructor(private readonly clock: Clock, public queue?: Queue) {
+    this.clock = new Clock();
+    this.queue = new Queue();
+    this.store = new Store();
+    this.#tm = new TM();
+    this.undeclared = 1;
+  }
+  run() { this.#tm.getTransaction(); }
+}`);
+      const fields = new Map(
+        Array.from(result.classes.values())[0].properties.map((p) => [p.name as string, p.location]),
+      );
+      const constructions = result.references
+        .filter((ref): ref is ConstructorCallReference => ref.kind === "constructor_call")
+        .map((ref) => ({ name: ref.name, construct_target: ref.construct_target }));
+
+      // TypeScript declares its fields, so an undeclared write declares none.
+      expect([...fields.keys()]).toEqual(["helper", "store", "#tm", "clock", "queue"]);
+      expect(constructions).toEqual([
+        { name: "Helper", construct_target: fields.get("helper") },
+        { name: "Clock", construct_target: fields.get("clock") },
+        { name: "Queue", construct_target: fields.get("queue") },
+        { name: "Store", construct_target: fields.get("store") },
+        { name: "TM", construct_target: fields.get("#tm") },
+      ]);
+      const call = result.references.find((ref) => ref.name === ("getTransaction" as SymbolName));
+      expect(call && "property_chain" in call ? call.property_chain : undefined).toEqual([
+        "this",
+        "#tm",
+        "getTransaction",
+      ]);
+    });
+  });
 });

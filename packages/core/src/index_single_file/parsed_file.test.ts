@@ -21,6 +21,7 @@ describe("parsed_file", () => {
         file_end_column: 12,
         tree: tree,
         lang: "javascript" as Language,
+        source: "const x = 1;",
       };
 
       // Verify all required properties exist
@@ -45,6 +46,7 @@ describe("parsed_file", () => {
           file_end_column: 18,
           tree: tree,
           lang: language,
+          source: "function test() {}",
         };
 
         expect(parsed_file.lang).toBe(language);
@@ -65,6 +67,7 @@ describe("parsed_file", () => {
         file_end_column: 1, // Last line has just "}"
         tree: tree,
         lang: "javascript" as Language,
+        source: multi_line_code,
       };
 
       expect(parsed_file.file_lines).toBe(3);
@@ -82,6 +85,7 @@ describe("parsed_file", () => {
         file_end_column: 0,
         tree: tree,
         lang: "javascript" as Language,
+        source: "",
       };
 
       expect(parsed_file.file_lines).toBe(0);
@@ -100,6 +104,7 @@ describe("parsed_file", () => {
         file_end_column: long_line.length,
         tree: tree,
         lang: "javascript" as Language,
+        source: long_line,
       };
 
       expect(parsed_file.file_end_column).toBe(long_line.length);

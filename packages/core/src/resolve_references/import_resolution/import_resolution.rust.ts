@@ -1,109 +1,196 @@
 /**
  * Rust Module Resolution
  *
- * Resolves Rust use paths to absolute file paths following Rust
- * module resolution rules.
+ * Resolves a Rust module path to the absolute file path backing it, following
+ * Rust's module resolution rules. Two spellings arrive here: a `::` path, and
+ * the relative file path a `#[path = "…"] mod x;` declaration names.
  */
 
 import * as path from "path";
 import type { FilePath } from "@ariadnejs/types";
 import type { FileSystemFolder } from "../file_folders";
+import { has_file_in_tree } from "../file_folders";
+import type { ModuleResolutionContext } from "./import_resolution";
 
 /**
- * Check if a file exists in the FileSystemFolder tree
- */
-function file_exists(
-  file_path: FilePath,
-  root_folder: FileSystemFolder
-): boolean {
-  // Convert absolute path to relative path if needed
-  const relative = file_path.startsWith(root_folder.path)
-    ? path.relative(root_folder.path, file_path)
-    : file_path;
-
-  const parts = relative.split(path.sep).filter((p) => p && p !== ".");
-  let current = root_folder;
-
-  // Navigate through folders
-  for (let i = 0; i < parts.length - 1; i++) {
-    const folder_name = parts[i];
-    const next_folder = current.folders.get(folder_name);
-    if (!next_folder) return false;
-    current = next_folder;
-  }
-
-  // Check if file exists in final folder
-  const filename = parts[parts.length - 1];
-  return current.files.has(filename);
-}
-
-/**
- * Resolve Rust module path to absolute file path
- *
- * Rules:
- * 1. Use statements: use crate::module;, use super::sibling;
- * 2. Module hierarchy: mod.rs, inline mod declarations
- * 3. Extensions: .rs
- * 4. Crate root: lib.rs or main.rs
- * 5. External crates: Cargo.toml dependencies (future)
- *
- * @param import_path - Use path from use statement
- * @param importing_file - Absolute path to file containing the use
- * @param root_folder - File system tree for existence checks
- * @returns Absolute path to the imported file
+ * Resolve a Rust `use` module path to an absolute file path. The leading segment
+ * selects the base: `crate` is the crate root, `super` the parent module, `self`
+ * the current module, and any other segment names either a local module of the
+ * importing file or, failing that, another crate in the workspace. A leading
+ * segment that names neither is a genuinely external crate, returned opaquely
+ * so no edge is fabricated for it.
  */
 export function resolve_module_path_rust(
   import_path: string,
   importing_file: FilePath,
-  root_folder: FileSystemFolder
+  modules: ModuleResolutionContext
 ): FilePath {
-  // Parse use path: "crate::module::submodule"
+  const { root_folder } = modules;
+
+  // A `#[path = "…"] mod x;` declaration names its backing file directly rather
+  // than by module path. No `use` path can be spelled this way — `::` is the
+  // only separator Rust paths accept — so the file form is unambiguous. Rust
+  // resolves it against the directory the declaring file sits in, whatever that
+  // file is called.
+  if (import_path.includes("/") || import_path.endsWith(".rs")) {
+    return path.resolve(
+      path.dirname(importing_file),
+      import_path
+    ) as FilePath;
+  }
+
   const parts = import_path.split("::");
 
   if (parts[0] === "crate") {
-    // Absolute from crate root
     return resolve_from_crate_root(parts.slice(1), importing_file, root_folder);
   } else if (parts[0] === "super") {
-    // Relative to parent module
     return resolve_from_parent(parts.slice(1), importing_file, root_folder);
   } else if (parts[0] === "self") {
-    // Current module
     return resolve_from_current(parts.slice(1), importing_file, root_folder);
   } else {
-    // No prefix: treat as local module relative to current file
-    // Example: `use user_mod::User;` where `mod user_mod;` was declared
-    // Try to resolve relative to current directory first
-    const current_dir = path.dirname(importing_file);
-    const resolved = resolve_rust_module_path(current_dir, parts, root_folder);
+    const resolved = resolve_local_module(parts, importing_file, root_folder);
 
-    // Check if the resolved path exists
-    if (file_exists(resolved, root_folder)) {
+    if (has_file_in_tree(resolved, root_folder)) {
       return resolved;
     }
 
-    // Fallback: external crate (future: Cargo.toml resolution)
+    // Only once the local probe has missed: the leading segment may name
+    // another crate in the workspace.
+    const from_crate = resolve_from_named_crate(parts, modules);
+    if (from_crate) {
+      return from_crate;
+    }
+
     return import_path as FilePath;
   }
 }
 
 /**
- * Resolve from crate root
+ * The file backing a submodule named by an item-position `use` segment.
+ *
+ * `use crate::internals::attr;` records module path `crate::internals` and name
+ * `attr`, so the resolved import path is `internals.rs` even when `attr` is a
+ * module of its own. Probing the declaring module's child directory recovers
+ * `internals/attr.rs`, which is what a `attr::Item` path must reach into.
+ * Restricted to that child directory: a flat sibling of the declaring file is a
+ * module of the *parent*, not of it.
  */
+export function resolve_submodule_path_rust(
+  resolved_source_file: FilePath,
+  import_name: string,
+  root_folder: FileSystemFolder
+): FilePath | undefined {
+  return (
+    walk_rust_module_path(
+      module_child_dir(resolved_source_file),
+      [import_name],
+      root_folder
+    ) ?? undefined
+  );
+}
+
+/**
+ * Resolve `other_crate::m::item` against the workspace's crate roots. Crate
+ * names normalise `-` to `_`, which is how a `sqlx-core` directory is spelled
+ * in a `use sqlx_core::…` path.
+ */
+function resolve_from_named_crate(
+  parts: string[],
+  modules: ModuleResolutionContext
+): FilePath | null {
+  const crate_root = modules.specifiers.crate_roots.get(
+    parts[0].replace(/-/g, "_")
+  );
+  if (!crate_root) {
+    return null;
+  }
+
+  const remaining = parts.slice(1);
+  if (remaining.length === 0) {
+    return crate_root_file(crate_root, modules.root_folder);
+  }
+
+  const resolved = resolve_rust_module_path(
+    crate_root,
+    remaining,
+    modules.root_folder
+  );
+  return has_file_in_tree(resolved, modules.root_folder) ? resolved : null;
+}
+
+/**
+ * The directory a module file's children live in. A `mod.rs` and a crate root
+ * own the directory they sit in; any other module file owns the sibling
+ * directory named after it (`src/deep.rs` owns `src/deep/`), which is how a
+ * 2018-style crate lays its tree out.
+ */
+function module_child_dir(module_file: FilePath): string {
+  const dir = path.dirname(module_file);
+  const base = path.basename(module_file);
+  if (base === "mod.rs" || base === "lib.rs" || base === "main.rs") {
+    return dir;
+  }
+  return path.join(dir, base.replace(/\.rs$/, ""));
+}
+
+/**
+ * Resolve a module path against the importing file's own module, preferring
+ * its 2018-style child directory and falling back to its own directory so a
+ * crate that keeps siblings flat still resolves.
+ */
+function resolve_local_module(
+  module_parts: string[],
+  base_file: FilePath,
+  root_folder: FileSystemFolder
+): FilePath {
+  const child_dir = module_child_dir(base_file);
+  const from_child = resolve_rust_module_path(child_dir, module_parts, root_folder);
+  if (has_file_in_tree(from_child, root_folder)) {
+    return from_child;
+  }
+  return resolve_rust_module_path(
+    path.dirname(base_file),
+    module_parts,
+    root_folder
+  );
+}
+
 function resolve_from_crate_root(
   module_parts: string[],
   base_file: FilePath,
   root_folder: FileSystemFolder
 ): FilePath {
   const crate_root = find_rust_crate_root(base_file, root_folder);
+  // `use crate::S` names an item of the crate root itself, not a module under
+  // it; resolve to the root file so the item is looked up in its exports.
+  if (module_parts.length === 0) {
+    return crate_root_file(crate_root, root_folder);
+  }
   return resolve_rust_module_path(crate_root, module_parts, root_folder);
 }
 
 /**
- * Resolve from parent module
- *
- * In Rust:
- * - If current file is a module file (e.g., utils.rs), parent is the directory containing it
- * - If current file is mod.rs, parent is the directory containing the parent directory
+ * The crate root's own file. `lib.rs` wins over `main.rs` for a crate that has
+ * both, matching the library-first convention.
+ */
+function crate_root_file(
+  crate_root_dir: string,
+  root_folder: FileSystemFolder
+): FilePath {
+  const lib = path.join(crate_root_dir, "lib.rs") as FilePath;
+  if (has_file_in_tree(lib, root_folder)) {
+    return lib;
+  }
+  return path.join(crate_root_dir, "main.rs") as FilePath;
+}
+
+/**
+ * A `mod.rs` file represents its containing directory, so its parent module
+ * lives one directory further up; any other module file shares its directory
+ * with its siblings, so its parent module resolves from that same directory.
+ * The caller strips the first `super`; each additional leading `super` climbs
+ * one more directory — after the first hop we are already in module-directory
+ * space, so the mod.rs distinction does not reapply.
  */
 function resolve_from_parent(
   module_parts: string[],
@@ -113,69 +200,144 @@ function resolve_from_parent(
   const base_name = path.basename(base_file);
   const current_dir = path.dirname(base_file);
 
-  // If this is a mod.rs file, go up two levels
-  // Otherwise, stay at current directory (parent module is in same dir)
-  const parent_dir =
+  let parent_dir =
     base_name === "mod.rs" ? path.dirname(current_dir) : current_dir;
 
-  return resolve_rust_module_path(parent_dir, module_parts, root_folder);
+  let remaining = module_parts;
+  while (remaining[0] === "super") {
+    parent_dir = path.dirname(parent_dir);
+    remaining = remaining.slice(1);
+  }
+
+  // `use super::Item` names an item of the parent module itself; resolve to
+  // that module's own file rather than a module beneath it.
+  if (remaining.length === 0) {
+    return parent_module_file(parent_dir, base_file, root_folder);
+  }
+
+  return resolve_rust_module_path(parent_dir, remaining, root_folder);
 }
 
 /**
- * Resolve from current module
+ * The file backing the module that owns `module_dir`: its `mod.rs`, or the
+ * sibling `<module_dir>.rs` a 2018-style crate uses instead.
+ *
+ * A top-level module has neither: its parent is the crate root, which is backed
+ * by `lib.rs`/`main.rs` under that same directory rather than by a file naming
+ * it. So `use super::Item` in `src/path.rs` names an item of `src/lib.rs` —
+ * rustc's own `rustc_ast_lowering/src/path.rs` reaching `LoweringContext` is
+ * this shape.
+ *
+ * That last step answers only for the climbing file's own crate root, and only
+ * where one file backs it. A climb that overshoots its crate lands in whatever
+ * directory sits above, and a package with both a library and a binary roots
+ * two crates in one directory with no way here to say which tree the module
+ * descends from. Both would resolve onto a real, indexed, unrelated file, which
+ * is an edge no caller could tell from a true one — so neither answers, and the
+ * miss stands.
  */
+function parent_module_file(
+  module_dir: string,
+  base_file: FilePath,
+  root_folder: FileSystemFolder
+): FilePath {
+  const mod_rs = path.join(module_dir, "mod.rs") as FilePath;
+  if (has_file_in_tree(mod_rs, root_folder)) {
+    return mod_rs;
+  }
+  const sibling = `${module_dir}.rs` as FilePath;
+  if (has_file_in_tree(sibling, root_folder)) {
+    return sibling;
+  }
+  if (module_dir === find_rust_crate_root(base_file, root_folder)) {
+    const lib = path.join(module_dir, "lib.rs") as FilePath;
+    const main = path.join(module_dir, "main.rs") as FilePath;
+    const has_lib = has_file_in_tree(lib, root_folder);
+    const has_main = has_file_in_tree(main, root_folder);
+    if (has_lib !== has_main) {
+      return has_lib ? lib : main;
+    }
+  }
+  return sibling;
+}
+
 function resolve_from_current(
   module_parts: string[],
   base_file: FilePath,
   root_folder: FileSystemFolder
 ): FilePath {
-  const current_dir = path.dirname(base_file);
-  return resolve_rust_module_path(current_dir, module_parts, root_folder);
+  // `use self::Item` names an item of this module.
+  if (module_parts.length === 0) {
+    return base_file;
+  }
+  return resolve_local_module(module_parts, base_file, root_folder);
 }
 
 /**
- * Resolve Rust module path parts to file path
+ * Walk every module segment to a file, trying `module.rs` before
+ * `module/mod.rs`, and stop the moment a segment matches nothing.
+ *
+ * Every segment must match. A walk that skipped an unmatched segment would let
+ * a foreign path collapse onto a local module named by its tail — `std::fs::x`
+ * finding the crate's own `src/fs.rs` — which is a target no caller can tell
+ * apart from a real one.
  */
-function resolve_rust_module_path(
+function walk_rust_module_path(
   base_dir: string,
   module_parts: string[],
   root_folder: FileSystemFolder
-): FilePath {
+): FilePath | null {
   let current_path = base_dir;
 
   for (let i = 0; i < module_parts.length; i++) {
     const part = module_parts[i];
     const is_last = i === module_parts.length - 1;
 
-    // Try module file or module directory
     const candidates = [
       path.join(current_path, `${part}.rs`),
       path.join(current_path, part, "mod.rs"),
     ];
 
-    for (const candidate of candidates) {
-      if (file_exists(candidate as FilePath, root_folder)) {
-        if (is_last) {
-          return candidate as FilePath;
-        } else {
-          // For mod.rs style, submodules are in the same directory as mod.rs.
-          // For module.rs style (Rust 2018+), submodules are in module/.
-          const is_mod_rs = path.basename(candidate) === "mod.rs";
-          current_path = is_mod_rs
-            ? path.dirname(candidate)
-            : path.join(current_path, part);
-          break;
-        }
-      }
+    const matched = candidates.find((candidate) =>
+      has_file_in_tree(candidate as FilePath, root_folder)
+    );
+    if (!matched) {
+      return null;
     }
+    if (is_last) {
+      return matched as FilePath;
+    }
+    // mod.rs style keeps submodules in the mod.rs directory; module.rs style
+    // (Rust 2018+) keeps them in a sibling `module/` directory.
+    current_path =
+      path.basename(matched) === "mod.rs"
+        ? path.dirname(matched)
+        : path.join(current_path, part);
   }
 
-  // Fallback
-  return path.join(base_dir, `${module_parts.join("/")}.rs`) as FilePath;
+  return null;
 }
 
 /**
- * Find Rust crate root by looking for lib.rs, main.rs, or Cargo.toml
+ * The file a module path names, falling back to the inferred `module.rs` path so
+ * callers that need a stable dependency target get one even when nothing on disk
+ * matches.
+ */
+function resolve_rust_module_path(
+  base_dir: string,
+  module_parts: string[],
+  root_folder: FileSystemFolder
+): FilePath {
+  return (
+    walk_rust_module_path(base_dir, module_parts, root_folder) ??
+    (path.join(base_dir, `${module_parts.join("/")}.rs`) as FilePath)
+  );
+}
+
+/**
+ * Walk up from the importing file to the crate root, recognized by an adjacent
+ * `lib.rs`/`main.rs`, or by a `Cargo.toml` whose `src/` holds one. Falls back to
+ * the importing file's own directory when no crate marker is found.
  */
 function find_rust_crate_root(
   start_file: FilePath,
@@ -184,23 +346,20 @@ function find_rust_crate_root(
   let current = path.dirname(start_file);
 
   while (true) {
-    // Look for lib.rs or main.rs
     if (
-      file_exists(path.join(current, "lib.rs") as FilePath, root_folder) ||
-      file_exists(path.join(current, "main.rs") as FilePath, root_folder)
+      has_file_in_tree(path.join(current, "lib.rs") as FilePath, root_folder) ||
+      has_file_in_tree(path.join(current, "main.rs") as FilePath, root_folder)
     ) {
       return current;
     }
 
-    // Look for Cargo.toml
     if (
-      file_exists(path.join(current, "Cargo.toml") as FilePath, root_folder)
+      has_file_in_tree(path.join(current, "Cargo.toml") as FilePath, root_folder)
     ) {
-      // Check for src/ directory
       const src_dir = path.join(current, "src");
       if (
-        file_exists(path.join(src_dir, "lib.rs") as FilePath, root_folder) ||
-        file_exists(path.join(src_dir, "main.rs") as FilePath, root_folder)
+        has_file_in_tree(path.join(src_dir, "lib.rs") as FilePath, root_folder) ||
+        has_file_in_tree(path.join(src_dir, "main.rs") as FilePath, root_folder)
       ) {
         return src_dir;
       }

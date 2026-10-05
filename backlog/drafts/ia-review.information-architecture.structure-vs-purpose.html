@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ariadne: where structure diverges from purpose</title>
+<style>
+:root {
+  --ivory: #f7f3ec;
+  --oat: #ece4d6;
+  --paper: #fffdf8;
+  --slate: #2f3338;
+  --ink: #1d2024;
+  --mute: #6c6f73;
+  --faint: #9a9b97;
+  --clay: #c06d4f;
+  --olive: #6f7a4f;
+  --rust: #a8412a;
+  --work: #4a6b8a; /* work / build axis accent */
+  --concept: #7d6699; /* concept / idea axis accent */
+  --line: #d8cfbe;
+  --hair: #e4ddce;
+  --serif: ui-serif, Georgia, "Times New Roman", serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: "SF Mono", "JetBrains Mono", Menlo, Consolas, ui-monospace, monospace;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: var(--sans);
+  color: var(--ink);
+  background: var(--ivory);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+.prose { max-width: 68ch; }
+code, .mono { font-family: var(--mono); }
+
+/* ---- cross-doc nav ---- */
+.crossnav {
+  position: sticky; top: 0; z-index: 10;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+  padding: 10px clamp(16px, 5vw, 64px);
+  background: var(--oat);
+  border-bottom: 1px solid var(--line);
+}
+.crossnav .set-label {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--mute); margin-right: 4px;
+}
+.crossnav a.doc-link, .crossnav span.doc-current {
+  font-family: var(--mono); font-size: 12.5px;
+  padding: 5px 12px; border-radius: 999px; text-decoration: none;
+  border: 1px solid var(--line); color: var(--slate); background: var(--paper);
+}
+.crossnav a.doc-link:hover { border-color: var(--clay); color: var(--rust); }
+.crossnav span.doc-current {
+  background: var(--slate); color: var(--ivory); border-color: var(--slate);
+}
+
+/* ---- sticky outline ---- */
+.toc {
+  position: sticky; top: 42px; z-index: 9;
+  display: flex; flex-wrap: wrap; gap: 8px;
+  padding: 9px clamp(16px, 5vw, 64px);
+  background: var(--ivory);
+  border-bottom: 1px solid var(--hair);
+}
+.toc a {
+  font-family: var(--mono); font-size: 12px;
+  padding: 4px 11px; border-radius: 999px; text-decoration: none;
+  color: var(--mute); border: 1px solid transparent;
+}
+.toc a:hover, .toc a.active { color: var(--rust); border-color: var(--line); background: var(--paper); }
+.toc a .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+
+main { padding: 0 clamp(16px, 5vw, 64px) 96px; }
+section { scroll-margin-top: 96px; padding-top: 44px; }
+
+/* ---- header ---- */
+.identity { padding-top: 40px; }
+.eyebrow {
+  font-family: var(--mono); font-size: 11.5px; letter-spacing: .16em;
+  text-transform: uppercase; color: var(--clay); margin: 0 0 10px;
+}
+h1 {
+  font-family: var(--serif); font-weight: 600;
+  font-size: clamp(30px, 4.4vw, 46px); line-height: 1.08;
+  margin: 0 0 16px; color: var(--ink); letter-spacing: -.01em;
+}
+.byline {
+  display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center;
+  font-family: var(--mono); font-size: 12px; color: var(--mute);
+  margin-bottom: 4px;
+}
+.byline .pill { padding: 3px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--paper); }
+.preamble {
+  font-size: 18px; line-height: 1.62; color: var(--slate);
+  margin: 24px 0 4px;
+}
+.preamble b { color: var(--ink); font-weight: 600; }
+
+h2.sec {
+  font-family: var(--serif); font-weight: 600;
+  font-size: clamp(22px, 2.8vw, 30px); margin: 0 0 6px; color: var(--ink);
+  letter-spacing: -.01em;
+}
+h2.sec .tag {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--clay); vertical-align: middle;
+  margin-left: 10px; border: 1px solid var(--line); border-radius: 999px; padding: 2px 8px;
+}
+.caption {
+  font-size: 15px; color: var(--mute); margin: 0 0 22px;
+}
+.caption b { color: var(--slate); }
+
+/* ---- system context map ---- */
+.contextmap { width: 100%; margin: 8px 0 6px; }
+.contextmap svg { width: 100%; height: auto; display: block; }
+
+/* ---- mermaid figure ---- */
+figure.macro { margin: 8px 0 4px; padding: 0; }
+figure.macro svg { width: 100%; height: auto; display: block; }
+figure.macro figcaption {
+  font-size: 15px; color: var(--mute); margin-top: 14px;
+}
+figure.macro figcaption b { color: var(--slate); }
+
+/* ---- numbered shape list ---- */
+.shapes { display: grid; gap: 16px; margin-top: 8px; }
+.shape {
+  display: grid; grid-template-columns: 46px 1fr; gap: 16px;
+  background: var(--paper); border: 1px solid var(--hair);
+  border-radius: 14px; padding: 18px 20px;
+}
+.shape .badge {
+  width: 40px; height: 40px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--serif); font-size: 19px; font-weight: 600;
+  color: var(--ivory); background: var(--clay);
+}
+.shape[data-sev="high"] .badge { background: var(--rust); }
+.shape[data-sev="mid"] .badge { background: var(--clay); }
+.shape[data-sev="surplus"] .badge { background: var(--slate); }
+.shape .glyph {
+  width: 20px; height: 20px; margin-right: 9px; vertical-align: -4px;
+  color: var(--clay);
+}
+.shape[data-sev="high"] .glyph { color: var(--rust); }
+.shape[data-sev="surplus"] .glyph { color: var(--slate); }
+.shape h3 {
+  font-family: var(--serif); font-weight: 600; font-size: 19px;
+  margin: 2px 0 6px; color: var(--ink);
+}
+.shape .body { font-size: 14.5px; color: var(--slate); margin: 0; }
+.shape .body code { background: var(--oat); padding: 1px 5px; border-radius: 4px; font-size: 12.8px; }
+.pin {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--mono); font-size: 11.5px; color: var(--mute);
+  margin-top: 10px; padding: 3px 9px; border: 1px solid var(--line);
+  border-radius: 6px; background: var(--ivory);
+}
+.pin .rng { color: var(--faint); }
+.pin::before {
+  content: ""; width: 8px; height: 8px; border-radius: 2px;
+  border: 2px solid var(--clay); transform: rotate(45deg); display: inline-block;
+}
+.shape[data-sev="high"] .pin::before { border-color: var(--rust); }
+.shape[data-sev="surplus"] .pin::before { border-color: var(--slate); }
+
+/* ---- routing matrix ---- */
+.matrix-wrap { width: 100%; margin-top: 6px; }
+table.matrix { width: 100%; border-collapse: collapse; font-size: 14px; }
+table.matrix th, table.matrix td {
+  text-align: left; padding: 13px 14px; border-bottom: 1px solid var(--hair);
+  vertical-align: top;
+}
+table.matrix thead th {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--mute); border-bottom: 1.5px solid var(--line);
+}
+table.matrix .path { font-weight: 600; color: var(--ink); }
+table.matrix .path .sub { display: block; font-weight: 400; color: var(--mute); font-size: 12.5px; margin-top: 3px; }
+table.matrix .marquee { font-family: var(--mono); font-size: 12.5px; color: var(--slate); }
+table.matrix .marquee code { background: var(--oat); padding: 1px 5px; border-radius: 4px; }
+.cnt {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: var(--mono); font-size: 13px; font-weight: 600; color: var(--ink);
+}
+.cnt::before {
+  content: ""; width: 12px; height: 12px; border-radius: 50%; display: inline-block;
+  background: var(--rust);
+}
+.cnt.mid::before { background: var(--clay); }
+tr.contrast td { background: rgba(111,122,79,.10); }
+tr.contrast .cnt::before { background: var(--olive); }
+tr.contrast .path { color: var(--olive); }
+
+.drills {
+  margin-top: 26px; background: var(--slate); color: var(--ivory);
+  border-radius: 14px; padding: 22px 24px;
+}
+.drills .lead {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--oat); margin: 0 0 14px;
+}
+.drills .barrow { display: grid; grid-template-columns: 120px 1fr 44px; align-items: center; gap: 14px; margin-bottom: 10px; }
+.drills .barrow .lbl { font-family: var(--mono); font-size: 12.5px; color: var(--ivory); }
+.drills .track { height: 22px; background: rgba(247,243,236,.12); border-radius: 6px; overflow: hidden; }
+.drills .bar { height: 100%; border-radius: 6px; }
+.drills .bar.clean { background: var(--olive); }
+.drills .bar.partial { background: var(--clay); }
+.drills .bar.fail { background: var(--rust); }
+.drills .barrow .val { font-family: var(--mono); font-size: 14px; font-weight: 600; text-align: right; color: var(--ivory); }
+
+/* ---- code panels (detect_language) ---- */
+.forked { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; margin-top: 6px; }
+.code {
+  background: var(--ink); border-radius: 12px; overflow: hidden;
+  border: 1px solid #0d0f11; display: flex; flex-direction: column;
+}
+.code .file-label {
+  font-family: var(--mono); font-size: 11px; color: #c8c2b5;
+  padding: 10px 14px; border-bottom: 1px solid #33373c; background: #24272b;
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+}
+.code .file-label .verdict {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .06em;
+  text-transform: uppercase; padding: 2px 8px; border-radius: 999px;
+}
+.code .file-label .verdict.null { background: rgba(111,122,79,.25); color: #b7c58e; }
+.code .file-label .verdict.throw { background: rgba(192,109,79,.25); color: #e6a385; }
+.code .file-label .verdict.bug { background: rgba(168,65,42,.32); color: #f0a08c; }
+.code pre {
+  margin: 0; padding: 14px 16px; font-family: var(--mono);
+  font-size: 12.3px; line-height: 1.62; color: #d7d3c8;
+  white-space: pre; overflow-x: auto;
+}
+.code .kw { color: #c58ad0; }
+.code .str { color: #a7c58e; }
+.code .fn { color: #82b6d8; }
+.code .cm { color: #6f7368; font-style: italic; }
+.code .ty { color: #d9b57a; }
+.code .hl { background: rgba(168,65,42,.28); display: inline-block; width: 100%; }
+.code .hlg { background: rgba(111,122,79,.24); display: inline-block; width: 100%; }
+
+/* ---- accent callouts ---- */
+aside.callout {
+  border-left: 4px solid var(--clay); background: var(--paper);
+  border-radius: 0 12px 12px 0; padding: 18px 22px; margin: 22px 0 0;
+}
+aside.callout.rust { border-left-color: var(--rust); background: rgba(168,65,42,.06); }
+aside.callout.olive { border-left-color: var(--olive); background: rgba(111,122,79,.07); }
+aside.callout .key {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--rust); margin: 0 0 8px; display: block;
+}
+aside.callout.olive .key { color: var(--olive); }
+aside.callout p { margin: 0; font-size: 15px; color: var(--slate); }
+aside.callout p + p { margin-top: 10px; }
+aside.callout code { font-family: var(--mono); font-size: 12.8px; background: var(--oat); padding: 1px 5px; border-radius: 4px; }
+aside.callout.rust code { background: rgba(168,65,42,.12); }
+aside.callout.olive code { background: rgba(111,122,79,.12); }
+
+/* ---- provenance ---- */
+footer.provenance {
+  margin-top: 64px; padding: 26px clamp(16px, 5vw, 64px) 40px;
+  border-top: 1px solid var(--line); background: var(--oat);
+}
+footer.provenance .label {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--mute); margin: 0 0 12px;
+}
+footer.provenance ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+footer.provenance li { font-family: var(--mono); font-size: 12px; color: var(--slate); }
+footer.provenance .stamp { font-family: var(--mono); font-size: 11.5px; color: var(--faint); margin-top: 16px; }
+
+.legend { display: flex; flex-wrap: wrap; gap: 16px; margin: 14px 0 0; font-family: var(--mono); font-size: 11.5px; color: var(--mute); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend .sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.drills .legend { color: var(--oat); }
+
+@media (max-width: 860px) {
+  .forked { grid-template-columns: 1fr; }
+}
+@media (max-width: 720px) {
+  .shape { grid-template-columns: 40px 1fr; }
+  .drills .barrow { grid-template-columns: 90px 1fr 40px; }
+}
+</style>
+</head>
+<body>
+
+<!-- icon glyph sprite -->
+<svg style="display:none" aria-hidden="true">
+  <symbol id="ic-hub" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="4" cy="5" r="2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="20" cy="5" r="2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="4" cy="19" r="2" fill="none" stroke="currentColor" stroke-width="1.8"/><line x1="9.4" y1="10.2" x2="5.4" y2="6.4" stroke="currentColor" stroke-width="1.6"/><line x1="14.6" y1="10.2" x2="18.6" y2="6.4" stroke="currentColor" stroke-width="1.6"/><line x1="9.4" y1="13.8" x2="5.4" y2="17.6" stroke="currentColor" stroke-width="1.6"/></symbol>
+  <symbol id="ic-mega" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M14 3v4h4" fill="none" stroke="currentColor" stroke-width="1.7"/><line x1="9" y1="12" x2="15" y2="12" stroke="currentColor" stroke-width="1.6"/><line x1="9" y1="15" x2="15" y2="15" stroke="currentColor" stroke-width="1.6"/><line x1="9" y1="18" x2="13" y2="18" stroke="currentColor" stroke-width="1.6"/></symbol>
+  <symbol id="ic-mask" viewBox="0 0 24 24"><path d="M4 8c0-1 1-2 3-2 2 0 3 1.4 5 1.4S17 6 19 6c1 0 1 1 1 2 0 5-3.5 9-8 9S4 13 4 8z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><circle cx="9" cy="11" r="1.1" fill="currentColor"/><circle cx="15" cy="11" r="1.1" fill="currentColor"/></symbol>
+  <symbol id="ic-fork" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2.2" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="5" cy="19" r="2.2" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="19" r="2.2" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="19" cy="19" r="2.2" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 7.2v3.3M12 10.5c0 3-7 2.5-7 6.3M12 10.5v6.3M12 10.5c0 3 7 2.5 7 6.3" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+  <symbol id="ic-barrel" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="1.7"/><line x1="5" y1="9" x2="19" y2="9" stroke="currentColor" stroke-width="1.5"/><line x1="5" y1="15" x2="19" y2="15" stroke="currentColor" stroke-width="1.5"/><line x1="8" y1="20" x2="8" y2="22" stroke="currentColor" stroke-width="1.5"/></symbol>
+  <symbol id="ic-dead" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.4" fill="none" stroke="currentColor" stroke-width="1.7"/><line x1="6.5" y1="6.5" x2="17.5" y2="17.5" stroke="currentColor" stroke-width="1.7"/></symbol>
+</svg>
+
+<nav class="crossnav" aria-label="Related documents">
+  <span class="set-label">IA Review</span>
+  <span class="doc-current" aria-current="page">The picture (structure vs purpose)</span>
+  <a class="doc-link" href="ia-review.refactor-program.program-map.html">The program (refactor map)</a>
+</nav>
+
+<nav class="toc" aria-label="On this page">
+  <a href="#macro"><span class="dot" style="background:var(--clay)"></span>Macro map</a>
+  <a href="#shapes"><span class="dot" style="background:var(--clay)"></span>Six shapes</a>
+  <a href="#matrix"><span class="dot" style="background:var(--rust)"></span>Routing matrix</a>
+  <a href="#forked"><span class="dot" style="background:var(--rust)"></span>Forked detect_language</a>
+  <a href="#negative"><span class="dot" style="background:var(--olive)"></span>Healthy negative space</a>
+</nav>
+
+<main>
+  <header class="identity">
+    <p class="eyebrow">Information architecture · monorepo review</p>
+    <h1>Where Ariadne&rsquo;s structure diverges from its purpose</h1>
+    <div class="byline">
+      <span class="pill">packages/core · types · mcp · skill-fs · skill-protocol</span>
+      <span class="pill">verified against source</span>
+      <span class="pill">3-stage intention tree</span>
+    </div>
+    <p class="preamble prose">Ariadne reads a codebase and works out which functions call which &mdash; a call graph &mdash; so it can find the program&rsquo;s real entry points. Its folders mirror that job in three stages: index each file, resolve the references between files, then trace the call graph. This review asks a blunt question of every file and folder: does its <b>name</b> tell a maintainer chasing a bug exactly where to look? The good news first &mdash; the three-stage skeleton is faithful; the folders route correctly. The trouble sits one level down. A handful of files quietly grew into &ldquo;hubs&rdquo; that do three jobs at once; four files ballooned past 800 lines under a name that covers only their first job; and language-specific logic (the Python rule, the Rust rule) hides inside neutrally-named bodies instead of the repo&rsquo;s own dotted <code>feature.language.ts</code> convention. This page maps those divergences onto the pipeline to make them visible.</p>
+  </header>
+
+  <!-- ================= ORIENTATION: system context map ================= -->
+  <section id="context" aria-label="Pipeline orientation">
+    <div class="contextmap">
+      <svg viewBox="0 0 1180 240" role="img" aria-label="Ariadne monorepo at a glance: packages/types feeds the three core pipeline stages, which feed the language-neutral periphery. Defects live one level inside these boxes.">
+        <defs>
+          <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="#2f3338"/>
+          </marker>
+        </defs>
+        <!-- types upstream -->
+        <rect x="12" y="78" width="150" height="84" rx="10" fill="#ece4d6" stroke="#9a9b97" stroke-width="1.4"/>
+        <text x="87" y="108" text-anchor="middle" font-family="var(--mono)" font-size="12" fill="#2f3338" font-weight="600">packages/types</text>
+        <text x="87" y="127" text-anchor="middle" font-family="var(--sans)" font-size="11" fill="#6c6f73">shared vocabulary</text>
+        <text x="87" y="143" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="#9a9b97">upstream</text>
+        <line x1="162" y1="120" x2="196" y2="120" stroke="#2f3338" stroke-width="1.6" marker-end="url(#ar)"/>
+
+        <!-- three core stages, tinted clay -->
+        <rect x="200" y="46" width="640" height="148" rx="12" fill="none" stroke="#c06d4f" stroke-width="1.4" stroke-dasharray="5 4"/>
+        <text x="520" y="34" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="#c06d4f" letter-spacing="0.1em">THIS WORK &mdash; DEFECTS LIVE HERE</text>
+
+        <rect x="214" y="70" width="184" height="100" rx="10" fill="#f0d9cd" stroke="#c06d4f" stroke-width="1.5"/>
+        <text x="306" y="98" text-anchor="middle" font-family="var(--mono)" font-size="11.5" fill="#2f3338" font-weight="600">Stage 1</text>
+        <text x="306" y="118" text-anchor="middle" font-family="var(--mono)" font-size="10.5" fill="#5c4034">index_single_file/</text>
+        <text x="306" y="140" text-anchor="middle" font-family="var(--sans)" font-size="10.5" fill="#6c6f73">index each file</text>
+
+        <rect x="414" y="70" width="200" height="100" rx="10" fill="#f0d9cd" stroke="#c06d4f" stroke-width="1.5"/>
+        <text x="514" y="98" text-anchor="middle" font-family="var(--mono)" font-size="11.5" fill="#2f3338" font-weight="600">Stage 2</text>
+        <text x="514" y="118" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="#5c4034">project/ + resolve_references/</text>
+        <text x="514" y="140" text-anchor="middle" font-family="var(--sans)" font-size="10.5" fill="#6c6f73">resolve references</text>
+
+        <rect x="630" y="70" width="196" height="100" rx="10" fill="#f0d9cd" stroke="#c06d4f" stroke-width="1.5"/>
+        <text x="728" y="98" text-anchor="middle" font-family="var(--mono)" font-size="11.5" fill="#2f3338" font-weight="600">Stage 3</text>
+        <text x="728" y="118" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="#5c4034">trace_call_graph/ + classify_entry_points/</text>
+        <text x="728" y="140" text-anchor="middle" font-family="var(--sans)" font-size="10.5" fill="#6c6f73">trace the call graph</text>
+
+        <line x1="398" y1="120" x2="414" y2="120" stroke="#2f3338" stroke-width="1.6" marker-end="url(#ar)"/>
+        <line x1="614" y1="120" x2="630" y2="120" stroke="#2f3338" stroke-width="1.6" marker-end="url(#ar)"/>
+        <line x1="840" y1="120" x2="874" y2="120" stroke="#2f3338" stroke-width="1.6" marker-end="url(#ar)"/>
+
+        <!-- periphery downstream -->
+        <rect x="878" y="78" width="290" height="84" rx="10" fill="#ece4d6" stroke="#9a9b97" stroke-width="1.4"/>
+        <text x="1023" y="104" text-anchor="middle" font-family="var(--mono)" font-size="11.5" fill="#2f3338" font-weight="600">mcp · skill-fs · skill-protocol</text>
+        <text x="1023" y="123" text-anchor="middle" font-family="var(--sans)" font-size="11" fill="#6c6f73">language-neutral periphery</text>
+        <text x="1023" y="142" text-anchor="middle" font-family="var(--mono)" font-size="10" fill="#9a9b97">downstream</text>
+      </svg>
+    </div>
+    <p class="caption prose">The trunk is sound; <b>every defect this page shows sits one level inside these boxes.</b> The three core stages carry the work &mdash; shared types and the periphery are correct as they stand.</p>
+  </section>
+
+  <!-- ================= SECTION A: macro map ================= -->
+  <section id="macro">
+    <h2 class="sec">The macro map <span class="tag">the core map</span></h2>
+    <p class="caption prose">The stage flow, package direction, protocol seam, and fault-area map are all correct. <b>Every annotated problem is a one-level-down mark on an otherwise-right skeleton</b> &mdash; the dashed red edges trace the three forked <code>detect_language</code> copies reaching into the parse, trace, and classification stages.</p>
+    <figure class="macro" role="img" aria-label="Macro map of the Ariadne monorepo: sound three-stage trunk with one-level-down defects annotated per node">
+      <div class="cdoc-mermaid-scope"><svg id="my-svg" width="100%" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="flowchart" style="max-width: 3731.17px; background-color: white;" viewBox="0 0 3731.171875 2207" role="graphics-document document" aria-roledescription="flowchart-v2"><style>#my-svg{font-size:16px;fill:#2f3338;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#my-svg .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#my-svg .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#my-svg .error-icon{fill:#fffdf8;}#my-svg .error-text{fill:#000207;stroke:#000207;}#my-svg .edge-thickness-normal{stroke-width:1px;}#my-svg .edge-thickness-thick{stroke-width:3.5px;}#my-svg .edge-pattern-solid{stroke-dasharray:0;}#my-svg .edge-thickness-invisible{stroke-width:0;fill:none;}#my-svg .edge-pattern-dashed{stroke-dasharray:3;}#my-svg .edge-pattern-dotted{stroke-dasharray:2;}#my-svg .marker{fill:#2f3338;stroke:#2f3338;}#my-svg .marker.cross{stroke:#2f3338;}#my-svg svg{font-size:16px;}#my-svg p{margin:0;}#my-svg .label{color:#2f3338;}#my-svg .cluster-label text{fill:#000207;}#my-svg .cluster-label span{color:#000207;}#my-svg .cluster-label span p{background-color:transparent;}#my-svg .label text,#my-svg span{fill:#2f3338;color:#2f3338;}#my-svg .node rect,#my-svg .node circle,#my-svg .node ellipse,#my-svg .node polygon,#my-svg .node path{fill:#ece4d6;stroke:#c06d4f;stroke-width:1px;}#my-svg .rough-node .label text,#my-svg .node .label text,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-anchor:middle;}#my-svg .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#my-svg .rough-node .label,#my-svg .node .label,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-align:center;}#my-svg .node.clickable{cursor:pointer;}#my-svg .root .anchor path{fill:#2f3338!important;stroke-width:0;stroke:#2f3338;}#my-svg .arrowheadPath{fill:#0b0b0b;}#my-svg .edgePath .path{stroke:#2f3338;stroke-width:1px;}#my-svg .flowchart-link{stroke:#2f3338;fill:none;}#my-svg .edgeLabel{background-color:#fffdf8;text-align:center;}#my-svg .edgeLabel p{background-color:#fffdf8;}#my-svg .edgeLabel rect{opacity:0.5;background-color:#fffdf8;fill:#fffdf8;}#my-svg .labelBkg{background-color:rgba(255, 253, 248, 0.5);}#my-svg .cluster rect{fill:#f7f3ec;stroke:#d8cfbe;stroke-width:1px;}#my-svg .cluster text{fill:#000207;}#my-svg .cluster span{color:#000207;}#my-svg div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-size:12px;background:#fffdf8;border:1px solid hsl(42.8571428571, 60%, 88.6274509804%);border-radius:2px;pointer-events:none;z-index:100;}#my-svg .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#2f3338;}#my-svg rect.text{fill:none;stroke-width:0;}#my-svg .icon-shape,#my-svg .image-shape{background-color:#fffdf8;text-align:center;}#my-svg .icon-shape p,#my-svg .image-shape p{background-color:#fffdf8;padding:2px;}#my-svg .icon-shape .label rect,#my-svg .image-shape .label rect{opacity:0.5;background-color:#fffdf8;fill:#fffdf8;}#my-svg .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#my-svg .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#my-svg .node .neo-node{stroke:#c06d4f;}#my-svg [data-look="neo"].node rect,#my-svg [data-look="neo"].cluster rect,#my-svg [data-look="neo"].node polygon{stroke:url(#my-svg-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#my-svg [data-look="neo"].node path{stroke:url(#my-svg-gradient);stroke-width:1px;}#my-svg [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#my-svg [data-look="neo"].node .neo-line path{stroke:#c06d4f;filter:none;}#my-svg [data-look="neo"].node circle{stroke:url(#my-svg-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#my-svg [data-look="neo"].node circle .state-start{fill:#000000;}#my-svg [data-look="neo"].icon-shape .icon{fill:url(#my-svg-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#my-svg [data-look="neo"].icon-shape .icon-neo path{stroke:url(#my-svg-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#my-svg :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}#my-svg .deadIsland&gt;*{fill:rgb(247, 243, 236)!important;stroke:rgb(168, 65, 42)!important;stroke-width:1.5px!important;color:rgb(168, 65, 42)!important;}#my-svg .deadIsland span{fill:rgb(247, 243, 236)!important;stroke:rgb(168, 65, 42)!important;stroke-width:1.5px!important;color:rgb(168, 65, 42)!important;}#my-svg .deadIsland tspan{fill:rgb(168, 65, 42)!important;}#my-svg .best&gt;*{fill:rgb(236, 228, 214)!important;stroke:rgb(111, 122, 79)!important;stroke-width:2px!important;color:rgb(47, 51, 56)!important;}#my-svg .best span{fill:rgb(236, 228, 214)!important;stroke:rgb(111, 122, 79)!important;stroke-width:2px!important;color:rgb(47, 51, 56)!important;}#my-svg .best tspan{fill:rgb(47, 51, 56)!important;}#my-svg .bug&gt;*{fill:rgb(255, 253, 248)!important;stroke:rgb(168, 65, 42)!important;stroke-width:2px!important;color:rgb(168, 65, 42)!important;}#my-svg .bug span{fill:rgb(255, 253, 248)!important;stroke:rgb(168, 65, 42)!important;stroke-width:2px!important;color:rgb(168, 65, 42)!important;}#my-svg .bug tspan{fill:rgb(168, 65, 42)!important;}</style><g><marker id="my-svg_flowchart-v2-pointEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-pointStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="4.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-pointEnd-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="11.5" refY="7" markerUnits="userSpaceOnUse" markerWidth="10.5" markerHeight="14" orient="auto"><path d="M 0 0 L 11.5 7 L 0 14 z" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-pointStart-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="1" refY="7" markerUnits="userSpaceOnUse" markerWidth="11.5" markerHeight="14" orient="auto"><polygon points="0,7 11.5,14 11.5,0" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="11" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-1" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleEnd-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refY="5" refX="12.25" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleStart-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-2" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-crossEnd" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="12" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-crossStart" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="-1" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-crossEnd-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="17.7" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5;"/></marker><marker id="my-svg_flowchart-v2-crossStart-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="-3.5" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5; stroke-dasharray: 1, 0;"/></marker><g class="root"><g class="clusters"><g class="cluster" id="my-svg-periphery" data-look="classic"><rect style="" x="303" y="8" width="591.171875" height="2191"/><g class="cluster-label" transform="translate(437.53125, 8)"><foreignObject width="322.109375" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5;"><span class="nodeLabel"><p>periphery — language-neutral seam (correct)</p></span></div></foreignObject></g></g><g class="cluster" id="my-svg-types" data-look="classic"><rect style="" x="2006.171875" y="8" width="1260" height="200"/><g class="cluster-label" transform="translate(2504.65625, 8)"><foreignObject width="263.03125" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5;"><span class="nodeLabel"><p>packages/types — shared vocabulary</p></span></div></foreignObject></g></g></g><g class="edgePaths"><path d="M451.82,147L451.82,157.167C451.82,167.333,451.82,187.667,451.82,206C451.82,224.333,451.82,240.667,402.898,380.875C353.975,521.083,256.131,785.166,207.208,917.208L158.286,1049.249" id="my-svg-L_SP_PIPELINE_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_SP_PIPELINE_0" data-points="W3sieCI6NDUxLjgyMDMxMjUsInkiOjE0N30seyJ4Ijo0NTEuODIwMzEyNSwieSI6MjA4fSx7IngiOjQ1MS44MjAzMTI1LCJ5IjoyNTd9LHsieCI6MTU2Ljg5NTkxMDE5Nzc1NjgsInkiOjEwNTN9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M164.378,1155L232.996,1287.667C301.614,1420.333,438.85,1685.667,510.802,1825.89C582.754,1966.113,589.421,1981.227,592.755,1988.784L596.089,1996.34" id="my-svg-L_PIPELINE_MCP_0" class="edge-thickness-normal edge-pattern-dotted edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_PIPELINE_MCP_0" data-points="W3sieCI6MTY0LjM3ODI1NTk3Njk3NzU2LCJ5IjoxMTU1fSx7IngiOjU3Ni4wODU5Mzc1LCJ5IjoxOTUxfSx7IngiOjU5Ny43MDM1ODQ1NTg4MjM1LCJ5IjoyMDAwfV0=" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M737.406,159L737.406,167.167C737.406,175.333,737.406,191.667,737.406,208C737.406,224.333,737.406,240.667,643.906,380.956C550.405,521.245,363.404,785.49,269.903,917.612L176.402,1049.735" id="my-svg-L_SFS_PIPELINE_0" class="edge-thickness-normal edge-pattern-dotted edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_SFS_PIPELINE_0" data-points="W3sieCI6NzM3LjQwNjI1LCJ5IjoxNTl9LHsieCI6NzM3LjQwNjI1LCJ5IjoyMDh9LHsieCI6NzM3LjQwNjI1LCJ5IjoyNTd9LHsieCI6MTc0LjA5MTc1NzY3NDE0NDA1LCJ5IjoxMDUzfV0=" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M2171.172,208L2171.172,216.167C2171.172,224.333,2171.172,240.667,2172.546,256.344C2173.921,272.022,2176.67,287.044,2178.044,294.554L2179.419,302.065" id="my-svg-L_types_core_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_types_core_0" data-points="W3sieCI6MjE3MS4xNzE4NzUsInkiOjE4M30seyJ4IjoyMTcxLjE3MTg3NSwieSI6MjA4fSx7IngiOjIxNzEuMTcxODc1LCJ5IjoyNTd9LHsieCI6MjE4MC4xMzg4MTcxNDg3NiwieSI6MzA2fV0=" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M929.172,1835.497L892.408,1854.747C855.643,1873.998,782.115,1912.499,741.31,1939.328C700.506,1966.157,692.426,1981.313,688.386,1988.892L684.346,1996.47" id="my-svg-L_core_MCP_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_core_MCP_0" data-points="W3sieCI6OTI5LjE3MTg3NSwieSI6MTgzNS40OTY4Mzg5NDMwNjI0fSx7IngiOjcwOC41ODU5Mzc1LCJ5IjoxOTUxfSx7IngiOjY4Mi40NjQ2MTM5NzA1ODgzLCJ5IjoyMDAwfV0=" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M2481.172,171L2481.172,177.167C2481.172,183.333,2481.172,195.667,2481.172,210C2481.172,224.333,2481.172,240.667,2479.797,256.344C2478.423,272.022,2475.674,287.044,2474.299,294.554L2472.925,302.065" id="my-svg-L_FAULT_core_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_FAULT_core_0" data-points="W3sieCI6MjQ4MS4xNzE4NzUsInkiOjE3MX0seyJ4IjoyNDgxLjE3MTg3NSwieSI6MjA4fSx7IngiOjI0ODEuMTcxODc1LCJ5IjoyNTd9LHsieCI6MjQ3Mi4yMDQ5MzI4NTEyNCwieSI6MzA2fV0=" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/></g><g class="edgeLabels"><g class="edgeLabel"><g class="label" data-id="L_SP_PIPELINE_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(382.5343, 1576.78521)"><g class="label" data-id="L_PIPELINE_MCP_0" transform="translate(-100, -24)"><foreignObject width="200" height="48"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="edgeLabel"><p>uses MCP tools, not introspection/</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(737.40625, 257)"><g class="label" data-id="L_SFS_PIPELINE_0" transform="translate(-68.5078125, -12)"><foreignObject width="137.015625" height="24"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>sole caller is triage</p></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_types_core_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_core_MCP_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(2481.171875, 257)"><g class="label" data-id="L_FAULT_core_0" transform="translate(-100, -24)"><foreignObject width="200" height="48"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="edgeLabel"><p>folder map routes investigators</p></span></div></foreignObject></g></g></g><g class="nodes"><g class="root" transform="translate(921.171875, 298)"><g class="clusters"><g class="cluster" id="my-svg-core" data-look="classic"><rect style="" x="8" y="8" width="2794" height="1596"/><g class="cluster-label" transform="translate(1298.65625, 8)"><foreignObject width="212.6875" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5;"><span class="nodeLabel"><p>packages/core — the pipeline</p></span></div></foreignObject></g></g><g class="cluster" id="my-svg-s3" data-look="classic"><rect style="" x="1802.234375" y="866" width="962.265625" height="470"/><g class="cluster-label" transform="translate(2098.8203125, 866)"><foreignObject width="369.09375" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5;"><span class="nodeLabel"><p>Stage 3: trace_call_graph/ + classify_entry_points/</p></span></div></foreignObject></g></g><g class="cluster" id="my-svg-s2" data-look="classic"><rect style="" x="1802.234375" y="74" width="335" height="772"/><g class="cluster-label" transform="translate(1826.4453125, 74)"><foreignObject width="286.578125" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5;"><span class="nodeLabel"><p>Stage 2: project/ + resolve_references/</p></span></div></foreignObject></g></g></g><g class="edgePaths"><path d="M902.771,940L1037.12,867.5C1171.47,795,1440.168,650,1590.079,577.5C1739.99,505,1771.112,505,1807.759,464.591C1844.406,424.182,1886.577,343.364,1907.663,302.955L1928.748,262.546" id="my-svg-L_DL_PROJ_0" class="edge-thickness-normal edge-pattern-dotted edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_DL_PROJ_0" data-points="W3sieCI6OTAyLjc3MDcxNzk1ODg2MDgsInkiOjk0MH0seyJ4IjoxNzA4Ljg2NzE4NzUsInkiOjUwNX0seyJ4IjoxODAyLjIzNDM3NSwieSI6NTA1fSx7IngiOjE5MzAuNTk4ODYwOTgxMzA4NSwieSI6MjU5fV0=" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M956.125,979L1081.582,979C1207.039,979,1457.953,979,1598.971,979C1739.99,979,1771.112,979,1814.59,979C1858.068,979,1913.901,979,1969.734,979C2025.568,979,2081.401,979,2132.234,979C2183.068,979,2228.901,979,2278.632,977.636C2328.364,976.272,2381.993,973.544,2408.808,972.18L2435.622,970.816" id="my-svg-L_DL_TRACE_0" class="edge-thickness-normal edge-pattern-dotted edge-thickness-normal edge-pattern-solid flowchart-link" style="stroke:#a8412a;stroke-width:2px;fill:none;;;stroke:#a8412a;stroke-width:2px;fill:none" data-edge="true" data-et="edge" data-id="L_DL_TRACE_0" data-points="W3sieCI6OTU2LjEyNSwieSI6OTc5fSx7IngiOjE3MDguODY3MTg3NSwieSI6OTc5fSx7IngiOjE4MDIuMjM0Mzc1LCJ5Ijo5Nzl9LHsieCI6MTk2OS43MzQzNzUsInkiOjk3OX0seyJ4IjoyMTM3LjIzNDM3NSwieSI6OTc5fSx7IngiOjIyNzQuNzM0Mzc1LCJ5Ijo5Nzl9LHsieCI6MjQzOS42MTcxODc1LCJ5Ijo5NzAuNjEyNzk2Mzk2ODczN31d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd__a8412a)"/><path d="M947.816,1018L1074.658,1060.167C1201.5,1102.333,1455.184,1186.667,1597.587,1228.833C1739.99,1271,1771.112,1271,1814.59,1271C1858.068,1271,1913.901,1271,1969.734,1271C2025.568,1271,2081.401,1271,2132.234,1271C2183.068,1271,2228.901,1271,2274.087,1265.487C2319.273,1259.974,2363.813,1248.948,2386.082,1243.435L2408.352,1237.922" id="my-svg-L_DL_MEGA_0" class="edge-thickness-normal edge-pattern-dotted edge-thickness-normal edge-pattern-solid flowchart-link" style="stroke:#a8412a;stroke-width:2px;fill:none;;;stroke:#a8412a;stroke-width:2px;fill:none" data-edge="true" data-et="edge" data-id="L_DL_MEGA_0" data-points="W3sieCI6OTQ3LjgxNjE2NTQ1Mzc2NzEsInkiOjEwMTh9LHsieCI6MTcwOC44NjcxODc1LCJ5IjoxMjcxfSx7IngiOjE4MDIuMjM0Mzc1LCJ5IjoxMjcxfSx7IngiOjE5NjkuNzM0Mzc1LCJ5IjoxMjcxfSx7IngiOjIxMzcuMjM0Mzc1LCJ5IjoxMjcxfSx7IngiOjIyNzQuNzM0Mzc1LCJ5IjoxMjcxfSx7IngiOjI0MTIuMjM0Mzc1LCJ5IjoxMjM2Ljk2MTA1NDQ0NDI5NzR9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd__a8412a)"/><path d="M2099.734,1125L2105.984,1125C2112.234,1125,2124.734,1125,2153.901,1125C2183.068,1125,2228.901,1125,2274.087,1130.513C2319.273,1136.026,2363.813,1147.052,2386.082,1152.565L2408.352,1158.078" id="my-svg-L_BUILTINS_MEGA_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style="stroke:#a8412a;stroke-width:2px;fill:none;;;stroke:#a8412a;stroke-width:2px;fill:none" data-edge="true" data-et="edge" data-id="L_BUILTINS_MEGA_0" data-points="W3sieCI6MjA5OS43MzQzNzUsInkiOjExMjV9LHsieCI6MjEzNy4yMzQzNzUsInkiOjExMjV9LHsieCI6MjI3NC43MzQzNzUsInkiOjExMjV9LHsieCI6MjQxMi4yMzQzNzUsInkiOjExNTkuMDM4OTQ1NTU1NzAyNn1d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd__a8412a)"/><path d="M1615.5,168L1631.061,168C1646.622,168,1677.745,168,1708.201,168C1738.656,168,1768.445,168,1783.34,168L1798.234,168" id="my-svg-L_s1_s2_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_s1_s2_0" data-points="W3sieCI6MTYxNS41LCJ5IjoxNjh9LHsieCI6MTcwOC44NjcxODc1LCJ5IjoxNjh9LHsieCI6MTgwMi4yMzQzNzUsInkiOjE2OH0seyJ4IjoxODM5LjczNDM3NSwieSI6MTcxLjU4MjA4OTU1MjIzODh9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M2137.234,184L2263.057,862.067" id="my-svg-L_s2_s3_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_s2_s3_0" data-points="W3sieCI6MjA5OS43MzQzNzUsInkiOjE4NH0seyJ4IjoyMTM3LjIzNDM3NSwieSI6MTg0fSx7IngiOjIyNzQuNzM0Mzc1LCJ5Ijo5MjV9LHsieCI6MjQzOS42MTcxODc1LCJ5Ijo5NDYuODA2NzI5MzY4MTI4Mn1d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/></g><g class="edgeLabels"><g class="edgeLabel" transform="translate(1708.8671875, 505)"><g class="label" data-id="L_DL_PROJ_0" transform="translate(-55.8671875, -12)"><foreignObject width="111.734375" height="24"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>forked contract</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(1969.734375, 979)"><g class="label" data-id="L_DL_TRACE_0" transform="translate(-55.8671875, -12)"><foreignObject width="111.734375" height="24"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>forked contract</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(1969.734375, 1271)"><g class="label" data-id="L_DL_MEGA_0" transform="translate(-55.8671875, -12)"><foreignObject width="111.734375" height="24"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>forked contract</p></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(2274.734375, 1125)"><g class="label" data-id="L_BUILTINS_MEGA_0" transform="translate(-100, -48)"><foreignObject width="200" height="96"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="edgeLabel"><p>reads EnrichedEntryPoint in-process<br />boundary CORRECT, under-documented</p></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_s1_s2_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_s2_s3_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g></g><g class="nodes"><g class="node default bug" id="my-svg-flowchart-TRACE-13" data-look="classic" transform="translate(2569.6171875, 964)"><rect class="basic label-container" style="fill:#fffdf8 !important;stroke:#a8412a !important;stroke-width:2px !important" x="-130" y="-63" width="260" height="126"/><g class="label" style="color:#a8412a !important" transform="translate(-100, -48)"><rect/><foreignObject width="200" height="96"><div style="color: rgb(168, 65, 42) !important; display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#a8412a !important" class="nodeLabel"><p>trace_call_graph.ts<br />detect_language copy #3:<br />unknown → 'typescript' (LATENT BUG)</p></span></div></foreignObject></g></g><g class="node default bug" id="my-svg-flowchart-DL-17" data-look="classic" transform="translate(830.5, 979)"><rect class="basic label-container" style="fill:#fffdf8 !important;stroke:#a8412a !important;stroke-width:2px !important" x="-125.625" y="-39" width="251.25" height="78"/><g class="label" style="color:#a8412a !important" transform="translate(-95.625, -24)"><rect/><foreignObject width="191.25" height="48"><div style="color: rgb(168, 65, 42) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#a8412a !important" class="nodeLabel"><p>detect_language ×3<br />null vs throw vs default-TS</p></span></div></foreignObject></g></g><g class="node default" id="my-svg-flowchart-PROJ-9" data-look="classic" transform="translate(1969.734375, 184)"><rect class="basic label-container" style="" x="-130" y="-75" width="260" height="150"/><g class="label" style="" transform="translate(-100, -60)"><rect/><foreignObject width="200" height="120"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>project.ts 759 LOC<br />hides parse dispatch + FS walk + persistence;<br />barrel leaks sibling registries</p></span></div></foreignObject></g></g><g class="node default" id="my-svg-flowchart-MEGA-14" data-look="classic" transform="translate(2569.6171875, 1198)"><rect class="basic label-container" style="" x="-157.3828125" y="-63" width="314.765625" height="126"/><g class="label" style="" transform="translate(-127.3828125, -48)"><rect/><foreignObject width="254.765625" height="96"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>extract_entry_point_diagnostics.ts 867 LOC<br />6+ responsibilities incl. detect_language #1</p></span></div></foreignObject></g></g><g class="node default" id="my-svg-flowchart-BUILTINS-15" data-look="classic" transform="translate(1969.734375, 1125)"><rect class="basic label-container" style="" x="-130" y="-99" width="260" height="198"/><g class="label" style="" transform="translate(-100, -84)"><rect/><foreignObject width="200" height="168"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>builtins/ check_*.ts × 18<br />hook-enforced filename = group_id<br />(correct; do NOT dot-suffix)<br />14 import detect_language from megafile</p></span></div></foreignObject></g></g><g class="root" transform="translate(37.5, 35)"><g class="clusters"><g class="cluster" id="my-svg-s1" data-look="classic"><rect style="" x="8" y="8" width="1570" height="250"/><g class="cluster-label" transform="translate(696.7890625, 8)"><foreignObject width="192.421875" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5;"><span class="nodeLabel"><p>Stage 1: index_single_file/</p></span></div></foreignObject></g></g></g><g class="edgePaths"/><g class="edgeLabels"/><g class="nodes"><g class="node default" id="my-svg-flowchart-ORCH-4" data-look="classic" transform="translate(173, 133)"><rect class="basic label-container" style="" x="-130" y="-75" width="260" height="150"/><g class="label" style="" transform="translate(-100, -60)"><rect/><foreignObject width="200" height="120"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>index_single_file.ts<br />orchestrator = TYPE-HUB + displaced dispatch;<br />18 sub-pass files import types UPWARD</p></span></div></foreignObject></g></g><g class="node default" id="my-svg-flowchart-QCT-5" data-look="classic" transform="translate(483, 133)"><rect class="basic label-container" style="" x="-130" y="-63" width="260" height="126"/><g class="label" style="" transform="translate(-100, -48)"><rect/><foreignObject width="200" height="96"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>query_code_tree/<br />dotted leaves clean;<br />marshallers missing/displaced</p></span></div></foreignObject></g></g><g class="node default" id="my-svg-flowchart-SCOPES-6" data-look="classic" transform="translate(793, 133)"><rect class="basic label-container" style="" x="-130" y="-75" width="260" height="150"/><g class="label" style="" transform="translate(-100, -60)"><rect/><foreignObject width="200" height="120"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>scopes/ (+extractors/ = sanctioned<br />shared-base exception)<br />hidden python sort L152; utils.ts</p></span></div></foreignObject></g></g><g class="node default" id="my-svg-flowchart-DEFS-7" data-look="classic" transform="translate(1103, 133)"><rect class="basic label-container" style="" x="-130" y="-51" width="260" height="102"/><g class="label" style="" transform="translate(-100, -36)"><rect/><foreignObject width="200" height="72"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>definitions/definitions.ts 1069 LOC<br />hides 5 language methods</p></span></div></foreignObject></g></g><g class="node default" id="my-svg-flowchart-REFS-8" data-look="classic" transform="translate(1413, 133)"><rect class="basic label-container" style="" x="-130" y="-63" width="260" height="126"/><g class="label" style="" transform="translate(-100, -48)"><rect/><foreignObject width="200" height="96"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>references/references.ts 754 LOC<br />inline TS/Py node-type branches</p></span></div></foreignObject></g></g></g></g><g class="node default" id="my-svg-flowchart-IMPRES-10" data-look="classic" transform="translate(1969.734375, 360)"><rect class="basic label-container" style="" x="-130" y="-51" width="260" height="102"/><g class="label" style="" transform="translate(-100, -36)"><rect/><foreignObject width="200" height="72"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>import_resolution/<br />GOLD STANDARD dotted family</p></span></div></foreignObject></g></g><g class="node default" id="my-svg-flowchart-CALLRES-11" data-look="classic" transform="translate(1969.734375, 560)"><rect class="basic label-container" style="" x="-130" y="-99" width="260" height="198"/><g class="label" style="" transform="translate(-100, -84)"><rect/><foreignObject width="200" height="168"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>call_resolution/<br />path_resolution.ts = 100% Rust, neutral name;<br />Rust/Py blocks in constructor.ts,<br />function_call.ts, receiver_resolution.ts</p></span></div></foreignObject></g></g><g class="node default" id="my-svg-flowchart-REG-12" data-look="classic" transform="translate(1969.734375, 760)"><rect class="basic label-container" style="" x="-130" y="-51" width="260" height="102"/><g class="label" style="" transform="translate(-100, -36)"><rect/><foreignObject width="200" height="72"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>registries/type.ts —(value import)→ call_resolution<br />LAYERING INVERSION</p></span></div></foreignObject></g></g><g class="node default" id="my-svg-flowchart-SUPPORT-16" data-look="classic" transform="translate(2569.6171875, 1470)"><rect class="basic label-container" style="" x="-130" y="-99" width="260" height="198"/><g class="label" style="" transform="translate(-100, -84)"><rect/><foreignObject width="200" height="168"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>support tissue: persistence / logging /<br />profiling / introspection<br />zero language code (correct);<br />explain_call_site: 0 consumers</p></span></div></foreignObject></g></g></g></g><g class="node default best" id="my-svg-flowchart-FAULT-0" data-look="classic" transform="translate(2481.171875, 108)"><rect class="basic label-container" style="fill:#ece4d6 !important;stroke:#6f7a4f !important;stroke-width:2px !important" x="-130" y="-63" width="260" height="126"/><g class="label" style="color:#2f3338 !important" transform="translate(-100, -48)"><rect/><foreignObject width="200" height="96"><div style="color: rgb(47, 51, 56) !important; display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#2f3338 !important" class="nodeLabel"><p>ariadne_fault_area.ts<br />BEST-IN-REPO: compiler-fenced<br />folder-anchored taxonomy</p></span></div></foreignObject></g></g><g class="node default" id="my-svg-flowchart-TLIVE-1" data-look="classic" transform="translate(2171.171875, 108)"><rect class="basic label-container" style="" x="-130" y="-75" width="260" height="150"/><g class="label" style="" transform="translate(-100, -60)"><rect/><foreignObject width="200" height="120"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>live vocabulary<br />(symbol / scopes / definitions / references /<br />entry_point / known_issues)</p></span></div></foreignObject></g></g><g class="node default deadIsland" id="my-svg-flowchart-TDEAD-2" data-look="classic" transform="translate(2791.171875, 108)"><rect class="basic label-container" style="fill:#f7f3ec !important;stroke:#a8412a !important;stroke-width:1.5px !important" x="-130" y="-63" width="260" height="126"/><g class="label" style="color:#a8412a !important" transform="translate(-100, -48)"><rect/><foreignObject width="200" height="96"><div style="color: rgb(168, 65, 42) !important; display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#a8412a !important" class="nodeLabel"><p>DEAD ISLAND ~450 LOC:<br />codegraph, calls, classes,<br />false_positive_results, immutable, type_kind</p></span></div></foreignObject></g></g><g class="node default" id="my-svg-flowchart-TSTRADDLE-3" data-look="classic" transform="translate(3101.171875, 108)"><rect class="basic label-container" style="" x="-130" y="-75" width="260" height="150"/><g class="label" style="" transform="translate(-100, -60)"><rect/><foreignObject width="200" height="120"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>call_chains.ts + symbol_references.ts<br />straddle stages; Resolution name collision<br />masked by leaky barrel</p></span></div></foreignObject></g></g><g class="node default" id="my-svg-flowchart-MCP-18" data-look="classic" transform="translate(636.0859375, 2087)"><rect class="basic label-container" style="" x="-130" y="-87" width="260" height="174"/><g class="label" style="" transform="translate(-100, -72)"><rect/><foreignObject width="200" height="144"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>packages/mcp<br />server.ts boots at import scope;<br />2 megafile tools duplicate core's<br />build_signature (diverged)</p></span></div></foreignObject></g></g><g class="node default" id="my-svg-flowchart-SFS-19" data-look="classic" transform="translate(737.40625, 108)"><rect class="basic label-container" style="" x="-121.765625" y="-51" width="243.53125" height="102"/><g class="label" style="" transform="translate(-91.765625, -36)"><rect/><foreignObject width="183.53125" height="72"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>packages/skill-fs<br />classifier_regressions.ts =<br />misplaced triage logic</p></span></div></foreignObject></g></g><g class="node default" id="my-svg-flowchart-SP-20" data-look="classic" transform="translate(451.8203125, 108)"><rect class="basic label-container" style="" x="-113.8203125" y="-39" width="227.640625" height="78"/><g class="label" style="" transform="translate(-83.8203125, -24)"><rect/><foreignObject width="167.640625" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>packages/skill-protocol<br />clean wire boundary</p></span></div></foreignObject></g></g><g class="node default" id="my-svg-flowchart-PIPELINE-21" data-look="classic" transform="translate(138, 1104)"><rect class="basic label-container" style="" x="-130" y="-51" width="260" height="102"/><g class="label" style="" transform="translate(-100, -36)"><rect/><foreignObject width="200" height="72"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>.claude/skills pipeline<br />triage → plan → prioritize → reconcile</p></span></div></foreignObject></g></g></g></g><marker id="my-svg_flowchart-v2-pointEnd__a8412a" class="marker flowchart-v2" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;" stroke="#a8412a" fill="#a8412a"/></marker></g><defs><filter id="my-svg-drop-shadow" height="130%" width="130%"><feDropShadow dx="4" dy="4" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"/></filter></defs><defs><filter id="my-svg-drop-shadow-small" height="150%" width="150%"><feDropShadow dx="2" dy="2" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"/></filter></defs><linearGradient id="my-svg-gradient" gradientUnits="objectBoundingBox" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#c06d4f" stop-opacity="1"/><stop offset="100%" stop-color="hsl(38.1818181818, 0.7407407407%, 84.7058823529%)" stop-opacity="1"/></linearGradient></svg></div>
+      <figcaption class="prose"><b>types</b> holds the best-in-repo fault-area taxonomy beside a ~450-LOC dead island; <b>core</b>&rsquo;s three stages each carry a per-node defect label; the <b>periphery</b> is a clean seam but for one misplaced triage file in <code>skill-fs</code>. None of it moves a boundary &mdash; only naming and splitting within boundaries already right.</figcaption>
+    </figure>
+  </section>
+
+  <!-- ================= SECTION B: six shapes ================= -->
+  <section id="shapes">
+    <h2 class="sec">The six repo-wide divergence shapes</h2>
+    <p class="caption prose">The divergences are not scattered noise. <b>They reduce to exactly six recurring shapes</b>, each with verified instances pinned to source.</p>
+    <div class="shapes">
+
+      <div class="shape" data-sev="mid">
+        <div class="badge">1</div>
+        <div>
+          <h3><svg class="glyph"><use href="#ic-hub"/></svg>Orchestrators that became hubs</h3>
+          <p class="body">A stage&rsquo;s orchestrator quietly also became its shared type-hub and its language-dispatch point. <code>index_single_file.ts</code> hands its fundamental wire types <b>upward</b> to eighteen sub-pass files; <code>project.ts</code> (759 LOC) hides parse dispatch, a filesystem walk, and persistence behind an orchestrator name.</p>
+          <span class="pin">packages/core/src/project/project.ts <span class="rng">:1&ndash;759</span></span>
+        </div>
+      </div>
+
+      <div class="shape" data-sev="mid">
+        <div class="badge">2</div>
+        <div>
+          <h3><svg class="glyph"><use href="#ic-mega"/></svg>Megafiles whose name covers only the trunk</h3>
+          <p class="body">The headline function names the file; the other five jobs hide inside it. <code>extract_entry_point_diagnostics.ts</code> is 867 LOC of diagnostics plus a grep-index builder, feature derivation, an async FS-touching test pass, and three shared utilities; <code>definitions.ts</code> is 1069 LOC; the four <code>symbol_factories.{lang}.ts</code> files run 835&ndash;993 LOC each.</p>
+          <span class="pin">packages/core/src/index_single_file/definitions/definitions.ts <span class="rng">:1&ndash;1069</span></span>
+        </div>
+      </div>
+
+      <div class="shape" data-sev="high">
+        <div class="badge">3</div>
+        <div>
+          <h3><svg class="glyph"><use href="#ic-mask"/></svg>Language logic in neutral bodies <span style="font-family:var(--mono);font-size:11px;color:var(--rust);border:1px solid var(--rust);border-radius:999px;padding:1px 8px;margin-left:6px;vertical-align:middle;">largest class</span></h3>
+          <p class="body">Whole-language rules live behind names that name no language. <code>path_resolution.ts</code> is 100% Rust (<code>PATH_ANCHORS = {crate, self, super}</code>) yet not <code>.rust.ts</code>; a Python sort sits inline at <code>scopes.ts:152</code>; ~120 LOC of Rust hide in <code>constructor.ts</code>. This is the single largest defect class.</p>
+          <span class="pin">packages/core/src/resolve_references/call_resolution/path_resolution.ts <span class="rng">:1</span></span>
+        </div>
+      </div>
+
+      <div class="shape" data-sev="high">
+        <div class="badge">4</div>
+        <div>
+          <h3><svg class="glyph"><use href="#ic-fork"/></svg><code style="font-size:15px;background:none;padding:0">detect_language</code> triplicated, forked contract</h3>
+          <p class="body">One function, three definitions, three different answers to &ldquo;what happens on an unknown extension.&rdquo; The classification copy returns <code>null</code>; <code>project.ts</code> <b>throws</b>; <code>trace_call_graph.ts</code> silently <b>defaults to TypeScript</b> &mdash; a latent bug. Detailed below.</p>
+          <span class="pin">packages/core/src/trace_call_graph/trace_call_graph.ts <span class="rng">:22</span></span>
+        </div>
+      </div>
+
+      <div class="shape" data-sev="mid">
+        <div class="badge">5</div>
+        <div>
+          <h3><svg class="glyph"><use href="#ic-barrel"/></svg>Barrel decay</h3>
+          <p class="body">Barrels stop describing their own folder. <code>resolve_references/index.ts</code> is a dead barrel (a doc comment, zero exports, zero importers); <code>project/index.ts</code> re-exports five registries from a <em>sibling</em> stage while omitting <code>project/</code>&rsquo;s own surface, forcing <code>core/src/index.ts</code> to bypass into four deep paths.</p>
+          <span class="pin">packages/core/src/project/index.ts <span class="rng">barrel</span></span>
+        </div>
+      </div>
+
+      <div class="shape" data-sev="surplus">
+        <div class="badge">6</div>
+        <div>
+          <h3><svg class="glyph"><use href="#ic-dead"/></svg>Surplus code the constitution forbids</h3>
+          <p class="body">A self-contained dead island in <code>packages/types/src</code> &mdash; <code>codegraph.ts</code>, <code>calls.ts</code>, <code>classes.ts</code>, <code>false_positive_results.ts</code>, <code>immutable.ts</code>, <code>type_kind.ts</code> &mdash; roughly 450 LOC of public type surface with zero non-test consumers, kept alive only by mutual reference and the barrel.</p>
+          <span class="pin">packages/types/src/false_positive_results.ts <span class="rng">dead island ~450 LOC</span></span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================= SECTION C: routing matrix ================= -->
+  <section id="matrix">
+    <h2 class="sec">The routing-failure matrix</h2>
+    <p class="caption prose"><b>Ten of twelve routing drills fail, and every failure reduces to one of five named name-pathologies</b> &mdash; the failure is systemic, not incidental. The last row is the contrast case that proves the discipline works.</p>
+    <div class="matrix-wrap">
+      <table class="matrix">
+        <thead>
+          <tr>
+            <th>Name pathology</th>
+            <th>Instances (verified)</th>
+            <th>Marquee example</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="path">Generic / category name<span class="sub">banned by the repo&rsquo;s own file-naming.md</span></td>
+            <td><span class="cnt">7</span></td>
+            <td class="marquee"><code>scopes/utils.ts</code>, <code>types/src/common.ts</code>, three <code>types.ts</code> under <code>query_code_tree/</code></td>
+          </tr>
+          <tr>
+            <td class="path">Folder-repeat that isn&rsquo;t the main impl<span class="sub">the name claims primacy it doesn&rsquo;t have</span></td>
+            <td><span class="cnt mid">3</span></td>
+            <td class="marquee"><code>classify_entry_points.ts</code> (a sub-step; the stage face is <code>enrich_call_graph.ts</code>); rule honored 6&times;, violated 3&times;</td>
+          </tr>
+          <tr>
+            <td class="path">Megafile &mdash; name covers trunk, not branches<span class="sub">first job named, other five hidden</span></td>
+            <td><span class="cnt">6</span></td>
+            <td class="marquee"><code>extract_entry_point_diagnostics.ts</code> (867), <code>definitions.ts</code> (1069), <code>symbol_factories.{lang}.ts</code></td>
+          </tr>
+          <tr>
+            <td class="path">Wholly-language content, neutral name<span class="sub">the language never appears in the name</span></td>
+            <td><span class="cnt">many</span></td>
+            <td class="marquee"><code>path_resolution.ts</code> = 100% Rust, yet not <code>.rust.ts</code>; every hidden branch</td>
+          </tr>
+          <tr>
+            <td class="path">Outright misnomer / inversion<span class="sub">the name says the opposite of the body</span></td>
+            <td><span class="cnt">3</span></td>
+            <td class="marquee"><code>extract_nested_definitions.ts</code> extracts only parameters; <code>server.ts</code> is CLI arg-parsing</td>
+          </tr>
+          <tr class="contrast">
+            <td class="path">Contrast &mdash; the discipline working<span class="sub">language + mechanism are in the name</span></td>
+            <td><span class="cnt">routes clean</span></td>
+            <td class="marquee"><code>builtins/check_rust-macro-invocation-call.ts</code> routes perfectly &mdash; the discriminating concepts are <em>in the name</em></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="drills" role="img" aria-label="Twelve routing drills score 1 clean, 1 partial, 10 fail">
+      <p class="lead">12 routing drills across representative bug reports</p>
+      <div class="barrow">
+        <span class="lbl">Clean route</span>
+        <div class="track"><div class="bar clean" style="width:8.33%"></div></div>
+        <span class="val">1</span>
+      </div>
+      <div class="barrow">
+        <span class="lbl">Partial route</span>
+        <div class="track"><div class="bar partial" style="width:8.33%"></div></div>
+        <span class="val">1</span>
+      </div>
+      <div class="barrow">
+        <span class="lbl">Failed route</span>
+        <div class="track"><div class="bar fail" style="width:83.3%"></div></div>
+        <span class="val">10</span>
+      </div>
+      <div class="legend">
+        <span><span class="sw" style="background:var(--olive)"></span>clean &mdash; the name routed correctly</span>
+        <span><span class="sw" style="background:var(--clay)"></span>partial &mdash; landed near, not on</span>
+        <span><span class="sw" style="background:var(--rust)"></span>fail &mdash; the name misled</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= SECTION D: forked detect_language ================= -->
+  <section id="forked">
+    <h2 class="sec">The forked <code style="font-family:var(--mono);font-size:.78em">detect_language</code></h2>
+    <p class="caption prose">One function, three definitions, <b>three different answers to a single question</b> at the entry gate of a multi-language analyzer &mdash; and one of them is a latent bug.</p>
+    <div class="forked">
+
+      <div class="code">
+        <div class="file-label"><span>classify_entry_points/extract_entry_point_diagnostics.ts&nbsp;:718</span><span class="verdict null">returns null</span></div>
+        <pre><span class="kw">export function</span> <span class="fn">detect_language</span>(
+  file_path: <span class="ty">string</span>
+): <span class="ty">Language | null</span> {
+  <span class="kw">if</span> (file_path.<span class="fn">endsWith</span>(<span class="str">".ts"</span>) …)
+    <span class="kw">return</span> <span class="str">"typescript"</span>;
+  <span class="cm">// … js, py, rs …</span>
+<span class="hlg">  <span class="cm">// go/java/cpp not yet supported</span></span>
+<span class="hlg">  <span class="kw">return</span> <span class="kw">null</span>;</span>
+}</pre>
+      </div>
+
+      <div class="code">
+        <div class="file-label"><span>project/project.ts&nbsp;:60</span><span class="verdict throw">throws</span></div>
+        <pre><span class="kw">function</span> <span class="fn">detect_language</span>(
+  file_path: <span class="ty">FilePath</span>
+): <span class="ty">Language</span> {
+  <span class="kw">const</span> ext = file_path.<span class="fn">split</span>(<span class="str">"."</span>).<span class="fn">pop</span>();
+  <span class="kw">switch</span> (ext) {
+    <span class="cm">// … ts, js, py, rs …</span>
+<span class="hl">    <span class="kw">default</span>:</span>
+<span class="hl">      <span class="kw">throw new</span> <span class="fn">Error</span>(</span>
+<span class="hl">        <span class="str">`Unsupported file extension`</span>);</span>
+  }
+}</pre>
+      </div>
+
+      <div class="code">
+        <div class="file-label"><span>trace_call_graph/trace_call_graph.ts&nbsp;:22</span><span class="verdict bug">defaults to TS</span></div>
+        <pre><span class="kw">function</span> <span class="fn">detect_language</span>(
+  file_path: <span class="ty">FilePath</span>
+): <span class="ty">Language</span> {
+  <span class="kw">const</span> ext = file_path.<span class="fn">split</span>(<span class="str">"."</span>).<span class="fn">pop</span>();
+  <span class="kw">switch</span> (ext) {
+    <span class="cm">// … ts, js, py, rs …</span>
+<span class="hl">    <span class="kw">default</span>:</span>
+<span class="hl">      <span class="kw">return</span> <span class="str">"typescript"</span>;</span>
+<span class="hl">      <span class="cm">// Default for unknown</span></span>
+  }
+}</pre>
+      </div>
+
+    </div>
+
+    <aside class="callout rust">
+      <span class="key">Latent bug</span>
+      <p>An unknown extension reaching the trace stage is <b>silently analyzed as TypeScript</b> &mdash; no error, no null, no signal. Add a fifth language and forget this one copy, and its files are mislabeled without a trace.</p>
+      <p>The canonical copy is a coupling magnet: <b>14 <code>check_*.ts</code> builtins import <code>detect_language</code></b> from the 867-LOC classification megafile, giving every pipeline-support check a hard import edge into a product megafile for one utility.</p>
+    </aside>
+  </section>
+
+  <!-- ================= SECTION E: negative space ================= -->
+  <section id="negative">
+    <h2 class="sec">Where the language axis is correctly held out</h2>
+    <aside class="callout olive">
+      <span class="key">Healthy negative space</span>
+      <p>Language-specificity is properly confined to the extraction and resolution stages. The support tissue &mdash; <code>persistence/</code>, <code>logging/</code>, <code>profiling/</code>, <code>introspection/</code> &mdash; and the periphery &mdash; <code>skill-fs</code>, <code>skill-protocol</code> &mdash; carry <b>zero language-specific code</b>, exactly as they should.</p>
+      <p>The <code>skill-protocol</code> wire schema is the deliberate neutral seam: <code>kind: function | method | constructor</code>, with <b>no language discriminator</b>. The language axis is held out of the pipeline by construction, so the periphery stays zero-cost when a fifth language arrives.</p>
+    </aside>
+  </section>
+
+</main>
+
+<footer class="provenance">
+  <p class="label">Sources read</p>
+  <ul>
+    <li>backlog/drafts/ia-review.information-architecture.md &mdash; §1.1&ndash;1.2, §3.1, §6 macro map</li>
+    <li>backlog/drafts/ia-review.refactor-program.md &mdash; the three detect_language contracts (:35&ndash;42)</li>
+    <li>packages/core/src/classify_entry_points/extract_entry_point_diagnostics.ts:718 &mdash; returns Language | null</li>
+    <li>packages/core/src/project/project.ts:60 &mdash; throws on unknown extension</li>
+    <li>packages/core/src/trace_call_graph/trace_call_graph.ts:22 &mdash; defaults to "typescript" (verified)</li>
+    <li>packages/core/src/resolve_references/call_resolution/path_resolution.ts:1 &mdash; Rust-only, neutral name</li>
+  </ul>
+  <p class="stamp">Generated from the IA review draft · every claim verified against source · one of the two IA-review pages.</p>
+</footer>
+
+<script>
+(function () {
+  var links = Array.prototype.slice.call(document.querySelectorAll('.toc a'));
+  var map = {};
+  links.forEach(function (a) {
+    var id = a.getAttribute('href').slice(1);
+    var sec = document.getElementById(id);
+    if (sec) map[id] = a;
+  });
+  if (!('IntersectionObserver' in window)) return;
+  var obs = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) {
+        links.forEach(function (l) { l.classList.remove('active'); });
+        var a = map[e.target.id];
+        if (a) a.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px', threshold: 0 });
+  Object.keys(map).forEach(function (id) { obs.observe(document.getElementById(id)); });
+})();
+</script>
+</body>
+</html>

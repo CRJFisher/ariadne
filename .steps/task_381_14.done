@@ -1,0 +1,7 @@
+{
+  "key": "once",
+  "run_id": "20260901T063943Z-28db2981",
+  "scope": "once",
+  "step_id": "task_381_14",
+  "summary": "TASK-381.14's end state already held; I changed nothing and only verified. The implementation is landed in commits 87d94d30 (feat), 4d3528b8 + ff2bba11 (docs/recorded measurements) and 6a335165 (refa…"
+}

@@ -11,17 +11,24 @@
  * - Detects optional chaining syntax (`obj?.method?.()`)
  * - Infers type information from annotations and JSDoc
  *
+ * Call-site syntactic context is marshalled through ./call_site_syntax to its
+ * per-language leaves; the node-type branches that remain here extract
+ * reference NAMES (function/constructor/property identifiers), not call-site
+ * syntax.
+ *
  * Uses functional composition pattern - each capture is processed through
  * a builder that chains operations and builds the final reference array.
  */
 
 import type {
   FilePath,
+  Language,
   SymbolName,
   SymbolReference,
   TypeInfo,
 } from "@ariadnejs/types";
 
+import { extract_call_site_syntax } from "./call_site_syntax";
 import {
   create_self_reference_call,
   create_method_call_reference,
@@ -29,13 +36,18 @@ import {
   create_constructor_call_reference,
   create_variable_reference,
   create_property_access_reference,
+  create_callable_value_reference,
   create_type_reference,
   create_assignment_reference,
 } from "./factories";
+import { extract_call_arguments } from "./call_arguments";
 
-import type { CaptureNode } from "../index_single_file";
-import type { ProcessingContext } from "../index_single_file";
-import type { MetadataExtractors } from "../query_code_tree/metadata_extractors";
+import type { SyntaxNode } from "tree-sitter";
+
+import type { CaptureNode } from "../capture_types";
+import type { ProcessingContext } from "../scopes/processing_context";
+import type { MetadataExtractors } from "../query_code_tree/metadata_extractors/metadata_extractor_types";
+import { nominal_cast_type_name } from "../query_code_tree/metadata_extractors/metadata_extractors.javascript";
 
 // ============================================================================
 // Reference Kind Enum
@@ -48,6 +60,7 @@ export enum ReferenceKind {
   FUNCTION_CALL,
   METHOD_CALL,
   PROPERTY_ACCESS,
+  CALLABLE_VALUE,
   VARIABLE_REFERENCE,
   VARIABLE_WRITE,
   TYPE_REFERENCE,
@@ -114,6 +127,9 @@ function determine_reference_kind(
     case "member_access":
       return ReferenceKind.PROPERTY_ACCESS;
 
+    case "callable_value":
+      return ReferenceKind.CALLABLE_VALUE;
+
     case "variable":
       return ReferenceKind.VARIABLE_REFERENCE;
 
@@ -173,9 +189,7 @@ function extract_type_info(
  * Distinguishes between self-reference calls (this.method()) and regular method calls (obj.method()).
  *
  * Handles patterns like:
- * - `this.method()` → SelfReferenceCall with keyword: 'this'
- * - `self.method()` → SelfReferenceCall with keyword: 'self'
- * - `super.method()` → SelfReferenceCall with keyword: 'super'
+ * - `this.method()`, `self.method()`, `super.method()` → SelfReferenceCall
  * - `obj.method()` → MethodCallReference with receiver: obj
  * - `a.b.c()` → MethodCallReference with chain: ['a', 'b', 'c']
  */
@@ -183,7 +197,8 @@ function process_method_reference(
   capture: CaptureNode,
   context: ProcessingContext,
   extractors: MetadataExtractors | undefined,
-  file_path: FilePath
+  file_path: FilePath,
+  language: Language
 ): SymbolReference {
   const scope_id = context.get_scope_id(capture.location);
   const location = capture.location;
@@ -205,13 +220,16 @@ function process_method_reference(
   // Route to appropriate factory based on receiver type
   if (receiver_info) {
     // Check if this is a self-reference call (this.method(), self.method(), etc.)
-    if (receiver_info.is_self_reference && receiver_info.self_keyword) {
+    if (receiver_info.is_self_reference) {
+      const self_syntax = extract_call_site_syntax(capture.node, language);
       return create_self_reference_call(
         method_name,
         location,
         scope_id,
-        receiver_info.self_keyword,
-        receiver_info.property_chain
+        receiver_info.property_chain,
+        self_syntax?.receiver_kind === "index_access"
+          ? { key_is_literal: self_syntax.index_key_is_literal === true }
+          : undefined
       );
     }
 
@@ -225,6 +243,9 @@ function process_method_reference(
     // (e.g., user = models.User(name) — user is the potential_construct_target)
     const potential_construct_target = extractors?.extract_construct_target(capture.node, file_path);
 
+    // Extract syntactic call-site context for downstream auto-classifiers
+    const call_site_syntax = extract_call_site_syntax(capture.node, language);
+
     return create_method_call_reference(
       method_name,
       location,
@@ -232,7 +253,9 @@ function process_method_reference(
       receiver_info.receiver_location,
       receiver_info.property_chain,
       is_optional_chain,
-      potential_construct_target
+      potential_construct_target,
+      call_site_syntax,
+      receiver_info.property_chain_arguments
     );
   }
 
@@ -274,7 +297,8 @@ export class ReferenceBuilder {
   constructor(
     private readonly context: ProcessingContext,
     private readonly extractors: MetadataExtractors | undefined,
-    private readonly file_path: FilePath
+    private readonly file_path: FilePath,
+    private readonly language: Language
   ) {}
 
   /**
@@ -300,7 +324,8 @@ export class ReferenceBuilder {
           capture,
           this.context,
           this.extractors,
-          this.file_path
+          this.file_path,
+          this.language
         )
       );
       return this;
@@ -379,11 +404,17 @@ export class ReferenceBuilder {
         // ConstructorCallReference with proper construct_target
         const potential_construct_target = this.extractors?.extract_construct_target(capture.node, this.file_path);
 
+        // Rust qualified call (worker::create) — carry the path that scopes the
+        // terminal-name lookup so call resolution honours the author's qualifier.
+        const path_prefix = this.extractors?.extract_call_path_prefix?.(capture.node, "function");
+
         reference = create_function_call_reference(
           reference_name,
           location,
           scope_id,
-          potential_construct_target
+          potential_construct_target,
+          path_prefix,
+          extract_call_arguments(capture.node)
         );
         break;
       }
@@ -403,12 +434,45 @@ export class ReferenceBuilder {
           }
         }
 
+        // Rust associated constructor (crate::runtime::Driver::new) — carry the
+        // full type path that scopes the terminal lookup.
+        const path_prefix = this.extractors?.extract_call_path_prefix?.(capture.node, "constructor");
+
         reference = create_constructor_call_reference(
           reference_name,
           location,
           scope_id,
           construct_target,
-          property_chain
+          property_chain,
+          path_prefix
+        );
+        break;
+      }
+
+      case ReferenceKind.CALLABLE_VALUE: {
+        // Member form (`user.list`) carries its chain and receiver; a named
+        // function expression's own name is a single-element chain resolved by
+        // its exact location. The reference is named after the chain's
+        // terminal — the callable itself.
+        if (
+          is_member_node(capture.node) &&
+          !is_grounded_member_read(capture.node)
+        ) {
+          // `register(getHelper().handler)` leaves only `handler`, which would
+          // resolve lexically against an unrelated function of that name.
+          return this;
+        }
+
+        const receiver_info = this.extractors
+          ? this.extractors.extract_receiver_info(capture.node, this.file_path)
+          : undefined;
+        const property_chain = receiver_info?.property_chain ?? [reference_name];
+        reference = create_callable_value_reference(
+          property_chain[property_chain.length - 1] ?? reference_name,
+          location,
+          scope_id,
+          property_chain,
+          receiver_info?.receiver_location
         );
         break;
       }
@@ -422,6 +486,29 @@ export class ReferenceBuilder {
         break;
 
       case ReferenceKind.PROPERTY_ACCESS: {
+        // A member expression in call position is already captured as a call
+        // reference and a getter can never be its target, so the read mints
+        // nothing — this keeps the resolver off every method call's callee.
+        const parent = capture.node.parent;
+        if (
+          (parent?.type === "call_expression" || parent?.type === "call") &&
+          parent.childForFieldName?.("function")?.id === capture.node.id
+        ) {
+          return this;
+        }
+
+        if (is_member_node(capture.node)) {
+          // An ungrounded chain (`getHelper().jsDoc`, `foo().bar.baz`) would
+          // resolve its trailing name lexically and fabricate an edge.
+          if (!is_grounded_member_read(capture.node)) {
+            return this;
+          }
+          // A write invokes the setter, never the getter.
+          if (is_write_target(capture.node)) {
+            return this;
+          }
+        }
+
         const receiver_info = this.extractors
           ? this.extractors.extract_receiver_info(capture.node, this.file_path)
           : undefined;
@@ -440,6 +527,10 @@ export class ReferenceBuilder {
             "property",
             is_optional_chain
           );
+        } else if (is_member_node(capture.node)) {
+          // A member read the extractor cannot ground must not degrade to a
+          // bare variable read — the property name would resolve lexically.
+          return this;
         } else {
           // Fallback: create variable read if no receiver info
           reference = create_variable_reference(reference_name, location, scope_id, "read");
@@ -453,7 +544,7 @@ export class ReferenceBuilder {
           capture.node,
           this.file_path
         );
-        const target_location = construct_target || location;
+        const target_location = construct_target?.location ?? location;
 
         // Extract type information from type annotation (if present)
         const assignment_type = extract_type_info(capture, this.extractors, this.file_path);
@@ -469,12 +560,11 @@ export class ReferenceBuilder {
       }
 
       case ReferenceKind.SUPER_CALL:
-        // Super calls are handled as self-reference calls with 'super' keyword
+        // Super calls are handled as self-reference calls rooted at `super`
         reference = create_self_reference_call(
           reference_name,
           location,
           scope_id,
-          "super",
           ["super" as SymbolName, reference_name]
         );
         break;
@@ -511,7 +601,8 @@ export class ReferenceBuilder {
 export function process_references(
   context: ProcessingContext,
   extractors: MetadataExtractors | undefined,
-  file_path: FilePath
+  file_path: FilePath,
+  language: Language
 ): SymbolReference[] {
   // Filter for reference captures and process using builder
   return context.captures
@@ -523,7 +614,147 @@ export function process_references(
     )
     .reduce(
       (builder: ReferenceBuilder, capture) => builder.process(capture),
-      new ReferenceBuilder(context, extractors, file_path)
+      new ReferenceBuilder(context, extractors, file_path, language)
     )
     .references;
+}
+// ============================================================================
+// Member-read grounding
+// ============================================================================
+
+/** A member-read node: `a.b` in JS/TS, `a.b` in Python. */
+function is_member_node(node: SyntaxNode): boolean {
+  return node.type === "member_expression" || node.type === "attribute";
+}
+
+/**
+ * A member read is grounded when its receiver chain bottoms out at a name the
+ * resolver can bind — an identifier, `this`, `self` or `super`. An ungrounded
+ * chain (`getHelper().jsDoc`) leaves only the trailing property name, which
+ * would resolve lexically against an unrelated definition of that name.
+ *
+ * Peels exactly the wrappers the chain extractor peels, so guard and extractor
+ * cannot disagree about what a receiver is.
+ *
+ * @language javascript,typescript,python
+ */
+function is_grounded_member_read(node: SyntaxNode): boolean {
+  let current = node;
+  for (;;) {
+    const object = current.childForFieldName("object");
+    if (!object) return true;
+    const receiver = peel_transparent_wrappers(object);
+    if (!receiver) return false;
+    if (
+      receiver.type === "member_expression" ||
+      receiver.type === "subscript_expression" ||
+      receiver.type === "attribute" ||
+      receiver.type === "subscript"
+    ) {
+      current = receiver;
+      continue;
+    }
+    return (
+      receiver.type === "identifier" ||
+      receiver.type === "this" ||
+      receiver.type === "super" ||
+      // A cast to a nominal type names the receiver as surely as an identifier.
+      receiver.type === "as_expression" ||
+      receiver.type === "type_assertion"
+    );
+  }
+}
+
+/**
+ * Wrappers that keep the wrapped expression's own type, so a chain reads
+ * through them. A cast to a nominal type is NOT one of them: the chain
+ * extractor stops there and uses the cast type as the chain's base, so peeling
+ * past it here would judge a chain the extractor grounds as ungrounded.
+ */
+function peel_transparent_wrappers(node: SyntaxNode): SyntaxNode | undefined {
+  let current: SyntaxNode = node;
+  for (;;) {
+    if (
+      current.type === "parenthesized_expression" ||
+      current.type === "non_null_expression" ||
+      current.type === "satisfies_expression"
+    ) {
+      const inner = current.namedChild(0);
+      if (!inner) return undefined;
+      current = inner;
+      continue;
+    }
+    if (current.type === "as_expression") {
+      if (nominal_cast_type_name(current.namedChild(1))) return current;
+      const inner = current.namedChild(0);
+      if (!inner) return undefined;
+      current = inner;
+      continue;
+    }
+    if (current.type === "type_assertion") {
+      if (nominal_cast_type_name(current.namedChild(0)?.namedChild(0))) {
+        return current;
+      }
+      const inner = current.namedChild(1);
+      if (!inner) return undefined;
+      current = inner;
+      continue;
+    }
+    return current;
+  }
+}
+
+/**
+ * True when the node is written or deleted rather than read — an assignment
+ * target, a destructuring target, a loop target, a `with … as` target, or the
+ * operand of `del` / `delete`. Binding a member invokes its setter and
+ * unbinding it invokes its deleter; neither reads the getter, so neither may
+ * mint a member read.
+ *
+ * An augmented assignment (`x.n += 1`) is deliberately absent: it reads the
+ * member before writing it back.
+ *
+ * @language javascript,typescript,python
+ */
+function is_write_target(node: SyntaxNode): boolean {
+  let current: SyntaxNode = node;
+  let parent: SyntaxNode | null = current.parent;
+  while (
+    parent &&
+    (parent.type === "array_pattern" ||
+      parent.type === "object_pattern" ||
+      parent.type === "pair_pattern" ||
+      parent.type === "rest_pattern" ||
+      parent.type === "assignment_pattern" ||
+      parent.type === "pattern_list" ||
+      parent.type === "tuple_pattern" ||
+      parent.type === "list_pattern")
+  ) {
+    current = parent;
+    parent = current.parent;
+  }
+  if (!parent) {
+    return false;
+  }
+  if (
+    (parent.type === "assignment_expression" || parent.type === "assignment") &&
+    parent.childForFieldName("left")?.id === current.id
+  ) {
+    return true;
+  }
+  if (
+    (parent.type === "for_in_statement" || parent.type === "for_statement") &&
+    parent.childForFieldName("left")?.id === current.id
+  ) {
+    return true;
+  }
+  // `del x.n` (Python) and `delete x.n` (JS/TS) unbind the member.
+  if (parent.type === "delete_statement") {
+    return true;
+  }
+  if (parent.type === "unary_expression" && parent.child(0)?.type === "delete") {
+    return true;
+  }
+  // `with cm as x.n:` binds the member.
+  return parent.type === "as_pattern_target" || parent.type === "as_pattern";
 }

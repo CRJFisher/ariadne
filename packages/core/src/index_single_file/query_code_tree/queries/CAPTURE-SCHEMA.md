@@ -47,7 +47,6 @@ The capture schema ensures:
 `@reference.call` on `call_expression` → Extractor derives:
 
 - Call reference name (via `extract_call_name()`)
-- Receiver location (via `extract_call_receiver()`)
 - Property chain (via `extract_property_chain()`)
 - Call type: function vs method (via `is_method_call()`)
 
@@ -81,7 +80,7 @@ All captures follow this pattern:
 - `@definition.function` - Function definition
 - `@reference.call` - Function/method call
 - `@scope.class` - Class scope
-- `@reference.call.generic` - Generic function call (optional qualifier)
+- `@reference.type.generic` - Generic type reference (optional qualifier)
 
 ### Parts Explained
 
@@ -133,7 +132,10 @@ Every language MUST implement these captures (from common analysis):
 - `@reference.variable.source` - Source in assignments
 - `@reference.variable.target` - Target in assignments
 - `@reference.this` - 'this' keyword
-- `@reference.super` - 'super' keyword
+- `@reference.super` - 'super' keyword, in the languages where `super` is an
+  expression. Rust emits none: there `super` is only a path anchor
+  (`use super::X`, `super::f()`, `pub(super)`), so a capture would name a
+  receiver that no call has.
 - `@reference.type_reference` - Type references
 
 ### Assignments/Returns
@@ -147,7 +149,26 @@ Every language MUST implement these captures (from common analysis):
 
 ### Modifiers
 
-- `@modifier.visibility` - Visibility modifiers
+- `@modifier.visibility` - Visibility modifiers (JavaScript, TypeScript, Rust)
+
+### Predicate-Binding Captures
+
+A capture whose name starts with `_` binds a node so a predicate can test it,
+and is dropped before definitions and references are built. Use it wherever a
+pattern must match on a node it should not record — a Protocol or Enum base
+gating its members, a method name excluded by `#not-eq?`:
+
+```scheme
+(class_definition
+  superclasses: (argument_list
+    [(identifier) @_enum_base (attribute attribute: (identifier) @_enum_base)]
+    (#match? @_enum_base "^(Enum|IntEnum|Flag|IntFlag|StrEnum)$"))
+  body: (block (expression_statement (assignment
+    left: (identifier) @definition.enum_member))))
+```
+
+Capturing the gate under a real name instead would emit one reference to the
+base per member the pattern matches.
 
 ---
 
@@ -162,25 +183,32 @@ Language-specific features explicitly allowed:
 - `@definition.enum` - Enum definitions
 - `@definition.enum.member` - Enum members
 - `@definition.namespace` - Namespaces
-- `@definition.type_parameter` - Generic type parameters
-- `@definition.property` - Class properties
-- `@reference.call.generic` - Generic calls
+- `@definition.type_parameter` - Generic type parameters (emitted; no handler currently consumes it — see Validation)
+- `@definition.field.assigned` - The property of a `this.<name> = …` write (JavaScript); its handler declares a field only for a constructor write the class body does not already name
 - `@reference.constructor` - Constructor calls
-- `@reference.constructor.generic` - Generic constructor calls (involves type parameters)
 - `@reference.constructor.qualified` - Namespace-qualified constructor calls (`new ns.Foo()`)
 - `@assignment.constructor.qualified` - Namespace-qualified constructor with assignment target
-- `@reference.property` - Property access
-- `@reference.property.optional` - Optional chaining
-- `@reference.member_access` - Member access patterns
+- `@reference.property` - Property-name read of an identifier-receiver member access
+- `@reference.member_access` - Member access, one capture per member expression whatever the receiver shape (optional chaining is derived from the node)
+- `@reference.callable_value` - Callable read in value position (a member-expression argument, an object-literal value, or a named function expression's own name); resolves to indirect reachability, never a call edge
 - `@reference.call.jsx` - JSX elements
 
 ### Python
 
-- `@decorator.function` - Function decorators
-- `@decorator.class` - Class decorators
-- `@decorator.method` - Method decorators
-- `@decorator.property` - Property decorators
-- `@reference.constructor` - Class instantiation (function call that is a class)
+- `@decorator.method` - Method decorators, any decorator shape (bare, dotted, call-shaped)
+- `@definition.property.interface` - Attribute signature declared in a Protocol body
+- `@definition.enum_member` - Member declared in an Enum body
+- `@reference.this` - `self` and `cls` identifiers
+
+A Python construction is not captured as a constructor: `obj = MyClass()` is
+syntactically a call, so it is one `@reference.call`, and
+`resolve_references/preprocess_references.python.ts` rewrites the calls whose
+callee resolves to a class into constructor calls once names are resolved.
+
+Python emits one `@definition.class` per `class_definition` whatever shape its
+bases take; the class capture handler discriminates Enum and Protocol classes
+and builds the enum/interface definition, and a `@property`-decorated def
+builds a method carrying `accessor_kind`.
 
 ### Rust
 
@@ -188,6 +216,7 @@ Language-specific features explicitly allowed:
 - `@definition.impl` - Impl blocks
 - `@definition.type_alias` - Type aliases
 - `@definition.enum` - Enums
+- `@definition.import.module` - Bodyless `mod x;` — the module edge to the file backing it, emitted alongside the `@definition.module` that binds the name. Captures the whole item so the handler can read the preceding `#[path = "…"]` attribute, which tree-sitter makes a sibling of `mod_item` rather than a child
 - `@scope.trait`, `@scope.impl` - Rust-specific scopes
 - `@reference.constructor.associated` - Associated function constructor (`Type::new()`)
 - `@reference.constructor.struct` - Struct literal constructor (`Foo { field: val }`)
@@ -197,7 +226,6 @@ Language-specific features explicitly allowed:
 | Qualifier     | Meaning                            | Example                    |
 | ------------- | ---------------------------------- | -------------------------- |
 | _(none)_      | Simple identifier constructor      | `new Foo()`                |
-| `.generic`    | Involves type parameters           | `new Foo<T>()`             |
 | `.qualified`  | Accessed via namespace/member path | `new ns.Foo()`, `ns.Foo()` |
 | `.associated` | Rust `::new()` associated function | `Type::new()`              |
 | `.struct`     | Rust struct literal                | `Foo { field: val }`       |
@@ -208,33 +236,29 @@ Language-specific features explicitly allowed:
 - `@modifier.*` - Various modifiers (static, async, etc.)
 - `@export.*` - Export variants
 - `@import.reexport` - Re-export patterns
+- `@import.reexport.wildcard` - `export * from` — a nameless edge forwarding a module's whole surface
+- `@import.reexport.namespace` - `export * as ns from` — one named namespace object
 
 ---
 
 ## Validation
 
-Captures are validated automatically in CI using `validate_captures.ts`.
+Two invariants keep query captures healthy.
 
-### Run Validation Locally
+**Naming** — every capture belongs to the required or optional lists above and
+matches `@{category}.{entity}[.{qualifier}]` (at most three parts). Capturing a
+fragment (a `property_identifier` instead of the whole `call_expression`) or
+duplicating a capture on one line breaks the complete-capture principle. These
+rules are the spec reviewers hold new and changed queries to.
 
-```bash
-npm run validate:captures              # All languages
-npm run validate:captures -- --lang=typescript  # Specific language
-```
-
-### Validation Checks
-
-**Errors** (fail CI):
-
-- Capture not in required OR optional lists
-- Invalid naming convention
-- Exceeds max depth (>3 parts)
-
-**Warnings** (visible but don't fail):
-
-- Capture on fragment node (property_identifier instead of call_expression)
-- Duplicate captures on same line
-- Heuristic checks for "complete capture" principle
+**Capture/receiver consistency** — every `definition`/`decorator`/`import`
+capture a query emits must have a handler in the matching
+`capture_handlers.<lang>.ts` registry, because definitions dispatch by exact
+`registry[capture.name]` lookup. A capture with no handler is silently dropped;
+`@definition.type_parameter` (TypeScript) and `@decorator.macro` (Rust) are
+currently in this state. The Stop hook
+`.claude/hooks/capture_receiver_consistency_stop.ts` enforces this on changed
+query and receiver files (see `.claude/rules/semantic-indexing.md`).
 
 ---
 
@@ -293,9 +317,12 @@ When adding support for a new language:
 
 2. **Implement required captures**: All captures from "Required" section above
 
-3. **Add language-specific captures**: Add to optional list in `capture_schema.ts`
+3. **Add language-specific captures**: Add them to the Optional Captures list above
 
-4. **Validate**: Run `npm run validate:captures` - must pass with 0 errors
+4. **Validate**: Confirm every capture matches this schema and that each
+   `definition`/`decorator`/`import` capture has a handler — the
+   capture/receiver consistency Stop hook blocks a dead handler and warns on an
+   orphan (see Validation)
 
 5. **Test**: Ensure semantic index tests pass
 
@@ -311,16 +338,17 @@ When adding support for a new language:
 
 ### Q: Can I add custom qualifiers?
 
-**A**: Yes, but add the full capture pattern to the optional captures list in `capture_schema.ts` first. Qualifiers must be semantic (`.generic`, `.optional`) not structural (`.full`, `.chained`).
+**A**: Yes, but add the full capture pattern to the Optional Captures list above first. Qualifiers must be semantic (`.generic`, `.optional`) not structural (`.full`, `.chained`).
 
 ### Q: What if my language needs something not in the schema?
 
 **A**: Add it as an optional capture with clear justification:
 
-1. Add pattern to `capture_schema.ts` optional list
+1. Add the pattern to the Optional Captures list above
 2. Document in this file under language-specific section
 3. Explain why it's needed
-4. Run validation to confirm it works
+4. Add its handler to the matching `capture_handlers.<lang>.ts` registry so the
+   capture/receiver consistency check does not report it as an orphan
 
 ### Q: How do I handle language-specific syntax differences?
 
@@ -364,7 +392,6 @@ This separation means:
 
 ---
 
-**Last Updated**: 2025-10-29
+**Last Updated**: 2026-08-11
 **Schema Version**: 1.0
-**Validation**: `npm run validate:captures`
-**Schema Definition**: `capture_schema.ts` in parent directory
+**Enforcement**: capture/receiver consistency Stop hook, `.claude/hooks/capture_receiver_consistency_stop.ts` (see Validation)

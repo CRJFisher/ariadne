@@ -1,10 +1,7 @@
 /**
- * Type Bindings Extraction
- *
- * Extracts type names from explicit annotations in definitions.
- * Maps definition locations to their type names (strings, not resolved SymbolIds).
- *
- * Resolution of type names to SymbolIds happens in task 11.109 using ScopeResolver.
+ * Maps annotated definitions to the annotation text they declare. Values are
+ * raw annotation strings; parsing and resolving them to SymbolIds is a later
+ * stage's job.
  */
 
 import type {
@@ -12,135 +9,97 @@ import type {
   FunctionDefinition,
   ClassDefinition,
   InterfaceDefinition,
+  EnumDefinition,
+  MethodDefinition,
+  ParameterDefinition,
 } from "@ariadnejs/types";
-import type { LocationKey, SymbolName } from "@ariadnejs/types";
-import { location_key } from "@ariadnejs/types";
+import type { SymbolId, SymbolName } from "@ariadnejs/types";
 
 /**
- * Extract type bindings from definitions
- *
- * Extracts type names from:
- * - Variable/constant type annotations
- * - Parameter type annotations
- * - Function return type annotations
- *
- * @param definitions - Object containing all definition maps
- * @returns Map from definition location to type name (string)
- *
- * @example
- * ```typescript
- * // Input: const user: User = getUser();
- * // Output: Map { "file.ts:1:6:1:10" => "User" }
- *
- * // Input: function getName(): string { ... }
- * // Output: Map { "file.ts:1:0:1:35" => "string" }
- * ```
+ * A file's annotations, split by what the annotated definition is. A value
+ * binding says what a variable, parameter or property holds; a return binding
+ * says what calling a function or method yields. The two are different facts
+ * about different receivers — `e.connect` names the method, `e.connect()` its
+ * result — so they are never kept in one map.
+ */
+interface TypeBindings {
+  /** Variable, parameter, class property or struct field → its annotation text. */
+  readonly value_bindings: ReadonlyMap<SymbolId, SymbolName>;
+  /** Function or method → its declared return annotation text. */
+  readonly return_bindings: ReadonlyMap<SymbolId, SymbolName>;
+}
+
+/**
+ * Collects annotation bindings across every definition kind that carries one.
+ * Each binding is keyed by the annotated definition's own SymbolId, so a name
+ * redefined in another scope yields a distinct entry, and two definitions
+ * sharing one span — a TypeScript constructor parameter property is both a
+ * parameter and a property — each keep their binding.
  */
 export function extract_type_bindings(definitions: {
   variables: ReadonlyMap<unknown, VariableDefinition>;
   functions: ReadonlyMap<unknown, FunctionDefinition>;
   classes: ReadonlyMap<unknown, ClassDefinition>;
   interfaces: ReadonlyMap<unknown, InterfaceDefinition>;
-}): ReadonlyMap<LocationKey, SymbolName> {
-  const bindings = new Map<LocationKey, SymbolName>();
+  enums: ReadonlyMap<unknown, EnumDefinition>;
+}): TypeBindings {
+  const value_bindings = new Map<SymbolId, SymbolName>();
+  const return_bindings = new Map<SymbolId, SymbolName>();
 
-  // Extract from variable/constant definitions
+  const bind_parameters = (parameters: readonly ParameterDefinition[]): void => {
+    for (const param of parameters) {
+      if (param.type) {
+        value_bindings.set(param.symbol_id, param.type);
+      }
+    }
+  };
+  const bind_methods = (methods: readonly MethodDefinition[]): void => {
+    for (const method of methods) {
+      if (method.return_type) {
+        return_bindings.set(method.symbol_id, method.return_type);
+      }
+      bind_parameters(method.parameters);
+    }
+  };
+
   for (const variable of definitions.variables.values()) {
     if (variable.type) {
-      const key = location_key(variable.location);
-      bindings.set(key, variable.type);
+      value_bindings.set(variable.symbol_id, variable.type);
     }
   }
 
-  // Extract from function return types
   for (const func of definitions.functions.values()) {
     if (func.return_type) {
-      const key = location_key(func.location);
-      bindings.set(key, func.return_type);
+      return_bindings.set(func.symbol_id, func.return_type);
     }
-
-    // Extract from function parameters
-    if (func.signature?.parameters) {
-      for (const param of func.signature.parameters) {
-        if (param.type) {
-          const key = location_key(param.location);
-          bindings.set(key, param.type);
-        }
-      }
-    }
+    bind_parameters(func.signature.parameters);
   }
 
-  // Extract from class methods and properties
+  // A Rust struct is indexed as a class, so its fields are these properties.
   for (const class_def of definitions.classes.values()) {
-    // Extract from methods
-    for (const method of class_def.methods) {
-      // Method return types
-      if (method.return_type) {
-        const key = location_key(method.location);
-        bindings.set(key, method.return_type);
-      }
-
-      // Method parameters
-      if (method.parameters) {
-        for (const param of method.parameters) {
-          if (param.type) {
-            const key = location_key(param.location);
-            bindings.set(key, param.type);
-          }
-        }
-      }
-    }
-
-    // Extract from properties
+    bind_methods(class_def.methods);
     for (const prop of class_def.properties) {
       if (prop.type) {
-        const key = location_key(prop.location);
-        bindings.set(key, prop.type);
+        value_bindings.set(prop.symbol_id, prop.type);
       }
     }
-
-    // Extract from constructor parameters
-    if (class_def.constructors) {
-      for (const ctor of class_def.constructors) {
-        for (const param of ctor.parameters) {
-          if (param.type) {
-            const key = location_key(param.location);
-            bindings.set(key, param.type);
-          }
-        }
-      }
+    for (const ctor of class_def.constructors ?? []) {
+      bind_parameters(ctor.parameters);
     }
   }
 
-  // Extract from interface methods and properties
   for (const interface_def of definitions.interfaces.values()) {
-    // Extract from interface methods
-    for (const method of interface_def.methods) {
-      // Method return types
-      if (method.return_type) {
-        const key = location_key(method.location);
-        bindings.set(key, method.return_type);
-      }
-
-      // Method parameters
-      if (method.parameters) {
-        for (const param of method.parameters) {
-          if (param.type) {
-            const key = location_key(param.location);
-            bindings.set(key, param.type);
-          }
-        }
-      }
-    }
-
-    // Extract from interface properties
+    bind_methods(interface_def.methods);
     for (const prop of interface_def.properties) {
       if (prop.type) {
-        const key = location_key(prop.location);
-        bindings.set(key, prop.type);
+        value_bindings.set(prop.symbol_id, prop.type);
       }
     }
   }
 
-  return bindings;
+  for (const enum_def of definitions.enums.values()) {
+    bind_methods(enum_def.methods ?? []);
+  }
+
+  return { value_bindings, return_bindings };
 }

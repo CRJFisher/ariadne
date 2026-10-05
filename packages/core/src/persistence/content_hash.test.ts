@@ -15,21 +15,21 @@ describe("compute_content_hash", () => {
     expect(a).not.toEqual(b);
   });
 
-  it("produces a 64-character hex string", () => {
-    const hash = compute_content_hash("hello");
-    expect(hash).toMatch(/^[0-9a-f]{64}$/);
+  it("produces the known SHA-256 hex digest of an ascii string", () => {
+    expect(compute_content_hash("hello")).toEqual(
+      "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
+    );
   });
 
   it("produces the known SHA-256 of empty string", () => {
-    const hash = compute_content_hash("");
-    expect(hash).toEqual(
+    expect(compute_content_hash("")).toEqual(
       "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     );
   });
 
-  it("handles unicode content", () => {
-    const hash = compute_content_hash("const x = '日本語';");
-    expect(hash).toMatch(/^[0-9a-f]{64}$/);
-    expect(hash).toEqual(compute_content_hash("const x = '日本語';"));
+  it("hashes unicode content via its utf-8 encoding", () => {
+    expect(compute_content_hash("const x = '日本語';")).toEqual(
+      "cb04720a4bd9eaa700c1199078958415c54dbae03195a6ed4c3b8ec9d019e2bb",
+    );
   });
 });

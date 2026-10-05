@@ -11,6 +11,8 @@ import {
   find_source_files,
   parse_gitignore,
 } from "./file_loading";
+import { detect_language } from "../detect_language";
+import { is_in_test_dir } from "./test_dir_patterns";
 
 describe("file_loading", () => {
   describe("SUPPORTED_EXTENSIONS", () => {
@@ -32,19 +34,9 @@ describe("file_loading", () => {
       expect(SUPPORTED_EXTENSIONS.test("file.rs")).toBe(true);
     });
 
-    it("should match Go files", () => {
-      expect(SUPPORTED_EXTENSIONS.test("file.go")).toBe(true);
-    });
-
-    it("should match C/C++ files", () => {
-      expect(SUPPORTED_EXTENSIONS.test("file.c")).toBe(true);
-      expect(SUPPORTED_EXTENSIONS.test("file.cpp")).toBe(true);
-      expect(SUPPORTED_EXTENSIONS.test("file.h")).toBe(true);
-      expect(SUPPORTED_EXTENSIONS.test("file.hpp")).toBe(true);
-    });
-
-    it("should match Java files", () => {
-      expect(SUPPORTED_EXTENSIONS.test("file.java")).toBe(true);
+    it("matches the ESM and CommonJS JavaScript extensions", () => {
+      expect(SUPPORTED_EXTENSIONS.test("file.mjs")).toBe(true);
+      expect(SUPPORTED_EXTENSIONS.test("file.cjs")).toBe(true);
     });
 
     it("should not match unsupported extensions", () => {
@@ -52,6 +44,22 @@ describe("file_loading", () => {
       expect(SUPPORTED_EXTENSIONS.test("file.json")).toBe(false);
       expect(SUPPORTED_EXTENSIONS.test("file.yaml")).toBe(false);
       expect(SUPPORTED_EXTENSIONS.test("file.txt")).toBe(false);
+    });
+
+    it("admits exactly the extensions detect_language maps to a grammar", () => {
+      // Discovery finding a file no grammar can parse would put it in the
+      // dropped-file set, where it reads as an indexing failure and inflates
+      // the coverage warning; a grammar the walk never reaches would hide a
+      // caller from both the index and the compensation for it.
+      const admitted = [
+        "ts", "tsx", "js", "jsx", "mjs", "cjs", "mdx", "py", "rs",
+        "go", "java", "cpp", "c", "hpp", "h", "md", "json", "txt", "rb", "kt",
+      ].filter((ext) => SUPPORTED_EXTENSIONS.test(`file.${ext}`));
+      const detected = admitted.filter(
+        (ext) => detect_language(`file.${ext}`) !== null,
+      );
+
+      expect(admitted).toEqual(detected);
     });
   });
 
@@ -93,8 +101,14 @@ describe("file_loading", () => {
     it("should accept other supported languages", () => {
       expect(is_supported_file("file.py")).toBe(true);
       expect(is_supported_file("file.rs")).toBe(true);
-      expect(is_supported_file("file.go")).toBe(true);
-      expect(is_supported_file("file.java")).toBe(true);
+      expect(is_supported_file("file.mjs")).toBe(true);
+      expect(is_supported_file("file.cjs")).toBe(true);
+    });
+
+    it("rejects a language no grammar parses", () => {
+      expect(is_supported_file("file.go")).toBe(false);
+      expect(is_supported_file("file.java")).toBe(false);
+      expect(is_supported_file("file.cpp")).toBe(false);
     });
 
     it("should reject .d.ts declaration files", () => {
@@ -141,6 +155,60 @@ describe("file_loading", () => {
       expect(should_ignore_path("src/index.ts")).toBe(false);
       expect(should_ignore_path("lib/utils.js")).toBe(false);
       expect(should_ignore_path("packages/core/src/main.ts")).toBe(false);
+    });
+
+    it("keeps source paths whose name merely contains an ignored directory name", () => {
+      expect(should_ignore_path("src/compiler/tsbuildPublic.ts")).toBe(false);
+      expect(
+        should_ignore_path("packages/compiler/src/render3/r3_template_transform.ts"),
+      ).toBe(false);
+      expect(should_ignore_path("packages/compiler/src/template/pipeline/x.ts")).toBe(
+        false,
+      );
+      expect(should_ignore_path("tools/write-locale-files-to-dist.ts")).toBe(false);
+    });
+
+    it("ignores paths whose whole segment is an ignored directory", () => {
+      expect(should_ignore_path("node_modules/x/y.ts")).toBe(true);
+      expect(should_ignore_path("dist/main.js")).toBe(true);
+      expect(should_ignore_path("build/out.js")).toBe(true);
+      expect(should_ignore_path("temp/a.ts")).toBe(true);
+    });
+
+    it("keeps a fixture tree in the corpus so its call edges survive", () => {
+      // A fixture that calls production code carries a real edge. Dropping the
+      // file would delete the edge with it and leave the callee reading as
+      // uncalled; `is_in_test_dir` suppresses the fixture's own callables from
+      // candidacy instead.
+      expect(should_ignore_path("packages/x/fixtures/y.ts")).toBe(false);
+      expect(is_in_test_dir("packages/x/fixtures")).toBe(true);
+      expect(is_in_test_dir("packages/x/__fixtures__")).toBe(true);
+    });
+
+    // The triage harness passes `IGNORED_DIRECTORIES` through `load_project`'s
+    // `exclude`, which lands in the pattern list — so this is the configuration
+    // the pipeline actually runs, and the one that decides the real corpus.
+    it("anchors pattern matches on segments too, not just the built-in list", () => {
+      const patterns = [...IGNORED_DIRECTORIES];
+
+      expect(should_ignore_path("packages/compiler/src/template/pipeline/x.ts", patterns)).toBe(
+        false,
+      );
+      expect(should_ignore_path("src/compiler/tsbuildPublic.ts", patterns)).toBe(false);
+      expect(
+        should_ignore_path("packages/compiler/src/render3/r3_template_transform.ts", patterns),
+      ).toBe(false);
+      expect(should_ignore_path("tools/write-locale-files-to-dist.ts", patterns)).toBe(false);
+
+      expect(should_ignore_path("node_modules/x/y.ts", patterns)).toBe(true);
+      expect(should_ignore_path("a/dist/main.js", patterns)).toBe(true);
+      expect(should_ignore_path("a/temp", patterns)).toBe(true);
+    });
+
+    it("matches a config exclude naming a whole directory", () => {
+      expect(should_ignore_path("django/tests/test_x.py", ["tests"])).toBe(true);
+      expect(should_ignore_path("tests/test_x.py", ["tests"])).toBe(true);
+      expect(should_ignore_path("lib/sqlalchemy/testing/plugin.py", ["test"])).toBe(false);
     });
 
     it("should respect gitignore patterns with prefix wildcards", () => {

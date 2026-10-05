@@ -44,6 +44,28 @@ else
   echo "📏 No TypeScript/JavaScript files staged for commit"
 fi
 
+# Lint staged TS/JS as a backstop for the Stop hook. The user-level Stop hook
+# (~/.claude/scripts/checks/ts-stop.cjs via dispatch.cjs) is the primary eslint
+# gate, but it only lints changed files at the MAIN session's turn-end and is
+# bypassed entirely by sub-agent edits (no SubagentStop hook), so debt written by
+# a sub-agent or committed while clean can slip through. This catches it at commit.
+STAGED_LINT_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '^(packages/[^/]+/(src|tests)|\.claude/skills/(triage|plan))/.*\.(ts|tsx|js|jsx|cjs|mjs)$')
+if [ -n "$STAGED_LINT_FILES" ]; then
+  echo "🔍 Linting staged TS/JS files (Stop-hook backstop)..."
+  # npx (not pnpm exec) invokes the local eslint binary directly, avoiding pnpm's
+  # pre-command deps-status check.
+  if ! npx eslint --cache --no-warn-ignored $STAGED_LINT_FILES; then
+    echo ""
+    echo "❌ Commit aborted: eslint errors in staged files."
+    echo "   These should have been caught at turn-end by the Stop hook"
+    echo "   (~/.claude/scripts/checks/ts-stop.cjs, dispatched from ~/.claude/settings.json)."
+    echo "   If that Stop hook did not fire for this work, fix the Stop hook —"
+    echo "   it is the primary gate; this pre-commit check is only the backstop."
+    exit 1
+  fi
+  echo "✅ eslint clean on staged files."
+fi
+
 # Run full test suites if any TS/JS files are staged
 if git diff --cached --name-only | grep -qE '\.(ts|tsx|js|jsx)$'; then
   echo "🧪 Running full test suites..."
@@ -52,4 +74,25 @@ fi
 EOF
 
 chmod +x .git/hooks/pre-commit
+
+cat > .git/hooks/commit-msg << 'EOF'
+#!/bin/sh
+
+# commit-msg hook: validates the commit convention documented at
+# .claude/rules/commit-convention.md. Permissive — only intervenes when the
+# subject's scope looks like a task id (`190.16.42`, `343`, `190.17.12-14`).
+# Named scopes and unscoped commits pass through.
+
+MSG_FILE="$1"
+PROJECT_DIR="$(git rev-parse --show-toplevel)"
+
+if [ ! -f "$PROJECT_DIR/scripts/check-commit-message.ts" ]; then
+  # Validator missing — skip silently rather than block commits.
+  exit 0
+fi
+
+node --import tsx "$PROJECT_DIR/scripts/check-commit-message.ts" "$MSG_FILE"
+EOF
+
+chmod +x .git/hooks/commit-msg
 echo "✅ Git hooks installed successfully"

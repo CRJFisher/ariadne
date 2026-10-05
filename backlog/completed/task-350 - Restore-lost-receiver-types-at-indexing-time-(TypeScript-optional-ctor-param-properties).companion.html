@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!-- Comprehension companion for TASK-350: restore lost receiver types for TypeScript optional
+     constructor parameter-properties. Source files read and verified:
+       packages/core/src/index_single_file/query_code_tree/queries/typescript.scm  (lines 167-179, 426-434)
+       packages/core/src/index_single_file/query_code_tree/capture_handlers/capture_handlers.typescript.ts
+         (handle_ts_definition_field @556, optional_parameter branch @571, registration @737/766)
+       packages/core/src/resolve_references/call_resolution/receiver_resolution.ts (reads def.type @269-278) -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TASK-350 — Optional ctor param-properties lose their implicit class field</title>
+<style>
+  :root{
+    --ivory:#f7f3ec; --slate:#2b2a28; --clay:#b9794f; --olive:#6c7a4a;
+    --oat:#e7ddc9; --rust:#a8472f; --paper:#fffdf8;
+    --g100:#efeae1; --g200:#ddd6c8; --g400:#9a9387; --g600:#5f594f;
+    --ink:#1f1e1c; --code:#26241f; --codeink:#e8e1d2;
+    --serif:ui-serif,Georgia,"Times New Roman",serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --r:12px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ivory);color:var(--slate);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased}
+  nav.cross{position:sticky;top:0;z-index:10;background:var(--ivory);border-bottom:1px solid var(--g200);padding:9px 0}
+  nav.cross .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  nav.cross .brand{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--clay);margin-right:6px}
+  nav.cross a, nav.cross .here{font-family:var(--mono);font-size:11.5px;text-decoration:none;color:var(--g600);border:1px solid var(--g200);background:var(--paper);border-radius:999px;padding:4px 10px;display:inline-flex;align-items:center;gap:6px}
+  nav.cross a:hover{border-color:var(--clay);color:var(--slate)}
+  nav.cross .here{background:var(--slate);color:var(--ivory);border-color:var(--slate)}
+  nav.cross .dot{width:7px;height:7px;border-radius:50%;background:var(--olive)}
+  nav.cross .pending{font-family:var(--mono);font-size:11.5px;color:var(--g400);border:1px dashed var(--g200);background:transparent;border-radius:999px;padding:4px 10px;display:inline-flex;align-items:center;gap:6px}
+  nav.cross .pending .tag{font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:var(--g400)}
+  nav.toc{position:sticky;top:43px;z-index:9;background:var(--ivory);border-bottom:1px solid var(--g200);padding:8px 0}
+  nav.toc .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  nav.toc .brand{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--g600);margin-right:4px}
+  nav.toc a{font-family:var(--mono);font-size:11px;text-decoration:none;color:var(--g600);border:1px solid var(--g200);background:var(--paper);border-radius:999px;padding:3px 9px}
+  nav.toc a:hover{border-color:var(--clay);color:var(--slate)}
+  main{width:90%;max-width:1600px;margin:0 auto;padding:30px 0 80px}
+  .prose{max-width:72ch}
+  .eyebrow{font-family:var(--mono);text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--clay);margin:0 0 10px}
+  h1{font-family:var(--serif);font-weight:600;font-size:32px;line-height:1.12;margin:0 0 12px;letter-spacing:-.01em;max-width:28ch}
+  h2{font-family:var(--serif);font-weight:600;font-size:23px;margin:54px 0 6px;letter-spacing:-.01em;scroll-margin-top:104px}
+  h3{font-family:var(--mono);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--g600);margin:20px 0 8px}
+  code{font-family:var(--mono);font-size:.85em;background:var(--g100);border-radius:5px;padding:1px 5px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 2px}
+  .chip{font-family:var(--mono);font-size:11.5px;background:var(--paper);border:1px solid var(--g200);border-radius:999px;padding:4px 11px;color:var(--g600)}
+  .chip strong{color:var(--slate);font-weight:600}
+  .chip.hot{background:#fbf2ef;border-color:var(--rust)} .chip.hot strong{color:var(--rust)}
+  .chip.good{background:#f2f4ec;border-color:var(--olive)} .chip.good strong{color:var(--olive)}
+  .cap{font-size:13.5px;color:var(--g600);margin:9px 2px 14px;max-width:84ch}
+  .cap b{color:var(--slate);font-weight:600}
+  /* callout */
+  .callout{border-left:4px solid var(--clay);background:var(--paper);border-radius:0 var(--r) var(--r) 0;padding:15px 19px;margin:18px 0;max-width:90ch}
+  .callout.olive{border-left-color:var(--olive)} .callout.rust{border-left-color:var(--rust)} .callout.slate{border-left-color:var(--slate);background:var(--slate);color:var(--ivory)}
+  .callout .k{font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;font-size:10.5px;color:var(--clay);margin:0 0 7px;display:block}
+  .callout.olive .k{color:var(--olive)} .callout.rust .k{color:var(--rust)} .callout.slate .k{color:var(--oat)}
+  .callout p{margin:0 0 6px;font-size:14.5px} .callout p:last-child{margin:0}
+  .callout.slate code{background:rgba(255,255,255,.12);color:var(--oat)}
+  .callout b{color:var(--slate)} .callout.slate b{color:#fff}
+  /* before/after */
+  .ba{display:grid;grid-template-columns:1fr auto 1fr;gap:0;align-items:stretch;margin:14px 0}
+  .ba .panel{background:var(--paper);border:1px solid var(--g200);padding:16px 18px}
+  .ba .panel:first-child{border-radius:var(--r) 0 0 var(--r)} .ba .panel:last-child{border-radius:0 var(--r) var(--r) 0;border-left:none}
+  .ba .arrow{display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--ivory);padding:0 4px;min-width:44px}
+  .ba .arrow .glyph{font-family:var(--serif);font-size:30px;color:var(--clay);line-height:1}
+  .ba .arrow .lab{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--g600);writing-mode:vertical-rl;margin-top:6px}
+  .ba .ptitle{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;margin:0 0 10px}
+  .ba .panel.cur .ptitle{color:var(--rust)} .ba .panel.plan .ptitle{color:var(--olive)}
+  .ba svg{width:100%;height:auto;display:block}
+  @media(max-width:760px){.ba{grid-template-columns:1fr}.ba .panel,.ba .panel:first-child,.ba .panel:last-child{border-radius:var(--r);border-left:1px solid var(--g200);margin-bottom:8px}.ba .arrow{flex-direction:row;padding:4px 0}.ba .arrow .glyph{transform:rotate(90deg)}.ba .arrow .lab{writing-mode:horizontal-tb;margin:0 0 0 8px}}
+  .legend{display:flex;flex-wrap:wrap;gap:16px;font-family:var(--mono);font-size:11px;color:var(--g600);margin:12px 2px 0}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend i{width:13px;height:13px;border-radius:4px;display:inline-block;border:1px solid rgba(0,0,0,.12)}
+  .legend i.add{background:var(--olive)} .legend i.del{background:var(--rust)} .legend i.same{background:var(--paper);border-color:var(--g400)}
+  /* two-up compare */
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:16px 0}
+  @media(max-width:860px){.two{grid-template-columns:1fr}}
+  .col{border:1px solid var(--g200);background:var(--paper);border-radius:var(--r);padding:16px 18px;display:flex;flex-direction:column}
+  .col.ok{border-color:var(--olive)} .col.bad{border-color:var(--rust)}
+  .col .ch{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+  .col .badge{font-family:var(--mono);font-weight:700;font-size:11px;color:var(--ivory);border-radius:7px;padding:3px 10px}
+  .col.ok .badge{background:var(--olive)} .col.bad .badge{background:var(--rust)}
+  .col h4{font-family:var(--serif);font-size:16px;font-weight:600;margin:0;letter-spacing:-.01em}
+  .col .verdict{font-family:var(--mono);font-size:10.5px;margin-left:auto;text-transform:uppercase;letter-spacing:.05em}
+  .col.ok .verdict{color:var(--olive)} .col.bad .verdict{color:var(--rust)}
+  /* code */
+  .code{background:var(--code);border-radius:9px;padding:11px 13px;margin:0 0 11px;overflow-x:auto}
+  .code .flab{font-family:var(--mono);font-size:9.5px;letter-spacing:.04em;color:#9a9387;margin-bottom:7px;text-transform:none}
+  .code pre{margin:0;font-family:var(--mono);font-size:11px;line-height:1.55;color:var(--codeink);white-space:pre}
+  .code .kw{color:#c98a64} .code .str{color:#9bb06a} .code .cm{color:#7d7669} .code .fn{color:#d9c27a} .code .cap{color:#82a0c0;margin:0;max-width:none}
+  .code .add{background:rgba(108,122,74,.28);display:inline-block;width:100%}
+  .code .del{background:rgba(168,71,47,.24);display:inline-block;width:100%;text-decoration:line-through;text-decoration-color:rgba(168,71,47,.7)}
+  .code .ctx{display:inline-block;width:100%;opacity:.7}
+  .code .hl{background:rgba(217,194,122,.22);display:inline-block;width:100%}
+  /* steps */
+  .steps{display:grid;grid-template-columns:1fr;gap:10px;margin:14px 0;counter-reset:s}
+  .step{display:grid;grid-template-columns:44px 1fr;gap:14px;border:1px solid var(--g200);background:var(--paper);border-radius:var(--r);padding:14px 16px}
+  .step .badge{width:30px;height:30px;border-radius:50%;background:var(--slate);color:var(--ivory);font-family:var(--mono);font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center}
+  .step.green .badge{background:var(--olive)}
+  .step h4{font-family:var(--serif);font-size:16px;font-weight:600;margin:1px 0 5px;letter-spacing:-.01em}
+  .step .body{font-size:13px;color:var(--slate);margin:0}
+  .step .loc{font-family:var(--mono);font-size:10.5px;color:var(--g600);background:var(--g100);border-radius:5px;padding:1px 6px}
+  /* invariant tags */
+  .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+  .tags .t{font-family:var(--mono);font-size:10.5px;border-radius:999px;padding:3px 9px;background:var(--g100);color:var(--g600)}
+  .tags .t.hot{background:#fbf2ef;color:var(--rust)} .tags .t.good{background:#f2f4ec;color:var(--olive)}
+  footer{margin-top:60px;border-top:1px solid var(--g200);padding-top:16px;font-family:var(--mono);font-size:10.5px;color:var(--g400);line-height:1.7}
+  footer code{background:transparent;color:var(--g600);padding:0}
+</style>
+</head>
+<body>
+
+<nav class="cross">
+  <div class="inner">
+    <span class="brand">receiver_type_inference · TASK-350</span>
+    <span class="here"><span class="dot"></span>Fix A · TS optional param-properties</span>
+    <a href="task-350 - Restore-lost-receiver-types-at-indexing-time-(TypeScript-optional-ctor-param-properties).overview.html">change-group overview</a>
+    <span class="pending">350.1 JS JSDoc <span class="tag">sibling</span></span>
+    <span class="pending">350.2 Python <span class="tag">sibling</span></span>
+    <span class="pending">350.3 interim classifier <span class="tag">sibling</span></span>
+  </div>
+</nav>
+
+<nav class="toc">
+  <div class="inner">
+    <span class="brand">On this page</span>
+    <a href="#flow">Where the type is lost</a>
+    <a href="#shape">Required vs optional</a>
+    <a href="#diff">The one-file diff</a>
+    <a href="#mech">Settled mechanism</a>
+    <a href="#verify">Verification</a>
+  </div>
+</nav>
+
+<main>
+
+  <p class="eyebrow">TASK-350 · Fix A · shipped · commit 0e6c3216</p>
+  <h1>Optional constructor parameter-properties never emit their implicit class field</h1>
+  <p class="cap prose">As shipped, a declared receiver type that was dropped at <b>indexing time</b> is now restored inside one tree-sitter query file; resolution code was untouched and reads the type the moment it exists.</p>
+  <div class="meta">
+    <span class="chip">scope <strong>1 file · typescript.scm</strong></span>
+    <span class="chip good">handlers <strong>0 edits</strong></span>
+    <span class="chip good">data model <strong>no schema bump</strong></span>
+    <span class="chip good">core suite <strong>2245+ green</strong></span>
+  </div>
+
+  <h2 id="flow">Where the type is lost, and where the fix puts it back</h2>
+  <p class="cap prose">The same pipeline carries a required param-property's type end-to-end, but for an <b>optional</b> param-property the implicit field is never created — so the chain breaks at the first hop and the member surfaces as a false-positive unreachable entry point.</p>
+  <div class="ba">
+    <div class="panel cur">
+      <p class="ptitle">Current — optional param-property</p>
+      <svg viewBox="0 0 300 360" role="img" aria-label="Current flow: optional parameter only emits a parameter capture, no field, so the type is lost and the member is unreachable">
+        <defs>
+          <marker id="aC" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#a8472f"/></marker>
+          <marker id="aG" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#9a9387"/></marker>
+        </defs>
+        <g font-family="ui-monospace,monospace" font-size="10.5">
+          <rect x="40" y="8" width="220" height="38" rx="9" fill="#26241f"/>
+          <text x="150" y="25" fill="#e8e1d2" text-anchor="middle">constructor(</text>
+          <text x="150" y="39" fill="#9bb06a" text-anchor="middle">private readonly config?: T</text>
+
+          <rect x="40" y="78" width="220" height="34" rx="9" fill="#fff" stroke="#ddd6c8"/>
+          <text x="150" y="93" fill="#2b2a28" text-anchor="middle">AST: optional_parameter</text>
+          <text x="150" y="106" fill="#5f594f" text-anchor="middle" font-size="9">accessibility_modifier + identifier</text>
+
+          <rect x="40" y="144" width="220" height="36" rx="9" fill="#fbf2ef" stroke="#a8472f"/>
+          <text x="150" y="159" fill="#a8472f" text-anchor="middle">.scm: generic rule only</text>
+          <text x="150" y="172" fill="#a8472f" text-anchor="middle" font-size="9">@definition.parameter.optional</text>
+
+          <rect x="40" y="212" width="220" height="34" rx="9" fill="#fbf2ef" stroke="#a8472f" stroke-dasharray="4 3"/>
+          <text x="150" y="227" fill="#a8472f" text-anchor="middle">field never emitted</text>
+          <text x="150" y="240" fill="#a8472f" text-anchor="middle" font-size="9">PropertyDefinition.type = ∅</text>
+
+          <rect x="40" y="278" width="220" height="32" rx="9" fill="#fff" stroke="#ddd6c8"/>
+          <text x="150" y="298" fill="#5f594f" text-anchor="middle">receiver_type_unknown</text>
+
+          <rect x="40" y="324" width="220" height="32" rx="9" fill="#fbf2ef" stroke="#a8472f"/>
+          <text x="150" y="344" fill="#a8472f" text-anchor="middle">member = false-positive FP</text>
+
+          <line x1="150" y1="46" x2="150" y2="76" stroke="#9a9387" stroke-width="1.5" marker-end="url(#aG)"/>
+          <line x1="150" y1="112" x2="150" y2="142" stroke="#9a9387" stroke-width="1.5" marker-end="url(#aG)"/>
+          <line x1="150" y1="180" x2="150" y2="210" stroke="#a8472f" stroke-width="1.5" marker-end="url(#aC)"/>
+          <line x1="150" y1="246" x2="150" y2="276" stroke="#a8472f" stroke-width="1.5" marker-end="url(#aC)"/>
+          <line x1="150" y1="310" x2="150" y2="322" stroke="#a8472f" stroke-width="1.5" marker-end="url(#aC)"/>
+        </g>
+      </svg>
+    </div>
+    <div class="arrow"><span class="glyph">→</span><span class="lab">add 2 scm rules</span></div>
+    <div class="panel plan">
+      <p class="ptitle">Planned — same node, field restored</p>
+      <svg viewBox="0 0 300 360" role="img" aria-label="Planned flow: new scm rules also bind definition.field, emitting the implicit field so the type flows through and the member is reachable">
+        <defs>
+          <marker id="aO" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 Z" fill="#6c7a4a"/></marker>
+        </defs>
+        <g font-family="ui-monospace,monospace" font-size="10.5">
+          <rect x="40" y="8" width="220" height="38" rx="9" fill="#26241f"/>
+          <text x="150" y="25" fill="#e8e1d2" text-anchor="middle">constructor(</text>
+          <text x="150" y="39" fill="#9bb06a" text-anchor="middle">private readonly config?: T</text>
+
+          <rect x="40" y="78" width="220" height="34" rx="9" fill="#fff" stroke="#ddd6c8"/>
+          <text x="150" y="93" fill="#2b2a28" text-anchor="middle">AST: optional_parameter</text>
+          <text x="150" y="106" fill="#5f594f" text-anchor="middle" font-size="9">unchanged AST node</text>
+
+          <rect x="40" y="144" width="220" height="36" rx="9" fill="#f2f4ec" stroke="#6c7a4a"/>
+          <text x="150" y="159" fill="#6c7a4a" text-anchor="middle">generic + 2 new modifier rules</text>
+          <text x="150" y="172" fill="#6c7a4a" text-anchor="middle" font-size="9">…optional &amp; @definition.field</text>
+
+          <rect x="40" y="212" width="220" height="34" rx="9" fill="#f2f4ec" stroke="#6c7a4a"/>
+          <text x="150" y="227" fill="#6c7a4a" text-anchor="middle">implicit field emitted</text>
+          <text x="150" y="240" fill="#6c7a4a" text-anchor="middle" font-size="9">PropertyDefinition.type = T</text>
+
+          <rect x="40" y="278" width="220" height="32" rx="9" fill="#fff" stroke="#ddd6c8"/>
+          <text x="150" y="298" fill="#5f594f" text-anchor="middle">receiver_resolution reads .type</text>
+
+          <rect x="40" y="324" width="220" height="32" rx="9" fill="#f2f4ec" stroke="#6c7a4a"/>
+          <text x="150" y="344" fill="#6c7a4a" text-anchor="middle">member = reachable</text>
+
+          <line x1="150" y1="46" x2="150" y2="76" stroke="#9a9387" stroke-width="1.5" marker-end="url(#aO)"/>
+          <line x1="150" y1="112" x2="150" y2="142" stroke="#6c7a4a" stroke-width="1.5" marker-end="url(#aO)"/>
+          <line x1="150" y1="180" x2="150" y2="210" stroke="#6c7a4a" stroke-width="1.5" marker-end="url(#aO)"/>
+          <line x1="150" y1="246" x2="150" y2="276" stroke="#6c7a4a" stroke-width="1.5" marker-end="url(#aO)"/>
+          <line x1="150" y1="310" x2="150" y2="322" stroke="#6c7a4a" stroke-width="1.5" marker-end="url(#aO)"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+  <div class="legend">
+    <span><i class="del"></i> broken / lost in current</span>
+    <span><i class="add"></i> restored by the fix</span>
+    <span><i class="same"></i> unchanged hop</span>
+  </div>
+
+  <h2 id="shape">Required works, optional does not — same AST, different query coverage</h2>
+  <p class="cap prose">For a required param-property two modifier rules bind both <code>@definition.parameter</code> and <code>@definition.field</code>; the optional path has only a generic rule that binds a parameter and nothing else — the gap is in the <code>.scm</code>, not the AST.</p>
+  <div class="two">
+    <div class="col ok">
+      <div class="ch"><span class="badge">REQUIRED</span><h4>private readonly config: T</h4><span class="verdict">field emitted</span></div>
+      <div class="code">
+        <div class="flab">typescript.scm · lines 167–179</div>
+<pre><span class="cm">; param properties (access modifier)</span>
+(<span class="fn">required_parameter</span>
+  (accessibility_modifier)
+  pattern: (identifier) <span class="add">@definition.parameter @definition.field</span>
+)
+<span class="cm">; param properties (readonly)</span>
+(<span class="fn">required_parameter</span>
+  "readonly"
+  pattern: (identifier) <span class="add">@definition.parameter @definition.field</span>
+)</pre>
+      </div>
+      <div class="tags"><span class="t good">emits @definition.field</span><span class="t good">type → T</span><span class="t good">receiver resolves</span></div>
+    </div>
+    <div class="col bad">
+      <div class="ch"><span class="badge">OPTIONAL</span><h4>private readonly config?: T</h4><span class="verdict">field missing</span></div>
+      <div class="code">
+        <div class="flab">typescript.scm · line 432 (only rule that matches)</div>
+<pre><span class="cm">; optional parameters (contain ? token)</span>
+(<span class="fn">optional_parameter</span>
+  pattern: (identifier) <span class="del">@definition.parameter.optional</span>
+)
+
+<span class="cm">; no modifier-aware rule exists →</span>
+<span class="cm">; @definition.field is NEVER bound</span>
+<span class="cm">; for an optional param-property</span></pre>
+      </div>
+      <div class="tags"><span class="t hot">no @definition.field</span><span class="t hot">type lost</span><span class="t hot">receiver_type_unknown</span></div>
+    </div>
+  </div>
+
+  <h2 id="diff">The entire change as shipped — two new rules, one file</h2>
+  <p class="cap prose">The committed change mirrors the required-parameter rules for <code>optional_parameter</code>, binding <code>@definition.parameter.optional</code> and <code>@definition.field</code> on the same identifier node, with a WHY comment recording the split and the dedup.</p>
+  <div class="code">
+    <div class="flab">packages/core/src/index_single_file/query_code_tree/queries/typescript.scm · lines 181–195 (committed)</div>
+<pre><span class="ctx">  pattern: (identifier) @definition.parameter @definition.field</span>
+<span class="ctx">)</span>
+<span class="add">; Optional constructor parameter properties — same dual-capture as the required</span>
+<span class="add">; variants above. Split into an accessibility-modifier rule and a readonly rule</span>
+<span class="add">; because a single pattern cannot OR the two child constraints; a</span>
+<span class="add">; `private readonly x?` param matches both, but the duplicate @definition.field</span>
+<span class="add">; (and @definition.parameter.optional) captures collapse downstream via the</span>
+<span class="add">; location-keyed symbol_id, so exactly one property and one parameter result.</span>
+<span class="add">(optional_parameter</span>
+<span class="add">  (accessibility_modifier)</span>
+<span class="add">  pattern: (identifier) @definition.parameter.optional @definition.field</span>
+<span class="add">)</span>
+<span class="add"></span>
+<span class="add">(optional_parameter</span>
+<span class="add">  "readonly"</span>
+<span class="add">  pattern: (identifier) @definition.parameter.optional @definition.field</span>
+<span class="add">)</span>
+<span class="ctx"></span>
+<span class="ctx">; Class decorators (decorator first, then target)</span></pre>
+  </div>
+  <div class="callout olive">
+    <span class="k">why no handler changed</span>
+    <p>The new <code>@definition.field</code> capture dispatches to <code>handle_ts_definition_field</code> (line 737), which already branches on <code>parent?.type === "optional_parameter"</code> and pulls type / access-modifier / readonly via <code>extract_parameter_type</code> — the capture landed in a handler already waiting for it.</p>
+  </div>
+
+  <h2 id="mech">The plan's hypothesis, now settled by what shipped</h2>
+  <p class="cap prose">The plan assumed the field must be routed to <code>handle_definition_field_param_property</code>; as built, that path was deliberately not used — the live handler <code>handle_ts_definition_field</code> already branches on the optional-parameter parent, and <code>definition.field.param_property</code> is confirmed dead (its removal is separate, out-of-scope cleanup).</p>
+  <div class="two">
+    <div class="col bad">
+      <div class="ch"><span class="badge">HYPOTHESIS</span><h4>plan, item 4</h4><span class="verdict">did not ship</span></div>
+      <div class="code">
+        <div class="flab">claim</div>
+<pre><span class="cm">"route the optional-param-property</span>
+<span class="cm"> field through handle_definition_</span>
+<span class="cm"> field_param_property" (line 700,</span>
+<span class="cm"> key definition.field.param_property)</span>
+
+<span class="del">→ would require a handler edit</span>
+<span class="del">→ assumes that key is dispatched</span></pre>
+      </div>
+      <div class="tags"><span class="t hot">key never emitted by .scm</span><span class="t hot">pre-existing dead code</span></div>
+    </div>
+    <div class="col ok">
+      <div class="ch"><span class="badge">AS-BUILT</span><h4>shipped dispatch</h4><span class="verdict">no handler edit</span></div>
+      <div class="code">
+        <div class="flab">capture_handlers.typescript.ts · @556 / @571 / @737</div>
+<pre><span class="kw">export function</span> <span class="fn">handle_ts_definition_field</span>(…){
+  <span class="kw">const</span> is_param_property =
+    capture.node.type === <span class="str">"identifier"</span> &amp;&amp;
+   (parent?.type === <span class="str">"required_parameter"</span> ||
+    parent?.type === <span class="hl">"optional_parameter"</span>);
+  …
+  type: is_param_property
+    ? <span class="fn">extract_parameter_type</span>(node) : …
+}
+<span class="cm">// registry: "definition.field": handle_ts_definition_field</span></pre>
+      </div>
+      <div class="tags"><span class="t good">already handles optional_parameter</span><span class="t good">scm change only</span></div>
+    </div>
+  </div>
+  <div class="callout">
+    <span class="k">the duplicate-capture nuance</span>
+    <p>The generic rule (line 432) and both new modifier rules match a modified optional param, so <code>@definition.parameter.optional</code> fires more than once for the same node — exactly as already happens for required params.</p>
+    <p>The downstream builder dedups by location-based <code>symbol_id</code>, so parameter counts cannot change; the tests assert exact counts to prove zero perturbation.</p>
+  </div>
+
+  <h2 id="verify">Verification as shipped — three test files plus a negative control</h2>
+  <p class="cap prose">The committed tests prove the field is emitted with its type, that real cross-file members are reachable, and that counts are unperturbed; reverting the <code>.scm</code> change makes them fail.</p>
+  <div class="steps">
+    <div class="step green">
+      <span class="badge">1</span>
+      <div>
+        <h4>Unit — 6 cases <span class="loc">capture_handlers.typescript.test.ts · describe "Optional constructor parameter properties (TASK-350)"</span></h4>
+        <p class="body">Three positive variants (private-readonly, accessibility-only, readonly-only) assert an implicit field carrying its <code>type</code>; a NEGATIVE case proves <code>constructor(name?: string)</code> emits zero properties; a COUNT case proves a mixed constructor yields exactly 3 parameters / 2 properties; and the recursive self-typed case is covered.</p>
+      </div>
+    </div>
+    <div class="step green">
+      <span class="badge">2</span>
+      <div>
+        <h4>Integration — reachability <span class="loc">receiver_resolution.typescript.integration.test.ts</span></h4>
+        <p class="body">NestJS members (<code>getGlobalPipes</code>, <code>getGlobalGuards</code>, <code>setMocker</code>) pass <code>assert_member_reachable</code>: a real graph node AND absent from <code>entry_points</code>. The Prisma recursive cases pin the resolved self-edge — <code>enclosed_calls[].resolutions[].symbol_id === method node</code> — a stronger proof than entry-point absence.</p>
+      </div>
+    </div>
+    <div class="step green">
+      <span class="badge">3</span>
+      <div>
+        <h4>Evidence fixtures <span class="loc">tests/fixtures/typescript/code/integration/optional_param_properties/</span></h4>
+        <p class="body">Committed real-shape sources drive the integration suite: <code>application_config.ts</code>, <code>pipes_context_creator.ts</code>, <code>testing_injector.ts</code>, <code>merged_extensions_list.ts</code>.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout olive">
+    <span class="k">negative control · outcome</span>
+    <p>Reverting the <code>.scm</code> change makes the new tests fail, confirming they bind to the fix; with the fix in place the full core suite is green (2245+ tests) and existing parameter/field counts are unperturbed.</p>
+  </div>
+
+  <div class="callout slate">
+    <span class="k">net change as committed</span>
+    <p>One file: <code>typescript.scm</code>, +14 lines (two rules plus a WHY comment). No edits to <code>receiver_resolution.ts</code>, <code>type_preprocessing/bindings.ts</code>, <code>constructor.ts</code>, <code>member.ts</code>, or any capture handler. No data-model change, no schema bump.</p>
+  </div>
+
+  <footer>
+    As-built · commit <code>0e6c3216 feat(350)</code>. Verified against <code>typescript.scm</code> (181–195), <code>capture_handlers.typescript.ts</code> (556, 571, 737), <code>receiver_resolution.ts</code> (269–278), <code>capture_handlers.typescript.test.ts</code> (553+), <code>receiver_resolution.typescript.integration.test.ts</code> (108+).<br>
+    Companion for TASK-350 · receiver_type_inference change group · reflects the shipped implementation.
+  </footer>
+
+</main>
+</body>
+</html>

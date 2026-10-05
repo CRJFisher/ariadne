@@ -3,7 +3,7 @@ id: task-epic-11.19
 title: Migrate symbol_resolution feature
 status: Done
 assignee: []
-created_date: '2025-08-20'
+created_date: "2025-08-20"
 labels: [migration, scope-analysis, epic-11]
 dependencies: [task-epic-11.2]
 parent_task_id: epic-11
@@ -16,6 +16,7 @@ Migrate the `symbol_resolution` feature to `src/scope_analysis/symbol_resolution
 ## Research Phase
 
 **NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+
 - `## Current Codebase Structure (As Implemented)` - understand current locations
 - `### Proposed Structure` - understand target architecture
 
@@ -54,8 +55,23 @@ Migrate the `symbol_resolution` feature to `src/scope_analysis/symbol_resolution
 
 ```typescript
 // ✅ Created in implementation
-interface ResolvedSymbol { symbol: ScopeSymbol; scope: ScopeNode; definition_file?: string; is_imported?: boolean; is_exported?: boolean; confidence: 'exact' | 'likely' | 'possible'; }
-interface ResolutionContext { scope_tree: ScopeTree; language: Language; file_path: string; root_node?: SyntaxNode; source_code?: string; imports: ImportInfo[]; exports: ExportInfo[]; }
+interface ResolvedSymbol {
+  symbol: ScopeSymbol;
+  scope: ScopeNode;
+  definition_file?: string;
+  is_imported?: boolean;
+  is_exported?: boolean;
+  confidence: "exact" | "likely" | "possible";
+}
+interface ResolutionContext {
+  scope_tree: ScopeTree;
+  language: Language;
+  file_path: string;
+  root_node?: SyntaxNode;
+  source_code?: string;
+  imports: ImportInfo[];
+  exports: ExportInfo[];
+}
 ```
 
 ## Planning Phase
@@ -108,15 +124,17 @@ Research findings will be documented here during execution.
 ### What Was Implemented
 
 1. **Created Complete Symbol Resolution System**
+
    - Core symbol_resolution.ts (615 lines) - ResolvedSymbol interface, scope chain traversal, import resolution, fuzzy matching
    - symbol_resolution.javascript.ts (909 lines) - JavaScript/TypeScript with hoisting, prototype chain, this/super binding, ES6/CommonJS imports/exports
    - symbol_resolution.typescript.ts (825 lines) - TypeScript-specific with type parameters, interfaces, namespaces, type-only imports/exports
-   - symbol_resolution.python.ts (685 lines) - Python with LEGB rule, global/nonlocal, __all__ exports, builtins
+   - symbol_resolution.python.ts (685 lines) - Python with LEGB rule, global/nonlocal, **all** exports, builtins
    - symbol_resolution.rust.ts (832 lines) - Rust with module paths, use statements, impl blocks, Self/self keywords, prelude
    - index.ts (346 lines) - Language dispatcher with high-level APIs
    - symbol_resolution.test.ts (379 lines) - Comprehensive tests for all languages
 
 2. **Key Features Implemented**
+
    - Language-agnostic symbol resolution with scope chain traversal
    - Import/export extraction for all languages
    - Cross-file symbol tracking support
@@ -130,6 +148,7 @@ Research findings will be documented here during execution.
      - Rust: Module paths, use statements, impl blocks, visibility modifiers
 
 3. **Test Status**: **14/14 tests passing ✅ (All fixed 2025-08-21)**
+
    - JavaScript: 4/4 passing (Fixed ES6 export extraction)
    - TypeScript: 2/2 passing
    - Python: 3/3 passing (Fixed import extraction)
@@ -137,6 +156,7 @@ Research findings will be documented here during execution.
    - Cross-language: 2/2 passing (Fixed go to definition)
 
 4. **Fixes Applied (2025-08-21)**
+
    - Fixed JavaScript ES6 export extraction to handle multiple declaration types
    - Fixed Python import extraction to handle dotted_name nodes
    - Fixed Rust use statement extraction to check 'argument' field
@@ -147,6 +167,7 @@ Research findings will be documented here during execution.
    - Fixed Rust struct/enum name extraction (type_identifier vs identifier)
 
 5. **Design Decisions**
+
    - Functional paradigm throughout (no classes)
    - ResolutionContext for passing state
    - Language-specific contexts extending base context
@@ -162,6 +183,7 @@ Research findings will be documented here during execution.
 When implementing, add these TODO comments:
 
 1. In `symbol_resolution.ts`:
+
    ```typescript
    // TODO: Integration with Scope Tree
    // - Walk scope tree for resolution

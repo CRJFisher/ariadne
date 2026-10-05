@@ -4,7 +4,8 @@
 
 import { describe, it, expect } from "vitest";
 import Parser from "tree-sitter";
-import TypeScript from "tree-sitter-typescript";
+import { LANGUAGE_TO_TREESITTER_LANG } from "../parsers";
+import { build_index_single_file } from "../../index_single_file";
 import type { SyntaxNode } from "tree-sitter";
 import {
   create_interface_id,
@@ -28,7 +29,7 @@ import {
   is_static_method,
   is_async_method,
   extract_return_type,
-  extract_property_type,
+  extract_declared_type,
   extract_parameter_type,
   extract_parameter_default_value,
   find_containing_callable,
@@ -49,13 +50,15 @@ import {
   property_symbol,
   type_symbol,
 } from "@ariadnejs/types";
-import type { FilePath, SymbolId, SymbolName } from "@ariadnejs/types";
+import type {
+  CollectionMember,
+  FilePath,
+  SymbolId,
+  SymbolName,
+} from "@ariadnejs/types";
+import { index_source } from "./test_utils";
 import { node_to_location } from "../../node_to_location";
-import {
-  SemanticCategory,
-  SemanticEntity,
-  type CaptureNode,
-} from "../../../index_single_file";
+import { SemanticCategory, SemanticEntity, type CaptureNode } from "../../capture_types";
 
 // ============================================================================
 // Helpers
@@ -65,7 +68,7 @@ const file_path = "/test.ts" as FilePath;
 
 function parse_typescript(code: string): SyntaxNode {
   const parser = new Parser();
-  parser.setLanguage(TypeScript.typescript);
+  parser.setLanguage(LANGUAGE_TO_TREESITTER_LANG.get("typescript")!);
   const tree = parser.parse(code);
   return tree.rootNode;
 }
@@ -542,21 +545,20 @@ class MyClass {
 // ============================================================================
 
 describe("find_containing_callable", () => {
-  it("should return anonymous function SymbolId for arrow function parameters", () => {
+  it("returns the declarator-named function id for a declarator arrow's parameters", () => {
+    // The definition pass mints `const fn = (x) => …` under the declarator
+    // name, so the parameter's owner id must agree with that, not with a
+    // location-keyed anonymous.
     const code = "const fn = (x: number) => x * 2;";
     const root = parse_typescript(code);
 
     const param_node = find_arrow_function_param(root, "x")!;
     expect(param_node).not.toBeNull();
 
-    const arrow_node = find_arrow_function(root)!;
-    expect(arrow_node).not.toBeNull();
-
     const capture = make_capture(param_node, "definition.parameter", SemanticCategory.DEFINITION, SemanticEntity.PARAMETER);
     const callable_id = find_containing_callable(capture);
 
-    const expected_id = anonymous_function_symbol(node_to_location(arrow_node, file_path));
-    expect(callable_id).toBe(expected_id);
+    expect(callable_id).toBe("function:/test.ts:1:7:1:8:fn");
   });
 
   it("should return anonymous function SymbolId for callback arrow function parameters", () => {
@@ -638,6 +640,13 @@ describe("extract_class_extends", () => {
     expect(class_node).not.toBeNull();
     expect(extract_class_extends(class_node!)).toEqual([]);
   });
+
+  it("keeps a namespace-qualified base as written: class Foo extends o.Base<T>", () => {
+    const root = parse_typescript("class Foo extends o.Base<T> {}");
+    const class_node = find_node_by_type(root, "class_declaration");
+    expect(class_node).not.toBeNull();
+    expect(extract_class_extends(class_node!)).toEqual(["o.Base"]);
+  });
 });
 
 // ============================================================================
@@ -679,6 +688,13 @@ describe("extract_interface_extends", () => {
     expect(iface_node).not.toBeNull();
     expect(extract_interface_extends(iface_node!)).toEqual([]);
   });
+
+  it("keeps namespace-qualified parents as written: interface Foo extends o.Base<T>, o.Other", () => {
+    const root = parse_typescript("interface Foo extends o.Base<T>, o.Other {}");
+    const iface_node = find_node_by_type(root, "interface_declaration");
+    expect(iface_node).not.toBeNull();
+    expect(extract_interface_extends(iface_node!)).toEqual(["o.Base", "o.Other"]);
+  });
 });
 
 // ============================================================================
@@ -712,6 +728,13 @@ describe("extract_implements", () => {
     const class_node = find_node_by_type(root, "class_declaration");
     expect(class_node).not.toBeNull();
     expect(extract_implements(class_node!)).toEqual([]);
+  });
+
+  it("keeps namespace-qualified interfaces as written, in order: implements o.TypeVisitor, o.Visitor<T>, I", () => {
+    const root = parse_typescript("class Foo implements o.TypeVisitor, o.Visitor<T>, I {}");
+    const class_node = find_node_by_type(root, "class_declaration");
+    expect(class_node).not.toBeNull();
+    expect(extract_implements(class_node!)).toEqual(["o.TypeVisitor", "o.Visitor", "I"]);
   });
 });
 
@@ -970,7 +993,7 @@ describe("extract_type_parameters", () => {
     expect(iface_node).not.toBeNull();
 
     const result = extract_type_parameters(iface_node);
-    expect(result).toEqual(["T", "U"]);
+    expect(result).toEqual([{ name: "T" }, { name: "U" }]);
   });
 
   it("should extract single type parameter from a class", () => {
@@ -980,7 +1003,25 @@ describe("extract_type_parameters", () => {
     expect(class_node).not.toBeNull();
 
     const result = extract_type_parameters(class_node);
-    expect(result).toEqual(["T"]);
+    expect(result).toEqual([{ name: "T" }]);
+  });
+
+  it("carries the type an `extends` constraint bounds a parameter by", () => {
+    const code = "class Container<T extends Base> {}";
+    const root = parse_typescript(code);
+    const class_node = find_node_by_type(root, "class_declaration")!;
+
+    expect(extract_type_parameters(class_node)).toEqual([{ name: "T", bound: "Base" }]);
+  });
+
+  it("carries a generic constraint whole", () => {
+    const code = "class Container<T extends Base<string>> {}";
+    const root = parse_typescript(code);
+    const class_node = find_node_by_type(root, "class_declaration")!;
+
+    expect(extract_type_parameters(class_node)).toEqual([
+      { name: "T", bound: "Base<string>" },
+    ]);
   });
 
   it("should return empty array for interface without type parameters", () => {
@@ -1036,17 +1077,17 @@ describe("extract_return_type", () => {
 });
 
 // ============================================================================
-// extract_property_type
+// extract_declared_type
 // ============================================================================
 
-describe("extract_property_type", () => {
+describe("extract_declared_type", () => {
   it("should extract type from a class property", () => {
     const code = "class Foo { count: number = 0; }";
     const root = parse_typescript(code);
     const prop_node = find_property_name_node(root, "count")!;
     expect(prop_node).not.toBeNull();
 
-    const result = extract_property_type(prop_node);
+    const result = extract_declared_type(prop_node);
     expect(result).toBe("number");
   });
 
@@ -1056,7 +1097,7 @@ describe("extract_property_type", () => {
     const prop_node = find_property_name_node(root, "items")!;
     expect(prop_node).not.toBeNull();
 
-    const result = extract_property_type(prop_node);
+    const result = extract_declared_type(prop_node);
     expect(result).toBe("Map<string, number[]>");
   });
 
@@ -1066,7 +1107,7 @@ describe("extract_property_type", () => {
     const prop_node = find_property_name_node(root, "count")!;
     expect(prop_node).not.toBeNull();
 
-    const result = extract_property_type(prop_node);
+    const result = extract_declared_type(prop_node);
     expect(result).toBeUndefined();
   });
 });
@@ -1252,5 +1293,127 @@ describe("is_async_method", () => {
     expect(name_node).not.toBeNull();
 
     expect(is_async_method(name_node)).toBe(false);
+  });
+});
+
+/**
+ * The member-assignment rule in `typescript.scm` is the TypeScript half of the
+ * same invariant `symbol_factories.javascript.test.ts` pins for JavaScript:
+ * every id a function collection records must be an id the definition builder
+ * minted, or a call through the holder lands on nothing.
+ */
+describe("collection member ids name real definitions (TypeScript)", () => {
+  const file = "members.ts" as FilePath;
+
+  function index_typescript(code: string) {
+    const parser = new Parser();
+    parser.setLanguage(LANGUAGE_TO_TREESITTER_LANG.get("typescript")!);
+    const tree = parser.parse(code);
+    const lines = code.split("\n");
+    return build_index_single_file(
+      {
+        file_path: file,
+        file_lines: lines.length,
+        file_end_column: lines[lines.length - 1]?.length ?? 0,
+        tree,
+        lang: "typescript",
+        source: code,
+      },
+      tree,
+      "typescript"
+    );
+  }
+
+  function recorded_ids(index: ReturnType<typeof index_typescript>): SymbolId[] {
+    const recorded: SymbolId[] = [];
+    const walk = (members: readonly CollectionMember[]) => {
+      for (const member of members) {
+        if ("symbol_id" in member) recorded.push(member.symbol_id);
+        if ("nested" in member) walk(member.nested);
+      }
+    };
+    for (const definition of [...index.variables.values(), ...index.functions.values()]) {
+      const collection = definition.function_collection;
+      if (!collection) continue;
+      recorded.push(...collection.stored_functions);
+      walk(collection.named_members ?? []);
+    }
+    return recorded;
+  }
+
+  it("records a member-assigned function under the id of its own definition", () => {
+    const index = index_typescript(
+      "const app: Record<string, unknown> = {};\napp.engine = function () { return 1; };"
+    );
+    const engine_id = anonymous_function_symbol({
+      file_path: file,
+      start_line: 2,
+      start_column: 14,
+      end_line: 2,
+      end_column: 38,
+    });
+    expect(recorded_ids(index)).toEqual([engine_id, engine_id]);
+    expect([...index.functions.keys()]).toEqual([engine_id]);
+  });
+
+  it("defines a CommonJS property export, which no other rule in this grammar names", () => {
+    const index = index_typescript("exports.handler = async () => { return 1; };");
+    expect([...index.functions.keys()]).toEqual([
+      anonymous_function_symbol({
+        file_path: file,
+        start_line: 1,
+        start_column: 19,
+        end_line: 1,
+        end_column: 43,
+      }),
+    ]);
+  });
+
+  it("leaves the whole-module export to the rule that already defines it", () => {
+    const index = index_typescript("module.exports = function () { return 1; };");
+    expect([...index.functions.keys()]).toEqual([
+      anonymous_function_symbol({
+        file_path: file,
+        start_line: 1,
+        start_column: 18,
+        end_line: 1,
+        end_column: 42,
+      }),
+    ]);
+  });
+});
+
+/**
+ * A local binding's declared annotation is the evidence type-parameter binding
+ * reads when the value a generic call is given is held in a `const` rather than
+ * passed as a parameter. It reaches that reader only from the definition's
+ * `type`, so the indexer has to write it there.
+ */
+describe("a local binding's declared annotation (TypeScript)", () => {
+  function declared_bindings(code: string) {
+    const index = index_source(code, "typescript", "locals.ts" as FilePath);
+    return [...index.variables.values()].map((def) => ({
+      name: def.name,
+      kind: def.kind,
+      type: def.type,
+    }));
+  }
+
+  it("records the generic annotation a constant declares", () => {
+    expect(declared_bindings("class Router {}\nconst routers: Array<Router> = [];")).toEqual([
+      { name: "routers", kind: "constant", type: "Array<Router>" },
+    ]);
+  });
+
+  it("records the annotation a mutable variable declares", () => {
+    expect(declared_bindings("class Router {}\nlet single: Router = new Router();")).toEqual([
+      { name: "single", kind: "variable", type: "Router" },
+    ]);
+  });
+
+  it("records no type for a binding that declares no annotation", () => {
+    expect(declared_bindings("class Router {}\nconst inferred = new Router();")).toEqual([
+      { name: "inferred", kind: "constant", type: undefined },
+    ]);
   });
 });

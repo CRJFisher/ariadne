@@ -7,6 +7,11 @@
 
 import { describe, it, expect, afterAll } from "vitest";
 import { Project } from "../project/project";
+import {
+  call_outcomes,
+  find_caller_node,
+  is_entry_point,
+} from "./resolve_references.test";
 import type { FilePath, SymbolName } from "@ariadnejs/types";
 import * as fs from "fs";
 import * as path from "path";
@@ -96,5 +101,1376 @@ def create_user(name):
       });
       expect(greet_entry).toBeUndefined();
     });
+  });
+
+  describe("underscore-private explicit named imports", () => {
+    const LIB = `def _make_block(x):
+    return x
+
+def _ensure_sync_result(r):
+    return r
+
+def _parse_mapper_argument(a):
+    return a
+
+def make_block(x):
+    return x
+`;
+
+    it("binds each underscore-private named import and resolves the calls to their _lib.py definitions", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "_lib.py": LIB,
+        "app.py": `from ._lib import _make_block, _ensure_sync_result, _parse_mapper_argument
+
+def run():
+    _make_block(1)
+    _ensure_sync_result(2)
+    _parse_mapper_argument(3)
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const private_names = [
+        "_make_block",
+        "_ensure_sync_result",
+        "_parse_mapper_argument",
+      ];
+
+      const app_scope = project.scopes.get_file_root_scope(file_paths["app.py"]);
+      expect(app_scope).not.toBeUndefined();
+
+      // Each private name binds in app.py's scope to its _lib.py definition.
+      for (const name of private_names) {
+        const resolved = project.resolutions.resolve(
+          app_scope!.id,
+          name as SymbolName
+        );
+        expect(resolved).not.toBeNull();
+        expect(resolved).toContain("_lib.py");
+        expect(resolved).toContain(name);
+      }
+
+      const call_graph = project.get_call_graph();
+      const run_node = find_caller_node(call_graph, "run", file_paths["app.py"]);
+      expect(run_node).not.toBeUndefined();
+
+      // Each call resolves to the matching _lib.py definition with no failure,
+      // and none of the private names is left as an entry point.
+      for (const name of private_names) {
+        const call = run_node!.enclosed_calls.find(
+          (c) => c.name === (name as SymbolName)
+        );
+        expect(call).not.toBeUndefined();
+        expect(call!.resolution_failure).toBeUndefined();
+        const target = call_graph.nodes.get(call!.resolutions[0].symbol_id);
+        expect(target?.location.file_path).toEqual(file_paths["_lib.py"]);
+        expect(target?.name).toEqual(name as SymbolName);
+
+        expect(is_entry_point(call_graph, name, file_paths["_lib.py"])).toEqual(
+          false
+        );
+      }
+    });
+
+    it("keeps the public control name resolving when imported alongside private names", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "_lib.py": LIB,
+        "app.py": `from ._lib import make_block
+
+def run():
+    make_block(1)
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const app_scope = project.scopes.get_file_root_scope(file_paths["app.py"]);
+      expect(app_scope).not.toBeUndefined();
+
+      const resolved = project.resolutions.resolve(
+        app_scope!.id,
+        "make_block" as SymbolName
+      );
+      expect(resolved).not.toBeNull();
+      expect(resolved).toContain("_lib.py");
+      expect(resolved).toContain("make_block");
+
+      const call_graph = project.get_call_graph();
+      const run_node = find_caller_node(call_graph, "run", file_paths["app.py"]);
+      const call = run_node!.enclosed_calls.find(
+        (c) => c.name === ("make_block" as SymbolName)
+      );
+      expect(call!.resolution_failure).toBeUndefined();
+      const target = call_graph.nodes.get(call!.resolutions[0].symbol_id);
+      expect(target?.location.file_path).toEqual(file_paths["_lib.py"]);
+      expect(target?.name).toEqual("make_block" as SymbolName);
+
+      expect(
+        is_entry_point(call_graph, "make_block", file_paths["_lib.py"])
+      ).toEqual(false);
+    });
+
+    it("does not surface an underscore-private name through a wildcard import", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "_lib.py": LIB,
+        "wildcard_app.py": `from ._lib import *
+
+def run():
+    _make_block(1)
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const app_scope = project.scopes.get_file_root_scope(
+        file_paths["wildcard_app.py"]
+      );
+      expect(app_scope).not.toBeUndefined();
+
+      // The wildcard layers only _lib's public surface; _make_block is
+      // is_exported: false and never enters it.
+      const resolved = project.resolutions.resolve(
+        app_scope!.id,
+        "_make_block" as SymbolName
+      );
+      expect(resolved).toBeNull();
+
+      // The unresolved call leaves _make_block an entry point.
+      const call_graph = project.get_call_graph();
+      expect(
+        is_entry_point(call_graph, "_make_block", file_paths["_lib.py"])
+      ).toEqual(true);
+    });
+
+    it("resolves an underscore-private member accessed through a namespace import to the module-scope definition", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "_lib.py": LIB,
+        "namespace_app.py": `import _lib as ns
+
+def run():
+    ns._make_block(1)
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const call_graph = project.get_call_graph();
+
+      // Python has no export keyword: `ns._make_block` is a real call, and the
+      // module member lookup falls back to the module's own top-level
+      // definition when the underscore name is absent from its export surface.
+      expect(
+        is_entry_point(call_graph, "_make_block", file_paths["_lib.py"])
+      ).toEqual(false);
+
+      const run_node = find_caller_node(
+        call_graph,
+        "run",
+        file_paths["namespace_app.py"]
+      );
+      const call = run_node!.enclosed_calls.find(
+        (c) => c.name === ("_make_block" as SymbolName)
+      );
+      const targets = (call?.resolutions ?? []).map((r) => {
+        const target = call_graph.nodes.get(r.symbol_id);
+        return `${target?.name}@${path.basename(target?.location.file_path ?? "")}`;
+      });
+      expect(targets).toEqual(["_make_block@_lib.py"]);
+    });
+
+    it("binds an aliased underscore import under its alias and resolves the call to the original definition", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "_lib.py": LIB,
+        "app.py": `from ._lib import _make_block as mb
+
+def run():
+    mb(1)
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const app_scope = project.scopes.get_file_root_scope(file_paths["app.py"]);
+      expect(app_scope).not.toBeUndefined();
+
+      // The alias is the bound name; the original private name is not in scope.
+      const resolved_alias = project.resolutions.resolve(
+        app_scope!.id,
+        "mb" as SymbolName
+      );
+      expect(resolved_alias).not.toBeNull();
+      expect(resolved_alias).toContain("_lib.py");
+      expect(resolved_alias).toContain("_make_block");
+      expect(
+        project.resolutions.resolve(app_scope!.id, "_make_block" as SymbolName)
+      ).toBeNull();
+
+      const call_graph = project.get_call_graph();
+      const run_node = find_caller_node(call_graph, "run", file_paths["app.py"]);
+      const call = run_node!.enclosed_calls.find(
+        (c) => c.name === ("mb" as SymbolName)
+      );
+      expect(call!.resolution_failure).toBeUndefined();
+      const target = call_graph.nodes.get(call!.resolutions[0].symbol_id);
+      expect(target?.location.file_path).toEqual(file_paths["_lib.py"]);
+      expect(target?.name).toEqual("_make_block" as SymbolName);
+      expect(
+        is_entry_point(call_graph, "_make_block", file_paths["_lib.py"])
+      ).toEqual(false);
+    });
+
+    it("binds an explicit import to the module-level definition, never a nested same-named definition", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "_lib.py": `def _make_block(x):
+    return x
+
+def _outer():
+    def _make_block(y):
+        return y
+
+    return _make_block(0)
+`,
+        "app.py": `from ._lib import _make_block
+
+def run():
+    _make_block(1)
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const call_graph = project.get_call_graph();
+      const run_node = find_caller_node(call_graph, "run", file_paths["app.py"]);
+      const call = run_node!.enclosed_calls.find(
+        (c) => c.name === ("_make_block" as SymbolName)
+      );
+      expect(call!.resolution_failure).toBeUndefined();
+      const target = call_graph.nodes.get(call!.resolutions[0].symbol_id);
+      expect(target?.location.file_path).toEqual(file_paths["_lib.py"]);
+      // The module-level def is on line 1; the nested one is on line 5. The
+      // module-scope lookup must bind the former.
+      expect(target?.location.start_line).toEqual(1);
+    });
+
+    it("leaves an explicit import of a name absent from the source module unbound", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "_lib.py": LIB,
+        "app.py": `from ._lib import _does_not_exist
+
+def run():
+    _does_not_exist(1)
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const app_scope = project.scopes.get_file_root_scope(file_paths["app.py"]);
+      expect(app_scope).not.toBeUndefined();
+      expect(
+        project.resolutions.resolve(
+          app_scope!.id,
+          "_does_not_exist" as SymbolName
+        )
+      ).toBeNull();
+    });
+
+    it("does not place an underscore-private name on the package surface for a re-export consumer", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "pkg/_lib.py": LIB,
+        "pkg/__init__.py": `from ._lib import make_block
+`,
+        "reexport_app.py": `from pkg import _make_block
+
+def run():
+    _make_block(1)
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const app_scope = project.scopes.get_file_root_scope(
+        file_paths["reexport_app.py"]
+      );
+      expect(app_scope).not.toBeUndefined();
+
+      // __init__.py re-exports only `make_block`; `_make_block` is not defined
+      // there, so the explicit import through the package stays unbound.
+      const resolved = project.resolutions.resolve(
+        app_scope!.id,
+        "_make_block" as SymbolName
+      );
+      expect(resolved).toBeNull();
+
+      const call_graph = project.get_call_graph();
+      expect(
+        is_entry_point(call_graph, "_make_block", file_paths["pkg/_lib.py"])
+      ).toEqual(true);
+    });
+  });
+
+  describe("query-pattern completeness over node shapes", () => {
+    it("resolves a call to a classmethod through the class", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "app.py": [
+          "class C:",
+          "    @classmethod",
+          "    def build(cls):",
+          "        return 1",
+          "",
+          "def run():",
+          "    return C.build()",
+        ].join("\n"),
+      });
+      temp_dirs.push(temp_dir);
+      const cg = project.get_call_graph();
+      const file = file_paths["app.py"];
+
+      const build_node = find_caller_node(cg, "build", file);
+      expect(build_node?.name).toEqual("build");
+      const run_node = find_caller_node(cg, "run", file);
+      expect(
+        run_node?.enclosed_calls.map((c) => [c.name, c.resolutions.length])
+      ).toEqual([["build", 1]]);
+      expect(is_entry_point(cg, "build", file)).toEqual(false);
+    });
+
+    it("creates an edge from a property read to the getter method", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "acc.py": [
+          "class R:",
+          "    @property",
+          "    def data(self):",
+          "        return 1",
+          "",
+          "def run(r: R):",
+          "    return r.data",
+        ].join("\n"),
+      });
+      temp_dirs.push(temp_dir);
+      const cg = project.get_call_graph();
+      const file = file_paths["acc.py"];
+
+      const getter = find_caller_node(cg, "data", file);
+      const run_node = find_caller_node(cg, "run", file);
+      expect(
+        run_node?.enclosed_calls.map((c) => ({
+          name: c.name,
+          call_type: c.call_type,
+          targets: c.resolutions.map((r) => r.symbol_id),
+        }))
+      ).toEqual([
+        { name: "data", call_type: "method", targets: [getter!.symbol_id] },
+      ]);
+      expect(is_entry_point(cg, "data", file)).toEqual(false);
+    });
+
+    it("creates no edge from a plain attribute read", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "attr.py": [
+          "class R:",
+          "    def __init__(self):",
+          "        self.data = 1",
+          "",
+          "def run(r: R):",
+          "    return r.data",
+        ].join("\n"),
+      });
+      temp_dirs.push(temp_dir);
+      const cg = project.get_call_graph();
+      const run_node = find_caller_node(cg, "run", file_paths["attr.py"]);
+      expect(run_node?.enclosed_calls).toEqual([]);
+    });
+
+    it("puts every method of a class with a dotted base in the call graph and resolves super() through the bare base", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "base.py": [
+          "class Base:",
+          "    def visit_create_sequence(self, create):",
+          "        return 0",
+        ].join("\n"),
+        "pg.py": [
+          "from base import Base",
+          "",
+          "class PG(Base):",
+          "    def visit_create_sequence(self, create):",
+          "        return super().visit_create_sequence(create)",
+          "",
+          "class PGDotted(compiler.DDLCompiler):",
+          "    def visit_drop_sequence(self, drop):",
+          "        return self.visit_create_sequence(drop)",
+          "    def visit_create_sequence(self, create):",
+          "        return 1",
+        ].join("\n"),
+      });
+      temp_dirs.push(temp_dir);
+      const cg = project.get_call_graph();
+      const pg = file_paths["pg.py"];
+      const base = file_paths["base.py"];
+
+      const pg_visit = find_caller_node(cg, "visit_create_sequence", pg);
+      const base_visit = find_caller_node(cg, "visit_create_sequence", base);
+      // super() runs the base method alone, never the subclass's own override.
+      expect(
+        pg_visit?.enclosed_calls.map((c) => ({
+          name: c.name,
+          targets: c.resolutions.map((r) => r.symbol_id),
+        }))
+      ).toEqual([
+        {
+          name: "visit_create_sequence",
+          targets: [base_visit!.symbol_id],
+        },
+        { name: "super", targets: [] },
+      ]);
+
+      const dotted_drop = find_caller_node(cg, "visit_drop_sequence", pg);
+      expect(dotted_drop?.name).toEqual("visit_drop_sequence");
+      expect(
+        dotted_drop?.enclosed_calls.map((c) => [c.name, c.resolutions.length])
+      ).toEqual([["visit_create_sequence", 1]]);
+    });
+
+    it("indexes an Enum subclass with a mixin base as a single definition", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "colors.py": [
+          "from enum import Enum",
+          "",
+          "class Color(Enum, Mixin):",
+          "    RED = 1",
+          "",
+          "def pick():",
+          "    return Color.RED",
+        ].join("\n"),
+      });
+      temp_dirs.push(temp_dir);
+      const file = file_paths["colors.py"];
+      const index = project.get_index_single_file(file)!;
+
+      // Two query arms firing on one class built it twice and aborted the file
+      // on the duplicate export, taking every definition in it down.
+      expect([...index.enums.values()].map((e) => e.name)).toEqual(["Color"]);
+      expect([...index.classes.values()].map((c) => c.name)).toEqual([]);
+
+      const cg = project.get_call_graph();
+      expect(is_entry_point(cg, "pick", file)).toEqual(true);
+    });
+
+    it("puts a method behind any decorator shape in the call graph", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "shapes.py": [
+          "import cython",
+          "import functools",
+          "import util",
+          "",
+          "class Box:",
+          "    @cython.cfunc",
+          "    def dotted(self):",
+          "        return 1",
+          "",
+          "    @functools.lru_cache()",
+          "    def call_shaped(self):",
+          "        return 2",
+          "",
+          "    @lru_cache(maxsize=1)",
+          "    def call_shaped_with_args(self):",
+          "        return 3",
+          "",
+          "    @util.memoized_property",
+          "    def descriptor(self):",
+          "        return 4",
+          "",
+          "    @cython.cfunc",
+          "    def never_called(self):",
+          "        return 5",
+          "",
+          "def run(box):",
+          "    box.dotted()",
+          "    box.call_shaped()",
+          "    box.call_shaped_with_args()",
+          "    return box.descriptor",
+        ].join("\n"),
+      });
+      temp_dirs.push(temp_dir);
+      const cg = project.get_call_graph();
+      const file = file_paths["shapes.py"];
+
+      // Each decorated method exists as a graph node — before this family a
+      // dotted or call-shaped decorator erased the method entirely.
+      expect(
+        ["dotted", "call_shaped", "call_shaped_with_args", "descriptor", "never_called"].map(
+          (name) => find_caller_node(cg, name, file)?.name
+        )
+      ).toEqual([
+        "dotted",
+        "call_shaped",
+        "call_shaped_with_args",
+        "descriptor",
+        "never_called",
+      ]);
+
+      // The uncalled sibling is the control: the calls below are what clears
+      // the others, not the mere fact that they are methods.
+      expect(is_entry_point(cg, "never_called", file)).toEqual(true);
+    });
+  });
+});
+
+describe("Accessor pair ahead of other members", () => {
+  it("resolves self-rooted calls in a class whose property pair is declared first", async () => {
+    // The class scope index is keyed by name, so the setter lands under the
+    // getter's key. Reverse-looking a method up through the deduplicated member
+    // index then failed to name the owning class, and every self-rooted call in
+    // the class went unresolved.
+    const { project, temp_dir, file_paths } = await setup_project({
+      "engine.py": [
+        "class Engine:",
+        "    @property",
+        "    def name(self):",
+        "        return self._n",
+        "",
+        "    @name.setter",
+        "    def name(self, v):",
+        "        self._n = v",
+        "",
+        "    def dialect(self):",
+        "        return 1",
+        "",
+        "    def connect(self):",
+        "        return self.dialect()",
+      ].join("\n"),
+    });
+    temp_dirs.push(temp_dir);
+    const call_graph = project.get_call_graph();
+    const file = file_paths["engine.py"];
+
+    const connect = find_caller_node(call_graph, "connect", file);
+    expect(
+      connect?.enclosed_calls.map((c) => [c.name, c.resolutions.length])
+    ).toEqual([["dialect", 1]]);
+    expect(is_entry_point(call_graph, "dialect", file)).toEqual(false);
+  });
+});
+
+describe("Python star imports across files", () => {
+  function expect_python_call_resolves_to(
+    project: Project,
+    caller_file: FilePath,
+    caller_name: string,
+    call_name: string,
+    target_file: FilePath
+  ): void {
+    const call_graph = project.get_call_graph();
+    const caller_node = find_caller_node(call_graph, caller_name, caller_file);
+    const call = caller_node!.enclosed_calls.find(
+      (c) => c.name === (call_name as SymbolName)
+    );
+    expect(call).toBeDefined();
+    expect(call!.resolution_failure).toBeUndefined();
+    expect(call!.resolutions.length).toEqual(1);
+    const target = call_graph.nodes.get(call!.resolutions[0].symbol_id);
+    expect(target?.location.file_path).toEqual(target_file);
+    expect(target?.name).toEqual(call_name as SymbolName);
+  }
+
+  it("binds a module-scope star import to the target module's public surface", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "lib.py": `def public_helper(x):
+    return x + 1
+`,
+      "app.py": `from lib import *
+
+def run():
+    return public_helper(1)
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect_python_call_resolves_to(
+      project,
+      file_paths["app.py"],
+      "run",
+      "public_helper",
+      file_paths["lib.py"]
+    );
+
+    const call_graph = project.get_call_graph();
+    expect(is_entry_point(call_graph, "public_helper", file_paths["lib.py"])).toEqual(
+      false
+    );
+  });
+
+  it("indexes six star imports in one file without a duplicate-export error", async () => {
+    const init_content = `from django.forms.boundfield import *
+from django.forms.fields import *
+from django.forms.forms import *
+from django.forms.formsets import *
+from django.forms.models import *
+from django.forms.widgets import *
+`;
+    const { project, temp_dir, file_paths } = await setup_project({
+      "django/forms/boundfield.py": `def bound_field():
+    return 1
+`,
+      "django/forms/fields.py": `def char_field():
+    return 2
+`,
+      "django/forms/forms.py": `def base_form():
+    return 3
+`,
+      "django/forms/formsets.py": `def formset_factory():
+    return 4
+`,
+      "django/forms/models.py": `def model_form():
+    return 5
+`,
+      "django/forms/widgets.py": `def text_input():
+    return 6
+`,
+      "django/forms/__init__.py": init_content,
+      "app.py": `from django.forms import char_field, text_input
+
+def run():
+    return char_field() + text_input()
+`,
+      "star_app.py": `from django.forms import *
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect(() =>
+      project.update_file(file_paths["django/forms/__init__.py"], init_content)
+    ).not.toThrow();
+
+    expect_python_call_resolves_to(
+      project,
+      file_paths["app.py"],
+      "run",
+      "char_field",
+      file_paths["django/forms/fields.py"]
+    );
+    expect_python_call_resolves_to(
+      project,
+      file_paths["app.py"],
+      "run",
+      "text_input",
+      file_paths["django/forms/widgets.py"]
+    );
+
+    // A consumer starring the package sees all six forwarded surfaces, and no
+    // binding for the star edges' own module names.
+    const star_scope = project.scopes.get_file_root_scope(
+      file_paths["star_app.py"]
+    );
+    const surface_files: Record<string, string> = {
+      bound_field: "django/forms/boundfield.py",
+      char_field: "django/forms/fields.py",
+      base_form: "django/forms/forms.py",
+      formset_factory: "django/forms/formsets.py",
+      model_form: "django/forms/models.py",
+      text_input: "django/forms/widgets.py",
+    };
+    for (const [name, file] of Object.entries(surface_files)) {
+      const resolved = project.resolutions.resolve(
+        star_scope!.id,
+        name as SymbolName
+      );
+      expect(resolved).toContain(file_paths[file]);
+    }
+    expect(
+      project.resolutions.resolve(star_scope!.id, "boundfield" as SymbolName)
+    ).toBeNull();
+  });
+
+  it("keeps a local definition shadowing a name the star import also provides", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "lib.py": `def helper():
+    return "lib"
+
+def lib_only():
+    return "lib_only"
+`,
+      "app.py": `from lib import *
+
+def helper():
+    return "app"
+
+def run():
+    return helper() + lib_only()
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect_python_call_resolves_to(
+      project,
+      file_paths["app.py"],
+      "run",
+      "helper",
+      file_paths["app.py"]
+    );
+    // The star surface is layered, not absent: a name only it supplies binds
+    // through it. Without this the shadowing assertion above holds trivially.
+    expect_python_call_resolves_to(
+      project,
+      file_paths["app.py"],
+      "run",
+      "lib_only",
+      file_paths["lib.py"]
+    );
+  });
+
+  it("rebinds a two-hop star chain when the leaf gains a name", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "leaf.py": `def alpha():
+    return 1
+`,
+      "mid.py": `from leaf import *
+`,
+      "consumer.py": `from mid import *
+
+def caller():
+    return beta()
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    project.update_file(
+      file_paths["leaf.py"],
+      `def alpha():
+    return 1
+
+def beta():
+    return 2
+`
+    );
+
+    const consumer_scope = project.scopes.get_file_root_scope(
+      file_paths["consumer.py"]
+    );
+    const resolved = project.resolutions.resolve(
+      consumer_scope!.id,
+      "beta" as SymbolName
+    );
+    expect(resolved).toContain(file_paths["leaf.py"]);
+    expect(resolved).toContain("beta");
+  });
+
+  it("keeps an explicit named import shadowing a star import of the same name", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "one.py": `def shared():
+    return 1
+
+def one_only():
+    return 3
+`,
+      "two.py": `def shared():
+    return 2
+`,
+      "app.py": `from one import *
+from two import shared
+
+def run():
+    return shared() + one_only()
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect_python_call_resolves_to(
+      project,
+      file_paths["app.py"],
+      "run",
+      "shared",
+      file_paths["two.py"]
+    );
+    // The star surface is layered below the explicit import, not discarded: a
+    // name only `one.py` supplies still binds through the star edge.
+    expect_python_call_resolves_to(
+      project,
+      file_paths["app.py"],
+      "run",
+      "one_only",
+      file_paths["one.py"]
+    );
+  });
+});
+
+/**
+ * Python has no block scoping, so an import written under `if`, `try`/`except`
+ * or `with` binds in the enclosing module — and a function-local import in the
+ * function — exactly as the unguarded form does, and the calls through those
+ * bindings resolve.
+ */
+describe("Python guarded and function-local imports", () => {
+  const FIXTURES = path.join(__dirname, "..", "..", "tests", "fixtures", "python", "code", "integration");
+
+  it("binds guarded and function-local imports in the enclosing scope so calls through them resolve", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "guarded_base.py": fs.readFileSync(path.join(FIXTURES, "guarded_base.py"), "utf-8"),
+      "guarded_imports.py": fs.readFileSync(path.join(FIXTURES, "guarded_imports.py"), "utf-8"),
+    });
+    temp_dirs.push(temp_dir);
+    const file = file_paths["guarded_imports.py"];
+
+    // The guard clauses keep their block scopes — that is what holds two
+    // branches' bindings apart — and the imports they make are layered into the
+    // enclosing module or function scope on top.
+    const scope_types = [...project.get_index_single_file(file)!.scopes.values()]
+      .map((scope) => scope.type)
+      .sort();
+    // One per guard clause: if, elif, else, try, except, finally, with.
+    expect(scope_types).toEqual([
+      "block",
+      "block",
+      "block",
+      "block",
+      "block",
+      "block",
+      "block",
+      "function",
+      "module",
+    ]);
+
+    const calls = project.resolutions
+      .get_calls_for_file(file)
+      .map((call) => [
+        call.location.start_line,
+        call.name,
+        call.resolutions
+          .map((r) => {
+            const parts = r.symbol_id.split(":");
+            return `${parts[0]}:${path.basename(parts[1])}:${parts[parts.length - 1]}`;
+          })
+          .join(",") || call.resolution_failure?.reason,
+      ]);
+    // Every guarded binding resolves into guarded_base.py: `Celery` from the
+    // if/elif/else, `make_app` from the try and its except, `shutdown` from the
+    // finally, `_bootstrap` from the with, `LocalCelery` inside `build`, and
+    // `gb.make_app` / `gb._bootstrap` through the namespace import — the
+    // underscore name through the module-scope fallback. `os.environ.get` goes
+    // through a module the project does not index, and `open` is a builtin.
+    expect(calls).toEqual([
+      [3, "get", "import_unresolved"],
+      [4, "get", "import_unresolved"],
+      [20, "open", "callee_is_a_language_global"],
+      [26, "LocalCelery", "class:guarded_base.py:Celery"],
+      [27, "send_task", "method:guarded_base.py:send_task"],
+      [33, "Celery", "class:guarded_base.py:Celery"],
+      [34, "send_task", "method:guarded_base.py:send_task"],
+      [35, "make_app", "function:guarded_base.py:make_app"],
+      [36, "_bootstrap", "function:guarded_base.py:_bootstrap"],
+      [37, "shutdown", "function:guarded_base.py:shutdown"],
+      [38, "make_app", "function:guarded_base.py:make_app"],
+      [39, "_bootstrap", "function:guarded_base.py:_bootstrap"],
+    ]);
+  });
+
+  it("keeps each branch's call on its own import when two branches import one name from different modules", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "fast.py": `def dumps(value):
+    return value
+`,
+      "slow.py": `def dumps(value):
+    return value
+`,
+      "app.py": `try:
+    from fast import dumps
+    fast_out = dumps(1)
+except ImportError:
+    from slow import dumps
+    slow_out = dumps(2)
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    // The guarded import is layered into the module scope, but each branch
+    // still binds its own name, so the call beside an import resolves to that
+    // import and neither module's `dumps` is left looking unreached.
+    const calls = project.resolutions
+      .get_calls_for_file(file_paths["app.py"])
+      .filter((call) => call.name === ("dumps" as SymbolName))
+      .map((call) => [
+        call.location.start_line,
+        call.resolutions
+          .map((r) => path.basename(r.symbol_id.split(":")[1]))
+          .join(",") || call.resolution_failure?.reason,
+      ]);
+    expect(calls).toEqual([
+      [3, "fast.py"],
+      [6, "slow.py"],
+    ]);
+
+    const call_graph = project.get_call_graph();
+    expect(is_entry_point(call_graph, "dumps", file_paths["fast.py"])).toEqual(false);
+    expect(is_entry_point(call_graph, "dumps", file_paths["slow.py"])).toEqual(false);
+  });
+
+  it("lets a function-local guarded import shadow a same-named module-level import", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "default_backend.py": `def execute():
+    return 1
+`,
+      "fast_backend.py": `def execute():
+    return 2
+`,
+      "app.py": `from default_backend import execute
+
+
+def run(flag):
+    if flag:
+        from fast_backend import execute
+    return execute()
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    // The guarded import binds in `run`, so it shadows the module-level one
+    // exactly as an unguarded function-local import would.
+    const call = project.resolutions
+      .get_calls_for_file(file_paths["app.py"])
+      .find((c) => c.name === ("execute" as SymbolName));
+    expect(
+      call!.resolutions.map((r) => path.basename(r.symbol_id.split(":")[1]))
+    ).toEqual(["fast_backend.py"]);
+
+    const call_graph = project.get_call_graph();
+    expect(
+      is_entry_point(call_graph, "execute", file_paths["fast_backend.py"])
+    ).toEqual(false);
+  });
+
+  it("keeps a scope's own import ahead of one hoisted out of a guard clause", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "direct.py": `def load():
+    return 1
+`,
+      "guarded.py": `def load():
+    return 2
+`,
+      "app.py": `from direct import load
+
+if True:
+    from guarded import load
+
+load()
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    // Both bind at module level, so the one the scope writes itself wins and
+    // the hoisted one only fills a name the scope does not already import.
+    const call = project.resolutions
+      .get_calls_for_file(file_paths["app.py"])
+      .find((c) => c.name === ("load" as SymbolName));
+    expect(
+      call!.resolutions.map((r) => path.basename(r.symbol_id.split(":")[1]))
+    ).toEqual(["direct.py"]);
+  });
+
+  it("does not let a nested branch's import answer a call in a sibling branch", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "a.py": `def x():
+    return 1
+`,
+      "b.py": `def x():
+    return 2
+`,
+      "app.py": `from a import x
+
+if FLAG:
+    if OTHER:
+        from b import x
+else:
+    x()
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    // The import is lifted to the module, not into the enclosing branch: in the
+    // `else` arm that import provably never ran, so the module-level `a` import
+    // is the only answer.
+    const call = project.resolutions
+      .get_calls_for_file(file_paths["app.py"])
+      .find((c) => c.name === ("x" as SymbolName));
+    expect(
+      call!.resolutions.map((r) => path.basename(r.symbol_id.split(":")[1]))
+    ).toEqual(["a.py"]);
+  });
+
+  it("reaches every constructor the branches of pandas's to_stata dispatch import under one name", async () => {
+    const stata_fixture = path.join(FIXTURES, "stata_writer_dispatch");
+    const sources = {
+      "pandas/__init__.py": "",
+      "pandas/io/__init__.py": "",
+      "pandas/core/__init__.py": "",
+      "pandas/io/stata.py": fs.readFileSync(path.join(stata_fixture, "pandas", "io", "stata.py"), "utf-8"),
+      "pandas/core/frame.py": fs.readFileSync(path.join(stata_fixture, "pandas", "core", "frame.py"), "utf-8"),
+    };
+    const { project, temp_dir, file_paths } = await setup_project(sources);
+    temp_dirs.push(temp_dir);
+
+    // `statawriter` is bound three times, once per version branch, and the call
+    // after the chain constructs whichever the version selected: the
+    // `__init__` of StataWriter (line 7), StataWriter117 (17) and
+    // StataWriterUTF8 (23).
+    const call = project.resolutions
+      .get_calls_for_file(file_paths["pandas/core/frame.py"])
+      .find((c) => c.name === ("statawriter" as SymbolName));
+    expect(
+      call!.resolutions
+        .map((r) => {
+          const parts = r.symbol_id.split(":");
+          return `${parts[0]}:${path.basename(parts[1])}:${parts[2]}`;
+        })
+        .sort()
+    ).toEqual([
+      "method:stata.py:17",
+      "method:stata.py:23",
+      "method:stata.py:7",
+    ]);
+  });
+
+  it("reaches every branch's function when if/else imports one name from different modules", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "fast.py": `def dumps(value):
+    return value
+`,
+      "slow.py": `def dumps(value):
+    return value
+`,
+      "app.py": `if FLAG:
+    from fast import dumps
+else:
+    from slow import dumps
+
+dumps(1)
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    const call = project.resolutions
+      .get_calls_for_file(file_paths["app.py"])
+      .find((c) => c.name === ("dumps" as SymbolName));
+    expect(
+      call!.resolutions.map((r) => path.basename(r.symbol_id.split(":")[1])).sort()
+    ).toEqual(["fast.py", "slow.py"]);
+
+    const call_graph = project.get_call_graph();
+    expect(is_entry_point(call_graph, "dumps", file_paths["fast.py"])).toEqual(false);
+    expect(is_entry_point(call_graph, "dumps", file_paths["slow.py"])).toEqual(false);
+  });
+
+  it("reaches every branch's function when try, except and finally import one name from different modules", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "fast.py": `def dumps(value):
+    return value
+`,
+      "slow.py": `def dumps(value):
+    return value
+`,
+      "last.py": `def dumps(value):
+    return value
+`,
+      "app.py": `try:
+    from fast import dumps
+except ImportError:
+    from slow import dumps
+finally:
+    from last import dumps
+
+dumps(1)
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    const call = project.resolutions
+      .get_calls_for_file(file_paths["app.py"])
+      .find((c) => c.name === ("dumps" as SymbolName));
+    expect(
+      call!.resolutions.map((r) => path.basename(r.symbol_id.split(":")[1])).sort()
+    ).toEqual(["fast.py", "last.py", "slow.py"]);
+  });
+
+  it("answers a call once when the branches import the one symbol", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "fast.py": `def dumps(value):
+    return value
+`,
+      "app.py": `if FLAG:
+    from fast import dumps
+else:
+    from fast import dumps
+
+dumps(1)
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    const call = project.resolutions
+      .get_calls_for_file(file_paths["app.py"])
+      .find((c) => c.name === ("dumps" as SymbolName));
+    expect(
+      call!.resolutions.map((r) => path.basename(r.symbol_id.split(":")[1]))
+    ).toEqual(["fast.py"]);
+  });
+
+  it("keeps a scope's own import ahead of every branch's hoisted import", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "direct.py": `def load():
+    return 0
+`,
+      "one.py": `def load():
+    return 1
+`,
+      "two.py": `def load():
+    return 2
+`,
+      "app.py": `from direct import load
+
+if FLAG:
+    from one import load
+else:
+    from two import load
+
+load()
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    const call = project.resolutions
+      .get_calls_for_file(file_paths["app.py"])
+      .find((c) => c.name === ("load" as SymbolName));
+    expect(
+      call!.resolutions.map((r) => path.basename(r.symbol_id.split(":")[1]))
+    ).toEqual(["direct.py"]);
+  });
+
+  it("keeps a call in one branch on that branch's import when the other branches bind the name too", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "fast.py": `def dumps(value):
+    return value
+`,
+      "slow.py": `def dumps(value):
+    return value
+`,
+      "app.py": `if FLAG:
+    from fast import dumps
+    dumps(1)
+else:
+    from slow import dumps
+    dumps(2)
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    const calls = project.resolutions
+      .get_calls_for_file(file_paths["app.py"])
+      .filter((c) => c.name === ("dumps" as SymbolName))
+      .map((c) => [
+        c.location.start_line,
+        c.resolutions.map((r) => path.basename(r.symbol_id.split(":")[1])).join(","),
+      ]);
+    expect(calls).toEqual([
+      [3, "fast.py"],
+      [6, "slow.py"],
+    ]);
+  });
+
+  it("binds every branch's wildcard surface when two guarded star imports share a display name", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "py2/compat.py": `def two_only():
+    return 2
+`,
+      "py3/compat.py": `def three_only():
+    return 3
+`,
+      "app.py": `if True:
+    from py2.compat import *
+else:
+    from py3.compat import *
+
+two_only()
+three_only()
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    // Both edges' display name is the last path segment, `compat`, which
+    // neither binds under, so they are disjoint surfaces rather than one name
+    // bound twice.
+    const calls = project.resolutions
+      .get_calls_for_file(file_paths["app.py"])
+      .map((c) => [
+        c.name,
+        c.resolutions.map((r) => path.basename(r.symbol_id.split(":")[1])).join(",") ||
+          c.resolution_failure?.reason,
+      ]);
+    expect(calls).toEqual([
+      ["two_only", "compat.py"],
+      ["three_only", "compat.py"],
+    ]);
+  });
+
+  it("lets a guarded import shadow a wildcard import of the same name", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "starmod.py": `def dumps(value):
+    return 1
+`,
+      "fast.py": `def dumps(value):
+    return 2
+`,
+      "app.py": `from starmod import *
+
+if True:
+    from fast import dumps
+
+dumps(1)
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    // The wildcard layer is the weakest binding, so an explicit import shadows
+    // it whether or not a guard clause encloses it.
+    const call = project.resolutions
+      .get_calls_for_file(file_paths["app.py"])
+      .find((c) => c.name === ("dumps" as SymbolName));
+    expect(
+      call!.resolutions.map((r) => path.basename(r.symbol_id.split(":")[1]))
+    ).toEqual(["fast.py"]);
+  });
+
+  it("confines an `except … as` alias to its clause so it cannot clobber a same-named typed local", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "app.py": `class Engine:
+    def start(self):
+        return 1
+
+
+def run():
+    e = Engine()
+    e.start()
+    try:
+        pass
+    except OSError as e:
+        pass
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    // Python deletes the alias at the end of the clause, so it is the one
+    // guard-clause binding that must not reach the enclosing function.
+    const call = project.resolutions
+      .get_calls_for_file(file_paths["app.py"])
+      .find((c) => c.name === ("start" as SymbolName));
+    expect(
+      call!.resolutions.map((r) => r.symbol_id.split(":").slice(-1)[0])
+    ).toEqual(["start"]);
+    expect(
+      is_entry_point(project.get_call_graph(), "start", file_paths["app.py"])
+    ).toEqual(false);
+  });
+});
+
+describe("Callees outside the indexed corpus", () => {
+  it("names the unindexed module, or the language, instead of blaming the type or the scope", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "mypkg.py": `def helper(x):
+    return x
+`,
+      "main.py": `import os
+import numpy as np
+from collections import OrderedDict
+from mypkg import helper
+from missing import render
+
+
+def run(p):
+    os.getcwd()
+    os.path.dirname(p)
+    np.arange(3)
+    OrderedDict()
+    render(p)
+    helper(p)
+    len(p)
+    print(p)
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect(call_outcomes(project, file_paths["main.py"])).toEqual([
+      { name: "getcwd", outcome: "import_unresolved", import_target_file: null, import_specifier: "os" },
+      { name: "dirname", outcome: "import_unresolved", import_target_file: null, import_specifier: "os" },
+      { name: "arange", outcome: "import_unresolved", import_target_file: null, import_specifier: "numpy" },
+      { name: "OrderedDict", outcome: "import_unresolved", import_target_file: null, import_specifier: "collections" },
+      { name: "render", outcome: "import_unresolved", import_target_file: null, import_specifier: "missing" },
+      { name: "helper", outcome: "resolved", import_target_file: null, import_specifier: null },
+      { name: "len", outcome: "callee_is_a_language_global", import_target_file: null, import_specifier: null },
+      { name: "print", outcome: "callee_is_a_language_global", import_target_file: null, import_specifier: null },
+    ]);
+  });
+
+  it("names the module of an import guarded by try, and resolves a local definition over a builtin", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "main.py": `try:
+    from yaml import safe_load
+except ImportError:
+    safe_load = None
+
+
+def print(x):
+    return x
+
+
+def run(text):
+    safe_load(text)
+    print(text)
+    input(text)
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect(call_outcomes(project, file_paths["main.py"])).toEqual([
+      { name: "safe_load", outcome: "import_unresolved", import_target_file: null, import_specifier: "yaml" },
+      { name: "print", outcome: "resolved", import_target_file: null, import_specifier: null },
+      { name: "input", outcome: "callee_is_a_language_global", import_target_file: null, import_specifier: null },
+    ]);
+  });
+
+  it("fails import_unresolved through a base bound by an unindexed import, and keeps method_not_on_type when every base is indexed", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "base.py": `class Base:
+    def known(self):
+        return 1
+`,
+      "main.py": `import unittest
+from base import Base
+
+
+class Case(unittest.TestCase):
+    def check(self):
+        self.assertEqual(1, 1)
+
+
+class Child(Base):
+    def run(self):
+        self.known()
+        self.absent()
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect(call_outcomes(project, file_paths["main.py"])).toEqual([
+      { name: "assertEqual", outcome: "import_unresolved", import_target_file: null, import_specifier: "unittest" },
+      { name: "known", outcome: "resolved", import_target_file: null, import_specifier: null },
+      { name: "absent", outcome: "method_not_on_type", import_target_file: null, import_specifier: null },
+    ]);
+  });
+
+  it("fails import_unresolved through a named import of an unindexed base", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "main.py": `from unittest import TestCase
+
+
+class Case(TestCase):
+    def check(self):
+        self.assertTrue(True)
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect(call_outcomes(project, file_paths["main.py"])).toEqual([
+      { name: "assertTrue", outcome: "import_unresolved", import_target_file: null, import_specifier: "unittest" },
+    ]);
   });
 });

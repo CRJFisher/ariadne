@@ -5,34 +5,12 @@
  * Provides functions to analyze codebases and extract code graphs.
  */
 
-// Main coordinator
+// Project orchestration: coordinator, loading, file discovery
 export { Project } from "./project";
-
-// Core processing functions
-export { build_index_single_file } from "./index_single_file/index_single_file";
-export { trace_call_graph, type TraceCallGraphOptions } from "./trace_call_graph/trace_call_graph";
-
-// Project-level registries
-export {
-  DefinitionRegistry,
-  TypeRegistry,
-  ScopeRegistry,
-  ExportRegistry,
-  ImportGraph,
-  ResolutionRegistry,
-} from "./project";
-
-// Profiling
-export { profiler } from "./profiling";
-
-// Test file detection
-export { is_test_file } from "./project/detect_test_file";
-
-// Project loading
-export { load_project } from "./project/load_project";
-export type { LoadProjectOptions } from "./project/load_project";
-
-// File discovery
+export type { ClassifyOptions } from "./project";
+export { load_project } from "./project";
+export type { LoadProjectOptions, LoadedProject } from "./project";
+export { is_test_file } from "./project";
 export {
   SUPPORTED_EXTENSIONS,
   IGNORED_DIRECTORIES,
@@ -41,9 +19,67 @@ export {
   parse_gitignore,
   should_ignore_path,
   find_source_files,
-} from "./project/file_loading";
+} from "./project";
+
+// Stage 1: per-file semantic indexing and tree-sitter query execution
+export {
+  build_index_single_file,
+  query_tree,
+  LANGUAGE_TO_TREESITTER_LANG,
+  SUPPORTED_LANGUAGES,
+} from "./index_single_file";
+
+// Stage 2: project-level registries and resolution state
+export {
+  DefinitionRegistry,
+  TypeRegistry,
+  ScopeRegistry,
+  ExportRegistry,
+  ImportGraph,
+  ResolutionRegistry,
+} from "./resolve_references";
+
+// Stage 3: call-graph tracing
+export {
+  trace_call_graph,
+  type TraceCallGraphOptions,
+  build_signature,
+  type SignatureLocation,
+  count_tree_size,
+} from "./trace_call_graph";
+
+// Entry-point classification (rule-application against known-issues registry)
+export {
+  enrich_call_graph,
+  type EnrichedCallGraph,
+  type EnrichCallGraphOptions,
+  auto_classify,
+  BUILTIN_CHECKS,
+  type BuiltinCheckFn,
+  MissingBuiltinError,
+  type AutoClassifyOptions,
+  type AutoClassifyResult,
+  type ClassifiedEntryPointResult,
+  type FileLinesReader,
+  extract_entry_point_diagnostics,
+  complete_caller_evidence,
+  build_class_name_by_constructor_position,
+  load_permanent_registry,
+  PermanentRegistryError,
+} from "./classify_entry_points";
+
+// Language identity (path-based detection is ingress-only)
+export { detect_language } from "./detect_language";
+
+// Logging
+export {
+  initialize_logger,
+  log_info,
+  log_warn,
+  log_error,
+  log_debug,
+} from "./logging";
 
 // Persistence
-export type { PersistenceStorage } from "./persistence/storage";
-export { FileSystemStorage } from "./persistence/file_system_storage";
-export { resolve_cache_dir, slugify_project_path } from "./persistence/resolve_cache_dir";
+export type { PersistenceStorage } from "./persistence";
+export { FileSystemStorage, resolve_cache_dir, slugify_project_path } from "./persistence";

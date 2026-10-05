@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TASK-190.22.17 — Membership convergence holes</title>
+<style>
+:root{
+  --ivory:#faf6ef; --slate:#2e3338; --clay:#c06a4a; --olive:#7a8450; --oat:#e8dfd0; --rust:#a8442e;
+  --g1:#f1ece2; --g2:#d9d2c4; --g3:#a59c8d; --g4:#6e675c; --g5:#4a453d;
+  --serif:ui-serif,Georgia,'Times New Roman',serif;
+  --sans:system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ivory);color:var(--slate);font:16px/1.55 var(--sans)}
+main{width:90%;max-width:1600px;margin-inline:auto;padding:28px 0 80px}
+.prose{max-width:72ch}
+h1{font-family:var(--serif);font-size:2.1rem;line-height:1.15;margin:.2em 0 .3em}
+h2{font-family:var(--serif);font-size:1.45rem;margin:2em 0 .4em}
+h3{font-family:var(--sans);font-size:1.05rem;font-weight:700;margin:1.4em 0 .3em;color:var(--g5)}
+section{margin-top:54px;scroll-margin-top:120px}
+.eyebrow{font:600 .72rem var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--g4)}
+.chiprow{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.chip{font:500 .78rem var(--mono);background:var(--g1);border:1px solid var(--g2);border-radius:999px;padding:4px 12px}
+.chip strong{color:var(--clay)}
+nav.topnav{position:sticky;top:0;z-index:10;background:var(--ivory);border-bottom:1px solid var(--g2);padding:9px 5%;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+nav.topnav .navlabel{font:600 .68rem var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--g4);margin-right:4px}
+nav.topnav a,nav.topnav span{font:500 .72rem var(--mono);border-radius:999px;padding:3px 10px;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+nav.topnav a.doc-link{color:var(--slate);background:var(--g1);border:1px solid var(--clay)}
+nav.topnav a.doc-link:hover{color:var(--clay)}
+nav.topnav span.here{background:var(--slate);color:var(--ivory)}
+.dot{width:7px;height:7px;border-radius:50%;flex:none}
+.d-done{background:var(--olive)} .d-todo{background:var(--g3)}
+.callout{border-left:4px solid var(--clay);background:var(--g1);padding:14px 18px;border-radius:0 10px 10px 0;margin:18px 0}
+.callout.rust{border-color:var(--rust);background:#fdf0ec}
+.callout.olive{border-color:var(--olive);background:#eef2e6}
+.callout .key{font:600 .7rem var(--mono);letter-spacing:.13em;text-transform:uppercase;color:var(--g4);display:block;margin-bottom:4px}
+.prov{border:1px solid var(--g2);border-radius:10px;padding:14px 18px;background:var(--g1);margin:18px 0}
+.prov .key{font:600 .7rem var(--mono);letter-spacing:.13em;text-transform:uppercase;color:var(--g4);display:block;margin-bottom:6px}
+.prov code{font:.78rem var(--mono);display:block;padding:1px 0;color:var(--g5)}
+code,kbd{font-family:var(--mono);font-size:.82em;background:var(--g1);border:1px solid var(--g2);border-radius:4px;padding:1px 5px}
+pre{background:#fff;border:1px solid var(--g2);border-radius:10px;padding:16px 20px;overflow-x:auto;font-size:.82rem;line-height:1.55}
+pre code{background:none;border:none;padding:0;font-size:inherit}
+.diagram{border:1px solid var(--g2);border-radius:12px;background:#fff;padding:14px;margin:16px 0}
+.diagram svg{width:100%;height:auto;display:block}
+.legend{display:flex;flex-wrap:wrap;gap:18px;margin-top:10px;font:500 .74rem var(--mono);color:var(--g4)}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.sw{width:26px;height:0;border-top:2.5px solid var(--slate);display:inline-block}
+.sw.cl{border-color:var(--clay)}
+.sw.ru{border-color:var(--rust);border-top-style:dashed}
+.hole{border:1px solid var(--g2);border-radius:12px;background:#fff;overflow:hidden;margin:24px 0}
+.hole-hdr{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center;padding:14px 18px;border-bottom:1px solid var(--g1);background:var(--g1)}
+.hole-num{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font:700 1rem var(--mono);background:var(--rust);color:#fff;flex:none}
+.hole-hdr h3{margin:0;font-family:var(--sans);font-size:1rem;font-weight:700;color:var(--rust)}
+.hole-body{padding:16px 18px}
+.fix{border-top:1px solid var(--g1);background:var(--g1);padding:14px 18px}
+.fix .key{font:600 .7rem var(--mono);letter-spacing:.13em;text-transform:uppercase;color:var(--g4);display:block;margin-bottom:8px}
+.aclist{list-style:none;padding:0;margin:0}
+.aclist li{display:flex;gap:10px;align-items:baseline;padding:6px 0;border-top:1px solid var(--g2);font-size:.9rem}
+.aclist li:first-child{border-top:none}
+.acnum{font:600 .72rem var(--mono);border-radius:999px;padding:2px 8px;background:var(--g1);border:1px solid var(--g2);white-space:nowrap}
+footer{border-top:1px solid var(--g2);margin-top:60px;padding:18px 5%;font:.74rem var(--mono);color:var(--g4)}
+</style>
+</head>
+<body>
+
+<nav class="topnav" aria-label="Epic 190.22 companion documents">
+  <span class="navlabel">Epic 190.22</span>
+  <a class="doc-link" href="task-190.22-overview.html"><span class="dot d-todo"></span>overview</a>
+  <span class="here" aria-current="page"><span class="dot d-todo"></span>.17 convergence holes</span>
+</nav>
+
+<main>
+
+<header>
+  <span class="eyebrow">TASK-190.22.17 · self-repair · bug · high priority</span>
+  <h1>Membership convergence holes in the plan pipeline</h1>
+  <div class="chiprow">
+    <span class="chip">status <strong>To Do</strong></span>
+    <span class="chip">parent <strong>190.22</strong></span>
+    <span class="chip">labels <strong>self-repair · bug</strong></span>
+    <span class="chip">parallel with <strong>.15</strong> (trivial merge at load_staged_plans)</span>
+  </div>
+</header>
+
+<div class="callout prose">
+  <span class="key">What this task fixes</span>
+  Two holes in the 190.22.14 membership-verification work defeat its own convergence goal — that a membership decision, once made, prevents re-adjudication on subsequent sweeps. Without these fixes, excluded members loop back into the same bucket every sweep and are re-excluded indefinitely. Membership override records are also keyed on the wrong area, making the convergence guard bypassable.
+</div>
+
+<!-- ===== HOLE 1 ===== -->
+<section id="hole1">
+  <h2>Hole 1 — Two-hop re-adjudication loop</h2>
+
+  <div class="hole">
+    <div class="hole-hdr">
+      <span class="hole-num">1</span>
+      <h3>Override lookup keyed on the derived area only — re-routed destination never consulted</h3>
+    </div>
+    <div class="hole-body">
+      <p class="prose"><strong>Location:</strong> <code>.claude/skills/plan/src/group/group_fault_areas.ts</code> ~line 101</p>
+
+      <p class="prose"><code>group_fault_areas</code> consults the override store keyed <code>(derived_area, member)</code>. When an override is found with a <code>suggested_area</code>, the member is re-routed into that destination bucket. No second lookup is performed for the destination area.</p>
+
+      <h3>The failing scenario</h3>
+      <pre><code>Sweep 1:
+  member derives to area A
+  no override for (A, member) → lands in A's bucket
+  A's strategist: belongs=false, suggested_area=B
+  record_membership_decisions writes override (A, member) → B
+
+Sweep 2:
+  member again derives to area A
+  override found: (A, member) → B, so member re-routes into B
+  B's strategist: belongs=false, suggested_area=null (suppress)
+  record_membership_decisions writes override (B, member) → null
+
+Sweep 3:
+  member again derives to area A
+  override found: (A, member) → B ← only one lookup
+  override (B, member) → null is NEVER consulted
+  member lands in B's bucket and is re-excluded — forever</code></pre>
+
+      <p class="prose">The 190.22.14 convergence guard in <code>validate_plan</code> (issue code <code>membership_suggested_area_is_own_bucket</code>) only blocks self-routing (A → A), not this two-hop loop.</p>
+
+      <div class="fix">
+        <span class="key">Fix</span>
+        <p class="prose" style="margin:0">After re-routing via an override's <code>suggested_area</code>, perform a second override lookup keyed on <em>(destination_area, member)</em> before bucketing. Follow the chain with a cycle guard (detect A → B → A by tracking visited areas). A suppressed member at any hop in the chain is discarded. The chain length in practice is at most two or three hops, so simple visited-set tracking suffices. Cover the derive → override → exclude → next-sweep loop in <code>group_fault_areas.test.ts</code>, including the cycle case.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="diagram">
+    <svg viewBox="0 0 900 320" role="img" aria-label="Two-hop re-adjudication loop: member derives to A, override routes to B, B records suppression, but sweep 3 still routes to B because only A's override is consulted">
+      <defs>
+        <marker id="ah-s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#2e3338"/></marker>
+        <marker id="ah-r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#a8442e"/></marker>
+        <marker id="ah-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#7a8450"/></marker>
+      </defs>
+
+      <!-- Sweep 1 -->
+      <text x="30" y="30" font-family="ui-monospace,Menlo,monospace" font-size="12" font-weight="600" fill="#6e675c">SWEEP 1</text>
+      <rect x="30" y="44" width="90" height="36" rx="8" fill="#f1ece2" stroke="#d9d2c4" stroke-width="1.5"/>
+      <text x="75" y="65" text-anchor="middle" font-family="system-ui,sans-serif" font-size="12" fill="#2e3338">derives→A</text>
+      <line x1="120" y1="62" x2="158" y2="62" stroke="#2e3338" stroke-width="1.5" marker-end="url(#ah-s)"/>
+      <rect x="160" y="44" width="80" height="36" rx="8" fill="#fff" stroke="#2e3338" stroke-width="1.5"/>
+      <text x="200" y="65" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#2e3338">bucket A</text>
+      <line x1="240" y1="62" x2="278" y2="62" stroke="#2e3338" stroke-width="1.5" marker-end="url(#ah-s)"/>
+      <rect x="280" y="44" width="120" height="36" rx="8" fill="#fff" stroke="#2e3338" stroke-width="1.5"/>
+      <text x="340" y="60" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" fill="#2e3338">strategist:</text>
+      <text x="340" y="74" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" fill="#a8442e">belongs=false →B</text>
+      <line x1="400" y1="62" x2="438" y2="62" stroke="#7a8450" stroke-width="1.5" marker-end="url(#ah-g)"/>
+      <rect x="440" y="44" width="160" height="36" rx="8" fill="#eef2e6" stroke="#7a8450" stroke-width="1.5"/>
+      <text x="520" y="60" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#2e3338">override store:</text>
+      <text x="520" y="74" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#6e675c">(A,member)→B  written ✓</text>
+
+      <!-- Sweep 2 -->
+      <text x="30" y="130" font-family="ui-monospace,Menlo,monospace" font-size="12" font-weight="600" fill="#6e675c">SWEEP 2</text>
+      <rect x="30" y="144" width="90" height="36" rx="8" fill="#f1ece2" stroke="#d9d2c4" stroke-width="1.5"/>
+      <text x="75" y="165" text-anchor="middle" font-family="system-ui,sans-serif" font-size="12" fill="#2e3338">derives→A</text>
+      <line x1="120" y1="162" x2="158" y2="162" stroke="#2e3338" stroke-width="1.5" marker-end="url(#ah-s)"/>
+      <text x="200" y="158" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#7a8450">(A,m)→B found</text>
+      <line x1="165" y1="168" x2="248" y2="168" stroke="#7a8450" stroke-width="1.5" marker-end="url(#ah-g)"/>
+      <rect x="250" y="150" width="80" height="36" rx="8" fill="#fff" stroke="#2e3338" stroke-width="1.5"/>
+      <text x="290" y="171" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#2e3338">bucket B</text>
+      <line x1="330" y1="168" x2="368" y2="168" stroke="#2e3338" stroke-width="1.5" marker-end="url(#ah-s)"/>
+      <rect x="370" y="150" width="120" height="36" rx="8" fill="#fff" stroke="#2e3338" stroke-width="1.5"/>
+      <text x="430" y="166" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" fill="#2e3338">strategist:</text>
+      <text x="430" y="180" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" fill="#a8442e">belongs=false →null</text>
+      <line x1="490" y1="168" x2="528" y2="168" stroke="#7a8450" stroke-width="1.5" marker-end="url(#ah-g)"/>
+      <rect x="530" y="150" width="160" height="36" rx="8" fill="#eef2e6" stroke="#7a8450" stroke-width="1.5"/>
+      <text x="610" y="166" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="11" fill="#2e3338">override store:</text>
+      <text x="610" y="180" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#6e675c">(B,member)→null  written ✓</text>
+
+      <!-- Sweep 3 -->
+      <text x="30" y="230" font-family="ui-monospace,Menlo,monospace" font-size="12" font-weight="600" fill="#a8442e">SWEEP 3+ (loop)</text>
+      <rect x="30" y="244" width="90" height="36" rx="8" fill="#f1ece2" stroke="#d9d2c4" stroke-width="1.5"/>
+      <text x="75" y="265" text-anchor="middle" font-family="system-ui,sans-serif" font-size="12" fill="#2e3338">derives→A</text>
+      <line x1="120" y1="262" x2="158" y2="262" stroke="#2e3338" stroke-width="1.5" marker-end="url(#ah-s)"/>
+      <text x="200" y="258" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="10" fill="#7a8450">(A,m)→B found</text>
+      <line x1="165" y1="268" x2="248" y2="268" stroke="#7a8450" stroke-width="1.5" marker-end="url(#ah-g)"/>
+      <rect x="250" y="250" width="80" height="36" rx="8" fill="#fdf0ec" stroke="#a8442e" stroke-width="2"/>
+      <text x="290" y="271" text-anchor="middle" font-family="ui-monospace,Menlo,monospace" font-size="12" fill="#a8442e">bucket B</text>
+      <text x="390" y="258" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" fill="#a8442e" font-weight="600">← (B,m)→null</text>
+      <text x="390" y="274" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" fill="#a8442e">never consulted</text>
+      <text x="390" y="290" text-anchor="middle" font-family="system-ui,sans-serif" font-size="11" fill="#a8442e">member re-excluded ∞</text>
+    </svg>
+    <div class="legend">
+      <span><span class="sw"></span>bucketing flow</span>
+      <span><span class="sw cl" style="border-color:#7a8450"></span>override store interaction</span>
+      <span><span class="sw ru"></span>the hole — missing second lookup</span>
+    </div>
+  </div>
+</section>
+
+<!-- ===== HOLE 2 ===== -->
+<section id="hole2">
+  <h2>Hole 2 — Plan identity never cross-checked against the dispatched bucket</h2>
+
+  <div class="hole">
+    <div class="hole-hdr">
+      <span class="hole-num">2</span>
+      <h3>validate_plan checks fault_area is in the taxonomy but not that it matches the dispatched bucket's area or sweep</h3>
+    </div>
+    <div class="hole-body">
+      <p class="prose"><strong>Location:</strong> <code>.claude/skills/plan/src/propose/validate_plan.ts</code> ~line 315–320 and <code>src/reconcile/record_membership_decisions.ts</code> ~line 64</p>
+
+      <p class="prose"><code>StrategistPlan</code> is documented as self-contained — it carries <code>fault_area</code> and <code>sweep_id</code> "so the validator and reconcile engine cross-check against the bucket fed to them." <code>validate_plan</code> verifies only that <code>fault_area</code> is a valid taxonomy member and <code>sweep_id</code> is non-empty. Neither is compared to the dispatched bucket even though <code>ValidatePlanContext</code> already carries <code>bucket_fault_area</code>.</p>
+
+      <h3>Consequence — miskeyed exclusions + bypassable convergence guard</h3>
+      <pre><code>// record_membership_decisions.ts ~line 64 — keyed on plan.fault_area, not bucket.fault_area:
+return {
+  fault_area: plan.fault_area,   // ← wrong when plan.fault_area ≠ bucket.fault_area
+  member: evidence.member_symbol,
+  reason: verdict.reason,
+  suggested_area: verdict.suggested_area ?? null,
+};
+
+// validate_plan.ts — membership_suggested_area_is_own_bucket guard
+// checks against bucket.fault_area while the exclusion is written under plan.fault_area
+// → guard fires on plan.fault_area === bucket_fault_area, bypass by setting them unequal</code></pre>
+
+      <p class="prose">A strategist that writes <code>fault_area: "X"</code> into <code>plans/Y.json</code> (where Y's bucket area is Y) passes validation today. Its exclusions are recorded under X, making them dead for bucket Y — the member is re-adjudicated every sweep — and wrongly suppressing or re-routing any future member whose derived area is X.</p>
+
+      <div class="fix">
+        <span class="key">Fix</span>
+        <p class="prose" style="margin:0 0 8px">Extend <code>ValidatePlanContext</code> with <code>bucket_sweep_id: string</code>. In <code>validate_plan</code>, add two new issue codes: <code>fault_area_mismatch</code> (plan's top-level <code>fault_area</code> does not equal <code>ctx.bucket_fault_area</code>) and <code>sweep_id_mismatch</code> (plan's <code>sweep_id</code> does not equal <code>ctx.bucket_sweep_id</code>). In <code>load_staged_plans.ts</code> — the call site that builds <code>ValidatePlanContext</code> — pass the dispatched <code>sweep_id</code> as <code>bucket_sweep_id</code>. Cover both rejection paths in <code>validate_plan.test.ts</code>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== COORDINATION ===== -->
+<section id="coordination">
+  <h2>Coordination with other tasks</h2>
+  <div class="callout olive prose">
+    <span class="key">Parallel with TASK-190.22.15</span>
+    Both tasks touch <code>load_staged_plans.ts</code>. TASK-190.22.15 changes the rejected/missing plan accounting; this task adds one field to <code>ValidatePlanContext</code>. The overlap is confined to that file and the merge is trivial — both tasks can proceed in parallel.
+  </div>
+</section>
+
+<!-- ===== ACCEPTANCE CRITERIA ===== -->
+<section id="acceptance">
+  <h2>Acceptance criteria</h2>
+  <ul class="aclist">
+    <li><span class="acnum">#1</span>A member excluded from a bucket it was re-routed INTO is suppressed (or re-routed onward per the stored suggestion) on the next sweep — it does not re-enter that bucket for re-adjudication; covered by a test in <code>group_fault_areas.test.ts</code> exercising the derive → override → exclude → next-sweep loop</li>
+    <li><span class="acnum">#2</span>Override chain following terminates safely on cyclic suggestions (A → B, B → A) with a deterministic, tested outcome</li>
+    <li><span class="acnum">#3</span><code>validate_plan</code> rejects a plan whose top-level <code>fault_area</code> does not equal the dispatched bucket's <code>fault_area</code>, and one whose <code>sweep_id</code> does not match the dispatched sweep, with distinct issue codes; covered in <code>validate_plan.test.ts</code></li>
+    <li><span class="acnum">#4</span>Membership exclusions can no longer be recorded under a fault area other than the dispatched bucket's area (the <code>record_membership_decisions</code> path is keyed consistently with the convergence guard)</li>
+    <li><span class="acnum">#5</span>Existing 190.22.14 membership tests stay green; SKILL.md / module headers describe the convergence behavior canonically</li>
+  </ul>
+</section>
+
+<!-- ===== FILES ===== -->
+<section id="files">
+  <h2>Files touched</h2>
+  <div class="prov">
+    <span class="key">Primary</span>
+    <code>.claude/skills/plan/src/group/group_fault_areas.ts — follow override chain, cycle guard</code>
+    <code>.claude/skills/plan/src/group/group_fault_areas.test.ts — two-hop loop + cycle tests</code>
+    <code>.claude/skills/plan/src/propose/validate_plan.ts — fault_area_mismatch + sweep_id_mismatch issues</code>
+    <code>.claude/skills/plan/src/propose/validate_plan.test.ts — rejection coverage</code>
+    <code>.claude/skills/plan/src/reconcile/load_staged_plans.ts — add bucket_sweep_id to ValidatePlanContext</code>
+    <code>.claude/skills/plan/src/reconcile/record_membership_decisions.ts — key exclusions on bucket.fault_area</code>
+  </div>
+  <div class="prov" style="margin-top:12px">
+    <span class="key">Reference task</span>
+    <code>backlog/tasks/task-190.22.17 - Plan-membership-convergence-honor-overrides-on-the-re-routed-into-area-validate-plan-identity-against-the-dispatched-bucket.md</code>
+  </div>
+</section>
+
+</main>
+<footer>Generated 2026-06-10 · companion for TASK-190.22.17 · branch feat/self-healing-pipeline-debug</footer>
+</body>
+</html>

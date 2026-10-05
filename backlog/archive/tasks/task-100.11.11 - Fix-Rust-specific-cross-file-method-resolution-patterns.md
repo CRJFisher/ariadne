@@ -3,7 +3,7 @@ id: task-100.11.11
 title: Fix Rust-specific cross-file method resolution patterns
 status: To Do
 assignee: []
-created_date: '2025-08-04 16:43'
+created_date: "2025-08-04 16:43"
 labels: []
 dependencies: []
 parent_task_id: task-100.11
@@ -35,6 +35,7 @@ Fixed Rust-specific cross-file method resolution by addressing several issues:
 1. **Import Resolution**: Fixed the crate:: path resolution in the virtual file system used by tests. Added fallback logic in Project.get_imports_with_definitions() to handle Rust's crate:: paths by checking multiple possible file paths (src/module.rs, src/module/mod.rs, and module.rs).
 
 2. **Constructor Type Discovery**: The main issue was that for Rust's Type::new() pattern, the type discovery wasn't working because it was trying to resolve the constructor at the 'new' reference position instead of the Type position. Fixed by:
+
    - Storing the AST node for the type name when detecting Type::new() pattern
    - Using that node's position when resolving the constructor definition
    - Following imports if the initial resolution returns an import node
@@ -42,6 +43,7 @@ Fixed Rust-specific cross-file method resolution by addressing several issues:
 3. **Method Resolution**: The instance method calls (calc.add(), calc.get_value()) were already working once the type discovery was fixed. The existing resolve_method_call_pure function correctly uses the type information to find methods in the class/struct definition.
 
 ### Technical Details:
+
 - Modified `analyze_constructor_call` in call_analysis.ts to handle Rust's Type::new() pattern better
 - Added logic to store and use the type node position for constructor resolution
 - Added import following logic when constructor resolution returns an import

@@ -2,123 +2,178 @@ import type {
   SymbolId,
   FilePath,
   AnyDefinition,
+  Location,
   LocationKey,
   ScopeId,
   SymbolName,
   CallableDefinition,
   ClassDefinition,
   ExportableDefinition,
-  SymbolKind,
   FunctionCollection,
+  FunctionDefinition,
 } from "@ariadnejs/types";
 import { is_exportable, location_key } from "@ariadnejs/types";
+import { MemberIndex } from "./member_index";
+import {
+  assert_reverse_indices_consistent,
+  first_reverse_index_divergence,
+} from "./reverse_index_invariant";
+import { SubtypeGraph } from "./subtype_graph";
+
+/** The name `anonymous_function_symbol` gives every callable with no name of its own. */
+const ANONYMOUS_CALLABLE_NAME = "<anonymous>" as SymbolName;
 
 /**
- * Central registry for all definitions across the project.
- *
- * Maintains multiple indexes for fast lookups:
- * - SymbolId → AnyDefinition (for fast symbol lookup)
- * - FilePath → Set<SymbolId> (for file-based operations)
- * - LocationKey → SymbolId (for location-based symbol lookup)
- *
- * Supports incremental updates when files change.
+ * Whether `outer` fully encloses `inner` within the same file, comparing
+ * (line, column) start/end tuples.
+ */
+function location_contains(outer: Location, inner: Location): boolean {
+  if (outer.file_path !== inner.file_path) {
+    return false;
+  }
+  const starts_before =
+    outer.start_line < inner.start_line ||
+    (outer.start_line === inner.start_line &&
+      outer.start_column <= inner.start_column);
+  const ends_after =
+    outer.end_line > inner.end_line ||
+    (outer.end_line === inner.end_line &&
+      outer.end_column >= inner.end_column);
+  return starts_before && ends_after;
+}
+
+/**
+ * Whether span `a` is tighter than span `b`, comparing line extent first and
+ * column extent as a tiebreaker. For two spans that both contain the same point,
+ * the more deeply nested one is always the tighter — so this orders enclosing
+ * collection members from innermost to outermost with no magic scale factor.
+ */
+function is_tighter_span(a: Location, b: Location): boolean {
+  const a_lines = a.end_line - a.start_line;
+  const b_lines = b.end_line - b.start_line;
+  if (a_lines !== b_lines) {
+    return a_lines < b_lines;
+  }
+  return a.end_column - a.start_column < b.end_column - b.start_column;
+}
+
+/**
+ * Resolves a type name as `file_id` writes it — bare, qualified
+ * (`o.TypeVisitor`, `compiler.DDLCompiler`) or generic (`BaseClass<T>`) — looked
+ * up from `scope_id`, to the definition it names.
+ */
+export type TypeNameResolver = (
+  scope_id: ScopeId,
+  type_name: SymbolName,
+  file_id: FilePath
+) => SymbolId | null;
+
+function kind_can_be_a_parent_type(def: AnyDefinition | undefined): boolean {
+  return def?.kind === "class" || def?.kind === "interface";
+}
+
+function kind_can_be_a_subtype(def: AnyDefinition | undefined): boolean {
+  return def?.kind === "class" || def?.kind === "interface" || def?.kind === "enum";
+}
+
+/**
+ * Central registry for all definitions across the project, supporting incremental
+ * updates when files change. Most secondary indexes below are rebuilt per-file
+ * on update_file / remove_file so they stay consistent with by_symbol.
+ * Two composed indexes are the exception, both evicted per contributing file:
+ * the member index (`members: MemberIndex`), whose type members are the union
+ * of every file that contributes to them, written only through
+ * `attach_members`; and the heritage graph (`heritage: SubtypeGraph`), written
+ * only by `resolve_type_heritage` once names resolve.
  */
 export class DefinitionRegistry {
-  /** SymbolId → AnyDefinition */
   private by_symbol: Map<SymbolId, AnyDefinition> = new Map();
 
-  /** FilePath → Set of SymbolIds defined in that file */
   private by_file: Map<FilePath, Set<SymbolId>> = new Map();
 
-  /** LocationKey → SymbolId (for fast symbol lookup by location) */
   private location_to_symbol: Map<LocationKey, SymbolId> = new Map();
 
   /**
-   * Member index: SymbolId → (member_name → member_symbol_id)
-   * Computed once during update_file for O(1) access during resolution.
-   * Combines methods and properties into a single flat map for each type/class.
+   * Per-type callable-member index (union across contributing files),
+   * ownership edges, and the name → types reverse index. Shares `by_symbol`
+   * by reference so a member registered there is visible here immediately.
    */
-  private member_index: Map<SymbolId, Map<SymbolName, SymbolId>> = new Map();
+  private members: MemberIndex = new MemberIndex(this.by_symbol);
 
-  /**
-   * Scope index: ScopeId → (symbol_name → symbol_id)
-   * Enables O(1) lookup of definitions declared in a specific scope.
-   * Used by ResolutionRegistry for eager symbol resolution.
-   */
   private by_scope: Map<ScopeId, Map<SymbolName, SymbolId>> = new Map();
 
   /**
-   * Scope-to-definitions index: FilePath → (ScopeId → (SymbolKind → AnyDefinition[]))
-   * Built eagerly during update_file(), provides O(1) lookup.
-   * Maps each scope to its definitions, grouped by SymbolKind.
-   * Matches SemanticIndex.scope_to_definitions structure but stored in registry.
+   * Binding → every variable, constant and parameter binding of its name in its
+   * scope, in source order. Only a name its scope binds more than once is held.
    */
-  private scope_to_definitions_index: Map<
-    FilePath,
-    Map<ScopeId, Map<SymbolKind, AnyDefinition[]>>
-  > = new Map();
+  private rebindings: Map<SymbolId, readonly SymbolId[]> = new Map();
+
+  /** Which types extend or implement which, for polymorphic dispatch and inherited-member lookup. */
+  private heritage: SubtypeGraph = new SubtypeGraph();
+
+  /** Parents that gained a structural subtype since the last `take_inferred_parents`. */
+  private inferred_parents: Set<SymbolId> = new Set();
+
+  /** Variable SymbolId → the function collection (Map/Array/Object of functions) it holds, for collection dispatch. */
+  private function_collections: Map<SymbolId, FunctionCollection> = new Map();
 
   /**
-   * Type inheritance index: Parent type → Set of subtypes that extend/implement it
-   * Enables polymorphic method resolution - finding all implementations of an interface/abstract class.
-   *
-   * Populated during update_file() by resolving ClassDefinition.extends and InterfaceDefinition.extends.
-   * Handles both:
-   * - Interface implementation (class implements Interface)
-   * - Class inheritance (class extends BaseClass)
-   * - Trait implementation (Rust: impl Trait for Type)
-   *
-   * Used by method_resolver for polymorphic dispatch.
+   * Body scope → the callable whose body it is. A parameter records the scope
+   * its name is visible in and nothing about what declares it, so this is the
+   * one route from a binding back to the generic declaration whose type
+   * parameters its annotation may name.
    */
-  private type_subtypes: Map<SymbolId, Set<SymbolId>> = new Map();
+  private callable_by_body_scope: Map<ScopeId, SymbolId> = new Map();
 
   /**
-   * Function collection index: Maps variable SymbolIds to their function collections.
-   * Tracks variables that hold collections (Map/Array/Object) containing functions.
+   * File → the anonymous functions it declares, which are the callbacks call
+   * resolution attributes to whoever passes them.
    *
-   * Example patterns:
-   * - const CONFIG = new Map([["class", classHandler], ["function", funcHandler]])
-   * - const handlers = [onSuccess, onError, onComplete]
-   * - const config = { success: handleSuccess, error: handleError }
-   *
-   * Used for collection dispatch resolution.
+   * Keyed on the file the definitions were registered under, so eviction
+   * inverts insertion exactly. The alternative — asking for every callable in
+   * the project and filtering down to the batch — makes each resolve pass cost
+   * the whole corpus to answer a question about a few files, which is a scan
+   * that grows with project size while its answer does not.
    */
-  private function_collections: Map<
-    SymbolId,
-    FunctionCollection
-  > = new Map();
+  private anonymous_callables_by_file: Map<FilePath, FunctionDefinition[]> =
+    new Map();
 
-  /**
-   * Update definitions for a file.
-   * Removes old definitions from this file first, then adds new ones.
-   * Also computes and stores the member index, scope index, and scope-to-definitions index.
-   *
-   * @param file_id - The file being updated
-   * @param definitions - New definitions from the file
-   */
+  /** Replace all definitions for a file, rebuilding every index that keys off it. */
   update_file(file_id: FilePath, definitions: AnyDefinition[]): void {
-    // Step 1: Remove old definitions from this file
     this.remove_file(file_id);
 
-    // Step 2: Add new definitions and build indexes
     const symbol_ids = new Set<SymbolId>();
 
+    const anonymous_callables: FunctionDefinition[] = [];
+
     for (const def of definitions) {
-      // Add to symbol index
       this.by_symbol.set(def.symbol_id, def);
 
-      // Add to location index
-      const loc_key = location_key(def.location);
-      this.location_to_symbol.set(loc_key, def.symbol_id);
-
-      // Track that this file defines this symbol
       symbol_ids.add(def.symbol_id);
 
-      // Build scope index: ScopeId → (name → symbol_id)
-      // This enables O(1) lookup of definitions in a scope
-      // IMPORTANT: Exclude ImportDefinitions - they are resolved via import resolution logic
-      // Adding ImportDefinitions here causes them to override properly resolved imports
+      if (def.kind === "function" && def.name === ANONYMOUS_CALLABLE_NAME) {
+        anonymous_callables.push(def);
+      }
+
+      if (def.kind === "function") {
+        this.callable_by_body_scope.set(def.body_scope_id, def.symbol_id);
+      }
+
+      // An ImportDefinition enters neither index, for two separate reasons.
+      //
+      // Out of the location index because `fix_import_definition_locations`
+      // (project/fix_import_locations.ts) gives an import the location of the
+      // definition it names. Indexed here, N importers of one symbol each claim
+      // that symbol's key, the map holds one value, and the ingest order
+      // decides whether the declaration or an importer's import symbol answers
+      // for the declaration's own location. All four readers want the
+      // declaration.
+      //
+      // Out of the scope index because imports are resolved through import
+      // resolution, and indexing them here would override those results.
       if (def.kind !== "import") {
+        this.location_to_symbol.set(location_key(def.location), def.symbol_id);
+
         const scope_id = def.defining_scope_id;
         if (!this.by_scope.has(scope_id)) {
           this.by_scope.set(scope_id, new Map());
@@ -129,66 +184,100 @@ export class DefinitionRegistry {
         }
       }
 
-      // Build member index for classes and interfaces
-      // Extract members directly from ClassDefinition/InterfaceDefinition
-      if (def.kind === "class" || def.kind === "interface") {
-        const flat_members = new Map<SymbolName, SymbolId>();
+      // Class/interface/enum members are registered as first-class definitions
+      // and added to the location index so type-binding resolution can find
+      // them. Enums are here because a Rust `impl E { … }` attaches associated
+      // functions to the enum, and `E::assoc()` — rustc's `MetaVarExpr::parse`
+      // — reaches them through this index. An enum's variants deliberately stay
+      // out of it: this is the callable-member index.
+      if (
+        def.kind === "class" ||
+        def.kind === "interface" ||
+        def.kind === "enum"
+      ) {
+        // Entries rather than a name-keyed map: a Rust field and a method may
+        // share a name, and a map would drop one of them before
+        // `attach_members` could decide which holds the name.
+        const own_members: [SymbolName, SymbolId][] = [];
 
-        // Combine methods into flat map
-        for (const method of def.methods) {
-          // Register method as first-class definition in by_symbol
+        // `methods` is optional on an enum and required on the other two.
+        for (const method of def.methods ?? []) {
           this.by_symbol.set(method.symbol_id, method);
-
-          flat_members.set(method.name, method.symbol_id);
-          // Add method to location index for type binding resolution
+          own_members.push([method.name, method.symbol_id]);
+          this.members.register_member_owner(method.symbol_id, def.symbol_id);
           const method_loc_key = location_key(method.location);
           this.location_to_symbol.set(method_loc_key, method.symbol_id);
-        }
-
-        // Combine properties into flat map
-        for (const prop of def.properties) {
-          // Register property as first-class definition in by_symbol
-          this.by_symbol.set(prop.symbol_id, prop);
-
-          flat_members.set(prop.name, prop.symbol_id);
-          // Add property to location index for type binding resolution
-          const prop_loc_key = location_key(prop.location);
-          this.location_to_symbol.set(prop_loc_key, prop.symbol_id);
-        }
-
-        // Register class constructors for call_type inference
-        if (def.kind === "class" && def.constructors) {
-          for (const ctor of def.constructors) {
-            this.by_symbol.set(ctor.symbol_id, ctor);
-            const ctor_loc_key = location_key(ctor.location);
-            this.location_to_symbol.set(ctor_loc_key, ctor.symbol_id);
+          if (method.body_scope_id !== undefined) {
+            this.callable_by_body_scope.set(method.body_scope_id, method.symbol_id);
           }
         }
 
-        this.member_index.set(def.symbol_id, flat_members);
+        if (def.kind !== "enum") {
+          for (const prop of def.properties) {
+            this.by_symbol.set(prop.symbol_id, prop);
+            own_members.push([prop.name, prop.symbol_id]);
+            this.members.register_member_owner(prop.symbol_id, def.symbol_id);
+            const prop_loc_key = location_key(prop.location);
+            this.location_to_symbol.set(prop_loc_key, prop.symbol_id);
+          }
+        }
+
+        // Register class constructors for call_type inference, and key each
+        // into the flat member index under its method name (__init__ for
+        // Python, constructor for TS/JS). This makes member-style constructor
+        // calls — self.__init__(), super().__init__() — resolvable through the
+        // same member lookup that serves ordinary methods.
+        //
+        // Keying cannot clobber a real method: __init__/constructor are captured
+        // only into `def.constructors`, never `def.methods`, so no method
+        // contends for the name. (Rust's `new` is captured as an ordinary
+        // method, so it never reaches this loop.)
+        if (def.kind === "class" && def.constructors) {
+          for (const ctor of def.constructors) {
+            this.by_symbol.set(ctor.symbol_id, ctor);
+            this.members.register_member_owner(ctor.symbol_id, def.symbol_id);
+            const ctor_loc_key = location_key(ctor.location);
+            this.location_to_symbol.set(ctor_loc_key, ctor.symbol_id);
+            own_members.push([ctor.name, ctor.symbol_id]);
+          }
+        }
+
+        this.members.attach_members(def.symbol_id, own_members);
+
+        if (def.kind === "class") {
+          this.members.attach_members(
+            def.symbol_id,
+            this.members.capture_member_aliases(
+              def,
+              this.members.get_member_index().get(def.symbol_id) ?? new Map()
+            )
+          );
+        }
       }
     }
 
-    // Update file index
     if (symbol_ids.size > 0) {
       this.by_file.set(file_id, symbol_ids);
     }
 
-    // Step 3: Build scope-to-definitions index for this file
-    this.scope_to_definitions_index.set(file_id, this.build_scope_to_definitions_index(definitions));
+    if (anonymous_callables.length > 0) {
+      this.anonymous_callables_by_file.set(file_id, anonymous_callables);
+    }
 
-    // Step 4: Build type inheritance index
-    // Note: This requires name resolution, so we do a second pass after all definitions are added
+    this.index_rebindings(definitions);
+
     for (const def of definitions) {
-      if (def.kind === "class" || def.kind === "interface") {
-        this.register_type_inheritance(def);
-      }
-
-      // Step 5: Build function collection index
-      if ((def.kind === "variable" || def.kind === "constant") && def.function_collection) {
+      if (
+        (def.kind === "variable" ||
+          def.kind === "constant" ||
+          def.kind === "function") &&
+        def.function_collection
+      ) {
         this.function_collections.set(def.symbol_id, def.function_collection);
       }
     }
+
+    assert_reverse_indices_consistent(this.members, this.heritage, `update_file(${file_id})`);
   }
 
   /**
@@ -201,34 +290,15 @@ export class DefinitionRegistry {
     return this.by_symbol.get(symbol_id);
   }
 
-  /**
-   * Get a SymbolId by its location.
-   * Fast O(1) lookup for finding which symbol is defined at a specific location.
-   *
-   * @param loc_key - The location to look up
-   * @returns The SymbolId at that location, or undefined if not found
-   */
   get_symbol_at_location(loc_key: LocationKey): SymbolId | undefined {
     return this.location_to_symbol.get(loc_key);
   }
 
-  /**
-   * Get the defining scope for a symbol.
-   * Fast O(1) lookup that finds the definition and returns its defining_scope_id.
-   *
-   * @param symbol_id - The symbol to look up
-   * @returns The ScopeId where this symbol is defined, or undefined if not found
-   */
   get_symbol_scope(symbol_id: SymbolId): ScopeId | undefined {
     const def = this.by_symbol.get(symbol_id);
     return def?.defining_scope_id;
   }
 
-  /**
-   * Get all callable definitions (functions, methods, constructors) across all files.
-   *
-   * @returns Array of callable definitions
-   */
   get_callable_definitions(): CallableDefinition[] {
     const callables: CallableDefinition[] = [];
     for (const def of this.by_symbol.values()) {
@@ -243,9 +313,13 @@ export class DefinitionRegistry {
     return callables;
   }
 
-  /**
-   * Get all class definitions in the registry.
-   */
+  /** The anonymous functions one file declares, in the order the file declares them. */
+  get_anonymous_callables_in_file(
+    file_id: FilePath
+  ): readonly FunctionDefinition[] {
+    return this.anonymous_callables_by_file.get(file_id) ?? [];
+  }
+
   get_class_definitions(): ClassDefinition[] {
     const classes: ClassDefinition[] = [];
     for (const def of this.by_symbol.values()) {
@@ -254,6 +328,46 @@ export class DefinitionRegistry {
       }
     }
     return classes;
+  }
+
+  /**
+   * Introspection APIs use this to surface name collisions (multiple definitions
+   * sharing a name), a resolver failure mode the auto-classifier uses as a signal.
+   */
+  get_definitions_by_name(name: SymbolName): AnyDefinition[] {
+    const matches: AnyDefinition[] = [];
+    for (const def of this.by_symbol.values()) {
+      if (def.name === name) {
+        matches.push(def);
+      }
+    }
+    return matches;
+  }
+
+  /**
+   * The class, interface or enum named `name` declared directly in `scope_id`.
+   *
+   * A scope holds one symbol per name, so a type declared beside a same-named
+   * non-type — a TypeScript `class Foo` merged with a `namespace Foo` — can lose
+   * that slot to the non-type. A caller that needs the type specifically asks
+   * for it by kind here rather than taking whichever declaration won the name.
+   */
+  find_type_declared_in_scope(
+    file_id: FilePath,
+    scope_id: ScopeId,
+    name: SymbolName
+  ): SymbolId | null {
+    for (const symbol_id of this.by_file.get(file_id) ?? []) {
+      const def = this.by_symbol.get(symbol_id);
+      if (
+        def?.name === name &&
+        def.defining_scope_id === scope_id &&
+        (def.kind === "class" || def.kind === "interface" || def.kind === "enum")
+      ) {
+        return symbol_id;
+      }
+    }
+    return null;
   }
 
   get_exportable_definitions_in_file(
@@ -268,258 +382,240 @@ export class DefinitionRegistry {
     }
     return exportables;
   }
-  
 
-  /**
-   * Get the member index for fast member lookup.
-   *
-   * Returns a map where each type's methods and properties are combined
-   * into a single flat map: type_id → (member_name → member_symbol_id)
-   *
-   * This eliminates the need to iterate and flatten TypeMemberInfo
-   * every time during type context building.
-   *
-   * @returns Map of type members for O(1) access
-   */
-  get_member_index(): ReadonlyMap<SymbolId, ReadonlyMap<SymbolName, SymbolId>> {
-    return this.member_index;
+  /** The type that declares `member_symbol_id`, or undefined for a non-member. */
+  get_member_owner(member_symbol_id: SymbolId): SymbolId | undefined {
+    return this.members.get_member_owner(member_symbol_id);
   }
 
   /**
-   * Get all definitions declared directly in a scope.
-   * O(1) lookup via scope index.
-   *
-   * Used by ResolutionRegistry to resolve local definitions during
-   * eager symbol resolution.
-   *
-   * @param scope_id - Scope to query
-   * @returns Map of symbol name → symbol_id for all local definitions
+   * Name → member for every type, live: a type's map is merged in place as
+   * files contribute to it, so a caller holding one across a registry write
+   * sees the write. Copy it to hold a snapshot.
    */
+  get_member_index(): ReadonlyMap<SymbolId, ReadonlyMap<SymbolName, SymbolId>> {
+    return this.members.get_member_index();
+  }
+
+  /**
+   * Every type whose member index holds a member named `name`. A type keeps
+   * the members another file contributed after its own declaration is evicted,
+   * so a caller that needs a live type checks `get` on the id.
+   */
+  get_members_by_name(name: SymbolName): ReadonlySet<SymbolId> {
+    return this.members.get_members_by_name(name);
+  }
+
+  /**
+   * A type's own members plus those it inherits, walking `parent_types`
+   * through parents of the type's own kind only: a class walks its parent
+   * classes and an interface its parent interfaces. See `MemberIndex.get_member_closure`.
+   */
+  get_member_closure(type_id: SymbolId): ReadonlyMap<SymbolName, SymbolId> {
+    return this.members.get_member_closure(type_id, (id) => this.heritage.get_parent_types(id));
+  }
+
+  /**
+   * Merge `members` into `type_id`'s member index, crediting each name to the
+   * file its member is declared in. See `MemberIndex.attach_members`.
+   */
+  attach_members(
+    type_id: SymbolId,
+    members: Iterable<readonly [SymbolName, SymbolId]>
+  ): void {
+    this.members.attach_members(type_id, members);
+  }
+
   get_scope_definitions(scope_id: ScopeId): ReadonlyMap<SymbolName, SymbolId> {
     return this.by_scope.get(scope_id) ?? new Map();
   }
 
   /**
-   * Build scope-to-definitions index from a list of definitions.
-   * Maps each scope to its definitions, grouped by SymbolKind.
-   *
-   * Mimics the logic from SemanticIndex.build_scope_to_definitions().
-   * Excludes re-exports (they don't create local bindings).
-   *
-   * @param definitions - The definitions to index
-   * @returns Map of ScopeId → (SymbolKind → AnyDefinition[])
+   * The function or method whose body `scope_id` is, or null when the scope is
+   * a class body, a block or a module. What a type parameter written inside a
+   * callable stands for is the callable's to say, so a binding annotated with
+   * one reaches its declaration this way.
    */
-  private build_scope_to_definitions_index(
-    definitions: AnyDefinition[]
-  ): Map<ScopeId, Map<SymbolKind, AnyDefinition[]>> {
-    const index = new Map<ScopeId, Map<SymbolKind, AnyDefinition[]>>();
-
-    for (const def of definitions) {
-      // Re-exports don't create local bindings - exclude them from scope_to_definitions.
-      // Re-exports are ImportDefinitions with export.is_reexport === true.
-      // They still appear in imported_symbols and exported_symbols for chain resolution,
-      // but are not available for local scope resolution.
-      if (def.kind === "import" && def.export?.is_reexport) {
-        continue;
-      }
-
-      const scope_id = def.defining_scope_id;
-
-      if (!index.has(scope_id)) {
-        index.set(scope_id, new Map());
-      }
-
-      const scope_map = index.get(scope_id);
-      if (!scope_map) {
-        continue;
-      }
-
-      if (!scope_map.has(def.kind)) {
-        scope_map.set(def.kind, []);
-      }
-
-      const kind_array = scope_map.get(def.kind);
-      if (kind_array) {
-        kind_array.push(def);
-      }
-    }
-
-    return index;
+  get_callable_of_body_scope(scope_id: ScopeId): SymbolId | null {
+    return this.callable_by_body_scope.get(scope_id) ?? null;
   }
 
   /**
-   * Remove all definitions from a file.
+   * Every variable, constant and parameter binding of `symbol_id`'s name in its
+   * scope, in source order, or empty when that binding is the name's only one.
    *
-   * @param file_id - The file to remove
+   * The scope index holds one symbol per name, chosen by the order definitions
+   * arrive in rather than by position, so a read that several bindings of one
+   * name precede — `mapper_cls = Mapper; mapper_cls(); mapper_cls = Other` —
+   * cannot tell from name resolution which of them reaches it.
    */
+  get_scope_rebindings(symbol_id: SymbolId): readonly SymbolId[] {
+    return this.rebindings.get(symbol_id) ?? [];
+  }
+
   remove_file(file_id: FilePath): void {
+    this.anonymous_callables_by_file.delete(file_id);
+
+    // Like member contributions, an edge leaves with the file that wrote it,
+    // which need not declare either end: a Rust `impl Trait for T` block.
+    this.heritage.forget_edges_written_by(file_id);
+
+    // Member names leave with the file that holds them, not with the type that
+    // declares them: a type declared here keeps whatever another file
+    // contributed, and a contribution made here to a type declared elsewhere
+    // goes with this file. A contributing file need not declare anything of
+    // its own — a Rust `impl` block for a foreign type is one — so this runs
+    // before the guard on the file's own definitions.
+    this.members.forget_contributed_members(file_id);
+
     const symbol_ids = this.by_file.get(file_id);
     if (!symbol_ids) {
-      return; // File not in registry
+      assert_reverse_indices_consistent(this.members, this.heritage, `remove_file(${file_id})`);
+      return;
     }
 
-    // Remove each symbol from indexes
     for (const symbol_id of symbol_ids) {
       const def = this.by_symbol.get(symbol_id);
       if (def) {
-        // Remove from location index
-        const loc_key = location_key(def.location);
-        this.location_to_symbol.delete(loc_key);
+        // Eviction inverts insertion exactly. An import was never written to
+        // either index and carries the location of a declaration it does not
+        // own, so deleting on its behalf would take the declaring file's entry
+        // out from under it the moment one importer is evicted.
+        if (def.kind === "function") {
+          this.callable_by_body_scope.delete(def.body_scope_id);
+        }
 
-        // Remove property and method locations for classes/interfaces
-        if (def.kind === "class" || def.kind === "interface") {
-          for (const method of def.methods) {
+        if (def.kind !== "import") {
+          this.location_to_symbol.delete(location_key(def.location));
+
+          const scope_id = def.defining_scope_id;
+          const scope_map = this.by_scope.get(scope_id);
+          if (scope_map) {
+            scope_map.delete(def.name as SymbolName);
+            if (scope_map.size === 0) {
+              this.by_scope.delete(scope_id);
+            }
+          }
+        }
+
+        // Members are first-class definitions in by_symbol and the location
+        // index, so evict them alongside the type that owns them — the same set
+        // of kinds update_file registers.
+        if (
+          def.kind === "class" ||
+          def.kind === "interface" ||
+          def.kind === "enum"
+        ) {
+          for (const method of def.methods ?? []) {
             const method_loc_key = location_key(method.location);
             this.location_to_symbol.delete(method_loc_key);
-            // Remove method from by_symbol (first-class definition cleanup)
             this.by_symbol.delete(method.symbol_id);
+            if (method.body_scope_id !== undefined) {
+              this.callable_by_body_scope.delete(method.body_scope_id);
+            }
           }
-          for (const prop of def.properties) {
-            const prop_loc_key = location_key(prop.location);
-            this.location_to_symbol.delete(prop_loc_key);
-            // Remove property from by_symbol (first-class definition cleanup)
-            this.by_symbol.delete(prop.symbol_id);
-          }
-        }
-
-        // Remove from scope index
-        const scope_id = def.defining_scope_id;
-        const scope_map = this.by_scope.get(scope_id);
-        if (scope_map) {
-          scope_map.delete(def.name as SymbolName);
-          // Clean up empty scope maps
-          if (scope_map.size === 0) {
-            this.by_scope.delete(scope_id);
+          if (def.kind !== "enum") {
+            for (const prop of def.properties) {
+              const prop_loc_key = location_key(prop.location);
+              this.location_to_symbol.delete(prop_loc_key);
+              this.by_symbol.delete(prop.symbol_id);
+            }
           }
         }
       }
 
-      // Remove from symbol index
       this.by_symbol.delete(symbol_id);
-
-      // Remove from member index if this symbol has members
-      this.member_index.delete(symbol_id);
-
-      // Remove from type inheritance index
-      // This symbol might be a parent type with subtypes, or a subtype of parent types
-      // 1. Remove this symbol as a parent (delete its entry)
-      this.type_subtypes.delete(symbol_id);
-
-      // 2. Remove this symbol from all parent types' subtype sets
-      for (const subtypes of this.type_subtypes.values()) {
-        subtypes.delete(symbol_id);
-      }
+      this.rebindings.delete(symbol_id);
+      this.members.forget_owned_members(symbol_id);
+      this.members.forget_member(symbol_id);
+      this.function_collections.delete(symbol_id);
+      this.heritage.forget_type(symbol_id);
     }
 
-    // Remove file from file index
     this.by_file.delete(file_id);
 
-    // Remove scope-to-definitions index for this file
-    this.scope_to_definitions_index.delete(file_id);
+    assert_reverse_indices_consistent(this.members, this.heritage, `remove_file(${file_id})`);
   }
 
   /**
-   * Get the total number of definitions in the registry.
-   *
-   * @returns Count of definitions
+   * Group one file's variable, constant and parameter bindings by scope and
+   * name, and index every group of more than one. A binding a scope holds twice
+   * over one span — a Python class attribute is also its class's property — is
+   * one binding, which is why properties take no part.
    */
+  private index_rebindings(definitions: readonly AnyDefinition[]): void {
+    const groups = new Map<string, AnyDefinition[]>();
+    for (const def of definitions) {
+      if (def.kind !== "variable" && def.kind !== "constant" && def.kind !== "parameter") {
+        continue;
+      }
+      const key = `${def.defining_scope_id}\u0000${def.name}`;
+      const group = groups.get(key);
+      if (group) {
+        group.push(def);
+      } else {
+        groups.set(key, [def]);
+      }
+    }
+
+    for (const group of groups.values()) {
+      if (group.length < 2) {
+        continue;
+      }
+      const in_source_order = group
+        .sort((a, b) =>
+          a.location.start_line !== b.location.start_line
+            ? a.location.start_line - b.location.start_line
+            : a.location.start_column - b.location.start_column
+        )
+        .map((def) => def.symbol_id);
+      for (const symbol_id of in_source_order) {
+        this.rebindings.set(symbol_id, in_source_order);
+      }
+    }
+  }
+
   size(): number {
     return this.by_symbol.size;
   }
 
-  /**
-   * Register type inheritance relationships for a class or interface.
-   * Resolves parent type names to SymbolIds and populates the type_subtypes index.
-   *
-   * Called during update_file() for each ClassDefinition and InterfaceDefinition.
-   *
-   * @param def - ClassDefinition or InterfaceDefinition with extends field
-   */
-  private register_type_inheritance(
-    def: Extract<AnyDefinition, { kind: "class" } | { kind: "interface" }>
-  ): void {
-    // ClassDefinition.extends and InterfaceDefinition.extends contain both:
-    // - Parent classes (extends)
-    // - Implemented interfaces (implements)
-    // For polymorphic resolution, we don't need to distinguish
-    for (const parent_name of def.extends) {
-      // Resolve parent name to SymbolId in the defining scope
-      // Use the scope-based lookup to find the parent type
-      const parent_id = this.resolve_type_name_in_scope(
-        parent_name,
-        def.defining_scope_id
-      );
-
-      if (parent_id) {
-        // Register this class/interface as a subtype of the parent
-        if (!this.type_subtypes.has(parent_id)) {
-          this.type_subtypes.set(parent_id, new Set());
-        }
-        const subtypes = this.type_subtypes.get(parent_id);
-        if (subtypes) {
-          subtypes.add(def.symbol_id);
-        }
-      }
-    }
+  /** The types that directly extend or implement `type_id`. */
+  get_subtypes(type_id: SymbolId): Iterable<SymbolId> {
+    return this.heritage.get_subtypes(type_id);
   }
 
   /**
-   * Resolve a type name to SymbolId in a given scope.
-   * Walks up the scope chain to find the type definition.
-   *
-   * Used internally for resolving parent type names during type inheritance registration.
-   *
-   * @param type_name - Name of the type to resolve
-   * @param scope_id - Scope to start resolution from
-   * @returns SymbolId of the type, or null if not found
+   * The types `type_id` directly extends or implements: declared parents first,
+   * in the order its declaration writes them, then structural ones.
    */
-  private resolve_type_name_in_scope(
-    type_name: SymbolName,
-    scope_id: ScopeId
-  ): SymbolId | null {
-    // Try to find the type in this scope or parent scopes
-    // This is a simplified resolution - just checks the by_scope index
-    const scope_defs = this.by_scope.get(scope_id);
-    if (scope_defs) {
-      const symbol_id = scope_defs.get(type_name);
-      if (symbol_id) {
-        return symbol_id;
-      }
-    }
+  /** Whether any type's own declaration names `type_id` as a parent. See `SubtypeGraph.has_declared_subtype`. */
+  has_declared_subtype(type_id: SymbolId): boolean {
+    return this.heritage.has_declared_subtype(type_id);
+  }
 
-    // Type not found in scope
-    // A more complete implementation would walk up the scope chain
-    // For now, this handles same-scope and imported types
-    return null;
+  /** Every type transitively below `type_id`, itself excluded. See `SubtypeGraph.get_subtype_closure`. */
+  get_subtype_closure(type_id: SymbolId): Set<SymbolId> {
+    return this.heritage.get_subtype_closure(type_id);
+  }
+
+  get_parent_types(type_id: SymbolId): readonly SymbolId[] {
+    return this.heritage.get_parent_types(type_id);
+  }
+
+  /** `type_ids` and every type they transitively extend or implement. */
+  get_supertype_closure(type_ids: Iterable<SymbolId>): Set<SymbolId> {
+    return this.heritage.get_supertype_closure(type_ids);
   }
 
   /**
-   * Get all types that extend/implement a given type (subtypes).
-   * Used for polymorphic method resolution.
-   *
-   * Example:
-   * - interface_id → all classes implementing the interface
-   * - abstract_class_id → all concrete subclasses
-   * - class_id → all subclasses extending it
-   *
-   * @param type_id - SymbolId of the parent type (interface, abstract class, or class)
-   * @returns ReadonlySet of SymbolIds that extend/implement this type
+   * The types whose members `file_id` contributes differently from before the
+   * file was last evicted, read once per eviction. See
+   * `MemberIndex.take_changed_member_types`.
    */
-  get_subtypes(type_id: SymbolId): ReadonlySet<SymbolId> {
-    return this.type_subtypes.get(type_id) ?? new Set();
+  take_changed_member_types(file_id: FilePath): ReadonlySet<SymbolId> {
+    return this.members.take_changed_member_types(file_id);
   }
 
-  /**
-   * Get function collection metadata for a variable.
-   * Used for collection dispatch resolution.
-   *
-   * Example:
-   * - CONFIG variable → FunctionCollection with all handler functions in the Map
-   * - handlers variable → FunctionCollection with all functions in the array
-   *
-   * @param variable_id - SymbolId of the variable holding the collection
-   * @returns FunctionCollection metadata, or undefined if variable doesn't hold a function collection
-   */
   get_function_collection(
     variable_id: SymbolId
   ): FunctionCollection | undefined {
@@ -527,105 +623,232 @@ export class DefinitionRegistry {
   }
 
   /**
-   * Resolve cross-file type inheritance using ResolutionRegistry.
-   * Called after Phase 3 (name resolution) to register inheritance for imported types.
+   * Find the collection holder whose member function most tightly encloses
+   * `location`, binding a `this`/self receiver inside an object-literal method or
+   * member/prototype-assigned function to the collection it belongs to so
+   * `this.method()` resolves against its siblings.
    *
-   * Phase 2 (update_file) can only resolve local type names. For cross-file inheritance
-   * like "class PythonScopeBoundaryExtractor implements ScopeBoundaryExtractor"
-   * where ScopeBoundaryExtractor is imported, we need the ResolutionRegistry.
+   * Selection is by the innermost enclosing member (smallest span): a call inside
+   * a nested object literal binds to the nearest collection member that owns it,
+   * not to an outer literal that merely contains it. Only inline members carry an
+   * enclosure span; reference members (`{ method: helper }`) live elsewhere.
    *
-   * @param file_id - The file to process
-   * @param resolutions - Object with resolve(scope_id, name) method
+   * @param location - The receiver call site (its enclosing scope span)
+   * @returns The collection holder's SymbolId, or null if none encloses it
    */
-  resolve_cross_file_type_inheritance(
-    file_id: FilePath,
-    resolutions: {
-      resolve: (scope_id: ScopeId, name: SymbolName) => SymbolId | null;
-    }
-  ): Set<FilePath> {
-    const affected_parent_files = new Set<FilePath>();
+  find_enclosing_collection(location: Location): SymbolId | null {
+    let best_holder: SymbolId | null = null;
+    let best_span: Location | null = null;
 
-    const file_symbols = this.by_file.get(file_id);
-    if (!file_symbols) {
-      return affected_parent_files;
-    }
-
-    for (const symbol_id of file_symbols) {
-      const def = this.by_symbol.get(symbol_id);
-      if (!def || (def.kind !== "class" && def.kind !== "interface")) {
-        continue;
-      }
-
-      // Skip if no extends/implements
-      if (def.extends.length === 0) {
-        continue;
-      }
-
-      // Try to resolve each parent type using ResolutionRegistry
-      for (const parent_name of def.extends) {
-        // Check if already resolved (from Phase 2)
-        const already_resolved = this.is_subtype_registered(def.symbol_id, parent_name);
-        if (already_resolved) {
+    for (const [collection_id, collection] of this.function_collections) {
+      for (const member of collection.named_members ?? []) {
+        if (!("location" in member)) {
           continue;
         }
-
-        // Use ResolutionRegistry to resolve the parent type name
-        // Use the class's defining scope for resolution (where imports are visible)
-        const parent_id = resolutions.resolve(def.defining_scope_id, parent_name);
-
-        if (parent_id) {
-          // Register this class/interface as a subtype of the parent
-          if (!this.type_subtypes.has(parent_id)) {
-            this.type_subtypes.set(parent_id, new Set());
-          }
-          const subtypes = this.type_subtypes.get(parent_id);
-          if (subtypes) {
-            subtypes.add(def.symbol_id);
-          }
-
-          // Track affected parent file for re-resolution
-          // When a new subtype is registered, the parent file's polymorphic
-          // calls need to be re-resolved to include the new subtype
-          const parent_def = this.by_symbol.get(parent_id);
-          if (parent_def) {
-            affected_parent_files.add(parent_def.location.file_path);
+        if (location_contains(member.location, location)) {
+          if (best_span === null || is_tighter_span(member.location, best_span)) {
+            best_span = member.location;
+            best_holder = collection_id;
           }
         }
       }
     }
 
-    return affected_parent_files;
+    return best_holder;
   }
 
   /**
-   * Check if a subtype relationship is already registered.
-   * Used to avoid duplicate registration.
+   * @language rust
+   * Attach each impl-block method `file_id` holds to the type its `impl`
+   * names, when the type is declared in another file: the method joins that
+   * type's member index, credited to `file_id` so it leaves with this file,
+   * and the type becomes its owner — which is what lets `s.method()` from any
+   * file, and the impl's trait edge, find it. Runs before
+   * `resolve_type_heritage`, which reads that owner.
    */
-  private is_subtype_registered(
-    child_id: SymbolId,
-    parent_name: SymbolName
-  ): boolean {
-    // Check all registered parent types to see if child is already a subtype
-    for (const [parent_id, subtypes] of this.type_subtypes) {
-      if (subtypes.has(child_id)) {
-        // Check if this parent has the same name
-        const parent_def = this.by_symbol.get(parent_id);
-        if (parent_def && parent_def.name === parent_name) {
-          return true;
+  attach_impl_methods(file_id: FilePath, resolve_type_name: TypeNameResolver): void {
+    const members_by_type = new Map<SymbolId, [SymbolName, SymbolId][]>();
+    for (const symbol_id of this.by_file.get(file_id) ?? []) {
+      const def = this.by_symbol.get(symbol_id);
+      if (
+        def?.kind !== "method" ||
+        !def.impl_self_type ||
+        this.members.get_member_owner(def.symbol_id) !== undefined
+      ) {
+        continue;
+      }
+      const type_id = resolve_type_name(def.defining_scope_id, def.impl_self_type, file_id);
+      if (!type_id || !kind_can_be_a_subtype(this.by_symbol.get(type_id))) {
+        continue;
+      }
+      this.members.register_member_owner(def.symbol_id, type_id);
+      const members = members_by_type.get(type_id) ?? [];
+      members.push([def.name, def.symbol_id]);
+      members_by_type.set(type_id, members);
+    }
+    for (const [type_id, members] of members_by_type) {
+      this.members.attach_members(type_id, members);
+    }
+
+    assert_reverse_indices_consistent(this.members, this.heritage, `attach_impl_methods(${file_id})`);
+  }
+
+  /**
+   * Resolve the heritage `file_id` declares and write it into the subtype
+   * graph: every `extends` entry of its classes and interfaces, and the trait
+   * of every Rust `impl Trait for T` method it holds, as a parent of the type
+   * that owns the method. The only writer of
+   * declared heritage edges, so it runs once per resolve pass, after name
+   * resolution, and replaces whatever declared edges the file wrote before.
+   *
+   * Every name goes through `resolve_type_name`, so a qualified or generic
+   * parent (`o.TypeVisitor`, `compiler.DDLCompiler`, `Base<T>`) resolves as an
+   * annotation does and the edge is keyed on the definition it names. Only a
+   * class or interface can be a parent.
+   *
+   * @returns The parents whose set of subtypes gained or lost a member since
+   *   the file's previous pass — including an edge the file's re-index evicted
+   *   and this pass did not write again — whose polymorphic calls must be
+   *   re-resolved to see it.
+   */
+  resolve_type_heritage(
+    file_id: FilePath,
+    resolve_type_name: TypeNameResolver
+  ): ReadonlySet<SymbolId> {
+    const previous = this.heritage.declared_edges_written_by(file_id);
+    for (const [subtype_id, parents] of this.heritage.take_evicted_edges_written_by(file_id)) {
+      const held = previous.get(subtype_id) ?? new Set<SymbolId>();
+      previous.set(subtype_id, new Set([...held, ...parents]));
+    }
+    this.heritage.forget_declared_edges_written_by(file_id);
+
+    for (const symbol_id of this.by_file.get(file_id) ?? []) {
+      const def = this.by_symbol.get(symbol_id);
+      if (def?.kind === "class" || def?.kind === "interface") {
+        for (const parent_name of def.extends) {
+          this.declare_subtype(
+            resolve_type_name(def.defining_scope_id, parent_name, file_id),
+            def.symbol_id,
+            file_id
+          );
+        }
+      } else if (def?.kind === "method" && def.impl_trait_name) {
+        // @language rust
+        this.declare_subtype(
+          resolve_type_name(def.defining_scope_id, def.impl_trait_name, file_id),
+          this.members.get_member_owner(def.symbol_id) ?? null,
+          file_id
+        );
+      }
+    }
+
+    const changed_parents = new Set<SymbolId>();
+    const current = this.heritage.declared_edges_written_by(file_id);
+    for (const [from, to] of [[previous, current], [current, previous]]) {
+      for (const [subtype_id, parents] of from) {
+        for (const parent_id of parents) {
+          if (!to.get(subtype_id)?.has(parent_id)) {
+            changed_parents.add(parent_id);
+          }
         }
       }
     }
-    return false;
+
+    assert_reverse_indices_consistent(this.members, this.heritage, `resolve_type_heritage(${file_id})`);
+
+    return changed_parents;
+  }
+
+  /**
+   * Record that `subtype_id` satisfies `parent_id` without declaring it, for a
+   * conformance a caller inferred from the two types' members.
+   *
+   * The edge is credited to the subtype's own file, because the subtype's
+   * members are what holds it up: re-indexing or deleting that file takes the
+   * edge back and reports the parent as a changed type, so the interface's
+   * callers are re-answered and the conformance is inferred again from whatever
+   * the file now declares. An edge into a type the registry no longer holds, or
+   * between kinds that cannot carry heritage, is refused exactly as a declared
+   * one is.
+   */
+  infer_subtype(parent_id: SymbolId, subtype_id: SymbolId): void {
+    const subtype_file = this.by_symbol.get(subtype_id)?.location.file_path;
+    if (
+      subtype_file === undefined ||
+      parent_id === subtype_id ||
+      !kind_can_be_a_parent_type(this.by_symbol.get(parent_id)) ||
+      !kind_can_be_a_subtype(this.by_symbol.get(subtype_id))
+    ) {
+      return;
+    }
+    if (this.heritage.register_subtype(parent_id, subtype_id, "structural", subtype_file)) {
+      this.inferred_parents.add(parent_id);
+    }
+
+    assert_reverse_indices_consistent(this.members, this.heritage, `infer_subtype(${parent_id}, ${subtype_id})`);
+  }
+
+  /**
+   * The parents that gained a structural subtype, read once. An edge inferred
+   * while calls resolve widens the subtype closure of its parent and of every
+   * type above it, so a call that dispatched through any of them before the edge
+   * existed holds an answer that depends on what was resolved first.
+   */
+  take_inferred_parents(): ReadonlySet<SymbolId> {
+    const taken = this.inferred_parents;
+    this.inferred_parents = new Set();
+    return taken;
+  }
+
+  /**
+   * The parents whose subtype sets lost an edge `file_id` wrote when the file
+   * was evicted, for a file that is gone and gets no further heritage pass.
+   */
+  take_evicted_heritage_parents(file_id: FilePath): ReadonlySet<SymbolId> {
+    const parents = new Set<SymbolId>();
+    for (const evicted_parents of this.heritage.take_evicted_edges_written_by(file_id).values()) {
+      for (const parent_id of evicted_parents) {
+        parents.add(parent_id);
+      }
+    }
+    return parents;
+  }
+
+  private declare_subtype(
+    parent_id: SymbolId | null,
+    subtype_id: SymbolId | null,
+    file_id: FilePath
+  ): void {
+    if (
+      parent_id &&
+      subtype_id &&
+      parent_id !== subtype_id &&
+      kind_can_be_a_parent_type(this.by_symbol.get(parent_id)) &&
+      kind_can_be_a_subtype(this.by_symbol.get(subtype_id))
+    ) {
+      this.heritage.register_subtype(parent_id, subtype_id, "declared", file_id);
+    }
+  }
+
+  /**
+   * The first place this registry's forward maps and reverse indexes disagree,
+   * or null when they all agree. Public so a test can assert the invariant
+   * directly after the writes it exercises.
+   */
+  verify_reverse_indices(): string | null {
+    return first_reverse_index_divergence(this.members, this.heritage);
   }
 
   clear(): void {
     this.by_symbol.clear();
     this.by_file.clear();
     this.location_to_symbol.clear();
-    this.member_index.clear();
+    this.members.clear();
     this.by_scope.clear();
-    this.scope_to_definitions_index.clear();
-    this.type_subtypes.clear();
+    this.rebindings.clear();
+    this.heritage.clear();
     this.function_collections.clear();
+    this.callable_by_body_scope.clear();
+    this.anonymous_callables_by_file.clear();
   }
 }

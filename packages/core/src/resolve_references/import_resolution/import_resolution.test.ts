@@ -2,10 +2,15 @@
  * Tests for import resolution dispatcher + shared test helpers
  */
 
+import { EMPTY_MODULE_SPECIFIER_INDEX } from "../resolution_test_helpers";
 import { describe, it, expect } from "vitest";
 import type { FilePath } from "@ariadnejs/types";
-import { resolve_module_path } from "./import_resolution";
+import {
+  resolve_module_path,
+  resolve_submodule_import_path,
+} from "./import_resolution";
 import type { FileSystemFolder } from "../file_folders";
+import { create_module_resolution_context } from "../import_resolution";
 
 /**
  * Create a mock FileSystemFolder tree from a list of file paths.
@@ -66,7 +71,7 @@ describe("resolve_module_path dispatcher", () => {
       "./utils",
       "/project/src/app.ts" as FilePath,
       "typescript",
-      tree
+      create_module_resolution_context(tree, EMPTY_MODULE_SPECIFIER_INDEX)
     );
     expect(result).toBe("/project/src/utils.ts");
   });
@@ -77,7 +82,7 @@ describe("resolve_module_path dispatcher", () => {
       "./utils",
       "/project/src/app.js" as FilePath,
       "javascript",
-      tree
+      create_module_resolution_context(tree, EMPTY_MODULE_SPECIFIER_INDEX)
     );
     expect(result).toBe("/project/src/utils.js");
   });
@@ -91,7 +96,7 @@ describe("resolve_module_path dispatcher", () => {
       "utils",
       "/project/pkg/main.py" as FilePath,
       "python",
-      tree
+      create_module_resolution_context(tree, EMPTY_MODULE_SPECIFIER_INDEX)
     );
     expect(result).toBe("/project/pkg/utils.py");
   });
@@ -105,7 +110,7 @@ describe("resolve_module_path dispatcher", () => {
       "crate::utils",
       "/project/src/lib.rs" as FilePath,
       "rust",
-      tree
+      create_module_resolution_context(tree, EMPTY_MODULE_SPECIFIER_INDEX)
     );
     expect(result).toBe("/project/src/utils.rs");
   });
@@ -117,8 +122,90 @@ describe("resolve_module_path dispatcher", () => {
         "./utils",
         "/project/src/app.rb" as FilePath,
         "ruby" as "typescript",
-        tree
+        create_module_resolution_context(tree, EMPTY_MODULE_SPECIFIER_INDEX)
       )
     ).toThrow("Unsupported language");
+  });
+});
+
+describe("resolve_submodule_import_path dispatcher", () => {
+  it("resolves a Python submodule sibling file", () => {
+    const tree = create_file_tree("/project", [
+      "pkg/__init__.py",
+      "pkg/pipeline.py",
+    ]);
+    const result = resolve_submodule_import_path(
+      "/project/pkg/__init__.py" as FilePath,
+      "pipeline",
+      "python",
+      create_module_resolution_context(tree, EMPTY_MODULE_SPECIFIER_INDEX)
+    );
+    expect(result).toBe("/project/pkg/pipeline.py");
+  });
+
+  it("resolves a Python submodule package directory", () => {
+    const tree = create_file_tree("/project", [
+      "pkg/__init__.py",
+      "pkg/nested/__init__.py",
+    ]);
+    const result = resolve_submodule_import_path(
+      "/project/pkg/__init__.py" as FilePath,
+      "nested",
+      "python",
+      create_module_resolution_context(tree, EMPTY_MODULE_SPECIFIER_INDEX)
+    );
+    expect(result).toBe("/project/pkg/nested/__init__.py");
+  });
+
+  it("returns undefined when the Python name is an explicit export, not a submodule", () => {
+    const tree = create_file_tree("/project", ["pkg/__init__.py"]);
+    const result = resolve_submodule_import_path(
+      "/project/pkg/__init__.py" as FilePath,
+      "some_export",
+      "python",
+      create_module_resolution_context(tree, EMPTY_MODULE_SPECIFIER_INDEX)
+    );
+    expect(result).toBeUndefined();
+  });
+
+  it("resolves a Rust use path whose final segment is a submodule", () => {
+    const tree = create_file_tree("/project", [
+      "src/lib.rs",
+      "src/internals.rs",
+      "src/internals/attr.rs",
+    ]);
+    const result = resolve_submodule_import_path(
+      "/project/src/internals.rs" as FilePath,
+      "attr",
+      "rust",
+      create_module_resolution_context(tree, EMPTY_MODULE_SPECIFIER_INDEX)
+    );
+    expect(result).toBe("/project/src/internals/attr.rs");
+  });
+
+  it("returns undefined for a Rust flat sibling of the declaring file", () => {
+    // `src/attr.rs` is a module of the parent, not of `internals`.
+    const tree = create_file_tree("/project", ["src/internals.rs", "src/attr.rs"]);
+    const result = resolve_submodule_import_path(
+      "/project/src/internals.rs" as FilePath,
+      "attr",
+      "rust",
+      create_module_resolution_context(tree, EMPTY_MODULE_SPECIFIER_INDEX)
+    );
+    expect(result).toBeUndefined();
+  });
+
+  it("returns undefined for TypeScript", () => {
+    const tree = create_file_tree("/project", [
+      "src/index.ts",
+      "src/utils.ts",
+    ]);
+    const result = resolve_submodule_import_path(
+      "/project/src/index.ts" as FilePath,
+      "utils",
+      "typescript",
+      create_module_resolution_context(tree, EMPTY_MODULE_SPECIFIER_INDEX)
+    );
+    expect(result).toBeUndefined();
   });
 });

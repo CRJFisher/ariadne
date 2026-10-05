@@ -15,7 +15,7 @@ This document outlines the design for adding class inheritance analysis to Ariad
 
 ### Python
 
-- Classes use `class_definition` nodes  
+- Classes use `class_definition` nodes
 - Superclasses are in `argument_list` field (named "superclasses")
 - Multiple inheritance supported (comma-separated in argument_list)
 
@@ -28,10 +28,10 @@ This document outlines the design for adding class inheritance analysis to Ariad
 
 ```typescript
 interface ClassRelationship {
-  parent_class?: string;           // Name of parent class
-  parent_class_def?: Def;          // Definition of parent class (if found)
+  parent_class?: string; // Name of parent class
+  parent_class_def?: Def; // Definition of parent class (if found)
   implemented_interfaces: string[]; // Names of implemented interfaces
-  interface_defs: Def[];           // Definitions of interfaces (if found)
+  interface_defs: Def[]; // Definitions of interfaces (if found)
 }
 
 class Project {
@@ -65,11 +65,13 @@ class Project {
 ## Implementation Strategy
 
 1. **Phase 1: Direct Relationships**
+
    - Extract parent class from AST during parsing
    - Store in a new optional field on Def or in a separate map
    - Support TypeScript, JavaScript ES6, and Python initially
 
 2. **Phase 2: Reverse Lookups**
+
    - Build indexes mapping parent classes to their children
    - Build indexes mapping interfaces to their implementers
    - Update indexes when files change

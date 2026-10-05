@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The classifier registry is builtin-only — and has a staged, validated authoring path</title>
+<style>
+  :root{
+    --ivory:#f7f3ec; --slate:#2b2a28; --clay:#b9794f; --olive:#6c7a4a;
+    --oat:#e7ddc9; --rust:#a8472f; --paper:#fffdf8;
+    --g100:#efeae1; --g200:#ddd6c8; --g400:#9a9387; --g600:#5f594f;
+    --ink:#1f1e1c; --code:#26241f; --codeink:#e8e1d2;
+    --serif:ui-serif,Georgia,"Times New Roman",serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --r:12px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ivory);color:var(--slate);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased}
+
+  /* cross-doc nav (outbound to family) */
+  nav.cross{position:sticky;top:0;z-index:10;background:var(--ivory);border-bottom:1px solid var(--g200);padding:8px 0}
+  nav.cross .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  nav.cross .brand{font-family:var(--mono);font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--clay);margin-right:6px}
+  nav.cross a, nav.cross .pending, nav.cross .me{font-family:var(--mono);font-size:11px;text-decoration:none;border-radius:999px;padding:3px 10px;border:1px solid var(--g200)}
+  nav.cross a.doc-link{color:var(--g600);background:var(--paper)}
+  nav.cross a.doc-link:hover{border-color:var(--clay);color:var(--slate)}
+  nav.cross a.doc-link .done-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--olive);margin-right:5px;vertical-align:1px}
+  nav.cross .me{color:var(--ivory);background:var(--slate);border-color:var(--slate)}
+  nav.cross .me .done-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--olive);margin-right:5px;vertical-align:1px}
+  nav.cross .pending{color:var(--g400);background:transparent;border-style:dashed}
+
+  /* same-page outline */
+  nav.toc{position:sticky;top:39px;z-index:9;background:var(--paper);border-bottom:1px solid var(--g200);padding:7px 0}
+  nav.toc .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  nav.toc .brand{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--g400);margin-right:6px}
+  nav.toc a{font-family:var(--mono);font-size:11px;text-decoration:none;color:var(--g600);border:1px solid transparent;border-radius:999px;padding:3px 9px}
+  nav.toc a:hover{border-color:var(--g200);background:var(--ivory);color:var(--slate)}
+
+  main{width:90%;max-width:1600px;margin:0 auto;padding:28px 0 80px}
+  .prose{max-width:72ch}
+  .eyebrow{font-family:var(--mono);text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--clay);margin:0 0 10px}
+  h1{font-family:var(--serif);font-weight:600;font-size:32px;line-height:1.14;margin:0 0 14px;letter-spacing:-.01em;max-width:28ch}
+  h2{font-family:var(--serif);font-weight:600;font-size:23px;margin:56px 0 4px;letter-spacing:-.01em;scroll-margin-top:96px}
+  h2 .n{font-family:var(--mono);font-size:13px;color:var(--clay);font-weight:600;margin-right:8px}
+  .lead{font-size:16px;color:var(--g600);max-width:84ch;margin:0 0 6px}
+  .lead b{color:var(--slate);font-weight:600}
+  code{font-family:var(--mono);font-size:.85em;background:var(--g100);border-radius:5px;padding:1px 5px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 2px}
+  .chip{font-family:var(--mono);font-size:11.5px;background:var(--paper);border:1px solid var(--g200);border-radius:999px;padding:4px 11px;color:var(--g600)}
+  .chip strong{color:var(--slate);font-weight:600}
+  .chip.clay{background:rgba(185,121,79,.12);border-color:rgba(185,121,79,.4)} .chip.clay strong{color:#915a32}
+  .chip.olive{background:rgba(108,122,74,.12);border-color:rgba(108,122,74,.4)} .chip.olive strong{color:#4f5a36}
+  .chip.rust{background:rgba(168,71,47,.1);border-color:rgba(168,71,47,.35)} .chip.rust strong{color:#8f3a26}
+  .cap{font-size:13.5px;color:var(--g600);margin:9px 2px 16px;max-width:96ch}
+  .cap b{color:var(--slate);font-weight:600}
+
+  .callout{border-left:4px solid var(--clay);background:var(--paper);border-radius:0 var(--r) var(--r) 0;padding:14px 18px;margin:18px 0;max-width:96ch}
+  .callout.olive{border-left-color:var(--olive)} .callout.rust{border-left-color:var(--rust)}
+  .callout.slate{background:var(--slate);border-left-color:var(--clay)}
+  .callout .k{font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;font-size:10.5px;color:var(--clay);margin:0 0 6px;display:block}
+  .callout.olive .k{color:var(--olive)} .callout.rust .k{color:var(--rust)} .callout.slate .k{color:var(--oat)}
+  .callout p{margin:0 0 6px;font-size:14.5px} .callout p:last-child{margin-bottom:0}
+  .callout.slate p{color:var(--ivory)} .callout.slate b{color:#fff} .callout.slate code{background:#3a3833;color:var(--codeink)}
+
+  .diagram svg{width:100%;height:auto;display:block}
+
+  /* before/after */
+  .sbs{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:14px 0}
+  .panel{background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);padding:16px 18px}
+  .panel.aft{border-color:var(--olive);box-shadow:0 0 0 1px rgba(108,122,74,.25)}
+  .panel .ph{display:flex;align-items:baseline;gap:9px;margin:0 0 10px}
+  .panel .ph .tag{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.09em;border-radius:999px;padding:3px 9px}
+  .panel.cur .ph .tag{background:var(--g100);color:var(--g600)}
+  .panel.aft .ph .tag{background:var(--olive);color:var(--ivory)}
+  .panel .ph h3{font-family:var(--serif);font-size:17px;font-weight:600;margin:0;letter-spacing:-.01em}
+  .panel svg{width:100%;height:auto;display:block}
+  @media(max-width:900px){ .sbs{grid-template-columns:1fr} }
+
+  .legend{display:flex;flex-wrap:wrap;gap:12px 18px;font-family:var(--mono);font-size:11px;color:var(--g600);margin:10px 2px 4px;align-items:center}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend i{width:13px;height:13px;border-radius:4px;display:inline-block;border:1px solid rgba(0,0,0,.1)}
+  .legend i.dash{background:repeating-linear-gradient(90deg,var(--rust) 0 5px,transparent 5px 9px);border:none;height:3px;width:20px;border-radius:0}
+
+  /* reconciliation table (7 predicate rules → builtins / retired) */
+  table.rec{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px}
+  table.rec th{text-align:left;font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--g400);font-weight:600;padding:7px 10px;border-bottom:1.5px solid var(--g200)}
+  table.rec td{padding:9px 10px;border-bottom:1px solid var(--g100);vertical-align:top}
+  table.rec tr:last-child td{border-bottom:none}
+  table.rec tr.retire td{background:rgba(168,71,47,.05)}
+  table.rec code{font-size:.92em;background:var(--ivory);border:1px solid var(--g200);padding:1px 5px}
+  .rtag{font-family:var(--mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;border-radius:999px;padding:3px 9px;white-space:nowrap;display:inline-block}
+  .rtag.conv{background:rgba(108,122,74,.16);color:var(--olive);border:1px solid rgba(108,122,74,.4)}
+  .rtag.drop{background:rgba(168,71,47,.12);color:var(--rust);border:1px solid rgba(168,71,47,.35)}
+  .why{font-family:var(--mono);font-size:11px;color:var(--g600);line-height:1.55}
+
+  /* staging handoff (two-cell comparison) */
+  .handoff{display:grid;grid-template-columns:1fr 44px 1fr;gap:0;margin:14px 0;align-items:stretch}
+  .hcell{background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);padding:16px 18px}
+  .hcell.agent{border-color:var(--olive)} .hcell.human{border-color:var(--clay)}
+  .hcell .role{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.09em;border-radius:999px;padding:3px 10px;display:inline-block;margin-bottom:4px}
+  .hcell.agent .role{background:rgba(108,122,74,.15);color:#4f5a36} .hcell.human .role{background:rgba(185,121,79,.15);color:#915a32}
+  .hcell h3{font-family:var(--serif);font-size:17px;font-weight:600;margin:6px 0 4px}
+  .hcell .can{font-family:var(--mono);font-size:11px;color:var(--g400);margin:0 0 12px}
+  .hbound{display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
+  .hbound .line{width:2px;flex:1;background:repeating-linear-gradient(180deg,var(--slate) 0 6px,transparent 6px 11px)}
+  .hbound .lbl{writing-mode:vertical-rl;font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--slate);background:var(--ivory);padding:8px 2px;border:1px solid var(--g200);border-radius:999px;margin:6px 0}
+  .art{list-style:none;margin:0;padding:0}
+  .art li{display:grid;grid-template-columns:16px 1fr;gap:9px;align-items:start;padding:7px 0;border-top:1px solid var(--g100);font-size:13px;line-height:1.45}
+  .art li:first-child{border-top:none}
+  .art li .fdot{width:9px;height:9px;border-radius:2px;margin-top:5px}
+  .art li.j .fdot{background:var(--olive)} .art li.ts .fdot{background:var(--clay)} .art li.md .fdot{background:var(--g400)}
+  .art li code{font-size:.86em}
+  .art li small{display:block;color:var(--g400);font-family:var(--mono);font-size:10.5px;margin-top:2px}
+  @media(max-width:900px){ .handoff{grid-template-columns:1fr} .hbound{flex-direction:row;padding:8px 0}.hbound .line{width:auto;height:2px;flex:1;background:repeating-linear-gradient(90deg,var(--slate) 0 6px,transparent 6px 11px)}.hbound .lbl{writing-mode:horizontal-tb} }
+
+  /* code panel */
+  .code{background:var(--code);border-radius:var(--r);padding:0;margin:14px 0;overflow:hidden;border:1px solid #34312b}
+  .code .fl{font-family:var(--mono);font-size:11px;color:#b8b0a0;background:#201e1a;padding:8px 14px;border-bottom:1px solid #34312b;display:flex;justify-content:space-between}
+  .code .fl .kind{color:var(--clay)}
+  .code pre{margin:0;padding:14px 16px;overflow-x:auto;font-family:var(--mono);font-size:12.5px;line-height:1.62;color:var(--codeink)}
+  .code .kw{color:#c98a5a} .code .str{color:#a8b978} .code .cm{color:#6f695c;font-style:italic} .code .fn{color:#e0c07a} .code .pk{color:#c98a5a} .code .num{color:#c98a5a}
+  .code .hl{background:rgba(108,122,74,.2);display:inline-block;width:100%}
+  .code .hlr{background:rgba(168,71,47,.22);display:inline-block;width:100%}
+
+  /* status / checklist */
+  .board{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:14px 0}
+  @media(max-width:840px){ .board{grid-template-columns:1fr} }
+  .col{background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);padding:14px 16px}
+  .col h3{font-family:var(--serif);font-size:17px;font-weight:600;margin:0 0 2px;display:flex;align-items:center;gap:8px}
+  .col .subh{font-family:var(--mono);font-size:11px;color:var(--g400);margin:0 0 12px}
+  .col.concrete{border-color:rgba(108,122,74,.5)} .col.soft{border-color:rgba(185,121,79,.5)}
+  .cl{list-style:none;margin:0;padding:0}
+  .cl li{display:grid;grid-template-columns:20px 1fr;gap:9px;align-items:start;padding:6px 0;border-top:1px solid var(--g100);font-size:12.5px;line-height:1.42}
+  .cl li:first-child{border-top:none}
+  .cl li small{display:block;color:var(--g400);font-family:var(--mono);font-size:10.5px;margin-top:2px}
+  .mark{width:17px;height:17px;border-radius:5px;border:1.5px solid var(--g400);margin-top:2px;position:relative;flex-shrink:0}
+  .mark.on{background:var(--olive);border-color:var(--olive)}
+  .mark.on::after{content:"";position:absolute;left:5px;top:1.5px;width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;transform:rotate(43deg)}
+
+  .prov{border:1px solid var(--g200);background:var(--paper);border-radius:var(--r);padding:12px 16px;margin:16px 0}
+  .prov .label{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--g400);margin:0 0 6px}
+  .prov code{font-size:.8em;background:var(--g100)}
+  .prov .files{margin:0;padding:0;list-style:none;font-family:var(--mono);font-size:11.5px;color:var(--g600);line-height:1.85}
+
+  footer{margin-top:56px;border-top:1px solid var(--g200);padding-top:16px;font-family:var(--mono);font-size:11px;color:var(--g400);line-height:1.7}
+</style>
+</head>
+<body>
+
+<!-- ============ CROSS-DOC NAV ============ -->
+<nav class="cross">
+  <div class="inner">
+    <span class="brand">task 190.30 · classifier scope</span>
+    <a class="doc-link" href="task-190.30.overview.html">190.30 · overview</a>
+    <a class="doc-link" href="task-190.30.1.disposition-plan.html"><span class="done-dot"></span>190.30.1 · audit &amp; cleanup · done</a>
+    <span class="me" aria-current="page"><span class="done-dot"></span>190.30.2 · classifier-author · done</span>
+  </div>
+</nav>
+
+<!-- ============ SAME-PAGE OUTLINE ============ -->
+<nav class="toc">
+  <div class="inner">
+    <span class="brand">on this page</span>
+    <a href="#model">1 · Builtin-only, before &amp; after</a>
+    <a href="#reconcile">2 · The 7 predicate rules</a>
+    <a href="#gates">3 · The --stage gates</a>
+    <a href="#handoff">4 · The staging handoff</a>
+    <a href="#wiring">5 · The prioritize wiring</a>
+    <a href="#status">6 · Deliverables</a>
+  </div>
+</nav>
+
+<main>
+<header>
+  <p class="eyebrow">self-healing pipeline · classifier registry · authoring path</p>
+  <h1>Every classifier is now a builtin function, and an agent drafts new ones for the human to insert under lock</h1>
+  <p class="lead prose">The classifier registry is a <b>builtin-only</b> catalog: each entry is a bespoke <code>check_&lt;group_id&gt;.ts</code> function looked up by name in <code>BUILTIN_CHECKS</code>. The serialisable predicate DSL is gone — <code>ClassifierSpec</code> is now <code>none | builtin | retired</code>.</p>
+  <p class="lead prose">A <code>classifier-author</code> agent drafts a validated <code>KnownIssue</code> plus its <code>check_*.ts</code> into a staging directory; <code>reconcile_registry.ts --stage</code> runs five gates over that draft and — with <code>--apply</code> — inserts it through the lock-fenced write contract. <b>The agent never touches <code>registry.json</code>.</b></p>
+  <div class="meta">
+    <span class="chip olive">registry <strong>21 rules · 0 wip</strong></span>
+    <span class="chip rust">predicate DSL <strong>removed</strong></span>
+    <span class="chip">classifier kinds <strong>none · builtin · retired</strong></span>
+    <span class="chip">builtins in barrel <strong>17</strong></span>
+    <span class="chip clay"><code>--stage</code> gates <strong>5</strong></span>
+    <span class="chip">human stays <strong>sole writer</strong></span>
+  </div>
+</header>
+
+<!-- ============ 1. BUILTIN-ONLY MODEL, BEFORE / AFTER ============ -->
+<h2 id="model"><span class="n">01</span>The classifier model, before and after: two kinds collapse to one</h2>
+<p class="cap prose"><b>Left (before):</b> a classifier could be a serialisable <code>predicate</code> — a JSON tree over 17 operators, no compile — or a named <code>builtin</code>. <b>Right (now):</b> the predicate arm is deleted; every classifier is a <code>builtin</code>, and <code>ClassifierSpec</code> is <code>none | builtin | retired</code>.</p>
+<div class="sbs">
+
+  <div class="panel cur">
+    <div class="ph"><span class="tag">before · two classifier kinds</span><h3>predicate OR builtin</h3></div>
+    <svg viewBox="0 0 420 336" role="img" aria-label="Before: an entry's classifier could be a predicate expression tree over 17 operators evaluated by predicate_evaluator with no TypeScript compile, or a builtin check function in BUILTIN_CHECKS requiring a compile. Both arms ran through the classify_entry_points dispatcher.">
+      <defs>
+        <marker id="b1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5f594f"/></marker>
+      </defs>
+      <rect x="90" y="14" width="240" height="40" rx="9" fill="#2b2a28"/>
+      <text x="210" y="33" text-anchor="middle" fill="#f7f3ec" font-family="ui-monospace,Menlo,monospace" font-size="12">classify_entry_points</text>
+      <text x="210" y="47" text-anchor="middle" fill="#e7ddc9" font-family="ui-monospace,Menlo,monospace" font-size="9.5">dispatcher — two arms</text>
+      <path d="M170,54 L120,96" stroke="#5f594f" stroke-width="1.6" marker-end="url(#b1)"/>
+      <path d="M250,54 L300,96" stroke="#5f594f" stroke-width="1.6" marker-end="url(#b1)"/>
+
+      <!-- predicate arm -->
+      <rect x="14" y="98" width="196" height="88" rx="9" fill="#fbf2ea" stroke="#b9794f" stroke-width="1.6"/>
+      <text x="112" y="120" text-anchor="middle" fill="#915a32" font-family="ui-serif,Georgia,serif" font-size="13.5" font-weight="600">kind: "predicate"</text>
+      <text x="112" y="139" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="9.5">JSON expression tree</text>
+      <text x="112" y="153" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="9.5">17 PredicateExpr operators</text>
+      <text x="112" y="167" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="9.5">predicate_evaluator.ts</text>
+      <text x="112" y="181" text-anchor="middle" fill="#4f5a36" font-family="ui-monospace,Menlo,monospace" font-size="9.5">no TS compile</text>
+
+      <!-- builtin arm -->
+      <rect x="214" y="98" width="196" height="88" rx="9" fill="#f1f3ea" stroke="#6c7a4a" stroke-width="1.6"/>
+      <text x="312" y="120" text-anchor="middle" fill="#4f5a36" font-family="ui-serif,Georgia,serif" font-size="13.5" font-weight="600">kind: "builtin"</text>
+      <text x="312" y="139" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="9.5">named check_*.ts fn</text>
+      <text x="312" y="153" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="9.5">BUILTIN_CHECKS barrel</text>
+      <text x="312" y="167" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="9.5">requires compile</text>
+
+      <rect x="40" y="226" width="340" height="82" rx="9" fill="#fbeee9" stroke="#a8472f" stroke-width="1.4"/>
+      <text x="210" y="248" text-anchor="middle" fill="#a8472f" font-family="ui-monospace,Menlo,monospace" font-size="10.5" font-weight="700">the cost of the predicate arm</text>
+      <text x="210" y="267" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="9.5">an untyped DSL — a leaf could compare a field</text>
+      <text x="210" y="281" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="9.5">against a value not in its enum and still parse,</text>
+      <text x="210" y="295" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="9.5">silently hiding a rule that never matched</text>
+    </svg>
+  </div>
+
+  <div class="panel aft">
+    <div class="ph"><span class="tag">now · one classifier kind</span><h3>builtin only</h3></div>
+    <svg viewBox="0 0 420 336" role="img" aria-label="Now: the dispatcher has a single builtin arm; every classifier is a check function looked up by function_name in BUILTIN_CHECKS. ClassifierSpec is none, builtin, or retired. The predicate types, evaluator, and dispatcher arm are all deleted.">
+      <defs>
+        <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#6c7a4a"/></marker>
+      </defs>
+      <rect x="90" y="14" width="240" height="40" rx="9" fill="#2b2a28"/>
+      <text x="210" y="33" text-anchor="middle" fill="#f7f3ec" font-family="ui-monospace,Menlo,monospace" font-size="12">classify_entry_points</text>
+      <text x="210" y="47" text-anchor="middle" fill="#e7ddc9" font-family="ui-monospace,Menlo,monospace" font-size="9.5">dispatcher — one arm</text>
+      <path d="M210,54 L210,92" stroke="#6c7a4a" stroke-width="1.8" marker-end="url(#a1)"/>
+
+      <rect x="70" y="94" width="280" height="86" rx="9" fill="#f1f3ea" stroke="#6c7a4a" stroke-width="1.8"/>
+      <text x="210" y="118" text-anchor="middle" fill="#4f5a36" font-family="ui-serif,Georgia,serif" font-size="14" font-weight="600">classifier.kind = "builtin"</text>
+      <text x="210" y="138" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="10">BUILTIN_CHECKS[function_name]</text>
+      <text x="210" y="154" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="10">(entry_point, read_file_lines) =&gt; boolean</text>
+      <text x="210" y="171" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="10">typed against EnrichedEntryPoint</text>
+
+      <rect x="14" y="206" width="128" height="46" rx="8" fill="#fffdf8" stroke="#9a9387" stroke-width="1.4"/>
+      <text x="78" y="227" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="11" font-weight="600">"none"</text>
+      <text x="78" y="242" text-anchor="middle" fill="#9a9387" font-family="ui-monospace,Menlo,monospace" font-size="9">never fires</text>
+
+      <rect x="146" y="206" width="128" height="46" rx="8" fill="#f1f3ea" stroke="#6c7a4a" stroke-width="1.6"/>
+      <text x="210" y="227" text-anchor="middle" fill="#4f5a36" font-family="ui-monospace,Menlo,monospace" font-size="11" font-weight="600">"builtin"</text>
+      <text x="210" y="242" text-anchor="middle" fill="#4f5a36" font-family="ui-monospace,Menlo,monospace" font-size="9">the only firing kind</text>
+
+      <rect x="278" y="206" width="128" height="46" rx="8" fill="#fbf2ea" stroke="#b9794f" stroke-width="1.4"/>
+      <text x="342" y="227" text-anchor="middle" fill="#915a32" font-family="ui-monospace,Menlo,monospace" font-size="11" font-weight="600">"retired"</text>
+      <text x="342" y="242" text-anchor="middle" fill="#915a32" font-family="ui-monospace,Menlo,monospace" font-size="9">from + reason kept</text>
+
+      <text x="210" y="270" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="9.5" font-weight="700">ClassifierSpec = none | builtin | retired</text>
+      <text x="210" y="290" text-anchor="middle" fill="#a8472f" font-family="ui-monospace,Menlo,monospace" font-size="9.5">deleted: PredicateExpr · PREDICATE_OPERATORS ·</text>
+      <text x="210" y="304" text-anchor="middle" fill="#a8472f" font-family="ui-monospace,Menlo,monospace" font-size="9.5">ClassifierAxis · predicate_evaluator.ts · the arm</text>
+    </svg>
+  </div>
+</div>
+<div class="legend">
+  <span><i style="background:#6c7a4a"></i> builtin (the surviving, firing kind)</span>
+  <span><i style="background:#b9794f"></i> predicate arm (removed) / retired marker</span>
+  <span><i style="background:#a8472f"></i> the untyped-DSL hazard</span>
+  <span><i style="background:#2b2a28"></i> the classifier dispatcher</span>
+</div>
+<div class="callout rust">
+  <span class="k">the biggest divergence from the plan — the predicate DSL is gone</span>
+  <p class="prose">The task started with an agent that would <i>choose</i> predicate or builtin; it shipped with the predicate abstraction removed outright — the operators, the evaluator, and every consuming arm. <b>The predicate DSL was the wrong abstraction, too brittle to type, so every classifier is now one small, directly-typed function.</b></p>
+</div>
+
+<!-- ============ 2. RECONCILING THE 7 PREDICATE RULES ============ -->
+<h2 id="reconcile"><span class="n">02</span>Reconciling the 7 firing predicate rules: 6 converted verbatim, 1 retired</h2>
+<p class="cap prose">Removing the DSL meant every live <code>predicate</code> rule had to become a <code>builtin</code> — or be dropped. Six converted to <code>check_*.ts</code> functions preserving their semantics <b>exactly</b> (including glob-as-regex patterns and the Rust macro regex); the seventh exposed a rule that never fired.</p>
+<table class="rec">
+  <thead>
+    <tr><th>Former predicate rule</th><th>Outcome</th><th>Builtin / reason</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>framework-pytest-fixture</code></td>
+      <td><span class="rtag conv">→ builtin</span></td>
+      <td class="why"><code>check_framework-pytest-fixture.ts</code> — Python guard + <code>new RegExp("@pytest.fixture*")</code> over the decorator block, verbatim glob-as-regex</td>
+    </tr>
+    <tr>
+      <td><code>framework-component-decorator</code></td>
+      <td><span class="rtag conv">→ builtin</span></td>
+      <td class="why"><code>check_framework-component-decorator.ts</code> — <code>new RegExp("@Component*")</code> over the decorator block, no language guard, kept exactly</td>
+    </tr>
+    <tr>
+      <td><code>framework-flask-route</code></td>
+      <td><span class="rtag conv">→ builtin</span></td>
+      <td class="why"><code>check_framework-flask-route.ts</code> — the <code>@*.route*</code> decorator-block match, preserved</td>
+    </tr>
+    <tr>
+      <td><code>framework-lifecycle-dispatch</code></td>
+      <td><span class="rtag conv">→ builtin</span></td>
+      <td class="why"><code>check_framework-lifecycle-dispatch.ts</code> — framework lifecycle discriminator, preserved</td>
+    </tr>
+    <tr>
+      <td><code>py-property-decorator-access</code></td>
+      <td><span class="rtag conv">→ builtin</span></td>
+      <td class="why"><code>check_py-property-decorator-access.ts</code> — Python <code>@property</code>-family decorator access, preserved</td>
+    </tr>
+    <tr>
+      <td><code>rust-macro-invocation-call</code></td>
+      <td><span class="rtag conv">→ builtin</span></td>
+      <td class="why"><code>check_rust-macro-invocation-call.ts</code> — Rust guard + macro-token regex <code>[A-Za-z_]\w*!\s*[([{]</code> over grep call sites, preserved</td>
+    </tr>
+    <tr class="retire">
+      <td><code>unindexed-external-module</code></td>
+      <td><span class="rtag drop">retired · dropped</span></td>
+      <td class="why">its predicate compared <code>resolution_failure.reason</code> against <code>"receiver_is_external_import"</code> — <b>a value absent from the <code>ResolutionFailureReason</code> enum</b>, so the untyped DSL had hidden a classifier that never fired. No available signal expresses its intent without over-matching, so it was dropped rather than mis-converted</td>
+    </tr>
+  </tbody>
+</table>
+<div class="callout olive">
+  <span class="k">what the type check surfaced</span>
+  <p class="prose">The 6 conversions were mechanical. The 7th is the payoff: forcing a predicate through the compiler revealed <code>unindexed-external-module</code> matched on a <code>resolution_failure.reason</code> the enum never emits — a brittle DSL had shipped a dead rule that the builtin-only model turns into a compile error. Registry: <b>22 &rarr; 21 rules</b>.</p>
+</div>
+<p class="cap prose">Every decorator check reaches for one shared <code>builtins/extract_decorator_block.ts</code> helper rather than copying the block-extraction into six files — a well-known intra-package import, exactly as the checks already import <code>FileLinesReader</code> and <code>detect_language</code>. Below: the pytest-fixture conversion, glob-as-regex intact.</p>
+<div class="code">
+  <div class="fl"><span>packages/core/src/classify_entry_points/builtins/check_framework-pytest-fixture.ts</span><span class="kind">as shipped</span></div>
+<pre><span class="cm">// A function decorated with `@pytest.fixture` is invoked by the pytest runtime</span>
+<span class="cm">// when a test requests it — a legitimate entry point with no explicit call</span>
+<span class="cm">// site. The pattern is passed to RegExp verbatim (glob-looking but regex):</span>
+<span class="cm">// `@pytest.fixture*` reads `.` as any char and `*` as zero-or-more `e`.</span>
+<span class="kw">import type</span> { EnrichedEntryPoint } <span class="kw">from</span> <span class="str">"@ariadnejs/types"</span>;
+<span class="kw">import</span> { detect_language } <span class="kw">from</span> <span class="str">"../extract_entry_point_diagnostics"</span>;
+<span class="kw">import</span> { extract_decorator_block } <span class="kw">from</span> <span class="str">"./extract_decorator_block"</span>;
+
+<span class="kw">export function</span> <span class="fn">check_framework_pytest_fixture</span>(
+  entry_point: EnrichedEntryPoint,
+  read_file_lines: FileLinesReader,
+): <span class="kw">boolean</span> {
+  <span class="kw">const</span> check_0 = <span class="fn">detect_language</span>(entry_point.file_path) === <span class="str">"python"</span>;
+<span class="hl">  <span class="kw">const</span> check_1 = <span class="kw">new</span> <span class="fn">RegExp</span>(<span class="str">"@pytest.fixture*"</span>).<span class="fn">test</span>(</span>
+    <span class="fn">extract_decorator_block</span>(<span class="fn">read_file_lines</span>(entry_point.file_path), entry_point.start_line),
+  );
+  <span class="kw">return</span> check_0 &amp;&amp; check_1;
+}</pre>
+</div>
+
+<!-- ============ 3. THE --STAGE GATES ============ -->
+<h2 id="gates"><span class="n">03</span>The <code>--stage</code> insertion path: five gates before any write, dry-run by default</h2>
+<p class="cap prose">The <code>--stage</code> subcommand shipped and was hardened at review. It reuses <code>validate_registry</code>, then adds cross-rule uniqueness checks the singleton-array validator cannot see. Each gate is a hard reject; only after all five pass does a <b>dry-run print</b> the entry — and only <code>--apply</code> writes, through <code>atomic_update_registry</code> with an under-lock re-check.</p>
+<div class="diagram">
+<svg viewBox="0 0 1000 258" role="img" aria-label="The --stage pipeline: read and parse draft_entry.json, then five sequential gates — KnownIssue schema including the observed_count at least 1 evidence gate, classifier.kind must be builtin, group_id not a duplicate, builtin function_name not already claimed by another rule, and function_name present in core's BUILTIN_CHECKS. Each gate rejects to a fail-loud StageDraftError exit. On pass, dry-run prints the entry; --apply inserts via atomic_update_registry with an under-lock collision re-check.">
+  <defs>
+    <marker id="s1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5f594f"/></marker>
+    <marker id="s1r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#a8472f"/></marker>
+    <marker id="s1o" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#6c7a4a"/></marker>
+  </defs>
+
+  <!-- read -->
+  <rect x="6" y="98" width="98" height="52" rx="9" fill="#2b2a28"/>
+  <text x="55" y="120" text-anchor="middle" fill="#f7f3ec" font-family="ui-monospace,Menlo,monospace" font-size="10">read draft</text>
+  <text x="55" y="135" text-anchor="middle" fill="#e7ddc9" font-family="ui-monospace,Menlo,monospace" font-size="9">+ JSON parse</text>
+
+  <!-- gate 1 -->
+  <path d="M104,124 L118,124" stroke="#5f594f" stroke-width="1.7" marker-end="url(#s1)"/>
+  <rect x="120" y="94" width="152" height="60" rx="9" fill="#fbf2ea" stroke="#b9794f" stroke-width="1.6"/>
+  <text x="196" y="112" text-anchor="middle" fill="#915a32" font-family="ui-monospace,Menlo,monospace" font-size="10" font-weight="700">gate 1 · schema</text>
+  <text x="196" y="127" text-anchor="middle" fill="#2b2a28" font-family="ui-monospace,Menlo,monospace" font-size="9.5">KnownIssue valid?</text>
+  <text x="196" y="141" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="9">incl. observed_count &#8805; 1</text>
+
+  <!-- gate 2 -->
+  <path d="M272,124 L286,124" stroke="#5f594f" stroke-width="1.7" marker-end="url(#s1)"/>
+  <rect x="288" y="94" width="132" height="60" rx="9" fill="#fbf2ea" stroke="#b9794f" stroke-width="1.6"/>
+  <text x="354" y="112" text-anchor="middle" fill="#915a32" font-family="ui-monospace,Menlo,monospace" font-size="10" font-weight="700">gate 2 · kind</text>
+  <text x="354" y="127" text-anchor="middle" fill="#2b2a28" font-family="ui-monospace,Menlo,monospace" font-size="9.5">kind === "builtin"?</text>
+  <text x="354" y="141" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="9">reject none / retired</text>
+
+  <!-- gate 3 -->
+  <path d="M420,124 L434,124" stroke="#5f594f" stroke-width="1.7" marker-end="url(#s1)"/>
+  <rect x="436" y="94" width="132" height="60" rx="9" fill="#fbf2ea" stroke="#b9794f" stroke-width="1.6"/>
+  <text x="502" y="112" text-anchor="middle" fill="#915a32" font-family="ui-monospace,Menlo,monospace" font-size="10" font-weight="700">gate 3 · group_id</text>
+  <text x="502" y="127" text-anchor="middle" fill="#2b2a28" font-family="ui-monospace,Menlo,monospace" font-size="9.5">not a duplicate?</text>
+  <text x="502" y="141" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="9">no overwrite</text>
+
+  <!-- gate 4 -->
+  <path d="M568,124 L582,124" stroke="#5f594f" stroke-width="1.7" marker-end="url(#s1)"/>
+  <rect x="584" y="90" width="140" height="68" rx="9" fill="#fbf2ea" stroke="#b9794f" stroke-width="1.6"/>
+  <text x="654" y="108" text-anchor="middle" fill="#915a32" font-family="ui-monospace,Menlo,monospace" font-size="10" font-weight="700">gate 4 · unique fn</text>
+  <text x="654" y="123" text-anchor="middle" fill="#2b2a28" font-family="ui-monospace,Menlo,monospace" font-size="9.5">function_name not</text>
+  <text x="654" y="136" text-anchor="middle" fill="#2b2a28" font-family="ui-monospace,Menlo,monospace" font-size="9.5">claimed by another</text>
+  <text x="654" y="149" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="9">rule?</text>
+
+  <!-- gate 5 -->
+  <path d="M724,124 L738,124" stroke="#5f594f" stroke-width="1.7" marker-end="url(#s1)"/>
+  <rect x="740" y="90" width="150" height="68" rx="9" fill="#fbf2ea" stroke="#b9794f" stroke-width="1.6"/>
+  <text x="815" y="108" text-anchor="middle" fill="#915a32" font-family="ui-monospace,Menlo,monospace" font-size="10" font-weight="700">gate 5 · registered</text>
+  <text x="815" y="123" text-anchor="middle" fill="#2b2a28" font-family="ui-monospace,Menlo,monospace" font-size="9.5">function_name in</text>
+  <text x="815" y="136" text-anchor="middle" fill="#2b2a28" font-family="ui-monospace,Menlo,monospace" font-size="9.5">BUILTIN_CHECKS?</text>
+  <text x="815" y="149" text-anchor="middle" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="9">place + rebuild first</text>
+
+  <!-- pass to dry-run -->
+  <path d="M890,110 L910,110" stroke="#6c7a4a" stroke-width="1.9" marker-end="url(#s1o)"/>
+  <rect x="912" y="92" width="84" height="34" rx="8" fill="#fffdf8" stroke="#6c7a4a" stroke-width="1.6"/>
+  <text x="954" y="107" text-anchor="middle" fill="#4f5a36" font-family="ui-monospace,Menlo,monospace" font-size="9.5" font-weight="600">dry-run:</text>
+  <text x="954" y="119" text-anchor="middle" fill="#4f5a36" font-family="ui-monospace,Menlo,monospace" font-size="9.5" font-weight="600">print</text>
+  <!-- apply -->
+  <path d="M954,126 L954,150" stroke="#6c7a4a" stroke-width="1.9" marker-end="url(#s1o)"/>
+  <rect x="900" y="152" width="96" height="44" rx="8" fill="#8a9a5e"/>
+  <text x="948" y="170" text-anchor="middle" fill="#fffdf8" font-family="ui-monospace,Menlo,monospace" font-size="10" font-weight="700">--apply</text>
+  <text x="948" y="183" text-anchor="middle" fill="#f1f3ea" font-family="ui-monospace,Menlo,monospace" font-size="7.5">atomic_update_registry</text>
+  <text x="948" y="192" text-anchor="middle" fill="#f1f3ea" font-family="ui-monospace,Menlo,monospace" font-size="7.5">re-checks under lock</text>
+
+  <!-- reject rail -->
+  <path d="M196,154 L196,218" stroke="#a8472f" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <path d="M354,154 L354,218" stroke="#a8472f" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <path d="M502,154 L502,218" stroke="#a8472f" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <path d="M654,158 L654,218" stroke="#a8472f" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <path d="M815,158 L815,218" stroke="#a8472f" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <path d="M196,218 L620,218" stroke="#a8472f" stroke-width="1.5"/>
+  <path d="M815,218 L672,218" stroke="#a8472f" stroke-width="1.5" marker-end="url(#s1r)"/>
+  <rect x="622" y="204" width="180" height="30" rx="8" fill="#fbeee9" stroke="#a8472f" stroke-width="1.5"/>
+  <text x="712" y="223" text-anchor="middle" fill="#a8472f" font-family="ui-monospace,Menlo,monospace" font-size="10" font-weight="700">StageDraftError · exit &#8800; 0</text>
+
+  <!-- header labels -->
+  <text x="6" y="28" fill="#5f594f" font-family="ui-monospace,Menlo,monospace" font-size="10.5" font-weight="700" letter-spacing=".05em">FIVE SEQUENTIAL GATES — ANY FAILURE ABORTS BEFORE A WRITE</text>
+  <text x="6" y="46" fill="#915a32" font-family="ui-monospace,Menlo,monospace" font-size="9.5">reuses validate_registry + the evidence gate · gates 3–4 also re-run under the write lock · dry-run is the DEFAULT</text>
+</svg>
+</div>
+<div class="callout rust">
+  <span class="k">deliberate safety inversion — kept and documented</span>
+  <p class="prose"><code>--stage</code> is <b>dry-run by default</b> and writes only with <code>--apply</code>. This <b>inverts</b> the rest of <code>reconcile_registry.ts</code>, where every reconciliation signal <i>applies by default</i> and previews with <code>--dry-run</code> (passing <code>--dry-run</code> to <code>--stage</code> is itself an error). Inserting a brand-new catalog entry is the higher-stakes operation, so its default is the safe one.</p>
+</div>
+<p class="cap prose"><b>Gate 4</b> was added at review — a <code>function_name</code> already claimed by another rule is rejected, keeping the barrel&harr;registry mapping a bijection. <b>Gate 5</b> forces the human to place the <code>.ts</code> and rebuild core <i>first</i>. Below: the evidence gate that gate 1 reuses.</p>
+<div class="code">
+  <div class="fl"><span>known_issues_registry.ts · validate_entry() — the evidence gate gate 1 reuses</span><span class="kind">as shipped</span></div>
+<pre><span class="cm">// Evidence gate: a wip entry that carries an authored classifier must have</span>
+<span class="cm">// fired in a real triage run (observed_count &gt;= 1).</span>
+<span class="kw">const</span> classifier = record[<span class="str">"classifier"</span>] <span class="kw">as</span> { kind?: unknown };
+<span class="hl"><span class="kw">if</span> (record[<span class="str">"status"</span>] === <span class="str">"wip"</span> &amp;&amp; classifier.kind !== <span class="str">"none"</span>) {</span>
+  <span class="kw">const</span> observed_count = record[<span class="str">"observed_count"</span>];
+  <span class="kw">if</span> (<span class="kw">typeof</span> observed_count !== <span class="str">"number"</span> || observed_count &lt; <span class="num">1</span>) {
+    <span class="kw">throw new</span> <span class="fn">RegistryValidationError</span>(
+      <span class="str">`${at_id}.observed_count: a wip entry with an authored classifier `</span> +
+      <span class="str">`must record observed_count &gt;= 1`</span>,
+    );
+  }
+}</pre>
+</div>
+
+<!-- ============ 4. STAGING HANDOFF ============ -->
+<h2 id="handoff"><span class="n">04</span>The staging directory is the agent&#8596;human boundary</h2>
+<p class="cap prose">The write-boundary contract reduces to this line. The <code>classifier-author</code> agent reads a <code>TriageEntry</code> via <code>get_entry_context.ts</code> but writes a check typed against <code>EnrichedEntryPoint</code> — building its discriminator only from the fields both types share. The human is the only actor that crosses into <code>registry.json</code>, and only via <code>--stage</code>.</p>
+<div class="handoff">
+  <div class="hcell agent">
+    <span class="role">agent · writes only here</span>
+    <h3>classifier-author drafts</h3>
+    <p class="can">reads: get_entry_context.ts (TriageEntry) · packages/core (read-only)</p>
+    <ul class="art">
+      <li class="j"><span class="fdot"></span><div><code>draft_entry.json</code><small>complete KnownIssue · status:"wip" · kind:"builtin" · min_confidence 0.95 · observed_count &#8805; 1</small></div></li>
+      <li class="ts"><span class="fdot"></span><div><code>check_&lt;group_id&gt;.ts</code><small>self-contained BuiltinCheckFn, typed against EnrichedEntryPoint · human places in builtins/ + rebuilds the barrel</small></div></li>
+      <li class="md"><span class="fdot"></span><div><code>REVIEW.md</code><small>what the pattern is · why it is permanent (not a fixable bug) · the samples it matched · exact apply steps</small></div></li>
+    </ul>
+  </div>
+  <div class="hbound"><div class="line"></div><span class="lbl">write boundary</span><div class="line"></div></div>
+  <div class="hcell human">
+    <span class="role">human · sole registry writer</span>
+    <h3>reviews, then inserts</h3>
+    <p class="can">runs: reconcile-registry --stage &lt;draft&gt; [--apply]</p>
+    <ul class="art">
+      <li class="md"><span class="fdot"></span><div>Reads <code>REVIEW.md</code>, confirms the pattern is a true permanent limitation<small>the human is the decider — the agent only proposes; if it is a fixable bug the agent drafts nothing</small></div></li>
+      <li class="ts"><span class="fdot"></span><div>Places <code>check_*.ts</code>, adds the barrel entry, runs <code>pnpm build --filter core</code><small>gate 5 blocks --apply until function_name is in BUILTIN_CHECKS</small></div></li>
+      <li class="j"><span class="fdot"></span><div>Runs <code>--stage draft_entry.json</code> (dry-run), then <code>--apply</code><small>inserts the wip entry through atomic_update_registry — the lock-fenced write, re-checked under lock</small></div></li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============ 5. THE WIRING, RESOLVED ============ -->
+<h2 id="wiring"><span class="n">05</span>How <code>classifier-author</code> wires into prioritize: <code>--priority permanent</code></h2>
+<p class="cap prose">The routing question from the plan is settled: <code>prioritize</code> gained a documented <code>--priority permanent</code> path. For human-confirmed permanent-limitation groups it dispatches <code>classifier-author</code> in place of <code>refactor-investigator</code>, producing a staged draft instead of a backlog card — a <code>SKILL.md</code> edit, exactly as the plan predicted.</p>
+<div class="sbs">
+  <div class="panel cur">
+    <div class="ph"><span class="tag">the plan asked</span><h3>which routing?</h3></div>
+    <ul class="art" style="margin-top:2px">
+      <li class="md"><span class="fdot" style="background:var(--g400)"></span><div>Add a third prioritize routing for permanent-limitation groups<small>dispatch an authoring agent, not the refactor investigator</small></div></li>
+      <li class="md"><span class="fdot" style="background:var(--g400)"></span><div>No backlog task; the staging dir replaces graduation<small>review happens through reconcile-registry --stage</small></div></li>
+    </ul>
+  </div>
+  <div class="panel aft">
+    <div class="ph"><span class="tag">what shipped</span><h3>--priority permanent</h3></div>
+    <ul class="art" style="margin-top:2px">
+      <li class="j"><span class="fdot"></span><div><code>--priority permanent</code> dispatches <code>classifier-author</code> per group<small>it pulls each group's sample entries via get_entry_context.ts</small></div></li>
+      <li class="ts"><span class="fdot"></span><div>Output is a staged draft; no backlog card is created<small>prioritize / reconcile-registry SKILLs document the dispatch + --stage insertion</small></div></li>
+    </ul>
+  </div>
+</div>
+<div class="callout slate">
+  <span class="k">the write-boundary contract, reframed</span>
+  <p class="prose">The autonomous pipeline still <b>never writes <code>registry.json</code> unattended</b> — the harness denies any agent write against it as <code>[Self-Modification]</code>. What is now explicit: a human directing a one-off edit approves it at the permission prompt. Follow-up <b>TASK-190.31</b> tracks removing the human from classifier review via growable eval-sets — the "self-healing eddy loops."</p>
+</div>
+
+<!-- ============ 6. DELIVERABLES ============ -->
+<h2 id="status"><span class="n">06</span>Deliverables: all shipped</h2>
+<p class="cap prose"><b>Left</b> is the concrete contract — the builtin-only model, the agent, the gated script, and its tests. <b>Right</b> is the documentation and the standing invariant the AST-walk guards. Every acceptance criterion is met; the task is <b>Done</b>.</p>
+<div class="board">
+  <div class="col concrete">
+    <h3><span class="mark on"></span>Model · agent · script · tests</h3>
+    <p class="subh">shipped &amp; verified</p>
+    <ul class="cl">
+      <li><span class="mark on"></span><div>Predicate DSL removed: <code>PredicateExpr</code> / <code>PREDICATE_OPERATORS</code> / <code>PredicateClassifierSpec</code> / <code>ClassifierAxis</code> deleted; <code>ClassifierSpec = none | builtin | retired</code>; <code>predicate_evaluator.ts</code> gone<small>every consuming arm removed — dispatcher, loader clone, enrich guard, triage validator, dispense slice</small></div></li>
+      <li><span class="mark on"></span><div>6 permanent predicate rules converted to builtins verbatim; <code>unindexed-external-module</code> retired<small>registry 22 → 21 · all builtin + none/retired · permanent slice regenerated · sync test passes</small></div></li>
+      <li><span class="mark on"></span><div><code>.claude/agents/classifier-author.md</code> — builtin-only, scoped tools, never writes registry<small>reads TriageEntry, emits draft_entry.json + check_*.ts + REVIEW.md into its staging dir</small></div></li>
+      <li><span class="mark on"></span><div><code>reconcile_registry.ts --stage &lt;draft&gt; [--apply]</code> — five gates, dry-run by default, locked write<small>schema · kind · dup group_id · unique function_name · registered in BUILTIN_CHECKS</small></div></li>
+      <li><span class="mark on"></span><div><code>reconcile_registry.test.ts</code> covers the <code>--stage</code> gates<small>happy path · duplicate group_id · missing-builtin · evidence gate</small></div></li>
+      <li><span class="mark on"></span><div>Barrel&harr;registry bijection test locks each bundled function_name to a live <code>BUILTIN_CHECKS</code> key<small>converts a latent runtime MissingBuiltinError into a fast unit failure</small></div></li>
+    </ul>
+  </div>
+  <div class="col soft">
+    <h3><span class="mark on"></span>Documentation &amp; invariant</h3>
+    <p class="subh">shipped</p>
+    <ul class="cl">
+      <li><span class="mark on"></span><div><code>prioritize/SKILL.md</code> documents <code>--priority permanent</code>, the classifier-author dispatch, and the staging → <code>--stage</code> review workflow</div></li>
+      <li><span class="mark on"></span><div><code>reconcile-registry/SKILL.md</code> documents the <code>--stage</code> insertion path</div></li>
+      <li><span class="mark on"></span><div><code>classifier-lifecycle.md</code> reflects the builtin-only catalog, the staging creation path, and the reframed write-boundary contract<small>wip+none stub state dropped · retired is the go-forward removed-classifier shape</small></div></li>
+      <li><span class="mark on"></span><div><code>registry_writers.test.ts</code> AST-walk still passes — no agent path writes the registry<small>a standing invariant this task preserved, not new code</small></div></li>
+      <li><span class="mark on"></span><div>Follow-up <code>TASK-190.31</code> opened — growable eval-sets to remove the human from classifier review<small>the self-healing eddy loops</small></div></li>
+    </ul>
+  </div>
+</div>
+
+<div class="prov">
+  <p class="label">Grounded in — files read to build this</p>
+  <ul class="files">
+    <li>backlog/tasks/task-190.30.2 (Implementation Notes → High-level summary — the authoritative as-built account)</li>
+    <li>.claude/skills/triage/scripts/reconcile_registry.ts (<code>run_stage</code> — the five gates, dry-run-by-default, under-lock re-check)</li>
+    <li>.claude/agents/classifier-author.md (the shipped builtin-only agent — TriageEntry in, EnrichedEntryPoint-typed check out)</li>
+    <li>packages/core/src/classify_entry_points/builtins/ (17 <code>check_*.ts</code>, the barrel, <code>extract_decorator_block.ts</code>; the 6 converted checks)</li>
+    <li>.claude/skills/triage/known_issues/registry.json (live: 21 rules · 19 permanent · 2 fixed · 18 builtin · 3 none)</li>
+    <li>.claude/rules/classifier-lifecycle.md (retired kind · staging creation path · reframed write boundary)</li>
+    <li>backlog/tasks/task-190.31 (the follow-up: growable classifier eval-sets)</li>
+  </ul>
+</div>
+
+<footer>
+  task-190.30.2 · classifier-author agent + reconcile-registry --stage · comprehension companion · refreshed as-built 2026-07-01 · self-contained, no network<br>
+  status DONE · predicate DSL removed · every classifier is a builtin · live registry: 21 rules (19 permanent / 2 fixed · 18 builtin / 3 none) · barrel holds 17 builtins<br>
+  the 7 firing predicate rules: 6 converted verbatim, unindexed-external-module retired (compared against a value absent from ResolutionFailureReason)
+</footer>
+</main>
+</body>
+</html>

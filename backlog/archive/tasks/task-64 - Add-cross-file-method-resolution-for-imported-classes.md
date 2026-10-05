@@ -3,9 +3,9 @@ id: task-64
 title: Add cross-file method resolution for imported classes
 status: Done
 assignee:
-  - '@assistant'
-created_date: '2025-08-01'
-updated_date: '2025-08-04 08:31'
+  - "@assistant"
+created_date: "2025-08-01"
+updated_date: "2025-08-04 08:31"
 labels:
   - enhancement
   - blocked
@@ -34,7 +34,7 @@ import { ScopeGraph } from "./graph";
 
 export function build_scope_graph() {
   const graph = new ScopeGraph();
-  graph.insert_global_def(def);  // This method call is not resolved
+  graph.insert_global_def(def); // This method call is not resolved
 }
 ```
 
@@ -56,10 +56,12 @@ The current implementation:
 ## Implementation Plan
 
 1. **Add instance type tracking**:
+
    - When we see `new ClassName()`, track that the assigned variable is an instance of `ClassName`
    - Store this type information in a map: `variable_name -> class_name`
 
 2. **Enhance method call resolution**:
+
    - When resolving a method call like `obj.method()`:
      - First resolve `obj` to its definition
      - Check if `obj` has associated type information
@@ -67,6 +69,7 @@ The current implementation:
      - Look up the method in the class definition
 
 3. **Update `get_calls_from_definition`**:
+
    - Add logic to track variable types from constructor calls
    - Enhance the method resolution logic to use type information
 
@@ -112,6 +115,7 @@ After investigation, we discovered that the tree-sitter scope queries were not p
 2. **Added type tracking**: In `get_calls_from_definition()`, we now track variable types when we see constructor calls (`new ClassName()`). This creates a map of variable names to their class types.
 
 3. **Implemented method resolution**: When we encounter a method reference that can't be resolved directly, we:
+
    - Check if it's a method call on a typed variable
    - Look up the variable's type from our tracking map
    - Resolve the class definition (possibly through imports)
@@ -139,12 +143,14 @@ The implementation has a significant limitation: it only works when the class de
 3. **No persistent type information**: Type information is not persisted across function boundaries or files.
 
 To fully support cross-file method resolution, we would need:
+
 - Global or file-level type tracking
 - Integration between import resolution and type tracking
 - Type inference across function boundaries
 - Possibly a two-pass analysis approach
 
 For now, the implementation successfully:
+
 - Captures method references in all languages
 - Resolves methods when the class is defined in the same file
 - Provides the foundation for future improvements

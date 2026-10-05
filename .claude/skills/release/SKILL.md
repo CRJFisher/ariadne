@@ -48,16 +48,19 @@ Summary of MCP changes
 
 ```markdown
 ## Summary
+
 - Package version bumps: core vX.Y.0, types vX.Y.0, mcp vX.Y.0
 - <bullet summary of major changes>
 
 ## Pre-release verification
+
 - [x] `pnpm build` passes
 - [x] `pnpm test` passes
 - [x] `pnpm typecheck` passes
 - [x] `pnpm changeset status` shows expected bumps
 
 ## Test plan
+
 - [ ] CI passes on this PR
 - [ ] Merge to main creates "Version Packages" PR
 - [ ] Version Packages PR shows correct version bumps

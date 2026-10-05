@@ -3,8 +3,8 @@ id: task-99
 title: Complete remaining JavaScript test updates for ref_to_scope changes
 status: To Do
 assignee: []
-created_date: '2025-08-04'
-updated_date: '2025-08-04 13:29'
+created_date: "2025-08-04"
+updated_date: "2025-08-04 13:29"
 labels: []
 dependencies:
   - task-97

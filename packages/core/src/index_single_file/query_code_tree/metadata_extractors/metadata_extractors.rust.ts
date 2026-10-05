@@ -6,10 +6,10 @@
  *
  * Supports:
  * - Type annotations: Rust's explicit type system with generics and lifetimes
- * - Method calls: Extracts receiver location from field_expression patterns
  * - Property chains: Recursive traversal of field_expression and index_expression
+ * - Receiver info: receiver location plus self/super detection from field_expression patterns
  * - Constructor tracking: Finds target variables in let_declaration patterns
- * - Turbofish syntax: Handles ::<Type> generic function calls
+ * - Turbofish syntax: recognises ::<Type> and reduces it to the bare path segment
  * - No optional chaining: Rust lacks ?. syntax, always returns false
  *
  * All extraction is purely tree-sitter AST-based - no type inference or
@@ -17,10 +17,15 @@
  */
 
 import type { SyntaxNode } from "tree-sitter";
-import type { Location, SymbolName, TypeInfo, FilePath } from "@ariadnejs/types";
-import { type_symbol } from "@ariadnejs/types";
-import type { MetadataExtractors, ReceiverInfo } from "./types";
+import type { SymbolName, TypeInfo, FilePath } from "@ariadnejs/types";
+import { self_reference_keyword, type_symbol } from "@ariadnejs/types";
+import type { ConstructTarget, MetadataExtractors, ReceiverInfo } from "./metadata_extractor_types";
 import { node_to_location } from "../../node_to_location";
+import { agreed } from "../symbol_factories/agreed_fact";
+import { declaration_written_by, written_values } from "../symbol_factories/binding_writes.rust";
+
+/** The expressions a Rust construction is written as. */
+const RUST_CONSTRUCTIONS: ReadonlySet<string> = new Set(["call_expression", "struct_expression"]);
 
 /**
  * Extract Rust type from type annotations
@@ -112,6 +117,34 @@ function extract_rust_type(node: SyntaxNode | null | undefined): string | undefi
 }
 
 /**
+ * Flatten a Rust scoped path node into its ordered segment names, dropping the
+ * turbofish at every level.
+ *
+ * `worker::create` → ["worker", "create"]; `crate::runtime::Driver` →
+ * ["crate", "runtime", "Driver"]; `Cell::<u8>` → ["Cell"]; `Self` → ["Self"].
+ * Used by `extract_call_path_prefix` to carry the qualifier of a qualified call.
+ */
+function scoped_path_segments(node: SyntaxNode): string[] {
+  switch (node.type) {
+    case "scoped_identifier":
+    case "scoped_type_identifier": {
+      const path_node = node.childForFieldName("path");
+      const name_node = node.childForFieldName("name");
+      const prefix = path_node ? scoped_path_segments(path_node) : [];
+      return name_node ? [...prefix, name_node.text] : prefix;
+    }
+    // Turbofish segment (`Cell::<u8>`) — keep the bare type, drop the arguments.
+    case "generic_type": {
+      const type_node = node.childForFieldName("type");
+      return type_node ? scoped_path_segments(type_node) : [];
+    }
+    default:
+      // Leaf segment: identifier, type_identifier, primitive_type, crate/self/super.
+      return [node.text];
+  }
+}
+
+/**
  * Rust metadata extractors implementation
  */
 export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
@@ -148,116 +181,6 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
       certainty: "declared", // Rust type annotations are always explicit
       is_nullable,
     };
-  },
-
-  /**
-   * Extract receiver location from method call
-   *
-   * Essential for method resolution - identifies the object a method is called on.
-   * Navigates the AST to find the receiver (value) portion of a method call.
-   *
-   * Tree-sitter pattern:
-   * ```
-   * (call_expression
-   *   function: (field_expression
-   *     value: (_) @receiver    ← Extract this location
-   *     field: (identifier)))
-   * ```
-   *
-   * Also handles turbofish syntax:
-   * ```
-   * (call_expression
-   *   function: (generic_function
-   *     function: (field_expression
-   *       value: (_) @receiver)))
-   * ```
-   *
-   * Handles:
-   * - Instance methods: `obj.method()` → location of `obj`
-   * - Associated functions: `Type::function()` → location of `Type`
-   * - Method chains: `a.b().c()` → location of `a.b()`
-   * - Field method calls: `self.field.method()` → location of `self.field`
-   * - Turbofish syntax: `vec.iter::<i32>()` → location of `vec`
-   * - Trait methods: `value.clone()` → location of `value`
-   *
-   * The receiver location enables looking up the receiver's type to determine
-   * which impl block or trait defines the method.
-   */
-  extract_call_receiver(
-    node: SyntaxNode | null | undefined,
-    file_path: FilePath
-  ): Location | undefined {
-    if (!node) {
-      return undefined;
-    }
-
-    // Handle scoped_identifier - this is captured directly by @reference.call
-    // For associated function calls like UserManager::new()
-    // Return the location of the path (type name), which is the receiver
-    if (node.type === "scoped_identifier") {
-      const path_node = node.childForFieldName("path");
-      if (path_node) {
-        return node_to_location(path_node, file_path);
-      }
-      return undefined;
-    }
-
-    // Handle field_identifier - walk up to find call_expression
-    // This handles captures like @reference.call on the method name
-    if (node.type === "field_identifier") {
-      // Walk up: field_identifier -> field_expression -> call_expression
-      const field_expr = node.parent;
-      if (field_expr && field_expr.type === "field_expression") {
-        const call_expr = field_expr.parent;
-        if (call_expr && call_expr.type === "call_expression") {
-          // Recursively process the call_expression
-          return this.extract_call_receiver(call_expr, file_path);
-        }
-      }
-      return undefined;
-    }
-
-    // Handle call_expression
-    if (node.type === "call_expression") {
-      const function_node = node.childForFieldName("function");
-
-      // Check if it's a field expression (method call)
-      if (function_node && function_node.type === "field_expression") {
-        const value_node = function_node.childForFieldName("value");
-        if (value_node) {
-          return node_to_location(value_node, file_path);
-        }
-      }
-
-      // Check for scoped identifier (associated function call like Type::method)
-      if (function_node && function_node.type === "scoped_identifier") {
-        const path_node = function_node.childForFieldName("path");
-        if (path_node) {
-          return node_to_location(path_node, file_path);
-        }
-      }
-
-      // Handle generic function with turbofish
-      if (function_node && function_node.type === "generic_function") {
-        const inner_function = function_node.childForFieldName("function");
-        if (inner_function && inner_function.type === "field_expression") {
-          const value_node = inner_function.childForFieldName("value");
-          if (value_node) {
-            return node_to_location(value_node, file_path);
-          }
-        }
-      }
-    }
-
-    // Handle field_expression directly (for property access that might be called)
-    if (node.type === "field_expression") {
-      const value_node = node.childForFieldName("value");
-      if (value_node) {
-        return node_to_location(value_node, file_path);
-      }
-    }
-
-    return undefined;
   },
 
   /**
@@ -409,7 +332,6 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
             ? ["self" as SymbolName, field_name as SymbolName]
             : ["self" as SymbolName],
           is_self_reference: true,
-          self_keyword: "self",
         };
       }
 
@@ -421,75 +343,16 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
         ? [value_text as SymbolName, field_name as SymbolName]
         : [value_text as SymbolName]);
 
-      // Detect self at root of nested chain
-      const is_self = property_chain[0] === "self";
+      const keyword = self_reference_keyword("rust", property_chain[0]);
 
       return {
         receiver_location: node_to_location(value_node, file_path),
         property_chain,
-        is_self_reference: is_self,
-        ...(is_self ? { self_keyword: "self" as const } : {}),
+        is_self_reference: keyword !== null,
       };
     }
 
     return undefined;
-  },
-
-  /**
-   * Extract assignment source and target locations
-   *
-   * Handles:
-   * - Let bindings: `let x = value`
-   * - Mutable bindings: `let mut x = value`
-   * - Pattern destructuring: `let (a, b) = tuple`
-   * - Struct destructuring: `let Point { x, y } = point`
-   * - Assignments: `x = new_value`
-   * - Field assignments: `self.field = value`
-   * - Index assignments: `array[0] = value`
-   * - Compound assignments: `x += 5`
-   */
-  extract_assignment_parts(
-    node: SyntaxNode | null | undefined,
-    file_path: FilePath
-  ): { source: Location | undefined; target: Location | undefined } {
-    if (!node) {
-      return { source: undefined, target: undefined };
-    }
-
-    // Handle let declarations
-    if (node.type === "let_declaration") {
-      const pattern = node.childForFieldName("pattern");
-      const value = node.childForFieldName("value");
-
-      return {
-        target: pattern ? node_to_location(pattern, file_path) : undefined,
-        source: value ? node_to_location(value, file_path) : undefined,
-      };
-    }
-
-    // Handle assignment expressions
-    if (node.type === "assignment_expression") {
-      const left = node.childForFieldName("left");
-      const right = node.childForFieldName("right");
-
-      return {
-        target: left ? node_to_location(left, file_path) : undefined,
-        source: right ? node_to_location(right, file_path) : undefined,
-      };
-    }
-
-    // Handle compound assignment (+=, -=, etc.)
-    if (node.type === "compound_assignment_expr") {
-      const left = node.childForFieldName("left");
-      const right = node.childForFieldName("right");
-
-      return {
-        target: left ? node_to_location(left, file_path) : undefined,
-        source: right ? node_to_location(right, file_path) : undefined,
-      };
-    }
-
-    return { source: undefined, target: undefined };
   },
 
   /**
@@ -528,7 +391,7 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
   extract_construct_target(
     node: SyntaxNode | null | undefined,
     file_path: FilePath
-  ): Location | undefined {
+  ): ConstructTarget | undefined {
     if (!node) {
       return undefined;
     }
@@ -541,22 +404,20 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
     // Look for parent let_declaration or assignment.
     // Stop at arguments boundaries to avoid matching outer bindings
     // for nested constructor calls (e.g., Outer::new(Inner::new())).
+    // An array literal whose every element is a construction holds each as an
+    // element of what the binding stores (`let layers = [Layer::new()]`); a tuple
+    // or struct literal, or an array holding anything else, holds it where no
+    // element type reaches.
+    let holds: ConstructTarget["holds"] = "value";
+    let child: SyntaxNode = node;
     let parent = node.parent;
     while (parent) {
       if (parent.type === "let_declaration") {
         const pattern = parent.childForFieldName("pattern");
         if (pattern) {
           // For patterns, we want the identifier, not the whole pattern
-          if (pattern.type === "identifier") {
-            return node_to_location(pattern, file_path);
-          }
-          // For more complex patterns, find the main binding
-          const ident = pattern.childForFieldName("name");
-          if (ident) {
-            return node_to_location(ident, file_path);
-          }
-          // For simple cases, use the whole pattern
-          return node_to_location(pattern, file_path);
+          const binding = pattern.type === "identifier" ? pattern : pattern.childForFieldName("name") ?? pattern;
+          return { location: node_to_location(binding, file_path), holds };
         }
         break;
       }
@@ -564,141 +425,34 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
       if (parent.type === "assignment_expression") {
         const left = parent.childForFieldName("left");
         if (left) {
-          return node_to_location(left, file_path);
+          const declared = left.type === "identifier" ? constructed_declaration(left) : null;
+          return { location: node_to_location(declared ?? left, file_path), holds };
         }
         break;
       }
 
-      if (parent.type === "arguments") {
+      if (parent.type === "arguments" || parent.type === "tuple_expression" || parent.type === "field_initializer_list") {
         break;
       }
 
+      if (parent.type === "array_expression") {
+        const direct_element =
+          holds === "value" &&
+          (child.id === node.id ||
+            (RUST_CONSTRUCTIONS.has(child.type) &&
+              node.endIndex <= (child.childForFieldName("arguments")?.startIndex ?? child.endIndex))) &&
+          parent.namedChildren.every((element) => RUST_CONSTRUCTIONS.has(element.type) || element.type.endsWith("comment"));
+        if (!direct_element) {
+          break;
+        }
+        holds = "element";
+      }
+
+      child = parent;
       parent = parent.parent;
     }
 
     return undefined;
-  },
-
-  /**
-   * Extract generic type arguments
-   *
-   * Handles:
-   * - Simple generics: `Vec<i32>` → ["i32"]
-   * - Multiple parameters: `HashMap<String, u64>` → ["String", "u64"]
-   * - Nested generics: `Vec<Option<String>>` → ["Option<String>"]
-   * - Turbofish syntax: `collect::<Vec<i32>>()` → ["Vec<i32>"]
-   * - Lifetime parameters: `Ref<'a, T>` → ["'a", "T"]
-   * - Associated types: `Iterator<Item = i32>` → ["Item = i32"]
-   * - Trait bounds: `T: Display + Clone` → ["Display + Clone"]
-   */
-  extract_type_arguments(node: SyntaxNode | null | undefined): string[] | undefined {
-    if (!node) {
-      return undefined;
-    }
-
-    const args: string[] = [];
-
-    // Handle generic_type node
-    if (node.type === "generic_type") {
-      const type_arguments = node.childForFieldName("type_arguments");
-      if (type_arguments && type_arguments.type === "type_arguments") {
-        // Extract each type argument
-        for (let i = 0; i < type_arguments.childCount; i++) {
-          const child = type_arguments.child(i);
-          if (
-            child &&
-            child.type !== "<" &&
-            child.type !== ">" &&
-            child.type !== "," &&
-            child.type !== "::"
-          ) {
-            // Skip turbofish operator and punctuation
-            args.push(child.text);
-          }
-        }
-      }
-    }
-
-    // Handle type_arguments node directly
-    if (node.type === "type_arguments") {
-      for (let i = 0; i < node.childCount; i++) {
-        const child = node.child(i);
-        if (
-          child &&
-          child.type !== "<" &&
-          child.type !== ">" &&
-          child.type !== "," &&
-          child.type !== "::"
-        ) {
-          args.push(child.text);
-        }
-      }
-    }
-
-    // Handle turbofish syntax in generic_function
-    if (node.type === "generic_function") {
-      const type_arguments = node.childForFieldName("type_arguments");
-      if (type_arguments) {
-        for (let i = 0; i < type_arguments.childCount; i++) {
-          const child = type_arguments.child(i);
-          if (
-            child &&
-            child.type !== "<" &&
-            child.type !== ">" &&
-            child.type !== "," &&
-            child.type !== "::"
-          ) {
-            args.push(child.text);
-          }
-        }
-      }
-    }
-
-    // Handle bracketed type (for traits like Iterator<Item = T>)
-    if (node.type === "bracketed_type") {
-      const inner = node.childForFieldName("inner");
-      if (inner) {
-        // Extract associated type bindings
-        for (let i = 0; i < inner.childCount; i++) {
-          const child = inner.child(i);
-          if (child && child.type === "type_binding") {
-            args.push(child.text);
-          }
-        }
-      }
-    }
-
-    // Try to extract from text using regex for complex cases
-    if (args.length === 0) {
-      const text = node.text;
-      // Match pattern like Type<Args> or Type::<Args> (turbofish)
-      const match = text.match(/(?:::)?<([^>]+)>/);
-      if (match) {
-        const type_arg_string = match[1];
-        // Handle nested brackets carefully
-        const parts: string[] = [];
-        let current = "";
-        let depth = 0;
-        for (const char of type_arg_string) {
-          if (char === "<") depth++;
-          else if (char === ">") depth--;
-          else if (char === "," && depth === 0) {
-            if (current.trim()) {
-              parts.push(current.trim());
-            }
-            current = "";
-            continue;
-          }
-          current += char;
-        }
-        if (current.trim()) {
-          parts.push(current.trim());
-        }
-        args.push(...parts);
-      }
-    }
-
-    return args.length > 0 ? args : undefined;
   },
 
   /**
@@ -772,6 +526,28 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
       }
     }
 
+    // Qualified path captured directly: the call node is the `scoped_identifier`
+    // itself (`worker::create`, `Parker::make`) or, for associated constructors,
+    // the captured path child (`crate::runtime::Driver`). The terminal name is the
+    // scoped_identifier's `name` field. A bare `identifier` is deliberately NOT
+    // handled here so it keeps returning `undefined` (the builder then falls back
+    // to `capture.text`, which is correct for `Self`/`Config`).
+    if (node.type === "scoped_identifier") {
+      const name_node = node.childForFieldName("name");
+      if (name_node) {
+        return name_node.text as SymbolName;
+      }
+    }
+
+    // Turbofish type captured as the constructor path child (`Cell::<u8>`): the
+    // terminal name is the bare `type` field, with the turbofish dropped.
+    if (node.type === "generic_type") {
+      const type_node = node.childForFieldName("type");
+      if (type_node) {
+        return type_node.text as SymbolName;
+      }
+    }
+
     // --- Struct literal expressions ---
     // Struct literals (e.g. `models::Struct { ... }`) are captured alongside
     // call expressions and need name extraction via the same interface.
@@ -809,4 +585,52 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
 
     return undefined;
   },
+
+  /**
+   * Extract the scoped-path qualifier of a qualified Rust call.
+   *
+   * The terminal name is reduced to a bare name by `extract_call_name`; this
+   * carries the path that scopes that lookup so call resolution can honour the
+   * author's qualifier instead of resolving the bare terminal in scope.
+   *
+   * `"function"` mode drops the terminal segment — the captured node is the
+   * whole `scoped_identifier` (`worker::create` → ["worker"]). `"constructor"`
+   * mode keeps the full type path — the captured node is already the path child
+   * (`crate::runtime::Driver` → ["crate","runtime","Driver"], `Cell::<u8>` →
+   * ["Cell"], `Self` → ["Self"]). Returns undefined when no qualifier remains
+   * (a bare unqualified call).
+   */
+  extract_call_path_prefix(
+    node: SyntaxNode,
+    mode: "function" | "constructor"
+  ): readonly SymbolName[] | undefined {
+    const segments = scoped_path_segments(node);
+    const prefix = mode === "function" ? segments.slice(0, -1) : segments;
+    return prefix.length > 0
+      ? prefix.map((segment) => segment as SymbolName)
+      : undefined;
+  },
 };
+
+/**
+ * The name of the `let` a construction assigned to `left` types: the one
+ * declared without a value that `left` writes, when every write into it
+ * constructs through the same callee (`let this; this = Foo::new();`). Where
+ * the writes construct different things, or anything else writes it, the
+ * construction types nothing a definition stands at.
+ */
+function constructed_declaration(left: SyntaxNode): SyntaxNode | null {
+  const declared = declaration_written_by(left);
+  const constructs = declared ? agreed(written_values(declared), construction_callee) : undefined;
+  return constructs === undefined ? null : declared;
+}
+
+function construction_callee(value: SyntaxNode): string | undefined {
+  const callee =
+    value.type === "call_expression"
+      ? value.childForFieldName("function")
+      : value.type === "struct_expression"
+        ? value.childForFieldName("name")
+        : null;
+  return callee?.text;
+}

@@ -3,7 +3,7 @@ id: task-epic-11.42
 title: Migrate position_utils
 status: To Do
 assignee: []
-created_date: '2025-08-20'
+created_date: "2025-08-20"
 labels: [migration, foundation, epic-11]
 dependencies: [task-epic-11.2]
 parent_task_id: epic-11
@@ -16,6 +16,7 @@ Migrate position/range utilities to src/ast/position_utils.ts
 ## Research Phase
 
 **NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+
 - `## Current Codebase Structure (As Implemented)` - understand current locations
 - `### Proposed Structure` - understand target architecture
 
@@ -52,7 +53,10 @@ Migrate position/range utilities to src/ast/position_utils.ts
 
 ```typescript
 // TODO: Add these stubs in implementation
-interface PositionUtils { contains(range: Range, pos: Position): boolean; compare(p1: Position, p2: Position): number; }
+interface PositionUtils {
+  contains(range: Range, pos: Position): boolean;
+  compare(p1: Position, p2: Position): number;
+}
 ```
 
 ## Planning Phase
@@ -95,6 +99,7 @@ Research findings will be documented here during execution.
 When implementing, add these TODO comments:
 
 1. In `position_utils.ts`:
+
    ```typescript
    // TODO: Integration with Node Utils
    // - Node position utilities
@@ -105,6 +110,7 @@ When implementing, add these TODO comments:
    ```
 
 2. In language-specific files (if applicable):
+
    ```typescript
 
    ```

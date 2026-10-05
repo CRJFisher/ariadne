@@ -1,0 +1,56 @@
+%%{init:{'theme':'base','themeVariables':{'primaryColor':'#ece4d6','primaryBorderColor':'#c06d4f','lineColor':'#2f3338','primaryTextColor':'#2f3338','fontFamily':'Trebuchet MS, Verdana, Arial, sans-serif'}}}%%
+flowchart LR
+  H1["Shared box:<br/>cpu/wall 0.04–0.5 at<br/>loadavg 100–273"]
+  H2["Idle box: cpu/wall<br/>0.97–1.09 on the<br/>same hardware"]
+  H3["One computation, three<br/>sessions: 777.6 /<br/>801.3 / 1,019.4 s"]
+  H4["A cross-session speedup:<br/>2.202x claimed,<br/>1.570x measured"]
+  H5["Fits from slices<br/>under-predicted by<br/>2.19x and 16.8x"]
+  H6["Hoisted tree-sitter 0.21.1<br/>ran instead of 0.25.0;<br/>~40 failures waved off"]
+  H7["One repo, four defensible<br/>file counts: 8,451 /<br/>8,494 / 8,648 / 12,654"]
+  H8["The in-repo benchmark<br/>asserts avg_time &gt; 0"]
+  H9["Six-number fingerprint<br/>missed a read-site<br/>order dependence"]
+
+  R1["Serial arms judged on CPU;<br/>wall only on an idle box"]
+  R2["Ratios only against a<br/>same-session control arm"]
+  R3["Corpus claims need a<br/>corpus-scale run"]
+  R4["Rows on different grammars<br/>are not comparable"]
+  R5["A row without its corpus<br/>predicate is not<br/>a measurement"]
+  R6["The guard must fail on<br/>a real regression"]
+
+  M1["Every row: cpu_user_ms,<br/>wall_ms, cpu/wall, loadavg,<br/>peak RSS, heap cap"]
+  M2["Arms interleaved A,B,A,B<br/>across separate processes"]
+  M3["Nested slices 50 ⊂ 100 ⊂ 200<br/>⊂ 1,200 ⊂ 2,000 ⊂ full corpus"]
+  M4["Multi-order mode: forward,<br/>reversed, descending size,<br/>seeded shuffle"]
+  M5["Seven-number fingerprint<br/>and its compare mode"]
+  M6["Refuses the comparison:<br/>grammar mismatch,<br/>cross-session ratio"]
+  M7["Row names corpus commit,<br/>predicate, file count,<br/>Ariadne commit,<br/>machine, node version"]
+
+  C1["Every later TASK-381.x<br/>acceptance criterion"]
+  C2["CI on every test run,<br/>against the in-repo<br/>fixture corpus"]
+
+  H1 & H2 --> R1
+  H3 & H4 --> R2
+  H5 --> R3
+  H6 --> R4
+  H7 --> R5
+  H8 & H9 --> R6
+
+  R1 --> M1 & M2
+  R2 --> M2 & M6
+  R3 --> M3
+  R4 --> M1 & M6
+  R5 --> M7
+  R6 --> M4 & M5
+
+  M1 & M2 & M3 & M7 --> C1
+  M5 --> C2
+
+  classDef hazard fill:#f7f3ec,stroke:#a8412a,stroke-width:1.5px,color:#2f3338;
+  classDef rule fill:#fffdf8,stroke:#2f3338,stroke-width:1.5px,color:#2f3338;
+  classDef harness fill:#c06d4f,stroke:#a8412a,stroke-width:2px,color:#f7f3ec;
+  classDef consumer fill:#f7f3ec,stroke:#9a9b97,stroke-width:1.5px,color:#6c6f73;
+
+  class H1,H2,H3,H4,H5,H6,H7,H8,H9 hazard;
+  class R1,R2,R3,R4,R5,R6 rule;
+  class M1,M2,M3,M4,M5,M6,M7 harness;
+  class C1,C2 consumer;

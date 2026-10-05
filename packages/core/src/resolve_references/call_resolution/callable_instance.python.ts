@@ -16,37 +16,39 @@
  */
 
 import type { SymbolId, SymbolName } from "@ariadnejs/types";
-import type { DefinitionRegistry } from "../registries/definition";
-import type { TypeRegistry } from "../registries/type";
+import type { ReceiverResolutionContext } from "./receiver_resolution";
+import type { ValueSource } from "./value_source";
 
 /**
  * Check if a resolved variable can be called via __call__ and return that method.
  *
  * @param resolved_symbol - The symbol resolved from the function call
- * @param definitions - Registry to look up definition kind
- * @param types - Registry to look up type and member information
+ * @param held - What the binding holds, as the caller's own value-source walk
+ *   already answered it. It types an instance no declaration does —
+ *   `processor = make_processor()` — and the walk is not repeated here.
  * @returns The __call__ method SymbolId if the variable's type has one, undefined otherwise
  */
 export function resolve_callable_instance(
   resolved_symbol: SymbolId,
-  definitions: DefinitionRegistry,
-  types: TypeRegistry
+  held: ValueSource | null,
+  context: ReceiverResolutionContext
 ): SymbolId | undefined {
-  const def = definitions.get(resolved_symbol);
+  const def = context.definitions.get(resolved_symbol);
 
-  // Only check variables and constants - functions should be called directly
+  // A bare function name is called directly; only an instance held in a
+  // variable or constant can dispatch through the __call__ protocol.
   if (!def || (def.kind !== "variable" && def.kind !== "constant")) {
     return undefined;
   }
 
-  // Get the type of the variable
-  const type_id = types.get_symbol_type(resolved_symbol);
+  const type_id =
+    context.types.get_symbol_type(resolved_symbol) ??
+    (held?.kind === "instance_of" ? held.type_id : null);
   if (!type_id) {
     return undefined;
   }
 
-  // Check if the type has a __call__ method
-  const call_method = types.get_type_member(type_id, "__call__" as SymbolName);
+  const call_method = context.types.get_type_member(type_id, "__call__" as SymbolName);
   if (!call_method) {
     return undefined;
   }

@@ -3,12 +3,10 @@
  */
 
 import { describe, it, expect, beforeEach, vi, test } from "vitest";
-import {
-  ReferenceBuilder,
-  process_references,
-} from "./references";
-import type { ProcessingContext, CaptureNode } from "../index_single_file";
-import { SemanticCategory, SemanticEntity } from "../index_single_file";
+import { ReferenceBuilder, process_references } from "./references";
+import type { CaptureNode } from "../capture_types";
+import type { ProcessingContext } from "../scopes/processing_context";
+import { SemanticCategory, SemanticEntity } from "../capture_types";
 import type {
   Location,
   ScopeId,
@@ -17,7 +15,7 @@ import type {
   SymbolId,
 } from "@ariadnejs/types";
 import { module_scope } from "@ariadnejs/types";
-import type { MetadataExtractors, ReceiverInfo } from "../query_code_tree/metadata_extractors";
+import type { MetadataExtractors, ReceiverInfo } from "../query_code_tree/metadata_extractors/metadata_extractor_types";
 
 // ============================================================================
 // Mock Metadata Extractors
@@ -31,14 +29,8 @@ function create_mock_extractors(
 ): MetadataExtractors {
   return {
     extract_type_from_annotation: vi.fn((node, file_path) => undefined),
-    extract_call_receiver: vi.fn((node, file_path) => undefined),
     extract_property_chain: vi.fn((node) => undefined),
-    extract_assignment_parts: vi.fn((node, file_path) => ({
-      source: undefined,
-      target: undefined,
-    })),
     extract_construct_target: vi.fn((node, file_path) => undefined),
-    extract_type_arguments: vi.fn((node) => undefined),
     extract_is_optional_chain: vi.fn((node) => false),
     is_method_call: vi.fn((node) => false),
     extract_call_name: vi.fn((node) => undefined),
@@ -75,7 +67,6 @@ function create_test_context(): ProcessingContext {
     scope_depths: new Map(),
     root_scope_id,
     get_scope_id: (loc: Location) => root_scope_id,
-    get_child_scope_with_symbol_name: (scope_id: ScopeId, name: SymbolName) => root_scope_id,
   };
 }
 
@@ -157,7 +148,7 @@ describe("ReferenceBuilder", () => {
   beforeEach(() => {
     context = create_test_context();
     // Pass undefined for extractors (no language-specific extractors in tests yet)
-    builder = new ReferenceBuilder(context, undefined, TEST_FILE_PATH);
+    builder = new ReferenceBuilder(context, undefined, TEST_FILE_PATH, "typescript");
   });
 
   describe("process", () => {
@@ -253,7 +244,8 @@ describe("ReferenceBuilder", () => {
       const builder = new ReferenceBuilder(
         context,
         mock_extractors,
-        TEST_FILE_PATH
+        TEST_FILE_PATH,
+        "typescript"
       );
 
       const capture = create_test_capture({
@@ -273,38 +265,6 @@ describe("ReferenceBuilder", () => {
       }
     });
 
-    it("should process type references with generics", () => {
-      const mock_extractors = create_mock_extractors({
-        extract_type_from_annotation: vi.fn((node, file_path) => ({
-          type_name: "Array" as SymbolName,
-          type_id: "type:Array:test.ts:1:0" as SymbolId,
-          certainty: "declared" as const,
-        })),
-        extract_type_arguments: vi.fn((node) => ["string"]),
-      });
-
-      const builder = new ReferenceBuilder(
-        context,
-        mock_extractors,
-        TEST_FILE_PATH
-      );
-
-      const capture = create_test_capture({
-        category: SemanticCategory.REFERENCE,
-        entity: SemanticEntity.TYPE,
-        symbol_name: "Array",
-      });
-
-      builder.process(capture);
-      const references = builder.references;
-
-      expect(references).toHaveLength(1);
-      expect(references[0].name).toBe("Array");
-      expect(references[0].kind).toBe("type_reference");
-      // Generic type info extraction is not yet implemented in factories
-      // This will be added in future tasks
-    });
-
     it("should process property access", () => {
       const receiver_info: ReceiverInfo = {
         receiver_location: create_test_location(),
@@ -320,7 +280,8 @@ describe("ReferenceBuilder", () => {
       const builder = new ReferenceBuilder(
         context,
         mock_extractors,
-        TEST_FILE_PATH
+        TEST_FILE_PATH,
+        "typescript"
       );
 
       const capture = create_test_capture({
@@ -353,7 +314,8 @@ describe("ReferenceBuilder", () => {
       const builder = new ReferenceBuilder(
         context,
         mock_extractors,
-        TEST_FILE_PATH
+        TEST_FILE_PATH,
+        "typescript"
       );
 
       const capture = create_test_capture({
@@ -403,7 +365,7 @@ describe("ReferenceBuilder", () => {
       expect(references[0].name).toBe("super");
       expect(references[0].kind).toBe("self_reference_call");
       if (references[0].kind === "self_reference_call") {
-        expect(references[0].keyword).toBe("super");
+        expect(references[0].property_chain[0]).toBe("super");
       }
     });
 
@@ -443,7 +405,6 @@ describe("ReferenceBuilder", () => {
         receiver_location: create_test_location(10, 5),
         property_chain: ["this" as SymbolName, "build_class" as SymbolName],
         is_self_reference: true,
-        self_keyword: "this",
       };
 
       const mock_extractors = create_mock_extractors({
@@ -454,7 +415,8 @@ describe("ReferenceBuilder", () => {
       const builder = new ReferenceBuilder(
         context,
         mock_extractors,
-        TEST_FILE_PATH
+        TEST_FILE_PATH,
+        "typescript"
       );
 
       const capture = create_test_capture({
@@ -475,7 +437,7 @@ describe("ReferenceBuilder", () => {
 
       // Use type narrowing to access SelfReferenceCall-specific fields
       if (ref.kind === "self_reference_call") {
-        expect(ref.keyword).toBe("this");
+        expect(ref.property_chain[0]).toBe("this");
         expect(ref.property_chain).toEqual(["this", "build_class"]);
         expect(ref.name).toBe("build_class");
       }
@@ -486,7 +448,6 @@ describe("ReferenceBuilder", () => {
         receiver_location: create_test_location(5, 2),
         property_chain: ["self" as SymbolName, "process_data" as SymbolName],
         is_self_reference: true,
-        self_keyword: "self",
       };
 
       const mock_extractors = create_mock_extractors({
@@ -497,7 +458,8 @@ describe("ReferenceBuilder", () => {
       const builder = new ReferenceBuilder(
         context,
         mock_extractors,
-        TEST_FILE_PATH
+        TEST_FILE_PATH,
+        "typescript"
       );
 
       const capture = create_test_capture({
@@ -511,7 +473,7 @@ describe("ReferenceBuilder", () => {
 
       expect(ref.kind).toBe("self_reference_call");
       if (ref.kind === "self_reference_call") {
-        expect(ref.keyword).toBe("self");
+        expect(ref.property_chain[0]).toBe("self");
         expect(ref.property_chain).toEqual(["self", "process_data"]);
       }
     });
@@ -521,7 +483,6 @@ describe("ReferenceBuilder", () => {
         receiver_location: create_test_location(8, 4),
         property_chain: ["super" as SymbolName, "init" as SymbolName],
         is_self_reference: true,
-        self_keyword: "super",
       };
 
       const mock_extractors = create_mock_extractors({
@@ -532,7 +493,8 @@ describe("ReferenceBuilder", () => {
       const builder = new ReferenceBuilder(
         context,
         mock_extractors,
-        TEST_FILE_PATH
+        TEST_FILE_PATH,
+        "typescript"
       );
 
       const capture = create_test_capture({
@@ -546,7 +508,7 @@ describe("ReferenceBuilder", () => {
 
       expect(ref.kind).toBe("self_reference_call");
       if (ref.kind === "self_reference_call") {
-        expect(ref.keyword).toBe("super");
+        expect(ref.property_chain[0]).toBe("super");
       }
     });
 
@@ -555,7 +517,6 @@ describe("ReferenceBuilder", () => {
         receiver_location: create_test_location(12, 8),
         property_chain: ["cls" as SymbolName, "class_method" as SymbolName],
         is_self_reference: true,
-        self_keyword: "cls",
       };
 
       const mock_extractors = create_mock_extractors({
@@ -566,7 +527,8 @@ describe("ReferenceBuilder", () => {
       const builder = new ReferenceBuilder(
         context,
         mock_extractors,
-        TEST_FILE_PATH
+        TEST_FILE_PATH,
+        "typescript"
       );
 
       const capture = create_test_capture({
@@ -580,7 +542,7 @@ describe("ReferenceBuilder", () => {
 
       expect(ref.kind).toBe("self_reference_call");
       if (ref.kind === "self_reference_call") {
-        expect(ref.keyword).toBe("cls");
+        expect(ref.property_chain[0]).toBe("cls");
       }
     });
 
@@ -599,7 +561,8 @@ describe("ReferenceBuilder", () => {
       const builder = new ReferenceBuilder(
         context,
         mock_extractors,
-        TEST_FILE_PATH
+        TEST_FILE_PATH,
+        "typescript"
       );
 
       const capture = create_test_capture({
@@ -628,7 +591,8 @@ describe("ReferenceBuilder", () => {
       const builder = new ReferenceBuilder(
         context,
         mock_extractors,
-        TEST_FILE_PATH
+        TEST_FILE_PATH,
+        "typescript"
       );
 
       const capture = create_test_capture({
@@ -675,7 +639,8 @@ describe("ReferenceBuilder", () => {
       const references = process_references(
         test_context,
         undefined,
-        TEST_FILE_PATH
+        TEST_FILE_PATH,
+        "typescript"
       );
 
       expect(references).toHaveLength(2);
@@ -703,7 +668,8 @@ describe("ReferenceBuilder", () => {
       const references = process_references(
         custom_context,
         undefined,
-        TEST_FILE_PATH
+        TEST_FILE_PATH,
+        "typescript"
       );
 
       expect(references).toHaveLength(1);
@@ -727,7 +693,8 @@ describe("ReferenceBuilder", () => {
       const builder = new ReferenceBuilder(
         context,
         mock_extractors,
-        TEST_FILE_PATH
+        TEST_FILE_PATH,
+        "typescript"
       );
       const capture = create_test_capture({
         category: SemanticCategory.REFERENCE,
@@ -763,7 +730,8 @@ describe("ReferenceBuilder", () => {
       const builder = new ReferenceBuilder(
         context,
         mock_extractors,
-        TEST_FILE_PATH
+        TEST_FILE_PATH,
+        "typescript"
       );
       const capture = create_test_capture({
         category: SemanticCategory.REFERENCE,
@@ -787,13 +755,17 @@ describe("ReferenceBuilder", () => {
     it("should call extract_construct_target for constructor calls", () => {
       const target_location = create_test_location(3, 6);
       const mock_extractors = create_mock_extractors({
-        extract_construct_target: vi.fn((node, file_path) => target_location),
+        extract_construct_target: vi.fn((node, file_path) => ({
+          location: target_location,
+          holds: "value" as const,
+        })),
       });
 
       const builder = new ReferenceBuilder(
         context,
         mock_extractors,
-        TEST_FILE_PATH
+        TEST_FILE_PATH,
+        "typescript"
       );
       const capture = create_test_capture({
         category: SemanticCategory.REFERENCE,
@@ -829,7 +801,8 @@ describe("ReferenceBuilder", () => {
       const builder = new ReferenceBuilder(
         context,
         mock_extractors,
-        TEST_FILE_PATH
+        TEST_FILE_PATH,
+        "typescript"
       );
       const capture = create_test_capture({
         category: SemanticCategory.REFERENCE,
@@ -853,7 +826,7 @@ describe("ReferenceBuilder", () => {
 
     it("should handle undefined extractors gracefully", () => {
       // Test with no extractors (undefined)
-      const builder = new ReferenceBuilder(context, undefined, TEST_FILE_PATH);
+      const builder = new ReferenceBuilder(context, undefined, TEST_FILE_PATH, "typescript");
       const capture = create_test_capture({
         category: SemanticCategory.REFERENCE,
         entity: SemanticEntity.METHOD,
@@ -876,7 +849,8 @@ describe("ReferenceBuilder", () => {
       const builder = new ReferenceBuilder(
         context,
         mock_extractors,
-        TEST_FILE_PATH
+        TEST_FILE_PATH,
+        "typescript"
       );
       const capture = create_test_capture({
         category: SemanticCategory.REFERENCE,
@@ -907,7 +881,8 @@ describe("ReferenceBuilder", () => {
       const builder = new ReferenceBuilder(
         context,
         mock_extractors,
-        TEST_FILE_PATH
+        TEST_FILE_PATH,
+        "typescript"
       );
       const capture = create_test_capture({
         category: SemanticCategory.REFERENCE,
@@ -931,7 +906,8 @@ describe("ReferenceBuilder", () => {
       const builder = new ReferenceBuilder(
         context,
         mock_extractors,
-        TEST_FILE_PATH
+        TEST_FILE_PATH,
+        "typescript"
       );
       const capture = create_test_capture({
         category: SemanticCategory.REFERENCE,
@@ -960,7 +936,8 @@ describe("ReferenceBuilder", () => {
       const builder = new ReferenceBuilder(
         context,
         mock_extractors,
-        TEST_FILE_PATH
+        TEST_FILE_PATH,
+        "typescript"
       );
       const capture = create_test_capture({
         category: SemanticCategory.REFERENCE,
@@ -999,7 +976,8 @@ describe("ReferenceBuilder", () => {
       const builder = new ReferenceBuilder(
         context,
         mock_extractors,
-        TEST_FILE_PATH
+        TEST_FILE_PATH,
+        "typescript"
       );
 
       const capture = create_test_capture({
@@ -1026,7 +1004,8 @@ describe("ReferenceBuilder", () => {
       const builder = new ReferenceBuilder(
         context,
         undefined,
-        TEST_FILE_PATH
+        TEST_FILE_PATH,
+        "typescript"
       );
 
       const capture = create_test_capture({
@@ -1046,7 +1025,8 @@ describe("ReferenceBuilder", () => {
       const builder = new ReferenceBuilder(
         context,
         undefined,
-        TEST_FILE_PATH
+        TEST_FILE_PATH,
+        "typescript"
       );
 
       const capture = create_test_capture({

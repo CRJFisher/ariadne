@@ -178,6 +178,22 @@
   pattern: (identifier) @definition.parameter @definition.field
 )
 
+; Optional constructor parameter properties — same dual-capture as the required
+; variants above. Split into an accessibility-modifier rule and a readonly rule
+; because a single pattern cannot OR the two child constraints; a
+; `private readonly x?` param matches both, but the duplicate @definition.field
+; (and @definition.parameter.optional) captures collapse downstream via the
+; location-keyed symbol_id, so exactly one property and one parameter result.
+(optional_parameter
+  (accessibility_modifier)
+  pattern: (identifier) @definition.parameter.optional @definition.field
+)
+
+(optional_parameter
+  "readonly"
+  pattern: (identifier) @definition.parameter.optional @definition.field
+)
+
 ; Class decorators (decorator first, then target)
 (class_declaration
   (decorator
@@ -267,6 +283,14 @@
   value: (arrow_function)
 ) @assignment.variable
 
+; Function expressions assigned to variables — registers the outer var name as a
+; function in the enclosing scope. The inner name of a named function expression
+; is captured separately above and stays scoped to the function body.
+(variable_declarator
+  name: (identifier) @definition.function @assignment.variable
+  value: (function_expression)
+) @assignment.variable
+
 ; === Anonymous arrow functions (inline callbacks, config objects, etc.) ===
 
 ; Inline arrow functions in call expression arguments (forEach, map, filter, etc.)
@@ -300,16 +324,80 @@
   )
 )
 
+; IIFEs whose callable is a traditional function expression
+(call_expression
+  function: (parenthesized_expression
+    (function_expression !name) @definition.anonymous_function
+  )
+)
+
 ; Traditional function expressions in object properties
 (pair
   value: (function_expression) @definition.anonymous_function
 )
+
+; Callables returned from a function. The returned callable owns its
+; parameters, and no named definition claims it (a named function expression
+; is captured above and keeps its own name).
+(return_statement
+  (function_expression !name) @definition.anonymous_function
+)
+
+(return_statement
+  (arrow_function) @definition.anonymous_function
+)
+
+; Whole-module CommonJS export of an inline callable:
+; module.exports = function (p) {} / (p) => {}.
+(assignment_expression
+  left: (member_expression
+    object: (identifier) @_module_obj
+    property: (property_identifier) @_exports_prop)
+  right: (function_expression !name) @definition.anonymous_function
+  (#eq? @_module_obj "module")
+  (#eq? @_exports_prop "exports")
+)
+
+(assignment_expression
+  left: (member_expression
+    object: (identifier) @_module_obj_arrow
+    property: (property_identifier) @_exports_prop_arrow)
+  right: (arrow_function) @definition.anonymous_function
+  (#eq? @_module_obj_arrow "module")
+  (#eq? @_exports_prop_arrow "exports")
+)
+
+; A function value assigned onto a member of a holder — `app.engine = function
+; () {}`, `Counter.prototype.tick = () => {}` — is a definition at the value's
+; own span. Where the holder is a bare identifier or `X.prototype`, that span is
+; also the id the holder's function collection records, so a call through the
+; holder reaches a real function; for any wider holder the definition stands on
+; its own and puts the function's own calls in the graph.
+; Only the bare `module` holder is excluded, because the whole-module
+; `module.exports = fn` rules above are the sole `exports` rules this file
+; carries — the CommonJS property-export rules live in javascript.scm only, so
+; `exports.NAME = fn` and `module.exports.NAME = fn` get their definition here.
+(assignment_expression
+  left: (member_expression
+    object: (_) @_member_holder
+    property: (property_identifier))
+  right: [(function_expression !name) (arrow_function)] @definition.anonymous_function
+  (#not-match? @_member_holder "^module$"))
 
 ; Variable declarations with assignments (tracking only — definition created by generic pattern above)
 (variable_declarator
   name: (identifier) @assignment.variable
   value: (_) @assignment.variable
 ) @assignment.variable
+
+; Prototype-style method assignment: Counter.prototype.method = function () {}
+; (the simple `app.method = fn` form is captured by the member-access @assignment.property below)
+(assignment_expression
+  left: (member_expression
+    object: (member_expression)
+    property: (property_identifier)
+  )
+) @assignment.property
 
 ; Variable declarations with namespace-qualified constructor calls
 (variable_declarator
@@ -319,13 +407,24 @@
   )
 ) @assignment.constructor.qualified
 
-; Destructuring
-(variable_declarator
-  name: (object_pattern) @definition.variable
+; Destructuring binds one name per identifier in the pattern; capturing the
+; whole pattern would bind a single name spelled "{ c }".
+(object_pattern
+  (shorthand_property_identifier_pattern) @definition.variable
 )
 
-(variable_declarator
-  name: (array_pattern) @definition.variable
+(object_pattern
+  (pair_pattern
+    value: (identifier) @definition.variable
+  )
+)
+
+(array_pattern
+  (identifier) @definition.variable
+)
+
+(rest_pattern
+  (identifier) @definition.variable
 )
 
 ; Class definitions with inheritance and implements
@@ -363,6 +462,13 @@
 
 (method_definition
   name: (private_property_identifier) @definition.method
+) @scope.method
+
+; Computed-key method definitions: [Symbol.iterator]() { ... }
+; Indexed as a callable node (the whole key text, e.g. `[Symbol.iterator]`, is the
+; name) so the method body is a scope and any calls it makes are captured.
+(method_definition
+  name: (computed_property_name) @definition.method
 ) @scope.method
 
 ; Abstract method signatures in classes (not interfaces)
@@ -433,18 +539,29 @@
   pattern: (identifier) @definition.parameter.optional
 )
 
-; Rest parameters (...args)
+; Rest parameters (...args). Anchored to the parameter list: an unanchored
+; rest_pattern also matches a destructuring rest (`const { ...r } = o`), which
+; binds a variable, not a parameter of the enclosing callable.
 ; Note: rest_pattern does NOT have a field name for the identifier child
-(rest_pattern
-  (identifier) @definition.parameter
+(required_parameter
+  pattern: (rest_pattern
+    (identifier) @definition.parameter
+  )
 )
 
 ; Catch clause parameter
+; A catch binding is scoped to the catch block, not a parameter of any
+; callable — it owns no signature slot.
 (catch_clause
-  parameter: (identifier) @definition.parameter
+  parameter: (identifier) @definition.variable
 )
 
-; Loop variables
+; Loop variables. `for (const a of xs)` puts the identifier directly under
+; `left`; the nested form covers `for (const { a } of xs)`.
+(for_in_statement
+  left: (identifier) @definition.variable
+)
+
 (for_in_statement
   left: (_
     (identifier) @definition.variable
@@ -517,6 +634,22 @@
   source: (string)
 ) @import.reexport
 
+; export * from 'module' — forwards the module's whole export surface under no
+; name of its own. The bare "*" is a direct child of export_statement; the
+; `export * as ns` form nests its star inside (namespace_export), so the two
+; patterns are disjoint.
+(export_statement
+  "*"
+  source: (string)
+) @import.reexport.wildcard
+
+; export * as ns from 'module' — a single named namespace object, not a
+; wildcard surface. Capturing the identifier keeps the symbol on the bound name.
+(export_statement
+  (namespace_export (identifier) @import.reexport.namespace)
+  source: (string)
+)
+
 ;; ==============================================================================
 ;; EXPORTS - Standard JavaScript exports
 ;; ==============================================================================
@@ -581,12 +714,6 @@
   function: (identifier) @reference.call
 )
 
-; Generic function calls (TypeScript)
-(call_expression
-  function: (identifier) @reference.call.generic
-  type_arguments: (type_arguments)
-) @reference.call.generic
-
 ; Method calls with receiver tracking
 ; Complete capture - extractor derives method name, receiver, property chain
 (call_expression
@@ -596,15 +723,20 @@
   )
 ) @reference.call
 
+; Private method calls: this.#method()
+; Private members use `private_property_identifier` rather than `property_identifier`,
+; so the receiver-tracking rule above misses them. The extractor derives `#method`
+; and the `this` self-reference identically for both property node types.
+(call_expression
+  function: (member_expression
+    object: (_) @reference.variable
+    property: (private_property_identifier)
+  )
+) @reference.call
+
 ; Constructor calls
 (new_expression
   constructor: (identifier) @reference.constructor
-)
-
-; Constructor calls with type arguments (TypeScript)
-(new_expression
-  constructor: (identifier) @reference.constructor.generic
-  type_arguments: (type_arguments)
 )
 
 ; Namespace-qualified constructor calls: new models.User(name)
@@ -612,37 +744,27 @@
   constructor: (member_expression) @reference.constructor.qualified
 )
 
-; Property access
+; Property access — any receiver shape (obj.x, this.x, a.b.c, getX().y), one
+; capture per member_expression node
+(member_expression
+  object: (_)
+  property: (property_identifier)
+) @reference.member_access
+
+; Base object and property name of an identifier-receiver member read. The base
+; stays pinned to an identifier — a wider base would mint a variable reference
+; whose name is a whole sub-expression — and the property-name read feeds
+; indirect reachability for methods read as values.
 (member_expression
   object: (identifier) @reference.variable.base
   property: (property_identifier) @reference.property
-) @reference.member_access
+)
 
 ; Computed member access (bracket notation)
 (subscript_expression
   object: (identifier) @reference.variable
   index: (_) @reference.property.computed
 ) @reference.member_access.computed
-
-; Optional chaining member access
-(member_expression
-  object: (identifier) @reference.variable
-  property: (property_identifier) @reference.property.optional
-) @reference.member_access.optional
-
-; Static method call - object is a class identifier (capitalized)
-(call_expression
-  function: (member_expression
-    object: (identifier) @reference.type_reference
-    property: (property_identifier))
-  (#match? @reference.type_reference "^[A-Z]")) @reference.call
-
-; Instance method call - object is lowercase/instance
-(call_expression
-  function: (member_expression
-    object: (identifier) @reference.variable
-    property: (property_identifier))
-  (#not-match? @reference.variable "^[A-Z]")) @reference.call
 
 ; Type references (TypeScript)
 (type_identifier) @reference.type
@@ -658,11 +780,14 @@
   right: (_) @reference.variable.source
 ) @assignment.variable
 
+; A write to a member invokes the setter, never the getter, so the target
+; carries no member read — the general member pattern above is suppressed at
+; write positions by the same rule.
 (assignment_expression
   left: (member_expression
     object: (identifier) @reference.variable.object
     property: (property_identifier) @reference.property.assign
-  ) @reference.member_access.assign
+  )
   right: (_) @reference.variable.source
 ) @assignment.property
 
@@ -676,14 +801,11 @@
   argument: (identifier) @reference.variable.update
 )
 
-; JSX components (only valid in TSX, commented out for plain TypeScript)
-; (jsx_opening_element
-;   (identifier) @reference.call.jsx
-; )
-;
-; (jsx_self_closing_element
-;   (identifier) @reference.call.jsx
-; )
+; JSX component usages are captured only for `.tsx`, which is parsed with the tsx
+; grammar; the JSX patterns live in query_loader's JSX_COMPONENT_CAPTURES and are
+; appended there. This file stays JSX-free so it compiles against the typescript
+; grammar used for `.ts`, where an angle-bracket `<T>x` is a type assertion, not
+; a JSX element.
 
 ; this references (important for method context)
 (this) @reference.this
@@ -698,6 +820,40 @@
 (type_query
   (identifier) @reference.typeof
 ) @reference.typeof
+
+; Field-initializer member read: narrowed to this/super so external-object fields
+; aren't double-captured (the property_access pattern already handles those).
+(public_field_definition
+  value: (member_expression
+    object: [(this) (super)]
+    property: (property_identifier) @reference.variable
+  )
+)
+
+; Shorthand object property ({ fn }): the catch-all (identifier) fires only on the
+; definition-site node, so this supplies the use-site read.
+(object
+  (shorthand_property_identifier) @reference.variable
+)
+
+; Value-position callables — a function handed to a framework by name is never
+; invoked at a syntactic call site, so this read is the only evidence it is
+; reachable. Bare identifier arguments are covered by the catch-all identifier
+; read plus indirect reachability; the member form, the object-literal value,
+; and a named function expression's own name need their own capture.
+(arguments
+  (member_expression) @reference.callable_value
+)
+
+(pair
+  value: (member_expression) @reference.callable_value
+)
+
+(arguments
+  (function_expression
+    name: (identifier) @reference.callable_value
+  )
+)
 
 ; General identifier references (catch-all)
 (identifier) @reference.variable

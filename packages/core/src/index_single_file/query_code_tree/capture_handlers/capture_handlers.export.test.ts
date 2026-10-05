@@ -5,11 +5,12 @@
 import { describe, it, expect } from "vitest";
 import Parser from "tree-sitter";
 import JavaScript from "tree-sitter-javascript";
-import TypeScript from "tree-sitter-typescript";
+import { LANGUAGE_TO_TREESITTER_LANG } from "../parsers";
 import { JAVASCRIPT_HANDLERS } from "./capture_handlers.javascript";
 import { TYPESCRIPT_HANDLERS } from "./capture_handlers.typescript";
-import { DefinitionBuilder } from "../../definitions";
-import type { ProcessingContext, CaptureNode } from "../../index_single_file";
+import { DefinitionBuilder } from "../../definitions/definition_builder";
+import type { CaptureNode } from "../../capture_types";
+import type { ProcessingContext } from "../../scopes/processing_context";
 import type { FilePath, SymbolName, ScopeId, LexicalScope } from "@ariadnejs/types";
 import { node_to_location } from "../../node_to_location";
 
@@ -17,14 +18,13 @@ const js_parser = new Parser();
 js_parser.setLanguage(JavaScript);
 
 const ts_parser = new Parser();
-ts_parser.setLanguage(TypeScript.typescript);
+ts_parser.setLanguage(LANGUAGE_TO_TREESITTER_LANG.get("typescript")!);
 
 const TEST_FILE_PATH: FilePath = "test.js" as FilePath;
 
 function create_test_context(): ProcessingContext {
   return {
     get_scope_id: () => "test-scope" as ScopeId,
-    get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => "test-scope" as ScopeId,
     captures: [],
     scopes: new Map<ScopeId, LexicalScope>(),
     scope_depths: new Map<ScopeId, number>(),

@@ -1,73 +1,144 @@
 /**
  * Indirect reachability detection.
  *
- * Detects functions that are reachable without direct call edges:
+ * Detects functions and methods that are reachable without direct call edges:
  * - Functions stored in collections that are read (e.g., `return HANDLERS`)
  * - Named functions passed as values/arguments (e.g., `apply(doubler, 21)`)
+ * - Bound or instance methods read as values via a bare member-name read that
+ *   resolves to the method through lexical scope (e.g., `register(self._acquire_connection)`,
+ *   `out.write = this.write.bind(this)`, `self._processor = self.process`)
+ * - Functions and methods a member read hands over as a value (e.g.,
+ *   `self.loop = loops.asynloop if hub else loops.synloop`)
  *
- * These functions should not be considered entry points.
+ * These callables should not be considered entry points.
  */
 
-import type { FilePath, SymbolId, SymbolName, Location, FunctionCollection, IndirectReachabilityReason } from "@ariadnejs/types";
+import type { FilePath, SymbolId, SymbolName, Location, FunctionCollection, IndirectReachability } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "./registries/definition";
 
-/**
- * Entry for indirectly reachable function
- */
-export interface IndirectReachabilityEntry {
-  function_id: SymbolId;
-  reason: IndirectReachabilityReason;
-}
+type SymbolResolver = (scope_id: string, name: SymbolName) => SymbolId | null;
 
 /**
- * Resolver function type for looking up symbols by name in a scope
+ * The function or method a member read names as a value, or null when the read
+ * holds anything else. Value tracking lives in call resolution, which this file
+ * sits below, so the caller hands it in.
  */
-export type SymbolResolver = (scope_id: string, name: SymbolName) => SymbolId | null;
+type MemberReadCallableResolver = (
+  scope_id: string,
+  property_chain: readonly SymbolName[],
+  read_at: Location
+) => SymbolId | null;
 
-/**
- * Reference with the fields needed for collection read detection
- */
 interface VariableReadReference {
   kind: string;
   access_type?: string;
   scope_id: string;
   name: SymbolName;
   location: Location;
+  property_chain?: readonly SymbolName[];
 }
 
 /**
- * Detect indirect reachability from variable read references.
+ * The single writer of an indirect-reachability map.
  *
- * Handles two cases:
- * 1. Function collections: when a collection variable is read, all stored functions
- *    become indirectly reachable.
- * 2. Function references: when a named function is read as a value (e.g., passed
- *    as an argument), it becomes indirectly reachable.
+ * A function can be read as a value from many files and the map holds one
+ * entry per function, so which read site becomes the reported evidence used to
+ * be decided by whichever of six writers reached the key first — some
+ * first-wins, some last-wins, all of them walking in ingest order. The entry
+ * kept is the one earliest in the project instead, so the evidence is a
+ * function of the corpus rather than of the order its files arrived in.
+ */
+export function record_indirect_reachability(
+  into: Map<SymbolId, IndirectReachability>,
+  fn_id: SymbolId,
+  entry: IndirectReachability
+): void {
+  const held = into.get(fn_id);
+  if (held === undefined || precedes(entry, held)) {
+    into.set(fn_id, entry);
+  }
+}
+
+/**
+ * Whether `candidate` sits earlier in the project than `held`: file path, then
+ * line, then column.
  *
- * @param file_references - Map of file_path → references
- * @param definitions - Definition registry
- * @param resolve - Function to resolve symbol names in scopes
- * @returns Map of function_id to IndirectReachabilityEntry
+ * The comparison runs on past the read site's start because the start alone is
+ * not a total order, and a pair it leaves unordered is a pair the walk decides.
+ * Two references can share a start — `apply_twice` is read both as the callee
+ * name and as the whole call expression at one column — and one read of a
+ * collection that spreads another reaches the same function under two
+ * collection ids at one location. Ending sooner wins, so the tighter span is
+ * the witness.
+ */
+function precedes(
+  candidate: IndirectReachability,
+  held: IndirectReachability
+): boolean {
+  const here = candidate.reason.read_location;
+  const there = held.reason.read_location;
+  if (here.file_path !== there.file_path) {
+    return here.file_path < there.file_path;
+  }
+  if (here.start_line !== there.start_line) {
+    return here.start_line < there.start_line;
+  }
+  if (here.start_column !== there.start_column) {
+    return here.start_column < there.start_column;
+  }
+  if (here.end_line !== there.end_line) {
+    return here.end_line < there.end_line;
+  }
+  if (here.end_column !== there.end_column) {
+    return here.end_column < there.end_column;
+  }
+  if (candidate.reason.type !== held.reason.type) {
+    return candidate.reason.type < held.reason.type;
+  }
+  return collection_of(candidate) < collection_of(held);
+}
+
+function collection_of(entry: IndirectReachability): string {
+  return entry.reason.type === "collection_read" ? entry.reason.collection_id : "";
+}
+
+/**
+ * Detect indirect reachability from read references.
+ *
+ * Three cases mark a symbol reachable: reading a function-collection variable
+ * (every stored function is reachable), reading a named function/method as a
+ * value, and a member read whose value is a function or method (the callable
+ * itself is reachable, in both).
  */
 export function detect_indirect_reachability(
   file_references: Map<FilePath, readonly VariableReadReference[]>,
   definitions: DefinitionRegistry,
-  resolve: SymbolResolver
-): Map<SymbolId, IndirectReachabilityEntry> {
-  const indirect_reachability = new Map<SymbolId, IndirectReachabilityEntry>();
+  resolve: SymbolResolver,
+  resolve_member_read_callable: MemberReadCallableResolver
+): Map<SymbolId, IndirectReachability> {
+  const indirect_reachability = new Map<SymbolId, IndirectReachability>();
 
   for (const references of file_references.values()) {
     for (const ref of references) {
-      // Only process variable reads
+      if (ref.kind === "property_access" && ref.property_chain) {
+        // A member read claims no call: a framework that stores the read
+        // (`self.loop = loops.synloop`) invokes it somewhere no call site names.
+        const callable_id = resolve_member_read_callable(ref.scope_id, ref.property_chain, ref.location);
+        if (callable_id) {
+          record_indirect_reachability(indirect_reachability, callable_id, {
+            reason: { type: "function_reference", read_location: ref.location },
+          });
+        }
+        continue;
+      }
+
       if (ref.kind !== "variable_reference" || ref.access_type !== "read") {
         continue;
       }
 
-      // Resolve the referenced symbol
       const symbol_id = resolve(ref.scope_id, ref.name);
       if (!symbol_id) continue;
 
-      // Check if it has function_collection metadata
       const collection = definitions.get_function_collection(symbol_id);
       if (collection) {
         mark_collection_as_consumed(
@@ -82,11 +153,15 @@ export function detect_indirect_reachability(
         continue;
       }
 
-      // Check if the resolved symbol is a function definition (passed as value)
+      // A bare member-name read (`self._acquire_connection`, `this.write`)
+      // resolves to the method symbol via lexical scope, so a method passed as a
+      // value or stored in a field is reachable just like a free function.
+      // Constructors are excluded: reading a constructor as a value is not a real
+      // pattern (constructor invocations arrive as call references, not reads).
       const def = definitions.get(symbol_id);
-      if (def && def.kind === "function") {
-        // Skip if the reference is at the definition site itself
-        // (e.g., Python's `def foo` creates a variable_reference read at the def location)
+      if (def && (def.kind === "function" || def.kind === "method")) {
+        // A Python `def foo` emits a variable_reference read at the def location;
+        // that self-read is not the function being passed as a value.
         if (
           ref.location.file_path === def.location.file_path &&
           ref.location.start_line === def.location.start_line &&
@@ -94,8 +169,7 @@ export function detect_indirect_reachability(
         ) {
           continue;
         }
-        indirect_reachability.set(symbol_id, {
-          function_id: symbol_id,
+        record_indirect_reachability(indirect_reachability, symbol_id, {
           reason: { type: "function_reference", read_location: ref.location },
         });
       }
@@ -106,16 +180,9 @@ export function detect_indirect_reachability(
 }
 
 /**
- * Mark all functions in a collection as indirectly reachable.
- * Recursively handles spread operators (e.g., ...JAVASCRIPT_HANDLERS).
- *
- * @param collection_id - SymbolId of the collection variable
- * @param collection - FunctionCollection metadata
- * @param read_location - Location where the collection was read
- * @param definitions - Definition registry
- * @param resolve - Function to resolve symbol names in scopes
- * @param indirect_reachability - Map to add entries to
- * @param visited - Set of already visited collection IDs (for cycle detection)
+ * Mark all functions in a collection as indirectly reachable, recursing through
+ * spread members (e.g. `...JAVASCRIPT_HANDLERS`). `visited` breaks cycles in
+ * mutually-spreading collections.
  */
 function mark_collection_as_consumed(
   collection_id: SymbolId,
@@ -123,17 +190,14 @@ function mark_collection_as_consumed(
   read_location: Location,
   definitions: DefinitionRegistry,
   resolve: SymbolResolver,
-  indirect_reachability: Map<SymbolId, IndirectReachabilityEntry>,
+  indirect_reachability: Map<SymbolId, IndirectReachability>,
   visited: Set<SymbolId>
 ): void {
-  // Prevent infinite recursion on circular references
   if (visited.has(collection_id)) return;
   visited.add(collection_id);
 
-  // Mark inline functions (stored_functions: SymbolId[])
   for (const fn_id of collection.stored_functions) {
-    indirect_reachability.set(fn_id, {
-      function_id: fn_id,
+    record_indirect_reachability(indirect_reachability, fn_id, {
       reason: {
         type: "collection_read",
         collection_id,
@@ -142,16 +206,14 @@ function mark_collection_as_consumed(
     });
   }
 
-  // Resolve stored references (stored_references: SymbolName[])
-  // These are function names or spread variable names like ["handler_foo", "JAVASCRIPT_HANDLERS"]
+  // `stored_references` holds names (function names or spread variable names)
+  // that must be resolved in the collection's own defining scope.
   if (collection.stored_references) {
-    // Get the scope where the collection variable is defined
     const collection_def = definitions.get(collection_id);
     if (!collection_def) return;
     const defining_scope = collection_def.defining_scope_id;
 
     for (const ref_name of collection.stored_references) {
-      // Resolve the name in the collection's defining scope
       const ref_id = resolve(defining_scope, ref_name);
       if (!ref_id) continue;
 
@@ -159,9 +221,7 @@ function mark_collection_as_consumed(
       if (!ref_def) continue;
 
       if (ref_def.kind === "function") {
-        // Direct function reference - mark as reachable
-        indirect_reachability.set(ref_id, {
-          function_id: ref_id,
+        record_indirect_reachability(indirect_reachability, ref_id, {
           reason: {
             type: "collection_read",
             collection_id,
@@ -172,7 +232,7 @@ function mark_collection_as_consumed(
         (ref_def.kind === "variable" || ref_def.kind === "constant") &&
         ref_def.function_collection
       ) {
-        // Nested collection (spread) - resolve recursively
+        // Spread of another collection — recurse into its members.
         mark_collection_as_consumed(
           ref_id,
           ref_def.function_collection,

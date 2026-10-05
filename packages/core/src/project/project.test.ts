@@ -117,6 +117,52 @@ describe("Project", () => {
     });
   });
 
+  describe("languages", () => {
+    it("throws at the parse dispatch for an unsupported extension", async () => {
+      await project.initialize();
+      expect(() =>
+        project.update_file("main.go" as FilePath, "package main")
+      ).toThrow("Unsupported file extension: go");
+      expect(project.get_languages()).toEqual(new Map());
+    });
+
+    it("maintains the map incrementally across update, restore, remove, and clear", async () => {
+      await project.initialize();
+      const ts_file = "app.ts" as FilePath;
+      const py_file = "main.py" as FilePath;
+      const rs_file = "lib.rs" as FilePath;
+
+      project.update_file(ts_file, "function foo() {}");
+      project.update_file(py_file, "def f():\n    pass\n");
+      expect(project.get_languages()).toEqual(
+        new Map([
+          [ts_file, "typescript"],
+          [py_file, "python"],
+        ])
+      );
+
+      const cached_index = project.get_index_single_file(ts_file)!;
+      const restored = new Project();
+      await restored.initialize();
+      restored.update_file(rs_file, "fn main() {}");
+      restored.restore_file(ts_file, "function foo() {}", cached_index);
+      expect(restored.get_languages()).toEqual(
+        new Map([
+          [rs_file, "rust"],
+          [ts_file, "typescript"],
+        ])
+      );
+
+      restored.remove_file(rs_file);
+      expect(restored.get_languages()).toEqual(
+        new Map([[ts_file, "typescript"]])
+      );
+
+      restored.clear();
+      expect(restored.get_languages()).toEqual(new Map());
+    });
+  });
+
   describe("remove_file", () => {
     it("should remove all data for a file", async () => {
       await project.initialize();
@@ -215,7 +261,7 @@ describe("Project", () => {
       expect(call_graph.nodes.size).toBeGreaterThan(0);
     });
 
-    it("should recalculate call graph on each call (no caching)", async () => {
+    it("returns a fresh wrapper over the cached enriched graph", async () => {
       await project.initialize();
       const file1 = "file1.ts" as FilePath;
       project.update_file(file1, "function foo() {}");
@@ -223,11 +269,28 @@ describe("Project", () => {
       const graph1 = project.get_call_graph();
       const graph2 = project.get_call_graph();
 
-      // Should be DIFFERENT references (recalculated each time)
+      // The wrapper is rebuilt on each call...
       expect(graph1).not.toBe(graph2);
 
-      // But should have same structure
-      expect(graph1.nodes.size).toBe(graph2.nodes.size);
+      // ...but both read the SAME underlying enriched graph, so a caller that
+      // asks twice never pays for classification twice. This is a cache-identity
+      // property, asserted without depending on wall-clock timing.
+      expect(graph2.nodes).toBe(graph1.nodes);
+      expect(graph2.entry_points).toEqual(graph1.entry_points);
+    });
+
+    it("shares one enriched graph with get_classified_entry_points", async () => {
+      await project.initialize();
+      const file1 = "file1.ts" as FilePath;
+      project.update_file(file1, "function foo() {}");
+
+      project.get_call_graph();
+      const first = project.get_classified_entry_points();
+      const second = project.get_classified_entry_points();
+
+      // Both methods share a single EnrichedCallGraph, so triage callers never
+      // repeat classification.
+      expect(second).toBe(first);
     });
 
     it("should reflect changes immediately after file update", async () => {
@@ -361,6 +424,11 @@ describe("Project", () => {
   });
 
   describe("parser buffer auto-adjustment", () => {
+    // 30s rather than the 5s default: this test parses a generated 130 KB file
+    // of 2,000 functions and takes ~2.6s on an idle 4-core box, which leaves
+    // under 2x headroom and crosses the default whenever the machine is busy.
+    // Its assertions are about what was extracted, not how fast — a genuine
+    // parse failure fails them whatever the timeout is.
     it("should parse large files by auto-growing the buffer", async () => {
       const project = new Project();
       await project.initialize();
@@ -380,6 +448,100 @@ describe("Project", () => {
       const stats = project.get_stats();
       expect(stats.file_count).toEqual(1);
       expect(stats.definition_count).toBeGreaterThan(1000);
+    }, 30_000);
+  });
+
+  describe("bulk corpus load", () => {
+    const importer = "importer.ts" as FilePath;
+    const target = "target.ts" as FilePath;
+    const importer_code = `
+import { helper } from "./target";
+export function run() { return helper(); }
+`;
+    const target_code = "export function helper() { return 42; }";
+
+    /** Entry-point symbol names, so an assertion reads as the reported capability. */
+    function entry_point_names(loaded: Project): string[] {
+      return loaded
+        .get_call_graph()
+        .entry_points.map((id) => loaded.get_definition(id)!.name as string)
+        .sort();
+    }
+
+    it("resolves nothing until resolve_corpus runs", async () => {
+      await project.initialize();
+
+      project.ingest_file(importer, importer_code);
+      project.ingest_file(target, target_code);
+
+      expect(project.get_stats().file_count).toEqual(2);
+      expect(project.get_stats().resolution_count).toEqual(0);
+
+      project.resolve_corpus();
+
+      expect(entry_point_names(project)).toEqual(["run"]);
+    });
+
+    // The case the per-arrival driver cannot answer: when the importer is
+    // ingested first, the file its import names does not exist yet, and an
+    // import location repaired only on arrival stays on the import statement.
+    it("points an import at its declaration when the target arrives later", async () => {
+      await project.initialize();
+
+      project.ingest_file(importer, importer_code);
+      project.ingest_file(target, target_code);
+      project.resolve_corpus();
+
+      const index = project.get_index_single_file(importer)!;
+      const helper_import = Array.from(index.imported_symbols.values()).find(
+        (def) => def.name === "helper",
+      )!;
+
+      expect(project.get_definition(helper_import.symbol_id)!.location.file_path)
+        .toEqual(target);
+    });
+
+    it("evicts a part-ingested file without resolving", async () => {
+      await project.initialize();
+
+      project.ingest_file(importer, importer_code);
+      project.ingest_file(target, target_code);
+      project.evict_ingested_file(target);
+
+      expect(project.get_all_files()).toEqual([importer]);
+      expect(project.get_stats().resolution_count).toEqual(0);
+    });
+
+    it("takes an incremental edit against a corpus loaded in bulk", async () => {
+      await project.initialize();
+
+      project.ingest_file(target, target_code);
+      project.ingest_file(importer, importer_code);
+      project.resolve_corpus();
+
+      project.update_file(
+        target,
+        "export function helper() { return 7; }\nexport function extra() {}",
+      );
+
+      expect(entry_point_names(project)).toEqual(["extra", "run"]);
+    });
+
+    it("restores a cached index through the bulk pass", async () => {
+      await project.initialize();
+      project.update_file(target, target_code);
+      const cached_index = project.get_index_single_file(target)!;
+
+      const bulk = new Project();
+      await bulk.initialize();
+      bulk.ingest_file(importer, importer_code);
+      bulk.ingest_restored_file(target, target_code, cached_index);
+
+      expect(bulk.get_stats().resolution_count).toEqual(0);
+
+      bulk.resolve_corpus();
+
+      expect(entry_point_names(bulk)).toEqual(["run"]);
     });
   });
 });

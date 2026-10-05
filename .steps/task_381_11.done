@@ -1,0 +1,7 @@
+{
+  "key": "once",
+  "run_id": "20260828T142443Z-b03b41c1",
+  "scope": "once",
+  "step_id": "task_381_11",
+  "summary": "Brought the resolution pipeline to the end state TASK-381.11 describes, measured it, and committed as 68be5636. CODE. `DefinitionRegistry.update_file` and `remove_file` both gate the location index o…"
+}

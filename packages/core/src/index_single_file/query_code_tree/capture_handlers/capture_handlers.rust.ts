@@ -7,9 +7,10 @@
 
 import type { SymbolId, SymbolName } from "@ariadnejs/types";
 import { enum_member_symbol, anonymous_function_symbol, create_module_path } from "@ariadnejs/types";
-import type { DefinitionBuilder } from "../../definitions/definitions";
-import type { CaptureNode, ProcessingContext } from "../../index_single_file";
-import type { HandlerRegistry } from "./types";
+import type { DefinitionBuilder } from "../../definitions/definition_builder";
+import type { CaptureNode } from "../../capture_types";
+import type { ProcessingContext } from "../../scopes/processing_context";
+import type { HandlerRegistry } from "./handler_types";
 import {
   create_struct_id,
   create_enum_id,
@@ -32,31 +33,51 @@ import {
   find_containing_callable,
   extract_type_expression,
   extract_export_info,
+  extract_module_path_attribute,
+  module_declaration_path,
+  module_path_attribute_target,
   extract_imports_from_use_declaration,
   extract_import_from_extern_crate,
   detect_callback_context,
   detect_function_collection,
-  extract_collection_source,
-  store_documentation,
-  consume_documentation,
   type ImportInfo,
 } from "../symbol_factories/symbol_factories.rust";
+import {
+  extract_collection_source,
+  extract_iteration_source,
+  extract_initializer_call,
+  extract_read_source,
+} from "../symbol_factories/initializer_sources.rust";
+import {
+  store_documentation,
+  consume_documentation,
+} from "../symbol_factories/documentation_state.rust";
 
-// Import and re-export method handlers from separate file
+// Import method and free-function handlers from their separate files
 import {
   handle_definition_method,
-  handle_definition_method_associated,
   handle_definition_method_default,
   handle_definition_method_async,
   handle_definition_constructor,
 } from "./methods.rust";
+import {
+  handle_definition_function,
+  handle_definition_function_generic,
+  handle_definition_function_async,
+  handle_definition_function_const,
+  handle_definition_function_unsafe,
+} from "./functions.rust";
 
 export {
   handle_definition_method,
-  handle_definition_method_associated,
   handle_definition_method_default,
   handle_definition_method_async,
   handle_definition_constructor,
+  handle_definition_function,
+  handle_definition_function_generic,
+  handle_definition_function_async,
+  handle_definition_function_const,
+  handle_definition_function_unsafe,
 };
 
 // ============================================================================
@@ -263,179 +284,6 @@ export function handle_definition_interface_method(
 }
 
 // ============================================================================
-// FUNCTION HANDLERS
-// ============================================================================
-
-export function handle_definition_function(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  // Skip functions inside impl blocks or traits - they're handled by method/constructor handlers
-  const impl_info = find_containing_impl(capture);
-  const trait_name = find_containing_trait(capture);
-  if (impl_info?.struct_name || impl_info?.trait_name || trait_name) {
-    return;
-  }
-
-  // Skip generic functions - they're handled by definition.function.generic
-  const generics = extract_generic_parameters(capture.node.parent || capture.node);
-  if (generics && generics.length > 0) {
-    return;
-  }
-
-  // Skip functions with modifiers (async, const, unsafe) - handled by specialized handlers
-  const fn_node = capture.node.parent || capture.node;
-  if (fn_node.children?.some(c => c.type === "function_modifiers")) {
-    return;
-  }
-
-  const func_id = create_function_id(capture);
-  const export_info = extract_export_info(capture.node.parent || capture.node);
-  const docstring = consume_documentation(capture.location);
-
-  builder.add_function(
-    {
-      symbol_id: func_id,
-      name: capture.text,
-      location: capture.location,
-      scope_id: context.get_scope_id(capture.location),
-      is_exported: export_info.is_exported,
-      export: export_info.export,
-      return_type: extract_return_type(capture.node.parent || capture.node),
-      docstring,
-    },
-    capture
-  );
-}
-
-export function handle_definition_function_generic(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  // Skip functions inside impl blocks or traits - they're handled by method/constructor handlers
-  const impl_info = find_containing_impl(capture);
-  const trait_name = find_containing_trait(capture);
-  if (impl_info?.struct_name || impl_info?.trait_name || trait_name) {
-    return;
-  }
-
-  const func_id = create_function_id(capture);
-  const generics = extract_generic_parameters(capture.node.parent || capture.node);
-  const export_info = extract_export_info(capture.node.parent || capture.node);
-  const docstring = consume_documentation(capture.location);
-
-  builder.add_function(
-    {
-      symbol_id: func_id,
-      name: capture.text,
-      location: capture.location,
-      scope_id: context.get_scope_id(capture.location),
-      is_exported: export_info.is_exported,
-      export: export_info.export,
-      generics,
-      return_type: extract_return_type(capture.node.parent || capture.node),
-      docstring,
-    },
-    capture
-  );
-}
-
-export function handle_definition_function_async(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  // Skip functions inside impl blocks or traits - they're handled by method/constructor handlers
-  const impl_info = find_containing_impl(capture);
-  const trait_name = find_containing_trait(capture);
-  if (impl_info?.struct_name || impl_info?.trait_name || trait_name) {
-    return;
-  }
-
-  const func_id = create_function_id(capture);
-  const export_info = extract_export_info(capture.node.parent || capture.node);
-  const docstring = consume_documentation(capture.location);
-
-  builder.add_function(
-    {
-      symbol_id: func_id,
-      name: capture.text,
-      location: capture.location,
-      scope_id: context.get_scope_id(capture.location),
-      is_exported: export_info.is_exported,
-      export: export_info.export,
-      return_type: extract_return_type(capture.node.parent || capture.node),
-      docstring,
-    },
-    capture
-  );
-}
-
-export function handle_definition_function_const(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  // Skip functions inside impl blocks or traits - they're handled by method/constructor handlers
-  const impl_info = find_containing_impl(capture);
-  const trait_name = find_containing_trait(capture);
-  if (impl_info?.struct_name || impl_info?.trait_name || trait_name) {
-    return;
-  }
-
-  const func_id = create_function_id(capture);
-  const export_info = extract_export_info(capture.node.parent || capture.node);
-  const docstring = consume_documentation(capture.location);
-
-  builder.add_function(
-    {
-      symbol_id: func_id,
-      name: capture.text,
-      location: capture.location,
-      scope_id: context.get_scope_id(capture.location),
-      is_exported: export_info.is_exported,
-      export: export_info.export,
-      return_type: extract_return_type(capture.node.parent || capture.node),
-      docstring,
-    },
-    capture
-  );
-}
-
-export function handle_definition_function_unsafe(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  // Skip functions inside impl blocks or traits - they're handled by method/constructor handlers
-  const impl_info = find_containing_impl(capture);
-  const trait_name = find_containing_trait(capture);
-  if (impl_info?.struct_name || impl_info?.trait_name || trait_name) {
-    return;
-  }
-
-  const func_id = create_function_id(capture);
-  const export_info = extract_export_info(capture.node.parent || capture.node);
-  const docstring = consume_documentation(capture.location);
-
-  builder.add_function(
-    {
-      symbol_id: func_id,
-      name: capture.text,
-      location: capture.location,
-      scope_id: context.get_scope_id(capture.location),
-      is_exported: export_info.is_exported,
-      export: export_info.export,
-      return_type: extract_return_type(capture.node.parent || capture.node),
-      docstring,
-    },
-    capture
-  );
-}
-
-// ============================================================================
 // FIELD HANDLERS
 // ============================================================================
 
@@ -511,28 +359,6 @@ export function handle_definition_parameter_self(
   });
 }
 
-export function handle_definition_parameter_closure(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const param_id = create_parameter_id(capture);
-  const parent_id = find_containing_callable(capture);
-
-  if (!parent_id) return;
-
-  const param_type = extract_parameter_type(capture.node.parent || capture.node);
-
-  builder.add_parameter_to_callable(parent_id, {
-    symbol_id: param_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    type: param_type,
-    optional: false,
-  });
-}
-
 // ============================================================================
 // VARIABLE AND CONSTANT HANDLERS
 // ============================================================================
@@ -571,6 +397,9 @@ export function handle_definition_variable(
     type: var_type,
     function_collection,
     collection_source,
+    initialized_from_call: extract_initializer_call(capture.node),
+    ...extract_read_source(capture.node),
+    iterated_from: extract_iteration_source(capture.node),
   });
 }
 
@@ -605,6 +434,8 @@ export function handle_definition_constant(
     export: export_info.export,
     type: const_type,
     function_collection,
+    initialized_from_call: extract_initializer_call(capture.node),
+    ...extract_read_source(capture.node),
   });
 }
 
@@ -642,6 +473,9 @@ export function handle_definition_variable_mut(
     type: var_type,
     function_collection,
     collection_source,
+    initialized_from_call: extract_initializer_call(capture.node),
+    ...extract_read_source(capture.node),
+    iterated_from: extract_iteration_source(capture.node),
   });
 }
 
@@ -649,6 +483,11 @@ export function handle_definition_variable_mut(
 // MODULE HANDLERS
 // ============================================================================
 
+/**
+ * Binds a module's name in its declaring scope, for every `mod` — bodied or not.
+ * A bodyless declaration additionally carries the edge to the file backing it,
+ * emitted by `handle_definition_import_module`.
+ */
 export function handle_definition_module(
   capture: CaptureNode,
   builder: DefinitionBuilder,
@@ -667,48 +506,52 @@ export function handle_definition_module(
   });
 }
 
-export function handle_definition_module_public(
+/**
+ * A bodyless `mod x;` names the file that backs the module, so it carries a
+ * module edge as well as a binding. The edge is an import: it is what makes
+ * `src/config.rs` a dependency of the file declaring `mod config;`, so editing
+ * the module re-resolves its declarer and everything that reaches through it.
+ *
+ * A `#[path = "…"]` attribute puts a file path — not a `::` path — on
+ * `import_path`; `resolve_module_path_rust` tells the two apart by `/` or a
+ * `.rs` suffix and resolves the file form against the declaring file's own
+ * directory.
+ *
+ * The name still binds through the `NamespaceDefinition` that
+ * `handle_definition_module` emits — `DefinitionRegistry` keeps imports out of
+ * the scope index, so the two never compete.
+ */
+export function handle_definition_import_module(
   capture: CaptureNode,
   builder: DefinitionBuilder,
   context: ProcessingContext
 ): void {
-  const module_id = create_module_id(capture);
+  const name = capture.node.childForFieldName("name")?.text as
+    | SymbolName
+    | undefined;
+  if (!name) return;
 
-  builder.add_namespace({
-    symbol_id: module_id,
-    name: capture.text,
+  const { file_path, start_line, start_column } = capture.location;
+  const path_attribute = extract_module_path_attribute(capture.node);
+  builder.add_import({
+    // Keyed by position, not just line: a `mod x;` and a `use x::*;` written on
+    // one line would otherwise share an id and one would overwrite the other.
+    symbol_id: `import:${file_path}:${start_line}:${start_column}:${name}` as SymbolId,
+    name,
     location: capture.location,
     scope_id: context.get_scope_id(capture.location),
-    is_exported: true,
-    export: undefined,
+    import_path: create_module_path(
+      path_attribute === undefined
+        ? module_declaration_path(capture.node, name)
+        : module_path_attribute_target(capture.node, path_attribute, file_path)
+    ),
+    import_kind: "namespace",
   });
 }
 
 // ============================================================================
 // TYPE HANDLERS
 // ============================================================================
-
-export function handle_definition_type(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const type_id = create_type_alias_id(capture);
-  const generics = extract_generic_parameters(capture.node.parent || capture.node);
-  const export_info = extract_export_info(capture.node.parent || capture.node);
-
-  builder.add_type_alias({
-    kind: "type_alias",
-    symbol_id: type_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    is_exported: export_info.is_exported,
-    export: export_info.export,
-    type_expression: extract_type_expression(capture.node) as SymbolName | undefined,
-    generics: generics.length > 0 ? generics : undefined,
-  });
-}
 
 export function handle_definition_type_alias(
   capture: CaptureNode,
@@ -729,25 +572,6 @@ export function handle_definition_type_alias(
     export: export_info.export,
     type_expression: extract_type_expression(capture.node) as SymbolName | undefined,
     generics: generics.length > 0 ? generics : undefined,
-  });
-}
-
-export function handle_definition_type_alias_impl(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const type_id = create_type_alias_id(capture);
-
-  builder.add_type_alias({
-    kind: "type_alias",
-    symbol_id: type_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    is_exported: true,
-    export: undefined,
-    type_expression: extract_type_expression(capture.node) as SymbolName | undefined,
   });
 }
 
@@ -789,14 +613,6 @@ export function handle_definition_type_parameter(
   // Type parameters are handled as part of the containing definition
 }
 
-export function handle_definition_type_parameter_constrained(
-  _capture: CaptureNode,
-  _builder: DefinitionBuilder,
-  _context: ProcessingContext
-): void {
-  // Constrained type parameters are handled as part of the containing definition
-}
-
 // ============================================================================
 // IMPORT HANDLERS
 // ============================================================================
@@ -819,32 +635,47 @@ export function handle_definition_import(
     }
   }
 
+  const defining_scope_id = context.get_scope_id(capture.location);
+
+  // Any visibility modifier is treated as re-exporting — including the
+  // pub(self)/pub(super) forms that are not, over-reporting rather than losing
+  // an edge. Gated to the file's root scope: a `pub use` inside an inline
+  // `mod {}` block publishes on that module's surface, not the file's.
+  const is_reexport =
+    (node.children ?? []).some((c) => c.type === "visibility_modifier") &&
+    defining_scope_id === context.root_scope_id;
+  const export_metadata = is_reexport ? { is_reexport: true } : undefined;
+
   // Create import definitions for each extracted import
   for (const import_info of imports) {
+    const name = import_info.is_wildcard
+      ? wildcard_binding_name(import_info.module_path)
+      : import_info.name;
+    // A wildcard id carries the full module path: `use crate::{a::x::*, b::x::*}`
+    // yields two edges sharing a line and a last segment.
+    const id_key = import_info.is_wildcard
+      ? import_info.module_path ?? name
+      : name;
     builder.add_import({
-      symbol_id: `import:${capture.location.file_path}:${capture.location.start_line}:${import_info.name}` as SymbolId,
-      name: import_info.name,
+      symbol_id: `import:${capture.location.file_path}:${capture.location.start_line}:${id_key}` as SymbolId,
+      name,
       location: capture.location,
-      scope_id: context.get_scope_id(capture.location),
+      scope_id: defining_scope_id,
       import_path: import_info.module_path || create_module_path(import_info.name),
       original_name: import_info.original_name,
-      import_kind: import_info.is_wildcard ? "namespace" : "named",
+      import_kind: import_info.is_wildcard ? "wildcard" : "named",
+      export: export_metadata,
     });
   }
 }
 
-export function handle_import_reexport(
-  _capture: CaptureNode,
-  _builder: DefinitionBuilder,
-  _context: ProcessingContext
-): void {
-  // Re-exports are pub use statements
-  // They are also captured by definition.import, which will add them as imports
-  // The presence of visibility_modifier makes them exported
-  // We can mark them as exported imports in definition.import handler
-
-  // For now, we handle re-exports in the definition.import handler
-  // by checking for visibility_modifier on the use_declaration node
+/**
+ * Last `::` segment of a wildcard edge's module path — a display name only,
+ * never matched against a call terminal.
+ */
+function wildcard_binding_name(module_path: string | undefined): SymbolName {
+  const last_segment = module_path?.split("::").filter(Boolean).pop();
+  return (last_segment ?? "*") as SymbolName;
 }
 
 // ============================================================================
@@ -882,52 +713,19 @@ export function handle_definition_anonymous_function(
 // OTHER HANDLERS (no-op)
 // ============================================================================
 
+/**
+ * Every closure owns an anonymous function definition, so its parameters have
+ * a callable to attach to in any grammatical position (declarator value,
+ * return position, argument). Argument-position closures are also captured as
+ * definition.anonymous_function; both emissions share the location-keyed id,
+ * so the second write is a no-op.
+ */
 export function handle_definition_function_closure(
-  _capture: CaptureNode,
-  _builder: DefinitionBuilder,
-  _context: ProcessingContext
+  capture: CaptureNode,
+  builder: DefinitionBuilder,
+  context: ProcessingContext
 ): void {
-  // Handled elsewhere
-}
-
-export function handle_definition_function_async_closure(
-  _capture: CaptureNode,
-  _builder: DefinitionBuilder,
-  _context: ProcessingContext
-): void {
-  // Handled elsewhere
-}
-
-export function handle_definition_function_async_move_closure(
-  _capture: CaptureNode,
-  _builder: DefinitionBuilder,
-  _context: ProcessingContext
-): void {
-  // Handled elsewhere
-}
-
-export function handle_definition_function_returns_impl(
-  _capture: CaptureNode,
-  _builder: DefinitionBuilder,
-  _context: ProcessingContext
-): void {
-  // Handled elsewhere
-}
-
-export function handle_definition_function_accepts_impl(
-  _capture: CaptureNode,
-  _builder: DefinitionBuilder,
-  _context: ProcessingContext
-): void {
-  // Handled elsewhere
-}
-
-export function handle_definition_visibility(
-  _capture: CaptureNode,
-  _builder: DefinitionBuilder,
-  _context: ProcessingContext
-): void {
-  // Visibility modifiers are handled as part of the containing definition
+  handle_definition_anonymous_function(capture, builder, context);
 }
 
 // ============================================================================
@@ -965,7 +763,6 @@ export const RUST_HANDLERS: HandlerRegistry = {
   // Parameters
   "definition.parameter": handle_definition_parameter,
   "definition.parameter.self": handle_definition_parameter_self,
-  "definition.parameter.closure": handle_definition_parameter_closure,
 
   // Variables and constants
   "definition.variable": handle_definition_variable,
@@ -974,38 +771,28 @@ export const RUST_HANDLERS: HandlerRegistry = {
 
   // Module definitions
   "definition.module": handle_definition_module,
-  "definition.module.public": handle_definition_module_public,
+  "definition.import.module": handle_definition_import_module,
 
   // Type definitions
-  "definition.type": handle_definition_type,
   "definition.type_alias": handle_definition_type_alias,
-  "definition.type_alias.impl": handle_definition_type_alias_impl,
 
   // Macro definitions
   "definition.macro": handle_definition_macro,
 
   // Type parameters
   "definition.type_parameter": handle_definition_type_parameter,
-  "definition.type_parameter.constrained": handle_definition_type_parameter_constrained,
 
   // Imports
   "definition.import": handle_definition_import,
-  "import.reexport": handle_import_reexport,
 
   // Anonymous functions
   "definition.anonymous_function": handle_definition_anonymous_function,
 
   // Other captures (no-op handlers)
   "definition.function.closure": handle_definition_function_closure,
-  "definition.function.async_closure": handle_definition_function_async_closure,
-  "definition.function.async_move_closure": handle_definition_function_async_move_closure,
-  "definition.function.returns_impl": handle_definition_function_returns_impl,
-  "definition.function.accepts_impl": handle_definition_function_accepts_impl,
-  "definition.visibility": handle_definition_visibility,
 
   // Method definitions
   "definition.method": handle_definition_method,
-  "definition.method.associated": handle_definition_method_associated,
   "definition.method.default": handle_definition_method_default,
   "definition.method.async": handle_definition_method_async,
   "definition.constructor": handle_definition_constructor,

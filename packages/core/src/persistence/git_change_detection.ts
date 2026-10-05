@@ -1,8 +1,11 @@
 /**
- * Git-accelerated file change detection using git plumbing commands.
+ * Snapshots git index state using git plumbing commands: which blob git tracks
+ * for each file, which files diverge from the index, and which are untracked.
  *
- * For git repos, detects which files changed without reading file content,
- * enabling fast cache invalidation on the MCP server's short-lived invocations.
+ * This is the evidence, not the decision — it lets a cache be validated without
+ * reading file content, which is what keeps the MCP server's short-lived
+ * invocations fast. The comparison that decides cache validity lives in
+ * project/project_cache_strategy.ts.
  */
 
 import { execFile } from "child_process";
@@ -11,13 +14,8 @@ import { resolve, join } from "path";
 const GIT_TIMEOUT_MS = 10_000;
 const MAX_BUFFER = 10 * 1024 * 1024; // 10MB — handles ~125k files
 
-/** Branded type for git tree SHA-1 hashes. */
-export type GitTreeHash = string & { _brand: "GitTreeHash" };
-
 /** Per-file state from the git index. */
 export interface GitFileState {
-  /** SHA-1 hash of the HEAD tree object. */
-  readonly tree_hash: GitTreeHash;
   /** Absolute path → git blob SHA-1 for tracked files in the index. */
   readonly tracked_hashes: ReadonlyMap<string, string>;
   /** Absolute paths of files with unstaged working-tree changes. */
@@ -50,24 +48,17 @@ export async function query_git_file_state(
   try {
     const abs_root = resolve(project_path);
 
-    const [tree_hash_raw, ls_files_raw, diff_files_raw, untracked_raw] =
-      await Promise.all([
-        exec_git(abs_root, ["rev-parse", "HEAD^{tree}"]),
-        exec_git(abs_root, ["ls-files", "-s"]),
-        exec_git(abs_root, ["diff-files", "--name-only"]),
-        exec_git(abs_root, [
-          "ls-files",
-          "--others",
-          "--exclude-standard",
-        ]),
-      ]);
+    const [ls_files_raw, diff_files_raw, untracked_raw] = await Promise.all([
+      exec_git(abs_root, ["ls-files", "-s"]),
+      exec_git(abs_root, ["diff-files", "--name-only"]),
+      exec_git(abs_root, ["ls-files", "--others", "--exclude-standard"]),
+    ]);
 
-    const tree_hash = tree_hash_raw.trim() as GitTreeHash;
     const tracked_hashes = parse_ls_files_output(ls_files_raw, abs_root);
     const dirty_files = parse_name_list(diff_files_raw, abs_root);
     const untracked_files = parse_name_list(untracked_raw, abs_root);
 
-    return { tree_hash, tracked_hashes, dirty_files, untracked_files };
+    return { tracked_hashes, dirty_files, untracked_files };
   } catch {
     return null;
   }
@@ -122,11 +113,20 @@ export function parse_name_list(
 
 /**
  * Run a git command and return stdout.
- * Clears inherited GIT_DIR / GIT_WORK_TREE / GIT_INDEX_FILE so that git
- * resolves the repo from `cwd` rather than from an inherited hook environment.
+ * Clears every inherited variable git consults before `cwd`, so an inherited
+ * hook environment cannot redirect the query at another repository.
  */
 function exec_git(cwd: string, args: string[]): Promise<string> {
-  const { GIT_DIR, GIT_WORK_TREE, GIT_INDEX_FILE, ...env } = process.env;
+  const {
+    GIT_DIR: _git_dir,
+    GIT_COMMON_DIR: _git_common_dir,
+    GIT_WORK_TREE: _git_work_tree,
+    GIT_INDEX_FILE: _git_index_file,
+    GIT_PREFIX: _git_prefix,
+    GIT_OBJECT_DIRECTORY: _git_object_directory,
+    GIT_ALTERNATE_OBJECT_DIRECTORIES: _git_alternate_object_directories,
+    ...env
+  } = process.env;
   return new Promise((resolve, reject) => {
     execFile(
       "git",

@@ -3,9 +3,9 @@ id: task-54.2
 title: Simulate agent experience with MCP tools
 status: Done
 assignee:
-  - '@claude'
-created_date: '2025-07-30'
-updated_date: '2025-07-31'
+  - "@claude"
+created_date: "2025-07-30"
+updated_date: "2025-07-31"
 labels: []
 dependencies: []
 parent_task_id: task-54

@@ -17,7 +17,8 @@
       },
       "child_ids": [
         "function:<fixtures>/javascript/code/modules/middle.js:10:31:12:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/modules/middle.js:10:31:12:1": {
       "id": "function:<fixtures>/javascript/code/modules/middle.js:10:31:12:1",
@@ -31,7 +32,8 @@
         "end_line": 12,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {
@@ -48,6 +50,7 @@
       },
       "defining_scope_id": "module:<fixtures>/javascript/code/modules/middle.js:1:1:13:0",
       "is_exported": true,
+      "docstring": "// Also define a local function",
       "signature": {
         "parameters": []
       },
@@ -98,6 +101,7 @@
       "import_kind": "named"
     }
   },
+  "unattached_impl_methods": {},
   "references": [
     {
       "kind": "variable_reference",

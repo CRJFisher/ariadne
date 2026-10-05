@@ -1,14 +1,15 @@
 /**
- * Integration tests for Python submodule import call resolution
+ * Integration tests for Python call resolution through the full pipeline.
  *
- * Verifies that `from package import module; module.function()` calls resolve
- * correctly through the full resolution pipeline when the named import refers
- * to a submodule file rather than an explicit export.
+ * Covers submodule import resolution (`from package import module;
+ * module.function()` where the named import is a submodule file) and
+ * receiver-type inference from `self.<attr>` constructor-flow assignments
+ * (a member called on a constructor-typed attribute resolves and is reachable).
  */
 
 import { describe, it, expect, afterAll } from "vitest";
 import { Project } from "../../project/project";
-import type { FilePath, SymbolName } from "@ariadnejs/types";
+import type { CallGraph, FilePath, SymbolName } from "@ariadnejs/types";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
@@ -137,5 +138,506 @@ describe("Python Submodule Import Resolution Integration", () => {
       );
     });
     expect(parse_entry).toBeUndefined();
+  });
+});
+
+describe("Operator-alias member resolution", () => {
+  // Mirrors the sqlalchemy path_registry evidence: a direct class-body alias and
+  // the conditional `if not TYPE_CHECKING:` form both make `_getitem` the runtime
+  // `__getitem__` / `__setitem__` implementation, so subscript callers must link
+  // back to `_getitem`.
+  it("binds direct and conditional class-body operator aliases to the target member", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "reg.py": `from typing import TYPE_CHECKING
+
+
+class PathRegistry:
+    def _getitem(self, key):
+        return key
+
+    __getitem__ = _getitem
+    bogus = not_a_member
+
+    if not TYPE_CHECKING:
+        __setitem__ = _getitem
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    const index = project.get_index_single_file(file_paths["reg.py"]);
+    const reg_class = [...index!.classes.values()].find(
+      (c) => c.name === ("PathRegistry" as SymbolName)
+    );
+    expect(reg_class).toBeDefined();
+
+    const members = project.definitions
+      .get_member_index()
+      .get(reg_class!.symbol_id);
+    expect(members).toBeDefined();
+
+    const getitem_target = members!.get("_getitem" as SymbolName);
+    expect(getitem_target).toBeDefined();
+
+    // The direct alias (`__getitem__ = _getitem`) binds to the `_getitem` method.
+    expect(members!.get("__getitem__" as SymbolName)).toEqual(getitem_target);
+
+    // The conditional alias (`__setitem__ = _getitem` under `if not
+    // TYPE_CHECKING:`) is lifted to a class attribute at index time and binds the
+    // same way.
+    expect(members!.get("__setitem__" as SymbolName)).toEqual(getitem_target);
+
+    // An assignment whose right-hand side is not a member of the class keeps its
+    // own symbol — it is not mis-bound to another member.
+    expect(members!.get("bogus" as SymbolName)).not.toEqual(getitem_target);
+  });
+});
+
+describe("Constructor member-call resolution", () => {
+  it("self.__init__() resolves to the constructor only (no subclass fan-out)", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "shapes.py": `class Base:
+    def __init__(self):
+        self.value = 0
+
+    def reset(self):
+        self.__init__()
+
+
+class Circle(Base):
+    def __init__(self):
+        self.value = 1
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    const index = project.get_index_single_file(file_paths["shapes.py"]);
+    const classes = [...index!.classes.values()];
+    const base = classes.find((c) => c.name === ("Base" as SymbolName));
+    expect(base).toBeDefined();
+
+    const member_index = project.definitions.get_member_index();
+    const base_members = member_index.get(base!.symbol_id)!;
+    const base_init = base_members.get("__init__" as SymbolName);
+    const reset_id = base_members.get("reset" as SymbolName);
+    expect(base_init).toBeDefined();
+    expect(reset_id).toBeDefined();
+
+    const call_graph = project.get_call_graph();
+    const reset_node = call_graph.nodes.get(reset_id!);
+    expect(reset_node).toBeDefined();
+
+    // self.__init__() inside reset() resolves through the member-index
+    // constructor key to exactly Base.__init__ — the guard keeps it from fanning
+    // out to Circle.__init__.
+    const init_calls = reset_node!.enclosed_calls.filter(
+      (c) => c.name === ("__init__" as SymbolName)
+    );
+    const resolved = new Set(
+      init_calls.flatMap((c) => c.resolutions.map((r) => r.symbol_id))
+    );
+    expect(resolved).toEqual(new Set([base_init]));
+  });
+
+  // Mirrors the django evidence shape: a direct instantiation `C(...)` of an
+  // imported class is a real caller of `C.__init__` (e.g. `ChangeList(request)`,
+  // `BaseCommand()`).
+  it("direct instantiation of an imported class links its __init__", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "models.py": `class ChangeList:
+    def __init__(self, request):
+        self.request = request
+`,
+      "admin.py": `from models import ChangeList
+
+
+def get_changelist(request):
+    return ChangeList(request)
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    // ChangeList.__init__ is called via the instantiation, so it is reachable
+    // and not a (false) entry point.
+    const call_graph = project.get_call_graph();
+    const init_entry = call_graph.entry_points.find((ep) => {
+      const node = call_graph.nodes.get(ep);
+      return (
+        node?.name === ("__init__" as SymbolName) &&
+        node.location.file_path === file_paths["models.py"]
+      );
+    });
+    expect(init_entry).toBeUndefined();
+  });
+
+  // Mirrors the django evidence shape: a namespace-qualified instantiation
+  // `pkg.C(...)` where the class is re-exported through a barrel package
+  // (e.g. `forms.CharField(required=False)`, `from django import forms`).
+  it("namespace-qualified instantiation through a barrel links __init__", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "fields.py": `class CharField:
+    def __init__(self, required=True):
+        self.required = required
+`,
+      "forms/__init__.py": `from fields import CharField
+`,
+      "main.py": `import forms
+
+
+def build():
+    return forms.CharField(required=False)
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    const call_graph = project.get_call_graph();
+    const init_entry = call_graph.entry_points.find((ep) => {
+      const node = call_graph.nodes.get(ep);
+      return (
+        node?.name === ("__init__" as SymbolName) &&
+        node.location.file_path === file_paths["fields.py"]
+      );
+    });
+    expect(init_entry).toBeUndefined();
+  });
+});
+
+// The pandas evidence shape: a `self.<attr> = Constructor()` assignment outside
+// `__init__` (in `setup()`) types the attribute so a `self.<attr>.method()` call
+// in a sibling method resolves, and the called member is no longer a false
+// entry point. Before Fix C the assignment was dropped (only `__init__` was
+// promoted) and the member surfaced as unreachable.
+describe("Constructor-flow property typing outside __init__", () => {
+  it("self.attr = Constructor() in setup() makes a sibling-method member reachable", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "data.py": `class DataFrame:
+    def head(self):
+        return self
+
+
+class Loader:
+    def setup(self):
+        self.df = DataFrame()
+
+    def run(self):
+        return self.df.head()
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    const call_graph = project.get_call_graph();
+    const head_entry = call_graph.entry_points.find((ep) => {
+      const node = call_graph.nodes.get(ep);
+      return (
+        node?.name === ("head" as SymbolName) &&
+        node.location.file_path === file_paths["data.py"]
+      );
+    });
+    expect(head_entry).toBeUndefined();
+  });
+
+  it("self.df.head() in a sibling resolves to exactly DataFrame.head", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "data.py": `class DataFrame:
+    def head(self):
+        return self
+
+
+class Loader:
+    def setup(self):
+        self.df = DataFrame()
+
+    def run(self):
+        return self.df.head()
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    const index = project.get_index_single_file(file_paths["data.py"]);
+    const classes = [...index!.classes.values()];
+    const data_frame = classes.find((c) => c.name === ("DataFrame" as SymbolName));
+    const loader = classes.find((c) => c.name === ("Loader" as SymbolName));
+    expect(data_frame).toBeDefined();
+    expect(loader).toBeDefined();
+
+    const member_index = project.definitions.get_member_index();
+    const head_id = member_index.get(data_frame!.symbol_id)!.get("head" as SymbolName);
+    const run_id = member_index.get(loader!.symbol_id)!.get("run" as SymbolName);
+    expect(head_id).toBeDefined();
+    expect(run_id).toBeDefined();
+
+    const call_graph = project.get_call_graph();
+    const run_node = call_graph.nodes.get(run_id!);
+    expect(run_node).toBeDefined();
+
+    const head_calls = run_node!.enclosed_calls.filter(
+      (c) => c.name === ("head" as SymbolName)
+    );
+    const resolved = new Set(
+      head_calls.flatMap((c) => c.resolutions.map((r) => r.symbol_id))
+    );
+    expect(resolved).toEqual(new Set([head_id]));
+  });
+
+  it("namespace-qualified self.attr = ns.Constructor() resolves via the last segment", async () => {
+    // `pd.DataFrame()` exercises the attribute-callee branch: the last segment
+    // `DataFrame` is taken as the type and resolves to the in-file class, so the
+    // member called on the receiver is reachable.
+    const { project, temp_dir, file_paths } = await setup_project({
+      "frames.py": `class DataFrame:
+    def head(self):
+        return self
+
+
+class Loader:
+    def setup(self):
+        self.df = pd.DataFrame()
+
+    def run(self):
+        return self.df.head()
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    const index = project.get_index_single_file(file_paths["frames.py"]);
+    const classes = [...index!.classes.values()];
+    const data_frame = classes.find((c) => c.name === ("DataFrame" as SymbolName));
+    const loader = classes.find((c) => c.name === ("Loader" as SymbolName));
+
+    const member_index = project.definitions.get_member_index();
+    const head_id = member_index.get(data_frame!.symbol_id)!.get("head" as SymbolName);
+    const run_id = member_index.get(loader!.symbol_id)!.get("run" as SymbolName);
+
+    const call_graph = project.get_call_graph();
+    const head_entry = call_graph.entry_points.find((ep) => {
+      const node = call_graph.nodes.get(ep);
+      return (
+        node?.name === ("head" as SymbolName) &&
+        node.location.file_path === file_paths["frames.py"]
+      );
+    });
+    expect(head_entry).toBeUndefined();
+
+    const run_node = call_graph.nodes.get(run_id!);
+    const head_calls = run_node!.enclosed_calls.filter(
+      (c) => c.name === ("head" as SymbolName)
+    );
+    const resolved = new Set(
+      head_calls.flatMap((c) => c.resolutions.map((r) => r.symbol_id))
+    );
+    expect(resolved).toEqual(new Set([head_id]));
+  });
+
+  it("an attr assigned in multiple methods yields one property and resolves the member once", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "svc.py": `class Client:
+    def send(self):
+        return self
+
+
+class Service:
+    def setup(self):
+        self.client = Client()
+
+    def reconfigure(self):
+        self.client = Client()
+
+    def run(self):
+        return self.client.send()
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    const index = project.get_index_single_file(file_paths["svc.py"]);
+    const classes = [...index!.classes.values()];
+    const service = classes.find((c) => c.name === ("Service" as SymbolName));
+    const client = classes.find((c) => c.name === ("Client" as SymbolName));
+
+    // Two assignment sites collapse to a single property.
+    expect(
+      service!.properties.filter((p) => p.name === ("client" as SymbolName)).length
+    ).toBe(1);
+
+    const member_index = project.definitions.get_member_index();
+    const send_id = member_index.get(client!.symbol_id)!.get("send" as SymbolName);
+    const run_id = member_index.get(service!.symbol_id)!.get("run" as SymbolName);
+
+    const call_graph = project.get_call_graph();
+    const send_entry = call_graph.entry_points.find((ep) => {
+      const node = call_graph.nodes.get(ep);
+      return (
+        node?.name === ("send" as SymbolName) &&
+        node.location.file_path === file_paths["svc.py"]
+      );
+    });
+    expect(send_entry).toBeUndefined();
+
+    const run_node = call_graph.nodes.get(run_id!);
+    const send_calls = run_node!.enclosed_calls.filter(
+      (c) => c.name === ("send" as SymbolName)
+    );
+    const resolved = new Set(
+      send_calls.flatMap((c) => c.resolutions.map((r) => r.symbol_id))
+    );
+    expect(resolved).toEqual(new Set([send_id]));
+  });
+});
+
+/**
+ * The self type is read off the scope tree, so a `self` receiver names its class
+ * whatever the class body holds and wherever in the body the call sits. The
+ * member scan this replaced excluded constructors from its seed, which left a
+ * class whose only other own callable member is `__init__` with no nameable
+ * type.
+ */
+describe("Python self-receiver resolution through the scope's self type (TASK-376.5)", () => {
+  /** The graph node for a member defined in a file, by name and declaration order. */
+  function member_nodes(
+    call_graph: CallGraph,
+    member: string,
+    file: FilePath
+  ) {
+    return Array.from(call_graph.nodes.values())
+      .filter(
+        (n) => n.name === (member as SymbolName) && n.location.file_path === file
+      )
+      .sort((a, b) => a.location.start_line - b.location.start_line);
+  }
+
+  // celery certificate.py:100 — a class that also declares `__init__`, which is
+  // captured into the class's constructors rather than its methods.
+  it("resolves self.method() in a class that also declares a constructor", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "certificate.py": `class Certificate:
+    def __init__(self, cert):
+        self._cert = cert
+
+    def get_id(self):
+        return self._verify()
+
+    def _verify(self):
+        return self._cert
+`,
+    });
+    temp_dirs.push(temp_dir);
+    const call_graph = project.get_call_graph();
+
+    const [verify] = member_nodes(
+      call_graph,
+      "_verify",
+      file_paths["certificate.py"]
+    );
+    expect(verify).toBeDefined();
+    expect(call_graph.entry_points).not.toContain(verify.symbol_id);
+  });
+
+  // The shape with no member the owning class could be read back off at all:
+  // `__init__` is the class's only own member, and the method called on `self` is
+  // inherited. Nothing in this class body names its type except the scope.
+  it("resolves an inherited self.method() in a class whose only own member is __init__", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "certificate.py": `class Base:
+    def helper(self):
+        return 1
+
+
+class Certificate(Base):
+    def __init__(self, cert):
+        self._cert = cert
+        self.helper()
+`,
+    });
+    temp_dirs.push(temp_dir);
+    const call_graph = project.get_call_graph();
+
+    const [helper] = member_nodes(
+      call_graph,
+      "helper",
+      file_paths["certificate.py"]
+    );
+    expect(helper).toBeDefined();
+    expect(call_graph.entry_points).not.toContain(helper.symbol_id);
+  });
+
+  // TASK-374.6 item 1 — a constructor body is not a member body, so no scan seed
+  // covered it.
+  it("resolves self.method() called from a constructor body", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "certificate.py": `class Certificate:
+    def __init__(self, cert):
+        self._cert = cert
+        self._validate()
+
+    def _validate(self):
+        return self._cert
+`,
+    });
+    temp_dirs.push(temp_dir);
+    const call_graph = project.get_call_graph();
+
+    const [validate] = member_nodes(
+      call_graph,
+      "_validate",
+      file_paths["certificate.py"]
+    );
+    expect(validate).toBeDefined();
+    expect(call_graph.entry_points).not.toContain(validate.symbol_id);
+  });
+
+  // A class is declared outside the body that records its name, so a class
+  // attribute named after its own class can only shadow the declaration.
+  // Resolving the recorded name from inside the body would bind `self` to the
+  // attribute.
+  it("resolves self.method() in a class with an attribute named after the class", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "certificate.py": `class Foo:
+    Foo = 5
+
+    def method(self):
+        self.other()
+
+    def other(self):
+        return 1
+`,
+    });
+    temp_dirs.push(temp_dir);
+    const call_graph = project.get_call_graph();
+
+    const [other] = member_nodes(
+      call_graph,
+      "other",
+      file_paths["certificate.py"]
+    );
+    expect(other).toBeDefined();
+    expect(call_graph.entry_points).not.toContain(other.symbol_id);
+  });
+
+  it("does not bind a constructor's self.method() to a same-named method of an unrelated class", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "certificate.py": `class Certificate:
+    def __init__(self, cert):
+        self._cert = cert
+        self._validate()
+
+    def _validate(self):
+        return self._cert
+
+
+class Unrelated:
+    def _validate(self):
+        return None
+`,
+    });
+    temp_dirs.push(temp_dir);
+    const call_graph = project.get_call_graph();
+
+    const validates = member_nodes(
+      call_graph,
+      "_validate",
+      file_paths["certificate.py"]
+    );
+    expect(validates.length).toBe(2);
+
+    expect(call_graph.entry_points).not.toContain(validates[0].symbol_id);
+    expect(call_graph.entry_points).toContain(validates[1].symbol_id);
   });
 });

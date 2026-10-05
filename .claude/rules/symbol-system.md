@@ -35,7 +35,6 @@ import {
   namespace_symbol,
   anonymous_function_symbol,
   module_symbol,
-  named_module_symbol,
   constant_symbol,
   decorator_symbol,
 } from "@ariadnejs/types";
@@ -52,4 +51,3 @@ const method_id = method_symbol(name, location);
 - Always use factory functions — never construct IDs manually
 - All Maps keyed by identifiers use `SymbolId` as the key type
 - `SymbolName` is for human-readable names within resolution; `SymbolId` is for globally unique identification
-- `ReferenceId` (from `reference_id()`) identifies reference sites, not definitions

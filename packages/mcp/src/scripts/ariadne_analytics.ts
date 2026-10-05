@@ -7,7 +7,7 @@ import {
   read_sessions,
   read_tool_calls,
 } from "../analytics/query_stats";
-import { resolve_analytics_dir } from "../analytics/analytics";
+import { resolve_analytics_dir } from "../analytics/analytics_config";
 
 interface CliArgs {
   since?: string;

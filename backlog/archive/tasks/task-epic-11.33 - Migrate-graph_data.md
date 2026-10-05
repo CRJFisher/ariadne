@@ -3,7 +3,7 @@ id: task-epic-11.33
 title: Create graph data structures and move types to packages/types
 status: To Do
 assignee: []
-created_date: '2025-08-20'
+created_date: "2025-08-20"
 labels: [migration, data-layer, epic-11, types]
 dependencies: [task-epic-11.32]
 parent_task_id: epic-11
@@ -44,6 +44,7 @@ Create proper graph data structures to replace the stub interfaces in graph_buil
 ### Required Features
 
 1. **Graph Operations**:
+
    - Add/remove nodes and edges
    - Find neighbors, predecessors, successors
    - Path finding (shortest path, all paths)
@@ -51,6 +52,7 @@ Create proper graph data structures to replace the stub interfaces in graph_buil
    - Connected components
 
 2. **Graph Types**:
+
    - Directed graph (for call graphs, dependencies)
    - Support for multiple edge types
    - Node and edge metadata/properties
@@ -128,7 +130,6 @@ Create proper graph data structures to replace the stub interfaces in graph_buil
   - GraphNode, GraphEdge, ProjectGraph (consumed by MCP, CLI, etc.)
   - FileAnalysisResult, GraphBuilderConfig
   - Any type that forms part of the public API
-  
 - **packages/core**: Private implementation details
   - Internal helper types (BuildContext, GraphBuilder stub)
   - Implementation-specific interfaces

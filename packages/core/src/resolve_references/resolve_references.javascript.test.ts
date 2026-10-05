@@ -5,9 +5,14 @@
  * pipeline using real files in temp directories.
  */
 
-import { describe, it, expect, afterAll } from "vitest";
+import { describe, it, expect, afterAll, beforeAll } from "vitest";
 import { Project } from "../project/project";
-import type { FilePath, SymbolName } from "@ariadnejs/types";
+import {
+  call_outcomes,
+  find_caller_node,
+  is_entry_point,
+} from "./resolve_references.test";
+import type { CallGraph, FilePath, SymbolName } from "@ariadnejs/types";
 import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
@@ -251,10 +256,831 @@ export function doWork() {
       );
       expect(logger_class).toBeDefined();
 
-      const type_info = project.get_type_info(logger_class!.symbol_id);
-      expect(type_info).toBeDefined();
-      expect(type_info!.methods.has("log" as SymbolName)).toBe(true);
-      expect(type_info!.methods.has("warn" as SymbolName)).toBe(true);
+      const logger_members = project.definitions
+        .get_member_index()
+        .get(logger_class!.symbol_id);
+      expect(
+        project.definitions.get(logger_members?.get("log" as SymbolName)!)
+          ?.kind
+      ).toBe("method");
+      expect(
+        project.definitions.get(logger_members?.get("warn" as SymbolName)!)
+          ?.kind
+      ).toBe("method");
     });
+  });
+
+  // Same-file binding gaps (task-349.3, Change C): a function declaration hoists
+  // out of a nested block to the sibling scopes that lexically reach it.
+  describe("hoisted function declarations", () => {
+    it("resolves a call to a function hoisted out of a sibling block", async () => {
+      // A `function cleanup` declared inside an `if` block is hoisted to the
+      // enclosing function scope, so the sibling arrow `() => cleanup()` reaches
+      // it. Without hoisting the call would fail with `name_not_in_scope`.
+      const { project, temp_dir, file_paths } = await setup_project({
+        "mod.js": `export function run(cond) {
+  const done = () => cleanup();
+  done();
+  if (cond) {
+    function cleanup() {
+      return 1;
+    }
+  }
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const cleanup_fn = project.definitions
+        .get_definitions_by_name("cleanup" as SymbolName)
+        .find((def) => def.location.file_path === file_paths["mod.js"]);
+      expect(cleanup_fn).not.toBeUndefined();
+
+      const call = project.resolutions
+        .get_calls_for_file(file_paths["mod.js"])
+        .find((c) => c.name === ("cleanup" as SymbolName));
+      expect(call!.resolution_failure).toBeUndefined();
+      expect(call!.resolutions.map((r) => r.symbol_id)).toEqual([
+        cleanup_fn!.symbol_id,
+      ]);
+
+      const entry = project
+        .get_call_graph()
+        .entry_points.find((ep) => ep === cleanup_fn!.symbol_id);
+      expect(entry).toBeUndefined();
+    });
+
+    it("hoists a function declared several blocks deep", async () => {
+      // `deep` is two blocks down (if/if); it still hoists to the function
+      // scope so the sibling arrow reaches it.
+      const { project, temp_dir, file_paths } = await setup_project({
+        "mod.js": `export function run(a, b) {
+  const probe = () => deep();
+  probe();
+  if (a) {
+    if (b) {
+      function deep() {
+        return 1;
+      }
+    }
+  }
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const deep_fn = project.definitions
+        .get_definitions_by_name("deep" as SymbolName)
+        .find((def) => def.location.file_path === file_paths["mod.js"]);
+      expect(deep_fn).not.toBeUndefined();
+
+      const call = project.resolutions
+        .get_calls_for_file(file_paths["mod.js"])
+        .find((c) => c.name === ("deep" as SymbolName));
+      expect(call!.resolution_failure).toBeUndefined();
+      expect(call!.resolutions.map((r) => r.symbol_id)).toEqual([
+        deep_fn!.symbol_id,
+      ]);
+    });
+
+    it("does not hoist a function across a nested function boundary", async () => {
+      // `inner_only` is declared inside `wrapper`'s body — a function scope, not
+      // a block. It must NOT hoist into `run`, so the sibling arrow cannot reach
+      // it and `inner_only` stays an entry point. This pins the stop-at-function
+      // boundary that keeps hoisting from over-reaching.
+      const { project, temp_dir, file_paths } = await setup_project({
+        "mod.js": `export function run() {
+  const probe = () => inner_only();
+  probe();
+  function wrapper() {
+    function inner_only() {
+      return 1;
+    }
+  }
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const inner_fn = project.definitions
+        .get_definitions_by_name("inner_only" as SymbolName)
+        .find((def) => def.location.file_path === file_paths["mod.js"]);
+      expect(inner_fn).not.toBeUndefined();
+
+      const call = project.resolutions
+        .get_calls_for_file(file_paths["mod.js"])
+        .find((c) => c.name === ("inner_only" as SymbolName));
+      expect(call!.resolutions).toEqual([]);
+      expect(call!.resolution_failure?.reason).toEqual("name_not_in_scope");
+
+      const entry = project
+        .get_call_graph()
+        .entry_points.find((ep) => ep === inner_fn!.symbol_id);
+      expect(entry).toEqual(inner_fn!.symbol_id);
+    });
+  });
+
+  // Variable-bound named function expression (task-355): `var X = function X(){}`
+  // registers the outer `X` in the enclosing scope, so intra-file references
+  // resolve and `X` is not surfaced as a spurious entry point.
+  describe("variable-bound named function expression", () => {
+    it("resolves an intra-file bare-name call to the outer function binding", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "mod.js": `var X = function X() {
+  return 1;
+};
+
+export function run() {
+  return X();
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const call = project.resolutions
+        .get_calls_for_file(file_paths["mod.js"])
+        .find((c) => c.name === ("X" as SymbolName));
+      expect(call!.resolution_failure).toBeUndefined();
+      expect(call!.resolutions.length).toEqual(1);
+
+      // The call resolves to a `X` function definition in this file (the outer
+      // var binding registered in the module scope).
+      const x_def_ids = project.definitions
+        .get_definitions_by_name("X" as SymbolName)
+        .filter((def) => def.location.file_path === file_paths["mod.js"])
+        .map((def) => def.symbol_id);
+      expect(x_def_ids).toContain(call!.resolutions[0].symbol_id);
+
+      const x_entries = project.get_call_graph().entry_points.filter((ep) => {
+        const node = project.get_call_graph().nodes.get(ep);
+        return (
+          node?.name === ("X" as SymbolName) &&
+          node.location.file_path === file_paths["mod.js"]
+        );
+      });
+      expect(x_entries).toEqual([]);
+    });
+
+    it("keeps a constructor-only var-bound function off the entry-point set", async () => {
+      // `Widget` is used only via `new Widget()`. The `new` site's name-resolved
+      // read reaches the outer binding, so `Widget` is reachable and not a
+      // spurious entry point — the false positive this task removes.
+      const { project, temp_dir, file_paths } = await setup_project({
+        "mod.js": `var Widget = function Widget() {
+  return { ok: true };
+};
+
+export function main() {
+  return new Widget();
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      // The `new Widget()` site is captured as exactly one call reference.
+      const widget_calls = project.resolutions
+        .get_calls_for_file(file_paths["mod.js"])
+        .filter((c) => c.name === ("Widget" as SymbolName));
+      expect(widget_calls.length).toEqual(1);
+
+      const call_graph = project.get_call_graph();
+      // The outer binding is a real call-graph node (so the empty entry-point
+      // result below is non-vacuous), and it is reachable — not an entry point.
+      const widget_nodes = Array.from(call_graph.nodes.values()).filter(
+        (n) =>
+          n.name === ("Widget" as SymbolName) &&
+          n.location.file_path === file_paths["mod.js"],
+      );
+      expect(widget_nodes.length).toEqual(1);
+      const widget_entries = call_graph.entry_points.filter((ep) => {
+        const node = call_graph.nodes.get(ep);
+        return (
+          node?.name === ("Widget" as SymbolName) &&
+          node.location.file_path === file_paths["mod.js"]
+        );
+      });
+      expect(widget_entries).toEqual([]);
+    });
+
+    it("resolves the self-reference and the outer binding for a distinct inner name", async () => {
+      // Inner (`fact`) differs from outer (`factorial`); the body scope is named
+      // after the outer var so the outer symbol still owns it. The in-body
+      // self-call resolves to the inner expression name.
+      const { project, temp_dir, file_paths } = await setup_project({
+        "mod.js": `const factorial = function fact(n) {
+  return n <= 1 ? 1 : n * fact(n - 1);
+};
+
+export function run() {
+  return factorial(5);
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const calls = project.resolutions.get_calls_for_file(file_paths["mod.js"]);
+      const outer_call = calls.find(
+        (c) => c.name === ("factorial" as SymbolName),
+      );
+      expect(outer_call!.resolution_failure).toBeUndefined();
+      expect(outer_call!.resolutions.length).toEqual(1);
+      const self_call = calls.find((c) => c.name === ("fact" as SymbolName));
+      expect(self_call!.resolution_failure).toBeUndefined();
+      expect(self_call!.resolutions.length).toEqual(1);
+
+      const call_graph = project.get_call_graph();
+      const factorial_nodes = Array.from(call_graph.nodes.values()).filter(
+        (n) =>
+          n.name === ("factorial" as SymbolName) &&
+          n.location.file_path === file_paths["mod.js"],
+      );
+      expect(factorial_nodes.length).toEqual(1);
+      const stray_entries = call_graph.entry_points.filter((ep) => {
+        const node = call_graph.nodes.get(ep);
+        return (
+          (node?.name === ("factorial" as SymbolName) ||
+            node?.name === ("fact" as SymbolName)) &&
+          node.location.file_path === file_paths["mod.js"]
+        );
+      });
+      expect(stray_entries).toEqual([]);
+    });
+
+    it("indexes an exported binding without a duplicate-export error and exports only the outer name", async () => {
+      // The inner expression name is body-local; registering it as an export
+      // would collide with the outer name in the export registry and abort
+      // indexing. Only the outer name is the module export.
+      const { project, temp_dir, file_paths } = await setup_project({
+        "mod.js": `export const X = function X() {
+  return 1;
+};
+`,
+        "use.js": `import { X } from "./mod.js";
+
+export function run() {
+  return X();
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const call = project.resolutions
+        .get_calls_for_file(file_paths["use.js"])
+        .find((c) => c.name === ("X" as SymbolName));
+      expect(call!.resolution_failure).toBeUndefined();
+      expect(call!.resolutions.length).toEqual(1);
+    });
+
+    it("does not export the inner expression name of an exported binding", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "mod.js": `export const outer = function inner() {
+  return 1;
+};
+`,
+        "use.js": `import { inner } from "./mod.js";
+
+export function run() {
+  return inner();
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      // `inner` is body-local, never a module export, so the import does not
+      // resolve to it.
+      const call = project.resolutions
+        .get_calls_for_file(file_paths["use.js"])
+        .find((c) => c.name === ("inner" as SymbolName));
+      expect(call!.resolutions).toEqual([]);
+      expect(call!.resolution_failure?.reason).toEqual("name_not_in_scope");
+    });
+  });
+
+  // Self-initializer (task-349.3, Change C.1): a `const x = x(…)` binding does
+  // not shadow its own import for the call inside its initializer.
+  describe("self-initializer binding", () => {
+    it("resolves a self-initializer call to the import, not the local", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "mod.js": `import { has_flatten } from "./helpers.js";
+
+export function build(fields) {
+  const has_flatten = has_flatten(fields);
+  return has_flatten;
+}
+`,
+        "helpers.js": `export function has_flatten(fields) {
+  return fields.length > 0;
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const imported_fn = project.definitions
+        .get_definitions_by_name("has_flatten" as SymbolName)
+        .find((def) => def.location.file_path === file_paths["helpers.js"]);
+      expect(imported_fn).not.toBeUndefined();
+
+      const call = project.resolutions
+        .get_calls_for_file(file_paths["mod.js"])
+        .find((c) => c.name === ("has_flatten" as SymbolName));
+      expect(call!.resolution_failure).toBeUndefined();
+      expect(call!.resolutions.map((r) => r.symbol_id)).toEqual([
+        imported_fn!.symbol_id,
+      ]);
+
+      const entry = project
+        .get_call_graph()
+        .entry_points.find((ep) => ep === imported_fn!.symbol_id);
+      expect(entry).toBeUndefined();
+    });
+  });
+
+  describe("CommonJS response-object methods (expressjs lib/response.js shape)", () => {
+    const FIXTURE = path.join(
+      __dirname,
+      "../../tests/fixtures/javascript/code/integration/commonjs_response_object/response.js"
+    );
+    let call_graph: CallGraph;
+    let file: FilePath;
+
+    beforeAll(async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "response.js": fs.readFileSync(FIXTURE, "utf-8"),
+      });
+      temp_dirs.push(temp_dir);
+      file = file_paths["response.js"];
+      call_graph = project.get_call_graph();
+    });
+
+    it("marks sendFile reachable through the module.exports read of the res collection", () => {
+      const node = find_caller_node(call_graph, "sendFile", file);
+      expect(
+        call_graph.indirect_reachability?.get(node!.symbol_id)?.reason.type
+      ).toEqual("collection_read");
+      expect(is_entry_point(call_graph, "sendFile", file)).toEqual(false);
+    });
+
+    it("marks append reachable through the module.exports read of the res collection", () => {
+      const node = find_caller_node(call_graph, "append", file);
+      expect(
+        call_graph.indirect_reachability?.get(node!.symbol_id)?.reason.type
+      ).toEqual("collection_read");
+      expect(is_entry_point(call_graph, "append", file)).toEqual(false);
+    });
+
+    it("marks location reachable through the module.exports read of the res collection", () => {
+      const node = find_caller_node(call_graph, "location", file);
+      expect(
+        call_graph.indirect_reachability?.get(node!.symbol_id)?.reason.type
+      ).toEqual("collection_read");
+      expect(is_entry_point(call_graph, "location", file)).toEqual(false);
+    });
+
+    it("resolves the sendfile helper from sendFile and keeps both sendfile callables off the entry-point list", () => {
+      const send_file = find_caller_node(call_graph, "sendFile", file);
+      const helper = [...call_graph.nodes.values()].find(
+        (n) =>
+          n.name === ("sendfile" as SymbolName) &&
+          n.location.file_path === file &&
+          n.location.start_line === 36
+      );
+      const helper_call = send_file?.enclosed_calls.find(
+        (c) => c.name === ("sendfile" as SymbolName)
+      );
+      expect(helper_call?.resolutions.map((r) => r.symbol_id)).toEqual([
+        helper?.symbol_id,
+      ]);
+      expect(is_entry_point(call_graph, "sendfile", file)).toEqual(false);
+    });
+
+    it("resolves the stringify call inside json to the module-scope stringify", () => {
+      const json = find_caller_node(call_graph, "json", file);
+      const module_stringify = [...call_graph.nodes.values()].find(
+        (n) =>
+          n.name === ("stringify" as SymbolName) && n.location.file_path === file
+      );
+      const stringify_call = json?.enclosed_calls.find(
+        (c) => c.name === ("stringify" as SymbolName)
+      );
+      expect(stringify_call?.resolutions.map((r) => r.symbol_id)).toEqual([
+        module_stringify?.symbol_id,
+      ]);
+      expect(is_entry_point(call_graph, "stringify", file)).toEqual(false);
+    });
+  });
+
+  describe("Named functions assigned onto an object in the same file", () => {
+    // express `lib/application.js`: `app.engine = function engine(...)` and
+    // `app.set = function set(...)` are reachable through `app`, and each call
+    // resolves to the named definition — never to a location-keyed twin.
+    const FIXTURE = path.join(
+      __dirname,
+      "..",
+      "..",
+      "tests",
+      "fixtures",
+      "javascript",
+      "code",
+      "integration",
+      "express_application.js"
+    );
+
+    it("resolves every call through app to the call-graph node the assignment defined", async () => {
+      const source = fs.readFileSync(FIXTURE, "utf-8");
+      const { project, temp_dir, file_paths } = await setup_project({
+        "application.js": source,
+      });
+      temp_dirs.push(temp_dir);
+      const file = file_paths["application.js"];
+      const cg = project.get_call_graph();
+      const calls = project.resolutions
+        .get_calls_for_file(file)
+        .filter((call) => !call.is_callback_invocation);
+
+      // `new Error` is a runtime global and `view(options)` calls through a
+      // local variable; the four `app.*` calls are the ones this step is about.
+      expect(
+        calls.map((call) => [call.location.start_line, call.name])
+      ).toEqual([
+        [15, "Error"],
+        [32, "view"],
+        [35, "init"],
+        [36, "set"],
+        [37, "engine"],
+        [38, "render"],
+      ]);
+      expect(calls[0].resolution_failure?.reason).toEqual("callee_is_a_language_global");
+
+      /** The call graph holds a node only for a callable the definition store carries. */
+      const node_at = (start_line: number) =>
+        [...cg.nodes.values()].find(
+          (n) =>
+            n.location.file_path === file && n.location.start_line === start_line
+        );
+      const line_of = (needle: string) =>
+        source.split("\n").findIndex((l) => l.includes(needle)) + 1;
+      const resolutions_at = (start_line: number) =>
+        calls
+          .find((call) => call.location.start_line === start_line)
+          ?.resolutions.map((r) => r.symbol_id);
+
+      // Each call names the definition the assignment minted — asserted as the
+      // whole SymbolId, so a location-keyed twin or a phantom id fails here.
+      for (const [call_line, assignment] of [
+        [35, "app.init = function init("],
+        [36, "app.set = function set("],
+        [37, "app.engine = function engine("],
+        [38, "app.render = function ("],
+      ] as const) {
+        const target = node_at(line_of(assignment));
+        expect(target).toBeDefined();
+        expect(resolutions_at(call_line)).toEqual([target?.symbol_id]);
+      }
+
+      expect(is_entry_point(cg, "engine", file)).toEqual(false);
+      expect(is_entry_point(cg, "set", file)).toEqual(false);
+      expect(is_entry_point(cg, "init", file)).toEqual(false);
+    });
+  });
+
+  describe("Value-position callables", () => {
+    const ROUTE_FILES = {
+      "user.js": [
+        "exports.list = function list(req, res) { return res; };",
+        "exports.edit = function edit(req, res) { return res; };",
+      ].join("\n"),
+      "post.js": ["exports.list = function list(req, res) { return res; };"].join(
+        "\n"
+      ),
+      "app.js": [
+        "var user = require('./user');",
+        "var post = require('./post');",
+        "app.get('/users', user.list);",
+        "app.get('/user/:id/edit', user.edit);",
+        "app.get('/posts', post.list);",
+      ].join("\n"),
+    };
+
+    it("records a weak edge from a route registration to user.list", async () => {
+      const { project, temp_dir, file_paths } = await setup_project(ROUTE_FILES);
+      temp_dirs.push(temp_dir);
+      const cg = project.get_call_graph();
+      const list = find_caller_node(cg, "list", file_paths["user.js"]);
+      expect(
+        cg.indirect_reachability?.get(list!.symbol_id)?.reason.type
+      ).toEqual("function_reference");
+      expect(is_entry_point(cg, "list", file_paths["user.js"])).toEqual(false);
+    });
+
+    it("records a weak edge from a route registration to user.edit", async () => {
+      const { project, temp_dir, file_paths } = await setup_project(ROUTE_FILES);
+      temp_dirs.push(temp_dir);
+      const cg = project.get_call_graph();
+      expect(is_entry_point(cg, "edit", file_paths["user.js"])).toEqual(false);
+    });
+
+    it("records a weak edge from a route registration to post.list", async () => {
+      const { project, temp_dir, file_paths } = await setup_project(ROUTE_FILES);
+      temp_dirs.push(temp_dir);
+      const cg = project.get_call_graph();
+      expect(is_entry_point(cg, "list", file_paths["post.js"])).toEqual(false);
+    });
+
+    it("records no call edge for a route handler", async () => {
+      const { project, temp_dir, file_paths } = await setup_project(ROUTE_FILES);
+      temp_dirs.push(temp_dir);
+      const resolved = project.resolutions.get_calls_for_file(
+        file_paths["app.js"]
+      );
+      expect(
+        resolved.map((c) => c.name).filter((n) => n !== "require")
+      ).toEqual(["get", "get", "get"]);
+    });
+
+    it("records a weak edge to a named function expression passed as an argument", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "getter.js": [
+          "function defineGetter(obj, name, getter) { return getter; }",
+          "defineGetter(req, 'query', function query() { return 1; });",
+        ].join("\n"),
+      });
+      temp_dirs.push(temp_dir);
+      const cg = project.get_call_graph();
+      const file = file_paths["getter.js"];
+      const query = find_caller_node(cg, "query", file);
+      expect(
+        cg.indirect_reachability?.get(query!.symbol_id)?.reason.type
+      ).toEqual("function_reference");
+      expect(is_entry_point(cg, "query", file)).toEqual(false);
+    });
+
+    it("records a weak edge for an object-literal member callable", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "user.js": "exports.list = function list(req, res) { return res; };",
+        "routes.js": [
+          "var user = require('./user');",
+          "register({ handler: user.list });",
+        ].join("\n"),
+      });
+      temp_dirs.push(temp_dir);
+      const cg = project.get_call_graph();
+      expect(is_entry_point(cg, "list", file_paths["user.js"])).toEqual(false);
+    });
+
+    it("records no weak edge for a non-callable member argument", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "config.js": "exports.timeout = 30;",
+        "app.js": [
+          "var config = require('./config');",
+          "app.use(config.timeout);",
+        ].join("\n"),
+      });
+      temp_dirs.push(temp_dir);
+      const cg = project.get_call_graph();
+      const reachable = [...(cg.indirect_reachability?.keys() ?? [])].filter(
+        (id) => String(id).includes("config.js")
+      );
+      expect(reachable).toEqual([]);
+    });
+
+    it("keeps a bare identifier callback reachable through exactly one entry", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "cb.js": [
+          "function apply(fn, x) { return fn(x); }",
+          "function doubler(n) { return n * 2; }",
+          "apply(doubler, 21);",
+        ].join("\n"),
+      });
+      temp_dirs.push(temp_dir);
+      const cg = project.get_call_graph();
+      const file = file_paths["cb.js"];
+      const doubler = find_caller_node(cg, "doubler", file);
+      const entries = [...(cg.indirect_reachability?.keys() ?? [])].filter(
+        (id) => id === doubler!.symbol_id
+      );
+      expect(entries).toEqual([doubler!.symbol_id]);
+      expect(is_entry_point(cg, "doubler", file)).toEqual(false);
+    });
+  });
+
+  describe("names bound at parameter position and in loop heads reach the receiver", () => {
+    function method_call_outcome(
+      project: Project,
+      file: FilePath,
+      call_name: string
+    ) {
+      const call = project.resolutions
+        .get_calls_for_file(file)
+        .find((c) => c.name === (call_name as SymbolName));
+      if (call === undefined) {
+        throw new Error(`no call named ${call_name} indexed in ${file}`);
+      }
+      return {
+        resolution_count: call.resolutions.length,
+        stage: call.resolution_failure?.stage,
+        reason: call.resolution_failure?.reason,
+      };
+    }
+
+    it("a declarator arrow's parameter binds, so a call on it fails at type inference, not name resolution", async () => {
+      // webpack lib/ids/IdHelpers.js:148 — chunkGraph.getChunkRootModules(chunk)
+      // inside `const getShortChunkName = (chunk, chunkGraph, …) => {…}`.
+      const { project, temp_dir, file_paths } = await setup_project({
+        "IdHelpers.js": `const getShortChunkName = (chunk, chunkGraph) => {
+  const modules = chunkGraph.getChunkRootModules(chunk);
+  return modules;
+};
+
+export { getShortChunkName };
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      expect(
+        method_call_outcome(project, file_paths["IdHelpers.js"], "getChunkRootModules")
+      ).toEqual({
+        resolution_count: 0,
+        stage: "type_inference",
+        reason: "receiver_type_unknown",
+      });
+    });
+
+    it("a whole-module CommonJS export's parameter binds, so a call on it fails at type inference, not name resolution", async () => {
+      // mocha lib/interfaces/common.js:75 — suites[0].beforeEach(name, fn)
+      // inside `module.exports = function (suites, context) {…}`.
+      const { project, temp_dir, file_paths } = await setup_project({
+        "common.js": `module.exports = function (suites, context) {
+  suites[0].beforeEach(context);
+};
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      expect(
+        method_call_outcome(project, file_paths["common.js"], "beforeEach")
+      ).toEqual({
+        resolution_count: 0,
+        stage: "type_inference",
+        reason: "receiver_type_unknown",
+      });
+    });
+
+    it("a loop-head name binds, so a call on it fails at type inference, not name resolution", async () => {
+      // `Handle.close` is in the same file and still not chosen: nothing types
+      // the parameter `ps`, so the loop-head binding gives the receiver an
+      // identity but no type.
+      const { project, temp_dir, file_paths } = await setup_project({
+        "loop.js": `export class Handle {
+  close() {
+    return 1;
+  }
+}
+
+export function close_all(ps) {
+  for (const p of ps) {
+    p.close();
+  }
+}
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      expect(
+        method_call_outcome(project, file_paths["loop.js"], "close")
+      ).toEqual({
+        resolution_count: 0,
+        stage: "type_inference",
+        reason: "receiver_type_unknown",
+      });
+    });
+  });
+
+  describe("object-literal shorthand methods", () => {
+    it("an object-literal method is no callable's own name, so it is not an entry point", async () => {
+      const { project, temp_dir } = await setup_project({
+        "routes.js": `const routes = { index(req) {}, show(req) {} };
+export default routes;
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const graph = await project.get_call_graph();
+      expect(
+        Array.from(graph.nodes.keys())
+          .map(String)
+          .filter((id) => id.startsWith("function:"))
+      ).toEqual([]);
+      expect(graph.entry_points).toHaveLength(0);
+    });
+
+    it("an object-literal method does not take a same-named import's call", async () => {
+      const { project, temp_dir, file_paths } = await setup_project({
+        "render.js": `export function render(a) {
+  return a;
+}
+`,
+        "app.js": `import { render } from './render.js';
+const spec = { render(a) { return a; } };
+render(1);
+`,
+      });
+      temp_dirs.push(temp_dir);
+
+      const call = project.resolutions
+        .get_calls_for_file(file_paths["app.js"])
+        .find((c) => c.name === ("render" as SymbolName));
+      expect(call!.resolution_failure).toBeUndefined();
+      expect(call!.resolutions).toHaveLength(1);
+      expect(String(call!.resolutions[0].symbol_id)).toContain("render.js");
+    });
+  });
+});
+
+/**
+ * express's `lib/express.js` requires `./application` and mixes its members
+ * into the application function; a member assigned onto the required module
+ * object in another file stays reachable across the boundary because the
+ * module object is consumed as a collection.
+ */
+describe("Cross-file require and mixin", () => {
+  const FIXTURES = path.join(__dirname, "..", "..", "tests", "fixtures", "javascript", "code", "integration");
+
+  it("leaves the mixed-in members reachable across the module boundary", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "mixin_application.js": fs.readFileSync(path.join(FIXTURES, "mixin_application.js"), "utf-8"),
+      "mixin_express.js": fs.readFileSync(path.join(FIXTURES, "mixin_express.js"), "utf-8"),
+    });
+    temp_dirs.push(temp_dir);
+    const application = file_paths["mixin_application.js"];
+    const cg = project.get_call_graph();
+    const engine = find_caller_node(cg, "engine", application);
+    expect(cg.indirect_reachability?.get(engine!.symbol_id)?.reason.type).toEqual("collection_read");
+    expect(is_entry_point(cg, "engine", application)).toEqual(false);
+    expect(is_entry_point(cg, "set", application)).toEqual(false);
+  });
+});
+
+describe("Callees outside the indexed corpus", () => {
+  it("names the unindexed module, or the language, instead of blaming the type or the scope", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "local.js": `exports.local = function local(p) {};
+`,
+      "main.js": `const fs = require("fs");
+const { render } = require("some-missing-pkg");
+const { local } = require("./local");
+
+function run(p) {
+  fs.readFileSync(p);
+  render(p);
+  local(p);
+  console.log(p);
+  JSON.stringify(p);
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect(call_outcomes(project, file_paths["main.js"])).toEqual([
+      { name: "require", outcome: "callee_is_a_language_global", import_target_file: null, import_specifier: null },
+      { name: "require", outcome: "callee_is_a_language_global", import_target_file: null, import_specifier: null },
+      { name: "require", outcome: "callee_is_a_language_global", import_target_file: null, import_specifier: null },
+      { name: "readFileSync", outcome: "import_unresolved", import_target_file: null, import_specifier: "fs" },
+      { name: "render", outcome: "import_unresolved", import_target_file: null, import_specifier: "some-missing-pkg" },
+      { name: "local", outcome: "resolved", import_target_file: null, import_specifier: null },
+      { name: "log", outcome: "callee_is_a_language_global", import_target_file: null, import_specifier: null },
+      { name: "stringify", outcome: "callee_is_a_language_global", import_target_file: null, import_specifier: null },
+    ]);
+  });
+
+  it("fails import_unresolved through a base bound by an unindexed import, and keeps method_not_on_type when every base is indexed", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "base.js": `export class Base {
+  known() {}
+}
+`,
+      "main.js": `import { Component } from "some-missing-pkg";
+import { Base } from "./base";
+
+export class Widget extends Component {
+  draw() {
+    this.render();
+  }
+}
+
+export class Child extends Base {
+  run() {
+    this.known();
+    this.absent();
+  }
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect(call_outcomes(project, file_paths["main.js"])).toEqual([
+      { name: "render", outcome: "import_unresolved", import_target_file: null, import_specifier: "some-missing-pkg" },
+      { name: "known", outcome: "resolved", import_target_file: null, import_specifier: null },
+      { name: "absent", outcome: "method_not_on_type", import_target_file: null, import_specifier: null },
+    ]);
   });
 });

@@ -47,7 +47,7 @@ This is semantically correct: `self_reference_call` references have the same `ca
 
 ### After fixing
 
-Remove the 5 false-positive entries added to `.claude/self-repair-pipeline-state/known_entrypoints/core.json` for `definitions.ts` anonymous functions.
+Remove the 5 false-positive entries added to `.claude/triage-entrypoints-state/known_entrypoints/core.json` for `definitions.ts` anonymous functions.
 
 <!-- SECTION:DESCRIPTION:END -->
 

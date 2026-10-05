@@ -3,9 +3,9 @@ id: task-56
 title: Add class inheritance and interface analysis to core
 status: Done
 assignee:
-  - '@claude'
-created_date: '2025-07-30'
-updated_date: '2025-07-31'
+  - "@claude"
+created_date: "2025-07-30"
+updated_date: "2025-07-31"
 labels: []
 dependencies: []
 ---

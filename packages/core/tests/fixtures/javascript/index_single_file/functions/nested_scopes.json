@@ -19,7 +19,8 @@
         "function:<fixtures>/javascript/code/functions/nested_scopes.js:7:16:9:1",
         "function:<fixtures>/javascript/code/functions/nested_scopes.js:14:23:39:1",
         "function:<fixtures>/javascript/code/functions/nested_scopes.js:45:23:48:1"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/nested_scopes.js:7:16:9:1": {
       "id": "function:<fixtures>/javascript/code/functions/nested_scopes.js:7:16:9:1",
@@ -33,7 +34,8 @@
         "end_line": 9,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/nested_scopes.js:14:23:39:1": {
       "id": "function:<fixtures>/javascript/code/functions/nested_scopes.js:14:23:39:1",
@@ -50,7 +52,8 @@
       "child_ids": [
         "block:<fixtures>/javascript/code/functions/nested_scopes.js:18:3:21:3",
         "function:<fixtures>/javascript/code/functions/nested_scopes.js:23:25:35:3"
-      ]
+      ],
+      "self_type_name": null
     },
     "block:<fixtures>/javascript/code/functions/nested_scopes.js:18:3:21:3": {
       "id": "block:<fixtures>/javascript/code/functions/nested_scopes.js:18:3:21:3",
@@ -64,7 +67,8 @@
         "end_line": 21,
         "end_column": 3
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/nested_scopes.js:23:25:35:3": {
       "id": "function:<fixtures>/javascript/code/functions/nested_scopes.js:23:25:35:3",
@@ -80,7 +84,8 @@
       },
       "child_ids": [
         "function:<fixtures>/javascript/code/functions/nested_scopes.js:28:28:31:5"
-      ]
+      ],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/nested_scopes.js:28:28:31:5": {
       "id": "function:<fixtures>/javascript/code/functions/nested_scopes.js:28:28:31:5",
@@ -94,7 +99,8 @@
         "end_line": 31,
         "end_column": 5
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     },
     "function:<fixtures>/javascript/code/functions/nested_scopes.js:45:23:48:1": {
       "id": "function:<fixtures>/javascript/code/functions/nested_scopes.js:45:23:48:1",
@@ -108,7 +114,8 @@
         "end_line": 48,
         "end_column": 1
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {
@@ -128,6 +135,7 @@
       "export": {
         "is_reexport": false
       },
+      "docstring": "// Helper function for calls",
       "signature": {
         "parameters": []
       },
@@ -182,6 +190,7 @@
       },
       "defining_scope_id": "function:<fixtures>/javascript/code/functions/nested_scopes.js:23:25:35:3",
       "is_exported": false,
+      "docstring": "// Nested function inside inner",
       "signature": {
         "parameters": []
       },
@@ -200,6 +209,7 @@
       },
       "defining_scope_id": "module:<fixtures>/javascript/code/functions/nested_scopes.js:1:1:57:2",
       "is_exported": false,
+      "docstring": "// Arrow function with nested call",
       "signature": {
         "parameters": []
       },
@@ -222,6 +232,7 @@
       "defining_scope_id": "module:<fixtures>/javascript/code/functions/nested_scopes.js:1:1:57:2",
       "is_exported": true,
       "initial_value": "helper()",
+      "docstring": "// Top-level function call (module scope)",
       "initialized_from_call": "helper"
     },
     "variable:<fixtures>/javascript/code/functions/nested_scopes.js:16:9:16:17:outerCall": {
@@ -238,6 +249,7 @@
       "defining_scope_id": "function:<fixtures>/javascript/code/functions/nested_scopes.js:14:23:39:1",
       "is_exported": false,
       "initial_value": "helper()",
+      "docstring": "// Call in outer function scope",
       "initialized_from_call": "helper"
     },
     "variable:<fixtures>/javascript/code/functions/nested_scopes.js:20:11:20:19:blockCall": {
@@ -254,6 +266,7 @@
       "defining_scope_id": "block:<fixtures>/javascript/code/functions/nested_scopes.js:18:3:21:3",
       "is_exported": false,
       "initial_value": "helper()",
+      "docstring": "// Call in block scope (enclosing function: outerFunction)",
       "initialized_from_call": "helper"
     },
     "variable:<fixtures>/javascript/code/functions/nested_scopes.js:25:11:25:19:innerCall": {
@@ -270,6 +283,7 @@
       "defining_scope_id": "function:<fixtures>/javascript/code/functions/nested_scopes.js:23:25:35:3",
       "is_exported": false,
       "initial_value": "helper()",
+      "docstring": "// Call in inner function scope",
       "initialized_from_call": "helper"
     },
     "variable:<fixtures>/javascript/code/functions/nested_scopes.js:29:13:29:20:deepCall": {
@@ -334,6 +348,7 @@
       "defining_scope_id": "module:<fixtures>/javascript/code/functions/nested_scopes.js:1:1:57:2",
       "is_exported": true,
       "initial_value": "outerFunction()",
+      "docstring": "// Calls from different scopes",
       "initialized_from_call": "outerFunction"
     },
     "variable:<fixtures>/javascript/code/functions/nested_scopes.js:46:9:46:17:arrowCall": {
@@ -374,6 +389,7 @@
   "namespaces": {},
   "types": {},
   "imported_symbols": {},
+  "unattached_impl_methods": {},
   "references": [
     {
       "kind": "variable_reference",
@@ -1095,6 +1111,32 @@
       "access_type": "read"
     },
     {
+      "kind": "variable_reference",
+      "name": "innerCall",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/nested_scopes.js",
+        "start_line": 34,
+        "start_column": 14,
+        "end_line": 34,
+        "end_column": 22
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/nested_scopes.js:23:25:35:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "deepResult",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/nested_scopes.js",
+        "start_line": 34,
+        "start_column": 25,
+        "end_line": 34,
+        "end_column": 34
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/nested_scopes.js:23:25:35:3",
+      "access_type": "read"
+    },
+    {
       "kind": "assignment",
       "name": "innerResult = innerFunction()",
       "location": {
@@ -1212,6 +1254,32 @@
         "start_column": 10,
         "end_line": 38,
         "end_column": 35
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/nested_scopes.js:14:23:39:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "outerCall",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/nested_scopes.js",
+        "start_line": 38,
+        "start_column": 12,
+        "end_line": 38,
+        "end_column": 20
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/nested_scopes.js:14:23:39:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "innerResult",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/nested_scopes.js",
+        "start_line": 38,
+        "start_column": 23,
+        "end_line": 38,
+        "end_column": 33
       },
       "scope_id": "function:<fixtures>/javascript/code/functions/nested_scopes.js:14:23:39:1",
       "access_type": "read"

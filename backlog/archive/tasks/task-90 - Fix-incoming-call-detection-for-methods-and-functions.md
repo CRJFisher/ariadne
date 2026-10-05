@@ -3,8 +3,8 @@ id: task-90
 title: Fix incoming call detection for methods and functions
 status: To Do
 assignee: []
-created_date: '2025-08-03'
-updated_date: '2025-08-04 13:28'
+created_date: "2025-08-03"
+updated_date: "2025-08-04 13:28"
 labels: []
 dependencies: []
 ---

@@ -3,8 +3,8 @@ id: task-100.13
 title: Document and test AST node identity comparison fix
 status: Done
 assignee: []
-created_date: '2025-08-05 12:01'
-updated_date: '2025-08-05 20:14'
+created_date: "2025-08-05 12:01"
+updated_date: "2025-08-05 20:14"
 labels: []
 dependencies: []
 parent_task_id: task-100
@@ -21,41 +21,51 @@ The fix for is_reference_called involved changing from object identity compariso
 - [ ] Ensure fix works with all tree-sitter language parsers
 - [ ] Add regression test for the generateLargeFile scenario
 
-
 ## Implementation Notes
 
 Work completed as part of task-100.11. Tests added in builtin_calls_multi_file.test.ts. Documentation task created as task-100.17.
+
 ## Technical Details
 
 ### The Bug
+
 In `is_reference_called`, the original code checked:
+
 ```typescript
-if (grandparent && grandparent.type === 'call_expression' && 
-    grandparent.childForFieldName('function') === parent) {
+if (
+  grandparent &&
+  grandparent.type === "call_expression" &&
+  grandparent.childForFieldName("function") === parent
+) {
   return true;
 }
 ```
 
 The object identity comparison `=== parent` fails when:
+
 1. Multiple files are loaded into the project
 2. The tree is reparsed (trees are immutable in tree-sitter)
 3. New node objects are created with the same structure but different identity
 
 ### The Fix
+
 Changed to check node type instead of identity:
+
 ```typescript
-if (grandparent && grandparent.type === 'call_expression') {
-  const functionChild = grandparent.childForFieldName('function');
-  if (functionChild && functionChild.type === 'member_expression') {
+if (grandparent && grandparent.type === "call_expression") {
+  const functionChild = grandparent.childForFieldName("function");
+  if (functionChild && functionChild.type === "member_expression") {
     return true;
   }
 }
 ```
 
 ### Why This Matters
+
 This bug caused built-in method calls (arr.push, console.log, etc.) to not be detected in multi-file projects, leading to artificially low "nodes with calls" percentages in validation.
 
 ### Test Scenarios Needed
+
 1. Single file with built-in calls (should work before and after)
 2. Two files with built-in calls in first file
 3. Many files (20+) with built-in calls scattered throughout

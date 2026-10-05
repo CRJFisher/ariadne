@@ -1,0 +1,707 @@
+import * as fs from "node:fs";
+import * as path from "node:path";
+
+import { describe, it, expect } from "vitest";
+import {
+  format_grep_hits,
+  format_call_refs,
+  format_classifier_hints,
+  substitute_template,
+  parse_entry_selector,
+  find_entries_by_selector,
+  find_enriched_entry_point,
+  resolution_failure_message,
+} from "./get_entry_context.js";
+import type { TriageEntry } from "../src/triage_state_types.js";
+import type { DispensePayload } from "../src/dispense/dispense_payload.js";
+import type {
+  AnalysisResult,
+  EnrichedEntryPoint,
+  GrepHit,
+  CallRefDiagnostic,
+  EntryPointDiagnostics,
+  SyntacticFeatures,
+  ClassifierHint,
+  KnownIssue,
+} from "@ariadnejs/types";
+import type { FilePath } from "@ariadnejs/types";
+
+const EMPTY_REGISTRY_SLICE: KnownIssue[] = [];
+
+function payload_for(entry: TriageEntry, overrides: Partial<DispensePayload> = {}): DispensePayload {
+  return {
+    entry_context: entry,
+    relevant_registry_slice: EMPTY_REGISTRY_SLICE,
+    ...overrides,
+  };
+}
+
+const BASE_SYNTACTIC_FEATURES: SyntacticFeatures = {
+  is_new_expression: false,
+  is_super_call: false,
+  is_optional_chain: false,
+  is_awaited: false,
+  is_callback_arg: false,
+  is_dynamic_dispatch: false,
+};
+
+const BASE_DIAGNOSTICS: EntryPointDiagnostics = {
+  grep_call_sites: [
+    { file_path: "test/server.test.ts" as FilePath, line: 10, content: "handle_request(req)", captures: [] },
+  ],
+  grep_call_sites_outside_index: [
+    { file_path: "docs/_ext/ext.py" as FilePath, line: 12, content: "handle_request(req)", captures: [] },
+  ],
+  reference_sites: [
+    {
+      file_path: "app/registry.py" as FilePath,
+      line: 7,
+      content: "handlers = {'*': dumper.handle_request}",
+      reference_kind: "property_access",
+      access_type: "property",
+      receiver_kind: "identifier",
+    },
+  ],
+  has_uncaptured_indexed_grep_hit: false,
+  ariadne_call_refs: [],
+  diagnosis: "callers-not-in-registry",
+};
+
+function make_entry(overrides: Partial<TriageEntry>): TriageEntry {
+  return {
+    entry_index: 5,
+    name: "handle_request",
+    file_path: "src/server.ts" as FilePath,
+    start_line: 42,
+    kind: "function",
+    signature: "function handle_request(req: Request): Response",
+    route: "llm-triage",
+    diagnosis: "callers-not-in-registry",
+    known_source: null,
+    status: "pending",
+    result: null,
+    error: null,
+    is_exported: true,
+    access_modifier: null,
+    diagnostics: BASE_DIAGNOSTICS,
+    auto_classified: false,
+    classifier_hints: [],
+    tp_source_run_id: null,
+    tp_stability_sample: false,
+    retry_count: 0,
+    ...overrides,
+  };
+}
+
+// ===== format_grep_hits =====
+
+describe("format_grep_hits", () => {
+  it("returns (none found) for empty array", () => {
+    expect(format_grep_hits([])).toEqual("(none found)");
+  });
+
+  it("formats hits with file:line and trimmed content", () => {
+    const hits: GrepHit[] = [
+      { file_path: "src/main.ts" as FilePath, line: 10, content: "  foo(42)  ", captures: [] },
+      { file_path: "src/utils.ts" as FilePath, line: 25, content: "bar.foo()", captures: [] },
+    ];
+    const result = format_grep_hits(hits);
+    expect(result).toContain("src/main.ts:10  foo(42)");
+    expect(result).toContain("src/utils.ts:25  bar.foo()");
+  });
+});
+
+// ===== format_call_refs =====
+
+describe("format_call_refs", () => {
+  it("returns (none found) for empty array", () => {
+    expect(format_call_refs([])).toEqual("(none found)");
+  });
+
+  it("formats resolved refs", () => {
+    const refs: CallRefDiagnostic[] = [
+      {
+        caller_function: "main",
+        caller_file: "src/main.ts" as FilePath,
+        call_line: 5,
+        call_type: "function",
+        resolution_count: 1,
+        resolved_to: ["src/lib.ts:10#foo"],
+        receiver_kind: "none",
+        resolution_failure: null,
+        syntactic_features: BASE_SYNTACTIC_FEATURES,
+      },
+    ];
+    const result = format_call_refs(refs);
+    expect(result).toContain("src/main.ts:5");
+    expect(result).toContain("function call from main");
+    expect(result).toContain("resolved to: src/lib.ts:10#foo");
+  });
+
+  it("formats unresolved refs", () => {
+    const refs: CallRefDiagnostic[] = [
+      {
+        caller_function: "handler",
+        caller_file: "src/api.ts" as FilePath,
+        call_line: 42,
+        call_type: "method",
+        resolution_count: 0,
+        resolved_to: [],
+        receiver_kind: "identifier",
+        resolution_failure: null,
+        syntactic_features: BASE_SYNTACTIC_FEATURES,
+      },
+    ];
+    const result = format_call_refs(refs);
+    expect(result).toContain("unresolved");
+  });
+});
+
+// ===== substitute_template =====
+
+describe("substitute_template", () => {
+  const mock_entry: TriageEntry = make_entry({});
+
+  it("substitutes all placeholders", () => {
+    const template = [
+      "Name: {{entry.name}}",
+      "Kind: {{entry.kind}}",
+      "File: {{entry.file_path}}:{{entry.start_line}}",
+      "Signature: {{entry.signature}}",
+      "Exported: {{entry.is_exported}}",
+      "Access: {{entry.access_modifier}}",
+      "Diagnosis: {{entry.diagnosis}}",
+      "Output: {{output_path}}",
+      "Grep: {{entry.diagnostics.grep_call_sites_formatted}}",
+      "Refs: {{entry.diagnostics.ariadne_call_refs_formatted}}",
+      "Outside: {{entry.diagnostics.grep_call_sites_outside_index_formatted}}",
+      "Reference sites: {{entry.diagnostics.reference_sites_formatted}}",
+      "Slice: {{relevant_registry_slice}}",
+    ].join("\n");
+
+    const result = substitute_template({
+      template,
+      payload: payload_for(mock_entry),
+      output_path: "/tmp/results/5.json",
+    });
+
+    expect(result).toContain("Name: handle_request");
+    expect(result).toContain("Kind: function");
+    expect(result).toContain("File: src/server.ts:42");
+    expect(result).toContain("Signature: function handle_request(req: Request): Response");
+    expect(result).toContain("Exported: true");
+    expect(result).toContain("Access: (none)");
+    expect(result).toContain("Diagnosis: callers-not-in-registry");
+    expect(result).toContain("Output: /tmp/results/5.json");
+    expect(result).toContain("test/server.test.ts:10");
+    expect(result).toContain("(none found)"); // ariadne_call_refs is empty
+    expect(result).toContain("Slice: []");
+    // Every slot the real template carries is filled: an unrendered `{{` reaches
+    // the investigator as literal template source and silently withholds the
+    // evidence that slot exists to show.
+    expect(result).not.toContain("{{");
+  });
+
+  it("renders every slot the shipped prompt template declares", () => {
+    // The template on disk is the investigator's actual surface; a slot added
+    // there and never wired here renders as literal `{{…}}` in production while
+    // a hand-built template in this file stays green.
+    const template = fs.readFileSync(
+      path.join(import.meta.dirname, "..", "templates", "prompt.md"),
+      "utf8",
+    );
+
+    const result = substitute_template({
+      template,
+      payload: payload_for(
+        make_entry({
+          diagnosis: "references-without-call-syntax",
+          diagnostics: {
+            ...BASE_DIAGNOSTICS,
+            reference_sites: [
+              {
+                file_path: "src/registry.ts" as FilePath,
+                line: 12,
+                content: "registry.register(handle_request)",
+                reference_kind: "property_access",
+                access_type: "property",
+                receiver_kind: "identifier",
+              },
+            ],
+          },
+        }),
+      ),
+      output_path: "/tmp/results/5.json",
+    });
+
+    expect(result).not.toContain("{{");
+    expect(result).toContain("src/registry.ts:12");
+    expect(result).toContain("receiver: identifier");
+  });
+
+  it("handles null signature", () => {
+    const entry = { ...mock_entry, signature: null };
+    const result = substitute_template({
+      template: "Sig: {{entry.signature}}",
+      payload: payload_for(entry),
+      output_path: "/tmp/out.json",
+    });
+    expect(result).toEqual("Sig: (none)");
+  });
+
+  it("empty classifier_hints expand to nothing", () => {
+    const result = substitute_template({
+      template: "before{{classifier_hints}}after",
+      payload: payload_for(mock_entry),
+      output_path: "/tmp/out.json",
+    });
+    expect(result).toEqual("beforeafter");
+  });
+
+  it("unknown diagnosis falls back to the generic hints title", () => {
+    const entry: TriageEntry = { ...mock_entry, diagnosis: "no-textual-callers" };
+    const result = substitute_template({
+      template: "{{diagnosis.title}}",
+      payload: payload_for(entry),
+      output_path: "/tmp/out.json",
+    });
+    expect(result).toEqual("General Entry Point Analysis");
+  });
+
+  it("non-empty classifier_hints render as a header block with bullets", () => {
+    const hints: ClassifierHint[] = [
+      {
+        group_id: "method-chain-dispatch",
+        confidence: 0.8,
+        reasoning: "receiver_kind=call_chain on the call site",
+      },
+      {
+        group_id: "constructor-new-expression",
+        confidence: 0.55,
+        reasoning: "grep saw `new Name(` without a @reference.constructor capture",
+      },
+    ];
+    const entry: TriageEntry = { ...mock_entry, classifier_hints: hints };
+    const result = substitute_template({
+      template: "{{classifier_hints}}",
+      payload: payload_for(entry),
+      output_path: "/tmp/out.json",
+    });
+    expect(result).toContain("### Classifier hints (sub-threshold matches)");
+    expect(result).toContain("- method-chain-dispatch (confidence 0.80): receiver_kind=call_chain on the call site");
+    expect(result).toContain("- constructor-new-expression (confidence 0.55): grep saw `new Name(` without a @reference.constructor capture");
+  });
+
+  it("renders relevant_registry_slice as pretty-printed JSON", () => {
+    const slice: KnownIssue[] = [
+      {
+        group_id: "demo-rule",
+        title: "Demo",
+        description: "Demo rule",
+        status: "wip",
+        languages: ["typescript"],
+        examples: [],
+        classifier: { function_name: "check_demo_rule", min_confidence: 1 },
+      },
+    ];
+    const result = substitute_template({
+      template: "{{relevant_registry_slice}}",
+      payload: payload_for(mock_entry, { relevant_registry_slice: slice }),
+      output_path: "/tmp/out.json",
+    });
+    expect(result).toEqual(JSON.stringify(slice, null, 2));
+  });
+});
+
+describe("format_classifier_hints", () => {
+  it("returns empty string for empty hints", () => {
+    expect(format_classifier_hints([])).toEqual("");
+  });
+
+  it("renders header and one bullet per hint", () => {
+    const out = format_classifier_hints([
+      { group_id: "g1", confidence: 0.9, reasoning: "r1" },
+      { group_id: "g2", confidence: 0.4, reasoning: "r2" },
+    ]);
+    expect(out).toContain("### Classifier hints (sub-threshold matches)");
+    expect(out).toContain("- g1 (confidence 0.90): r1");
+    expect(out).toContain("- g2 (confidence 0.40): r2");
+  });
+});
+
+// ===== parse_entry_selector =====
+
+describe("parse_entry_selector", () => {
+  it("parses the --entry index selector", () => {
+    expect(parse_entry_selector(["--project", "mocha", "--entry", "62"])).toEqual({
+      by: "index",
+      entry_index: 62,
+    });
+  });
+
+  it("parses the four-flag member-symbol selector", () => {
+    expect(
+      parse_entry_selector([
+        "--project", "mocha",
+        "--run-id", "20260630T101502Z",
+        "--file", "lib/interfaces/bdd.js",
+        "--name", "bddInterface",
+        "--kind", "function",
+        "--line", "12",
+      ]),
+    ).toEqual({
+      by: "member_symbol",
+      member: {
+        file_path: "lib/interfaces/bdd.js",
+        name: "bddInterface",
+        kind: "function",
+        start_line: 12,
+      },
+    });
+  });
+
+  it("rejects mixing --entry with member-symbol flags", () => {
+    expect(() => parse_entry_selector(["--entry", "1", "--file", "src/a.ts"])).toThrowError(
+      /not both/,
+    );
+  });
+
+  it("rejects a partial member-symbol selector naming the missing flags", () => {
+    expect(() =>
+      parse_entry_selector(["--file", "src/a.ts", "--name", "foo", "--kind", "function"]),
+    ).toThrowError(/missing --line/);
+  });
+
+  it("rejects an argv with no selector", () => {
+    expect(() => parse_entry_selector(["--project", "mocha"])).toThrowError(
+      /an entry selector is required/,
+    );
+  });
+
+  it("rejects a non-integer --entry", () => {
+    expect(() => parse_entry_selector(["--entry", "abc"])).toThrowError(
+      /--entry requires an integer/,
+    );
+  });
+
+  it("rejects a non-integer --line", () => {
+    expect(() =>
+      parse_entry_selector([
+        "--run-id", "r1",
+        "--file", "a.ts", "--name", "n", "--kind", "function", "--line", "x",
+      ]),
+    ).toThrowError(/--line requires an integer/);
+  });
+
+  it("rejects a partial-numeric --line rather than truncating it", () => {
+    expect(() =>
+      parse_entry_selector([
+        "--run-id", "r1",
+        "--file", "a.ts", "--name", "n", "--kind", "function", "--line", "12abc",
+      ]),
+    ).toThrowError(/--line requires an integer/);
+  });
+
+  it("rejects a partial-numeric --entry rather than truncating it", () => {
+    expect(() => parse_entry_selector(["--entry", "62x"])).toThrowError(
+      /--entry requires an integer/,
+    );
+  });
+
+  it("rejects a kind outside the member-symbol union", () => {
+    expect(() =>
+      parse_entry_selector([
+        "--run-id", "r1",
+        "--file", "a.ts", "--name", "n", "--kind", "generator", "--line", "1",
+      ]),
+    ).toThrowError(/--kind must be one of function, method, constructor/);
+  });
+
+  it("rejects a member-symbol selector without --run-id", () => {
+    expect(() =>
+      parse_entry_selector([
+        "--file", "a.ts", "--name", "n", "--kind", "function", "--line", "1",
+      ]),
+    ).toThrowError(/the member-symbol selector requires --run-id/);
+  });
+
+  it("treats a flag-like token as a missing value, not as the value", () => {
+    expect(() =>
+      parse_entry_selector([
+        "--run-id", "r1",
+        "--file", "--name", "n", "--kind", "function", "--line", "1",
+      ]),
+    ).toThrowError(/missing --file/);
+  });
+});
+
+// ===== find_entries_by_selector =====
+
+describe("find_entries_by_selector", () => {
+  const fn_at_42 = make_entry({
+    entry_index: 5,
+    name: "handle",
+    file_path: "src/server.ts" as FilePath,
+    kind: "function",
+    start_line: 42,
+  });
+  const method_at_42 = make_entry({
+    entry_index: 6,
+    name: "handle",
+    file_path: "src/server.ts" as FilePath,
+    kind: "method",
+    start_line: 42,
+  });
+  const fn_at_99 = make_entry({
+    entry_index: 7,
+    name: "handle",
+    file_path: "src/server.ts" as FilePath,
+    kind: "function",
+    start_line: 99,
+  });
+  const state = { project_path: "/repo", entries: [fn_at_42, method_at_42, fn_at_99] };
+
+  it("resolves an index selector to the entry with that entry_index", () => {
+    expect(find_entries_by_selector(state, { by: "index", entry_index: 6 })).toEqual([
+      method_at_42,
+    ]);
+  });
+
+  it("returns no match for a missing index", () => {
+    expect(find_entries_by_selector(state, { by: "index", entry_index: 999 })).toEqual([]);
+  });
+
+  it("resolves a member symbol to the exact four-field match", () => {
+    expect(
+      find_entries_by_selector(state, {
+        by: "member_symbol",
+        member: { file_path: "src/server.ts", name: "handle", kind: "function", start_line: 42 },
+      }),
+    ).toEqual([fn_at_42]);
+  });
+
+  it("kind is load-bearing: the method sibling at the same file, name, and line resolves for kind=method", () => {
+    expect(
+      find_entries_by_selector(state, {
+        by: "member_symbol",
+        member: { file_path: "src/server.ts", name: "handle", kind: "method", start_line: 42 },
+      }),
+    ).toEqual([method_at_42]);
+  });
+
+  it("start_line is load-bearing: the sibling at a different line resolves for its own line", () => {
+    expect(
+      find_entries_by_selector(state, {
+        by: "member_symbol",
+        member: { file_path: "src/server.ts", name: "handle", kind: "function", start_line: 99 },
+      }),
+    ).toEqual([fn_at_99]);
+  });
+
+  it("relativizes absolute state paths against project_path before matching", () => {
+    const absolute = make_entry({
+      entry_index: 8,
+      name: "abs_fn",
+      file_path: "/repo/src/abs.ts" as FilePath,
+      kind: "function",
+      start_line: 10,
+    });
+    expect(
+      find_entries_by_selector(
+        { project_path: "/repo", entries: [absolute] },
+        {
+          by: "member_symbol",
+          member: { file_path: "src/abs.ts", name: "abs_fn", kind: "function", start_line: 10 },
+        },
+      ),
+    ).toEqual([absolute]);
+  });
+
+  it("returns no match when no entry has the member identity", () => {
+    expect(
+      find_entries_by_selector(state, {
+        by: "member_symbol",
+        member: { file_path: "src/server.ts", name: "nope", kind: "function", start_line: 42 },
+      }),
+    ).toEqual([]);
+  });
+
+  it("returns every colliding entry for a duplicated member identity", () => {
+    const duplicate = make_entry({
+      entry_index: 9,
+      name: "handle",
+      file_path: "src/server.ts" as FilePath,
+      kind: "function",
+      start_line: 42,
+    });
+    expect(
+      find_entries_by_selector(
+        { project_path: "/repo", entries: [fn_at_42, duplicate] },
+        {
+          by: "member_symbol",
+          member: { file_path: "src/server.ts", name: "handle", kind: "function", start_line: 42 },
+        },
+      ),
+    ).toEqual([fn_at_42, duplicate]);
+  });
+});
+
+// ===== resolution_failure_message =====
+
+describe("resolution_failure_message", () => {
+  const fn_at_42 = make_entry({
+    entry_index: 5,
+    name: "handle",
+    file_path: "src/server.ts" as FilePath,
+    kind: "function",
+    start_line: 42,
+  });
+  const method_at_42 = make_entry({
+    entry_index: 6,
+    name: "handle",
+    file_path: "src/server.ts" as FilePath,
+    kind: "method",
+    start_line: 42,
+  });
+  const fn_at_99 = make_entry({
+    entry_index: 7,
+    name: "handle",
+    file_path: "src/server.ts" as FilePath,
+    kind: "function",
+    start_line: 99,
+  });
+  const state = { project_path: "/repo", entries: [fn_at_42, method_at_42, fn_at_99] };
+
+  it("returns null for exactly one match", () => {
+    expect(
+      resolution_failure_message(
+        state,
+        {
+          by: "member_symbol",
+          member: { file_path: "src/server.ts", name: "handle", kind: "function", start_line: 42 },
+        },
+        [fn_at_42],
+      ),
+    ).toEqual(null);
+  });
+
+  it("reports every colliding entry index for an ambiguous member symbol", () => {
+    const duplicate = make_entry({
+      entry_index: 9,
+      name: "handle",
+      file_path: "src/server.ts" as FilePath,
+      kind: "function",
+      start_line: 42,
+    });
+    expect(
+      resolution_failure_message(
+        { project_path: "/repo", entries: [fn_at_42, duplicate] },
+        {
+          by: "member_symbol",
+          member: { file_path: "src/server.ts", name: "handle", kind: "function", start_line: 42 },
+        },
+        [fn_at_42, duplicate],
+      ),
+    ).toEqual(
+      "Ambiguous selector: 2 entries match Member symbol function handle at src/server.ts:42 (entry indices 5, 9). Use --entry <index> to disambiguate.",
+    );
+  });
+
+  it("diagnoses a zero-match with same (file, name, kind) at other lines as run drift", () => {
+    expect(
+      resolution_failure_message(
+        state,
+        {
+          by: "member_symbol",
+          member: { file_path: "src/server.ts", name: "handle", kind: "function", start_line: 43 },
+        },
+        [],
+      ),
+    ).toEqual(
+      "Member symbol function handle at src/server.ts:43 not found in state file\n" +
+        "Entries matching (file, name, kind) exist at start_line 42, 99 — the member symbol and --run-id likely come from different runs (start_line is run-specific).",
+    );
+  });
+
+  it("diagnoses a zero-match with same (file, name) under other kinds as a --kind mismatch", () => {
+    expect(
+      resolution_failure_message(
+        state,
+        {
+          by: "member_symbol",
+          member: {
+            file_path: "src/server.ts",
+            name: "handle",
+            kind: "constructor",
+            start_line: 42,
+          },
+        },
+        [],
+      ),
+    ).toEqual(
+      "Member symbol constructor handle at src/server.ts:42 not found in state file\n" +
+        "Entries matching (file, name) exist with kind function, method — the selector's --kind does not match this run's entry.",
+    );
+  });
+
+  it("diagnoses a zero-match with no near entry as a run/selector mismatch", () => {
+    expect(
+      resolution_failure_message(
+        state,
+        {
+          by: "member_symbol",
+          member: { file_path: "src/server.ts", name: "nope", kind: "function", start_line: 42 },
+        },
+        [],
+      ),
+    ).toEqual(
+      "Member symbol function nope at src/server.ts:42 not found in state file\n" +
+        "The member symbol and --run-id must come from the same triage run.",
+    );
+  });
+
+  it("reports an index zero-match with the bare not-found line", () => {
+    expect(
+      resolution_failure_message(state, { by: "index", entry_index: 999 }, []),
+    ).toEqual("Entry index 999 not found in state file");
+  });
+});
+
+// ===== find_enriched_entry_point =====
+
+describe("find_enriched_entry_point", () => {
+  const enriched_at_42: EnrichedEntryPoint = {
+    name: "handle_request",
+    file_path: "src/server.ts" as FilePath,
+    start_line: 42,
+    kind: "function",
+    tree_size: 7,
+    is_exported: true,
+    definition_features: {
+      definition_is_object_literal_method: false,
+      accessor_kind: null,
+    },
+    diagnostics: BASE_DIAGNOSTICS,
+  };
+  const method_at_42: EnrichedEntryPoint = { ...enriched_at_42, kind: "method" };
+  const analysis: AnalysisResult = {
+    project_name: "demo",
+    project_path: "/repo",
+    entry_points: [method_at_42, enriched_at_42],
+  };
+
+  it("matches on the full member identity (file_path, name, kind, start_line)", () => {
+    const entry = make_entry({ name: "handle_request", kind: "function", start_line: 42 });
+    expect(find_enriched_entry_point(analysis, entry)).toEqual(enriched_at_42);
+  });
+
+  it("distinguishes a function from a same-name method at the same line", () => {
+    const entry = make_entry({ name: "handle_request", kind: "method", start_line: 42 });
+    expect(find_enriched_entry_point(analysis, entry)).toEqual(method_at_42);
+  });
+
+  it("returns undefined when no entry point matches the identity", () => {
+    const entry = make_entry({ name: "handle_request", kind: "function", start_line: 99 });
+    expect(find_enriched_entry_point(analysis, entry)).toEqual(undefined);
+  });
+});

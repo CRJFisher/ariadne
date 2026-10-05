@@ -7,7 +7,7 @@
 import type { SyntaxNode } from "tree-sitter";
 import type { Location, SymbolName, TypeInfo, FilePath } from "@ariadnejs/types";
 import { type_symbol } from "@ariadnejs/types";
-import type { MetadataExtractors } from "./types";
+import type { MetadataExtractors } from "./metadata_extractor_types";
 import { JAVASCRIPT_METADATA_EXTRACTORS } from "./metadata_extractors.javascript";
 import { node_to_location } from "../../node_to_location";
 
@@ -74,12 +74,9 @@ export const TYPESCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
   },
 
   // Delegate other methods to JavaScript extractors
-  extract_call_receiver: JAVASCRIPT_METADATA_EXTRACTORS.extract_call_receiver,
   extract_property_chain: JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain,
   extract_receiver_info: JAVASCRIPT_METADATA_EXTRACTORS.extract_receiver_info,
-  extract_assignment_parts: JAVASCRIPT_METADATA_EXTRACTORS.extract_assignment_parts,
   extract_construct_target: JAVASCRIPT_METADATA_EXTRACTORS.extract_construct_target,
-  extract_type_arguments: JAVASCRIPT_METADATA_EXTRACTORS.extract_type_arguments,
   extract_is_optional_chain: JAVASCRIPT_METADATA_EXTRACTORS.extract_is_optional_chain,
   is_method_call: JAVASCRIPT_METADATA_EXTRACTORS.is_method_call,
   extract_call_name: JAVASCRIPT_METADATA_EXTRACTORS.extract_call_name,

@@ -3,9 +3,9 @@ id: task-100.11.2
 title: Create immutable import/export detection module
 status: Done
 assignee:
-  - '@chuck'
-created_date: '2025-08-04 14:17'
-updated_date: '2025-08-04 14:47'
+  - "@chuck"
+created_date: "2025-08-04 14:17"
+updated_date: "2025-08-04 14:47"
 labels:
   - immutable
   - refactoring

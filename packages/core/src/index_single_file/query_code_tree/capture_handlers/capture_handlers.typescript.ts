@@ -1,26 +1,34 @@
 /**
- * TypeScript capture handlers
- *
- * Named, exported handler functions for processing TypeScript-specific captures.
- * Extends JavaScript handlers with TypeScript features like interfaces, enums,
- * type aliases, namespaces, decorators, and enhanced class/method support.
+ * Pass-3 definition handlers for TypeScript captures: interfaces, enums, type
+ * aliases, namespaces, decorators, plus class/method/field/parameter handling
+ * that adds type annotations and generics on top of the JavaScript registry.
  */
 
 import type { SymbolName } from "@ariadnejs/types";
 import { function_symbol, anonymous_function_symbol } from "@ariadnejs/types";
-import type { DefinitionBuilder } from "../../definitions/definitions";
-import type { CaptureNode, ProcessingContext } from "../../index_single_file";
-import type { HandlerRegistry } from "./types";
+import type { DefinitionBuilder } from "../../definitions/definition_builder";
+import type { CaptureNode } from "../../capture_types";
+import type { ProcessingContext } from "../../scopes/processing_context";
+import type { HandlerRegistry } from "./handler_types";
 import { JAVASCRIPT_HANDLERS } from "./capture_handlers.javascript";
 import {
   create_variable_id,
   extract_export_info,
-  extract_type_annotation,
   extract_initial_value,
-  consume_documentation,
-  extract_collection_source,
-  extract_call_initializer_name,
+  extract_accessor_kind,
 } from "../symbol_factories/symbol_factories.javascript";
+import {
+  extract_collection_source,
+  extract_iteration_source,
+  extract_initializer_call,
+  extract_initializer_call_arguments,
+  extract_read_source,
+} from "../symbol_factories/initializer_sources.javascript";
+import { extract_returned_name_chain } from "../symbol_factories/returned_name_chain.javascript";
+import { extract_destructured_binding } from "../symbol_factories/destructuring.javascript";
+import {
+  consume_documentation,
+} from "../symbol_factories/documentation_state.javascript";
 import {
   create_interface_id,
   extract_interface_extends,
@@ -29,8 +37,9 @@ import {
   extract_type_parameters,
   extract_return_type,
   create_property_signature_id,
-  extract_property_type,
+  extract_declared_type,
   is_readonly_property,
+  is_optional_member_signature,
   create_type_alias_id,
   extract_type_expression,
   create_enum_id,
@@ -63,7 +72,7 @@ import {
 } from "../symbol_factories/symbol_factories.typescript";
 
 // ============================================================================
-// VARIABLE HANDLER (Override JavaScript with function collection detection)
+// VARIABLE HANDLER
 // ============================================================================
 
 export function handle_ts_definition_variable(
@@ -71,9 +80,8 @@ export function handle_ts_definition_variable(
   builder: DefinitionBuilder,
   context: ProcessingContext
 ): void {
-  // Skip if this is an arrow function or function expression assignment.
-  // These are captured as @definition.function by a more specific query pattern,
-  // so we don't need to create a separate variable definition.
+  // Arrow-function and function-expression assignments are captured separately as
+  // @definition.function; skip them here to avoid a duplicate variable definition.
   const parent = capture.node.parent; // variable_declarator
   if (parent) {
     const value_node = parent.childForFieldName("value");
@@ -90,12 +98,10 @@ export function handle_ts_definition_variable(
   const export_info = extract_export_info(capture.node, capture.text);
   const docstring = consume_documentation(capture.location);
 
-  // Check for const by looking at parent (variable_declarator) and its parent (lexical_declaration)
   let is_const = false;
   if (parent && parent.parent) {
     const lexical_decl = parent.parent; // lexical_declaration
     if (lexical_decl.type === "lexical_declaration") {
-      // Check the first token for 'const'
       const first_child = lexical_decl.firstChild;
       if (first_child && first_child.type === "const") {
         is_const = true;
@@ -103,19 +109,21 @@ export function handle_ts_definition_variable(
     }
   }
 
-  // Detect function collections
   const collection_info = parent
     ? detect_function_collection(parent, capture.location.file_path)
     : null;
   const function_collection = collection_info
     ? {
         ...collection_info,
-        collection_id: var_id, // Set the collection_id to the variable's symbol_id
+        collection_id: var_id,
       }
     : undefined;
 
   const collection_source = extract_collection_source(capture.node);
-  const initialized_from_call = extract_call_initializer_name(capture.node);
+  const initialized_from_call = extract_initializer_call(capture.node);
+  const initialized_from_call_arguments = extract_initializer_call_arguments(capture.node);
+  const destructured = extract_destructured_binding(capture.node);
+  const iterated_from = extract_iteration_source(capture.node);
 
   builder.add_variable({
     kind: is_const ? "constant" : "variable",
@@ -124,12 +132,17 @@ export function handle_ts_definition_variable(
     location: capture.location,
     scope_id: context.get_scope_id(capture.location),
     is_exported: export_info.is_exported,
-    type: extract_type_annotation(capture.node),
+    type: extract_declared_type(capture.node),
     initial_value: extract_initial_value(capture.node),
     docstring,
     function_collection,
     collection_source,
+    ...extract_read_source(capture.node),
     initialized_from_call,
+    initialized_from_call_arguments,
+    destructured_from: destructured?.source,
+    destructured_key: destructured?.key,
+    iterated_from,
   });
 }
 
@@ -175,6 +188,7 @@ export function handle_definition_interface_method(
     scope_id: context.get_scope_id(capture.location),
     generics: extract_type_parameters(capture.node.parent),
     return_type: extract_return_type(capture.node),
+    optional: is_optional_member_signature(capture.node) || undefined,
   });
 }
 
@@ -192,8 +206,9 @@ export function handle_definition_interface_property(
     symbol_id: prop_id,
     name: capture.text,
     location: capture.location,
-    type: extract_property_type(capture.node),
+    type: extract_declared_type(capture.node),
     scope_id: context.get_scope_id(capture.location),
+    optional: is_optional_member_signature(capture.node) || undefined,
   });
 }
 
@@ -293,43 +308,7 @@ export function handle_definition_namespace(
 // DECORATOR HANDLERS
 // ============================================================================
 
-export function handle_decorator_class(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const target_id = find_decorator_target(capture);
-  if (!target_id) return;
-
-  const decorator_name = extract_decorator_name(capture.node);
-
-  builder.add_decorator_to_target(target_id, {
-    defining_scope_id: context.get_scope_id(capture.location),
-    name: decorator_name,
-    arguments: extract_decorator_arguments(capture.node),
-    location: capture.location,
-  });
-}
-
-export function handle_decorator_method(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const target_id = find_decorator_target(capture);
-  if (!target_id) return;
-
-  const decorator_name = extract_decorator_name(capture.node);
-
-  builder.add_decorator_to_target(target_id, {
-    defining_scope_id: context.get_scope_id(capture.location),
-    name: decorator_name,
-    arguments: extract_decorator_arguments(capture.node),
-    location: capture.location,
-  });
-}
-
-export function handle_decorator_property(
+function handle_decorator(
   capture: CaptureNode,
   builder: DefinitionBuilder,
   context: ProcessingContext
@@ -348,7 +327,7 @@ export function handle_decorator_property(
 }
 
 // ============================================================================
-// FUNCTION HANDLERS (Override JavaScript with return type support)
+// FUNCTION HANDLERS
 // ============================================================================
 
 export function handle_ts_definition_function(
@@ -360,31 +339,33 @@ export function handle_ts_definition_function(
   const export_info = extract_export_info(capture.node, capture.text);
   const docstring = consume_documentation(capture.location);
 
-  // Determine scope based on function type
-  let scope_id;
-  if (
-    capture.node.parent?.type === "function_expression" ||
-    capture.node.parent?.type === "function"
-  ) {
-    // Named function expression - assign to function's own scope
-    scope_id = context.get_scope_id(capture.location);
-  } else {
-    // Function declaration - assign to parent scope
-    scope_id = context.get_scope_id(capture.location);
-  }
+  // The inner name of a variable-bound named function expression is visible only
+  // inside the body. Its outer var name is registered separately (as
+  // @definition.function) and owns the body scope, call-graph node, and any
+  // export. Register the inner name for self-reference resolution only — without
+  // a body scope, and never as an export — so it neither duplicates the node,
+  // surfaces as a spurious entry point, nor collides with the outer name in the
+  // export registry.
+  const is_var_bound_expression_name =
+    capture.node.parent?.type === "function_expression" &&
+    capture.node.parent?.parent?.type === "variable_declarator";
 
   builder.add_function(
     {
       symbol_id: func_id,
       name: capture.text,
       location: capture.location,
-      scope_id: scope_id,
-      is_exported: export_info.is_exported,
-      export: export_info.export,
+      scope_id: context.get_scope_id(capture.location),
+      is_exported: is_var_bound_expression_name
+        ? false
+        : export_info.is_exported,
+      export: is_var_bound_expression_name ? undefined : export_info.export,
       return_type: extract_return_type(capture.node),
+      returned_name_chain: extract_returned_name_chain(capture.node),
+      generics: capture.node.parent ? extract_type_parameters(capture.node.parent) : [],
       docstring,
     },
-    capture
+    is_var_bound_expression_name ? undefined : capture
   );
 }
 
@@ -397,11 +378,9 @@ export function handle_ts_definition_anonymous_function(
   builder: DefinitionBuilder,
   context: ProcessingContext
 ): void {
-  // Generate location-based symbol ID for anonymous function
   const anon_id = anonymous_function_symbol(capture.location);
   const scope_id = context.get_scope_id(capture.location);
 
-  // Detect if this function is being passed as a callback
   const callback_context = detect_callback_context(
     capture.node,
     capture.location.file_path
@@ -420,7 +399,7 @@ export function handle_ts_definition_anonymous_function(
 }
 
 // ============================================================================
-// CLASS HANDLERS (Override JavaScript with TypeScript features)
+// CLASS HANDLERS
 // ============================================================================
 
 export function handle_ts_definition_class(
@@ -433,8 +412,8 @@ export function handle_ts_definition_class(
   const export_info = extract_export_info(capture.node, capture.text);
   const docstring = consume_documentation(capture.location);
 
-  // Extract both extends and implements, combining into unified extends field
-  // Task 11.158: For polymorphic resolution, both inheritance and implementation work the same way
+  // extends and implements collapse into one field: polymorphic resolution treats
+  // superclass and implemented interface the same way.
   const extends_classes = parent ? extract_class_extends(parent) : [];
   const implements_interfaces = parent ? extract_implements(parent) : [];
   const all_extends = [...extends_classes, ...implements_interfaces];
@@ -453,7 +432,7 @@ export function handle_ts_definition_class(
 }
 
 // ============================================================================
-// METHOD HANDLERS (Override JavaScript with TypeScript features)
+// METHOD HANDLERS
 // ============================================================================
 
 export function handle_ts_definition_method(
@@ -462,9 +441,26 @@ export function handle_ts_definition_method(
   context: ProcessingContext
 ): void {
   const class_id = find_containing_class(capture);
-  if (!class_id) return;
-
   const method_id = create_method_id(capture);
+
+  if (!class_id) {
+    // An object-literal method (`{ m(p) {} }`) has no owning class. It is
+    // reached through the object's collection dispatch, never by its own name,
+    // so a named node here would surface as an entry point nothing can call.
+    // Registering it anonymously under the id the parameter pass computes still
+    // binds its parameters.
+    builder.add_anonymous_function(
+      {
+        symbol_id: method_id,
+        location: capture.location,
+        scope_id: context.get_scope_id(capture.location),
+        return_type: extract_return_type(capture.node),
+      },
+      capture
+    );
+    return;
+  }
+
   const parent = capture.node.parent; // method_definition
   const docstring = consume_documentation(capture.location);
 
@@ -479,78 +475,17 @@ export function handle_ts_definition_method(
       abstract: is_abstract_method(capture.node),
       static: is_static_method(capture.node),
       async: is_async_method(capture.node),
+      accessor_kind: extract_accessor_kind(capture.node),
       return_type: extract_return_type(capture.node),
+      returned_name_chain: extract_returned_name_chain(capture.node),
       generics: parent ? extract_type_parameters(parent) : [],
       docstring,
     },
-    capture
-  );
-}
-
-export function handle_definition_method_private(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  // Private methods use the same logic as regular methods
-  // They're identified by private_property_identifier node (#method syntax)
-  const class_id = find_containing_class(capture);
-  if (!class_id) return;
-
-  const method_id = create_method_id(capture);
-  const parent = capture.node.parent; // method_definition
-
-  builder.add_method_to_class(
-    class_id,
-    {
-      symbol_id: method_id,
-      name: capture.text,
-      location: capture.location,
-      scope_id: context.get_scope_id(capture.location),
-      access_modifier: "private",
-      abstract: is_abstract_method(capture.node),
-      static: is_static_method(capture.node),
-      async: is_async_method(capture.node),
-      return_type: extract_return_type(capture.node),
-      generics: parent ? extract_type_parameters(parent) : [],
-    },
-    capture
-  );
-}
-
-export function handle_definition_method_abstract(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  // Abstract methods are method_signature nodes in class bodies
-  // They have no body and are always abstract
-  const class_id = find_containing_class(capture);
-  if (!class_id) return;
-
-  const method_id = create_method_id(capture);
-  const parent = capture.node.parent; // method_signature
-
-  builder.add_method_to_class(
-    class_id,
-    {
-      symbol_id: method_id,
-      name: capture.text,
-      location: capture.location,
-      scope_id: context.get_scope_id(capture.location),
-      access_modifier: extract_access_modifier(capture.node),
-      abstract: true, // method_signature nodes are always abstract
-      static: is_static_method(capture.node),
-      async: false, // abstract methods cannot be async
-      return_type: extract_return_type(capture.node),
-      generics: parent ? extract_type_parameters(parent) : [],
-    },
-    capture
   );
 }
 
 // ============================================================================
-// FIELD HANDLERS (Override JavaScript with TypeScript features)
+// FIELD HANDLERS
 // ============================================================================
 
 export function handle_ts_definition_field(
@@ -563,14 +498,14 @@ export function handle_ts_definition_field(
 
   const prop_id = create_property_id(capture);
 
-  // Check if this is a parameter property (constructor parameter with access modifier)
-  // Parameter properties have identifier node with required_parameter parent
+  // A parameter property (constructor parameter with an access modifier) is an
+  // identifier under a required/optional parameter, so its value and type come
+  // from parameter extractors rather than the property extractors.
   const is_param_property =
     capture.node.type === "identifier" &&
     (capture.node.parent?.type === "required_parameter" ||
       capture.node.parent?.type === "optional_parameter");
 
-  // Use appropriate extraction function based on context
   const initial_value = is_param_property
     ? extract_parameter_default_value(capture.node)
     : extract_property_initial_value(capture.node);
@@ -586,39 +521,14 @@ export function handle_ts_definition_field(
     abstract: is_abstract_method(capture.node),
     type: is_param_property
       ? extract_parameter_type(capture.node)
-      : extract_property_type(capture.node),
+      : extract_declared_type(capture.node),
     initial_value: initial_value,
-  });
-}
-
-export function handle_definition_field_private(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  // Private fields use the same logic as regular fields
-  // They're identified by private_property_identifier node (#field syntax)
-  const class_id = find_containing_class(capture);
-  if (!class_id) return;
-
-  const prop_id = create_property_id(capture);
-
-  builder.add_property_to_class(class_id, {
-    symbol_id: prop_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    access_modifier: "private",
-    static: is_static_method(capture.node),
-    readonly: is_readonly_property(capture.node),
-    abstract: is_abstract_method(capture.node),
-    type: extract_property_type(capture.node),
-    initial_value: extract_property_initial_value(capture.node),
+    ...extract_read_source(capture.node),
   });
 }
 
 // ============================================================================
-// PARAMETER HANDLERS (Override JavaScript with TypeScript's find_containing_callable)
+// PARAMETER HANDLERS
 // ============================================================================
 
 export function handle_ts_definition_parameter(
@@ -641,6 +551,7 @@ export function handle_ts_definition_parameter(
     scope_id: context.get_scope_id(capture.location),
     type: extract_parameter_type(capture.node),
     default_value: extract_parameter_default_value(capture.node),
+    ...extract_read_source(capture.node),
     optional: false,
   });
 }
@@ -665,58 +576,8 @@ export function handle_definition_parameter_optional(
     scope_id: context.get_scope_id(capture.location),
     type: extract_parameter_type(capture.node),
     default_value: extract_parameter_default_value(capture.node),
+    ...extract_read_source(capture.node),
     optional: true,
-  });
-}
-
-export function handle_definition_parameter_rest(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  // Skip parameters inside function_type (they're type annotations, not actual parameters)
-  if (is_parameter_in_function_type(capture.node)) {
-    return;
-  }
-
-  const param_id = create_parameter_id(capture);
-  const parent_id = find_containing_callable(capture);
-
-  builder.add_parameter_to_callable(parent_id, {
-    symbol_id: param_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    type: extract_parameter_type(capture.node),
-    default_value: extract_parameter_default_value(capture.node),
-    optional: false,
-  });
-}
-
-// ============================================================================
-// PARAMETER PROPERTIES (Constructor parameters that become properties)
-// ============================================================================
-
-export function handle_definition_field_param_property(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  // This is the field definition aspect of a parameter property
-  const class_id = find_containing_class(capture);
-  if (!class_id) return;
-
-  const prop_id = create_property_id(capture);
-
-  builder.add_property_to_class(class_id, {
-    symbol_id: prop_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    access_modifier: extract_access_modifier(capture.node),
-    readonly: is_readonly_property(capture.node),
-    type: extract_parameter_type(capture.node),
-    initial_value: extract_parameter_default_value(capture.node),
   });
 }
 
@@ -725,10 +586,8 @@ export function handle_definition_field_param_property(
 // ============================================================================
 
 export const TYPESCRIPT_HANDLERS: HandlerRegistry = {
-  // Inherit all JavaScript handlers
   ...JAVASCRIPT_HANDLERS,
 
-  // TypeScript overrides for JavaScript handlers
   "definition.variable": handle_ts_definition_variable,
   "definition.function": handle_ts_definition_function,
   "definition.anonymous_function": handle_ts_definition_anonymous_function,
@@ -736,36 +595,20 @@ export const TYPESCRIPT_HANDLERS: HandlerRegistry = {
   "definition.method": handle_ts_definition_method,
   "definition.field": handle_ts_definition_field,
   "definition.parameter": handle_ts_definition_parameter,
+  "definition.parameter.optional": handle_definition_parameter_optional,
 
-  // TypeScript-specific: Interfaces
   "definition.interface": handle_definition_interface,
   "definition.interface.method": handle_definition_interface_method,
   "definition.interface.property": handle_definition_interface_property,
 
-  // TypeScript-specific: Type aliases
   "definition.type_alias": handle_definition_type_alias,
 
-  // TypeScript-specific: Enums
   "definition.enum": handle_definition_enum,
   "definition.enum.member": handle_definition_enum_member,
 
-  // TypeScript-specific: Namespaces
   "definition.namespace": handle_definition_namespace,
 
-  // TypeScript-specific: Decorators
-  "decorator.class": handle_decorator_class,
-  "decorator.method": handle_decorator_method,
-  "decorator.property": handle_decorator_property,
-
-  // TypeScript-specific: Methods
-  "definition.method.private": handle_definition_method_private,
-  "definition.method.abstract": handle_definition_method_abstract,
-
-  // TypeScript-specific: Fields
-  "definition.field.private": handle_definition_field_private,
-  "definition.field.param_property": handle_definition_field_param_property,
-
-  // TypeScript-specific: Parameters
-  "definition.parameter.optional": handle_definition_parameter_optional,
-  "definition.parameter.rest": handle_definition_parameter_rest,
+  "decorator.class": handle_decorator,
+  "decorator.method": handle_decorator,
+  "decorator.property": handle_decorator,
 } as const;

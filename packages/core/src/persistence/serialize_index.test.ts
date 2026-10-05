@@ -1,18 +1,27 @@
 import { describe, it, expect } from "vitest";
 import type { FilePath, Language, ScopeId, SymbolId } from "@ariadnejs/types";
-import type { SemanticIndex } from "../index_single_file/index_single_file";
+import type { SemanticIndex } from "@ariadnejs/types";
 import {
-  serialize_semantic_index,
+  to_serializable_semantic_index,
   deserialize_semantic_index,
   validate_semantic_index_shape,
 } from "./serialize_index";
 import { build_index_single_file } from "../index_single_file/index_single_file";
 import Parser from "tree-sitter";
-import TypeScriptParser from "tree-sitter-typescript";
+import { LANGUAGE_TO_TREESITTER_LANG } from "../index_single_file/query_code_tree/parsers";
 import PythonParser from "tree-sitter-python";
 import JavaScriptParser from "tree-sitter-javascript";
 import RustParser from "tree-sitter-rust";
 import type { ParsedFile } from "../index_single_file/parsed_file";
+
+/**
+ * A `SemanticIndex` as one JSON document. Cache blobs embed the index in their
+ * validity stamp rather than stringifying it alone, so this shape exists only
+ * for the round-trip guards below and in the sibling persistence tests.
+ */
+export function serialize_semantic_index(index: SemanticIndex): string {
+  return JSON.stringify(to_serializable_semantic_index(index));
+}
 
 function make_parsed_file(
   content: string,
@@ -27,12 +36,13 @@ function make_parsed_file(
     file_end_column: lines[lines.length - 1]?.length || 0,
     tree,
     lang: language,
+    source: content,
   };
 }
 
 function parse_ts(content: string, file_path = "test.ts"): SemanticIndex {
   const parser = new Parser();
-  parser.setLanguage(TypeScriptParser.typescript);
+  parser.setLanguage(LANGUAGE_TO_TREESITTER_LANG.get("typescript")!);
   const tree = parser.parse(content);
   const parsed = make_parsed_file(
     content,
@@ -122,6 +132,10 @@ function assert_index_equal(a: SemanticIndex, b: SemanticIndex): void {
   for (const [key, val] of a.imported_symbols) {
     expect(b.imported_symbols.get(key)).toEqual(val);
   }
+  expect(b.unattached_impl_methods.size).toEqual(a.unattached_impl_methods.size);
+  for (const [key, val] of a.unattached_impl_methods) {
+    expect(b.unattached_impl_methods.get(key)).toEqual(val);
+  }
   expect([...b.references]).toEqual([...a.references]);
 }
 
@@ -141,11 +155,68 @@ describe("serialize_semantic_index / deserialize_semantic_index", () => {
         namespaces: new Map(),
         types: new Map(),
         imported_symbols: new Map(),
+        unattached_impl_methods: new Map(),
         references: [],
       };
       const json = serialize_semantic_index(index);
       const restored = deserialize_semantic_index(json);
       assert_index_equal(index, restored);
+    });
+  });
+
+  describe("pre-parsed object input", () => {
+    it("deserializes from an already-parsed object without re-parsing JSON", () => {
+      const index = parse_ts(
+        "export function greet(name: string): string { return name; }",
+      );
+      const json = serialize_semantic_index(index);
+      const parsed = JSON.parse(json) as Record<string, unknown>;
+      const restored = deserialize_semantic_index(parsed);
+      assert_index_equal(index, restored);
+    });
+
+    it("produces equal indexes from string and object inputs", () => {
+      const index = parse_ts("export const x = 1;");
+      const json = serialize_semantic_index(index);
+      const from_string = deserialize_semantic_index(json);
+      const from_object = deserialize_semantic_index(
+        JSON.parse(json) as Record<string, unknown>,
+      );
+      assert_index_equal(from_string, from_object);
+    });
+  });
+
+  describe("malformed string input", () => {
+    it("throws on non-JSON input", () => {
+      expect(() => deserialize_semantic_index("not json {")).toThrow();
+    });
+  });
+
+  /**
+   * String identity is not observable from JavaScript, so what a test can hold
+   * is that sharing repeated strings changes no VALUE — the retained-bytes half
+   * is a measurement and lives in `RECORDED_WORKER_INDEX_DISPATCH`.
+   */
+  describe("a document whose strings repeat", () => {
+    it("restores every repeated string to its own value", () => {
+      const index = parse_ts(
+        [
+          "export class Repeated {",
+          "  first(): void {}",
+          "  second(): void { this.first(); }",
+          "}",
+          "export function repeated(): void { new Repeated().second(); }",
+        ].join("\n"),
+      );
+      const restored = deserialize_semantic_index(
+        serialize_semantic_index(index),
+      );
+
+      assert_index_equal(index, restored);
+      expect([...restored.classes.keys()]).toEqual([...index.classes.keys()]);
+      expect(restored.references.map((reference) => reference.name)).toEqual(
+        index.references.map((reference) => reference.name),
+      );
     });
   });
 
@@ -238,6 +309,40 @@ impl Animal {
       assert_index_equal(index, restored);
     });
   });
+
+  describe("a receiver chain rooted at an Object.prototype member name", () => {
+    // A field holding a function fails the two transports differently: JSON
+    // drops it without a word, so a restored file carries a different reference
+    // record from a cold one, and structuredClone refuses outright, so the file
+    // never crosses a worker boundary at all.
+    const OBJECT_PROTOTYPE_MEMBERS = [
+      "toString",
+      "valueOf",
+      "constructor",
+      "hasOwnProperty",
+    ];
+
+    it.each(OBJECT_PROTOTYPE_MEMBERS)(
+      "restores identical reference records for a chain rooted at '%s'",
+      (member) => {
+        const index = parse_js(`${member}.padStart(2);`);
+        const restored = deserialize_semantic_index(
+          serialize_semantic_index(index),
+        );
+        expect([...restored.references]).toEqual([...index.references]);
+      },
+    );
+
+    it.each(OBJECT_PROTOTYPE_MEMBERS)(
+      "clones every reference record for a chain rooted at '%s'",
+      (member) => {
+        const index = parse_js(`${member}.padStart(2);`);
+        expect([...globalThis.structuredClone(index).references]).toEqual([
+          ...index.references,
+        ]);
+      },
+    );
+  });
 });
 
 describe("validate_semantic_index_shape", () => {
@@ -255,6 +360,7 @@ describe("validate_semantic_index_shape", () => {
       namespaces: [],
       types: [],
       imported_symbols: [],
+      unattached_impl_methods: [],
       references: [],
     };
     expect(validate_semantic_index_shape(valid)).toBe(true);
@@ -262,6 +368,75 @@ describe("validate_semantic_index_shape", () => {
 
   it("returns false for null", () => {
     expect(validate_semantic_index_shape(null)).toBe(false);
+  });
+
+  it("returns false for non-object primitives", () => {
+    expect(validate_semantic_index_shape("scope:0")).toBe(false);
+    expect(validate_semantic_index_shape(42)).toBe(false);
+    expect(validate_semantic_index_shape(undefined)).toBe(false);
+  });
+
+  it("returns false for non-string language", () => {
+    expect(
+      validate_semantic_index_shape({
+        file_path: "test.ts",
+        language: 123,
+        root_scope_id: "scope:0",
+        scopes: [],
+        functions: [],
+        classes: [],
+        variables: [],
+        interfaces: [],
+        enums: [],
+        namespaces: [],
+        types: [],
+        imported_symbols: [],
+        unattached_impl_methods: [],
+        references: [],
+      }),
+    ).toBe(false);
+  });
+
+  it("returns false for non-string root_scope_id", () => {
+    expect(
+      validate_semantic_index_shape({
+        file_path: "test.ts",
+        language: "typescript",
+        root_scope_id: null,
+        scopes: [],
+        functions: [],
+        classes: [],
+        variables: [],
+        interfaces: [],
+        enums: [],
+        namespaces: [],
+        types: [],
+        imported_symbols: [],
+        unattached_impl_methods: [],
+        references: [],
+      }),
+    ).toBe(false);
+  });
+
+  it("returns false for non-array references", () => {
+    expect(
+      validate_semantic_index_shape({
+        file_path: "test.ts",
+        language: "typescript",
+        root_scope_id: "scope:0",
+        scopes: [],
+        functions: [],
+        classes: [],
+        variables: [],
+        interfaces: [],
+        enums: [],
+        namespaces: [],
+        types: [],
+        imported_symbols: [],
+        unattached_impl_methods: [],
+        references: "not an array",
+      }),
+    ).toBe(false);
   });
 
   it("returns false for missing fields", () => {
@@ -284,6 +459,7 @@ describe("validate_semantic_index_shape", () => {
       namespaces: [],
       types: [],
       imported_symbols: [],
+      unattached_impl_methods: [],
       references: [],
     };
     expect(validate_semantic_index_shape(invalid)).toBe(false);

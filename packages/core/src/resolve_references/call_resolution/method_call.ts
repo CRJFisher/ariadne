@@ -15,21 +15,17 @@
  */
 
 import type {
-  SymbolId,
   MethodCallReference,
   SelfReferenceCall,
 } from "@ariadnejs/types";
-import { ScopeRegistry } from "../registries/scope";
-import { DefinitionRegistry } from "../registries/definition";
-import type { ResolutionRegistry } from "../resolve_references";
-import type { TypeRegistry } from "../registries/type";
-import type { ImportGraph } from "../../project/import_graph";
 import {
   extract_receiver,
+  find_self_type,
   resolve_receiver_type,
   type ReceiverResolutionContext,
 } from "./receiver_resolution";
-import { resolve_method_on_type } from "./method_lookup";
+import { resolve_method_on_type, resolve_super_method, type MethodLookup } from "./method_lookup";
+import { resolve_held_type } from "./value_source";
 
 /**
  * Resolve a method call to zero, one, or more symbols
@@ -39,47 +35,34 @@ import { resolve_method_on_type } from "./method_lookup";
  * 1. Resolve receiver expression to a type
  * 2. Look up method on that type
  *
- * Returns:
- * - []: Resolution failed (no receiver, no type, or no method)
- * - [symbol]: Concrete method call (user.getName())
- * - [a, b, c]: Polymorphic method call (handler.process() where handler is an interface)
+ * `targets` is:
+ * - `ok([symbol])`: Concrete method call (user.getName())
+ * - `ok([a, b, c])`: Polymorphic method call (handler.process() where handler is an interface)
+ * - `err(failure)`: Receiver-resolution or method-lookup failure with a named reason
  *
- * @param call_ref - Method call or self-reference call from semantic index
- * @param scopes - Scope registry for scope tree walking
- * @param definitions - Definition registry for lookups
- * @param types - TypeRegistry for type tracking and member lookup
- * @param resolutions - Resolution registry for symbol resolution
- * @param resolve_import_path - Optional resolver for import paths (for module imports)
- * @param resolve_submodule_import_path - Optional resolver for submodule import paths
- * @returns Array of resolved method symbol_ids (empty if resolution fails)
+ * `subtype_closure_of` names the type whose subtypes the lookup enumerated; a
+ * receiver that never resolved reached no lookup and enumerated none.
  */
 export function resolve_method_call(
   call_ref: MethodCallReference | SelfReferenceCall,
-  scopes: ScopeRegistry,
-  definitions: DefinitionRegistry,
-  types: TypeRegistry,
-  resolutions: ResolutionRegistry,
-  imports: ImportGraph
-): SymbolId[] {
-  // Build resolution context
-  const context: ReceiverResolutionContext = {
-    scopes,
-    definitions,
-    types,
-    resolutions,
-    imports,
-  };
+  context: ReceiverResolutionContext
+): MethodLookup {
+  const receiver = extract_receiver(call_ref, context);
+  const receiver_result = resolve_receiver_type(receiver, context, resolve_held_type);
 
-  // Phase 1: Extract and resolve the receiver expression to a type
-  const receiver = extract_receiver(call_ref);
-  const receiver_type = resolve_receiver_type(receiver, context);
-
-  if (!receiver_type) {
-    // Resolution failed - no fallback for now
-    // Collection dispatch fallback is handled by the caller
-    return [];
+  if (!receiver_result.ok) {
+    return { targets: receiver_result, subtype_closure_of: null, undeclared_interface: null };
   }
 
-  // Phase 2: Look up method on the resolved receiver type
-  return resolve_method_on_type(receiver_type, receiver.method_name, context);
+  // `super().m()` dispatches from the calling class; `super().a.m()` has left
+  // it for the value `a` holds.
+  if (receiver.base.type === "keyword" && receiver.base.value === "super" && receiver.chain.length === 0) {
+    const calling_class = find_self_type(receiver.scope_id, context);
+    if (!calling_class.ok) {
+      return { targets: calling_class, subtype_closure_of: null, undeclared_interface: null };
+    }
+    return resolve_super_method(calling_class.value, receiver_result.value, receiver.method_name, context.definitions);
+  }
+
+  return resolve_method_on_type(receiver_result.value, receiver.method_name, context);
 }

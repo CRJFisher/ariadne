@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { Project } from "./project";
 import path from "path";
 import fs from "fs";
-import type { FilePath, SymbolName } from "@ariadnejs/types";
+import type { FilePath, SymbolId, SymbolName } from "@ariadnejs/types";
 import type {
   ConstructorCallReference,
   MethodCallReference,
@@ -115,6 +115,449 @@ describe("Project Integration - JavaScript", () => {
       expect(process_data_fn).toBeDefined();
       expect(calculate_total_fn).toBeDefined();
     });
+  });
+
+  describe("CommonJS whole-namespace method dispatch", () => {
+    // `var ns = require('./mod'); ns.fn()` must resolve `fn` against the
+    // module's `exports.fn` / `module.exports.fn` definition, and the target
+    // must count as reached so it is not a false unreachable entry point.
+    function find_function_id(mod_file: FilePath, name: string) {
+      const index = project.get_index_single_file(mod_file);
+      expect(index).toBeDefined();
+      const fn = Array.from(index!.functions.values()).find(
+        (f) => f.name === (name as SymbolName)
+      );
+      expect(fn).toBeDefined();
+      return fn!.symbol_id;
+    }
+
+    function method_call_targets(main_file: FilePath, name: string) {
+      const calls = project.resolutions.get_calls_for_file(main_file);
+      const call = calls.find((c) => c.name === (name as SymbolName));
+      expect(call).toBeDefined();
+      return call!.resolutions.map((r) => r.symbol_id);
+    }
+
+    // Targets of a call named `callee_name` enclosed in `caller_id`'s body —
+    // the caller->callee edge, which proves the caller owns that body scope
+    // (unlike the global referenced set, which collects the call regardless of
+    // which definition, if any, encloses it).
+    function enclosed_call_targets(caller_id: SymbolId, callee_name: string) {
+      const node = project.get_call_graph().nodes.get(caller_id);
+      expect(node).toBeDefined();
+      return node!.enclosed_calls
+        .filter((c) => c.name === (callee_name as SymbolName))
+        .flatMap((c) => c.resolutions.map((r) => r.symbol_id));
+    }
+
+    it("resolves a named-function-expression export and marks it reached", () => {
+      const mod = [
+        "exports.castArray = function castArray(v) { return [v]; };",
+        "module.exports.isBrowser = function isBrowser() { return false; };",
+      ].join("\n");
+      const main = [
+        "var utils = require('./ns_named');",
+        "function run() {",
+        "  utils.castArray(1);",
+        "  utils.isBrowser();",
+        "}",
+      ].join("\n");
+      const mod_file = file_path("modules/ns_named.js");
+      const main_file = file_path("modules/main_ns_named.js");
+
+      project.update_file(mod_file, mod);
+      project.update_file(main_file, main);
+
+      const cast_array_id = find_function_id(mod_file, "castArray");
+      const is_browser_id = find_function_id(mod_file, "isBrowser");
+
+      expect(method_call_targets(main_file, "castArray")).toContain(cast_array_id);
+      expect(method_call_targets(main_file, "isBrowser")).toContain(is_browser_id);
+
+      const referenced = project.resolutions.get_all_referenced_symbols();
+      expect(referenced.has(cast_array_id)).toBe(true);
+      expect(referenced.has(is_browser_id)).toBe(true);
+    });
+
+    it("resolves anonymous-function and arrow exports and attributes their bodies", () => {
+      const mod = [
+        "exports.escape = function (html) { return helper(html); };",
+        "module.exports.uniqueID = () => next();",
+        "function helper(x) { return x; }",
+        "function next() { return 1; }",
+      ].join("\n");
+      const main = [
+        "const u = require('./ns_anon');",
+        "function run() {",
+        "  u.escape('x');",
+        "  u.uniqueID();",
+        "}",
+      ].join("\n");
+      const mod_file = file_path("modules/ns_anon.js");
+      const main_file = file_path("modules/main_ns_anon.js");
+
+      project.update_file(mod_file, mod);
+      project.update_file(main_file, main);
+
+      const escape_id = find_function_id(mod_file, "escape");
+      const unique_id = find_function_id(mod_file, "uniqueID");
+      const helper_id = find_function_id(mod_file, "helper");
+      const next_id = find_function_id(mod_file, "next");
+
+      expect(method_call_targets(main_file, "escape")).toContain(escape_id);
+      expect(method_call_targets(main_file, "uniqueID")).toContain(unique_id);
+
+      // The exports themselves are reached via CJS-namespace dispatch...
+      const referenced = project.resolutions.get_all_referenced_symbols();
+      expect(referenced.has(escape_id)).toBe(true);
+      expect(referenced.has(unique_id)).toBe(true);
+      // ...and each body's calls are attributed to the property-located
+      // definition, so `helper`/`next` are edges out of `escape`/`uniqueID`
+      // rather than orphaned calls. This is what proves body attribution — the
+      // definition owns its body scope despite being located at the property.
+      expect(enclosed_call_targets(escape_id, "helper")).toContain(helper_id);
+      expect(enclosed_call_targets(unique_id, "next")).toContain(next_id);
+    });
+
+    it("does not treat a non-exports member assignment as an export", () => {
+      const mod = [
+        "exports.real = () => 1;",
+        "notExports.fake = () => 2;",
+      ].join("\n");
+      const main = [
+        "const u = require('./ns_guard');",
+        "function run() {",
+        "  u.real();",
+        "  u.fake();",
+        "}",
+      ].join("\n");
+      const mod_file = file_path("modules/ns_guard.js");
+      const main_file = file_path("modules/main_ns_guard.js");
+
+      project.update_file(mod_file, mod);
+      project.update_file(main_file, main);
+
+      const mod_index = project.get_index_single_file(mod_file);
+      const fake = Array.from(mod_index!.functions.values()).find(
+        (f) => f.name === ("fake" as SymbolName)
+      );
+      expect(fake).toBeUndefined();
+      expect(method_call_targets(main_file, "real")).toHaveLength(1);
+      expect(method_call_targets(main_file, "fake")).toHaveLength(0);
+    });
+
+    it("exports the arrow, not a same-named local, without a duplicate-export conflict", () => {
+      const mod = [
+        "function dup() { return 'local'; }",
+        "exports.dup = () => 'exported';",
+        "function useLocal() { return dup(); }",
+      ].join("\n");
+      const main = [
+        "const u = require('./ns_shadow');",
+        "function run() { u.dup(); }",
+      ].join("\n");
+      const mod_file = file_path("modules/ns_shadow.js");
+      const main_file = file_path("modules/main_ns_shadow.js");
+
+      project.update_file(mod_file, mod);
+      project.update_file(main_file, main);
+
+      const mod_index = project.get_index_single_file(mod_file);
+      const dups = Array.from(mod_index!.functions.values()).filter(
+        (f) => f.name === ("dup" as SymbolName)
+      );
+      // Two distinct definitions share the name; exactly one is exported.
+      expect(dups.length).toBe(2);
+      expect(dups.filter((f) => f.is_exported).length).toBe(1);
+
+      // `u.dup()` resolves to the exported arrow only — not also the local.
+      const exported_dup = dups.find((f) => f.is_exported)!;
+      expect(method_call_targets(main_file, "dup")).toEqual([
+        exported_dup.symbol_id,
+      ]);
+    });
+
+    it("does not export a function assigned to exports inside a function body", () => {
+      // A nested `exports.x = () => {}` is a local assignment, not a module
+      // export — matching the top-level-only treatment of the identifier and
+      // named-function-expression forms.
+      const mod = [
+        "function configure() {",
+        "  exports.hidden = () => 1;",
+        "}",
+        "exports.shown = () => 2;",
+      ].join("\n");
+      const main = [
+        "var u = require('./ns_nested');",
+        "function run() {",
+        "  u.hidden();",
+        "  u.shown();",
+        "}",
+      ].join("\n");
+      const mod_file = file_path("modules/ns_nested.js");
+      const main_file = file_path("modules/main_ns_nested.js");
+
+      project.update_file(mod_file, mod);
+      project.update_file(main_file, main);
+
+      const mod_index = project.get_index_single_file(mod_file);
+      const hidden = Array.from(mod_index!.functions.values()).find(
+        (f) => f.name === ("hidden" as SymbolName)
+      );
+      expect(hidden).toBeUndefined();
+      expect(method_call_targets(main_file, "hidden")).toHaveLength(0);
+      expect(method_call_targets(main_file, "shown")).toHaveLength(1);
+    });
+  });
+
+  describe("CommonJS Class Export Dispatch", () => {
+    // Resolve a call by name + call_type in a file to its target definition
+    // ("kind:name"), or its resolution-failure reason when it does not resolve.
+    function resolved_target(
+      file: FilePath,
+      name: string,
+      call_type: "method" | "constructor"
+    ): { targets: string[]; failure?: string } {
+      const call = project.resolutions
+        .get_calls_for_file(file)
+        .find((c) => c.name === (name as SymbolName) && c.call_type === call_type);
+      if (!call) {
+        return { targets: [], failure: "call_not_found" };
+      }
+      const targets = call.resolutions.map((r) => {
+        const def = project.definitions.get(r.symbol_id);
+        return def ? `${def.kind}:${def.name}` : String(r.symbol_id);
+      });
+      const failure = call.resolution_failure
+        ? `${call.resolution_failure.stage}/${call.resolution_failure.reason}`
+        : undefined;
+      return { targets, failure };
+    }
+
+    describe("default export `module.exports = Class`", () => {
+      const mod_file = file_path("modules/cjs_default_class.js");
+      const main_file = file_path("modules/uses_cjs_default_class.js");
+      const mod_source = [
+        "class Widget {",
+        "  constructor() {}",
+        "  static make() { return new Widget(); }",
+        "  render() {}",
+        "}",
+        "module.exports = Widget;",
+      ].join("\n");
+      const main_source = [
+        "const Widget = require('./cjs_default_class');",
+        "function use() {",
+        "  const w = new Widget();",
+        "  w.render();",
+        "  return Widget.make();",
+        "}",
+      ].join("\n");
+
+      beforeEach(() => {
+        project.update_file(mod_file, mod_source);
+        project.update_file(main_file, main_source);
+      });
+
+      it("marks the class as the file's default export and binds the require to it", () => {
+        const mod_index = project.get_index_single_file(mod_file);
+        const widget = Array.from(mod_index!.classes.values()).find(
+          (c) => c.name === ("Widget" as SymbolName)
+        );
+        expect(widget!.is_exported).toBe(true);
+        expect(widget!.export).toEqual({ is_default: true });
+
+        const call = project.resolutions
+          .get_calls_for_file(main_file)
+          .find((c) => c.name === ("make" as SymbolName));
+        expect(project.resolutions.resolve(call!.scope_id, "Widget" as SymbolName)).toEqual(
+          widget!.symbol_id
+        );
+      });
+
+      it("resolves a static method call `Widget.make()` to the class's static method", () => {
+        expect(resolved_target(main_file, "make", "method")).toEqual({
+          targets: ["method:make"],
+          failure: undefined,
+        });
+      });
+
+      it("resolves `new Widget()` to the class's constructor", () => {
+        expect(resolved_target(main_file, "Widget", "constructor")).toEqual({
+          targets: ["constructor:constructor"],
+          failure: undefined,
+        });
+      });
+
+      it("resolves an instance method call `w.render()` to the class's instance method", () => {
+        expect(resolved_target(main_file, "render", "method")).toEqual({
+          targets: ["method:render"],
+          failure: undefined,
+        });
+      });
+    });
+
+    describe("named export `exports.X = class`", () => {
+      const mod_file = file_path("modules/cjs_named_class.js");
+      const main_file = file_path("modules/uses_cjs_named_class.js");
+      const mod_source = [
+        "exports.Gadget = class Gadget {",
+        "  constructor() {}",
+        "  static create() { return new Gadget(); }",
+        "  run() {}",
+        "};",
+      ].join("\n");
+      const main_source = [
+        "const { Gadget } = require('./cjs_named_class');",
+        "function use() {",
+        "  const g = new Gadget();",
+        "  g.run();",
+        "  return Gadget.create();",
+        "}",
+      ].join("\n");
+
+      beforeEach(() => {
+        project.update_file(mod_file, mod_source);
+        project.update_file(main_file, main_source);
+      });
+
+      it("marks the class expression as a named export bound in scope to the class", () => {
+        const mod_index = project.get_index_single_file(mod_file);
+        const gadget = Array.from(mod_index!.classes.values()).find(
+          (c) => c.name === ("Gadget" as SymbolName)
+        );
+        expect(gadget!.is_exported).toBe(true);
+        expect(gadget!.export).toEqual({});
+
+        const call = project.resolutions
+          .get_calls_for_file(main_file)
+          .find((c) => c.name === ("create" as SymbolName));
+        expect(project.resolutions.resolve(call!.scope_id, "Gadget" as SymbolName)).toEqual(
+          gadget!.symbol_id
+        );
+      });
+
+      it("resolves a static method call `Gadget.create()` to the class's static method", () => {
+        expect(resolved_target(main_file, "create", "method")).toEqual({
+          targets: ["method:create"],
+          failure: undefined,
+        });
+      });
+
+      it("resolves `new Gadget()` to the class's constructor", () => {
+        expect(resolved_target(main_file, "Gadget", "constructor")).toEqual({
+          targets: ["constructor:constructor"],
+          failure: undefined,
+        });
+      });
+
+      it("resolves an instance method call `g.run()` to the class's instance method", () => {
+        expect(resolved_target(main_file, "run", "method")).toEqual({
+          targets: ["method:run"],
+          failure: undefined,
+        });
+      });
+    });
+
+    it("keeps `const utils = require()` an object-module namespace (no rebind)", () => {
+      const obj_file = file_path("modules/cjs_object_module.js");
+      const main_file = file_path("modules/uses_cjs_object_module.js");
+      project.update_file(
+        obj_file,
+        "function helper() {}\nmodule.exports = { helper };"
+      );
+      project.update_file(
+        main_file,
+        "const utils = require('./cjs_object_module');\nfunction use() { return utils.helper(); }"
+      );
+
+      // A namespace member that resolves to a function is reported with
+      // call_type "function", so match on the callee name alone.
+      const call = project.resolutions
+        .get_calls_for_file(main_file)
+        .find((c) => c.name === ("helper" as SymbolName));
+      const targets = call!.resolutions.map((r) => {
+        const def = project.definitions.get(r.symbol_id);
+        return def ? `${def.kind}:${def.name}` : String(r.symbol_id);
+      });
+      expect(targets).toEqual(["function:helper"]);
+    });
+
+    it("does not rebind an ESM `import * as` namespace of a default-class module", () => {
+      const mod_file = file_path("modules/esm_default_class.js");
+      const main_file = file_path("modules/uses_esm_default_class.js");
+      project.update_file(
+        mod_file,
+        "export default class Widget { static make() {} }"
+      );
+      project.update_file(
+        main_file,
+        "import * as ns from './esm_default_class';\nfunction use() { return ns.make(); }"
+      );
+
+      // `ns` is a namespace object, not the class; `ns.make()` is not a real
+      // call, so it must stay unresolved rather than being rebound to the class.
+      const call = project.resolutions
+        .get_calls_for_file(main_file)
+        .find((c) => c.name === ("make" as SymbolName));
+      expect(call!.resolutions).toEqual([]);
+      expect(call!.resolution_failure).toBeDefined();
+    });
+
+    it("keeps a function default export (`module.exports = fn`) a namespace import", () => {
+      const mod_file = file_path("modules/cjs_default_fn.js");
+      const main_file = file_path("modules/uses_cjs_default_fn.js");
+      project.update_file(
+        mod_file,
+        "function build() {}\nmodule.exports = build;"
+      );
+      project.update_file(
+        main_file,
+        "const build = require('./cjs_default_fn');\nfunction use() { return build(); }"
+      );
+
+      const mod_index = project.get_index_single_file(mod_file);
+      const fn = Array.from(mod_index!.functions.values()).find(
+        (f) => f.name === ("build" as SymbolName)
+      );
+      // The function is the module's default export (public surface)...
+      expect(fn!.is_exported).toBe(true);
+      expect(fn!.export).toEqual({ is_default: true });
+      // ...but the `kind === "class"` gate keeps the require a namespace import:
+      // `build` must not be rebound to the function (only a class default rebinds).
+      const call = project.resolutions
+        .get_calls_for_file(main_file)
+        .find((c) => c.name === ("build" as SymbolName));
+      const bound = project.resolutions.resolve(call!.scope_id, "build" as SymbolName);
+      expect(bound).not.toEqual(fn!.symbol_id);
+    });
+
+    it.each([
+      ["variable-bound", "const C = class Bar {};"],
+      ["object-property", "const obj = {};\nobj.prop = class Bar {};"],
+    ])(
+      "does not capture a non-export named class expression (%s)",
+      (_label, decl) => {
+        const file = file_path("modules/local_class_expr.js");
+        project.update_file(
+          file,
+          `${decl}\nfunction Bar() {}\nfunction use() { return Bar(); }`
+        );
+
+        const index = project.get_index_single_file(file);
+        // The class expression's inner name `Bar` must not register a stray
+        // class definition that would shadow the sibling `function Bar`.
+        expect(Array.from(index!.classes.values())).toEqual([]);
+        const call = project.resolutions
+          .get_calls_for_file(file)
+          .find((c) => c.name === ("Bar" as SymbolName));
+        const targets = call!.resolutions.map((r) => {
+          const def = project.definitions.get(r.symbol_id);
+          return def ? `${def.kind}:${def.name}` : String(r.symbol_id);
+        });
+        expect(targets).toEqual(["function:Bar"]);
+      }
+    );
   });
 
   describe("ES6 Module Resolution", () => {
@@ -247,16 +690,22 @@ describe("Project Integration - JavaScript", () => {
       );
       expect(get_name_call).toBeDefined();
 
-      // Get type info for Product class
-      const type_info = project.get_type_info(product_class!.symbol_id);
-      expect(type_info).toBeDefined();
-      expect(type_info!.methods.size).toBeGreaterThan(0);
+      // Get member index entry for Product class
+      const product_members = project.definitions
+        .get_member_index()
+        .get(product_class!.symbol_id);
+      const get_name_def = product_class!.methods.find(
+        (m) => m.name === ("getName" as SymbolName)
+      )!;
+      expect(product_members?.get("getName" as SymbolName)).toBe(
+        get_name_def.symbol_id
+      );
 
-      // Verify getName method exists in type info
-      const get_name_method_id = type_info!.methods.get(
+      // Verify getName method exists in the member index
+      const get_name_method_id = product_members?.get(
         "getName" as SymbolName
       );
-      expect(get_name_method_id).toBeDefined();
+      expect(get_name_method_id).toBe(get_name_def.symbol_id);
     });
 
     it("should handle prototype methods", async () => {
@@ -293,8 +742,33 @@ describe("Project Integration - JavaScript", () => {
       );
       expect(get_info_call).toBeDefined();
 
-      // Note: Prototype methods may not resolve in the same way as ES6 class methods
-      // due to the dynamic nature of prototype assignment. This is expected.
+    });
+
+    it("types a variable constructed from a constructor function, so its prototype method calls resolve", async () => {
+      const file = file_path("classes/prototype_methods.js");
+      project.update_file(file, load_source("classes/prototype_methods.js"));
+
+      // `new Vehicle()` binds `vehicle` to a `function` definition, not a
+      // class; the prototype methods hang off it as a function collection and
+      // are reachable only through that binding. Each resolves to the
+      // assignment that defined it, named by the line it sits on.
+      const prototype_calls = project.resolutions
+        .get_calls_for_file(file)
+        .filter((call) => [49, 50, 54, 55].includes(call.location.start_line))
+        .map((call) => ({
+          line: call.location.start_line,
+          name: call.name as string,
+          target_lines: call.resolutions.map(
+            (resolution) => resolution.symbol_id.split(":").slice(-5)[0]
+          ),
+        }));
+
+      expect(prototype_calls).toEqual([
+        { line: 49, name: "start", target_lines: ["14"] },
+        { line: 50, name: "getInfo", target_lines: ["24"] },
+        { line: 54, name: "honk", target_lines: ["39"] },
+        { line: 55, name: "getDoors", target_lines: ["43"] },
+      ]);
     });
 
     it("should handle method chaining", async () => {
@@ -675,6 +1149,200 @@ describe("Project Integration - JavaScript", () => {
     });
   });
 
+  describe("Callback parameters", () => {
+    function calls_to(file: FilePath, class_name: string, method_name: string) {
+      const owner = Array.from(project.get_index_single_file(file)!.classes.values()).find(
+        (c) => c.name === (class_name as SymbolName)
+      )!;
+      const target = project.definitions.get_member_index().get(owner.symbol_id)!.get(method_name as SymbolName)!;
+      const calls = project.resolutions
+        .get_calls_for_file(file)
+        .filter((call) => call.name === (method_name as SymbolName))
+        .map((call) => ({
+          line: call.location.start_line,
+          targets: call.resolutions.map((r) => r.symbol_id),
+          reason: call.resolution_failure?.reason,
+        }));
+      return { target, calls };
+    }
+
+    it("types a callback's parameter from the JSDoc function type its callee declares", () => {
+      const file = file_path("callback_parameters/jsdoc.js");
+      project.update_file(
+        file,
+        [
+          "class Foo { m() {} }",
+          "/** @param {function(Foo): void} cb */",
+          "function apply(cb) {}",
+          "/** @param {(f: Foo) => void} cb */",
+          "function arrow(cb) {}",
+          "apply(function (f) { f.m(); });",
+          "arrow((f) => f.m());",
+        ].join("\n")
+      );
+
+      const { target, calls } = calls_to(file, "Foo", "m");
+      expect(calls).toEqual([
+        { line: 6, targets: [target], reason: undefined },
+        { line: 7, targets: [target], reason: undefined },
+      ]);
+    });
+  });
+
+  describe("Self-reference keywords", () => {
+    function calls_named(file: FilePath, name: string) {
+      return project.resolutions
+        .get_calls_for_file(file)
+        .filter((call) => call.name === (name as SymbolName))
+        .map((call) => ({
+          line: call.location.start_line,
+          targets: call.resolutions.map((r) => r.symbol_id),
+          failure: call.resolution_failure,
+        }));
+    }
+
+    function method_of(file: FilePath, class_name: string, method_name: string): SymbolId {
+      const owner = Array.from(project.get_index_single_file(file)!.classes.values()).find(
+        (c) => c.name === (class_name as SymbolName)
+      )!;
+      return owner.methods.find((m) => m.name === (method_name as SymbolName))!.symbol_id;
+    }
+
+    it("resolves `self` through the binding it names, not through the enclosing class", () => {
+      const file = file_path("self_reference/capture.js");
+      project.update_file(
+        file,
+        [
+          "class Other {",
+          "  n() {}",
+          "}",
+          "class Widget {",
+          "  m() {",
+          "    var self = this;",
+          "    self.n();",
+          "  }",
+          "  k() {",
+          "    var self = new Other();",
+          "    self.n();",
+          "  }",
+          "  n() {}",
+          "}",
+        ].join("\n")
+      );
+
+      // `var self = this` reaches Widget.n because `self` holds `this`; a `self`
+      // holding an Other reaches Other.n, which the enclosing class never would.
+      expect(calls_named(file, "n")).toEqual([
+        { line: 7, targets: [method_of(file, "Widget", "n")], failure: undefined },
+        { line: 11, targets: [method_of(file, "Other", "n")], failure: undefined },
+      ]);
+    });
+
+    it("reads a module-level `self` as the global it is, not as a class receiver", () => {
+      const file = file_path("self_reference/worker.js");
+      project.update_file(file, "function onMessage() {\n  self.postMessage();\n}\n");
+
+      expect(calls_named(file, "postMessage")).toEqual([
+        {
+          line: 2,
+          targets: [],
+          failure: {
+            stage: "name_resolution",
+            reason: "name_not_in_scope",
+            partial_info: { last_known_scope: project.get_index_single_file(file)!.references.find(
+              (r) => r.name === ("postMessage" as SymbolName)
+            )!.scope_id },
+          },
+        },
+      ]);
+    });
+  });
+
+  describe("Bindings declared without a value", () => {
+    function run_targets(file: FilePath, name: string) {
+      return project.resolutions
+        .get_calls_for_file(file)
+        .filter((call) => call.name === (name as SymbolName))
+        .map((call) => ({
+          line: call.location.start_line,
+          targets: call.resolutions.map((r) => r.symbol_id),
+          reason: call.resolution_failure?.reason,
+        }));
+    }
+
+    function method_of(file: FilePath, class_name: string, method_name: string): SymbolId {
+      const owner = Array.from(project.get_index_single_file(file)!.classes.values()).find(
+        (c) => c.name === (class_name as SymbolName)
+      )!;
+      return owner.methods.find((m) => m.name === (method_name as SymbolName))!.symbol_id;
+    }
+
+    it("holds the receiver a later `self = this` captures", () => {
+      const file = file_path("declared_without_value/capture.js");
+      project.update_file(
+        file,
+        ["class Widget {", "  m() {", "    var self;", "    self = this;", "    self.n();", "  }", "  n() {}", "}"].join("\n")
+      );
+
+      expect(run_targets(file, "n")).toEqual([
+        { line: 5, targets: [method_of(file, "Widget", "n")], reason: undefined },
+      ]);
+    });
+
+    it("holds the instance every branch constructs, and nothing where the branches disagree", () => {
+      const file = file_path("declared_without_value/branches.js");
+      project.update_file(
+        file,
+        [
+          "class Parser { parse() {} }",
+          "class Lexer { parse() {} }",
+          "function same(c) {",
+          "  let p;",
+          "  if (c) { p = new Parser(); } else { p = new Parser(); }",
+          "  p.parse();",
+          "}",
+          "function differ(c) {",
+          "  let p;",
+          "  if (c) { p = new Parser(); } else { p = new Lexer(); }",
+          "  p.parse();",
+          "}",
+        ].join("\n")
+      );
+
+      expect(run_targets(file, "parse")).toEqual([
+        { line: 6, targets: [method_of(file, "Parser", "parse")], reason: undefined },
+        { line: 11, targets: [], reason: "receiver_type_unknown" },
+      ]);
+    });
+
+    it("holds nothing when a nested function writes the binding, and ignores a write to a same-named inner binding", () => {
+      const file = file_path("declared_without_value/scopes.js");
+      project.update_file(
+        file,
+        [
+          "class Parser { parse() {} }",
+          "class Lexer { parse() {} }",
+          "function nested() {",
+          "  var p;",
+          "  function init() { p = new Parser(); }",
+          "  p.parse();",
+          "}",
+          "function shadowed() {",
+          "  let p;",
+          "  const reset = () => { let p; p = new Lexer(); };",
+          "  p = new Parser();",
+          "  p.parse();",
+          "}",
+        ].join("\n")
+      );
+
+      expect(run_targets(file, "parse")).toEqual([
+        { line: 6, targets: [], reason: "receiver_type_unknown" },
+        { line: 12, targets: [method_of(file, "Parser", "parse")], reason: undefined },
+      ]);
+    });
+  });
+
   describe("Shadowing", () => {
     it("should resolve to local definition when it shadows import", async () => {
       const source = load_source("modules/shadowing.js");
@@ -905,18 +1573,268 @@ function process(x) {}
       expect(child_class).toBeDefined();
 
       // Verify extends is correctly populated through the full project pipeline
-      const child_type_info = project.get_type_info(child_class!.symbol_id)!;
-      expect(child_type_info.extends).toEqual(["Base" as SymbolName]);
+      expect(child_class!.extends).toEqual(["Base" as SymbolName]);
 
       // Verify Base.helper is referenced via this.helper() call
-      const base_helper = project.get_type_info(base_class!.symbol_id)!.methods.get(
-        "helper" as SymbolName
+      const base_helper = project.definitions
+        .get_member_index()
+        .get(base_class!.symbol_id)
+        ?.get("helper" as SymbolName);
+      expect(base_helper).toBe(
+        base_class!.methods.find((m) => m.name === ("helper" as SymbolName))!
+          .symbol_id
       );
-      expect(base_helper).toBeDefined();
 
       const referenced = project.resolutions.get_all_referenced_symbols();
       expect(referenced.has(base_helper!)).toBe(true);
     });
   });
 
+  describe("Re-export barrel — multiple aliases of one source (TASK-364.8)", () => {
+    it("registers both aliases without a forged duplicate export", () => {
+      // Two specifiers share the source name create_class_id but carry
+      // distinct aliases, so each must reach ExportRegistry under its own
+      // export name; a source-name-keyed collapse would make update_file
+      // throw "Duplicate export name create_py_class_id".
+      const barrel = file_path("modules/reexport_barrel_multi_alias.js");
+      const content = `export { create_class_id as create_js_class_id } from "./sf_js";
+export { create_class_id as create_py_class_id } from "./sf_py";
+`;
+
+      expect(() => project.update_file(barrel, content)).not.toThrow();
+
+      // Both aliases survive as distinct exports; a collapse would have thrown
+      // above or dropped one of them here.
+      const export_names = Array.from(project.exports.get_exports(barrel))
+        .map((symbol_id) => symbol_id.split(":").pop())
+        .sort();
+      expect(export_names).toEqual(["create_js_class_id", "create_py_class_id"]);
+    });
+  });
+
+  describe("JSX Component Usage", () => {
+    it("resolves a JSX element to its component definition and marks it referenced", async () => {
+      const source = `
+        function Icon() {
+          return null;
+        }
+        function Panel() {
+          return null;
+        }
+        function App() {
+          return (
+            <Panel>
+              <div>
+                <Icon />
+              </div>
+            </Panel>
+          );
+        }
+      `;
+      const file = file_path("jsx_component_usage.jsx");
+      project.update_file(file, source);
+
+      const index = project.get_index_single_file(file);
+      expect(index).toBeDefined();
+
+      const functions = Array.from(index!.functions.values());
+      const icon_fn = functions.find((f) => f.name === ("Icon" as SymbolName));
+      const panel_fn = functions.find((f) => f.name === ("Panel" as SymbolName));
+      expect(icon_fn).toBeDefined();
+      expect(panel_fn).toBeDefined();
+
+      // The self-closing `<Icon />` and the opening `<Panel>` tag each emit a
+      // call reference to the component.
+      const jsx_calls = index!.references.filter(
+        (r): r is FunctionCallReference =>
+          r.kind === "function_call" &&
+          (r.name === ("Icon" as SymbolName) || r.name === ("Panel" as SymbolName))
+      );
+      const icon_call = jsx_calls.find((c) => c.name === ("Icon" as SymbolName));
+      const panel_call = jsx_calls.find((c) => c.name === ("Panel" as SymbolName));
+      expect(icon_call).toBeDefined();
+      expect(panel_call).toBeDefined();
+
+      expect(
+        project.resolutions.resolve(icon_call!.scope_id, icon_call!.name)
+      ).toBe(icon_fn!.symbol_id);
+      expect(
+        project.resolutions.resolve(panel_call!.scope_id, panel_call!.name)
+      ).toBe(panel_fn!.symbol_id);
+
+      // A component used only as a JSX element has an incoming call edge, so it
+      // is no longer an unreachable entry point.
+      const referenced = project.resolutions.get_all_referenced_symbols();
+      expect(referenced.has(icon_fn!.symbol_id)).toBe(true);
+      expect(referenced.has(panel_fn!.symbol_id)).toBe(true);
+
+      // The lowercase `<div>` is an intrinsic host element, not a component, so
+      // it emits no component call reference (only capitalized tags do).
+      const div_calls = index!.references.filter(
+        (r) => r.kind === "function_call" && r.name === ("div" as SymbolName)
+      );
+      expect(div_calls).toEqual([]);
+    });
+  });
+
+  describe("Member reference reachability (task-351)", () => {
+    function method_symbol(file: FilePath, class_name: string, method: string) {
+      const index = project.get_index_single_file(file);
+      const cls = Array.from(index!.classes.values()).find(
+        (c) => c.name === (class_name as SymbolName)
+      );
+      return project.definitions
+        .get_member_index()
+        .get(cls!.symbol_id)
+        ?.get(method as SymbolName);
+    }
+
+    it("resolves a this.#method() private call to the private method", () => {
+      const file = file_path("private_call.js");
+      project.update_file(
+        file,
+        `class Vault {
+          #open() { return 1; }
+          run() { return this.#open(); }
+        }`
+      );
+      const referenced = project.resolutions.get_all_referenced_symbols();
+      const open = method_symbol(file, "Vault", "#open");
+      expect(open).toBeDefined();
+      expect(referenced.has(open!)).toBe(true);
+    });
+
+    it("resolves calls made from a computed-key method body", () => {
+      const file = file_path("computed_body.js");
+      project.update_file(
+        file,
+        `class Bag {
+          helper() { return 1; }
+          [Symbol.iterator]() { this.helper(); }
+        }`
+      );
+      const referenced = project.resolutions.get_all_referenced_symbols();
+      const helper = method_symbol(file, "Bag", "helper");
+      expect(helper).toBeDefined();
+      expect(referenced.has(helper!)).toBe(true);
+    });
+
+    it("makes a getter reachable when invoked via a bare property read", () => {
+      const file = file_path("getter_read.js");
+      project.update_file(
+        file,
+        `class Widget {
+          get value() { return 1; }
+          compute() { return 2; }
+        }
+        function main() { const w = new Widget(); return w.value; }`
+      );
+      const referenced = project.resolutions.get_all_referenced_symbols();
+      const value = method_symbol(file, "Widget", "value");
+      const compute = method_symbol(file, "Widget", "compute");
+      expect(value).toBeDefined();
+
+      expect(referenced.has(value!)).toBe(true);
+      expect(referenced.has(compute!)).toBe(false);
+
+      const entry_points = new Set(
+        project.get_call_graph({ include_tests: true }).entry_points
+      );
+      expect(entry_points.has(value!)).toBe(false);
+      expect(entry_points.has(compute!)).toBe(true);
+    });
+
+    it("makes a getter reachable even when a same-named setter is declared", () => {
+      // A `get value()` / `set value()` pair share one member name; the getter
+      // must still be reached by a bare read despite the name collision.
+      const file = file_path("getter_setter.js");
+      project.update_file(
+        file,
+        `class Widget {
+          get value() { return 1; }
+          set value(v) {}
+        }
+        function main() { const w = new Widget(); return w.value; }`
+      );
+      const referenced = project.resolutions.get_all_referenced_symbols();
+      const value = method_symbol(file, "Widget", "value");
+      expect(value).toBeDefined();
+      expect(referenced.has(value!)).toBe(true);
+    });
+
+    it("forges an edge only for getters — a non-getter member read creates none, and keeps the method it reads reachable", () => {
+      const file = file_path("field_read.js");
+      project.update_file(
+        file,
+        `class Box {
+          field = 1;
+          plain() { return 3; }
+        }
+        function main() {
+          const b = new Box();
+          const f = b.field;   // plain data-property read
+          const m = b.plain;   // ordinary method read as a value (not a call)
+          return [f, m];
+        }`
+      );
+      const call_targets = new Set(
+        project.resolutions
+          .get_calls_for_file(file)
+          .flatMap((call) => call.resolutions.map((resolution) => resolution.symbol_id))
+      );
+      const plain = method_symbol(file, "Box", "plain");
+      expect(plain).toBeDefined();
+      // Reading a field or a non-getter method as a value must not forge a call
+      // edge — this is what the `accessor_kind === "getter"` guard enforces.
+      expect(call_targets.has(plain!)).toBe(false);
+      // The method read as a value is handed somewhere a call can reach it, so
+      // it is indirectly reachable instead.
+      expect(project.resolutions.get_indirect_reachability().get(plain!)?.reason.type).toBe(
+        "function_reference"
+      );
+    });
+  });
+
+});
+
+describe("CommonJS export status by scope", () => {
+  it("indexes a file whose method-local var shadows the exported module-scope var", async () => {
+    const project = new Project();
+    await project.initialize(FIXTURE_ROOT as FilePath);
+    const file = file_path("modules/shadowed_commonjs_local.js");
+    project.update_file(
+      file,
+      [
+        "var res = {};",
+        "module.exports = res;",
+        "res.send = function send(body) {",
+        "  var res = this;",
+        "  return res;",
+        "};",
+      ].join("\n")
+    );
+    const exported_names = [...project.exports.get_exports(file)].map((id) =>
+      id.split(":").pop()
+    );
+    expect(exported_names).toEqual(["res"]);
+  });
+
+  it("indexes two module-scope function declarations exported under one name", async () => {
+    const project = new Project();
+    await project.initialize(FIXTURE_ROOT as FilePath);
+    const file = file_path("modules/genuine_duplicate_export.js");
+    const code = [
+      "function run() {}",
+      "function run() {}",
+      "module.exports.run = run;",
+    ].join("\n");
+
+    project.update_file(file, code);
+
+    expect(project.get_file_contents().has(file)).toBe(true);
+    const exported_names = [...project.exports.get_exports(file)].map((id) =>
+      id.split(":").pop()
+    );
+    expect(exported_names).toEqual(["run", "run"]);
+  });
 });

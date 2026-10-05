@@ -2,9 +2,10 @@
  * Tests for Python symbol factories
  */
 
-import { describe, it, expect, beforeEach } from "vitest";
-import Parser from "tree-sitter";
-import Python from "tree-sitter-python";
+import { describe, it, expect } from "vitest";
+import { parse_python, make_capture, find_string_node, index_source } from "./test_utils";
+import * as fs from "node:fs";
+import * as path from "node:path";
 import type { SyntaxNode } from "tree-sitter";
 import {
   create_class_id,
@@ -35,10 +36,6 @@ import {
   determine_method_type,
   detect_callback_context,
   detect_function_collection,
-  store_python_docstring,
-  consume_python_docstring,
-  reset_documentation_state,
-  clean_python_docstring,
 } from "./symbol_factories.python";
 import {
   anonymous_function_symbol,
@@ -54,49 +51,15 @@ import {
 } from "@ariadnejs/types";
 import type { FilePath, SymbolName, SymbolId } from "@ariadnejs/types";
 import { node_to_location } from "../../node_to_location";
-import {
-  SemanticCategory,
-  SemanticEntity,
-  type CaptureNode,
-} from "../../../index_single_file";
+import { SemanticCategory, SemanticEntity, type CaptureNode } from "../../capture_types";
 
 // ============================================================================
 // Helpers
 // ============================================================================
 
-function parse_python(code: string): SyntaxNode {
-  const parser = new Parser();
-  parser.setLanguage(Python);
-  const tree = parser.parse(code);
-  return tree.rootNode;
-}
 
 const file_path = "/test.py" as FilePath;
 
-/** Build a CaptureNode from a tree-sitter node. */
-function make_capture(
-  node: SyntaxNode,
-  opts: {
-    name?: string;
-    category?: SemanticCategory;
-    entity?: SemanticEntity;
-  } = {},
-): CaptureNode {
-  return {
-    node,
-    text: node.text as SymbolName,
-    name: opts.name ?? "definition.function",
-    category: opts.category ?? SemanticCategory.DEFINITION,
-    entity: opts.entity ?? SemanticEntity.FUNCTION,
-    location: {
-      file_path,
-      start_line: node.startPosition.row + 1,
-      start_column: node.startPosition.column + 1,
-      end_line: node.endPosition.row + 1,
-      end_column: node.endPosition.column + 1,
-    },
-  };
-}
 
 /** DFS to find first node matching a predicate. */
 function find_node(root: SyntaxNode, predicate: (n: SyntaxNode) => boolean): SyntaxNode | null {
@@ -179,10 +142,6 @@ function find_assignment(root: SyntaxNode): SyntaxNode | null {
   return find_node(root, (n) => n.type === "assignment");
 }
 
-/** Find a string node (for docstrings). */
-function find_string_node(root: SyntaxNode): SyntaxNode | null {
-  return find_node(root, (n) => n.type === "string");
-}
 
 // ============================================================================
 // create_*_id functions
@@ -541,7 +500,7 @@ describe("find_decorator_target", () => {
     expect(result).toMatch(/^class:\/test\.py:\d+:\d+:\d+:\d+:Foo$/);
   });
 
-  it("should return property SymbolId for @property decorator on method", () => {
+  it("returns the method SymbolId for a @property decorator on a method", () => {
     const code = "class Foo:\n  @property\n  def name(self):\n    return self._name";
     const root = parse_python(code);
     const dec = find_decorator(root, "property")!;
@@ -554,7 +513,7 @@ describe("find_decorator_target", () => {
 
     const result = find_decorator_target(capture);
     expect(result).toBeDefined();
-    expect(result).toMatch(/^property:\/test\.py:\d+:\d+:\d+:\d+:name$/);
+    expect(result).toMatch(/^method:\/test\.py:\d+:\d+:\d+:\d+:name$/);
   });
 
   it("should return method SymbolId for non-property decorator on class method", () => {
@@ -768,13 +727,13 @@ describe("determine_method_type", () => {
     expect(result).toEqual({ static: true });
   });
 
-  it("should detect @classmethod", () => {
+  it("detects @classmethod as class-bound, keeping its body scope", () => {
     const code = "class Foo:\n  @classmethod\n  def create(cls):\n    pass";
     const root = parse_python(code);
     const func_def = find_function_def(root, "create")!;
 
     const result = determine_method_type(func_def);
-    expect(result).toEqual({ abstract: true });
+    expect(result).toEqual({ static: true });
   });
 
   it("should return empty object for regular method", () => {
@@ -871,6 +830,13 @@ describe("extract_export_info (Python visibility via naming conventions)", () =>
 
 describe("detect_callback_context", () => {
   describe("direct function call patterns", () => {
+    it("records a positional lambda's position, and none for one passed by keyword", () => {
+      const positional = detect_callback_context(find_lambda(parse_python("registry.each(key, lambda f: f.m())"))!, file_path);
+      expect(positional.argument_index).toEqual(1);
+      const keyword = detect_callback_context(find_lambda(parse_python("registry.each(key, cb=lambda f: f.m())"))!, file_path);
+      expect(keyword.argument_index).toEqual(null);
+    });
+
     it("should detect callback in map(lambda x: ...)", () => {
       const code = "result = list(map(lambda x: x * 2, items))";
       const root = parse_python(code);
@@ -1124,97 +1090,175 @@ describe("detect_function_collection", () => {
     expect(result!.collection_type).toBe("Array");
     expect(result!.stored_functions.length).toBe(1);
   });
+
+  it("should detect list splat operator", () => {
+    const code = "handlers = [*BASE_HANDLERS, fn1]";
+    const root = parse_python(code);
+    const assignment = find_assignment(root)!;
+
+    const result = detect_function_collection(assignment, file_path);
+    expect(result).not.toBeNull();
+    expect(result!.collection_type).toBe("Array");
+    expect(result!.stored_references).toContain("BASE_HANDLERS");
+    expect(result!.stored_references).toContain("fn1");
+  });
+
+  it("should detect dict splat operator", () => {
+    const code = "config = {**BASE_CONFIG, 'extra': fn1}";
+    const root = parse_python(code);
+    const assignment = find_assignment(root)!;
+
+    const result = detect_function_collection(assignment, file_path);
+    expect(result).not.toBeNull();
+    expect(result!.collection_type).toBe("Object");
+    expect(result!.stored_references).toContain("BASE_CONFIG");
+    expect(result!.stored_references).toContain("fn1");
+  });
+
+  it("should detect lambda functions in list with anonymous symbols", () => {
+    const code = "handlers = [lambda x: x + 1, lambda y: y * 2]";
+    const root = parse_python(code);
+    const assignment = find_assignment(root)!;
+
+    const result = detect_function_collection(assignment, file_path);
+    expect(result).not.toBeNull();
+    expect(result!.collection_type).toBe("Array");
+    expect(result!.stored_functions).toHaveLength(2);
+    expect(result!.stored_functions[0]).toMatch(/^function:.*:<anonymous>$/);
+    expect(result!.stored_references).toHaveLength(0);
+  });
+
+  it("should detect lambda functions in dict values", () => {
+    const code = "handlers = {'a': lambda x: x + 1, 'b': lambda y: y * 2}";
+    const root = parse_python(code);
+    const assignment = find_assignment(root)!;
+
+    const result = detect_function_collection(assignment, file_path);
+    expect(result).not.toBeNull();
+    expect(result!.collection_type).toBe("Object");
+    expect(result!.stored_functions).toHaveLength(2);
+  });
+
+  it("should return null for empty list", () => {
+    const code = "handlers = []";
+    const root = parse_python(code);
+    const assignment = find_assignment(root)!;
+
+    const result = detect_function_collection(assignment, file_path);
+    expect(result).toBeNull();
+  });
+
+  it("should return null for empty dict", () => {
+    const code = "config = {}";
+    const root = parse_python(code);
+    const assignment = find_assignment(root)!;
+
+    const result = detect_function_collection(assignment, file_path);
+    expect(result).toBeNull();
+  });
+
+  it("should return null for non-function list", () => {
+    const code = "items = [1, 2, 3]";
+    const root = parse_python(code);
+    const assignment = find_assignment(root)!;
+
+    const result = detect_function_collection(assignment, file_path);
+    expect(result).toBeNull();
+  });
+
+  it("should return null for string assignment", () => {
+    const code = "name = 'hello'";
+    const root = parse_python(code);
+    const assignment = find_assignment(root)!;
+
+    const result = detect_function_collection(assignment, file_path);
+    expect(result).toBeNull();
+  });
+
+  it.each([
+    ["list", "suites = [root, child]"],
+    ["tuple", "suites = (root, child)"],
+  ])("marks a %s literal whose every element is a bare name as holding references", (_label, code) => {
+    const result = detect_function_collection(find_assignment(parse_python(code))!, file_path);
+
+    expect(result?.elements_are_references).toBe(true);
+  });
+
+  it.each([
+    ["a list splat", "suites = [root, *rest]"],
+    ["a tuple splat", "suites = (root, *rest)"],
+    ["a call", "suites = [root, make()]"],
+    ["an attribute read", "suites = [root, models.child]"],
+    ["a lambda", "suites = [root, lambda: None]"],
+  ])("leaves a literal holding %s unmarked", (_label, code) => {
+    const result = detect_function_collection(find_assignment(parse_python(code))!, file_path);
+
+    expect(result).not.toBeNull();
+    expect(result?.elements_are_references).toBeUndefined();
+  });
 });
 
 // ============================================================================
-// Docstring management
-// ============================================================================
+// extract_collection_source
+describe("Enum base list agreement between the query gate and the builder", () => {
+  // `classify_class_bases` decides whether a class is an enum; the
+  // `@_enum_base` gate in python.scm decides whether its class-body
+  // assignments are captured as members. A name in one list but not the other
+  // yields an enum with no members, or members with no enum.
+  it("states the same enum bases in python.scm and symbol_factories.python.ts", () => {
+    const here = __dirname;
+    const query = fs.readFileSync(
+      path.join(here, "../queries/python.scm"),
+      "utf-8"
+    );
+    const factory = fs.readFileSync(
+      path.join(here, "symbol_factories.python.ts"),
+      "utf-8"
+    );
 
-describe("clean_python_docstring", () => {
-  it("should strip triple double quotes from single-line docstring", () => {
-    expect(clean_python_docstring("\"\"\"Hello\"\"\"")).toBe("Hello");
-  });
+    const query_bases = query.match(
+      /#match\? @_enum_base "\^\(([^)]*)\)\$"/
+    )?.[1];
+    const factory_bases = factory.match(
+      /const ENUM_BASES = \/\^\(([^)]*)\)\$\//
+    )?.[1];
 
-  it("should strip triple single quotes from single-line docstring", () => {
-    expect(clean_python_docstring("'''Hello'''")).toBe("Hello");
-  });
-
-  it("should strip and dedent multi-line docstring", () => {
-    const raw = "\"\"\"\n  Hello\n  World\n\"\"\"";
-    expect(clean_python_docstring(raw)).toBe("Hello\nWorld");
-  });
-
-  it("should handle empty docstring", () => {
-    expect(clean_python_docstring("\"\"\"\"\"\"")).toBe("");
-  });
-
-  it("should handle docstring with varying indentation", () => {
-    const raw = "\"\"\"\n    First line\n      Indented\n    Back\n\"\"\"";
-    expect(clean_python_docstring(raw)).toBe("First line\n  Indented\nBack");
+    expect(query_bases).toEqual("Enum|IntEnum|Flag|IntFlag|StrEnum");
+    expect(factory_bases).toEqual(query_bases);
   });
 });
 
-describe("store_python_docstring / consume_python_docstring / reset_documentation_state", () => {
-  beforeEach(() => {
-    reset_documentation_state();
+/**
+ * A local binding's declared annotation is the evidence type-parameter binding
+ * reads when the value a generic call is given is held in an annotated
+ * assignment rather than passed as a parameter. It reaches that reader only
+ * from the definition's `type`.
+ */
+describe("a local binding's declared annotation (Python)", () => {
+  function declared_bindings(code: string) {
+    const index = index_source(code, "python", "locals.py" as FilePath);
+    return [...index.variables.values()].map((def) => ({
+      name: def.name,
+      kind: def.kind,
+      type: def.type,
+    }));
+  }
+
+  it("records the generic annotation a binding declares", () => {
+    expect(declared_bindings("class Router: pass\nrouters: list[Router] = []")).toEqual([
+      { name: "routers", kind: "variable", type: "list[Router]" },
+    ]);
   });
 
-  it("should store and consume a docstring keyed by definition start line", () => {
-    const code = "def foo():\n  \"\"\"A docstring.\"\"\"\n  pass";
-    const root = parse_python(code);
-
-    // Find the string node (the docstring)
-    const string_node = find_string_node(root)!;
-    expect(string_node).not.toBeNull();
-
-    const capture = make_capture(string_node, {
-      name: "definition.documentation",
-      entity: SemanticEntity.DOCUMENTATION,
-    });
-
-    store_python_docstring(capture);
-
-    // The function_definition starts at line 1
-    const consumed = consume_python_docstring(1);
-    expect(consumed).toBe("A docstring.");
+  it("records the annotation a single-valued binding declares", () => {
+    expect(declared_bindings("class Router: pass\nsingle: Router = Router()")).toEqual([
+      { name: "single", kind: "variable", type: "Router" },
+    ]);
   });
 
-  it("should return undefined when consuming a non-existent docstring", () => {
-    const result = consume_python_docstring(999);
-    expect(result).toBeUndefined();
-  });
-
-  it("should consume only once (second call returns undefined)", () => {
-    const code = "def bar():\n  \"\"\"Doc.\"\"\"\n  pass";
-    const root = parse_python(code);
-    const string_node = find_string_node(root)!;
-    const capture = make_capture(string_node, {
-      name: "definition.documentation",
-      entity: SemanticEntity.DOCUMENTATION,
-    });
-
-    store_python_docstring(capture);
-
-    const first = consume_python_docstring(1);
-    expect(first).toBe("Doc.");
-
-    const second = consume_python_docstring(1);
-    expect(second).toBeUndefined();
-  });
-
-  it("should clear all stored docstrings on reset", () => {
-    const code = "def baz():\n  \"\"\"Baz doc.\"\"\"\n  pass";
-    const root = parse_python(code);
-    const string_node = find_string_node(root)!;
-    const capture = make_capture(string_node, {
-      name: "definition.documentation",
-      entity: SemanticEntity.DOCUMENTATION,
-    });
-
-    store_python_docstring(capture);
-    reset_documentation_state();
-
-    const result = consume_python_docstring(1);
-    expect(result).toBeUndefined();
+  it("records no type for a binding that declares no annotation", () => {
+    expect(declared_bindings("class Router: pass\ninferred = Router()")).toEqual([
+      { name: "inferred", kind: "variable", type: undefined },
+    ]);
   });
 });

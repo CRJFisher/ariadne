@@ -3,9 +3,9 @@ id: task-47
 title: Remove custom prebuild system
 status: Done
 assignee:
-  - '@chuck'
-created_date: '2025-07-29'
-updated_date: '2025-07-29'
+  - "@chuck"
+created_date: "2025-07-29"
+updated_date: "2025-07-29"
 labels: []
 dependencies: []
 ---
@@ -32,9 +32,11 @@ Tree-sitter packages already include platform-specific prebuilt binaries. Our cu
 ## Implementation Notes
 
 ### Approach Taken
+
 Completely removed the custom prebuild system and relied on tree-sitter's built-in prebuild support. This simplifies the codebase and reduces maintenance burden.
 
 ### Changes Made
+
 1. **Removed prebuild and github-release jobs** from `.github/workflows/release-and-publish.yml` - The workflow now only handles npm publishing
 2. **Removed postinstall script entirely** - Tree-sitter packages handle their own prebuilds, so no custom postinstall logic is needed
 3. **Removed tar dependency** from `packages/core/package.json` - No longer needed for extracting prebuild archives
@@ -43,10 +45,12 @@ Completely removed the custom prebuild system and relied on tree-sitter's built-
    - Updated `docs/releasing.md` to remove references to prebuild binaries in the release process
 
 ### Technical Decisions
+
 - Decided to remove the postinstall script entirely rather than keeping a simplified version, as tree-sitter packages handle everything automatically
 - No changes needed to .gitignore as there were no prebuild directory references
 
 ### Files Modified
+
 - `.github/workflows/release-and-publish.yml` - Removed prebuild and github-release jobs
 - `packages/core/package.json` - Removed postinstall script, tar dependency, and scripts/postinstall.js from files array
 - `packages/core/scripts/postinstall.js` - Deleted entirely

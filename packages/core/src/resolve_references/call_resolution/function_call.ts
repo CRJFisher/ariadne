@@ -1,112 +1,165 @@
 /**
- * Function Call Resolution
+ * Resolves bare function calls (no receiver) to their target definitions.
  *
- * Resolves bare function calls (no receiver) by:
- * 1. Resolving the function name via scope-based resolution
- * 2. Skipping method/constructor definitions (they require receivers)
- * 3. Falling back to collection dispatch and callable instance patterns
- *
- * Integration points:
- * - Uses ResolutionRegistry for EAGER O(1) name resolution
- * - Uses DefinitionRegistry for definition kind checks
- * - Uses collection dispatch for Map/Array/Object function stores
- * - Uses callable instance for Python __call__ method resolution
+ * A path-qualified call (`worker::create`) binds through its qualifier first,
+ * honouring the author's path over a same-name local. A bare call resolves by
+ * name, skips method/constructor definitions (they require a receiver), then
+ * follows a binding to what it holds — the functions of the collection it was
+ * read out of, or the callable or class object it carries — and falls back to
+ * the Python callable-instance protocol.
  */
 
 import type {
   SymbolId,
   FunctionCallReference,
+  Result,
+  ResolutionFailure,
 } from "@ariadnejs/types";
+import { err, is_ok, ok } from "@ariadnejs/types";
 import type { CallResolutionContext } from "./call_resolver";
-import type { ResolutionRegistry } from "../resolve_references";
+import type { ResolutionRegistry } from "../resolution_registry";
 import { resolve_collection_dispatch } from "./collection_dispatch";
 import { resolve_callable_instance } from "./callable_instance.python";
+import { resolve_via_path_prefix_rust } from "./function_call.rust";
+import { resolve_value_source, type ValueSource } from "./value_source";
+import { unbound_name_failure } from "./outside_corpus";
 
 /**
  * Find alternative resolution by skipping method/constructor definitions.
  *
  * When a function_call resolves to a method (which requires a receiver),
  * walk up the scope tree to find an import or function with the same name.
- *
- * @param ref - The function call reference
- * @param context - Call resolution context
- * @param resolver - Name resolution provider
- * @returns The resolved SymbolId or null if no valid resolution found
  */
 function find_function_resolution(
   ref: FunctionCallReference,
   context: CallResolutionContext,
   resolver: ResolutionRegistry
-): SymbolId | null {
+): Result<SymbolId, ResolutionFailure> {
   const initial = resolver.resolve(ref.scope_id, ref.name);
-  if (!initial) return null;
+  if (!initial) {
+    // A path-qualified call is bound by its head (`fs` in `fs::read`), never by
+    // the terminal, so the head is the name whose absence explains the failure.
+    return err(
+      unbound_name_failure(
+        ref.path_prefix?.[0] ?? ref.name,
+        ref.scope_id,
+        "name_resolution",
+        context
+      )
+    );
+  }
 
-  // Check if resolution is valid for a function call
   const def = context.definitions.get(initial);
-  if (!def) return initial; // Trust unresolved symbols
+  if (!def) return ok(initial); // Trust unresolved symbols
 
   // Methods and constructors require receivers - can't be called as bare functions
   if (def.kind !== "method" && def.kind !== "constructor") {
-    return initial; // Valid: function, variable, import
+    return ok(initial);
   }
 
-  // Resolved to method/constructor - this can't be the target of a bare function call
-  // Find alternative by walking up from the class scope
+  // Find an alternative by walking up from the class scope to where imports live.
   const method_body_scope = def.body_scope_id;
-  if (!method_body_scope) return null;
+  if (!method_body_scope) {
+    return err({
+      stage: "name_resolution",
+      reason: "definition_has_no_body_scope",
+      partial_info: { last_known_scope: ref.scope_id },
+    });
+  }
 
   const body_scope = context.scopes.get_scope(method_body_scope);
-  if (!body_scope?.parent_id) return null;
-
-  // Class scope's parent should be module scope with imports
-  const class_scope = context.scopes.get_scope(body_scope.parent_id);
-  if (!class_scope?.parent_id) return null;
-
-  // Try resolving from module scope (where imports live)
-  const alternative = resolver.resolve(class_scope.parent_id, ref.name);
-  if (!alternative) return null;
-
-  // Verify the alternative is valid for a function call
-  const alt_def = context.definitions.get(alternative);
-  if (!alt_def) return alternative;
-
-  if (alt_def.kind === "method" || alt_def.kind === "constructor") {
-    return null; // Still a method/constructor - no valid resolution
+  if (!body_scope?.parent_id) {
+    return err({
+      stage: "name_resolution",
+      reason: "definition_has_no_body_scope",
+      partial_info: {
+        resolved_receiver_type: initial,
+        last_known_scope: method_body_scope,
+      },
+    });
   }
 
-  return alternative;
+  const class_scope = context.scopes.get_scope(body_scope.parent_id);
+  if (!class_scope?.parent_id) {
+    return err({
+      stage: "name_resolution",
+      reason: "no_parent_class",
+      partial_info: {
+        resolved_receiver_type: initial,
+        last_known_scope: body_scope.parent_id,
+      },
+    });
+  }
+
+  const alternative = resolver.resolve(class_scope.parent_id, ref.name);
+  if (!alternative) {
+    return err({
+      stage: "name_resolution",
+      reason: "name_not_in_scope",
+      partial_info: { last_known_scope: class_scope.parent_id },
+    });
+  }
+
+  const alt_def = context.definitions.get(alternative);
+  if (!alt_def) return ok(alternative);
+
+  if (alt_def.kind === "method" || alt_def.kind === "constructor") {
+    return err({
+      stage: "name_resolution",
+      reason: "name_not_in_scope",
+      partial_info: { last_known_scope: class_scope.parent_id },
+    });
+  }
+
+  return ok(alternative);
 }
 
 /**
  * Resolve a function call to zero, one, or more symbols.
  *
  * Handles bare function calls (no receiver):
- * 1. Resolve the name, skipping method/constructor definitions
- * 2. Fall back to collection dispatch if unresolved or collection-sourced
+ * 1. Resolve the name, skipping method/constructor definitions; a name that
+ *    sibling branches bind to different symbols resolves to each of them
+ * 2. Fall back to collection dispatch if unresolved or collection-sourced;
+ *    otherwise follow a binding holding a callable or a class object to it
  * 3. Fall back to Python callable instance (__call__ method)
  *
- * @param ref - Function call reference from semantic index
- * @param context - Call resolution context with all required registries
- * @param resolver - Name resolution provider
- * @returns Array of resolved symbol_ids (empty if resolution fails)
+ * @returns Resolved symbol_ids on success, or a `ResolutionFailure` describing
+ *          why no valid resolution could be produced.
  */
 export function resolve_function_call(
   ref: FunctionCallReference,
   context: CallResolutionContext,
   resolver: ResolutionRegistry
-): SymbolId[] {
-  // Step 1: Resolve function name
-  const func_symbol = find_function_resolution(ref, context, resolver);
-
-  let resolved_symbols: SymbolId[];
-  if (func_symbol) {
-    resolved_symbols = [func_symbol];
-  } else {
-    resolved_symbols = [];
+): Result<SymbolId[], ResolutionFailure> {
+  // Path-qualified calls resolve via the qualifier first — the author wrote the
+  // path, so honour it. This binds the terminal under its module/type rather
+  // than letting a same-name local shadow capture it via the scope map. The
+  // leaf self-guards and returns null for unqualified calls.
+  const via_path = resolve_via_path_prefix_rust(ref, context);
+  if (via_path) {
+    return ok([via_path]);
   }
 
-  // Step 2: Check for collection dispatch
+  // Step 1: Resolve function name
+  const name_result = find_function_resolution(ref, context, resolver);
+
+  let resolved_symbols: SymbolId[] = [];
+  if (is_ok(name_result)) {
+    resolved_symbols = [name_result.value];
+    // A name sibling branches bind to different symbols is reached through
+    // every one of them: which branch ran is not knowable here.
+    const branch_targets = resolver.resolve_all(ref.scope_id, ref.name);
+    if (branch_targets.length > 1 && branch_targets[0] === name_result.value) {
+      resolved_symbols = [...branch_targets];
+    }
+  }
+
+  // Step 2: Check for collection dispatch, or what the binding holds
   let try_dispatch = resolved_symbols.length === 0;
+  // Kept for step 3: an instance the binding holds is what dispatches through
+  // `__call__`, and the walk that found it runs once.
+  let held_value: ValueSource | null = null;
   if (resolved_symbols.length === 1) {
     const def = context.definitions.get(resolved_symbols[0]);
     if (
@@ -115,34 +168,57 @@ export function resolve_function_call(
       def.collection_source
     ) {
       try_dispatch = true;
+    } else {
+      // A class object is called to construct it: the class stands in for
+      // the call, and its constructor joins it once the call is recorded. An
+      // instance is left to the callable-instance step below.
+      held_value = resolve_value_source(resolved_symbols[0], ref.location, context);
+      if (held_value?.kind === "callable") {
+        resolved_symbols = [held_value.symbol_id];
+      } else if (held_value?.kind === "class_object") {
+        resolved_symbols = [held_value.class_id];
+      }
     }
   }
 
   if (try_dispatch) {
-    const dispatch_ids = resolve_collection_dispatch(
+    const dispatch_result = resolve_collection_dispatch(
       ref,
       context.definitions,
       resolver
     );
-    if (dispatch_ids.length > 0) {
-      resolved_symbols = dispatch_ids;
+    if (is_ok(dispatch_result) && dispatch_result.value.length > 0) {
+      resolved_symbols = dispatch_result.value;
     }
   }
 
+  // @language python
   // Step 3: Python-specific callable instance (__call__ method)
   if (
     resolved_symbols.length === 1 &&
-    ref.location.file_path.endsWith(".py")
+    context.languages.get(ref.location.file_path) === "python"
   ) {
-    const call_method = resolve_callable_instance(
-      resolved_symbols[0],
-      context.definitions,
-      context.types
-    );
+    const call_method = resolve_callable_instance(resolved_symbols[0], held_value, context);
     if (call_method) {
       resolved_symbols = [call_method];
     }
   }
 
-  return resolved_symbols;
+  if (resolved_symbols.length === 0) {
+    // Prefer the original name-resolution failure (most specific). If name
+    // resolution succeeded but downstream dispatch produced nothing, the
+    // failure is in collection dispatch, not name resolution.
+    return is_ok(name_result)
+      ? err({
+          stage: "collection_dispatch",
+          reason: "collection_dispatch_miss",
+          partial_info: {
+            resolved_receiver_type: name_result.value,
+            last_known_scope: ref.scope_id,
+          },
+        })
+      : name_result;
+  }
+
+  return ok(resolved_symbols);
 }

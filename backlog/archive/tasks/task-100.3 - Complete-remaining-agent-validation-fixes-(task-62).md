@@ -3,8 +3,8 @@ id: task-100.3
 title: Complete remaining agent validation fixes (task-62)
 status: Done
 assignee: []
-created_date: '2025-08-04 11:55'
-updated_date: '2025-08-05 10:39'
+created_date: "2025-08-04 11:55"
+updated_date: "2025-08-05 10:39"
 labels: []
 dependencies:
   - task-62

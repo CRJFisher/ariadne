@@ -14,11 +14,13 @@ import type {
   TypeReference,
   MethodCallReference,
   SelfReferenceCall,
-  ConstructorCallReference,
   PropertyAccessReference,
   VariableReference,
   AssignmentReference,
   FunctionCallReference,
+  SymbolName,
+  VariableDefinition,
+  IterationSource,
 } from "@ariadnejs/types";
 import { build_index_single_file } from "./index_single_file";
 import type { ParsedFile } from "./parsed_file";
@@ -39,6 +41,7 @@ function create_parsed_file(
     file_end_column: lines[lines.length - 1]?.length || 0,
     tree,
     lang: language,
+    source: code,
   };
 }
 
@@ -351,46 +354,37 @@ result = data['key'].attribute
       }
     });
 
-    it("should handle self and cls in property chains", () => {
+    it("reads self and cls chains and mints nothing for a write target", () => {
       const code = `
 class MyClass:
     def method(self):
         self.instance_var = 42
         self.prop.nested.value = 10
+        return self.readable
 
     @classmethod
     def class_method(cls):
         cls.class_var = "test"
-        cls.prop.value = 20
+        return cls.readable
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
       const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const result = build_index_single_file(parsed_file, tree, "python");
 
-      const member_accesses = result.references.filter(
-        (ref): ref is PropertyAccessReference => ref.kind === "property_access"
-      );
+      const member_reads = result.references
+        .filter(
+          (ref): ref is PropertyAccessReference => ref.kind === "property_access"
+        )
+        .map((ref) => ({ name: ref.name, chain: ref.property_chain }));
 
-      // Check self.instance_var
-      const self_access = member_accesses.find(
-        (ref) => ref.name === "instance_var"
-      );
-      expect(self_access).toBeDefined();
-      if (self_access?.property_chain) {
-        expect(self_access.property_chain).toContain("self");
-        expect(self_access.property_chain).toContain("instance_var");
-      }
-
-      // Check cls.class_var
-      const cls_access = member_accesses.find(
-        (ref) => ref.name === "class_var"
-      );
-      expect(cls_access).toBeDefined();
-      if (cls_access?.property_chain) {
-        expect(cls_access.property_chain).toContain("cls");
-        expect(cls_access.property_chain).toContain("class_var");
-      }
+      // A write invokes the setter, so `instance_var` and `class_var` mint no
+      // read; `self.prop` is read on the way to writing its member.
+      expect(member_reads).toEqual([
+        { name: "prop", chain: ["self", "prop"] },
+        { name: "readable", chain: ["self", "readable"] },
+        { name: "readable", chain: ["cls", "readable"] },
+      ]);
     });
   });
 
@@ -424,7 +418,7 @@ class Calculator:
       expect(type_refs.length).toBeGreaterThan(0);
     });
 
-    it("should handle constructor calls", () => {
+    it("records a class instantiation as a call carrying the assignment target it lands in", () => {
       const code = `
 class Person:
     def __init__(self, name: str):
@@ -438,11 +432,18 @@ person = Person("Alice")
 
       const index = build_index_single_file(parsed_file, tree, "python");
 
-      // Check that constructor call was captured
-      const constructs = index.references.filter(
-        (r): r is ConstructorCallReference => r.kind === "constructor_call"
-      );
-      expect(constructs.length).toBeGreaterThan(0);
+      // A Python construction is a plain call in the index; the constructor
+      // rewrite happens once the callee resolves to a class, in resolution.
+      const calls = index.references
+        .filter((r): r is FunctionCallReference => r.kind === "function_call")
+        .map((r) => ({ name: r.name, target: r.potential_construct_target }));
+      expect(calls).toEqual([
+        {
+          name: "Person",
+          target: { file_path, start_line: 6, start_column: 1, end_line: 6, end_column: 6 },
+        },
+      ]);
+      expect(index.references.filter((r) => r.kind === "constructor_call")).toEqual([]);
     });
   });
 
@@ -451,7 +452,7 @@ person = Person("Alice")
   // ============================================================================
 
   describe("Class Instantiation Metadata", () => {
-    it("should extract construct_target for class instantiation", () => {
+    it("carries the assignment target on plain, argument-bearing and annotated instantiations", () => {
       const code = `
 obj = MyClass()
 instance = MyClass(arg1, arg2)
@@ -462,27 +463,26 @@ typed_obj: MyClass = MyClass()
       const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const result = build_index_single_file(parsed_file, tree, "python");
 
-      // Find constructor calls
-      const constructor_calls = result.references.filter(
-        (ref): ref is ConstructorCallReference => ref.kind === "constructor_call"
-      );
-      expect(constructor_calls.length).toBeGreaterThan(0);
-
-      // Check MyClass() constructor
-      const my_class_construct = constructor_calls.find(
-        (ref) => ref.name === "MyClass"
-      );
-      expect(my_class_construct).toBeDefined();
-      if (my_class_construct?.construct_target) {
-        // Should point to the variable being assigned
-        expect(my_class_construct.construct_target).toHaveProperty("start_line");
-        expect(my_class_construct.construct_target).toHaveProperty(
-          "start_column"
-        );
-      }
+      const calls = result.references
+        .filter((ref): ref is FunctionCallReference => ref.kind === "function_call")
+        .map((ref) => ({ name: ref.name, target: ref.potential_construct_target }));
+      expect(calls).toEqual([
+        {
+          name: "MyClass",
+          target: { file_path, start_line: 2, start_column: 1, end_line: 2, end_column: 3 },
+        },
+        {
+          name: "MyClass",
+          target: { file_path, start_line: 3, start_column: 1, end_line: 3, end_column: 8 },
+        },
+        {
+          name: "MyClass",
+          target: { file_path, start_line: 4, start_column: 1, end_line: 4, end_column: 9 },
+        },
+      ]);
     });
 
-    it("should handle nested constructor calls", () => {
+    it("carries the assignment target on the outer call only, never on one passed to it as an argument", () => {
       const code = `
 wrapper = Wrapper(Inner(data))
 result = process(Factory.create())
@@ -492,21 +492,36 @@ result = process(Factory.create())
       const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const result = build_index_single_file(parsed_file, tree, "python");
 
-      const constructor_calls = result.references.filter(
-        (ref): ref is ConstructorCallReference => ref.kind === "constructor_call"
-      );
-
-      // Check Wrapper constructor
-      const wrapper_construct = constructor_calls.find(
-        (ref) => ref.name === "Wrapper"
-      );
-      expect(wrapper_construct).toBeDefined();
-
-      // Check Inner constructor (nested)
-      const inner_construct = constructor_calls.find(
-        (ref) => ref.name === "Inner"
-      );
-      expect(inner_construct).toBeDefined();
+      const calls = result.references
+        .filter(
+          (ref): ref is FunctionCallReference | MethodCallReference =>
+            ref.kind === "function_call" || ref.kind === "method_call"
+        )
+        .map((ref) => ({ kind: ref.kind, name: ref.name, target: ref.potential_construct_target }));
+      // A value passed to a call belongs to the callee's parameter: `wrapper`
+      // holds what `Wrapper` builds, never the `Inner` it was given.
+      expect(calls).toEqual([
+        {
+          kind: "function_call",
+          name: "Wrapper",
+          target: { file_path, start_line: 2, start_column: 1, end_line: 2, end_column: 7 },
+        },
+        {
+          kind: "function_call",
+          name: "Inner",
+          target: undefined,
+        },
+        {
+          kind: "function_call",
+          name: "process",
+          target: { file_path, start_line: 3, start_column: 1, end_line: 3, end_column: 6 },
+        },
+        {
+          kind: "method_call",
+          name: "create",
+          target: undefined,
+        },
+      ]);
     });
   });
 
@@ -1039,7 +1054,7 @@ class UntypedClass:
       expect(type_refs.length).toBeLessThanOrEqual(1);
     });
 
-    it("should handle standalone constructor calls without assignment", () => {
+    it("carries no assignment target on a call that lands in none", () => {
       const code = `
 MyClass()
 print(Factory.create())
@@ -1049,17 +1064,20 @@ print(Factory.create())
       const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const result = build_index_single_file(parsed_file, tree, "python");
 
-      const constructor_calls = result.references.filter(
-        (ref): ref is ConstructorCallReference => ref.kind === "constructor_call"
-      );
-
-      // Standalone MyClass() won't have construct_target
-      const standalone = constructor_calls.find(
-        (ref) => ref.name === "MyClass"
-      );
-      expect(standalone).toBeDefined();
-      // construct_target should be undefined for standalone calls
-      expect(standalone?.construct_target).toBeUndefined();
+      const calls = result.references
+        .filter(
+          (ref): ref is FunctionCallReference | MethodCallReference =>
+            ref.kind === "function_call" || ref.kind === "method_call"
+        )
+        .map((ref) => ({
+          name: ref.name,
+          has_target: "potential_construct_target" in ref,
+        }));
+      expect(calls).toEqual([
+        { name: "MyClass", has_target: false },
+        { name: "print", has_target: false },
+        { name: "create", has_target: false },
+      ]);
     });
 
     it("should extract method resolution metadata for all receiver patterns", () => {
@@ -1085,43 +1103,45 @@ service2.get_data()
       const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const result = build_index_single_file(parsed_file, tree, "python");
 
-      // Scenario 1: Receiver from type annotation
-      // Verify the assignment is captured
-      const service1_assignment = result.references.find(
-        (ref): ref is AssignmentReference =>
-          ref.kind === "assignment" && ref.name === "service1"
-      );
-      expect(service1_assignment).toBeDefined();
+      // Scenario 1: the annotated assignment is recorded, and both `get_data`
+      // calls carry the receiver the method is looked up on.
+      const service1_assignments = result.references
+        .filter(
+          (ref): ref is AssignmentReference =>
+            ref.kind === "assignment" && ref.name === "service1"
+        )
+        .map((ref) => ref.location.start_line);
+      // Recorded twice: a typed assignment matches the patterns with and
+      // without a type annotation. Pre-existing, owned by TASK-374.5.
+      expect(service1_assignments).toEqual([10, 10]);
 
-      // Note: assignment_type from type annotations is a future enhancement
+      const method_calls = result.references
+        .filter(
+          (ref): ref is MethodCallReference =>
+            ref.kind === "method_call" && ref.name === "get_data"
+        )
+        .map((ref) => ({
+          line: ref.location.start_line,
+          receiver_line: ref.receiver_location?.start_line ?? null,
+        }));
+      expect(method_calls).toEqual([
+        { line: 11, receiver_line: 11 },
+        { line: 15, receiver_line: 15 },
+      ]);
 
-      // Verify method calls have receiver_location
-      const method_calls = result.references.filter(
-        (ref): ref is MethodCallReference =>
-          ref.kind === "method_call" && ref.name === "get_data"
-      );
-
-      // Should have at least 2 get_data method calls
-      expect(method_calls.length).toBeGreaterThanOrEqual(2);
-
-      // At least some method calls should have receiver_location
-      // (calls within class definitions may not have it)
-      const calls_with_receiver = method_calls.filter(
-        (c) => c.receiver_location
-      );
-      expect(calls_with_receiver.length).toBeGreaterThan(0);
-
-      // Scenario 2: Verify constructor call has construct_target
-      const constructor_calls = result.references.filter(
-        (ref): ref is ConstructorCallReference =>
-          ref.kind === "constructor_call" && ref.name === "Service"
-      );
-
-      // Should have at least one constructor call with construct_target
-      const construct_with_target = constructor_calls.find(
-        (c) => c.construct_target
-      );
-      expect(construct_with_target).toBeDefined();
+      // Scenario 2: the construction `service2 = Service()` is a plain call
+      // carrying its assignment target; resolution turns it into the
+      // constructor call once `Service` resolves to the class.
+      const service_calls = result.references
+        .filter(
+          (ref): ref is FunctionCallReference =>
+            ref.kind === "function_call" && ref.name === "Service"
+        )
+        .map((ref) => ref.potential_construct_target);
+      expect(service_calls).toEqual([
+        undefined,
+        { file_path, start_line: 14, start_column: 1, end_line: 14, end_column: 8 },
+      ]);
     });
   });
 
@@ -1274,20 +1294,14 @@ class User:
           );
         }
 
-        // Verify @property decorated function is registered as a property (not a method)
-        const property_def = user_class.properties.find(
-          (p) => p.name === "name",
-        );
-        if (property_def) {
-          expect(property_def.kind).toBe("property");
-          expect(property_def.name).toBe("name");
-          expect(property_def.location.file_path).toBe("test.py");
-          expect(property_def.readonly).toBe(true);
-
-          // Verify @property decorator is attached
-          expect(property_def.decorators.length).toBeGreaterThanOrEqual(1);
-          expect(property_def.decorators.some((d: any) => d.name === "property")).toBe(true);
-        }
+        // A @property-decorated def is a getter method, never a data property
+        expect(
+          user_class.properties.find((p) => p.name === "name")
+        ).toBeUndefined();
+        const getter = user_class.methods.find((m) => m.name === "name")!;
+        expect(getter.kind).toBe("method");
+        expect(getter.accessor_kind).toBe("getter");
+        expect(getter.decorators!.map((d) => d.name)).toEqual(["property"]);
 
         // Verify @staticmethod decorated method
         const static_method = user_class.methods.find(
@@ -2406,6 +2420,18 @@ doubled = list(map(lambda x: x * 2, numbers))`;
       expect(lambda.callback_context!.receiver_location?.start_line).toBe(2);
     });
 
+    it("indexes a lambda's parameters as its own, defaults and splats included", () => {
+      const code = "apply(lambda f, k=2, *rest, **options: f.m())";
+      const tree = parser.parse(code);
+      const index = build_index_single_file(
+        create_parsed_file(code, "lambda_parameters.py" as FilePath, tree, "python" as Language),
+        tree,
+        "python" as Language
+      );
+      const lambda = Array.from(index.functions.values()).find((f) => f.name === "<anonymous>")!;
+      expect(lambda.signature.parameters.map((parameter) => parameter.name)).toEqual(["f", "k", "rest", "options"]);
+    });
+
     it("should detect callback context for lambda in filter", () => {
       const code = `numbers = [1, 2, 3, 4, 5]
 evens = list(filter(lambda x: x % 2 == 0, numbers))`;
@@ -2602,6 +2628,411 @@ class Factory:
       const fn = Array.from(index.functions.values()).find(f => f.name === "no_doc");
       expect(fn).toBeDefined();
       expect(fn!.docstring).toBeUndefined();
+    });
+  });
+
+  describe("Superclass shapes", () => {
+    function class_summary(code: string) {
+      const tree = parser.parse(code);
+      const parsed = create_parsed_file(code, "test.py" as FilePath, tree, "python");
+      const index = build_index_single_file(parsed, tree, "python");
+      return Array.from(index.classes.values()).map((c) => ({
+        name: c.name,
+        extends: c.extends,
+        methods: c.methods.map((m) => m.name),
+      }));
+    }
+
+    it("records the class and every method for a bare superclass", () => {
+      expect(
+        class_summary("class PG(Base):\n    def visit(self, c):\n        return 1\n")
+      ).toEqual([{ name: "PG", extends: ["Base"], methods: ["visit"] }]);
+    });
+
+    it("records the class and every method for a dotted superclass", () => {
+      expect(
+        class_summary(
+          "class PGDDLCompiler(compiler.DDLCompiler):\n    def visit_create_sequence(self, c):\n        return 1\n    def visit_drop_sequence(self, d):\n        return 2\n"
+        )
+      ).toEqual([
+        {
+          name: "PGDDLCompiler",
+          extends: ["compiler.DDLCompiler"],
+          methods: ["visit_create_sequence", "visit_drop_sequence"],
+        },
+      ]);
+    });
+
+    it("records the class and every method for a generic superclass", () => {
+      expect(
+        class_summary("class Gen(Base[T]):\n    def visit(self, c):\n        return 1\n")
+      ).toEqual([{ name: "Gen", extends: ["Base"], methods: ["visit"] }]);
+    });
+
+    it("records the class and every method for a dotted generic superclass", () => {
+      expect(
+        class_summary(
+          "class Gen(mod.Base[T]):\n    def visit(self, c):\n        return 1\n"
+        )
+      ).toEqual([{ name: "Gen", extends: ["mod.Base"], methods: ["visit"] }]);
+    });
+
+    it("records the class and every method with no superclass", () => {
+      expect(
+        class_summary("class Plain:\n    def visit(self, c):\n        return 1\n")
+      ).toEqual([{ name: "Plain", extends: [], methods: ["visit"] }]);
+    });
+
+    it("keeps a plain class nested inside an Enum body a class with its methods", () => {
+      const code = [
+        "from enum import Enum",
+        "class Color(Enum):",
+        "    RED = 1",
+        "    class Meta:",
+        "        def describe(self):",
+        "            return 'meta'",
+      ].join("\n");
+      expect(class_summary(code)).toEqual([
+        { name: "Meta", extends: [], methods: ["describe"] },
+      ]);
+    });
+
+    it("builds an interface for a generic Protocol base, keeping its methods and property signatures", () => {
+      const code = [
+        "from typing import Protocol, TypeVar",
+        "T = TypeVar('T')",
+        "class Repo(Protocol[T]):",
+        "    name: str",
+        "    def get(self, key: T) -> T: ...",
+      ].join("\n");
+      const tree = parser.parse(code);
+      const parsed = create_parsed_file(code, "test.py" as FilePath, tree, "python");
+      const index = build_index_single_file(parsed, tree, "python");
+      expect(Array.from(index.classes.values())).toEqual([]);
+      expect(
+        Array.from(index.interfaces.values()).map((i) => ({
+          name: i.name,
+          methods: i.methods?.map((m) => m.name) ?? [],
+          properties: i.properties?.map((p) => p.name) ?? [],
+        }))
+      ).toEqual([{ name: "Repo", methods: ["get"], properties: ["name"] }]);
+    });
+
+    it("keeps a plain class nested inside a Protocol body a class with its methods", () => {
+      const code = [
+        "from typing import Protocol",
+        "class P(Protocol):",
+        "    class Inner:",
+        "        def m(self):",
+        "            return 1",
+      ].join("\n");
+      const tree = parser.parse(code);
+      const parsed = create_parsed_file(code, "test.py" as FilePath, tree, "python");
+      const index = build_index_single_file(parsed, tree, "python");
+      expect(
+        Array.from(index.classes.values()).map((c) => ({
+          name: c.name,
+          methods: c.methods.map((m) => m.name),
+        }))
+      ).toEqual([{ name: "Inner", methods: ["m"] }]);
+      expect(
+        Array.from(index.interfaces.values()).map((i) => ({
+          name: i.name,
+          methods: i.methods?.map((m) => m.name) ?? [],
+        }))
+      ).toEqual([{ name: "P", methods: [] }]);
+    });
+
+    it("records a constructor for a decorated __init__", () => {
+      const code = [
+        "class Boxed:",
+        "    @log_calls",
+        "    def __init__(self, v):",
+        "        self.v = v",
+      ].join("\n");
+      const tree = parser.parse(code);
+      const parsed = create_parsed_file(code, "test.py" as FilePath, tree, "python");
+      const index = build_index_single_file(parsed, tree, "python");
+      const boxed = Array.from(index.classes.values())[0]!;
+      expect(boxed.constructors?.map((c) => c.name)).toEqual(["__init__"]);
+    });
+
+    it("opens exactly one scope for a decorated __init__ so a nested block still nests", () => {
+      const code = [
+        "class Boxed:",
+        "    @log_calls",
+        "    def __init__(self, v):",
+        "        if v:",
+        "            self.v = v",
+      ].join("\n");
+      const tree = parser.parse(code);
+      const parsed = create_parsed_file(code, "test.py" as FilePath, tree, "python");
+      const index = build_index_single_file(parsed, tree, "python");
+      expect(
+        Array.from(index.scopes.values()).map((s) => s.type)
+      ).toEqual(["module", "class", "constructor", "block"]);
+    });
+  });
+
+  describe("Accessor kinds", () => {
+    it("flags accessor_kind on property getter and setter definitions", () => {
+      const code = [
+        "class Box:",
+        "    @property",
+        "    def data(self):",
+        "        return 1",
+        "",
+        "    @data.setter",
+        "    def data(self, v):",
+        "        pass",
+        "",
+        "    def plain(self):",
+        "        return 2",
+      ].join("\n");
+      const tree = parser.parse(code);
+      const parsed = create_parsed_file(code, "test.py" as FilePath, tree, "python");
+      const index = build_index_single_file(parsed, tree, "python");
+      const box = Array.from(index.classes.values())[0]!;
+      expect(
+        box.methods.map((m) => ({ name: m.name, accessor_kind: m.accessor_kind }))
+      ).toEqual([
+        { name: "data", accessor_kind: "getter" },
+        { name: "data", accessor_kind: "setter" },
+        { name: "plain", accessor_kind: undefined },
+      ]);
+      expect(box.properties).toEqual([]);
+    });
+
+    it("flags a getter redefinition as a getter so it keeps the member slot", () => {
+      const code = [
+        "class Box:",
+        "    @property",
+        "    def data(self):",
+        "        return 1",
+        "",
+        "    @data.getter",
+        "    def data(self):",
+        "        return 2",
+      ].join("\n");
+      const tree = parser.parse(code);
+      const parsed = create_parsed_file(code, "test.py" as FilePath, tree, "python");
+      const index = build_index_single_file(parsed, tree, "python");
+      const box = Array.from(index.classes.values())[0]!;
+      expect(box.methods.map((m) => m.accessor_kind)).toEqual([
+        "getter",
+        "getter",
+      ]);
+    });
+
+    it("keeps a deleter out of the getter's member slot", () => {
+      const code = [
+        "class Box:",
+        "    @property",
+        "    def data(self):",
+        "        return 1",
+        "",
+        "    @data.deleter",
+        "    def data(self):",
+        "        pass",
+      ].join("\n");
+      const tree = parser.parse(code);
+      const parsed = create_parsed_file(code, "test.py" as FilePath, tree, "python");
+      const index = build_index_single_file(parsed, tree, "python");
+      const box = Array.from(index.classes.values())[0]!;
+      expect(
+        box.methods.map((m) => ({ name: m.name, accessor_kind: m.accessor_kind }))
+      ).toEqual([
+        { name: "data", accessor_kind: "getter" },
+        { name: "data", accessor_kind: "deleter" },
+      ]);
+    });
+
+    it("mints no member read where a member is written or deleted", () => {
+      // Binding a member invokes its setter and unbinding it invokes its
+      // deleter; neither reads the getter, so neither may mint a read that
+      // call resolution would turn into an edge to the getter.
+      const cases: [string, string[]][] = [
+        ["def f(w):\n    del w.cache", []],
+        ["def f(w, xs):\n    for w.item in xs:\n        pass", []],
+        ["def f(w, cm):\n    with cm as w.handle:\n        pass", []],
+        ["def f(w):\n    w.cache = 1", []],
+        // An augmented assignment reads the member before writing it back.
+        ["def f(w):\n    w.count += 1", ["count"]],
+        ["def f(w):\n    return w.cache", ["cache"]],
+      ];
+
+      const actual = cases.map(([code]) => {
+        const tree = parser.parse(code);
+        const parsed = create_parsed_file(code, "test.py" as FilePath, tree, "python");
+        return build_index_single_file(parsed, tree, "python")
+          .references.filter((r) => r.kind === "property_access")
+          .map((r) => r.name);
+      });
+
+      expect(actual).toEqual(cases.map(([, expected]) => expected));
+    });
+
+    it("keeps a method declared on an Enum class", () => {
+      // The class builds as an enum, so a method attached through the class
+      // path would address a symbol no enum state answers to and be dropped.
+      const code = [
+        "from enum import Enum",
+        "",
+        "class Color(str, Enum):",
+        "    RED = \"red\"",
+        "",
+        "    def describe(self):",
+        "        return self.value",
+      ].join("\n");
+      const tree = parser.parse(code);
+      const parsed = create_parsed_file(code, "test.py" as FilePath, tree, "python");
+      const index = build_index_single_file(parsed, tree, "python");
+      const color = Array.from(index.enums.values())[0]!;
+      expect({
+        name: color.name,
+        members: (color.members ?? []).map((m) => m.name),
+        methods: (color.methods ?? []).map((m) => m.name),
+      }).toEqual({ name: "Color", members: ["RED"], methods: ["describe"] });
+      expect(Array.from(index.classes.values()).map((c) => c.name)).toEqual([]);
+    });
+
+    it("records the property-descriptor decorator family as getters", () => {
+      const code = [
+        "class Box:",
+        "    @functools.cached_property",
+        "    def cached(self):",
+        "        return 1",
+        "",
+        "    @util.memoized_property",
+        "    def memoized(self):",
+        "        return 2",
+        "",
+        "    @cache_readonly",
+        "    def readonly(self):",
+        "        return 3",
+        "",
+        "    @lru_cache(maxsize=1)",
+        "    def still_called(self):",
+        "        return 4",
+      ].join("\n");
+      const tree = parser.parse(code);
+      const parsed = create_parsed_file(code, "test.py" as FilePath, tree, "python");
+      const index = build_index_single_file(parsed, tree, "python");
+      const box = Array.from(index.classes.values())[0]!;
+      expect(
+        box.methods.map((m) => ({ name: m.name, accessor_kind: m.accessor_kind }))
+      ).toEqual([
+        { name: "cached", accessor_kind: "getter" },
+        { name: "memoized", accessor_kind: "getter" },
+        { name: "readonly", accessor_kind: "getter" },
+        // A memoizing decorator that keeps call syntax is not an accessor.
+        { name: "still_called", accessor_kind: undefined },
+      ]);
+    });
+  });
+
+  describe("walrus binding", () => {
+    it("binds the name a walrus assignment introduces", () => {
+      const code = `def f(xs):
+    if (d := xs[0]):
+        return use_it(d)
+    return None
+`;
+      const tree = parser.parse(code);
+      const parsed_file = create_parsed_file(
+        code,
+        "test.py" as FilePath,
+        tree,
+        "python"
+      );
+      const index = build_index_single_file(parsed_file, tree, "python");
+      const names = Array.from(index.variables.values()).map((v) => v.name as string);
+      expect(names).toContain("d");
+    });
+  });
+
+  describe("Initialiser capture", () => {
+    function index_python(code: string) {
+      const tree = parser.parse(code);
+      const parsed_file = create_parsed_file(code, "test.py" as FilePath, tree, "python" as Language);
+      return build_index_single_file(parsed_file, tree, "python" as Language);
+    }
+
+    it("records what each loop and unpacking binding takes from the container it iterates", () => {
+      const result = index_python(`for suite in suites:
+    pass
+for name, entry in named.items():
+    pass
+for each in self.named.values():
+    pass
+first, second = suites
+`);
+      const sources = new Map(
+        Array.from(result.variables.values()).map((v) => [v.name, v.iterated_from]),
+      );
+      expect(sources).toEqual(
+        new Map<SymbolName, IterationSource | undefined>([
+          ["suite" as SymbolName, { container: ["suites" as SymbolName], yields: "item" }],
+          ["name" as SymbolName, undefined],
+          ["entry" as SymbolName, { container: ["named" as SymbolName], yields: "entry_value" }],
+          ["each" as SymbolName, { container: ["self" as SymbolName, "named" as SymbolName], yields: "value" }],
+          ["first" as SymbolName, { container: ["suites" as SymbolName], yields: "item" }],
+          ["second" as SymbolName, { container: ["suites" as SymbolName], yields: "item" }],
+        ]),
+      );
+    });
+
+    it("records initialized_from_call as the callee chain, initialized_from_call_result as the called call's chain and member_source as the attribute read", () => {
+      const result = index_python(`c = connect()
+i = s.get_info()
+router = inject(Router)
+parser = _parser_dispatch(flav)
+p = make()(io)
+orig = BaseTask.__call__
+a, b = pair()
+`);
+      const captured = new Map(
+        Array.from(result.variables.values()).map((v) => [
+          v.name,
+          {
+            initialized_from_call: v.initialized_from_call,
+            initialized_from_call_result: v.initialized_from_call_result,
+            member_source: v.member_source,
+          },
+        ]),
+      );
+      expect(captured).toEqual(
+        new Map<SymbolName, Pick<VariableDefinition, "initialized_from_call" | "initialized_from_call_result" | "member_source">>([
+          ["c" as SymbolName, { initialized_from_call: ["connect" as SymbolName], initialized_from_call_result: undefined, member_source: undefined }],
+          [
+            "i" as SymbolName,
+            { initialized_from_call: ["s" as SymbolName, "get_info" as SymbolName], initialized_from_call_result: undefined, member_source: undefined },
+          ],
+          ["router" as SymbolName, { initialized_from_call: ["inject" as SymbolName], initialized_from_call_result: undefined, member_source: undefined }],
+          [
+            "parser" as SymbolName,
+            { initialized_from_call: ["_parser_dispatch" as SymbolName], initialized_from_call_result: undefined, member_source: undefined },
+          ],
+          [
+            "p" as SymbolName,
+            {
+              initialized_from_call: undefined,
+              initialized_from_call_result: ["make" as SymbolName],
+              member_source: undefined,
+            },
+          ],
+          [
+            "orig" as SymbolName,
+            {
+              initialized_from_call: undefined,
+              initialized_from_call_result: undefined,
+              member_source: { holder: "BaseTask" as SymbolName, member: "__call__" as SymbolName },
+            },
+          ],
+          ["a" as SymbolName, { initialized_from_call: undefined, initialized_from_call_result: undefined, member_source: undefined }],
+          ["b" as SymbolName, { initialized_from_call: undefined, initialized_from_call_result: undefined, member_source: undefined }],
+        ]),
+      );
     });
   });
 });

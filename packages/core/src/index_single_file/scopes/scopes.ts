@@ -14,39 +14,11 @@ import type {
 } from "@ariadnejs/types";
 import { module_scope, scope_string, ScopeType } from "@ariadnejs/types";
 import { ParsedFile } from "../parsed_file";
-import {
-  CaptureNode,
-  ProcessingContext,
-  SemanticCategory,
-} from "../index_single_file";
+import { CaptureNode, SemanticCategory } from "../capture_types";
+import { ProcessingContext } from "./processing_context";
 import { get_scope_boundary_extractor } from "./boundary_extractor";
+import { calculate_area, location_contains } from "./boundary_base";
 import type Parser from "tree-sitter";
-
-/**
- * Scope type priority for deterministic sorting.
- * Lower number = processed first (parent types before child types).
- * When two captures have identical locations, this ensures parent scopes
- * are created before child scopes.
- */
-const SCOPE_TYPE_PRIORITY: Record<string, number> = {
-  module: 0,
-  namespace: 0,
-  class: 1,
-  interface: 1,
-  enum: 1,
-  function: 2,
-  method: 3,
-  constructor: 3,
-  closure: 4,
-  block: 5,
-};
-
-/**
- * Get priority for a capture entity for sorting purposes.
- */
-function get_capture_priority(entity: string): number {
-  return SCOPE_TYPE_PRIORITY[entity] ?? 10;
-}
 
 /**
  * Extract the proper identifier name for a scope from a tree-sitter node.
@@ -95,6 +67,20 @@ function extract_scope_name(
     scope_type === "method" ||
     scope_type === "constructor"
   ) {
+    // A function expression bound to a variable is named after its outer var, so
+    // the outer function symbol registered in the enclosing scope matches this
+    // body scope by name. The inner expression name stays resolvable inside the
+    // body via its own definition, independent of the scope name.
+    if (
+      node.type === "function_expression" &&
+      node.parent?.type === "variable_declarator"
+    ) {
+      const declarator_name = node.parent.childForFieldName("name");
+      if (declarator_name?.type === "identifier") {
+        return declarator_name.text as SymbolName;
+      }
+    }
+
     // Try to get the name field first
     const name_node = node.childForFieldName("name");
     if (name_node) {
@@ -122,7 +108,7 @@ function extract_scope_name(
 export function process_scopes(
   captures: CaptureNode[],
   file: ParsedFile
-): ReadonlyMap<ScopeId, LexicalScope> {
+): { scopes: ReadonlyMap<ScopeId, LexicalScope>; root_scope_id: ScopeId } {
   const scopes = new Map<ScopeId, LexicalScope>();
 
   // Create root module scope for the file
@@ -142,53 +128,14 @@ export function process_scopes(
     type: "module",
     location: file_location,
     child_ids: [],
+    self_type_name: null,
   };
   scopes.set(root_scope_id, root_scope);
 
-  // Sort captures to ensure parent scopes are created before child scopes
-  // Apply different sorting strategies based on language
-  const sorted_captures = [...captures].sort((a, b) => {
-    // For Python, use containment-based sorting to fix class/method scope issues
-    if (file.lang === "python") {
-      // First, check if one scope contains the other
-      const a_contains_b = location_contains(a.location, b.location);
-      const b_contains_a = location_contains(b.location, a.location);
-
-      if (a_contains_b && !b_contains_a) {
-        // A contains B, so A should be processed first (parent before child)
-        return -1;
-      }
-      if (b_contains_a && !a_contains_b) {
-        // B contains A, so B should be processed first (parent before child)
-        return 1;
-      }
-
-      // If neither contains the other, sort by area (larger first for efficiency)
-      const area_a = calculate_area(a.location);
-      const area_b = calculate_area(b.location);
-
-      if (area_a !== area_b) {
-        return area_b - area_a; // Descending order by area
-      }
-
-      // Tiebreaker: sort by scope type priority (class before method/constructor before block)
-      // This ensures deterministic ordering when locations are identical
-      const priority_a = get_capture_priority(a.entity);
-      const priority_b = get_capture_priority(b.entity);
-      if (priority_a !== priority_b) {
-        return priority_a - priority_b;
-      }
-    }
-
-    // For other languages, use original location-based sorting
-    const loc_cmp = compare_locations(a.location, b.location);
-    if (loc_cmp !== 0) {
-      return loc_cmp;
-    }
-
-    // Final tiebreaker: sort by scope type priority for deterministic ordering
-    return get_capture_priority(a.entity) - get_capture_priority(b.entity);
-  });
+  // The language's boundary extractor orders scope captures so parents are
+  // created before their children.
+  const extractor = get_scope_boundary_extractor(file.lang);
+  const sorted_captures = extractor.sort_captures(captures);
 
   // Process each capture that creates a scope
   for (const capture of sorted_captures) {
@@ -198,7 +145,6 @@ export function process_scopes(
     if (!scope_type) continue;
 
     // Extract boundaries using language-specific extractors
-    const extractor = get_scope_boundary_extractor(file.lang);
     const boundaries = extractor.extract_boundaries(
       capture.node,
       scope_type,
@@ -229,6 +175,14 @@ export function process_scopes(
     // Extract the scope name from the tree-sitter node
     const scope_name = extract_scope_name(capture.node, scope_type);
 
+    // The scope tree is the only place that can link a body back to the type it
+    // belongs to: a Rust `impl` block whose type is declared in another file
+    // contributes no member definition the fact could be read back off.
+    const self_type_name = extractor.extract_self_type_name(
+      capture.node,
+      scope_type
+    );
+
     // Create the scope with parent reference
     const scope: LexicalScope = {
       id: scope_id,
@@ -237,6 +191,7 @@ export function process_scopes(
       type: scope_type,
       location,
       child_ids: [],
+      self_type_name,
     };
 
     // Update parent's child IDs
@@ -249,7 +204,7 @@ export function process_scopes(
     scopes.set(scope_id, scope);
   }
 
-  return scopes;
+  return { scopes, root_scope_id };
 }
 
 /**
@@ -257,10 +212,10 @@ export function process_scopes(
  */
 export function create_processing_context(
   scopes: ReadonlyMap<ScopeId, LexicalScope>,
+  root_scope_id: ScopeId,
   captures: CaptureNode[]
 ): ProcessingContext {
   const scope_depths = new Map<ScopeId, number>();
-  const root_scope_id = find_root_scope(scopes);
 
   // Precompute all depths once
   for (const scope of scopes.values()) {
@@ -273,51 +228,33 @@ export function create_processing_context(
     scope_depths,
     root_scope_id,
     get_scope_id(location: Location): ScopeId {
-      // Find the deepest scope that contains this location
-      let best_scope_id = root_scope_id;
-      let best_depth = -1;
-
-      for (const scope of scopes.values()) {
-        if (!location_contains(scope.location, location)) {
-          continue;
-        }
-
-        const depth = scope_depths.get(scope.id);
-        if (depth === undefined) {
-          throw new Error(`Internal error: scope ${scope.id} has no precomputed depth`);
-        }
-
-        if (depth > best_depth) {
-          best_scope_id = scope.id;
-          best_depth = depth;
-        } else if (depth === best_depth && scope.id !== best_scope_id) {
-          throw new Error(
-            `Malformed scope tree: multiple scopes at depth ${depth} contain location ${JSON.stringify(
-              location
-            )}. ` + `Found scopes: ${best_scope_id} and ${scope.id}`
-          );
-        }
-      }
-
-      return best_scope_id;
-    },
-    get_child_scope_with_symbol_name(
-      scope_id: ScopeId,
-      name: SymbolName
-    ): ScopeId {
-      const scope = scopes.get(scope_id);
-      if (!scope) {
-        throw new Error(`Scope with id ${scope_id} not found`);
-      }
-      const matched_scope = scope.child_ids.find(
-        (id) => scopes.get(id)?.name === name
-      );
-      if (!matched_scope) {
+      // Containment is a tree, so a descent costs one step per level of
+      // nesting where reading every scope costs one step per scope in the
+      // file — the difference between a lookup priced on a file's depth and
+      // one priced on its size, at 1,099.5 lookups per file.
+      let current = scopes.get(root_scope_id);
+      if (!current) {
         throw new Error(
-          `Child scope with name ${name} not found in scope ${scope_id}`
+          `Root scope with id ${root_scope_id} not found at location ${JSON.stringify(
+            location
+          )}`
         );
       }
-      return matched_scope;
+
+      for (;;) {
+        let deeper: LexicalScope | undefined;
+        for (const child_id of current.child_ids) {
+          const child = scopes.get(child_id);
+          if (child && location_contains(child.location, location)) {
+            deeper = child;
+            break;
+          }
+        }
+        if (!deeper) {
+          return current.id;
+        }
+        current = deeper;
+      }
     },
   };
 }
@@ -400,81 +337,6 @@ function locations_equal(a: Location, b: Location): boolean {
     a.end_line === b.end_line &&
     a.end_column === b.end_column
   );
-}
-
-/**
- * Compare two locations for sorting
- */
-function compare_locations(a: Location, b: Location): number {
-  if (a.start_line !== b.start_line) return a.start_line - b.start_line;
-  if (a.start_column !== b.start_column) return a.start_column - b.start_column;
-  if (a.end_line !== b.end_line) return a.end_line - b.end_line;
-  return a.end_column - b.end_column;
-}
-
-/**
- * Check if a location contains another location
- * For well-formed nested scopes, checking the start position is usually sufficient,
- * but we verify both start and end for correctness.
- */
-function location_contains(container: Location, contained: Location): boolean {
-  // Check if contained START is within container bounds
-  if (
-    contained.start_line < container.start_line ||
-    contained.start_line > container.end_line
-  ) {
-    return false;
-  }
-
-  // If on the start line, check column is at or after container start
-  if (
-    contained.start_line === container.start_line &&
-    contained.start_column < container.start_column
-  ) {
-    return false;
-  }
-
-  // Check if contained END is within container bounds
-  if (
-    contained.end_line < container.start_line ||
-    contained.end_line > container.end_line
-  ) {
-    return false;
-  }
-
-  // If on the end line, check column is at or before container end
-  if (
-    contained.end_line === container.end_line &&
-    contained.end_column > container.end_column
-  ) {
-    return false;
-  }
-
-  return true;
-}
-
-/**
- * Calculate area of a location (for finding smallest containing scope)
- * Uses a position-based calculation for accurate ordering across multi-line spans
- */
-function calculate_area(location: Location): number {
-  // Convert start and end to single position numbers
-  // Each line is worth 10000 units to ensure column positions don't overflow
-  const start_pos = location.start_line * 10000 + location.start_column;
-  const end_pos = location.end_line * 10000 + location.end_column;
-  return end_pos - start_pos;
-}
-
-/**
- * Find the root scope in a collection
- */
-function find_root_scope(scopes: ReadonlyMap<ScopeId, LexicalScope>): ScopeId {
-  for (const scope of scopes.values()) {
-    if (scope.parent_id === null) {
-      return scope.id;
-    }
-  }
-  throw new Error("No root scope found");
 }
 
 /**

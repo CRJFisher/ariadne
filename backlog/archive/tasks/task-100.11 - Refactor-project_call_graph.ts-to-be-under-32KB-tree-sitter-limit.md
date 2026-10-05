@@ -3,9 +3,9 @@ id: task-100.11
 title: Refactor project_call_graph.ts to be under 32KB tree-sitter limit
 status: Done
 assignee:
-  - '@chuck'
-created_date: '2025-08-04 13:54'
-updated_date: '2025-08-04 14:18'
+  - "@chuck"
+created_date: "2025-08-04 13:54"
+updated_date: "2025-08-04 14:18"
 labels:
   - refactoring
   - file-size
@@ -46,7 +46,7 @@ The project_call_graph.ts file is currently 60KB, which exceeds the 32KB tree-si
 Created immutable refactoring plan with 7 sub-tasks:
 
 1. task-100.11.1: Implement immutable type tracking system
-2. task-100.11.2: Create immutable import/export detection module  
+2. task-100.11.2: Create immutable import/export detection module
 3. task-100.11.3: Implement immutable call analysis with state passing
 4. task-100.11.4: Create immutable ProjectCallGraphData with update functions
 5. task-100.11.5: Implement two-phase call graph building
@@ -56,6 +56,7 @@ Created immutable refactoring plan with 7 sub-tasks:
 The plan focuses on transforming the mutable class-based system into a fully immutable functional approach. This will significantly improve code quality, eliminate bugs from shared mutable state, and make the code much easier to test and reason about.
 
 Key principles:
+
 - All data structures are immutable
 - All functions are pure (no side effects)
 - State changes flow through return values
@@ -64,6 +65,7 @@ Key principles:
 ## Status Update
 
 The immutable refactoring subtasks have been completed:
+
 - ✅ task-100.11.1: Implement immutable type tracking system
 - ✅ task-100.11.2: Create immutable import/export detection module
 - ✅ task-100.11.3: Implement immutable call analysis with state passing
@@ -75,6 +77,7 @@ The immutable refactoring subtasks have been completed:
 - ✅ task-100.11.14: Track all function calls including built-ins
 
 However, the main goal of reducing file size was not achieved:
+
 - project_call_graph.ts is still 60KB (exceeds 32KB limit)
 - The immutable implementation improved code quality but didn't reduce file size
 - The file still cannot be analyzed by Ariadne during self-validation

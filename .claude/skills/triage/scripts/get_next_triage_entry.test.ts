@@ -1,0 +1,290 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { execFileSync } from "node:child_process";
+import * as fs from "node:fs/promises";
+import * as fsSync from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
+import { fileURLToPath } from "node:url";
+import {
+  pick_next_entries,
+  absorb_and_pick,
+  dispense_batch,
+  MAX_TRIAGE_RETRIES,
+} from "./get_next_triage_entry.js";
+import type { TriageEntry, TriageState } from "../src/triage_state_types.js";
+
+// vi.hoisted runs before all `import` statements, so the env var is set before
+// `paths.js` (transitively imported by the script) reads it.
+const TMP = vi.hoisted(() => {
+  const tmp_path = `${process.env.TMPDIR ?? "/tmp"}/ariadne-test-dispense-${process.pid}`;
+  process.env.ARIADNE_TRIAGE_ENTRYPOINTS_DIR_OVERRIDE = tmp_path;
+  return tmp_path;
+});
+
+const TRIAGE_STATE = path.join(TMP, "triage_state");
+
+function make_entry(overrides: Partial<TriageEntry> & { entry_index: number }): TriageEntry {
+  return {
+    name: `entry_${overrides.entry_index}`,
+    file_path: "src/x.ts",
+    start_line: 1,
+    kind: "function",
+    signature: null,
+    route: "llm-triage",
+    diagnosis: "callers-not-in-registry",
+    known_source: null,
+    status: "pending",
+    result: null,
+    error: null,
+    retry_count: 0,
+    is_exported: true,
+    access_modifier: null,
+    diagnostics: {
+      grep_call_sites: [],
+      grep_call_sites_outside_index: [],
+      reference_sites: [],
+      has_uncaptured_indexed_grep_hit: false,
+      ariadne_call_refs: [],
+      diagnosis: "callers-not-in-registry",
+    },
+    auto_classified: false,
+    classifier_hints: [],
+    tp_source_run_id: null,
+    tp_stability_sample: false,
+    ...overrides,
+  };
+}
+
+function make_state(entries: TriageEntry[]): TriageState {
+  return {
+    project_name: "proj",
+    project_path: "/tmp/proj",
+    phase: "triage",
+    entries,
+    created_at: "2026-01-01T00:00:00.000Z",
+    updated_at: "2026-01-01T00:00:00.000Z",
+  };
+}
+
+/** A minimal well-formed `tp` verdict file, accepted by `parse_triage_verdict`. */
+function tp_verdict_json(): string {
+  return JSON.stringify({
+    kind: "tp",
+    member_evidence: { file: "src/x.ts", line: 1, why: "no callers" },
+  });
+}
+
+describe("pick_next_entries", () => {
+  it("returns the first pending entry", () => {
+    const entries: TriageEntry[] = [
+      make_entry({ entry_index: 0, status: "completed" }),
+      make_entry({ entry_index: 1 }),
+      make_entry({ entry_index: 2 }),
+    ];
+    expect(pick_next_entries(entries, 1)).toEqual([1]);
+  });
+
+  it("respects --count", () => {
+    const entries: TriageEntry[] = [
+      make_entry({ entry_index: 0 }),
+      make_entry({ entry_index: 1 }),
+      make_entry({ entry_index: 2 }),
+    ];
+    expect(pick_next_entries(entries, 2)).toEqual([0, 1]);
+  });
+
+  it("skips auto_classified entries even if status is pending", () => {
+    const entries: TriageEntry[] = [
+      make_entry({ entry_index: 0, status: "pending", auto_classified: true }),
+      make_entry({ entry_index: 1 }),
+    ];
+    expect(pick_next_entries(entries, 2)).toEqual([1]);
+  });
+
+  it("returns [] when nothing is pickable", () => {
+    const entries: TriageEntry[] = [
+      make_entry({ entry_index: 0, status: "completed" }),
+      make_entry({ entry_index: 1, status: "pending", auto_classified: true }),
+    ];
+    expect(pick_next_entries(entries, 5)).toEqual([]);
+  });
+
+  it("re-picks a failed entry with retry budget left", () => {
+    const entries: TriageEntry[] = [
+      make_entry({ entry_index: 0, status: "failed", retry_count: 0 }),
+      make_entry({ entry_index: 1, status: "failed", retry_count: MAX_TRIAGE_RETRIES - 1 }),
+    ];
+    expect(pick_next_entries(entries, 5)).toEqual([0, 1]);
+  });
+
+  it("does not re-pick a failed entry that exhausted its retry budget", () => {
+    const entries: TriageEntry[] = [
+      make_entry({ entry_index: 0, status: "failed", retry_count: MAX_TRIAGE_RETRIES }),
+    ];
+    expect(pick_next_entries(entries, 5)).toEqual([]);
+  });
+});
+
+describe("absorb_and_pick", () => {
+  let run_dir: string;
+  let state_path: string;
+  let results_dir: string;
+
+  beforeEach(async () => {
+    run_dir = await fs.mkdtemp(path.join(os.tmpdir(), "triage-absorb-"));
+    results_dir = path.join(run_dir, "results");
+    state_path = path.join(run_dir, "triage.json");
+    await fs.mkdir(results_dir, { recursive: true });
+  });
+
+  afterEach(async () => {
+    await fs.rm(run_dir, { recursive: true, force: true });
+  });
+
+  async function write_state(state: TriageState): Promise<void> {
+    await fs.writeFile(state_path, JSON.stringify(state, null, 2) + "\n");
+  }
+
+  async function read_state(): Promise<TriageState> {
+    return JSON.parse(await fs.readFile(state_path, "utf8")) as TriageState;
+  }
+
+  it("absorbs a batch's completed verdicts, drains the pool, and releases the lock", async () => {
+    await write_state(
+      make_state([
+        make_entry({ entry_index: 0 }),
+        make_entry({ entry_index: 1 }),
+      ]),
+    );
+    await fs.writeFile(path.join(results_dir, "0.json"), tp_verdict_json());
+    await fs.writeFile(path.join(results_dir, "1.json"), tp_verdict_json());
+
+    const picked = await absorb_and_pick(state_path, run_dir, 2);
+
+    expect(picked).toEqual([]);
+    const state = await read_state();
+    expect(state.entries.map((e) => e.status)).toEqual(["completed", "completed"]);
+    expect(state.phase).toEqual("complete");
+    expect(await fs.readdir(run_dir)).not.toContain("triage.json.lock");
+  });
+
+  it("re-picking a failed entry clears its stale result file and bumps retry_count", async () => {
+    await write_state(make_state([make_entry({ entry_index: 0, status: "failed", retry_count: 0 })]));
+    await fs.writeFile(path.join(results_dir, "0.json"), "not valid json{{{");
+
+    const picked = await absorb_and_pick(state_path, run_dir, 1);
+
+    expect(picked).toEqual([0]);
+    const state = await read_state();
+    expect(state.entries[0].status).toEqual("pending");
+    expect(state.entries[0].error).toBeNull();
+    expect(state.entries[0].retry_count).toEqual(1);
+    expect(await fs.readdir(results_dir)).not.toContain("0.json");
+  });
+
+  it("keeps phase 'triage' while a retryable failed entry remains, then completes when it terminalizes", async () => {
+    await write_state(
+      make_state([make_entry({ entry_index: 0, status: "failed", retry_count: MAX_TRIAGE_RETRIES - 1 })]),
+    );
+    await fs.writeFile(path.join(results_dir, "0.json"), "still malformed{{{");
+
+    // One retry left: entry is re-picked, so the pool is not drained.
+    await absorb_and_pick(state_path, run_dir, 1);
+    expect((await read_state()).phase).toEqual("triage");
+
+    // The retry investigator writes another malformed file; the budget is now
+    // exhausted, so the entry terminalizes as failed and the gate closes.
+    await fs.writeFile(path.join(results_dir, "0.json"), "malformed again{{{");
+    const picked = await absorb_and_pick(state_path, run_dir, 1);
+    expect(picked).toEqual([]);
+    const state = await read_state();
+    expect(state.entries[0].status).toEqual("failed");
+    expect(state.entries[0].retry_count).toEqual(MAX_TRIAGE_RETRIES);
+    expect(state.phase).toEqual("complete");
+  });
+
+  it("picks a still-running pending entry but holds phase 'triage' until it completes", async () => {
+    await write_state(make_state([make_entry({ entry_index: 0, status: "pending" })]));
+
+    const picked = await absorb_and_pick(state_path, run_dir, 1);
+
+    expect(picked).toEqual([0]);
+    expect((await read_state()).phase).toEqual("triage");
+  });
+});
+
+describe("dispense_batch", () => {
+  beforeEach(() => {
+    fsSync.rmSync(TMP, { recursive: true, force: true });
+    fsSync.mkdirSync(TMP, { recursive: true });
+  });
+
+  afterEach(() => {
+    fsSync.rmSync(TMP, { recursive: true, force: true });
+  });
+
+  function seed_run(project: string, run_id: string, entries: TriageEntry[]): void {
+    const dir = path.join(TRIAGE_STATE, project, "runs", run_id);
+    fsSync.mkdirSync(path.join(dir, "results"), { recursive: true });
+    fsSync.writeFileSync(
+      path.join(dir, "triage.json"),
+      JSON.stringify(make_state(entries), null, 2) + "\n",
+    );
+  }
+
+  function point_latest_at(project: string, run_id: string): void {
+    fsSync.writeFileSync(path.join(TRIAGE_STATE, project, "LATEST"), run_id + "\n");
+  }
+
+  it("echoes the LATEST run-id alongside the picked indices", async () => {
+    seed_run("proj", "run-one", [make_entry({ entry_index: 7 })]);
+    point_latest_at("proj", "run-one");
+
+    expect(await dispense_batch("proj", null, 1)).toEqual({
+      run_id: "run-one",
+      entries: [7],
+    });
+  });
+
+  it("dispenses from the pinned run and echoes it, ignoring a LATEST that moved on", async () => {
+    seed_run("proj", "run-one", [make_entry({ entry_index: 7 })]);
+    seed_run("proj", "run-two", [make_entry({ entry_index: 42 })]);
+    point_latest_at("proj", "run-two");
+
+    expect(await dispense_batch("proj", "run-one", 1)).toEqual({
+      run_id: "run-one",
+      entries: [7],
+    });
+  });
+
+  it("echoes the run-id even when the pool is drained", async () => {
+    seed_run("proj", "run-one", [make_entry({ entry_index: 7, status: "completed" })]);
+    point_latest_at("proj", "run-one");
+
+    expect(await dispense_batch("proj", null, 5)).toEqual({
+      run_id: "run-one",
+      entries: [],
+    });
+  });
+
+  // The orchestrator reads stdout, not the return value, so the JSON the script
+  // actually prints is the contract worth pinning.
+  it("prints the run-id and entries as one JSON object on stdout", () => {
+    seed_run("proj", "run-one", [make_entry({ entry_index: 7 })]);
+    seed_run("proj", "run-two", [make_entry({ entry_index: 42 })]);
+    point_latest_at("proj", "run-two");
+
+    const script = path.join(path.dirname(fileURLToPath(import.meta.url)), "get_next_triage_entry.ts");
+    const stdout = execFileSync(
+      process.execPath,
+      ["--import", "tsx", script, "--project", "proj", "--run-id", "run-one", "--count", "5"],
+      {
+        encoding: "utf8",
+        stdio: ["ignore", "pipe", "pipe"],
+        env: { ...process.env, ARIADNE_TRIAGE_ENTRYPOINTS_DIR_OVERRIDE: TMP },
+      },
+    );
+
+    expect(JSON.parse(stdout)).toEqual({ run_id: "run-one", entries: [7] });
+  });
+});

@@ -3,7 +3,7 @@ id: task-epic-11.32.8
 title: Fix build_module_graph incorrect inputs
 status: To Do
 assignee: []
-created_date: '2025-08-26'
+created_date: "2025-08-26"
 labels: [bug, graph-builder, module-graph, epic-11]
 dependencies: [task-epic-11.32]
 parent_task_id: task-epic-11.32
@@ -16,40 +16,46 @@ Fix the incorrect arguments being passed to build_module_graph in graph_builder.
 ## Context
 
 The actual build_module_graph signature:
+
 ```typescript
 export function build_module_graph(
   file_paths: string[],
   context: ModuleGraphContext
-): ModuleGraph
+): ModuleGraph;
 ```
 
 But graph_builder is calling it incorrectly:
+
 ```typescript
 context.module_graph = build_module_graph(
-  all_imports,    // Wrong: ImportInfo[] not string[]
-  all_exports,    // Wrong: ExportInfo[] not context
+  all_imports, // Wrong: ImportInfo[] not string[]
+  all_exports, // Wrong: ExportInfo[] not context
   module_metadata // Wrong: third argument doesn't exist
 );
 ```
 
 This is a critical bug that would cause runtime errors. The function expects:
+
 1. An array of file paths to analyze
 2. A ModuleGraphContext with callbacks for getting imports/exports
 
 But it's receiving:
+
 1. Import information arrays
-2. Export information arrays  
+2. Export information arrays
 3. Metadata object
 
 ## Root Cause
 
 This appears to be confusion between two different approaches:
+
 1. **Current module_graph design**: Takes file paths and discovers imports/exports via context callbacks
 2. **What graph_builder expects**: Takes already-computed imports/exports and builds graph from them
 
 ## Tasks
 
 ### Phase 1: Understand Requirements
+
 - [ ] Analyze what module_graph.ts actually does
 - [ ] Determine what graph_builder needs from module graph
 - [ ] Check if module_graph can work with pre-computed data
@@ -57,6 +63,7 @@ This appears to be confusion between two different approaches:
 ### Phase 2: Design Solution
 
 #### Option A: Fix the call to match current signature
+
 ```typescript
 // Pass file paths and proper context
 const module_context: ModuleGraphContext = {
@@ -73,30 +80,34 @@ context.module_graph = build_module_graph(
 ```
 
 #### Option B: Refactor build_module_graph to accept imports/exports
+
 ```typescript
 // Change signature to accept pre-computed data
 export function build_module_graph(
   imports: Map<string, ImportInfo[]>,
   exports: Map<string, ExportInfo[]>,
   config: ModuleGraphConfig
-): ModuleGraph
+): ModuleGraph;
 ```
 
 #### Option C: Create adapter function
+
 ```typescript
 // Create new function that adapts between the two
 export function build_module_graph_from_analysis(
   file_analyses: Map<string, FileAnalysisResult>
-): ModuleGraph
+): ModuleGraph;
 ```
 
 ### Phase 3: Implementation
+
 - [ ] Choose approach based on analysis
 - [ ] Update build_module_graph or create adapter
 - [ ] Fix the call in graph_builder
 - [ ] Ensure module graph is built correctly
 
 ### Phase 4: Testing
+
 - [ ] Test module graph construction
 - [ ] Verify import/export relationships
 - [ ] Test with multi-file projects
@@ -113,6 +124,7 @@ export function build_module_graph_from_analysis(
 ## Technical Analysis
 
 ### Current module_graph.ts approach:
+
 ```typescript
 interface ModuleGraphContext {
   get_imports: (file: string) => ImportInfo[];
@@ -123,6 +135,7 @@ interface ModuleGraphContext {
 ```
 
 ### What graph_builder has available:
+
 ```typescript
 // After analyzing all files:
 const all_imports: ImportInfo[] = [];
@@ -137,11 +150,13 @@ for (const analysis of analyses) {
 ### Recommended Solution:
 
 **Option A** is recommended because:
+
 1. Maintains existing module_graph design
 2. Graph_builder already has all needed data
 3. Clean separation of concerns
 
 Implementation:
+
 ```typescript
 // Create context from analyzed data
 const module_context: ModuleGraphContext = {
@@ -157,7 +172,7 @@ const module_context: ModuleGraphContext = {
     // Use existing module resolution logic
     return resolve_module_path(from, to);
   },
-  language: config.default_language // or determine from files
+  language: config.default_language, // or determine from files
 };
 
 // Build module graph with correct arguments

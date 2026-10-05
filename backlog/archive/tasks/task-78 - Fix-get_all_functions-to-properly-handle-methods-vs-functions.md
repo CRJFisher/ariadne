@@ -3,8 +3,8 @@ id: task-78
 title: Fix get_all_functions to properly handle methods vs functions
 status: Done
 assignee: []
-created_date: '2025-08-03'
-updated_date: '2025-08-04 08:32'
+created_date: "2025-08-03"
+updated_date: "2025-08-04 08:32"
 labels: []
 dependencies: []
 ---

@@ -3,9 +3,9 @@ id: task-21
 title: Add function metadata support
 status: Done
 assignee:
-  - '@chuck'
-created_date: '2025-07-17'
-updated_date: '2025-07-18'
+  - "@chuck"
+created_date: "2025-07-17"
+updated_date: "2025-07-18"
 labels: []
 dependencies:
   - task-18
@@ -49,7 +49,7 @@ interface FunctionDef extends Def {
   - [x] JavaScript
     - [x] e.g. async functions; arrow functions; extracts parameter names and types; detects test functions from common test frameworks; handles class methods vs functions etc
   - [x] Python
-    - [x] e.g. async def functions; test_ prefixed functions; unittest and pytest test methods; decorator names; class methods vs static methods; etc.
+    - [x] e.g. async def functions; test\_ prefixed functions; unittest and pytest test methods; decorator names; class methods vs static methods; etc.
   - [x] Rust
     - [x] e.g. async functions; arrow functions; extracts parameter names and types; detects test functions from common test frameworks; handles class methods vs functions etc
 - [x] Function definitions include metadata property
@@ -76,7 +76,7 @@ interface FunctionDef extends Def {
    - Similar to TypeScript but without type information
 5. Implement function metadata extraction for Python
    - Handle async def functions
-   - Detect test_ prefixed functions and unittest/pytest methods
+   - Detect test\_ prefixed functions and unittest/pytest methods
    - Extract decorator names
    - Handle class methods vs static methods
 6. Implement function metadata extraction for Rust

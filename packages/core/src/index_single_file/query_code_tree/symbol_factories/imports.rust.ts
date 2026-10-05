@@ -1,9 +1,3 @@
-/**
- * Rust Import Extraction
- *
- * Functions for extracting import information from Rust use declarations
- * and extern crate statements.
- */
 import type { SyntaxNode } from "tree-sitter";
 import type { SymbolName, ModulePath } from "@ariadnejs/types";
 import { create_module_path, create_symbol_name } from "@ariadnejs/types";
@@ -15,10 +9,8 @@ export interface ImportInfo {
   is_wildcard?: boolean;
 }
 
-/**
- * Extract scoped path from scoped_identifier node
- * Traverses the tree to build full path like "std::fmt"
- */
+// Rebuilds "std::fmt::Display" from the nested scoped_identifier tree, whose
+// `path` field points at the next segment inward until a non-scoped base node.
 function extract_scoped_path(node: SyntaxNode): string {
   const parts: string[] = [];
   let current: SyntaxNode | null = node;
@@ -32,7 +24,6 @@ function extract_scoped_path(node: SyntaxNode): string {
       if (path.type === "scoped_identifier") {
         current = path;
       } else {
-        // Base identifier
         parts.unshift(path.text);
         break;
       }
@@ -44,10 +35,28 @@ function extract_scoped_path(node: SyntaxNode): string {
   return parts.join("::");
 }
 
-/**
- * Extract imports from complete use_declaration node
- * Handles all use patterns: simple, scoped, aliased, lists, wildcards
- */
+// A `self` group member imports the group's own module (`use a::b::{self}` is
+// `use a::b`), so the prefix splits at its final `::` — the last segment names
+// the imported module, the rest is its module_path. A single-segment prefix
+// mirrors bare `use foo`, where both are the segment.
+function split_group_prefix(prefix: string): {
+  module_name: string;
+  parent_path: string;
+} {
+  const sep = prefix.lastIndexOf("::");
+  if (sep === -1) {
+    return { module_name: prefix, parent_path: prefix };
+  }
+  return {
+    module_name: prefix.slice(sep + 2),
+    parent_path: prefix.slice(0, sep),
+  };
+}
+
+// Normalizes every `use` form so `module_path` names the module and `name` the
+// imported item — the item, glob, alias, and group braces are stripped here, which
+// is the shape the downstream Rust import resolver relies on. A leading `pub`
+// visibility_modifier is ignored: re-export visibility is handled by the caller.
 export function extract_imports_from_use_declaration(
   node: SyntaxNode
 ): ImportInfo[] {
@@ -62,10 +71,9 @@ export function extract_imports_from_use_declaration(
     return imports;
   }
 
-  // Handle different use patterns by argument type
   switch (argument.type) {
     case "identifier": {
-      // Simple: use foo
+      // use foo
       const name = argument.text as SymbolName;
       imports.push({
         name,
@@ -75,8 +83,7 @@ export function extract_imports_from_use_declaration(
     }
 
     case "scoped_identifier": {
-      // Scoped: use std::fmt::Display
-      // module_path is the path to the module (without the item name)
+      // use std::fmt::Display — module_path is the path minus the item name
       const name = argument.childForFieldName?.("name");
       const path_node = argument.childForFieldName?.("path");
       if (name && path_node) {
@@ -92,7 +99,7 @@ export function extract_imports_from_use_declaration(
     }
 
     case "use_list": {
-      // List: use {Display, Debug}
+      // use {Display, Debug} — a group with no path prefix
       for (let i = 0; i < argument.childCount; i++) {
         const item = argument.child(i);
         if (!item) continue;
@@ -130,8 +137,8 @@ export function extract_imports_from_use_declaration(
     }
 
     case "scoped_use_list": {
-      // List with path: use std::fmt::{Display, Debug}
-      // Also handles nested lists: use std::{cmp::Ordering, collections::{HashMap, HashSet}}
+      // use std::fmt::{Display, Debug} and nested groups like
+      // use std::{cmp::Ordering, collections::{HashMap, HashSet}}
       const path = argument.childForFieldName?.("path");
       const list = argument.childForFieldName?.("list");
 
@@ -140,7 +147,6 @@ export function extract_imports_from_use_declaration(
           ? extract_scoped_path(path)
           : path.text;
 
-        // Process items in the list recursively
         const process_use_list_items = (list_node: SyntaxNode, prefix: string) => {
           for (let i = 0; i < list_node.childCount; i++) {
             const item = list_node.child(i);
@@ -150,6 +156,12 @@ export function extract_imports_from_use_declaration(
               imports.push({
                 name: item.text as SymbolName,
                 module_path: create_module_path(prefix),
+              });
+            } else if (item.type === "self") {
+              const { module_name, parent_path } = split_group_prefix(prefix);
+              imports.push({
+                name: module_name as SymbolName,
+                module_path: create_module_path(parent_path),
               });
             } else if (item.type === "scoped_identifier") {
               const name = item.childForFieldName?.("name");
@@ -190,7 +202,18 @@ export function extract_imports_from_use_declaration(
                   break;
                 }
               }
-              if (original && alias) {
+              // `use a::b::{self as c}` — the `self` node is not an identifier,
+              // so the `original` finder above would wrongly grab the alias as
+              // the original. Emit the same shape as `use a::b as c`.
+              const self_member = item.children?.find((c) => c.type === "self");
+              if (self_member && alias) {
+                const { module_name, parent_path } = split_group_prefix(prefix);
+                imports.push({
+                  name: alias.text as SymbolName,
+                  module_path: create_module_path(parent_path),
+                  original_name: create_symbol_name(module_name),
+                });
+              } else if (original && alias) {
                 if (original.type === "scoped_identifier") {
                   // e.g., `use std::{cmp::Ordering as Ord}` — original is cmp::Ordering
                   const original_name_node = original.childForFieldName?.("name");
@@ -222,7 +245,7 @@ export function extract_imports_from_use_declaration(
     }
 
     case "use_as_clause": {
-      // Alias: use foo as bar or use self::math::add as add_numbers
+      // use foo as bar, or use self::math::add as add_numbers
       const original = argument.children?.find(
         (c) => c.type === "identifier" || c.type === "scoped_identifier"
       );
@@ -267,9 +290,16 @@ export function extract_imports_from_use_declaration(
     }
 
     case "use_wildcard": {
-      // Wildcard: use foo::*
+      // use foo::*, and prefix keywords use crate::*, use super::*, use self::*,
+      // where the segment before `*` is a bare `crate`/`super`/`self` node rather
+      // than an identifier.
       const path = argument.children?.find(
-        (c) => c.type === "scoped_identifier" || c.type === "identifier"
+        (c) =>
+          c.type === "scoped_identifier" ||
+          c.type === "identifier" ||
+          c.type === "crate" ||
+          c.type === "super" ||
+          c.type === "self"
       );
       if (path) {
         const module_path = path.type === "scoped_identifier"
@@ -288,10 +318,7 @@ export function extract_imports_from_use_declaration(
   return imports;
 }
 
-/**
- * Extract import from complete extern_crate_declaration node
- * Handles: extern crate foo; and extern crate foo as bar;
- */
+// Handles `extern crate foo;` and `extern crate foo as bar;`.
 export function extract_import_from_extern_crate(
   node: SyntaxNode
 ): ImportInfo | undefined {

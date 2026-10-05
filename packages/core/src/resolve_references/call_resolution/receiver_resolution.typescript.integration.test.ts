@@ -1,0 +1,529 @@
+/**
+ * Integration tests for TASK-350 — optional TypeScript constructor
+ * parameter-properties as method-call receivers.
+ *
+ * Each evidence case reproduces a real-world cluster (NestJS, Prisma) where a
+ * method is reached only through an optional `private readonly x?: T` (or
+ * `public x?: T`) constructor param-property. Before the `.scm` fix the implicit
+ * class field — and therefore the receiver's declared type — was lost at
+ * indexing time, the call could not resolve, and the member was reported as an
+ * unreachable entry point (false positive). These tests assert the members are
+ * reachable now that the field's type survives indexing.
+ *
+ * The evidence cases are committed fixtures under
+ * tests/fixtures/typescript/code/integration/optional_param_properties/ rather
+ * than inline strings: the NestJS cases span two files that import each other,
+ * so they are grouped in their own subdirectory and copied into an isolated
+ * temp dir per test to keep cross-file resolution self-contained.
+ */
+
+import { describe, it, expect, afterAll } from "vitest";
+import { Project } from "../../project/project";
+import type { FilePath, SymbolName, CallGraph } from "@ariadnejs/types";
+import * as fs from "fs";
+import * as path from "path";
+import * as os from "os";
+
+const FIXTURE_DIR = path.join(
+  __dirname,
+  "../../../tests/fixtures/typescript/code/integration/optional_param_properties"
+);
+
+function load_fixture(name: string): string {
+  return fs.readFileSync(path.join(FIXTURE_DIR, name), "utf8");
+}
+
+const temp_dirs: string[] = [];
+
+afterAll(() => {
+  for (const dir of temp_dirs) {
+    if (fs.existsSync(dir)) {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  }
+});
+
+/**
+ * Writes the named fixtures into a temp dir, then loads them into a Project so
+ * cross-file imports resolve against an isolated tree.
+ */
+async function project_from_fixtures(
+  names: string[]
+): Promise<{ project: Project; file_paths: Record<string, FilePath> }> {
+  const temp_dir = fs.mkdtempSync(path.join(os.tmpdir(), "ariadne-task350-"));
+  temp_dirs.push(temp_dir);
+
+  const file_paths: Record<string, FilePath> = {};
+  for (const name of names) {
+    const abs_path = path.join(temp_dir, name);
+    fs.writeFileSync(abs_path, load_fixture(name));
+    file_paths[name] = abs_path as FilePath;
+  }
+
+  const project = new Project();
+  await project.initialize(temp_dir as FilePath);
+  for (const name of names) {
+    project.update_file(file_paths[name], load_fixture(name));
+  }
+
+  return { project, file_paths };
+}
+
+/**
+ * An entry point is a false positive here iff the named member in the given file
+ * is reported as uncalled. Returns the matching entry point's SymbolId, or
+ * undefined when the member is reachable (the post-fix expectation).
+ */
+function entry_point_for(
+  call_graph: CallGraph,
+  member: string,
+  file: FilePath
+): string | undefined {
+  return call_graph.entry_points.find((ep) => {
+    const node = call_graph.nodes.get(ep);
+    return (
+      node?.name === (member as SymbolName) &&
+      node.location.file_path === file
+    );
+  });
+}
+
+/**
+ * Asserts the member is a real graph node AND is not reported as an entry
+ * point. The node-presence guard stops the entry-point check from passing
+ * vacuously if the member ever disappears from the graph entirely.
+ */
+function assert_member_reachable(
+  call_graph: CallGraph,
+  member: string,
+  file: FilePath
+): void {
+  const node_present = Array.from(call_graph.nodes.values()).some(
+    (n) => n.name === (member as SymbolName) && n.location.file_path === file
+  );
+  expect(node_present).toBe(true);
+  expect(entry_point_for(call_graph, member, file)).toBeUndefined();
+}
+
+describe("TypeScript optional ctor param-property receiver resolution (TASK-350)", () => {
+  describe("NestJS ApplicationConfig cluster", () => {
+    it("getGlobalPipes is reachable via a private readonly optional param-property receiver", async () => {
+      const { project, file_paths } = await project_from_fixtures([
+        "application_config.ts",
+        "pipes_context_creator.ts",
+      ]);
+      const call_graph = project.get_call_graph();
+
+      assert_member_reachable(call_graph, "getGlobalPipes", file_paths["application_config.ts"]);
+    });
+
+    it("getGlobalGuards is reachable via the same optional param-property receiver", async () => {
+      const { project, file_paths } = await project_from_fixtures([
+        "application_config.ts",
+        "pipes_context_creator.ts",
+      ]);
+      const call_graph = project.get_call_graph();
+
+      assert_member_reachable(call_graph, "getGlobalGuards", file_paths["application_config.ts"]);
+    });
+  });
+
+  describe("NestJS TestingInjector", () => {
+    it("setMocker is reachable via a public (non-readonly) optional param-property receiver", async () => {
+      const { project, file_paths } = await project_from_fixtures([
+        "application_config.ts",
+        "testing_injector.ts",
+      ]);
+      const call_graph = project.get_call_graph();
+
+      assert_member_reachable(call_graph, "setMocker", file_paths["application_config.ts"]);
+    });
+  });
+
+  // The recursive members have no external caller, so rather than asserting
+  // entry-point absence (as the NestJS cases do), these tests pin the exact
+  // resolved self-edge — the method's own call site resolving back to itself
+  // through `this.previous` — which is a stronger proof that the optional
+  // self-typed param-property receiver resolved.
+  describe("Prisma MergedExtensionsList recursive cluster", () => {
+    it("getAllComputedFields resolves its recursive this.previous?.method() self-call", async () => {
+      const { project, file_paths } = await project_from_fixtures([
+        "merged_extensions_list.ts",
+      ]);
+      const call_graph = project.get_call_graph();
+      const file = file_paths["merged_extensions_list.ts"];
+
+      const method_node = Array.from(call_graph.nodes.values()).find(
+        (n) =>
+          n.name === ("getAllComputedFields" as SymbolName) &&
+          n.location.file_path === file
+      );
+      expect(method_node).toBeDefined();
+      const self_call = method_node!.enclosed_calls.find(
+        (c) => c.name === ("getAllComputedFields" as SymbolName)
+      );
+      expect(self_call).toBeDefined();
+      expect(self_call!.resolutions.some((r) => r.symbol_id === method_node!.symbol_id)).toBe(true);
+    });
+
+    it("getAllQueryCallbacks resolves its recursive self-call", async () => {
+      const { project, file_paths } = await project_from_fixtures([
+        "merged_extensions_list.ts",
+      ]);
+      const call_graph = project.get_call_graph();
+      const file = file_paths["merged_extensions_list.ts"];
+
+      const method_node = Array.from(call_graph.nodes.values()).find(
+        (n) =>
+          n.name === ("getAllQueryCallbacks" as SymbolName) &&
+          n.location.file_path === file
+      );
+      expect(method_node).toBeDefined();
+      const self_call = method_node!.enclosed_calls.find(
+        (c) => c.name === ("getAllQueryCallbacks" as SymbolName)
+      );
+      expect(self_call).toBeDefined();
+      expect(self_call!.resolutions.some((r) => r.symbol_id === method_node!.symbol_id)).toBe(true);
+    });
+  });
+});
+
+/**
+ * Loads a single inline TypeScript source into an isolated Project, so a
+ * self-contained snippet exercises the full index → resolve → call-graph
+ * pipeline without a committed fixture file.
+ */
+async function project_from_inline(
+  source: string
+): Promise<{ project: Project; file: FilePath }> {
+  const temp_dir = fs.mkdtempSync(path.join(os.tmpdir(), "ariadne-task360-"));
+  temp_dirs.push(temp_dir);
+  const file = path.join(temp_dir, "di.ts") as FilePath;
+  fs.writeFileSync(file, source);
+
+  const project = new Project();
+  await project.initialize(temp_dir as FilePath);
+  project.update_file(file, source);
+  return { project, file };
+}
+
+/**
+ * The SymbolId of the given method on the given class, in the given file.
+ */
+function method_symbol_id(
+  call_graph: CallGraph,
+  method: string,
+  file: FilePath
+): string | undefined {
+  return Array.from(call_graph.nodes.values()).find(
+    (n) =>
+      n.name === (method as SymbolName) && n.location.file_path === file
+  )?.symbol_id;
+}
+
+describe("TypeScript interface-typed destructured binding receivers (TASK-389)", () => {
+  /** The SymbolId of the given method's resolution targets at its call site. */
+  function resolutions_of(
+    call_graph: CallGraph,
+    caller: string,
+    call_name: string
+  ): string[] {
+    const caller_node = Array.from(call_graph.nodes.values()).find(
+      (n) => n.name === (caller as SymbolName)
+    );
+    const call = caller_node?.enclosed_calls.find(
+      (c) => c.name === (call_name as SymbolName)
+    );
+    return (call?.resolutions ?? []).map((r) => r.symbol_id as string);
+  }
+
+  it("reaches the implementation through a destructured interface-typed option binding", async () => {
+    const { project, file } = await project_from_inline(`
+interface PersistenceStorage {
+  sweep(paths: Set<string>): void;
+}
+class FileSystemStorage implements PersistenceStorage {
+  sweep(paths: Set<string>): void {}
+}
+interface Options {
+  storage?: PersistenceStorage;
+}
+function load(options: Options): void {
+  const { storage } = options;
+  storage!.sweep(new Set());
+}
+`);
+    const call_graph = project.get_call_graph();
+    assert_member_reachable(call_graph, "sweep", file);
+
+    const impl_id = method_symbol_id(call_graph, "sweep", file);
+    expect(resolutions_of(call_graph, "load", "sweep")).toContain(impl_id);
+  });
+
+  it("attributes the dispatch to the interface member as well as the implementation", async () => {
+    const { project, file } = await project_from_inline(`
+interface PersistenceStorage {
+  sweep(paths: Set<string>): void;
+}
+class FileSystemStorage implements PersistenceStorage {
+  sweep(paths: Set<string>): void {}
+}
+interface Options {
+  storage?: PersistenceStorage;
+}
+function load(options: Options): void {
+  const { storage } = options;
+  storage!.sweep(new Set());
+}
+`);
+    const call_graph = project.get_call_graph();
+
+    const index = project.get_index_single_file(file);
+    const interface_member_id = Array.from(index!.interfaces.values())
+      .find((i) => (i.name as string) === "PersistenceStorage")
+      ?.methods.find((m) => (m.name as string) === "sweep")?.symbol_id as string;
+    const impl_id = method_symbol_id(call_graph, "sweep", file);
+
+    expect(resolutions_of(call_graph, "load", "sweep").sort()).toEqual(
+      [interface_member_id, impl_id].sort()
+    );
+    // The interface member gains an incoming edge without becoming a node.
+    expect(call_graph.nodes.has(interface_member_id as SymbolName as never)).toBe(false);
+
+    // The head is the interface member (direct); the implementation reaches it
+    // by implementing the interface, named as its declaring interface.
+    const load_node = Array.from(call_graph.nodes.values()).find(
+      (n) => n.name === ("load" as SymbolName)
+    );
+    const sweep_call = load_node?.enclosed_calls.find(
+      (c) => c.name === ("sweep" as SymbolName)
+    );
+    const interface_type_id = Array.from(
+      project.get_index_single_file(file)!.interfaces.values()
+    ).find((i) => (i.name as string) === "PersistenceStorage")!.symbol_id;
+    const by_id = new Map(
+      (sweep_call?.resolutions ?? []).map((r) => [r.symbol_id as string, r])
+    );
+    expect(by_id.get(interface_member_id)?.reason).toEqual({ type: "direct" });
+    expect(by_id.get(impl_id!)?.reason).toEqual({
+      type: "interface_implementation",
+      interface_id: interface_type_id,
+    });
+  });
+
+  it("attributes a class dispatch to its base and overrides, each of them direct", async () => {
+    const { project, file } = await project_from_inline(`
+class Base {
+  handle(): void {}
+}
+class Derived extends Base {
+  handle(): void {}
+}
+function run(base: Base): void {
+  base.handle();
+}
+`);
+    const call_graph = project.get_call_graph();
+    const run_node = Array.from(call_graph.nodes.values()).find(
+      (n) => n.name === ("run" as SymbolName)
+    );
+    const handle_call = run_node?.enclosed_calls.find(
+      (c) => c.name === ("handle" as SymbolName)
+    );
+    expect(handle_call?.resolutions.length).toBe(2);
+    for (const resolution of handle_call?.resolutions ?? []) {
+      expect(resolution.reason).toEqual({ type: "direct" });
+    }
+  });
+
+  it("reaches the implementation through a binding destructured from another destructured binding", async () => {
+    const { project, file } = await project_from_inline(`
+interface PersistenceStorage {
+  sweep(paths: Set<string>): void;
+}
+class FileSystemStorage implements PersistenceStorage {
+  sweep(paths: Set<string>): void {}
+}
+interface Inner {
+  storage: PersistenceStorage;
+}
+interface Options {
+  inner: Inner;
+}
+function load(options: Options): void {
+  const { inner } = options;
+  const { storage } = inner;
+  storage.sweep(new Set());
+}
+`);
+    const call_graph = project.get_call_graph();
+    assert_member_reachable(call_graph, "sweep", file);
+  });
+
+  it("reaches the implementation through a renamed destructured binding", async () => {
+    const { project, file } = await project_from_inline(`
+interface PersistenceStorage {
+  sweep(paths: Set<string>): void;
+}
+class FileSystemStorage implements PersistenceStorage {
+  sweep(paths: Set<string>): void {}
+}
+interface Options {
+  storage?: PersistenceStorage;
+}
+function load(options: Options): void {
+  const { storage: store } = options;
+  store!.sweep(new Set());
+}
+`);
+    const call_graph = project.get_call_graph();
+    assert_member_reachable(call_graph, "sweep", file);
+  });
+
+  it("leaves the implementation an entry point when the destructuring source is a call", async () => {
+    const { project, file } = await project_from_inline(`
+interface PersistenceStorage {
+  sweep(paths: Set<string>): void;
+}
+class FileSystemStorage implements PersistenceStorage {
+  sweep(paths: Set<string>): void {}
+}
+interface Options {
+  storage?: PersistenceStorage;
+}
+function make(): Options {
+  return { storage: new FileSystemStorage() };
+}
+function load(): void {
+  const { storage } = make();
+  storage!.sweep(new Set());
+}
+`);
+    const call_graph = project.get_call_graph();
+    expect(entry_point_for(call_graph, "sweep", file)).toBeDefined();
+  });
+});
+
+/**
+ * The self type is read off the scope tree, so a `this` receiver names its class
+ * whatever the class body holds and wherever in the body the call sits. Each
+ * case here is a shape that left the type unnameable while it was inferred by
+ * scanning the class's members back through the name-keyed member index.
+ */
+describe("TypeScript this-receiver resolution through the scope's self type (TASK-376.5)", () => {
+  // angular abstract_form.directive.ts:63,68 — the accessor pair lands in the
+  // by-scope index under one name, so whichever accessor that was decided
+  // whether the class could be named at all.
+  it("resolves this.method() in a class whose accessor pair precedes the caller", async () => {
+    const { project, file } = await project_from_inline(`
+export class AbstractFormDirective {
+  private _disabled = false;
+
+  get disabled(): boolean {
+    return this._disabled;
+  }
+
+  set disabled(value: boolean) {
+    this._disabled = value;
+  }
+
+  submit(): void {
+    this.validate();
+  }
+
+  validate(): void {}
+}
+
+new AbstractFormDirective().submit();
+`);
+    assert_member_reachable(project.get_call_graph(), "validate", file);
+  });
+
+  // A scope holds one symbol per name, and TypeScript's declaration merging puts
+  // a namespace beside the class under that one name. Only a type can be what
+  // `this` denotes, so the class is named regardless of which won the slot.
+  it("resolves this.method() in a class merged with a same-named namespace", async () => {
+    const { project, file } = await project_from_inline(`
+class Foo {
+  method(): void {
+    this.other();
+  }
+  other(): void {}
+}
+
+namespace Foo {
+  export const X = 1;
+}
+
+new Foo().method();
+`);
+
+    assert_member_reachable(project.get_call_graph(), "other", file);
+  });
+
+  // TASK-374.6 item 2 — a field initialiser runs in the class body scope, which
+  // the member scan reached only through a member it did not have.
+  it("resolves this.method() inside a class-field initialiser", async () => {
+    const { project, file } = await project_from_inline(`
+export class Config {
+  derived = this.compute();
+
+  compute(): number {
+    return 1;
+  }
+}
+
+new Config();
+`);
+
+    assert_member_reachable(project.get_call_graph(), "compute", file);
+  });
+
+  it("resolves a getter read inside a class-field initialiser", async () => {
+    const { project, file } = await project_from_inline(`
+export class Config {
+  derived = this.base + 1;
+
+  get base(): number {
+    return 1;
+  }
+}
+
+new Config();
+`);
+
+    assert_member_reachable(project.get_call_graph(), "base", file);
+  });
+
+  it("does not bind a field initialiser's this.method() to a same-named method of an unrelated class", async () => {
+    const { project, file } = await project_from_inline(`
+export class Config {
+  derived = this.compute();
+
+  compute(): number {
+    return 1;
+  }
+}
+
+export class Unrelated {
+  compute(): number {
+    return 2;
+  }
+}
+
+new Config();
+`);
+    const call_graph = project.get_call_graph();
+
+    const computes = Array.from(call_graph.nodes.values())
+      .filter(
+        (n) =>
+          n.name === ("compute" as SymbolName) && n.location.file_path === file
+      )
+      .sort((a, b) => a.location.start_line - b.location.start_line);
+    expect(computes.length).toBe(2);
+
+    expect(call_graph.entry_points).not.toContain(computes[0].symbol_id);
+    expect(call_graph.entry_points).toContain(computes[1].symbol_id);
+  });
+});

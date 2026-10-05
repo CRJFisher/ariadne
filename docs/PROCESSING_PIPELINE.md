@@ -14,9 +14,9 @@ Ariadne's processing pipeline has two modes:
 ```
 Source Code → tree-sitter AST
     │
-    ├── PASS 1: query_code_tree()     → CaptureNode[]
+    ├── PASS 1: query_tree()           → CaptureNode[]
     ├── PASS 2: process_scopes()      → LexicalScope tree + ProcessingContext
-    ├── PASS 3: process_definitions() → AnyDefinition[] (via CaptureHandlers)
+    ├── PASS 3: process_definitions() → BuilderResult (via CaptureHandlers)
     └── PASS 4: process_references()  → SymbolReference[] (via MetadataExtractors)
     │
     └── SemanticIndex
@@ -45,8 +45,9 @@ Phase 2:  Update registries
             ├── ExportRegistry      (exports per file)
             ├── ReferenceRegistry   (raw references per file)
             └── ImportGraph         (import dependency tracking)
+Phase 2.5: Fix import locations (correct ImportDefinition source locations)
 Phase 3:  Name resolution (lexical scope walk: local → imports → parent)
-Phase 3.5: Cross-file type inheritance resolution
+Phase 3.5: Type heritage (extends/implements/impl-trait names → the subtype graph)
 Phase 3.6: Reference preprocessing (language-specific, e.g., Python class instantiation)
 Phase 4:  Type registry update (resolves type names to SymbolIds)
 Phase 5:  Call resolution (function/method/constructor dispatch using types)
@@ -59,9 +60,10 @@ Phases 3-5 run on the changed file **and** all its dependents (files that import
 `trace_call_graph(definitions, resolutions)` builds the call graph from resolved data:
 
 1. Create a `CallableNode` for each callable definition with its enclosed `CallReference[]`
-2. Identify entry points — functions with no incoming call edges and no indirect reachability
+2. Identify entry points — functions with no incoming call edges and no indirect reachability — and track test file origin via the `is_test` flag on `CallableNode`
+3. Classify entry points against the bundled known-issues registry (`classify_entry_points/`). Permanent rules cover framework-invocation patterns (Flask routes, pytest fixtures, JSX components, dynamic dispatch) and Python dunders. Matched candidates are filtered out of `CallGraph.entry_points` and surfaced separately by `Project.get_classified_entry_points()` for triage workflows.
 
-Entry points are functions never called by any other function in the codebase. Indirect reachability (functions stored in collections or passed as references) is tracked to avoid false positives.
+Entry points are functions never called by any other function in the codebase, after both indirect-reachability tracking (functions stored in collections or passed as references) and classification against known false positives.
 
 ## Data Flow
 
@@ -72,7 +74,10 @@ Registries (project-level, incrementally updated)
     ↓
 Name Resolution → Type Resolution → Call Resolution
     ↓
-CallGraph { nodes, entry_points, indirect_reachability }
+trace_call_graph → raw CallGraph
+    ↓
+classify_entry_points → CallGraph { nodes, entry_points (true positives), indirect_reachability }
+                      ↘ ClassifiedEntryPoints { true_entry_points, known_false_positives }
 ```
 
 ## Language Support
@@ -82,5 +87,5 @@ TypeScript, JavaScript, Python, Rust. Each language has:
 - Tree-sitter `.scm` query files
 - Capture handlers and metadata extractors
 - Scope boundary extractors
-- Import resolvers and receiver resolvers
+- Import resolvers
 - Test file detectors

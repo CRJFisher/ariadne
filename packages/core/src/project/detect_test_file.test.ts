@@ -154,6 +154,7 @@ describe("is_test_file", () => {
       it("detects test_*.py files", () => {
         expect(is_test_file("/src/test_utils.py", language)).toBe(true);
         expect(is_test_file("/src/test_module.py", language)).toBe(true);
+        expect(is_test_file("/src/test_helpers_factory.py", language)).toBe(true);
       });
 
       it("detects *_test.py files", () => {
@@ -188,7 +189,6 @@ describe("is_test_file", () => {
       });
 
       it("does not detect files that contain 'test' but don't match patterns", () => {
-        expect(is_test_file("/src/test_helpers_factory.py", language)).toBe(true); // This matches test_*.py
         expect(is_test_file("/src/contest.py", language)).toBe(false);
         expect(is_test_file("/src/attest.py", language)).toBe(false);
       });
@@ -230,6 +230,14 @@ describe("is_test_file", () => {
         expect(is_test_file("/src/test_utils.rs", language)).toBe(false);
         expect(is_test_file("/src/contest.rs", language)).toBe(false);
       });
+    });
+  });
+
+  describe("unsupported language", () => {
+    it("treats every file as non-test when the language has no detector", () => {
+      const language = "go" as Language;
+      expect(is_test_file("/src/utils_test.go", language)).toBe(false);
+      expect(is_test_file("/tests/main.go", language)).toBe(false);
     });
   });
 });

@@ -55,17 +55,41 @@
   )
 )
 
-; Decorated method scopes (property getters, setters, staticmethod, classmethod)
+; Decorated method scopes (property getters, setters, staticmethod, classmethod),
+; excluding __init__ which is captured as a constructor scope
 (class_definition
   body: (block
     (decorated_definition
-      definition: (function_definition) @scope.method
+      definition: (function_definition
+        name: (identifier) @_scope_decorated_method_name
+        (#not-eq? @_scope_decorated_method_name "__init__")
+      ) @scope.method
     )
   )
 )
 
 ; Block scopes
-; Only capture standalone blocks (if/for/while/try/except/etc.)
+; Python has no block scoping: every name a block binds belongs to the
+; enclosing function or module. The scopes stay because name lookup keeps one
+; binding per name per scope, and the last one wins; a block scope is what keeps
+; a block's rebinding from replacing the binding the code around it reads.
+;   if / elif / else, try / except / finally, with
+;       two branches' same-named locals stay apart, a guarded def's body is
+;       confined, and `except ... as e` binds an alias deleted at the clause's
+;       end. Import bindings are hoisted into the enclosing scope.
+;   for / while
+;       a target or body assignment does not replace a same-named binding made
+;       before the loop, and two loops' same-named targets stay two bindings
+;       (`for callback in ...` three times in one test method). Without them
+;       django, pandas and celery resolve 5, 8 and 0 fewer calls, lose 22, 9
+;       and 3 call edges (gaining 11, 2 and 1) and django gains 2 raw entry
+;       points.
+;   match / case
+;       a case body's assignments, held apart in the same way. They hold almost
+;       nothing (django: 27 scopes, 6 bindings; pandas: 4 scopes, none; celery:
+;       none), and the figures above measure all four captures removed
+;       together, so they stay with for / while. Capture patterns are not
+;       recorded as bindings (4 in django, none in pandas or celery).
 (for_statement) @scope.block
 (while_statement) @scope.block
 (with_statement) @scope.block
@@ -160,83 +184,41 @@
   (lambda) @definition.anonymous_function
 )
 
-; Enum class detection (classes inheriting from Enum)
-(class_definition
-  name: (identifier) @definition.enum
-  superclasses: (argument_list
-    (identifier) @reference.type
-    (#match? @reference.type "^(Enum|IntEnum|Flag|IntFlag|StrEnum)$")
-  )
-)
-
-; Enum class detection (from module.Enum)
-(class_definition
-  name: (identifier) @definition.enum
-  superclasses: (argument_list
-    (attribute
-      attribute: (identifier) @reference.type
-      (#match? @reference.type "^(Enum|IntEnum|Flag|IntFlag|StrEnum)$")
-    )
-  )
-)
-
-; Protocol class detection (classes inheriting from Protocol)
-(class_definition
-  name: (identifier) @definition.interface
-  superclasses: (argument_list
-    (identifier) @reference.type
-    (#eq? @reference.type "Protocol")
-  )
-)
-
-; Protocol class detection (from typing.Protocol)
-(class_definition
-  name: (identifier) @definition.interface
-  superclasses: (argument_list
-    (attribute
-      attribute: (identifier) @reference.type
-      (#eq? @reference.type "Protocol")
-    )
-  )
-)
-
-; Class definitions without inheritance
+; Class definitions — one capture per class, whatever shape its bases take
+; (bare, dotted, subscripted, or absent). The builder discriminates Enum and
+; Protocol classes and reads base names off the node (extract_extends), per the
+; capture-schema contract: the query captures the syntactic unit, the builder
+; derives the semantics.
 (class_definition
   name: (identifier) @definition.class
-  !superclasses
 )
 
-; Class definitions with inheritance (but not Enum or Protocol)
+; Base-class references — one per base, whatever shape the base takes and
+; whatever the class body holds. Carrying the base inside the member patterns
+; below instead would re-emit it once per class-body assignment.
 (class_definition
-  name: (identifier) @definition.class
   superclasses: (argument_list
-    (identifier) @reference.type
-    (#not-match? @reference.type "^(Enum|IntEnum|Flag|IntFlag|StrEnum|Protocol)$")
+    [
+      (identifier) @reference.type
+      (attribute attribute: (identifier) @reference.type)
+      (subscript value: (identifier) @reference.type)
+      (subscript value: (attribute attribute: (identifier) @reference.type))
+    ]
   )
 )
 
-; Protocol property signatures (annotated assignments without values)
+; Protocol property signatures (annotated assignments without values). The base
+; is matched through an underscore capture, filtered before any reference is
+; built, so gating here costs no second reference to the base.
 (class_definition
   superclasses: (argument_list
-    (identifier) @reference.type
-    (#eq? @reference.type "Protocol")
-  )
-  body: (block
-    (expression_statement
-      (assignment
-        left: (identifier) @definition.property.interface
-      )
-    )
-  )
-)
-
-; Protocol property signatures (from typing.Protocol)
-(class_definition
-  superclasses: (argument_list
-    (attribute
-      attribute: (identifier) @reference.type
-      (#eq? @reference.type "Protocol")
-    )
+    [
+      (identifier) @_protocol_base
+      (attribute attribute: (identifier) @_protocol_base)
+      (subscript value: (identifier) @_protocol_base)
+      (subscript value: (attribute attribute: (identifier) @_protocol_base))
+    ]
+    (#eq? @_protocol_base "Protocol")
   )
   body: (block
     (expression_statement
@@ -267,85 +249,69 @@
   )
 )
 
-; Static methods
+; Decorated constructor
 (class_definition
   body: (block
     (decorated_definition
-      (decorator
-        (identifier) @modifier.visibility
-        (#eq? @modifier.visibility "staticmethod")
-      )
+      definition: (function_definition
+        name: (identifier) @definition.constructor
+        (#eq? @definition.constructor "__init__")
+      ) @scope.constructor
+    )
+  )
+)
+
+; Decorated methods — any decorator shape (@property, @staticmethod,
+; @cython.cfunc, @functools.lru_cache(), @mod.dec(arg)). The builder reads the
+; decorator list off the node (extract_decorators / determine_method_type /
+; determine_accessor_kind); the query only says "this is a method".
+(class_definition
+  body: (block
+    (decorated_definition
       definition: (function_definition
         name: (identifier) @definition.method
-      )
-    ) @modifier.visibility
-  )
-)
-
-; Class methods — modifier only (@definition.method comes from the general decorated pattern below)
-(class_definition
-  body: (block
-    (decorated_definition
-      (decorator
-        (identifier) @modifier.visibility
-        (#eq? @modifier.visibility "classmethod")
-      )
-      (function_definition)
-    ) @scope.method
-  )
-)
-
-; Property decorators
-(class_definition
-  body: (block
-    (decorated_definition
-      (decorator
-        (identifier) @decorator.property
-        (#eq? @decorator.property "property")
-      )
-      definition: (function_definition
-        name: (identifier) @definition.property
-      )
-    ) @definition.property
-  )
-)
-
-; Method decorators (@staticmethod, @classmethod, etc.)
-(class_definition
-  body: (block
-    (decorated_definition
-      (decorator
-        (identifier) @decorator.method
-      )
-      definition: (function_definition
-        name: (identifier) @definition.method
+        (#not-eq? @definition.method "__init__")
       )
     )
   )
 )
 
-; Enum members (class attributes in Enum classes)
+; Decorator metadata — the decorator's name node, for the decorator record on
+; the decorated method. Call-shaped decorators contribute their callee name.
+(class_definition
+  body: (block
+    (decorated_definition
+      (decorator
+        [(identifier) (attribute)] @decorator.method
+      )
+    )
+  )
+)
+
+(class_definition
+  body: (block
+    (decorated_definition
+      (decorator
+        (call
+          function: [(identifier) (attribute)] @decorator.method
+        )
+      )
+    )
+  )
+)
+
+; Enum members (class attributes in Enum classes). The base list mirrors
+; ENUM_BASES in symbol_factories.python.ts, which is the authority; a test pins
+; the two equal so a base added to one cannot go missing from the other.
 (class_definition
   superclasses: (argument_list
-    (identifier) @reference.type
-    (#match? @reference.type "^(Enum|IntEnum|Flag|IntFlag|StrEnum)$")
-  )
-  body: (block
-    (expression_statement
-      (assignment
-        left: (identifier) @definition.enum_member
-      )
-    )
-  )
-)
-
-; Enum members (from module.Enum)
-(class_definition
-  superclasses: (argument_list
-    (attribute
-      attribute: (identifier) @reference.type
-      (#match? @reference.type "^(Enum|IntEnum|Flag|IntFlag|StrEnum)$")
-    )
+    [
+      (identifier) @_enum_base
+      (attribute attribute: (identifier) @_enum_base)
+      (subscript value: (identifier) @_enum_base)
+      (subscript value: (attribute attribute: (identifier) @_enum_base))
+    ]
+    (#match? @_enum_base "^(Enum|IntEnum|Flag|IntFlag|StrEnum)$")
   )
   body: (block
     (expression_statement
@@ -366,6 +332,31 @@
       )
     )
   )
+)
+
+; Class attributes assigned inside a class-body conditional block, e.g.
+; `if not TYPE_CHECKING: __getitem__ = _getitem`. The assignment runs at
+; class-definition time, so it is a class attribute, but it is nested in the
+; `if` block rather than directly in the class body. Matching only direct
+; children of the `if` consequence keeps nested-function locals out.
+(class_definition
+  body: (block
+    (if_statement
+      consequence: (block
+        (expression_statement
+          (assignment
+            left: (identifier) @definition.field
+            right: (_)? @reference.variable
+          )
+        )
+      )
+    )
+  )
+)
+
+; Walrus assignment: `if (d := xs[0]):` binds d in the enclosing scope.
+(named_expression
+  name: (identifier) @definition.variable
 )
 
 ; Variable assignments
@@ -419,6 +410,29 @@
   (typed_default_parameter
     name: (identifier) @definition.parameter
     type: (_)
+  )
+)
+
+; Lambda parameters belong to the lambda's anonymous function, as a def's do to it
+(lambda_parameters
+  (identifier) @definition.parameter
+)
+
+(lambda_parameters
+  (default_parameter
+    name: (identifier) @definition.parameter
+  )
+)
+
+(lambda_parameters
+  (list_splat_pattern
+    (identifier) @definition.parameter
+  )
+)
+
+(lambda_parameters
+  (dictionary_splat_pattern
+    (identifier) @definition.parameter
   )
 )
 
@@ -528,6 +542,12 @@
 ; Import all (from module import *)
 (import_from_statement
   module_name: (dotted_name)
+  (wildcard_import) @definition.import
+)
+
+; Relative import all (from .pkg import *, from . import *)
+(import_from_statement
+  module_name: (relative_import)
   (wildcard_import) @definition.import
 )
 
@@ -669,28 +689,24 @@
 ; FUNCTION AND METHOD CALLS
 ; ============================================================================
 ;
-; NOTE: Python Class Instantiation Limitation
-; -------------------------------------------
-; In Python, class instantiation (e.g., `obj = MyClass()`) uses identical syntax
-; to function calls (e.g., `result = my_function()`). Both are represented as
-; `call` nodes with an `identifier` function field in tree-sitter.
-;
-; Unlike TypeScript/JavaScript (`new ClassName()`) or Rust (`StructName { ... }`),
-; there is NO syntactic distinction at the AST level.
-;
-; Capture Strategy:
-; - Calls WITH argument lists are captured as @reference.constructor (heuristic)
-;   This provides construct_target metadata for type binding extraction
-; - At resolution time, if the identifier resolves to a class symbol,
-;   the call is resolved to __init__. Otherwise, it's treated as a function call.
-; - The call_type in CallReference is inferred from the resolved symbol, not syntax
-; - See: resolve_references/call_resolution/call_resolution.python.ts
+; Python class instantiation (`obj = MyClass()`) is syntactically a call: both it
+; and `result = my_function()` are `call` nodes with an `identifier` function
+; field, where TypeScript/JavaScript write `new ClassName()` and Rust a struct
+; literal. So every call with an identifier callee other than `super` is one
+; `@reference.call`, carrying the assignment target it lands in when there is
+; one, and
+; `resolve_references/preprocess_references.python.ts` rewrites the ones whose
+; callee resolves to a class into constructor calls once names are resolved.
+; A construction is therefore recorded once, and only when the callee is a
+; class.
 ;
 ; ============================================================================
 
-; Function calls
+; Function calls. `super` is excluded: the super() pattern below owns that call
+; node, and a second capture here would mint a duplicate call reference.
 (call
   function: (identifier) @reference.call
+  (#not-eq? @reference.call "super")
 )
 
 ; Method calls with receiver tracking
@@ -700,28 +716,6 @@
     attribute: (identifier)
   )
 ) @reference.call
-
-; Constructor calls (class instantiation) - heuristic capture for construct_target extraction
-; This captures ALL calls with argument lists as potential constructors.
-; Actual call type is determined at resolution time based on what the identifier resolves to.
-(call
-  function: (identifier) @reference.constructor
-  arguments: (argument_list)
-) @reference.call
-
-; Static method call - object is a class identifier (capitalized)
-(call
-  function: (attribute
-    object: (identifier) @reference.type_reference
-    attribute: (identifier) @modifier.visibility)
-  (#match? @reference.type_reference "^[A-Z]")) @reference.call
-
-; Instance method call - object is lowercase/instance
-(call
-  function: (attribute
-    object: (identifier) @reference.variable
-    attribute: (identifier))
-  (#not-match? @reference.variable "^[A-Z]")) @reference.call
 
 ; Attribute access
 (attribute
@@ -741,11 +735,14 @@
   right: (_) @reference.variable.source
 ) @assignment.variable
 
+; A write to an attribute invokes the setter, never the getter, so the target
+; carries no member read — the general attribute pattern above is suppressed
+; at write positions by the same rule.
 (assignment
   left: (attribute
     object: (identifier) @reference.variable
     attribute: (identifier) @reference.property
-  ) @reference.member_access
+  )
   right: (_)
 ) @assignment.property
 
@@ -775,53 +772,29 @@
   (identifier) @reference.variable
 )
 
-; Decorators - capture for decorator tracking
+; Decorators - capture for decorator tracking. A call-shaped decorator's callee
+; is already captured by the general call patterns and a dotted decorator by
+; the general attribute pattern; only the bare-identifier form needs its own
+; reference capture.
 (decorated_definition
   (decorator
     (identifier) @reference.call
   )
 )
 
-(decorated_definition
-  (decorator
-    (call
-      function: (identifier) @reference.call
-    )
-  )
-)
-
-(decorated_definition
-  (decorator
-    (attribute
-      attribute: (identifier) @reference.property
-    )
-  )
-)
-
-; Decorators (old reference captures for compatibility)
-(decorator
-  (identifier) @reference.call
-)
-
-(decorator
-  (call
-    function: (identifier) @reference.call
-  )
-)
-
 ; self references (important for method context)
-(identifier) @reference.this
-(#eq? @reference.this "self")
+((identifier) @reference.this
+  (#eq? @reference.this "self"))
 
 ; cls references (for classmethods)
-(identifier) @reference.this
-(#eq? @reference.this "cls")
+((identifier) @reference.this
+  (#eq? @reference.this "cls"))
 
 ; super() calls
 (call
   function: (identifier) @reference.super
   (#eq? @reference.super "super")
-) @reference.call
+)
 
 ; Type annotations in various contexts
 (type

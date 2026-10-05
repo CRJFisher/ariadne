@@ -1,0 +1,137 @@
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import * as fsSync from "fs";
+import path from "path";
+
+import type { TriageResultsFile } from "@ariadnejs/skill-protocol";
+import {
+  all_finalized_run_ids,
+  all_finalized_runs_at_commit,
+  list_projects_with_results,
+  read_triage_results,
+} from "./triage_results_store.js";
+
+const TMP = vi.hoisted(() => {
+  const tmp_path = `${process.env.TMPDIR ?? "/tmp"}/ariadne-test-triage-results-store-${process.pid}`;
+  process.env.ARIADNE_TRIAGE_ENTRYPOINTS_DIR_OVERRIDE = tmp_path;
+  return tmp_path;
+});
+
+const ANALYSIS_OUTPUT = path.join(TMP, "analysis_output");
+
+beforeEach(() => {
+  fsSync.rmSync(TMP, { recursive: true, force: true });
+  fsSync.mkdirSync(TMP, { recursive: true });
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  fsSync.rmSync(TMP, { recursive: true, force: true });
+});
+
+const EMPTY_OUTPUT: TriageResultsFile = {
+  schema_version: 5,
+  project_path: "/some/path",
+  commit_hash: null,
+  novel_issues: [],
+  classifier_regressions: [],
+  confirmed_unreachable: [],
+  uncertain: [],
+  last_updated: "2026-04-28T13:42:07.812Z",
+};
+
+function seed(project: string, run_id: string, output: TriageResultsFile = EMPTY_OUTPUT): void {
+  const dir = path.join(ANALYSIS_OUTPUT, project, "triage_results");
+  fsSync.mkdirSync(dir, { recursive: true });
+  fsSync.writeFileSync(path.join(dir, `${run_id}.json`), JSON.stringify(output));
+}
+
+describe("all_finalized_runs_at_commit", () => {
+  it("returns empty array when triage_results dir is missing", async () => {
+    expect(await all_finalized_runs_at_commit("nope", "deadbee")).toEqual([]);
+  });
+
+  it("returns empty array when no triage_results match the commit prefix", async () => {
+    seed("p", "feedf00-2026-04-26T00-00-00.000Z");
+    expect(await all_finalized_runs_at_commit("p", "deadbee")).toEqual([]);
+  });
+
+  it("returns all matching run-ids sorted newest-first (lex-descending)", async () => {
+    seed("p", "deadbee-2026-04-26T00-00-00.000Z");
+    seed("p", "deadbee-2026-04-28T00-00-00.000Z");
+    seed("p", "feedf00-2026-04-27T00-00-00.000Z");
+
+    const results = await all_finalized_runs_at_commit("p", "deadbee");
+    expect(results).toEqual([
+      "deadbee-2026-04-28T00-00-00.000Z",
+      "deadbee-2026-04-26T00-00-00.000Z",
+    ]);
+  });
+
+  it("does not match a partial-prefix collision (e.g. 'dead' vs 'deadbee')", async () => {
+    seed("p", "deadbee-2026-04-26T00-00-00.000Z");
+    expect(await all_finalized_runs_at_commit("p", "dead")).toEqual([]);
+  });
+});
+
+describe("all_finalized_run_ids", () => {
+  it("returns empty array when the project has no published results", async () => {
+    expect(await all_finalized_run_ids("nope")).toEqual([]);
+  });
+
+  it("orders by wall-clock time across commits, not by the run-id's commit hex", async () => {
+    // `feedf00` sorts lexicographically ABOVE `deadbee`, but its run is OLDER.
+    // A whole-id sort would put the older run first; the timestamp-suffix sort
+    // must put the newer `deadbee` run first.
+    seed("p", "feedf00-2026-04-27T00-00-00.000Z");
+    seed("p", "deadbee-2026-04-28T00-00-00.000Z");
+    seed("p", "deadbee-2026-04-26T00-00-00.000Z");
+
+    expect(await all_finalized_run_ids("p")).toEqual([
+      "deadbee-2026-04-28T00-00-00.000Z",
+      "feedf00-2026-04-27T00-00-00.000Z",
+      "deadbee-2026-04-26T00-00-00.000Z",
+    ]);
+  });
+});
+
+describe("list_projects_with_results", () => {
+  it("returns empty array when analysis_output is missing", async () => {
+    expect(await list_projects_with_results()).toEqual([]);
+  });
+
+  it("lists only project dirs that have a triage_results subdir, sorted", async () => {
+    seed("zulu", "deadbee-2026-04-28T00-00-00.000Z");
+    seed("alpha", "deadbee-2026-04-28T00-00-00.000Z");
+    // A bare project dir with no triage_results subdir is not a published project.
+    fsSync.mkdirSync(path.join(ANALYSIS_OUTPUT, "empty_proj"), { recursive: true });
+
+    expect(await list_projects_with_results()).toEqual(["alpha", "zulu"]);
+  });
+});
+
+describe("read_triage_results", () => {
+  it("returns the parsed output when the file exists", async () => {
+    seed("p", "deadbee-2026-04-26T00-00-00.000Z");
+    const result = await read_triage_results("p", "deadbee-2026-04-26T00-00-00.000Z");
+    expect(result.schema_version).toBe(5);
+  });
+
+  it("throws when the file is missing", async () => {
+    await expect(read_triage_results("p", "nope")).rejects.toThrow();
+  });
+
+  it("rejects a legacy v3 file with an explicit schema-mismatch error", async () => {
+    const v3_file = {
+      schema_version: 3,
+      project_path: "/some/path",
+      commit_hash: null,
+      confirmed_unreachable: [],
+      false_positive_groups: {},
+      last_updated: "2026-04-28T13:42:07.812Z",
+    };
+    const dir = path.join(ANALYSIS_OUTPUT, "p", "triage_results");
+    fsSync.mkdirSync(dir, { recursive: true });
+    fsSync.writeFileSync(path.join(dir, "legacy.json"), JSON.stringify(v3_file));
+    await expect(read_triage_results("p", "legacy")).rejects.toThrow(/schema_version=3/);
+  });
+});

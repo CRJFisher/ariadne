@@ -3,13 +3,13 @@ import * as fc from "fast-check";
 import type { FilePath, Language } from "@ariadnejs/types";
 import { Project } from "../project/project";
 import {
-  serialize_semantic_index,
   deserialize_semantic_index,
 } from "./serialize_index";
+import { serialize_semantic_index } from "./serialize_index.test";
 import { build_index_single_file } from "../index_single_file/index_single_file";
 import type { ParsedFile } from "../index_single_file/parsed_file";
 import Parser from "tree-sitter";
-import TypeScriptParser from "tree-sitter-typescript";
+import { LANGUAGE_TO_TREESITTER_LANG } from "../index_single_file/query_code_tree/parsers";
 
 function fp(s: string): FilePath {
   return s as FilePath;
@@ -17,7 +17,7 @@ function fp(s: string): FilePath {
 
 function parse_ts_code(content: string, file_path: string): ReturnType<typeof build_index_single_file> {
   const parser = new Parser();
-  parser.setLanguage(TypeScriptParser.typescript);
+  parser.setLanguage(LANGUAGE_TO_TREESITTER_LANG.get("typescript")!);
   const tree = parser.parse(content);
   const lines = content.split("\n");
   const parsed: ParsedFile = {
@@ -26,6 +26,7 @@ function parse_ts_code(content: string, file_path: string): ReturnType<typeof bu
     file_end_column: lines[lines.length - 1]?.length || 0,
     tree,
     lang: "typescript" as Language,
+    source: content,
   };
   return build_index_single_file(parsed, tree, "typescript" as Language);
 }

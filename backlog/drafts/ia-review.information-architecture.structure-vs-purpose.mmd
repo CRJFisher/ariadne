@@ -1,0 +1,59 @@
+%%{init:{'theme':'base','themeVariables':{'primaryColor':'#ece4d6','primaryBorderColor':'#c06d4f','primaryTextColor':'#2f3338','lineColor':'#2f3338','secondaryColor':'#f7f3ec','tertiaryColor':'#fffdf8','fontFamily':'-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif','clusterBkg':'#f7f3ec','clusterBorder':'#d8cfbe','edgeLabelBackground':'#fffdf8'}}}%%
+flowchart TD
+    subgraph types["packages/types — shared vocabulary"]
+        FAULT["ariadne_fault_area.ts<br/>BEST-IN-REPO: compiler-fenced<br/>folder-anchored taxonomy"]
+        TLIVE["live vocabulary<br/>(symbol / scopes / definitions / references /<br/>entry_point / known_issues)"]
+        TDEAD["DEAD ISLAND ~450 LOC:<br/>codegraph, calls, classes,<br/>false_positive_results, immutable, type_kind"]
+        TSTRADDLE["call_chains.ts + symbol_references.ts<br/>straddle stages; Resolution name collision<br/>masked by leaky barrel"]
+    end
+
+    subgraph core["packages/core — the pipeline"]
+        subgraph s1["Stage 1: index_single_file/"]
+            ORCH["index_single_file.ts<br/>orchestrator = TYPE-HUB + displaced dispatch;<br/>18 sub-pass files import types UPWARD"]
+            QCT["query_code_tree/<br/>dotted leaves clean;<br/>marshallers missing/displaced"]
+            SCOPES["scopes/ (+extractors/ = sanctioned<br/>shared-base exception)<br/>hidden python sort L152; utils.ts"]
+            DEFS["definitions/definitions.ts 1069 LOC<br/>hides 5 language methods"]
+            REFS["references/references.ts 754 LOC<br/>inline TS/Py node-type branches"]
+        end
+        subgraph s2["Stage 2: project/ + resolve_references/"]
+            PROJ["project.ts 759 LOC<br/>hides parse dispatch + FS walk + persistence;<br/>barrel leaks sibling registries"]
+            IMPRES["import_resolution/<br/>GOLD STANDARD dotted family"]
+            CALLRES["call_resolution/<br/>path_resolution.ts = 100% Rust, neutral name;<br/>Rust/Py blocks in constructor.ts,<br/>function_call.ts, receiver_resolution.ts"]
+            REG["registries/type.ts —(value import)→ call_resolution<br/>LAYERING INVERSION"]
+        end
+        subgraph s3["Stage 3: trace_call_graph/ + classify_entry_points/"]
+            TRACE["trace_call_graph.ts<br/>detect_language copy #3:<br/>unknown → 'typescript' (LATENT BUG)"]
+            MEGA["extract_entry_point_diagnostics.ts 867 LOC<br/>6+ responsibilities incl. detect_language #1"]
+            BUILTINS["builtins/ check_*.ts × 18<br/>hook-enforced filename = group_id<br/>(correct; do NOT dot-suffix)<br/>14 import detect_language from megafile"]
+        end
+        SUPPORT["support tissue: persistence / logging /<br/>profiling / introspection<br/>zero language code (correct);<br/>explain_call_site: 0 consumers"]
+        DL["detect_language ×3<br/>null vs throw vs default-TS"]
+    end
+
+    subgraph periphery["periphery — language-neutral seam (correct)"]
+        MCP["packages/mcp<br/>server.ts boots at import scope;<br/>2 megafile tools duplicate core's<br/>build_signature (diverged)"]
+        SFS["packages/skill-fs<br/>classifier_regressions.ts =<br/>misplaced triage logic"]
+        SP["packages/skill-protocol<br/>clean wire boundary"]
+    end
+
+    PIPELINE[".claude/skills pipeline<br/>triage → plan → prioritize → reconcile"]
+
+    s1 --> s2 --> s3
+    DL -.forked contract.-> PROJ
+    DL -.forked contract.-> TRACE
+    DL -.forked contract.-> MEGA
+    BUILTINS -->|reads EnrichedEntryPoint in-process<br/>boundary CORRECT, under-documented| MEGA
+    types --> core
+    core --> MCP
+    SP --> PIPELINE
+    FAULT -->|folder map routes investigators| core
+    PIPELINE -.->|uses MCP tools, not introspection/| MCP
+    SFS -.->|sole caller is triage| PIPELINE
+
+    linkStyle 3,4,5 stroke:#a8412a,stroke-width:2px;
+    classDef deadIsland fill:#f7f3ec,stroke:#a8412a,stroke-width:1.5px,color:#a8412a;
+    classDef best fill:#ece4d6,stroke:#6f7a4f,stroke-width:2px,color:#2f3338;
+    classDef bug fill:#fffdf8,stroke:#a8412a,stroke-width:2px,color:#a8412a;
+    class TDEAD deadIsland;
+    class FAULT best;
+    class TRACE,DL bug;

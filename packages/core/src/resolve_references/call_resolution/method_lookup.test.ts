@@ -1,36 +1,27 @@
-/**
- * Unit Tests for Method Lookup Module
- *
- * Tests the core function for looking up methods on resolved receiver types:
- * - resolve_method_on_type: Main entry point for method lookup
- *
- * Scenarios covered:
- * - Regular class method lookup
- * - Interface polymorphic resolution
- * - Object literal FunctionCollection lookup
- * - Namespace import method lookup
- * - Fallback paths and error cases
- *
- * For full integration tests, see method.test.ts.
- */
-
 import { describe, it, expect, beforeEach } from "vitest";
-import { resolve_method_on_type } from "./method_lookup";
+import { resolve_method_on_type, resolve_super_method, type MethodLookup } from "./method_lookup";
 import type { ReceiverResolutionContext } from "./receiver_resolution";
 import { ScopeRegistry } from "../registries/scope";
 import { DefinitionRegistry } from "../registries/definition";
 import { TypeRegistry } from "../registries/type";
-import { ResolutionRegistry } from "../resolve_references";
-import { ImportGraph } from "../../project/import_graph";
-import { set_test_resolutions } from "../resolve_references.test";
+import { ResolutionRegistry } from "../resolution_registry";
+import { ImportGraph } from "../import_resolution/import_graph";
+import type { ModuleResolutionContext } from "../import_resolution";
+import { create_module_resolution_context } from "../import_resolution";
+import { ExportRegistry } from "../registries/export";
+import type { FileSystemFolder } from "../file_folders";
+import { make_export_chain_context } from "../resolution_test_helpers";
+import { set_test_resolutions, unwrap } from "../resolve_references.test";
 import type {
   SymbolId,
   SymbolName,
   ScopeId,
   Location,
   FilePath,
+  Language,
   MethodDefinition,
   ClassDefinition,
+  ConstructorDefinition,
   InterfaceDefinition,
   FunctionDefinition,
   VariableDefinition,
@@ -43,7 +34,10 @@ import {
   method_symbol,
   function_symbol,
   variable_symbol,
+  is_ok,
+  is_err,
 } from "@ariadnejs/types";
+import { ReferenceRegistry } from "../registries/reference";
 
 // Test fixtures
 const TEST_FILE = "test.ts" as FilePath;
@@ -66,19 +60,33 @@ describe("resolve_method_on_type", () => {
   let types: TypeRegistry;
   let resolutions: ResolutionRegistry;
   let imports: ImportGraph;
+  let exports: ExportRegistry;
+  let languages: Map<FilePath, Language>;
+  let modules: ModuleResolutionContext;
   let context: ReceiverResolutionContext;
 
   beforeEach(() => {
     scopes = new ScopeRegistry();
     definitions = new DefinitionRegistry();
-    types = new TypeRegistry();
+    types = new TypeRegistry(definitions);
     resolutions = new ResolutionRegistry();
     imports = new ImportGraph();
-    context = { scopes, definitions, types, resolutions, imports };
+    ({ exports, languages, modules } = make_export_chain_context());
+    context = {
+      references: new ReferenceRegistry(),
+      scopes,
+      definitions,
+      types,
+      resolutions,
+      imports,
+      exports,
+      languages,
+      modules,
+    };
   });
 
   describe("Regular class method lookup", () => {
-    it("should find method via TypeRegistry", () => {
+    it("finds method via TypeRegistry", () => {
       const class_id = class_symbol("MyClass", MOCK_LOCATION);
       const method_id = method_symbol("process" as SymbolName, MOCK_LOCATION);
 
@@ -109,23 +117,22 @@ describe("resolve_method_on_type", () => {
 
       definitions.update_file(TEST_FILE, [class_def, method_def]);
 
-      // Setup TypeRegistry to return the method
       types["resolved_type_members"] = new Map();
       types["resolved_type_members"].set(
         class_id,
         new Map([[("process" as SymbolName), method_id]])
       );
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         class_id,
         "process" as SymbolName,
         context
       );
 
-      expect(result).toEqual([method_id]);
+      expect(unwrap(result)).toEqual([method_id]);
     });
 
-    it("should find method via DefinitionRegistry fallback", () => {
+    it("finds method via DefinitionRegistry member-index fallback when TypeRegistry misses", () => {
       const class_id = class_symbol("MyClass", MOCK_LOCATION);
       const method_id = method_symbol("process" as SymbolName, MOCK_LOCATION);
 
@@ -156,17 +163,16 @@ describe("resolve_method_on_type", () => {
 
       definitions.update_file(TEST_FILE, [class_def, method_def]);
 
-      // TypeRegistry doesn't have the member, so it should fall back to member_index
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         class_id,
         "process" as SymbolName,
         context
       );
 
-      expect(result).toEqual([method_id]);
+      expect(unwrap(result)).toEqual([method_id]);
     });
 
-    it("should return empty array if method not found", () => {
+    it("fails with method_not_on_type when the class has no such method", () => {
       const class_id = class_symbol("MyClass", MOCK_LOCATION);
 
       const class_def: ClassDefinition = {
@@ -185,18 +191,25 @@ describe("resolve_method_on_type", () => {
 
       definitions.update_file(TEST_FILE, [class_def]);
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         class_id,
         "nonexistent" as SymbolName,
         context
       );
 
-      expect(result).toEqual([]);
+      expect(is_err(result)).toBe(true);
+      if (is_err(result)) {
+        expect(result.error).toEqual({
+          stage: "method_lookup",
+          reason: "method_not_on_type",
+          partial_info: { resolved_receiver_type: class_id },
+        });
+      }
     });
   });
 
   describe("Interface polymorphic resolution", () => {
-    it("should resolve method to all implementations", () => {
+    it("resolves an interface method to the interface member and every implementation", () => {
       const interface_id = interface_symbol("Handler", MOCK_LOCATION);
       const class_a_id = class_symbol("HandlerA", { ...MOCK_LOCATION, start_line: 10 });
       const class_b_id = class_symbol("HandlerB", { ...MOCK_LOCATION, start_line: 20 });
@@ -289,8 +302,8 @@ describe("resolve_method_on_type", () => {
       ]);
 
       // Set up type inheritance index (interface -> implementing classes)
-      definitions["type_subtypes"] = new Map();
-      definitions["type_subtypes"].set(interface_id, new Set([class_a_id, class_b_id]));
+      definitions["heritage"].register_subtype(interface_id, class_a_id, "declared", TEST_FILE);
+      definitions["heritage"].register_subtype(interface_id, class_b_id, "declared", TEST_FILE);
 
       // Setup TypeRegistry to return the interface method
       types["resolved_type_members"] = new Map();
@@ -299,20 +312,19 @@ describe("resolve_method_on_type", () => {
         new Map([[("process" as SymbolName), interface_method_id]])
       );
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         interface_id,
         "process" as SymbolName,
         context
       );
 
-      // Should return both implementation methods
-      expect(result).toHaveLength(2);
-      expect(result).toContain(method_a_id);
-      expect(result).toContain(method_b_id);
+      expect(unwrap(result)).toEqual([interface_method_id, method_a_id, method_b_id]);
     });
 
-    it("should return empty array for interface with no implementations", () => {
+    it("names the interface member ahead of the sole implementation", () => {
       const interface_id = interface_symbol("Handler", MOCK_LOCATION);
+      const class_a_id = class_symbol("HandlerA", { ...MOCK_LOCATION, start_line: 10 });
+      const method_a_id = method_symbol("process" as SymbolName, { ...MOCK_LOCATION, start_line: 12 });
       const interface_method_id = method_symbol("process" as SymbolName, MOCK_LOCATION);
 
       const interface_method_def: MethodDefinition = {
@@ -321,6 +333,114 @@ describe("resolve_method_on_type", () => {
         name: "process" as SymbolName,
         defining_scope_id: "scope:test.ts:Handler:1:0" as ScopeId,
         location: MOCK_LOCATION,
+        parameters: [],
+        decorators: [],
+      };
+      const interface_def: InterfaceDefinition = {
+        kind: "interface",
+        symbol_id: interface_id,
+        name: "Handler" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        is_exported: false,
+        extends: [],
+        methods: [interface_method_def],
+        properties: [],
+      };
+      const method_a_def: MethodDefinition = {
+        kind: "method",
+        symbol_id: method_a_id,
+        name: "process" as SymbolName,
+        defining_scope_id: "scope:test.ts:HandlerA:10:0" as ScopeId,
+        location: { ...MOCK_LOCATION, start_line: 12 },
+        parameters: [],
+        body_scope_id: "scope:test.ts:HandlerA.process:12:2" as ScopeId,
+        decorators: [],
+      };
+      const class_a_def: ClassDefinition = {
+        kind: "class",
+        symbol_id: class_a_id,
+        name: "HandlerA" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 10 },
+        is_exported: false,
+        extends: ["Handler" as SymbolName],
+        methods: [method_a_def],
+        properties: [],
+        decorators: [],
+        constructors: [],
+      };
+
+      definitions.update_file(TEST_FILE, [
+        interface_def,
+        interface_method_def,
+        class_a_def,
+        method_a_def,
+      ]);
+      definitions["heritage"].register_subtype(interface_id, class_a_id, "declared", TEST_FILE);
+      types["resolved_type_members"] = new Map();
+      types["resolved_type_members"].set(
+        interface_id,
+        new Map([[("process" as SymbolName), interface_method_id]])
+      );
+
+      const { targets: result } = resolve_method_on_type(
+        interface_id,
+        "process" as SymbolName,
+        context
+      );
+
+      expect(unwrap(result)).toEqual([interface_method_id, method_a_id]);
+    });
+
+    it("fails with polymorphic_no_implementations for an interface no class implements or conforms to", () => {
+      const interface_id = interface_symbol("Handler", MOCK_LOCATION);
+      const interface_method_id = method_symbol("process" as SymbolName, MOCK_LOCATION);
+      const interface_flush_id = method_symbol("flush" as SymbolName, {
+        ...MOCK_LOCATION,
+        start_line: 6,
+      });
+      const interface_close_id = method_symbol("close" as SymbolName, {
+        ...MOCK_LOCATION,
+        start_line: 7,
+      });
+      const class_id = class_symbol("Logger", { ...MOCK_LOCATION, start_line: 20 });
+      const class_method_id = method_symbol("process" as SymbolName, {
+        ...MOCK_LOCATION,
+        start_line: 21,
+      });
+      const class_close_id = method_symbol("close" as SymbolName, {
+        ...MOCK_LOCATION,
+        start_line: 24,
+      });
+
+      const interface_method_def: MethodDefinition = {
+        kind: "method",
+        symbol_id: interface_method_id,
+        name: "process" as SymbolName,
+        defining_scope_id: "scope:test.ts:Handler:1:0" as ScopeId,
+        location: MOCK_LOCATION,
+        parameters: [],
+        decorators: [],
+      };
+
+      // Two further members clear the structural floor, so undeclared
+      // conformance is genuinely asked about here and answers with nothing.
+      const interface_flush_def: MethodDefinition = {
+        kind: "method",
+        symbol_id: interface_flush_id,
+        name: "flush" as SymbolName,
+        defining_scope_id: "scope:test.ts:Handler:1:0" as ScopeId,
+        location: { ...MOCK_LOCATION, start_line: 6 },
+        parameters: [],
+        decorators: [],
+      };
+      const interface_close_def: MethodDefinition = {
+        kind: "method",
+        symbol_id: interface_close_id,
+        name: "close" as SymbolName,
+        defining_scope_id: "scope:test.ts:Handler:1:0" as ScopeId,
+        location: { ...MOCK_LOCATION, start_line: 7 },
         parameters: [],
         decorators: [],
       };
@@ -333,11 +453,56 @@ describe("resolve_method_on_type", () => {
         location: MOCK_LOCATION,
         is_exported: false,
         extends: [],
-        methods: [interface_method_def],
+        methods: [interface_method_def, interface_flush_def, interface_close_def],
         properties: [],
       };
 
-      definitions.update_file(TEST_FILE, [interface_def, interface_method_def]);
+      // The class covers `process` and `close` but not `flush`: a member set
+      // no class covers.
+      const class_method_def: MethodDefinition = {
+        kind: "method",
+        symbol_id: class_method_id,
+        name: "process" as SymbolName,
+        defining_scope_id: "scope:test.ts:Logger:20:0" as ScopeId,
+        location: { ...MOCK_LOCATION, start_line: 21 },
+        parameters: [],
+        body_scope_id: "scope:test.ts:Logger.process:21:2" as ScopeId,
+        decorators: [],
+      };
+      const class_close_def: MethodDefinition = {
+        kind: "method",
+        symbol_id: class_close_id,
+        name: "close" as SymbolName,
+        defining_scope_id: "scope:test.ts:Logger:20:0" as ScopeId,
+        location: { ...MOCK_LOCATION, start_line: 24 },
+        parameters: [],
+        body_scope_id: "scope:test.ts:Logger.close:24:2" as ScopeId,
+        decorators: [],
+      };
+
+      const class_def: ClassDefinition = {
+        kind: "class",
+        symbol_id: class_id,
+        name: "Logger" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 20 },
+        is_exported: false,
+        extends: [],
+        methods: [class_method_def, class_close_def],
+        properties: [],
+        decorators: [],
+        constructors: [],
+      };
+
+      definitions.update_file(TEST_FILE, [
+        interface_def,
+        interface_method_def,
+        interface_flush_def,
+        interface_close_def,
+        class_def,
+        class_method_def,
+        class_close_def,
+      ]);
 
       // Setup TypeRegistry to return the interface method
       types["resolved_type_members"] = new Map();
@@ -346,19 +511,235 @@ describe("resolve_method_on_type", () => {
         new Map([[("process" as SymbolName), interface_method_id]])
       );
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         interface_id,
         "process" as SymbolName,
         context
       );
 
-      // No implementations = empty result
-      expect(result).toEqual([]);
+      expect(is_err(result)).toBe(true);
+      if (is_err(result)) {
+        expect(result.error).toEqual({
+          stage: "method_lookup",
+          reason: "polymorphic_no_implementations",
+          partial_info: { resolved_receiver_type: interface_id },
+        });
+      }
+    });
+
+    it("reaches a class that conforms to the interface without declaring it", () => {
+      const interface_id = interface_symbol("Facade", MOCK_LOCATION);
+      const interface_compile_id = method_symbol("compile" as SymbolName, MOCK_LOCATION);
+      const interface_reset_id = method_symbol("reset" as SymbolName, {
+        ...MOCK_LOCATION,
+        start_line: 6,
+      });
+      const interface_flush_id = method_symbol("flush" as SymbolName, {
+        ...MOCK_LOCATION,
+        start_line: 7,
+      });
+      const class_id = class_symbol("FacadeImpl", { ...MOCK_LOCATION, start_line: 20 });
+      const class_compile_id = method_symbol("compile" as SymbolName, {
+        ...MOCK_LOCATION,
+        start_line: 21,
+      });
+      const class_reset_id = method_symbol("reset" as SymbolName, {
+        ...MOCK_LOCATION,
+        start_line: 24,
+      });
+      const class_flush_id = method_symbol("flush" as SymbolName, {
+        ...MOCK_LOCATION,
+        start_line: 27,
+      });
+
+      const interface_method = (
+        symbol_id: SymbolId,
+        name: string,
+        start_line: number
+      ): MethodDefinition => ({
+        kind: "method",
+        symbol_id,
+        name: name as SymbolName,
+        defining_scope_id: "scope:test.ts:Facade:1:0" as ScopeId,
+        location: { ...MOCK_LOCATION, start_line },
+        parameters: [],
+        decorators: [],
+      });
+      const class_method = (
+        symbol_id: SymbolId,
+        name: string,
+        start_line: number
+      ): MethodDefinition => ({
+        kind: "method",
+        symbol_id,
+        name: name as SymbolName,
+        defining_scope_id: "scope:test.ts:FacadeImpl:20:0" as ScopeId,
+        location: { ...MOCK_LOCATION, start_line },
+        parameters: [],
+        body_scope_id: `scope:test.ts:FacadeImpl.${name}:${start_line}:2` as ScopeId,
+        decorators: [],
+      });
+
+      const interface_compile_def = interface_method(interface_compile_id, "compile", 5);
+      const interface_reset_def = interface_method(interface_reset_id, "reset", 6);
+      const interface_flush_def = interface_method(interface_flush_id, "flush", 7);
+      const class_compile_def = class_method(class_compile_id, "compile", 21);
+      const class_reset_def = class_method(class_reset_id, "reset", 24);
+      const class_flush_def = class_method(class_flush_id, "flush", 27);
+
+      const interface_def: InterfaceDefinition = {
+        kind: "interface",
+        symbol_id: interface_id,
+        name: "Facade" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        is_exported: false,
+        extends: [],
+        methods: [interface_compile_def, interface_reset_def, interface_flush_def],
+        properties: [],
+      };
+
+      // Declares neither `implements Facade` nor anything else: only its
+      // members say it is an implementation.
+      const class_def: ClassDefinition = {
+        kind: "class",
+        symbol_id: class_id,
+        name: "FacadeImpl" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 20 },
+        is_exported: false,
+        extends: [],
+        methods: [class_compile_def, class_reset_def, class_flush_def],
+        properties: [],
+        decorators: [],
+        constructors: [],
+      };
+
+      definitions.update_file(TEST_FILE, [
+        interface_def,
+        interface_compile_def,
+        interface_reset_def,
+        interface_flush_def,
+        class_def,
+        class_compile_def,
+        class_reset_def,
+        class_flush_def,
+      ]);
+      types["resolved_type_members"] = new Map();
+      types["resolved_type_members"].set(
+        interface_id,
+        new Map([[("compile" as SymbolName), interface_compile_id]])
+      );
+
+      const lookup = resolve_method_on_type(interface_id, "compile" as SymbolName, context);
+
+      expect(unwrap(lookup.targets)).toEqual([interface_compile_id, class_compile_id]);
+      expect(lookup.subtype_closure_of).toEqual(interface_id);
+      // The conformance is recorded, so the next dispatch reads it off the graph.
+      expect([...definitions.get_subtypes(interface_id)]).toEqual([class_id]);
+      // And the interface is still reported as one no class declares, so a
+      // second class that conforms later is tested against it too.
+      expect(lookup.undeclared_interface).toEqual(interface_id);
+    });
+
+    it("never asks about conformance for an interface a class already declares", () => {
+      const interface_id = interface_symbol("Facade", MOCK_LOCATION);
+      const interface_compile_id = method_symbol("compile" as SymbolName, MOCK_LOCATION);
+      const declarer_id = class_symbol("DeclaredImpl", { ...MOCK_LOCATION, start_line: 10 });
+      const conformer_id = class_symbol("ConformingImpl", { ...MOCK_LOCATION, start_line: 30 });
+
+      const member = (
+        symbol_id: SymbolId,
+        owner: string,
+        name: string,
+        start_line: number,
+        body: boolean
+      ): MethodDefinition => ({
+        kind: "method",
+        symbol_id,
+        name: name as SymbolName,
+        defining_scope_id: `scope:test.ts:${owner}:1:0` as ScopeId,
+        location: { ...MOCK_LOCATION, start_line },
+        parameters: [],
+        ...(body ? { body_scope_id: `scope:test.ts:${owner}.${name}:${start_line}:2` as ScopeId } : {}),
+        decorators: [],
+      });
+
+      const interface_members = [
+        member(interface_compile_id, "Facade", "compile", 5, false),
+        member(method_symbol("reset" as SymbolName, { ...MOCK_LOCATION, start_line: 6 }), "Facade", "reset", 6, false),
+        member(method_symbol("flush" as SymbolName, { ...MOCK_LOCATION, start_line: 7 }), "Facade", "flush", 7, false),
+      ];
+      const conformer_members = [
+        member(method_symbol("compile" as SymbolName, { ...MOCK_LOCATION, start_line: 31 }), "ConformingImpl", "compile", 31, true),
+        member(method_symbol("reset" as SymbolName, { ...MOCK_LOCATION, start_line: 33 }), "ConformingImpl", "reset", 33, true),
+        member(method_symbol("flush" as SymbolName, { ...MOCK_LOCATION, start_line: 35 }), "ConformingImpl", "flush", 35, true),
+      ];
+
+      const interface_def: InterfaceDefinition = {
+        kind: "interface",
+        symbol_id: interface_id,
+        name: "Facade" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        is_exported: false,
+        extends: [],
+        methods: interface_members,
+        properties: [],
+      };
+      // Declares the interface and none of its members: the answer is still in
+      // the source, so conformance is not consulted.
+      const declarer_def: ClassDefinition = {
+        kind: "class",
+        symbol_id: declarer_id,
+        name: "DeclaredImpl" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 10 },
+        is_exported: false,
+        extends: ["Facade" as SymbolName],
+        methods: [],
+        properties: [],
+        decorators: [],
+        constructors: [],
+      };
+      const conformer_def: ClassDefinition = {
+        kind: "class",
+        symbol_id: conformer_id,
+        name: "ConformingImpl" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 30 },
+        is_exported: false,
+        extends: [],
+        methods: conformer_members,
+        properties: [],
+        decorators: [],
+        constructors: [],
+      };
+
+      definitions.update_file(TEST_FILE, [
+        interface_def,
+        ...interface_members,
+        declarer_def,
+        conformer_def,
+        ...conformer_members,
+      ]);
+      definitions["heritage"].register_subtype(interface_id, declarer_id, "declared", TEST_FILE);
+      types["resolved_type_members"] = new Map();
+      types["resolved_type_members"].set(
+        interface_id,
+        new Map([[("compile" as SymbolName), interface_compile_id]])
+      );
+
+      const lookup = resolve_method_on_type(interface_id, "compile" as SymbolName, context);
+
+      expect(is_err(lookup.targets)).toBe(true);
+      expect(lookup.undeclared_interface).toBe(null);
+      expect([...definitions.get_subtypes(interface_id)]).toEqual([declarer_id]);
     });
   });
 
   describe("Class polymorphic resolution", () => {
-    it("should resolve method to base and all child overrides", () => {
+    it("resolves method to base and all child overrides", () => {
       const base_class_id = class_symbol("Base", MOCK_LOCATION);
       const child_class_id = class_symbol("Child", { ...MOCK_LOCATION, start_line: 10 });
       const base_method_id = method_symbol("helper" as SymbolName, MOCK_LOCATION);
@@ -424,8 +805,7 @@ describe("resolve_method_on_type", () => {
       ]);
 
       // Set up type subtypes index (Base -> Child)
-      definitions["type_subtypes"] = new Map();
-      definitions["type_subtypes"].set(base_class_id, new Set([child_class_id]));
+      definitions["heritage"].register_subtype(base_class_id, child_class_id, "declared", TEST_FILE);
 
       // Setup TypeRegistry to return the base method
       types["resolved_type_members"] = new Map();
@@ -434,19 +814,92 @@ describe("resolve_method_on_type", () => {
         new Map([[("helper" as SymbolName), base_method_id]])
       );
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         base_class_id,
         "helper" as SymbolName,
         context
       );
 
-      // Should return both base and child methods
-      expect(result).toHaveLength(2);
-      expect(result).toContain(base_method_id);
-      expect(result).toContain(child_method_id);
+      expect(unwrap(result)).toEqual([base_method_id, child_method_id]);
     });
 
-    it("should resolve multi-level inheritance (3 levels)", () => {
+    it("does not fan a constructor call out to subclass constructors", () => {
+      // self.__init__() / super().__init__() resolve the receiver to a class,
+      // and the constructor is keyed into the member index. The guard must keep
+      // this a single concrete resolution rather than expanding across subtypes.
+      const base_class_id = class_symbol("Base", MOCK_LOCATION);
+      const child_class_id = class_symbol("Child", {
+        ...MOCK_LOCATION,
+        start_line: 10,
+      });
+      const base_ctor_id = method_symbol("__init__" as SymbolName, {
+        ...MOCK_LOCATION,
+        start_line: 2,
+      });
+      const child_ctor_id = method_symbol("__init__" as SymbolName, {
+        ...MOCK_LOCATION,
+        start_line: 11,
+      });
+
+      const base_ctor_def: ConstructorDefinition = {
+        kind: "constructor",
+        symbol_id: base_ctor_id,
+        name: "__init__" as SymbolName,
+        defining_scope_id: "scope:test.ts:Base:1:0" as ScopeId,
+        location: { ...MOCK_LOCATION, start_line: 2 },
+        parameters: [],
+        body_scope_id: "scope:test.ts:Base.__init__:2:2" as ScopeId,
+      };
+      const base_class_def: ClassDefinition = {
+        kind: "class",
+        symbol_id: base_class_id,
+        name: "Base" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        is_exported: false,
+        extends: [],
+        methods: [],
+        properties: [],
+        decorators: [],
+        constructors: [base_ctor_def],
+      };
+
+      const child_ctor_def: ConstructorDefinition = {
+        kind: "constructor",
+        symbol_id: child_ctor_id,
+        name: "__init__" as SymbolName,
+        defining_scope_id: "scope:test.ts:Child:10:0" as ScopeId,
+        location: { ...MOCK_LOCATION, start_line: 11 },
+        parameters: [],
+        body_scope_id: "scope:test.ts:Child.__init__:11:2" as ScopeId,
+      };
+      const child_class_def: ClassDefinition = {
+        kind: "class",
+        symbol_id: child_class_id,
+        name: "Child" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 10 },
+        is_exported: false,
+        extends: ["Base" as SymbolName],
+        methods: [],
+        properties: [],
+        decorators: [],
+        constructors: [child_ctor_def],
+      };
+
+      definitions.update_file(TEST_FILE, [base_class_def, child_class_def]);
+      definitions["heritage"].register_subtype(base_class_id, child_class_id, "declared", TEST_FILE);
+
+      const { targets: result } = resolve_method_on_type(
+        base_class_id,
+        "__init__" as SymbolName,
+        context
+      );
+
+      expect(unwrap(result)).toEqual([base_ctor_id]);
+    });
+
+    it("resolves multi-level inheritance across three levels", () => {
       const class_a_id = class_symbol("A", MOCK_LOCATION);
       const class_b_id = class_symbol("B", { ...MOCK_LOCATION, start_line: 10 });
       const class_c_id = class_symbol("C", { ...MOCK_LOCATION, start_line: 20 });
@@ -539,9 +992,8 @@ describe("resolve_method_on_type", () => {
       ]);
 
       // Set up transitive type subtypes index (A -> B -> C)
-      definitions["type_subtypes"] = new Map();
-      definitions["type_subtypes"].set(class_a_id, new Set([class_b_id]));
-      definitions["type_subtypes"].set(class_b_id, new Set([class_c_id]));
+      definitions["heritage"].register_subtype(class_a_id, class_b_id, "declared", TEST_FILE);
+      definitions["heritage"].register_subtype(class_b_id, class_c_id, "declared", TEST_FILE);
 
       // Setup TypeRegistry to return A's method
       types["resolved_type_members"] = new Map();
@@ -550,20 +1002,16 @@ describe("resolve_method_on_type", () => {
         new Map([[("helper" as SymbolName), method_a_id]])
       );
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         class_a_id,
         "helper" as SymbolName,
         context
       );
 
-      // Should return all three methods
-      expect(result).toHaveLength(3);
-      expect(result).toContain(method_a_id);
-      expect(result).toContain(method_b_id);
-      expect(result).toContain(method_c_id);
+      expect(unwrap(result)).toEqual([method_a_id, method_b_id, method_c_id]);
     });
 
-    it("should return only base method when no overrides exist", () => {
+    it("returns only base method when no subtype overrides exist", () => {
       const base_class_id = class_symbol("Base", MOCK_LOCATION);
       const child_class_id = class_symbol("Child", { ...MOCK_LOCATION, start_line: 10 });
       const base_method_id = method_symbol("helper" as SymbolName, MOCK_LOCATION);
@@ -616,8 +1064,7 @@ describe("resolve_method_on_type", () => {
       ]);
 
       // Set up type subtypes index (Base -> Child)
-      definitions["type_subtypes"] = new Map();
-      definitions["type_subtypes"].set(base_class_id, new Set([child_class_id]));
+      definitions["heritage"].register_subtype(base_class_id, child_class_id, "declared", TEST_FILE);
 
       // Setup TypeRegistry
       types["resolved_type_members"] = new Map();
@@ -626,17 +1073,17 @@ describe("resolve_method_on_type", () => {
         new Map([[("helper" as SymbolName), base_method_id]])
       );
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         base_class_id,
         "helper" as SymbolName,
         context
       );
 
       // Should return only base method
-      expect(result).toEqual([base_method_id]);
+      expect(unwrap(result)).toEqual([base_method_id]);
     });
 
-    it("should handle sibling classes both overriding", () => {
+    it("resolves base plus both sibling overrides in diamond-shaped hierarchy", () => {
       const base_class_id = class_symbol("Base", MOCK_LOCATION);
       const child1_class_id = class_symbol("Child1", { ...MOCK_LOCATION, start_line: 10 });
       const child2_class_id = class_symbol("Child2", { ...MOCK_LOCATION, start_line: 20 });
@@ -729,8 +1176,8 @@ describe("resolve_method_on_type", () => {
       ]);
 
       // Set up type subtypes index (Base -> Child1, Base -> Child2)
-      definitions["type_subtypes"] = new Map();
-      definitions["type_subtypes"].set(base_class_id, new Set([child1_class_id, child2_class_id]));
+      definitions["heritage"].register_subtype(base_class_id, child1_class_id, "declared", TEST_FILE);
+      definitions["heritage"].register_subtype(base_class_id, child2_class_id, "declared", TEST_FILE);
 
       // Setup TypeRegistry
       types["resolved_type_members"] = new Map();
@@ -739,22 +1186,301 @@ describe("resolve_method_on_type", () => {
         new Map([[("method" as SymbolName), base_method_id]])
       );
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         base_class_id,
         "method" as SymbolName,
         context
       );
 
-      // Should return all three methods
-      expect(result).toHaveLength(3);
-      expect(result).toContain(base_method_id);
-      expect(result).toContain(child1_method_id);
-      expect(result).toContain(child2_method_id);
+      expect(unwrap(result)).toEqual([
+        base_method_id,
+        child1_method_id,
+        child2_method_id,
+      ]);
+    });
+  });
+
+  describe("A miss fanned out over the subtype closure", () => {
+    function at_line(line: number): Location {
+      return { ...MOCK_LOCATION, start_line: line, end_line: line };
+    }
+
+    function method_at(owner: string, name: string, line: number): MethodDefinition {
+      return {
+        kind: "method",
+        symbol_id: method_symbol(name as SymbolName, at_line(line)),
+        name: name as SymbolName,
+        defining_scope_id: `scope:test.ts:${owner}:${line}:0` as ScopeId,
+        location: at_line(line),
+        parameters: [],
+        body_scope_id: `scope:test.ts:${owner}.${name}:${line}:2` as ScopeId,
+        decorators: [],
+      };
+    }
+
+    function constructor_at(owner: string, line: number): ConstructorDefinition {
+      return {
+        kind: "constructor",
+        symbol_id: method_symbol("__init__" as SymbolName, at_line(line)),
+        name: "__init__" as SymbolName,
+        defining_scope_id: `scope:test.ts:${owner}:${line}:0` as ScopeId,
+        location: at_line(line),
+        parameters: [],
+        body_scope_id: `scope:test.ts:${owner}.__init__:${line}:2` as ScopeId,
+      };
+    }
+
+    function class_at(
+      name: string,
+      line: number,
+      members: { methods?: MethodDefinition[]; constructors?: ConstructorDefinition[] } = {}
+    ): ClassDefinition {
+      return {
+        kind: "class",
+        symbol_id: class_symbol(name, at_line(line)),
+        name: name as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: at_line(line),
+        is_exported: false,
+        extends: [],
+        methods: members.methods ?? [],
+        properties: [],
+        decorators: [],
+        constructors: members.constructors ?? [],
+      };
+    }
+
+    function register(defs: readonly (ClassDefinition | InterfaceDefinition)[]): void {
+      definitions.update_file(
+        TEST_FILE,
+        defs.flatMap((def) => [
+          def,
+          ...def.methods,
+          ...(def.kind === "class" ? def.constructors ?? [] : []),
+        ])
+      );
+    }
+
+    function subtype(parent: SymbolId, child: SymbolId): void {
+      definitions["heritage"].register_subtype(parent, child, "declared", TEST_FILE);
+    }
+
+    it("resolves a base-class miss to every transitive subtype declaring the member", () => {
+      const json_handle = method_at("JsonHandler", "handle", 11);
+      const pretty_handle = method_at("PrettyJson", "handle", 21);
+      const base = class_at("Handler", 1);
+      const json = class_at("JsonHandler", 10, { methods: [json_handle] });
+      const pretty = class_at("PrettyJson", 20, { methods: [pretty_handle] });
+      const silent = class_at("Silent", 30);
+      register([base, json, pretty, silent]);
+      subtype(base.symbol_id, json.symbol_id);
+      subtype(json.symbol_id, pretty.symbol_id);
+      subtype(base.symbol_id, silent.symbol_id);
+
+      const lookup = resolve_method_on_type(base.symbol_id, "handle" as SymbolName, context);
+
+      expect([...unwrap(lookup.targets)].sort()).toEqual(
+        [json_handle.symbol_id, pretty_handle.symbol_id].sort()
+      );
+      expect(lookup.subtype_closure_of).toBe(base.symbol_id);
+    });
+
+    it("resolves an interface miss to the implementers declaring the member, with no interface member to lead", () => {
+      const visit = method_at("Collector", "visit_item", 11);
+      const visitor: InterfaceDefinition = {
+        kind: "interface",
+        symbol_id: interface_symbol("Visitor", at_line(1)),
+        name: "Visitor" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: at_line(1),
+        is_exported: false,
+        extends: [],
+        methods: [],
+        properties: [],
+      };
+      const collector = class_at("Collector", 10, { methods: [visit] });
+      register([visitor, collector]);
+      subtype(visitor.symbol_id, collector.symbol_id);
+
+      const lookup = resolve_method_on_type(visitor.symbol_id, "visit_item" as SymbolName, context);
+
+      expect(lookup).toEqual({ targets: { ok: true, value: [visit.symbol_id] }, subtype_closure_of: visitor.symbol_id, undeclared_interface: null });
+    });
+
+    it("fails with method_not_on_type when no subtype declares the member either, still naming the closure it read", () => {
+      const base = class_at("Handler", 1);
+      const child = class_at("JsonHandler", 10, { methods: [method_at("JsonHandler", "other", 11)] });
+      register([base, child]);
+      subtype(base.symbol_id, child.symbol_id);
+
+      const lookup = resolve_method_on_type(base.symbol_id, "handle" as SymbolName, context);
+
+      const expected: MethodLookup = {
+        targets: {
+          ok: false,
+          error: {
+            stage: "method_lookup",
+            reason: "method_not_on_type",
+            partial_info: { resolved_receiver_type: base.symbol_id },
+          },
+        },
+        subtype_closure_of: base.symbol_id,
+        undeclared_interface: null,
+      };
+      expect(lookup).toEqual(expected);
+    });
+
+    it("never fans a constructor miss out to subclass constructors", () => {
+      const base = class_at("Handler", 1);
+      const child = class_at("JsonHandler", 10, { constructors: [constructor_at("JsonHandler", 11)] });
+      register([base, child]);
+      subtype(base.symbol_id, child.symbol_id);
+
+      const lookup = resolve_method_on_type(base.symbol_id, "__init__" as SymbolName, context);
+
+      const expected: MethodLookup = {
+        targets: {
+          ok: false,
+          error: {
+            stage: "method_lookup",
+            reason: "method_not_on_type",
+            partial_info: { resolved_receiver_type: base.symbol_id },
+          },
+        },
+        subtype_closure_of: base.symbol_id,
+        undeclared_interface: null,
+      };
+      expect(lookup).toEqual(expected);
+    });
+
+    it("resolves a `super` hit to the member the parent declares alone, where a value receiver fans out to the overrides", () => {
+      const base_save = method_at("Model", "save", 2);
+      const article_save = method_at("Article", "save", 11);
+      const comment_save = method_at("Comment", "save", 21);
+      const base = class_at("Model", 1, { methods: [base_save] });
+      const article = class_at("Article", 10, { methods: [article_save] });
+      const comment = class_at("Comment", 20, { methods: [comment_save] });
+      register([base, article, comment]);
+      subtype(base.symbol_id, article.symbol_id);
+      subtype(base.symbol_id, comment.symbol_id);
+
+      const as_value = resolve_method_on_type(base.symbol_id, "save" as SymbolName, context);
+      const as_super = resolve_super_method(article.symbol_id, base.symbol_id, "save" as SymbolName, definitions);
+
+      expect(as_value.subtype_closure_of).toBe(base.symbol_id);
+      expect([...unwrap(as_value.targets)].sort()).toEqual(
+        [base_save.symbol_id, article_save.symbol_id, comment_save.symbol_id].sort()
+      );
+      const expected: MethodLookup = {
+        targets: { ok: true, value: [base_save.symbol_id] },
+        subtype_closure_of: base.symbol_id,
+        undeclared_interface: null,
+      };
+      expect(as_super).toEqual(expected);
+    });
+
+    it("resolves a `super` call to the member a grandparent declares when the parent inherits it", () => {
+      const validate = method_at("Model", "validate", 2);
+      const invoice_validate = method_at("Invoice", "validate", 21);
+      const model = class_at("Model", 1, { methods: [validate] });
+      const document = class_at("Document", 10);
+      const invoice = class_at("Invoice", 20, { methods: [invoice_validate] });
+      register([model, document, invoice]);
+      subtype(model.symbol_id, document.symbol_id);
+      subtype(document.symbol_id, invoice.symbol_id);
+
+      const lookup = resolve_super_method(invoice.symbol_id, document.symbol_id, "validate" as SymbolName, definitions);
+
+      expect(lookup).toEqual({ targets: { ok: true, value: [validate.symbol_id] }, subtype_closure_of: document.symbol_id, undeclared_interface: null });
+    });
+
+    it("resolves a `super` call to the sibling a subclass with several bases puts next in its method resolution order", () => {
+      const base_save = method_at("Base", "save", 2);
+      const a_save = method_at("A", "save", 11);
+      const b_save = method_at("B", "save", 21);
+      const base = class_at("Base", 1, { methods: [base_save] });
+      const a = class_at("A", 10, { methods: [a_save] });
+      const b = class_at("B", 20, { methods: [b_save] });
+      const both = class_at("C", 30);
+      register([base, a, b, both]);
+      subtype(base.symbol_id, a.symbol_id);
+      subtype(base.symbol_id, b.symbol_id);
+      subtype(a.symbol_id, both.symbol_id);
+      subtype(b.symbol_id, both.symbol_id);
+
+      // `C(A, B)` linearises to C, A, B, Base: `super().save()` inside `A` runs
+      // `B.save` on a `C`, and `Base.save` on an `A`. Inside `B` it runs
+      // `Base.save` on either.
+      const from_a = resolve_super_method(a.symbol_id, base.symbol_id, "save" as SymbolName, definitions);
+      const from_b = resolve_super_method(b.symbol_id, base.symbol_id, "save" as SymbolName, definitions);
+
+      expect(from_a).toEqual({ targets: { ok: true, value: [base_save.symbol_id, b_save.symbol_id] }, subtype_closure_of: base.symbol_id, undeclared_interface: null });
+      expect(from_b).toEqual({ targets: { ok: true, value: [base_save.symbol_id] }, subtype_closure_of: base.symbol_id, undeclared_interface: null });
+    });
+
+    it("keeps a parent the calling class names first ahead of a later base's sibling that does not share it", () => {
+      const first_save = method_at("First", "save", 2);
+      const other_save = method_at("Other", "save", 31);
+      const first = class_at("First", 1, { methods: [first_save] });
+      const a = class_at("A", 10, { methods: [method_at("A", "save", 11)] });
+      const other = class_at("Other", 30, { methods: [other_save] });
+      const both = class_at("C", 40);
+      register([first, a, other, both]);
+      subtype(first.symbol_id, a.symbol_id);
+      subtype(a.symbol_id, both.symbol_id);
+      subtype(other.symbol_id, both.symbol_id);
+
+      // `C(A, Other)` with `A(First)` linearises to C, A, First, Other.
+      const lookup = resolve_super_method(a.symbol_id, first.symbol_id, "save" as SymbolName, definitions);
+
+      expect(lookup).toEqual({ targets: { ok: true, value: [first_save.symbol_id] }, subtype_closure_of: first.symbol_id, undeclared_interface: null });
+    });
+
+    it("fails a `super` call no class after the calling class declares, never fanning down to the parent's subtypes", () => {
+      const close = method_at("JsonHandler", "close", 11);
+      const base = class_at("Handler", 1);
+      const child = class_at("JsonHandler", 10, { methods: [close] });
+      register([base, child]);
+      subtype(base.symbol_id, child.symbol_id);
+
+      const as_value = resolve_method_on_type(base.symbol_id, "close" as SymbolName, context);
+      const as_super = resolve_super_method(child.symbol_id, base.symbol_id, "close" as SymbolName, definitions);
+
+      expect(as_value).toEqual({ targets: { ok: true, value: [close.symbol_id] }, subtype_closure_of: base.symbol_id, undeclared_interface: null });
+      const expected: MethodLookup = {
+        targets: {
+          ok: false,
+          error: {
+            stage: "method_lookup",
+            reason: "method_not_on_type",
+            partial_info: { resolved_receiver_type: base.symbol_id },
+          },
+        },
+        subtype_closure_of: base.symbol_id,
+        undeclared_interface: null,
+      };
+      expect(as_super).toEqual(expected);
+    });
+
+    it("names the receiver's closure on a class hit, and none for a constructor hit or a receiver that cannot have subtypes", () => {
+      const helper = method_at("Base", "helper", 2);
+      const ctor = constructor_at("Base", 3);
+      const base = class_at("Base", 1, { methods: [helper], constructors: [ctor] });
+      register([base]);
+      const unknown_id = "unknown:test.ts:1:0:1:10:mystery" as SymbolId;
+
+      const hit = resolve_method_on_type(base.symbol_id, "helper" as SymbolName, context);
+      const constructor_hit = resolve_method_on_type(base.symbol_id, "__init__" as SymbolName, context);
+      const unregistered = resolve_method_on_type(unknown_id, "helper" as SymbolName, context);
+
+      expect(hit).toEqual({ targets: { ok: true, value: [helper.symbol_id] }, subtype_closure_of: base.symbol_id, undeclared_interface: null });
+      expect(constructor_hit).toEqual({ targets: { ok: true, value: [ctor.symbol_id] }, subtype_closure_of: null, undeclared_interface: null });
+      expect(unregistered.subtype_closure_of).toBe(null);
     });
   });
 
   describe("Namespace import method lookup", () => {
-    it("should resolve method from source file exports", () => {
+    it("resolves method from source file exports", () => {
       const namespace_import_id = "import:test.ts:1:0:1:20:utils" as SymbolId;
       const helper_fn_id = function_symbol("helper" as SymbolName, {
         ...MOCK_LOCATION,
@@ -787,24 +1513,26 @@ describe("resolve_method_on_type", () => {
 
       definitions.update_file(TEST_FILE, [import_def]);
       definitions.update_file(UTILS_FILE, [helper_def]);
+      exports.update_file(UTILS_FILE, definitions);
 
       const imports_for_test = new ImportGraph();
       imports_for_test["resolved_import_paths"].set(namespace_import_id, UTILS_FILE);
+      languages.set(UTILS_FILE, "typescript");
       const context_with_resolver: ReceiverResolutionContext = {
         ...context,
         imports: imports_for_test,
       };
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         namespace_import_id,
         "helper" as SymbolName,
         context_with_resolver
       );
 
-      expect(result).toEqual([helper_fn_id]);
+      expect(unwrap(result)).toEqual([helper_fn_id]);
     });
 
-    it("should return empty for non-exported function", () => {
+    it("fails with method_not_on_type for a non-exported function in the namespace source", () => {
       const namespace_import_id = "import:test.ts:1:0:1:20:utils" as SymbolId;
       const private_fn_id = function_symbol("private_helper" as SymbolName, {
         ...MOCK_LOCATION,
@@ -836,24 +1564,36 @@ describe("resolve_method_on_type", () => {
 
       definitions.update_file(TEST_FILE, [import_def]);
       definitions.update_file(UTILS_FILE, [private_def]);
+      exports.update_file(UTILS_FILE, definitions);
 
       const imports_for_test = new ImportGraph();
       imports_for_test["resolved_import_paths"].set(namespace_import_id, UTILS_FILE);
+      languages.set(UTILS_FILE, "typescript");
       const context_with_resolver: ReceiverResolutionContext = {
         ...context,
         imports: imports_for_test,
       };
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         namespace_import_id,
         "private_helper" as SymbolName,
         context_with_resolver
       );
 
-      expect(result).toEqual([]);
+      expect(is_err(result)).toBe(true);
+      if (is_err(result)) {
+        expect(result.error).toEqual({
+          stage: "method_lookup",
+          reason: "method_not_on_type",
+          partial_info: {
+            resolved_receiver_type: namespace_import_id,
+            import_target_file: UTILS_FILE,
+          },
+        });
+      }
     });
 
-    it("should return empty for non-existent function", () => {
+    it("fails with method_not_on_type for a name absent from the namespace source", () => {
       const namespace_import_id = "import:test.ts:1:0:1:20:utils" as SymbolId;
 
       const import_def: ImportDefinition = {
@@ -870,21 +1610,32 @@ describe("resolve_method_on_type", () => {
 
       const imports_for_test = new ImportGraph();
       imports_for_test["resolved_import_paths"].set(namespace_import_id, UTILS_FILE);
+      languages.set(UTILS_FILE, "typescript");
       const context_with_resolver: ReceiverResolutionContext = {
         ...context,
         imports: imports_for_test,
       };
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         namespace_import_id,
         "nonexistent" as SymbolName,
         context_with_resolver
       );
 
-      expect(result).toEqual([]);
+      expect(is_err(result)).toBe(true);
+      if (is_err(result)) {
+        expect(result.error).toEqual({
+          stage: "method_lookup",
+          reason: "method_not_on_type",
+          partial_info: {
+            resolved_receiver_type: namespace_import_id,
+            import_target_file: UTILS_FILE,
+          },
+        });
+      }
     });
 
-    it("should return empty when no import path resolver is provided", () => {
+    it("fails with import_unresolved when the namespace import path cannot be resolved", () => {
       const namespace_import_id = "import:test.ts:1:0:1:20:utils" as SymbolId;
 
       const import_def: ImportDefinition = {
@@ -899,19 +1650,28 @@ describe("resolve_method_on_type", () => {
 
       definitions.update_file(TEST_FILE, [import_def]);
 
-      // Use context without resolver
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         namespace_import_id,
         "helper" as SymbolName,
         context
       );
 
-      expect(result).toEqual([]);
+      expect(is_err(result)).toBe(true);
+      if (is_err(result)) {
+        expect(result.error).toEqual({
+          stage: "import_resolution",
+          reason: "import_unresolved",
+          partial_info: {
+            resolved_receiver_type: namespace_import_id,
+            import_specifier: "./utils",
+          },
+        });
+      }
     });
   });
 
   describe("Object literal FunctionCollection lookup", () => {
-    it("should find method in stored_functions", () => {
+    it("finds method in stored_functions", () => {
       const var_id = variable_symbol("HANDLERS", MOCK_LOCATION);
       const method_fn_id = function_symbol("process" as SymbolName, MOCK_LOCATION);
 
@@ -950,16 +1710,16 @@ describe("resolve_method_on_type", () => {
         stored_references: [],
       });
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         var_id,
         "process" as SymbolName,
         context
       );
 
-      expect(result).toEqual([method_fn_id]);
+      expect(unwrap(result)).toEqual([method_fn_id]);
     });
 
-    it("should find method in stored_references via resolution", () => {
+    it("finds method in stored_references via scope resolution", () => {
       const var_id = variable_symbol("HANDLERS", MOCK_LOCATION);
       const external_fn_id = function_symbol("external_process" as SymbolName, {
         ...MOCK_LOCATION,
@@ -1006,16 +1766,16 @@ describe("resolve_method_on_type", () => {
       scope_resolutions.set("external_process" as SymbolName, external_fn_id);
       set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         var_id,
         "external_process" as SymbolName,
         context
       );
 
-      expect(result).toEqual([external_fn_id]);
+      expect(unwrap(result)).toEqual([external_fn_id]);
     });
 
-    it("should return empty for method not in collection", () => {
+    it("fails with collection_dispatch_miss for a method absent from the collection", () => {
       const var_id = variable_symbol("HANDLERS", MOCK_LOCATION);
       const other_fn_id = function_symbol("other" as SymbolName, MOCK_LOCATION);
 
@@ -1052,30 +1812,44 @@ describe("resolve_method_on_type", () => {
         stored_references: [],
       });
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         var_id,
         "nonexistent" as SymbolName,
         context
       );
 
-      expect(result).toEqual([]);
+      expect(is_err(result)).toBe(true);
+      if (is_err(result)) {
+        expect(result.error).toEqual({
+          stage: "method_lookup",
+          reason: "collection_dispatch_miss",
+          partial_info: { resolved_receiver_type: var_id },
+        });
+      }
     });
   });
 
   describe("Edge cases", () => {
-    it("should handle unknown receiver type", () => {
+    it("fails with method_not_on_type for an unregistered receiver type", () => {
       const unknown_id = "unknown:test.ts:1:0:1:10:mystery" as SymbolId;
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         unknown_id,
         "method" as SymbolName,
         context
       );
 
-      expect(result).toEqual([]);
+      expect(is_err(result)).toBe(true);
+      if (is_err(result)) {
+        expect(result.error).toEqual({
+          stage: "method_lookup",
+          reason: "method_not_on_type",
+          partial_info: { resolved_receiver_type: unknown_id },
+        });
+      }
     });
 
-    it("should prefer TypeRegistry over member_index", () => {
+    it("prefers TypeRegistry member over member_index when both hold the name", () => {
       const class_id = class_symbol("MyClass", MOCK_LOCATION);
       const method_id_registry = method_symbol("process" as SymbolName, MOCK_LOCATION);
       const method_id_index = method_symbol("process" as SymbolName, { ...MOCK_LOCATION, start_line: 99 });
@@ -1114,14 +1888,13 @@ describe("resolve_method_on_type", () => {
         new Map([[("process" as SymbolName), method_id_registry]])
       );
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         class_id,
         "process" as SymbolName,
         context
       );
 
-      // Should return the TypeRegistry result, not the member_index one
-      expect(result).toEqual([method_id_registry]);
+      expect(unwrap(result)).toEqual([method_id_registry]);
     });
   });
 
@@ -1129,11 +1902,9 @@ describe("resolve_method_on_type", () => {
     const IMPORT_GRAPH_FILE = "/test/import_graph.ts" as FilePath;
     const IMPORT_GRAPH_SCOPE = "module:import_graph.ts:1:1:100:1" as ScopeId;
 
-    it("should resolve method through named import to actual class", () => {
-      // This tests the pattern:
+    it("resolves method through a named import to the actual class", () => {
       // import { ImportGraph } from "./import_graph";
       // class Project { imports: ImportGraph; update() { this.imports.update_file(...); } }
-
       const import_id = "import:test.ts:1:0:1:30:ImportGraph" as SymbolId;
       const actual_class_id = class_symbol("ImportGraph", {
         ...MOCK_LOCATION,
@@ -1187,21 +1958,80 @@ describe("resolve_method_on_type", () => {
 
       const imports_for_test = new ImportGraph();
       imports_for_test["resolved_import_paths"].set(import_id, IMPORT_GRAPH_FILE);
+      languages.set(IMPORT_GRAPH_FILE, "typescript");
       const context_with_resolver: ReceiverResolutionContext = {
         ...context,
         imports: imports_for_test,
       };
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         import_id,
         "update_file" as SymbolName,
         context_with_resolver
       );
 
-      expect(result).toEqual([update_method_id]);
+      expect(unwrap(result)).toEqual([update_method_id]);
     });
 
-    it("should return empty for non-exported class in source file", () => {
+    it("skips a re-export import definition in the source file instead of resolving to it", () => {
+      // import { Widget } from "./import_graph"; where import_graph.ts contains
+      // `export { Widget } from "./widget"` — a re-export import def whose name
+      // matches. Named-import lookup must not return the re-export def itself;
+      // the chain falls through to reexport_chain_unresolved.
+      const import_id = "import:test.ts:1:0:1:30:Widget" as SymbolId;
+      const reexport_id = "import:import_graph.ts:1:0:1:40:Widget" as SymbolId;
+
+      const import_def: ImportDefinition = {
+        kind: "import",
+        symbol_id: import_id,
+        name: "Widget" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        import_kind: "named",
+        import_path: "./import_graph" as ModulePath,
+      };
+
+      const reexport_def: ImportDefinition = {
+        kind: "import",
+        symbol_id: reexport_id,
+        name: "Widget" as SymbolName,
+        defining_scope_id: IMPORT_GRAPH_SCOPE,
+        location: { ...MOCK_LOCATION, file_path: IMPORT_GRAPH_FILE },
+        import_kind: "named",
+        import_path: "./widget" as ModulePath,
+      };
+
+      definitions.update_file(TEST_FILE, [import_def]);
+      definitions.update_file(IMPORT_GRAPH_FILE, [reexport_def]);
+
+      const imports_for_test = new ImportGraph();
+      imports_for_test["resolved_import_paths"].set(import_id, IMPORT_GRAPH_FILE);
+      languages.set(IMPORT_GRAPH_FILE, "typescript");
+      const context_with_resolver: ReceiverResolutionContext = {
+        ...context,
+        imports: imports_for_test,
+      };
+
+      const { targets: result } = resolve_method_on_type(
+        import_id,
+        "render" as SymbolName,
+        context_with_resolver
+      );
+
+      expect(is_err(result)).toBe(true);
+      if (is_err(result)) {
+        expect(result.error).toEqual({
+          stage: "import_resolution",
+          reason: "reexport_chain_unresolved",
+          partial_info: {
+            resolved_receiver_type: import_id,
+            import_target_file: IMPORT_GRAPH_FILE,
+          },
+        });
+      }
+    });
+
+    it("fails with reexport_chain_unresolved for a non-exported class in the source file", () => {
       const import_id = "import:test.ts:1:0:1:30:PrivateClass" as SymbolId;
       const private_class_id = class_symbol("PrivateClass", {
         ...MOCK_LOCATION,
@@ -1239,24 +2069,34 @@ describe("resolve_method_on_type", () => {
 
       const imports_for_test = new ImportGraph();
       imports_for_test["resolved_import_paths"].set(import_id, IMPORT_GRAPH_FILE);
+      languages.set(IMPORT_GRAPH_FILE, "typescript");
       const context_with_resolver: ReceiverResolutionContext = {
         ...context,
         imports: imports_for_test,
       };
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         import_id,
         "some_method" as SymbolName,
         context_with_resolver
       );
 
-      expect(result).toEqual([]);
+      expect(is_err(result)).toBe(true);
+      if (is_err(result)) {
+        expect(result.error).toEqual({
+          stage: "import_resolution",
+          reason: "reexport_chain_unresolved",
+          partial_info: {
+            resolved_receiver_type: import_id,
+            import_target_file: IMPORT_GRAPH_FILE,
+          },
+        });
+      }
     });
 
-    it("should fall back to submodule resolution when named import fails export chain", () => {
-      // This tests the pattern:
+    it("falls back to submodule resolution when a named import misses the export chain", () => {
       // from training import pipeline  (pipeline is a submodule file, not an export)
-      // pipeline.train()               (should resolve to train() in pipeline.py)
+      // pipeline.train()               resolves to train() in pipeline.py
       const PIPELINE_FILE = "/project/training/pipeline.py" as FilePath;
       const PIPELINE_SCOPE = "module:pipeline.py:1:0:100:0:<module>" as ScopeId;
       const import_id = "import:test.ts:1:0:1:30:pipeline" as SymbolId;
@@ -1292,22 +2132,70 @@ describe("resolve_method_on_type", () => {
 
       definitions.update_file(TEST_FILE, [import_def]);
       definitions.update_file(PIPELINE_FILE, [train_def]);
+      exports.update_file(PIPELINE_FILE, definitions);
 
       const imports_for_test = new ImportGraph();
       imports_for_test["resolved_import_paths"].set(import_id, "/project/training/__init__.py" as FilePath);
       imports_for_test["submodule_import_paths"].set(import_id, PIPELINE_FILE);
+      languages.set("/project/training/__init__.py" as FilePath, "python");
+      languages.set(PIPELINE_FILE, "python");
       const context_with_resolvers: ReceiverResolutionContext = {
         ...context,
         imports: imports_for_test,
       };
 
-      const result = resolve_method_on_type(
+      const { targets: result } = resolve_method_on_type(
         import_id,
         "train" as SymbolName,
         context_with_resolvers
       );
 
-      expect(result).toEqual([train_fn_id]);
+      expect(unwrap(result)).toEqual([train_fn_id]);
+    });
+
+    it("fails with reexport_chain_unresolved when source resolves but the export is missing", () => {
+      // import { Helper } from "./barrel"; — barrel.ts re-exports nothing matching Helper
+      const import_id = "import:test.ts:1:0:1:30:Helper" as SymbolId;
+
+      const import_def: ImportDefinition = {
+        kind: "import",
+        symbol_id: import_id,
+        name: "Helper" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        import_kind: "named",
+        import_path: "./barrel" as ModulePath,
+      };
+
+      // Source file resolves but contains no Helper export and no submodule fallback
+      definitions.update_file(TEST_FILE, [import_def]);
+      definitions.update_file(IMPORT_GRAPH_FILE, []);
+
+      const imports_for_test = new ImportGraph();
+      imports_for_test["resolved_import_paths"].set(import_id, IMPORT_GRAPH_FILE);
+      languages.set(IMPORT_GRAPH_FILE, "typescript");
+      const context_with_resolver: ReceiverResolutionContext = {
+        ...context,
+        imports: imports_for_test,
+      };
+
+      const { targets: result } = resolve_method_on_type(
+        import_id,
+        "do_thing" as SymbolName,
+        context_with_resolver
+      );
+
+      expect(is_err(result)).toBe(true);
+      if (is_err(result)) {
+        expect(result.error).toEqual({
+          stage: "import_resolution",
+          reason: "reexport_chain_unresolved",
+          partial_info: {
+            resolved_receiver_type: import_id,
+            import_target_file: IMPORT_GRAPH_FILE,
+          },
+        });
+      }
     });
   });
 });

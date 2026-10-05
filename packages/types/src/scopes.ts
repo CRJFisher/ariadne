@@ -1,5 +1,5 @@
-import { FilePath } from "./common";
-import { Location } from "./common";
+import { FilePath } from "./location";
+import { Location } from "./location";
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export type ScopeId = string & { __brand: "ScopeId" }; // Unique scope identifier

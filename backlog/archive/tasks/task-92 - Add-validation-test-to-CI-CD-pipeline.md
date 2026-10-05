@@ -3,9 +3,9 @@ id: task-92
 title: Add validation test to CI/CD pipeline
 status: Done
 assignee:
-  - '@assistant'
-created_date: '2025-08-03'
-updated_date: '2025-08-04 10:44'
+  - "@assistant"
+created_date: "2025-08-03"
+updated_date: "2025-08-04 10:44"
 labels: []
 dependencies:
   - task-87
@@ -25,7 +25,6 @@ Once the accuracy issues are fixed, the validation test should be added to the C
 - [x] Test fails if accuracy drops below thresholds
 - [x] Automated validation of self-analysis accuracy
 
-
 ## Implementation Plan
 
 1. Create a validation script that runs validate-ariadne.ts and checks the output against success criteria
@@ -37,6 +36,7 @@ Once the accuracy issues are fixed, the validation test should be added to the C
 4. Configure the validation to fail the CI/CD build if thresholds are not met
 5. Add proper error reporting to show which metrics failed
 6. Test the CI/CD integration locally first
+
 ## Implementation Notes
 
 Success criteria from validation guide:
@@ -53,13 +53,15 @@ Created CI/CD validation infrastructure for Ariadne self-analysis.
 
 ## Implementation Details
 
-1. Created  script that:
+1. Created script that:
+
    - Runs the existing validate-ariadne.ts
    - Parses the YAML output
    - Checks validation statistics against thresholds
    - Returns appropriate exit codes for CI/CD
 
 2. Success thresholds configured:
+
    - Top-level accuracy: ≥ 90%
    - Nodes with calls: ≥ 85%
    - Nodes called by others: ≥ 85%
@@ -68,6 +70,7 @@ Created CI/CD validation infrastructure for Ariadne self-analysis.
    - Min calls: 100
 
 3. Integrated into CI/CD:
+
    - Added validation step to test.yml workflow
    - Set continue-on-error: true (since accuracy is below thresholds)
    - Created separate validation.yml workflow for future use
@@ -79,6 +82,7 @@ Created CI/CD validation infrastructure for Ariadne self-analysis.
 ## Current Status
 
 The validation runs in CI/CD but won't fail builds yet. When run:
+
 - Top-level accuracy: 100% ✅
 - Nodes with calls: 36.9% ❌
 - Nodes called by others: 65.0% ❌

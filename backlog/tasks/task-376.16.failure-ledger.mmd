@@ -1,0 +1,65 @@
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"Trebuchet MS, Verdana, Arial, sans-serif","fontSize":"16px","primaryColor":"#ece4d6","primaryBorderColor":"#c06d4f","primaryTextColor":"#2f3338","textColor":"#2f3338","lineColor":"#2f3338","mainBkg":"#ece4d6","nodeBorder":"#c06d4f","background":"#f7f3ec","edgeLabelBackground":"#f7f3ec"},"flowchart":{"htmlLabels":true,"nodeSpacing":38,"rankSpacing":50,"padding":10,"useMaxWidth":true}}}%%
+flowchart TB
+  IDX["<b>index_single_file</b><br/>references emitted<br/>per file"]
+
+  CK["<b>4 call kinds</b><br/>function_call · method_call<br/>constructor_call<br/>self_reference_call"]
+  PA["<b>property_access</b><br/>a bare read: obj.value"]
+  NC["<b>4 non-call kinds</b><br/>callable_value · assignment<br/>variable_reference<br/>type_reference"]
+
+  FN["resolve_function_call"]
+  CT["resolve_constructor_call"]
+  MC["resolve_method_call<br/>then collection dispatch"]
+  GP["getter probe<br/>synthetic method_call"]
+
+  OKR["<b>CallReference</b><br/>with resolutions"]
+  ERR["<b>CallReference</b><br/>+ ResolutionFailure"]
+  EMPTY["ok([]) → CallReference<br/>no resolutions, no reason<br/>:229"]
+  NOGET["no getter found<br/>nothing pushed<br/>:286-290"]
+  CONT["continue — not a call kind<br/>resolves elsewhere<br/>:297-301"]
+
+  FIX["<b>this step</b><br/>emit a typed reason<br/>for the empty result"]
+
+  LEDGER["<b>per file</b><br/>resolved + failed ==<br/>call-kind references"]
+  TAX["<b>failure_taxonomy per arm</b><br/>call_references · resolved<br/>by_reason"]
+
+  IDX --> CK
+  IDX --> PA
+  IDX --> NC
+  CK --> FN
+  CK --> CT
+  CK --> MC
+  PA --> GP
+  NC --> CONT
+  FN --> OKR
+  FN --> ERR
+  CT --> OKR
+  CT --> ERR
+  MC --> OKR
+  MC --> ERR
+  MC -.-> EMPTY
+  GP --> OKR
+  GP -.-> NOGET
+  EMPTY -.-> FIX
+  NOGET -.->|state the exclusion| CONT
+  FIX --> ERR
+  OKR --> LEDGER
+  ERR --> LEDGER
+  LEDGER --> TAX
+
+  classDef neutral fill:#ece4d6,stroke:#b3a58c,stroke-width:1.5px,color:#2f3338
+  classDef good fill:#e2e8d3,stroke:#6f7a4f,stroke-width:2px,color:#2f3338
+  classDef silent fill:#f4ddd6,stroke:#a8412a,stroke-width:2px,color:#2f3338
+  classDef closed fill:#f6e3d7,stroke:#c06d4f,stroke-width:2px,color:#2f3338
+  classDef step fill:#f6e3d7,stroke:#c06d4f,stroke-width:2px,stroke-dasharray:6 4,color:#2f3338
+  classDef ledger fill:#2f3338,stroke:#2f3338,stroke-width:2px,color:#f7f3ec
+
+  class IDX,CK,PA,NC,FN,CT,MC,GP neutral
+  class OKR,ERR good
+  class EMPTY,NOGET silent
+  class CONT closed
+  class FIX step
+  class LEDGER ledger
+  class TAX closed
+
+  linkStyle 14,16 stroke:#a8412a,stroke-width:2px
+  linkStyle 17,18 stroke:#c06d4f,stroke-width:2px

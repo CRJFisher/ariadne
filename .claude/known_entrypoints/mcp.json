@@ -1,0 +1,7 @@
+[
+  {
+    "source": "mcp-empirical-baseline",
+    "description": "Ariadne flags no uncalled entry points in packages/mcp: the public surface (start_server, the CLI and analytics bins) is fully consumed inside the package's indexed graph. Deliberately empty so any newly flagged export blocks until it is deleted as dead code or whitelisted here as new public API.",
+    "entrypoints": []
+  }
+]

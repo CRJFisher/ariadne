@@ -14,7 +14,7 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import Parser from "tree-sitter";
 import Rust from "tree-sitter-rust";
-import type { FilePath, Language } from "@ariadnejs/types";
+import type { FilePath, IterationSource, Language, SymbolName } from "@ariadnejs/types";
 import type {
   FunctionCallReference,
   MethodCallReference,
@@ -43,6 +43,7 @@ function create_parsed_file(
     file_end_column: (lines[lines.length - 1]?.length || 0) + 1,
     tree,
     lang: language,
+    source: code,
   };
 }
 
@@ -877,6 +878,47 @@ fn main() {
       const config_constructor = constructor_calls.find((c) => c.name === "Config");
       expect(config_constructor).toBeDefined();
     });
+
+    it("reduces qualified calls to the terminal name and carries the path prefix", () => {
+      const code = `
+mod worker {
+    pub fn create(id: u32) -> u32 { id }
+}
+
+fn main() {
+    worker::create(7);
+    crate::runtime::Driver::new();
+    Cell::<u8>::new();
+}
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.rs" as FilePath;
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
+
+      const index = build_index_single_file(parsed_file, tree, "rust");
+
+      // worker::create(7) → function call, terminal name `create`, prefix ["worker"]
+      const function_calls = index.references.filter(
+        (r): r is FunctionCallReference => r.kind === "function_call",
+      );
+      const create_call = function_calls.find((c) => c.name === "create");
+      expect(create_call).toBeDefined();
+      expect(create_call!.path_prefix).toEqual(["worker"]);
+
+      const constructor_calls = index.references.filter(
+        (r): r is ConstructorCallReference => r.kind === "constructor_call",
+      );
+
+      // crate::runtime::Driver::new() → constructor name `Driver`, full type path
+      const driver_ctor = constructor_calls.find((c) => c.name === "Driver");
+      expect(driver_ctor).toBeDefined();
+      expect(driver_ctor!.path_prefix).toEqual(["crate", "runtime", "Driver"]);
+
+      // Cell::<u8>::new() → constructor name `Cell`, turbofish stripped
+      const cell_ctor = constructor_calls.find((c) => c.name === "Cell");
+      expect(cell_ctor).toBeDefined();
+      expect(cell_ctor!.path_prefix).toEqual(["Cell"]);
+    });
   });
 
   // ============================================================================
@@ -1041,6 +1083,127 @@ mod private_module {
 
     });
 
+    it("carries a file-backed mod declaration as a module import alongside its namespace", () => {
+      const code = `mod config;
+pub mod helpers;
+pub mod inline {
+    pub fn f() {}
+}
+`;
+      const tree = parser.parse(code);
+      const file_path = "lib.rs" as FilePath;
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
+
+      const index = build_index_single_file(parsed_file, tree, "rust");
+
+      expect(
+        Array.from(index.namespaces.values())
+          .map((ns) => ns.name)
+          .sort(),
+      ).toEqual(["config", "helpers", "inline"] as SymbolName[]);
+
+      expect(
+        Array.from(index.imported_symbols.values()).map((imp) => ({
+          name: imp.name,
+          import_kind: imp.import_kind,
+          import_path: imp.import_path,
+        })),
+      ).toEqual([
+        {
+          name: "config" as SymbolName,
+          import_kind: "namespace",
+          import_path: "self::config",
+        },
+        {
+          name: "helpers" as SymbolName,
+          import_kind: "namespace",
+          import_path: "self::helpers",
+        },
+      ]);
+    });
+
+    it("anchors a nested bodyless mod declaration at its enclosing module", () => {
+      const code = `pub mod outer {
+    mod inner;
+}
+`;
+      const tree = parser.parse(code);
+      const file_path = "lib.rs" as FilePath;
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
+
+      const index = build_index_single_file(parsed_file, tree, "rust");
+
+      expect(
+        Array.from(index.imported_symbols.values()).map((imp) => ({
+          name: imp.name,
+          import_path: imp.import_path,
+        })),
+      ).toEqual([
+        { name: "inner" as SymbolName, import_path: "self::outer::inner" },
+      ]);
+    });
+
+    it("reads a #[path] attribute separated from its mod by a comment", () => {
+      const code = `#[path = "sys/unix.rs"]
+// pick the unix backend
+mod imp;
+`;
+      const tree = parser.parse(code);
+      const file_path = "lib.rs" as FilePath;
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
+
+      const index = build_index_single_file(parsed_file, tree, "rust");
+
+      expect(
+        Array.from(index.imported_symbols.values()).map(
+          (imp) => imp.import_path,
+        ),
+      ).toEqual(["sys/unix.rs"]);
+    });
+
+    it("keeps the default target for a mod carrying only non-path attributes", () => {
+      const code = `#[cfg(unix)]
+mod imp;
+`;
+      const tree = parser.parse(code);
+      const file_path = "lib.rs" as FilePath;
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
+
+      const index = build_index_single_file(parsed_file, tree, "rust");
+
+      expect(
+        Array.from(index.imported_symbols.values()).map(
+          (imp) => imp.import_path,
+        ),
+      ).toEqual(["self::imp"]);
+    });
+
+    it("carries a #[path] attribute as the module import's target file", () => {
+      const code = `#[cfg(unix)]
+#[path = "sys/unix.rs"]
+mod imp;
+`;
+      const tree = parser.parse(code);
+      const file_path = "lib.rs" as FilePath;
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
+
+      const index = build_index_single_file(parsed_file, tree, "rust");
+
+      expect(
+        Array.from(index.imported_symbols.values()).map((imp) => ({
+          name: imp.name,
+          import_kind: imp.import_kind,
+          import_path: imp.import_path,
+        })),
+      ).toEqual([
+        {
+          name: "imp" as SymbolName,
+          import_kind: "namespace",
+          import_path: "sys/unix.rs",
+        },
+      ]);
+    });
+
     it("CRITICAL: should extract use statements with complete structure", () => {
       // CRITICAL - Import extraction was completely missing for Rust!
       const code = `
@@ -1098,7 +1261,7 @@ use crate::models::User;
 
       // Verify glob import
       const glob_imports = Array.from(index.imported_symbols.values()).filter(
-        (imp) => imp.import_kind === "namespace",
+        (imp) => imp.import_kind === "wildcard",
       );
       expect(glob_imports.length).toBeGreaterThan(0);
 
@@ -1414,6 +1577,77 @@ fn main() {
         (t) => t.type_info?.type_name && t.type_info.certainty === "declared",
       );
       expect(has_valid_type).toBe(true);
+    });
+
+    it("records what each for-loop binding takes from the container it iterates", () => {
+      const code = `
+fn forward(layers: Vec<Layer>, named: HashMap<String, Layer>) {
+    for layer in &layers {}
+    for (name, entry) in named.iter() {}
+    for value in named.values() {}
+}
+`;
+      const tree = parser.parse(code);
+      const parsed_file = create_parsed_file(code, "test.rs" as FilePath, tree, "rust");
+
+      const index = build_index_single_file(parsed_file, tree, "rust");
+
+      const sources = new Map(
+        Array.from(index.variables.values()).map((v) => [v.name, v.iterated_from]),
+      );
+      expect(sources).toEqual(
+        new Map<SymbolName, IterationSource | undefined>([
+          ["layer" as SymbolName, { container: ["layers" as SymbolName], yields: "item" }],
+          ["name" as SymbolName, undefined],
+          ["entry" as SymbolName, { container: ["named" as SymbolName], yields: "entry_value" }],
+          ["value" as SymbolName, { container: ["named" as SymbolName], yields: "value" }],
+        ]),
+      );
+    });
+
+    it("records initialized_from_call as the callee chain of a let or const", () => {
+      // Name resolution reads a one-segment chain to recognise a self-initializer
+      // (`let has_flatten = has_flatten(fields)`); the type registry follows the
+      // whole chain to the callee's declared return type.
+      const code = `
+const MADE: i32 = make();
+fn build(fields: &[u8]) -> bool {
+    let has_flatten = has_flatten(fields);
+    let parsed = parse::<i32>();
+    let via_method = config.get();
+    let via_self = self.inner.get();
+    let via_path = Parser::new();
+    let chained = make().finish();
+    let literal = 0;
+    has_flatten
+}
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.rs" as FilePath;
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
+
+      const index = build_index_single_file(parsed_file, tree, "rust");
+
+      const chains = new Map(
+        Array.from(index.variables.values()).map((v) => [v.name, v.initialized_from_call]),
+      );
+      expect(chains).toEqual(
+        new Map<SymbolName, readonly SymbolName[] | undefined>([
+          ["MADE" as SymbolName, ["make" as SymbolName]],
+          ["has_flatten" as SymbolName, ["has_flatten" as SymbolName]],
+          // Turbofish: the callee is a generic_function wrapping the bare name.
+          ["parsed" as SymbolName, ["parse" as SymbolName]],
+          ["via_method" as SymbolName, ["config" as SymbolName, "get" as SymbolName]],
+          [
+            "via_self" as SymbolName,
+            ["self" as SymbolName, "inner" as SymbolName, "get" as SymbolName],
+          ],
+          // A `::` path is the constructor and path resolvers' to follow.
+          ["via_path" as SymbolName, undefined],
+          ["chained" as SymbolName, undefined],
+          ["literal" as SymbolName, undefined],
+        ]),
+      );
     });
 
     it("should handle generic types", () => {
@@ -1782,7 +2016,7 @@ fn pair<T, U>(first: T, second: U) -> (T, U) {
         // Verify generic type parameters (classes use generics field)
         expect(struct_def.generics).toBeDefined();
         expect(Array.isArray(struct_def.generics)).toBe(true);
-        expect(struct_def.generics).toEqual(["T"]);
+        expect(struct_def.generics).toEqual([{ name: "T" }]);
 
         // Verify methods exist
         expect(struct_def.methods).toBeDefined();
@@ -1819,7 +2053,7 @@ fn pair<T, U>(first: T, second: U) -> (T, U) {
       if (identity_func) {
         // Functions use generics field (not type_parameters)
         expect(identity_func.generics).toBeDefined();
-        expect(identity_func.generics).toEqual(["T"]);
+        expect(identity_func.generics).toEqual([{ name: "T" }]);
 
         // Functions use signature.parameters
         expect(identity_func.signature).toBeDefined();
@@ -1840,7 +2074,7 @@ fn pair<T, U>(first: T, second: U) -> (T, U) {
       if (pair_func) {
         expect(pair_func.generics).toBeDefined();
         expect(pair_func.generics?.length).toBe(2);
-        expect(pair_func.generics).toEqual(["T", "U"]);
+        expect(pair_func.generics).toEqual([{ name: "T" }, { name: "U" }]);
 
         expect(pair_func.signature).toBeDefined();
         expect(pair_func.signature.parameters).toBeDefined();
@@ -2175,7 +2409,7 @@ pub type BoxedError = Box<dyn Error>;
         expect(result_type.kind).toBe("type_alias");
         expect(result_type.name).toBe("Result");
         expect(result_type.type_expression).toBe("std::result::Result<T, Error>");
-        expect(result_type.generics).toEqual(expect.arrayContaining(["T"]));
+        expect(result_type.generics).toEqual([{ name: "T" }]);
       }
 
       // Verify public BoxedError type alias
@@ -2267,7 +2501,7 @@ type FnPtr = fn(i32, i32) -> i32;
       expect(result_type?.type_expression).toBe(
         "std::result::Result<T, Error>",
       );
-      expect(result_type?.generics).toEqual(["T"]);
+      expect(result_type?.generics).toEqual([{ name: "T" }]);
 
       // Check Callback (trait object)
       const callback = type_aliases.find((t) => t.name === "Callback");
@@ -2301,19 +2535,19 @@ type GenericRef<'a, T> = &'a T;
       const ref_type = type_aliases.find((t) => t.name === "Ref");
       expect(ref_type).toBeDefined();
       expect(ref_type?.type_expression).toBe("&'a str");
-      expect(ref_type?.generics).toEqual(["'a"]);
+      expect(ref_type?.generics).toEqual([{ name: "'a" }]);
 
       // Check RefPair with multiple lifetimes
       const ref_pair_type = type_aliases.find((t) => t.name === "RefPair");
       expect(ref_pair_type).toBeDefined();
       expect(ref_pair_type?.type_expression).toBe("(&'a str, &'b str)");
-      expect(ref_pair_type?.generics).toEqual(["'a", "'b"]);
+      expect(ref_pair_type?.generics).toEqual([{ name: "'a" }, { name: "'b" }]);
 
       // Check GenericRef with lifetime and type parameter
       const generic_ref_type = type_aliases.find((t) => t.name === "GenericRef");
       expect(generic_ref_type).toBeDefined();
       expect(generic_ref_type?.type_expression).toBe("&'a T");
-      expect(generic_ref_type?.generics).toEqual(["'a", "T"]);
+      expect(generic_ref_type?.generics).toEqual([{ name: "'a" }, { name: "T" }]);
     });
 
     it("should extract type aliases with const generics", () => {
@@ -2366,7 +2600,7 @@ type AsyncFn<'a, T> = Box<dyn Future<Output = Result<T, Box<dyn Error>>> + Send 
       expect(nested_result?.type_expression).toBe(
         "Result<Option<T>, Box<dyn std::error::Error>>",
       );
-      expect(nested_result?.generics).toEqual(["T", "E"]);
+      expect(nested_result?.generics).toEqual([{ name: "T" }, { name: "E" }]);
 
       // Check ComplexCallback
       const complex_callback = type_aliases.find(
@@ -2376,7 +2610,7 @@ type AsyncFn<'a, T> = Box<dyn Future<Output = Result<T, Box<dyn Error>>> + Send 
       expect(complex_callback?.type_expression).toBe(
         "Box<dyn Fn(Result<T, String>) -> Option<T>>",
       );
-      expect(complex_callback?.generics).toEqual(["T"]);
+      expect(complex_callback?.generics).toEqual([{ name: "T" }]);
 
       // Check AsyncFn
       const async_fn = type_aliases.find((t) => t.name === "AsyncFn");
@@ -2384,7 +2618,7 @@ type AsyncFn<'a, T> = Box<dyn Future<Output = Result<T, Box<dyn Error>>> + Send 
       expect(async_fn?.type_expression).toBe(
         "Box<dyn Future<Output = Result<T, Box<dyn Error>>> + Send + 'a>",
       );
-      expect(async_fn?.generics).toEqual(["'a", "T"]);
+      expect(async_fn?.generics).toEqual([{ name: "'a" }, { name: "T" }]);
     });
 
     it("should extract type aliases with trait bounds", () => {
@@ -2408,19 +2642,19 @@ type SerializeFn<T: Serialize + Send + 'static> = Box<dyn Fn(T) -> String>;
       const handler = type_aliases.find((t) => t.name === "Handler");
       expect(handler).toBeDefined();
       expect(handler?.type_expression).toBe("Box<dyn Fn(T)>");
-      expect(handler?.generics).toEqual(["T"]);
+      expect(handler?.generics).toEqual([{ name: "T", bound: "Display" }]);
 
       // Check CompareFn with multiple bounds
       const compare_fn = type_aliases.find((t) => t.name === "CompareFn");
       expect(compare_fn).toBeDefined();
       expect(compare_fn?.type_expression).toBe("fn(&T, &T) -> bool");
-      expect(compare_fn?.generics).toEqual(["T"]);
+      expect(compare_fn?.generics).toEqual([{ name: "T", bound: "PartialOrd" }]);
 
       // Check SerializeFn with multiple bounds including lifetime
       const serialize_fn = type_aliases.find((t) => t.name === "SerializeFn");
       expect(serialize_fn).toBeDefined();
       expect(serialize_fn?.type_expression).toBe("Box<dyn Fn(T) -> String>");
-      expect(serialize_fn?.generics).toEqual(["T"]);
+      expect(serialize_fn?.generics).toEqual([{ name: "T", bound: "Serialize" }]);
     });
   });
 
@@ -2761,6 +2995,55 @@ impl Counter {
       const fn_def = Array.from(index.functions.values()).find(f => f.name === "no_doc");
       expect(fn_def).toBeDefined();
       expect(fn_def!.docstring).toBeUndefined();
+    });
+  });
+
+  describe("pattern bindings", () => {
+    function variable_names(code: string): string[] {
+      const tree = parser.parse(code);
+      const parsed_file = create_parsed_file(
+        code,
+        "test.rs" as FilePath,
+        tree,
+        "rust"
+      );
+      const index = build_index_single_file(parsed_file, tree, "rust");
+      return Array.from(index.variables.values()).map((v) => v.name as string);
+    }
+
+    it("binds the inner name of an if-let pattern, not the type path", () => {
+      const names = variable_names(`fn f(o: Option<i32>) {
+    if let Some(b) = o {
+        use_it(b);
+    }
+}
+`);
+      expect(names).toContain("b");
+      expect(names).not.toContain("Some(b)");
+      expect(names).not.toContain("Some");
+    });
+
+    it("binds the inner name of a match arm pattern", () => {
+      const names = variable_names(`fn f(o: Option<i32>) {
+    match o {
+        Some(d) => use_it(d),
+        None => {}
+    }
+}
+`);
+      expect(names).toContain("d");
+      expect(names).not.toContain("Some(d)");
+    });
+
+    it("binds the inner name of a while-let pattern", () => {
+      const names = variable_names(`fn f(mut it: Iter) {
+    while let Some(c) = it.next() {
+        use_it(c);
+    }
+}
+`);
+      expect(names).toContain("c");
+      expect(names).not.toContain("Some(c)");
     });
   });
 });

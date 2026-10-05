@@ -3,9 +3,9 @@ id: task-63
 title: Add module-level call detection to call graph extraction
 status: Done
 assignee:
-  - '@chuck'
-created_date: '2025-08-01'
-updated_date: '2025-08-01'
+  - "@chuck"
+created_date: "2025-08-01"
+updated_date: "2025-08-01"
 labels:
   - call-graph
   - enhancement

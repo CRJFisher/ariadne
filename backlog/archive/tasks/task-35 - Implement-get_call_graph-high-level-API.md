@@ -3,9 +3,9 @@ id: task-35
 title: Implement get_call_graph high-level API
 status: Done
 assignee:
-  - '@chuck'
-created_date: '2025-07-18'
-updated_date: '2025-07-18'
+  - "@chuck"
+created_date: "2025-07-18"
+updated_date: "2025-07-18"
 labels: []
 dependencies:
   - task-32
@@ -63,7 +63,6 @@ Implement the get_call_graph API that builds a complete call graph for the proje
 10. Add performance tests for large codebases
 11. Test edge cases and error scenarios
 
-
 ## Implementation Notes
 
 ## Implementation Summary
@@ -71,11 +70,14 @@ Implement the get_call_graph API that builds a complete call graph for the proje
 Successfully implemented the get_call_graph high-level API that builds a complete call graph for the project.
 
 ### Features Implemented:
+
 1. **Core API Methods**:
+
    - Project.get_call_graph(options?: CallGraphOptions): CallGraph
    - get_call_graph(root_path: string, options?: CallGraphOptions): CallGraph (standalone)
 
 2. **CallGraphOptions Support**:
+
    - include_external: Currently only includes internal functions (default: false)
    - max_depth: Limits graph traversal depth from top-level nodes using BFS
    - file_filter: Filters which files to include in the graph
@@ -86,6 +88,7 @@ Successfully implemented the get_call_graph high-level API that builds a complet
    - Top-level nodes: Functions not called by any other function in the graph
 
 ### Technical Decisions:
+
 - Used symbol IDs (module_path#symbol_name) for consistent node identification
 - Implemented two-pass algorithm: first create nodes, then build edges
 - max_depth filtering uses BFS from top-level nodes
@@ -93,24 +96,29 @@ Successfully implemented the get_call_graph high-level API that builds a complet
 - Standalone function recursively finds all source files in directory
 
 ### Files Modified/Added:
+
 - src/index.ts: Added get_call_graph methods
 - src/graph.ts: Fixed Call interface (resolved -> resolved_definition)
 - src/call_graph.test.ts: Added comprehensive unit tests
 - src/call_graph_integration.test.ts: Added integration tests for multi-file scenarios
 
 ### Testing:
+
 - 8 unit tests covering all CallGraphOptions features
 - 6 integration tests for cross-file scenarios and performance
 - All tests passing
 
 ### Known Limitations:
+
 - Cross-file import resolution is limited (existing issue in codebase)
 - External library calls not fully tracked
 - CommonJS require/exports have limited support
 
 ### Performance:
+
 - Large project test (30+ files) completes in under 2 seconds
 - Efficient filtering reduces unnecessary processing
+
 ## API Specification
 
 ### Function Signature

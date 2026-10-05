@@ -1,23 +1,21 @@
-/**
- * Unit Tests for detect_indirect_reachability
- *
- * Tests detection of indirectly reachable functions through:
- * - Function collection reads (existing behavior)
- * - Function-as-value references (new behavior)
- */
-
 import { describe, it, expect } from "vitest";
-import { detect_indirect_reachability } from "./indirect_reachability";
-import { function_symbol, variable_symbol } from "@ariadnejs/types";
+import {
+  detect_indirect_reachability,
+  record_indirect_reachability,
+} from "./indirect_reachability";
+import { function_symbol, method_symbol, variable_symbol } from "@ariadnejs/types";
 import type {
   SymbolId,
   SymbolName,
   FilePath,
   Location,
   FunctionCollection,
+  IndirectReachability,
   AnyDefinition,
   ScopeId,
   FunctionDefinition,
+  MethodDefinition,
+  ConstructorDefinition,
   VariableDefinition,
 } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "./registries/definition";
@@ -41,6 +39,64 @@ const READ_LOCATION: Location = {
   end_column: 10,
 };
 
+type ReadRef = {
+  kind: string;
+  access_type?: string;
+  scope_id: string;
+  name: SymbolName;
+  location: Location;
+  property_chain?: readonly SymbolName[];
+};
+
+type MemberReadCallableResolver = (
+  scope_id: string,
+  property_chain: readonly SymbolName[],
+  read_at: Location,
+) => SymbolId | null;
+
+const NO_MEMBER_READ_CALLABLES: MemberReadCallableResolver = () => null;
+
+function member_read(chain: readonly string[], location: Location): ReadRef {
+  return {
+    kind: "property_access",
+    scope_id: SCOPE_FILE,
+    name: chain[chain.length - 1] as SymbolName,
+    location,
+    property_chain: chain as SymbolName[],
+  };
+}
+
+function read_ref(
+  name: string,
+  location: Location,
+  overrides: Partial<ReadRef> = {},
+): ReadRef {
+  return {
+    kind: "variable_reference",
+    access_type: "read",
+    scope_id: SCOPE_FILE,
+    name: name as SymbolName,
+    location,
+    ...overrides,
+  };
+}
+
+function name_resolver(
+  by_name: Record<string, SymbolId>,
+): (scope_id: string, name: SymbolName) => SymbolId | null {
+  return (_scope_id, name) => by_name[name as string] ?? null;
+}
+
+function run(
+  refs: ReadRef[],
+  registry: DefinitionRegistry,
+  resolve: (scope_id: string, name: SymbolName) => SymbolId | null,
+  resolve_member_read_callable: MemberReadCallableResolver = NO_MEMBER_READ_CALLABLES,
+): Map<SymbolId, IndirectReachability> {
+  const file_references = new Map<FilePath, readonly ReadRef[]>([[TEST_FILE, refs]]);
+  return detect_indirect_reachability(file_references, registry, resolve, resolve_member_read_callable);
+}
+
 function make_function_def(name: string, location: Location): FunctionDefinition {
   return {
     kind: "function",
@@ -54,7 +110,36 @@ function make_function_def(name: string, location: Location): FunctionDefinition
   };
 }
 
-function make_variable_def(name: string, location: Location): VariableDefinition {
+function make_method_def(name: string, location: Location): MethodDefinition {
+  return {
+    kind: "method",
+    symbol_id: method_symbol(name as SymbolName, location),
+    name: name as SymbolName,
+    defining_scope_id: SCOPE_FILE,
+    location,
+    parameters: [],
+    body_scope_id: `scope:test.ts:method:${location.start_line}:${location.start_column}` as ScopeId,
+  };
+}
+
+// Constructors reuse method_symbol for their id (see capture_handlers.javascript.ts).
+function make_constructor_def(name: string, location: Location): ConstructorDefinition {
+  return {
+    kind: "constructor",
+    symbol_id: method_symbol(name as SymbolName, location),
+    name: name as SymbolName,
+    defining_scope_id: SCOPE_FILE,
+    location,
+    parameters: [],
+    body_scope_id: `scope:test.ts:constructor:${location.start_line}:${location.start_column}` as ScopeId,
+  };
+}
+
+function make_variable_def(
+  name: string,
+  location: Location,
+  function_collection?: FunctionCollection,
+): VariableDefinition {
   return {
     kind: "variable",
     symbol_id: variable_symbol(name as SymbolName, location),
@@ -62,257 +147,576 @@ function make_variable_def(name: string, location: Location): VariableDefinition
     defining_scope_id: SCOPE_FILE,
     location,
     is_exported: false,
+    function_collection,
   };
 }
 
 function mock_definition_registry(
   defs: Map<SymbolId, AnyDefinition>,
-  collections: Map<SymbolId, FunctionCollection> = new Map()
+  collections: Map<SymbolId, FunctionCollection> = new Map(),
 ): DefinitionRegistry {
   return {
     get: (symbol_id: SymbolId) => defs.get(symbol_id),
     get_function_collection: (symbol_id: SymbolId) => collections.get(symbol_id),
-  } as unknown as DefinitionRegistry;
+  } as Partial<DefinitionRegistry> as DefinitionRegistry;
 }
 
 describe("detect_indirect_reachability", () => {
+  it("returns an empty map when there are no references", () => {
+    const registry = mock_definition_registry(new Map());
+    const result = detect_indirect_reachability(new Map(), registry, () => null, NO_MEMBER_READ_CALLABLES);
+    expect(result).toEqual(new Map());
+  });
+
   describe("function reference detection", () => {
-    it("should mark function definition read as a value as function_reference", () => {
+    it("marks a function read as a value as a function_reference", () => {
       const fn_def = make_function_def("doubler", MOCK_LOCATION);
-      const defs = new Map<SymbolId, AnyDefinition>([[fn_def.symbol_id, fn_def]]);
-      const registry = mock_definition_registry(defs);
-
-      const file_references = new Map([
-        [
-          TEST_FILE,
-          [
-            {
-              kind: "variable_reference",
-              access_type: "read",
-              scope_id: SCOPE_FILE,
-              name: "doubler" as SymbolName,
-              location: READ_LOCATION,
-            },
-          ],
-        ],
-      ]);
-
-      const resolve = (_scope_id: string, name: SymbolName) =>
-        name === ("doubler" as SymbolName) ? fn_def.symbol_id : null;
-
-      const result = detect_indirect_reachability(
-        file_references as Map<FilePath, readonly { kind: string; access_type?: string; scope_id: string; name: SymbolName; location: Location }[]>,
-        registry,
-        resolve
+      const registry = mock_definition_registry(
+        new Map<SymbolId, AnyDefinition>([[fn_def.symbol_id, fn_def]]),
       );
 
-      expect(result.size).toBe(1);
-      expect(result.has(fn_def.symbol_id)).toBe(true);
-      const entry = result.get(fn_def.symbol_id)!;
-      expect(entry.function_id).toBe(fn_def.symbol_id);
-      expect(entry.reason.type).toBe("function_reference");
-      expect(entry.reason).toEqual({
-        type: "function_reference",
-        read_location: READ_LOCATION,
-      });
+      const result = run(
+        [read_ref("doubler", READ_LOCATION)],
+        registry,
+        name_resolver({ doubler: fn_def.symbol_id }),
+      );
+
+      expect(result).toEqual(
+        new Map<SymbolId, IndirectReachability>([
+          [
+            fn_def.symbol_id,
+            { reason: { type: "function_reference", read_location: READ_LOCATION } },
+          ],
+        ]),
+      );
     });
 
-    it("should NOT mark variable (non-function) read as indirectly reachable", () => {
+    it("does not mark a non-function variable read", () => {
       const var_def = make_variable_def("counter", MOCK_LOCATION);
-      const defs = new Map<SymbolId, AnyDefinition>([[var_def.symbol_id, var_def]]);
-      const registry = mock_definition_registry(defs);
-
-      const file_references = new Map([
-        [
-          TEST_FILE,
-          [
-            {
-              kind: "variable_reference",
-              access_type: "read",
-              scope_id: SCOPE_FILE,
-              name: "counter" as SymbolName,
-              location: READ_LOCATION,
-            },
-          ],
-        ],
-      ]);
-
-      const resolve = (_scope_id: string, name: SymbolName) =>
-        name === ("counter" as SymbolName) ? var_def.symbol_id : null;
-
-      const result = detect_indirect_reachability(
-        file_references as Map<FilePath, readonly { kind: string; access_type?: string; scope_id: string; name: SymbolName; location: Location }[]>,
-        registry,
-        resolve
+      const registry = mock_definition_registry(
+        new Map<SymbolId, AnyDefinition>([[var_def.symbol_id, var_def]]),
       );
 
-      expect(result.size).toBe(0);
+      const result = run(
+        [read_ref("counter", READ_LOCATION)],
+        registry,
+        name_resolver({ counter: var_def.symbol_id }),
+      );
+
+      expect(result).toEqual(new Map());
     });
 
-    it("should NOT mark non-read access types", () => {
+    it("does not mark a write access to a function name", () => {
       const fn_def = make_function_def("handler", MOCK_LOCATION);
-      const defs = new Map<SymbolId, AnyDefinition>([[fn_def.symbol_id, fn_def]]);
-      const registry = mock_definition_registry(defs);
-
-      const file_references = new Map([
-        [
-          TEST_FILE,
-          [
-            {
-              kind: "variable_reference",
-              access_type: "write",
-              scope_id: SCOPE_FILE,
-              name: "handler" as SymbolName,
-              location: READ_LOCATION,
-            },
-          ],
-        ],
-      ]);
-
-      const resolve = (_scope_id: string, name: SymbolName) =>
-        name === ("handler" as SymbolName) ? fn_def.symbol_id : null;
-
-      const result = detect_indirect_reachability(
-        file_references as Map<FilePath, readonly { kind: string; access_type?: string; scope_id: string; name: SymbolName; location: Location }[]>,
-        registry,
-        resolve
+      const registry = mock_definition_registry(
+        new Map<SymbolId, AnyDefinition>([[fn_def.symbol_id, fn_def]]),
       );
 
-      expect(result.size).toBe(0);
+      const result = run(
+        [read_ref("handler", READ_LOCATION, { access_type: "write" })],
+        registry,
+        name_resolver({ handler: fn_def.symbol_id }),
+      );
+
+      expect(result).toEqual(new Map());
     });
 
-    it("should mark multiple function references in same file", () => {
+    it("marks each of several function reads with its own read location", () => {
       const fn_a = make_function_def("doubler", MOCK_LOCATION);
       const loc_b: Location = { ...MOCK_LOCATION, start_line: 3, end_line: 3 };
       const fn_b = make_function_def("tripler", loc_b);
-      const defs = new Map<SymbolId, AnyDefinition>([
-        [fn_a.symbol_id, fn_a],
-        [fn_b.symbol_id, fn_b],
-      ]);
-      const registry = mock_definition_registry(defs);
-
       const read_loc_b: Location = { ...READ_LOCATION, start_line: 6, end_line: 6 };
-      const file_references = new Map([
-        [
-          TEST_FILE,
-          [
-            {
-              kind: "variable_reference",
-              access_type: "read",
-              scope_id: SCOPE_FILE,
-              name: "doubler" as SymbolName,
-              location: READ_LOCATION,
-            },
-            {
-              kind: "variable_reference",
-              access_type: "read",
-              scope_id: SCOPE_FILE,
-              name: "tripler" as SymbolName,
-              location: read_loc_b,
-            },
-          ],
-        ],
-      ]);
-
-      const resolve = (_scope_id: string, name: SymbolName) => {
-        if (name === ("doubler" as SymbolName)) return fn_a.symbol_id;
-        if (name === ("tripler" as SymbolName)) return fn_b.symbol_id;
-        return null;
-      };
-
-      const result = detect_indirect_reachability(
-        file_references as Map<FilePath, readonly { kind: string; access_type?: string; scope_id: string; name: SymbolName; location: Location }[]>,
-        registry,
-        resolve
+      const registry = mock_definition_registry(
+        new Map<SymbolId, AnyDefinition>([
+          [fn_a.symbol_id, fn_a],
+          [fn_b.symbol_id, fn_b],
+        ]),
       );
 
-      expect(result.size).toBe(2);
-      expect(result.has(fn_a.symbol_id)).toBe(true);
-      expect(result.has(fn_b.symbol_id)).toBe(true);
+      const result = run(
+        [read_ref("doubler", READ_LOCATION), read_ref("tripler", read_loc_b)],
+        registry,
+        name_resolver({ doubler: fn_a.symbol_id, tripler: fn_b.symbol_id }),
+      );
+
+      expect(result).toEqual(
+        new Map<SymbolId, IndirectReachability>([
+          [
+            fn_a.symbol_id,
+            { reason: { type: "function_reference", read_location: READ_LOCATION } },
+          ],
+          [
+            fn_b.symbol_id,
+            { reason: { type: "function_reference", read_location: read_loc_b } },
+          ],
+        ]),
+      );
     });
 
-    it("should skip non-variable_reference kinds", () => {
+    it("skips references that are not variable_reference kinds", () => {
       const fn_def = make_function_def("handler", MOCK_LOCATION);
-      const defs = new Map<SymbolId, AnyDefinition>([[fn_def.symbol_id, fn_def]]);
-      const registry = mock_definition_registry(defs);
-
-      const file_references = new Map([
-        [
-          TEST_FILE,
-          [
-            {
-              kind: "function_call",
-              access_type: "read",
-              scope_id: SCOPE_FILE,
-              name: "handler" as SymbolName,
-              location: READ_LOCATION,
-            },
-          ],
-        ],
-      ]);
-
-      const resolve = (_scope_id: string, name: SymbolName) =>
-        name === ("handler" as SymbolName) ? fn_def.symbol_id : null;
-
-      const result = detect_indirect_reachability(
-        file_references as Map<FilePath, readonly { kind: string; access_type?: string; scope_id: string; name: SymbolName; location: Location }[]>,
-        registry,
-        resolve
+      const registry = mock_definition_registry(
+        new Map<SymbolId, AnyDefinition>([[fn_def.symbol_id, fn_def]]),
       );
 
-      expect(result.size).toBe(0);
+      const result = run(
+        [read_ref("handler", READ_LOCATION, { kind: "function_call" })],
+        registry,
+        name_resolver({ handler: fn_def.symbol_id }),
+      );
+
+      expect(result).toEqual(new Map());
+    });
+
+    it("skips a name that does not resolve to a symbol", () => {
+      const registry = mock_definition_registry(new Map());
+
+      const result = run([read_ref("ghost", READ_LOCATION)], registry, () => null);
+
+      expect(result).toEqual(new Map());
+    });
+
+    it("skips a resolved symbol that has no definition", () => {
+      const orphan_id = function_symbol("orphan" as SymbolName, MOCK_LOCATION);
+      const registry = mock_definition_registry(new Map());
+
+      const result = run(
+        [read_ref("orphan", READ_LOCATION)],
+        registry,
+        name_resolver({ orphan: orphan_id }),
+      );
+
+      expect(result).toEqual(new Map());
     });
   });
 
-  describe("collection read detection (existing behavior)", () => {
-    it("should mark functions in a collection as collection_read", () => {
+  describe("method reference detection", () => {
+    it("marks a method read as a value as a function_reference", () => {
+      const method_def = make_method_def("on_node_start", MOCK_LOCATION);
+      const registry = mock_definition_registry(
+        new Map<SymbolId, AnyDefinition>([[method_def.symbol_id, method_def]]),
+      );
+
+      const result = run(
+        [read_ref("on_node_start", READ_LOCATION)],
+        registry,
+        name_resolver({ on_node_start: method_def.symbol_id }),
+      );
+
+      expect(result).toEqual(
+        new Map<SymbolId, IndirectReachability>([
+          [
+            method_def.symbol_id,
+            { reason: { type: "function_reference", read_location: READ_LOCATION } },
+          ],
+        ]),
+      );
+    });
+
+    it("skips a method read at its own definition site", () => {
+      const method_def = make_method_def("process", MOCK_LOCATION);
+      const registry = mock_definition_registry(
+        new Map<SymbolId, AnyDefinition>([[method_def.symbol_id, method_def]]),
+      );
+
+      const result = run(
+        [read_ref("process", MOCK_LOCATION)],
+        registry,
+        name_resolver({ process: method_def.symbol_id }),
+      );
+
+      expect(result).toEqual(new Map());
+    });
+
+    it("does not mark a constructor read as a value", () => {
+      const ctor_def = make_constructor_def("constructor", MOCK_LOCATION);
+      const registry = mock_definition_registry(
+        new Map<SymbolId, AnyDefinition>([[ctor_def.symbol_id, ctor_def]]),
+      );
+
+      const result = run(
+        [read_ref("constructor", READ_LOCATION)],
+        registry,
+        name_resolver({ constructor: ctor_def.symbol_id }),
+      );
+
+      expect(result).toEqual(new Map());
+    });
+  });
+
+  describe("member read detection", () => {
+    const LOOPS_FILE = "loops.py" as FilePath;
+    const synloop = make_function_def("synloop", { ...MOCK_LOCATION, file_path: LOOPS_FILE });
+
+    it("marks the function a member read hands over as a function_reference", () => {
+      const registry = mock_definition_registry(new Map());
+      const read_chains: (readonly SymbolName[])[] = [];
+
+      const result = run(
+        [member_read(["loops", "synloop"], READ_LOCATION)],
+        registry,
+        () => null,
+        (_scope_id, property_chain) => {
+          read_chains.push(property_chain);
+          return synloop.symbol_id;
+        },
+      );
+
+      expect({ result, read_chains }).toEqual({
+        result: new Map<SymbolId, IndirectReachability>([
+          [synloop.symbol_id, { reason: { type: "function_reference", read_location: READ_LOCATION } }],
+        ]),
+        read_chains: [["loops", "synloop"]],
+      });
+    });
+
+    it("marks nothing for a member read that holds no function or method", () => {
+      const registry = mock_definition_registry(new Map());
+
+      const result = run(
+        [member_read(["self", "loop"], READ_LOCATION)],
+        registry,
+        name_resolver({ loop: synloop.symbol_id }),
+        NO_MEMBER_READ_CALLABLES,
+      );
+
+      expect(result).toEqual(new Map());
+    });
+
+    it("records the earlier of a member read and a name read of one function, whichever the walk meets first", () => {
+      const registry = mock_definition_registry(
+        new Map<SymbolId, AnyDefinition>([[synloop.symbol_id, synloop]]),
+      );
+      const name_read_location: Location = { ...READ_LOCATION, start_line: 9, end_line: 9 };
+      const refs = [member_read(["loops", "synloop"], READ_LOCATION), read_ref("synloop", name_read_location)];
+
+      const member_read_first = run(refs, registry, name_resolver({ synloop: synloop.symbol_id }), () => synloop.symbol_id);
+      const name_read_first = run(
+        [...refs].reverse(),
+        registry,
+        name_resolver({ synloop: synloop.symbol_id }),
+        () => synloop.symbol_id,
+      );
+
+      const expected = new Map<SymbolId, IndirectReachability>([
+        [synloop.symbol_id, { reason: { type: "function_reference", read_location: READ_LOCATION } }],
+      ]);
+      expect({ member_read_first, name_read_first }).toEqual({ member_read_first: expected, name_read_first: expected });
+    });
+  });
+
+  describe("collection read detection", () => {
+    it("marks inline stored functions as collection_read", () => {
       const fn_def = make_function_def("handler", MOCK_LOCATION);
       const collection_loc: Location = { ...MOCK_LOCATION, start_line: 10, end_line: 10 };
       const collection_id = variable_symbol("HANDLERS" as SymbolName, collection_loc);
       const collection: FunctionCollection = {
-        collection_id: collection_id,
+        collection_id,
         collection_type: "Array",
         location: collection_loc,
         stored_functions: [fn_def.symbol_id],
       };
-
-      const defs = new Map<SymbolId, AnyDefinition>([[fn_def.symbol_id, fn_def]]);
-      const collections = new Map<SymbolId, FunctionCollection>([[collection_id, collection]]);
-      const registry = mock_definition_registry(defs, collections);
-
-      const file_references = new Map([
-        [
-          TEST_FILE,
-          [
-            {
-              kind: "variable_reference",
-              access_type: "read",
-              scope_id: SCOPE_FILE,
-              name: "HANDLERS" as SymbolName,
-              location: READ_LOCATION,
-            },
-          ],
-        ],
-      ]);
-
-      const resolve = (_scope_id: string, name: SymbolName) =>
-        name === ("HANDLERS" as SymbolName) ? collection_id : null;
-
-      const result = detect_indirect_reachability(
-        file_references as Map<FilePath, readonly { kind: string; access_type?: string; scope_id: string; name: SymbolName; location: Location }[]>,
-        registry,
-        resolve
+      const registry = mock_definition_registry(
+        new Map<SymbolId, AnyDefinition>([[fn_def.symbol_id, fn_def]]),
+        new Map<SymbolId, FunctionCollection>([[collection_id, collection]]),
       );
 
-      expect(result.size).toBe(1);
-      expect(result.has(fn_def.symbol_id)).toBe(true);
-      const entry = result.get(fn_def.symbol_id)!;
-      expect(entry.reason.type).toBe("collection_read");
-      expect(entry.reason).toEqual({
-        type: "collection_read",
-        collection_id,
-        read_location: READ_LOCATION,
-      });
+      const result = run(
+        [read_ref("HANDLERS", READ_LOCATION)],
+        registry,
+        name_resolver({ HANDLERS: collection_id }),
+      );
+
+      expect(result).toEqual(
+        new Map<SymbolId, IndirectReachability>([
+          [
+            fn_def.symbol_id,
+            {
+              reason: { type: "collection_read", collection_id, read_location: READ_LOCATION },
+            },
+          ],
+        ]),
+      );
     });
+
+    it("marks a function referenced by name in a collection as collection_read", () => {
+      const fn_def = make_function_def("handler", MOCK_LOCATION);
+      const collection_loc: Location = { ...MOCK_LOCATION, start_line: 10, end_line: 10 };
+      const collection_id = variable_symbol("HANDLERS" as SymbolName, collection_loc);
+      const collection_def = make_variable_def("HANDLERS", collection_loc);
+      const collection: FunctionCollection = {
+        collection_id,
+        collection_type: "Array",
+        location: collection_loc,
+        stored_functions: [],
+        stored_references: ["handler" as SymbolName],
+      };
+      const registry = mock_definition_registry(
+        new Map<SymbolId, AnyDefinition>([
+          [fn_def.symbol_id, fn_def],
+          [collection_id, collection_def],
+        ]),
+        new Map<SymbolId, FunctionCollection>([[collection_id, collection]]),
+      );
+
+      const result = run(
+        [read_ref("HANDLERS", READ_LOCATION)],
+        registry,
+        name_resolver({ HANDLERS: collection_id, handler: fn_def.symbol_id }),
+      );
+
+      expect(result).toEqual(
+        new Map<SymbolId, IndirectReachability>([
+          [
+            fn_def.symbol_id,
+            {
+              reason: { type: "collection_read", collection_id, read_location: READ_LOCATION },
+            },
+          ],
+        ]),
+      );
+    });
+
+    it("recurses into a spread collection and keys reachability on the inner collection", () => {
+      const inner_fn = make_function_def("inner_handler", MOCK_LOCATION);
+      const inner_loc: Location = { ...MOCK_LOCATION, start_line: 8, end_line: 8 };
+      const inner_id = variable_symbol("INNER" as SymbolName, inner_loc);
+      const inner_collection: FunctionCollection = {
+        collection_id: inner_id,
+        collection_type: "Array",
+        location: inner_loc,
+        stored_functions: [inner_fn.symbol_id],
+      };
+      const inner_def = make_variable_def("INNER", inner_loc, inner_collection);
+
+      const outer_loc: Location = { ...MOCK_LOCATION, start_line: 10, end_line: 10 };
+      const outer_id = variable_symbol("OUTER" as SymbolName, outer_loc);
+      const outer_collection: FunctionCollection = {
+        collection_id: outer_id,
+        collection_type: "Array",
+        location: outer_loc,
+        stored_functions: [],
+        stored_references: ["INNER" as SymbolName],
+      };
+      const outer_def = make_variable_def("OUTER", outer_loc, outer_collection);
+
+      const registry = mock_definition_registry(
+        new Map<SymbolId, AnyDefinition>([
+          [inner_fn.symbol_id, inner_fn],
+          [inner_id, inner_def],
+          [outer_id, outer_def],
+        ]),
+        new Map<SymbolId, FunctionCollection>([[outer_id, outer_collection]]),
+      );
+
+      const result = run(
+        [read_ref("OUTER", READ_LOCATION)],
+        registry,
+        name_resolver({ OUTER: outer_id, INNER: inner_id }),
+      );
+
+      expect(result).toEqual(
+        new Map<SymbolId, IndirectReachability>([
+          [
+            inner_fn.symbol_id,
+            {
+              reason: {
+                type: "collection_read",
+                collection_id: inner_id,
+                read_location: READ_LOCATION,
+              },
+            },
+          ],
+        ]),
+      );
+    });
+
+    it("terminates on a self-referencing collection without re-processing it", () => {
+      const fn_def = make_function_def("handler", MOCK_LOCATION);
+      const collection_loc: Location = { ...MOCK_LOCATION, start_line: 10, end_line: 10 };
+      const collection_id = variable_symbol("HANDLERS" as SymbolName, collection_loc);
+      const collection: FunctionCollection = {
+        collection_id,
+        collection_type: "Array",
+        location: collection_loc,
+        stored_functions: [fn_def.symbol_id],
+        stored_references: ["HANDLERS" as SymbolName],
+      };
+      const collection_def = make_variable_def("HANDLERS", collection_loc, collection);
+      const registry = mock_definition_registry(
+        new Map<SymbolId, AnyDefinition>([
+          [fn_def.symbol_id, fn_def],
+          [collection_id, collection_def],
+        ]),
+        new Map<SymbolId, FunctionCollection>([[collection_id, collection]]),
+      );
+
+      const result = run(
+        [read_ref("HANDLERS", READ_LOCATION)],
+        registry,
+        name_resolver({ HANDLERS: collection_id, handler: fn_def.symbol_id }),
+      );
+
+      expect(result).toEqual(
+        new Map<SymbolId, IndirectReachability>([
+          [
+            fn_def.symbol_id,
+            {
+              reason: { type: "collection_read", collection_id, read_location: READ_LOCATION },
+            },
+          ],
+        ]),
+      );
+    });
+  });
+});
+
+/**
+ * A function read as a value from several places is one key in the map, and
+ * the read site stored under it is what the report shows as the evidence. The
+ * walk arrives at those places in ingest order, so the entry has to be chosen
+ * by where the read sits in the project rather than by when the walk got there.
+ */
+describe("the read site recorded as evidence", () => {
+  const EARLIER_FILE = "a_earlier.ts" as FilePath;
+  const LATER_FILE = "z_later.ts" as FilePath;
+
+  function read_site(file: FilePath, line: number, column: number): Location {
+    return {
+      file_path: file,
+      start_line: line,
+      start_column: column,
+      end_line: line,
+      end_column: column + 7,
+    };
+  }
+
+  function detect_over(
+    files: readonly (readonly [FilePath, readonly ReadRef[]])[],
+    registry: DefinitionRegistry,
+    resolve: (scope_id: string, name: SymbolName) => SymbolId | null,
+  ): Map<SymbolId, IndirectReachability> {
+    return detect_indirect_reachability(
+      new Map<FilePath, readonly ReadRef[]>(files),
+      registry,
+      resolve,
+      NO_MEMBER_READ_CALLABLES,
+    );
+  }
+
+  it("records the earliest file's read site whichever file the walk reaches first", () => {
+    const fn_def = make_function_def("handler", MOCK_LOCATION);
+    const registry = mock_definition_registry(
+      new Map<SymbolId, AnyDefinition>([[fn_def.symbol_id, fn_def]]),
+    );
+    const resolve = name_resolver({ handler: fn_def.symbol_id });
+    const earlier = read_site(EARLIER_FILE, 9, 4);
+    const later = read_site(LATER_FILE, 2, 0);
+
+    const earliest_first = detect_over(
+      [
+        [EARLIER_FILE, [read_ref("handler", earlier)]],
+        [LATER_FILE, [read_ref("handler", later)]],
+      ],
+      registry,
+      resolve,
+    );
+    const latest_first = detect_over(
+      [
+        [LATER_FILE, [read_ref("handler", later)]],
+        [EARLIER_FILE, [read_ref("handler", earlier)]],
+      ],
+      registry,
+      resolve,
+    );
+
+    const expected = new Map<SymbolId, IndirectReachability>([
+      [
+        fn_def.symbol_id,
+        { reason: { type: "function_reference", read_location: earlier } },
+      ],
+    ]);
+    expect(earliest_first).toEqual(expected);
+    expect(latest_first).toEqual(expected);
+  });
+
+  it("orders two read sites in one file by line and then column", () => {
+    const fn_def = make_function_def("handler", MOCK_LOCATION);
+    const registry = mock_definition_registry(
+      new Map<SymbolId, AnyDefinition>([[fn_def.symbol_id, fn_def]]),
+    );
+    const resolve = name_resolver({ handler: fn_def.symbol_id });
+    const first_on_the_line = read_site(EARLIER_FILE, 7, 2);
+    const later_on_the_line = read_site(EARLIER_FILE, 7, 30);
+    const on_a_later_line = read_site(EARLIER_FILE, 40, 0);
+
+    // Both directions, because a walk-order rule passes one of them by luck:
+    // first-wins answers the ascending list correctly and last-wins the
+    // descending one, and only a positional rule answers both.
+    const ascending = detect_over(
+      [
+        [
+          EARLIER_FILE,
+          [
+            read_ref("handler", first_on_the_line),
+            read_ref("handler", later_on_the_line),
+            read_ref("handler", on_a_later_line),
+          ],
+        ],
+      ],
+      registry,
+      resolve,
+    );
+    const descending = detect_over(
+      [
+        [
+          EARLIER_FILE,
+          [
+            read_ref("handler", on_a_later_line),
+            read_ref("handler", later_on_the_line),
+            read_ref("handler", first_on_the_line),
+          ],
+        ],
+      ],
+      registry,
+      resolve,
+    );
+
+    const expected = new Map<SymbolId, IndirectReachability>([
+      [
+        fn_def.symbol_id,
+        {
+          reason: {
+            type: "function_reference",
+            read_location: first_on_the_line,
+          },
+        },
+      ],
+    ]);
+    expect(ascending).toEqual(expected);
+    expect(descending).toEqual(expected);
+  });
+
+  it("keeps the earliest read site when a later writer merges into the map", () => {
+    const fn_def = make_function_def("handler", MOCK_LOCATION);
+    const earlier = read_site(EARLIER_FILE, 9, 4);
+    const later = read_site(LATER_FILE, 2, 0);
+    const map = new Map<SymbolId, IndirectReachability>();
+
+    record_indirect_reachability(map, fn_def.symbol_id, {
+      reason: { type: "function_reference", read_location: earlier },
+    });
+    record_indirect_reachability(map, fn_def.symbol_id, {
+      reason: { type: "function_reference", read_location: later },
+    });
+
+    expect(map).toEqual(
+      new Map<SymbolId, IndirectReachability>([
+        [
+          fn_def.symbol_id,
+          { reason: { type: "function_reference", read_location: earlier } },
+        ],
+      ]),
+    );
   });
 });

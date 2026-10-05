@@ -13,8 +13,13 @@ import { create_logger, parse_stdin, get_project_dir } from "./utils.js";
 import {
   validate_root_file,
   validate_src_file,
-  validate_package_root_file
+  validate_package_root_file,
+  type ValidationResult
 } from "./file_naming.js";
+import {
+  marshaller_nudge_with_dedup,
+  marshaller_context_output,
+} from "./marshaller_nudge.js";
 
 const log = create_logger("file-naming");
 
@@ -29,7 +34,7 @@ function main(): void {
   const file_path = tool_input?.file_path as string | undefined;
   if (!file_path) return;
 
-  const project_dir = get_project_dir();
+  const project_dir = get_project_dir(input);
   const relative = path.relative(project_dir, file_path);
   const parts = relative.split(path.sep);
 
@@ -38,7 +43,7 @@ function main(): void {
     return;
   }
 
-  let result = { valid: true } as { valid: boolean; error?: string; warning?: string };
+  let result: ValidationResult = { valid: true };
 
   // Root directory file (single part, not hidden)
   if (parts.length === 1) {
@@ -54,13 +59,29 @@ function main(): void {
   }
 
   if (!result.valid && result.error) {
-    log(`Blocking: ${result.error}`);
+    // Emitted before logging: an unwritable log must not swallow the block.
     console.log(JSON.stringify({
       decision: "block",
       reason: result.error
     }));
-  } else if (result.warning) {
+    log(`Blocking: ${result.error}`);
+    return;
+  }
+
+  if (result.warning) {
     log(result.warning);
+  }
+
+  // Allow path only: a folder growing its first language variant with no
+  // marshaller earns an encourage-only nudge, kept isolated from the block
+  // logic above. Never a block — a false positive here is worse than a miss.
+  const nudge = marshaller_nudge_with_dedup(
+    file_path,
+    project_dir,
+    input.session_id as string | undefined,
+  );
+  if (nudge) {
+    console.log(JSON.stringify(marshaller_context_output(nudge)));
   }
 }
 

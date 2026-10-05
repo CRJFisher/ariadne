@@ -1,0 +1,17 @@
+#!/usr/bin/env sh
+# Hydrate this ariadne checkout: install workspace deps and build every package.
+# Follows the Scripts-to-Rule-Them-All convention, so both a local worktree and
+# the n8n-claude runtime's native-dep provisioning use one recipe.
+#
+# tree-sitter@0.25.0 ships no prebuilds and its C++ binding needs C++20 on Node
+# 24, so the native-compile flag lives here (per-repo data) — never in a runtime
+# image. pnpm-workspace.yaml already allows the tree-sitter/esbuild builds. pnpm
+# resolves via corepack to the repo-pinned version (packageManager: pnpm@11.9.0).
+set -e
+unset CDPATH
+cd "$(dirname "$0")/.."
+
+export CXXFLAGS="-std=gnu++20"
+
+pnpm install
+pnpm build

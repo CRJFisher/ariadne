@@ -8,14 +8,10 @@ import JavaScript from "tree-sitter-javascript";
 import type { SyntaxNode } from "tree-sitter";
 import { JAVASCRIPT_HANDLERS } from "./capture_handlers.javascript";
 import { analyze_export_statement, detect_callback_context } from "../symbol_factories/symbol_factories.javascript";
-import { DefinitionBuilder } from "../../definitions/definitions";
+import { DefinitionBuilder } from "../../definitions/definition_builder";
 import { build_index_single_file } from "../../index_single_file";
-import type {
-  ProcessingContext,
-  CaptureNode,
-  SemanticCategory,
-  SemanticEntity,
-} from "../../index_single_file";
+import type { CaptureNode, SemanticCategory, SemanticEntity } from "../../capture_types";
+import type { ProcessingContext } from "../../scopes/processing_context";
 import type {
   Location,
   ScopeId,
@@ -25,7 +21,7 @@ import type {
   ConstructorCallReference,
 } from "@ariadnejs/types";
 import { ReferenceBuilder } from "../../references/references";
-import { JAVASCRIPT_METADATA_EXTRACTORS } from "../metadata_extractors";
+import { JAVASCRIPT_METADATA_EXTRACTORS } from "../metadata_extractors/metadata_extractors.javascript";
 import { node_to_location } from "../../node_to_location";
 
 describe("JavaScript Builder Configuration", () => {
@@ -93,7 +89,6 @@ describe("JavaScript Builder Configuration", () => {
       scope_depths: new Map(),
       root_scope_id: test_scope_id,
       get_scope_id: (location: Location) => test_scope_id,
-      get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => test_scope_id,
     };
   }
 
@@ -133,33 +128,24 @@ describe("JavaScript Builder Configuration", () => {
   describe("JAVASCRIPT_HANDLERS", () => {
     it("should export a valid handler registry with all expected handlers", () => {
       expect(Object.keys(JAVASCRIPT_HANDLERS).sort()).toEqual([
+        "assignment.property",
         "definition.anonymous_function",
-        "definition.arrow",
         "definition.class",
         "definition.constructor",
         "definition.documentation",
         "definition.field",
+        "definition.field.assigned",
         "definition.function",
+        "definition.function.commonjs_export",
         "definition.import",
-        "definition.import.default",
-        "definition.import.named",
-        "definition.import.namespace",
         "definition.import.require",
         "definition.import.require.simple",
         "definition.method",
-        "definition.param",
         "definition.parameter",
-        "definition.property",
         "definition.variable",
         "import.reexport",
-        "import.reexport.as_default.alias",
-        "import.reexport.default.alias",
-        "import.reexport.default.original",
-        "import.reexport.named",
-        "import.reexport.named.alias",
-        "import.reexport.named.simple",
-        "import.reexport.namespace.alias",
-        "import.reexport.namespace.source",
+        "import.reexport.namespace",
+        "import.reexport.wildcard",
       ]);
     });
 
@@ -169,13 +155,10 @@ describe("JavaScript Builder Configuration", () => {
         "definition.method",
         "definition.constructor",
         "definition.function",
-        "definition.arrow",
         "definition.anonymous_function",
-        "definition.param",
         "definition.parameter",
         "definition.variable",
         "definition.field",
-        "definition.property",
       ];
 
       for (const mapping of definition_mappings) {
@@ -187,9 +170,6 @@ describe("JavaScript Builder Configuration", () => {
     it("should contain all import capture handler functions", () => {
       const import_mappings = [
         "definition.import",
-        "definition.import.named",
-        "definition.import.default",
-        "definition.import.namespace",
         "definition.import.require",
         "definition.import.require.simple",
       ];
@@ -203,14 +183,8 @@ describe("JavaScript Builder Configuration", () => {
     it("should contain all re-export capture handler functions", () => {
       const reexport_mappings = [
         "import.reexport",
-        "import.reexport.named.simple",
-        "import.reexport.named",
-        "import.reexport.named.alias",
-        "import.reexport.default.original",
-        "import.reexport.default.alias",
-        "import.reexport.as_default.alias",
-        "import.reexport.namespace.source",
-        "import.reexport.namespace.alias",
+        "import.reexport.wildcard",
+        "import.reexport.namespace",
       ];
 
       for (const mapping of reexport_mappings) {
@@ -390,71 +364,6 @@ describe("JavaScript Builder Configuration", () => {
         expect(class_def.methods[0].name).toBe("myMethod");
       });
 
-      it("should process import statements", () => {
-        const code = "import React from 'react';";
-        const context = create_test_context();
-        const builder = new DefinitionBuilder(context);
-
-        const ast = parser.parse(code);
-        const import_clause = find_node_by_type(ast.rootNode, "import_clause");
-        const name_node = import_clause?.child(0); // Default import identifier
-
-        if (!name_node) {
-          throw new Error("Could not find import name");
-        }
-
-        const capture: CaptureNode = {
-          name: "definition.import.default",
-          category: "definition" as SemanticCategory,
-          entity: "import" as SemanticEntity,
-          node: name_node as any,
-          text: name_node.text as SymbolName,
-          location: node_to_location(name_node, TEST_FILE_PATH),
-        };
-
-        JAVASCRIPT_HANDLERS["definition.import.default"]!(capture, builder, context);
-
-        const result = builder.build();
-        const imports = Array.from(result.imports.values());
-        expect(imports).toHaveLength(1);
-        expect(imports[0].kind).toBe("import");
-        expect(imports[0].name).toBe("React");
-        expect(imports[0].import_kind).toBe("default");
-        expect(imports[0].import_path).toBe("react");
-        expect(imports[0].original_name).toBeUndefined();
-      });
-
-      it("should process arrow function assignments", () => {
-        const code = "const myFunc = () => {};";
-        const context = create_test_context();
-        const builder = new DefinitionBuilder(context);
-
-        const ast = parser.parse(code);
-        const var_node = find_node_by_type(ast.rootNode, "variable_declarator");
-        const name_node = var_node?.childForFieldName("name");
-
-        if (!name_node) {
-          throw new Error("Could not find arrow function name");
-        }
-
-        const capture: CaptureNode = {
-          name: "definition.arrow",
-          category: "definition" as SemanticCategory,
-          entity: "function" as SemanticEntity,
-          node: name_node as any,
-          text: name_node.text as SymbolName,
-          location: node_to_location(name_node, TEST_FILE_PATH),
-        };
-
-        JAVASCRIPT_HANDLERS["definition.arrow"]!(capture, builder, context);
-
-        const result = builder.build();
-        const functions = Array.from(result.functions.values());
-        expect(functions).toHaveLength(1);
-        expect(functions[0].kind).toBe("function");
-        expect(functions[0].name).toBe("myFunc");
-      });
-
       it("should NOT create VariableDefinition for arrow function assignments", () => {
         // Arrow functions assigned to variables are captured by @definition.function,
         // so the @definition.variable handler should skip them to avoid dual registration
@@ -582,17 +491,15 @@ describe("JavaScript Builder Configuration", () => {
         expect(class_def.properties[0].name).toBe("myProperty");
       });
 
-      it("should process function parameters", () => {
+      it("should process function parameters via definition.parameter", () => {
         const code = "function myFunc(param1, param2) { }";
         const context = create_test_context(true); // Need scopes for function bodies
         const builder = new DefinitionBuilder(context);
 
         const ast = parser.parse(code);
 
-        // First add the function
         const func_node = find_node_by_type(ast.rootNode, "function_declaration");
         const func_name_node = func_node?.childForFieldName("name");
-
         if (!func_name_node) {
           throw new Error("Could not find function name");
         }
@@ -605,40 +512,28 @@ describe("JavaScript Builder Configuration", () => {
           text: func_name_node.text as SymbolName,
           location: node_to_location(func_name_node, TEST_FILE_PATH),
         };
+        JAVASCRIPT_HANDLERS["definition.function"]!(func_capture, builder, context);
 
-        const func_processor = JAVASCRIPT_HANDLERS[
-          "definition.function"
-        ];
-        func_processor!(func_capture, builder, context);
-
-        // Then add the parameters
         const params_node = func_node?.childForFieldName("parameters");
         if (!params_node) {
           throw new Error("Could not find parameters");
         }
-
         for (const child of params_node.namedChildren) {
           if (child.type === "identifier") {
             const param_capture: CaptureNode = {
-              name: "definition.param",
+              name: "definition.parameter",
               category: "definition" as SemanticCategory,
               entity: "parameter" as SemanticEntity,
               node: child as any,
               text: child.text as SymbolName,
               location: node_to_location(child, TEST_FILE_PATH),
             };
-
-            const param_processor =
-              JAVASCRIPT_HANDLERS["definition.param"];
-            param_processor!(param_capture, builder, context);
+            JAVASCRIPT_HANDLERS["definition.parameter"]!(param_capture, builder, context);
           }
         }
 
-        const result = builder.build();
-        const functions = Array.from(result.functions.values());
+        const functions = Array.from(builder.build().functions.values());
         expect(functions).toHaveLength(1);
-        expect(functions[0].kind).toBe("function");
-
         const func_def = functions[0] as any;
         expect(func_def.signature.parameters).toHaveLength(2);
         expect(func_def.signature.parameters[0].name).toBe("param1");
@@ -740,67 +635,6 @@ describe("JavaScript Builder Configuration", () => {
         const functions = Array.from(result.functions.values());
         expect(functions).toHaveLength(1);
         expect(functions[0].callback_context!.is_callback).toBe(true);
-      });
-
-      it("should process named import statements", () => {
-        const code = "import { useState } from 'react';";
-        const context = create_test_context();
-        const builder = new DefinitionBuilder(context);
-
-        const ast = parser.parse(code);
-        const import_specifier = find_node_by_type(ast.rootNode, "import_specifier");
-        const name_node = import_specifier?.childForFieldName("name");
-        if (!name_node) throw new Error("Could not find import name");
-
-        const capture: CaptureNode = {
-          name: "definition.import.named",
-          category: "definition" as SemanticCategory,
-          entity: "import" as SemanticEntity,
-          node: name_node as any,
-          text: name_node.text as SymbolName,
-          location: node_to_location(name_node, TEST_FILE_PATH),
-        };
-        JAVASCRIPT_HANDLERS["definition.import.named"]!(capture, builder, context);
-
-        const result = builder.build();
-        const imports = Array.from(result.imports.values());
-        expect(imports).toHaveLength(1);
-        expect(imports[0].name).toBe("useState");
-        expect(imports[0].import_kind).toBe("named");
-        expect(imports[0].import_path).toBe("react");
-        expect(imports[0].original_name).toBeUndefined();
-      });
-
-      it("should process namespace import statements", () => {
-        const code = "import * as React from 'react';";
-        const context = create_test_context();
-        const builder = new DefinitionBuilder(context);
-
-        const ast = parser.parse(code);
-        // In JS tree-sitter, namespace import is: import_clause > namespace_import > identifier
-        const namespace_import = find_node_by_type(ast.rootNode, "namespace_import");
-        if (!namespace_import) throw new Error("Could not find namespace_import");
-        // The identifier inside namespace_import
-        const name_node = find_node_by_type(namespace_import, "identifier");
-        if (!name_node) throw new Error("Could not find namespace identifier");
-
-        const capture: CaptureNode = {
-          name: "definition.import.namespace",
-          category: "definition" as SemanticCategory,
-          entity: "import" as SemanticEntity,
-          node: name_node as any,
-          text: name_node.text as SymbolName,
-          location: node_to_location(name_node, TEST_FILE_PATH),
-        };
-        JAVASCRIPT_HANDLERS["definition.import.namespace"]!(capture, builder, context);
-
-        const result = builder.build();
-        const imports = Array.from(result.imports.values());
-        expect(imports).toHaveLength(1);
-        expect(imports[0].name).toBe("React");
-        expect(imports[0].import_kind).toBe("namespace");
-        expect(imports[0].import_path).toBe("react");
-        expect(imports[0].original_name).toBeUndefined();
       });
 
       it("should process CommonJS require with destructuring", () => {
@@ -1006,7 +840,8 @@ describe("JavaScript Builder Configuration", () => {
         const builder = new ReferenceBuilder(
           processing_context,
           JAVASCRIPT_METADATA_EXTRACTORS,
-          TEST_FILE_PATH
+          TEST_FILE_PATH,
+          "javascript"
         );
 
         builder.process(captures[0]);
@@ -1071,7 +906,8 @@ describe("JavaScript Builder Configuration", () => {
         const builder = new ReferenceBuilder(
           processing_context,
           JAVASCRIPT_METADATA_EXTRACTORS,
-          TEST_FILE_PATH
+          TEST_FILE_PATH,
+          "javascript"
         );
 
         builder.process(captures[0]);
@@ -1131,7 +967,8 @@ describe("JavaScript Builder Configuration", () => {
         const builder = new ReferenceBuilder(
           processing_context,
           JAVASCRIPT_METADATA_EXTRACTORS,
-          TEST_FILE_PATH
+          TEST_FILE_PATH,
+          "javascript"
         );
 
         builder.process(captures[0]);
@@ -1180,7 +1017,8 @@ describe("JavaScript Builder Configuration", () => {
         const builder = new ReferenceBuilder(
           processing_context,
           JAVASCRIPT_METADATA_EXTRACTORS,
-          TEST_FILE_PATH
+          TEST_FILE_PATH,
+          "javascript"
         );
 
         builder.process(captures[0]);
@@ -1226,7 +1064,8 @@ describe("JavaScript Builder Configuration", () => {
         const builder = new ReferenceBuilder(
           processing_context,
           JAVASCRIPT_METADATA_EXTRACTORS,
-          TEST_FILE_PATH
+          TEST_FILE_PATH,
+          "javascript"
         );
 
         builder.process(captures[0]);
@@ -2001,6 +1840,7 @@ export const NESTED = {
         file_end_column: lines[lines.length - 1].length + 1,
         tree: tree,
         lang: "javascript" as const,
+        source: code,
       };
 
       return build_index_single_file(parsed_file, tree, "javascript");
@@ -2369,6 +2209,38 @@ export const NESTED = {
     });
   });
 
+  describe("CommonJS class expression capture", () => {
+    it("captures a named class expression exported via `exports.X = class` with its members", async () => {
+      const code =
+        "exports.Gadget = class Gadget {\n" +
+        "  constructor() {}\n" +
+        "  static create() {}\n" +
+        "  run() {}\n" +
+        "};";
+      const tree = parser.parse(code);
+      const lines = code.split("\n");
+      const parsed_file = {
+        file_path: TEST_FILE_PATH,
+        file_lines: lines.length,
+        file_end_column: lines[lines.length - 1].length + 1,
+        tree: tree,
+        lang: "javascript" as const,
+        source: code,
+      };
+
+      const index = await build_index_single_file(parsed_file, tree, "javascript");
+
+      const classes = Array.from(index.classes.values());
+      expect(classes).toHaveLength(1);
+      const gadget = classes[0];
+      expect(gadget.name).toBe("Gadget");
+      expect(gadget.is_exported).toBe(true);
+      expect(gadget.export).toEqual({});
+      expect(gadget.methods.map((m) => m.name).sort()).toEqual(["create", "run"]);
+      expect(gadget.constructors).toHaveLength(1);
+    });
+  });
+
   describe("Aliased Re-export Handling", () => {
     it("should create ImportDefinition with correct export metadata for aliased re-exports", async () => {
       // Tests the fix for aliased re-exports: export { originalName as aliasedName } from './module'
@@ -2382,6 +2254,7 @@ export const NESTED = {
         file_end_column: lines[lines.length - 1].length + 1,
         tree: tree,
         lang: "javascript" as const,
+        source: code,
       };
 
       const index = await build_index_single_file(parsed_file, tree, "javascript");
@@ -2407,6 +2280,7 @@ export const NESTED = {
         file_end_column: lines[lines.length - 1].length + 1,
         tree: tree,
         lang: "javascript" as const,
+        source: code,
       };
 
       const index = await build_index_single_file(parsed_file, tree, "javascript");
@@ -2418,6 +2292,7 @@ export const NESTED = {
       expect(reexport.name).toBe("foo");
       expect(reexport.original_name).toBeUndefined(); // No alias
       expect(reexport.export?.is_reexport).toBe(true);
+      expect(reexport.export?.export_name).toBeUndefined(); // No alias → no distinct export name
     });
 
     it("should handle multiple aliased re-exports in same statement", async () => {
@@ -2430,6 +2305,7 @@ export const NESTED = {
         file_end_column: lines[lines.length - 1].length + 1,
         tree: tree,
         lang: "javascript" as const,
+        source: code,
       };
 
       const index = await build_index_single_file(parsed_file, tree, "javascript");
@@ -2447,6 +2323,181 @@ export const NESTED = {
       expect(qux_import!.name).toBe("qux");
       expect(qux_import!.original_name).toBe("baz");
       expect(qux_import!.export?.is_reexport).toBe(true);
+    });
+
+    it("gives each re-export of one source symbol its own alias as export name", async () => {
+      // The symbol_factories barrel re-exports create_class_id under a
+      // per-language alias from two different modules. Both specifiers share
+      // the source name create_class_id, so a source-name-keyed export lookup
+      // would forge a duplicate export named after whichever alias came last.
+      const code = `export { create_class_id as create_js_class_id } from "./symbol_factories.javascript";
+export { create_class_id as create_py_class_id } from "./symbol_factories.python";`;
+      const tree = parser.parse(code);
+      const lines = code.split("\n");
+      const parsed_file = {
+        file_path: TEST_FILE_PATH,
+        file_lines: lines.length,
+        file_end_column: lines[lines.length - 1].length + 1,
+        tree: tree,
+        lang: "javascript" as const,
+        source: code,
+      };
+
+      const index = await build_index_single_file(parsed_file, tree, "javascript");
+      const imports = Array.from(index.imported_symbols.values());
+
+      const projected = imports
+        .map((i) => ({
+          name: i.name,
+          original_name: i.original_name,
+          import_path: i.import_path,
+          export_name: i.export?.export_name,
+          is_reexport: i.export?.is_reexport,
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+
+      expect(projected).toEqual([
+        {
+          name: "create_js_class_id" as SymbolName,
+          original_name: "create_class_id" as SymbolName,
+          import_path: "./symbol_factories.javascript",
+          export_name: "create_js_class_id" as SymbolName,
+          is_reexport: true,
+        },
+        {
+          name: "create_py_class_id" as SymbolName,
+          original_name: "create_class_id" as SymbolName,
+          import_path: "./symbol_factories.python",
+          export_name: "create_py_class_id" as SymbolName,
+          is_reexport: true,
+        },
+      ]);
+    });
+  });
+
+  describe("Wildcard re-exports", () => {
+    function index_js_imports(code: string) {
+      const tree = parser.parse(code);
+      const lines = code.split("\n");
+      const parsed_file = {
+        file_path: TEST_FILE_PATH,
+        file_lines: lines.length,
+        file_end_column: lines[lines.length - 1].length + 1,
+        tree: tree,
+        lang: "javascript" as const,
+        source: code,
+      };
+      const index = build_index_single_file(parsed_file, tree, "javascript");
+      return Array.from(index.imported_symbols.values()).map((i) => ({
+        name: i.name,
+        import_path: i.import_path,
+        import_kind: i.import_kind,
+        original_name: i.original_name,
+        export: i.export,
+      }));
+    }
+
+    it("records a wildcard re-export edge for export * from", () => {
+      expect(index_js_imports("export * from './m.js';")).toEqual([
+        {
+          name: "m",
+          import_path: "./m.js",
+          import_kind: "wildcard",
+          original_name: undefined,
+          export: { is_reexport: true },
+        },
+      ]);
+    });
+
+    it("binds the alias as a namespace object for export * as ns from", () => {
+      expect(index_js_imports("export * as ns from './m.js';")).toEqual([
+        {
+          name: "ns",
+          import_path: "./m.js",
+          import_kind: "namespace",
+          original_name: undefined,
+          export: {},
+        },
+      ]);
+    });
+
+    it("carries the export metadata onto a namespace import re-exported by name", () => {
+      expect(
+        index_js_imports("import * as X from './m';\nexport { X };")
+      ).toEqual([
+        {
+          name: "X",
+          import_path: "./m",
+          import_kind: "namespace",
+          original_name: undefined,
+          export: { export_name: undefined, is_reexport: false },
+        },
+      ]);
+    });
+
+    it("keys wildcard and alias symbol ids on their derived names", () => {
+      const code = "export * from './m.js';\nexport * as ns from './n.js';";
+      const tree = parser.parse(code);
+      const parsed_file = {
+        file_path: TEST_FILE_PATH,
+        file_lines: 2,
+        file_end_column: 30,
+        tree: tree,
+        lang: "javascript" as const,
+        source: code,
+      };
+      const index = build_index_single_file(parsed_file, tree, "javascript");
+      const ids = Array.from(index.imported_symbols.keys()).sort();
+
+      expect(ids).toEqual([
+        "variable:/test/file.js:1:1:1:23:m",
+        "variable:/test/file.js:2:13:2:14:ns",
+      ]);
+    });
+
+    it("does not treat a plain named re-export as a wildcard edge", () => {
+      expect(index_js_imports("export { foo } from './m.js';")).toEqual([
+        {
+          name: "foo",
+          import_path: "./m.js",
+          import_kind: "named",
+          original_name: undefined,
+          export: { is_reexport: true, export_name: undefined },
+        },
+      ]);
+    });
+
+    it("does not attach export metadata to an import nobody re-exports", () => {
+      expect(index_js_imports("import { a } from './m';")).toEqual([
+        {
+          name: "a",
+          import_path: "./m",
+          import_kind: "named",
+          original_name: undefined,
+          export: undefined,
+        },
+      ]);
+    });
+
+    it("leaves a from-clause re-export of an imported name to the reexport handler", () => {
+      expect(
+        index_js_imports("import { a } from './m';\nexport { a } from './m';")
+      ).toEqual([
+        {
+          name: "a",
+          import_path: "./m",
+          import_kind: "named",
+          original_name: undefined,
+          export: undefined,
+        },
+        {
+          name: "a",
+          import_path: "./m",
+          import_kind: "named",
+          original_name: undefined,
+          export: { is_reexport: true, export_name: undefined },
+        },
+      ]);
     });
   });
 });

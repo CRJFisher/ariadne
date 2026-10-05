@@ -3,7 +3,7 @@ id: task-epic-11.16
 title: Migrate parameter_type_inference feature
 status: Done
 assignee: []
-created_date: '2025-08-20'
+created_date: "2025-08-20"
 labels: [migration, type-analysis, epic-11]
 dependencies: [task-epic-11.2]
 parent_task_id: epic-11
@@ -16,6 +16,7 @@ Migrate the `parameter_type_inference` feature to `src/type_analysis/parameter_t
 ## Research Phase
 
 **NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+
 - `## Current Codebase Structure (As Implemented)` - understand current locations
 - `### Proposed Structure` - understand target architecture
 
@@ -54,8 +55,17 @@ Migrate the `parameter_type_inference` feature to `src/type_analysis/parameter_t
 
 ```typescript
 // TODO: Add these stubs in implementation
-interface ParameterInferrer { infer_parameter_types(func: FunctionDef, calls: CallInfo[]): Map<string, TypeInfo>; }
-interface ParameterAnalysis { param_name: string; inferred_types: TypeInfo[]; resolved_type: TypeInfo; }
+interface ParameterInferrer {
+  infer_parameter_types(
+    func: FunctionDef,
+    calls: CallInfo[]
+  ): Map<string, TypeInfo>;
+}
+interface ParameterAnalysis {
+  param_name: string;
+  inferred_types: TypeInfo[];
+  resolved_type: TypeInfo;
+}
 ```
 
 ## Planning Phase
@@ -110,6 +120,7 @@ Research findings will be documented here during execution.
 Created the parameter_type_inference feature from scratch as it didn't exist in src_old:
 
 1. **Core Implementation** (`parameter_type_inference.ts`):
+
    - Created comprehensive parameter extraction for all languages
    - Implemented type inference from multiple sources:
      - Explicit type annotations
@@ -119,6 +130,7 @@ Created the parameter_type_inference feature from scratch as it didn't exist in 
    - 629 lines of functional implementation
 
 2. **Language-Specific Implementations**:
+
    - **JavaScript** (`parameter_type_inference.javascript.ts`): 406 lines
      - Handles assignment_pattern for default values
      - Analyzes parameter usage for type inference
@@ -130,7 +142,7 @@ Created the parameter_type_inference feature from scratch as it didn't exist in 
    - **Python** (`parameter_type_inference.python.ts`): 428 lines
      - Extracts type hints from typed_parameter nodes
      - Handles self/cls special parameters
-     - Supports *args/**kwargs
+     - Supports \*args/\*\*kwargs
      - Parses docstring type annotations
    - **Rust** (`parameter_type_inference.rust.ts`): 405 lines
      - Requires explicit types (Rust standard)
@@ -138,6 +150,7 @@ Created the parameter_type_inference feature from scratch as it didn't exist in 
      - Supports lifetime and generic parameters
 
 3. **Dispatcher** (`index.ts`): 328 lines
+
    - Routes to language-specific implementations
    - Provides unified API
    - Includes formatting utilities
@@ -157,6 +170,7 @@ Created the parameter_type_inference feature from scratch as it didn't exist in 
 ### Integration Points
 
 Successfully integrates with:
+
 - Type tracking system (for variable types)
 - Function call analysis (for call-site inference)
 - Return type inference (shares patterns)
@@ -164,9 +178,10 @@ Successfully integrates with:
 ### Test Coverage
 
 All tests passing (17/17):
+
 - JavaScript: default values, patterns, usage analysis, rest params
 - TypeScript: annotations, optional params, signature formatting
-- Python: type hints, self/cls, *args/**kwargs, defaults
+- Python: type hints, self/cls, \*args/\*\*kwargs, defaults
 - Rust: explicit types, self variants, references
 - Utilities: pattern detection, type checking
 
@@ -175,6 +190,7 @@ All tests passing (17/17):
 When implementing, add these TODO comments:
 
 1. In `parameter_type_inference.ts`:
+
    ```typescript
    // TODO: Integration with Function Calls
    // - Analyze argument types at call sites

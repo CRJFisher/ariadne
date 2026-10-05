@@ -41,7 +41,7 @@ index_single_file/
 - **`SemanticIndex`** — Output of the full pipeline: `{ file_path, language, root_scope_id, scopes, definitions (by kind), references }`
 - **`CaptureNode`** — Normalized tree-sitter capture: `{ category, entity, name, text, location, node }`
 - **`ProcessingContext`** — Context threaded through passes 2-4: `{ captures, scopes, scope_depths, root_scope_id, get_scope_id() }`
-- **`LexicalScope`** — Scope tree node: `{ id, parent_id, name, type, location, child_ids }`
+- **`LexicalScope`** — Scope tree node: `{ id, parent_id, name, type, location, child_ids, self_type_name }`
 
 ## Capture Naming Convention
 
@@ -57,6 +57,8 @@ Every scope-creating construct has three positions:
 
 Each language has a `ScopeBoundaryExtractor` that converts tree-sitter node positions to semantic scope boundaries. This centralizes language-specific logic instead of scattering it through the scope processor.
 
+The extractor also answers what a `self`/`this`/`cls`/`Self` receiver in the scope is looked up on, as `LexicalScope.self_type_name`. Every grammar anchors a class-family scope to the body node, so the common base names the type off the declaration around it; a language overrides that only where its grammar diverges — Rust reads the type an `impl` block implements, and JavaScript withholds the name of a class expression no definition registers.
+
 ```
 Tree-Sitter Query → CaptureNode (raw position)
     → ScopeBoundaryExtractor (language-specific)
@@ -67,3 +69,12 @@ Tree-Sitter Query → CaptureNode (raw position)
 ## Arrow Function Handling
 
 Arrow functions and function expressions assigned to variables are captured as function definitions only, not as both function and variable definitions. This prevents duplicate symbols — the function symbol is sufficient for call graph analysis and reference resolution.
+
+## Capture/Receiver Consistency
+
+Definition captures dispatch by exact name: `process_definitions` in `index_single_file.ts` does `registry[capture.name]` and runs the handler only when one exists — no normalization, no prefix fallback. A registry key and the `.scm` `@<name>` that reaches it must be byte-identical, so registry keys and emitted captures must agree. `TYPESCRIPT_HANDLERS` spreads `JAVASCRIPT_HANDLERS`, so a JavaScript handler is reachable from `typescript.scm` too; a redeclared key shadows the inherited one.
+
+Two ways they drift:
+
+- **Dead handler** — a registry key no feeding query emits. The handler is unreachable and is deleted (function, registry entry, sole-use helpers, dead-only tests).
+- **Orphan capture** — a query emits a `definition`/`decorator`/`import` capture with no matching handler, so the extraction silently never runs.

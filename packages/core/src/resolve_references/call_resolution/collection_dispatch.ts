@@ -1,143 +1,277 @@
 /**
- * Collection Dispatch Resolution
+ * Resolves a call whose target was retrieved from a collection of functions to
+ * every function the collection holds. A lookup like `const h = CONFIG.get(k)`
+ * loses the specific element statically, so a later `h(x)` is resolved to the
+ * union of all handlers stored in `CONFIG`:
  *
- * Resolves function calls through collection access patterns by:
- * 1. Detecting when a collection (Map/Array/Object) is accessed
- * 2. Detecting when the result is immediately invoked
- * 3. Resolving to ALL functions stored in the collection
- *
- * Pattern detected (Indirect invocation):
  * ```typescript
  * const CONFIG = new Map([["class", handler1], ["fn", handler2]]);
  * const handler = CONFIG.get(type); // handler.collection_source = "CONFIG"
- * handler(capture);  // ← Resolves to [handler1, handler2]
+ * handler(capture);  // ← resolves to [handler1, handler2]
  * ```
  */
 
 import type {
   SymbolId,
   SymbolName,
+  ScopeId,
   SymbolReference,
   MethodCallReference,
+  CollectionMember,
+  AnyDefinition,
+  Result,
+  ResolutionFailure,
 } from "@ariadnejs/types";
+import { err, ok } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "../registries/definition";
-import type { ResolutionRegistry } from "../resolve_references";
-
+import type { ResolutionRegistry } from "../resolution_registry";
 
 /**
- * Resolve a collection dispatch call to all stored functions.
- *
- * Steps:
- * 1. Identify the variable being called (function call) or the receiver (method call)
- * 2. Resolve that variable to a definition
- * 3. Check if the variable was looked up from a collection (collection_source metadata)
- * 4. If so, resolve the collection variable
- * 5. Return all functions from the collection
- *
- * @param call_ref - Call reference from semantic index
- * @param definitions - Definition registry with function collections
- * @param resolutions - Resolution registry for symbol lookup
- * @returns Array of resolved function symbol_ids
+ * The member named `name` in a collection, or undefined. The last match wins,
+ * matching last-write-wins reassignment and duplicate object keys.
+ */
+export function find_named_member(
+  members: readonly CollectionMember[],
+  name: SymbolName
+): CollectionMember | undefined {
+  let matched: CollectionMember | undefined;
+  for (const member of members) {
+    if (member.name === name) matched = member;
+  }
+  return matched;
+}
+
+/**
+ * The callable a member names: an inline function value directly, or a value
+ * identifier resolved in `scope_id`. Undefined for a nested member, which names an
+ * object rather than a function.
+ */
+function member_callable(
+  member: CollectionMember,
+  scope_id: ScopeId,
+  resolutions: ResolutionRegistry
+): SymbolId | undefined {
+  if ("symbol_id" in member) return member.symbol_id;
+  if ("reference_name" in member) {
+    return resolutions.resolve(scope_id, member.reference_name) ?? undefined;
+  }
+  return undefined;
+}
+
+/**
+ * Resolve the callable named `name` within a collection's members. Undefined when
+ * the name is absent or names a nested object (not itself callable).
+ */
+export function resolve_named_member(
+  members: readonly CollectionMember[],
+  name: SymbolName,
+  scope_id: ScopeId,
+  resolutions: ResolutionRegistry
+): SymbolId | undefined {
+  const member = find_named_member(members, name);
+  return member ? member_callable(member, scope_id, resolutions) : undefined;
+}
+
+/**
+ * @returns Resolved function symbol_ids on success, or a `ResolutionFailure`
+ *          identifying why no collection-stored functions could be reached.
  */
 export function resolve_collection_dispatch(
   call_ref: SymbolReference,
   definitions: DefinitionRegistry,
   resolutions: ResolutionRegistry
-): SymbolId[] {
-  // 1. Identify the target variable name
+): Result<SymbolId[], ResolutionFailure> {
   let target_name: SymbolName | undefined;
   const scope_id = call_ref.scope_id;
 
   if (call_ref.kind === "function_call") {
-    // For fn(...), target is "fn"
     target_name = call_ref.name;
   } else if (call_ref.kind === "method_call") {
-    // For obj.method(...), target is "obj" (receiver)
-    // We need to extract receiver name from property_chain
+    // The collection element is held by the receiver, the second-to-last chain
+    // element: `handler.process()` → chain ["handler", "process"] → "handler".
     const method_ref = call_ref as MethodCallReference;
     if (method_ref.property_chain && method_ref.property_chain.length >= 2) {
-      // Chain: ["obj", "method"] -> receiver is "obj"
-      // Chain: ["api", "users", "list"] -> receiver is "users"? No, usually we resolve the base "api"
-      // But here we want the variable that holds the collection item.
-      // If `const handler = config.get(...)`, handler is a variable.
-      // So we look for the variable name.
-      // In `handler.process(...)`, chain is `["handler", "process"]`.
       target_name = method_ref.property_chain[method_ref.property_chain.length - 2];
     }
   }
 
   if (!target_name) {
-    return [];
+    return err({
+      stage: "collection_dispatch",
+      reason: "dynamic_dispatch",
+      partial_info: { last_known_scope: scope_id },
+    });
   }
 
-  // 2. Resolve target variable
   const target_id = resolutions.resolve(scope_id, target_name);
   if (!target_id) {
-    return [];
+    return err({
+      stage: "name_resolution",
+      reason: "name_not_in_scope",
+      partial_info: { last_known_scope: scope_id },
+    });
   }
 
   const target_def = definitions.get(target_id);
   if (!target_def) {
-    return [];
+    // Resolved to a symbol_id with no registered definition (e.g. an unresolved
+    // import target), so the target cannot be inspected for a collection_source.
+    return err({
+      stage: "collection_dispatch",
+      reason: "collection_dispatch_miss",
+      partial_info: {
+        resolved_receiver_type: target_id,
+        last_known_scope: scope_id,
+      },
+    });
   }
 
-  // 3. Check collection_source
-  // Only variables/constants have collection_source
+  // collection_source is carried only on variable/constant definitions.
   if (
     (target_def.kind !== "variable" && target_def.kind !== "constant") ||
     !target_def.collection_source
   ) {
-    return [];
+    return err({
+      stage: "collection_dispatch",
+      reason: "collection_dispatch_miss",
+      partial_info: { resolved_receiver_type: target_id },
+    });
   }
 
-  // 4. Resolve collection variable
-  // collection_source is a name, resolve it in the target's defining scope
+  // collection_source is a bare name, resolved from where the target was defined.
   const collection_id = resolutions.resolve(
     target_def.defining_scope_id,
     target_def.collection_source
   );
 
   if (!collection_id) {
-    return [];
+    return err({
+      stage: "name_resolution",
+      reason: "name_not_in_scope",
+      partial_info: { last_known_scope: target_def.defining_scope_id },
+    });
   }
 
-  // 5. Get functions from collection
+  // A static object-property alias (`var A = Ns.A`) names one member by key, so it
+  // dispatches to exactly that member — never the union of everything in `Ns`.
+  if (target_def.member_source) {
+    return resolve_keyed_alias(
+      collection_id,
+      target_def.member_source.member,
+      call_ref,
+      definitions,
+      resolutions
+    );
+  }
+
   return get_collection_functions(collection_id, definitions, resolutions);
 }
 
 /**
- * Get all functions from a collection variable.
+ * Resolve a static object-property alias call to the single keyed member it names.
+ * `alias_key` addresses the aliased value in the collection's keyed members; a method
+ * call then addresses a function one property deeper (inside the aliased nested
+ * object), a direct call targets the aliased value itself. A miss returns a failure
+ * rather than falling back to the union.
+ */
+function resolve_keyed_alias(
+  collection_id: SymbolId,
+  alias_key: SymbolName,
+  call_ref: SymbolReference,
+  definitions: DefinitionRegistry,
+  resolutions: ResolutionRegistry
+): Result<SymbolId[], ResolutionFailure> {
+  const collection = definitions.get_function_collection(collection_id);
+  const collection_def = definitions.get(collection_id);
+  const member = collection?.named_members
+    ? find_named_member(collection.named_members, alias_key)
+    : undefined;
+  if (!collection || !collection_def || !member) {
+    return err({
+      stage: "collection_dispatch",
+      reason: "collection_dispatch_miss",
+      partial_info: { resolved_receiver_type: collection_id },
+    });
+  }
+
+  const scope_id = collection_def.defining_scope_id;
+  // A method call addresses a function one property deeper (inside the aliased
+  // nested object); a direct call targets the aliased value itself.
+  const target =
+    call_ref.kind === "method_call"
+      ? "nested" in member
+        ? resolve_named_member(member.nested, call_ref.name, scope_id, resolutions)
+        : undefined
+      : member_callable(member, scope_id, resolutions);
+
+  if (!target) {
+    return err({
+      stage: "collection_dispatch",
+      reason: "collection_dispatch_miss",
+      partial_info: { resolved_receiver_type: collection_id },
+    });
+  }
+  return ok([target]);
+}
+
+/**
+ * Every function a collection holds: its inline functions, and each stored
+ * identifier that resolves to something callable.
  *
- * @param variable_id - SymbolId of the collection variable
- * @param definitions - Definition registry
- * @param resolutions - Resolution registry
- * @returns Array of function SymbolIds stored in the collection
+ * A stored identifier naming a value that is not callable — the `suite`
+ * parameter in mocha's `var suites = [suite]` — is not a call target. It is the
+ * collection's element, and a call on a binding read out of the collection
+ * resolves against that element's type instead. A class is callable: calling
+ * it constructs. A stored identifier whose definition the registry does not
+ * hold, or that is an import, is kept: what it names cannot be inspected here.
  */
 function get_collection_functions(
   variable_id: SymbolId,
   definitions: DefinitionRegistry,
   resolutions: ResolutionRegistry
-): SymbolId[] {
+): Result<SymbolId[], ResolutionFailure> {
   const collection = definitions.get_function_collection(variable_id);
   if (!collection) {
-    return [];
+    return err({
+      stage: "collection_dispatch",
+      reason: "collection_dispatch_miss",
+      partial_info: { resolved_receiver_type: variable_id },
+    });
   }
-  
+
   const functions = Array.from(collection.stored_functions);
 
-  // Resolve stored references (e.g. identifiers in the collection)
+  // stored_references are unresolved identifiers stored in the collection;
+  // resolve each from the collection's defining scope.
   if (collection.stored_references && collection.stored_references.length > 0) {
     const def = definitions.get(variable_id);
     if (def) {
       for (const ref_name of collection.stored_references) {
-        // Resolve in the scope where the collection variable is defined
         const resolved_id = resolutions.resolve(def.defining_scope_id, ref_name);
-        if (resolved_id) {
+        if (resolved_id && may_be_callable(definitions.get(resolved_id))) {
           functions.push(resolved_id);
         }
       }
     }
   }
 
-  return functions;
+  if (functions.length === 0) {
+    return err({
+      stage: "collection_dispatch",
+      reason: "collection_dispatch_miss",
+      partial_info: { resolved_receiver_type: variable_id },
+    });
+  }
+
+  return ok(functions);
+}
+
+function may_be_callable(definition: AnyDefinition | undefined): boolean {
+  return (
+    definition === undefined ||
+    definition.kind === "function" ||
+    definition.kind === "method" ||
+    definition.kind === "class" ||
+    definition.kind === "import"
+  );
 }

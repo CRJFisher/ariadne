@@ -5,7 +5,14 @@ status: To Do
 assignee: []
 created_date: "2025-08-21"
 labels: [enhancement, cache, type-inference, epic-11]
-dependencies: [task-epic-11.31, task-epic-11.14, task-epic-11.15, task-epic-11.16, task-epic-11.17]
+dependencies:
+  [
+    task-epic-11.31,
+    task-epic-11.14,
+    task-epic-11.15,
+    task-epic-11.16,
+    task-epic-11.17,
+  ]
 parent_task_id: task-epic-11.31
 ---
 

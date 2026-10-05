@@ -1,5 +1,5 @@
 import type { FilePath, Language } from "@ariadnejs/types";
-import { Tree } from "tree-sitter";
+import type { Tree } from "tree-sitter";
 
 export interface ParsedFile {
   file_path: FilePath;
@@ -7,4 +7,6 @@ export interface ParsedFile {
   file_end_column: number;
   tree: Tree;
   lang: Language;
+  /** The text the tree was parsed from. */
+  source: string;
 }

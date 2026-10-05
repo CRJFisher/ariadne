@@ -2,13 +2,38 @@
  * Type definitions for code element definitions.
  */
 
-import { Location } from "./common";
+import { Location } from "./location";
 import { ScopeId } from "./scopes";
-import { DocString } from "./aliases";
 import { SymbolId, SymbolKind } from "./symbol";
 import { SymbolName } from "./symbol";
 import { ModulePath } from "./import_export";
-import { CallbackContext } from "./call_chains";
+
+export type DocString = string;
+
+/**
+ * Context information for anonymous functions that are callbacks.
+ * Tracked during definition capture, classified during resolution.
+ */
+export interface CallbackContext {
+  /** True if this function is syntactically inside call expression arguments */
+  readonly is_callback: boolean;
+
+  /**
+   * Whether the receiving function is external (built-in/library) or internal (our code).
+   * Null = not yet classified (set during resolution phase).
+   */
+  readonly receiver_is_external: boolean | null;
+
+  /** Location of the call expression that receives this callback */
+  readonly receiver_location: Location | null;
+
+  /**
+   * The callback's position among the receiving call's arguments, or null when
+   * it is not itself one of them but is written inside one. What the callee
+   * declares at this position is what types the callback's parameters.
+   */
+  readonly argument_index: number | null;
+}
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 export type ParameterName = string & { __brand: "ParameterName" };
@@ -45,6 +70,21 @@ export interface Definition {
   readonly export?: ExportMetadata; // Export-specific metadata if exported
 }
 
+/**
+ * One type parameter a generic declaration writes, with the bound that names
+ * the type its values reach members through: Rust's first trait bound
+ * (`<V: Visitor>`), TypeScript's `extends` constraint (`<T extends Base>`).
+ *
+ * The bound is the type a parameter denotes wherever a call site binds it to
+ * nothing, so it is the last entry of a type-parameter environment rather than
+ * the first. A parameter constrained by nothing carries none, and a call on a
+ * receiver it types stays unresolved.
+ */
+export interface TypeParameter {
+  readonly name: SymbolName;
+  readonly bound?: SymbolName;
+}
+
 export interface FunctionDefinition extends Definition {
   readonly kind: "function";
   readonly is_exported: boolean; // Can this symbol be imported from other files?
@@ -52,9 +92,22 @@ export interface FunctionDefinition extends Definition {
   readonly docstring?: DocString;
   readonly decorators?: readonly DecoratorDefinition[];
   readonly return_type?: SymbolName;
-  readonly generics?: SymbolName[];
+  readonly generics?: readonly TypeParameter[];
   readonly body_scope_id: ScopeId; // The scope ID of this function's body
   readonly callback_context?: CallbackContext; // For anonymous functions that are callbacks
+  readonly function_collection?: FunctionCollection; // Prototype-style methods assigned as `Fn.prototype.method = ...`
+  /**
+   * The name chain every value-bearing `return` in the body returns, root
+   * first: `["self", "form_class"]` for `def get_form_class(self): return
+   * self.form_class`. A binding this callable's call initialises holds what
+   * that chain holds, which is how a class reaches a construction site through
+   * the function that was called to fetch it.
+   *
+   * Absent when a `return` carries a value that is not a name chain, when two
+   * returns name different chains, and when the body returns no value — one
+   * class or none, never a union.
+   */
+  readonly returned_name_chain?: readonly SymbolName[];
 }
 
 export interface FunctionSignature {
@@ -75,7 +128,7 @@ export interface ClassDefinition extends Definition {
   readonly decorators: readonly DecoratorDefinition[];
   readonly constructors?: readonly ConstructorDefinition[];
   readonly docstring?: readonly DocString[];
-  readonly generics?: SymbolName[];
+  readonly generics?: readonly TypeParameter[];
 }
 
 /** Access modifier for class members */
@@ -90,12 +143,49 @@ export interface MethodDefinition extends Definition {
   readonly return_type?: SymbolName;
   readonly decorators?: readonly DecoratorDefinition[];
   readonly docstring?: DocString;
-  readonly generics?: SymbolName[];
+  readonly generics?: readonly TypeParameter[];
   readonly static?: boolean;
   readonly abstract?: boolean;
   readonly async?: boolean;
   readonly body_scope_id?: ScopeId; // The scope ID of this method's body - undefined in interfaces
   readonly access_modifier?: AccessModifier;
+  // Set for class accessors (`get x()` / `set x()`, `@property` / `@x.setter` /
+  // `@x.deleter`); absent for ordinary methods. A getter is invoked by a bare
+  // property read, so call resolution consults this to turn `obj.x` reads into
+  // call edges to the getter, and only a getter may hold the member slot for
+  // its name.
+  readonly accessor_kind?: "getter" | "setter" | "deleter";
+  /**
+   * The name chain every value-bearing `return` in the body returns, root
+   * first: `["self", "form_class"]` for `def get_form_class(self): return
+   * self.form_class`. A binding this callable's call initialises holds what
+   * that chain holds, which is how a class reaches a construction site through
+   * the function that was called to fetch it.
+   *
+   * Absent when a `return` carries a value that is not a name chain, when two
+   * returns name different chains, and when the body returns no value — one
+   * class or none, never a union.
+   */
+  readonly returned_name_chain?: readonly SymbolName[];
+  /**
+   * @language rust
+   * The type an `impl` block names as its self type (`impl S`, `impl Tr for S`),
+   * as written. Set on every method an `impl` block declares, including one
+   * whose type another file declares.
+   */
+  readonly impl_self_type?: SymbolName;
+  /**
+   * @language rust
+   * The trait an `impl Tr for S` block implements, as written. Absent for an
+   * inherent `impl S` block.
+   */
+  readonly impl_trait_name?: SymbolName;
+  /**
+   * Set on an interface member a conforming type may leave out: a TypeScript
+   * optional signature (`saveViewState?(): string`) or a Rust trait method with
+   * a default body. Structural conformance requires only the members without it.
+   */
+  readonly optional?: boolean;
 }
 
 export interface ConstructorDefinition extends Definition {
@@ -113,9 +203,15 @@ export interface PropertyDefinition extends Definition {
   readonly kind: "property";
   readonly type?: SymbolName;
   readonly initial_value?: string;
+  /** The name a whole-name initialiser reads: "Store" for `store_class = Store`. */
+  readonly name_source?: SymbolName;
+  /** The holder and member a plain member-read initialiser names: `feed_type = feedgenerator.DefaultFeed`. */
+  readonly member_source?: MemberSource;
   readonly readonly?: boolean;
   readonly decorators: readonly DecoratorDefinition[];
   readonly access_modifier?: AccessModifier;
+  /** Set on a TypeScript optional property signature (`label?: string`); see `MethodDefinition.optional`. */
+  readonly optional?: boolean;
 }
 
 /**
@@ -125,6 +221,10 @@ export interface ParameterDefinition extends Definition {
   readonly kind: "parameter";
   readonly type?: SymbolName;
   readonly default_value?: string;
+  /** The name a whole-name default reads: "TraceInfo" for `Info=TraceInfo`. */
+  readonly name_source?: SymbolName;
+  /** The holder and member a plain member-read default names: `feed=feedgenerator.DefaultFeed`. */
+  readonly member_source?: MemberSource;
   readonly optional?: boolean;
 }
 
@@ -138,7 +238,7 @@ export interface InterfaceDefinition extends Definition {
   readonly extends: readonly SymbolName[];
   readonly methods: readonly MethodDefinition[];
   readonly properties: readonly PropertyDefinition[];
-  readonly generics?: SymbolName[];
+  readonly generics?: readonly TypeParameter[];
 }
 
 export interface DecoratorDefinition extends Definition {
@@ -154,7 +254,7 @@ export interface EnumDefinition extends Definition {
   readonly members: readonly EnumMember[];
   readonly methods?: readonly MethodDefinition[]; // Enum methods (Rust/Java style)
   readonly is_const: boolean; // TypeScript const enum, defaults to false
-  readonly generics?: SymbolName[];
+  readonly generics?: readonly TypeParameter[];
 }
 
 /**
@@ -182,12 +282,59 @@ export interface FunctionCollection {
   readonly location: Location;
   readonly stored_functions: readonly SymbolId[];
   readonly stored_references?: readonly SymbolName[]; // Names of referenced functions (e.g. "handler" in [handler])
+  /**
+   * Present on an `Array` whose every element is a bare name in
+   * `stored_references` (`[suite, child]`), so those names' types are the
+   * element types. A spread, inline function, call, member read or literal
+   * among the elements leaves it absent.
+   */
+  readonly elements_are_references?: true;
+  readonly named_members?: readonly CollectionMember[]; // Property name → member function, for `obj.method()` / `this.method()` resolution
 }
+
+/**
+ * A property-named function value on a collection: the sibling looked up by
+ * `obj.method()` or `this.method()`. Covers object-literal properties and
+ * member/prototype assignments (`app.method = function () {}`).
+ *
+ * An inline member holds the function value directly (`symbol_id`) plus its body
+ * span (`location`), used to bind a `this` receiver inside that body to the
+ * enclosing collection. A reference member names a value identifier resolved in
+ * the collection's defining scope (`reference_name`, e.g. `{ method: helper }`),
+ * whose body lives elsewhere and so carries no enclosure span. A nested member
+ * holds a nested object literal's own members (`{ A: { prop: fn } }`), addressed
+ * one property deeper when following a local object-property alias.
+ */
+export type CollectionMember =
+  | {
+      readonly name: SymbolName;
+      readonly symbol_id: SymbolId;
+      readonly location: Location;
+    }
+  | {
+      readonly name: SymbolName;
+      readonly reference_name: SymbolName;
+    }
+  | {
+      readonly name: SymbolName;
+      readonly nested: readonly CollectionMember[];
+    };
 
 /**
  * Partial function collection without collection_id (set by caller)
  */
 export type FunctionCollectionInfo = Omit<FunctionCollection, "collection_id">;
+
+/**
+ * The holder and member an initialiser or default reads as a whole: `BaseTask`
+ * and `__call__` in `orig = BaseTask.__call__`. Recorded only when the holder is
+ * a bare identifier and the member a static name — never a call, a subscript or a
+ * `get(...)` retrieval.
+ */
+export interface MemberSource {
+  readonly holder: SymbolName;
+  readonly member: SymbolName;
+}
 
 /**
  * Variable/constant definition
@@ -200,7 +347,90 @@ export interface VariableDefinition extends Definition {
   readonly docstring?: DocString;
   readonly function_collection?: FunctionCollection;
   readonly collection_source?: SymbolName; // Name of the collection variable this was looked up from (e.g. "config" in "const handler = config.get(...)")
-  readonly initialized_from_call?: SymbolName; // Name of the function called in initializer (e.g. "getHandler" in "const h = getHandler()")
+  /** The name a whole-name initialiser reads: "Mapper" for `mapper_cls = Mapper`. */
+  readonly name_source?: SymbolName;
+  /**
+   * The holder and member a plain member read initialiser names: `{ holder: "Ns",
+   * member: "A" }` for `var alias = Ns.A`, `{ holder: "BaseTask", member: "__call__" }`
+   * for `orig = BaseTask.__call__`. A call on the alias addresses that one member.
+   */
+  readonly member_source?: MemberSource;
+  /**
+   * The callee chain of the call this binding is initialised from, root first:
+   * `["getHandler"]` for `const h = getHandler()`, `["s", "getInfo"]` for
+   * `const i = s.getInfo()`, `["self", "factory"]` for `p = self.factory()`,
+   * `["cls"]` for `const p = new cls()`. Absent when the callee is not a name
+   * chain (`make()(…)`, `a[k]()`).
+   */
+  readonly initialized_from_call?: readonly SymbolName[];
+  /**
+   * @language typescript
+   * The identifier arguments of that call, positionally aligned to the callee's
+   * parameters, with `null` where an argument is not a bare identifier. A
+   * generic factory's return names a type parameter its arguments are what
+   * bind (`const r = create(Router)`), so typing the binding needs them.
+   */
+  readonly initialized_from_call_arguments?: readonly (SymbolName | null)[];
+  /**
+   * @language python
+   * The callee chain of the call whose result this binding's initialiser calls
+   * in turn: `["make"]` for `p = make()(io)`. Where the inner call returns a
+   * class object, the binding holds an instance of that class.
+   */
+  readonly initialized_from_call_result?: readonly SymbolName[];
+  /**
+   * @language javascript,typescript
+   * The identifier an object-destructured binding unpacks: "options" in
+   * `const { storage } = options`. Populated only when the declarator's
+   * initializer is a bare identifier — a member access, a call, an `await` or
+   * a non-null assertion (`options!`) is not one, so those leave it absent
+   * even where the value they produce has members. Absent too for an array or rest pattern, whose
+   * bindings are keyed by position rather than by name, and for any
+   * destructuring that is not a variable declarator's own pattern: a
+   * parameter, a `for…of` head, a nested pattern, a bare assignment.
+   *
+   * A receiver typed through this reaches the type a written
+   * `options.storage` would: the declared type of `destructured_key` on the
+   * source's type.
+   */
+  readonly destructured_from?: SymbolName;
+  /**
+   * @language javascript,typescript
+   * The property key read on `destructured_from`, written out for a shorthand
+   * binding as well as an aliased one: "storage" for both `{ storage }` and
+   * `{ storage: s }`. Present exactly when `destructured_from` is.
+   */
+  readonly destructured_key?: SymbolName;
+  /**
+   * The container a loop or array-destructuring binding takes one element of:
+   * `{ container: ["suites"], yields: "item" }` for `for (const s of suites)`.
+   * Absent when the iterable is not a name chain rooted at an identifier or a
+   * self receiver — a call other than the `values()`/`items()` forms below, a
+   * subscript, a literal.
+   */
+  readonly iterated_from?: IterationSource;
+}
+
+/**
+ * Which part of a container's iteration a binding holds.
+ *
+ * - `item` — what iterating the container yields: `x` in `for (const x of xs)`,
+ *   `for x in xs`, `for x in &xs` or `xs.iter()`, and each name of
+ *   `const [a, b] = xs`.
+ * - `value` — what iterating its values yields: `for (const v of m.values())`,
+ *   `for v in d.values()`.
+ * - `entry_value` — the value half of an iterated key/value pair: `v` in
+ *   `for (const [k, v] of m)`, `for k, v in d.items()`, `for (k, v) in &m`.
+ */
+export type IterationPart = "item" | "value" | "entry_value";
+
+/**
+ * A container name chain, root first (`["xs"]`, `["this", "_instances"]`,
+ * `["self", "layers"]`), and the part of its iteration a binding holds.
+ */
+export interface IterationSource {
+  readonly container: readonly SymbolName[];
+  readonly yields: IterationPart;
 }
 
 /**
@@ -209,10 +439,38 @@ export interface VariableDefinition extends Definition {
  */
 export interface ImportDefinition extends Definition {
   readonly kind: "import";
-  readonly import_path: ModulePath; // Module path imported from
-  readonly import_kind: "named" | "default" | "namespace"; // Type of import
+  // Module path imported from.
+  // @language rust — a `#[path = "sys/unix.rs"] mod x;` declaration carries a
+  // file path relative to the directory the declaring file sits in, not a `::`
+  // path. `::` is Rust's only path separator, so the two forms never collide and
+  // `resolve_module_path_rust` tells them apart by `/` or a `.rs` suffix.
+  readonly import_path: ModulePath;
+  // "wildcard" carries two facts with different language sets:
+  // @language rust,python — the statement binds every public name of
+  // `import_path` into `defining_scope_id` (`use m::*`, `from m import *`).
+  // @language javascript,typescript,python,rust — with
+  // `export: { is_reexport: true }` it forwards that whole surface without
+  // binding it locally (`export * from`, `pub use m::*`, module-level
+  // `from m import *`). `name` is the module path's last segment — or the
+  // path itself when it has none (`from . import *`) — and is never matched
+  // against a call terminal.
+  // "namespace" carries two facts:
+  // @language javascript,typescript — the statement binds a whole module object
+  // (`import * as X`, `const X = require(...)`).
+  // @language rust — the statement is a bodyless `mod x;`, the edge to the file
+  // backing the module. It binds no name of its own (the NamespaceDefinition
+  // does), and incremental re-resolution treats the declaring file as forwarding
+  // that module's whole surface, because a `crate::declarer::x::item` path
+  // reaches straight through it.
+  readonly import_kind: "named" | "default" | "namespace" | "wildcard"; // Type of import
   readonly original_name?: SymbolName; // Original name in source module if aliased (for named imports)
   readonly is_type_only?: boolean; // TypeScript type-only import (e.g., import type { Foo })
+  // @language javascript
+  // True for a CommonJS `require()` binding. A whole-module `const X = require()`
+  // and an ESM `import * as X` both carry import_kind "namespace"; this flag
+  // separates them so only the require form is reinterpreted as its module's
+  // sole default export.
+  readonly is_commonjs_require?: boolean;
 }
 
 /**
@@ -228,7 +486,7 @@ export interface TypeAliasDefinition extends Definition {
   readonly kind: "type" | "type_alias";
   readonly is_exported: boolean;
   readonly type_expression?: SymbolName;
-  readonly generics?: SymbolName[];
+  readonly generics?: readonly TypeParameter[];
 }
 /**
  * Union of all definition types

@@ -99,24 +99,29 @@ describe("Rust Self-Reference Resolution Integration", () => {
       );
       expect(counter_struct).toBeDefined();
 
-      const type_info = project.get_type_info(counter_struct!.symbol_id);
-      expect(type_info).toBeDefined();
-      expect(type_info!.methods.has("set_count" as SymbolName)).toBe(true);
-      expect(type_info!.methods.has("get_count" as SymbolName)).toBe(true);
+      const counter_members = project.definitions
+        .get_member_index()
+        .get(counter_struct!.symbol_id);
+      const set_count_id = counter_members?.get("set_count" as SymbolName);
+      const get_count_id = counter_members?.get("get_count" as SymbolName);
+      expect(set_count_id).toBe(
+        counter_struct!.methods.find((m) => m.name === ("set_count" as SymbolName))!.symbol_id
+      );
+      expect(get_count_id).toBe(
+        counter_struct!.methods.find((m) => m.name === ("get_count" as SymbolName))!.symbol_id
+      );
 
       // Verify self.set_count() is detected as a self_reference_call
       const self_ref_calls = index!.references.filter(
         (r): r is SelfReferenceCall => r.kind === "self_reference_call"
       );
       const set_count_call = self_ref_calls.find(
-        (c) => c.name === ("set_count" as SymbolName) && c.keyword === "self"
+        (c) => c.name === ("set_count" as SymbolName) && c.property_chain[0] === "self"
       );
       expect(set_count_call).toBeDefined();
 
       // set_count should be referenced via self.set_count() in increment
       const referenced = project.resolutions.get_all_referenced_symbols();
-      const set_count_id = type_info!.methods.get("set_count" as SymbolName);
-      expect(set_count_id).toBeDefined();
       expect(referenced.has(set_count_id!)).toBe(true);
     });
 
@@ -153,18 +158,24 @@ describe("Rust Self-Reference Resolution Integration", () => {
       );
       expect(data_struct).toBeDefined();
 
-      const type_info = project.get_type_info(data_struct!.symbol_id);
-      expect(type_info).toBeDefined();
-      expect(type_info!.methods.has("get_value" as SymbolName)).toBe(true);
-      expect(type_info!.methods.has("update" as SymbolName)).toBe(true);
-      expect(type_info!.methods.has("process" as SymbolName)).toBe(true);
+      const data_members = project.definitions
+        .get_member_index()
+        .get(data_struct!.symbol_id);
+      const get_value_id = data_members?.get("get_value" as SymbolName);
+      const update_id = data_members?.get("update" as SymbolName);
+      const process_id = data_members?.get("process" as SymbolName);
+      expect(get_value_id).toBe(
+        data_struct!.methods.find((m) => m.name === ("get_value" as SymbolName))!.symbol_id
+      );
+      expect(update_id).toBe(
+        data_struct!.methods.find((m) => m.name === ("update" as SymbolName))!.symbol_id
+      );
+      expect(process_id).toBe(
+        data_struct!.methods.find((m) => m.name === ("process" as SymbolName))!.symbol_id
+      );
 
       // Verify get_value and update are referenced via self calls in process
       const referenced = project.resolutions.get_all_referenced_symbols();
-      const get_value_id = type_info!.methods.get("get_value" as SymbolName);
-      const update_id = type_info!.methods.get("update" as SymbolName);
-      expect(get_value_id).toBeDefined();
-      expect(update_id).toBeDefined();
       expect(referenced.has(get_value_id!)).toBe(true);
       expect(referenced.has(update_id!)).toBe(true);
     });
@@ -206,12 +217,12 @@ describe("Rust Self-Reference Resolution Integration", () => {
       );
       expect(builder_struct).toBeDefined();
 
-      const type_info = project.get_type_info(builder_struct!.symbol_id);
-      expect(type_info).toBeDefined();
-
       // validate should be referenced via self.validate() in build
       const referenced = project.resolutions.get_all_referenced_symbols();
-      const validate_id = type_info!.methods.get("validate" as SymbolName);
+      const validate_id = project.definitions
+        .get_member_index()
+        .get(builder_struct!.symbol_id)
+        ?.get("validate" as SymbolName);
       expect(validate_id).toBeDefined();
       expect(referenced.has(validate_id!)).toBe(true);
     });
@@ -264,7 +275,7 @@ describe("Rust Self-Reference Resolution Integration", () => {
         (r): r is SelfReferenceCall => r.kind === "self_reference_call"
       );
       const draw_call = self_ref_calls.find(
-        (c) => c.name === ("draw" as SymbolName) && c.keyword === "self"
+        (c) => c.name === ("draw" as SymbolName) && c.property_chain[0] === "self"
       );
       expect(draw_call).toBeDefined();
     });
@@ -310,15 +321,20 @@ describe("Rust Self-Reference Resolution Integration", () => {
       );
       expect(server_struct).toBeDefined();
 
-      const type_info = project.get_type_info(server_struct!.symbol_id);
-      expect(type_info).toBeDefined();
-      expect(type_info!.methods.has("get_host" as SymbolName)).toBe(true);
-      expect(type_info!.methods.has("start" as SymbolName)).toBe(true);
+      const server_members = project.definitions
+        .get_member_index()
+        .get(server_struct!.symbol_id);
+      const get_host_id = server_members?.get("get_host" as SymbolName);
+      const start_id = server_members?.get("start" as SymbolName);
+      expect(get_host_id).toBe(
+        server_struct!.methods.find((m) => m.name === ("get_host" as SymbolName))!.symbol_id
+      );
+      expect(start_id).toBe(
+        server_struct!.methods.find((m) => m.name === ("start" as SymbolName))!.symbol_id
+      );
 
       // self.get_host() in start should be resolved
       const referenced = project.resolutions.get_all_referenced_symbols();
-      const get_host_id = type_info!.methods.get("get_host" as SymbolName);
-      expect(get_host_id).toBeDefined();
       expect(referenced.has(get_host_id!)).toBe(true);
     });
   });
@@ -341,7 +357,7 @@ describe("Rust Cross-File Receiver Resolution Integration", () => {
 
   it("should resolve self.method() in struct defined in another file", async () => {
     const { project, temp_dir, file_paths } = await setup_project({
-      "lib.rs": `mod engine;\n`,
+      "lib.rs": "mod engine;\n",
       "engine.rs": `pub struct Engine {
     running: bool,
 }
@@ -371,13 +387,145 @@ impl Engine {
     );
     expect(engine_struct).toBeDefined();
 
-    const type_info = project.get_type_info(engine_struct!.symbol_id);
-    expect(type_info).toBeDefined();
-
     // set_running should be referenced via self.set_running() in start
     const referenced = project.resolutions.get_all_referenced_symbols();
-    const set_running_id = type_info!.methods.get("set_running" as SymbolName);
+    const set_running_id = project.definitions
+      .get_member_index()
+      .get(engine_struct!.symbol_id)
+      ?.get("set_running" as SymbolName);
     expect(set_running_id).toBeDefined();
     expect(referenced.has(set_running_id!)).toBe(true);
+  });
+});
+
+/**
+ * An `impl` block is a `block` scope that names the type it implements, so a
+ * `self` receiver inside it reads that name rather than being inferred from the
+ * members the block happens to hold. Each case here is a shape the member scan
+ * this replaced could not name.
+ */
+describe("Rust self-receiver resolution through the impl block's self type (TASK-376.5)", () => {
+  const temp_dirs: string[] = [];
+
+  afterAll(() => {
+    for (const dir of temp_dirs) {
+      if (fs.existsSync(dir)) {
+        fs.rmSync(dir, { recursive: true, force: true });
+      }
+    }
+  });
+
+  /** Whether the named member of the named type is reached by some call. */
+  function is_referenced(
+    project: Project,
+    type_name: string,
+    member: string,
+    file: FilePath
+  ): boolean {
+    const index = project.get_index_single_file(file);
+    const declaration = [
+      ...index!.classes.values(),
+      ...index!.enums.values(),
+    ].find((c) => c.name === (type_name as SymbolName));
+    expect(declaration).toBeDefined();
+    const member_id = project.definitions
+      .get_member_index()
+      .get(declaration!.symbol_id)
+      ?.get(member as SymbolName);
+    expect(member_id).toBeDefined();
+    return project.resolutions.get_all_referenced_symbols().has(member_id!);
+  }
+
+  // sqlx PgCube (sqlx-postgres/src/types/cube.rs) — two chained self hops across
+  // two types, each named by its own impl block.
+  it("resolves self.method().method() across two types' impl blocks", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "lib.rs": "mod cube;\n",
+      "cube.rs": `pub struct PgCube {
+    dims: u8,
+}
+
+impl PgCube {
+    fn header(&self) -> Header {
+        Header { size: self.dims }
+    }
+
+    pub fn total(&self) -> u8 {
+        self.header().encoded_size()
+    }
+}
+
+pub struct Header {
+    size: u8,
+}
+
+impl Header {
+    fn encoded_size(&self) -> u8 {
+        self.size
+    }
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+    const file = file_paths["cube.rs"];
+
+    expect(is_referenced(project, "PgCube", "header", file)).toBe(true);
+    expect(is_referenced(project, "Header", "encoded_size", file)).toBe(true);
+  });
+
+  it("resolves self.method() across two impl blocks on one enum", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "lib.rs": "mod shape;\n",
+      "shape.rs": `pub enum Shape {
+    Square,
+    Round,
+}
+
+impl Shape {
+    fn sides(&self) -> u8 {
+        match self {
+            Shape::Square => 4,
+            Shape::Round => 0,
+        }
+    }
+}
+
+impl Shape {
+    pub fn describe(&self) -> u8 {
+        self.sides()
+    }
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect(is_referenced(project, "Shape", "sides", file_paths["shape.rs"])).toBe(
+      true
+    );
+  });
+
+  it("resolves self.name() to the method when a field shares the name", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "lib.rs": "mod node;\n",
+      "node.rs": `pub struct Node {
+    size: u8,
+}
+
+impl Node {
+    fn size(&self) -> u8 {
+        self.size
+    }
+
+    pub fn report(&self) -> u8 {
+        self.size()
+    }
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    expect(is_referenced(project, "Node", "size", file_paths["node.rs"])).toBe(
+      true
+    );
   });
 });

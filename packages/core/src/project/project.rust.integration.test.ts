@@ -23,6 +23,14 @@ function file_path(relative_path: string): FilePath {
   return path.join(FIXTURE_ROOT, relative_path) as FilePath;
 }
 
+function method_names_of(project: Project, type_id: SymbolId): SymbolName[] {
+  const members = project.definitions.get_member_index().get(type_id);
+  return Array.from(members ?? [])
+    .filter(([, id]) => project.definitions.get(id)?.kind === "method")
+    .map(([name]) => name)
+    .sort();
+}
+
 describe("Project Integration - Rust", () => {
   let project: Project;
 
@@ -48,10 +56,7 @@ describe("Project Integration - Rust", () => {
       expect(user_struct).toBeDefined();
 
       // User has 8 impl methods: new, default, get_name, get_email, update_name, activate, deactivate, get_info
-      const type_info = project.get_type_info(user_struct!.symbol_id);
-      expect(type_info).toBeDefined();
-
-      const method_names = Array.from(type_info!.methods.keys()).sort();
+      const method_names = method_names_of(project, user_struct!.symbol_id);
       expect(method_names).toEqual([
         "activate",
         "deactivate",
@@ -99,10 +104,14 @@ describe("Project Integration - Rust", () => {
       const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
-      // nested_scopes.rs defines: helper, main, outer_function, inner_function, deeper_function, complex_nesting
+      // nested_scopes.rs defines: helper, main, outer_function, inner_function,
+      // deeper_function, complex_nesting, plus the closure bound in
+      // outer_function — every closure owns an anonymous function definition so
+      // its parameters and body calls have somewhere to attach.
       const functions = Array.from(index!.functions.values());
       const function_names = functions.map((f) => f.name).sort();
       expect(function_names).toEqual([
+        "<anonymous>",
         "complex_nesting",
         "deeper_function",
         "helper",
@@ -138,9 +147,10 @@ describe("Project Integration - Rust", () => {
       const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
-      // variable_shadowing.rs has many variables across scopes
+      // variable_shadowing.rs has many variables across scopes, including the
+      // names its `match` and `if let` patterns bind.
       const variables = Array.from(index!.variables.values());
-      expect(variables.length).toBe(48);
+      expect(variables.length).toBe(49);
 
       // Verify variable references exist (read or write)
       const var_refs = index!.references.filter(
@@ -179,7 +189,8 @@ describe("Project Integration - Rust", () => {
       project.update_file(utils_file, utils_source);
       project.update_file(main_file, main_source);
 
-      // main.rs imports exactly 4 symbols: helper, process_data, calculate_total, validate_email
+      // main.rs imports 4 named symbols — helper, process_data,
+      // calculate_total, validate_email — plus the `mod utils;` module edge.
       const main_index = project.get_index_single_file(main_file);
       expect(main_index).toBeDefined();
 
@@ -189,6 +200,7 @@ describe("Project Integration - Rust", () => {
         "calculate_total",
         "helper",
         "process_data",
+        "utils",
         "validate_email",
       ] as SymbolName[]);
 
@@ -220,13 +232,15 @@ describe("Project Integration - Rust", () => {
       const main_index = project.get_index_single_file(main_file);
       expect(main_index).toBeDefined();
 
-      // main.rs imports: helper, process_data, calculate_total, validate_email
+      // main.rs imports helper, process_data, calculate_total and
+      // validate_email by name, and `utils` as a module edge.
       const imports = Array.from(main_index!.imported_symbols.values());
       const import_names = imports.map((i) => i.name).sort();
       expect(import_names).toEqual([
         "calculate_total",
         "helper",
         "process_data",
+        "utils",
         "validate_email",
       ] as SymbolName[]);
 
@@ -305,10 +319,15 @@ describe("Project Integration - Rust", () => {
       const main_index = project.get_index_single_file(uses_user_file);
       expect(main_index).toBeDefined();
 
-      // uses_user.rs imports exactly User and UserManager
+      // uses_user.rs imports User and UserManager by name, and `user_mod`
+      // as the module edge its `mod user_mod;` declares.
       const imports = Array.from(main_index!.imported_symbols.values());
       const import_names = imports.map((i) => i.name).sort();
-      expect(import_names).toEqual(["User", "UserManager"] as SymbolName[]);
+      expect(import_names).toEqual([
+        "User",
+        "UserManager",
+        "user_mod",
+      ] as SymbolName[]);
 
       // Verify User struct exists in user_mod.rs
       const user_mod_index = project.get_index_single_file(user_mod_file);
@@ -362,7 +381,11 @@ describe("Project Integration - Rust", () => {
 
       const imports = Array.from(main_index!.imported_symbols.values());
       const main_import_names = imports.map((i) => i.name).sort();
-      expect(main_import_names).toEqual(["User", "UserManager"] as SymbolName[]);
+      expect(main_import_names).toEqual([
+        "User",
+        "UserManager",
+        "user_mod",
+      ] as SymbolName[]);
 
       // Verify UserManager::new() and User::new() are captured as constructor calls
       const new_calls = main_index!.references.filter(
@@ -372,6 +395,218 @@ describe("Project Integration - Rust", () => {
       );
       // main() and create_test_user() both call User::new() and main() also calls UserManager::new()
       expect(new_calls.length).toBe(3);
+    });
+  });
+
+  describe("Bindings declared without a value", () => {
+    it("types a `let` from the construction every later assignment agrees on", () => {
+      const file = file_path("declared_without_value/deferred.rs");
+      project.update_file(
+        file,
+        [
+          "struct Foo;",
+          "impl Foo {",
+          "    fn new() -> Foo { Foo }",
+          "    fn run(&self) {}",
+          "    fn again(&self) { let other; other = self; other.run(); }",
+          "}",
+          "struct Bar;",
+          "impl Bar {",
+          "    fn new() -> Bar { Bar }",
+          "    fn run(&self) {}",
+          "}",
+          "fn same(c: bool) { let this; if c { this = Foo::new(); } else { this = Foo::new(); } this.run(); }",
+          "fn differ(c: bool) { let this; if c { this = Foo::new(); } else { this = Bar::new(); } this.run(); }",
+        ].join("\n")
+      );
+
+      const foo = Array.from(project.get_index_single_file(file)!.classes.values()).find(
+        (c) => c.name === ("Foo" as SymbolName)
+      )!;
+      const foo_run = project.definitions.get_member_index().get(foo.symbol_id)?.get("run" as SymbolName);
+
+      const run_calls = project.resolutions
+        .get_calls_for_file(file)
+        .filter((call) => call.name === ("run" as SymbolName))
+        .map((call) => ({
+          line: call.location.start_line,
+          targets: call.resolutions.map((r) => r.symbol_id),
+          reason: call.resolution_failure?.reason,
+        }));
+      expect(run_calls).toEqual([
+        { line: 5, targets: [foo_run!], reason: undefined },
+        { line: 12, targets: [foo_run!], reason: undefined },
+        { line: 13, targets: [], reason: "receiver_type_unknown" },
+      ]);
+    });
+  });
+
+  describe("Callback parameters", () => {
+    function calls_to(file: FilePath, class_name: string, method_name: string) {
+      const owner = Array.from(project.get_index_single_file(file)!.classes.values()).find(
+        (c) => c.name === (class_name as SymbolName)
+      )!;
+      const target = project.definitions.get_member_index().get(owner.symbol_id)!.get(method_name as SymbolName)!;
+      const calls = project.resolutions
+        .get_calls_for_file(file)
+        .filter((call) => call.name === (method_name as SymbolName))
+        .map((call) => ({
+          line: call.location.start_line,
+          targets: call.resolutions.map((r) => r.symbol_id),
+          reason: call.resolution_failure?.reason,
+        }));
+      return { target, calls };
+    }
+
+    it("types a closure parameter from the callee's `impl Fn*`, inline and `where` bounds", () => {
+      const file = file_path("callback_parameters/with_res.rs");
+      project.update_file(
+        file,
+        [
+          "struct Parser;",
+          "impl Parser {",
+          "    fn with_res<T>(&mut self, r: u32, f: impl FnOnce(&mut Self) -> T) -> T { f(self) }",
+          "    fn with_inline<F: FnMut(&mut Self)>(&mut self, mut f: F) { f(self) }",
+          "    fn with_where<F, T>(&mut self, f: F) -> T where F: FnOnce(&mut Self) -> T { f(self) }",
+          "    fn parse(&mut self) {}",
+          "    fn go(&mut self) {",
+          "        self.with_res(1, |this| this.parse());",
+          "        self.with_inline(|this| this.parse());",
+          "        self.with_where(|this| this.parse());",
+          "        self.with_res(1, |this: &mut Other| this.parse());",
+          "    }",
+          "}",
+          "struct Other;",
+        ].join("\n")
+      );
+
+      // A closure parameter annotated in its own right is the annotation's,
+      // which names a type declaring no `parse`.
+      const { target, calls } = calls_to(file, "Parser", "parse");
+      expect(calls).toEqual([
+        { line: 8, targets: [target], reason: undefined },
+        { line: 9, targets: [target], reason: undefined },
+        { line: 10, targets: [target], reason: undefined },
+        { line: 11, targets: [], reason: "method_not_on_type" },
+      ]);
+    });
+  });
+
+  describe("Standard-library re-borrows of the receiver", () => {
+    it("holds the receiver through ManuallyDrop::new, the Pin unwrappings and a pinned receiver's get_mut", () => {
+      const file = file_path("self_reference/reborrow.rs");
+      project.update_file(
+        file,
+        [
+          "use std::mem;",
+          "use std::pin::Pin;",
+          "struct Conn;",
+          "impl Conn {",
+          "    fn flush(&self) {}",
+          "    fn poll(self: Pin<&mut Self>) { let me = unsafe { self.get_unchecked_mut() }; me.flush(); }",
+          "    fn close(self) { let me = mem::ManuallyDrop::new(self); me.flush(); }",
+          "    fn finish(self: Pin<Box<Self>>) { let this = Pin::into_inner(self); this.flush(); }",
+          "    fn plain(&mut self) { let this = self.get_mut(); this.flush(); }",
+          "}",
+        ].join("\n")
+      );
+
+      const conn = Array.from(project.get_index_single_file(file)!.classes.values()).find(
+        (c) => c.name === ("Conn" as SymbolName)
+      )!;
+      const flush = project.definitions.get_member_index().get(conn.symbol_id)?.get("flush" as SymbolName);
+
+      // On a `&mut self` receiver `get_mut` would be Conn's own method, which
+      // Conn does not declare, so nothing says what it returns.
+      const flush_calls = project.resolutions
+        .get_calls_for_file(file)
+        .filter((call) => call.name === ("flush" as SymbolName))
+        .map((call) => ({
+          line: call.location.start_line,
+          targets: call.resolutions.map((r) => r.symbol_id),
+          reason: call.resolution_failure?.reason,
+        }));
+      expect(flush_calls).toEqual([
+        { line: 6, targets: [flush!], reason: undefined },
+        { line: 7, targets: [flush!], reason: undefined },
+        { line: 8, targets: [flush!], reason: undefined },
+        { line: 9, targets: [], reason: "receiver_type_unknown" },
+      ]);
+    });
+  });
+
+  describe("Self-reference keywords", () => {
+    it("resolves a `this` binding as the local it is: Rust has no `this` keyword", () => {
+      const file = file_path("self_reference/this_binding.rs");
+      project.update_file(
+        file,
+        [
+          "struct Foo;",
+          "impl Foo {",
+          "    fn new() -> Foo { Foo }",
+          "    fn run(&self) {}",
+          "}",
+          "struct Bar;",
+          "impl Bar {",
+          "    fn go(&self) { let this = Foo::new(); this.run(); }",
+          "}",
+          "fn main() { let this = Foo::new(); this.run(); }",
+        ].join("\n")
+      );
+
+      const foo = Array.from(project.get_index_single_file(file)!.classes.values()).find(
+        (c) => c.name === ("Foo" as SymbolName)
+      )!;
+      const foo_run = project.definitions.get_member_index().get(foo.symbol_id)?.get("run" as SymbolName);
+
+      // Inside `impl Bar` the keyword reading would dispatch against Bar; at
+      // module level it would find no enclosing impl at all.
+      const run_calls = project.resolutions
+        .get_calls_for_file(file)
+        .filter((call) => call.name === ("run" as SymbolName))
+        .map((call) => ({
+          line: call.location.start_line,
+          targets: call.resolutions.map((r) => r.symbol_id),
+          failure: call.resolution_failure,
+        }));
+      expect(run_calls).toEqual([
+        { line: 8, targets: [foo_run!], failure: undefined },
+        { line: 10, targets: [foo_run!], failure: undefined },
+      ]);
+    });
+
+    it("types a binding annotated `Self`, a call returning `Self` and a `let this = self` as the enclosing impl type", () => {
+      const file = file_path("self_reference/self_annotation.rs");
+      project.update_file(
+        file,
+        [
+          "struct Guard;",
+          "struct Inner;",
+          "impl Guard {",
+          "    fn skip_drop(self) -> Inner { Inner }",
+          "    fn arm(&mut self) -> &mut Self { self }",
+          "    fn fire(&mut self) {}",
+          "    pub fn map(this: Self) -> Inner { this.skip_drop() }",
+          "    fn reborrow(&mut self) { let this = self; this.fire(); }",
+          "}",
+          "fn main(mut g: Guard) { g.arm().fire(); }",
+        ].join("\n")
+      );
+
+      const guard = Array.from(project.get_index_single_file(file)!.classes.values()).find(
+        (c) => c.name === ("Guard" as SymbolName)
+      )!;
+      const members = project.definitions.get_member_index().get(guard.symbol_id)!;
+
+      const targets = project.resolutions
+        .get_calls_for_file(file)
+        .filter((call) => call.name === ("skip_drop" as SymbolName) || call.name === ("fire" as SymbolName))
+        .map((call) => ({ name: call.name, targets: call.resolutions.map((r) => r.symbol_id) }));
+      expect(targets).toEqual([
+        { name: "skip_drop", targets: [members.get("skip_drop" as SymbolName)!] },
+        { name: "fire", targets: [members.get("fire" as SymbolName)!] },
+        { name: "fire", targets: [members.get("fire" as SymbolName)!] },
+      ]);
     });
   });
 
@@ -403,19 +638,56 @@ describe("Project Integration - Rust", () => {
       expect(local_helper).toBeDefined();
       expect(local_helper!.location.file_path).toContain("shadowing.rs");
 
-      // helper() calls in main() and test_shadowing() should resolve to LOCAL definition
-      const helper_calls = shadowing_index!.references.filter(
+      // Bare helper() calls (main(), test_shadowing()) carry no path_prefix and
+      // resolve to the LOCAL definition — the terminal-name reduction does not
+      // collapse the qualified call onto them.
+      const bare_helper_calls = shadowing_index!.references.filter(
         (r): r is FunctionCallReference =>
           r.kind === "function_call" &&
-          r.name === ("helper" as SymbolName)
+          r.name === ("helper" as SymbolName) &&
+          r.path_prefix === undefined
       );
-      expect(helper_calls.length).toBe(2);
+      expect(bare_helper_calls.length).toBe(2);
 
-      for (const call of helper_calls) {
+      for (const call of bare_helper_calls) {
         const resolved = project.resolutions.resolve(call.scope_id, call.name);
         expect(resolved).toBeDefined();
         expect(resolved).toBe(local_helper!.symbol_id);
       }
+
+      // The qualified utils::helper() call reduces to terminal `helper` with
+      // path_prefix ["utils"] — exactly one such call.
+      const qualified_helper_calls = shadowing_index!.references.filter(
+        (r): r is FunctionCallReference =>
+          r.kind === "function_call" &&
+          r.name === ("helper" as SymbolName) &&
+          r.path_prefix !== undefined
+      );
+      expect(qualified_helper_calls.length).toBe(1);
+      expect(qualified_helper_calls[0].path_prefix).toEqual([
+        "utils",
+      ] as SymbolName[]);
+
+      // Regression guard: the qualified utils::helper() must resolve to the
+      // IMPORT (utils.rs), not the local shadow. The qualifier overrides the
+      // last-write-wins scope map that bare helper() rides.
+      const utils_helper = Array.from(
+        project.get_index_single_file(utils_file)!.functions.values()
+      ).find((f) => f.name === ("helper" as SymbolName));
+      expect(utils_helper).toBeDefined();
+
+      const call_graph = project.get_call_graph();
+      const use_original_node = Array.from(call_graph.nodes.values()).find(
+        (n) =>
+          project.definitions.get(n.symbol_id)?.name ===
+          ("use_original_helper" as SymbolName)
+      );
+      expect(use_original_node).toBeDefined();
+
+      const qualified_targets = use_original_node!.enclosed_calls
+        .filter((c) => c.name === ("helper" as SymbolName))
+        .flatMap((c) => c.resolutions.map((r) => r.symbol_id));
+      expect(qualified_targets).toEqual([utils_helper!.symbol_id]);
 
       // process_data() call should resolve to utils.rs (not shadowed)
       const process_call = shadowing_index!.references.find(
@@ -434,6 +706,360 @@ describe("Project Integration - Rust", () => {
       const process_def = project.definitions.get(process_resolved!);
       expect(process_def).toBeDefined();
       expect(process_def!.location.file_path).toContain("utils.rs");
+    });
+  });
+
+  describe("Qualified Call Resolution", () => {
+    it("resolves a module-qualified call (worker::create) to the module function", async () => {
+      const worker_file = file_path("modules/worker.rs");
+      const uses_worker_file = file_path("modules/uses_worker.rs");
+      project.update_file(worker_file, load_source("modules/worker.rs"));
+      project.update_file(uses_worker_file, load_source("modules/uses_worker.rs"));
+
+      // worker::create(7) reduces to terminal `create` with path_prefix ["worker"]
+      const uses_worker_index = project.get_index_single_file(uses_worker_file)!;
+      const create_call = uses_worker_index.references.find(
+        (r): r is FunctionCallReference =>
+          r.kind === "function_call" && r.name === ("create" as SymbolName)
+      );
+      expect(create_call).toBeDefined();
+      expect(create_call!.path_prefix).toEqual(["worker"] as SymbolName[]);
+
+      const worker_create = Array.from(
+        project.get_index_single_file(worker_file)!.functions.values()
+      ).find((f) => f.name === ("create" as SymbolName));
+      expect(worker_create).toBeDefined();
+
+      const call_graph = project.get_call_graph();
+      const run_node = Array.from(call_graph.nodes.values()).find(
+        (n) =>
+          project.definitions.get(n.symbol_id)?.name === ("run" as SymbolName)
+      );
+      expect(run_node).toBeDefined();
+
+      const targets = run_node!.enclosed_calls
+        .filter((c) => c.name === ("create" as SymbolName))
+        .flatMap((c) => c.resolutions.map((r) => r.symbol_id));
+      expect(targets).toEqual([worker_create!.symbol_id]);
+
+      // create is now reachable from run(), not a false-positive entry point.
+      expect(new Set(call_graph.entry_points).has(worker_create!.symbol_id)).toBe(
+        false
+      );
+    });
+
+    it("resolves an inline module-qualified call (worker::create) over a same-name local shadow", async () => {
+      const file = file_path("modules/inline_qualified.rs");
+      project.update_file(file, load_source("modules/inline_qualified.rs"));
+
+      const index = project.get_index_single_file(file)!;
+      const functions = Array.from(index.functions.values());
+      // Two `create` functions: the module one and the local shadow.
+      const module_create = functions.find(
+        (f) => f.name === ("create" as SymbolName) && f.location.start_line === 6
+      );
+      const local_create = functions.find(
+        (f) => f.name === ("create" as SymbolName) && f.location.start_line === 12
+      );
+      expect(module_create).toBeDefined();
+      expect(local_create).toBeDefined();
+
+      const call_graph = project.get_call_graph();
+      const run_node = Array.from(call_graph.nodes.values()).find(
+        (n) =>
+          project.definitions.get(n.symbol_id)?.name === ("run" as SymbolName)
+      );
+      expect(run_node).toBeDefined();
+
+      const create_calls = run_node!.enclosed_calls.filter(
+        (c) => c.name === ("create" as SymbolName)
+      );
+      expect(create_calls.length).toBe(2);
+
+      // Bare create() (line 18) binds to the local shadow.
+      const bare_targets = create_calls
+        .filter((c) => c.location.start_line === 18)
+        .flatMap((c) => c.resolutions.map((r) => r.symbol_id));
+      expect(bare_targets).toEqual([local_create!.symbol_id]);
+
+      // worker::create() (line 20) binds to the MODULE function via the module
+      // body scope — the qualifier overrides the same-name local shadow.
+      const qualified_targets = create_calls
+        .filter((c) => c.location.start_line === 20)
+        .flatMap((c) => c.resolutions.map((r) => r.symbol_id));
+      expect(qualified_targets).toEqual([module_create!.symbol_id]);
+    });
+
+    it("resolves a type-qualified associated function (Parker::make) via the member index", async () => {
+      const af_file = file_path("modules/associated_fn.rs");
+      project.update_file(af_file, load_source("modules/associated_fn.rs"));
+
+      const af_index = project.get_index_single_file(af_file)!;
+      const make_call = af_index.references.find(
+        (r): r is FunctionCallReference =>
+          r.kind === "function_call" && r.name === ("make" as SymbolName)
+      );
+      expect(make_call).toBeDefined();
+      expect(make_call!.path_prefix).toEqual(["Parker"] as SymbolName[]);
+
+      const parker = Array.from(af_index.classes.values()).find(
+        (c) => c.name === ("Parker" as SymbolName)
+      );
+      expect(parker).toBeDefined();
+      const make_member = project.definitions
+        .get_member_index()
+        .get(parker!.symbol_id)
+        ?.get("make" as SymbolName);
+      expect(make_member).toBeDefined();
+
+      const call_graph = project.get_call_graph();
+      const build_node = Array.from(call_graph.nodes.values()).find(
+        (n) =>
+          project.definitions.get(n.symbol_id)?.name === ("build" as SymbolName)
+      );
+      expect(build_node).toBeDefined();
+
+      const targets = build_node!.enclosed_calls
+        .filter((c) => c.name === ("make" as SymbolName))
+        .flatMap((c) => c.resolutions.map((r) => r.symbol_id));
+      expect(targets).toEqual([make_member!]);
+
+      // make is reachable from build(), not a false-positive entry point.
+      expect(new Set(call_graph.entry_points).has(make_member!)).toBe(false);
+    });
+  });
+
+  describe("Associated Constructor Resolution", () => {
+    it("resolves a use-imported Type::new() to the associated constructor, not the class symbol", async () => {
+      const user_mod_file = file_path("modules/user_mod.rs");
+      const uses_user_file = file_path("modules/uses_user.rs");
+      project.update_file(user_mod_file, load_source("modules/user_mod.rs"));
+      project.update_file(uses_user_file, load_source("modules/uses_user.rs"));
+
+      // User::new(...) is a constructor call: terminal type name `User`,
+      // path_prefix ["User"] (the producer reduction from 349.1).
+      const uses_user_index = project.get_index_single_file(uses_user_file)!;
+      const new_call = uses_user_index.references.find(
+        (r): r is ConstructorCallReference =>
+          r.kind === "constructor_call" && r.name === ("User" as SymbolName)
+      );
+      expect(new_call).toBeDefined();
+      expect(new_call!.path_prefix).toEqual(["User"] as SymbolName[]);
+
+      const user_struct = Array.from(
+        project.get_index_single_file(user_mod_file)!.classes.values()
+      ).find((c) => c.name === ("User" as SymbolName))!;
+      const user_new = project.definitions
+        .get_member_index()
+        .get(user_struct.symbol_id)
+        ?.get("new" as SymbolName);
+      expect(user_new).toBeDefined();
+
+      const call_graph = project.get_call_graph();
+      const main_node = Array.from(call_graph.nodes.values()).find(
+        (n) =>
+          project.definitions.get(n.symbol_id)?.name === ("main" as SymbolName)
+      )!;
+
+      // The User::new() call resolves to the `new` member — exactly one target,
+      // not the bare `User` class symbol (AC#1) and not duplicated (AC#3).
+      const targets = main_node.enclosed_calls
+        .filter((c) => c.name === ("User" as SymbolName))
+        .flatMap((c) => c.resolutions.map((r) => r.symbol_id));
+      expect(targets).toEqual([user_new!]);
+      expect(targets).not.toContain(user_struct.symbol_id);
+
+      // `new` is now reachable, not a false-positive entry point.
+      expect(new Set(call_graph.entry_points).has(user_new!)).toBe(false);
+    });
+
+    it("resolves Self::new() inside an impl to the enclosing type's constructor", async () => {
+      const file = file_path("modules/self_constructor.rs");
+      project.update_file(file, load_source("modules/self_constructor.rs"));
+
+      // Self::new() is a constructor call: terminal type name `Self`,
+      // path_prefix ["Self"].
+      const index = project.get_index_single_file(file)!;
+      const self_new_call = index.references.find(
+        (r): r is ConstructorCallReference =>
+          r.kind === "constructor_call" && r.name === ("Self" as SymbolName)
+      );
+      expect(self_new_call).toBeDefined();
+      expect(self_new_call!.path_prefix).toEqual(["Self"] as SymbolName[]);
+
+      const widget = Array.from(index.classes.values()).find(
+        (c) => c.name === ("Widget" as SymbolName)
+      )!;
+      const widget_new = project.definitions
+        .get_member_index()
+        .get(widget.symbol_id)
+        ?.get("new" as SymbolName);
+      expect(widget_new).toBeDefined();
+
+      const call_graph = project.get_call_graph();
+      const zeroed_node = Array.from(call_graph.nodes.values()).find(
+        (n) =>
+          project.definitions.get(n.symbol_id)?.name === ("zeroed" as SymbolName)
+      )!;
+
+      // Self::new() resolves to Widget::new via the enclosing-impl substitution.
+      const targets = zeroed_node.enclosed_calls
+        .filter((c) => c.name === ("Self" as SymbolName))
+        .flatMap((c) => c.resolutions.map((r) => r.symbol_id));
+      expect(targets).toEqual([widget_new!]);
+
+      // `new` is reachable from zeroed(), not a false-positive entry point.
+      expect(new Set(call_graph.entry_points).has(widget_new!)).toBe(false);
+    });
+  });
+
+  describe("Inline-Full-Path Constructor Resolution", () => {
+    it("resolves crate::runtime::Driver::new() by walking the inline module path to the type", async () => {
+      const file = file_path("modules/inline_path_constructor.rs");
+      project.update_file(file, load_source("modules/inline_path_constructor.rs"));
+
+      // crate::runtime::Driver::new() is a constructor call: terminal type name
+      // `Driver`, type-last path_prefix ["crate","runtime","Driver"] (349.1).
+      const index = project.get_index_single_file(file)!;
+      const new_call = index.references.find(
+        (r): r is ConstructorCallReference =>
+          r.kind === "constructor_call" && r.name === ("Driver" as SymbolName)
+      );
+      expect(new_call).toBeDefined();
+      expect(new_call!.path_prefix).toEqual([
+        "crate",
+        "runtime",
+        "Driver",
+      ] as SymbolName[]);
+
+      // The bare type name does not bind in scope — the type lives in the inline
+      // `runtime` module and is never imported.
+      expect(
+        project.resolutions.resolve(new_call!.scope_id, "Driver" as SymbolName)
+      ).toBeNull();
+
+      const driver = Array.from(index.classes.values()).find(
+        (c) => c.name === ("Driver" as SymbolName)
+      )!;
+      const driver_new = project.definitions
+        .get_member_index()
+        .get(driver.symbol_id)
+        ?.get("new" as SymbolName);
+      expect(driver_new).toBeDefined();
+
+      const call_graph = project.get_call_graph();
+      const run_node = Array.from(call_graph.nodes.values()).find(
+        (n) =>
+          project.definitions.get(n.symbol_id)?.name === ("run" as SymbolName)
+      )!;
+
+      // The inline-path call resolves to the `new` member — exactly one target,
+      // not the bare `Driver` class symbol.
+      const targets = run_node.enclosed_calls
+        .filter((c) => c.name === ("Driver" as SymbolName))
+        .flatMap((c) => c.resolutions.map((r) => r.symbol_id));
+      expect(targets).toEqual([driver_new!]);
+      expect(targets).not.toContain(driver.symbol_id);
+
+      // `new` is now reachable, not a false-positive entry point.
+      expect(new Set(call_graph.entry_points).has(driver_new!)).toBe(false);
+    });
+
+    it("disambiguates same-named types across modules via the path_prefix", async () => {
+      const file = file_path("modules/ambiguous_path_constructor.rs");
+      project.update_file(file, load_source("modules/ambiguous_path_constructor.rs"));
+
+      const index = project.get_index_single_file(file)!;
+
+      // Two distinct `Driver` types, one per inline module, ordered by location.
+      const drivers = Array.from(index.classes.values())
+        .filter((c) => c.name === ("Driver" as SymbolName))
+        .sort((a, b) => a.location.start_line - b.location.start_line);
+      expect(drivers.length).toBe(2);
+      const [alpha_driver, beta_driver] = drivers;
+
+      // The constructor resolves to the module's `new` member when linked, else
+      // falls back to the type symbol — exactly the resolver's own contract. The
+      // expected target per call is therefore the correct module's Driver,
+      // computed from the member index rather than hard-coded, so this stays
+      // honest if the same-file same-name impl→type linking (which currently
+      // attaches both `impl Driver` blocks to alpha's type) changes.
+      const member_index = project.definitions.get_member_index();
+      const alpha_target =
+        member_index.get(alpha_driver.symbol_id)?.get("new" as SymbolName) ??
+        alpha_driver.symbol_id;
+      const beta_target =
+        member_index.get(beta_driver.symbol_id)?.get("new" as SymbolName) ??
+        beta_driver.symbol_id;
+      // A global bare-name resolve would collapse both `Driver` names onto one
+      // type; the path_prefix walk binds each call to its own module's type.
+      expect(alpha_target).not.toEqual(beta_target);
+
+      const call_graph = project.get_call_graph();
+      const run_node = Array.from(call_graph.nodes.values()).find(
+        (n) =>
+          project.definitions.get(n.symbol_id)?.name === ("run" as SymbolName)
+      )!;
+
+      // Both calls share the terminal name `Driver`; the earlier call site
+      // (crate::alpha::…) binds alpha's type, the later (crate::beta::…) beta's.
+      // These per-call equalities are the disambiguation proof: each call must
+      // resolve to ITS module's Driver-derived target. A collapsed walk that
+      // bound both `Driver` names to one module would make beta's call resolve to
+      // alpha_target (≠ beta_target) and fail the second assertion.
+      const driver_calls = run_node.enclosed_calls
+        .filter((c) => c.name === ("Driver" as SymbolName))
+        .sort((a, b) => a.location.start_line - b.location.start_line);
+      expect(driver_calls.length).toBe(2);
+
+      expect(driver_calls[0].resolutions.map((r) => r.symbol_id)).toEqual([
+        alpha_target,
+      ]);
+      expect(driver_calls[1].resolutions.map((r) => r.symbol_id)).toEqual([
+        beta_target,
+      ]);
+    });
+
+    it("binds a separate-file module hop to the type's associated constructor", async () => {
+      const caller_file = file_path("modules/uses_separate_gadget.rs");
+      const gadget_file = file_path("modules/gadget.rs");
+      project.update_file(gadget_file, load_source("modules/gadget.rs"));
+      project.update_file(caller_file, load_source("modules/uses_separate_gadget.rs"));
+
+      // crate::gadget::Gadget::new(): the type is in a sibling file declared only
+      // via `mod gadget;` with no `use`. The path names that file, so `Gadget`
+      // binds there and the call reaches its associated `new`.
+      const caller_index = project.get_index_single_file(caller_file)!;
+      const new_call = caller_index.references.find(
+        (r): r is ConstructorCallReference =>
+          r.kind === "constructor_call" && r.name === ("Gadget" as SymbolName)
+      );
+      expect(new_call).toBeDefined();
+      expect(new_call!.path_prefix).toEqual([
+        "crate",
+        "gadget",
+        "Gadget",
+      ] as SymbolName[]);
+
+      // The type is not bound by name in the caller: only the author's path can
+      // reach it, which is what this pins.
+      expect(
+        project.resolutions.resolve(new_call!.scope_id, "Gadget" as SymbolName)
+      ).toBeNull();
+
+      const gadget_new = project.definitions
+        .get_definitions_by_name("new" as SymbolName)
+        .find((def) => def.location.file_path === gadget_file)!;
+
+      const call_graph = project.get_call_graph();
+      const run_node = Array.from(call_graph.nodes.values()).find(
+        (n) =>
+          project.definitions.get(n.symbol_id)?.name === ("run" as SymbolName)
+      )!;
+      const targets = run_node.enclosed_calls
+        .filter((c) => c.name === ("Gadget" as SymbolName))
+        .flatMap((c) => c.resolutions.map((r) => r.symbol_id));
+      expect(targets).toEqual([gadget_new.symbol_id]);
     });
   });
 
@@ -469,10 +1095,7 @@ describe("Project Integration - Rust", () => {
       );
       expect(product_struct).toBeDefined();
 
-      const type_info = project.get_type_info(product_struct!.symbol_id);
-      expect(type_info).toBeDefined();
-
-      const impl_method_names = Array.from(type_info!.methods.keys()).sort();
+      const impl_method_names = method_names_of(project, product_struct!.symbol_id);
       expect(impl_method_names).toEqual([
         "apply_discount",
         "default",
@@ -503,9 +1126,7 @@ describe("Project Integration - Rust", () => {
       const user_struct = structs.find((s) => s.name === ("User" as SymbolName));
       expect(user_struct).toBeDefined();
 
-      const user_type_info = project.get_type_info(user_struct!.symbol_id);
-      expect(user_type_info).toBeDefined();
-      const user_methods = Array.from(user_type_info!.methods.keys()).sort();
+      const user_methods = method_names_of(project, user_struct!.symbol_id);
       expect(user_methods).toEqual([
         "get_age",
         "greet",
@@ -517,9 +1138,7 @@ describe("Project Integration - Rust", () => {
       const point_struct = structs.find((s) => s.name === ("Point" as SymbolName));
       expect(point_struct).toBeDefined();
 
-      const point_type_info = project.get_type_info(point_struct!.symbol_id);
-      expect(point_type_info).toBeDefined();
-      const point_methods = Array.from(point_type_info!.methods.keys()).sort();
+      const point_methods = method_names_of(project, point_struct!.symbol_id);
       expect(point_methods).toEqual([
         "distance_from_origin",
         "new",
@@ -790,7 +1409,8 @@ fn main() {
       project.update_file(file, source);
 
       const call_graph = project.get_call_graph();
-      expect(call_graph.nodes.size).toBe(6);
+      // Six named functions plus the closure's anonymous node.
+      expect(call_graph.nodes.size).toBe(7);
 
       const nodes = Array.from(call_graph.nodes.values());
 
@@ -924,7 +1544,11 @@ fn main() {
 
       const imports = Array.from(consumer_index!.imported_symbols.values());
       const import_names = imports.map((i) => i.name).sort();
-      expect(import_names).toEqual(["add", "multiply"] as SymbolName[]);
+      expect(import_names).toEqual([
+        "add",
+        "multiply",
+        "reexport",
+      ] as SymbolName[]);
 
       // Verify add() call resolves
       const add_call = consumer_index!.references.find(

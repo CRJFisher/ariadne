@@ -3,8 +3,10 @@
  */
 
 import { describe, it, expect, beforeEach, beforeAll } from "vitest";
+import { readFileSync } from "fs";
+import { join } from "path";
 import Parser from "tree-sitter";
-import TypeScript from "tree-sitter-typescript";
+import { LANGUAGE_TO_TREESITTER_LANG } from "../query_code_tree/parsers";
 import JavaScript from "tree-sitter-javascript";
 import Python from "tree-sitter-python";
 import Rust from "tree-sitter-rust";
@@ -17,12 +19,8 @@ import type {
   LexicalScope,
   Language,
 } from "@ariadnejs/types";
-import {
-  CaptureNode,
-  SemanticEntity,
-  SemanticCategory,
-  build_index_single_file,
-} from "../index_single_file";
+import { build_index_single_file } from "../index_single_file";
+import { CaptureNode, SemanticEntity, SemanticCategory } from "../capture_types";
 import { ParsedFile } from "../parsed_file";
 
 describe("scopes", () => {
@@ -33,6 +31,7 @@ describe("scopes", () => {
     file_end_column: 0,
     tree: null as any,
     lang: "typescript" as const,
+    source: "",
   } as ParsedFile;
 
   // Helper to create raw captures for testing
@@ -129,7 +128,7 @@ describe("scopes", () => {
     it("should create root module scope for empty file", () => {
       const captures: CaptureNode[] = [];
 
-      const scopes = process_scopes(captures, file);
+      const { scopes } = process_scopes(captures, file);
 
       expect(scopes.size).toBe(1);
       const root = Array.from(scopes.values())[0];
@@ -154,7 +153,7 @@ describe("scopes", () => {
         ),
       ];
 
-      const scopes = process_scopes(captures, file);
+      const { scopes } = process_scopes(captures, file);
 
       expect(scopes.size).toBe(2);
 
@@ -216,7 +215,7 @@ describe("scopes", () => {
         ),
       ];
 
-      const scopes = process_scopes(captures, file);
+      const { scopes } = process_scopes(captures, file);
 
       expect(scopes.size).toBe(4); // root + class + method + block
 
@@ -287,7 +286,7 @@ describe("scopes", () => {
         ),
       ];
 
-      const scopes = process_scopes(captures, file);
+      const { scopes } = process_scopes(captures, file);
 
       expect(scopes.size).toBe(4); // root + 3 functions
 
@@ -336,7 +335,7 @@ describe("scopes", () => {
         ),
       ];
 
-      const scopes = process_scopes(captures, file);
+      const { scopes } = process_scopes(captures, file);
 
       expect(scopes.size).toBe(3); // root + outer + inner
 
@@ -381,7 +380,7 @@ describe("scopes", () => {
         ),
       ];
 
-      const scopes = process_scopes(captures, file);
+      const { scopes } = process_scopes(captures, file);
 
       expect(scopes.size).toBe(3); // root + interface + enum
 
@@ -419,6 +418,7 @@ describe("scopes", () => {
           end_column: 0,
         },
         child_ids: [func_id],
+        self_type_name: null,
       });
 
       scopes.set(func_id, {
@@ -434,6 +434,7 @@ describe("scopes", () => {
           end_column: 1,
         },
         child_ids: [block_id],
+        self_type_name: null,
       });
 
       scopes.set(block_id, {
@@ -449,10 +450,11 @@ describe("scopes", () => {
           end_column: 3,
         },
         child_ids: [],
+        self_type_name: null,
       });
 
       const captures: CaptureNode[] = [];
-      const context = create_processing_context(scopes, captures);
+      const context = create_processing_context(scopes, root_id, captures);
 
       expect(context.scope_depths.get(root_id)).toBe(0);
       expect(context.scope_depths.get(func_id)).toBe(1);
@@ -480,6 +482,7 @@ describe("scopes", () => {
           end_column: 0,
         },
         child_ids: [func_id],
+        self_type_name: null,
       });
 
       scopes.set(func_id, {
@@ -495,6 +498,7 @@ describe("scopes", () => {
           end_column: 1,
         },
         child_ids: [block_id],
+        self_type_name: null,
       });
 
       scopes.set(block_id, {
@@ -510,10 +514,11 @@ describe("scopes", () => {
           end_column: 3,
         },
         child_ids: [],
+        self_type_name: null,
       });
 
       const captures: CaptureNode[] = [];
-      const context = create_processing_context(scopes, captures);
+      const context = create_processing_context(scopes, root_id, captures);
 
       // Location in module but outside function
       expect(
@@ -571,6 +576,7 @@ describe("scopes", () => {
           end_column: 0,
         },
         child_ids: [class_id],
+        self_type_name: null,
       });
 
       scopes.set(class_id, {
@@ -586,6 +592,7 @@ describe("scopes", () => {
           end_column: 1,
         },
         child_ids: [method1_id, method2_id],
+        self_type_name: null,
       });
 
       scopes.set(method1_id, {
@@ -601,6 +608,7 @@ describe("scopes", () => {
           end_column: 3,
         },
         child_ids: [],
+        self_type_name: null,
       });
 
       scopes.set(method2_id, {
@@ -616,10 +624,11 @@ describe("scopes", () => {
           end_column: 3,
         },
         child_ids: [],
+        self_type_name: null,
       });
 
       const captures: CaptureNode[] = [];
-      const context = create_processing_context(scopes, captures);
+      const context = create_processing_context(scopes, root_id, captures);
 
       // Location in method1
       expect(
@@ -688,7 +697,7 @@ describe("scopes", () => {
           ),
         ];
 
-        const scopes = process_scopes(captures, file);
+        const { scopes } = process_scopes(captures, file);
 
         if (entity === "module" || entity === "namespace") {
           // Mock nodes have equal symbol_location and scope_location,
@@ -734,6 +743,7 @@ describe("scopes", () => {
           end_column: 0,
         },
         child_ids: [class_body_id],
+        self_type_name: null,
       });
 
       scopes.set(class_body_id, {
@@ -749,10 +759,11 @@ describe("scopes", () => {
           end_column: 1,
         },
         child_ids: [],
+        self_type_name: null,
       });
 
       const captures: CaptureNode[] = [];
-      const context = create_processing_context(scopes, captures);
+      const context = create_processing_context(scopes, root_id, captures);
 
       // Class name is at 1:7:1:14 - BEFORE the class body scope
       // Should be assigned to module scope, not class scope
@@ -779,61 +790,6 @@ describe("scopes", () => {
       const method_scope_id = context.get_scope_id(method_location);
       expect(method_scope_id).toBe(class_body_id); // Method in class scope
     });
-
-    it("should throw error when multiple scopes at same depth contain location", () => {
-      const scopes = new Map<ScopeId, LexicalScope>();
-
-      // Two module scopes with same depth but different sizes - this is malformed data
-      const small_module_id = "module:test.ts:1:1:3:1" as ScopeId;
-      const large_module_id = "module:test.ts:1:1:3:10" as ScopeId;
-
-      scopes.set(small_module_id, {
-        id: small_module_id,
-        parent_id: null,
-        name: null,
-        type: "module",
-        location: {
-          file_path,
-          start_line: 1,
-          start_column: 1,
-          end_line: 3,
-          end_column: 1,
-        },
-        child_ids: [],
-      });
-
-      scopes.set(large_module_id, {
-        id: large_module_id,
-        parent_id: null,
-        name: null,
-        type: "module",
-        location: {
-          file_path,
-          start_line: 1,
-          start_column: 1,
-          end_line: 3,
-          end_column: 10,
-        },
-        child_ids: [],
-      });
-
-      const captures: CaptureNode[] = [];
-      const context = create_processing_context(scopes, captures);
-
-      // Location at 1:5:1:10 is contained in both scopes
-      const location: Location = {
-        file_path,
-        start_line: 1,
-        start_column: 5,
-        end_line: 1,
-        end_column: 10,
-      };
-
-      // Should throw error for malformed scope tree
-      expect(() => context.get_scope_id(location)).toThrow(
-        /Malformed scope tree: multiple scopes at depth 0 contain location/
-      );
-    });
   });
 
   // ============================================================================
@@ -857,6 +813,7 @@ describe("scopes", () => {
         file_end_column: lines[lines.length - 1]?.length || 0,
         tree,
         lang: language,
+        source: code,
       };
     }
 
@@ -865,7 +822,7 @@ describe("scopes", () => {
 
       beforeAll(() => {
         parser = new Parser();
-        parser.setLanguage(TypeScript.typescript);
+        parser.setLanguage(LANGUAGE_TO_TREESITTER_LANG.get("typescript")!);
       });
 
       it("should capture only class body as scope, not entire declaration", () => {
@@ -1391,6 +1348,7 @@ describe("scopes", () => {
           file_end_column: code.split("\n")[2]?.length || 0,
           tree,
           lang: "javascript" as Language,
+          source: code,
         };
 
         const index = build_index_single_file(parsed_file, tree, "javascript");
@@ -1414,7 +1372,7 @@ describe("scopes", () => {
 
       it("should start scope after 'function' keyword for named function expressions in TypeScript", () => {
         const ts_parser = new Parser();
-        ts_parser.setLanguage(TypeScript.typescript);
+        ts_parser.setLanguage(LANGUAGE_TO_TREESITTER_LANG.get("typescript")!);
 
         const code = `const factorial = function fact(n: number): number {
   return n * fact(n - 1);
@@ -1427,6 +1385,7 @@ describe("scopes", () => {
           file_end_column: code.split("\n")[2]?.length || 0,
           tree,
           lang: "typescript" as Language,
+          source: code,
         };
 
         const index = build_index_single_file(parsed_file, tree, "typescript");
@@ -1458,6 +1417,7 @@ describe("scopes", () => {
           file_end_column: code.split("\n")[2]?.length || 0,
           tree,
           lang: "javascript" as Language,
+          source: code,
         };
 
         const index = build_index_single_file(parsed_file, tree, "javascript");
@@ -1487,6 +1447,7 @@ describe("scopes", () => {
           file_end_column: code.split("\n")[2]?.length || 0,
           tree,
           lang: "javascript" as Language,
+          source: code,
         };
 
         const index = build_index_single_file(parsed_file, tree, "javascript");
@@ -1618,7 +1579,7 @@ describe("scopes", () => {
 
       beforeAll(() => {
         ts_parser = new Parser();
-        ts_parser.setLanguage(TypeScript.typescript);
+        ts_parser.setLanguage(LANGUAGE_TO_TREESITTER_LANG.get("typescript")!);
       });
 
       it("should create block scopes for for/while/if/switch/try/catch/finally", () => {
@@ -1754,7 +1715,7 @@ describe("scopes", () => {
 
       beforeAll(() => {
         ts_parser = new Parser();
-        ts_parser.setLanguage(TypeScript.typescript);
+        ts_parser.setLanguage(LANGUAGE_TO_TREESITTER_LANG.get("typescript")!);
       });
 
       it("should create constructor scope as child of class scope", () => {
@@ -1805,7 +1766,7 @@ describe("scopes", () => {
 
       beforeAll(() => {
         ts_parser = new Parser();
-        ts_parser.setLanguage(TypeScript.typescript);
+        ts_parser.setLanguage(LANGUAGE_TO_TREESITTER_LANG.get("typescript")!);
       });
 
       it("should create module scope for namespace declaration", () => {
@@ -2394,7 +2355,7 @@ fn main() {}`;
 
         beforeAll(() => {
           parser = new Parser();
-          parser.setLanguage(TypeScript.typescript);
+          parser.setLanguage(LANGUAGE_TO_TREESITTER_LANG.get("typescript")!);
         });
 
         it("constructor produces exactly one @scope.constructor, not @scope.method", () => {
@@ -2507,6 +2468,203 @@ fn main() {}`;
 
           expect(count_scope_captures(index.scopes, "method", "create")).toBe(1);
         });
+      });
+    });
+
+    // What `self`/`this`/`cls`/`Self` means inside a scope is recorded as the
+    // scope is built, so every shape that binds one of those keywords names
+    // its type and every other scope records null.
+    describe("self_type_name", () => {
+      function scope_facts(code: string, language: Language, file: FilePath) {
+        const parser = new Parser();
+        parser.setLanguage(LANGUAGE_TO_TREESITTER_LANG.get(language)!);
+        const tree = parser.parse(code);
+        const index = build_index_single_file(
+          create_parsed_file(code, file, tree, language),
+          tree,
+          language
+        );
+        return [...index.scopes.values()]
+          .sort(
+            (a, b) =>
+              a.location.start_line - b.location.start_line ||
+              a.location.start_column - b.location.start_column
+          )
+          .map((scope) => ({
+            type: scope.type,
+            name: scope.name,
+            self_type_name: scope.self_type_name,
+            line: scope.location.start_line,
+          }));
+      }
+
+      it("records the class for a JavaScript class body and null for a class expression no definition registers", () => {
+        const code = [
+          "class Foo {",
+          "  m() { if (x) { } }",
+          "}",
+          "const Anon = class {",
+          "  n() { }",
+          "};",
+          "const Named = class Bar {",
+          "  p() { }",
+          "};",
+          "module.exports = class Exported {",
+          "  q() { }",
+          "};",
+          "const arrow = () => { };",
+          "function f() { }",
+        ].join("\n");
+        // `class Bar`'s scope carries the name as its own identifier and still
+        // records no self type: the name binds only inside the expression, so
+        // reading it would point `this` at any enclosing `Bar` instead.
+        expect(scope_facts(code, "javascript", "test.js" as FilePath)).toEqual([
+          { type: "module", name: null, self_type_name: null, line: 1 },
+          { type: "class", name: "Foo", self_type_name: "Foo", line: 1 },
+          { type: "method", name: "m", self_type_name: null, line: 2 },
+          { type: "block", name: null, self_type_name: null, line: 2 },
+          { type: "class", name: null, self_type_name: null, line: 4 },
+          { type: "method", name: "n", self_type_name: null, line: 5 },
+          { type: "class", name: "Bar", self_type_name: null, line: 7 },
+          { type: "method", name: "p", self_type_name: null, line: 8 },
+          { type: "class", name: "Exported", self_type_name: "Exported", line: 10 },
+          { type: "method", name: "q", self_type_name: null, line: 11 },
+          { type: "function", name: null, self_type_name: null, line: 13 },
+          { type: "function", name: "f", self_type_name: null, line: 14 },
+        ]);
+      });
+
+      it("records the interface and the enum for TypeScript interface and enum bodies", () => {
+        const code = [
+          "interface Shape {",
+          "  area(): number;",
+          "}",
+          "enum Color {",
+          "  Red,",
+          "}",
+          "class Box { }",
+          "module.exports = class Exported { q() { } };",
+        ].join("\n");
+        // `typescript.scm` registers a class definition for a declaration only,
+        // so the CommonJS assignment that names a class in JavaScript names
+        // nothing here and its body records null.
+        expect(scope_facts(code, "typescript", "test.ts" as FilePath)).toEqual([
+          { type: "module", name: null, self_type_name: null, line: 1 },
+          { type: "class", name: "Shape", self_type_name: "Shape", line: 1 },
+          { type: "method", name: "area", self_type_name: null, line: 2 },
+          { type: "class", name: "Color", self_type_name: "Color", line: 4 },
+          { type: "class", name: "Box", self_type_name: "Box", line: 7 },
+          { type: "class", name: "Exported", self_type_name: null, line: 8 },
+          { type: "method", name: "q", self_type_name: null, line: 8 },
+        ]);
+      });
+
+      it("records the class for a Python class body block and null for functions, lambdas and loop blocks", () => {
+        const code = [
+          "class Widget:",
+          "    def paint(self):",
+          "        handler = lambda x: x",
+          "        return handler",
+          "",
+          "def helper():",
+          "    for i in range(3):",
+          "        pass",
+        ].join("\n");
+        // The Python class scope is captured on the body block, whose own
+        // `name` is null; the self type is read off the class_definition.
+        expect(scope_facts(code, "python", "test.py" as FilePath)).toEqual([
+          { type: "module", name: null, self_type_name: null, line: 1 },
+          { type: "class", name: null, self_type_name: "Widget", line: 1 },
+          { type: "method", name: "paint", self_type_name: null, line: 2 },
+          { type: "function", name: null, self_type_name: null, line: 3 },
+          { type: "function", name: "helper", self_type_name: null, line: 6 },
+          { type: "block", name: null, self_type_name: null, line: 7 },
+        ]);
+      });
+
+      it("records the implemented type for every Rust impl block and the item for struct, enum and trait bodies", () => {
+        const code = [
+          "struct S { x: i32 }",
+          "enum E { A }",
+          "trait Tr { fn t(&self); }",
+          "impl S { fn a(&self) { } }",
+          "impl<T> Wrapper<T> { }",
+          "impl Tr for S { fn t(&self) { } }",
+          "impl Tr for &S { }",
+          "impl<T> Tr for T { }",
+          "fn f() { if true { } }",
+        ].join("\n");
+        // Struct, enum and trait bodies are class scopes captured on the body
+        // node; each impl body is a block scope that binds `self` to the
+        // implemented type. `impl Tr for &S` implements a reference and
+        // `impl<T> Tr for T` implements its own type parameter — neither names
+        // a definition a lookup could reach, so both record null like the `if`
+        // block.
+        expect(scope_facts(code, "rust", "test.rs" as FilePath)).toEqual([
+          { type: "module", name: null, self_type_name: null, line: 1 },
+          { type: "class", name: null, self_type_name: "S", line: 1 },
+          { type: "class", name: null, self_type_name: "E", line: 2 },
+          { type: "class", name: null, self_type_name: "Tr", line: 3 },
+          { type: "block", name: null, self_type_name: "S", line: 4 },
+          { type: "function", name: "a", self_type_name: null, line: 4 },
+          { type: "block", name: null, self_type_name: "Wrapper", line: 5 },
+          { type: "block", name: null, self_type_name: "S", line: 6 },
+          { type: "function", name: "t", self_type_name: null, line: 6 },
+          { type: "block", name: null, self_type_name: null, line: 7 },
+          { type: "block", name: null, self_type_name: null, line: 8 },
+          { type: "function", name: "f", self_type_name: null, line: 9 },
+          { type: "block", name: null, self_type_name: null, line: 9 },
+        ]);
+      });
+
+      it("records the type for a Rust impl block whose struct is declared in another file", () => {
+        const fixture = (name: string) =>
+          join(
+            __dirname,
+            "..",
+            "..",
+            "..",
+            "tests",
+            "fixtures",
+            "rust",
+            "code",
+            "integration",
+            name
+          ) as FilePath;
+        const declarations = fixture("types.rs");
+        const implementations = fixture("impls.rs");
+
+        // The declaring file names its own types off the item around each body.
+        expect(
+          scope_facts(readFileSync(declarations, "utf-8"), "rust", declarations)
+        ).toEqual([
+          { type: "module", name: null, self_type_name: null, line: 1 },
+          { type: "class", name: null, self_type_name: "Lowering", line: 4 },
+          { type: "class", name: null, self_type_name: "Visit", line: 8 },
+        ]);
+
+        // The implementing file declares no class of its own, so no per-file
+        // member index could name the type — each impl block records it anyway,
+        // the trait impl included, and the method scopes inside stay null.
+        const code = readFileSync(implementations, "utf-8");
+        const parser = new Parser();
+        parser.setLanguage(LANGUAGE_TO_TREESITTER_LANG.get("rust")!);
+        const tree = parser.parse(code);
+        const index = build_index_single_file(
+          create_parsed_file(code, implementations, tree, "rust"),
+          tree,
+          "rust"
+        );
+        expect(index.classes.size).toEqual(0);
+        expect(scope_facts(code, "rust", implementations)).toEqual([
+          { type: "module", name: null, self_type_name: null, line: 1 },
+          { type: "block", name: null, self_type_name: "Lowering", line: 9 },
+          { type: "function", name: "descend", self_type_name: null, line: 10 },
+          { type: "block", name: null, self_type_name: "Lowering", line: 15 },
+          { type: "function", name: "visit", self_type_name: null, line: 16 },
+          { type: "block", name: null, self_type_name: "Lowering", line: 21 },
+          { type: "function", name: "report", self_type_name: null, line: 22 },
+        ]);
       });
     });
   });

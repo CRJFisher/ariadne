@@ -1,126 +1,75 @@
 import { readFileSync, existsSync } from "fs";
-import { join, dirname } from "path";
+import { join } from "path";
 import type { Language } from "@ariadnejs/types";
-import JavaScript from "tree-sitter-javascript";
-import Python from "tree-sitter-python";
-import Rust from "tree-sitter-rust";
-import TypeScript from "tree-sitter-typescript";
-import { Query } from "tree-sitter";
+import type TreeSitter from "tree-sitter";
+import { Query } from "../../native";
+import {
+  LANGUAGE_TO_TREESITTER_LANG,
+  SUPPORTED_LANGUAGES,
+  grammar_for_dialect,
+} from "./parsers";
 
-/**
- * Language to tree-sitter parser mapping
- * NOTE: TypeScript uses .typescript grammar (not .tsx) for compatibility with both .ts and .tsx files
- */
-export const LANGUAGE_TO_TREESITTER_LANG = new Map([
-  ["javascript", JavaScript],
-  ["typescript", TypeScript.typescript],
-  ["python", Python],
-  ["rust", Rust],
-]);
-
-/**
- * Supported languages (derived from the Language type)
- */
-export const SUPPORTED_LANGUAGES: readonly Language[] = [
-  "javascript",
-  "typescript",
-  "python",
-  "rust",
-] as const;
-
-/**
- * Query cache for performance
- * Exported for testing purposes only
- */
-export const query_cache = new Map<Language, string>();
-
-/**
- * Cache for the queries directory path (computed once per process)
- * Exported as object for testing purposes only
- */
+// Exported so tests can reset process-wide memoization between cases. Keyed by
+// query dialect: the language name, or "typescript:tsx" for the JSX-augmented
+// TypeScript query.
+export const query_cache = new Map<string, string>();
 export const cached_queries_dir_cache = { value: null as string | null };
 
-/**
- * Get the queries directory path (robust across different environments)
- */
+// JSX component captures appended to the `.tsx` TypeScript query. A `.tsx` file
+// is parsed with the tsx grammar (which yields the jsx element nodes), while
+// `typescript.scm` itself stays JSX-free so it compiles against the non-JSX
+// typescript grammar used for `.ts`. The `javascript.scm` query carries an
+// identical inline copy for `.js`/`.jsx`/`.mdx`; keep the two in sync.
+const JSX_COMPONENT_CAPTURES = `
+; JSX components — a JSX element is how a component is invoked, so its tag name
+; captures as a call reference to the component. A lowercase-initial tag is an
+; intrinsic host element (\`<div>\`) that names no definition; every other tag
+; (\`<Panel>\`, \`<_Private>\`) names a component.
+(jsx_opening_element
+  (identifier) @reference.call.jsx
+  (#not-match? @reference.call.jsx "^[a-z]")
+)
+
+(jsx_self_closing_element
+  (identifier) @reference.call.jsx
+  (#not-match? @reference.call.jsx "^[a-z]")
+)
+`;
+
+// The dialect key under which a language's query is cached: `.tsx` gets its own
+// JSX-augmented variant; every other file uses the bare language name.
+export function query_dialect(language: Language, tsx: boolean): string {
+  return language === "typescript" && tsx ? `${language}:tsx` : language;
+}
+
+// The `.scm` files ship alongside this module in both `src` (dev/test) and
+// `dist` (published), so they always resolve relative to this file.
 export function get_queries_dir(): string {
-  // Return cached result if available
   if (cached_queries_dir_cache.value !== null) {
     return cached_queries_dir_cache.value;
   }
 
-  // Strategy: Try multiple approaches to find the queries directory
-  // This handles development, CI, production, and bundled environments
-
-  const possible_paths = [
-    // 1. Standard CommonJS approach (works in most cases)
-    join(dirname(__filename), "queries"),
-
-    // 2. From package root (for cases where __filename is in a different structure)
-    join(__dirname, "queries"),
-
-    // 3. Relative to current working directory (fallback for some CI environments)
-    join(
-      process.cwd(),
-      "packages",
-      "core",
-      "dist",
-      "semantic_index",
-      "queries"
-    ),
-    join(process.cwd(), "packages", "core", "src", "semantic_index", "queries"),
-    join(process.cwd(), "dist", "semantic_index", "queries"),
-    join(process.cwd(), "src", "semantic_index", "queries"),
-
-    // 4. For bundled environments or when installed as a package
-    join(
-      process.cwd(),
-      "node_modules",
-      "@ariadnejs",
-      "core",
-      "dist",
-      "semantic_index",
-      "queries"
-    ),
-  ];
-
-  // Try each path until we find one that exists
-  for (const path of possible_paths) {
-    if (existsSync(path)) {
-      cached_queries_dir_cache.value = path;
-      return path;
-    }
+  const queries_dir = join(__dirname, "queries");
+  if (existsSync(queries_dir)) {
+    cached_queries_dir_cache.value = queries_dir;
+    return queries_dir;
   }
-
-  // If all else fails, provide detailed error information for debugging
-  const error_details = possible_paths
-    .map(
-      (path, index) => `  ${index + 1}. ${path} (exists: ${existsSync(path)})`
-    )
-    .join("\n");
 
   const environment_info = {
     node_env: process.env.NODE_ENV,
     cwd: process.cwd(),
-    filename: __filename,
     dirname: __dirname,
-    argv0: process.argv[0],
-    argv1: process.argv[1],
     platform: process.platform,
     arch: process.arch,
   };
 
   throw new Error(
-    `Unable to locate queries directory. Tried the following paths:\n${error_details}\n\n` +
+    `Unable to locate queries directory at '${queries_dir}'.\n\n` +
       `Environment information:\n${JSON.stringify(environment_info, null, 2)}`
   );
 }
 
-/**
- * Validate that a language is supported
- */
 function validate_language(language: Language): void {
-  // Check for null/undefined/empty inputs
   if (language == null || (language as string) === "") {
     throw new Error(
       `Invalid language: ${language}. Language cannot be null, undefined, or empty.`
@@ -142,67 +91,64 @@ function validate_language(language: Language): void {
   }
 }
 
-/**
- * Validate query syntax by attempting to parse it
- */
-function validate_query_syntax(query_string: string, language: Language): void {
+// Compiling the query surfaces `.scm` syntax errors at load time with the
+// offending dialect named, rather than deep inside pass-1 execution. Compiled
+// against the same grammar the dialect parses with, so a JSX pattern is
+// validated against a JSX-capable grammar.
+function validate_query_syntax(
+  query_string: string,
+  grammar: TreeSitter.Language,
+  dialect: string
+): void {
   try {
-    const parser = LANGUAGE_TO_TREESITTER_LANG.get(language);
-    if (!parser) {
-      throw new Error(`No parser available for ${language}`);
-    }
-    // Attempt to create the query to validate syntax
-    new Query(parser, query_string);
+    new Query(grammar, query_string);
   } catch (error) {
     throw new Error(
-      `Invalid query syntax for ${language}: ${
+      `Invalid query syntax for ${dialect}: ${
         error instanceof Error ? error.message : String(error)
       }`
     );
   }
 }
 
-/**
- * Load a tree-sitter query for a specific language
- */
-export function load_query(language: Language): string {
-  // Check cache first
-  const cached = query_cache.get(language);
+export function load_query(language: Language, tsx: boolean = false): string {
+  const dialect = query_dialect(language, tsx);
+  const cached = query_cache.get(dialect);
   if (cached !== undefined) {
     return cached;
   }
 
-  // Validate language support
   validate_language(language);
 
   const queries_dir = get_queries_dir();
   const query_path = join(queries_dir, `${language}.scm`);
 
   try {
-    const query_string = readFileSync(query_path, "utf-8");
-
-    // Validate query syntax
-    validate_query_syntax(query_string, language);
-
-    // Cache the result
-    query_cache.set(language, query_string);
-
+    const base = readFileSync(query_path, "utf-8");
+    // `.tsx` appends the JSX component captures; `typescript.scm` itself is
+    // JSX-free so it compiles against the non-JSX typescript grammar for `.ts`.
+    const query_string =
+      language === "typescript" && tsx
+        ? `${base}\n${JSX_COMPONENT_CAPTURES}`
+        : base;
+    validate_query_syntax(
+      query_string,
+      grammar_for_dialect(language, tsx),
+      dialect
+    );
+    query_cache.set(dialect, query_string);
     return query_string;
   } catch (error) {
     if (
       error instanceof Error &&
       error.message.includes("Invalid query syntax")
     ) {
-      // Re-throw validation errors as-is
       throw error;
     }
 
-    // File system errors
     const error_msg = error instanceof Error ? error.message : String(error);
     throw new Error(
       `Failed to load semantic index query for language '${language}' from '${query_path}': ${error_msg}`
     );
   }
 }
-
-

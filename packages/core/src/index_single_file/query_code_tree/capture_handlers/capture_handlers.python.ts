@@ -6,19 +6,28 @@
  * imports, decorators, protocols, enums, and type aliases.
  */
 
+import type { SyntaxNode } from "tree-sitter";
 import type { SymbolName } from "@ariadnejs/types";
-import { anonymous_function_symbol, property_symbol } from "@ariadnejs/types";
-import type { DefinitionBuilder } from "../../definitions/definitions";
-import type { CaptureNode, ProcessingContext } from "../../index_single_file";
-import { node_to_location } from "../../node_to_location";
-import type { HandlerRegistry } from "./types";
 import {
+  anonymous_function_symbol,
+  interface_symbol,
+  property_symbol,
+} from "@ariadnejs/types";
+import type { DefinitionBuilder } from "../../definitions/definition_builder";
+import type { CaptureNode } from "../../capture_types";
+import type { ProcessingContext } from "../../scopes/processing_context";
+import { node_to_location } from "../../node_to_location";
+import type { HandlerRegistry } from "./handler_types";
+import {
+  classify_class_bases,
+  find_owning_class_node,
   create_class_id,
   extract_extends,
   extract_export_info,
   create_method_id,
   find_containing_class,
   determine_method_type,
+  determine_accessor_kind,
   is_async_function,
   extract_return_type,
   create_property_id,
@@ -42,32 +51,20 @@ import {
   extract_type_expression,
   detect_callback_context,
   detect_function_collection,
+} from "../symbol_factories/symbol_factories.python";
+import {
   extract_collection_source,
+  extract_iteration_source,
+  extract_initializer_call,
+  extract_initializer_result_call,
+  extract_read_source,
+} from "../symbol_factories/initializer_sources.python";
+import { extract_returned_name_chain } from "../symbol_factories/returned_name_chain.python";
+import {
   store_python_docstring,
   consume_python_docstring,
-} from "../symbol_factories/symbol_factories.python";
-// Import handlers from python_imports.ts for local use
-import {
-  handle_definition_import,
-  handle_import_named,
-  handle_import_named_source,
-  handle_import_named_alias,
-  handle_import_module,
-  handle_import_module_source,
-  handle_import_module_alias,
-  handle_import_star,
-} from "./imports.python";
-// Re-export import handlers for external use
-export {
-  handle_definition_import,
-  handle_import_named,
-  handle_import_named_source,
-  handle_import_named_alias,
-  handle_import_module,
-  handle_import_module_source,
-  handle_import_module_alias,
-  handle_import_star,
-};
+} from "../symbol_factories/documentation_state.python";
+import { handle_definition_import } from "./imports.python";
 
 // ============================================================================
 // DOCUMENTATION HANDLERS
@@ -90,6 +87,19 @@ export function handle_definition_class(
   builder: DefinitionBuilder,
   context: ProcessingContext
 ): void {
+  // The query emits one capture per class whatever its base shapes; Enum and
+  // Protocol classes are discriminated here so a class builds exactly one
+  // definition (a co-firing query discriminator would forge duplicate exports).
+  // Discrimination reads the captured class's own bases only — a walk-up
+  // helper would re-kind a plain class nested inside an Enum/Protocol body.
+  const base_kind = classify_class_bases(capture.node.parent);
+  if (base_kind === "interface") {
+    return handle_definition_interface(capture, builder, context);
+  }
+  if (base_kind === "enum") {
+    return handle_definition_enum(capture, builder, context);
+  }
+
   const class_id = create_class_id(capture);
   const base_classes = extract_extends(capture.node.parent || capture.node);
   const defining_scope_id = context.get_scope_id(capture.location);
@@ -131,23 +141,57 @@ export function handle_definition_method(
 
   const docstring = consume_python_docstring(capture.location.start_line);
 
-  // Check if this is a Protocol method (should be added to interface)
-  const protocol_id = find_containing_protocol(capture);
-  if (protocol_id) {
-    builder.add_method_signature_to_interface(protocol_id, {
-      symbol_id: method_id,
-      name: name,
-      location: capture.location,
-      scope_id: context.get_scope_id(capture.location),
-      return_type: extract_return_type(capture.node.parent || capture.node),
-    });
-    return;
+  // A method belongs to the class that owns it, so the Protocol test reads the
+  // nearest class's own bases — walking up would attribute a nested plain
+  // class's methods to an enclosing Protocol.
+  const owning_class = find_owning_class_node(capture);
+  if (owning_class && classify_class_bases(owning_class) === "interface") {
+    const owning_class_name = owning_class.childForFieldName("name");
+    if (owning_class_name) {
+      builder.add_method_signature_to_interface(
+        interface_symbol(
+          owning_class_name.text as SymbolName,
+          node_to_location(owning_class_name, capture.location.file_path)
+        ),
+        {
+          symbol_id: method_id,
+          name: name,
+          location: capture.location,
+          scope_id: context.get_scope_id(capture.location),
+          return_type: extract_return_type(capture.node.parent || capture.node),
+        }
+      );
+      return;
+    }
+  }
+
+  // An Enum class is built as an enum, so its methods attach to the enum. The
+  // class branch below mints a class symbol, which no enum state answers to,
+  // and the method would be dropped.
+  if (owning_class && classify_class_bases(owning_class) === "enum") {
+    const enum_id = find_containing_enum(capture);
+    if (enum_id) {
+      builder.add_method_to_enum(enum_id, {
+        symbol_id: method_id,
+        name: name,
+        location: capture.location,
+        scope_id: context.get_scope_id(capture.location),
+        return_type: extract_return_type(capture.node.parent || capture.node),
+        ...determine_method_type(capture.node.parent || capture.node),
+        async: is_async_function(capture.node.parent || capture.node),
+        docstring,
+      });
+      return;
+    }
   }
 
   // Regular class method
   const class_id = find_containing_class(capture);
   if (class_id) {
     const method_type = determine_method_type(capture.node.parent || capture.node);
+    const accessor_kind = determine_accessor_kind(
+      capture.node.parent || capture.node
+    );
     const is_async = is_async_function(capture.node.parent || capture.node);
 
     builder.add_method_to_class(
@@ -158,65 +202,12 @@ export function handle_definition_method(
         location: capture.location,
         scope_id: context.get_scope_id(capture.location),
         return_type: extract_return_type(capture.node.parent || capture.node),
+        returned_name_chain: extract_returned_name_chain(capture.node.parent || capture.node),
         ...method_type,
+        accessor_kind,
         async: is_async,
         docstring,
       },
-      capture
-    );
-  }
-}
-
-export function handle_definition_method_static(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const method_id = create_method_id(capture);
-  const class_id = find_containing_class(capture);
-  const docstring = consume_python_docstring(capture.location.start_line);
-
-  if (class_id) {
-    builder.add_method_to_class(
-      class_id,
-      {
-        symbol_id: method_id,
-        name: capture.text,
-        location: capture.location,
-        scope_id: context.get_scope_id(capture.location),
-        return_type: extract_return_type(capture.node.parent || capture.node),
-        static: true,
-        async: is_async_function(capture.node.parent || capture.node),
-        docstring,
-      },
-      capture
-    );
-  }
-}
-
-export function handle_definition_method_class(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const method_id = create_method_id(capture);
-  const class_id = find_containing_class(capture);
-  const docstring = consume_python_docstring(capture.location.start_line);
-
-  if (class_id) {
-    builder.add_method_to_class(
-      class_id,
-      {
-        symbol_id: method_id,
-        name: capture.text,
-        location: capture.location,
-        scope_id: context.get_scope_id(capture.location),
-        return_type: extract_return_type(capture.node.parent || capture.node),
-        abstract: true, // Use abstract flag for classmethod
-        async: is_async_function(capture.node.parent || capture.node),
-        docstring,
-      },
-      capture
     );
   }
 }
@@ -248,27 +239,6 @@ export function handle_definition_constructor(
 // PROPERTY HANDLERS
 // ============================================================================
 
-export function handle_definition_property(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const prop_id = create_property_id(capture);
-  const class_id = find_containing_class(capture);
-
-  if (class_id) {
-    builder.add_property_to_class(class_id, {
-      symbol_id: prop_id,
-      name: capture.text,
-      location: capture.location,
-      scope_id: context.get_scope_id(capture.location),
-      type: extract_type_annotation(capture.node),
-      initial_value: extract_initial_value(capture.node),
-      readonly: true, // Properties decorated with @property are readonly
-    });
-  }
-}
-
 export function handle_definition_field(
   capture: CaptureNode,
   builder: DefinitionBuilder,
@@ -285,17 +255,57 @@ export function handle_definition_field(
       scope_id: context.get_scope_id(capture.location),
       type: extract_type_annotation(capture.node),
       initial_value: extract_initial_value(capture.node),
+      ...extract_read_source(capture.node),
     });
   }
 }
 
+// A constructor callee is a class name, which Python spells in CapWords
+// (PEP 8), optionally with leading underscores for a private class. This
+// distinguishes `self.x = Database()` (a typed construction) from
+// `self.x = helper()` (a transient call result), since indexing has no
+// cross-file class table to resolve the callee against.
+const CONSTRUCTOR_NAME = /^_*[A-Z]/;
+
 /**
- * Handle `self.attr = value` assignments in `__init__` methods.
+ * Extract the constructed type from an assignment's right-hand side.
+ *
+ * `self.x = Database()` yields `Database` from the bare-identifier callee;
+ * `self.x = pd.DataFrame()` yields the last segment `DataFrame` from the
+ * namespace-qualified attribute callee — the same last-segment rule
+ * `extract_constructor_bindings` applies to namespace-qualified constructors.
+ * A call whose callee is not CapWords (e.g. `helper()`, `obj.transform()`) is
+ * a plain call result, not a construction, and yields `undefined`.
+ */
+function extract_constructor_rhs_type(
+  right: SyntaxNode | null
+): SymbolName | undefined {
+  if (right?.type !== "call") return undefined;
+  const callee = right.childForFieldName("function");
+  let name: string | undefined;
+  if (callee?.type === "identifier") name = callee.text;
+  else if (callee?.type === "attribute") {
+    name = callee.childForFieldName("attribute")?.text;
+  }
+  if (!name || !CONSTRUCTOR_NAME.test(name)) return undefined;
+  return name as SymbolName;
+}
+
+/**
+ * Handle `self.attr = value` assignments inside class methods.
  *
  * Creates a PropertyDefinition on the containing class for instance attributes
- * assigned in `__init__`. The `@assignment.property` capture in python.scm fires
- * for all `obj.attr = value` patterns; this handler filters to only `self.X = ...`
- * inside `__init__`.
+ * so a later `self.attr.method()` resolves against the attribute's type. The
+ * `@assignment.property` capture in python.scm fires for all `obj.attr = value`
+ * patterns; this handler keeps only `self.X = ...` assignments in a direct
+ * method body of the class.
+ *
+ * Inside `__init__`, every distinct attribute is promoted (typed or not) — the
+ * canonical declaration site. Outside `__init__`, only a constructor RHS
+ * promotes; an untyped transient mutation in an arbitrary method is not a
+ * declaration. Promotion is deduped by attribute name (see
+ * `add_inferred_property_to_class`): the first assignment of an attribute wins
+ * and a later typed assignment upgrades an earlier untyped one.
  */
 export function handle_assignment_property(
   capture: CaptureNode,
@@ -315,35 +325,40 @@ export function handle_assignment_property(
   // Only handle self.X assignments
   if (object_node.type !== "identifier" || object_node.text !== "self") return;
 
-  // Only handle assignments inside __init__
-  let node = assignment_node.parent;
-  let in_init = false;
-  while (node) {
-    if (node.type === "function_definition") {
-      const name_node = node.childForFieldName("name");
-      in_init = name_node?.text === "__init__";
-      break;
-    }
-    node = node.parent;
+  // Promote only from a direct method body — the nearest enclosing function
+  // must sit directly in the class block, never a nested function.
+  let enclosing_function = assignment_node.parent;
+  while (
+    enclosing_function &&
+    enclosing_function.type !== "function_definition"
+  ) {
+    enclosing_function = enclosing_function.parent;
   }
-  if (!in_init) return;
+  if (!enclosing_function) return;
+  const method_block = enclosing_function.parent;
+  if (
+    method_block?.type !== "block" ||
+    method_block.parent?.type !== "class_definition"
+  ) {
+    return;
+  }
+  const in_init =
+    enclosing_function.childForFieldName("name")?.text === "__init__";
+
+  const right = assignment_node.childForFieldName("right");
+  const rhs_type = extract_constructor_rhs_type(right);
+
+  // Outside __init__, only a typed/constructor RHS is a declaration worth promoting.
+  if (!in_init && rhs_type === undefined) return;
 
   const class_id = find_containing_class(capture);
   if (!class_id) return;
 
   const attr_name = attr_node.text as SymbolName;
-  const file_path = capture.location.file_path;
-  const attr_location = node_to_location(attr_node, file_path);
-  const prop_id = property_symbol(attr_name, attr_location);
+  const attr_location = node_to_location(attr_node, capture.location.file_path);
 
-  // Extract type from RHS if it's a constructor call (e.g., Database())
-  const right = assignment_node.childForFieldName("right");
-  const rhs_type = right?.type === "call"
-    ? right.childForFieldName("function")?.text as SymbolName | undefined
-    : undefined;
-
-  builder.add_property_to_class(class_id, {
-    symbol_id: prop_id,
+  builder.add_inferred_property_to_class(class_id, {
+    symbol_id: property_symbol(attr_name, attr_location),
     name: attr_name,
     location: attr_location,
     scope_id: context.get_scope_id(capture.location),
@@ -378,26 +393,8 @@ export function handle_definition_function(
       is_exported: export_info.is_exported,
       export: export_info.export,
       return_type: extract_return_type(capture.node.parent || capture.node),
+      returned_name_chain: extract_returned_name_chain(capture.node.parent || capture.node),
       docstring,
-    },
-    capture
-  );
-}
-
-export function handle_definition_lambda(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const func_id = create_function_id(capture);
-
-  builder.add_function(
-    {
-      symbol_id: func_id,
-      name: "lambda" as SymbolName,
-      location: capture.location,
-      scope_id: context.get_scope_id(capture.location),
-      is_exported: false, // Lambda functions are never exported
     },
     capture
   );
@@ -449,96 +446,7 @@ export function handle_definition_parameter(
     scope_id: context.get_scope_id(capture.location),
     type: extract_parameter_type(capture.node),
     default_value: extract_default_value(capture.node),
-  });
-}
-
-export function handle_definition_parameter_default(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const param_id = create_parameter_id(capture);
-  const parent_id = find_containing_callable(capture);
-
-  builder.add_parameter_to_callable(parent_id, {
-    symbol_id: param_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    type: extract_parameter_type(capture.node),
-    default_value: extract_default_value(capture.node),
-    optional: true,
-  });
-}
-
-export function handle_definition_parameter_typed(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const param_id = create_parameter_id(capture);
-  const parent_id = find_containing_callable(capture);
-
-  builder.add_parameter_to_callable(parent_id, {
-    symbol_id: param_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    type: extract_parameter_type(capture.node),
-    default_value: extract_default_value(capture.node),
-  });
-}
-
-export function handle_definition_parameter_typed_default(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const param_id = create_parameter_id(capture);
-  const parent_id = find_containing_callable(capture);
-
-  builder.add_parameter_to_callable(parent_id, {
-    symbol_id: param_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    type: extract_parameter_type(capture.node),
-    default_value: extract_default_value(capture.node),
-    optional: true,
-  });
-}
-
-export function handle_definition_parameter_args(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const param_id = create_parameter_id(capture);
-  const parent_id = find_containing_callable(capture);
-
-  builder.add_parameter_to_callable(parent_id, {
-    symbol_id: param_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    type: "tuple" as SymbolName, // *args is a tuple
-  });
-}
-
-export function handle_definition_parameter_kwargs(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const param_id = create_parameter_id(capture);
-  const parent_id = find_containing_callable(capture);
-
-  builder.add_parameter_to_callable(parent_id, {
-    symbol_id: param_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    type: "dict" as SymbolName, // **kwargs is a dict
+    ...extract_read_source(capture.node),
   });
 }
 
@@ -590,223 +498,10 @@ export function handle_definition_variable(
     initial_value: extract_initial_value(capture.node),
     function_collection,
     collection_source,
-  });
-}
-
-export function handle_definition_variable_typed(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const var_id = create_variable_id(capture);
-  const name = capture.text;
-
-  const defining_scope_id = context.get_scope_id(capture.location);
-  const export_info = extract_export_info(
-    name,
-    defining_scope_id,
-    context.root_scope_id
-  );
-
-  const collection_source = extract_collection_source(capture.node);
-
-  builder.add_variable({
-    kind: "variable",
-    symbol_id: var_id,
-    name: name,
-    location: capture.location,
-    scope_id: defining_scope_id,
-    is_exported: export_info.is_exported,
-    export: export_info.export,
-    type: extract_type_annotation(capture.node),
-    initial_value: extract_initial_value(capture.node),
-    collection_source,
-  });
-}
-
-export function handle_definition_variable_multiple(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  // Handle multiple assignment like: a, b = 1, 2
-  const var_id = create_variable_id(capture);
-  const name = capture.text;
-
-  const defining_scope_id = context.get_scope_id(capture.location);
-  const export_info = extract_export_info(
-    name,
-    defining_scope_id,
-    context.root_scope_id
-  );
-
-  builder.add_variable({
-    kind: "variable",
-    symbol_id: var_id,
-    name: name,
-    location: capture.location,
-    scope_id: defining_scope_id,
-    is_exported: export_info.is_exported,
-    export: export_info.export,
-    type: undefined, // Type inference would be complex for unpacking
-    initial_value: undefined, // Value would be partial
-  });
-}
-
-export function handle_definition_variable_tuple(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  // Handle tuple unpacking like: (a, b) = (1, 2)
-  const var_id = create_variable_id(capture);
-  const name = capture.text;
-
-  const defining_scope_id = context.get_scope_id(capture.location);
-  const export_info = extract_export_info(
-    name,
-    defining_scope_id,
-    context.root_scope_id
-  );
-
-  builder.add_variable({
-    kind: "variable",
-    symbol_id: var_id,
-    name: name,
-    location: capture.location,
-    scope_id: defining_scope_id,
-    is_exported: export_info.is_exported,
-    export: export_info.export,
-    type: undefined,
-    initial_value: undefined,
-  });
-}
-
-export function handle_definition_variable_destructured(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  // Handle destructuring assignment
-  const var_id = create_variable_id(capture);
-  const name = capture.text;
-
-  const defining_scope_id = context.get_scope_id(capture.location);
-  const export_info = extract_export_info(
-    name,
-    defining_scope_id,
-    context.root_scope_id
-  );
-
-  builder.add_variable({
-    kind: "variable",
-    symbol_id: var_id,
-    name: name,
-    location: capture.location,
-    scope_id: defining_scope_id,
-    is_exported: export_info.is_exported,
-    export: export_info.export,
-    type: undefined,
-    initial_value: undefined,
-  });
-}
-
-// ============================================================================
-// LOOP AND COMPREHENSION VARIABLE HANDLERS
-// ============================================================================
-
-export function handle_definition_loop_var(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const var_id = create_variable_id(capture);
-
-  builder.add_variable({
-    kind: "variable",
-    symbol_id: var_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    is_exported: false, // Loop variables are never exported
-    type: undefined,
-    initial_value: undefined,
-  });
-}
-
-export function handle_definition_loop_var_multiple(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const var_id = create_variable_id(capture);
-
-  builder.add_variable({
-    kind: "variable",
-    symbol_id: var_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    is_exported: false, // Loop variables are never exported
-    type: undefined,
-    initial_value: undefined,
-  });
-}
-
-export function handle_definition_comprehension_var(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const var_id = create_variable_id(capture);
-
-  builder.add_variable({
-    kind: "variable",
-    symbol_id: var_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    is_exported: false, // Comprehension variables are never exported
-    type: undefined,
-    initial_value: undefined,
-  });
-}
-
-export function handle_definition_except_var(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const var_id = create_variable_id(capture);
-
-  builder.add_variable({
-    kind: "variable",
-    symbol_id: var_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    is_exported: false, // Exception variables are never exported
-    type: "Exception" as SymbolName,
-    initial_value: undefined,
-  });
-}
-
-export function handle_definition_with_var(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const var_id = create_variable_id(capture);
-
-  builder.add_variable({
-    kind: "variable",
-    symbol_id: var_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    is_exported: false, // Context manager variables are never exported
-    type: undefined,
-    initial_value: undefined,
+    ...extract_read_source(capture.node),
+    initialized_from_call: extract_initializer_call(capture.node),
+    initialized_from_call_result: extract_initializer_result_call(capture.node),
+    iterated_from: extract_iteration_source(capture.node),
   });
 }
 
@@ -910,57 +605,6 @@ export function handle_definition_enum_member(
 // DECORATOR HANDLERS
 // ============================================================================
 
-export function handle_decorator_variable(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const target_id = find_decorator_target(capture);
-  if (!target_id) return;
-
-  const decorator_name = capture.text;
-
-  builder.add_decorator_to_target(target_id, {
-    name: decorator_name,
-    defining_scope_id: context.get_scope_id(capture.location),
-    location: capture.location,
-  });
-}
-
-export function handle_decorator_function(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const target_id = find_decorator_target(capture);
-  if (!target_id) return;
-
-  const decorator_name = capture.text;
-
-  builder.add_decorator_to_target(target_id, {
-    name: decorator_name,
-    defining_scope_id: context.get_scope_id(capture.location),
-    location: capture.location,
-  });
-}
-
-export function handle_decorator_property(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const target_id = find_decorator_target(capture);
-  if (!target_id) return;
-
-  const decorator_name = capture.text;
-
-  builder.add_decorator_to_target(target_id, {
-    name: decorator_name,
-    defining_scope_id: context.get_scope_id(capture.location),
-    location: capture.location,
-  });
-}
-
 export function handle_decorator_method(
   capture: CaptureNode,
   builder: DefinitionBuilder,
@@ -1021,64 +665,33 @@ export const PYTHON_HANDLERS: HandlerRegistry = {
 
   // Methods
   "definition.method": handle_definition_method,
-  "definition.method.static": handle_definition_method_static,
-  "definition.method.class": handle_definition_method_class,
   "definition.constructor": handle_definition_constructor,
 
   // Properties
-  "definition.property": handle_definition_property,
   "definition.field": handle_definition_field,
   "assignment.property": handle_assignment_property,
 
   // Functions
   "definition.function": handle_definition_function,
-  "definition.lambda": handle_definition_lambda,
   "definition.anonymous_function": handle_definition_anonymous_function,
 
   // Parameters
   "definition.parameter": handle_definition_parameter,
-  "definition.parameter.default": handle_definition_parameter_default,
-  "definition.parameter.typed": handle_definition_parameter_typed,
-  "definition.parameter.typed.default": handle_definition_parameter_typed_default,
-  "definition.parameter.args": handle_definition_parameter_args,
-  "definition.parameter.kwargs": handle_definition_parameter_kwargs,
 
   // Variables
   "definition.variable": handle_definition_variable,
-  "definition.variable.typed": handle_definition_variable_typed,
-  "definition.variable.multiple": handle_definition_variable_multiple,
-  "definition.variable.tuple": handle_definition_variable_tuple,
-  "definition.variable.destructured": handle_definition_variable_destructured,
-
-  // Loop and comprehension variables
-  "definition.loop_var": handle_definition_loop_var,
-  "definition.loop_var.multiple": handle_definition_loop_var_multiple,
-  "definition.comprehension_var": handle_definition_comprehension_var,
-  "definition.except_var": handle_definition_except_var,
-  "definition.with_var": handle_definition_with_var,
 
   // Imports
   "definition.import": handle_definition_import,
-  "import.named": handle_import_named,
-  "import.named.source": handle_import_named_source,
-  "import.named.alias": handle_import_named_alias,
-  "import.module": handle_import_module,
-  "import.module.source": handle_import_module_source,
-  "import.module.alias": handle_import_module_alias,
-  "import.star": handle_import_star,
 
-  // Protocols
-  "definition.interface": handle_definition_interface,
+  // Protocols (definition.class discriminates and routes to the interface/enum
+  // handlers; only their member captures dispatch directly)
   "definition.property.interface": handle_definition_property_interface,
 
   // Enums
-  "definition.enum": handle_definition_enum,
   "definition.enum_member": handle_definition_enum_member,
 
   // Decorators
-  "decorator.variable": handle_decorator_variable,
-  "decorator.function": handle_decorator_function,
-  "decorator.property": handle_decorator_property,
   "decorator.method": handle_decorator_method,
 
   // Type aliases

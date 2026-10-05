@@ -1,9 +1,8 @@
-import { Project, load_project } from "@ariadnejs/core";
+import { Project, load_project, log_info, log_warn } from "@ariadnejs/core";
 import type { PersistenceStorage } from "@ariadnejs/core";
 import { FilePath } from "@ariadnejs/types";
 import * as chokidar from "chokidar";
 import { create_file_watcher, FileWatcherOptions } from "./file_watcher";
-import { log_info, log_warn } from "./logger";
 
 export interface ProjectManagerOptions {
   project_path: string;
@@ -68,10 +67,11 @@ export class ProjectManager {
     log_info(`Loading project files from: ${this.project_path}`);
     const start_time = Date.now();
 
-    this.project = await load_project({
+    const { project } = await load_project({
       project_path: this.project_path,
       storage: this.storage ?? undefined,
     });
+    this.project = project;
 
     const duration = Date.now() - start_time;
     const stats = this.project.get_stats();

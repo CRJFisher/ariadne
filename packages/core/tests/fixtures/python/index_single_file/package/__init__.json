@@ -15,7 +15,8 @@
         "end_line": 5,
         "end_column": 0
       },
-      "child_ids": []
+      "child_ids": [],
+      "self_type_name": null
     }
   },
   "functions": {},
@@ -26,5 +27,6 @@
   "namespaces": {},
   "types": {},
   "imported_symbols": {},
+  "unattached_impl_methods": {},
   "references": []
 }

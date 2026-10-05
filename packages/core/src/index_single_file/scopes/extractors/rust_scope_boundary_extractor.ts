@@ -1,208 +1,38 @@
-import type { FilePath, ScopeType } from "@ariadnejs/types";
-import Parser from "tree-sitter";
+import type { FilePath, ScopeType, SymbolName } from "@ariadnejs/types";
+import type Parser from "tree-sitter";
 import { CommonScopeBoundaryExtractor, type ScopeBoundaries } from "../boundary_base";
 import { node_to_location } from "../../node_to_location";
 
 /**
- * Rust-specific scope boundary extractor.
+ * Scope boundary extraction for Rust.
  *
- * Rust has specific constructs that need special handling:
- * - Struct definitions
- * - Enum definitions
- * - Impl blocks
- * - Trait definitions
- * - Module definitions
- *
- * For most cases, the common extractor works fine since Rust
- * tree-sitter grammar follows standard patterns.
+ * Rust's scope query captures class-family scopes — struct, enum, and trait
+ * bodies — on the body node (field_declaration_list, enum_variant_list,
+ * declaration_list) rather than the named item. That body node carries no name
+ * field, so it is both the symbol and the scope. Module, function, closure, and
+ * block scope boundaries match the common brace-oriented base exactly and are
+ * inherited; only the self type of an `impl` block is read here.
  */
 export class RustScopeBoundaryExtractor extends CommonScopeBoundaryExtractor {
-
-  extract_boundaries(
+  // An `impl` block is the one block scope that binds `self`, to the type it
+  // implements and never to the trait. Struct, enum and trait bodies are
+  // class scopes the base already names from the item around them.
+  override extract_self_type_name(
     node: Parser.SyntaxNode,
-    scope_type: ScopeType,
-    file_path: FilePath
-  ): ScopeBoundaries {
-    switch (scope_type) {
-      case "class":
-        // Rust class-like constructs: struct, enum, trait, impl
-        return this.extract_rust_class_like_boundaries(node, file_path);
-      case "module":
-        return this.extract_module_boundaries(node, file_path);
-      default:
-        // Use common logic for function, method, constructor, block
-        return super.extract_boundaries(node, scope_type, file_path);
+    scope_type: ScopeType
+  ): SymbolName | null {
+    const parent = node.parent;
+    if (
+      scope_type === "block" &&
+      node.type === "declaration_list" &&
+      parent?.type === "impl_item"
+    ) {
+      return implemented_type_name(parent);
     }
+    return super.extract_self_type_name(node, scope_type);
   }
 
-  private extract_rust_class_like_boundaries(
-    node: Parser.SyntaxNode,
-    file_path: FilePath
-  ): ScopeBoundaries {
-    // Handle different Rust class-like constructs based on node type
-    switch (node.type) {
-      case "struct_item":
-        return this.extract_struct_boundaries(node, file_path);
-      case "enum_item":
-        return this.extract_enum_boundaries(node, file_path);
-      case "trait_item":
-        return this.extract_trait_boundaries(node, file_path);
-      case "impl_item":
-        return this.extract_impl_boundaries(node, file_path);
-      case "field_declaration_list":
-        return this.extract_field_list_boundaries(node, file_path);
-      case "enum_variant_list":
-        return this.extract_enum_variant_list_boundaries(node, file_path);
-      case "declaration_list":
-        return this.extract_declaration_list_boundaries(node, file_path);
-      default:
-        // Fall back to common logic for other types
-        return super.extract_class_boundaries(node, file_path);
-    }
-  }
-
-  /**
-   * Extract struct boundaries.
-   * Similar to class but for struct declarations.
-   */
-  private extract_struct_boundaries(
-    node: Parser.SyntaxNode,
-    file_path: FilePath
-  ): ScopeBoundaries {
-    const name_node = node.childForFieldName("name");
-    if (!name_node) {
-      throw new Error("Struct declaration has no name field");
-    }
-
-    const body_node = node.childForFieldName("body");
-    if (!body_node) {
-      // Some structs don't have bodies (unit structs)
-      const location = node_to_location(name_node, file_path);
-      return {
-        symbol_location: location,
-        scope_location: location,
-      };
-    }
-
-    return {
-      symbol_location: node_to_location(name_node, file_path),
-      scope_location: node_to_location(body_node, file_path),
-    };
-  }
-
-  /**
-   * Extract enum boundaries.
-   */
-  private extract_enum_boundaries(
-    node: Parser.SyntaxNode,
-    file_path: FilePath
-  ): ScopeBoundaries {
-    const name_node = node.childForFieldName("name");
-    if (!name_node) {
-      throw new Error("Enum declaration has no name field");
-    }
-
-    const body_node = node.childForFieldName("body");
-    if (!body_node) {
-      throw new Error("Enum declaration has no body field");
-    }
-
-    return {
-      symbol_location: node_to_location(name_node, file_path),
-      scope_location: node_to_location(body_node, file_path),
-    };
-  }
-
-  /**
-   * Extract trait boundaries.
-   */
-  private extract_trait_boundaries(
-    node: Parser.SyntaxNode,
-    file_path: FilePath
-  ): ScopeBoundaries {
-    const name_node = node.childForFieldName("name");
-    if (!name_node) {
-      throw new Error("Trait declaration has no name field");
-    }
-
-    const body_node = node.childForFieldName("body");
-    if (!body_node) {
-      throw new Error("Trait declaration has no body field");
-    }
-
-    return {
-      symbol_location: node_to_location(name_node, file_path),
-      scope_location: node_to_location(body_node, file_path),
-    };
-  }
-
-  /**
-   * Extract impl boundaries.
-   */
-  private extract_impl_boundaries(
-    node: Parser.SyntaxNode,
-    file_path: FilePath
-  ): ScopeBoundaries {
-    // Impl blocks don't have names, use the type being implemented
-    const type_node = node.childForFieldName("type");
-    const body_node = node.childForFieldName("body");
-
-    if (!body_node) {
-      throw new Error("Impl block has no body field");
-    }
-
-    const symbol_location = type_node
-      ? node_to_location(type_node, file_path)
-      : node_to_location(node, file_path);
-
-    return {
-      symbol_location,
-      scope_location: node_to_location(body_node, file_path),
-    };
-  }
-
-  /**
-   * Extract module boundaries.
-   *
-   * Handles both the root-level source_file node (which has no name/body fields)
-   * and inline mod_item nodes (which have name and optionally body fields).
-   */
-  protected override extract_module_boundaries(
-    node: Parser.SyntaxNode,
-    file_path: FilePath
-  ): ScopeBoundaries {
-    // Root-level source_file has no name field — return full node location.
-    // process_scopes will skip it via the file_location comparison.
-    if (node.type === "source_file") {
-      const location = node_to_location(node, file_path);
-      return { symbol_location: location, scope_location: location };
-    }
-
-    const name_node = node.childForFieldName("name");
-    if (!name_node) {
-      throw new Error("Module declaration has no name field");
-    }
-
-    const body_node = node.childForFieldName("body");
-    if (!body_node) {
-      // External modules don't have bodies
-      const location = node_to_location(name_node, file_path);
-      return {
-        symbol_location: location,
-        scope_location: location,
-      };
-    }
-
-    return {
-      symbol_location: node_to_location(name_node, file_path),
-      scope_location: node_to_location(body_node, file_path),
-    };
-  }
-
-  /**
-   * Extract boundaries for field declaration lists (struct/enum body parts).
-   */
-  private extract_field_list_boundaries(
+  protected override extract_class_boundaries(
     node: Parser.SyntaxNode,
     file_path: FilePath
   ): ScopeBoundaries {
@@ -212,32 +42,45 @@ export class RustScopeBoundaryExtractor extends CommonScopeBoundaryExtractor {
       scope_location: location,
     };
   }
+}
 
-  /**
-   * Extract boundaries for enum variant lists.
-   */
-  private extract_enum_variant_list_boundaries(
-    node: Parser.SyntaxNode,
-    file_path: FilePath
-  ): ScopeBoundaries {
-    const location = node_to_location(node, file_path);
-    return {
-      symbol_location: location,
-      scope_location: location,
-    };
-  }
+/**
+ * The bare name of the type an `impl` block implements: a `type_identifier`,
+ * or the identifier under a `generic_type` (`impl S<T>` and `impl Tr for S<T>`
+ * both name `S`).
+ *
+ * Two shapes deliberately name nothing. A reference, tuple, pointer or scoped
+ * path wraps its type, and recording the wrapped name would claim `self` IS
+ * the owned type, which the member lookup cannot yet tell apart from an
+ * inherent impl. A blanket impl's `type` is one of the block's own type
+ * parameters (`impl<T> Tr for T`), which stands for every implementor rather
+ * than for a definition — and, spelled as Rust convention allows
+ * (`impl<Handler> Service for Handler`), would otherwise collide with an
+ * unrelated type of that name.
+ */
+function implemented_type_name(impl_node: Parser.SyntaxNode): SymbolName | null {
+  const type_node = impl_node.childForFieldName("type");
+  if (!type_node) return null;
 
-  /**
-   * Extract boundaries for declaration lists (trait/impl body parts).
-   */
-  private extract_declaration_list_boundaries(
-    node: Parser.SyntaxNode,
-    file_path: FilePath
-  ): ScopeBoundaries {
-    const location = node_to_location(node, file_path);
-    return {
-      symbol_location: location,
-      scope_location: location,
-    };
-  }
+  const base =
+    type_node.type === "generic_type"
+      ? type_node.childForFieldName("type")
+      : type_node;
+  if (base?.type !== "type_identifier") return null;
+
+  const name = base.text as SymbolName;
+  return declares_type_parameter(impl_node, name) ? null : name;
+}
+
+function declares_type_parameter(
+  impl_node: Parser.SyntaxNode,
+  name: SymbolName
+): boolean {
+  const parameters = impl_node.childForFieldName("type_parameters");
+  if (!parameters) return false;
+  return parameters.namedChildren.some(
+    (parameter) =>
+      parameter.type === "type_parameter" &&
+      parameter.childForFieldName("name")?.text === name
+  );
 }

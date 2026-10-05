@@ -1,0 +1,476 @@
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TASK-376.16 &mdash; a reason for every dropped call reference</title>
+<script>
+  (function () {
+    var root = document.documentElement;
+    var theme = null, nav = null;
+    try { theme = localStorage.getItem('cdocTheme'); nav = localStorage.getItem('cdocNav'); } catch (e) {}
+    var frag = location.hash;
+    var dark = frag === '#theme-dark' ? true
+      : frag === '#theme-light' ? false
+      : theme ? theme === 'dark'
+      : matchMedia('(prefers-color-scheme: dark)').matches;
+    root.classList.toggle('dark', dark);
+    root.classList.toggle('nav-collapsed', nav === 'collapsed');
+  })();
+</script>
+<style>
+:root {
+  color-scheme: light;
+  --ivory: #f7f3ec;
+  --oat: #ece4d6;
+  --paper: #fffdf8;
+  --slate: #2f3338;
+  --ink: #1d2024;
+  --mute: #6c6f73;
+  --faint: #9a9b97;
+  --clay: #c06d4f;
+  --olive: #6f7a4f;
+  --rust: #a8412a;
+  --work: #4a6b8a; /* work / build axis accent */
+  --concept: #7d6699; /* concept / idea axis accent */
+  --line: #d8cfbe;
+  --hair: #e4ddce;
+  --plate: #f7f3ec; /* fixed: backs literal-hex SVG, never themes */
+  --plate-ink: #2f3338; /* fixed: text on --plate */
+  --serif: ui-serif, Georgia, "Times New Roman", serif;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --mono: "SF Mono", "JetBrains Mono", Menlo, Consolas, ui-monospace, monospace;
+  /* Live sticky-bar heights, rewritten by the nav's ResizeObserver. The seeds
+   * keep every sticky top and scroll-margin-top DEFINED before the first
+   * measurement lands — a var with no value invalidates the whole declaration
+   * and the bars stop stacking. These two are the only measured values that
+   * live in the brand block rather than a JS-mutated live block, because they
+   * must resolve before any script runs. */
+  --nav-h: 0px;
+  --rail-h: 0px;
+}
+html.dark {
+  color-scheme: dark;
+  --ivory: #191715;
+  --oat: #2b2723;
+  --paper: #211e1b;
+  --slate: #e8e0d4;
+  --ink: #f4efe6;
+  --mute: #a9a49c;
+  --faint: #8a857d;
+  --clay: #e0906f;
+  --olive: #9aad76;
+  --rust: #e0765a;
+  --work: #7fa8cd;
+  --concept: #ab92c9;
+  --line: #3a342e;
+  --hair: #2e2925;
+  --plate: #f7f3ec;
+  --plate-ink: #2f3338;
+}
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--ivory);
+      color: var(--slate);
+      font-family: var(--sans);
+      font-size: 14px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+    code, .mono { font-family: var(--mono); }
+    .prose { max-width: 68ch; }
+    :focus-visible { outline: 2px solid var(--clay); outline-offset: 2px; border-radius: 4px; }
+
+    /* ── cross-doc navigation ─────────────────────────────── */
+    .xnav {
+      position: sticky; top: 0; z-index: 10;
+      background: var(--oat);
+      border-bottom: 1px solid var(--line);
+      padding: 0 clamp(12px, 3vw, 28px);
+    }
+    .xnav-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 9px 0; }
+    .xnav-here {
+      font-family: var(--mono); font-size: 11px; letter-spacing: .05em;
+      background: var(--slate); color: var(--ivory);
+      border-radius: 999px; padding: 4px 12px; white-space: nowrap;
+    }
+    .xnav-axis { font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--mute); }
+    .xnav-spacer { flex: 1 1 auto; }
+    .xnav-btn {
+      font-family: var(--mono); font-size: 11px; letter-spacing: .04em;
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 5px 11px; border: 1px solid var(--line); border-radius: 999px;
+      background: var(--paper); color: var(--slate); cursor: pointer;
+    }
+    .xnav-btn:hover { border-color: var(--mute); color: var(--ink); }
+    .chev { width: 7px; height: 7px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor;
+             transform: rotate(-135deg) translate(-1px, -1px); transition: transform .24s ease; }
+    html.nav-collapsed .chev { transform: rotate(45deg) translate(-1px, -1px); }
+
+    .nav-region {
+      display: grid; grid-template-rows: 1fr; opacity: 1;
+      transition: grid-template-rows .24s ease, opacity .16s ease, visibility 0s linear 0s;
+    }
+    .nav-region-inner { min-height: 0; overflow: hidden; }
+    html.nav-collapsed .nav-region {
+      grid-template-rows: 0fr; opacity: 0; visibility: hidden;
+      transition: grid-template-rows .24s ease, opacity .16s ease, visibility 0s linear .24s;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .nav-region, html.nav-collapsed .nav-region { transition: none; }
+      .chev { transition: none; }
+    }
+    .xnav-row { display: flex; flex-wrap: wrap; gap: 6px; padding: 2px 0 11px; }
+    .dchip {
+      display: flex; flex-direction: column; gap: 1px;
+      flex: 1 1 205px; min-width: 205px; max-width: 300px; padding: 5px 10px 6px;
+      border: 1px solid var(--line); border-radius: 9px;
+      background: var(--paper); text-decoration: none; color: var(--slate);
+    }
+    a.dchip:hover { border-color: var(--clay); background: var(--ivory); }
+    .dchip.here { background: var(--slate); border-color: var(--slate); }
+    .dchip.here .cid, .dchip.here .ctitle { color: var(--ivory); }
+    .dchip.here .ctag { color: var(--oat); }
+    .dchip.pending { border-style: dashed; background: transparent; }
+    .dchip.pending .cid, .dchip.pending .ctitle { color: var(--mute); }
+    .dchip-top { display: flex; align-items: center; gap: 6px; min-width: 0; }
+    .cid { font-family: var(--mono); font-size: 11px; font-weight: 600; letter-spacing: .02em; color: var(--ink); white-space: nowrap; }
+    .ctag { font-family: var(--mono); font-size: 10px; font-style: normal; letter-spacing: .04em; color: var(--faint);
+             margin-left: auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+    .ctitle { font-size: 11px; line-height: 1.3; color: var(--mute);
+               overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+    .dot { width: 7px; height: 7px; border-radius: 999px; flex: none; }
+    .dot-ok { background: var(--olive); }
+    .dot-here { background: var(--clay); }
+    .dot-pending { background: transparent; border: 1.5px solid var(--faint); }
+
+    /* ── page shell ───────────────────────────────────────── */
+    main { padding-inline: clamp(16px, 5vw, 64px); padding-block: 30px 18px; }
+    section[id] { scroll-margin-top: calc(var(--nav-h) + var(--rail-h) + 12px); }
+
+    .masthead { margin-bottom: 30px; }
+    .eyebrow {
+      font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+      color: var(--mute); margin-bottom: 10px;
+    }
+    h1 {
+      font-family: var(--serif); font-weight: 500; font-size: 32px; line-height: 1.2;
+      letter-spacing: -.01em; color: var(--ink); margin-bottom: 10px;
+    }
+    .byline { display: flex; flex-wrap: wrap; gap: 6px 10px; margin-bottom: 16px; }
+    .byline span {
+      font-family: var(--mono); font-size: 10px; letter-spacing: .03em; color: var(--mute);
+      border: 1px solid var(--hair); border-radius: 999px; padding: 3px 9px; background: var(--paper);
+    }
+    .preamble { font-size: 17px; line-height: 1.6; color: var(--ink); }
+
+    .sec-head { display: flex; flex-direction: column; gap: 5px; margin: 0 0 14px; }
+    .kicker { font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--clay); }
+    h2 { font-family: var(--serif); font-weight: 500; font-size: 21px; line-height: 1.25; color: var(--ink); }
+    section { margin-bottom: 44px; }
+
+    /* ── plated figure (spliced Mermaid keeps its light palette) ── */
+    .plate {
+      background: var(--plate); border: 1px solid var(--line); border-radius: 14px;
+      padding: 22px; margin: 0;
+    }
+    .cdoc-mermaid-scope { width: 100%; }
+    .cdoc-mermaid-scope svg {
+      display: block; width: 100%; max-width: 100%; height: auto; background: transparent !important;
+    }
+    .cdoc-mermaid-scope svg,
+    .cdoc-mermaid-scope svg foreignObject div {
+      font-family: "Trebuchet MS", Verdana, Arial, sans-serif;
+    }
+    .fig-legend { display: flex; flex-wrap: wrap; gap: 8px 22px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--hair); }
+    .lg { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--plate-ink); }
+    .sw { width: 22px; height: 14px; border-radius: 4px; border: 2px solid; flex: none; }
+    .sw.edge { height: 0; border-width: 0 0 2px 0; border-style: dashed; border-radius: 0; }
+    .plate figcaption { margin-top: 14px; font-size: 13px; line-height: 1.6; color: var(--plate-ink); }
+    .plate figcaption .pin, .plate figcaption code { color: var(--plate-ink); }
+    .plate figcaption code { font-size: 12.5px; }
+    .pin { font-family: var(--mono); font-size: 12px; color: var(--mute); white-space: nowrap; }
+
+    /* ── arm metric chips ─────────────────────────────────── */
+    .arm-strip { display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px; }
+    .arm { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .armname {
+      font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+      width: 92px; color: var(--mute);
+    }
+    .chipm {
+      font-family: var(--mono); font-size: 12px; letter-spacing: .02em;
+      border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px;
+      background: var(--paper); color: var(--mute);
+    }
+    .chipm strong { color: var(--ink); font-weight: 600; margin-left: 6px; }
+    .chipm.failed { border-color: var(--rust); }
+    .chipm.failed strong { color: var(--rust); }
+    .chipm.share { background: var(--oat); border-color: var(--oat); color: var(--slate); }
+
+    /* ── taxonomy table ───────────────────────────────────── */
+    .tablefig { margin: 0; }
+    table.tax { width: 100%; border-collapse: collapse; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; }
+    table.tax caption {
+      caption-side: top; text-align: left; padding: 0 0 8px;
+      font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--mute);
+    }
+    table.tax thead th:first-child { border-top-left-radius: 12px; }
+    table.tax thead th:last-child { border-top-right-radius: 12px; }
+    table.tax th {
+      font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+      color: var(--mute); font-weight: 500; text-align: left; padding: 10px 14px;
+      background: var(--oat); border-bottom: 1px solid var(--line);
+    }
+    table.tax th.rt, table.tax td.n, table.tax td.d { text-align: right; }
+    table.tax td { padding: 7px 14px; border-bottom: 1px solid var(--hair); vertical-align: middle; }
+    table.tax tr:last-child td { border-bottom: 0; }
+    table.tax td.reason code { font-size: 12.5px; color: var(--ink); }
+    table.tax td.n { font-family: var(--mono); font-size: 12.5px; color: var(--ink); white-space: nowrap; }
+    .barcell { width: 46%; }
+    .bar { display: block; height: 10px; min-width: 2px; border-radius: 3px; background: var(--clay); opacity: .5; }
+    .bar.peak { height: 14px; background: var(--rust); opacity: 1; }
+    .never { font-family: var(--mono); font-size: 10px; letter-spacing: .04em; color: var(--faint); }
+    .zerorow td.reason code, .zerorow td.n { color: var(--mute); }
+    .delta { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; }
+    .delta.down { color: var(--olive); }
+    .delta.up { color: var(--clay); }
+    .delta.flat { color: var(--faint); }
+    .tablefig figcaption { margin-top: 12px; font-size: 13px; line-height: 1.6; color: var(--mute); }
+
+    .callout {
+      margin-top: 18px; border-left: 4px solid var(--clay); background: var(--paper);
+      border-top: 1px solid var(--hair); border-right: 1px solid var(--hair); border-bottom: 1px solid var(--hair);
+      border-radius: 0 10px 10px 0; padding: 12px 16px; font-size: 13.5px; line-height: 1.6; color: var(--slate);
+    }
+    .callout .colabel {
+      display: block; font-family: var(--mono); font-size: 10px; letter-spacing: .14em;
+      text-transform: uppercase; color: var(--clay); margin-bottom: 5px;
+    }
+    .callout code { font-size: 12.5px; color: var(--ink); }
+
+    /* ── key points ───────────────────────────────────────── */
+    .kpl { list-style: none; display: flex; flex-direction: column; gap: .6rem; }
+    .kpl li { display: grid; grid-template-columns: 1.25rem 1fr; gap: .75rem; align-items: baseline; }
+    .kpl li > span { font-family: var(--serif); font-size: 15.5px; line-height: 1.55; color: var(--slate); }
+    .kpl li::before { content: "\203A"; font-family: var(--mono); color: var(--rust); font-size: 15px; }
+    .kpl li code { font-family: var(--mono); font-size: 13px; color: var(--ink); }
+
+    /* ── footer ───────────────────────────────────────────── */
+    .pagefoot {
+      border-top: 1px solid var(--line); padding: 16px clamp(16px, 5vw, 64px) 40px;
+      display: flex; flex-wrap: wrap; gap: 6px 18px;
+    }
+    .pagefoot span { font-family: var(--mono); font-size: 10px; letter-spacing: .03em; color: var(--faint); }
+
+    @media (max-width: 760px) {
+      .dchip { flex: 1 1 100%; max-width: none; }
+      .barcell { width: 30%; }
+      h1 { font-size: 26px; }
+    }
+</style>
+</head>
+<body>
+
+<nav class="xnav" id="xnav" aria-label="TASK-376 family">
+  <div class="xnav-bar">
+    <span class="xnav-axis">TASK-376 family</span>
+    <span class="xnav-here" aria-current="page">TASK-376.16 &middot; failure ledger</span>
+    <span class="xnav-spacer"></span>
+    <button class="xnav-btn" id="navToggle" type="button" aria-expanded="true" aria-controls="nav-rows">
+      <span class="nt-label">Hide 19 companions</span><i class="chev" aria-hidden="true"></i>
+    </button>
+    <button class="xnav-btn" id="themeToggle" type="button" aria-pressed="false">
+      <span class="tt-label">Theme: Light</span>
+    </button>
+  </div>
+  <div class="nav-region" id="nav-rows">
+    <div class="nav-region-inner">
+      <div class="xnav-row">
+        <a class="dchip doc-link" href="task-376%20-%20Record-the-five-type-facts-once-and-resolve-members-over-a-single-lookup-ladder.overview.html" title="Record the five type facts once, resolve members over one ladder"><span class="dchip-top"><i class="dot dot-ok"></i><b class="cid">TASK-376</b><em class="ctag">overview</em></span><span class="ctitle">Record the five type facts once, resolve members over one ladder</span></a>
+        <a class="dchip doc-link" href="task-376.1%20-%20Mint-collection-member-ids-that-name-real-definitions.member-id-identity.html" title="Mint collection member ids that name real definitions"><span class="dchip-top"><i class="dot dot-ok"></i><b class="cid">TASK-376.1</b><em class="ctag">member id identity</em></span><span class="ctitle">Mint collection member ids that name real definitions</span></a>
+        <a class="dchip doc-link" href="task-376.2%20-%20Delete-the-Python-heuristic-constructor-capture-and-stop-the-annotation-clobber.constructor-capture.html" title="Delete the Python heuristic constructor capture"><span class="dchip-top"><i class="dot dot-ok"></i><b class="cid">TASK-376.2</b><em class="ctag">constructor capture</em></span><span class="ctitle">Delete the Python heuristic constructor capture</span></a>
+        <a class="dchip doc-link" href="task-376.3%20-%20Record-the-scope%27s-self-type-as-LexicalScope.self_type_name.self-type-on-the-scope.html" title="Record the scope&#x27;s self type as LexicalScope.self_type_name"><span class="dchip-top"><i class="dot dot-ok"></i><b class="cid">TASK-376.3</b><em class="ctag">self type on the scope</em></span><span class="ctitle">Record the scope&#x27;s self type as LexicalScope.self_type_name</span></a>
+        <a class="dchip doc-link" href="task-376.4%20-%20Make-the-member-index-complete-enums,-cross-file-union,-reverse-lookup.member-union.html" title="Make the member index complete: enums, cross-file union, reverse lookup"><span class="dchip-top"><i class="dot dot-ok"></i><b class="cid">TASK-376.4</b><em class="ctag">member union</em></span><span class="ctitle">Make the member index complete: enums, cross-file union, reverse lookup</span></a>
+        <span class="dchip pending" title="Resolve self/this through find_self_type"><span class="dchip-top"><i class="dot dot-pending"></i><b class="cid">TASK-376.5</b><em class="ctag">not yet generated</em></span><span class="ctitle">Resolve self/this through find_self_type</span></span>
+        <span class="dchip pending" title="Parse and resolve type annotations through one annotation resolver"><span class="dchip-top"><i class="dot dot-pending"></i><b class="cid">TASK-376.6</b><em class="ctag">not yet generated</em></span><span class="ctitle">Parse and resolve type annotations through one annotation resolver</span></span>
+        <span class="dchip pending" title="Single-source the heritage graph and publish parent_types"><span class="dchip-top"><i class="dot dot-pending"></i><b class="cid">TASK-376.7</b><em class="ctag">not yet generated</em></span><span class="ctitle">Single-source the heritage graph and publish parent_types</span></span>
+        <span class="dchip pending" title="Attach cross-file Rust impl block methods to their type"><span class="dchip-top"><i class="dot dot-pending"></i><b class="cid">TASK-376.8</b><em class="ctag">not yet generated</em></span><span class="ctitle">Attach cross-file Rust impl block methods to their type</span></span>
+        <span class="dchip pending" title="Widen construction and initialiser capture across four languages"><span class="dchip-top"><i class="dot dot-pending"></i><b class="cid">TASK-376.9</b><em class="ctag">not yet generated</em></span><span class="ctitle">Widen construction and initialiser capture across four languages</span></span>
+        <span class="dchip pending" title="Resolve container element types and stop mistyping the container"><span class="dchip-top"><i class="dot dot-pending"></i><b class="cid">TASK-376.10</b><em class="ctag">not yet generated</em></span><span class="ctitle">Resolve container element types and stop mistyping the container</span></span>
+        <span class="dchip pending" title="Add the single ValueSource channel and its four consumers"><span class="dchip-top"><i class="dot dot-pending"></i><b class="cid">TASK-376.11</b><em class="ctag">not yet generated</em></span><span class="ctitle">Add the single ValueSource channel and its four consumers</span></span>
+        <a class="dchip doc-link" href="task-376.12%20-%20Collapse-module-member-lookup-and-fix-guarded-and-function-local-import-bindings.module-member-lookup.html" title="Collapse module member lookup and fix guarded import bindings"><span class="dchip-top"><i class="dot dot-ok"></i><b class="cid">TASK-376.12</b><em class="ctag">module member lookup</em></span><span class="ctitle">Collapse module member lookup and fix guarded import bindings</span></a>
+        <span class="dchip pending" title="Add ladder rung 5: subtype closure fan-out on a miss"><span class="dchip-top"><i class="dot dot-pending"></i><b class="cid">TASK-376.13</b><em class="ctag">not yet generated</em></span><span class="ctitle">Add ladder rung 5: subtype closure fan-out on a miss</span></span>
+        <span class="dchip pending" title="Infer structural conformance for interfaces no class declares"><span class="dchip-top"><i class="dot dot-pending"></i><b class="cid">TASK-376.14</b><em class="ctag">not yet generated</em></span><span class="ctitle">Infer structural conformance for interfaces no class declares</span></span>
+        <span class="dchip pending" title="Bind type parameters from call arguments and declared instantiations"><span class="dchip-top"><i class="dot dot-pending"></i><b class="cid">TASK-376.15</b><em class="ctag">not yet generated</em></span><span class="ctitle">Bind type parameters from call arguments and declared instantiations</span></span>
+        <span class="dchip here" title="Emit a ResolutionFailure for every dropped call reference"><span class="dchip-top"><i class="dot dot-here"></i><b class="cid">TASK-376.16</b><em class="ctag">you are here</em></span><span class="ctitle">Emit a ResolutionFailure for every dropped call reference</span></span>
+        <span class="dchip pending" title="Split symbol_types into value types and callable return types"><span class="dchip-top"><i class="dot dot-pending"></i><b class="cid">TASK-376.17</b><em class="ctag">not yet generated</em></span><span class="ctitle">Split symbol_types into value types and callable return types</span></span>
+        <span class="dchip pending" title="Re-run the evidence corpora and pin the per-corpus regression suite"><span class="dchip-top"><i class="dot dot-pending"></i><b class="cid">TASK-376.18</b><em class="ctag">not yet generated</em></span><span class="ctitle">Re-run the evidence corpora and pin the per-corpus regression suite</span></span>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<main>
+
+  <header class="masthead">
+    <div class="eyebrow">TASK-376.16 &middot; wave 1 &middot; no dependencies</div>
+    <h1>A reason for every call the resolver could not place</h1>
+    <div class="byline">
+      <span>resolve_references/call_resolution/call_resolver.ts</span>
+      <span>benchmark_corpus_load/</span>
+      <span>types/resolution_failure.ts</span>
+    </div>
+    <p class="preamble prose">Ariadne's call resolver drops some calls it cannot place without recording why, so nothing later in this epic can be measured; this step gives every dropped call a typed reason and reports those reasons per repository the benchmark loads.</p>
+  </header>
+
+  <section id="exits" data-spine="lead">
+    <div class="sec-head">
+      <span class="kicker">01 &middot; where a reference leaves the resolver</span>
+      <h2>Five exits out of <code>resolve_calls</code>, three of them recording nothing</h2>
+    </div>
+    <figure class="plate" role="img" aria-label="Flow from index_single_file through resolve_calls: the four call kinds reach resolve_function_call, resolve_constructor_call and resolve_method_call; property_access reaches the getter probe; the four non-call kinds continue. Two exits produce a CallReference carrying resolutions or a ResolutionFailure, two produce nothing at all, and one is a documented non-call exclusion. Accounted references reach the per-file ledger and the per-arm failure taxonomy.">
+      <div class="cdoc-mermaid-scope"><svg id="my-svg" width="100%" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="flowchart" style="max-width: 1383.89px; background-color: white;" viewBox="0 0 1383.890625 1126" role="graphics-document document" aria-roledescription="flowchart-v2"><style>#my-svg{font-size:16px;fill:#2f3338;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#my-svg .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#my-svg .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#my-svg .error-icon{fill:hsl(218.1818181818, 36.6666666667%, 93.2352941176%);}#my-svg .error-text{fill:rgb(23.5750000002, 18.9750000001, 10.9250000001);stroke:rgb(23.5750000002, 18.9750000001, 10.9250000001);}#my-svg .edge-thickness-normal{stroke-width:1px;}#my-svg .edge-thickness-thick{stroke-width:3.5px;}#my-svg .edge-pattern-solid{stroke-dasharray:0;}#my-svg .edge-thickness-invisible{stroke-width:0;fill:none;}#my-svg .edge-pattern-dashed{stroke-dasharray:3;}#my-svg .edge-pattern-dotted{stroke-dasharray:2;}#my-svg .marker{fill:#2f3338;stroke:#2f3338;}#my-svg .marker.cross{stroke:#2f3338;}#my-svg svg{font-size:16px;}#my-svg p{margin:0;}#my-svg .label{color:#2f3338;}#my-svg .cluster-label text{fill:rgb(23.5750000002, 18.9750000001, 10.9250000001);}#my-svg .cluster-label span{color:rgb(23.5750000002, 18.9750000001, 10.9250000001);}#my-svg .cluster-label span p{background-color:transparent;}#my-svg .label text,#my-svg span{fill:#2f3338;color:#2f3338;}#my-svg .node rect,#my-svg .node circle,#my-svg .node ellipse,#my-svg .node polygon,#my-svg .node path{fill:#ece4d6;stroke:#c06d4f;stroke-width:1px;}#my-svg .rough-node .label text,#my-svg .node .label text,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-anchor:middle;}#my-svg .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#my-svg .rough-node .label,#my-svg .node .label,#my-svg .image-shape .label,#my-svg .icon-shape .label{text-align:center;}#my-svg .node.clickable{cursor:pointer;}#my-svg .root .anchor path{fill:#2f3338!important;stroke-width:0;stroke:#2f3338;}#my-svg .arrowheadPath{fill:#080c13;}#my-svg .edgePath .path{stroke:#2f3338;stroke-width:1px;}#my-svg .flowchart-link{stroke:#2f3338;fill:none;}#my-svg .edgeLabel{background-color:#f7f3ec;text-align:center;}#my-svg .edgeLabel p{background-color:#f7f3ec;}#my-svg .edgeLabel rect{opacity:0.5;background-color:#f7f3ec;fill:#f7f3ec;}#my-svg .labelBkg{background-color:rgba(247, 243, 236, 0.5);}#my-svg .cluster rect{fill:hsl(218.1818181818, 36.6666666667%, 93.2352941176%);stroke:hsl(218.1818181818, 0%, 83.2352941176%);stroke-width:1px;}#my-svg .cluster text{fill:rgb(23.5750000002, 18.9750000001, 10.9250000001);}#my-svg .cluster span{color:rgb(23.5750000002, 18.9750000001, 10.9250000001);}#my-svg div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-size:12px;background:hsl(218.1818181818, 36.6666666667%, 93.2352941176%);border:1px solid hsl(218.1818181818, 0%, 83.2352941176%);border-radius:2px;pointer-events:none;z-index:100;}#my-svg .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#2f3338;}#my-svg rect.text{fill:none;stroke-width:0;}#my-svg .icon-shape,#my-svg .image-shape{background-color:#f7f3ec;text-align:center;}#my-svg .icon-shape p,#my-svg .image-shape p{background-color:#f7f3ec;padding:2px;}#my-svg .icon-shape .label rect,#my-svg .image-shape .label rect{opacity:0.5;background-color:#f7f3ec;fill:#f7f3ec;}#my-svg .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#my-svg .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#my-svg .node .neo-node{stroke:#c06d4f;}#my-svg [data-look="neo"].node rect,#my-svg [data-look="neo"].cluster rect,#my-svg [data-look="neo"].node polygon{stroke:url(#my-svg-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#my-svg [data-look="neo"].node path{stroke:url(#my-svg-gradient);stroke-width:1px;}#my-svg [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#my-svg [data-look="neo"].node .neo-line path{stroke:#c06d4f;filter:none;}#my-svg [data-look="neo"].node circle{stroke:url(#my-svg-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#my-svg [data-look="neo"].node circle .state-start{fill:#000000;}#my-svg [data-look="neo"].icon-shape .icon{fill:url(#my-svg-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#my-svg [data-look="neo"].icon-shape .icon-neo path{stroke:url(#my-svg-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#my-svg :root{--mermaid-font-family:"trebuchet ms",verdana,arial,sans-serif;}#my-svg .neutral&gt;*{fill:rgb(236, 228, 214)!important;stroke:rgb(179, 165, 140)!important;stroke-width:1.5px!important;color:rgb(47, 51, 56)!important;}#my-svg .neutral span{fill:rgb(236, 228, 214)!important;stroke:rgb(179, 165, 140)!important;stroke-width:1.5px!important;color:rgb(47, 51, 56)!important;}#my-svg .neutral tspan{fill:rgb(47, 51, 56)!important;}#my-svg .good&gt;*{fill:rgb(226, 232, 211)!important;stroke:rgb(111, 122, 79)!important;stroke-width:2px!important;color:rgb(47, 51, 56)!important;}#my-svg .good span{fill:rgb(226, 232, 211)!important;stroke:rgb(111, 122, 79)!important;stroke-width:2px!important;color:rgb(47, 51, 56)!important;}#my-svg .good tspan{fill:rgb(47, 51, 56)!important;}#my-svg .silent&gt;*{fill:rgb(244, 221, 214)!important;stroke:rgb(168, 65, 42)!important;stroke-width:2px!important;color:rgb(47, 51, 56)!important;}#my-svg .silent span{fill:rgb(244, 221, 214)!important;stroke:rgb(168, 65, 42)!important;stroke-width:2px!important;color:rgb(47, 51, 56)!important;}#my-svg .silent tspan{fill:rgb(47, 51, 56)!important;}#my-svg .closed&gt;*{fill:rgb(246, 227, 215)!important;stroke:rgb(192, 109, 79)!important;stroke-width:2px!important;color:rgb(47, 51, 56)!important;}#my-svg .closed span{fill:rgb(246, 227, 215)!important;stroke:rgb(192, 109, 79)!important;stroke-width:2px!important;color:rgb(47, 51, 56)!important;}#my-svg .closed tspan{fill:rgb(47, 51, 56)!important;}#my-svg .step&gt;*{fill:rgb(246, 227, 215)!important;stroke:rgb(192, 109, 79)!important;stroke-width:2px!important;stroke-dasharray:6,4!important;color:rgb(47, 51, 56)!important;}#my-svg .step span{fill:rgb(246, 227, 215)!important;stroke:rgb(192, 109, 79)!important;stroke-width:2px!important;stroke-dasharray:6,4!important;color:rgb(47, 51, 56)!important;}#my-svg .step tspan{fill:rgb(47, 51, 56)!important;}#my-svg .ledger&gt;*{fill:rgb(47, 51, 56)!important;stroke:rgb(47, 51, 56)!important;stroke-width:2px!important;color:rgb(247, 243, 236)!important;}#my-svg .ledger span{fill:rgb(47, 51, 56)!important;stroke:rgb(47, 51, 56)!important;stroke-width:2px!important;color:rgb(247, 243, 236)!important;}#my-svg .ledger tspan{fill:rgb(247, 243, 236)!important;}</style><g><marker id="my-svg_flowchart-v2-pointEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-pointStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="4.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-pointEnd-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="11.5" refY="7" markerUnits="userSpaceOnUse" markerWidth="10.5" markerHeight="14" orient="auto"><path d="M 0 0 L 11.5 7 L 0 14 z" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-pointStart-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="1" refY="7" markerUnits="userSpaceOnUse" markerWidth="11.5" markerHeight="14" orient="auto"><polygon points="0,7 11.5,14 11.5,0" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="11" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-1" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleEnd-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refY="5" refX="12.25" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-circleStart-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-2" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-crossEnd" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="12" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-crossStart" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="-1" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"/></marker><marker id="my-svg_flowchart-v2-crossEnd-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="17.7" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5;"/></marker><marker id="my-svg_flowchart-v2-crossStart-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="-3.5" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5; stroke-dasharray: 1, 0;"/></marker><g class="root"><g class="clusters"/><g class="edgePaths"><path d="M485.977,67.256L550.637,76.88C615.297,86.504,744.617,105.752,809.277,118.876C873.938,132,873.938,139,873.938,142.5L873.938,146" id="my-svg-L_IDX_CK_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_IDX_CK_0" data-points="W3sieCI6NDg1Ljk3NjU2MjUsInkiOjY3LjI1NjAzMTA1MTkzMzM4fSx7IngiOjg3My45Mzc1LCJ5IjoxMjV9LHsieCI6ODczLjkzNzUsInkiOjE1MH1d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M396.914,100L396.914,104.167C396.914,108.333,396.914,116.667,396.914,128.333C396.914,140,396.914,155,396.914,162.5L396.914,170" id="my-svg-L_IDX_PA_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_IDX_PA_0" data-points="W3sieCI6Mzk2LjkxNDA2MjUsInkiOjEwMH0seyJ4IjozOTYuOTE0MDYyNSwieSI6MTI1fSx7IngiOjM5Ni45MTQwNjI1LCJ5IjoxNzR9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M307.852,77.456L277.764,85.38C247.677,93.304,187.503,109.152,157.415,130.909C127.328,152.667,127.328,180.333,127.328,208C127.328,235.667,127.328,263.333,127.328,287C127.328,310.667,127.328,330.333,127.328,350C127.328,369.667,127.328,389.333,127.328,402.667C127.328,416,127.328,423,127.328,426.5L127.328,430" id="my-svg-L_IDX_NC_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_IDX_NC_0" data-points="W3sieCI6MzA3Ljg1MTU2MjUsInkiOjc3LjQ1NjExMDM1NDQyMDg0fSx7IngiOjEyNy4zMjgxMjUsInkiOjEyNX0seyJ4IjoxMjcuMzI4MTI1LCJ5IjoyMDh9LHsieCI6MTI3LjMyODEyNSwieSI6MjkxfSx7IngiOjEyNy4zMjgxMjUsInkiOjM1MH0seyJ4IjoxMjcuMzI4MTI1LCJ5Ijo0MDl9LHsieCI6MTI3LjMyODEyNSwieSI6NDM0fV0=" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M754.945,250.735L736.259,257.445C717.573,264.156,680.201,277.578,661.514,289.789C642.828,302,642.828,313,642.828,318.5L642.828,324" id="my-svg-L_CK_FN_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_CK_FN_0" data-points="W3sieCI6NzU0Ljk0NTMxMjUsInkiOjI1MC43MzQ1MzQ1MTQyMzE2M30seyJ4Ijo2NDIuODI4MTI1LCJ5IjoyOTF9LHsieCI6NjQyLjgyODEyNSwieSI6MzI4fV0=" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M882.012,266L882.592,270.167C883.172,274.333,884.332,282.667,884.912,292.333C885.492,302,885.492,313,885.492,318.5L885.492,324" id="my-svg-L_CK_CT_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_CK_CT_0" data-points="W3sieCI6ODgyLjAxMTg1OTkzOTc1OSwieSI6MjY2fSx7IngiOjg4NS40OTIxODc1LCJ5IjoyOTF9LHsieCI6ODg1LjQ5MjE4NzUsInkiOjMyOH1d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M992.93,245.385L1017.128,252.987C1041.326,260.59,1089.721,275.795,1113.919,286.897C1138.117,298,1138.117,305,1138.117,308.5L1138.117,312" id="my-svg-L_CK_MC_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_CK_MC_0" data-points="W3sieCI6OTkyLjkyOTY4NzUsInkiOjI0NS4zODQ5NzcwODExNzd9LHsieCI6MTEzOC4xMTcxODc1LCJ5IjoyOTF9LHsieCI6MTEzOC4xMTcxODc1LCJ5IjozMTZ9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M396.914,242L396.914,250.167C396.914,258.333,396.914,274.667,396.914,286.333C396.914,298,396.914,305,396.914,308.5L396.914,312" id="my-svg-L_PA_GP_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_PA_GP_0" data-points="W3sieCI6Mzk2LjkxNDA2MjUsInkiOjI0Mn0seyJ4IjozOTYuOTE0MDYyNSwieSI6MjkxfSx7IngiOjM5Ni45MTQwNjI1LCJ5IjozMTZ9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M127.328,550L127.328,556.167C127.328,562.333,127.328,574.667,131.196,586.451C135.064,598.235,142.8,609.47,146.668,615.088L150.536,620.705" id="my-svg-L_NC_CONT_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_NC_CONT_0" data-points="W3sieCI6MTI3LjMyODEyNSwieSI6NTUwfSx7IngiOjEyNy4zMjgxMjUsInkiOjU4N30seyJ4IjoxNTIuODAzOTM0NDg3OTUxOCwieSI6NjI0fV0=" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M585.084,372L568.898,378.167C552.712,384.333,520.34,396.667,512.109,410.536C503.877,424.406,519.785,439.812,527.739,447.514L535.693,455.217" id="my-svg-L_FN_OKR_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_FN_OKR_0" data-points="W3sieCI6NTg1LjA4Mzk1MTI3MTE4NjUsInkiOjM3Mn0seyJ4Ijo0ODcuOTY4NzUsInkiOjQwOX0seyJ4Ijo1MzguNTY2ODc2ODgyNTMwMSwieSI6NDU4fV0=" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M739.523,369.971L771.02,376.475C802.516,382.98,865.508,395.99,897.004,416.328C928.5,436.667,928.5,464.333,928.5,494C928.5,523.667,928.5,555.333,928.5,585C928.5,614.667,928.5,642.333,928.5,668C928.5,693.667,928.5,717.333,949.697,734.861C970.895,752.389,1013.289,763.779,1034.487,769.473L1055.684,775.168" id="my-svg-L_FN_ERR_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_FN_ERR_0" data-points="W3sieCI6NzM5LjUyMzQzNzUsInkiOjM2OS45NzA1NDY0MDkyMzI2fSx7IngiOjkyOC41LCJ5Ijo0MDl9LHsieCI6OTI4LjUsInkiOjQ5Mn0seyJ4Ijo5MjguNSwieSI6NTg3fSx7IngiOjkyOC41LCJ5Ijo2NzB9LHsieCI6OTI4LjUsInkiOjc0MX0seyJ4IjoxMDU5LjU0Njg3NSwieSI6Nzc2LjIwNTY0OTAzNDE4NTl9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M786.234,372L758.412,378.167C730.59,384.333,674.945,396.667,642.955,410.416C610.965,424.165,602.629,439.33,598.46,446.912L594.292,454.495" id="my-svg-L_CT_OKR_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_CT_OKR_0" data-points="W3sieCI6Nzg2LjIzNDM3NSwieSI6MzcyfSx7IngiOjYxOS4zMDA3ODEyNSwieSI6NDA5fSx7IngiOjU5Mi4zNjU1NDAyODYxNDQ2LCJ5Ijo0NTh9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M950.5,372L968.722,378.167C986.944,384.333,1023.388,396.667,1041.61,416.667C1059.832,436.667,1059.832,464.333,1059.832,494C1059.832,523.667,1059.832,555.333,1059.832,585C1059.832,614.667,1059.832,642.333,1059.832,668C1059.832,693.667,1059.832,717.333,1065.513,732.963C1071.193,748.592,1082.554,756.185,1088.235,759.981L1093.915,763.777" id="my-svg-L_CT_ERR_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_CT_ERR_0" data-points="W3sieCI6OTUwLjUwMDI2NDgzMDUwODUsInkiOjM3Mn0seyJ4IjoxMDU5LjgzMjAzMTI1LCJ5Ijo0MDl9LHsieCI6MTA1OS44MzIwMzEyNSwieSI6NDkyfSx7IngiOjEwNTkuODMyMDMxMjUsInkiOjU4N30seyJ4IjoxMDU5LjgzMjAzMTI1LCJ5Ijo2NzB9LHsieCI6MTA1OS44MzIwMzEyNSwieSI6NzQxfSx7IngiOjEwOTcuMjQwOTk1NzYyNzEyLCJ5Ijo3NjZ9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M1031.461,367.637L989.771,374.531C948.081,381.424,864.701,395.212,801.902,410.544C739.104,425.875,696.888,442.75,675.779,451.187L654.671,459.624" id="my-svg-L_MC_OKR_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_MC_OKR_0" data-points="W3sieCI6MTAzMS40NjA5Mzc1LCJ5IjozNjcuNjM2Njk4MDUxMjM3MTV9LHsieCI6NzgxLjMyMDMxMjUsInkiOjQwOX0seyJ4Ijo2NTAuOTU3MDMxMjUsInkiOjQ2MS4xMDkwMTY2ODY0MTk0N31d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M1131.459,384L1130.643,388.167C1129.827,392.333,1128.195,400.667,1127.379,418.667C1126.563,436.667,1126.563,464.333,1126.563,494C1126.563,523.667,1126.563,555.333,1126.563,585C1126.563,614.667,1126.563,642.333,1126.563,668C1126.563,693.667,1126.563,717.333,1127.856,732.707C1129.149,748.081,1131.736,755.162,1133.03,758.702L1134.323,762.243" id="my-svg-L_MC_ERR_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_MC_ERR_0" data-points="W3sieCI6MTEzMS40NTg1NTQwMjU0MjM4LCJ5IjozODR9LHsieCI6MTEyNi41NjI1LCJ5Ijo0MDl9LHsieCI6MTEyNi41NjI1LCJ5Ijo0OTJ9LHsieCI6MTEyNi41NjI1LCJ5Ijo1ODd9LHsieCI6MTEyNi41NjI1LCJ5Ijo2NzB9LHsieCI6MTEyNi41NjI1LCJ5Ijo3NDF9LHsieCI6MTEzNS42OTU4NDIxNjEwMTcsInkiOjc2Nn1d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M1211.655,384L1220.667,388.167C1229.679,392.333,1247.703,400.667,1256.715,410.333C1265.727,420,1265.727,431,1265.727,436.5L1265.727,442" id="my-svg-L_MC_EMPTY_0" class="edge-thickness-normal edge-pattern-dotted edge-thickness-normal edge-pattern-solid flowchart-link" style="stroke:#a8412a;stroke-width:2px;fill:none;;;stroke:#a8412a;stroke-width:2px;fill:none" data-edge="true" data-et="edge" data-id="L_MC_EMPTY_0" data-points="W3sieCI6MTIxMS42NTQ3OTM0MzIyMDM0LCJ5IjozODR9LHsieCI6MTI2NS43MjY1NjI1LCJ5Ijo0MDl9LHsieCI6MTI2NS43MjY1NjI1LCJ5Ijo0NDZ9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd__a8412a)"/><path d="M496.578,364.54L547.368,371.95C598.159,379.36,699.74,394.18,726.096,410.499C752.452,426.818,703.583,444.635,679.149,453.544L654.715,462.453" id="my-svg-L_GP_OKR_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_GP_OKR_0" data-points="W3sieCI6NDk2LjU3ODEyNSwieSI6MzY0LjU0MDI3ODk1ODM0OTR9LHsieCI6ODAxLjMyMDMxMjUsInkiOjQwOX0seyJ4Ijo2NTAuOTU3MDMxMjUsInkiOjQ2My44MjI5ODMzMzgxOTUyfV0=" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M376.096,384L373.545,388.167C370.994,392.333,365.891,400.667,363.34,410.333C360.789,420,360.789,431,360.789,436.5L360.789,442" id="my-svg-L_GP_NOGET_0" class="edge-thickness-normal edge-pattern-dotted edge-thickness-normal edge-pattern-solid flowchart-link" style="stroke:#a8412a;stroke-width:2px;fill:none;;;stroke:#a8412a;stroke-width:2px;fill:none" data-edge="true" data-et="edge" data-id="L_GP_NOGET_0" data-points="W3sieCI6Mzc2LjA5NjI2NTg4OTgzMDUzLCJ5IjozODR9LHsieCI6MzYwLjc4OTA2MjUsInkiOjQwOX0seyJ4IjozNjAuNzg5MDYyNSwieSI6NDQ2fV0=" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd__a8412a)"/><path d="M1265.727,538L1265.727,546.167C1265.727,554.333,1265.727,570.667,1265.727,584.333C1265.727,598,1265.727,609,1265.727,614.5L1265.727,620" id="my-svg-L_EMPTY_FIX_0" class="edge-thickness-normal edge-pattern-dotted edge-thickness-normal edge-pattern-solid flowchart-link" style="stroke:#c06d4f;stroke-width:2px;fill:none;;;stroke:#c06d4f;stroke-width:2px;fill:none" data-edge="true" data-et="edge" data-id="L_EMPTY_FIX_0" data-points="W3sieCI6MTI2NS43MjY1NjI1LCJ5Ijo1Mzh9LHsieCI6MTI2NS43MjY1NjI1LCJ5Ijo1ODd9LHsieCI6MTI2NS43MjY1NjI1LCJ5Ijo2MjR9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd__c06d4f)"/><path d="M360.789,538L360.789,546.167C360.789,554.333,360.789,570.667,348.293,584.716C335.796,598.765,310.804,610.531,298.307,616.414L285.811,622.296" id="my-svg-L_NOGET_CONT_0" class="edge-thickness-normal edge-pattern-dotted edge-thickness-normal edge-pattern-solid flowchart-link" style="stroke:#c06d4f;stroke-width:2px;fill:none;;;stroke:#c06d4f;stroke-width:2px;fill:none" data-edge="true" data-et="edge" data-id="L_NOGET_CONT_0" data-points="W3sieCI6MzYwLjc4OTA2MjUsInkiOjUzOH0seyJ4IjozNjAuNzg5MDYyNSwieSI6NTg3fSx7IngiOjI4Mi4xOTE5MjM5NDU3ODMxLCJ5Ijo2MjR9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd__c06d4f)"/><path d="M1265.727,716L1265.727,720.167C1265.727,724.333,1265.727,732.667,1258.017,740.701C1250.307,748.735,1234.887,756.471,1227.177,760.339L1219.467,764.206" id="my-svg-L_FIX_ERR_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_FIX_ERR_0" data-points="W3sieCI6MTI2NS43MjY1NjI1LCJ5Ijo3MTZ9LHsieCI6MTI2NS43MjY1NjI1LCJ5Ijo3NDF9LHsieCI6MTIxNS44OTIwODE1Njc3OTY2LCJ5Ijo3NjZ9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M573.676,526L573.676,536.167C573.676,546.333,573.676,566.667,573.676,590.667C573.676,614.667,573.676,642.333,573.676,668C573.676,693.667,573.676,717.333,573.676,739C573.676,760.667,573.676,780.333,573.676,800C573.676,819.667,573.676,839.333,622.99,858.112C672.304,876.891,770.932,894.782,820.246,903.728L869.56,912.674" id="my-svg-L_OKR_LEDGER_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_OKR_LEDGER_0" data-points="W3sieCI6NTczLjY3NTc4MTI1LCJ5Ijo1MjZ9LHsieCI6NTczLjY3NTc4MTI1LCJ5Ijo1ODd9LHsieCI6NTczLjY3NTc4MTI1LCJ5Ijo2NzB9LHsieCI6NTczLjY3NTc4MTI1LCJ5Ijo3NDF9LHsieCI6NTczLjY3NTc4MTI1LCJ5Ijo4MDB9LHsieCI6NTczLjY3NTc4MTI1LCJ5Ijo4NTl9LHsieCI6ODczLjQ5NjA5Mzc1LCJ5Ijo5MTMuMzg3NjUyNDQ4MTUyNn1d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M1148.117,834L1148.117,838.167C1148.117,842.333,1148.117,850.667,1133.495,860.505C1118.872,870.344,1089.627,881.688,1075.004,887.36L1060.382,893.031" id="my-svg-L_ERR_LEDGER_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_ERR_LEDGER_0" data-points="W3sieCI6MTE0OC4xMTcxODc1LCJ5Ijo4MzR9LHsieCI6MTE0OC4xMTcxODc1LCJ5Ijo4NTl9LHsieCI6MTA1Ni42NTIzNDM3NSwieSI6ODk0LjQ3ODAyOTgzNDE4MzR9XQ==" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/><path d="M965.074,976L965.074,980.167C965.074,984.333,965.074,992.667,965.074,1000.333C965.074,1008,965.074,1015,965.074,1018.5L965.074,1022" id="my-svg-L_LEDGER_TAX_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_LEDGER_TAX_0" data-points="W3sieCI6OTY1LjA3NDIxODc1LCJ5Ijo5NzZ9LHsieCI6OTY1LjA3NDIxODc1LCJ5IjoxMDAxfSx7IngiOjk2NS4wNzQyMTg3NSwieSI6MTAyNn1d" data-look="classic" marker-end="url(#my-svg_flowchart-v2-pointEnd)"/></g><g class="edgeLabels"><g class="edgeLabel"><g class="label" data-id="L_IDX_CK_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_IDX_PA_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_IDX_NC_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_CK_FN_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_CK_CT_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_CK_MC_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_PA_GP_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_NC_CONT_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_FN_OKR_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_FN_ERR_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_CT_OKR_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_CT_ERR_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_MC_OKR_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_MC_ERR_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_MC_EMPTY_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_GP_OKR_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_GP_NOGET_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_EMPTY_FIX_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel" transform="translate(360.7890625, 587)"><g class="label" data-id="L_NOGET_CONT_0" transform="translate(-68.125, -12)"><foreignObject width="136.25" height="24"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"><p>state the exclusion</p></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_FIX_ERR_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_OKR_LEDGER_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_ERR_LEDGER_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g><g class="edgeLabel"><g class="label" data-id="L_LEDGER_TAX_0" transform="translate(0, 0)"><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" class="labelBkg" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="edgeLabel"></span></div></foreignObject></g></g></g><g class="nodes"><g class="node default neutral" id="my-svg-flowchart-IDX-0" data-look="classic" transform="translate(396.9140625, 54)"><rect class="basic label-container" style="fill:#ece4d6 !important;stroke:#b3a58c !important;stroke-width:1.5px !important" x="-89.0625" y="-46" width="178.125" height="92"/><g class="label" style="color:#2f3338 !important" transform="translate(-69.0625, -36)"><rect/><foreignObject width="138.125" height="72"><div style="color: rgb(47, 51, 56) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#2f3338 !important" class="nodeLabel"><p><b>index_single_file</b><br />references emitted<br />per file</p></span></div></foreignObject></g></g><g class="node default neutral" id="my-svg-flowchart-CK-1" data-look="classic" transform="translate(873.9375, 208)"><rect class="basic label-container" style="fill:#ece4d6 !important;stroke:#b3a58c !important;stroke-width:1.5px !important" x="-118.9921875" y="-58" width="237.984375" height="116"/><g class="label" style="color:#2f3338 !important" transform="translate(-98.9921875, -48)"><rect/><foreignObject width="197.984375" height="96"><div style="color: rgb(47, 51, 56) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#2f3338 !important" class="nodeLabel"><p><b>4 call kinds</b><br />function_call · method_call<br />constructor_call<br />self_reference_call</p></span></div></foreignObject></g></g><g class="node default neutral" id="my-svg-flowchart-PA-2" data-look="classic" transform="translate(396.9140625, 208)"><rect class="basic label-container" style="fill:#ece4d6 !important;stroke:#b3a58c !important;stroke-width:1.5px !important" x="-100.4765625" y="-34" width="200.953125" height="68"/><g class="label" style="color:#2f3338 !important" transform="translate(-80.4765625, -24)"><rect/><foreignObject width="160.953125" height="48"><div style="color: rgb(47, 51, 56) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#2f3338 !important" class="nodeLabel"><p><b>property_access</b><br />a bare read: obj.value</p></span></div></foreignObject></g></g><g class="node default neutral" id="my-svg-flowchart-NC-3" data-look="classic" transform="translate(127.328125, 492)"><rect class="basic label-container" style="fill:#ece4d6 !important;stroke:#b3a58c !important;stroke-width:1.5px !important" x="-119.328125" y="-58" width="238.65625" height="116"/><g class="label" style="color:#2f3338 !important" transform="translate(-99.328125, -48)"><rect/><foreignObject width="198.65625" height="96"><div style="color: rgb(47, 51, 56) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#2f3338 !important" class="nodeLabel"><p><b>4 non-call kinds</b><br />callable_value · assignment<br />variable_reference<br />type_reference</p></span></div></foreignObject></g></g><g class="node default neutral" id="my-svg-flowchart-FN-4" data-look="classic" transform="translate(642.828125, 350)"><rect class="basic label-container" style="fill:#ece4d6 !important;stroke:#b3a58c !important;stroke-width:1.5px !important" x="-96.6953125" y="-22" width="193.390625" height="44"/><g class="label" style="color:#2f3338 !important" transform="translate(-76.6953125, -12)"><rect/><foreignObject width="153.390625" height="24"><div style="color: rgb(47, 51, 56) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#2f3338 !important" class="nodeLabel"><p>resolve_function_call</p></span></div></foreignObject></g></g><g class="node default neutral" id="my-svg-flowchart-CT-5" data-look="classic" transform="translate(885.4921875, 350)"><rect class="basic label-container" style="fill:#ece4d6 !important;stroke:#b3a58c !important;stroke-width:1.5px !important" x="-107.96875" y="-22" width="215.9375" height="44"/><g class="label" style="color:#2f3338 !important" transform="translate(-87.96875, -12)"><rect/><foreignObject width="175.9375" height="24"><div style="color: rgb(47, 51, 56) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#2f3338 !important" class="nodeLabel"><p>resolve_constructor_call</p></span></div></foreignObject></g></g><g class="node default neutral" id="my-svg-flowchart-MC-6" data-look="classic" transform="translate(1138.1171875, 350)"><rect class="basic label-container" style="fill:#ece4d6 !important;stroke:#b3a58c !important;stroke-width:1.5px !important" x="-106.65625" y="-34" width="213.3125" height="68"/><g class="label" style="color:#2f3338 !important" transform="translate(-86.65625, -24)"><rect/><foreignObject width="173.3125" height="48"><div style="color: rgb(47, 51, 56) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#2f3338 !important" class="nodeLabel"><p>resolve_method_call<br />then collection dispatch</p></span></div></foreignObject></g></g><g class="node default neutral" id="my-svg-flowchart-GP-7" data-look="classic" transform="translate(396.9140625, 350)"><rect class="basic label-container" style="fill:#ece4d6 !important;stroke:#b3a58c !important;stroke-width:1.5px !important" x="-99.6640625" y="-34" width="199.328125" height="68"/><g class="label" style="color:#2f3338 !important" transform="translate(-79.6640625, -24)"><rect/><foreignObject width="159.328125" height="48"><div style="color: rgb(47, 51, 56) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#2f3338 !important" class="nodeLabel"><p>getter probe<br />synthetic method_call</p></span></div></foreignObject></g></g><g class="node default good" id="my-svg-flowchart-OKR-8" data-look="classic" transform="translate(573.67578125, 492)"><rect class="basic label-container" style="fill:#e2e8d3 !important;stroke:#6f7a4f !important;stroke-width:2px !important" x="-77.28125" y="-34" width="154.5625" height="68"/><g class="label" style="color:#2f3338 !important" transform="translate(-57.28125, -24)"><rect/><foreignObject width="114.5625" height="48"><div style="color: rgb(47, 51, 56) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#2f3338 !important" class="nodeLabel"><p><b>CallReference</b><br />with resolutions</p></span></div></foreignObject></g></g><g class="node default good" id="my-svg-flowchart-ERR-9" data-look="classic" transform="translate(1148.1171875, 800)"><rect class="basic label-container" style="fill:#e2e8d3 !important;stroke:#6f7a4f !important;stroke-width:2px !important" x="-88.5703125" y="-34" width="177.140625" height="68"/><g class="label" style="color:#2f3338 !important" transform="translate(-68.5703125, -24)"><rect/><foreignObject width="137.140625" height="48"><div style="color: rgb(47, 51, 56) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#2f3338 !important" class="nodeLabel"><p><b>CallReference</b><br />+ ResolutionFailure</p></span></div></foreignObject></g></g><g class="node default silent" id="my-svg-flowchart-EMPTY-10" data-look="classic" transform="translate(1265.7265625, 492)"><rect class="basic label-container" style="fill:#f4ddd6 !important;stroke:#a8412a !important;stroke-width:2px !important" x="-110.1640625" y="-46" width="220.328125" height="92"/><g class="label" style="color:#2f3338 !important" transform="translate(-90.1640625, -36)"><rect/><foreignObject width="180.328125" height="72"><div style="color: rgb(47, 51, 56) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#2f3338 !important" class="nodeLabel"><p>ok([]) → CallReference<br />no resolutions, no reason<br />:229</p></span></div></foreignObject></g></g><g class="node default silent" id="my-svg-flowchart-NOGET-11" data-look="classic" transform="translate(360.7890625, 492)"><rect class="basic label-container" style="fill:#f4ddd6 !important;stroke:#a8412a !important;stroke-width:2px !important" x="-76.1328125" y="-46" width="152.265625" height="92"/><g class="label" style="color:#2f3338 !important" transform="translate(-56.1328125, -36)"><rect/><foreignObject width="112.265625" height="72"><div style="color: rgb(47, 51, 56) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#2f3338 !important" class="nodeLabel"><p>no getter found<br />nothing pushed<br />:286-290</p></span></div></foreignObject></g></g><g class="node default closed" id="my-svg-flowchart-CONT-12" data-look="classic" transform="translate(184.4765625, 670)"><rect class="basic label-container" style="fill:#f6e3d7 !important;stroke:#c06d4f !important;stroke-width:2px !important" x="-113.1796875" y="-46" width="226.359375" height="92"/><g class="label" style="color:#2f3338 !important" transform="translate(-93.1796875, -36)"><rect/><foreignObject width="186.359375" height="72"><div style="color: rgb(47, 51, 56) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#2f3338 !important" class="nodeLabel"><p>continue — not a call kind<br />resolves elsewhere<br />:297-301</p></span></div></foreignObject></g></g><g class="node default step" id="my-svg-flowchart-FIX-13" data-look="classic" transform="translate(1265.7265625, 670)"><rect class="basic label-container" style="fill:#f6e3d7 !important;stroke:#c06d4f !important;stroke-width:2px !important;stroke-dasharray:6 4 !important" x="-92.6875" y="-46" width="185.375" height="92"/><g class="label" style="color:#2f3338 !important" transform="translate(-72.6875, -36)"><rect/><foreignObject width="145.375" height="72"><div style="color: rgb(47, 51, 56) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#2f3338 !important" class="nodeLabel"><p><b>this step</b><br />emit a typed reason<br />for the empty result</p></span></div></foreignObject></g></g><g class="node default ledger" id="my-svg-flowchart-LEDGER-14" data-look="classic" transform="translate(965.07421875, 930)"><rect class="basic label-container" style="fill:#2f3338 !important;stroke:#2f3338 !important;stroke-width:2px !important" x="-91.578125" y="-46" width="183.15625" height="92"/><g class="label" style="color:#f7f3ec !important" transform="translate(-71.578125, -36)"><rect/><foreignObject width="143.15625" height="72"><div style="color: rgb(247, 243, 236) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#f7f3ec !important" class="nodeLabel"><p><b>per file</b><br />resolved + failed ==<br />call-kind references</p></span></div></foreignObject></g></g><g class="node default closed" id="my-svg-flowchart-TAX-15" data-look="classic" transform="translate(965.07421875, 1072)"><rect class="basic label-container" style="fill:#f6e3d7 !important;stroke:#c06d4f !important;stroke-width:2px !important" x="-118.21875" y="-46" width="236.4375" height="92"/><g class="label" style="color:#2f3338 !important" transform="translate(-98.21875, -36)"><rect/><foreignObject width="196.4375" height="72"><div style="color: rgb(47, 51, 56) !important; display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;" xmlns="http://www.w3.org/1999/xhtml"><span style="color:#2f3338 !important" class="nodeLabel"><p><b>failure_taxonomy per arm</b><br />call_references · resolved<br />by_reason</p></span></div></foreignObject></g></g></g></g><marker id="my-svg_flowchart-v2-pointEnd__a8412a" class="marker flowchart-v2" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;" stroke="#a8412a" fill="#a8412a"/></marker><marker id="my-svg_flowchart-v2-pointEnd__c06d4f" class="marker flowchart-v2" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;" stroke="#c06d4f" fill="#c06d4f"/></marker></g><defs><filter id="my-svg-drop-shadow" height="130%" width="130%"><feDropShadow dx="4" dy="4" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"/></filter></defs><defs><filter id="my-svg-drop-shadow-small" height="150%" width="150%"><feDropShadow dx="2" dy="2" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"/></filter></defs><linearGradient id="my-svg-gradient" gradientUnits="objectBoundingBox" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#c06d4f" stop-opacity="1"/><stop offset="100%" stop-color="hsl(-81.8181818182, 0%, 78.2352941176%)" stop-opacity="1"/></linearGradient></svg></div>
+      <div class="fig-legend">
+        <span class="lg"><i class="sw" style="background:#e2e8d3;border-color:#6f7a4f"></i>the reference is accounted for</span>
+        <span class="lg"><i class="sw" style="background:#f4ddd6;border-color:#a8412a"></i>the reference leaves no record today</span>
+        <span class="lg"><i class="sw" style="background:#f6e3d7;border-color:#c06d4f"></i>closed or documented by this step</span>
+        <span class="lg"><i class="sw edge" style="border-color:#a8412a"></i>the exit this step converts</span>
+        <span class="lg"><i class="sw" style="background:#2f3338;border-color:#2f3338"></i>the invariant and what it feeds</span>
+      </div>
+      <figcaption class="prose">Three exits record nothing today: the empty <code>ok([])</code> dispatch at <span class="pin">call_resolver.ts:229</span> becomes <code>polymorphic_no_implementations</code> or <code>method_not_on_type</code>, while the getter probe at <span class="pin">:286-290</span> and the non-call kinds at <span class="pin">:297-301</span> are stated as excluded.</figcaption>
+    </figure>
+  </section>
+
+  <section id="taxonomy" data-spine="support">
+    <div class="sec-head">
+      <span class="kicker">02 &middot; what the reasons weigh on a real corpus</span>
+      <h2>Fourteen counters, two of them carrying three quarters of the mass</h2>
+    </div>
+    <div class="arm-strip">
+      <div class="arm">
+        <span class="armname">control</span>
+        <span class="chipm">call_references<strong>977,985</strong></span>
+        <span class="chipm">resolved<strong>553,928</strong></span>
+        <span class="chipm failed">failed<strong>424,057</strong></span>
+        <span class="chipm share">43.4% unplaced</span>
+      </div>
+      <div class="arm">
+        <span class="armname">candidate</span>
+        <span class="chipm">call_references<strong>977,994</strong></span>
+        <span class="chipm">resolved<strong>557,036</strong></span>
+        <span class="chipm failed">failed<strong>420,958</strong></span>
+        <span class="chipm share">43.0% unplaced</span>
+      </div>
+    </div>
+    <figure class="tablefig">
+      <table class="tax">
+        <caption>vscode &middot; by_reason, descending control count</caption>
+        <thead>
+          <tr>
+            <th scope="col">reason</th>
+            <th scope="col" class="rt">control</th>
+            <th scope="col">share of the control column</th>
+            <th scope="col" class="rt">candidate</th>
+            <th scope="col" class="rt">delta</th>
+          </tr>
+        </thead>
+        <tbody>
+            <tr><td class="reason"><code>name_not_in_scope</code></td><td class="n">165,901</td><td class="barcell"><span class="bar peak" style="width:100.00%"></span></td><td class="n">165,901</td><td class="d"><span class="delta flat">0</span></td></tr>
+            <tr><td class="reason"><code>receiver_type_unknown</code></td><td class="n">163,174</td><td class="barcell"><span class="bar" style="width:98.36%"></span></td><td class="n">158,233</td><td class="d"><span class="delta down">&minus;4,941</span></td></tr>
+            <tr><td class="reason"><code>member_type_unknown</code></td><td class="n">59,544</td><td class="barcell"><span class="bar" style="width:35.89%"></span></td><td class="n">60,065</td><td class="d"><span class="delta up">+521</span></td></tr>
+            <tr><td class="reason"><code>method_not_on_type</code></td><td class="n">23,339</td><td class="barcell"><span class="bar" style="width:14.07%"></span></td><td class="n">24,660</td><td class="d"><span class="delta up">+1,321</span></td></tr>
+            <tr><td class="reason"><code>polymorphic_no_implementations</code></td><td class="n">5,857</td><td class="barcell"><span class="bar" style="width:3.53%"></span></td><td class="n">5,857</td><td class="d"><span class="delta flat">0</span></td></tr>
+            <tr><td class="reason"><code>class_definition_not_found</code></td><td class="n">3,273</td><td class="barcell"><span class="bar" style="width:1.97%"></span></td><td class="n">3,273</td><td class="d"><span class="delta flat">0</span></td></tr>
+            <tr><td class="reason"><code>collection_dispatch_miss</code></td><td class="n">2,132</td><td class="barcell"><span class="bar" style="width:1.29%"></span></td><td class="n">2,132</td><td class="d"><span class="delta flat">0</span></td></tr>
+            <tr><td class="reason"><code>no_enclosing_class_scope</code></td><td class="n">396</td><td class="barcell"><span class="bar" style="width:0.24%"></span></td><td class="n">396</td><td class="d"><span class="delta flat">0</span></td></tr>
+            <tr><td class="reason"><code>constructor_target_not_a_class</code></td><td class="n">355</td><td class="barcell"><span class="bar" style="width:0.21%"></span></td><td class="n">355</td><td class="d"><span class="delta flat">0</span></td></tr>
+            <tr><td class="reason"><code>no_parent_class</code></td><td class="n">86</td><td class="barcell"><span class="bar" style="width:0.05%"></span></td><td class="n">86</td><td class="d"><span class="delta flat">0</span></td></tr>
+            <tr class="zerorow"><td class="reason"><code>import_unresolved</code></td><td class="n">0</td><td class="barcell"><span class="never">never produced &middot; explicit 0</span></td><td class="n">0</td><td class="d"><span class="delta flat">0</span></td></tr>
+            <tr class="zerorow"><td class="reason"><code>reexport_chain_unresolved</code></td><td class="n">0</td><td class="barcell"><span class="never">never produced &middot; explicit 0</span></td><td class="n">0</td><td class="d"><span class="delta flat">0</span></td></tr>
+            <tr class="zerorow"><td class="reason"><code>dynamic_dispatch</code></td><td class="n">0</td><td class="barcell"><span class="never">never produced &middot; explicit 0</span></td><td class="n">0</td><td class="d"><span class="delta flat">0</span></td></tr>
+            <tr class="zerorow"><td class="reason"><code>definition_has_no_body_scope</code></td><td class="n">0</td><td class="barcell"><span class="never">never produced &middot; explicit 0</span></td><td class="n">0</td><td class="d"><span class="delta flat">0</span></td></tr>
+        </tbody>
+      </table>
+      <figcaption class="prose">Fourteen reasons on vscode: 43% of call references end unplaced, <code>name_not_in_scope</code> and <code>receiver_type_unknown</code> carry three quarters of them, and four reasons the resolver never produced are explicit zeros rather than missing keys.</figcaption>
+    </figure>
+    <aside class="callout prose">
+      <span class="colabel">provenance</span>
+      These two arms were counted once, by hand, for one earlier change &mdash; recorded as <code>before</code> and <code>after</code> at <span class="pin">recorded_order_independence.ts:496-529</span>. This step puts the row on every arm the harness runs and records a pre-epic row for ten corpora.
+    </aside>
+  </section>
+
+  <section id="points" data-spine="points">
+    <div class="sec-head">
+      <span class="kicker">03 &middot; what else holds</span>
+      <h2>What else this step has to hold true</h2>
+    </div>
+    <ul class="kpl">
+      <li><span>The resolved-plus-failed count per file must equal the call-kind references emitted, asserted in <code>call_resolver.test.ts</code> over four language fixtures and at the <code>Project</code> tier.</span></li>
+      <li><span>This step records a pre-epic taxonomy row for angular, rustc, tokio, sqlx, TypeScript, django, pandas, celery, express and mocha.</span></li>
+      <li><span>TASK-376.17, TASK-376.13 and TASK-376.18 each report their per-reason deltas against the baseline row this step's landed tree records.</span></li>
+      <li><span>The seven-number call-graph fingerprint must stay byte-identical: this step adds diagnostics and moves no call edge.</span></li>
+      <li><span>Each reason names an observation the resolver made about its own state, never a classifier's verdict, so a new resolver path extends the enum.</span></li>
+    </ul>
+  </section>
+
+</main>
+
+<footer class="pagefoot">
+  <span>source: backlog/tasks/task-376.16 - Emit-a-ResolutionFailure-for-every-dropped-call-reference-and-count-the-failure-taxonomy-per-corpus.md</span>
+  <span>read: call_resolution/call_resolver.ts:197-347</span>
+  <span>read: types/resolution_failure.ts:14-66</span>
+  <span>read: benchmark_corpus_load/recorded_order_independence.ts:108-112, 496-529</span>
+</footer>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+    var nav = document.getElementById('xnav');
+    var navBtn = document.getElementById('navToggle');
+    var themeBtn = document.getElementById('themeToggle');
+    var COMPANIONS = 19;
+
+    function save(key, value) { try { localStorage.setItem(key, value); } catch (e) {} }
+
+    function syncNav() {
+      var collapsed = root.classList.contains('nav-collapsed');
+      navBtn.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+      navBtn.querySelector('.nt-label').textContent =
+        (collapsed ? 'Show ' : 'Hide ') + COMPANIONS + ' companions';
+    }
+    function syncTheme() {
+      var dark = root.classList.contains('dark');
+      themeBtn.setAttribute('aria-pressed', dark ? 'true' : 'false');
+      themeBtn.querySelector('.tt-label').textContent = dark ? 'Theme: Dark' : 'Theme: Light';
+    }
+
+    navBtn.addEventListener('click', function () {
+      root.classList.toggle('nav-collapsed');
+      save('cdocNav', root.classList.contains('nav-collapsed') ? 'collapsed' : 'expanded');
+      syncNav();
+    });
+    themeBtn.addEventListener('click', function () {
+      root.classList.toggle('dark');
+      save('cdocTheme', root.classList.contains('dark') ? 'dark' : 'light');
+      syncTheme();
+    });
+    syncNav();
+    syncTheme();
+
+    function measure() { root.style.setProperty('--nav-h', nav.offsetHeight + 'px'); }
+    if (window.ResizeObserver) { new ResizeObserver(measure).observe(nav); }
+    measure();
+    window.addEventListener('load', function () {
+      measure();
+      if (location.hash) {
+        var target = document.getElementById(location.hash.slice(1));
+        if (target) target.scrollIntoView();
+      }
+    });
+  })();
+</script>
+</body>
+</html>

@@ -6,10 +6,11 @@
  */
 
 import type { SyntaxNode } from "tree-sitter";
-import type { SymbolName } from "@ariadnejs/types";
-import type { DefinitionBuilder } from "../../definitions/definitions";
-import type { CaptureNode, ProcessingContext } from "../../index_single_file";
-import type { HandlerRegistry } from "./types";
+import type { SymbolName, ExportMetadata } from "@ariadnejs/types";
+import type { DefinitionBuilder } from "../../definitions/definition_builder";
+import type { CaptureNode } from "../../capture_types";
+import type { ProcessingContext } from "../../scopes/processing_context";
+import type { HandlerRegistry } from "./handler_types";
 import { method_symbol, anonymous_function_symbol } from "@ariadnejs/types";
 import {
   create_class_id,
@@ -23,25 +24,40 @@ import {
   find_containing_class,
   find_containing_callable,
   extract_export_info,
+  extract_accessor_kind,
   extract_return_type,
   extract_parameter_type,
   extract_property_type,
-  extract_type_annotation,
   extract_initial_value,
   extract_default_value,
+  extract_extends,
+  detect_callback_context,
+} from "../symbol_factories/symbol_factories.javascript";
+import {
+  extract_collection_source,
+  extract_iteration_source,
+  extract_initializer_call,
+  extract_read_source,
+} from "../symbol_factories/initializer_sources.javascript";
+import { extract_returned_name_chain } from "../symbol_factories/returned_name_chain.javascript";
+import {
+  detect_function_collection,
+  detect_member_assignment,
+} from "../symbol_factories/function_collection.javascript";
+import { extract_destructured_binding } from "../symbol_factories/destructuring.javascript";
+import { extract_jsdoc_type } from "../symbol_factories/jsdoc_extraction.javascript";
+import { resolve_this_field_write } from "../symbol_factories/this_field_write.javascript";
+import {
   extract_import_path,
   extract_require_path,
   extract_original_name,
   is_default_import,
   is_namespace_import,
-  extract_extends,
+} from "../symbol_factories/imports.javascript";
+import {
   store_documentation,
-  detect_callback_context,
-  detect_function_collection,
   consume_documentation,
-  extract_collection_source,
-  extract_call_initializer_name,
-} from "../symbol_factories/symbol_factories.javascript";
+} from "../symbol_factories/documentation_state.javascript";
 
 // ============================================================================
 // DOCUMENTATION HANDLERS
@@ -99,11 +115,28 @@ export function handle_definition_method(
         location: capture.location,
         scope_id: context.get_scope_id(capture.location),
         return_type: extract_return_type(capture.node),
+        returned_name_chain: extract_returned_name_chain(capture.node),
+        accessor_kind: extract_accessor_kind(capture.node),
         docstring,
       },
-      capture
     );
+    return;
   }
+
+  // An object-literal method (`{ m(p) {} }`) has no owning class. It is reached
+  // through the object's collection dispatch, never by its own name, so a named
+  // node here would surface as an entry point nothing can call. Registering it
+  // anonymously under the id the parameter pass computes still binds its
+  // parameters.
+  builder.add_anonymous_function(
+    {
+      symbol_id: method_id,
+      location: capture.location,
+      scope_id: context.get_scope_id(capture.location),
+      return_type: extract_return_type(capture.node),
+    },
+    capture
+  );
 }
 
 export function handle_definition_constructor(
@@ -167,12 +200,26 @@ export function handle_definition_function(
   //   - 'fact' is visible in parent scope
   //   - 'factorial' is only visible inside the function
   let scope_id;
+  let body_capture: CaptureNode | undefined = capture;
+  let is_exported = export_info.is_exported;
+  let export_metadata = export_info.export;
   if (
     capture.node.parent?.type === "function_expression" ||
     capture.node.parent?.type === "function"
   ) {
     // This is a named function expression - assign to function's own scope
     scope_id = find_function_scope_at_location(capture.location, context);
+    // When the expression is bound to a variable, the outer var name is
+    // registered separately (as @definition.function) and owns the body scope,
+    // call-graph node, and any export. Register the inner name for
+    // self-reference resolution only — without a body scope, and never as an
+    // export — so it neither duplicates the node, surfaces as a spurious entry
+    // point, nor collides with the outer name in the export registry.
+    if (capture.node.parent?.parent?.type === "variable_declarator") {
+      body_capture = undefined;
+      is_exported = false;
+      export_metadata = undefined;
+    }
   } else {
     // This is a function declaration - assign to parent scope
     scope_id = context.get_scope_id(capture.location);
@@ -184,21 +231,33 @@ export function handle_definition_function(
       name: capture.text,
       location: capture.location,
       scope_id: scope_id,
-      is_exported: export_info.is_exported,
-      export: export_info.export,
+      is_exported: is_exported,
+      export: export_metadata,
       docstring,
+      returned_name_chain: extract_returned_name_chain(capture.node),
     },
-    capture
+    body_capture
   );
 }
 
-export function handle_definition_arrow(
+/**
+ * A CommonJS property export whose value is an anonymous function or arrow —
+ * `exports.NAME = function () {}` / `module.exports.NAME = () => {}`. The
+ * definition is named after the export property (the capture is the property
+ * identifier) and marked exported directly, so `ns.NAME()` resolves against it.
+ *
+ * Named function expressions are handled elsewhere (the function_expression
+ * definition rule plus the export cache) and are excluded by the query's
+ * `!name`. The property-identifier location lets `find_body_scope_for_definition`
+ * attach the function body, the same geometry as `const NAME = () => {}`.
+ */
+export function handle_definition_function_commonjs_export(
   capture: CaptureNode,
   builder: DefinitionBuilder,
   context: ProcessingContext
 ): void {
   const func_id = create_function_id(capture);
-  const export_info = extract_export_info(capture.node, capture.text);
+  const docstring = consume_documentation(capture.location);
 
   builder.add_function(
     {
@@ -206,8 +265,10 @@ export function handle_definition_arrow(
       name: capture.text,
       location: capture.location,
       scope_id: context.get_scope_id(capture.location),
-      is_exported: export_info.is_exported,
-      export: export_info.export,
+      is_exported: true,
+      export: {},
+      docstring,
+      returned_name_chain: extract_returned_name_chain(capture.node),
     },
     capture
   );
@@ -236,24 +297,6 @@ export function handle_definition_anonymous_function(
   );
 }
 
-export function handle_definition_param(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const param_id = create_parameter_id(capture);
-  const parent_id = find_containing_callable(capture);
-
-  builder.add_parameter_to_callable(parent_id, {
-    symbol_id: param_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    type: extract_parameter_type(capture.node),
-    default_value: extract_default_value(capture.node),
-  });
-}
-
 export function handle_definition_parameter(
   capture: CaptureNode,
   builder: DefinitionBuilder,
@@ -269,7 +312,33 @@ export function handle_definition_parameter(
     scope_id: context.get_scope_id(capture.location),
     type: extract_parameter_type(capture.node),
     default_value: extract_default_value(capture.node),
+    ...extract_read_source(capture.node),
   });
+}
+
+/**
+ * True when `node` is an identifier inside a destructuring pattern whose
+ * declarator initializes from `require(...)`.
+ */
+function is_destructured_require_binding(node: SyntaxNode): boolean {
+  let current: SyntaxNode | null = node.parent;
+  while (
+    current &&
+    (current.type === "object_pattern" ||
+      current.type === "array_pattern" ||
+      current.type === "pair_pattern" ||
+      current.type === "rest_pattern")
+  ) {
+    current = current.parent;
+  }
+  if (current?.type !== "variable_declarator") {
+    return false;
+  }
+  const value = current.childForFieldName("value");
+  if (value?.type !== "call_expression") {
+    return false;
+  }
+  return value.childForFieldName("function")?.text === "require";
 }
 
 export function handle_definition_variable(
@@ -286,6 +355,13 @@ export function handle_definition_variable(
     if (value_node && (value_node.type === "arrow_function" || value_node.type === "function_expression")) {
       return;
     }
+  }
+
+  // A destructured `require` binding is owned by the require handlers: they
+  // record it as an import, and a same-id variable here would shadow that
+  // import in the scope map and strand the name at the destructuring site.
+  if (is_destructured_require_binding(capture.node)) {
+    return;
   }
 
   const var_id = create_variable_id(capture);
@@ -317,7 +393,9 @@ export function handle_definition_variable(
     : undefined;
 
   const collection_source = extract_collection_source(capture.node);
-  const initialized_from_call = extract_call_initializer_name(capture.node);
+  const initialized_from_call = extract_initializer_call(capture.node);
+  const destructured = extract_destructured_binding(capture.node);
+  const iterated_from = extract_iteration_source(capture.node);
 
   builder.add_variable({
     kind: is_const ? "constant" : "variable",
@@ -326,13 +404,33 @@ export function handle_definition_variable(
     location: capture.location,
     scope_id: context.get_scope_id(capture.location),
     is_exported: export_info.is_exported,
-    type: extract_type_annotation(capture.node),
+    type: extract_jsdoc_type(capture.node),
     initial_value: extract_initial_value(capture.node),
     docstring,
     function_collection,
     collection_source,
+    ...extract_read_source(capture.node),
     initialized_from_call,
+    destructured_from: destructured?.source,
+    destructured_key: destructured?.key,
+    iterated_from,
   });
+}
+
+/**
+ * Record a function assigned to a receiver property (`app.method = function () {}`,
+ * `Counter.prototype.method = () => {}`) as a member of the holder's function
+ * collection, so `app.method()` and `this.method()` resolve to it.
+ */
+export function handle_assignment_property(
+  capture: CaptureNode,
+  builder: DefinitionBuilder,
+  _context: ProcessingContext
+): void {
+  const assignment = detect_member_assignment(capture.node, capture.location.file_path);
+  if (assignment) {
+    builder.add_collection_member(assignment.holder_name, assignment.member);
+  }
 }
 
 export function handle_definition_field(
@@ -351,28 +449,40 @@ export function handle_definition_field(
       scope_id: context.get_scope_id(capture.location),
       type: extract_property_type(capture.node),
       initial_value: extract_initial_value(capture.node),
+      ...extract_read_source(capture.node),
     });
   }
 }
 
-export function handle_definition_property(
+/**
+ * A `this.<name> = …` write in a class constructor declares the field `<name>`
+ * when the class body declares no member by that name — how JavaScript declared
+ * fields before class-field syntax, and still the common form. The write's
+ * JSDoc `@type` types the field; a construction it stores types it through the
+ * construct target, which `resolve_this_field_write` keys to this same node.
+ */
+export function handle_definition_field_assigned(
   capture: CaptureNode,
   builder: DefinitionBuilder,
   context: ProcessingContext
 ): void {
-  const prop_id = create_property_id(capture);
-  const class_id = find_containing_class(capture);
-
-  if (class_id) {
-    builder.add_property_to_class(class_id, {
-      symbol_id: prop_id,
-      name: capture.text,
-      location: capture.location,
-      scope_id: context.get_scope_id(capture.location),
-      type: extract_property_type(capture.node),
-      initial_value: extract_initial_value(capture.node),
-    });
+  const target = capture.node.parent;
+  const field_write = target ? resolve_this_field_write(target) : undefined;
+  if (!field_write?.in_constructor || field_write.declared_member) {
+    return;
   }
+  const class_id = find_containing_class(capture);
+  if (!class_id) {
+    return;
+  }
+
+  builder.add_inferred_property_to_class(class_id, {
+    symbol_id: create_property_id(capture),
+    name: capture.text,
+    location: capture.location,
+    scope_id: context.get_scope_id(capture.location),
+    type: extract_jsdoc_type(capture.node),
+  });
 }
 
 // ============================================================================
@@ -409,6 +519,14 @@ export function handle_definition_import(
     ? "default"
     : "named";
 
+  // A later `export { X }` of the imported binding makes it part of the
+  // module's surface. From-clause re-exports are excluded: those are owned by
+  // handle_import_reexport, and carrying them here too would forge a
+  // duplicate export name for `import { a } from './m'; export { a } from './m'`.
+  const export_info = extract_export_info(capture.node, capture.text);
+  const export_metadata =
+    export_info.export?.is_reexport === true ? undefined : export_info.export;
+
   builder.add_import({
     symbol_id: import_id,
     name: capture.text,
@@ -417,108 +535,7 @@ export function handle_definition_import(
     import_path: extract_import_path(import_stmt),
     import_kind,
     original_name: extract_original_name(import_stmt, capture.text),
-  });
-}
-
-export function handle_definition_import_named(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const import_id = create_import_id(capture);
-
-  // Check if this is an aliased import by looking at the parent import_specifier
-  const import_specifier = capture.node.parent;
-  if (import_specifier?.type === "import_specifier") {
-    const alias_node = import_specifier.childForFieldName("alias");
-    const name_node = import_specifier.childForFieldName("name");
-
-    // If there's an alias and we captured the NAME (not the alias), skip it
-    // We'll handle it when we capture the ALIAS
-    if (alias_node && capture.node === name_node) {
-      return; // Skip - will be handled by alias capture
-    }
-
-    // If there's an alias and we captured the ALIAS, extract the original name
-    if (alias_node && capture.node === alias_node) {
-      // Navigate up to find import statement
-      let import_stmt = capture.node.parent;
-      while (import_stmt && import_stmt.type !== "import_statement") {
-        import_stmt = import_stmt.parent;
-      }
-
-      const original_name = name_node?.text as SymbolName | undefined;
-
-      builder.add_import({
-        symbol_id: import_id,
-        name: capture.text, // This is the alias
-        location: capture.location,
-        scope_id: context.get_scope_id(capture.location),
-        import_path: extract_import_path(import_stmt),
-        import_kind: "named",
-        original_name: original_name,
-      });
-      return;
-    }
-  }
-
-  // Simple import (no alias)
-  // Navigate up to find import statement
-  let import_stmt = capture.node.parent;
-  while (import_stmt && import_stmt.type !== "import_statement") {
-    import_stmt = import_stmt.parent;
-  }
-
-  builder.add_import({
-    symbol_id: import_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    import_path: extract_import_path(import_stmt),
-    import_kind: "named",
-    original_name: undefined,
-  });
-}
-
-export function handle_definition_import_default(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const import_id = create_import_id(capture);
-  const import_stmt = capture.node.parent?.parent; // import_clause -> import_statement
-
-  builder.add_import({
-    symbol_id: import_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    import_path: extract_import_path(import_stmt),
-    import_kind: "default",
-    original_name: undefined,
-  });
-}
-
-export function handle_definition_import_namespace(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const import_id = create_import_id(capture);
-  // Navigate up to import statement
-  let import_stmt = capture.node.parent;
-  while (import_stmt && import_stmt.type !== "import_statement") {
-    import_stmt = import_stmt.parent;
-  }
-
-  builder.add_import({
-    symbol_id: import_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    import_path: extract_import_path(import_stmt),
-    import_kind: "namespace",
-    original_name: undefined,
+    export: export_metadata,
   });
 }
 
@@ -568,6 +585,7 @@ export function handle_definition_import_require(
     import_path: extract_require_path(string_node),
     import_kind: "named",
     original_name: undefined,
+    is_commonjs_require: true,
   });
 }
 
@@ -609,6 +627,7 @@ export function handle_definition_import_require_simple(
     import_path: extract_require_path(string_node),
     import_kind: "namespace",
     original_name: undefined,
+    is_commonjs_require: true,
   });
 }
 
@@ -665,7 +684,16 @@ export function handle_import_reexport(
       location,
     });
 
-    const export_info = extract_export_info(export_stmt, name_node.text as SymbolName);
+    // Derive export metadata from this specifier directly. The shared
+    // extract_export_info cache keys named exports by source name, so multiple
+    // re-exports of one source symbol under different aliases (e.g.
+    // `create_class_id as create_js_class_id` and `create_class_id as
+    // create_py_class_id`) would collapse to a single alias and forge a
+    // duplicate export name.
+    const export_metadata: ExportMetadata = {
+      is_reexport: true,
+      export_name: alias_node ? (alias_node.text as SymbolName) : undefined,
+    };
 
     builder.add_import({
       symbol_id: import_id,
@@ -675,85 +703,49 @@ export function handle_import_reexport(
       import_path: extract_import_path(export_stmt),
       import_kind: "named",
       original_name,
-      export: export_info.export,
+      export: export_metadata,
     });
   }
 }
 
-export function handle_import_reexport_named_simple(
+/**
+ * `export * from 'module'` — one wildcard edge forwarding the module's whole
+ * export surface. The capture is the export_statement itself; the emitted
+ * name is the specifier's last path segment, a display name only.
+ */
+export function handle_import_reexport_wildcard(
   capture: CaptureNode,
   builder: DefinitionBuilder,
   context: ProcessingContext
 ): void {
-  const import_id = create_import_id(capture);
-  // Navigate up to export_statement
-  let export_stmt = capture.node.parent;
-  while (export_stmt && export_stmt.type !== "export_statement") {
-    export_stmt = export_stmt.parent;
-  }
-
-  if (!export_stmt) {
-    throw new Error("Export statement not found for re-export capture");
-  }
-
-  // Check if this export_specifier has an alias - if so, skip it
-  // (it will be handled by import.reexport.named.alias handler)
-  const export_specifier = capture.node.parent;
-  if (export_specifier?.childForFieldName?.("alias")) {
-    return; // Skip - has alias
-  }
-
-  const export_info = extract_export_info(export_stmt, capture.text);
+  const import_path = extract_import_path(capture.node);
+  const name = wildcard_binding_name(import_path);
 
   builder.add_import({
-    symbol_id: import_id,
-    name: capture.text,
+    symbol_id: create_import_id({ ...capture, text: name }),
+    name,
     location: capture.location,
     scope_id: context.get_scope_id(capture.location),
-    import_path: extract_import_path(export_stmt),
-    import_kind: "named",
+    import_path,
+    import_kind: "wildcard",
     original_name: undefined,
-    export: export_info.export,
+    export: { is_reexport: true },
   });
 }
 
-export function handle_import_reexport_named(
+/**
+ * `export * as ns from 'module'` — a single named namespace object, exactly
+ * the shape of `import * as ns from 'module'; export { ns }`. Not a wildcard
+ * edge: it publishes one name, so it must never fan a consumer's lookup out
+ * across the source module's surface. The export chain terminates at this
+ * definition (is_reexport stays unset); member access descends through the
+ * resolved import path instead.
+ */
+export function handle_import_reexport_namespace(
   capture: CaptureNode,
   builder: DefinitionBuilder,
   context: ProcessingContext
 ): void {
-  const import_id = create_import_id(capture);
-  // Navigate up to export_statement
-  let export_stmt = capture.node.parent;
-  while (export_stmt && export_stmt.type !== "export_statement") {
-    export_stmt = export_stmt.parent;
-  }
-
-  if (!export_stmt) {
-    throw new Error("Export statement not found for re-export capture");
-  }
-
-  const export_info = extract_export_info(export_stmt, capture.text);
-
-  builder.add_import({
-    symbol_id: import_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    import_path: extract_import_path(export_stmt),
-    import_kind: "named",
-    original_name: undefined,
-    export: export_info.export,
-  });
-}
-
-export function handle_import_reexport_named_alias(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const import_id = create_import_id(capture);
-  // Navigate up to export_statement
   let export_stmt = capture.node.parent;
   while (export_stmt && export_stmt.type !== "export_statement") {
     export_stmt = export_stmt.parent;
@@ -762,175 +754,26 @@ export function handle_import_reexport_named_alias(
     return;
   }
 
-  // Get the original name from the export_specifier
-  const export_specifier = capture.node.parent;
-  const original_node = export_specifier?.childForFieldName?.("name");
-  const original_name = original_node?.text as SymbolName | undefined;
-
-  const export_info = extract_export_info(export_stmt, capture.text);
-
   builder.add_import({
-    symbol_id: import_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    import_path: extract_import_path(export_stmt),
-    import_kind: "named",
-    original_name,
-    export: export_info.export,
-  });
-}
-
-export function handle_import_reexport_default_original(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const import_id = create_import_id(capture);
-  // Navigate up to export_statement
-  let export_stmt = capture.node.parent;
-  while (export_stmt && export_stmt.type !== "export_statement") {
-    export_stmt = export_stmt.parent;
-  }
-  if (!export_stmt) {
-    return;
-  }
-
-  // Check if there's an alias
-  const export_specifier = capture.node.parent;
-  const alias_node = export_specifier?.childForFieldName?.("alias");
-  const local_name = alias_node?.text || "default";
-
-  const export_info = extract_export_info(export_stmt, local_name as SymbolName);
-
-  builder.add_import({
-    symbol_id: import_id,
-    name: local_name as SymbolName,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    import_path: extract_import_path(export_stmt),
-    import_kind: "default",
-    original_name: undefined,
-    export: export_info.export,
-  });
-}
-
-export function handle_import_reexport_default_alias(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const import_id = create_import_id(capture);
-  // Navigate up to export_statement
-  let export_stmt = capture.node.parent;
-  while (export_stmt && export_stmt.type !== "export_statement") {
-    export_stmt = export_stmt.parent;
-  }
-  if (!export_stmt) {
-    return;
-  }
-
-  const export_info = extract_export_info(export_stmt, capture.text);
-
-  builder.add_import({
-    symbol_id: import_id,
-    name: capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    import_path: extract_import_path(export_stmt),
-    import_kind: "default",
-    original_name: "default" as SymbolName,
-    export: export_info.export,
-  });
-}
-
-export function handle_import_reexport_as_default_alias(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const import_id = create_import_id(capture);
-  // Navigate up to export_statement
-  let export_stmt = capture.node.parent;
-  while (export_stmt && export_stmt.type !== "export_statement") {
-    export_stmt = export_stmt.parent;
-  }
-  if (!export_stmt) {
-    return;
-  }
-
-  // Get the original name from the export_specifier
-  const export_specifier = capture.node.parent;
-  const original_node = export_specifier?.childForFieldName?.("name");
-  const original_name = original_node?.text as SymbolName | undefined;
-
-  const export_info = extract_export_info(export_stmt, capture.text);
-
-  builder.add_import({
-    symbol_id: import_id,
-    name: original_name || capture.text,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    import_path: extract_import_path(export_stmt),
-    import_kind: "named",
-    original_name: undefined,
-    export: export_info.export,
-  });
-}
-
-export function handle_import_reexport_namespace_source(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  // This handles: export * from './module'
-  // Note: This is a special case - no specific name to import
-  // We create a synthetic import entry for the namespace re-export
-  const import_id = create_import_id(capture);
-  const export_stmt = capture.node;
-
-  const export_info = extract_export_info(export_stmt, "*" as SymbolName);
-
-  // For bare namespace re-exports, we use "*" as the name
-  builder.add_import({
-    symbol_id: import_id,
-    name: "*" as SymbolName,
-    location: capture.location,
-    scope_id: context.get_scope_id(capture.location),
-    import_path: extract_import_path(export_stmt),
-    import_kind: "namespace",
-    original_name: undefined,
-    export: export_info.export,
-  });
-}
-
-export function handle_import_reexport_namespace_alias(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const import_id = create_import_id(capture);
-  // Navigate up to export_statement
-  let export_stmt = capture.node.parent;
-  while (export_stmt && export_stmt.type !== "export_statement") {
-    export_stmt = export_stmt.parent;
-  }
-  if (!export_stmt) {
-    return;
-  }
-
-  const export_info = extract_export_info(export_stmt, capture.text);
-
-  builder.add_import({
-    symbol_id: import_id,
+    symbol_id: create_import_id(capture),
     name: capture.text,
     location: capture.location,
     scope_id: context.get_scope_id(capture.location),
     import_path: extract_import_path(export_stmt),
     import_kind: "namespace",
     original_name: undefined,
-    export: export_info.export,
+    export: {},
   });
+}
+
+/**
+ * Last path segment of a wildcard edge's module specifier, extension stripped
+ * (`./m.js` → `m`) — a display name only, never matched against a call
+ * terminal.
+ */
+function wildcard_binding_name(import_path: string): SymbolName {
+  const last_segment = import_path.split("/").filter(Boolean).pop() ?? "*";
+  return last_segment.replace(/\.(js|mjs|cjs|jsx|ts|mts|cts|tsx)$/, "") as SymbolName;
 }
 
 // ============================================================================
@@ -946,30 +789,21 @@ export const JAVASCRIPT_HANDLERS: HandlerRegistry = {
   "definition.method": handle_definition_method,
   "definition.constructor": handle_definition_constructor,
   "definition.function": handle_definition_function,
-  "definition.arrow": handle_definition_arrow,
+  "definition.function.commonjs_export": handle_definition_function_commonjs_export,
   "definition.anonymous_function": handle_definition_anonymous_function,
-  "definition.param": handle_definition_param,
   "definition.parameter": handle_definition_parameter,
   "definition.variable": handle_definition_variable,
   "definition.field": handle_definition_field,
-  "definition.property": handle_definition_property,
+  "definition.field.assigned": handle_definition_field_assigned,
+  "assignment.property": handle_assignment_property,
 
   // Imports
   "definition.import": handle_definition_import,
-  "definition.import.named": handle_definition_import_named,
-  "definition.import.default": handle_definition_import_default,
-  "definition.import.namespace": handle_definition_import_namespace,
   "definition.import.require": handle_definition_import_require,
   "definition.import.require.simple": handle_definition_import_require_simple,
 
   // Re-exports
   "import.reexport": handle_import_reexport,
-  "import.reexport.named.simple": handle_import_reexport_named_simple,
-  "import.reexport.named": handle_import_reexport_named,
-  "import.reexport.named.alias": handle_import_reexport_named_alias,
-  "import.reexport.default.original": handle_import_reexport_default_original,
-  "import.reexport.default.alias": handle_import_reexport_default_alias,
-  "import.reexport.as_default.alias": handle_import_reexport_as_default_alias,
-  "import.reexport.namespace.source": handle_import_reexport_namespace_source,
-  "import.reexport.namespace.alias": handle_import_reexport_namespace_alias,
+  "import.reexport.wildcard": handle_import_reexport_wildcard,
+  "import.reexport.namespace": handle_import_reexport_namespace,
 } as const;

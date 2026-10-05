@@ -1,10 +1,6 @@
-/**
- * Semantic Index - Unified symbol extraction with lexical scoping
- *
- * This module provides a complete semantic index of source code,
- * capturing all symbols (definitions, references, imports, exports)
- * with their proper lexical scope relationships.
- */
-
 export { build_index_single_file } from "./index_single_file";
-export { SemanticCategory, SemanticEntity, type CaptureNode } from "./index_single_file";
+export {
+  query_tree,
+  LANGUAGE_TO_TREESITTER_LANG,
+  SUPPORTED_LANGUAGES,
+} from "./query_code_tree";

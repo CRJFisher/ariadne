@@ -13,7 +13,7 @@ describe("scopes.boundary_extractor infrastructure", () => {
       const mock_node = {
         startPosition: { row: 0, column: 5 },
         endPosition: { row: 2, column: 10 },
-      } as Parser.SyntaxNode;
+      } as Partial<Parser.SyntaxNode> as Parser.SyntaxNode;
 
       const location = node_to_location(mock_node, "test.py" as FilePath);
 
@@ -28,31 +28,27 @@ describe("scopes.boundary_extractor infrastructure", () => {
   });
 
   describe("get_scope_boundary_extractor", () => {
-    it("should return PythonScopeBoundaryExtractor for python", () => {
+    it("returns PythonScopeBoundaryExtractor for python", () => {
       const extractor = get_scope_boundary_extractor("python" as Language);
-      expect(extractor).toBeDefined();
       expect(extractor.constructor.name).toBe("PythonScopeBoundaryExtractor");
     });
 
-    it("should return TypeScriptScopeBoundaryExtractor for typescript", () => {
+    it("returns TypeScriptScopeBoundaryExtractor for typescript", () => {
       const extractor = get_scope_boundary_extractor("typescript" as Language);
-      expect(extractor).toBeDefined();
       expect(extractor.constructor.name).toBe("TypeScriptScopeBoundaryExtractor");
     });
 
-    it("should return JavaScriptScopeBoundaryExtractor for javascript", () => {
+    it("returns the shared JS/TS extractor for javascript", () => {
       const extractor = get_scope_boundary_extractor("javascript" as Language);
-      expect(extractor).toBeDefined();
-      expect(extractor.constructor.name).toBe("JavaScriptScopeBoundaryExtractor");
+      expect(extractor.constructor.name).toBe("JavaScriptTypeScriptScopeBoundaryExtractor");
     });
 
-    it("should return Rust extractor for rust language", () => {
+    it("returns RustScopeBoundaryExtractor for rust", () => {
       const extractor = get_scope_boundary_extractor("rust" as Language);
-      expect(extractor).toBeDefined();
       expect(extractor.constructor.name).toBe("RustScopeBoundaryExtractor");
     });
 
-    it("should throw error for unknown language", () => {
+    it("throws for unknown language", () => {
       expect(() => {
         get_scope_boundary_extractor("unknown" as Language);
       }).toThrow(/No scope boundary extractor for language: unknown/);
@@ -68,7 +64,7 @@ describe("scopes.boundary_extractor infrastructure", () => {
     });
 
     it("should throw error for unsupported scope type", () => {
-      const mock_node = {} as Parser.SyntaxNode;
+      const mock_node = {} as Partial<Parser.SyntaxNode> as Parser.SyntaxNode;
       expect(() => {
         extractor.extract_boundaries(mock_node, "global", "test.py" as FilePath);
       }).toThrow(/Unsupported scope type: global/);
@@ -83,17 +79,17 @@ describe("scopes.boundary_extractor infrastructure", () => {
               return {
                 startPosition: { row: 0, column: 6 },
                 endPosition: { row: 0, column: 13 },
-              } as Parser.SyntaxNode;
+              } as Partial<Parser.SyntaxNode> as Parser.SyntaxNode;
             }
             if (field === "body") {
               return {
                 startPosition: { row: 0, column: 16 },
                 endPosition: { row: 5, column: 1 },
-              } as Parser.SyntaxNode;
+              } as Partial<Parser.SyntaxNode> as Parser.SyntaxNode;
             }
             return null;
           },
-        } as Parser.SyntaxNode;
+        } as Partial<Parser.SyntaxNode> as Parser.SyntaxNode;
 
         const result = extractor.extract_boundaries(mock_node, "class", "test.ts" as FilePath);
 
@@ -130,12 +126,12 @@ describe("scopes.boundary_extractor infrastructure", () => {
           // eslint-disable-next-line @typescript-eslint/naming-convention
           childForFieldName: (field: string) => {
             if (field === "name") {
-              return {} as Parser.SyntaxNode;
+              return {} as Partial<Parser.SyntaxNode> as Parser.SyntaxNode;
             }
             return null;
           },
           type: "class_declaration",
-        } as Parser.SyntaxNode;
+        } as Partial<Parser.SyntaxNode> as Parser.SyntaxNode;
 
         expect(() => {
           extractor.extract_boundaries(mock_node, "class", "test.ts" as FilePath);
@@ -152,23 +148,23 @@ describe("scopes.boundary_extractor infrastructure", () => {
               return {
                 startPosition: { row: 1, column: 9 },
                 endPosition: { row: 1, column: 16 },
-              } as Parser.SyntaxNode;
+              } as Partial<Parser.SyntaxNode> as Parser.SyntaxNode;
             }
             if (field === "parameters") {
               return {
                 startPosition: { row: 1, column: 16 },
                 endPosition: { row: 1, column: 18 },
-              } as Parser.SyntaxNode;
+              } as Partial<Parser.SyntaxNode> as Parser.SyntaxNode;
             }
             if (field === "body") {
               return {
                 startPosition: { row: 1, column: 19 },
                 endPosition: { row: 3, column: 1 },
-              } as Parser.SyntaxNode;
+              } as Partial<Parser.SyntaxNode> as Parser.SyntaxNode;
             }
             return null;
           },
-        } as Parser.SyntaxNode;
+        } as Partial<Parser.SyntaxNode> as Parser.SyntaxNode;
 
         const result = extractor.extract_boundaries(mock_node, "function", "test.ts" as FilePath);
 
@@ -199,17 +195,17 @@ describe("scopes.boundary_extractor infrastructure", () => {
               return {
                 startPosition: { row: 1, column: 8 },
                 endPosition: { row: 1, column: 10 },
-              } as Parser.SyntaxNode;
+              } as Partial<Parser.SyntaxNode> as Parser.SyntaxNode;
             }
             if (field === "body") {
               return {
                 startPosition: { row: 1, column: 11 },
                 endPosition: { row: 3, column: 1 },
-              } as Parser.SyntaxNode;
+              } as Partial<Parser.SyntaxNode> as Parser.SyntaxNode;
             }
             return null;
           },
-        } as Parser.SyntaxNode;
+        } as Partial<Parser.SyntaxNode> as Parser.SyntaxNode;
 
         const result = extractor.extract_boundaries(mock_node, "function", "test.ts" as FilePath);
 
@@ -227,12 +223,12 @@ describe("scopes.boundary_extractor infrastructure", () => {
           // eslint-disable-next-line @typescript-eslint/naming-convention
           childForFieldName: (field: string) => {
             if (field === "name") {
-              return {} as Parser.SyntaxNode;
+              return {} as Partial<Parser.SyntaxNode> as Parser.SyntaxNode;
             }
             return null;
           },
           type: "function_declaration",
-        } as Parser.SyntaxNode;
+        } as Partial<Parser.SyntaxNode> as Parser.SyntaxNode;
 
         expect(() => {
           extractor.extract_boundaries(mock_node, "function", "test.ts" as FilePath);
@@ -249,23 +245,23 @@ describe("scopes.boundary_extractor infrastructure", () => {
               return {
                 startPosition: { row: 2, column: 2 },
                 endPosition: { row: 2, column: 13 },
-              } as Parser.SyntaxNode;
+              } as Partial<Parser.SyntaxNode> as Parser.SyntaxNode;
             }
             if (field === "parameters") {
               return {
                 startPosition: { row: 2, column: 13 },
                 endPosition: { row: 2, column: 15 },
-              } as Parser.SyntaxNode;
+              } as Partial<Parser.SyntaxNode> as Parser.SyntaxNode;
             }
             if (field === "body") {
               return {
                 startPosition: { row: 2, column: 16 },
                 endPosition: { row: 4, column: 3 },
-              } as Parser.SyntaxNode;
+              } as Partial<Parser.SyntaxNode> as Parser.SyntaxNode;
             }
             return null;
           },
-        } as Parser.SyntaxNode;
+        } as Partial<Parser.SyntaxNode> as Parser.SyntaxNode;
 
         const result = extractor.extract_boundaries(mock_node, "constructor", "test.ts" as FilePath);
 
@@ -291,7 +287,7 @@ describe("scopes.boundary_extractor infrastructure", () => {
         const mock_node = {
           startPosition: { row: 3, column: 4 },
           endPosition: { row: 6, column: 5 },
-        } as Parser.SyntaxNode;
+        } as Partial<Parser.SyntaxNode> as Parser.SyntaxNode;
 
         const result = extractor.extract_boundaries(mock_node, "block", "test.ts" as FilePath);
 
@@ -317,23 +313,23 @@ describe("scopes.boundary_extractor infrastructure", () => {
               return {
                 startPosition: { row: 4, column: 2 },
                 endPosition: { row: 4, column: 8 },
-              } as Parser.SyntaxNode;
+              } as Partial<Parser.SyntaxNode> as Parser.SyntaxNode;
             }
             if (field === "parameters") {
               return {
                 startPosition: { row: 4, column: 8 },
                 endPosition: { row: 4, column: 10 },
-              } as Parser.SyntaxNode;
+              } as Partial<Parser.SyntaxNode> as Parser.SyntaxNode;
             }
             if (field === "body") {
               return {
                 startPosition: { row: 4, column: 11 },
                 endPosition: { row: 6, column: 3 },
-              } as Parser.SyntaxNode;
+              } as Partial<Parser.SyntaxNode> as Parser.SyntaxNode;
             }
             return null;
           },
-        } as Parser.SyntaxNode;
+        } as Partial<Parser.SyntaxNode> as Parser.SyntaxNode;
 
         const result = extractor.extract_boundaries(mock_node, "method", "test.ts" as FilePath);
 

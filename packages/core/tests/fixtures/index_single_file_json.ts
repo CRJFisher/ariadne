@@ -29,6 +29,7 @@ import type {
   NamespaceDefinition,
   TypeAliasDefinition,
   ImportDefinition,
+  MethodDefinition,
   SymbolReference,
 } from "@ariadnejs/types";
 
@@ -114,6 +115,7 @@ export interface SemanticIndexJSON {
 
   /** Import definitions - maps symbol IDs to definitions */
   imported_symbols: Record<string, ImportDefinition>;
+  unattached_impl_methods: Record<string, MethodDefinition>;
 
   /** Symbol references (calls, member access, etc.) */
   references: SymbolReference[];
@@ -129,7 +131,7 @@ export interface SemanticIndexJSON {
  * @returns JSON-serializable object
  */
 export function index_single_file_to_json(
-  index: import("../../src/index_single_file/index_single_file").SemanticIndex
+  index: import("@ariadnejs/types").SemanticIndex
 ): SemanticIndexJSON {
   return {
     file_path: index.file_path,
@@ -144,8 +146,17 @@ export function index_single_file_to_json(
     namespaces: Object.fromEntries(index.namespaces),
     types: Object.fromEntries(index.types),
     imported_symbols: Object.fromEntries(index.imported_symbols),
+    unattached_impl_methods: Object.fromEntries(index.unattached_impl_methods),
     references: [...index.references],
   };
+}
+
+/**
+ * Converts a string-keyed record to a ReadonlyMap with branded key type.
+ * Used at JSON deserialization boundaries where branded types are trusted.
+ */
+function record_to_readonly_map<K extends string, V>(record: Record<string, V>): ReadonlyMap<K, V> {
+  return new Map(Object.entries(record) as [K, V][]) as ReadonlyMap<K, V>;
 }
 
 /**
@@ -159,46 +170,21 @@ export function index_single_file_to_json(
  */
 export function json_to_index_single_file(
   json: SemanticIndexJSON
-): import("../../src/index_single_file/index_single_file").SemanticIndex {
+): import("@ariadnejs/types").SemanticIndex {
   return {
     file_path: json.file_path as FilePath,
     language: json.language as Language,
     root_scope_id: json.root_scope_id as ScopeId,
-    scopes: new Map(Object.entries(json.scopes)) as unknown as ReadonlyMap<
-      ScopeId,
-      LexicalScope
-    >,
-    functions: new Map(Object.entries(json.functions)) as unknown as ReadonlyMap<
-      SymbolId,
-      FunctionDefinition
-    >,
-    classes: new Map(Object.entries(json.classes)) as unknown as ReadonlyMap<
-      SymbolId,
-      ClassDefinition
-    >,
-    variables: new Map(Object.entries(json.variables)) as unknown as ReadonlyMap<
-      SymbolId,
-      VariableDefinition
-    >,
-    interfaces: new Map(Object.entries(json.interfaces)) as unknown as ReadonlyMap<
-      SymbolId,
-      InterfaceDefinition
-    >,
-    enums: new Map(Object.entries(json.enums)) as unknown as ReadonlyMap<
-      SymbolId,
-      EnumDefinition
-    >,
-    namespaces: new Map(Object.entries(json.namespaces)) as unknown as ReadonlyMap<
-      SymbolId,
-      NamespaceDefinition
-    >,
-    types: new Map(Object.entries(json.types)) as unknown as ReadonlyMap<
-      SymbolId,
-      TypeAliasDefinition
-    >,
-    imported_symbols: new Map(
-      Object.entries(json.imported_symbols)
-    ) as unknown as ReadonlyMap<SymbolId, ImportDefinition>,
+    scopes: record_to_readonly_map<ScopeId, LexicalScope>(json.scopes),
+    functions: record_to_readonly_map<SymbolId, FunctionDefinition>(json.functions),
+    classes: record_to_readonly_map<SymbolId, ClassDefinition>(json.classes),
+    variables: record_to_readonly_map<SymbolId, VariableDefinition>(json.variables),
+    interfaces: record_to_readonly_map<SymbolId, InterfaceDefinition>(json.interfaces),
+    enums: record_to_readonly_map<SymbolId, EnumDefinition>(json.enums),
+    namespaces: record_to_readonly_map<SymbolId, NamespaceDefinition>(json.namespaces),
+    types: record_to_readonly_map<SymbolId, TypeAliasDefinition>(json.types),
+    imported_symbols: record_to_readonly_map<SymbolId, ImportDefinition>(json.imported_symbols),
+    unattached_impl_methods: record_to_readonly_map<SymbolId, MethodDefinition>(json.unattached_impl_methods),
     references: json.references as readonly SymbolReference[],
   };
 }
@@ -212,7 +198,7 @@ export function json_to_index_single_file(
  * @returns Formatted JSON string
  */
 export function index_single_file_to_json_string(
-  index: import("../../src/index_single_file/index_single_file").SemanticIndex
+  index: import("@ariadnejs/types").SemanticIndex
 ): string {
   return JSON.stringify(index_single_file_to_json(index), null, 2);
 }
@@ -227,7 +213,7 @@ export function index_single_file_to_json_string(
  */
 export function json_string_to_index_single_file(
   json_string: string
-): import("../../src/index_single_file/index_single_file").SemanticIndex {
+): import("@ariadnejs/types").SemanticIndex {
   return json_to_index_single_file(JSON.parse(json_string));
 }
 
@@ -242,7 +228,7 @@ export function json_string_to_index_single_file(
  * @param output_path - Absolute path to the output JSON file
  */
 export function write_index_single_file_fixture(
-  index: import("../../src/index_single_file/index_single_file").SemanticIndex,
+  index: import("@ariadnejs/types").SemanticIndex,
   output_path: string
 ): void {
   const json_string = index_single_file_to_json_string(index);
@@ -261,7 +247,7 @@ export function write_index_single_file_fixture(
  */
 export function load_index_single_file_fixture(
   fixture_path: string
-): import("../../src/index_single_file/index_single_file").SemanticIndex {
+): import("@ariadnejs/types").SemanticIndex {
   const json_string = fs.readFileSync(fixture_path, "utf-8");
   const absolute_json_string = relative_to_absolute_paths(json_string);
   return json_string_to_index_single_file(absolute_json_string);

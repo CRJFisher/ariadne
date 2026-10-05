@@ -356,145 +356,6 @@ describe("Rust Metadata Extractors", () => {
     });
   });
 
-  describe("extract_call_receiver", () => {
-    it("should extract receiver from method call", () => {
-      const code = "obj.method();";
-      const tree = parser.parse(code);
-      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
-
-      const result = RUST_METADATA_EXTRACTORS.extract_call_receiver(call_expr, TEST_FILE);
-
-      expect(result).toBeDefined();
-      expect(result?.start_line).toBe(1);
-      expect(result?.start_column).toBe(1);
-      expect(result?.end_column).toBe(3); // "obj"
-    });
-
-    it("should extract receiver from chained method call", () => {
-      const code = "vec.iter().map(|x| x * 2);";
-      const tree = parser.parse(code);
-      const calls = tree.rootNode.descendantsOfType("call_expression");
-
-      // The first call in the AST is the outer one: vec.iter().map(...)
-      // The second call is vec.iter()
-      const iter_call = calls[1]; // vec.iter()
-
-      const result = RUST_METADATA_EXTRACTORS.extract_call_receiver(iter_call, TEST_FILE);
-
-      expect(result).toBeDefined();
-      expect(result?.start_column).toBe(1);
-      expect(result?.end_column).toBe(3); // "vec"
-    });
-
-    it("should extract receiver from self method call", () => {
-      const code = "self.process();";
-      const tree = parser.parse(code);
-      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
-
-      const result = RUST_METADATA_EXTRACTORS.extract_call_receiver(call_expr, TEST_FILE);
-
-      expect(result).toBeDefined();
-      expect(result?.start_column).toBe(1);
-      expect(result?.end_column).toBe(4); // "self"
-    });
-
-    it("should extract receiver from field method call", () => {
-      const code = "self.data.process();";
-      const tree = parser.parse(code);
-      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
-
-      const result = RUST_METADATA_EXTRACTORS.extract_call_receiver(call_expr, TEST_FILE);
-
-      expect(result).toBeDefined();
-      expect(result?.start_column).toBe(1);
-      expect(result?.end_column).toBe(9); // "self.data"
-    });
-
-    it("should extract path from associated function call", () => {
-      const code = "String::new();";
-      const tree = parser.parse(code);
-      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
-
-      const result = RUST_METADATA_EXTRACTORS.extract_call_receiver(call_expr, TEST_FILE);
-
-      expect(result).toBeDefined();
-      expect(result?.start_column).toBe(1);
-      expect(result?.end_column).toBe(6); // "String"
-    });
-
-    it("should extract receiver from scoped_identifier node directly", () => {
-      // This tests the case where rust.scm captures @reference.call on scoped_identifier
-      // rather than on the call_expression
-      const code = "let manager = UserManager::new();";
-      const tree = parser.parse(code);
-      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
-      const scoped_id = call_expr.childForFieldName("function");
-
-      expect(scoped_id?.type).toBe("scoped_identifier");
-
-      const result = RUST_METADATA_EXTRACTORS.extract_call_receiver(scoped_id!, TEST_FILE);
-
-      expect(result).toBeDefined();
-      expect(result?.start_column).toBe(15); // Points to "UserManager"
-      expect(result?.end_column).toBe(25);
-    });
-
-    it("should extract receiver with turbofish syntax", () => {
-      const code = "vec.iter::<i32>().collect();";
-      const tree = parser.parse(code);
-      const calls = tree.rootNode.descendantsOfType("call_expression");
-
-      // Find the iter call with turbofish
-      let turbofish_call;
-      for (const call of calls) {
-        const func = call.childForFieldName("function");
-        if (func && func.type === "generic_function") {
-          turbofish_call = call;
-          break;
-        }
-      }
-
-      expect(turbofish_call).toBeDefined();
-      const result = RUST_METADATA_EXTRACTORS.extract_call_receiver(turbofish_call!, TEST_FILE);
-
-      expect(result).toBeDefined();
-      expect(result!.start_column).toBe(1);
-      expect(result!.end_column).toBe(3); // "vec"
-    });
-
-    it("should return undefined for null input", () => {
-      const result = RUST_METADATA_EXTRACTORS.extract_call_receiver(null as any, TEST_FILE);
-      expect(result).toBeUndefined();
-    });
-
-    it("should return undefined for undefined input", () => {
-      const result = RUST_METADATA_EXTRACTORS.extract_call_receiver(undefined as any, TEST_FILE);
-      expect(result).toBeUndefined();
-    });
-
-    it("should return undefined for function calls without receiver", () => {
-      const code = "foo();";
-      const tree = parser.parse(code);
-      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
-
-      const result = RUST_METADATA_EXTRACTORS.extract_call_receiver(call_expr, TEST_FILE);
-
-      expect(result).toBeUndefined();
-    });
-
-    it("should handle field_expression directly", () => {
-      const code = "obj.field";
-      const tree = parser.parse(code);
-      const field_expr = tree.rootNode.descendantsOfType("field_expression")[0];
-
-      const result = RUST_METADATA_EXTRACTORS.extract_call_receiver(field_expr, TEST_FILE);
-
-      expect(result).toBeDefined();
-      expect(result?.start_column).toBe(1);
-      expect(result?.end_column).toBe(3); // obj
-    });
-  });
-
   describe("extract_property_chain", () => {
     it("should extract simple field access chain", () => {
       const code = "obj.field1.field2;";
@@ -617,139 +478,6 @@ describe("Rust Metadata Extractors", () => {
     });
   });
 
-  describe("extract_assignment_parts", () => {
-    it("should extract let binding parts", () => {
-      const code = "let x = 42;";
-      const tree = parser.parse(code);
-      const let_decl = tree.rootNode.descendantsOfType("let_declaration")[0];
-
-      const result = RUST_METADATA_EXTRACTORS.extract_assignment_parts(let_decl, TEST_FILE);
-
-      expect(result.target).toBeDefined();
-      expect(result.source).toBeDefined();
-      expect(result.target?.start_column).toBe(5); // "x"
-      expect(result.source?.start_column).toBe(9); // "42"
-    });
-
-    it("should extract mutable binding parts", () => {
-      const code = "let mut x = vec![1, 2, 3];";
-      const tree = parser.parse(code);
-      const let_decl = tree.rootNode.descendantsOfType("let_declaration")[0];
-
-      const result = RUST_METADATA_EXTRACTORS.extract_assignment_parts(let_decl, TEST_FILE);
-
-      expect(result.target).toBeDefined();
-      expect(result.source).toBeDefined();
-    });
-
-    it("should extract assignment expression parts", () => {
-      const code = "x = 100;";
-      const tree = parser.parse(code);
-      const assignment = tree.rootNode.descendantsOfType("assignment_expression")[0];
-
-      const result = RUST_METADATA_EXTRACTORS.extract_assignment_parts(assignment, TEST_FILE);
-
-      expect(result.target).toBeDefined();
-      expect(result.source).toBeDefined();
-      expect(result.target?.start_column).toBe(1); // "x"
-      expect(result.source?.start_column).toBe(5); // "100"
-    });
-
-    it("should extract field assignment parts", () => {
-      const code = "self.value = 42;";
-      const tree = parser.parse(code);
-      const assignment = tree.rootNode.descendantsOfType("assignment_expression")[0];
-
-      const result = RUST_METADATA_EXTRACTORS.extract_assignment_parts(assignment, TEST_FILE);
-
-      expect(result.target).toBeDefined();
-      expect(result.source).toBeDefined();
-      expect(result.target?.end_column).toBe(10); // "self.value"
-    });
-
-    it("should extract compound assignment parts", () => {
-      const code = "x += 5;";
-      const tree = parser.parse(code);
-      const compound_assign = tree.rootNode.descendantsOfType("compound_assignment_expr")[0];
-
-      const result = RUST_METADATA_EXTRACTORS.extract_assignment_parts(compound_assign, TEST_FILE);
-
-      expect(result.target).toBeDefined();
-      expect(result.source).toBeDefined();
-      expect(result.target?.start_column).toBe(1); // "x"
-      expect(result.source?.start_column).toBe(6); // "5"
-    });
-
-    it("should extract pattern destructuring", () => {
-      const code = "let (a, b) = (1, 2);";
-      const tree = parser.parse(code);
-      const let_decl = tree.rootNode.descendantsOfType("let_declaration")[0];
-
-      const result = RUST_METADATA_EXTRACTORS.extract_assignment_parts(let_decl, TEST_FILE);
-
-      expect(result.target).toBeDefined();
-      expect(result.source).toBeDefined();
-    });
-
-    it("should extract struct destructuring", () => {
-      const code = "let Point { x, y } = point;";
-      const tree = parser.parse(code);
-      const let_decl = tree.rootNode.descendantsOfType("let_declaration")[0];
-
-      const result = RUST_METADATA_EXTRACTORS.extract_assignment_parts(let_decl, TEST_FILE);
-
-      expect(result.target).toBeDefined();
-      expect(result.source).toBeDefined();
-    });
-
-    it("should return undefined for non-assignment nodes", () => {
-      const code = "println!(\"hello\");";
-      const tree = parser.parse(code);
-      const macro_call = tree.rootNode.descendantsOfType("macro_invocation")[0];
-
-      const result = RUST_METADATA_EXTRACTORS.extract_assignment_parts(macro_call, TEST_FILE);
-
-      expect(result.target).toBeUndefined();
-      expect(result.source).toBeUndefined();
-    });
-
-    it("should handle null input", () => {
-      const result = RUST_METADATA_EXTRACTORS.extract_assignment_parts(null as any, TEST_FILE);
-      expect(result.target).toBeUndefined();
-      expect(result.source).toBeUndefined();
-    });
-
-    it("should handle undefined input", () => {
-      const result = RUST_METADATA_EXTRACTORS.extract_assignment_parts(undefined as any, TEST_FILE);
-      expect(result.target).toBeUndefined();
-      expect(result.source).toBeUndefined();
-    });
-
-    it("should handle let declaration without value", () => {
-      const code = "let x: i32;";
-      const tree = parser.parse(code);
-      const let_decl = tree.rootNode.descendantsOfType("let_declaration")[0];
-
-      const result = RUST_METADATA_EXTRACTORS.extract_assignment_parts(let_decl, TEST_FILE);
-
-      expect(result.target).toBeDefined();
-      expect(result.source).toBeUndefined();
-    });
-
-    it("should handle index assignment", () => {
-      const code = "array[0] = value;";
-      const tree = parser.parse(code);
-      const assignment = tree.rootNode.descendantsOfType("assignment_expression")[0];
-
-      const result = RUST_METADATA_EXTRACTORS.extract_assignment_parts(assignment, TEST_FILE);
-
-      expect(result.target).toBeDefined();
-      expect(result.source).toBeDefined();
-      expect(result.target?.start_column).toBe(1); // array[0]
-      expect(result.source?.start_column).toBe(12); // value
-    });
-  });
-
   describe("extract_construct_target", () => {
     it("should extract target for struct instantiation", () => {
       const code = "let point = Point { x: 1, y: 2 };";
@@ -758,9 +486,10 @@ describe("Rust Metadata Extractors", () => {
 
       const result = RUST_METADATA_EXTRACTORS.extract_construct_target(struct_expr, TEST_FILE);
 
-      expect(result).toBeDefined();
-      expect(result?.start_column).toBe(5); // "point"
-      expect(result?.end_column).toBe(9);
+      expect(result).toEqual({
+        location: { file_path: TEST_FILE, start_line: 1, start_column: 5, end_line: 1, end_column: 9 },
+        holds: "value",
+      });
     });
 
     it("should extract target for Vec::new()", () => {
@@ -770,8 +499,10 @@ describe("Rust Metadata Extractors", () => {
 
       const result = RUST_METADATA_EXTRACTORS.extract_construct_target(call_expr, TEST_FILE);
 
-      expect(result).toBeDefined();
-      expect(result?.start_column).toBe(5); // "vec"
+      expect(result).toEqual({
+        location: { file_path: TEST_FILE, start_line: 1, start_column: 5, end_line: 1, end_column: 7 },
+        holds: "value",
+      });
     });
 
     it("should extract target for Box::new()", () => {
@@ -781,8 +512,10 @@ describe("Rust Metadata Extractors", () => {
 
       const result = RUST_METADATA_EXTRACTORS.extract_construct_target(call_expr, TEST_FILE);
 
-      expect(result).toBeDefined();
-      expect(result?.start_column).toBe(5); // "boxed"
+      expect(result).toEqual({
+        location: { file_path: TEST_FILE, start_line: 1, start_column: 5, end_line: 1, end_column: 9 },
+        holds: "value",
+      });
     });
 
     it("should extract target for tuple struct", () => {
@@ -792,8 +525,10 @@ describe("Rust Metadata Extractors", () => {
 
       const result = RUST_METADATA_EXTRACTORS.extract_construct_target(call_expr, TEST_FILE);
 
-      expect(result).toBeDefined();
-      expect(result?.start_column).toBe(5); // "color"
+      expect(result).toEqual({
+        location: { file_path: TEST_FILE, start_line: 1, start_column: 5, end_line: 1, end_column: 9 },
+        holds: "value",
+      });
     });
 
     it("should extract target for enum variant", () => {
@@ -803,8 +538,10 @@ describe("Rust Metadata Extractors", () => {
 
       const result = RUST_METADATA_EXTRACTORS.extract_construct_target(call_expr, TEST_FILE);
 
-      expect(result).toBeDefined();
-      expect(result?.start_column).toBe(5); // "opt"
+      expect(result).toEqual({
+        location: { file_path: TEST_FILE, start_line: 1, start_column: 5, end_line: 1, end_column: 7 },
+        holds: "value",
+      });
     });
 
     it("should extract target from assignment", () => {
@@ -814,8 +551,10 @@ describe("Rust Metadata Extractors", () => {
 
       const result = RUST_METADATA_EXTRACTORS.extract_construct_target(call_expr, TEST_FILE);
 
-      expect(result).toBeDefined();
-      expect(result?.start_column).toBe(1); // "obj"
+      expect(result).toEqual({
+        location: { file_path: TEST_FILE, start_line: 1, start_column: 1, end_line: 1, end_column: 3 },
+        holds: "value",
+      });
     });
 
     it("should extract field assignment target", () => {
@@ -825,9 +564,38 @@ describe("Rust Metadata Extractors", () => {
 
       const result = RUST_METADATA_EXTRACTORS.extract_construct_target(call_expr, TEST_FILE);
 
-      expect(result).toBeDefined();
-      expect(result?.start_column).toBe(1);
-      expect(result?.end_column).toBe(9); // "self.data"
+      expect(result).toEqual({
+        location: { file_path: TEST_FILE, start_line: 1, start_column: 1, end_line: 1, end_column: 9 },
+        holds: "value",
+      });
+    });
+
+    it("should target the element of the binding an array literal initialises", () => {
+      const code = "let layers = [Layer::new()];";
+      const tree = parser.parse(code);
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = RUST_METADATA_EXTRACTORS.extract_construct_target(call_expr, TEST_FILE);
+
+      expect(result).toEqual({
+        location: { file_path: TEST_FILE, start_line: 1, start_column: 5, end_line: 1, end_column: 10 },
+        holds: "element",
+      });
+    });
+
+    it("should type nothing through a tuple or struct literal, or an array holding anything but constructions", () => {
+      for (const code of [
+        "let pair = (Layer::new(), 1);",
+        "let h = Holder { inner: Inner::new() };",
+        "let layers = [Layer::new(), other];",
+      ]) {
+        const tree = parser.parse(code);
+        const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+        const result = RUST_METADATA_EXTRACTORS.extract_construct_target(call_expr, TEST_FILE);
+
+        expect(result).toEqual(undefined);
+      }
     });
 
     it("should return undefined for constructor without assignment", () => {
@@ -858,8 +626,10 @@ describe("Rust Metadata Extractors", () => {
 
       const result = RUST_METADATA_EXTRACTORS.extract_construct_target(build_call, TEST_FILE);
 
-      expect(result).toBeDefined();
-      expect(result?.start_column).toBe(5); // obj
+      expect(result).toEqual({
+        location: { file_path: TEST_FILE, start_line: 1, start_column: 5, end_line: 1, end_column: 7 },
+        holds: "value",
+      });
     });
 
     it("should handle pattern with identifier name field", () => {
@@ -881,170 +651,6 @@ describe("Rust Metadata Extractors", () => {
       const result = RUST_METADATA_EXTRACTORS.extract_construct_target(struct_expr, TEST_FILE);
 
       expect(result).toBeUndefined();
-    });
-  });
-
-  describe("extract_type_arguments", () => {
-    it("should extract single type argument", () => {
-      const code = "let v: Vec<i32> = Vec::new();";
-      const tree = parser.parse(code);
-      const generic_type = tree.rootNode.descendantsOfType("generic_type")[0];
-
-      const result = RUST_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
-
-      expect(result).toBeDefined();
-      expect(result).toEqual(["i32"]);
-    });
-
-    it("should extract multiple type arguments", () => {
-      const code = "let map: HashMap<String, u64> = HashMap::new();";
-      const tree = parser.parse(code);
-      const generic_type = tree.rootNode.descendantsOfType("generic_type")[0];
-
-      const result = RUST_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
-
-      expect(result).toBeDefined();
-      expect(result).toEqual(["String", "u64"]);
-    });
-
-    it("should extract nested generic arguments", () => {
-      const code = "let v: Vec<Option<String>> = Vec::new();";
-      const tree = parser.parse(code);
-      const generic_type = tree.rootNode.descendantsOfType("generic_type")[0];
-
-      const result = RUST_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
-
-      expect(result).toBeDefined();
-      expect(result).toEqual(["Option<String>"]);
-    });
-
-    it("should extract turbofish type arguments", () => {
-      const code = "vec.collect::<Vec<i32>>();";
-      const tree = parser.parse(code);
-      const generic_func = tree.rootNode.descendantsOfType("generic_function")[0];
-
-      expect(generic_func).toBeDefined();
-      const result = RUST_METADATA_EXTRACTORS.extract_type_arguments(generic_func!);
-
-      expect(result).toBeDefined();
-      expect(result).toEqual(["Vec<i32>"]);
-    });
-
-    it("should extract lifetime parameters", () => {
-      const code = "let r: &'a str = \"hello\";";
-      const tree = parser.parse(code);
-      const ref_type = tree.rootNode.descendantsOfType("reference_type")[0];
-
-      expect(ref_type).toBeDefined();
-      expect(ref_type.text).toContain("'");
-      const result = RUST_METADATA_EXTRACTORS.extract_type_arguments(ref_type);
-      expect(result).toBeUndefined();
-    });
-
-    it("should extract Result type arguments", () => {
-      const code = "fn foo() -> Result<String, std::io::Error> {}";
-      const tree = parser.parse(code);
-      const generic_type = tree.rootNode.descendantsOfType("generic_type")[0];
-
-      const result = RUST_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
-
-      expect(result).toBeDefined();
-      expect(result).toEqual(["String", "std::io::Error"]);
-    });
-
-    it("should handle complex nested generics", () => {
-      const code = "let map: HashMap<String, Vec<(i32, String)>> = HashMap::new();";
-      const tree = parser.parse(code);
-      const generic_type = tree.rootNode.descendantsOfType("generic_type")[0];
-
-      const result = RUST_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
-
-      expect(result).toBeDefined();
-      expect(result).toEqual(["String", "Vec<(i32, String)>"]);
-    });
-
-    it("should return undefined for non-generic types", () => {
-      const code = "let x: i32 = 5;";
-      const tree = parser.parse(code);
-      const primitive_type = tree.rootNode.descendantsOfType("primitive_type")[0];
-
-      const result = RUST_METADATA_EXTRACTORS.extract_type_arguments(primitive_type);
-
-      expect(result).toBeUndefined();
-    });
-
-    it("should handle null input", () => {
-      const result = RUST_METADATA_EXTRACTORS.extract_type_arguments(null as any);
-      expect(result).toBeUndefined();
-    });
-
-    it("should handle undefined input", () => {
-      const result = RUST_METADATA_EXTRACTORS.extract_type_arguments(undefined as any);
-      expect(result).toBeUndefined();
-    });
-
-    it("should extract from type_arguments node directly", () => {
-      const code = "Vec::<i32>::new();";
-      const tree = parser.parse(code);
-      const type_args = tree.rootNode.descendantsOfType("type_arguments")[0];
-
-      const result = RUST_METADATA_EXTRACTORS.extract_type_arguments(type_args);
-
-      expect(result).toEqual(["i32"]);
-    });
-
-    it("should handle associated types via type_arguments", () => {
-      const code = "fn foo() -> impl Iterator<Item = i32> {}";
-      const tree = parser.parse(code);
-      const type_args = tree.rootNode.descendantsOfType("type_arguments")[0];
-
-      expect(type_args).toBeDefined();
-      const result = RUST_METADATA_EXTRACTORS.extract_type_arguments(type_args!);
-      expect(result).toEqual(["Item = i32"]);
-    });
-
-    it("should handle fallback regex extraction for simple generics", () => {
-      // Create a mock node with simple text that needs regex extraction
-      const mock_node = {
-        type: "simple_type",
-        text: "SomeType<A, B, C>",
-        childCount: 0,
-        child: () => null,
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        childForFieldName: () => null,
-      } as any;
-
-      const result = RUST_METADATA_EXTRACTORS.extract_type_arguments(mock_node);
-
-      expect(result).toEqual(["A", "B", "C"]);
-    });
-
-    it("should handle turbofish with double colon", () => {
-      const mock_node = {
-        type: "turbofish_type",
-        text: "collect::<Vec<String>>",
-        childCount: 0,
-        child: () => null,
-        // eslint-disable-next-line @typescript-eslint/naming-convention
-        childForFieldName: () => null,
-      } as any;
-
-      const result = RUST_METADATA_EXTRACTORS.extract_type_arguments(mock_node);
-
-      // Regex fallback truncates the closing bracket for nested generics
-      expect(result).toEqual(["Vec<String"]);
-    });
-
-    it("should handle type arguments from tree-sitter parsed node", () => {
-      // Use actual tree-sitter parsed code instead of mock
-      const code = "let x: Result<HashMap<String, Vec<Option<i32>>>, Error> = Ok(HashMap::new());";
-      const tree = parser.parse(code);
-      const generic_type = tree.rootNode.descendantsOfType("generic_type")[0];
-
-      const result = RUST_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
-
-      expect(result).toBeDefined();
-      expect(result!.length).toBe(2);
     });
   });
 
@@ -1076,17 +682,6 @@ impl MyStruct {
       const result = RUST_METADATA_EXTRACTORS.extract_type_from_annotation(display_trait!, TEST_FILE);
       expect(result).toBeDefined();
       expect(result!.type_name).toBe("Display");
-    });
-
-    it("should handle macro calls in let bindings", () => {
-      const code = "let v = vec![1, 2, 3];";
-      const tree = parser.parse(code);
-      const let_decl = tree.rootNode.descendantsOfType("let_declaration")[0];
-
-      const result = RUST_METADATA_EXTRACTORS.extract_assignment_parts(let_decl, TEST_FILE);
-
-      expect(result.target).toBeDefined();
-      expect(result.source).toBeDefined();
     });
 
     it("should handle closure types", () => {
@@ -1168,8 +763,10 @@ impl MyStruct {
 
       const result = RUST_METADATA_EXTRACTORS.extract_construct_target(call_expr, TEST_FILE);
 
-      expect(result).toBeDefined();
-      expect(result?.start_column).toBe(5); // arc
+      expect(result).toEqual({
+        location: { file_path: TEST_FILE, start_line: 1, start_column: 5, end_line: 1, end_column: 7 },
+        holds: "value",
+      });
     });
   });
 
@@ -1307,6 +904,110 @@ impl MyStruct {
 
       expect(result).toBe("new");
     });
+
+    it("extracts the terminal name from a bare scoped_identifier call node", () => {
+      // The qualified-call capture hands the scoped_identifier itself, not the call.
+      const code = "worker::create(7)";
+      const tree = parser.parse(code);
+      const scoped = tree.rootNode.descendantsOfType("scoped_identifier")[0];
+
+      const result = RUST_METADATA_EXTRACTORS.extract_call_name(scoped);
+
+      expect(result).toBe("create");
+    });
+
+    it("extracts the terminal type name from a full constructor path node", () => {
+      const code = "crate::runtime::Driver::new()";
+      const tree = parser.parse(code);
+      const path_node = tree.rootNode
+        .descendantsOfType("scoped_identifier")
+        .find((n) => n.text === "crate::runtime::Driver");
+
+      const result = RUST_METADATA_EXTRACTORS.extract_call_name(path_node!);
+
+      expect(result).toBe("Driver");
+    });
+
+    it("extracts the type name from a turbofish constructor path, stripping the turbofish", () => {
+      const code = "Cell::<u8>::new()";
+      const tree = parser.parse(code);
+      const generic = tree.rootNode.descendantsOfType("generic_type")[0];
+
+      const result = RUST_METADATA_EXTRACTORS.extract_call_name(generic);
+
+      expect(result).toBe("Cell");
+    });
+  });
+
+  describe("extract_call_path_prefix", () => {
+    it("drops the terminal segment in function mode (worker::create → [worker])", () => {
+      const code = "worker::create(7)";
+      const tree = parser.parse(code);
+      const scoped = tree.rootNode.descendantsOfType("scoped_identifier")[0];
+
+      const result = RUST_METADATA_EXTRACTORS.extract_call_path_prefix!(
+        scoped,
+        "function",
+      );
+
+      expect(result).toEqual(["worker"]);
+    });
+
+    it("drops the terminal segment for a type-qualified associated fn (Parker::make → [Parker])", () => {
+      const code = "Parker::make(5)";
+      const tree = parser.parse(code);
+      const scoped = tree.rootNode.descendantsOfType("scoped_identifier")[0];
+
+      const result = RUST_METADATA_EXTRACTORS.extract_call_path_prefix!(
+        scoped,
+        "function",
+      );
+
+      expect(result).toEqual(["Parker"]);
+    });
+
+    it("keeps the full type path in constructor mode (crate::runtime::Driver)", () => {
+      const code = "crate::runtime::Driver::new()";
+      const tree = parser.parse(code);
+      const path_node = tree.rootNode
+        .descendantsOfType("scoped_identifier")
+        .find((n) => n.text === "crate::runtime::Driver");
+
+      const result = RUST_METADATA_EXTRACTORS.extract_call_path_prefix!(
+        path_node!,
+        "constructor",
+      );
+
+      expect(result).toEqual(["crate", "runtime", "Driver"]);
+    });
+
+    it("strips the turbofish from each segment in constructor mode (Cell::<u8> → [Cell])", () => {
+      const code = "Cell::<u8>::new()";
+      const tree = parser.parse(code);
+      const generic = tree.rootNode.descendantsOfType("generic_type")[0];
+
+      const result = RUST_METADATA_EXTRACTORS.extract_call_path_prefix!(
+        generic,
+        "constructor",
+      );
+
+      expect(result).toEqual(["Cell"]);
+    });
+
+    it("returns undefined for an unqualified call (no path prefix)", () => {
+      // A bare call is captured as the callee `identifier` (rust.scm), so that
+      // is the node the builder hands the extractor.
+      const code = "func()";
+      const tree = parser.parse(code);
+      const callee = tree.rootNode.descendantsOfType("identifier")[0];
+
+      const result = RUST_METADATA_EXTRACTORS.extract_call_path_prefix!(
+        callee,
+        "function",
+      );
+
+      expect(result).toBeUndefined();
+    });
   });
 
   describe("extract_receiver_info", () => {
@@ -1321,7 +1022,6 @@ impl MyStruct {
         receiver_location: expect.objectContaining({ start_column: 1, end_column: 4 }),
         property_chain: ["self", "method"],
         is_self_reference: true,
-        self_keyword: "self",
       });
     });
 
@@ -1335,7 +1035,6 @@ impl MyStruct {
       expect(result).toBeDefined();
       expect(result!.property_chain).toEqual(["vec", "push"]);
       expect(result!.is_self_reference).toBe(false);
-      expect(result!.self_keyword).toBeUndefined();
     });
 
     it("should handle nested self field access", () => {
@@ -1348,7 +1047,6 @@ impl MyStruct {
       expect(result).toBeDefined();
       expect(result!.property_chain).toEqual(["self", "data", "process"]);
       expect(result!.is_self_reference).toBe(true);
-      expect(result!.self_keyword).toBe("self");
     });
 
     it("should return undefined for standalone function calls", () => {
@@ -1383,7 +1081,6 @@ impl MyStruct {
       expect(result).toBeDefined();
       expect(result!.property_chain).toEqual(["self", "value"]);
       expect(result!.is_self_reference).toBe(true);
-      expect(result!.self_keyword).toBe("self");
     });
   });
 

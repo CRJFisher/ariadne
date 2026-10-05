@@ -1,104 +1,75 @@
-import type { FilePath, SymbolId, Language } from "@ariadnejs/types";
-import type { ParsedFile } from "../index_single_file/parsed_file";
+import type {
+  FilePath,
+  ScopeId,
+  SymbolId,
+  SymbolName,
+  Language,
+  AnyDefinition,
+  CallGraph,
+  ClassifiedEntryPoints,
+  KnownIssuesRegistry,
+  TraceCallGraphOptions,
+} from "@ariadnejs/types";
 import { build_index_single_file } from "../index_single_file/index_single_file";
-import type { SemanticIndex } from "../index_single_file/index_single_file";
-import type { AnyDefinition } from "@ariadnejs/types";
+import type { SemanticIndex } from "@ariadnejs/types";
 import { DefinitionRegistry } from "../resolve_references/registries/definition";
 import { TypeRegistry } from "../resolve_references/registries/type";
+import {
+  lookup_type_name,
+  type AnnotationLookupContext,
+} from "../resolve_references/type_annotation_lookup";
+import { resolve_qualified_path_rust } from "../resolve_references/call_resolution/path_resolution.rust";
+import { infer_conformance_to_pending_interfaces } from "../resolve_references/call_resolution/structural_conformance";
 import { ScopeRegistry } from "../resolve_references/registries/scope";
 import { ExportRegistry } from "../resolve_references/registries/export";
 import { ReferenceRegistry } from "../resolve_references/registries/reference";
-import { ImportGraph } from "./import_graph";
-import { ResolutionRegistry } from "../resolve_references/resolve_references";
+import { ImportGraph } from "../resolve_references/import_resolution/import_graph";
+import { find_files_affected_by_change } from "./find_files_affected_by_change";
+import { ResolutionRegistry } from "../resolve_references/resolution_registry";
 import { preprocess_references } from "../resolve_references/preprocess_references";
-import { type CallGraph } from "@ariadnejs/types";
+import { trace_call_graph } from "../trace_call_graph/trace_call_graph";
 import {
-  trace_call_graph,
-  type TraceCallGraphOptions,
-} from "../trace_call_graph/trace_call_graph";
+  enrich_call_graph,
+  type EnrichedCallGraph,
+} from "../classify_entry_points/enrich_call_graph";
 import { fix_import_definition_locations } from "./fix_import_locations";
-import { extract_all_parameters } from "./extract_nested_definitions";
-import Parser from "tree-sitter";
-import TypeScriptParser from "tree-sitter-typescript";
-import JavaScriptParser from "tree-sitter-javascript";
-import PythonParser from "tree-sitter-python";
-import RustParser from "tree-sitter-rust";
+import { extract_all_parameters } from "./extract_parameters";
+import { parse_file } from "./parse_file";
 import type { FileSystemFolder } from "../resolve_references/file_folders";
 import { readdir, realpath } from "fs/promises";
 import { join } from "path";
-import { profiler } from "../profiling";
-import type { PersistenceStorage } from "../persistence/storage";
-import { compute_content_hash } from "../persistence/content_hash";
-import type { CacheManifestEntry } from "../persistence/cache_manifest";
+import type { PersistenceStorage } from "../persistence";
+import { write_file_index } from "./project_cache_strategy";
+import type { ModuleResolutionContext } from "../resolve_references/import_resolution";
 import {
-  CURRENT_SCHEMA_VERSION,
-  serialize_manifest,
-} from "../persistence/cache_manifest";
-import { serialize_semantic_index } from "../persistence/serialize_index";
+  build_module_specifier_index,
+  create_module_resolution_context,
+} from "../resolve_references/import_resolution";
 
 /**
- * Detect language from file path extension
+ * Options for the classification pipeline. Extends `TraceCallGraphOptions`
+ * (e.g. `include_tests`) with a registry override used by the self-healing
+ * pipeline to substitute the full skill registry for the bundled permanent
+ * slice.
  */
-function detect_language(file_path: FilePath): Language {
-  const ext = file_path.split(".").pop()?.toLowerCase();
-  switch (ext) {
-    case "ts":
-    case "tsx":
-      return "typescript" as Language;
-    case "js":
-    case "jsx":
-      return "javascript" as Language;
-    case "py":
-      return "python" as Language;
-    case "rs":
-      return "rust" as Language;
-    default:
-      throw new Error(`Unsupported file extension: ${ext}`);
-  }
+export interface ClassifyOptions extends TraceCallGraphOptions {
+  readonly registry?: KnownIssuesRegistry;
 }
 
 /**
- * Get parser for language
+ * How many times one resolve may answer files again because a carried class
+ * changed a parameter's type. Each round can only add call sites, so a corpus
+ * settles in one or two; the bound stops a pathological chain of factories from
+ * running the pass over the project repeatedly.
  */
-function get_parser(language: Language): Parser {
-  const parser = new Parser();
-  switch (language) {
-    case "typescript":
-      parser.setLanguage(TypeScriptParser.typescript);
-      break;
-    case "javascript":
-      parser.setLanguage(JavaScriptParser);
-      break;
-    case "python":
-      parser.setLanguage(PythonParser);
-      break;
-    case "rust":
-      parser.setLanguage(RustParser);
-      break;
-    default:
-      throw new Error(`Unsupported language: ${language}`);
-  }
-  return parser;
-}
+const CARRIER_RESOLUTION_ROUNDS = 4;
 
 /**
- * Create ParsedFile object
+ * How many times one resolve may answer files again because resolving calls
+ * inferred a structural subtype. Each round can only add edges, so the rounds
+ * run out on their own; the bound is a guard.
  */
-function create_parsed_file(
-  file_path: FilePath,
-  content: string,
-  tree: Parser.Tree,
-  language: Language
-): ParsedFile {
-  const lines = content.split("\n");
-  return {
-    file_path,
-    file_lines: lines.length,
-    file_end_column: lines[lines.length - 1]?.length || 0,
-    tree,
-    lang: language,
-  };
-}
+const INFERENCE_RESOLUTION_ROUNDS = 4;
 
 /**
  * Main coordinator for the entire processing pipeline.
@@ -106,22 +77,35 @@ function create_parsed_file(
  * Manages:
  * - File-level data (SemanticIndex per file)
  * - Project-level registries (definitions, types, scopes, exports, imports)
- * - Symbol resolution (eager, always up-to-date)
+ * - Symbol resolution
  * - Call graph computation
  *
- * Architecture:
- * - When a file changes, recompute file-local data
- * - Update all registries incrementally
- * - Immediately re-resolve affected files (updated file + dependents)
- * - State is always consistent - no "pending" or "stale" data
+ * Two drivers sit on one set of phases.
  *
- * Provides efficient incremental updates: only affected files are re-parsed
- * and re-resolved, while unchanged files reuse cached results.
+ * The INCREMENTAL driver — `update_file`, `restore_file`, `remove_file` — is
+ * the file watcher's. One file changes in an already-consistent project, so it
+ * repairs exactly the region the edit can have invalidated: the file itself
+ * plus every file whose resolutions its surface reaches. State is consistent
+ * when each call returns.
+ *
+ * The BULK driver — `ingest_file` / `ingest_restored_file` per file, then one
+ * `resolve_corpus()` — loads a corpus. Nothing cross-file is asked until every
+ * file is present, so every such question is asked once against the whole
+ * corpus rather than repeatedly against the fraction of it that had arrived.
+ * Between the first ingest and `resolve_corpus()` the project is deliberately
+ * inconsistent and nothing may read the call graph.
+ *
+ * Both drivers compose the same private steps — `populate_registries`,
+ * `fix_import_locations_for_file`, `resolve_files`, `evict_file` — so no phase
+ * has a second implementation to drift from the first.
  */
 export class Project {
   // ===== File-level data (immutable once computed) =====
   private index_single_filees: Map<FilePath, SemanticIndex> = new Map();
   private file_contents: Map<FilePath, string> = new Map();
+  // Language decided once at ingress per file; every downstream consumer
+  // reads this map instead of re-deriving from the path.
+  private languages: Map<FilePath, Language> = new Map();
 
   // ===== Configuration =====
   /** Buffer size for tree-sitter parser (auto-adjusts upward to fit largest file). */
@@ -129,7 +113,7 @@ export class Project {
 
   // ===== Project-level registries (aggregated, incrementally updated) =====
   public definitions: DefinitionRegistry = new DefinitionRegistry();
-  public types: TypeRegistry = new TypeRegistry();
+  public types: TypeRegistry = new TypeRegistry(this.definitions);
   public scopes: ScopeRegistry = new ScopeRegistry();
   public exports: ExportRegistry = new ExportRegistry();
   public references: ReferenceRegistry = new ReferenceRegistry();
@@ -137,8 +121,21 @@ export class Project {
 
   // ===== Resolution layer (always up-to-date) =====
   public resolutions: ResolutionRegistry = new ResolutionRegistry();
-  private root_folder?: FileSystemFolder = undefined;
+  private modules?: ModuleResolutionContext = undefined;
   private excluded_folders: Set<string> = new Set();
+
+  // ===== EnrichedCallGraph cache =====
+  // LRU-1 keyed by (registry-identity, include_tests). Sufficient because:
+  //   - Project state is invalidated by clearing the cache on every
+  //     `update_file`/`remove_file`/`restore_file`/`clear` call.
+  //   - Within a stable Project state, repeated calls with the same options
+  //     should reuse work; differing options recompute.
+  //   - Most sessions hit one shape (no override) so a single slot is plenty.
+  private enriched_cache: {
+    registry: KnownIssuesRegistry | undefined;
+    include_tests: boolean;
+    enriched: EnrichedCallGraph;
+  } | null = null;
 
   async initialize(
     root_folder_abs_path?: FilePath,
@@ -152,69 +149,45 @@ export class Project {
       this.excluded_folders = new Set(excluded_folders);
     }
 
-    this.root_folder = await this.get_file_tree(resolved_path);
+    // The specifier index is read once, here, because it is the only part of
+    // module resolution that needs real I/O; every later resolution query runs
+    // against this snapshot and the I/O-free file tree.
+    const root_folder = await this.get_file_tree(resolved_path);
+    this.modules = create_module_resolution_context(
+      root_folder,
+      await build_module_specifier_index(root_folder)
+    );
   }
 
   /**
-   * Add or update a file in the project.
-   * This is the main entry point for incremental updates.
+   * Add or update one file in an already-consistent project.
    *
-   * Process (3 phases):
-   * 0. Track dependents before updating import graph
-   * 1. Compute file-local data (SemanticIndex)
-   * 2. Update all project registries
-   * 3. Re-resolve affected files (this file + dependents)
-   *
-   * After this method completes, all project state is consistent and up-to-date.
+   * The incremental-edit entry point. Bulk corpus loading does not come through
+   * here: see `ingest_file` + `resolve_corpus`.
    *
    * @param file_id - The file to update
    * @param content - The file's source code
    */
   update_file(file_id: FilePath, content: string): void {
-    if (!this.root_folder) {
-      throw new Error("Project not initialized");
-    }
+    const modules = this.begin_mutation();
 
-    profiler.start_file(file_id);
-
-    // Phase 0: Track who depends on this file (before updating imports)
+    // Read before the import graph is rewritten, so the files that depended on
+    // the OLD surface are re-resolved too.
     const dependents = this.imports.get_dependents(file_id);
 
-    // Phase 1: Compute file-local data
-    const language = detect_language(file_id);
-    profiler.start("tree_sitter_parse");
-    const parser = get_parser(language);
-    // Auto-adjust buffer to fit the file (2x content length, minimum 1MB)
-    const needed = content.length * 2;
-    if (needed > this.parser_buffer_size) {
-      this.parser_buffer_size = needed;
-    }
-    const tree = parser.parse(content, undefined, {
-      bufferSize: this.parser_buffer_size,
-    });
-    profiler.end("tree_sitter_parse");
-    const parsed_file = create_parsed_file(file_id, content, tree, language);
-    profiler.start("build_index");
-    const index_single_file = build_index_single_file(parsed_file, tree, language);
-    profiler.end("build_index");
+    const index_single_file = this.index_and_store(file_id, content);
 
-    this.index_single_filees.set(file_id, index_single_file);
-    this.file_contents.set(file_id, content);
-
-    // Phases 2-5: Registry update + resolution
-    this.apply_index_and_resolve(file_id, index_single_file, dependents, this.root_folder);
-
-    profiler.end_file();
+    this.populate_registries(file_id, index_single_file, modules);
+    this.fix_import_locations_for_file(file_id, index_single_file);
+    this.resolve_files(find_files_affected_by_change(this.imports, file_id, dependents), modules);
   }
 
   /**
-   * Restore a file from a cached SemanticIndex, skipping tree-sitter parsing.
-   *
-   * Used by the persistence layer when a file's content has not changed since
-   * the cache was written. Runs only registry updates + resolution (Phases 2-5).
+   * Restore one file from a cached SemanticIndex into an already-consistent
+   * project, skipping tree-sitter parsing.
    *
    * @param file_id - The file to restore
-   * @param content - The file's source code (needed for get_source_code lookups)
+   * @param content - The file's source code (stored for `get_file_contents()` access)
    * @param cached_index - Pre-computed SemanticIndex from cache
    */
   restore_file(
@@ -222,30 +195,136 @@ export class Project {
     content: string,
     cached_index: SemanticIndex,
   ): void {
-    if (!this.root_folder) {
-      throw new Error("Project not initialized");
-    }
+    const modules = this.begin_mutation();
 
     const dependents = this.imports.get_dependents(file_id);
 
-    this.index_single_filees.set(file_id, cached_index);
-    this.file_contents.set(file_id, content);
+    this.store_file(file_id, content, cached_index, cached_index.language);
 
-    this.apply_index_and_resolve(file_id, cached_index, dependents, this.root_folder);
+    this.populate_registries(file_id, cached_index, modules);
+    this.fix_import_locations_for_file(file_id, cached_index);
+    this.resolve_files(find_files_affected_by_change(this.imports, file_id, dependents), modules);
   }
 
   /**
-   * Run registry update and resolution phases for a file with a known SemanticIndex.
-   * Shared by update_file() (after parsing) and restore_file() (from cached index).
+   * Bulk-load pass A: index one file and write its own facts into the project
+   * registries, resolving nothing.
+   *
+   * Deferring resolution is what keeps the load flat. Resolving on arrival
+   * re-resolves every already-loaded importer each time a file lands, so a
+   * widely-imported file drags hundreds of files through resolution that the
+   * next arrival drags through again — all of it against a corpus that is still
+   * incomplete, and none of it able to see a file that has not arrived yet.
+   *
+   * @param file_id - The file to ingest
+   * @param content - The file's source code
    */
-  private apply_index_and_resolve(
+  ingest_file(file_id: FilePath, content: string): void {
+    const modules = this.begin_mutation();
+    const index_single_file = this.index_and_store(file_id, content);
+    this.populate_registries(file_id, index_single_file, modules);
+  }
+
+  /**
+   * Bulk-load pass A for a file whose SemanticIndex came from the persistence
+   * cache: registry population only, no parse and no resolution.
+   */
+  ingest_restored_file(
     file_id: FilePath,
-    index_single_file: SemanticIndex,
-    dependents: Set<FilePath>,
-    root_folder: FileSystemFolder,
+    content: string,
+    cached_index: SemanticIndex,
   ): void {
-    // Phase 2: Update project-level registries
-    profiler.start("registry_updates");
+    const modules = this.begin_mutation();
+    this.store_file(file_id, content, cached_index, cached_index.language);
+    this.populate_registries(file_id, cached_index, modules);
+  }
+
+  /**
+   * Undo a pass-A ingest that threw part-way through, without resolving.
+   *
+   * Pass A holds no resolution state to repair, so the re-resolution
+   * `remove_file` owes an edit is pure waste here — and it would be waste
+   * charged against an incomplete corpus, resolving files that pass B resolves
+   * again from a better position.
+   */
+  evict_ingested_file(file_id: FilePath): void {
+    this.begin_mutation();
+    this.evict_file(file_id);
+  }
+
+  /**
+   * Bulk-load pass B: resolve the whole corpus once.
+   *
+   * Runs against fully-populated definition, export and import registries, so
+   * every cross-file question — which file an import names, which definition an
+   * export chain ends at, which class a subtype extends — is answerable on the
+   * first attempt.
+   *
+   * Phase 2.5 runs for every file before any file is resolved. An import can
+   * only be repointed at the file it names once that file is indexed, so
+   * running it per-arrival leaves every import naming a not-yet-ingested file
+   * pointing at the import statement for good.
+   */
+  resolve_corpus(): void {
+    const modules = this.begin_mutation();
+    const all_files = new Set(this.index_single_filees.keys());
+
+    for (const [file_id, index_single_file] of this.index_single_filees) {
+      this.fix_import_locations_for_file(file_id, index_single_file);
+    }
+
+    this.resolve_files(all_files, modules);
+  }
+
+  /**
+   * Open a state-changing operation: drop the EnrichedCallGraph cache the
+   * mutation is about to invalidate, and hand back the module resolution
+   * context every cross-file lookup needs.
+   */
+  private begin_mutation(): ModuleResolutionContext {
+    if (!this.modules) {
+      throw new Error("Project not initialized");
+    }
+    this.enriched_cache = null;
+    return this.modules;
+  }
+
+  /** Phase 1: parse a file, build its SemanticIndex, and store the file-local data. */
+  private index_and_store(file_id: FilePath, content: string): SemanticIndex {
+    // Auto-adjust buffer to fit the file (2x content length)
+    const needed = content.length * 2;
+    if (needed > this.parser_buffer_size) {
+      this.parser_buffer_size = needed;
+    }
+    const parsed_file = parse_file(file_id, content, this.parser_buffer_size);
+    const index_single_file = build_index_single_file(
+      parsed_file,
+      parsed_file.tree,
+      parsed_file.lang,
+    );
+    this.store_file(file_id, content, index_single_file, parsed_file.lang);
+    return index_single_file;
+  }
+
+  private store_file(
+    file_id: FilePath,
+    content: string,
+    index_single_file: SemanticIndex,
+    language: Language,
+  ): void {
+    this.index_single_filees.set(file_id, index_single_file);
+    this.file_contents.set(file_id, content);
+    this.languages.set(file_id, language);
+  }
+
+  /**
+   * Flatten a file's SemanticIndex into the definition list the registries
+   * consume: top-level definitions, class/interface/enum members, and
+   * parameters.
+   */
+  private collect_all_definitions(
+    index_single_file: SemanticIndex,
+  ): AnyDefinition[] {
     const all_definitions: AnyDefinition[] = [
       ...Array.from(index_single_file.functions.values()),
       ...Array.from(index_single_file.classes.values()),
@@ -273,123 +352,242 @@ export class Project {
         all_definitions.push(...enum_def.methods);
       }
     }
+    all_definitions.push(...index_single_file.unattached_impl_methods.values());
 
     all_definitions.push(...extract_all_parameters(index_single_file));
+
+    return all_definitions;
+  }
+
+  /**
+   * Phase 2: write one file's own facts into the project-level registries.
+   * Reads no other file's resolutions, so the answer does not depend on which
+   * files have arrived.
+   */
+  private populate_registries(
+    file_id: FilePath,
+    index_single_file: SemanticIndex,
+    modules: ModuleResolutionContext,
+  ): void {
+    const all_definitions = this.collect_all_definitions(index_single_file);
 
     this.definitions.update_file(file_id, all_definitions);
     this.scopes.update_file(file_id, index_single_file.scopes);
     this.exports.update_file(file_id, this.definitions);
     this.references.update_file(file_id, index_single_file.references);
 
-    const import_definitions = Array.from(
-      index_single_file.imported_symbols.values(),
-    );
     this.imports.update_file(
       file_id,
-      import_definitions,
+      Array.from(index_single_file.imported_symbols.values()),
       index_single_file.language,
-      root_folder,
+      modules,
     );
+  }
 
-    // Phase 2.5: Fix ImportDefinition locations to point to source files
+  /**
+   * Phase 2.5: repoint this file's ImportDefinitions at the definitions they
+   * name, so "go to definition" on an imported symbol lands where it is
+   * declared rather than on the import statement.
+   *
+   * Reads the export and definition registries of OTHER files, so it can only
+   * answer for a file that is already indexed.
+   */
+  private fix_import_locations_for_file(
+    file_id: FilePath,
+    index_single_file: SemanticIndex,
+  ): void {
     const fixed_import_definitions = fix_import_definition_locations(
-      import_definitions,
+      Array.from(index_single_file.imported_symbols.values()),
       this.imports,
       this.exports,
       this.definitions,
     );
 
-    const non_import_definitions = all_definitions.filter(
-      (def) => def.kind !== "import",
-    );
+    const non_import_definitions = this.collect_all_definitions(
+      index_single_file,
+    ).filter((def) => def.kind !== "import");
+
     this.definitions.update_file(file_id, [
       ...non_import_definitions,
       ...fixed_import_definitions,
     ]);
-    profiler.end("registry_updates");
+  }
 
-    // Phase 3: Re-resolve affected files
-    const affected_files = new Set([file_id, ...dependents]);
-
-    const languages = new Map<FilePath, Language>();
-    for (const [file_path, index] of this.index_single_filees) {
-      languages.set(file_path, index.language);
+  /**
+   * Phases 3-5: resolve names, cross-file type inheritance, references, types
+   * and calls for a set of files.
+   */
+  private resolve_files(
+    files: Set<FilePath>,
+    modules: ModuleResolutionContext,
+  ): void {
+    // An eviction drops the call sites that typed a factory's parameter without
+    // any pass answering for them, so the callees they typed are answered again
+    // even where the eviction reached no file this resolve was called with.
+    const evicted_carrier_files = this.files_declaring(
+      this.resolutions.take_evicted_carrier_callees(),
+    );
+    if (files.size === 0 && evicted_carrier_files.size === 0) {
+      return;
     }
 
-    profiler.start("resolve_names");
+    // Phase 3: Name resolution
     this.resolutions.resolve_names(
-      affected_files,
-      languages,
+      files,
+      this.languages,
       this.definitions,
       this.scopes,
       this.exports,
       this.imports,
-      root_folder,
+      modules,
     );
-    profiler.end("resolve_names");
 
-    // Phase 3.5: Cross-file type inheritance resolution
-    profiler.start("cross_file_inheritance");
-    const files_needing_call_reresolution = new Set<FilePath>();
-    for (const affected_file of affected_files) {
-      const parent_files =
-        this.definitions.resolve_cross_file_type_inheritance(
-          affected_file,
-          this.resolutions,
-        );
-      for (const parent_file of parent_files) {
-        files_needing_call_reresolution.add(parent_file);
+    const type_resolution_context: AnnotationLookupContext = {
+      resolutions: this.resolutions,
+      exports: this.exports,
+      imports: this.imports,
+      languages: this.languages,
+      modules,
+      resolve_rust_type_path: (module_path, terminal, scope_id, referring_file) =>
+        resolve_qualified_path_rust(module_path, terminal, "type", scope_id, referring_file, {
+          definitions: this.definitions,
+          scopes: this.scopes,
+          resolutions: this.resolutions,
+          exports: this.exports,
+          imports: this.imports,
+          languages: this.languages,
+          modules,
+        }),
+    };
+
+    // Phase 3.5: Type heritage — Rust impl methods joined to the type another
+    // file declares, then every file's extends/implements/impl-trait names
+    // resolved into the subtype graph
+    const resolve_type_name = (scope_id: ScopeId, type_name: SymbolName, file_id: FilePath) =>
+      lookup_type_name(
+        scope_id,
+        type_name,
+        file_id,
+        this.definitions,
+        type_resolution_context
+      );
+    for (const file_id of files) {
+      this.definitions.attach_impl_methods(file_id, resolve_type_name);
+    }
+    const changed_types = new Set<SymbolId>();
+    for (const file_id of files) {
+      for (const parent_id of this.definitions.resolve_type_heritage(file_id, resolve_type_name)) {
+        changed_types.add(parent_id);
+      }
+      for (const type_id of this.definitions.take_changed_member_types(file_id)) {
+        changed_types.add(type_id);
       }
     }
-    profiler.end("cross_file_inheritance");
+    for (const interface_id of infer_conformance_to_pending_interfaces(
+      changed_types,
+      this.resolutions.get_undeclared_interfaces(),
+      this.definitions,
+    )) {
+      changed_types.add(interface_id);
+    }
+    const files_needing_call_reresolution = this.files_dispatching_through(changed_types);
 
     // Phase 3.6: Reference preprocessing
-    profiler.start("preprocess_references");
-    for (const affected_file of affected_files) {
-      const affected_index = this.index_single_filees.get(affected_file);
-      if (affected_index) {
+    for (const file_id of files) {
+      const index_single_file = this.index_single_filees.get(file_id);
+      if (index_single_file) {
         preprocess_references(
-          affected_file,
-          affected_index.language,
+          file_id,
+          index_single_file.language,
           this.references,
           this.definitions,
           this.resolutions,
         );
       }
     }
-    profiler.end("preprocess_references");
 
     // Phase 4: Type registry
-    profiler.start("type_registry");
-    for (const affected_file of affected_files) {
-      const affected_index = this.index_single_filees.get(affected_file);
-      if (affected_index) {
+    for (const file_id of files) {
+      const index_single_file = this.index_single_filees.get(file_id);
+      if (index_single_file) {
         this.types.update_file(
-          affected_file,
-          affected_index,
-          this.definitions,
-          this.resolutions,
-          (import_id) => this.imports.get_resolved_import_path(import_id),
+          file_id,
+          index_single_file,
+          this.references.get_file_references(file_id),
+          type_resolution_context,
         );
       }
     }
-    profiler.end("type_registry");
 
     // Phase 5: Call resolution
-    profiler.start("resolve_calls");
-    const call_resolution_files = new Set([
-      ...affected_files,
-      ...files_needing_call_reresolution,
-    ]);
-    this.resolutions.resolve_calls_for_files(
-      call_resolution_files,
-      this.references,
-      this.scopes,
-      this.types,
-      this.definitions,
-      this.imports,
+    // Pass the same exports/languages/resolution instances handed to
+    // resolve_names above, so namespace re-export following sees the current
+    // export graph rather than a stale snapshot.
+    //
+    // A class handed to a factory as an argument types that factory's
+    // parameter, so a pass that changes what a call site passes changes an
+    // answer inside the callee — a file the pass need not have touched, and one
+    // no import edge leads to from the caller. Those files are answered again,
+    // and again while doing so keeps changing a carrier: each round can only
+    // add call sites to the index, so the rounds run out on their own and the
+    // bound is a guard rather than the terminating condition.
+    //
+    // Edges inferred above are already in `changed_types`; the ones to answer
+    // for are those inferred while calls resolve.
+    this.definitions.take_inferred_parents();
+    this.resolve_calls_until_carriers_settle(
+      new Set([...files, ...files_needing_call_reresolution, ...evicted_carrier_files]),
+      modules,
     );
-    profiler.end("resolve_calls");
+
+    // A structural subtype inferred by a dispatch widens the closure of its
+    // parent and of every type above it, and a call that dispatched through
+    // one of them earlier in this pass read the narrower closure. Which calls
+    // those are depends on the order files were resolved in, so they are
+    // answered again against the closure the pass left behind.
+    for (let round = 0; round < INFERENCE_RESOLUTION_ROUNDS; round += 1) {
+      const inferred_parents = this.definitions.take_inferred_parents();
+      if (inferred_parents.size === 0) {
+        break;
+      }
+      this.resolve_calls_until_carriers_settle(
+        this.files_dispatching_through(inferred_parents),
+        modules,
+      );
+    }
+  }
+
+  private resolve_calls_until_carriers_settle(
+    files: Set<FilePath>,
+    modules: ModuleResolutionContext,
+  ): void {
+    let pending = files;
+    for (let round = 0; pending.size > 0 && round < CARRIER_RESOLUTION_ROUNDS; round += 1) {
+      const changed_carriers = this.resolutions.resolve_calls_for_files(
+        pending,
+        this.references,
+        this.scopes,
+        this.types,
+        this.definitions,
+        this.imports,
+        this.exports,
+        this.languages,
+        modules,
+      );
+      pending = this.files_declaring(changed_carriers);
+    }
+  }
+
+  /** The files declaring `symbol_ids` — where a carrier-typed parameter is read. */
+  private files_declaring(symbol_ids: ReadonlySet<SymbolId>): Set<FilePath> {
+    const files = new Set<FilePath>();
+    for (const symbol_id of symbol_ids) {
+      const file_path = this.definitions.get(symbol_id)?.location.file_path;
+      if (file_path && this.index_single_filees.has(file_path)) {
+        files.add(file_path);
+      }
+    }
+    return files;
   }
 
   /**
@@ -400,70 +598,63 @@ export class Project {
    * @param file_id - The file to remove
    */
   remove_file(file_id: FilePath): void {
-    if (!this.root_folder) {
-      throw new Error("Project not initialized");
-    }
+    const modules = this.begin_mutation();
 
     const dependents = this.imports.get_dependents(file_id);
 
-    // Remove from file-level stores
+    this.evict_file(file_id);
+
+    // Re-resolve every file the deletion can reach, not just direct dependents:
+    // a file two module hops away can hold a path that read the deleted file.
+    const affected = find_files_affected_by_change(this.imports, file_id, dependents);
+    affected.delete(file_id);
+    // A call that dispatched to the deleted file's subtypes, or to a member it
+    // contributed, can sit in a file that depends on nothing the deletion touched.
+    const changed_types = new Set([
+      ...this.definitions.take_evicted_heritage_parents(file_id),
+      ...this.definitions.take_changed_member_types(file_id),
+    ]);
+    for (const caller_file of this.files_dispatching_through(changed_types)) {
+      affected.add(caller_file);
+    }
+    this.resolve_files(affected, modules);
+  }
+
+  /**
+   * Every file holding a call whose answer a change to `changed_types` alters:
+   * a parent that gained or lost a subtype edge, or a type whose members a file
+   * contributes differently.
+   *
+   * Either change alters the subtype closure of that type and of every type
+   * above it, so a call dispatched through any of them is re-answered. The
+   * caller may import none of the files involved — it names the interface, and
+   * the implementer names it too — which is why the import graph cannot find it
+   * and the resolution state's subtype-dispatch index does. That covers a call
+   * that failed for want of a subtype as well as one that resolved to the
+   * subtypes it saw.
+   */
+  private files_dispatching_through(changed_types: ReadonlySet<SymbolId>): Set<FilePath> {
+    if (changed_types.size === 0) {
+      return new Set();
+    }
+    return this.resolutions.get_files_dispatching_through(
+      this.definitions.get_supertype_closure(changed_types)
+    );
+  }
+
+  /** Drop every trace of a file from the file-level stores and the registries. */
+  private evict_file(file_id: FilePath): void {
     this.index_single_filees.delete(file_id);
     this.file_contents.delete(file_id);
+    this.languages.delete(file_id);
 
-    // Remove from registries
     this.definitions.remove_file(file_id);
     this.types.remove_file(file_id);
     this.scopes.remove_file(file_id);
     this.exports.remove_file(file_id);
     this.references.remove_file(file_id);
     this.imports.remove_file(file_id);
-
-    // Remove resolutions for deleted file
     this.resolutions.remove_file(file_id);
-
-    // Re-resolve dependent files (imports may be broken now)
-    if (dependents.size > 0) {
-      // Create language map from semantic indexes
-      const languages = new Map<FilePath, Language>();
-      for (const [file_path, index] of this.index_single_filees) {
-        languages.set(file_path, index.language);
-      }
-
-      // Phase 1: Name resolution
-      this.resolutions.resolve_names(
-        dependents,
-        languages,
-        this.definitions,
-        this.scopes,
-        this.exports,
-        this.imports,
-        this.root_folder
-      );
-
-      // Phase 2: Type registry (uses name resolutions)
-      for (const dependent_file of dependents) {
-        const dependent_index = this.index_single_filees.get(dependent_file);
-        if (dependent_index) {
-          this.types.update_file(
-            dependent_file,
-            dependent_index,
-            this.definitions,
-            this.resolutions,
-            (import_id) => this.imports.get_resolved_import_path(import_id)
-          );
-        }
-      }
-
-      // Phase 3: Call resolution (uses types)
-      this.resolutions.resolve_calls_for_files(
-        dependents,
-        this.references,
-        this.scopes,
-        this.types,
-        this.definitions,
-        this.imports
-      );
-    }
   }
 
   /**
@@ -481,19 +672,57 @@ export class Project {
   /**
    * Get the call graph for the project.
    *
-   * Builds the call graph from current state. All resolutions are maintained
-   * up-to-date by update_file() and remove_file(), so this method always returns
+   * Builds the call graph from current state, then filters out entry points
+   * that match the bundled permanent known-issues registry (Python dunders,
+   * Flask routes, pytest fixtures, etc.). All resolutions are maintained
+   * up-to-date by `update_file()` and `remove_file()`, so this always returns
    * accurate results.
    *
-   * Note: This method does not cache. If you need to call it multiple times,
-   * consider caching the result yourself.
+   * The returned `CallGraph.entry_points` contains true positives only. Use
+   * `get_classified_entry_points()` for the full set with classification labels.
    *
-   * @returns The call graph
+   * @returns The call graph (with entry_points filtered to true positives only)
    */
-  get_call_graph(options?: TraceCallGraphOptions): CallGraph {
-    // Build call graph from current state
-    // All resolutions are always up-to-date (eager resolution)
-    return trace_call_graph(this.definitions, this.resolutions, options);
+  get_call_graph(options?: ClassifyOptions): CallGraph {
+    const enriched = this.compute_enriched_call_graph(options);
+    const true_ids = new Set(
+      enriched.classified_entry_points.true_entry_points.map((e) => e.symbol_id),
+    );
+    const filtered_entry_points = enriched.call_graph.entry_points.filter((id) =>
+      true_ids.has(id),
+    );
+    return {
+      nodes: enriched.call_graph.nodes,
+      entry_points: filtered_entry_points,
+      indirect_reachability: enriched.call_graph.indirect_reachability,
+    };
+  }
+
+  /**
+   * Get classified entry points: every candidate entry point paired with its
+   * classification verdict, split into true positives and known false
+   * positives. Used by triage workflows; library callers typically prefer the
+   * cleaner `get_call_graph().entry_points` shape.
+   */
+  get_classified_entry_points(options?: ClassifyOptions): ClassifiedEntryPoints {
+    return this.compute_enriched_call_graph(options).classified_entry_points;
+  }
+
+  private compute_enriched_call_graph(options?: ClassifyOptions): EnrichedCallGraph {
+    const include_tests = options?.include_tests ?? false;
+    const registry = options?.registry;
+    const cached = this.enriched_cache;
+    if (
+      cached !== null &&
+      cached.registry === registry &&
+      cached.include_tests === include_tests
+    ) {
+      return cached.enriched;
+    }
+    const raw = trace_call_graph(this.definitions, this.resolutions, this.languages, { include_tests });
+    const enriched = enrich_call_graph(raw, this, { registry });
+    this.enriched_cache = { registry, include_tests, enriched };
+    return enriched;
   }
 
   /**
@@ -538,17 +767,30 @@ export class Project {
   }
 
   /**
-   * Get all semantic indexes (for MCP compatibility).
-   * Returns a Map from file path to semantic index.
+   * Read-only view of all indexed source-file contents. Diagnostics passes
+   * (e.g. `extract_entry_point_diagnostics`) walk this map instead of touching
+   * the filesystem so they see exactly the bytes the resolver saw — including
+   * in-memory edits applied via `update_file`.
    */
-  get_all_scope_graphs(): ReadonlyMap<FilePath, SemanticIndex> {
-    return this.index_single_filees;
+  get_file_contents(): ReadonlyMap<FilePath, string> {
+    return this.file_contents;
   }
 
   /**
-   * Get all files that depend on a given file.
+   * Read-only view of each indexed file's language, decided once at parse
+   * ingress. Downstream passes (trace, classification) consume this instead
+   * of re-deriving language from paths.
+   */
+  get_languages(): ReadonlyMap<FilePath, Language> {
+    return this.languages;
+  }
+
+  /**
+   * Every file whose resolutions this file's content can change: the files that
+   * import from it, and the files that reached it through a Rust `::` path,
+   * which name it without importing it.
+   *
    * @param file_id - The file to check dependencies for
-   * @returns Set of files that import from this file
    */
   get_dependents(file_id: FilePath): Set<FilePath> {
     return this.imports.get_dependents(file_id);
@@ -572,15 +814,6 @@ export class Project {
   }
 
   /**
-   * Get type information for a symbol.
-   * @param symbol_id - The symbol to get type info for
-   * @returns Type member info or undefined if not found
-   */
-  get_type_info(symbol_id: SymbolId) {
-    return this.types.get_type_members(symbol_id);
-  }
-
-  /**
    * Get derived data for a file.
    * @param file_id - The file to get derived data for
    * @returns Derived data object or undefined if file not found
@@ -599,53 +832,6 @@ export class Project {
   }
 
   /**
-   * Get source code for a definition range.
-   * @param def - Definition object with range and file_path
-   * @param file_path - File path (optional, uses def.file_path if not provided)
-   * @returns Source code string
-   */
-  get_source_code(
-    def: {
-      file_path?: FilePath;
-      range: { start: { row: number; column: number }; end: { row: number; column: number } };
-    },
-    file_path?: FilePath
-  ): string {
-    const path = file_path || def.file_path;
-    if (!path || !this.file_contents.has(path)) {
-      throw new Error(`File not found: ${path}`);
-    }
-
-    const content = this.file_contents.get(path);
-    if (!content) {
-      throw new Error(`File content not found: ${path}`);
-    }
-    const lines = content.split("\n");
-    const start_row = def.range.start.row;
-    const end_row = def.range.end.row;
-    const start_col = def.range.start.column;
-    const end_col = def.range.end.column;
-
-    if (start_row === end_row) {
-      // Single line
-      return lines[start_row]?.substring(start_col, end_col) || "";
-    } else {
-      // Multiple lines
-      const result_lines: string[] = [];
-      for (let i = start_row; i <= end_row && i < lines.length; i++) {
-        if (i === start_row) {
-          result_lines.push(lines[i]?.substring(start_col) || "");
-        } else if (i === end_row) {
-          result_lines.push(lines[i]?.substring(0, end_col) || "");
-        } else {
-          result_lines.push(lines[i] || "");
-        }
-      }
-      return result_lines.join("\n");
-    }
-  }
-
-  /**
    * Get a definition by its symbol ID.
    * @param symbol_id - The symbol ID to look up
    * @returns The definition or undefined if not found
@@ -655,49 +841,24 @@ export class Project {
   }
 
   /**
-   * Persist all per-file SemanticIndex data and a manifest to storage.
-   * No auto-save — the caller decides when to persist.
+   * Persist every per-file SemanticIndex to storage, each stamped with what
+   * validates it. No auto-save — the caller decides when to persist.
    */
   async save(storage: PersistenceStorage): Promise<void> {
-    const manifest_entries = new Map<FilePath, CacheManifestEntry>();
-
     for (const [file_path, index] of this.index_single_filees) {
       const content = this.file_contents.get(file_path);
       if (!content) continue;
 
-      try {
-        const content_hash = compute_content_hash(content);
-        const serialized = serialize_semantic_index(index);
-        await storage.write_index(file_path, serialized);
-        manifest_entries.set(file_path, { content_hash });
-      } catch (error) {
-        console.warn(
-          `[ariadne:persistence] Failed to save cache for ${file_path}: ${
-            error instanceof Error ? error.message : error
-          }`,
-        );
-      }
-    }
-
-    try {
-      await storage.write_manifest(
-        serialize_manifest({
-          schema_version: CURRENT_SCHEMA_VERSION,
-          entries: manifest_entries,
-        }),
-      );
-    } catch (error) {
-      console.warn(
-        `[ariadne:persistence] Failed to save manifest: ${
-          error instanceof Error ? error.message : error
-        }`,
-      );
+      // No git state here: blobs this path writes carry no blob hash and are
+      // validated by content hash on the next load.
+      await write_file_index(storage, file_path, index, content, null);
     }
   }
 
   clear(): void {
     this.file_contents.clear();
     this.index_single_filees.clear();
+    this.languages.clear();
     this.definitions.clear();
     this.types.clear();
     this.scopes.clear();
@@ -705,5 +866,6 @@ export class Project {
     this.references.clear();
     this.imports.clear();
     this.resolutions.clear();
+    this.enriched_cache = null;
   }
 }

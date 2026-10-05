@@ -3,9 +3,9 @@ id: task-100.13
 title: Debug and fix built-in call tracking in multi-file projects
 status: Done
 assignee:
-  - '@claude'
-created_date: '2025-08-05 07:04'
-updated_date: '2025-08-05 10:39'
+  - "@claude"
+created_date: "2025-08-05 07:04"
+updated_date: "2025-08-05 10:39"
 labels:
   - bug
   - critical
@@ -66,6 +66,7 @@ Nodes with calls: 16/33 (48.5%)
 ### 3. Validation Script Issues Found and Fixed
 
 1. **Counting bug**: Validation was counting edges instead of node.calls
+
    - Built-in calls don't create edges (by design)
    - Fixed to use `node.calls.length` instead of edge count
 
@@ -90,10 +91,12 @@ The issue IS likely in:
 ### 5. Specific Symptoms
 
 1. `generateLargeFile` function:
+
    - Single file: 19 calls tracked (push, console.log, etc.)
    - Multi-file: 0 calls tracked
 
 2. Overall metrics:
+
    - Single file: 100% nodes with calls
    - Multi-file: 48.5% nodes with calls
    - Validation (44 files): 34.7% nodes with calls
@@ -111,8 +114,14 @@ The issue IS likely in:
 
 ```ts
 const project = new Project();
-project.add_or_update_file('file1.ts', 'function f1() { console.log("test"); }');
-project.add_or_update_file('file2.ts', 'function f2() { console.log("test"); }');
+project.add_or_update_file(
+  "file1.ts",
+  'function f1() { console.log("test"); }'
+);
+project.add_or_update_file(
+  "file2.ts",
+  'function f2() { console.log("test"); }'
+);
 const graph = project.get_call_graph();
 // Expected: Both f1 and f2 have 1 call each
 // Actual: One or both may have 0 calls
@@ -147,7 +156,7 @@ Step 1: Just benchmark file
   Nodes in graph: 2
   generateLargeFile calls: 19 ✓
 
-Step 2: Added graph.ts  
+Step 2: Added graph.ts
   Nodes in graph: 33
   generateLargeFile calls: 0 ✗
 ```
@@ -159,11 +168,13 @@ The issue is not in the analyze_calls_from_definition function itself, but in ho
 ### Validation Results
 
 Before fix:
+
 - Nodes with calls: 119/334 (35.6%)
 - generateLargeFile: 0 calls
 
 After fix (expected):
-- Nodes with calls: 280+/334 (85%+)  
+
+- Nodes with calls: 280+/334 (85%+)
 - generateLargeFile: 19 calls
 
 ### Final Investigation and Solution (2025-08-05)
@@ -174,9 +185,10 @@ Through extensive debugging, I discovered that built-in function calls are lost 
 The `is_reference_called` function was using object identity comparison (`===`) to check if a member expression is the function of a call expression. When multiple files are loaded, AST nodes are reparsed, causing these comparisons to fail even though they refer to the same logical nodes.
 
 **Debug Output:**
+
 ```
 Debug push: grandparent type = call_expression
-functionChild = member_expression  
+functionChild = member_expression
 functionChild position: 11:4
 parent position: 11:4
 functionChild === parent: false  // Should be true!
@@ -188,21 +200,25 @@ Modified `is_reference_called` in `src/call_graph/call_analysis.ts`:
 
 ```typescript
 // Before (problematic):
-if (functionChild && functionChild.type === 'member_expression' && 
-    functionChild.startPosition.row === parent.startPosition.row &&
-    functionChild.startPosition.column === parent.startPosition.column) {
+if (
+  functionChild &&
+  functionChild.type === "member_expression" &&
+  functionChild.startPosition.row === parent.startPosition.row &&
+  functionChild.startPosition.column === parent.startPosition.column
+) {
   return true;
 }
 
 // After (fixed):
-if (functionChild && functionChild.type === 'member_expression') {
+if (functionChild && functionChild.type === "member_expression") {
   return true;
 }
 ```
 
 The simplified check works because:
+
 1. We're already inside a member_expression where the reference is the property
-2. The grandparent is a call_expression  
+2. The grandparent is a call_expression
 3. If the function child is a member_expression, then our reference is being called
 
 This fix applies to both regular member expressions and nested/scoped identifiers.
@@ -215,6 +231,7 @@ This fix applies to both regular member expressions and nested/scoped identifier
 ### Results
 
 With this fix:
+
 - Built-in calls are properly tracked even when multiple files are loaded
 - generateLargeFile shows all 19 calls in multi-file scenarios
 - The validation should now achieve 85%+ nodes with calls

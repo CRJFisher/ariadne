@@ -5,7 +5,7 @@
  */
 
 import path from "path";
-import type { SemanticIndex } from "../../src/index_single_file/index_single_file";
+import type { SemanticIndex } from "@ariadnejs/types";
 import { load_index_single_file_fixture } from "./index_single_file_json";
 
 /**

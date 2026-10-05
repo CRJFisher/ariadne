@@ -10,11 +10,14 @@ import JavaScript from "tree-sitter-javascript";
 import type {
   Language,
   FilePath,
+  SymbolName,
   FunctionCallReference,
   MethodCallReference,
+  CallableValueReference,
   ConstructorCallReference,
   PropertyAccessReference,
   SelfReferenceCall,
+  IterationSource,
 } from "@ariadnejs/types";
 import { build_index_single_file } from "./index_single_file";
 import { query_tree } from "./query_code_tree/query_code_tree";
@@ -38,6 +41,7 @@ function create_parsed_file(
     file_end_column: lines[lines.length - 1]?.length || 0,
     tree,
     lang: language,
+    source: code,
   };
 }
 
@@ -521,13 +525,13 @@ describe("Semantic Index - JavaScript", () => {
       // Self-reference calls have property_chain instead
       expect(this_call).toBeDefined();
       if (this_call) {
-        expect(this_call.keyword).toBe("this");
+        expect(this_call.property_chain[0]).toBe("this");
         expect(this_call.property_chain).toContain("doSomething");
       }
 
       expect(super_call).toBeDefined();
       if (super_call) {
-        expect(super_call.keyword).toBe("super");
+        expect(super_call.property_chain[0]).toBe("super");
         expect(super_call.property_chain).toContain("parentMethod");
       }
     });
@@ -984,18 +988,20 @@ describe("Semantic Index - JavaScript", () => {
         "javascript" as Language,
       );
 
-      // Note: Current implementation captures destructuring patterns as whole variables,
-      // not individual identifiers within the pattern
-      const variable_names = Array.from(result.variables.values()).map(
-        (v) => v.name,
-      );
+      // Each identifier in the pattern binds its own name; no binding is
+      // spelled with the pattern's own punctuation.
+      const variable_names = Array.from(result.variables.values())
+        .map((v) => v.name as string)
+        .sort();
 
-      // Verify that destructuring patterns are captured (as patterns, not individual names)
-      // This is a known limitation - individual destructured names aren't extracted
-      expect(variable_names.length).toBeGreaterThan(0);
-      expect(
-        variable_names.some((v) => v.includes("{") || v.includes("[")),
-      ).toBe(true);
+      expect(variable_names).toEqual([
+        "age",
+        "first",
+        "name",
+        "rest",
+        "second",
+        "value",
+      ]);
     });
 
     it("should correctly parse default and rest parameters", () => {
@@ -1032,6 +1038,52 @@ describe("Semantic Index - JavaScript", () => {
         (f) => f.name === "greet",
       );
       expect(greet_func).toBeDefined();
+    });
+
+    it("types a function parameter from its JSDoc @param tag", () => {
+      const code = `
+        /** @param {ModuleGraph} g */
+        function buildChunkGraph(g) {
+          return g;
+        }
+
+        function plain(h) {
+          return h;
+        }
+      `;
+
+      const tree = parser.parse(code);
+      const parsed_file = create_parsed_file(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language,
+      );
+      const result = build_index_single_file(
+        parsed_file,
+        tree,
+        "javascript" as Language,
+      );
+
+      const build_func = Array.from(result.functions.values()).find(
+        (f) => f.name === "buildChunkGraph",
+      );
+      expect(build_func).toBeDefined();
+      const g_param = build_func!.signature.parameters.find(
+        (p) => p.name === ("g" as SymbolName),
+      );
+      expect(g_param).toBeDefined();
+      expect(g_param!.type).toBe("ModuleGraph" as SymbolName);
+
+      // A parameter with no JSDoc tag keeps an undefined type.
+      const plain_func = Array.from(result.functions.values()).find(
+        (f) => f.name === "plain",
+      );
+      const h_param = plain_func!.signature.parameters.find(
+        (p) => p.name === ("h" as SymbolName),
+      );
+      expect(h_param).toBeDefined();
+      expect(h_param!.type).toBeUndefined();
     });
 
     it("should correctly parse computed member access and bracket notation", () => {
@@ -2113,6 +2165,47 @@ describe("Semantic Index - JavaScript", () => {
     });
   });
 
+  describe("Variable-bound named function expression", () => {
+    it("registers the outer var name in the enclosing scope and the inner name in the function scope", () => {
+      const code = `var X = function X() {
+  return 1;
+};`;
+
+      const tree = parser.parse(code);
+      const parsed_file = create_parsed_file(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language,
+      );
+      const index = build_index_single_file(
+        parsed_file,
+        tree,
+        "javascript" as Language,
+      );
+
+      const file_scope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "module" && s.parent_id === null,
+      );
+      expect(file_scope).toBeDefined();
+      const file_scope_id = file_scope!.id;
+
+      const function_scope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "function",
+      );
+      expect(function_scope).toBeDefined();
+
+      // Two function definitions named `X`: the outer var binding lives in the
+      // enclosing (module) scope so intra-file calls resolve; the inner
+      // expression name lives in the function scope for self-reference.
+      const x_scopes = Array.from(index.functions.values())
+        .filter((f) => f.name === ("X" as SymbolName))
+        .map((f) => f.defining_scope_id)
+        .sort();
+      expect(x_scopes).toEqual([file_scope_id, function_scope!.id].sort());
+    });
+  });
+
   describe("Scope assignment", () => {
     it("should assign class to module scope", () => {
       const code = `class MyClass {
@@ -2190,6 +2283,510 @@ const names = items.map(({id, name}) => name);`;
       expect(callback.callback_context).not.toBe(undefined);
       expect(callback.callback_context!.is_callback).toBe(true);
       expect(callback.callback_context!.receiver_location).not.toBe(null);
+    });
+  });
+
+  describe("Member reference capture gaps (task-351)", () => {
+    function build_index(code: string) {
+      const tree = parser.parse(code);
+      return build_index_single_file(
+        create_parsed_file(code, "test.js" as FilePath, tree, "javascript" as Language),
+        tree,
+        "javascript" as Language,
+      );
+    }
+
+    function methods_of(index: ReturnType<typeof build_index>) {
+      return Array.from(index.classes.values()).flatMap((c) => c.methods ?? []);
+    }
+
+    it("captures this.#method() private call as a self-reference call", () => {
+      const code = `class Vault {
+        #open() { return 1; }
+        run() { return this.#open(); }
+      }`;
+      const index = build_index(code);
+      const call = index.references.find(
+        (r): r is SelfReferenceCall =>
+          r.kind === "self_reference_call" && r.name === ("#open" as SymbolName),
+      );
+      expect(call).toBeDefined();
+      expect(call!.property_chain[0]).toBe("this");
+    });
+
+    it("indexes computed-key methods (member-expression and identifier keys) and captures calls from their bodies", () => {
+      const computed_key = "run";
+      const code = `const ${computed_key} = "run";
+      class Bag {
+        helper() { return 1; }
+        [Symbol.iterator]() { this.helper(); }
+        [${computed_key}]() { this.helper(); }
+      }`;
+      const index = build_index(code);
+      const methods = methods_of(index);
+
+      // Member-expression key: [Symbol.iterator]
+      const symbol_iterator = methods.find(
+        (m) => m.name === ("[Symbol.iterator]" as SymbolName),
+      );
+      expect(symbol_iterator).toBeDefined();
+      expect(symbol_iterator!.body_scope_id).toBeDefined();
+
+      // Identifier/variable key: [run]
+      const identifier_key = methods.find(
+        (m) => m.name === (`[${computed_key}]` as SymbolName),
+      );
+      expect(identifier_key).toBeDefined();
+      expect(identifier_key!.body_scope_id).toBeDefined();
+
+      // The `this.helper()` call inside the computed method body is captured AND
+      // attributed to that method's body scope (proving the body is a real scope).
+      const body_calls = index.references.filter(
+        (r): r is SelfReferenceCall =>
+          r.kind === "self_reference_call" && r.name === ("helper" as SymbolName),
+      );
+      expect(
+        body_calls.some((c) => c.scope_id === symbol_iterator!.body_scope_id),
+      ).toBe(true);
+      expect(
+        body_calls.some((c) => c.scope_id === identifier_key!.body_scope_id),
+      ).toBe(true);
+    });
+
+    it("flags accessor_kind on getter and setter definitions", () => {
+      const code = `class Box {
+        get value() { return 1; }
+        set value(v) {}
+        plain() { return 2; }
+      }`;
+      const methods = methods_of(build_index(code));
+      const getter = methods.find((m) => m.accessor_kind === "getter");
+      const setter = methods.find((m) => m.accessor_kind === "setter");
+      const plain = methods.find((m) => m.name === ("plain" as SymbolName));
+      expect(getter).toBeDefined();
+      expect(getter!.name).toBe("value");
+      expect(setter).toBeDefined();
+      expect(plain).toBeDefined();
+      expect(plain!.accessor_kind).toBeUndefined();
+    });
+
+    function property_accesses(code: string) {
+      return build_index(code)
+        .references.filter(
+          (r): r is PropertyAccessReference => r.kind === "property_access"
+        )
+        .map((r) => ({
+          name: r.name,
+          property_chain: r.property_chain,
+        }));
+    }
+
+    it("mints one property access for a this-rooted member read", () => {
+      const code = "class A { m() { const a = this.argsTypes; return a; } }";
+      expect(property_accesses(code)).toEqual([
+        { name: "argsTypes" as SymbolName, property_chain: ["this", "argsTypes"] },
+      ]);
+    });
+
+    it("mints one property access per member expression in a nested chain", () => {
+      const code = "function m(ctx) { return ctx.dmmf.typeAndModelMap; }";
+      expect(property_accesses(code)).toEqual([
+        { name: "dmmf" as SymbolName, property_chain: ["ctx", "dmmf"] },
+        {
+          name: "typeAndModelMap" as SymbolName,
+          property_chain: ["ctx", "dmmf", "typeAndModelMap"],
+        },
+      ]);
+    });
+
+    it("mints one property access for a plain identifier receiver", () => {
+      const code = "function m(obj) { return obj.x; }";
+      expect(property_accesses(code)).toEqual([
+        { name: "x" as SymbolName, property_chain: ["obj", "x"] },
+      ]);
+    });
+
+    it("mints no property access for a call-rooted member read", () => {
+      const code = "function m() { return getHelper().jsDoc; }";
+      expect(property_accesses(code)).toEqual([]);
+    });
+
+    it("mints no property access for the callee of a member call", () => {
+      const code = "function m(svc) { svc.run(); }";
+      const index = build_index(code);
+      expect(
+        index.references.filter((r) => r.kind === "property_access")
+      ).toEqual([]);
+      expect(
+        index.references
+          .filter((r): r is MethodCallReference => r.kind === "method_call")
+          .map((r) => r.name)
+      ).toEqual(["run"]);
+    });
+
+    function callable_values(code: string) {
+      return build_index(code)
+        .references.filter(
+          (r): r is CallableValueReference => r.kind === "callable_value"
+        )
+        .map((r) => ({ name: r.name, property_chain: r.property_chain }));
+    }
+
+    it("indexes a member-expression argument as a callable value", () => {
+      expect(callable_values("app.get('/users', user.list);")).toEqual([
+        { name: "list" as SymbolName, property_chain: ["user", "list"] },
+      ]);
+    });
+
+    it("indexes an object-literal member value and leaves a bare name to the identifier read", () => {
+      // A bare identifier already mints a variable read that indirect
+      // reachability resolves, so capturing it again as a callable value adds
+      // a second row for one reachability fact.
+      expect(
+        callable_values("register({ handler: user.list, name: makeName });")
+      ).toEqual([
+        { name: "list" as SymbolName, property_chain: ["user", "list"] },
+      ]);
+    });
+
+    it("mints no callable value for an ungrounded member chain", () => {
+      // `getHelper().handler` leaves only `handler`, which would resolve
+      // lexically against an unrelated function of that name.
+      expect(callable_values("register(getHelper().handler);")).toEqual([]);
+    });
+
+    it("indexes a named function expression argument as a callable value at its own name", () => {
+      expect(
+        callable_values(
+          "defineGetter(req, 'query', function query() { return 1; });"
+        )
+      ).toEqual([{ name: "query" as SymbolName, property_chain: ["query"] }]);
+    });
+
+    it("indexes no callable value for bare identifier or literal arguments", () => {
+      expect(callable_values("run(plain, 1, 's');")).toEqual([]);
+    });
+  });
+
+  describe("Parameters of callables the source binds by position", () => {
+    function index_js(code: string) {
+      const tree = parser.parse(code);
+      const parsed_file = create_parsed_file(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language,
+      );
+      return build_index_single_file(parsed_file, tree, "javascript" as Language);
+    }
+
+    function parameter_names(code: string, function_name: string): string[] {
+      const result = index_js(code);
+      const fn = Array.from(result.functions.values()).find(
+        (f) => f.name === (function_name as SymbolName),
+      );
+      expect(fn).toBeDefined();
+      return fn!.signature.parameters.map((p) => p.name as string);
+    }
+
+    it("binds the parameters of a declarator-assigned arrow", () => {
+      expect(parameter_names("const f = (p) => p;", "f")).toEqual(["p"]);
+    });
+
+    it("binds the parameters of a declarator-assigned function expression", () => {
+      expect(parameter_names("const f = function (p) { return p; };", "f")).toEqual([
+        "p",
+      ]);
+    });
+
+    it("binds the parameters of a returned function expression", () => {
+      const result = index_js(
+        "function outer() {\n  return function (p) { return p; };\n}",
+      );
+      const returned = Array.from(result.functions.values()).find(
+        (f) => f.name === ("<anonymous>" as SymbolName),
+      );
+      expect(returned).toBeDefined();
+      expect(returned!.signature.parameters.map((p) => p.name as string)).toEqual([
+        "p",
+      ]);
+    });
+
+    it("binds the parameters of a whole-module CommonJS export", () => {
+      const result = index_js("module.exports = function (suites, context) {};");
+      const exported = Array.from(result.functions.values()).find(
+        (f) => f.name === ("<anonymous>" as SymbolName),
+      );
+      expect(exported).toBeDefined();
+      expect(exported!.signature.parameters.map((p) => p.name as string)).toEqual([
+        "suites",
+        "context",
+      ]);
+    });
+
+    it("binds the parameters of a property-assigned CommonJS export", () => {
+      expect(
+        parameter_names("exports.escape = function (html) { return html; };", "escape"),
+      ).toEqual(["html"]);
+    });
+
+    it("binds an object-literal method's parameters on an anonymous callable, not a named node", () => {
+      const callables = Array.from(
+        index_js("const obj = { updateProfile(name, email) {} };").functions.values(),
+      );
+      expect(callables.map((f) => f.name as string)).toEqual(["<anonymous>"]);
+      expect(
+        Array.from(callables[0].signature.parameters.values()).map((p) => p.name),
+      ).toEqual(["name", "email"]);
+    });
+
+    it("binds a for-of and a for-in loop head by name", () => {
+      const of_names = Array.from(
+        index_js("for (const a of xs) { a.m(); }").variables.values(),
+      ).map((v) => v.name as string);
+      expect(of_names).toContain("a");
+
+      const in_names = Array.from(
+        index_js("for (const k in o) { use(k); }").variables.values(),
+      ).map((v) => v.name as string);
+      expect(in_names).toContain("k");
+    });
+
+    it("binds each identifier of a destructured declarator by name", () => {
+      const names = Array.from(
+        index_js("const { c } = o;\nconst [d] = xs;\nconst { ...r } = o;").variables.values(),
+      )
+        .map((v) => v.name as string)
+        .sort();
+      expect(names).toEqual(["c", "d", "r"]);
+    });
+
+    it("binds each identifier of a destructured parameter by name", () => {
+      const names = Array.from(
+        index_js("function f({ g }, [h]) { return g + h; }").variables.values(),
+      )
+        .map((v) => v.name as string)
+        .sort();
+      expect(names).toEqual(["g", "h"]);
+    });
+
+    it("records the source and key of a destructured declarator on the variable", () => {
+      const storage = Array.from(
+        index_js("const { storage } = options;").variables.values(),
+      ).find((v) => (v.name as string) === "storage");
+      expect({
+        destructured_from: storage!.destructured_from as string | undefined,
+        destructured_key: storage!.destructured_key as string | undefined,
+      }).toEqual({ destructured_from: "options", destructured_key: "storage" });
+    });
+
+    it("records a destructured require binding as an import rather than a variable", () => {
+      const index = index_js("const { readFile } = require(\"fs\");");
+      expect(
+        Array.from(index.variables.values()).map((v) => v.name as string),
+      ).toEqual([]);
+      expect(
+        Array.from(index.imported_symbols.values()).map((i) => i.name as string),
+      ).toEqual(["readFile"]);
+    });
+
+    it("keeps the anonymous fallback for a genuinely anonymous IIFE", () => {
+      const result = index_js("(function (p) { return p; })(1);");
+      const iife = Array.from(result.functions.values()).find(
+        (f) => f.name === ("<anonymous>" as SymbolName),
+      );
+      expect(iife).toBeDefined();
+      expect(iife!.signature.parameters.map((p) => p.name as string)).toEqual(["p"]);
+    });
+
+    it("binds a catch clause name as a block variable, not a callable parameter", () => {
+      const result = index_js(`
+        function guarded() {
+          try {
+            risky();
+          } catch (error) {
+            log(error);
+          }
+        }
+      `);
+      const names = Array.from(result.variables.values()).map((v) => v.name as string);
+      expect(names).toContain("error");
+
+      const guarded = Array.from(result.functions.values()).find(
+        (f) => f.name === ("guarded" as SymbolName),
+      );
+      expect(guarded!.signature.parameters).toEqual([]);
+    });
+  });
+
+  describe("Construction and initialiser capture", () => {
+    function index_js(code: string) {
+      const tree = parser.parse(code);
+      const parsed_file = create_parsed_file(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language,
+      );
+      return build_index_single_file(parsed_file, tree, "javascript" as Language);
+    }
+
+    function constructions(result: ReturnType<typeof index_js>) {
+      return result.references
+        .filter((ref): ref is ConstructorCallReference => ref.kind === "constructor_call")
+        .map((ref) => ({ name: ref.name, construct_target: ref.construct_target }));
+    }
+
+    function property_locations(result: ReturnType<typeof index_js>, class_name: string) {
+      const class_def = Array.from(result.classes.values()).find(
+        (c) => c.name === (class_name as SymbolName),
+      );
+      return new Map(class_def?.properties.map((p) => [p.name as string, p.location]));
+    }
+
+    function variable_location(result: ReturnType<typeof index_js>, name: string) {
+      return Array.from(result.variables.values()).find((v) => v.name === (name as SymbolName))
+        ?.location;
+    }
+
+    it("keeps a private name as a chain segment of this.#tm.getTransaction()", () => {
+      const result = index_js(`class Compilation {
+  #tm = new TM();
+  run() { this.#tm.getTransaction(); }
+}`);
+      const call = result.references.find((ref) => ref.name === ("getTransaction" as SymbolName));
+      expect(call && "property_chain" in call ? call.property_chain : undefined).toEqual([
+        "this",
+        "#tm",
+        "getTransaction",
+      ]);
+    });
+
+    it("binds a construction passed as an argument to nothing: const t = new Outer(new Inner(), x)", () => {
+      const result = index_js("function lex(x) { const t = new Outer(new Inner(), x); }");
+      expect(constructions(result)).toEqual([
+        { name: "Outer", construct_target: variable_location(result, "t") },
+        { name: "Inner", construct_target: undefined },
+      ]);
+    });
+
+    it("keys a class-field initialiser construction to the field's definition", () => {
+      const result = index_js(`class A {
+  store = new Store();
+  #tm = new TM();
+}`);
+      const fields = property_locations(result, "A");
+      expect(constructions(result)).toEqual([
+        { name: "Store", construct_target: fields.get("store") },
+        { name: "TM", construct_target: fields.get("#tm") },
+      ]);
+    });
+
+    it("keys this.x = new Y() to the declared field, or to the field the constructor write declares", () => {
+      const result = index_js(`class A {
+  declared;
+  constructor() {
+    this.declared = new Declared();
+    this.promoted = new Promoted();
+  }
+}`);
+      const fields = property_locations(result, "A");
+      expect([...fields.keys()]).toEqual(["declared", "promoted"]);
+      expect(constructions(result)).toEqual([
+        { name: "Declared", construct_target: fields.get("declared") },
+        { name: "Promoted", construct_target: fields.get("promoted") },
+      ]);
+    });
+
+    it("declares a field only from a constructor write the class body does not already name", () => {
+      const result = index_js(`class A {
+  constructor() {
+    this.kept = 1;
+    this.kept = 2;
+    this.value = 3;
+    const helper = function () { this.own = 4; };
+    const handlers = { on() { this.literal = 5; } };
+    const later = () => { this.arrow = 6; };
+  }
+  method() { this.elsewhere = 7; }
+  set value(v) {}
+}`);
+      expect([...property_locations(result, "A").keys()]).toEqual(["kept", "arrow"]);
+    });
+
+    it("records initialized_from_call as the callee chain", () => {
+      const result = index_js(`const i = s.getInfo();
+const router = inject(Router);
+const made = make()();`);
+      const chains = new Map(
+        Array.from(result.variables.values()).map((v) => [v.name, v.initialized_from_call]),
+      );
+      expect(chains).toEqual(
+        new Map<SymbolName, readonly SymbolName[] | undefined>([
+          ["i" as SymbolName, ["s" as SymbolName, "getInfo" as SymbolName]],
+          ["router" as SymbolName, ["inject" as SymbolName]],
+          ["made" as SymbolName, undefined],
+        ]),
+      );
+    });
+
+    it("records what each loop and array-pattern binding takes from the container it iterates", () => {
+      const result = index_js(`for (const suite of suites) {}
+for (const [id, instance] of this.instances) {}
+for (const pending of pendingById.values()) {}
+const [first] = suites;
+for (const key in lookup) {}`);
+      const sources = new Map(
+        Array.from(result.variables.values()).map((v) => [v.name, v.iterated_from]),
+      );
+      expect(sources).toEqual(
+        new Map<SymbolName, IterationSource | undefined>([
+          ["suite" as SymbolName, { container: ["suites" as SymbolName], yields: "item" }],
+          ["id" as SymbolName, undefined],
+          ["instance" as SymbolName, { container: ["this" as SymbolName, "instances" as SymbolName], yields: "entry_value" }],
+          ["pending" as SymbolName, { container: ["pendingById" as SymbolName], yields: "value" }],
+          ["first" as SymbolName, { container: ["suites" as SymbolName], yields: "item" }],
+          ["key" as SymbolName, undefined],
+        ]),
+      );
+    });
+
+    it("keys an array literal's construction to the declarator's element, never its value", () => {
+      const result = index_js("const suites = [new Suite(\"root\")];");
+      const construction = result.references.find(
+        (ref): ref is ConstructorCallReference => ref.kind === "constructor_call",
+      );
+      expect(construction).toEqual({
+        kind: "constructor_call",
+        name: "Suite" as SymbolName,
+        location: construction!.location,
+        scope_id: construction!.scope_id,
+        construct_element_of: {
+          file_path: "test.js" as FilePath,
+          start_line: 1,
+          start_column: 7,
+          end_line: 1,
+          end_column: 12,
+        },
+      });
+    });
+
+    it("types a local declarator and a constructor write from their JSDoc @type", () => {
+      const result = index_js(`/** @type {Service} */
+const service = make();
+class A {
+  constructor() {
+    /** @type {Store} */
+    this.store = make();
+  }
+}`);
+      const service = Array.from(result.variables.values()).find(
+        (v) => v.name === ("service" as SymbolName),
+      );
+      const store = Array.from(result.classes.values())[0].properties.find(
+        (p) => p.name === ("store" as SymbolName),
+      );
+      expect([service?.type, store?.type]).toEqual(["Service", "Store"]);
     });
   });
 });

@@ -2,10 +2,9 @@
  * Tests for Rust symbol factories
  */
 
-import { describe, it, expect, beforeEach } from "vitest";
-import Parser from "tree-sitter";
-import Rust from "tree-sitter-rust";
+import { describe, it, expect } from "vitest";
 import type { SyntaxNode } from "tree-sitter";
+import { parse_rust, find_node_by_type, index_source } from "./test_utils";
 import {
   create_struct_id,
   create_enum_id,
@@ -34,9 +33,6 @@ import {
   find_containing_callable,
   detect_function_collection,
   detect_callback_context,
-  store_documentation,
-  consume_documentation,
-  reset_documentation_state,
 } from "./symbol_factories.rust";
 import {
   anonymous_function_symbol,
@@ -54,11 +50,7 @@ import {
 } from "@ariadnejs/types";
 import type { FilePath, SymbolName } from "@ariadnejs/types";
 import { node_to_location } from "../../node_to_location";
-import {
-  SemanticCategory,
-  SemanticEntity,
-  type CaptureNode,
-} from "../../../index_single_file";
+import { SemanticCategory, SemanticEntity, type CaptureNode } from "../../capture_types";
 
 // ============================================================================
 // Helpers
@@ -66,24 +58,6 @@ import {
 
 const file_path = "/test.rs" as FilePath;
 
-function parse_rust(code: string): SyntaxNode {
-  const parser = new Parser();
-  parser.setLanguage(Rust);
-  const tree = parser.parse(code);
-  return tree.rootNode;
-}
-
-function find_node_by_type(root: SyntaxNode, type: string): SyntaxNode | null {
-  if (root.type === type) return root;
-  for (let i = 0; i < root.childCount; i++) {
-    const child = root.child(i);
-    if (child) {
-      const result = find_node_by_type(child, type);
-      if (result) return result;
-    }
-  }
-  return null;
-}
 
 function find_all_nodes_by_type(root: SyntaxNode, type: string): SyntaxNode[] {
   const results: SyntaxNode[] = [];
@@ -534,7 +508,17 @@ describe("extract_generic_parameters", () => {
     const root = parse_rust(code);
     const fn_item = find_node_by_type(root, "function_item")!;
     const params = extract_generic_parameters(fn_item);
-    expect(params).toEqual(["T", "U"]);
+    expect(params).toEqual([{ name: "T" }, { name: "U" }]);
+  });
+
+  it("takes a parameter's bound from its `where` clause when the list writes none", () => {
+    const code = "fn with<F, T, V: Visitor>(f: F) -> T where F: FnOnce(&mut Self) -> T + Send, Vec<T>: Debug, V: Clone {}";
+    const fn_item = find_node_by_type(parse_rust(code), "function_item")!;
+    expect(extract_generic_parameters(fn_item)).toEqual([
+      { name: "F", bound: "FnOnce(&mut Self) -> T" },
+      { name: "T" },
+      { name: "V", bound: "Visitor" },
+    ]);
   });
 
   it("returns empty array for non-generic function", () => {
@@ -550,7 +534,7 @@ describe("extract_generic_parameters", () => {
     const root = parse_rust(code);
     const fn_item = find_node_by_type(root, "function_item")!;
     const params = extract_generic_parameters(fn_item);
-    expect(params).toEqual(["'a"]);
+    expect(params).toEqual([{ name: "'a" }]);
   });
 
   it("extracts from generic struct", () => {
@@ -558,7 +542,39 @@ describe("extract_generic_parameters", () => {
     const root = parse_rust(code);
     const struct_item = find_node_by_type(root, "struct_item")!;
     const params = extract_generic_parameters(struct_item);
-    expect(params).toEqual(["T"]);
+    expect(params).toEqual([{ name: "T" }]);
+  });
+
+  it("carries the trait a parameter is bounded by", () => {
+    const code = "fn walk<V: Visitor>(v: &mut V) {}";
+    const root = parse_rust(code);
+    const fn_item = find_node_by_type(root, "function_item")!;
+    const params = extract_generic_parameters(fn_item);
+    expect(params).toEqual([{ name: "V", bound: "Visitor" }]);
+  });
+
+  it("names a multi-bound parameter by its principal trait, ahead of the auto traits", () => {
+    const code = "fn walk<V: Visitor + Send + Sync>(v: &mut V) {}";
+    const root = parse_rust(code);
+    const fn_item = find_node_by_type(root, "function_item")!;
+    const params = extract_generic_parameters(fn_item);
+    expect(params).toEqual([{ name: "V", bound: "Visitor" }]);
+  });
+
+  it("skips a `?Sized` relaxation, which names no type a method is called on", () => {
+    const code = "fn hold<T: ?Sized + Visitor>(t: &T) {}";
+    const root = parse_rust(code);
+    const fn_item = find_node_by_type(root, "function_item")!;
+    const params = extract_generic_parameters(fn_item);
+    expect(params).toEqual([{ name: "T", bound: "Visitor" }]);
+  });
+
+  it("carries no bound for a lifetime-only constraint", () => {
+    const code = "fn hold<T: 'static>(t: T) {}";
+    const root = parse_rust(code);
+    const fn_item = find_node_by_type(root, "function_item")!;
+    const params = extract_generic_parameters(fn_item);
+    expect(params).toEqual([{ name: "T" }]);
   });
 });
 
@@ -1100,99 +1116,6 @@ describe("detect_callback_context", () => {
   });
 });
 
-// ============================================================================
-// Documentation state management
-// ============================================================================
-
-describe("documentation state", () => {
-  beforeEach(() => {
-    reset_documentation_state();
-  });
-
-  it("stores and consumes documentation for adjacent definition", () => {
-    store_documentation("/// Does something", 5);
-    const doc = consume_documentation({
-      file_path,
-      start_line: 6,
-      start_column: 1,
-      end_line: 10,
-      end_column: 1,
-    });
-    expect(doc).toBe("/// Does something");
-  });
-
-  it("concatenates consecutive comment lines", () => {
-    store_documentation("/// Line 1", 5);
-    store_documentation("/// Line 2", 6);
-    const doc = consume_documentation({
-      file_path,
-      start_line: 7,
-      start_column: 1,
-      end_line: 10,
-      end_column: 1,
-    });
-    expect(doc).toBe("/// Line 1\n/// Line 2");
-  });
-
-  it("returns undefined when no documentation matches", () => {
-    store_documentation("/// Far away", 1);
-    const doc = consume_documentation({
-      file_path,
-      start_line: 10,
-      start_column: 1,
-      end_line: 15,
-      end_column: 1,
-    });
-    expect(doc).toBeUndefined();
-  });
-
-  it("consumes documentation only once", () => {
-    store_documentation("/// Single use", 5);
-    const first = consume_documentation({
-      file_path,
-      start_line: 6,
-      start_column: 1,
-      end_line: 10,
-      end_column: 1,
-    });
-    expect(first).toBe("/// Single use");
-
-    const second = consume_documentation({
-      file_path,
-      start_line: 6,
-      start_column: 1,
-      end_line: 10,
-      end_column: 1,
-    });
-    expect(second).toBeUndefined();
-  });
-
-  it("allows 1-line gap between doc and definition", () => {
-    store_documentation("/// With gap", 5);
-    // Definition starts at line 7 (gap at line 6)
-    const doc = consume_documentation({
-      file_path,
-      start_line: 7,
-      start_column: 1,
-      end_line: 10,
-      end_column: 1,
-    });
-    expect(doc).toBe("/// With gap");
-  });
-
-  it("reset clears all pending documentation", () => {
-    store_documentation("/// Cleared", 5);
-    reset_documentation_state();
-    const doc = consume_documentation({
-      file_path,
-      start_line: 6,
-      start_column: 1,
-      end_line: 10,
-      end_column: 1,
-    });
-    expect(doc).toBeUndefined();
-  });
-});
 
 // ============================================================================
 // detect_function_collection
@@ -1249,5 +1172,104 @@ describe("detect_function_collection", () => {
 
     const result = detect_function_collection(let_decl, file_path);
     expect(result).toBeNull();
+  });
+
+  it("detects hashmap! macro as a Map", () => {
+    const code = "let config = hashmap!{'k' => fn1};";
+    const root = parse_rust(code);
+    const let_decl = find_node_by_type(root, "let_declaration")!;
+
+    const result = detect_function_collection(let_decl, file_path);
+    expect(result).not.toBeNull();
+    expect(result!.collection_type).toBe("Map");
+    expect(result!.stored_references).toContain("fn1");
+  });
+
+  it("detects closures in array with anonymous symbols", () => {
+    const code = "let handlers = [|x| x + 1, |y| y * 2];";
+    const root = parse_rust(code);
+    const let_decl = find_node_by_type(root, "let_declaration")!;
+
+    const result = detect_function_collection(let_decl, file_path);
+    expect(result).not.toBeNull();
+    expect(result!.collection_type).toBe("Array");
+    expect(result!.stored_functions).toHaveLength(2);
+    expect(result!.stored_functions[0]).toMatch(/^function:.*:<anonymous>$/);
+  });
+
+  it("returns empty or null for empty vec! macro", () => {
+    const code = "let handlers: Vec<fn()> = vec![];";
+    const root = parse_rust(code);
+    const let_decl = find_node_by_type(root, "let_declaration")!;
+
+    const result = detect_function_collection(let_decl, file_path);
+    expect(
+      result === null ||
+        (result?.stored_references?.length === 0 && result?.stored_functions?.length === 0),
+    ).toBe(true);
+  });
+
+  it.each([
+    ["an array", "let layers = [root, child];"],
+    ["a vec! macro", "let layers = vec![root, child];"],
+  ])("marks %s whose every element is a bare name as holding references", (_label, code) => {
+    const let_decl = find_node_by_type(parse_rust(code), "let_declaration")!;
+
+    const result = detect_function_collection(let_decl, file_path);
+
+    expect(result?.elements_are_references).toBe(true);
+  });
+
+  it.each([
+    ["an array holding a field read", "let layers = [root, self.child];"],
+    ["an array holding a call", "let layers = [root, make()];"],
+    ["an array holding a closure", "let layers = [root, |x| x];"],
+    ["a vec! macro holding a field read", "let layers = vec![root, a.b];"],
+    ["a vec! macro holding a call", "let layers = vec![root, make()];"],
+  ])("leaves %s unmarked", (_label, code) => {
+    const let_decl = find_node_by_type(parse_rust(code), "let_declaration")!;
+
+    const result = detect_function_collection(let_decl, file_path);
+
+    expect(result).not.toBeNull();
+    expect(result?.elements_are_references).toBeUndefined();
+  });
+});
+
+// ============================================================================
+// extract_collection_source
+
+/**
+ * A local binding's declared annotation is the evidence type-parameter binding
+ * reads when the value a generic call is given is held in a `let` rather than
+ * passed as a parameter. It reaches that reader only from the definition's
+ * `type`.
+ */
+describe("a local binding's declared annotation (Rust)", () => {
+  function declared_bindings(code: string) {
+    const index = index_source(code, "rust", "locals.rs" as FilePath);
+    return [...index.variables.values()].map((def) => ({
+      name: def.name,
+      kind: def.kind,
+      type: def.type,
+    }));
+  }
+
+  it("records the generic annotation a local declares", () => {
+    expect(
+      declared_bindings("struct Router {}\nfn main() { let routers: Vec<Router> = Vec::new(); }")
+    ).toEqual([{ name: "routers", kind: "variable", type: "Vec<Router>" }]);
+  });
+
+  it("records the annotation a constant declares", () => {
+    expect(declared_bindings("const LIMIT: u32 = 3;")).toEqual([
+      { name: "LIMIT", kind: "constant", type: "u32" },
+    ]);
+  });
+
+  it("records no type for a local that declares no annotation", () => {
+    expect(declared_bindings("struct Router {}\nfn main() { let inferred = Router {}; }")).toEqual([
+      { name: "inferred", kind: "variable", type: undefined },
+    ]);
   });
 });

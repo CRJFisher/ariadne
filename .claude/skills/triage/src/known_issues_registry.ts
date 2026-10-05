@@ -1,0 +1,359 @@
+/**
+ * Loader and schema validator for the known-issues registry.
+ *
+ * Registry source of truth: `.claude/skills/triage/known_issues/registry.json`.
+ * The validator walks every entry, checks shape and enum values, and validates
+ * each classifier spec (`{ function_name, min_confidence }`).
+ */
+
+import * as fs from "node:fs";
+
+import { known_issues_registry_path } from "@ariadnejs/skill-protocol";
+import {
+  KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION,
+  parse_known_issues_registry_json,
+  type ClassifierSpec,
+  type KnownIssue,
+  type KnownIssueLanguage,
+  type KnownIssueStatus,
+  type KnownIssuesRegistry,
+} from "@ariadnejs/types";
+
+// ===== Constants =====
+
+const VALID_STATUSES: ReadonlySet<KnownIssueStatus> = new Set<KnownIssueStatus>([
+  "permanent",
+  "wip",
+  "fixed",
+]);
+
+const VALID_LANGUAGES: ReadonlySet<KnownIssueLanguage> = new Set<KnownIssueLanguage>([
+  "typescript",
+  "javascript",
+  "python",
+  "rust",
+]);
+
+const KEBAB_CASE = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/;
+
+// ===== Loader =====
+
+export function load_registry(): KnownIssuesRegistry {
+  const raw = fs.readFileSync(known_issues_registry_path(), "utf8");
+  let rules: KnownIssue[];
+  try {
+    rules = parse_known_issues_registry_json(raw);
+  } catch (e) {
+    throw new RegistryValidationError(e instanceof Error ? e.message : String(e));
+  }
+  // Deep validation (rule shapes, builtin classifier specs) — the wire
+  // format helper only checks the envelope.
+  validate_registry(rules);
+  return rules;
+}
+
+/**
+ * Filter a registry to the subset that should fire during the pipeline's
+ * auto-classification pass. Two rules are excluded:
+ *
+ * - `status === "fixed"` — the underlying Ariadne bug is resolved (the human
+ *   marks the row `fixed` once the fix lands). Continuing to apply the
+ *   classifier would silently suppress entries that the now-fixed code path
+ *   handles correctly, breaking the self-healing loop.
+ * - `status === "wip" && drift_detected === true` — review flagged this
+ *   classifier as mis-matching. Leaving it live would auto-suppress entries
+ *   already suspected to be mis-attributed, pre-empting the very
+ *   re-investigation queue that `next_investigate_tasks` tries to prioritize.
+ *
+ * Pure. Returns a new array; preserves order.
+ */
+export function active_rules_for_classification(
+  registry: KnownIssuesRegistry,
+): KnownIssuesRegistry {
+  return registry.filter((rule) => {
+    if (rule.status === "fixed") return false;
+    if (rule.status === "wip" && rule.drift_detected === true) return false;
+    return true;
+  });
+}
+
+export { KNOWN_ISSUES_REGISTRY_SCHEMA_VERSION };
+
+// ===== Validation =====
+
+export class RegistryValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "RegistryValidationError";
+  }
+}
+
+/**
+ * Validates a registry. Throws `RegistryValidationError` on the first problem
+ * found. Narrows `value` to `KnownIssuesRegistry` on success.
+ */
+export function validate_registry(value: unknown): asserts value is KnownIssuesRegistry {
+  if (!Array.isArray(value)) {
+    throw new RegistryValidationError("registry must be a JSON array");
+  }
+  const seen_group_ids = new Set<string>();
+  const seen_function_names = new Map<string, string>();
+  for (let i = 0; i < value.length; i++) {
+    const at = `[${i}]`;
+    const entry = value[i];
+    validate_entry(entry, at);
+    if (seen_group_ids.has(entry.group_id)) {
+      throw new RegistryValidationError(`${at}: duplicate group_id "${entry.group_id}"`);
+    }
+    seen_group_ids.add(entry.group_id);
+    // function_names must be unique because the barrel imports them as
+    // identifiers — collisions would surface as cryptic TS compile errors.
+    // Catch them at registry-load time instead.
+    const fn = entry.classifier.function_name;
+    const prior = seen_function_names.get(fn);
+    if (prior !== undefined) {
+      throw new RegistryValidationError(
+        `${at}: builtin function_name "${fn}" already used by group_id "${prior}"`,
+      );
+    }
+    seen_function_names.set(fn, entry.group_id);
+  }
+}
+
+function validate_entry(entry: unknown, at: string): asserts entry is KnownIssue {
+  if (typeof entry !== "object" || entry === null) {
+    throw new RegistryValidationError(`${at}: entry must be an object`);
+  }
+  const record = entry as Record<string, unknown>;
+
+  require_string(record, "group_id", at);
+  require_kebab_case(record["group_id"] as string, `${at}.group_id`);
+  // All subsequent errors carry the group_id so a reader doesn't need to count
+  // array positions to find the offending entry.
+  const at_id = `${at}(group_id="${record["group_id"] as string}")`;
+
+  require_string(record, "title", at_id);
+  require_string(record, "description", at_id);
+
+  require_enum(record, "status", VALID_STATUSES, at_id);
+
+  if (!Array.isArray(record["languages"])) {
+    throw new RegistryValidationError(`${at_id}.languages: must be an array`);
+  }
+  if (record["languages"].length === 0) {
+    throw new RegistryValidationError(`${at_id}.languages: must not be empty`);
+  }
+  for (const lang of record["languages"]) {
+    if (typeof lang !== "string" || !VALID_LANGUAGES.has(lang as KnownIssueLanguage)) {
+      throw new RegistryValidationError(
+        `${at_id}.languages: invalid language "${String(lang)}" (allowed: ${[...VALID_LANGUAGES].join(", ")})`,
+      );
+    }
+  }
+
+  if ("backlog_task" in record && record["backlog_task"] !== undefined) {
+    if (typeof record["backlog_task"] !== "string") {
+      throw new RegistryValidationError(`${at_id}.backlog_task: must be a string`);
+    }
+    if (!/^TASK-[0-9]+(?:\.[0-9]+)*$/.test(record["backlog_task"])) {
+      throw new RegistryValidationError(
+        `${at_id}.backlog_task: must match "TASK-<id>" with digits and optional dotted suffixes (got "${record["backlog_task"]}")`,
+      );
+    }
+  }
+
+  validate_examples(record["examples"], `${at_id}.examples`);
+  validate_classifier_spec(record["classifier"], `${at_id}.classifier`);
+
+  validate_optional_rollup_fields(record, at_id);
+
+  // Evidence gate: a wip entry's authored classifier must have fired in a real
+  // triage run (observed_count >= 1). Every authored wip entry is drafted from
+  // a novel group that crossed the promotion threshold, so it inherits that
+  // group's observation; an authored wip rule with no observation is a
+  // speculative, never-validated classifier and must not enter the catalog.
+  // Exempt: permanent/fixed rows (a past human decision, observation is
+  // historical).
+  if (record["status"] === "wip") {
+    const observed_count = record["observed_count"];
+    if (typeof observed_count !== "number" || observed_count < 1) {
+      throw new RegistryValidationError(
+        `${at_id}.observed_count: a wip entry with an authored classifier must record observed_count >= 1 ` +
+          "(no speculative, never-observed classifiers in the permanent-limitations catalog)",
+      );
+    }
+  }
+
+  // Regime gate: a `permanent` entry is a genuine static-analysis impossibility,
+  // not a deferred fix — so it must not carry a `backlog_task`. That link marks a
+  // fixable bug tracked in the backlog, which by definition does not belong in the
+  // permanent-limitations catalog; its presence on a permanent row is the clearest
+  // signature of a mis-filed fixable bug.
+  if (
+    record["status"] === "permanent" &&
+    "backlog_task" in record &&
+    record["backlog_task"] !== undefined
+  ) {
+    throw new RegistryValidationError(
+      `${at_id}.backlog_task: a permanent entry must not link a backlog task — ` +
+        "a backlog_task marks a fixable bug, which does not belong in the permanent-limitations catalog",
+    );
+  }
+
+  // Drift review is a wip-only signal: it gates re-investigation of a candidate
+  // classifier (`active_rules_for_classification` only suppresses `wip` rows on
+  // it). A `permanent` rule was already promoted past that review, so a lingering
+  // `drift_detected: true` on it is dead metadata — reject it so the flag cannot
+  // silently rot on a promoted row.
+  if (record["status"] === "permanent" && record["drift_detected"] === true) {
+    throw new RegistryValidationError(
+      `${at_id}.drift_detected: a permanent entry must not carry drift_detected=true ` +
+        "(drift review is a wip-only signal; clear it before promotion)",
+    );
+  }
+}
+
+function validate_examples(value: unknown, at: string): void {
+  if (!Array.isArray(value)) {
+    throw new RegistryValidationError(`${at}: must be an array`);
+  }
+  for (let i = 0; i < value.length; i++) {
+    const e = value[i];
+    if (typeof e !== "object" || e === null) {
+      throw new RegistryValidationError(`${at}[${i}]: must be an object`);
+    }
+    const record = e as Record<string, unknown>;
+    require_string(record, "file", `${at}[${i}]`);
+    require_number(record, "line", `${at}[${i}]`);
+    require_string(record, "snippet", `${at}[${i}]`);
+  }
+}
+
+const BUILTIN_FUNCTION_NAME = /^[a-z_][a-z0-9_]*$/;
+
+function validate_classifier_spec(value: unknown, at: string): asserts value is ClassifierSpec {
+  if (typeof value !== "object" || value === null) {
+    throw new RegistryValidationError(`${at}: must be an object`);
+  }
+  const record = value as Record<string, unknown>;
+  const function_name = record["function_name"];
+  if (typeof function_name !== "string" || function_name.length === 0) {
+    throw new RegistryValidationError(
+      `${at}.function_name: must be a non-empty string`,
+    );
+  }
+  if (!BUILTIN_FUNCTION_NAME.test(function_name)) {
+    throw new RegistryValidationError(
+      `${at}.function_name: must match /^[a-z_][a-z0-9_]*$/ (got "${function_name}")`,
+    );
+  }
+  require_confidence(record["min_confidence"], `${at}.min_confidence`);
+  const extra = Object.keys(record).filter(
+    (k) => k !== "function_name" && k !== "min_confidence",
+  );
+  if (extra.length > 0) {
+    throw new RegistryValidationError(
+      `${at}: must not carry extra fields (got: ${extra.join(", ")})`,
+    );
+  }
+}
+
+function validate_optional_rollup_fields(record: Record<string, unknown>, at: string): void {
+  if ("observed_count" in record && record["observed_count"] !== undefined) {
+    const v = record["observed_count"];
+    if (typeof v !== "number" || !Number.isFinite(v) || v < 0 || !Number.isInteger(v)) {
+      throw new RegistryValidationError(`${at}.observed_count: must be a non-negative integer`);
+    }
+  }
+  if ("observed_projects" in record && record["observed_projects"] !== undefined) {
+    if (!Array.isArray(record["observed_projects"])) {
+      throw new RegistryValidationError(`${at}.observed_projects: must be an array`);
+    }
+    for (const p of record["observed_projects"]) {
+      if (typeof p !== "string") {
+        throw new RegistryValidationError(`${at}.observed_projects: entries must be strings`);
+      }
+    }
+  }
+  if ("last_seen_run" in record && record["last_seen_run"] !== undefined) {
+    if (typeof record["last_seen_run"] !== "string") {
+      throw new RegistryValidationError(`${at}.last_seen_run: must be a string`);
+    }
+  }
+  if ("drift_evidence" in record && record["drift_evidence"] !== undefined) {
+    validate_drift_evidence(record["drift_evidence"], `${at}.drift_evidence`);
+  }
+}
+
+// A row missing `project`/`run_id` would reach a fixer agent unresolvable back
+// to its `EnrichedEntryPoint`, so a malformed row fails at load, not at dispatch.
+function validate_drift_evidence(value: unknown, at: string): void {
+  if (!Array.isArray(value)) {
+    throw new RegistryValidationError(`${at}: must be an array`);
+  }
+  for (let i = 0; i < value.length; i++) {
+    const row = value[i];
+    if (typeof row !== "object" || row === null) {
+      throw new RegistryValidationError(`${at}[${i}]: must be an object`);
+    }
+    const record = row as Record<string, unknown>;
+    require_string(record, "project", `${at}[${i}]`);
+    require_string(record, "run_id", `${at}[${i}]`);
+    const entry_index = record["entry_index"];
+    if (
+      typeof entry_index !== "number" ||
+      !Number.isInteger(entry_index) ||
+      entry_index < 0
+    ) {
+      throw new RegistryValidationError(
+        `${at}[${i}].entry_index: must be a non-negative integer`,
+      );
+    }
+    require_string(record, "evidence_excerpt", `${at}[${i}]`);
+  }
+}
+
+// ===== Small helpers =====
+
+function require_string(record: Record<string, unknown>, key: string, at: string): void {
+  const v = record[key];
+  if (typeof v !== "string" || v.length === 0) {
+    throw new RegistryValidationError(`${at}.${key}: must be a non-empty string`);
+  }
+}
+
+function require_number(record: Record<string, unknown>, key: string, at: string): void {
+  const v = record[key];
+  if (typeof v !== "number" || !Number.isFinite(v)) {
+    throw new RegistryValidationError(`${at}.${key}: must be a number`);
+  }
+}
+
+function require_enum<T extends string>(
+  record: Record<string, unknown>,
+  key: string,
+  allowed: ReadonlySet<T>,
+  at: string,
+): void {
+  const v = record[key];
+  if (typeof v !== "string" || !allowed.has(v as T)) {
+    throw new RegistryValidationError(
+      `${at}.${key}: must be one of ${[...allowed].join(", ")} (got "${String(v)}")`,
+    );
+  }
+}
+
+function require_confidence(value: unknown, at: string): void {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    throw new RegistryValidationError(`${at}: must be a number`);
+  }
+  if (value < 0 || value > 1) {
+    throw new RegistryValidationError(`${at}: must be in [0, 1] (got ${value})`);
+  }
+}
+
+function require_kebab_case(value: string, at: string): void {
+  if (!KEBAB_CASE.test(value)) {
+    throw new RegistryValidationError(`${at}: must be kebab-case (got "${value}")`);
+  }
+}

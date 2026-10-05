@@ -127,6 +127,7 @@ Migrate the `call_chain_analysis` feature to `src/call_graph/call_chain_analysis
 ### Implementation Details
 
 1. **Core Features Implemented**:
+
    - `build_call_chains` - Build chains from function calls
    - `detect_recursion` - Find recursive cycles
    - `find_paths_between` - Find all paths between two functions
@@ -135,11 +136,13 @@ Migrate the `call_chain_analysis` feature to `src/call_graph/call_chain_analysis
    - `analyze_call_graph` - Bridge from existing CallGraph format
 
 2. **Integration with Existing Code**:
+
    - Compatible with existing `FunctionCall` type from types package
    - Works with new call info types (FunctionCallInfo, MethodCallInfo, ConstructorCallInfo)
    - Can convert from existing CallGraph structure
 
 3. **Utility Functions**:
+
    - Chain formatting for display
    - JSON export for analysis tools
    - Graphviz DOT export for visualization

@@ -1,0 +1,70 @@
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"Trebuchet MS, Verdana, Arial, sans-serif","fontSize":"16px","primaryColor":"#ece4d6","primaryBorderColor":"#c06d4f","primaryTextColor":"#2f3338","textColor":"#2f3338","lineColor":"#2f3338","mainBkg":"#ece4d6","nodeBorder":"#c06d4f","background":"#f7f3ec","edgeLabelBackground":"#f7f3ec"},"flowchart":{"htmlLabels":true,"nodeSpacing":34,"rankSpacing":48,"padding":9,"useMaxWidth":true}}}%%
+flowchart TB
+  T1["<b>W1 · 376.1</b><br/>collection member ids"]
+  T12["<b>W1 · 376.12</b><br/>module member lookup"]
+  T3["<b>W1 · 376.3</b><br/>self_type_name"]
+  T4["<b>W1 · 376.4</b><br/>member index union"]
+  T2["<b>W1 · 376.2</b><br/>Python constructor"]
+  T16["<b>W1 · 376.16</b><br/>failure taxonomy"]
+
+  T5["<b>W2 · 376.5</b><br/>find_self_type"]
+  T6["<b>W2 · 376.6</b><br/>annotation resolver"]
+
+  T17["<b>W3 · 376.17</b><br/>symbol_types split"]
+
+  T7["<b>W4 · 376.7</b><br/>heritage graph"]
+  T9["<b>W4 · 376.9</b><br/>construction capture"]
+  T10["<b>W4 · 376.10</b><br/>element types"]
+
+  T11["<b>W5 · 376.11</b><br/>ValueSource channel"]
+  T13["<b>W5 · 376.13</b><br/>rung 5 fan-out"]
+
+  T8["<b>W6 · 376.8</b><br/>Rust impl attach"]
+  T14["<b>W6 · 376.14</b><br/>structural conformance"]
+  T15["<b>W6 · 376.15</b><br/>type parameters"]
+
+  T18["<b>W7 · 376.18</b><br/>corpus validation"]
+
+  T3 --> T5
+  T6 --> T17
+  T17 --> T7
+  T17 --> T9
+  T17 --> T10
+  T17 --> T11
+  T9 --> T11
+  T10 --> T11
+  T7 --> T13
+  T16 --> T13
+  T4 --> T8
+  T7 --> T8
+  T13 --> T8
+  T4 --> T14
+  T7 --> T14
+  T13 --> T14
+  T6 --> T15
+  T8 --> T18
+  T14 --> T18
+  T15 --> T18
+  T2 --> T6
+  T11 --> T15
+  T16 --> T6
+  T16 --> T18
+  T17 --> T18
+  T13 --> T18
+
+  T4 ~~~ T6
+
+  classDef ready fill:#e4e9d5,stroke:#6f7a4f,stroke-width:2px,color:#2f3338
+  classDef crit fill:#f6e3d7,stroke:#c06d4f,stroke-width:3px,color:#2f3338
+  classDef waits fill:#ece4d6,stroke:#b3a58c,stroke-width:1.5px,color:#2f3338
+
+  class T1,T2,T3,T4,T12 ready
+  class T16,T6,T17,T7,T13,T8,T14,T18 crit
+  class T5,T9,T10,T11,T15 waits
+
+  linkStyle default stroke:#2f3338,stroke-width:1.2px
+  linkStyle 20,21 stroke:#2f3338,stroke-width:1.4px,stroke-dasharray:9 5
+  linkStyle 23,24,25 stroke:#2f3338,stroke-width:1.4px,stroke-dasharray:2 5
+  linkStyle 1,2,8,12,15,17,18 stroke:#c06d4f,stroke-width:2.6px
+  linkStyle 22 stroke:#c06d4f,stroke-width:2.6px,stroke-dasharray:2 5
+  linkStyle 26 stroke:none,stroke-width:0px,fill:none

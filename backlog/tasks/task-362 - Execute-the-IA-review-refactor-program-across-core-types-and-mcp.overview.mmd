@@ -1,0 +1,44 @@
+%%{init:{'theme':'base','themeVariables':{'primaryColor':'#ece4d6','primaryBorderColor':'#c06d4f','lineColor':'#2f3338','primaryTextColor':'#2f3338','tertiaryColor':'#fffdf8','fontFamily':'ui-sans-serif, -apple-system, Segoe UI, Roboto, sans-serif','fontSize':'14px'}}}%%
+flowchart LR
+  subgraph REFACTOR["REFACTOR &middot; 362.1&ndash;362.8"]
+    direction LR
+    T1["362.1 &middot; Unify language identity"]
+    T2["362.2 &middot; Dissolve index_single_file hub"]
+    T3["362.3 &middot; Dotted leaves"]
+    T4["362.4 &middot; Split classification megafile"]
+    T5["362.5 &middot; Types dead island"]
+    T6["362.6 &middot; Stage boundaries"]
+    T7["362.7 &middot; MCP boot/logic"]
+    T8["362.8 &middot; Hygiene sweep"]
+  end
+  subgraph ENFORCE["ENFORCE / ENCOURAGE &middot; 362.9&ndash;362.15"]
+    direction LR
+    T9["362.9 &middot; Refresh IA rule payloads"]
+    T10["362.10 &middot; File-naming hook"]
+    T11["362.11 &middot; detect_language Stop guard"]
+    T12["362.12 &middot; Stage-boundary Stop hook"]
+    T13["362.13 &middot; Doc-truth + dead-code"]
+    T14["362.14 &middot; Write-time nudges"]
+    T15["362.15 &middot; Thin always-on context"]
+  end
+  T1 --> T3
+  T1 --> T4
+  T2 --> T3
+  T5 --> T6
+  T3 --> T6
+  T2 --> T6
+  T4 --> T7
+  T1 --> T8
+  T2 --> T8
+  T3 --> T8
+  T4 --> T8
+  T5 --> T8
+  T6 --> T8
+  T7 --> T8
+  T1 -. "warn-only until" .-> T11
+  T6 -. "warn-only until" .-> T12
+  T9 -. "precedes" .-> T13
+  classDef started fill:#c06d4f,stroke:#a8412a,color:#f7f3ec,font-weight:600;
+  class T1 started;
+  style REFACTOR fill:#eef1f4,stroke:#4a6b8a,color:#2f3338;
+  style ENFORCE fill:#f2f0ea,stroke:#9a9b97,color:#6c6f73;

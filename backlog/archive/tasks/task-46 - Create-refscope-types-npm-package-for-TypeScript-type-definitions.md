@@ -3,9 +3,9 @@ id: task-46
 title: Create refscope-types npm package for TypeScript type definitions
 status: Done
 assignee:
-  - '@chuck'
-created_date: '2025-07-19'
-updated_date: '2025-07-19'
+  - "@chuck"
+created_date: "2025-07-19"
+updated_date: "2025-07-19"
 labels:
   - ops
 dependencies: []

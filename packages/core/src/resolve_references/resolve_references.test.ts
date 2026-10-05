@@ -1,32 +1,106 @@
+/**
+ * Stage-level integration suite for the resolve_references stage (with the
+ * .{language}.test.ts siblings) — named for the folder, so it has no paired
+ * source file by design. Also the common-ancestor host for test helpers
+ * shared by call_resolution/ tests.
+ */
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { Project } from "../project/project";
-import type { FilePath, ScopeId, SymbolId, SymbolName, SymbolReference } from "@ariadnejs/types";
-import type { ResolutionRegistry } from "./resolve_references";
+import type {
+  CallGraph,
+  FilePath,
+  ResolutionFailureReason,
+  Result,
+  ScopeId,
+  SymbolId,
+  SymbolName,
+  SymbolReference,
+} from "@ariadnejs/types";
+import type { ResolutionRegistry } from "./resolution_registry";
+import type { ScopeResolutions } from "./resolution_state";
 import * as path from "path";
 import * as os from "os";
 import * as fs from "fs";
 
 /**
- * Test helper: Set up scope resolutions directly for testing.
- * Exported for use by other test files in resolve_references/.
+ * Unwrap a `Result` to its value, throwing if it's an error.
+ * Imported by sibling call_resolution test files.
+ */
+export function unwrap<T>(r: Result<T, unknown>): T {
+  if (!r.ok) {
+    throw new Error(`Expected ok, got err: ${JSON.stringify(r.error)}`);
+  }
+  return r.value;
+}
+
+/**
+ * Seed scope resolutions directly, bypassing name resolution so call-resolution
+ * units can be exercised in isolation. Imported by sibling call_resolution tests.
  */
 export function set_test_resolutions(
   registry: ResolutionRegistry,
   scope_id: ScopeId,
   resolutions: Map<SymbolName, SymbolId>
 ): void {
-  const internal = registry as unknown as {
-    state: { resolutions_by_scope: Map<ScopeId, Map<SymbolName, SymbolId>> };
+  const internal = (registry as object) as {
+    state: { resolutions_by_scope: Map<ScopeId, ScopeResolutions> };
   };
   if (!internal.state.resolutions_by_scope) {
     internal.state.resolutions_by_scope = new Map();
   }
-  internal.state.resolutions_by_scope.set(scope_id, resolutions);
+  // A seeded scope inherits nothing: these units name every binding they need.
+  internal.state.resolutions_by_scope.set(scope_id, {
+    own: resolutions,
+    parent: null,
+  });
 }
 
-/**
- * Helper: Check if a reference is a call reference
- */
+/** What one call resolved to, or the reason it did not, with the module the failure names. */
+export interface CallOutcome {
+  readonly name: string;
+  readonly outcome: "resolved" | ResolutionFailureReason;
+  readonly import_target_file: FilePath | null;
+  readonly import_specifier: string | null;
+}
+
+/** The outcome of every call in `file`, in source order. Imported by the per-language suites. */
+export function call_outcomes(project: Project, file: FilePath): CallOutcome[] {
+  return project.resolutions.get_calls_for_file(file).map((call) => ({
+    name: call.name,
+    outcome: call.resolutions.length > 0 ? "resolved" : call.resolution_failure!.reason,
+    import_target_file: call.resolution_failure?.partial_info.import_target_file ?? null,
+    import_specifier: call.resolution_failure?.partial_info.import_specifier ?? null,
+  }));
+}
+
+/** Locate the CallableNode for a caller function defined in a given file. */
+export function find_caller_node(
+  call_graph: CallGraph,
+  caller_name: string,
+  file_path: FilePath
+) {
+  return [...call_graph.nodes.values()].find(
+    (node) =>
+      node.name === (caller_name as SymbolName) &&
+      node.location.file_path === file_path
+  );
+}
+
+/** True when `name` (defined in `file_path`) is reported as an entry point. */
+export function is_entry_point(
+  call_graph: CallGraph,
+  name: string,
+  file_path: FilePath
+): boolean {
+  return call_graph.entry_points.some((ep) => {
+    const node = call_graph.nodes.get(ep);
+    return (
+      node?.name === (name as SymbolName) &&
+      node.location.file_path === file_path
+    );
+  });
+}
+
 function is_call_reference(ref: SymbolReference): boolean {
   return (
     ref.kind === "function_call" ||
@@ -37,339 +111,319 @@ function is_call_reference(ref: SymbolReference): boolean {
 }
 
 /**
- * Tests for ResolutionRegistry focusing on re-export import resolution
- *
- * Bug: Imports from re-exports don't get added to scope's symbol table,
- * causing calls to resolve to null and functions to be incorrectly marked
- * as entry points in the call graph.
- *
- * See: task-epic-11.149
+ * The SymbolId of the one function defined in `file`, read back from the
+ * orchestrated project index. Resolution targets are asserted against this
+ * exact id rather than substring-matching the id string.
  */
-describe("ResolutionRegistry - Re-export Import Resolution", () => {
+function sole_function_id(project: Project, file: FilePath): SymbolId {
+  const index = project.get_index_single_file(file);
+  if (!index) {
+    throw new Error(`no index for ${file}`);
+  }
+  const ids = [...index.functions.keys()];
+  expect(ids.length).toBe(1);
+  return ids[0];
+}
+
+/** The SymbolId of the function named `name` in `file`'s orchestrated index. */
+function function_id_named(
+  project: Project,
+  file: FilePath,
+  name: string
+): SymbolId {
+  const index = project.get_index_single_file(file);
+  if (!index) {
+    throw new Error(`no index for ${file}`);
+  }
+  const ids = [...index.functions.entries()]
+    .filter(([, def]) => def.name === name)
+    .map(([id]) => id);
+  expect(ids.length).toBe(1);
+  return ids[0];
+}
+
+/**
+ * Resolve the single call to `name` inside `file` through the orchestrator,
+ * returning both the call reference and its resolved target.
+ */
+function resolve_sole_call(
+  project: Project,
+  file: FilePath,
+  name: string
+): { call: SymbolReference; resolved: SymbolId | null } {
+  const index = project.get_index_single_file(file);
+  if (!index) {
+    throw new Error(`no index for ${file}`);
+  }
+  const calls = index.references.filter(
+    (ref) => ref.name === name && is_call_reference(ref)
+  );
+  expect(calls.length).toBe(1);
+  const call = calls[0];
+  return {
+    call,
+    resolved: project.resolutions.resolve(call.scope_id, call.name),
+  };
+}
+
+/**
+ * Imports pulled through a re-export must land in the consumer scope's symbol
+ * table, otherwise calls to them resolve to null and the target is falsely
+ * reported as an unreached entry point in the call graph.
+ */
+describe("ResolutionRegistry - re-export import resolution", () => {
   let project: Project;
   let temp_dir: string;
 
   beforeEach(async () => {
-    // Create temp directory for test files
     temp_dir = fs.mkdtempSync(path.join(os.tmpdir(), "resolution-test-"));
 
-    // Create nested directory structure before initializing project
-    // This ensures the FileSystemFolder tree includes these directories
-    const import_resolution_dir = path.join(temp_dir, "import_resolution");
-    const registries_dir = path.join(temp_dir, "registries");
-    fs.mkdirSync(import_resolution_dir, { recursive: true });
-    fs.mkdirSync(registries_dir, { recursive: true });
+    // FileSystemFolder tree is built at initialize() from directories on disk,
+    // so directory-based import targets must exist before the project starts.
+    fs.mkdirSync(path.join(temp_dir, "import_resolution"), { recursive: true });
+    fs.mkdirSync(path.join(temp_dir, "registries"), { recursive: true });
 
     project = new Project();
     await project.initialize(temp_dir as FilePath, []);
   });
 
   afterEach(() => {
-    // Cleanup temp directory
     if (temp_dir && fs.existsSync(temp_dir)) {
       fs.rmSync(temp_dir, { recursive: true, force: true });
     }
   });
 
-  it("should resolve imports from re-exports in scope symbol table", () => {
-    // Create three files simulating the re-export pattern
-
-    // 1. Original definition
+  it("resolves an import from a re-export to the original definition", () => {
     const original_file = path.join(temp_dir, "original.ts") as FilePath;
-    const original_code = `
+    const reexport_file = path.join(temp_dir, "index.ts") as FilePath;
+    const consumer_file = path.join(temp_dir, "consumer.ts") as FilePath;
+
+    project.update_file(
+      original_file,
+      `
 export function helper(x: number): number {
   return x * 2;
 }
-`;
-
-    // 2. Re-export (index.ts pattern)
-    const reexport_file = path.join(temp_dir, "index.ts") as FilePath;
-    const reexport_code = `
+`
+    );
+    project.update_file(
+      reexport_file,
+      `
 export { helper } from "./original";
-`;
-
-    // 3. Consumer that imports from re-export
-    const consumer_file = path.join(temp_dir, "consumer.ts") as FilePath;
-    const consumer_code = `
+`
+    );
+    project.update_file(
+      consumer_file,
+      `
 import { helper } from "./index";
 
 export function use_helper(y: number): number {
   return helper(y);
 }
-`;
-
-    // Load files into project
-    project.update_file(original_file, original_code);
-    project.update_file(reexport_file, reexport_code);
-    project.update_file(consumer_file, consumer_code);
-
-    // Get the module scope of consumer.ts
-    const consumer_scope = project.scopes.get_file_root_scope(consumer_file);
-    expect(consumer_scope).toBeDefined();
-
-    // TEST 1: Verify the import is resolved in the scope's symbol table
-    // When we look up "helper" in consumer.ts's module scope, it should resolve
-    // to the original function's symbol ID
-    const resolved_helper = project.resolutions.resolve(
-      consumer_scope!.id,
-      "helper" as any
+`
     );
 
-    // Should NOT be null!
-    expect(resolved_helper).not.toBeNull();
-    expect(resolved_helper).toBeDefined();
+    const helper_id = sole_function_id(project, original_file);
+    const consumer_scope = project.scopes.get_file_root_scope(consumer_file);
+    const resolved = project.resolutions.resolve(
+      consumer_scope!.id,
+      "helper" as SymbolName
+    );
 
-    // Should resolve to the original function definition
-    expect(resolved_helper).toContain("function:");
-    expect(resolved_helper).toContain("original.ts");
-    expect(resolved_helper).toContain("helper");
+    expect(resolved).toEqual(helper_id);
   });
 
-  it("should detect calls to re-exported functions", () => {
-    // Same setup as above
+  it("resolves a call to a re-exported function to the original definition", () => {
     const original_file = path.join(temp_dir, "original.ts") as FilePath;
-    const original_code = `
+    const reexport_file = path.join(temp_dir, "index.ts") as FilePath;
+    const consumer_file = path.join(temp_dir, "consumer.ts") as FilePath;
+
+    project.update_file(
+      original_file,
+      `
 export function helper(x: number): number {
   return x * 2;
 }
-`;
-
-    const reexport_file = path.join(temp_dir, "index.ts") as FilePath;
-    const reexport_code = `
+`
+    );
+    project.update_file(
+      reexport_file,
+      `
 export { helper } from "./original";
-`;
-
-    const consumer_file = path.join(temp_dir, "consumer.ts") as FilePath;
-    const consumer_code = `
+`
+    );
+    project.update_file(
+      consumer_file,
+      `
 import { helper } from "./index";
 
 export function use_helper(y: number): number {
-  return helper(y);  // This call should be detected!
+  return helper(y);
 }
-`;
-
-    project.update_file(original_file, original_code);
-    project.update_file(reexport_file, reexport_code);
-    project.update_file(consumer_file, consumer_code);
-
-    // TEST 2: Verify the call is resolved
-    // Get semantic index and find the helper call
-    const consumer_index = project.get_index_single_file(consumer_file);
-    expect(consumer_index).toBeDefined();
-
-    const helper_calls = consumer_index!.references.filter(
-      (ref) => ref.name === "helper" && is_call_reference(ref)
-    );
-    expect(helper_calls.length).toBe(1);
-
-    // Resolve the call using the public API
-    const helper_call = helper_calls[0];
-    const resolved_symbol_id = project.resolutions.resolve(
-      helper_call.scope_id,
-      helper_call.name
+`
     );
 
-    // The call should be resolved to the original function
-    expect(resolved_symbol_id).not.toBeNull();
-    expect(resolved_symbol_id).toBeDefined();
-    expect(resolved_symbol_id).toContain("function:");
-    expect(resolved_symbol_id).toContain("original.ts");
-    expect(resolved_symbol_id).toContain("helper");
+    const helper_id = sole_function_id(project, original_file);
+    const { resolved } = resolve_sole_call(project, consumer_file, "helper");
+
+    expect(resolved).toEqual(helper_id);
   });
 
-  it("should handle chained re-exports (A exports to B, B exports to C)", () => {
-    // 1. Original definition
+  it("resolves a call through a chain of re-exports (A -> B -> C)", () => {
     const original_file = path.join(temp_dir, "original.ts") as FilePath;
-    const original_code = `
+    const reexport1_file = path.join(temp_dir, "reexport1.ts") as FilePath;
+    const reexport2_file = path.join(temp_dir, "reexport2.ts") as FilePath;
+    const consumer_file = path.join(temp_dir, "consumer.ts") as FilePath;
+
+    project.update_file(
+      original_file,
+      `
 export function deepHelper(x: number): number {
   return x * 3;
 }
-`;
-
-    // 2. First re-export
-    const reexport1_file = path.join(temp_dir, "reexport1.ts") as FilePath;
-    const reexport1_code = `
+`
+    );
+    project.update_file(
+      reexport1_file,
+      `
 export { deepHelper } from "./original";
-`;
-
-    // 3. Second re-export (chained)
-    const reexport2_file = path.join(temp_dir, "reexport2.ts") as FilePath;
-    const reexport2_code = `
+`
+    );
+    project.update_file(
+      reexport2_file,
+      `
 export { deepHelper } from "./reexport1";
-`;
-
-    // 4. Consumer
-    const consumer_file = path.join(temp_dir, "consumer.ts") as FilePath;
-    const consumer_code = `
+`
+    );
+    project.update_file(
+      consumer_file,
+      `
 import { deepHelper } from "./reexport2";
 
 export function use_deep_helper(y: number): number {
   return deepHelper(y);
 }
-`;
+`
+    );
 
-    project.update_file(original_file, original_code);
-    project.update_file(reexport1_file, reexport1_code);
-    project.update_file(reexport2_file, reexport2_code);
-    project.update_file(consumer_file, consumer_code);
+    const deep_helper_id = sole_function_id(project, original_file);
 
-    // Verify the import resolves through the chain
     const consumer_scope = project.scopes.get_file_root_scope(consumer_file);
-    const resolved_helper = project.resolutions.resolve(
-      consumer_scope!.id,
-      "deepHelper" as any
-    );
+    expect(
+      project.resolutions.resolve(consumer_scope!.id, "deepHelper" as SymbolName)
+    ).toEqual(deep_helper_id);
 
-    expect(resolved_helper).not.toBeNull();
-    expect(resolved_helper).toContain("original.ts");
-    expect(resolved_helper).toContain("deepHelper");
-
-    // Verify the call is detected
-    const consumer_index = project.get_index_single_file(consumer_file);
-    expect(consumer_index).toBeDefined();
-
-    const deep_helper_calls = consumer_index!.references.filter(
-      (ref) => ref.name === "deepHelper" && is_call_reference(ref)
-    );
-    expect(deep_helper_calls.length).toBe(1);
-
-    // Resolve the call
-    const resolved_deep_helper = project.resolutions.resolve(
-      deep_helper_calls[0].scope_id,
-      deep_helper_calls[0].name
-    );
-    expect(resolved_deep_helper).toContain("original.ts");
+    const { resolved } = resolve_sole_call(project, consumer_file, "deepHelper");
+    expect(resolved).toEqual(deep_helper_id);
   });
 
-  it("should resolve imports from re-exports in nested function scopes", () => {
-    // This test captures the actual bug:
-    // Import is at module scope, but call is inside a nested function scope
-    // Resolution should inherit from parent scopes
-
+  it("resolves a re-exported import used inside a nested function scope", () => {
     const original_file = path.join(temp_dir, "original.ts") as FilePath;
-    const original_code = `
+    const reexport_file = path.join(temp_dir, "index.ts") as FilePath;
+    const consumer_file = path.join(temp_dir, "consumer.ts") as FilePath;
+
+    project.update_file(
+      original_file,
+      `
 export function resolve_module_path(import_path: string): string {
   return import_path + ".ts";
 }
-`;
-
-    const reexport_file = path.join(temp_dir, "index.ts") as FilePath;
-    const reexport_code = `
+`
+    );
+    project.update_file(
+      reexport_file,
+      `
 export { resolve_module_path } from "./original";
-`;
-
-    const consumer_file = path.join(temp_dir, "consumer.ts") as FilePath;
-    const consumer_code = `
+`
+    );
+    // The import binds at module scope; the call sits inside a function scope,
+    // so resolution must walk from the call scope up to the module scope.
+    project.update_file(
+      consumer_file,
+      `
 import { resolve_module_path } from "./index";
 
 export function resolve_export_chain(source_file: string): string | null {
-  // Import is at module scope, but call is inside this function's scope
   const resolved_file = resolve_module_path(source_file);
   return resolved_file;
 }
-`;
-
-    project.update_file(original_file, original_code);
-    project.update_file(reexport_file, reexport_code);
-    project.update_file(consumer_file, consumer_code);
-
-    // Verify the call inside the function is detected
-    const consumer_index = project.get_index_single_file(consumer_file);
-    expect(consumer_index).toBeDefined();
-
-    const resolve_calls = consumer_index!.references.filter(
-      (ref) => ref.name === "resolve_module_path" && is_call_reference(ref)
+`
     );
 
-    // The call should be detected and resolved
-    expect(resolve_calls.length).toBe(1);
-
-    const resolved_symbol_id = project.resolutions.resolve(
-      resolve_calls[0].scope_id,
-      resolve_calls[0].name
+    const target_id = sole_function_id(project, original_file);
+    const { resolved } = resolve_sole_call(
+      project,
+      consumer_file,
+      "resolve_module_path"
     );
-    expect(resolved_symbol_id).not.toBeNull();
-    expect(resolved_symbol_id).toBeDefined();
-    expect(resolved_symbol_id).toContain("original.ts");
+
+    expect(resolved).toEqual(target_id);
   });
 
-  it("should handle re-exports with aliases", () => {
-    // Fixed: aliased re-exports now properly resolve
+  it("resolves an aliased re-export to the original definition", () => {
     const original_file = path.join(temp_dir, "original.ts") as FilePath;
-    const original_code = `
+    const reexport_file = path.join(temp_dir, "index.ts") as FilePath;
+    const consumer_file = path.join(temp_dir, "consumer.ts") as FilePath;
+
+    project.update_file(
+      original_file,
+      `
 export function originalName(x: number): number {
   return x + 1;
 }
-`;
-
-    const reexport_file = path.join(temp_dir, "index.ts") as FilePath;
-    const reexport_code = `
+`
+    );
+    project.update_file(
+      reexport_file,
+      `
 export { originalName as aliasedName } from "./original";
-`;
-
-    const consumer_file = path.join(temp_dir, "consumer.ts") as FilePath;
-    const consumer_code = `
+`
+    );
+    project.update_file(
+      consumer_file,
+      `
 import { aliasedName } from "./index";
 
 export function use_aliased(y: number): number {
   return aliasedName(y);
 }
-`;
+`
+    );
 
-    project.update_file(original_file, original_code);
-    project.update_file(reexport_file, reexport_code);
-    project.update_file(consumer_file, consumer_code);
+    const original_id = sole_function_id(project, original_file);
 
     const consumer_scope = project.scopes.get_file_root_scope(consumer_file);
-    const resolved = project.resolutions.resolve(
-      consumer_scope!.id,
-      "aliasedName" as any
-    );
+    expect(
+      project.resolutions.resolve(consumer_scope!.id, "aliasedName" as SymbolName)
+    ).toEqual(original_id);
 
-    expect(resolved).not.toBeNull();
-    expect(resolved).toContain("originalName");
-
-    const consumer_index = project.get_index_single_file(consumer_file);
-    expect(consumer_index).toBeDefined();
-
-    const aliased_calls = consumer_index!.references.filter(
-      (ref) => ref.name === "aliasedName" && is_call_reference(ref)
-    );
-    expect(aliased_calls.length).toBe(1);
+    const { resolved } = resolve_sole_call(project, consumer_file, "aliasedName");
+    expect(resolved).toEqual(original_id);
   });
 
-  it("should handle re-exports with nested directory structure and relative imports", async () => {
-    // This test verifies that directory-based imports resolve correctly to index.ts files
-    // after fixing the has_file_in_tree bug
-
-    // This test matches the real codebase structure:
-    // resolve_references/
-    //   import_resolution/
-    //     import_resolution.ts
-    //     index.ts
-    //   registries/
-    //     export_registry.ts
-
-    // Nested directories are created in beforeEach
+  it("resolves a directory-based import to the directory's index.ts across folders", async () => {
     const import_resolution_dir = path.join(temp_dir, "import_resolution");
     const registries_dir = path.join(temp_dir, "registries");
 
-    // 1. Original definition (import_resolution.ts)
-    const import_resolution_file = path.join(import_resolution_dir, "import_resolution.ts") as FilePath;
+    const import_resolution_file = path.join(
+      import_resolution_dir,
+      "import_resolution.ts"
+    ) as FilePath;
+    const index_file = path.join(import_resolution_dir, "index.ts") as FilePath;
+    const export_registry_file = path.join(
+      registries_dir,
+      "export_registry.ts"
+    ) as FilePath;
+
     const import_resolution_code = `
 export function resolve_module_path(import_path: string): string {
   return import_path + ".ts";
 }
 `;
-
-    // 2. Re-export (index.ts)
-    const index_file = path.join(import_resolution_dir, "index.ts") as FilePath;
     const index_code = `
 export { resolve_module_path } from "./import_resolution";
 `;
-
-    // 3. Consumer in different directory (export_registry.ts)
-    const export_registry_file = path.join(registries_dir, "export_registry.ts") as FilePath;
+    // Imports "../import_resolution" (a directory) which must resolve to its index.ts.
     const export_registry_code = `
 import { resolve_module_path } from "../import_resolution";
 
@@ -379,50 +433,110 @@ export function resolve_export_chain(source_file: string): string | null {
 }
 `;
 
-    // Write files to disk so they're in the FileSystemFolder tree
+    // Files must exist on disk before initialize() so the FileSystemFolder tree
+    // includes them for directory-import resolution.
     fs.writeFileSync(import_resolution_file, import_resolution_code);
     fs.writeFileSync(index_file, index_code);
     fs.writeFileSync(export_registry_file, export_registry_code);
 
-    // Create a new project instance to rebuild the file tree with the new files
-    // (re-initializing the same instance doesn't rebuild the tree)
     project = new Project();
     await project.initialize(temp_dir as FilePath, []);
 
-    // Now index the files
     project.update_file(import_resolution_file, import_resolution_code);
     project.update_file(index_file, index_code);
     project.update_file(export_registry_file, export_registry_code);
 
-    // Verify the import resolves in the consumer
-    const consumer_scope = project.scopes.get_file_root_scope(export_registry_file);
-    const resolved = project.resolutions.resolve(
-      consumer_scope!.id,
-      "resolve_module_path" as any
+    const target_id = sole_function_id(project, import_resolution_file);
+
+    const consumer_scope = project.scopes.get_file_root_scope(
+      export_registry_file
     );
+    expect(
+      project.resolutions.resolve(
+        consumer_scope!.id,
+        "resolve_module_path" as SymbolName
+      )
+    ).toEqual(target_id);
 
-    expect(resolved).not.toBeNull();
-    expect(resolved).toBeDefined();
-    expect(resolved).toContain("import_resolution.ts");
-    expect(resolved).toContain("resolve_module_path");
-
-    // Verify the call is detected
-    const registry_index = project.get_index_single_file(export_registry_file);
-    expect(registry_index).toBeDefined();
-
-    const resolve_calls = registry_index!.references.filter(
-      (ref) => ref.name === "resolve_module_path" && is_call_reference(ref)
+    const { resolved } = resolve_sole_call(
+      project,
+      export_registry_file,
+      "resolve_module_path"
     );
-
-    expect(resolve_calls.length).toBe(1);
-
-    const resolved_call_symbol = project.resolutions.resolve(
-      resolve_calls[0].scope_id,
-      resolve_calls[0].name
-    );
-    expect(resolved_call_symbol).not.toBeNull();
-    expect(resolved_call_symbol).toBeDefined();
-    expect(resolved_call_symbol).toContain("import_resolution.ts");
+    expect(resolved).toEqual(target_id);
   });
 });
 
+describe("ResolutionRegistry - orchestration lifecycle", () => {
+  let project: Project;
+  let temp_dir: string;
+
+  beforeEach(async () => {
+    temp_dir = fs.mkdtempSync(path.join(os.tmpdir(), "resolution-lifecycle-"));
+    project = new Project();
+    await project.initialize(temp_dir as FilePath, []);
+  });
+
+  afterEach(() => {
+    if (temp_dir && fs.existsSync(temp_dir)) {
+      fs.rmSync(temp_dir, { recursive: true, force: true });
+    }
+  });
+
+  it("holds no resolutions for an empty project", () => {
+    expect(project.resolutions.size()).toBe(0);
+  });
+
+  it("leaves a call to an undefined function unresolved", () => {
+    const file = path.join(temp_dir, "a.ts") as FilePath;
+    project.update_file(
+      file,
+      `
+export function caller(): void {
+  ghost();
+}
+`
+    );
+
+    const { resolved } = resolve_sole_call(project, file, "ghost");
+    expect(resolved).toBeNull();
+  });
+
+  it("re-resolves a call to the new definition after the file changes", () => {
+    const file = path.join(temp_dir, "b.ts") as FilePath;
+    project.update_file(
+      file,
+      `
+export function helper(): number {
+  return 1;
+}
+export function use(): number {
+  return helper();
+}
+`
+    );
+    const first_id = function_id_named(project, file, "helper");
+    expect(resolve_sole_call(project, file, "helper").resolved).toEqual(first_id);
+
+    // Prepend blank lines so the definition shifts to a new SymbolId; the
+    // orchestrator must drop the stale resolution and re-resolve to the new id.
+    project.update_file(
+      file,
+      `
+
+
+
+export function helper(): number {
+  return 1;
+}
+export function use(): number {
+  return helper();
+}
+`
+    );
+    const second_id = function_id_named(project, file, "helper");
+
+    expect(second_id).not.toEqual(first_id);
+    expect(resolve_sole_call(project, file, "helper").resolved).toEqual(second_id);
+  });
+});

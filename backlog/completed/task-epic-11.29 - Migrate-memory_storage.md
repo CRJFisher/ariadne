@@ -142,6 +142,7 @@ class MemoryStorage implements StorageInterface {
 ### Implementation Details
 
 1. **Refactoring to Functional Paradigm**:
+
    - Original implementation used stateful classes (MemoryStorage, MemoryTransaction)
    - Refactored to use functions with closures for state encapsulation
    - Added backwards compatibility wrapper class in index.ts
@@ -157,6 +158,7 @@ class MemoryStorage implements StorageInterface {
    ```
 
 3. **Integration TODOs Added**:
+
    - Added TODO comments for Storage Interface integration
    - Added TODO for Cache Layer integration
    - Added TODO for Project Manager integration

@@ -37,7 +37,9 @@ await project.initialize("/path/to/project" as FilePath);
 const source = fs.readFileSync("src/main.ts", "utf-8");
 project.update_file("src/main.ts" as FilePath, source);
 
-// Build call graph and find entry points
+// Build call graph and find entry points (true positives only —
+// framework-invoked routes, Python dunders, pytest fixtures, etc. are
+// filtered out by the bundled known-issues registry).
 const call_graph = project.get_call_graph();
 console.log("Entry points:", call_graph.entry_points.length);
 
@@ -82,14 +84,14 @@ Returns all files that import from the specified file.
 
 #### Call Graph
 
-##### `get_call_graph(): CallGraph`
+##### `get_call_graph(options?: ClassifyOptions): CallGraph`
 
-Builds the call graph from current project state.
+Builds the call graph from current project state. `entry_points` contains true positives only — entry points matching the bundled known-issues registry (Python dunders, Flask `@app.route` handlers, pytest fixtures, JSX components, etc.) are filtered out.
 
 ```typescript
 const call_graph = project.get_call_graph();
 
-// Entry points: functions never called (directly or indirectly)
+// Entry points: probably-dead functions (true positives only)
 for (const entry_id of call_graph.entry_points) {
   const node = call_graph.nodes.get(entry_id);
   console.log(`Entry point: ${node?.name}`);
@@ -100,6 +102,45 @@ if (call_graph.indirect_reachability) {
   for (const [fn_id, info] of call_graph.indirect_reachability) {
     console.log(`${fn_id} reachable via ${info.reason.type}`);
   }
+}
+```
+
+##### `get_classified_entry_points(options?: ClassifyOptions): ClassifiedEntryPoints`
+
+Returns every candidate entry point paired with its classification verdict, split into true positives and known false positives. Used by triage workflows that need to inspect why a particular entry point is suppressed.
+
+```typescript
+const { true_entry_points, known_false_positives } =
+  project.get_classified_entry_points();
+
+for (const fp of known_false_positives) {
+  const c = fp.classification;
+  switch (c.kind) {
+    case "framework_invoked":
+      console.log(`${fp.symbol_id} called by ${c.framework} (${c.group_id})`);
+      break;
+    case "dunder_protocol":
+      console.log(`${fp.symbol_id} is dunder ${c.protocol}`);
+      break;
+    case "test_only":
+    case "indirect_only":
+      console.log(`${fp.symbol_id}: ${c.kind} (${c.group_id})`);
+      break;
+  }
+}
+```
+
+Both methods accept the same options and share an internal cache, so calling them in sequence does the classification work once.
+
+```typescript
+interface ClassifyOptions {
+  /** Include test-file callables in entry-point detection. Default: false. */
+  include_tests?: boolean;
+  /**
+   * Override the bundled permanent registry. Used by the self-healing
+   * pipeline to load the full skill registry (including `wip` rules).
+   */
+  registry?: KnownIssuesRegistry;
 }
 ```
 
@@ -116,10 +157,6 @@ Returns the semantic index for a specific file, containing all extracted definit
 ##### `get_definition(symbol_id: SymbolId): AnyDefinition | undefined`
 
 Looks up a definition by its symbol ID.
-
-##### `get_type_info(symbol_id: SymbolId): TypeMemberInfo | undefined`
-
-Returns type member information for a symbol.
 
 ##### `get_source_code(file_id: FilePath, location: Location): string | undefined`
 
@@ -153,18 +190,41 @@ interface CallGraph {
   // All callable nodes (functions, methods, constructors)
   nodes: ReadonlyMap<SymbolId, CallableNode>;
 
-  // Functions never called - the true entry points
+  // True-positive entry points only. Known false positives (framework
+  // routes, dunder protocols, pytest fixtures, etc.) are filtered out.
   entry_points: readonly SymbolId[];
 
   // Functions reachable through indirect mechanisms (e.g., collection reads)
   indirect_reachability?: ReadonlyMap<SymbolId, IndirectReachability>;
 }
 
+// Classification verdict for a candidate entry point. Mutually exclusive.
+type EntryPointClassification =
+  | { kind: "true_entry_point" }
+  | { kind: "framework_invoked"; group_id: string; framework: string }
+  | { kind: "dunder_protocol"; group_id: string; protocol: string }
+  | { kind: "test_only"; group_id: string }
+  | {
+      kind: "indirect_only";
+      group_id: string;
+      via: IndirectReachabilityReason;
+    };
+
+interface ClassifiedEntryPoint {
+  symbol_id: SymbolId;
+  classification: EntryPointClassification;
+}
+
+interface ClassifiedEntryPoints {
+  true_entry_points: readonly ClassifiedEntryPoint[];
+  known_false_positives: readonly ClassifiedEntryPoint[];
+}
+
 // Node in the call graph
 interface CallableNode {
   symbol_id: SymbolId;
   name: SymbolName;
-  enclosed_calls: readonly CallReference[];  // Calls made by this function
+  enclosed_calls: readonly CallReference[]; // Calls made by this function
   location: Location;
   definition: AnyDefinition;
 }
@@ -185,7 +245,7 @@ interface CallReference {
   name: SymbolName;
   scope_id: ScopeId;
   call_type: "function" | "method" | "constructor";
-  resolutions: readonly Resolution[];  // All possible call targets
+  resolutions: readonly Resolution[]; // All possible call targets
   is_callback_invocation?: boolean;
 }
 ```
@@ -196,14 +256,15 @@ Entry points are functions that are never called by any other function in the co
 
 1. **Direct calls**: Function A calls function B → B is not an entry point
 2. **Indirect reachability**: Function stored in a collection that is read → function is not an entry point
+3. **Classification against known false positives**: Each candidate entry point is checked against a bundled registry of framework-invocation patterns (Flask routes, pytest fixtures, JSX components, dynamic dispatch, Python dunders, etc.). Matched candidates are excluded from `CallGraph.entry_points` and surfaced separately by `get_classified_entry_points()`.
 
 Example of indirect reachability:
 
 ```typescript
 // Handler functions are stored in HANDLERS
 const HANDLERS = {
-  "create": handle_create,
-  "delete": handle_delete,
+  create: handle_create,
+  delete: handle_delete,
 } as const;
 
 // HANDLERS is read here - all stored functions become reachable

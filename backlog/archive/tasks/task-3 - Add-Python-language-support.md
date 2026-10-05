@@ -3,9 +3,9 @@ id: task-3
 title: Add Python language support
 status: Done
 assignee:
-  - '@chuck'
-created_date: '2025-07-08'
-updated_date: '2025-07-09'
+  - "@chuck"
+created_date: "2025-07-08"
+updated_date: "2025-07-09"
 labels:
   - feature
   - enhancement
@@ -29,13 +29,12 @@ Implement Python language support following the language configuration guide. Py
 - [x] Add full test coverage. Include the test cases the relevant language bloop server code (mod.rs)
 - [x] Update documentation
 
-
 ## Implementation Plan
 
 1. Install tree-sitter-python parser dependency
 2. Create Python language configuration with basic metadata
 3. Implement Python-specific scope query rules:
-   - Handle indentation-based scoping  
+   - Handle indentation-based scoping
    - Support class definitions and inheritance
    - Handle decorators properly
    - Implement import system scoping
@@ -43,6 +42,7 @@ Implement Python language support following the language configuration guide. Py
 4. Test with Python code samples from bloop server
 5. Add comprehensive unit tests
 6. Update documentation with Python example
+
 ## Implementation Notes
 
 Reference implementation sketch is already in the language configuration documentation. This will be a good test of the language abstraction. Key differences from TypeScript: indentation-based syntax, dynamic typing, different import system, special scoping rules (global, nonlocal), everything is an object.

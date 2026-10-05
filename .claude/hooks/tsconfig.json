@@ -6,7 +6,12 @@
     "strict": true,
     "noEmit": true,
     "esModuleInterop": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "allowJs": true,
+    "checkJs": true
   },
-  "include": ["*.ts"]
+  "include": [
+    "*.ts",
+    "*.mjs"
+  ]
 }

@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!-- Comprehension aid for TASK-350.3: design of the narrowed interim classifier
+     (check_untyped_attribute_receiver) as built. Refreshed to match the shipped rule.
+     Sources read: task-350.3 .md (status Done, impl notes); task-350.4 .md;
+     classify_entry_points.ts; builtins/check_untyped-attribute-receiver.ts + .test.ts;
+     check_receiver-type-unknown.ts, check_py-dunder-protocol.ts, builtins/index.ts;
+     classify_entry_points.python.integration.test.ts; types/entry_point.ts; types/call_chains.ts;
+     .claude/skills/triage/known_issues/registry.json; .claude/rules/classifier-lifecycle.md. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TASK-350.3 — the self-narrowing interim classifier for untyped-attribute receivers</title>
+<style>
+  :root{
+    --ivory:#f7f3ec; --slate:#2b2a28; --clay:#b9794f; --olive:#6c7a4a;
+    --oat:#e7ddc9; --rust:#a8472f; --paper:#fffdf8;
+    --g100:#efeae1; --g200:#ddd6c8; --g400:#9a9387; --g600:#5f594f;
+    --ink:#1f1e1c; --code:#26241f; --codeink:#e8e1d2;
+    --serif:ui-serif,Georgia,"Times New Roman",serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    --r:12px;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--ivory);color:var(--slate);font-family:var(--sans);line-height:1.55;-webkit-font-smoothing:antialiased}
+  /* cross-doc nav bar */
+  nav.cross{position:sticky;top:0;z-index:10;background:var(--ivory);border-bottom:1px solid var(--g200);padding:9px 0}
+  nav.cross .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  nav.cross .brand{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--clay);margin-right:6px}
+  nav.cross a, nav.cross .here{font-family:var(--mono);font-size:11.5px;text-decoration:none;color:var(--g600);border:1px solid var(--g200);background:var(--paper);border-radius:999px;padding:4px 10px;display:inline-flex;align-items:center;gap:6px}
+  nav.cross a:hover{border-color:var(--clay);color:var(--slate)}
+  nav.cross .here{background:var(--slate);color:var(--ivory);border-color:var(--slate)}
+  nav.cross .dot{width:7px;height:7px;border-radius:50%;background:var(--olive)}
+  nav.fam{position:sticky;top:43px;z-index:9;background:var(--ivory);border-bottom:1px solid var(--g200);padding:8px 0}
+  nav.fam .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  nav.fam .brand{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--olive);margin-right:4px}
+  nav.fam a, nav.fam .here{font-family:var(--mono);font-size:11px;text-decoration:none;color:var(--g600);border:1px solid var(--g200);background:var(--paper);border-radius:999px;padding:3px 10px;display:inline-flex;align-items:center;gap:6px}
+  nav.fam a:hover{border-color:var(--olive);color:var(--slate)}
+  nav.fam .here{background:#eef1e6;border-color:var(--olive);color:var(--slate);font-weight:700}
+  nav.fam .st{font-size:9px;text-transform:uppercase;letter-spacing:.05em}
+  nav.fam .st.done{color:var(--olive)} nav.fam .st.todo{color:var(--clay)}
+  nav.toc{position:sticky;top:78px;z-index:8;background:var(--ivory);border-bottom:1px solid var(--g200);padding:8px 0}
+  nav.toc .inner{width:90%;max-width:1600px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+  nav.toc .brand{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--g600);margin-right:4px}
+  nav.toc a{font-family:var(--mono);font-size:11px;text-decoration:none;color:var(--g600);border:1px solid var(--g200);background:var(--paper);border-radius:999px;padding:3px 9px}
+  nav.toc a:hover{border-color:var(--clay);color:var(--slate)}
+  main{width:90%;max-width:1600px;margin:0 auto;padding:30px 0 80px}
+  .prose{max-width:74ch}
+  .eyebrow{font-family:var(--mono);text-transform:uppercase;letter-spacing:.14em;font-size:11px;color:var(--clay);margin:0 0 10px}
+  h1{font-family:var(--serif);font-weight:600;font-size:33px;line-height:1.12;margin:0 0 14px;letter-spacing:-.01em;max-width:30ch}
+  h2{font-family:var(--serif);font-weight:600;font-size:24px;margin:54px 0 6px;letter-spacing:-.01em;scroll-margin-top:130px}
+  h3{font-family:var(--mono);font-weight:600;font-size:12.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--g600);margin:22px 0 8px}
+  p{margin:0 0 12px}
+  .lead{font-size:16.5px;color:var(--g600);max-width:82ch}
+  code{font-family:var(--mono);font-size:.85em;background:var(--g100);border-radius:5px;padding:1px 5px}
+  .meta{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 2px}
+  .chip{font-family:var(--mono);font-size:11.5px;background:var(--paper);border:1px solid var(--g200);border-radius:999px;padding:4px 11px;color:var(--g600)}
+  .chip strong{color:var(--slate);font-weight:600}
+  .chip.hot{background:#fbf2ef;border-color:var(--rust)} .chip.hot strong{color:var(--rust)}
+  .chip.good{background:#f2f4ec;border-color:var(--olive)} .chip.good strong{color:var(--olive)}
+  .cap{font-size:13.5px;color:var(--g600);margin:8px 2px 14px;max-width:82ch}
+  .cap b{color:var(--slate);font-weight:600}
+  /* callout */
+  .callout{border-left:4px solid var(--clay);background:var(--paper);border-radius:0 var(--r) var(--r) 0;padding:15px 19px;margin:18px 0;max-width:92ch}
+  .callout.olive{border-left-color:var(--olive)} .callout.rust{border-left-color:var(--rust)} .callout.slate{border-left-color:var(--slate);background:var(--slate);color:var(--ivory)}
+  .callout .k{font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;font-size:10.5px;color:var(--clay);margin:0 0 7px;display:block}
+  .callout.olive .k{color:var(--olive)} .callout.rust .k{color:var(--rust)} .callout.slate .k{color:var(--oat)}
+  .callout p{margin:0 0 6px;font-size:14.5px} .callout p:last-child{margin:0}
+  .callout.slate code{background:rgba(255,255,255,.12);color:var(--oat)}
+  .callout b{color:var(--slate)} .callout.slate b{color:#fff}
+  /* CRUX flow diagram */
+  .flowwrap{background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);padding:14px 16px;margin:14px 0}
+  .flowwrap svg{width:100%;height:auto;display:block}
+  .legend{display:flex;flex-wrap:wrap;gap:16px;font-family:var(--mono);font-size:11px;color:var(--g600);margin:12px 2px 0}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .legend i{width:13px;height:13px;border-radius:4px;display:inline-block;border:1px solid rgba(0,0,0,.12)}
+  .legend i.add{background:var(--olive)} .legend i.del{background:var(--rust)} .legend i.mod{background:var(--oat);border-color:var(--clay)} .legend i.same{background:var(--paper);border-color:var(--g400)}
+  /* numbered steps */
+  .steps{display:flex;flex-direction:column;gap:11px;margin:16px 0}
+  .step{display:grid;grid-template-columns:44px 1fr;gap:14px;align-items:start}
+  .step .badge{width:30px;height:30px;border-radius:50%;background:var(--slate);color:var(--ivory);font-family:var(--mono);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px}
+  .step.hot .badge{background:var(--rust)} .step.key .badge{background:var(--olive)}
+  .step .body h4{font-family:var(--mono);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin:4px 0 4px;color:var(--slate)}
+  .step .body .txt{font-size:13.5px;color:var(--g600);margin:0}
+  .step .body .txt b{color:var(--slate)}
+  .step .body .loc{font-family:var(--mono);font-size:10.5px;color:var(--clay);background:var(--g100);border-radius:5px;padding:2px 7px;display:inline-block;margin-top:5px}
+  /* breadth chart */
+  .breadth{background:var(--paper);border:1px solid var(--g200);border-radius:var(--r);padding:18px 20px;margin:14px 0}
+  .breadth svg{width:100%;height:auto;display:block}
+  /* options */
+  .opts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:16px 0}
+  @media(max-width:960px){.opts{grid-template-columns:1fr}}
+  .opt{border:1px solid var(--g200);background:var(--paper);border-radius:var(--r);padding:16px 18px;display:flex;flex-direction:column}
+  .opt.win{border-color:var(--olive);box-shadow:0 0 0 2px rgba(108,122,74,.18)}
+  .opt .top{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+  .opt .num{font-family:var(--mono);font-weight:700;font-size:13px;color:var(--ivory);background:var(--g400);border-radius:7px;padding:3px 10px}
+  .opt.win .num{background:var(--olive)}
+  .opt .flag{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--olive);border:1px solid var(--olive);border-radius:999px;padding:2px 8px;margin-left:auto}
+  .opt h4{font-family:var(--serif);font-size:16.5px;font-weight:600;margin:2px 0 8px;letter-spacing:-.01em}
+  .opt h4 code{font-size:.78em}
+  .opt .what{font-size:13px;color:var(--slate);margin:0 0 10px}
+  .opt .rat{font-size:12.5px;color:var(--g600);margin:0 0 10px}
+  .opt .pc{display:flex;flex-direction:column;gap:4px;margin-top:auto}
+  .opt .pc div{font-size:12px;display:flex;gap:7px;align-items:flex-start}
+  .opt .pc .pro::before,.opt .pc .con::before{content:"";width:7px;height:7px;border-radius:50%;margin-top:5px;flex:0 0 auto}
+  .opt .pc .pro::before{background:var(--olive)} .opt .pc .con::before{background:var(--rust)}
+  /* feature matrix */
+  table.mtx{border-collapse:collapse;width:100%;margin:16px 0;font-size:13px}
+  table.mtx th,table.mtx td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--g200);vertical-align:middle}
+  table.mtx th{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--g600);background:var(--paper)}
+  table.mtx td.crit{font-size:12.5px;color:var(--slate)}
+  table.mtx td.cell{text-align:center}
+  .glyph{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;color:var(--g600);justify-content:center}
+  .disc{width:14px;height:14px;border-radius:50%;flex:0 0 auto;border:1.5px solid var(--g400)}
+  .disc.full{background:var(--olive);border-color:var(--olive)}
+  .disc.half{background:linear-gradient(90deg,var(--clay) 50%,transparent 50%);border-color:var(--clay)}
+  .disc.none{background:transparent;border-color:var(--rust)}
+  .mtx .winhead{color:var(--olive)}
+  /* integration test boundary */
+  .ba{display:grid;grid-template-columns:1fr auto 1fr;gap:0;align-items:stretch;margin:14px 0}
+  .ba .panel{background:var(--paper);border:1px solid var(--g200);padding:16px 18px;display:flex;flex-direction:column}
+  .ba .panel:first-child{border-radius:var(--r) 0 0 var(--r)} .ba .panel:last-child{border-radius:0 var(--r) var(--r) 0;border-left:none}
+  .ba .arrow{display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--ivory);padding:0 4px;min-width:46px}
+  .ba .arrow .glyph2{font-family:var(--serif);font-size:26px;color:var(--g400);line-height:1}
+  .ba .arrow .lab{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--g600);writing-mode:vertical-rl;margin-top:6px}
+  .ba .ptitle{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.1em;margin:0 0 4px}
+  .ba .panel.res .ptitle{color:var(--olive)} .ba .panel.rsd .ptitle{color:var(--rust)}
+  .ba .sub{font-size:12px;color:var(--g600);margin:0 0 11px}
+  @media(max-width:820px){.ba{grid-template-columns:1fr}.ba .panel,.ba .panel:first-child,.ba .panel:last-child{border-radius:var(--r);border-left:1px solid var(--g200);margin-bottom:8px}.ba .arrow{flex-direction:row;padding:4px 0}.ba .arrow .lab{writing-mode:horizontal-tb;margin:0 0 0 8px}}
+  .verdict{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11.5px;white-space:nowrap;margin-top:10px;font-weight:700}
+  .verdict::before{content:"";width:12px;height:12px;border-radius:50%;display:inline-block}
+  .verdict.ok{color:var(--olive)} .verdict.ok::before{background:var(--olive)}
+  .verdict.bad{color:var(--rust)} .verdict.bad::before{background:var(--rust)}
+  /* code panels */
+  .code{background:var(--code);border-radius:9px;padding:11px 13px;margin:0 0 11px;overflow-x:auto}
+  .code .flabel{font-family:var(--mono);font-size:10px;color:#b9b0a0;text-transform:none;letter-spacing:.02em;display:block;margin-bottom:7px;border-bottom:1px solid #3a3730;padding-bottom:6px}
+  .code pre{margin:0;font-family:var(--mono);font-size:11px;line-height:1.55;color:var(--codeink);white-space:pre}
+  .code .kw{color:#c98a64} .code .str{color:#9bb06a} .code .cm{color:#7d7669} .code .fn{color:#d9c27a} .code .hl{background:rgba(108,122,74,.30);display:inline-block;width:100%} .code .hlr{background:rgba(168,71,47,.32);display:inline-block;width:100%}
+  /* impl steps timeline */
+  .tl{position:relative;margin:18px 0 0;padding-left:6px}
+  .tl::before{content:"";position:absolute;left:20px;top:8px;bottom:14px;width:2px;background:var(--g200)}
+  .tlrow{position:relative;display:grid;grid-template-columns:42px 1fr;gap:14px;padding:0 0 18px;align-items:start}
+  .tldot{width:30px;height:30px;border-radius:50%;background:var(--paper);border:2px solid var(--olive);color:var(--olive);font-family:var(--mono);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;z-index:1}
+  .tlrow.reg .tldot{border-color:var(--clay);color:var(--clay)} .tlrow.test .tldot{border-color:var(--olive);color:var(--olive)}
+  .tlrow h4{font-family:var(--mono);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin:4px 0 4px}
+  .tlrow .txt{font-size:13px;color:var(--g600);margin:0}
+  .tlrow .txt b{color:var(--slate)}
+  .tlrow .txt code{font-size:.92em}
+  footer{border-top:1px solid var(--g200);margin-top:60px;padding-top:16px;font-family:var(--mono);font-size:11px;color:var(--g400)}
+</style>
+</head>
+<body>
+
+<nav class="cross">
+  <div class="inner">
+    <span class="brand">FP unreachable-fn · receiver_type_inference</span>
+    <span class="here"><span class="dot"></span>350.3 · interim classifier</span>
+    <a href="task-350 - Restore-lost-receiver-types-at-indexing-time-(TypeScript-optional-ctor-param-properties).overview.html">TASK-350 overview</a>
+  </div>
+</nav>
+
+<nav class="fam">
+  <div class="inner">
+    <span class="brand">TASK-350 family</span>
+    <a href="task-350 - Restore-lost-receiver-types-at-indexing-time-(TypeScript-optional-ctor-param-properties).overview.html">350 · epic <span class="st done">Done</span></a>
+    <span class="here">Fix A · TS <span class="st done">Done</span></span>
+    <span class="here">350.1 · Fix B · JS <span class="st done">Done</span></span>
+    <a href="task-350.2 - Fix-C-—-promote-Python-self.attr-assignments-outside-__init__-and-read-namespace-qualified-constructor-RHS-(Python).fix-walkthrough.html">350.2 · Fix C · Py <span class="st done">Done</span></a>
+    <span class="here">350.3 · interim classifier <span class="st done">Done</span></span>
+    <span class="here">350.4 · Shape I disposition <span class="st todo">To Do</span></span>
+  </div>
+</nav>
+
+<nav class="toc">
+  <div class="inner">
+    <span class="brand">On this page</span>
+    <a href="#intent">Intent</a>
+    <a href="#crux">Resolution collapse</a>
+    <a href="#breadth">Self-narrowing</a>
+    <a href="#options">Design options</a>
+    <a href="#tests">Test boundary</a>
+    <a href="#impl">Implementation</a>
+  </div>
+</nav>
+
+<main>
+
+  <p class="eyebrow">TASK-350.3 · design of the classifier as built</p>
+  <h1>The interim classifier keys on a receiver that collapsed to its own caller — and self-narrows as Fix&nbsp;C lands</h1>
+  <p class="lead prose">A Python builtin, <code>check_untyped_attribute_receiver</code>, flags methods reached only as <code>self.&lt;attr&gt;.&lt;method&gt;()</code> where <code>&lt;attr&gt;</code> has no type. Fix&nbsp;C now resolves the typeable receivers out of the classifier's view, leaving the single genuinely out-of-reach self-attribute row that this rule classifies.</p>
+
+  <div class="meta">
+    <span class="chip good"><strong>1</strong>&nbsp;row in scope · Shape&nbsp;S</span>
+    <span class="chip"><code>_set_value</code> · Cython <code>object</code> self.obj</span>
+    <span class="chip hot">Shape&nbsp;I <code>_repr_html_</code> → <strong>TASK-350.4</strong></span>
+    <span class="chip good">builtin, <strong>not</strong> predicate</span>
+    <span class="chip">kind <strong>= builtin</strong> · status <strong>wip</strong></span>
+  </div>
+
+  <div class="callout" id="intent">
+    <span class="k">Intent</span>
+    <p>Classify <b>only</b> the genuinely-unreachable self-attribute receiver, <b>never</b> the members that Fixes A–C now resolve. The discriminator is the <b>telltale signature</b> of an untyped self-attribute receiver — principled, not an allowlist — which Fix&nbsp;C makes self-narrowing.</p>
+  </div>
+
+  <!-- ============ CRUX: RESOLUTION COLLAPSE ============ -->
+  <h2 id="crux">Why <code>self.obj._set_value()</code> fails: the receiver collapses to the caller's own class</h2>
+  <p class="cap prose">When <code>self.&lt;attr&gt;</code> carries no type, the resolver cannot follow the attribute, so it falls back to the enclosing <code>self</code> class and records <code>resolution_failure.reason = member_type_unknown</code> with <code>resolved_receiver_type</code> set to the <b>caller's own class</b>. That file-equality is the signature the builtin keys on.</p>
+
+  <div class="flowwrap">
+    <svg viewBox="0 0 980 250" role="img" aria-label="Step trace: self.obj._set_value at indexing.py:3171 has an untyped attribute obj, so the resolver collapses the receiver to the caller's enclosing class _ScalarAccessIndexer, fails with reason member_type_unknown and resolution_count 0, and records resolved_receiver_type equal to the caller file — the telltale signature.">
+      <defs>
+        <marker id="aR" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#a8472f"/></marker>
+        <marker id="aG" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#9a9387"/></marker>
+      </defs>
+      <!-- node 1: call site -->
+      <rect x="8" y="56" width="176" height="86" rx="10" fill="#fff" stroke="#9a9387"/>
+      <text x="96" y="80" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" font-weight="700" fill="#2b2a28">call site</text>
+      <text x="96" y="100" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10.5" fill="#2b2a28">self.obj._set_value()</text>
+      <text x="96" y="116" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#5f594f">in __setitem__ (caller)</text>
+      <text x="96" y="130" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#5f594f">indexing.py:3171</text>
+      <line x1="184" y1="99" x2="218" y2="99" stroke="#9a9387" stroke-width="1.5" marker-end="url(#aG)"/>
+      <!-- node 2: untyped attr -->
+      <rect x="220" y="56" width="176" height="86" rx="10" fill="#fbe6df" stroke="#a8472f" stroke-width="1.5"/>
+      <text x="308" y="80" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" font-weight="700" fill="#a8472f">attr has no type</text>
+      <text x="308" y="100" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" fill="#a8472f">self.obj : object</text>
+      <text x="308" y="116" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#a8472f">Cython ctor param</text>
+      <text x="308" y="130" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#a8472f">never = Constructor()</text>
+      <line x1="396" y1="99" x2="430" y2="99" stroke="#a8472f" stroke-width="1.5" marker-end="url(#aR)"/>
+      <!-- node 3: collapse -->
+      <rect x="432" y="56" width="188" height="86" rx="10" fill="#fff" stroke="#9a9387"/>
+      <text x="526" y="80" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" font-weight="700" fill="#2b2a28">collapse to self class</text>
+      <text x="526" y="100" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#5f594f">receiver_kind = self_keyword</text>
+      <text x="526" y="116" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#5f594f">look for _set_value on</text>
+      <text x="526" y="130" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#2b2a28">_ScalarAccessIndexer</text>
+      <line x1="620" y1="99" x2="654" y2="99" stroke="#a8472f" stroke-width="1.5" marker-end="url(#aR)"/>
+      <!-- node 4: fail -->
+      <rect x="656" y="56" width="170" height="86" rx="10" fill="#fbe6df" stroke="#a8472f" stroke-width="1.5"/>
+      <text x="741" y="80" text-anchor="middle" font-family="ui-monospace,monospace" font-size="11" font-weight="700" fill="#a8472f">resolution fails</text>
+      <text x="741" y="100" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#a8472f">reason =</text>
+      <text x="741" y="113" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#a8472f">member_type_unknown</text>
+      <text x="741" y="130" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#a8472f">resolution_count = 0</text>
+      <line x1="826" y1="99" x2="860" y2="99" stroke="#a8472f" stroke-width="1.5" marker-end="url(#aR)"/>
+      <!-- node 5: telltale -->
+      <rect x="862" y="44" width="112" height="110" rx="10" fill="#2b2a28" stroke="#2b2a28"/>
+      <text x="918" y="68" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" font-weight="700" fill="#e7ddc9">TELLTALE</text>
+      <text x="918" y="90" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#fffdf8">resolved_receiver</text>
+      <text x="918" y="102" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#fffdf8">_type . file</text>
+      <text x="918" y="120" text-anchor="middle" font-family="ui-monospace,monospace" font-size="13" font-weight="700" fill="#6c7a4a">==</text>
+      <text x="918" y="138" text-anchor="middle" font-family="ui-monospace,monospace" font-size="8.5" fill="#fffdf8">caller_file</text>
+      <!-- title strip -->
+      <text x="8" y="28" font-family="ui-monospace,monospace" font-size="11" font-weight="700" fill="#5f594f">RESIDUAL PATH — out of static reach (Shape S)</text>
+      <text x="8" y="226" font-family="ui-monospace,monospace" font-size="9.5" fill="#5f594f">reason = member_type_unknown · the receiver class IS the caller class because the attribute type was never built</text>
+    </svg>
+  </div>
+  <div class="legend">
+    <span><i class="del"></i> failure stage / dropped type</span>
+    <span><i class="same"></i> resolver behaving correctly</span>
+    <span style="color:var(--slate)"><i style="background:var(--slate);border-color:var(--slate)"></i> telltale discriminator</span>
+  </div>
+
+  <div class="steps">
+    <div class="step hot">
+      <div class="badge">1</div>
+      <div class="body">
+        <h4>The call carries an untyped receiver</h4>
+        <p class="txt"><code>self.obj</code> is a constructor parameter typed as Cython <code>object</code> in <code>NDFrameIndexerBase</code>; it is never assigned <code>= Constructor()</code>, so it gains no <b>real type</b>. <code>receiver_kind = self_keyword</code>, the two-hop <code>self.&lt;attr&gt;.&lt;name&gt;(</code> shape shows in the grep call sites.</p>
+        <span class="loc">pandas/core/indexing.py :3171</span>
+      </div>
+    </div>
+    <div class="step hot">
+      <div class="badge">2</div>
+      <div class="body">
+        <h4>The resolver falls back to the enclosing self class</h4>
+        <p class="txt">With no attribute type to follow, the receiver collapses to the caller's own class. The caller <code>__setitem__</code> lives in <code>_ScalarAccessIndexer</code>, so the resolver searches for <code>_set_value</code> there.</p>
+      </div>
+    </div>
+    <div class="step hot">
+      <div class="badge">3</div>
+      <div class="body">
+        <h4>Resolution fails — recording the caller's own class</h4>
+        <p class="txt"><code>resolution_failure.reason = member_type_unknown</code>, <code>resolution_count = 0</code>, and <code>partial_info.resolved_receiver_type</code> is a <code>SymbolId</code> for <b>_ScalarAccessIndexer</b> — the caller's class, in the caller's file.</p>
+      </div>
+    </div>
+    <div class="step key">
+      <div class="badge">4</div>
+      <div class="body">
+        <h4>The discriminator: receiver-type file equals caller file</h4>
+        <p class="txt">The builtin splits the <code>resolved_receiver_type</code> SymbolId's <code>kind:file:line…</code> form and compares its file to <code>caller_file</code>. Equality, gated by <code>reason === member_type_unknown</code>, means the receiver collapsed to its caller — the untyped-attribute signature. The DSL has no op for this cross-field equality, so it must be a <b>builtin</b>.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SELF-NARROWING BREADTH ============ -->
+  <h2 id="breadth">Why the broad self-attribute shape narrows to a single residual row</h2>
+  <p class="cap prose">Keyed on the raw <code>self.&lt;attr&gt;.&lt;method&gt;()</code> shape, the signature matched ~401 entries in the pandas run <code>897eeef</code> (captured <b>before</b> Fix&nbsp;C). Fix&nbsp;C promotes <code>self.&lt;attr&gt; = CapWords(...)</code> assignments to typed properties, so those receivers resolve and <b>leave entry-point detection entirely</b> — leaving the single <code>_set_value</code> self-attribute row this rule classifies; Shape&nbsp;I is dispositioned separately.</p>
+
+  <div class="breadth">
+    <svg viewBox="0 0 980 232" role="img" aria-label="Bar comparison: before Fix C the raw self-dot-attr shape matched roughly 401 pandas entries; after Fix C the typeable cases resolve and drop out of detection, leaving roughly one genuinely untyped self-attribute receiver for the classifier, while Shape I is deferred to task 350.4.">
+      <!-- baseline -->
+      <line x1="150" y1="186" x2="960" y2="186" stroke="#ddd6c8" stroke-width="1"/>
+      <!-- pre bar (~401 -> full height) -->
+      <rect x="200" y="40" width="150" height="146" rx="6" fill="#a8472f"/>
+      <text x="275" y="32" text-anchor="middle" font-family="ui-serif,Georgia,serif" font-size="26" font-weight="700" fill="#a8472f">~401</text>
+      <text x="275" y="204" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10.5" fill="#5f594f">raw shape matches</text>
+      <text x="275" y="218" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#5f594f">pre-Fix-C · run 897eeef</text>
+      <!-- post bar (~1 -> sliver) -->
+      <rect x="730" y="180" width="150" height="6" rx="3" fill="#6c7a4a"/>
+      <text x="805" y="170" text-anchor="middle" font-family="ui-serif,Georgia,serif" font-size="26" font-weight="700" fill="#6c7a4a">~1</text>
+      <text x="805" y="204" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10.5" fill="#5f594f">this rule classifies</text>
+      <text x="805" y="218" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#5f594f">self.obj._set_value (Shape S)</text>
+      <!-- collapse arrow + label -->
+      <line x1="360" y1="100" x2="718" y2="172" stroke="#6c7a4a" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#aGbig)"/>
+      <defs><marker id="aGbig" markerWidth="11" markerHeight="11" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#6c7a4a"/></marker></defs>
+      <rect x="438" y="96" width="206" height="44" rx="8" fill="#eef1e6" stroke="#6c7a4a"/>
+      <text x="541" y="115" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10.5" font-weight="700" fill="#3f4a2c">Fix C resolves the typeable</text>
+      <text x="541" y="130" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9.5" fill="#3f4a2c">self.df = DataFrame() → drops out</text>
+      <!-- deferred Shape I tag -->
+      <rect x="730" y="40" width="206" height="40" rx="8" fill="#fbf2ef" stroke="#b9794f"/>
+      <text x="833" y="58" text-anchor="middle" font-family="ui-monospace,monospace" font-size="10" font-weight="700" fill="#a8472f">Shape I _repr_html_ deferred</text>
+      <text x="833" y="72" text-anchor="middle" font-family="ui-monospace,monospace" font-size="9" fill="#a8472f">→ TASK-350.4 (not this rule)</text>
+      <text x="150" y="20" font-family="ui-monospace,monospace" font-size="11" font-weight="700" fill="#5f594f">SELF-NARROWING — the classifier inherits Fix C's resolution for free</text>
+    </svg>
+  </div>
+  <div class="callout olive">
+    <span class="k">Why the residual is safe to classify</span>
+    <p>What stays flagged after Fix&nbsp;C and is safe for this rule is the genuinely-untyped self-attribute receiver: <code>self.obj</code> (a Cython <code>object</code> param, never <code>= Constructor()</code>). The Fix-C-resolved clusters are <b>no longer entry points</b> when the classifier runs, so no allowlist is needed.</p>
+  </div>
+  <div class="callout rust">
+    <span class="k">Out of scope — Shape I deferred to TASK-350.4</span>
+    <p>The fixture-injected <code>styler._repr_html_()</code> row is <b>not</b> classified here: its receiver is a bare untyped parameter, so the ref is <code>receiver_kind: identifier</code> + <code>reason: receiver_type_unknown</code> with no <code>resolved_receiver_type</code> to collapse to.</p>
+    <p>That signal is indistinguishable from the dominant untyped-local-call bucket (~8,500 <code>receiver_type_unknown</code> occurrences), so classifying it would mask thousands of genuine entry points.</p>
+    <p>Its true root cause — an unindexed test caller, or <code>_repr_html_</code> as a framework IPython display-protocol method (name-based, like <code>py-dunder-protocol</code>) — is tracked as <b>TASK-350.4</b>.</p>
+  </div>
+
+  <!-- ============ DESIGN OPTIONS ============ -->
+  <h2 id="options">Three ways to author it — the self-narrowing builtin won</h2>
+  <p class="cap prose">All three reach the same Shape&nbsp;S row today; they differ on generalization, robustness, and source re-reads. Option&nbsp;1 keys on the structural signature and inherits Fix&nbsp;C's narrowing, so it needs no literal-row list — it is the design that shipped.</p>
+
+  <div class="opts">
+    <article class="opt win">
+      <div class="top"><span class="num">1</span><span class="flag">built</span></div>
+      <h4>Self-narrowing builtin <code>check_untyped_attribute_receiver</code></h4>
+      <p class="what">Match the telltale signature: Python method, a call ref with <code>receiver_kind = self_keyword</code>, <code>reason = member_type_unknown</code>, <code>resolution_count = 0</code>, and <code>resolved_receiver_type</code>'s file equal to <code>caller_file</code>.</p>
+      <p class="rat">Generalizes beyond the literal row without an allowlist; naturally excludes the Fix-C-resolved cases because they no longer reach the classifier.</p>
+      <div class="pc">
+        <div class="pro">Principled; reads only call-ref data already on the entry point</div>
+        <div class="pro">No source re-read; no literal method/receiver list to maintain</div>
+        <div class="con">Slightly broader matcher; relies on Fix C to have landed first</div>
+      </div>
+    </article>
+
+    <article class="opt">
+      <div class="top"><span class="num">2</span></div>
+      <h4>Tiny explicit allowlist builtin</h4>
+      <p class="what">Match the specific tuple directly: <code>_set_value</code> on <code>self.obj</code>.</p>
+      <p class="rat">Maximally narrow — it can only ever match the one known row.</p>
+      <div class="pc">
+        <div class="pro">Cannot over-match; trivially auditable</div>
+        <div class="con">Brittle — breaks on any rename or new sibling case</div>
+        <div class="con">Not really a classifier; encodes data, not a rule</div>
+      </div>
+    </article>
+
+    <article class="opt">
+      <div class="top"><span class="num">3</span></div>
+      <h4>Re-run pandas detection with A/B/C landed first</h4>
+      <p class="what">Run <code>detect_entrypoints.ts</code> against pandas with all three fixes landed to measure the <b>true</b> residual set before sizing the classifier.</p>
+      <p class="rat">Most rigorous evidence — but a heavy run, and Option&nbsp;1 already self-narrows.</p>
+      <div class="pc">
+        <div class="pro">Ground-truth residual count, no estimate</div>
+        <div class="con">Heavy run; not required to author a safe classifier</div>
+        <div class="con">Can be deferred — Option&nbsp;1 needs no measured count</div>
+      </div>
+    </article>
+  </div>
+
+  <table class="mtx">
+    <thead>
+      <tr>
+        <th style="width:34%">Criterion</th>
+        <th class="winhead" style="text-align:center">1 · self-narrowing builtin</th>
+        <th style="text-align:center">2 · allowlist builtin</th>
+        <th style="text-align:center">3 · re-run detection</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="crit">Generalizes beyond the literal row</td>
+        <td class="cell"><span class="glyph"><span class="disc full"></span>yes</span></td>
+        <td class="cell"><span class="glyph"><span class="disc none"></span>no</span></td>
+        <td class="cell"><span class="glyph"><span class="disc half"></span>n/a</span></td>
+      </tr>
+      <tr>
+        <td class="crit">Excludes Fix-C-resolved clusters automatically</td>
+        <td class="cell"><span class="glyph"><span class="disc full"></span>yes</span></td>
+        <td class="cell"><span class="glyph"><span class="disc full"></span>yes</span></td>
+        <td class="cell"><span class="glyph"><span class="disc half"></span>measures</span></td>
+      </tr>
+      <tr>
+        <td class="crit">No source re-read beyond call-ref data</td>
+        <td class="cell"><span class="glyph"><span class="disc full"></span>yes</span></td>
+        <td class="cell"><span class="glyph"><span class="disc full"></span>yes</span></td>
+        <td class="cell"><span class="glyph"><span class="disc none"></span>full run</span></td>
+      </tr>
+      <tr>
+        <td class="crit">Robust to renames / new sibling cases</td>
+        <td class="cell"><span class="glyph"><span class="disc full"></span>yes</span></td>
+        <td class="cell"><span class="glyph"><span class="disc none"></span>brittle</span></td>
+        <td class="cell"><span class="glyph"><span class="disc half"></span>snapshot</span></td>
+      </tr>
+      <tr>
+        <td class="crit">Low effort to land now</td>
+        <td class="cell"><span class="glyph"><span class="disc full"></span>low</span></td>
+        <td class="cell"><span class="glyph"><span class="disc full"></span>low</span></td>
+        <td class="cell"><span class="glyph"><span class="disc none"></span>heavy</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ============ TEST BOUNDARY ============ -->
+  <h2 id="tests">The integration-test boundary: core fix resolves one side, the classifier catches the other</h2>
+  <p class="cap prose">A single <code>Project</code> + <code>update_file</code> test builds both sides as minimal Python fixtures and runs the real index → resolve → trace → enrich → classify pipeline. The <b>resolved</b> side proves the evidence case is fixed by the core fix; the <b>residual</b> side proves the builtin catches the one self-attribute row that stays out of reach.</p>
+
+  <div class="ba">
+    <div class="panel res">
+      <p class="ptitle">Resolved side — proved fixed by Fix C</p>
+      <p class="sub">Typed receiver → resolves → never reaches the classifier</p>
+      <div class="code">
+        <span class="flabel">fixture · resolved.py</span>
+        <pre><span class="kw">class</span> <span class="fn">Bench</span>:
+    <span class="kw">def</span> <span class="fn">setup</span>(self):
+        <span class="hl">self.df = DataFrame()</span>  <span class="cm"># not __init__</span>
+    <span class="kw">def</span> <span class="fn">run</span>(self):
+        self.df.<span class="fn">count</span>()      <span class="cm"># resolves</span></pre>
+      </div>
+      <p class="txt" style="font-size:12.5px;color:var(--g600);margin:0">Assert <code>count</code> gains an incoming edge and is <b>absent</b> from entry_points — so <code>auto_classify</code> never evaluates it.</p>
+      <span class="verdict ok">resolved · NOT classified</span>
+    </div>
+    <div class="arrow"><span class="glyph2">|</span><span class="lab">one boundary</span></div>
+    <div class="panel rsd">
+      <p class="ptitle">Residual side — out of static reach (Shape S)</p>
+      <p class="sub">Untyped self-attr receiver → stays flagged → builtin matches</p>
+      <div class="code">
+        <span class="flabel">fixture · residual.py</span>
+        <pre><span class="kw">class</span> <span class="fn">Idx</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, obj):
+        <span class="hlr">self.obj = obj</span>       <span class="cm"># untyped param</span>
+    <span class="kw">def</span> <span class="fn">setitem</span>(self):
+        self.obj.<span class="fn">_set_value</span>()  <span class="cm"># member_type_unknown</span></pre>
+      </div>
+      <p class="txt" style="font-size:12.5px;color:var(--g600);margin:0">Assert <code>_set_value</code> is flagged AND <code>auto_classified === true</code> with the new <code>auto_group_id</code>.</p>
+      <span class="verdict bad">flagged · IS classified</span>
+    </div>
+  </div>
+  <div class="callout">
+    <span class="k">Plus a unit near-miss matrix</span>
+    <p><code>check_untyped-attribute-receiver.test.ts</code> pins the positive case and one negative per clause over synthetic <code>EnrichedEntryPoint</code>s: an <code>identifier</code> receiver, a receiver type resolved in a <b>different</b> file, non-Python, non-method, a resolved call, the wrong <code>reason</code>, a missing <code>resolved_receiver_type</code>, no refs, and multi-ref <code>.some()</code> behaviour. Fixtures carry the stages the real pipeline emits (<code>type_inference</code> for <code>member_type_unknown</code>).</p>
+  </div>
+
+  <!-- ============ IMPLEMENTATION ============ -->
+  <h2 id="impl">Implementation — author the rule, wire the barrel, prove with tests</h2>
+  <p class="cap prose">Sequenced last, after Fixes A–C (all Done). The registry write went through the sole sanctioned mutator; the builtin file and barrel are hand-authored (the registry-to-builtin generator no longer exists).</p>
+
+  <div class="tl">
+    <div class="tlrow reg">
+      <div class="tldot">1</div>
+      <div>
+        <h4>Add the wip rule via atomic_update_registry</h4>
+        <p class="txt">Insert a <code>KnownIssue</code> (<code>untyped-attribute-receiver</code>) into <code>registry.json</code> with <code>status: "wip"</code>, <code>languages: ["python"]</code>, and <code>classifier: { kind: "builtin", function_name: "check_untyped_attribute_receiver" }</code>; the description points the deferred Shape&nbsp;I at TASK-350.4. Written <b>only</b> through <code>atomic_update_registry(path, mutator)</code> — the human is the registry's sole writer.</p>
+      </div>
+    </div>
+    <div class="tlrow">
+      <div class="tldot">2</div>
+      <div>
+        <h4>Add the builtin file and wire the barrel</h4>
+        <p class="txt">Hand-author <code>builtins/check_untyped-attribute-receiver.ts</code> and add its import + <code>BUILTIN_CHECKS</code> entry to <code>builtins/index.ts</code>. A registry rule whose <code>function_name</code> is missing from the barrel throws <code>MissingBuiltinError</code> at classify time.</p>
+      </div>
+    </div>
+    <div class="tlrow">
+      <div class="tldot">3</div>
+      <div>
+        <h4>Implement the matcher</h4>
+        <p class="txt">Read the entry point's <code>diagnostics.ariadne_call_refs</code>; match when a ref has <code>receiver_kind === "self_keyword"</code>, <code>resolution_count === 0</code>, <code>resolution_failure.reason === "member_type_unknown"</code>, and the file segment of <code>resolution_failure.partial_info.resolved_receiver_type</code> equals <code>caller_file</code>. Gate on <code>.py</code> and <code>kind === "method"</code> first, mirroring <code>check_py_dunder_protocol</code>.</p>
+      </div>
+    </div>
+    <div class="tlrow test">
+      <div class="tldot">4</div>
+      <div>
+        <h4>Prove the boundary</h4>
+        <p class="txt">Add the <code>Project</code> + <code>update_file</code> integration test (resolved vs residual sides) plus the unit near-miss matrix. The integration test is the explicit requirement: the Fix-C-typed receiver drops out of detection, the untyped <code>self.obj._set_value</code> is auto-classified through the real registry-rule → barrel path.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout rust">
+    <span class="k">Lifecycle guardrail</span>
+    <p>Never call <code>writeFile</code> / <code>atomic_write_file</code> against the registry directly, and never invoke <code>serialize_known_issues_registry_json</code> outside <code>reconcile_registry.ts</code>'s mutator closure — the structural test in <code>registry_writers.test.ts</code> flags both. The rule stays <code>wip</code>; promotion to <code>permanent</code> is a separate human decision.</p>
+  </div>
+
+  <div class="code" style="max-width:none;margin-top:22px">
+    <span class="flabel">builtins/check_untyped-attribute-receiver.ts · matcher core</span>
+    <pre><span class="cm">// Python method reached as self.&lt;attr&gt;.&lt;method&gt;() where &lt;attr&gt; has no type:</span>
+<span class="cm">// the resolver collapsed the receiver to the caller's own class.</span>
+<span class="kw">if</span> (!entry_point.file_path.<span class="fn">endsWith</span>(<span class="str">".py"</span>)) <span class="kw">return</span> false;
+<span class="kw">if</span> (entry_point.kind !== <span class="str">"method"</span>) <span class="kw">return</span> false;
+
+<span class="kw">return</span> entry_point.diagnostics.ariadne_call_refs.<span class="fn">some</span>((ref) => {
+  <span class="kw">const</span> f = ref.resolution_failure;
+  <span class="kw">if</span> (ref.receiver_kind !== <span class="str">"self_keyword"</span>) <span class="kw">return</span> false;
+  <span class="kw">if</span> (ref.resolution_count !== <span class="str">0</span>) <span class="kw">return</span> false;
+  <span class="hlr">if (f?.reason !== <span class="str">"member_type_unknown"</span>) return false;  // load-bearing reason gate</span>
+  <span class="kw">const</span> rt = f.partial_info.resolved_receiver_type;     <span class="cm">// SymbolId | undefined</span>
+  <span class="kw">if</span> (rt === <span class="kw">undefined</span>) <span class="kw">return</span> false;
+  <span class="kw">const</span> receiver_file = rt.<span class="fn">split</span>(<span class="str">":"</span>)[<span class="str">1</span>];  <span class="cm">// kind:file:line:col:...:name</span>
+  <span class="hl">return receiver_file === ref.caller_file;  // collapsed to caller → untyped attr</span>
+});</pre>
+  </div>
+
+  <footer>
+    TASK-350.3 · design of the classifier as built · status Done &nbsp;·&nbsp; sequenced last after Fixes A–C (Done) &nbsp;·&nbsp;
+    Shape S shipped · Shape I deferred to TASK-350.4 · run 897eeef (pandas, pre-Fix-C) · classifier kind = builtin · status = wip
+  </footer>
+
+</main>
+</body>
+</html>

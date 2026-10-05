@@ -3,7 +3,7 @@ id: task-epic-11.38
 title: Migrate python.scm
 status: To Do
 assignee: []
-created_date: '2025-08-20'
+created_date: "2025-08-20"
 labels: [migration, foundation, epic-11]
 dependencies: [task-epic-11.2]
 parent_task_id: epic-11
@@ -16,6 +16,7 @@ Migrate Python scope patterns to src/scope_queries/
 ## Research Phase
 
 **NOTE**: First read `CODEBASE_HIERARCHY_ANALYSIS.md` sections:
+
 - `## Current Codebase Structure (As Implemented)` - understand current locations
 - `### Proposed Structure` - understand target architecture
 
@@ -96,6 +97,7 @@ Research findings will be documented here during execution.
 When implementing, add these TODO comments:
 
 1. In `python.scm.ts`:
+
    ```typescript
    // TODO: Integration with Loader
    // - Provide Python scope queries
@@ -106,6 +108,7 @@ When implementing, add these TODO comments:
    ```
 
 2. In language-specific files (if applicable):
+
    ```typescript
 
    ```

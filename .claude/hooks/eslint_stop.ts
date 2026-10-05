@@ -13,22 +13,25 @@ import {
   create_logger,
   parse_stdin,
   get_project_dir,
-  get_changed_files,
+  get_scoped_changes,
   truncate_eslint_output,
   truncate_tsc_output
 } from "./utils.js";
+import { record_scan_cleared } from "./scan_base.js";
 
 const log = create_logger("stop");
+const HOOK = "eslint";
 
 function main(): void {
   log("Hook started");
-  parse_stdin();
+  const input = parse_stdin();
 
-  const project_dir = get_project_dir();
-  const changed = get_changed_files(project_dir);
+  const project_dir = get_project_dir(input);
+  const { changed, range } = get_scoped_changes(project_dir, HOOK);
 
   if (!changed.has_source_changes) {
     log("No source changes detected, skipping lint/typecheck");
+    record_scan_cleared(project_dir, HOOK, range);
     process.exit(0);
   }
 
@@ -83,7 +86,7 @@ function main(): void {
     "packages/types": "packages/types",
     "packages/core": "packages/core",
     "packages/mcp": "packages/mcp",
-    ".claude/skills/self-repair-pipeline": ".claude/skills/self-repair-pipeline",
+    ".claude/skills/triage": ".claude/skills/triage",
   };
 
   for (const area of changed.modified_areas) {
@@ -115,6 +118,7 @@ function main(): void {
     }));
   } else {
     log("Hook completed successfully - no errors");
+    record_scan_cleared(project_dir, HOOK, range);
   }
 
   process.exit(0);

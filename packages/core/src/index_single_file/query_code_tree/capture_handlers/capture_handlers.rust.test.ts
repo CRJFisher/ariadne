@@ -4,12 +4,10 @@ import Parser from "tree-sitter";
 import Rust from "tree-sitter-rust";
 import { RUST_HANDLERS } from "./capture_handlers.rust";
 import { detect_callback_context } from "../symbol_factories/symbol_factories.rust";
-import { DefinitionBuilder } from "../../definitions/definitions";
+import { DefinitionBuilder } from "../../definitions/definition_builder";
 import { build_index_single_file } from "../../index_single_file";
-import type {
-  ProcessingContext,
-  CaptureNode,
-} from "../../index_single_file";
+import type { CaptureNode } from "../../capture_types";
+import type { ProcessingContext } from "../../scopes/processing_context";
 import type { Location, SymbolName, ScopeId, FilePath } from "@ariadnejs/types";
 import type { SyntaxNode } from "tree-sitter";
 import { node_to_location } from "../../node_to_location";
@@ -78,9 +76,6 @@ describe("rust_builder", () => {
       scope_depths: new Map(),
       root_scope_id,
       get_scope_id: (_location: Location) => root_scope_id,
-      get_child_scope_with_symbol_name: (scope_id: ScopeId, name: SymbolName) => {
-        throw new Error(`Child scope with name ${name} not found in scope ${scope_id}`);
-      },
     };
   }
 
@@ -187,7 +182,7 @@ describe("rust_builder", () => {
 
       expect(definitions.classes).toHaveLength(1);
       expect(definitions.classes[0].name).toBe("Container");
-      expect(definitions.classes[0].generics).toEqual(["T", "U"]);
+      expect(definitions.classes[0].generics).toEqual([{ name: "T" }, { name: "U" }]);
     });
 
     it("should process tuple struct", () => {
@@ -259,7 +254,7 @@ describe("rust_builder", () => {
 
       expect(definitions.enums).toHaveLength(1);
       expect(definitions.enums[0].name).toBe("Result");
-      expect(definitions.enums[0].generics).toEqual(["T", "E"]);
+      expect(definitions.enums[0].generics).toEqual([{ name: "T" }, { name: "E" }]);
       // Members are objects, extract names
       const member_names = definitions.enums[0].members.map((m: any) =>
         m.name.split(":").pop()
@@ -322,7 +317,7 @@ describe("rust_builder", () => {
 
       expect(definitions.interfaces).toHaveLength(1);
       expect(definitions.interfaces[0].name).toBe("Iterator");
-      expect(definitions.interfaces[0].generics).toEqual(["Item"]);
+      expect(definitions.interfaces[0].generics).toEqual([{ name: "Item" }]);
     });
   });
 
@@ -415,7 +410,7 @@ describe("rust_builder", () => {
 
       expect(definitions.functions).toHaveLength(1);
       expect(definitions.functions[0].name).toBe("compare");
-      expect(definitions.functions[0].generics).toEqual(["T"]);
+      expect(definitions.functions[0].generics).toEqual([{ name: "T", bound: "Ord" }]);
     });
   });
 
@@ -442,9 +437,6 @@ impl MyStruct {
         scope_depths: new Map(),
         root_scope_id,
         get_scope_id: (_location: Location) => root_scope_id,
-        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
-          throw new Error(`Child scope with name ${_name} not found in scope ${_scope_id}`);
-        },
       };
 
       const builder = new DefinitionBuilder(context);
@@ -478,67 +470,6 @@ impl MyStruct {
       expect(classes[0].methods).toHaveLength(1);
       expect(classes[0].methods[0].name).toBe("get_value");
       expect(classes[0].methods[0].return_type).toBe("String");
-    });
-
-    it("should process associated function (static method)", () => {
-      const code = `struct MyStruct { value: String }
-impl MyStruct {
-    pub fn new() -> Self {
-        MyStruct { value: String::new() }
-    }
-}`;
-
-      const tree = parser.parse(code);
-      const struct_node = find_node(tree.rootNode, "type_identifier", "MyStruct");
-      const method_node = find_node(tree.rootNode, "identifier", "new");
-
-      const struct_location = node_to_location(struct_node, "test.rs" as FilePath);
-      const method_location = node_to_location(method_node, "test.rs" as FilePath);
-
-      const root_scope_id = "module:test.rs:1:0:100:0:<module>" as ScopeId;
-      const context: ProcessingContext = {
-        captures: [],
-        scopes: new Map(),
-        scope_depths: new Map(),
-        root_scope_id,
-        get_scope_id: (_location: Location) => root_scope_id,
-        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
-          throw new Error(`Child scope with name ${_name} not found in scope ${_scope_id}`);
-        },
-      };
-
-      const builder = new DefinitionBuilder(context);
-
-      // Add struct first
-      const struct_capture: CaptureNode = {
-        category: "definition" as any,
-        entity: "class" as any,
-        node: struct_node,
-        text: "MyStruct" as SymbolName,
-        name: "definition.class",
-        location: struct_location,
-      };
-      RUST_HANDLERS["definition.class"](struct_capture, builder, context);
-
-      // Now process the associated function
-      const method_capture: CaptureNode = {
-        category: "definition" as any,
-        entity: "method" as any,
-        node: method_node,
-        text: "new" as SymbolName,
-        name: "definition.method.associated",
-        location: method_location,
-      };
-      RUST_HANDLERS["definition.method.associated"](method_capture, builder, context);
-
-      const result = builder.build();
-      const classes = Array.from(result.classes.values());
-      expect(classes).toHaveLength(1);
-      expect(classes[0].name).toBe("MyStruct");
-      expect(classes[0].methods).toHaveLength(1);
-      expect(classes[0].methods[0].name).toBe("new");
-      expect(classes[0].methods[0].static).toBe(true);
-      expect(classes[0].methods[0].return_type).toBe("Self");
     });
   });
 
@@ -607,9 +538,6 @@ impl MyStruct {
         scope_depths: new Map(),
         root_scope_id,
         get_scope_id: (_location: Location) => root_scope_id,
-        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
-          throw new Error("Child scope not found");
-        },
       };
 
       const builder = new DefinitionBuilder(context);
@@ -662,9 +590,6 @@ impl MyStruct {
         scope_depths: new Map(),
         root_scope_id,
         get_scope_id: (_location: Location) => root_scope_id,
-        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
-          throw new Error("Child scope not found");
-        },
       };
 
       const builder = new DefinitionBuilder(context);
@@ -720,9 +645,6 @@ impl MyStruct {
         scope_depths: new Map(),
         root_scope_id,
         get_scope_id: (_location: Location) => root_scope_id,
-        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
-          throw new Error("Child scope not found");
-        },
       };
 
       const builder = new DefinitionBuilder(context);
@@ -781,7 +703,7 @@ impl MyStruct {
 
       expect(definitions.types).toHaveLength(1);
       expect(definitions.types[0].name).toBe("Result");
-      expect(definitions.types[0].generics).toEqual(["T"]);
+      expect(definitions.types[0].generics).toEqual([{ name: "T" }]);
     });
 
     it("should process module definition", () => {
@@ -846,9 +768,6 @@ impl MyStruct {
         scope_depths: new Map(),
         root_scope_id,
         get_scope_id: (_location: Location) => root_scope_id,
-        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
-          throw new Error("Child scope not found");
-        },
       };
 
       const builder = new DefinitionBuilder(context);
@@ -927,7 +846,7 @@ impl MyStruct {
         );
         expect(definitions.classes).toHaveLength(1);
         expect(definitions.classes[0].name).toBe("Database");
-        expect(definitions.classes[0].generics).toEqual(["T"]);
+        expect(definitions.classes[0].generics).toEqual([{ name: "T", bound: "Clone" }]);
       }
     });
 
@@ -1026,6 +945,36 @@ impl MyStruct {
       expect(definitions.classes[0].export).toBeUndefined();
     });
 
+    it("should set is_exported=true for pub type alias", () => {
+      const code = "pub type Alias = Bar;";
+
+      const definitions = process_capture(
+        code,
+        "definition.type_alias",
+        "type_identifier",
+        "Alias"
+      );
+
+      expect(definitions.types).toHaveLength(1);
+      expect(definitions.types[0].name).toBe("Alias");
+      expect(definitions.types[0].is_exported).toBe(true);
+    });
+
+    it("should set is_exported=false for private type alias", () => {
+      const code = "type Alias = Bar;";
+
+      const definitions = process_capture(
+        code,
+        "definition.type_alias",
+        "type_identifier",
+        "Alias"
+      );
+
+      expect(definitions.types).toHaveLength(1);
+      expect(definitions.types[0].name).toBe("Alias");
+      expect(definitions.types[0].is_exported).toBe(false);
+    });
+
     it("should set is_exported=true for pub(crate) fn", () => {
       const code = "pub(crate) fn foo() {}";
 
@@ -1121,38 +1070,6 @@ impl MyStruct {
       expect(definitions.classes[0].name).toBe("Internal");
       expect(definitions.classes[0].is_exported).toBe(true);
       expect(definitions.classes[0].export).toBeUndefined();
-    });
-
-    it("should set is_exported=true for pub type alias", () => {
-      const code = "pub type Result<T> = std::result::Result<T, Error>;";
-
-      const definitions = process_capture(
-        code,
-        "definition.type",
-        "type_identifier",
-        "Result"
-      );
-
-      expect(definitions.types).toHaveLength(1);
-      expect(definitions.types[0].name).toBe("Result");
-      expect(definitions.types[0].is_exported).toBe(true);
-      expect(definitions.types[0].export).toBeUndefined();
-    });
-
-    it("should set is_exported=false for private type alias", () => {
-      const code = "type Result<T> = std::result::Result<T, Error>;";
-
-      const definitions = process_capture(
-        code,
-        "definition.type",
-        "type_identifier",
-        "Result"
-      );
-
-      expect(definitions.types).toHaveLength(1);
-      expect(definitions.types[0].name).toBe("Result");
-      expect(definitions.types[0].is_exported).toBe(false);
-      expect(definitions.types[0].export).toBeUndefined();
     });
 
     it("should set is_exported=true for pub trait", () => {
@@ -1253,22 +1170,6 @@ impl MyStruct {
       expect(definitions.functions[0].export).toBeUndefined();
     });
 
-    it("should set is_exported=true for pub mod", () => {
-      const code = "pub mod utils;";
-
-      const definitions = process_capture(
-        code,
-        "definition.module.public",
-        "identifier",
-        "utils"
-      );
-
-      expect(definitions.namespaces).toHaveLength(1);
-      expect(definitions.namespaces[0].name).toBe("utils");
-      expect(definitions.namespaces[0].is_exported).toBe(true);
-      expect(definitions.namespaces[0].export).toBeUndefined();
-    });
-
     it("should set is_exported=false for private mod", () => {
       const code = "mod utils;";
 
@@ -1305,9 +1206,6 @@ impl MyStruct {
         scope_depths: new Map(),
         root_scope_id,
         get_scope_id: (_location: Location) => root_scope_id,
-        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
-          throw new Error("Child scope not found");
-        },
       };
 
       const builder = new DefinitionBuilder(context);
@@ -1341,9 +1239,6 @@ impl MyStruct {
         scope_depths: new Map(),
         root_scope_id,
         get_scope_id: (_location: Location) => root_scope_id,
-        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
-          throw new Error("Child scope not found");
-        },
       };
 
       const builder = new DefinitionBuilder(context);
@@ -1378,9 +1273,6 @@ impl MyStruct {
         scope_depths: new Map(),
         root_scope_id,
         get_scope_id: (_location: Location) => root_scope_id,
-        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
-          throw new Error("Child scope not found");
-        },
       };
 
       const builder = new DefinitionBuilder(context);
@@ -1400,7 +1292,7 @@ impl MyStruct {
       expect(import_names).toEqual(["Read", "Write"]);
     });
 
-    it("should process wildcard use declaration", () => {
+    it("names a glob for its module's last segment and marks it a wildcard edge", () => {
       const code = "use std::io::*;";
       const tree = parser.parse(code);
       const use_node = find_node(tree.rootNode, "use_declaration");
@@ -1414,9 +1306,6 @@ impl MyStruct {
         scope_depths: new Map(),
         root_scope_id,
         get_scope_id: (_location: Location) => root_scope_id,
-        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
-          throw new Error("Child scope not found");
-        },
       };
 
       const builder = new DefinitionBuilder(context);
@@ -1432,7 +1321,166 @@ impl MyStruct {
       const result = builder.build();
       const imports = Array.from(result.imports.values());
       expect(imports).toHaveLength(1);
-      expect(imports[0].import_kind).toBe("namespace");
+      expect(imports[0].name).toBe("io");
+      expect(imports[0].import_kind).toBe("wildcard");
+      expect(imports[0].export).toBeUndefined();
+    });
+
+    describe("pub use re-export edges", () => {
+      function index_rust_imports(code: string) {
+        const tree = parser.parse(code);
+        const lines = code.split("\n");
+        const parsed_file = {
+          file_path: "test.rs" as FilePath,
+          file_lines: lines.length,
+          file_end_column: lines[lines.length - 1]?.length || 0,
+          tree,
+          lang: "rust" as const,
+          source: code,
+        };
+        const index = build_index_single_file(parsed_file, tree, "rust");
+        return Array.from(index.imported_symbols.values()).map((i) => ({
+          symbol_id: i.symbol_id,
+          name: i.name,
+          import_path: i.import_path,
+          import_kind: i.import_kind,
+          original_name: i.original_name,
+          export: i.export,
+        }));
+      }
+
+      it("attaches re-export metadata to a pub use of a single name", () => {
+        expect(index_rust_imports("pub use inner::x;")).toEqual([
+          {
+            symbol_id: "import:test.rs:1:x",
+            name: "x",
+            import_path: "inner",
+            import_kind: "named",
+            original_name: undefined,
+            export: { is_reexport: true },
+          },
+        ]);
+      });
+
+      it("attaches re-export metadata to every member of a pub use group", () => {
+        expect(index_rust_imports("pub use util::{copy, copy_bidirectional};")).toEqual([
+          {
+            symbol_id: "import:test.rs:1:copy",
+            name: "copy",
+            import_path: "util",
+            import_kind: "named",
+            original_name: undefined,
+            export: { is_reexport: true },
+          },
+          {
+            symbol_id: "import:test.rs:1:copy_bidirectional",
+            name: "copy_bidirectional",
+            import_path: "util",
+            import_kind: "named",
+            original_name: undefined,
+            export: { is_reexport: true },
+          },
+        ]);
+      });
+
+      it("attaches re-export metadata to a module-level pub use via self", () => {
+        expect(index_rust_imports("pub use self::mpsc;")).toEqual([
+          {
+            symbol_id: "import:test.rs:1:mpsc",
+            name: "mpsc",
+            import_path: "self",
+            import_kind: "named",
+            original_name: undefined,
+            export: { is_reexport: true },
+          },
+        ]);
+      });
+
+      it("attaches re-export metadata to a renamed pub use", () => {
+        expect(index_rust_imports("pub use a::b as c;")).toEqual([
+          {
+            symbol_id: "import:test.rs:1:c",
+            name: "c",
+            import_path: "a",
+            import_kind: "named",
+            original_name: "b",
+            export: { is_reexport: true },
+          },
+        ]);
+      });
+
+      it("records a private glob as a wildcard edge with no export metadata", () => {
+        expect(index_rust_imports("use m::*;")).toEqual([
+          {
+            symbol_id: "import:test.rs:1:m",
+            name: "m",
+            import_path: "m",
+            import_kind: "wildcard",
+            original_name: undefined,
+            export: undefined,
+          },
+        ]);
+      });
+
+      it("records a public glob as a re-exporting wildcard edge", () => {
+        expect(index_rust_imports("pub use m::*;")).toEqual([
+          {
+            symbol_id: "import:test.rs:1:m",
+            name: "m",
+            import_path: "m",
+            import_kind: "wildcard",
+            original_name: undefined,
+            export: { is_reexport: true },
+          },
+        ]);
+      });
+
+      it("treats a pub(crate) glob as a re-exporting wildcard edge", () => {
+        expect(
+          index_rust_imports("pub(crate) use sqlx_core::transaction::*;")
+        ).toEqual([
+          {
+            symbol_id: "import:test.rs:1:sqlx_core::transaction",
+            name: "transaction",
+            import_path: "sqlx_core::transaction",
+            import_kind: "wildcard",
+            original_name: undefined,
+            export: { is_reexport: true },
+          },
+        ]);
+      });
+
+      it("does not mark a pub use inside an inline mod block as a file-level re-export", () => {
+        expect(
+          index_rust_imports("pub mod wrapper {\n    pub use crate::inner::thing;\n}")
+        ).toEqual([
+          {
+            symbol_id: "import:test.rs:2:thing",
+            name: "thing",
+            import_path: "crate::inner",
+            import_kind: "named",
+            original_name: undefined,
+            export: undefined,
+          },
+        ]);
+      });
+
+      it("marks a pub extern crate as a re-export", () => {
+        expect(index_rust_imports("pub extern crate serde;")).toEqual([
+          {
+            symbol_id: "import:test.rs:1:serde",
+            name: "serde",
+            import_path: "serde",
+            import_kind: "named",
+            original_name: undefined,
+            export: { is_reexport: true },
+          },
+        ]);
+      });
+
+      it("has no import.reexport handler", () => {
+        expect("import.reexport" in RUST_HANDLERS).toEqual(false);
+      });
     });
 
     it("should process extern crate declaration", () => {
@@ -1478,9 +1526,6 @@ impl MyStruct {
         scope_depths: new Map(),
         root_scope_id,
         get_scope_id: (_location: Location) => root_scope_id,
-        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
-          throw new Error("Child scope not found");
-        },
       };
 
       const builder = new DefinitionBuilder(context);
@@ -1512,6 +1557,7 @@ impl MyStruct {
       expect(interfaces[0].methods).toHaveLength(1);
       expect(interfaces[0].methods[0].name).toBe("fmt");
       expect(interfaces[0].methods[0].return_type).toBe("String");
+      expect(interfaces[0].methods[0].optional).toBeUndefined();
     });
   });
 
@@ -1530,9 +1576,6 @@ impl MyStruct {
         scope_depths: new Map(),
         root_scope_id,
         get_scope_id: (_location: Location) => root_scope_id,
-        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
-          throw new Error("Child scope not found");
-        },
       };
 
       const builder = new DefinitionBuilder(context);
@@ -1566,9 +1609,6 @@ impl MyStruct {
         scope_depths: new Map(),
         root_scope_id,
         get_scope_id: (_location: Location) => root_scope_id,
-        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
-          throw new Error("Child scope not found");
-        },
       };
 
       const builder = new DefinitionBuilder(context);
@@ -1621,77 +1661,6 @@ impl MyStruct {
     });
   });
 
-  describe("type alias in impl block", () => {
-    it("should process type alias in impl", () => {
-      const code = "type Output = String;";
-
-      const definitions = process_capture(
-        code,
-        "definition.type_alias.impl",
-        "type_identifier",
-        "Output"
-      );
-
-      expect(definitions.types).toHaveLength(1);
-      expect(definitions.types[0].name).toBe("Output");
-      expect(definitions.types[0].is_exported).toBe(true);
-    });
-  });
-
-  describe("closure parameter definitions", () => {
-    it("should process closure parameter", () => {
-      const code = "fn apply(f: impl Fn(i32) -> i32) {}";
-      const tree = parser.parse(code);
-
-      const fn_node = find_node(tree.rootNode, "identifier", "apply");
-      const param_node = find_node(tree.rootNode, "identifier", "f");
-
-      const fn_location = node_to_location(fn_node, "test.rs" as FilePath);
-      const param_location = node_to_location(param_node, "test.rs" as FilePath);
-
-      const root_scope_id = "module:test.rs:1:0:100:0:<module>" as ScopeId;
-      const context: ProcessingContext = {
-        captures: [],
-        scopes: new Map(),
-        scope_depths: new Map(),
-        root_scope_id,
-        get_scope_id: (_location: Location) => root_scope_id,
-        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
-          throw new Error("Child scope not found");
-        },
-      };
-
-      const builder = new DefinitionBuilder(context);
-
-      // Add function first
-      RUST_HANDLERS["definition.function"]({
-        category: "definition" as any,
-        entity: "function" as any,
-        node: fn_node,
-        text: "apply" as SymbolName,
-        name: "definition.function",
-        location: fn_location,
-      }, builder, context);
-
-      // Add closure parameter
-      RUST_HANDLERS["definition.parameter.closure"]({
-        category: "definition" as any,
-        entity: "parameter" as any,
-        node: param_node,
-        text: "f" as SymbolName,
-        name: "definition.parameter.closure",
-        location: param_location,
-      }, builder, context);
-
-      const result = builder.build();
-      const functions = Array.from(result.functions.values());
-      expect(functions).toHaveLength(1);
-      expect(functions[0].name).toBe("apply");
-      expect(functions[0].signature.parameters).toHaveLength(1);
-      expect(functions[0].signature.parameters[0].name).toBe("f");
-    });
-  });
-
   describe("Property Type Extraction", () => {
     async function build_index_from_code(code: string) {
       const tree = parser.parse(code);
@@ -1702,6 +1671,7 @@ impl MyStruct {
         file_end_column: lines[lines.length - 1]?.length || 0,
         tree,
         lang: "rust" as const,
+        source: code,
       };
       return build_index_single_file(parsed_file, tree, "rust");
     }
@@ -2056,6 +2026,7 @@ struct Arrays {
         file_end_column: lines[lines.length - 1]?.length || 0,
         tree,
         lang: "rust" as const,
+        source: code,
       };
       return build_index_single_file(parsed_file, tree, "rust");
     }
@@ -2254,6 +2225,101 @@ fn helper() {}
       const fn_def = Array.from(index.functions.values()).find(f => f.name === "helper");
       expect(fn_def?.name).toBe("helper");
       expect(fn_def!.docstring).toBe("/// Inline helper.");
+    });
+  });
+
+  describe("Test-harness attribute decorators", () => {
+    async function build_index_from_code(code: string) {
+      const tree = parser.parse(code);
+      const lines = code.split("\n");
+      const parsed_file = {
+        file_path: "src/foo.rs" as any,
+        file_lines: lines.length,
+        file_end_column: lines[lines.length - 1]?.length || 0,
+        tree,
+        lang: "rust" as const,
+        source: code,
+      };
+      return build_index_single_file(parsed_file, tree, "rust");
+    }
+
+    function decorator_names(fn: { decorators?: readonly { name: string }[] }) {
+      return (fn.decorators ?? []).map((d) => d.name).sort();
+    }
+
+    it("records a test decorator on a directly #[test]-attributed function", async () => {
+      const index = await build_index_from_code(`#[test]
+fn top_level_test() {}
+`);
+      const fn = Array.from(index.functions.values()).find(
+        (f) => f.name === "top_level_test"
+      );
+      expect(decorator_names(fn!)).toEqual(["test"]);
+    });
+
+    it("records test and cfg decorators on a #[test] fn inside a #[cfg(test)] mod", async () => {
+      const index = await build_index_from_code(`#[cfg(test)]
+mod tests {
+    #[test]
+    fn masks_roundtrip() {}
+}
+`);
+      const fn = Array.from(index.functions.values()).find(
+        (f) => f.name === "masks_roundtrip"
+      );
+      expect(decorator_names(fn!)).toEqual(["cfg", "test"]);
+    });
+
+    it("inherits the cfg decorator onto a plain helper inside a #[cfg(test)] mod", async () => {
+      const index = await build_index_from_code(`#[cfg(test)]
+mod tests {
+    fn build_fixture() {}
+}
+`);
+      const fn = Array.from(index.functions.values()).find(
+        (f) => f.name === "build_fixture"
+      );
+      expect(decorator_names(fn!)).toEqual(["cfg"]);
+    });
+
+    it("ignores #[cfg(...)] predicates that are not test", async () => {
+      const index = await build_index_from_code(`#[cfg(unix)]
+fn unix_only() {}
+`);
+      const fn = Array.from(index.functions.values()).find(
+        (f) => f.name === "unix_only"
+      );
+      expect(fn!.decorators).toEqual(undefined);
+    });
+
+    it("does not treat #[cfg(not(test))] as a test gate", async () => {
+      const index = await build_index_from_code(`#[cfg(not(test))]
+fn prod_only() {}
+`);
+      const fn = Array.from(index.functions.values()).find(
+        (f) => f.name === "prod_only"
+      );
+      expect(fn!.decorators).toEqual(undefined);
+    });
+
+    it("records only the test decorator for #[cfg(feature=...)] #[test]", async () => {
+      const index = await build_index_from_code(`#[cfg(feature = "chrono")]
+#[test]
+fn chrono_feature_test() {}
+`);
+      const fn = Array.from(index.functions.values()).find(
+        (f) => f.name === "chrono_feature_test"
+      );
+      expect(decorator_names(fn!)).toEqual(["test"]);
+    });
+
+    it("leaves a plain production function with no decorators", async () => {
+      const index = await build_index_from_code(`fn run_server() {}
+`);
+      const fn = Array.from(index.functions.values()).find(
+        (f) => f.name === "run_server"
+      );
+      expect(fn!.decorators).toEqual(undefined);
     });
   });
 });

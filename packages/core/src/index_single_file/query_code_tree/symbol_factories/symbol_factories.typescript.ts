@@ -11,8 +11,7 @@ import type {
   SymbolId,
   SymbolName,
   Location,
-  CallbackContext,
-  FilePath,
+  TypeParameter,
 } from "@ariadnejs/types";
 import {
   anonymous_function_symbol,
@@ -26,11 +25,13 @@ import {
   property_symbol,
   type_symbol,
 } from "@ariadnejs/types";
-import type { CaptureNode } from "../../index_single_file";
+import type { CaptureNode } from "../../capture_types";
 import { node_to_location } from "../../node_to_location";
+import { bound_callable_name_node } from "./symbol_factories.javascript";
 
-// Re-export detect_function_collection from JavaScript to avoid duplication
-export { detect_function_collection } from "./symbol_factories.javascript";
+// Re-exported from JavaScript: the shapes are identical, and a second copy drifts.
+export { detect_callback_context } from "./symbol_factories.javascript";
+export { detect_function_collection } from "./function_collection.javascript";
 
 // ============================================================================
 // TypeScript-Specific Symbol ID Creation
@@ -146,19 +147,22 @@ export function create_property_id(capture: CaptureNode): SymbolId {
 /**
  * Extract type parameters from a node
  */
-export function extract_type_parameters(node: SyntaxNode | null): SymbolName[] {
+export function extract_type_parameters(node: SyntaxNode | null): TypeParameter[] {
   if (!node) {
     return [];
   }
   const type_params = node.childForFieldName?.("type_parameters");
   if (type_params) {
-    // Extract individual type parameter names
-    const params: SymbolName[] = [];
+    const params: TypeParameter[] = [];
     for (const child of type_params.children || []) {
       if (child.type === "type_parameter") {
         const name_node = child.childForFieldName?.("name");
         if (name_node) {
-          params.push(name_node.text as SymbolName);
+          const bound = extends_constraint(child);
+          params.push({
+            name: name_node.text as SymbolName,
+            ...(bound !== undefined && { bound }),
+          });
         }
       }
     }
@@ -167,9 +171,56 @@ export function extract_type_parameters(node: SyntaxNode | null): SymbolName[] {
   return [];
 }
 
+/**
+ * The type a `<T extends Base>` constraint names. The constraint node spells
+ * the `extends` keyword ahead of the type, so the type is its last named child
+ * rather than its text.
+ */
+function extends_constraint(type_parameter: SyntaxNode): SymbolName | undefined {
+  const constraint = type_parameter.childForFieldName?.("constraint");
+  const written = constraint?.namedChildren?.[constraint.namedChildren.length - 1]?.text;
+  return written === undefined || written.length === 0
+    ? undefined
+    : (written as SymbolName);
+}
+
 // ============================================================================
 // Interface Extraction
 // ============================================================================
+
+/**
+ * The name one heritage entry writes, as written: bare (`Base`), qualified
+ * through a namespace (`o.TypeVisitor`), or either with its type arguments
+ * dropped (`Base<T>`, `o.Visitor<T>`). Resolving the name is the heritage
+ * builder's job, so every shape is kept rather than filtered here.
+ */
+function heritage_entry_name(node: SyntaxNode): SymbolName | undefined {
+  switch (node.type) {
+  case "identifier":
+  case "type_identifier":
+  case "nested_type_identifier":
+  case "member_expression":
+    return node.text as SymbolName;
+  case "generic_type": {
+    const name = node.namedChildren?.find((child) => child.type !== "type_arguments");
+    return name ? heritage_entry_name(name) : undefined;
+  }
+  default:
+    return undefined;
+  }
+}
+
+/** Every name a heritage clause lists, in the order it lists them. */
+function heritage_clause_names(clause: SyntaxNode): SymbolName[] {
+  const names: SymbolName[] = [];
+  for (const child of clause.namedChildren || []) {
+    const name = heritage_entry_name(child);
+    if (name) {
+      names.push(name);
+    }
+  }
+  return names;
+}
 
 /**
  * Extract interface extends clauses
@@ -179,23 +230,7 @@ export function extract_interface_extends(node: SyntaxNode): SymbolName[] {
   const extends_clause = node.namedChildren?.find(
     (c) => c.type === "extends_type_clause"
   );
-  if (extends_clause) {
-    const interfaces: SymbolName[] = [];
-    for (const child of extends_clause.namedChildren || []) {
-      if (child.type === "type_identifier") {
-        interfaces.push(child.text as SymbolName);
-      } else if (child.type === "generic_type") {
-        const base_type = child.namedChildren?.find(
-          (c) => c.type === "type_identifier" || c.type === "identifier"
-        );
-        if (base_type) {
-          interfaces.push(base_type.text as SymbolName);
-        }
-      }
-    }
-    return interfaces;
-  }
-  return [];
+  return extends_clause ? heritage_clause_names(extends_clause) : [];
 }
 
 // ============================================================================
@@ -208,34 +243,13 @@ export function extract_interface_extends(node: SyntaxNode): SymbolName[] {
 export function extract_class_extends(node: SyntaxNode): SymbolName[] {
   // Find class_heritage by searching children (it's NOT a field)
   const heritage = node.namedChildren?.find((c) => c.type === "class_heritage");
-
-  if (heritage) {
-    // Find extends_clause within heritage (also not a field)
-    const extends_clause = heritage.namedChildren?.find(
-      (c) => c.type === "extends_clause"
-    );
-
-    if (extends_clause) {
-      // The identifier is accessed via the 'value' field
-      const value_node = extends_clause.childForFieldName?.("value");
-      if (value_node) {
-        if (value_node.type === "identifier" || value_node.type === "type_identifier") {
-          return [value_node.text as SymbolName];
-        }
-        // Handle generic base classes: class Foo extends Bar<T>
-        if (value_node.type === "generic_type") {
-          const base_type = value_node.namedChildren?.find(
-            (c) => c.type === "type_identifier" || c.type === "identifier"
-          );
-          if (base_type) {
-            return [base_type.text as SymbolName];
-          }
-        }
-      }
-    }
-  }
-
-  return [];
+  const extends_clause = heritage?.namedChildren?.find(
+    (c) => c.type === "extends_clause"
+  );
+  // The base is the `value` field; its type arguments are a sibling field.
+  const value_node = extends_clause?.childForFieldName?.("value");
+  const name = value_node ? heritage_entry_name(value_node) : undefined;
+  return name ? [name] : [];
 }
 
 /**
@@ -244,32 +258,10 @@ export function extract_class_extends(node: SyntaxNode): SymbolName[] {
 export function extract_implements(node: SyntaxNode): SymbolName[] {
   // Find class_heritage by searching children (it's NOT a field)
   const heritage = node.namedChildren?.find((c) => c.type === "class_heritage");
-
-  if (heritage) {
-    // Find implements_clause within heritage (also not a field)
-    const implements_clause = heritage.namedChildren?.find(
-      (c) => c.type === "implements_clause"
-    );
-
-    if (implements_clause) {
-      const interfaces: SymbolName[] = [];
-      for (const child of implements_clause.namedChildren || []) {
-        if (child.type === "type_identifier") {
-          interfaces.push(child.text as SymbolName);
-        } else if (child.type === "generic_type") {
-          // Handle generic interfaces: class Foo implements Bar<T>
-          const base_type = child.namedChildren?.find(
-            (c) => c.type === "type_identifier" || c.type === "identifier"
-          );
-          if (base_type) {
-            interfaces.push(base_type.text as SymbolName);
-          }
-        }
-      }
-      return interfaces;
-    }
-  }
-  return [];
+  const implements_clause = heritage?.namedChildren?.find(
+    (c) => c.type === "implements_clause"
+  );
+  return implements_clause ? heritage_clause_names(implements_clause) : [];
 }
 
 // ============================================================================
@@ -316,6 +308,14 @@ export function is_readonly_property(node: SyntaxNode): boolean {
     }
   }
   return false;
+}
+
+/**
+ * Whether an interface member signature is marked optional: the `?` after its
+ * name, in `saveViewState?(): string` and `label?: string` alike.
+ */
+export function is_optional_member_signature(name_node: SyntaxNode): boolean {
+  return name_node.parent?.children.some((child) => child.type === "?") ?? false;
 }
 
 /**
@@ -390,14 +390,18 @@ export function extract_type_expression(node: SyntaxNode): string | undefined {
 }
 
 /**
- * Extract property type
+ * The annotation the node declaring `node` writes after it.
+ *
+ * TypeScript states a declared type in one place whatever is being declared —
+ * the `type` field of the property, parameter or variable declarator that owns
+ * the name — so properties, parameters and locals all read it here. The
+ * annotation node carries its colon; the type itself is the child past it.
  */
-export function extract_property_type(
+export function extract_declared_type(
   node: SyntaxNode
 ): SymbolName | undefined {
   const type_annotation = node.parent?.childForFieldName?.("type");
   if (type_annotation) {
-    // Skip the colon and get the actual type
     for (const child of type_annotation.children || []) {
       if (child.type !== ":") {
         return child.text as SymbolName;
@@ -432,7 +436,7 @@ export function extract_parameter_type(
   }
 
   // For regular parameters, use the standard extraction
-  return extract_property_type(node);
+  return extract_declared_type(node);
 }
 
 /**
@@ -686,13 +690,15 @@ export function find_containing_callable(capture: CaptureNode): SymbolId {
       node.type === "function_expression" ||
       node.type === "arrow_function" ||
       node.type === "method_definition" ||
-      node.type === "method_signature"
+      node.type === "method_signature" ||
+      node.type === "abstract_method_signature"
     ) {
       const name_node = node.childForFieldName?.("name");
 
       if (
         node.type === "method_definition" ||
-        node.type === "method_signature"
+        node.type === "method_signature" ||
+        node.type === "abstract_method_signature"
       ) {
         const method_name = name_node ? name_node.text : "anonymous";
         // Reconstruct location with proper file_path
@@ -706,7 +712,16 @@ export function find_containing_callable(capture: CaptureNode): SymbolId {
         const location: Location = node_to_location(name_node, file_path);
         return function_symbol(name_node.text as SymbolName, location);
       } else {
-        // Anonymous function/arrow function - use location-based anonymous symbol
+        // A nameless arrow/function expression in declarator position was
+        // minted as a function under the declarator's name; the parameter's
+        // owner id must agree with that, not with a location-keyed anonymous.
+        const declarator_name = bound_callable_name_node(node);
+        if (declarator_name) {
+          return function_symbol(
+            declarator_name.text as SymbolName,
+            node_to_location(declarator_name, file_path)
+          );
+        }
         const location: Location = node_to_location(node, file_path);
         return anonymous_function_symbol(location);
       }
@@ -790,46 +805,3 @@ export function find_decorator_target(
 // Callback Detection
 // ============================================================================
 
-/**
- * Detect if an anonymous function node is being passed as a callback to another function.
- * Returns callback context with:
- * - is_callback: true if the function is in call expression arguments
- * - receiver_location: location of the call expression receiving this callback
- * - receiver_is_external: null (will be classified during resolution phase)
- */
-export function detect_callback_context(
-  node: SyntaxNode,
-  file_path: FilePath
-): CallbackContext {
-  let current: SyntaxNode | null = node.parent;
-  let depth = 0;
-  const MAX_DEPTH = 5; // Limit upward traversal
-
-  while (current && depth < MAX_DEPTH) {
-    // Check if we're in an arguments node
-    if (current.type === "arguments") {
-      // Check if the parent of arguments is a call_expression or new_expression
-      const call_node = current.parent;
-      if (
-        call_node &&
-        (call_node.type === "call_expression" ||
-          call_node.type === "new_expression")
-      ) {
-        return {
-          is_callback: true,
-          receiver_is_external: null, // Will be classified during resolution
-          receiver_location: node_to_location(call_node, file_path),
-        };
-      }
-    }
-    current = current.parent;
-    depth++;
-  }
-
-  // Not a callback
-  return {
-    is_callback: false,
-    receiver_is_external: null,
-    receiver_location: null,
-  };
-}

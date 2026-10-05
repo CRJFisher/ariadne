@@ -7,21 +7,32 @@ import fs from "fs";
 import path from "path";
 import { execSync } from "child_process";
 import { fileURLToPath } from "url";
+import { changed_paths_since, git_env, open_scan_range, type ScanRange } from "./scan_base.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const LOG_FILE = path.join(__dirname, "..", "hook_log.txt");
+const DEFAULT_LOG_FILE = path.join(__dirname, "..", "hook_log.txt");
 export const TS_JS_EXTENSIONS = [".ts", ".tsx", ".js", ".jsx"];
 
 /**
- * Log a message with timestamp and hook name
+ * Log a message with timestamp and hook name.
+ *
+ * Writes synchronously: a hook's last act is usually `process.exit`, which
+ * discards pending async writes, and the log is the only record of what a Stop
+ * hook decided. A failed write is swallowed — losing a log line must never turn
+ * a hook's verdict into a crash. `ARIADNE_HOOK_LOG` redirects the file so a
+ * test run does not forge entries in the real record.
  */
 export function create_logger(hook_name: string): (message: string) => void {
   return function log(message: string): void {
     const timestamp = new Date().toISOString();
     const entry = `[${timestamp}] [${hook_name}] ${message}\n`;
-    fs.appendFileSync(LOG_FILE, entry);
+    try {
+      fs.appendFileSync(process.env.ARIADNE_HOOK_LOG || DEFAULT_LOG_FILE, entry);
+    } catch {
+      // Deliberately ignored — see above.
+    }
   };
 }
 
@@ -53,10 +64,41 @@ export function is_ts_js_file(file_path: string): boolean {
 }
 
 /**
- * Get the project directory from environment or cwd
+ * The working tree whose files the session is changing.
+ *
+ * `CLAUDE_PROJECT_DIR` names the main checkout even when the session works
+ * inside a git worktree, and hooks are invoked with that directory as their
+ * cwd, so neither survives as evidence of which tree is being edited. The hook
+ * payload's `cwd` is the session's own directory; its worktree root is the tree
+ * to inspect. Passing the payload is what makes a hook worktree-correct —
+ * without it a Stop hook tests the main checkout, which holds none of the
+ * session's work.
  */
-export function get_project_dir(): string {
+export function get_project_dir(input?: Record<string, unknown> | null): string {
+  const session_cwd = input?.cwd;
+  if (typeof session_cwd === "string" && session_cwd.length > 0) {
+    const root = worktree_root(session_cwd);
+    if (root) return root;
+  }
   return process.env.CLAUDE_PROJECT_DIR || process.cwd();
+}
+
+/** The git working-tree root containing `dir`, or undefined outside a repo. */
+function worktree_root(dir: string): string | undefined {
+  try {
+    const root = execSync("git rev-parse --show-toplevel", {
+      cwd: dir,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+      // A hook invoked by git inherits GIT_DIR, which would answer for the
+      // repository git is working in rather than the one holding `dir` —
+      // the exact substitution this function exists to prevent.
+      env: git_env(),
+    }).trim();
+    return root || undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 export interface ChangedFiles {
@@ -70,44 +112,48 @@ export interface ChangedFiles {
 
 const SOURCE_EXTENSIONS = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"];
 
+/** Every workspace package, for the fallback that assumes everything changed. */
+const WORKSPACE_PACKAGES = ["types", "core", "mcp", "skill-fs", "skill-protocol"];
+
+export interface ScopedChanges {
+  changed: ChangedFiles;
+  range: ScanRange;
+}
+
 /**
- * Detect changed files by combining git diff (unstaged), git diff --cached (staged),
- * and git ls-files --others (untracked).
- * Returns a summary of what changed for use by stop hooks.
+ * What a hook must look at this session: everything since the commit that hook
+ * last cleared. Pair it with `record_scan_cleared(project_dir, hook, range)` on
+ * the passing path — until some run records a clean pass, the range stays open.
+ * `.claude/hooks/SCAN_SCOPE.md` is the contract.
+ *
+ * With no mark on record the range anchors at HEAD, so a first run covers the
+ * working tree only and a hook that acts per file never touches work the
+ * session did not do.
  */
-export function get_changed_files(project_dir: string): ChangedFiles {
+export function get_scoped_changes(project_dir: string, hook: string): ScopedChanges {
+  let range: ScanRange = { base: null, head: null };
   try {
-    const unstaged = execSync("git diff --name-only HEAD", {
-      cwd: project_dir,
-      encoding: "utf8",
-      stdio: ["pipe", "pipe", "pipe"],
-    }).trim();
+    range = open_scan_range(project_dir, hook);
+  } catch {
+    // Git unreadable — get_changed_files applies its own fail-wide fallback.
+  }
 
-    const staged = execSync("git diff --name-only --cached", {
-      cwd: project_dir,
-      encoding: "utf8",
-      stdio: ["pipe", "pipe", "pipe"],
-    }).trim();
+  return { range, changed: get_changed_files(project_dir, range.base ?? range.head) };
+}
 
-    const untracked = execSync("git ls-files --others --exclude-standard", {
-      cwd: project_dir,
-      encoding: "utf8",
-      stdio: ["pipe", "pipe", "pipe"],
-    }).trim();
-
-    const all_files = [
-      ...unstaged.split("\n"),
-      ...staged.split("\n"),
-      ...untracked.split("\n"),
-    ].filter((f) => f.trim());
-
-    // Deduplicate
-    const unique_files = [...new Set(all_files)];
+/**
+ * Everything that changed since `scan_base` — committed, staged, unstaged, or
+ * untracked — summarized for use by stop hooks. Reached through
+ * `get_scoped_changes`, which supplies the base a hook should anchor at.
+ */
+function get_changed_files(project_dir: string, scan_base: string | null): ChangedFiles {
+  try {
+    const unique_files = changed_paths_since(project_dir, scan_base);
 
     const has_no_changes = unique_files.length === 0;
 
     // Filter to project source files only (exclude .claude/, backlog/, etc.)
-    const PROJECT_SOURCE_PREFIXES = ["packages/", ".claude/skills/self-repair-pipeline/"];
+    const PROJECT_SOURCE_PREFIXES = ["packages/", ".claude/skills/triage/"];
 
     // Check if any project source files changed
     const has_source_changes = unique_files.some((f) => {
@@ -126,14 +172,14 @@ export function get_changed_files(project_dir: string): ChangedFiles {
     }
     const modified_packages = Array.from(packages);
 
-    // Extract modified areas (top-level directories like packages/core, .claude/skills/self-repair-pipeline)
+    // Extract modified areas (top-level directories like packages/core, .claude/skills/triage)
     const areas = new Set<string>();
     for (const file of unique_files) {
       if (file.startsWith("packages/")) {
         const match = file.match(/^packages\/[^/]+/);
         if (match) areas.add(match[0]);
-      } else if (file.startsWith(".claude/skills/self-repair-pipeline/")) {
-        areas.add(".claude/skills/self-repair-pipeline");
+      } else if (file.startsWith(".claude/skills/triage/")) {
+        areas.add(".claude/skills/triage");
       }
     }
     const modified_areas = Array.from(areas);
@@ -164,13 +210,18 @@ export function get_changed_files(project_dir: string): ChangedFiles {
       changed_ts_files,
     };
   } catch {
-    // On git failure, assume everything changed (safe fallback)
+    // On git failure, assume everything changed (safe fallback). Consumers
+    // recognise this state by `all_files` being empty while `has_no_changes`
+    // is false, and widen their own scope accordingly.
     return {
       all_files: [],
       has_source_changes: true,
       has_no_changes: false,
-      modified_packages: ["types", "core", "mcp"],
-      modified_areas: ["packages/types", "packages/core", "packages/mcp", ".claude/skills/self-repair-pipeline"],
+      modified_packages: [...WORKSPACE_PACKAGES],
+      modified_areas: [
+        ...WORKSPACE_PACKAGES.map((name) => `packages/${name}`),
+        ".claude/skills/triage",
+      ],
       changed_ts_files: [],
     };
   }
