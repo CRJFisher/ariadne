@@ -3,11 +3,8 @@
   "version": "0.5.8",
   "type": "module",
   "private": true,
-  "packageManager": "pnpm@11.9.0",
+  "packageManager": "pnpm@12.9.1",
   "description": "Monorepo for Ariadne - Find call graphs in your codebase using tree-sitter",
-  "workspaces": [
-    "packages/*"
-  ],
   "scripts": {
     "build": "pnpm --filter @ariadnejs/types build && pnpm --filter @ariadnejs/skill-protocol build && pnpm --filter @ariadnejs/skill-fs build && pnpm --filter @ariadnejs/core build && pnpm --filter @ariadnejs/mcp build",
     "typecheck": "tsc --noEmit -p packages/types/tsconfig.json && tsc --noEmit -p packages/skill-protocol/tsconfig.json && tsc --noEmit -p packages/skill-fs/tsconfig.json && tsc --noEmit -p packages/core/tsconfig.json && tsc --noEmit -p packages/mcp/tsconfig.json && tsc --noEmit -p .claude/skills/triage/tsconfig.json && tsc --noEmit -p .claude/skills/plan/tsconfig.json && tsc --noEmit -p .claude/hooks/tsconfig.json && tsc --noEmit -p scripts/tsconfig.json",
