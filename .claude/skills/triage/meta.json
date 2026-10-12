@@ -27,7 +27,7 @@
         "kind": "published_output",
         "target": "triage-results"
       },
-      "phases": ["P1", "P2", "P3", "P4"],
+      "phases": ["P0", "P1", "P2", "P3", "P4"],
       "bypasses": [],
       "diagram_anchor": "per-step-pipeline",
       "is_primary": true
@@ -53,7 +53,7 @@
         "kind": "store_write",
         "target": "project-configs"
       },
-      "phases": ["P1"],
+      "phases": ["P0", "P1"],
       "bypasses": [],
       "diagram_anchor": "per-step-pipeline",
       "is_primary": false

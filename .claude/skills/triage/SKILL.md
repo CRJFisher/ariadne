@@ -3,7 +3,7 @@ name: triage
 description: Triage stage for entry-point candidates. Detects entry points in Ariadne packages or external codebases and triages false positives via per-entry investigators, publishing each false positive raw and self-contained.
 argument-hint: "[config-name | /path/to/repo | owner/repo (GitHub)]"
 disable-model-invocation: true
-allowed-tools: Bash(node --import tsx:*), Read, Write, Glob, Task(triage-investigator)
+allowed-tools: Bash(bash .claude/skills/triage/scripts/ensure_environment.sh), Bash(node --import tsx:*), Read, Write, Glob, Task(triage-investigator)
 ---
 
 # Triage Entrypoints
@@ -14,16 +14,29 @@ Triage pipeline for entry point analysis: detect false positives and classify ro
 
 Each invocation produces a self-contained run under `triage_state/<project>/runs/<run-id>/`. Run-id format is `<short-commit>-<iso-ts>` (e.g. `deadbee-2026-04-28T13-42-07.812Z`); `nogit-...` for non-git projects. Re-running at the same target commit reuses prior `confirmed_unreachable` verdicts via the TP cache (skip with `--no-reuse-tp`). Moving the target to a new commit (`--commit <sha>`, see **Phase 1**) busts the cache: every entry re-investigates.
 
-**Script invocation:** Always use `node --import tsx` to run scripts. Never use `pnpm exec tsx` or `npx tsx` — these create IPC Unix sockets that the sandbox blocks.
+**Script invocation:** Always use `node --import tsx` to run the TypeScript scripts. Never use `pnpm exec tsx` or `npx tsx` — these create IPC Unix sockets that the sandbox blocks.
 
 ## Pipeline Overview
 
 | Phase          | Script / Agent                  | Purpose                                                                                |
 | -------------- | ------------------------------- | -------------------------------------------------------------------------------------- |
+| 0. Environment | `scripts/ensure_environment.sh` | Install dependencies and build the workspace packages the scripts import, where needed |
 | 1. Detect      | `scripts/detect_entrypoints.ts` | Run entry point detection                                                              |
 | 2. Prepare     | `scripts/prepare_triage.ts`     | Classify against the known-issues registry via `enrich_call_graph`, build triage state |
 | 3. Triage Loop | triage-investigator             | Investigate residual entries; each writes one self-contained verdict to `results/`     |
 | 4. Finalize    | `scripts/finalize_triage.ts`    | Publish the v5 triage-results JSON built entirely from the per-entry verdict files     |
+
+## Phase 0: Environment
+
+Run this first, before any other script in this skill — the folder preview included:
+
+```bash
+bash .claude/skills/triage/scripts/ensure_environment.sh
+```
+
+The pipeline runs the Ariadne in the checkout this skill lives in. The script installs that checkout's dependencies when `tsx` or any of the skill's `@ariadnejs/*` workspace links is missing — the state of a fresh git worktree — and builds those workspace packages when any has no `dist/` or has source newer than its build. A ready checkout is left untouched and prints `environment: ready`; otherwise it prints what it installed and built. Concurrent triages in one checkout wait on each other here rather than building into the same tree.
+
+If it exits non-zero, report its stderr and stop: every later script imports the packages it could not prepare.
 
 ## Analysis Target
 
