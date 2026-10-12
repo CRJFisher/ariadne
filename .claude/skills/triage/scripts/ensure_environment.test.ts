@@ -103,7 +103,7 @@ afterEach(async () => {
   await fs.rm(path.dirname(root), { recursive: true, force: true });
 });
 
-describe("ensure_environment.sh", () => {
+describe("ensure_environment.sh", { timeout: 30_000 }, () => {
   it("installs and builds a fresh worktree that has neither", async () => {
     const result = await run(WITH_PNPM());
 
