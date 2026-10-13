@@ -112,7 +112,7 @@
   "sub_agents": [
     {
       "id": "refactor-investigator",
-      "model": "opus",
+      "model": "sonnet",
       "max_turns": 200,
       "multiplicity": "one per fixable change group (rows with is_permanent_limitation:false); dispatched all in one message, capped at ~5 concurrent and drained in waves. disable-model-invocation:true.",
       "used_in_flows": ["investigate-consolidate-graduate"]
@@ -126,21 +126,21 @@
     },
     {
       "id": "refactor-comprehension-author",
-      "model": "opus",
+      "model": "haiku",
       "max_turns": 30,
       "multiplicity": "one per cluster in consolidation.json, rendering that cluster's plan into backlog/docs/<slug>.comprehension.html. disable-model-invocation:true.",
       "used_in_flows": ["investigate-consolidate-graduate"]
     },
     {
       "id": "refactor-task-architect",
-      "model": "opus",
+      "model": "sonnet",
       "max_turns": 20,
       "multiplicity": "one per confirmed (funded) cluster, dispatched in parallel; authors task_assignment.json. disable-model-invocation:true.",
       "used_in_flows": ["investigate-consolidate-graduate"]
     },
     {
       "id": "classifier-author",
-      "model": "opus",
+      "model": "sonnet",
       "max_turns": 40,
       "multiplicity": "one per confirmed permanent-limitation group; stages a registry draft, never writes registry.json. disable-model-invocation:true.",
       "used_in_flows": ["permanent-limitation-routing"]

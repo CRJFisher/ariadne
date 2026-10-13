@@ -154,7 +154,7 @@
   "sub_agents": [
     {
       "id": "triage-investigator",
-      "model": "sonnet",
+      "model": "haiku",
       "max_turns": 50,
       "multiplicity": "one per residual llm-triage entry; the main agent dispatches synchronous foreground batches of N=5 that the turn awaits, and caps total dispatch at --max-count (default 250)",
       "used_in_flows": ["detect-triage-publish"]

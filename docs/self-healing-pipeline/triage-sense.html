@@ -105,7 +105,7 @@
     </tr>
     <tr>
       <td><strong>3 · Loop</strong></td>
-      <td><code>triage-investigator</code> (Sonnet, worker pool N=5)</td>
+      <td><code>triage-investigator</code> (Haiku, worker pool N=5)</td>
       <td>Investigates each residual entry; every agent writes one self-contained <code>TriageVerdict</code> to <code>results/&lt;entry_index&gt;.json</code>. Entries stay <code>pending</code> until a verdict file lands, so crash recovery is automatic.</td>
     </tr>
     <tr>
@@ -175,7 +175,7 @@
   <rect x="610" y="350" width="215" height="72" rx="8" fill="#1d212b" stroke="#6ea8fe" stroke-width="1.5"/>
   <text x="717" y="375" text-anchor="middle" fill="#e6e9ef" font-size="13.5" font-weight="600">3 · Loop</text>
   <text x="717" y="393" text-anchor="middle" fill="#9aa3b2" font-size="11">triage-investigator pool</text>
-  <text x="717" y="408" text-anchor="middle" fill="#9aa3b2" font-size="11">sonnet · N = 5 in flight</text>
+  <text x="717" y="408" text-anchor="middle" fill="#9aa3b2" font-size="11">haiku · N = 5 in flight</text>
   <line x1="717" y1="288" x2="717" y2="343" stroke="#9aa3b2" stroke-width="1.5" marker-end="url(#arr)"/>
 
   <!-- results artifact -->

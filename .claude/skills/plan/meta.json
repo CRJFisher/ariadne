@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "skill": "plan",
-  "description": "Offline planning sweep over completed triage runs. Pass A deterministically groups every false-positive verdict by AriadneFaultArea (derive_fault_area); Pass B dispatches one plan-strategist (opus) per fault-area bucket to design a hierarchical fix-plan tree; Pass C reconciles within the task-DB by dedup_key and writes PlanTask rows + a per-sweep event log to ~/.ariadne/plan/. Planning-only: never writes backlog/, registry.json, or packages/core. Graduation to backlog/ is the user-invoked export adapter.",
+  "description": "Offline planning sweep over completed triage runs. Pass A deterministically groups every false-positive verdict by AriadneFaultArea (derive_fault_area); Pass B dispatches one plan-strategist (sonnet) per fault-area bucket to design a hierarchical fix-plan tree; Pass C reconciles within the task-DB by dedup_key and writes PlanTask rows + a per-sweep event log to ~/.ariadne/plan/. Planning-only: never writes backlog/, registry.json, or packages/core. Graduation to backlog/ is the user-invoked export adapter.",
 
   "flows": [
     {
@@ -71,7 +71,7 @@
   "sub_agents": [
     {
       "id": "plan-strategist",
-      "model": "opus",
+      "model": "sonnet",
       "max_turns": 200,
       "multiplicity": "one per fault-area bucket from Pass A; dispatcher bounds concurrency to 5. Each emits a StrategistPlan (hierarchical fix-plan tree), not a classifier spec; for each 'other' bucket it emits BOTH a taxonomy-extension task and an underlying-core-fix task.",
       "used_in_flows": ["group-strategize-reconcile"]

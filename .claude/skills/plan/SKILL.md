@@ -1,6 +1,6 @@
 ---
 name: plan
-description: Offline plan engine over completed triage runs. Deterministically groups every false-positive by Ariadne fault area, dispatches one opus strategist per fault-area bucket to design a hierarchical fix plan, and reconciles the plans into the task-DB by dedup_key. Planning-only — never writes the user's backlog, the registry, or core code.
+description: Offline plan engine over completed triage runs. Deterministically groups every false-positive by Ariadne fault area, dispatches one sonnet strategist per fault-area bucket to design a hierarchical fix plan, and reconciles the plans into the task-DB by dedup_key. Planning-only — never writes the user's backlog, the registry, or core code.
 argument-hint: "[--project <name>] [--last <n>] [--run <path>]"
 disable-model-invocation: true
 allowed-tools: Bash(node --import tsx:*), AskUserQuestion, Read, Write, Glob, Task(plan-strategist)
@@ -22,7 +22,7 @@ The pipeline is self-contained.
 
 Offline three-pass engine over `triage` outputs: **group → strategize →
 reconcile**. Pass A deterministically buckets every published false-positive by
-`AriadneFaultArea`; Pass B dispatches one `plan-strategist` (opus) per bucket to
+`AriadneFaultArea`; Pass B dispatches one `plan-strategist` (sonnet) per bucket to
 design a hierarchical fix-plan tree; Pass C reconciles the trees into the
 task-DB at `~/.ariadne/plan/`, augmenting existing tasks by
 `dedup_key` rather than duplicating them.
@@ -47,11 +47,11 @@ resolve or exclude, never fed into planning.
 
 ## Pipeline overview
 
-| #   | Pass       | Actor                                   | Output                                                                                                                                                                                                                                                                                                                                       |
-| --- | ---------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| A   | Group      | `scripts/group_runs.ts`                 | One `FaultAreaBucket` per `AriadneFaultArea`, staged under `~/.ariadne/plan/staging/<sweep>/buckets/`, plus a `manifest.json` recording the full scanned scope (projects + run_ids, incl. zero-FP runs) and a sweep summary. Consults the membership-override store to re-route (or suppress) members a prior sweep judged mis-routed        |
-| B   | Strategize | `plan-strategist` (opus, ≤5 concurrent) | One `StrategistPlan` (hierarchical fix tree) per bucket — including a total per-member `membership` review — self-validated via `scripts/validate_plan.ts`                                                                                                                                                                                   |
-| C   | Reconcile  | `scripts/reconcile_plan.ts`             | `PlanTask` rows (grounded on confirmed members only) + a `PlanSweepEvent` log in `~/.ariadne/plan/`; live tasks augmented by `dedup_key`, orphans superseded/combined/resolved, user-promoted tasks marked `exported`; membership exclusions recorded as `exclude_member` events + override records + `derive_fault_area` correction signals |
+| #   | Pass       | Actor                                     | Output                                                                                                                                                                                                                                                                                                                                       |
+| --- | ---------- | ----------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A   | Group      | `scripts/group_runs.ts`                   | One `FaultAreaBucket` per `AriadneFaultArea`, staged under `~/.ariadne/plan/staging/<sweep>/buckets/`, plus a `manifest.json` recording the full scanned scope (projects + run_ids, incl. zero-FP runs) and a sweep summary. Consults the membership-override store to re-route (or suppress) members a prior sweep judged mis-routed        |
+| B   | Strategize | `plan-strategist` (sonnet, ≤5 concurrent) | One `StrategistPlan` (hierarchical fix tree) per bucket — including a total per-member `membership` review — self-validated via `scripts/validate_plan.ts`                                                                                                                                                                                   |
+| C   | Reconcile  | `scripts/reconcile_plan.ts`               | `PlanTask` rows (grounded on confirmed members only) + a `PlanSweepEvent` log in `~/.ariadne/plan/`; live tasks augmented by `dedup_key`, orphans superseded/combined/resolved, user-promoted tasks marked `exported`; membership exclusions recorded as `exclude_member` events + override records + `derive_fault_area` correction signals |
 
 ## Arguments
 
@@ -90,11 +90,11 @@ judged mis-routed is therefore corrected here instead of re-adjudicated every sw
 
 ### Pass B — dispatch the strategist wave
 
-The strategist is opus/200-turn, so cap concurrency at
+The strategist is a 200-turn sub-agent, so cap concurrency at
 `MAX_CONCURRENT_STRATEGISTS = 5` and drain `SWEEP.buckets[]` in waves. **Skip a
 bucket whose `plan_exists` is `true`** — its `StrategistPlan` is already staged
 (the `skipped_planned` rollup lists them), so re-dispatching would re-spend the
-opus/200-turn fan-out the `--sweep <id>` resume exists to save. For each
+200-turn fan-out the `--sweep <id>` resume exists to save. For each
 remaining bucket, fire one `Task(plan-strategist)` (all buckets in a wave in a
 single message so they run in parallel):
 

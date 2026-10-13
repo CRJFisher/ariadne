@@ -23,7 +23,7 @@ flowchart TD
   subgraph PB["Pass B · Strategize (LLM, per bucket)"]
     direction TB
     HY("get_bucket_context.ts<br/>hydrate one fault-area bucket"):::step
-    AGB[["plan-strategist<br/>opus · 1 per bucket"]]:::agent
+    AGB[["plan-strategist<br/>sonnet · 1 per bucket"]]:::agent
     VAL("validate_plan.ts<br/>self-validate loop"):::step
     SP[/"staging/&lt;sweep&gt;/plans/&lt;area&gt;.json<br/>StrategistPlan · membership review<br/>architectural → fault_area → localized<br/>other → taxonomy-ext + core-fix"/]:::artifact
   end

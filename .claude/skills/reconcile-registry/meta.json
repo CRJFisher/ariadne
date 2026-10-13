@@ -115,7 +115,7 @@
   "sub_agents": [
     {
       "id": "classifier-fixer",
-      "model": "opus",
+      "model": "sonnet",
       "max_turns": 50,
       "multiplicity": "one per rule with an applied drift_detected proposal, dispatched in parallel after the --drift apply; resume-skip on an existing verdicts.json. Edits only check_<group_id>.ts + its test; never writes registry.json. disable-model-invocation:true.",
       "used_in_flows": ["reconcile-transitions"]

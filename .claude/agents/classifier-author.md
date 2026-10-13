@@ -3,7 +3,7 @@ name: classifier-author
 description: Drafts a builtin classifier for ONE novel permanent-limitation group. Studies the false-positive pattern across the group's sample triage entries, then writes three staging artifacts — draft_entry.json (a complete KnownIssue), check_<group_id>.ts (a BuiltinCheckFn), and REVIEW.md (human apply steps). Never writes registry.json; the human reviews the staging dir and applies via reconcile-registry --stage.
 disable-model-invocation: true
 tools: Bash(node --import tsx .claude/skills/triage/scripts/get_entry_context.ts:*), Read, Grep, Glob, Write(~/.ariadne/prioritize/**), Write(/tmp/claude/**)
-model: opus
+model: sonnet
 maxTurns: 40
 ---
 
@@ -209,7 +209,7 @@ import type { FileLinesReader } from "../auto_classify_types";
 export function check_<group_id_snake>(
   entry_point: EnrichedEntryPoint,
   read_file_lines: FileLinesReader,
-  language: Language,
+  language: Language
 ): boolean {
   void read_file_lines;
   // ... discriminator logic that returns true for every sample entry ...

@@ -126,7 +126,7 @@ describe("plan-strategist agent prompt — frontmatter", () => {
       tools:
         "Bash(node --import tsx .claude/skills/plan/scripts/get_bucket_context.ts:*), Bash(node --import tsx .claude/skills/plan/scripts/validate_plan.ts:*), Read, Grep, Glob, Write(~/.ariadne/plan/staging/**)",
       mcp_servers: [],
-      model: "opus",
+      model: "sonnet",
       max_turns: 200,
     };
     expect(doc.frontmatter).toEqual(expected);

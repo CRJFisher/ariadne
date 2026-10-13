@@ -397,9 +397,9 @@ The skill is a thin caller of `@ariadnejs/core`. Classification (`enrich_call_gr
 
 ## Sub-Agents
 
-| Agent               | Model  | Purpose                                                                                                              |
-| ------------------- | ------ | -------------------------------------------------------------------------------------------------------------------- |
-| triage-investigator | sonnet | Investigate a single residual entry; emit one `TriageVerdict` (tp / fp-novel / fp-classifier-regression / uncertain) |
+| Agent               | Model | Purpose                                                                                                              |
+| ------------------- | ----- | -------------------------------------------------------------------------------------------------------------------- |
+| triage-investigator | haiku | Investigate a single residual entry; emit one `TriageVerdict` (tp / fp-novel / fp-classifier-regression / uncertain) |
 
 ## Current State
 

@@ -22,7 +22,7 @@ classifier `registry.json`, or `packages/core`.
   a rollup, staged under `~/.ariadne/plan/staging/<sweep>/buckets/<area>.json`.
   Consults the membership-override store to re-route (or suppress) members a
   prior sweep judged mis-routed, so a mis-route is corrected, not re-litigated.
-- **Pass B — strategize** (`plan-strategist`, opus, one per bucket): turn one
+- **Pass B — strategize** (`plan-strategist`, sonnet, one per bucket): turn one
   bucket into a hierarchical fix-plan tree (`architectural → fault_area →
 localized`) as a `StrategistPlan`, self-validated via `scripts/validate_plan.ts`.
   First reviews bucket membership — a total per-member `membership` verdict — so
@@ -45,7 +45,7 @@ localized`) as a `StrategistPlan`, self-validated via `scripts/validate_plan.ts`
 (`scripts/export_to_backlog.ts`) — the only writer of `backlog/tasks/*.md` cards
 (`graduate_group_docs.ts` moves graduated comprehension docs alongside them).
 
-Sub-agent: `.claude/agents/plan-strategist.md` — opus, 200 turns, one per
+Sub-agent: `.claude/agents/plan-strategist.md` — sonnet, 200 turns, one per
 fault-area bucket.
 
 ## Run the sweep

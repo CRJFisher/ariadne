@@ -4,7 +4,7 @@ description: Investigates one entry point candidate and emits a single TriageVer
 tools: Bash(node --import tsx .claude/skills/triage/scripts/get_entry_context.ts:*), Read, Grep, Glob, Write(~/.ariadne/triage-entrypoints/**), Write(/tmp/claude/**), mcp__ariadne__show_call_graph_neighborhood
 mcpServers:
   - ariadne
-model: sonnet
+model: haiku
 maxTurns: 50
 ---
 
