@@ -222,6 +222,16 @@ export function create_processing_context(
     scope_depths.set(scope.id, compute_scope_depth(scope, scopes));
   }
 
+  const children_by_start = new Map<ScopeId, readonly LexicalScope[]>();
+  for (const scope of scopes.values()) {
+    const children = scope.child_ids.flatMap((child_id) => {
+      const child = scopes.get(child_id);
+      return child ? [child] : [];
+    });
+    children.sort((a, b) => compare_starts(a.location, b.location));
+    children_by_start.set(scope.id, children);
+  }
+
   return {
     captures,
     scopes,
@@ -231,7 +241,10 @@ export function create_processing_context(
       // Containment is a tree, so a descent costs one step per level of
       // nesting where reading every scope costs one step per scope in the
       // file — the difference between a lookup priced on a file's depth and
-      // one priced on its size, at 1,099.5 lookups per file.
+      // one priced on its size, at 1,099.5 lookups per file. Each step is a
+      // binary search over the level's children, because a file written as
+      // one wrapper function gives a single scope as many children as the
+      // file has functions.
       let current = scopes.get(root_scope_id);
       if (!current) {
         throw new Error(
@@ -242,14 +255,10 @@ export function create_processing_context(
       }
 
       for (;;) {
-        let deeper: LexicalScope | undefined;
-        for (const child_id of current.child_ids) {
-          const child = scopes.get(child_id);
-          if (child && location_contains(child.location, location)) {
-            deeper = child;
-            break;
-          }
-        }
+        const deeper = child_containing(
+          children_by_start.get(current.id) ?? [],
+          location
+        );
         if (!deeper) {
           return current.id;
         }
@@ -257,6 +266,36 @@ export function create_processing_context(
       }
     },
   };
+}
+
+/**
+ * The child scope containing `location`, from children sorted by start.
+ * Sibling scopes never overlap, so the only candidate is the last child that
+ * starts at or before the location.
+ */
+function child_containing(
+  children: readonly LexicalScope[],
+  location: Location
+): LexicalScope | undefined {
+  let low = 0;
+  let high = children.length - 1;
+  let candidate: LexicalScope | undefined;
+  while (low <= high) {
+    const middle = (low + high) >> 1;
+    if (compare_starts(children[middle].location, location) <= 0) {
+      candidate = children[middle];
+      low = middle + 1;
+    } else {
+      high = middle - 1;
+    }
+  }
+  return candidate && location_contains(candidate.location, location)
+    ? candidate
+    : undefined;
+}
+
+function compare_starts(a: Location, b: Location): number {
+  return a.start_line - b.start_line || a.start_column - b.start_column;
 }
 
 /**

@@ -555,6 +555,64 @@ describe("scopes", () => {
       expect(context.captures).toEqual(captures);
     });
 
+    it("finds the child scope of a scope with many children, listed in any order", () => {
+      // One wrapper function holding a function per line: the shape of a file
+      // written as a single IIFE.
+      const root_id = "module:test.ts:1:0:1000:0" as ScopeId;
+      const wrapper_id = "function:test.ts:1:0:1000:0" as ScopeId;
+      const scope_at = (line: number): ScopeId => `function:test.ts:${line}:2:${line}:40` as ScopeId;
+      const lines = Array.from({ length: 500 }, (_, i) => i + 2).reverse();
+
+      const scopes = new Map<ScopeId, LexicalScope>();
+      scopes.set(root_id, {
+        id: root_id,
+        parent_id: null,
+        name: null,
+        type: "module",
+        location: { file_path, start_line: 1, start_column: 0, end_line: 1000, end_column: 0 },
+        child_ids: [wrapper_id],
+        self_type_name: null,
+      });
+      scopes.set(wrapper_id, {
+        id: wrapper_id,
+        parent_id: root_id,
+        name: null,
+        type: "function",
+        location: { file_path, start_line: 1, start_column: 0, end_line: 1000, end_column: 0 },
+        child_ids: lines.map(scope_at),
+        self_type_name: null,
+      });
+      for (const line of lines) {
+        scopes.set(scope_at(line), {
+          id: scope_at(line),
+          parent_id: wrapper_id,
+          name: null,
+          type: "function",
+          location: { file_path, start_line: line, start_column: 2, end_line: line, end_column: 40 },
+          child_ids: [],
+          self_type_name: null,
+        });
+      }
+
+      const context = create_processing_context(scopes, root_id, []);
+      const scope_of = (line: number, column: number): ScopeId =>
+        context.get_scope_id({
+          file_path,
+          start_line: line,
+          start_column: column,
+          end_line: line,
+          end_column: column + 1,
+        });
+
+      expect([
+        scope_of(2, 10),
+        scope_of(250, 2),
+        scope_of(501, 39),
+        scope_of(250, 1),
+        scope_of(700, 10),
+      ]).toEqual([scope_at(2), scope_at(250), scope_at(501), wrapper_id, wrapper_id]);
+    });
+
     it("should handle overlapping scopes by choosing deepest", () => {
       const scopes = new Map<ScopeId, LexicalScope>();
 
