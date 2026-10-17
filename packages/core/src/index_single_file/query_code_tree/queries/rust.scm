@@ -135,13 +135,7 @@
 ;; DEFINITIONS - Basic symbols
 ;; ==============================================================================
 
-; Struct with generics (must come first to match before general pattern)
-(struct_item
-  name: (type_identifier) @definition.class.generic
-  type_parameters: (type_parameters)
-)
-
-; Struct definitions (general)
+; Struct definitions
 (struct_item
   name: (type_identifier) @definition.class
 )
@@ -151,13 +145,7 @@
   name: (field_identifier) @definition.field
 )
 
-; Enum with generics (must come first)
-(enum_item
-  name: (type_identifier) @definition.enum.generic
-  type_parameters: (type_parameters)
-)
-
-; Enum definitions (general)
+; Enum definitions
 (enum_item
   name: (type_identifier) @definition.enum
 )
@@ -167,57 +155,7 @@
   (identifier) @definition.enum_member
 )
 
-; Generic functions (must come first)
-(function_item
-  name: (identifier) @definition.function.generic
-  type_parameters: (type_parameters)
-)
-
-; Async functions (identified by modifiers)
-(function_item
-  (function_modifiers
-    "async"
-  )
-  name: (identifier) @definition.function.async
-)
-
-; Const functions
-(function_item
-  (function_modifiers "const")
-  name: (identifier) @definition.function.const
-)
-
-; Unsafe const functions (const unsafe order)
-(function_item
-  (function_modifiers "const" "unsafe")
-  name: (identifier) @definition.function.unsafe
-)
-
-(function_item
-  (function_modifiers "const" "unsafe")
-  name: (identifier) @definition.function.const
-)
-
-; Unsafe const functions (unsafe const order)
-(function_item
-  (function_modifiers "unsafe" "const")
-  name: (identifier) @definition.function.unsafe
-)
-
-(function_item
-  (function_modifiers "unsafe" "const")
-  name: (identifier) @definition.function.const
-)
-
-; Unsafe functions (identified by modifiers)
-(function_item
-  (function_modifiers
-    "unsafe"
-  )
-  name: (identifier) @definition.function.unsafe
-)
-
-; Function definitions (general)
+; Function definitions
 (function_item
   name: (identifier) @definition.function
 )
@@ -228,57 +166,17 @@
   type: (_)
 )
 
-; Async methods in trait implementations - capture all async methods
+; Methods and associated functions of impl blocks, inherent and trait alike.
+; Rust has no constructors: `new` is an associated function like any other.
 (impl_item
-  trait: (_)
   body: (declaration_list
     (function_item
-      (function_modifiers
-        "async"
-      )
-      (identifier) @definition.method.async
+      name: (identifier) @definition.method
     )
   )
 )
 
-; Methods in trait implementations - capture all methods
-(impl_item
-  trait: (_)
-  body: (declaration_list
-    (function_item
-      (identifier) @definition.method
-    )
-  )
-)
-
-; Methods in regular impl blocks — exclude fn new (handled by definition.constructor)
-(impl_item
-  type: (_)
-  body: (declaration_list
-    (function_item
-      (identifier) @definition.method
-      (#not-match? @definition.method "^new$")
-    )
-  )
-)
-
-; Constructor functions (named patterns)
-(impl_item
-  body: (declaration_list
-    (function_item
-      name: (identifier) @definition.constructor
-      (#match? @definition.constructor "^(new|default|from|try_from|with_.*)$")
-    )
-  )
-)
-
-; Generic traits (must come first) - captured as interfaces
-(trait_item
-  name: (type_identifier) @definition.interface.generic
-  type_parameters: (type_parameters)
-)
-
-; Trait definitions (general) - captured as interfaces
+; Trait definitions - captured as interfaces
 (trait_item
   name: (type_identifier) @definition.interface
 )
@@ -349,12 +247,6 @@
   pattern: (identifier) @definition.variable
 )
 
-; Mutable variables
-(let_declaration
-  (mutable_specifier)
-  pattern: (identifier) @definition.variable.mut
-)
-
 ; Assignment references with type annotations (for type tracking)
 (let_declaration
   pattern: (identifier) @assignment.variable
@@ -368,7 +260,8 @@
   value: (struct_expression)
 )
 
-; Function parameters - direct identifier child (not pattern field)
+; Function parameters, and the typed parameters of closures - direct identifier
+; child (not pattern field)
 (parameter
   (identifier) @definition.parameter
 )
@@ -376,32 +269,15 @@
 ; Self parameters - capture the whole node
 (self_parameter) @definition.parameter.self
 
-; Closure expressions (named, assigned to variables)
-(closure_expression) @definition.function.closure
-
-; === Anonymous closures (inline callbacks in iterators, etc.) ===
-; Note: In Rust, most closures are anonymous. The above pattern catches ALL closures.
-; For consistency with other languages, we also tag inline closures as anonymous_function
-; when they appear in common callback contexts.
-
-; Closures in method call arguments (map, filter, etc.)
-(arguments
-  (closure_expression) @definition.anonymous_function
-)
+; Every closure owns an anonymous function definition, so its parameters have a
+; callable to attach to in any grammatical position (declarator value, return
+; position, call argument).
+(closure_expression) @definition.anonymous_function
 
 ; Closure parameters - simple identifiers
 (closure_expression
   parameters: (closure_parameters
     (identifier) @definition.parameter
-  )
-)
-
-; Closure parameters with type annotations
-(closure_expression
-  parameters: (closure_parameters
-    (parameter
-      (identifier) @definition.parameter
-    )
   )
 )
 

@@ -521,12 +521,12 @@ describe("extract_generic_parameters", () => {
     ]);
   });
 
-  it("returns empty array for non-generic function", () => {
+  it("returns undefined for a non-generic function", () => {
     const code = "fn bar(x: i32) {}";
     const root = parse_rust(code);
     const fn_item = find_node_by_type(root, "function_item")!;
     const params = extract_generic_parameters(fn_item);
-    expect(params).toEqual([]);
+    expect(params).toEqual(undefined);
   });
 
   it("extracts lifetime parameters", () => {

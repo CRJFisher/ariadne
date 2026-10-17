@@ -5,9 +5,11 @@ import { LANGUAGE_TO_TREESITTER_LANG } from "./parsers";
 import Python from "tree-sitter-python";
 import Rust from "tree-sitter-rust";
 import { query_tree } from "./query_code_tree";
+import { load_query } from "./query_loader";
 import type { Language } from "@ariadnejs/types";
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { isDeepStrictEqual } from "node:util";
 
 function unique_capture_names(
   lang: Language,
@@ -396,7 +398,6 @@ const MAX_SIZE: usize = 100;
       expect(names).toEqual([
         "definition.class",
         "definition.constant",
-        "definition.constructor",
         "definition.enum",
         "definition.enum_member",
         "definition.field",
@@ -792,6 +793,17 @@ describe("Fixture corpus invariants", () => {
       ],
       single_definition_per_range: false,
     },
+    rust: {
+      grammar: Rust,
+      ext: ".rs",
+      named_definition_nodes: ["struct_item", "enum_item", "trait_item", "function_item"],
+      duplicate_families: ["definition.", "scope.", "reference.call"],
+      known_duplicates: [],
+      // A `fn` inside an impl or trait body fits the free-function pattern as
+      // well as its method pattern; the free-function handler declines it, so
+      // the clause stays python-only.
+      single_definition_per_range: false,
+    },
   };
 
   /**
@@ -867,6 +879,37 @@ describe("Fixture corpus invariants", () => {
       }
 
       expect(missing).toEqual([]);
+    });
+
+    // tree-sitter's own captures() is the reference for what a query yields;
+    // the fixtures are small enough for it to run without overflowing. Its
+    // range filter treats a zero-width node at byte 0 as preceding the range,
+    // so for an empty file it drops the root scope capture that query_tree
+    // keeps; that one capture is excluded from the comparison.
+    it(`returns the captures tree-sitter's captures() returns, in start-byte order, for the ${lang} corpus`, () => {
+      const parser = new Parser();
+      parser.setLanguage(config.grammar);
+      const reference_query = new Parser.Query(config.grammar, load_query(lang as Language));
+      const capture_keys = (captures: readonly Parser.QueryCapture[]): string[] =>
+        captures.map((c) => `${c.name}@${c.node.startIndex}:${c.node.endIndex}`).sort();
+      const mismatched: string[] = [];
+
+      for (const file of corpus_files(lang, config.ext)) {
+        const tree = parser.parse(fs.readFileSync(file, "utf-8"));
+        const captures = query_tree(lang as Language, tree);
+        const in_start_order = captures.every(
+          (capture, i) => i === 0 || captures[i - 1].node.startIndex <= capture.node.startIndex
+        );
+        const same_captures = isDeepStrictEqual(
+          capture_keys(captures.filter((c) => c.node.endIndex > 0)),
+          capture_keys(reference_query.captures(tree.rootNode))
+        );
+        if (!in_start_order || !same_captures) {
+          mismatched.push(path.relative(FIXTURE_ROOT, file));
+        }
+      }
+
+      expect(mismatched).toEqual([]);
     });
 
     // The duplicate audit covers the families listed per language in

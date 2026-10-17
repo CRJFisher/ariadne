@@ -212,14 +212,18 @@ builds a method carrying `accessor_kind`.
 
 ### Rust
 
-- `@definition.trait` - Trait definitions
-- `@definition.impl` - Impl blocks
-- `@definition.type_alias` - Type aliases
-- `@definition.enum` - Enums
+- `@definition.interface` - Trait definitions
+- `@definition.method` - Every `fn` of an impl block, inherent or trait, `new` included: Rust has no constructors, so it emits no `@definition.constructor`
+- `@definition.method.default` - A trait method with a default body
+- `@definition.interface.method` - A trait method signature
 - `@definition.import.module` - Bodyless `mod x;` — the module edge to the file backing it, emitted alongside the `@definition.module` that binds the name. Captures the whole item so the handler can read the preceding `#[path = "…"]` attribute, which tree-sitter makes a sibling of `mod_item` rather than a child
-- `@scope.trait`, `@scope.impl` - Rust-specific scopes
 - `@reference.constructor.associated` - Associated function constructor (`Type::new()`)
 - `@reference.constructor.struct` - Struct literal constructor (`Foo { field: val }`)
+
+Rust emits one definition capture per item. A generic struct, enum, trait or
+`fn`, and an `async`, `const` or `unsafe` `fn`, is the item's single
+`@definition.*` capture; its handler reads the type parameters and modifiers
+off the item.
 
 ### Constructor Qualifier Taxonomy
 
@@ -243,7 +247,7 @@ builds a method carrying `accessor_kind`.
 
 ## Validation
 
-Two invariants keep query captures healthy.
+Three invariants keep query captures healthy.
 
 **Naming** — every capture belongs to the required or optional lists above and
 matches `@{category}.{entity}[.{qualifier}]` (at most three parts). Capturing a
@@ -259,6 +263,16 @@ capture a query emits must have a handler in the matching
 currently in this state. The Stop hook
 `.claude/hooks/capture_receiver_consistency_stop.ts` enforces this on changed
 query and receiver files (see `.claude/rules/semantic-indexing.md`).
+
+**One registration per definition** — each definition is registered by exactly
+one capture. The definition builder keys entries by symbol id and a later
+registration replaces an earlier one, while captures that start at the same
+byte arrive in no meaningful order; two patterns registering one item make the
+indexed definition depend on which handler runs last. A pattern that refines
+another (a generic or `async` variant of an item) folds into the item's one
+capture, and its handler reads the refinement off the node. The order
+independence test in `index_single_file.test.ts` indexes every fixture with its
+same-start captures reversed and requires an identical index.
 
 ---
 

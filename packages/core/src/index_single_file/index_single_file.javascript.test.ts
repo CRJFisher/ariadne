@@ -2240,6 +2240,44 @@ describe("Semantic Index - JavaScript", () => {
     });
   });
 
+  describe("Single-wrapper modules", () => {
+    // One IIFE wrapping the whole file keeps a query match open from the first
+    // byte to the last; at this size the file yields about 150k captures.
+    const WRAPPED_FUNCTION_COUNT = 5200;
+
+    function single_wrapper_module(function_count: number): string {
+      const body = Array.from(
+        { length: function_count },
+        (_, i) => `  function f${i}(a, b) { var x = a.b(c, d); return g(x, b[1]); }`
+      ).join("\n");
+      return `;(function() {\n${body}\n}.call(this));\n`;
+    }
+
+    it("indexes every definition and call of a file written as one wrapper IIFE", () => {
+      const code = single_wrapper_module(WRAPPED_FUNCTION_COUNT);
+      const tree = parser.parse(code, undefined, { bufferSize: code.length * 2 });
+      const parsed_file = create_parsed_file(code, "wrapped.js" as FilePath, tree, "javascript");
+
+      expect(query_tree("javascript", tree)).toHaveLength(150_806);
+
+      const index = build_index_single_file(parsed_file, tree, "javascript");
+      const functions = Array.from(index.functions.values());
+      const count_calls = (kind: string, name: string): number =>
+        index.references.filter((ref) => ref.kind === kind && ref.name === name).length;
+      expect({
+        wrapped_functions: functions.filter((f) => /^f\d+$/.test(f.name)).length,
+        calls_to_g: count_calls("function_call", "g"),
+        calls_to_b: count_calls("method_call", "b"),
+        wrapper_invocations: count_calls("method_call", "call"),
+      }).toEqual({
+        wrapped_functions: WRAPPED_FUNCTION_COUNT,
+        calls_to_g: WRAPPED_FUNCTION_COUNT,
+        calls_to_b: WRAPPED_FUNCTION_COUNT,
+        wrapper_invocations: 1,
+      });
+    }, 60_000);
+  });
+
   describe("Callback edge cases", () => {
     it("should detect callbacks with try-catch blocks", () => {
       const code = `const items = [1, 2, 3];

@@ -227,6 +227,6 @@ describe("the in-repo corpus guard", () => {
     expect({
       tree_sitter: row.environment.tree_sitter_version,
       tree_sitter_typescript: row.environment.tree_sitter_typescript_version,
-    }).toEqual({ tree_sitter: "0.25.0", tree_sitter_typescript: "0.23.2" });
+    }).toEqual({ tree_sitter: "0.25.1", tree_sitter_typescript: "0.23.2" });
   }, 60_000);
 });
