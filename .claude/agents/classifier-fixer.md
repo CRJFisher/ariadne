@@ -3,7 +3,7 @@ name: classifier-fixer
 description: Repairs ONE drifted rule's builtin classifier from its drift_evidence[]. Runs the fixability triage on every evidence case first, then terminates each adjudicated case as captured (predicate broadened, positive + negative-guard tests), fixable-in-Ariadne (backlog-task proposal, never absorbed), or mis-classified (hand-off toward classifier-author). Edits only check_<group_id>.ts and its test; never writes registry.json.
 disable-model-invocation: true
 tools: Bash(node --import tsx .claude/skills/triage/scripts/get_entry_context.ts:*), Bash(npx vitest run:*), Read, Grep, Glob, Edit(packages/core/src/classify_entry_points/builtins/**), Write(packages/core/src/classify_entry_points/builtins/**), Write(~/.ariadne/reconcile/**), Write(/tmp/claude/**)
-model: opus
+model: sonnet
 maxTurns: 50
 ---
 

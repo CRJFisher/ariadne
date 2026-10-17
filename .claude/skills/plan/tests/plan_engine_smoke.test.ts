@@ -1,7 +1,7 @@
 /**
  * End-to-end smoke test for the plan engine (AC #7): drive Pass A (deterministic
  * fault-area grouping) over ≥2 finalized triage runs, then Pass C (build +
- * reconcile) on a SYNTHETIC strategist plan (the opus agent is not run in tests),
+ * reconcile) on a SYNTHETIC strategist plan (the strategist agent is not run in tests),
  * and assert:
  *
  *   - grouped, hierarchical `PlanTask` rows (architectural → fault_area →

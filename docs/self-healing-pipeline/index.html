@@ -134,7 +134,7 @@
   <rect x="360" y="106" width="144" height="104" rx="8" fill="#13203a" stroke="#3a5a8f"/>
   <rect x="356" y="110" width="144" height="104" rx="8" fill="#16263f" stroke="#6ea8fe" stroke-width="1.5"/>
   <text x="428" y="134" text-anchor="middle" font-size="12.5" font-weight="600" fill="#e6e9ef">triage-investigator</text>
-  <text x="428" y="152" text-anchor="middle" font-size="12.5" font-weight="600" fill="#6ea8fe">pool (Sonnet ×N)</text>
+  <text x="428" y="152" text-anchor="middle" font-size="12.5" font-weight="600" fill="#6ea8fe">pool (Haiku ×N)</text>
   <text x="428" y="176" text-anchor="middle" font-size="11" fill="#9aa3b2">per-entry TriageVerdicts:</text>
   <text x="428" y="191" text-anchor="middle" font-size="10" fill="#9aa3b2">tp / fp-novel / fp-cls-regr / uncertain</text>
 
@@ -157,7 +157,7 @@
   <rect x="864" y="106" width="144" height="104" rx="8" fill="#13203a" stroke="#3a5a8f"/>
   <rect x="860" y="110" width="144" height="104" rx="8" fill="#16263f" stroke="#6ea8fe" stroke-width="1.5"/>
   <text x="932" y="134" text-anchor="middle" font-size="12.5" font-weight="600" fill="#e6e9ef">plan-strategist</text>
-  <text x="932" y="152" text-anchor="middle" font-size="12.5" font-weight="600" fill="#6ea8fe">pool (Opus, 1/bucket)</text>
+  <text x="932" y="152" text-anchor="middle" font-size="12.5" font-weight="600" fill="#6ea8fe">pool (Sonnet, 1/bucket)</text>
   <text x="932" y="176" text-anchor="middle" font-size="11" fill="#9aa3b2">validated</text>
   <text x="932" y="191" text-anchor="middle" font-size="11" fill="#9aa3b2">StrategistPlan trees</text>
 
@@ -312,10 +312,10 @@
 <p>Ariadne's core job is to detect call graphs and find a codebase's entry points. Doing that well means correctly distinguishing genuinely-unreachable code from code whose callers the resolver failed to connect — and every such failure is a defect in Ariadne itself. The pipeline is the operational loop around the engine: it surfaces those defects, turns them into actionable engineering work, fences the actuation behind a human, and re-reads what it learned on the next run.</p>
 
 <h3>Sense — triage</h3>
-<p>Triage runs as a self-contained per-commit job. It calls <code>@ariadnejs/core</code> to detect entry-point candidates, then partitions every candidate into three buckets: entries an existing classifier rule already explains (auto-classified, never investigated), entries a prior same-commit run already confirmed as true dead code (the TP cache), and a residual pool. A pool of <code>triage-investigator</code> sub-agents (Sonnet) investigates the residual, each emitting one self-contained <code>TriageVerdict</code> — <code>tp</code>, <code>fp-novel</code>, <code>fp-classifier-regression</code>, or <code>uncertain</code>. Finalize folds every verdict into one published, schema-v5 <code>triage_results/&lt;run-id&gt;.json</code> — the single cross-skill seam. Triage reads the registry as a filter but never writes it.</p>
+<p>Triage runs as a self-contained per-commit job. It calls <code>@ariadnejs/core</code> to detect entry-point candidates, then partitions every candidate into three buckets: entries an existing classifier rule already explains (auto-classified, never investigated), entries a prior same-commit run already confirmed as true dead code (the TP cache), and a residual pool. A pool of <code>triage-investigator</code> sub-agents (Haiku) investigates the residual, each emitting one self-contained <code>TriageVerdict</code> — <code>tp</code>, <code>fp-novel</code>, <code>fp-classifier-regression</code>, or <code>uncertain</code>. Finalize folds every verdict into one published, schema-v5 <code>triage_results/&lt;run-id&gt;.json</code> — the single cross-skill seam. Triage reads the registry as a filter but never writes it.</p>
 
 <h3>Classify — plan</h3>
-<p>Plan is an offline, planning-only engine over the published <code>novel_issues[]</code> rows. Group flattens each novel issue into evidence and buckets it by <code>AriadneFaultArea</code> — a folder-anchored, recomputed-on-read taxonomy of which part of core is at fault — consulting the membership-override store for re-routes. Strategize runs one <code>plan-strategist</code> (Opus) per bucket, which reviews every member's membership and emits a validated <code>StrategistPlan</code> tree with a <code>core_fix_effort</code> estimate. Reconcile flattens accepted plans into <code>PlanTask</code> rows keyed by a content-addressed <code>dedup_key</code>, augmenting rather than duplicating, retiring orphans whose bug appears fixed, and recording mis-route corrections. Plan writes only its own task-DB under <code>~/.ariadne/plan/</code>.</p>
+<p>Plan is an offline, planning-only engine over the published <code>novel_issues[]</code> rows. Group flattens each novel issue into evidence and buckets it by <code>AriadneFaultArea</code> — a folder-anchored, recomputed-on-read taxonomy of which part of core is at fault — consulting the membership-override store for re-routes. Strategize runs one <code>plan-strategist</code> (Sonnet) per bucket, which reviews every member's membership and emits a validated <code>StrategistPlan</code> tree with a <code>core_fix_effort</code> estimate. Reconcile flattens accepted plans into <code>PlanTask</code> rows keyed by a content-addressed <code>dedup_key</code>, augmenting rather than duplicating, retiring orphans whose bug appears fixed, and recording mis-route corrections. Plan writes only its own task-DB under <code>~/.ariadne/plan/</code>.</p>
 
 <h3>Actuate — human</h3>
 <p>The autonomous sweep proposes; only a human promotes. The <code>prioritize</code> skill is the decision surface; the <code>export_to_backlog.ts</code> adapter — the sole writer of <code>backlog/</code> — graduates selected tasks into <code>backlog/tasks/&lt;id&gt;.md</code>, stamping each with its <code>plan_dedup_key</code>. The human likewise owns every registry transition: authoring a <code>wip</code> rule, flipping it to <code>permanent</code> (regenerating the bundled core slice), or to <code>fixed</code> once a landing commit's <code>fix(&lt;task_id&gt;)</code> scope matches the rule's <code>backlog_task</code>.</p>
@@ -345,11 +345,11 @@
   </div>
   <div class="card">
     <h3 style="margin-top:0"><a href="triage-investigator.html">The Investigator &amp; Verdict Union</a></h3>
-    <p style="font-size:14px; color:var(--muted)">The Sonnet worker pool, the pump's dispatch and crash recovery, and the four-arm <code>TriageVerdict</code> union with its write boundary.</p>
+    <p style="font-size:14px; color:var(--muted)">The Haiku worker pool, the pump's dispatch and crash recovery, and the four-arm <code>TriageVerdict</code> union with its write boundary.</p>
   </div>
   <div class="card">
     <h3 style="margin-top:0"><a href="plan-classify.html">Plan: Group, Strategize, Reconcile</a></h3>
-    <p style="font-size:14px; color:var(--muted)">Plan's three passes: fault-area bucketing with override re-routes, one Opus strategist per bucket, and dedup-keyed reconciliation.</p>
+    <p style="font-size:14px; color:var(--muted)">Plan's three passes: fault-area bucketing with override re-routes, one Sonnet strategist per bucket, and dedup-keyed reconciliation.</p>
   </div>
   <div class="card">
     <h3 style="margin-top:0"><a href="fault-area-taxonomy.html">Fault Areas &amp; dedup_key</a></h3>

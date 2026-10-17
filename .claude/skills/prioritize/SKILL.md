@@ -136,7 +136,7 @@ Always invoke with `node --import tsx`. Never `pnpm exec tsx` or `npx tsx`
 
 ### Resuming a crashed run
 
-A prioritize run fans out expensive opus/200-turn sub-agents (an investigator or
+A prioritize run fans out expensive 200-turn sub-agents (an investigator or
 classifier-author per group in step 3/3a, an architect per cluster in step 7a).
 A session death mid-fan-out must not re-spend the investigations that already
 finished. Resume is idempotent by construction:

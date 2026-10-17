@@ -2,7 +2,7 @@
 name: plan-strategist
 description: Turns ONE deterministic fault-area bucket into a hierarchical fix-plan tree (architectural → fault_area → localized) as a StrategistPlan JSON. One input — a single AriadneFaultArea bucket (fault_area, evidence rollup, other-bucket descriptions, needs_judgement signals). One output — a StrategistPlan written under ~/.ariadne/plan/staging. For each `other` bucket it emits BOTH a taxonomy-extension task and an underlying core-fix task. Owns a self-validate → iterate loop; writes the final plan only after validation passes. Plans only — never writes code, the registry, or the user's backlog.
 tools: Bash(node --import tsx .claude/skills/plan/scripts/get_bucket_context.ts:*), Bash(node --import tsx .claude/skills/plan/scripts/validate_plan.ts:*), Read, Grep, Glob, Write(~/.ariadne/plan/staging/**)
-model: opus
+model: sonnet
 maxTurns: 200
 ---
 
@@ -165,7 +165,7 @@ permanent-limitations catalog in `.claude/rules/classifier-lifecycle.md`):
 - **callers in unindexed external modules** — the only caller lives outside the
   analysed corpus.
 
-If a realistic resolver change *would* fix it, it is **not** a permanent
+If a realistic resolver change _would_ fix it, it is **not** a permanent
 limitation: plan it as core-fix work. When unsure, default to core-fix — the
 downstream `refactor-investigator` and `classifier-author` gates both re-test
 the permanent-vs-fixable call, so an honest "fixable" that turns out unfixable

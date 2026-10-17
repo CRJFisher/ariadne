@@ -82,7 +82,7 @@
 <p>
   <span class="tag">skill: plan</span>
   <span class="tag">Pass A — group (deterministic)</span>
-  <span class="tag">Pass B — strategize (opus)</span>
+  <span class="tag">Pass B — strategize (sonnet)</span>
   <span class="tag">Pass C — reconcile (deterministic)</span>
   <span class="tag">planning-only</span>
 </p>
@@ -127,7 +127,7 @@
 
   <rect x="690" y="22" width="240" height="62" rx="8" fill="#1d212b" stroke="#6ea8fe"/>
   <text x="810" y="46" text-anchor="middle" fill="#6ea8fe" font-size="13" font-weight="700">Pass B — Strategize</text>
-  <text x="810" y="64" text-anchor="middle" fill="#9aa3b2" font-size="11.5">plan-strategist × N (opus, ≤5 concurrent)</text>
+  <text x="810" y="64" text-anchor="middle" fill="#9aa3b2" font-size="11.5">plan-strategist × N (sonnet, ≤5 concurrent)</text>
   <text x="810" y="78" text-anchor="middle" fill="#9aa3b2" font-size="11.5">self-validate → iterate loop</text>
 
   <!-- B down to plans -->
@@ -195,9 +195,9 @@
 <h3>Bucket output</h3>
 <p>Each <code>FaultAreaBucket</code> carries its evidence verbatim plus rollups: <code>observed_count</code>, sorted <code>projects</code> and <code>source_runs</code>, sorted <code>descriptions</code> (free-text signal, populated for the <code>other</code> escape hatch), and a <code>needs_judgement</code> flag. Buckets sort by <code>observed_count</code> descending, ties broken lexically by <code>fault_area</code>, so the strategist wave and every test assertion are deterministic. Buckets stage under <code>~/.ariadne/plan/staging/&lt;sweep&gt;/buckets/</code> alongside a <code>manifest.json</code> recording the full scanned scope — projects and run ids <em>including zero-FP runs</em>, which Pass C's orphan retirement depends on.</p>
 
-<h2 id="pass-b">Pass B — Strategize: one opus strategist per bucket</h2>
+<h2 id="pass-b">Pass B — Strategize: one sonnet strategist per bucket</h2>
 
-<p>The skill dispatches one <code>plan-strategist</code> sub-agent (opus, 200-turn) per bucket, capped at <code>MAX_CONCURRENT_STRATEGISTS = 5</code> and drained in waves. The strategist hydrates its bucket with <code>get_bucket_context.ts</code>, plans, and writes one file — a <code>StrategistPlan</code> JSON (schema v1) under <code>staging/&lt;sweep_id&gt;/plans/&lt;fault_area&gt;.json</code> — returning nothing inline. It never writes code, the registry, or the backlog; its only write grant is <code>~/.ariadne/plan/staging/**</code>.</p>
+<p>The skill dispatches one <code>plan-strategist</code> sub-agent (sonnet, 200-turn) per bucket, capped at <code>MAX_CONCURRENT_STRATEGISTS = 5</code> and drained in waves. The strategist hydrates its bucket with <code>get_bucket_context.ts</code>, plans, and writes one file — a <code>StrategistPlan</code> JSON (schema v1) under <code>staging/&lt;sweep_id&gt;/plans/&lt;fault_area&gt;.json</code> — returning nothing inline. It never writes code, the registry, or the backlog; its only write grant is <code>~/.ariadne/plan/staging/**</code>.</p>
 
 <h3>Membership review first</h3>
 <p>Pass A's deterministic lookup can mis-route a member into a bucket whose bulk root cause it does not share — a borderline <code>(stage, reason)</code>, a defaulted derivation, or a genuinely cross-area fault. The strategist is the one stage with judgement and code access, so before planning it emits a <code>membership</code> array: one verdict per evidence index, prioritizing the <code>needs_judgement_indices</code> (members whose derivation defaulted, the likeliest mis-routes).</p>

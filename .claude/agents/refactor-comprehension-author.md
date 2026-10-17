@@ -3,7 +3,7 @@ name: refactor-comprehension-author
 description: "Renders ONE funded cluster's verified refactor plan into a self-contained HTML comprehension doc — a benefit-vs-cost decision aid the user reads while ranking clusters, not a transcript of the plan. One input — a cluster's plan_path (a refactor_plan.md or a merged consolidated_plan.md) and the exact backlog/docs/<slug>.comprehension.html target. One output — that one HTML file, staged for graduation. Presentation-only — never writes packages/core, the registry, the backlog tasks, or the plan itself."
 disable-model-invocation: true
 tools: Read, Write(backlog/docs/**)
-model: opus
+model: haiku
 maxTurns: 30
 ---
 

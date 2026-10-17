@@ -14,7 +14,7 @@
  * `--sweep <id>` resumes an existing sweep instead of minting a fresh one:
  * buckets are regenerated into the same dir, and any fault area whose strategist
  * plan (`plans/<area>.json`) is already staged is flagged `plan_exists` in the
- * summary so Pass B skips re-dispatching its opus/200-turn strategist. Pass the
+ * summary so Pass B skips re-dispatching its 200-turn strategist. Pass the
  * same scan filters as the original run so the regenerated buckets match.
  *
  * Usage:
@@ -98,7 +98,7 @@ export function resolve_sweep_id(sweep: string | null): string {
 /**
  * The fault areas in `sweep_id` whose strategist plan (`plans/<area>.json`) is
  * already staged and complete. On a resumed run these are skipped from the Pass
- * B dispatch so the opus/200-turn strategist fan-out is not re-spent. The
+ * B dispatch so the 200-turn strategist fan-out is not re-spent. The
  * strategist writes its plan with the non-atomic harness `Write` tool, so a
  * crash mid-write can leave a truncated file — completeness is therefore gated
  * on JSON-parseability, not mere non-emptiness: a zero-byte or truncated file
