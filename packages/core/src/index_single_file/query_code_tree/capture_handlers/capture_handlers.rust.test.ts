@@ -175,7 +175,7 @@ describe("rust_builder", () => {
 
       const definitions = process_capture(
         code,
-        "definition.class.generic",
+        "definition.class",
         "type_identifier",
         "Container"
       );
@@ -247,7 +247,7 @@ describe("rust_builder", () => {
 
       const definitions = process_capture(
         code,
-        "definition.enum.generic",
+        "definition.enum",
         "type_identifier",
         "Result"
       );
@@ -310,7 +310,7 @@ describe("rust_builder", () => {
 
       const definitions = process_capture(
         code,
-        "definition.interface.generic",
+        "definition.interface",
         "type_identifier",
         "Iterator"
       );
@@ -348,7 +348,7 @@ describe("rust_builder", () => {
 
       const definitions = process_capture(
         code,
-        "definition.function.async",
+        "definition.function",
         "identifier",
         "fetch_data",
         true
@@ -366,7 +366,7 @@ describe("rust_builder", () => {
 
       const definitions = process_capture(
         code,
-        "definition.function.const",
+        "definition.function",
         "identifier",
         "compute",
         true
@@ -384,7 +384,7 @@ describe("rust_builder", () => {
 
       const definitions = process_capture(
         code,
-        "definition.function.unsafe",
+        "definition.function",
         "identifier",
         "raw_access",
         true
@@ -402,7 +402,7 @@ describe("rust_builder", () => {
 
       const definitions = process_capture(
         code,
-        "definition.function.generic",
+        "definition.function",
         "identifier",
         "compare",
         true
@@ -840,7 +840,7 @@ impl MyStruct {
       if (struct_node) {
         const definitions = process_capture(
           code,
-          "definition.class.generic",
+          "definition.class",
           "type_identifier",
           "Database"
         );
@@ -1109,7 +1109,7 @@ impl MyStruct {
 
       const definitions = process_capture(
         code,
-        "definition.class.generic",
+        "definition.class",
         "type_identifier",
         "Vec"
       );
@@ -1125,7 +1125,7 @@ impl MyStruct {
 
       const definitions = process_capture(
         code,
-        "definition.class.generic",
+        "definition.class",
         "type_identifier",
         "Vec"
       );
@@ -1141,7 +1141,7 @@ impl MyStruct {
 
       const definitions = process_capture(
         code,
-        "definition.function.async",
+        "definition.function",
         "identifier",
         "fetch",
         true
@@ -1158,7 +1158,7 @@ impl MyStruct {
 
       const definitions = process_capture(
         code,
-        "definition.function.unsafe",
+        "definition.function",
         "identifier",
         "raw_ptr",
         true
@@ -1634,7 +1634,7 @@ impl MyStruct {
 
       const definitions = process_capture(
         code,
-        "definition.variable.mut",
+        "definition.variable",
         "identifier",
         "count"
       );
@@ -1650,7 +1650,7 @@ impl MyStruct {
 
       const definitions = process_capture(
         code,
-        "definition.variable.mut",
+        "definition.variable",
         "identifier",
         "items"
       );

@@ -303,7 +303,14 @@ export function module_path_attribute_target(
   return [...stem, ...enclosing, attribute_value].join("/");
 }
 
-export function extract_generic_parameters(node: SyntaxNode): TypeParameter[] {
+/**
+ * The type, lifetime and const parameters an item declares, each with the
+ * bound its parameter list or `where` clause writes; undefined when the item
+ * declares none, matching the optional `generics` of every definition kind.
+ */
+export function extract_generic_parameters(
+  node: SyntaxNode
+): readonly TypeParameter[] | undefined {
   const generics: TypeParameter[] = [];
   const type_params = node.childForFieldName?.("type_parameters");
   const where_bounds = where_clause_bounds(node);
@@ -329,7 +336,7 @@ export function extract_generic_parameters(node: SyntaxNode): TypeParameter[] {
     }
   }
 
-  return generics;
+  return generics.length > 0 ? generics : undefined;
 }
 
 /**
@@ -595,6 +602,12 @@ export function is_associated_function(node: SyntaxNode): boolean {
 
   // No self parameter means it's an associated function (static)
   return true;
+}
+
+/** Whether a `fn` item is declared `async`, alone or among other modifiers. */
+export function is_async_function(fn_item: SyntaxNode): boolean {
+  const modifiers = fn_item.children.find((child) => child.type === "function_modifiers");
+  return modifiers?.children.some((child) => child.type === "async") ?? false;
 }
 
 function has_ancestor_of_type(node: SyntaxNode, type: string): boolean {

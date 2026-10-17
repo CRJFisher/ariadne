@@ -2998,6 +2998,95 @@ impl Counter {
     });
   });
 
+  // One capture per item: a generic or modified item is one definition that
+  // carries all of its facts, however many query shapes it fits.
+  describe("Generic and modified items", () => {
+    function build_index(code: string) {
+      const tree = parser.parse(code);
+      const parsed_file = create_parsed_file(code, "test.rs" as FilePath, tree, "rust");
+      return build_index_single_file(parsed_file, tree, "rust");
+    }
+
+    it("records a generic trait's type parameters", () => {
+      const index = build_index(`pub trait Visitor<T: Clone> {
+    fn visit(&self, item: T);
+}
+`);
+      expect(
+        Array.from(index.interfaces.values()).map((t) => ({ name: t.name, generics: t.generics }))
+      ).toEqual([{ name: "Visitor", generics: [{ name: "T", bound: "Clone" }] }]);
+    });
+
+    it("records a generic enum's type parameters and variants", () => {
+      const index = build_index(`pub enum Either<L, R> {
+    Left(L),
+    Right(R),
+}
+`);
+      expect(
+        Array.from(index.enums.values()).map((e) => ({
+          name: e.name,
+          generics: e.generics,
+          members: e.members.map((m) => m.name),
+        }))
+      ).toEqual([
+        { name: "Either", generics: [{ name: "L" }, { name: "R" }], members: ["Left", "Right"] },
+      ]);
+    });
+
+    it("records a generic async function's type parameters and doc comment", () => {
+      const index = build_index(`/// Fetches a value.
+pub async fn fetch<T: Send>(x: T) -> T { x }
+`);
+      expect(
+        Array.from(index.functions.values()).map((f) => ({
+          name: f.name,
+          generics: f.generics,
+          docstring: f.docstring,
+        }))
+      ).toEqual([
+        { name: "fetch", generics: [{ name: "T", bound: "Send" }], docstring: "/// Fetches a value." },
+      ]);
+    });
+
+    it("records the doc comment of a const unsafe function", () => {
+      const index = build_index(`/// Reads raw.
+pub const unsafe fn raw() -> u8 { 0 }
+`);
+      expect(
+        Array.from(index.functions.values()).map((f) => ({ name: f.name, docstring: f.docstring }))
+      ).toEqual([{ name: "raw", docstring: "/// Reads raw." }]);
+    });
+
+    it("records async and the doc comment on methods of trait and inherent impls", () => {
+      const index = build_index(`pub struct Server;
+
+impl std::fmt::Display for Server {
+    /// Formats the server.
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result { Ok(()) }
+}
+
+impl Handler for Server {
+    /// Handles a request.
+    async fn handle(&self) -> u8 { 0 }
+}
+
+impl Server {
+    /// Serves forever.
+    pub async fn serve(&self) {}
+}
+`);
+      const [server] = Array.from(index.classes.values());
+      expect(
+        server.methods.map((m) => ({ name: m.name, async: m.async, docstring: m.docstring }))
+      ).toEqual([
+        { name: "fmt", async: undefined, docstring: "/// Formats the server." },
+        { name: "handle", async: true, docstring: "/// Handles a request." },
+        { name: "serve", async: true, docstring: "/// Serves forever." },
+      ]);
+    });
+  });
+
   describe("pattern bindings", () => {
     function variable_names(code: string): string[] {
       const tree = parser.parse(code);

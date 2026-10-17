@@ -396,7 +396,6 @@ const MAX_SIZE: usize = 100;
       expect(names).toEqual([
         "definition.class",
         "definition.constant",
-        "definition.constructor",
         "definition.enum",
         "definition.enum_member",
         "definition.field",
@@ -790,6 +789,17 @@ describe("Fixture corpus invariants", () => {
         "typescript/code/modules/exports.ts definition.parameter@388:396 x2",
         "typescript/code/modules/exports.ts definition.parameter@1112:1118 x2",
       ],
+      single_definition_per_range: false,
+    },
+    rust: {
+      grammar: Rust,
+      ext: ".rs",
+      named_definition_nodes: ["struct_item", "enum_item", "trait_item", "function_item"],
+      duplicate_families: ["definition.", "scope.", "reference.call"],
+      known_duplicates: [],
+      // A `fn` inside an impl or trait body fits the free-function pattern as
+      // well as its method pattern; the free-function handler declines it, so
+      // the clause stays python-only.
       single_definition_per_range: false,
     },
   };

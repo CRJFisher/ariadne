@@ -4,7 +4,6 @@
  * Separated from main capture_handlers.rust.ts to keep file sizes manageable.
  */
 
-import type { SymbolName, TypeParameter } from "@ariadnejs/types";
 import type { DefinitionBuilder } from "../../definitions/definition_builder";
 import type { ImplMethodInput } from "../../definitions/method_input";
 import type { CaptureNode } from "../../capture_types";
@@ -16,6 +15,7 @@ import {
   find_containing_impl,
   find_containing_trait,
   is_associated_function,
+  is_async_function,
 } from "../symbol_factories/symbol_factories.rust";
 import {
   consume_documentation,
@@ -45,38 +45,31 @@ function add_impl_method(builder: DefinitionBuilder, method_def: ImplMethodInput
   builder.add_unattached_impl_method(method_def);
 }
 
-/** The type parameters a method declares, with the bounds its `where` clause writes. */
-function method_generics(capture: CaptureNode): readonly TypeParameter[] | undefined {
-  const generics = extract_generic_parameters(capture.node.parent || capture.node);
-  return generics.length > 0 ? generics : undefined;
-}
-
 export function handle_definition_method(
   capture: CaptureNode,
   builder: DefinitionBuilder,
   context: ProcessingContext
 ): void {
-  const method_id = create_method_id(capture);
-  const impl_info = find_containing_impl(capture);
-  const return_type = extract_return_type(capture.node.parent || capture.node);
-  const is_static = is_associated_function(capture.node.parent || capture.node);
+  // The doc comment is consumed even when no self type is found, so it never
+  // attaches to whatever definition follows.
   const docstring = consume_documentation(capture.location);
+  const impl_info = find_containing_impl(capture);
+  if (!impl_info?.struct_name) return;
 
-  if (impl_info?.struct_name) {
-    const method_def = {
-      symbol_id: method_id,
-      name: capture.text,
-      location: capture.location,
-      scope_id: context.get_scope_id(capture.location),
-      return_type: return_type,
-      static: is_static || undefined,
-      docstring,
-      generics: method_generics(capture),
-      impl_self_type: impl_info.struct_name,
-      impl_trait_name: impl_info.trait_name,
-    };
-    add_impl_method(builder, method_def);
-  }
+  const fn_item = capture.node.parent || capture.node;
+  add_impl_method(builder, {
+    symbol_id: create_method_id(capture),
+    name: capture.text,
+    location: capture.location,
+    scope_id: context.get_scope_id(capture.location),
+    return_type: extract_return_type(fn_item),
+    static: is_associated_function(fn_item) || undefined,
+    async: is_async_function(fn_item) || undefined,
+    docstring,
+    generics: extract_generic_parameters(fn_item),
+    impl_self_type: impl_info.struct_name,
+    impl_trait_name: impl_info.trait_name,
+  });
 }
 
 export function handle_definition_method_default(
@@ -103,59 +96,5 @@ export function handle_definition_method_default(
         optional: true,
       });
     }
-  }
-}
-
-export function handle_definition_method_async(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const method_id = create_method_id(capture);
-  const impl_info = find_containing_impl(capture);
-  const return_type = extract_return_type(capture.node.parent || capture.node);
-  const docstring = consume_documentation(capture.location);
-
-  if (impl_info?.struct_name) {
-    const method_def = {
-      symbol_id: method_id,
-      name: capture.text,
-      location: capture.location,
-      scope_id: context.get_scope_id(capture.location),
-      return_type: return_type,
-      async: true as const,
-      docstring,
-      generics: method_generics(capture),
-      impl_self_type: impl_info.struct_name,
-      impl_trait_name: impl_info.trait_name,
-    };
-    add_impl_method(builder, method_def);
-  }
-}
-
-export function handle_definition_constructor(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const method_id = create_method_id(capture);
-  const impl_info = find_containing_impl(capture);
-  const return_type = extract_return_type(capture.node.parent || capture.node);
-  const docstring = consume_documentation(capture.location);
-
-  if (impl_info?.struct_name && capture.text === "new") {
-    const method_def = {
-      symbol_id: method_id,
-      name: capture.text as SymbolName,
-      location: capture.location,
-      scope_id: context.get_scope_id(capture.location),
-      return_type: return_type,
-      static: true as const,
-      docstring,
-      generics: method_generics(capture),
-      impl_self_type: impl_info.struct_name,
-      impl_trait_name: impl_info.trait_name,
-    };
-    add_impl_method(builder, method_def);
   }
 }
