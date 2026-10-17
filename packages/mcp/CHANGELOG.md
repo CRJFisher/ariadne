@@ -1,5 +1,59 @@
 # @ariadnejs/mcp
 
+## 0.3.0
+
+### Minor Changes
+
+- 817beb4: Declare the supported Node.js range
+
+  - `@ariadnejs/core`, `@ariadnejs/types` and `@ariadnejs/mcp` require Node.js 22.13.0 or later; package managers warn when installed on an older Node.
+
+- 817beb4: Report true entry points by default, and put the suppressed bucket behind a flag.
+
+  `list_entrypoints` sources its output from
+  `Project.get_classified_entry_points()`, so the default listing an agent reads
+  holds true entry points only. Framework-invoked routes, Python dunder protocol
+  methods, dynamically dispatched callables, indirect-only calls and test-only
+  code no longer appear as functions nothing calls.
+
+  Start the server with `--show-suppressed` (or `ARIADNE_SHOW_SUPPRESSED=1`) to
+  append a clearly-delimited "Suppressed (known false positives)" section, each
+  entry tagged with the `[group_id: detail]` that matched it. The flag is
+  server-level rather than a per-call parameter, so a triage workflow enables it
+  once in `.mcp.json` while everyday agents keep the clean default;
+  `--no-show-suppressed` overrides the environment variable.
+
+  The `ariadne-mcp` binary and the `start_server` export keep their names. The
+  tool set is unchanged: `list_entrypoints` and `show_call_graph_neighborhood`.
+
+### Patch Changes
+
+- 817beb4: Refuse a path outside the loaded project instead of answering about a different codebase.
+
+  The server loads one project root at startup. A `files` or `folders` argument, or
+  an absolute `symbol_ref` path, that lies outside that root used to produce an
+  answer about another tree, or a "Could not find callable" that did not say why.
+  It now returns an error response naming the offending path and the loaded root.
+  An empty-string entry in `files` or `folders` is rejected the same way.
+
+- Updated dependencies [817beb4]
+- Updated dependencies [817beb4]
+- Updated dependencies [817beb4]
+- Updated dependencies [817beb4]
+- Updated dependencies [817beb4]
+- Updated dependencies [817beb4]
+- Updated dependencies [817beb4]
+- Updated dependencies [817beb4]
+- Updated dependencies [817beb4]
+- Updated dependencies [817beb4]
+- Updated dependencies [817beb4]
+- Updated dependencies [817beb4]
+- Updated dependencies [817beb4]
+- Updated dependencies [817beb4]
+- Updated dependencies [817beb4]
+  - @ariadnejs/core@1.0.0
+  - @ariadnejs/types@1.0.0
+
 ## 0.2.0
 
 ### Minor Changes
