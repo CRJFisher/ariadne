@@ -1,0 +1,7 @@
+{
+  "key": "once",
+  "run_id": "20261018T191936Z-90f86a11",
+  "scope": "once",
+  "step_id": "lodash_lodash",
+  "summary": "Verified the prior /triage lodash/lodash run already completed the full pipeline in this session: detection, prepare, 7-entry investigator loop, and finalize all succeeded with no crash. Confirmed on\u2026"
+}

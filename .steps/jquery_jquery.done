@@ -1,0 +1,7 @@
+{
+  "key": "once",
+  "run_id": "20261018T191936Z-90f86a11",
+  "scope": "once",
+  "step_id": "jquery_jquery",
+  "summary": "Verified the prior session's /triage jquery/jquery run already reached the required end state: tracked working tree is unchanged (clean git status/diff), triage run 51eb576-2026-10-18T19-22-24.614Z i\u2026"
+}
