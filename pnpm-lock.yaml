@@ -279,6 +279,9 @@ importers:
       '@ariadnejs/types':
         specifier: workspace:*
         version: link:../../../packages/types
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
     devDependencies:
       '@types/node':
         specifier: ^24.0.14

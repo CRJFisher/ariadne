@@ -127,7 +127,7 @@ function attach_fault_diagnostics(
 /**
  * Build the published v5 output from the run's per-entry verdict files.
  *
- * The function is pure: callers (`finalize_triage.ts`) load the per-entry
+ * The function is pure: its caller (`finalize_run`) loads the per-entry
  * verdict files first and pass them in via `FinalizationContext.sources`.
  */
 export function build_finalization_output(
@@ -168,7 +168,7 @@ export function build_finalization_output(
     if (verdict === undefined) {
       throw new Error(
         `build_finalization_output: entry ${entry.entry_index} (${entry.name}) is completed on the llm-triage route but has no verdict in results/. ` +
-          "Re-run the per-entry investigator (get_next_triage_entry) for this entry before finalizing.",
+          "Re-run investigate_and_finalize.ts for this run before finalizing.",
       );
     }
 

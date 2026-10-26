@@ -78,26 +78,28 @@
 <main>
 
 <h1>The Triage Investigator and the Verdict Union</h1>
-<p class="lede">A pool of Haiku sub-agents, each handed one entry-point candidate, each emitting exactly one self-contained <code>TriageVerdict</code> file — pumped by a stateless picker that makes crash recovery automatic.</p>
+<p class="lede">One deterministic script investigates every residual entry-point candidate, each as a lean Agent SDK call that submits exactly one self-contained <code>TriageVerdict</code> — in a continuous pool that warms the prompt cache once and makes crash recovery automatic.</p>
 
 <p>
-<span class="tag">agent: .claude/agents/triage-investigator.md</span>
-<span class="tag">model: haiku</span>
-<span class="tag">maxTurns: 50</span>
-<span class="tag">one verdict per invocation</span>
+<span class="tag">script: scripts/investigate_and_finalize.ts</span>
+<span class="tag">model: claude-haiku-5-5 · effort medium</span>
+<span class="tag">maxTurns: 20</span>
+<span class="tag">one verdict per entry</span>
 </p>
 
-<h2 id="pump">The worker-pool pump</h2>
+<h2 id="pump">The investigation loop</h2>
 
-<p>The main triage agent runs a continuous worker pool over the residual entries — those neither auto-classified by a registry rule nor satisfied from the TP cache. It keeps the pool full by repeatedly calling <code>get_next_triage_entry.ts</code>, which does two things on every call:</p>
+<p>After Phase 2 prepares a run, the skill runs one command for Phases 3–4. No agent dispatches or coordinates investigations. Each call of <code>investigate_and_finalize.ts</code>:</p>
 
 <ol>
-  <li><strong>Merge</strong> — <code>merge_results</code> absorbs any completed verdict files from <code>results/</code> into the triage state, flipping each matching entry's <code>status</code> from <code>"pending"</code> to <code>"completed"</code> (or <code>"failed"</code> when the verdict file does not parse). The verdict itself is <em>not</em> copied onto the entry — <code>entry.result</code> stays <code>null</code>. The verdict ledger lives on disk in <code>results/</code>; the state file is a pure control-plane log of routing and status.</li>
-  <li><strong>Pick</strong> — <code>pick_next_entries</code> returns up to <code>--count</code> entry indices that are <code>status === "pending"</code>, not <code>auto_classified</code>, and not listed in <code>--active</code>. The picker never mutates a pending entry: there is no "claimed" or "in-flight" status on disk.</li>
+  <li><strong>Claims</strong> — <code>absorb_and_pick</code> merges any verdict files already in <code>results/</code> into the triage state (flipping each entry to <code>"completed"</code>, or <code>"failed"</code> when a file does not parse) and picks every entry still to investigate: <code>"pending"</code>, or <code>"failed"</code> with retry budget left. The verdict itself is <em>not</em> copied onto the entry; the state file is a control-plane log of routing and status.</li>
+  <li><strong>Investigates</strong> — a continuous pool of N concurrent investigations (default 8) with no batch barrier. The pool starts one lead and releases the other slots when the lead's first response arrives, so the shared prompt prefix is written to cache once and read by every later investigation.</li>
+  <li><strong>Writes</strong> — each accepted verdict to <code>results/&lt;entry_index&gt;.json</code>, and each investigation's usage (USD, turns, tokens, first-turn cache split) to <code>investigations.json</code>. An investigation that ends without a verdict is retried once; an entry whose second attempt also ends without one is recorded <code>"failed"</code>.</li>
+  <li><strong>Finalizes</strong> — once nothing is left to investigate, <code>finalize_run</code> publishes the v5 results in the same call.</li>
 </ol>
 
 <figure>
-<svg viewBox="0 0 940 430" role="img" aria-label="Worker pool pump: the main agent calls get_next_triage_entry, which merges results into state and picks pending indices; investigators fetch context via get_entry_context and write one verdict file each back to results/">
+<svg viewBox="0 0 940 400" role="img" aria-label="Investigation loop: investigate_and_finalize claims pending entries from state, a pool runs one lead then N investigations, each an SDK query with a constant system prompt and the entry's bounded context, submitting one verdict that the loop writes to results; a drained run is finalized">
   <defs>
     <marker id="arr" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
       <path d="M0,0 L9,4.5 L0,9 z" fill="#9aa3b2"/>
@@ -110,102 +112,74 @@
     </marker>
   </defs>
 
-  <!-- Main agent -->
-  <rect x="20" y="30" width="220" height="92" rx="10" fill="#171a21" stroke="#6ea8fe" stroke-width="1.5"/>
-  <text x="130" y="58" text-anchor="middle" fill="#e6e9ef" font-size="15" font-weight="600">Main triage agent</text>
-  <text x="130" y="80" text-anchor="middle" fill="#9aa3b2" font-size="12.5">worker pool, tracks in-flight</text>
-  <text x="130" y="98" text-anchor="middle" fill="#9aa3b2" font-size="12.5">indices for --active</text>
+  <rect x="20" y="30" width="250" height="92" rx="10" fill="#171a21" stroke="#6ea8fe" stroke-width="1.5"/>
+  <text x="145" y="58" text-anchor="middle" fill="#e6e9ef" font-size="13.5" font-weight="600" font-family="Menlo, monospace">investigate_and_finalize.ts</text>
+  <text x="145" y="80" text-anchor="middle" fill="#9aa3b2" font-size="12.5">claim pending entries ·</text>
+  <text x="145" y="98" text-anchor="middle" fill="#9aa3b2" font-size="12.5">pool of N, one lead first</text>
 
-  <!-- Pump script -->
-  <rect x="340" y="30" width="280" height="92" rx="10" fill="#171a21" stroke="#2a2f3a" stroke-width="1.5"/>
-  <text x="480" y="56" text-anchor="middle" fill="#e6e9ef" font-size="14" font-weight="600" font-family="Menlo, monospace">get_next_triage_entry.ts</text>
-  <text x="480" y="78" text-anchor="middle" fill="#9aa3b2" font-size="12.5">1. merge_results(state, run_dir)</text>
-  <text x="480" y="96" text-anchor="middle" fill="#9aa3b2" font-size="12.5">2. pick_next_entries(pending, not --active)</text>
-
-  <!-- State file -->
   <rect x="720" y="30" width="200" height="92" rx="10" fill="#11141a" stroke="#2a2f3a" stroke-width="1.5"/>
-  <text x="820" y="58" text-anchor="middle" fill="#e6e9ef" font-size="13.5" font-weight="600" font-family="Menlo, monospace">state.json</text>
+  <text x="820" y="58" text-anchor="middle" fill="#e6e9ef" font-size="13.5" font-weight="600" font-family="Menlo, monospace">triage.json</text>
   <text x="820" y="80" text-anchor="middle" fill="#9aa3b2" font-size="12.5">entries[]: status, route,</text>
-  <text x="820" y="98" text-anchor="middle" fill="#9aa3b2" font-size="12.5">auto_classified — no verdicts</text>
+  <text x="820" y="98" text-anchor="middle" fill="#9aa3b2" font-size="12.5">retry_count — no verdicts</text>
 
-  <!-- Investigators -->
-  <rect x="288" y="208" width="240" height="100" rx="10" fill="#1d212b" stroke="#2a2f3a" stroke-width="1.5"/>
-  <rect x="296" y="216" width="240" height="100" rx="10" fill="#1d212b" stroke="#2a2f3a" stroke-width="1.5"/>
-  <rect x="304" y="224" width="240" height="100" rx="10" fill="#171a21" stroke="#7ee787" stroke-width="1.5"/>
-  <text x="424" y="252" text-anchor="middle" fill="#e6e9ef" font-size="14" font-weight="600">triage-investigator × N</text>
-  <text x="424" y="274" text-anchor="middle" fill="#9aa3b2" font-size="12.5">Haiku sub-agent, one entry each:</text>
-  <text x="424" y="292" text-anchor="middle" fill="#9aa3b2" font-size="12.5">Read / Grep / call-graph MCP,</text>
-  <text x="424" y="310" text-anchor="middle" fill="#9aa3b2" font-size="12.5">then Write one verdict JSON</text>
+  <rect x="288" y="200" width="270" height="110" rx="10" fill="#1d212b" stroke="#2a2f3a" stroke-width="1.5"/>
+  <rect x="296" y="208" width="270" height="110" rx="10" fill="#1d212b" stroke="#2a2f3a" stroke-width="1.5"/>
+  <rect x="304" y="216" width="270" height="110" rx="10" fill="#171a21" stroke="#7ee787" stroke-width="1.5"/>
+  <text x="439" y="244" text-anchor="middle" fill="#e6e9ef" font-size="14" font-weight="600">investigation × N</text>
+  <text x="439" y="266" text-anchor="middle" fill="#9aa3b2" font-size="12.5">Agent SDK query(), one entry each:</text>
+  <text x="439" y="284" text-anchor="middle" fill="#9aa3b2" font-size="12.5">read · grep (repository-confined)</text>
+  <text x="439" y="302" text-anchor="middle" fill="#9aa3b2" font-size="12.5">then submit_verdict once</text>
 
-  <!-- Context script -->
-  <rect x="20" y="232" width="220" height="84" rx="10" fill="#171a21" stroke="#2a2f3a" stroke-width="1.5"/>
-  <text x="130" y="262" text-anchor="middle" fill="#e6e9ef" font-size="13.5" font-weight="600" font-family="Menlo, monospace">get_entry_context.ts</text>
-  <text x="130" y="284" text-anchor="middle" fill="#9aa3b2" font-size="12.5">dispense payload: entry context</text>
-  <text x="130" y="302" text-anchor="middle" fill="#9aa3b2" font-size="12.5">+ relevant_registry_slice</text>
+  <rect x="20" y="216" width="230" height="110" rx="10" fill="#171a21" stroke="#2a2f3a" stroke-width="1.5"/>
+  <text x="135" y="244" text-anchor="middle" fill="#e6e9ef" font-size="13" font-weight="600">prompt</text>
+  <text x="135" y="266" text-anchor="middle" fill="#9aa3b2" font-size="12.5">constant system prompt</text>
+  <text x="135" y="284" text-anchor="middle" fill="#9aa3b2" font-size="12.5">(shared from cache) +</text>
+  <text x="135" y="302" text-anchor="middle" fill="#9aa3b2" font-size="12.5">bounded entry context</text>
 
-  <!-- Results dir -->
-  <rect x="640" y="232" width="280" height="84" rx="10" fill="#11141a" stroke="#7ee787" stroke-width="1.5"/>
-  <text x="780" y="262" text-anchor="middle" fill="#e6e9ef" font-size="13.5" font-weight="600" font-family="Menlo, monospace">results/&lt;entry_index&gt;.json</text>
-  <text x="780" y="284" text-anchor="middle" fill="#9aa3b2" font-size="12.5">one TriageVerdict per file —</text>
-  <text x="780" y="302" text-anchor="middle" fill="#9aa3b2" font-size="12.5">the verdict ledger, source of truth</text>
+  <rect x="640" y="216" width="280" height="110" rx="10" fill="#11141a" stroke="#7ee787" stroke-width="1.5"/>
+  <text x="780" y="244" text-anchor="middle" fill="#e6e9ef" font-size="13.5" font-weight="600" font-family="Menlo, monospace">results/&lt;entry_index&gt;.json</text>
+  <text x="780" y="266" text-anchor="middle" fill="#9aa3b2" font-size="12.5">one TriageVerdict per file —</text>
+  <text x="780" y="284" text-anchor="middle" fill="#9aa3b2" font-size="12.5">the verdict ledger, source of truth</text>
+  <text x="780" y="302" text-anchor="middle" fill="#9aa3b2" font-size="12.5">+ investigations.json (usage)</text>
 
-  <!-- Edges -->
-  <path d="M240 62 L338 62" stroke="#6ea8fe" stroke-width="1.5" fill="none" marker-end="url(#arr-a)"/>
-  <text x="289" y="54" text-anchor="middle" fill="#6ea8fe" font-size="11.5" font-family="Menlo, monospace">--count --active</text>
+  <path d="M270 62 L718 62" stroke="#6ea8fe" stroke-width="1.5" fill="none" marker-end="url(#arr-a)"/>
+  <text x="494" y="54" text-anchor="middle" fill="#6ea8fe" font-size="11.5">absorb + claim (locked)</text>
 
-  <path d="M338 96 L240 96" stroke="#9aa3b2" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
-  <text x="289" y="116" text-anchor="middle" fill="#9aa3b2" font-size="11.5" font-family="Menlo, monospace">{ run_id, entries: [i, …] }</text>
+  <path d="M200 122 L360 214" stroke="#6ea8fe" stroke-width="1.5" fill="none" marker-end="url(#arr-a)"/>
+  <text x="250" y="180" text-anchor="end" fill="#6ea8fe" font-size="11.5">dispatch entry i</text>
 
-  <path d="M620 62 L718 62" stroke="#9aa3b2" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
-  <text x="669" y="54" text-anchor="middle" fill="#9aa3b2" font-size="11.5">read + write back</text>
+  <path d="M250 270 L302 270" stroke="#9aa3b2" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
 
-  <path d="M130 122 L130 230" stroke="#6ea8fe" stroke-width="1.5" fill="none" marker-end="url(#arr-a)"/>
-  <text x="120" y="180" text-anchor="end" fill="#6ea8fe" font-size="11.5">dispatch entry i</text>
+  <path d="M574 270 L638 270" stroke="#7ee787" stroke-width="1.5" fill="none" marker-end="url(#arr-g)"/>
+  <text x="606" y="262" text-anchor="middle" fill="#7ee787" font-size="11.5">verdict</text>
 
-  <path d="M240 274 L302 274" stroke="#9aa3b2" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
-  <text x="271" y="266" text-anchor="middle" fill="#9aa3b2" font-size="11.5">prompt</text>
+  <path d="M780 214 C 780 160, 820 140, 820 124" stroke="#7ee787" stroke-width="1.5" fill="none" stroke-dasharray="5 4" marker-end="url(#arr-g)"/>
+  <text x="900" y="176" text-anchor="end" fill="#7ee787" font-size="11.5">absorbed at the end of the call</text>
 
-  <path d="M544 274 L638 274" stroke="#7ee787" stroke-width="1.5" fill="none" marker-end="url(#arr-g)"/>
-  <text x="591" y="266" text-anchor="middle" fill="#7ee787" font-size="11.5">Write verdict</text>
-
-  <path d="M780 230 C 780 160, 640 130, 560 124" stroke="#7ee787" stroke-width="1.5" fill="none" stroke-dasharray="5 4" marker-end="url(#arr-g)"/>
-  <text x="722" y="170" text-anchor="middle" fill="#7ee787" font-size="11.5">absorbed by merge on next call</text>
-
-  <text x="424" y="380" text-anchor="middle" fill="#9aa3b2" font-size="12.5">phase → "complete" only when nothing is pending AND --active is empty</text>
-  <rect x="214" y="362" width="420" height="28" rx="6" fill="none" stroke="#2a2f3a" stroke-width="1"/>
+  <text x="470" y="372" text-anchor="middle" fill="#9aa3b2" font-size="12.5">drained (nothing pending or retryable) → finalize_run publishes triage_results in the same call</text>
+  <rect x="180" y="354" width="580" height="28" rx="6" fill="none" stroke="#2a2f3a" stroke-width="1"/>
 </svg>
-<figcaption>One pump cycle. The pump's pick is pure; the only durable progress signal is a verdict file appearing in <code>results/</code>, which the next merge folds into state.</figcaption>
+<figcaption>One call. The only durable progress signal is a verdict file appearing in <code>results/</code>, which the end-of-call absorb folds into state.</figcaption>
 </figure>
 
-<h3>The <code>--active</code> double-dispatch guard</h3>
-<p>Because the picker never marks an entry as claimed, two consecutive pump calls would otherwise return the same pending index twice. The main agent prevents this in memory: it passes the comma-separated indices of currently in-flight investigators via <code>--active</code>, and the picker excludes them. In-flight tracking lives only in the live agent's context — never in the state file.</p>
-
-<h3>Crash recovery via pending re-dispense</h3>
-<p>That deliberate omission is the recovery mechanism. An investigator that dies mid-investigation leaves no verdict file, so its entry is still <code>"pending"</code> in state. When a run is resumed (or all of a prior run's investigators have died), the main agent simply calls the pump with <code>--active</code> omitted: every unfinished entry is re-dispensed as if never dispatched. No lease expiry, no janitor process, no claimed-but-orphaned status to repair.</p>
+<h3>Stopping and resuming</h3>
+<p>A call stops starting investigations at the first of: the queue emptying, the <code>--max-usd</code> cap, an account error (spend limit, rate limit, auth), or its time budget (default 420 s, with investigations still running two minutes later aborted), so one call fits inside a 10-minute shell timeout. It prints a summary whose <code>status</code> is <code>finalized</code>, <code>continue</code> (run the same command again) or <code>stopped</code>. An entry whose investigation was cut short has no verdict file and stays <code>"pending"</code>, so the next call simply re-investigates it: no lease, no claimed status on disk, no janitor. One call runs per run at a time, because a call claims every pending entry up front.</p>
 
 <div class="callout">
-<strong>Completion is double-gated.</strong> The pump flips <code>state.phase</code> to <code>"complete"</code> only when no investigatable entry is pending <em>and</em> <code>--active</code> is empty — so a run never finalizes while a worker is still in flight. Defence in depth: the picker also skips <code>auto_classified</code> entries even though <code>build_triage_entries</code> already marks them <code>"completed"</code>, protecting against a regression that flips one back to pending.
+<strong>The cache is checked, not assumed.</strong> Every investigation records its first request's <code>cache_read_input_tokens</code> and <code>cache_creation_input_tokens</code>. The summary counts a <code>prefix_miss</code> for each investigation that started into a warm cache yet read under 90% of the shared prefix, so anything that makes the system prompt or tool definitions vary per investigation shows up in the run summary instead of silently raising its cost.
 </div>
 
-<h2 id="context">Self-service context: <code>get_entry_context.ts</code></h2>
+<h2 id="context">The investigation's prompt and tools</h2>
 
-<p>Each investigator's prompt contains a <code>project</code>, a <code>run_id</code>, and an <code>entry_index</code>. Its first action is to fetch its own dispense payload:</p>
-
-<pre><code>node --import tsx .claude/skills/triage/scripts/get_entry_context.ts --project &lt;project&gt; --run-id &lt;run_id&gt; --entry &lt;entry_index&gt;</code></pre>
-
-<p>Entry indices are run-local, and the script derives the verdict output path from the run it resolves, so the orchestrator and its investigators pin the same run explicitly rather than each resolving the project's <code>LATEST</code> pointer.</p>
-
-<p>The script loads the entry from triage state, loads the classifier registry, builds the payload via <code>build_dispense_payload</code>, and substitutes everything into a single prompt template. The investigator receives:</p>
+<p>Each investigation is an Agent SDK <code>query()</code> that loads no Claude Code preset, settings, CLAUDE.md, hooks or other MCP servers. It writes 5-minute cache entries and sets a fixed session title, so it makes no extra title call. Its prompt has two parts:</p>
 
 <table>
-<tr><th>Payload section</th><th>Contents</th></tr>
-<tr><td><code>entry_context</code></td><td>The entry's <code>name</code>, <code>file_path</code>, <code>kind</code>, <code>start_line</code>, signature, export status, <code>diagnosis</code>, pre-gathered diagnostics (grep call sites and Ariadne call references with <code>resolution_count</code>, <code>resolved_to</code>, <code>call_type</code>, <code>caller_function</code>), and the exact output path for the verdict: <code>results/&lt;entry_index&gt;.json</code>.</td></tr>
-<tr><td>Diagnosis hints</td><td>An investigation guide keyed off the entry's <code>diagnosis</code> — <code>callers-not-in-registry</code>, <code>callers-in-registry-unresolved</code>, <code>callers-in-registry-wrong-target</code> — with a generic guide as the fallback.</td></tr>
-<tr><td>Classifier hints</td><td>Sub-threshold predicate matches: rules that matched this entry but fell below <code>min_confidence</code> for auto-classification, each with its <code>group_id</code>, confidence, and reasoning. A hint often names the exact detection gap.</td></tr>
-<tr><td><code>relevant_registry_slice</code></td><td>The wip + permanent classifier rules in scope for this entry (language or <code>diagnosis_eq</code> match, capped at 20, sorted by <code>observed_count</code>). This is the only registry material the investigator ever sees, and the citation universe for <code>fp-classifier-regression</code>.</td></tr>
+<tr><th>Part</th><th>Contents</th></tr>
+<tr><td>System prompt (constant)</td><td>The verdict definitions and their pitfalls, what each evidence list means, the tool rules, the output contract, and the investigation guide for every diagnosis route (<code>callers-not-in-registry</code>, <code>callers-in-registry-unresolved</code>, <code>callers-in-registry-wrong-target</code>, <code>callers-outside-indexed-corpus</code>, <code>references-without-call-syntax</code>, and the generic <code>no-textual-callers</code> guide). It names no entry, so every investigation of every run shares it from the prompt cache.</td></tr>
+<tr><td>First user message (per entry)</td><td>The entry's name, kind, export status, definition <code>file:line</code>, signature and <code>diagnosis</code>; its grep call sites (each tagged with the call references captured at that line), Ariadne's call references (caller, receiver form, resolution targets, and an unresolved call's failing stage and reason, with its syntactic flags), out-of-index call sites and non-call reference sites; its sub-threshold classifier hints; and the in-scope classifier rules one line each (<code>group_id: title — description</code>, language match, capped at 20 by <code>observed_count</code>). Each evidence list shows at most 40 rows and names how many it left out, with a grep pattern that lists them. Paths are relative to the project root. <code>get_entry_context.ts</code> prints the same text.</td></tr>
 </table>
 
-<p>From there the investigator gathers evidence with <code>Read</code>, <code>Grep</code>, <code>Glob</code>, and the <code>mcp__ariadne__show_call_graph_neighborhood</code> tool (to compare what the codebase contains against what Ariadne's call graph actually resolved), then writes raw JSON — no markdown fencing, no prose — to the supplied output path.</p>
+<p>Its three tools are served in-process: <code>read</code> (a numbered window of at most 200 lines), <code>grep</code> (a Perl-compatible search returning at most 100 matches) and <code>submit_verdict</code>. Both <code>read</code> and <code>grep</code> resolve every path inside the project root and refuse anything outside it. <code>submit_verdict</code> accepts a verdict only when it parses as a strict <code>TriageVerdict</code>, its <code>member_evidence</code> names a real line of the repository, and a regression cites an in-scope rule; otherwise it returns the reason and the investigation corrects it. The turn cap is 20.</p>
 
 <h2 id="union">The <code>TriageVerdict</code> discriminated union</h2>
 
@@ -240,20 +214,20 @@
 </table>
 
 <h3>Why <code>fp-classifier-regression</code> must cite the slice</h3>
-<p><code>should_have_matched_rule_id</code> must be a <code>group_id</code> from <code>relevant_registry_slice</code>. The regression verdict exists to power a cross-run drift signal on a <em>specific</em> rule the human owns: finalize aggregates flagged entries per rule id, and the human reads that slice when deciding whether a rule's predicate needs widening. A citation outside the in-scope slice is not actionable — there is no rule the human can inspect against the evidence — so the agent contract restricts citations to the rules the dispense payload actually delivered.</p>
+<p><code>should_have_matched_rule_id</code> must be a <code>group_id</code> from <code>relevant_registry_slice</code>. The regression verdict exists to power a cross-run drift signal on a <em>specific</em> rule the human owns: finalize aggregates flagged entries per rule id, and the human reads that slice when deciding whether a rule's predicate needs widening. A citation outside the in-scope slice is not actionable — there is no rule the human can inspect against the evidence — so <code>submit_verdict</code> rejects a citation outside the rules the entry's context actually delivered.</p>
 
 <h3>Strict parsing, no silent skipping</h3>
-<p><code>parse_triage_verdict</code> is the single gate at both absorb time and finalize time (shared via the verdict ledger, so the two gates cannot diverge). It throws on any shape violation: unknown <code>kind</code>, missing fields, <em>extra</em> unknown fields, empty strings, or a non-positive-integer <code>line</code>. At absorb time a malformed file flips the entry to <code>"failed"</code> with the parse error recorded; at finalize, a completed llm-triage entry with no verdict file halts finalization with an instruction to re-dispense that entry. Verdicts are never partially accepted or quietly dropped.</p>
+<p><code>parse_triage_verdict</code> is the single gate at both absorb time and finalize time (shared via the verdict ledger, so the two gates cannot diverge). It throws on any shape violation: unknown <code>kind</code>, missing fields, <em>extra</em> unknown fields, empty strings, or a non-positive-integer <code>line</code>. At absorb time a malformed file flips the entry to <code>"failed"</code> with the parse error recorded; at finalize, a completed llm-triage entry with no verdict file halts finalization with an instruction to re-run the investigation loop. <code>submit_verdict</code> applies the same parser before a verdict is ever written. Verdicts are never partially accepted or quietly dropped.</p>
 
 <h2 id="boundary">The write boundary</h2>
 
 <div class="callout" style="border-left-color: var(--warn);">
-<strong>The investigator never touches <code>registry.json</code>.</strong> Its only persistent output is the single verdict file at <code>results/&lt;entry_index&gt;.json</code>. It <em>reads</em> registry material only as the <code>relevant_registry_slice</code> embedded in its dispense payload. Every registry transition — including acting on the <code>classifier_regressions[]</code> its verdicts feed — is a human edit through <code>atomic_update_registry</code>. See <a href="atomic-write-contract.html">Write Boundaries</a> and <a href="registry-lifecycle.html">Registry</a>.
+<strong>An investigation never touches <code>registry.json</code>.</strong> It writes nothing at all: its verdict goes back through <code>submit_verdict</code> to the loop, which writes the single verdict file at <code>results/&lt;entry_index&gt;.json</code>. It <em>reads</em> registry material only as the in-scope rules in its first message. Every registry transition — including acting on the <code>classifier_regressions[]</code> its verdicts feed — is a human edit through <code>atomic_update_registry</code>. See <a href="atomic-write-contract.html">Write Boundaries</a> and <a href="registry-lifecycle.html">Registry</a>.
 </div>
 
 <p>The boundary is enforced structurally, not just by instruction:</p>
 <ul>
-  <li>The agent's tool grant fences <code>Write</code> to <code>~/.ariadne/triage-entrypoints/**</code> — the triage state tree where <code>results/</code> lives. The repo-resident registry is outside the writable surface.</li>
+  <li>The investigation has no write tool: <code>read</code> and <code>grep</code> are read-only and confined to the target repository, and <code>submit_verdict</code> only hands the verdict back to the loop.</li>
   <li>An AST-level write-boundary test (<code>packages/skill-fs/src/registry_writers.test.ts</code>) flags any code under <code>.claude/skills/</code> that writes a registry-shaped path outside <code>atomic_update_registry</code>.</li>
   <li>The state file itself stays a control-plane log: <code>merge_results</code> records only status transitions, leaving <code>entry.result</code> as <code>null</code>, so the verdict ledger on disk remains the single source of truth that finalize re-reads.</li>
 </ul>
@@ -261,9 +235,14 @@
 <h2 id="files">Files on this page</h2>
 <table>
 <tr><th>Path</th><th>Role</th></tr>
-<tr><td><code>.claude/agents/triage-investigator.md</code></td><td>Sub-agent definition: purpose, tool fence, the four verdict shapes, guarantees.</td></tr>
-<tr><td><code>.claude/skills/triage/scripts/get_next_triage_entry.ts</code></td><td>The pump: merge completed results, pick pending-and-not-active indices, flip phase when fully drained.</td></tr>
-<tr><td><code>.claude/skills/triage/scripts/get_entry_context.ts</code></td><td>Self-service dispense: entry context, diagnosis-keyed investigation guide, classifier hints, registry slice, output path.</td></tr>
+<tr><td><code>.claude/skills/triage/scripts/investigate_and_finalize.ts</code></td><td>The Phases 3–4 command: one call claims, investigates, writes, and finalizes a drained run.</td></tr>
+<tr><td><code>.claude/skills/triage/src/investigate/investigate_run.ts</code></td><td>The loop behind it: stop conditions, retries, usage records, <code>prefix_miss</code>.</td></tr>
+<tr><td><code>.claude/skills/triage/src/investigate/investigation_pool.ts</code></td><td>The continuous pool with one lead investigation that warms the cache.</td></tr>
+<tr><td><code>.claude/skills/triage/src/investigate/run_investigation.ts</code></td><td>One investigation as an Agent SDK <code>query()</code>.</td></tr>
+<tr><td><code>.claude/skills/triage/src/investigate/investigator_system_prompt.ts</code></td><td>The constant system prompt.</td></tr>
+<tr><td><code>.claude/skills/triage/src/investigate/investigation_tools.ts</code></td><td><code>read</code>, <code>grep</code> and <code>submit_verdict</code>.</td></tr>
+<tr><td><code>.claude/skills/triage/src/dispense/render_entry_context.ts</code></td><td>The bounded first message; <code>scripts/get_entry_context.ts</code> prints it.</td></tr>
+<tr><td><code>.claude/skills/triage/src/dispense/claim_pending_entries.ts</code></td><td>Absorb verdict files, claim entries still to investigate, record an entry that never yields a verdict.</td></tr>
 <tr><td><code>.claude/skills/triage/src/verdict/triage_verdict.ts</code></td><td>The four-arm union and its strict runtime parser <code>parse_triage_verdict</code>.</td></tr>
 <tr><td><code>.claude/skills/triage/src/finalize/merge_results.ts</code></td><td>Absorbs verdict files into state status; verdicts stay on disk.</td></tr>
 <tr><td><code>.claude/skills/triage/src/finalize/output.ts</code></td><td>Builds the published v5 results: verdicts fan out into the four published sections.</td></tr>

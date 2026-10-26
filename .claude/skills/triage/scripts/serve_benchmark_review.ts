@@ -7,7 +7,8 @@
  *   node --import tsx .claude/skills/triage/scripts/serve_benchmark_review.ts [--port 4310]
  *     [--runs <run_dir,run_dir>] [--chat-model claude-opus-5-5]
  *
- * Without `--runs`, the page shows the newest benchmark run of each model.
+ * Without `--runs`, the page shows the newest benchmark run of each model and
+ * effort.
  * Votes are written to `benchmark/v1/human_review.json` as they are cast; the
  * per-case Claude sessions are kept under
  * `~/.ariadne/triage-entrypoints/benchmark_review/chats/`.
@@ -20,7 +21,7 @@ import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
 
 import { default_store_dir, repos_root } from "../src/store/store_layout.js";
-import { list_benchmark_runs, read_replay_records, read_run_config } from "../src/benchmark/benchmark_run_store.js";
+import { list_benchmark_runs, read_replay_records, read_run_config, run_label } from "../src/benchmark/benchmark_run_store.js";
 import { load_benchmark_suite } from "../src/benchmark/load_benchmark_suite.js";
 import {
   DISAGREEMENT_GROUPS,
@@ -64,7 +65,7 @@ const chat_model = values["chat-model"];
 function selected_run_dirs(): string[] {
   if (values.runs !== undefined) return values.runs.split(",").map((d) => path.resolve(d.trim()));
   const newest = new Map<string, string>();
-  for (const { run_dir, config } of list_benchmark_runs()) if (!newest.has(config.model)) newest.set(config.model, run_dir);
+  for (const { run_dir, config } of list_benchmark_runs()) if (!newest.has(run_label(config))) newest.set(run_label(config), run_dir);
   return [...newest.values()].sort();
 }
 const RUN_DIRS = selected_run_dirs();
@@ -79,15 +80,14 @@ function current_model_runs(): { runs: ModelRun[]; status: object[] } {
   for (const run_dir of RUN_DIRS) {
     const config = read_run_config(run_dir);
     const records = read_replay_records(run_dir);
-    runs.push({ model: config.model, records });
+    runs.push({ model: run_label(config), records });
     status.push({
-      model: config.model,
-      label: model_label(config.model),
+      model: run_label(config),
+      label: model_label(run_label(config)),
       run_id: config.run_id,
       recorded: records.length,
       expected: config.case_ids.length * config.repeats,
       usd: records.reduce((t, r) => t + (r.usage?.usd ?? 0), 0),
-      answer_key_exposures: records.filter((r) => r.saw_answer_key).length,
     });
   }
   return { runs, status };

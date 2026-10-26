@@ -28,16 +28,13 @@ flowchart TD
     A2[/"runs/&lt;run-id&gt;/<br/>manifest.json · triage.json · LATEST"/]:::artifact
   end
 
-  subgraph P3["Phase 3 · Triage Loop (foreground batches, N=5)"]
+  subgraph P34["Phases 3–4 · investigate_and_finalize.ts (no agent in the loop)"]
     direction TB
-    S3("get_next_triage_entry.ts<br/>dispense/absorb cycle"):::step
-    AG3[["triage-investigator<br/>haiku · foreground batch"]]:::agent
+    S3("claim pending entries<br/>continuous pool · N concurrent<br/>one lead warms the prompt cache"):::step
+    AG3[["investigation · Agent SDK query()<br/>claude-haiku-5-5 · constant system prompt<br/>read · grep · submit_verdict"]]:::agent
     A3[/"results/&#123;idx&#125;.json<br/>TriageVerdict · self-contained<br/>tp · fp-novel · fp-classifier-regression · uncertain"/]:::artifact
-  end
-
-  subgraph P4["Phase 4 · Finalize"]
-    direction TB
-    S5("finalize_triage.ts<br/>finalize/output · seal manifest<br/>DERIVE novel_issues[] (one per fp-novel)<br/>+ classifier_regressions[] (per-rule rollup) from results/"):::step
+    A3U[/"investigations.json<br/>usage · turn-1 cache · prefix_miss"/]:::artifact
+    S5("finalize_run<br/>finalize/output · seal manifest<br/>DERIVE novel_issues[] (one per fp-novel)<br/>+ classifier_regressions[] (per-rule rollup) from results/"):::step
     PUB[/"analysis_output/&lt;p&gt;/<br/>triage_results/&lt;run-id&gt;.json<br/>schema v5"/]:::published
   end
 
@@ -58,8 +55,9 @@ flowchart TD
   I_RES --> A2
 
   A2 --> S3
+  REG -. "read · in-scope rules" .-> AG3
   S3 --> AG3 --> A3
-  A3 --> S3
+  AG3 --> A3U
   S3 -- "all pending drained" --> S5
   A3 -- "verdict files · single source of truth" --> S5
   S5 --> PUB

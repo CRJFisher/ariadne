@@ -51,7 +51,7 @@ export interface KnownIssue {
   drift_detected?: boolean;
   /**
    * Per-citation evidence accumulated alongside `drift_detected`. Each row is
-   * a per-entry triage-investigator's `fp-classifier-regression` verdict,
+   * a per-entry triage investigation's `fp-classifier-regression` verdict,
    * surfaced through the triage run's `classifier_regressions`
    * aggregate. Append-only across runs, deduped by `(project, entry_index)`,
    * so the human promotion reviewer can see every flag that recommended
@@ -75,7 +75,7 @@ export interface DriftEvidence {
 /**
  * One rule's flagged entries from a single triage run's `classifier_regressions`
  * aggregate. Mirrors the on-disk JSONL record shape emitted by the per-entry
- * triage-investigator's `fp-classifier-regression` verdict, grouped by
+ * triage investigation's `fp-classifier-regression` verdict, grouped by
  * `rule_id` for the human's drift-absorb path.
  */
 export interface ClassifierRegressionFlag {

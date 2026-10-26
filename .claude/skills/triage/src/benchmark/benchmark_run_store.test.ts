@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   benchmark_run_id,
   list_benchmark_runs,
+  run_label,
   read_replay_records,
   replay_record_path,
   verdict_under_test,
@@ -19,20 +20,26 @@ import type { ReplayRecord } from "./replay_investigation.js";
 const record = (verdict: ReplayRecord["verdict"]): ReplayRecord => ({
   case_id: "c1",
   repeat: 1,
-  model: "claude-haiku-5-5",
+  model: "claude-haiku-5-5@medium",
+  lead: false,
   verdict,
   error: null,
   usage: null,
   tool_calls: [],
-  saw_answer_key: false,
-  permission_denials: [],
 });
 
 describe("benchmark_run_id", () => {
-  it("makes the start time path-safe and names the model", () => {
-    expect(benchmark_run_id("2026-10-25T14:40:01.123Z", "claude-haiku-5-5")).toEqual(
-      "2026-10-25T14-40-01-123Z--claude-haiku-5-5",
+  it("makes the start time and the run label path-safe", () => {
+    expect(benchmark_run_id("2026-10-25T14:40:01.123Z", "claude-haiku-5-5@low")).toEqual(
+      "2026-10-25T14-40-01-123Z--claude-haiku-5-5-low",
     );
+  });
+});
+
+describe("run_label", () => {
+  it("names the effort only for a model that takes one", () => {
+    expect(run_label({ model: "claude-haiku-5-5", effort: "low" })).toEqual("claude-haiku-5-5@low");
+    expect(run_label({ model: "claude-haiku-4-5", effort: null })).toEqual("claude-haiku-4-5");
   });
 });
 
@@ -64,7 +71,7 @@ describe("run listing", () => {
     const config = (started_at: string): BenchmarkRunConfig => ({
       run_id: benchmark_run_id(started_at, "m"),
       model: "m",
-      coordinator_model: "c",
+      effort: null,
       repeats: 1,
       case_ids: ["c1"],
       sdk_version: "0.3.304",
@@ -91,18 +98,16 @@ describe("write_run_score", () => {
   it("grades the run's replays against the suite and rewrites score.json", () => {
     run_dir = fs.mkdtempSync(path.join(os.tmpdir(), "bench-score-"));
     const labelled = load_benchmark_suite().cases.filter((c) => c.case.case_id === "Automattic--mongoose__applyStatics__L9");
-    const usage = (usd: number, coordinator_usd: number, turns: number): ReplayRecord["usage"] => ({
+    const usage = (usd: number, turns: number, turn1_cache_read: number): ReplayRecord["usage"] => ({
       usd,
-      coordinator_usd,
       turns,
       duration_ms: 1000,
       input_tokens: 10,
       output_tokens: 100,
       cache_read_input_tokens: 0,
       cache_creation_input_tokens: 0,
-      turn1_cache_read_input_tokens: 0,
+      turn1_cache_read_input_tokens: turn1_cache_read,
       turn1_cache_creation_input_tokens: 0,
-      model_usd: {},
     });
     const novel: ReplayRecord["verdict"] = {
       kind: "fp-novel",
@@ -114,14 +119,14 @@ describe("write_run_score", () => {
     write_json(replay_record_path(run_dir, labelled[0].case.case_id, 1), {
       ...record(novel),
       case_id: labelled[0].case.case_id,
-      usage: usage(0.03, 0.01, 6),
+      lead: true,
+      usage: usage(0.03, 6, 0),
     });
     write_json(replay_record_path(run_dir, labelled[0].case.case_id, 2), {
       ...record(null),
       case_id: labelled[0].case.case_id,
       repeat: 2,
-      usage: usage(0.01, 0.01, 2),
-      saw_answer_key: true,
+      usage: usage(0.01, 2, 0),
     });
 
     const score = write_run_score(run_dir, labelled);
@@ -131,14 +136,12 @@ describe("write_run_score", () => {
       n: score.n,
       missing_verdicts: score.missing_verdicts,
       kind_accuracy_pct: score.kind_accuracy_pct,
-      answer_key_exposures: score.answer_key_exposures,
       efficiency: score.efficiency,
     }).toEqual({
       n: 2,
       missing_verdicts: 1,
       kind_accuracy_pct: 50,
-      answer_key_exposures: ["Automattic--mongoose__applyStatics__L9 r2"],
-      efficiency: { total_usd: 0.04, coordinator_usd: 0.02, mean_usd_per_replay: 0.02, mean_turns: 4 },
+      efficiency: { total_usd: 0.04, mean_usd_per_replay: 0.02, mean_turns: 4, prefix_miss: 1 },
     });
   });
 });

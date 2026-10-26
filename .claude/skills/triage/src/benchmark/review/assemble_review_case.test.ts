@@ -19,6 +19,7 @@ describe("model_label", () => {
     expect(model_label("claude-haiku-4-5")).toEqual("Haiku 4.5");
     expect(model_label("claude-opus-5-5-20261001")).toEqual("Opus 5.5");
     expect(model_label("gpt-x")).toEqual("gpt-x");
+    expect(model_label("claude-haiku-5-5@low")).toEqual("Haiku 5.5 (low)");
   });
 });
 
@@ -47,7 +48,6 @@ function view(source: string, kind: VerdictView["kind"], rule_id: string | null 
     usd: null,
     turns: null,
     tool_calls: [],
-    saw_answer_key: false,
     error: null,
   };
 }
@@ -141,6 +141,7 @@ describe("assemble_review_case", () => {
     case_id: labelled.case.case_id,
     repeat,
     model: "claude-haiku-5-5",
+    lead: false,
     verdict:
       kind === "tp"
         ? { kind: "tp", member_evidence: { file: `${clone_dir}/lib/model.js`, line: 1044, why: "none found" } }
@@ -152,9 +153,7 @@ describe("assemble_review_case", () => {
           },
     error: null,
     usage: null,
-    tool_calls: [{ name: "Read", input: "{}" }],
-    saw_answer_key: false,
-    permission_denials: [],
+    tool_calls: [{ name: "mcp__triage__read", input: "{}" }],
   });
 
   it("lays the model verdicts beside the gold label and names their disagreement", () => {

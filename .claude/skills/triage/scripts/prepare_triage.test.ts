@@ -20,8 +20,8 @@ describe("active_run_conflict_message", () => {
     expect(message).toContain("project \"tokio\" already has an active run");
     expect(message).toContain("deadbee-2026-07-28T10-00-00.000Z (prepared at commit deadbee)");
     expect(message).toContain(
-      "node --import tsx .claude/skills/triage/scripts/get_next_triage_entry.ts " +
-        "--project tokio --run-id deadbee-2026-07-28T10-00-00.000Z --count 5",
+      "node --import tsx .claude/skills/triage/scripts/investigate_and_finalize.ts " +
+        "--project tokio --run-id deadbee-2026-07-28T10-00-00.000Z",
     );
     expect(message).toContain(
       "node --import tsx .claude/skills/triage/scripts/abandon_run.ts " +
@@ -37,7 +37,7 @@ describe("active_run_conflict_message", () => {
 
     expect(message).toContain("2 active runs");
     for (const run_id of ["run-a", "run-b"]) {
-      expect(message).toContain(`get_next_triage_entry.ts --project tokio --run-id ${run_id}`);
+      expect(message).toContain(`investigate_and_finalize.ts --project tokio --run-id ${run_id}`);
       expect(message).toContain(`abandon_run.ts --project tokio --run-id ${run_id}`);
     }
   });
@@ -58,9 +58,9 @@ describe("active_run_conflict_message", () => {
     expect(message).toContain("interrupted before its state was written — abandon only");
     expect(message).toContain("Discard the run and start fresh:");
     expect(message).toContain("abandon_run.ts --project tokio --run-id run-torn");
-    // Phase 3 resolves through require_run, which demands triage.json, so
-    // pointing at it here would be a dead end.
-    expect(message).not.toContain("get_next_triage_entry.ts");
+    // Investigation resolves through require_run, which demands triage.json,
+    // so pointing at it here would be a dead end.
+    expect(message).not.toContain("investigate_and_finalize.ts");
   });
 
   it("offers continuation only for the resumable run when both kinds are live", () => {
@@ -69,8 +69,8 @@ describe("active_run_conflict_message", () => {
       { run_id: "run-torn", short_commit: "bbbbbbb", resumable: false },
     ]);
 
-    expect(message).toContain("get_next_triage_entry.ts --project tokio --run-id run-good");
-    expect(message).not.toContain("get_next_triage_entry.ts --project tokio --run-id run-torn");
+    expect(message).toContain("investigate_and_finalize.ts --project tokio --run-id run-good");
+    expect(message).not.toContain("investigate_and_finalize.ts --project tokio --run-id run-torn");
     expect(message).toContain("abandon_run.ts --project tokio --run-id run-good");
     expect(message).toContain("abandon_run.ts --project tokio --run-id run-torn");
   });

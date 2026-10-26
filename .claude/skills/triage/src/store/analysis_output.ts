@@ -36,7 +36,7 @@ export async function save_json<T extends object>(
 
 /**
  * Save JSON to `analysis_output/{project}/{output_type}/{filename}`.
- * Caller controls the filename — used by finalize_triage to write
+ * Caller controls the filename — used by finalize_run to write
  * `<run-id>.json` so triage_results filename matches the run that produced it.
  * Returns the absolute path to the saved file.
  */

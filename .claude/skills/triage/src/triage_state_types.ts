@@ -2,7 +2,7 @@
  * State types for the self-repair triage pipeline.
  *
  * The triage state file tracks entry point candidates through two phases:
- * - "triage": investigators dispatched as synchronous foreground batches
+ * - "triage": entries still to investigate, dispatched by `investigate_run`
  * - "complete": all entries processed, ready to finalize
  */
 
@@ -62,7 +62,7 @@ export interface TriageEntry {
    * True when a builtin classifier from the known-issues registry matched this
    * entry at or above its `min_confidence` threshold. Orthogonal to `route`:
    * these entries carry `route === "known-unreachable"` and `status === "completed"`,
-   * and are skipped by `get_next_triage_entry`.
+   * and are never claimed for investigation.
    */
   auto_classified: boolean;
   /**

@@ -1,6 +1,6 @@
 # Triage benchmark v1
 
-63 frozen triage-investigator cases with gold verdicts. The suite measures whether a change to the triage pipeline (model, prompt, context bundle, tools, dispatch loop) keeps the quality of its verdicts while it changes their cost. Run it before and after the change, and compare.
+63 frozen triage investigation cases with gold verdicts. The suite measures whether a change to the triage pipeline (model, prompt, context bundle, tools, dispatch loop) keeps the quality of its verdicts while it changes their cost. Run it before and after the change, and compare.
 
 ## What a case is
 
@@ -15,31 +15,28 @@
 
 Source code is not copied. A case names `owner/repo` and a commit, and every reader uses the clone under `~/.ariadne/triage-entrypoints/repos/<owner>--<repo>/`, rebasing any path recorded on another machine onto it. The runner refuses to run while a clone is off its pinned commit.
 
-Every case entry carries the full diagnostics shape `get_entry_context.ts` formats: `grep_call_sites`, `grep_call_sites_outside_index`, `reference_sites` and `ariadne_call_refs`. The suite loader rejects a case that lacks one. The 25 cases frozen from July runs predate the last two lists; they carry them empty, which is what those runs recorded.
+Every case entry carries the full diagnostics shape the investigation's first message renders: `grep_call_sites`, `grep_call_sites_outside_index`, `reference_sites` and `ariadne_call_refs`. The suite loader rejects a case that lacks one. The 25 cases frozen from July runs predate the last two lists; they carry them empty, which is what those runs recorded.
 
 ## Running it
 
 ```bash
 node --import tsx .claude/skills/triage/scripts/run_benchmark.ts \
-  --model claude-haiku-4-5 --coordinator-model claude-haiku-5-5 --repeats 2 --max-usd 11
+  --model claude-haiku-5-5 --effort medium --repeats 2 --max-usd 2
+node --import tsx .claude/skills/triage/scripts/run_benchmark.ts \
+  --model claude-haiku-4-5 --repeats 2 --max-usd 15
 ```
 
-Each replay runs the investigator the way the pipeline does. A coordinator session in `auto` permission mode dispatches `triage-investigator` as a Task subagent with the triage skill's dispatch prompt; the subagent is registered from `.claude/agents/triage-investigator.md` with only its model replaced. Each case is staged as a one-entry run in a scratch store, which `ARIADNE_TRIAGE_ENTRYPOINTS_DIR_OVERRIDE` points the investigator's `get_entry_context.ts` at. The repo's hooks are disabled and MCP servers are withheld; the pipeline's subagents run without both.
+Each replay runs the pipeline's own investigation (`src/investigate/run_investigation.ts`) on the case's frozen entry, rebased onto the local clone, with the in-scope slice of the registry snapshot: the same constant system prompt, bounded first message, tools, turn cap and cache settings a triage run uses, through the same warm-up pool. `--effort` is required for a model with effort control and refused for `claude-haiku-4-5`, which runs with thinking disabled. The investigation's `read` and `grep` tools are confined to the clone, so it cannot reach this suite's case or label files.
 
-The coordinator must run on a different model from the investigator, because a session reports its spend per model: the investigator's cost is read off its own model, and the coordinator's dispatch turns are reported apart as `coordinator_usd`.
+Before any paid call the runner checks that the live registry matches the snapshot and that every clone is at its commit, and renders every pending case's context. During the run it stops at the first account error (spend, rate limit, auth) and once the run's spend reaches `--max-usd`. A replay that dies leaves no record, so `--resume <run_dir>` runs exactly the replays still missing; a record's missing verdict is always the investigation's own outcome.
 
-Before any paid call the runner checks that the live registry matches the snapshot, that every clone is at its commit, and that `get_entry_context.ts` produces context for every pending case. During the run it stops at the first account error (spend, rate limit, auth), at the first investigation the SDK reports as failed or stopped (an API error ends a subagent that way, never as an assistant error), and once the run's spend reaches `--max-usd`. A replay that dies leaves no record, so `--resume <run_dir>` runs exactly the replays still missing; a record's missing verdict is always the investigator's own outcome.
+A run lands in `~/.ariadne/triage-entrypoints/benchmark_runs/<started_at>--<model>[-<effort>]/`:
 
-A run lands in `~/.ariadne/triage-entrypoints/benchmark_runs/<started_at>--<model>/`:
-
-| Path                          | Content                                                                                                                   |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `run.json`                    | Model, coordinator model, repeats, case ids, SDK version                                                                  |
-| `replays/<case_id>.r<n>.json` | The verdict (or the reason there is none), usage, the investigator's tool calls, refused tool calls, and `saw_answer_key` |
-| `score.json`                  | The run graded against the labels, with spend                                                                             |
-| `store/`                      | The scratch triage store the replays read and wrote                                                                       |
-
-`saw_answer_key` is true when a tool result showed the investigator one of this suite's case or label files. Those files sit inside the repo the investigator works in, so a replay that reads one has seen the answer; the score lists such replays under `answer_key_exposures`.
+| Path                          | Content                                                                                                                              |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `run.json`                    | Model, effort, repeats, case ids, SDK version                                                                                        |
+| `replays/<case_id>.r<n>.json` | The verdict (or the reason there is none), usage including the first turn's cache split, whether it led the pool, and the tool calls |
+| `score.json`                  | The run graded against the labels, with spend and `prefix_miss`                                                                      |
 
 ## Scoring
 
@@ -56,7 +53,7 @@ The score reports verdict-kind accuracy against `acceptable_kinds` and against `
 node --import tsx .claude/skills/triage/scripts/serve_benchmark_review.ts   # http://127.0.0.1:4310/
 ```
 
-The review page compares each case's verdicts: both repeats of each benchmark run (the newest run per model, or `--runs <dir,dir>`) and the Opus label. The reviewer casts the deciding vote: agree with one candidate verdict (a kind, plus a rule for a regression), or record that none fits. "None fits" is a finding about the taxonomy and requires feedback naming what does not fit (a verdict definition, a classifier rule, a diagnosis route) and what should change. Votes are written to `human_review.json` as they are cast.
+The review page compares each case's verdicts: both repeats of each benchmark run (the newest run per model and effort, or `--runs <dir,dir>`) and the Opus label. The reviewer casts the deciding vote: agree with one candidate verdict (a kind, plus a rule for a regression), or record that none fits. "None fits" is a finding about the taxonomy and requires feedback naming what does not fit (a verdict definition, a classifier rule, a diagnosis route) and what should change. Votes are written to `human_review.json` as they are cast.
 
 The page has two levels:
 
@@ -101,7 +98,7 @@ The adjudicators saw these verdicts, which may flatter them, and they are mostly
 
 ## Baseline
 
-The baseline is the investigator as `.claude/agents/triage-investigator.md` ships it: `model: haiku`, which resolves to `claude-haiku-4-5`, two repeats of every case, run on 2026-10-25. Beside it, the same pipeline ran with only the investigator's model set to `claude-haiku-5-5`. Both runs are under `~/.ariadne/triage-entrypoints/benchmark_runs/`: `2026-10-25T15-07-11-075Z--claude-haiku-4-5` and `2026-10-25T15-07-09-527Z--claude-haiku-5-5`.
+The baseline is the investigator as the pipeline ran it on 2026-10-25: a Claude Code subagent dispatched by the skill agent, on `claude-haiku-4-5`, two repeats of every case. Beside it, the same pipeline ran with only the investigator's model set to `claude-haiku-5-5`. Both runs are under `~/.ariadne/triage-entrypoints/benchmark_runs/`: `2026-10-25T15-07-11-075Z--claude-haiku-4-5` and `2026-10-25T15-07-09-527Z--claude-haiku-5-5`.
 
 | Metric (126 replays each)                     | Haiku 4.5 (baseline)   | Haiku 5.5                 |
 | --------------------------------------------- | ---------------------- | ------------------------- |
@@ -116,17 +113,17 @@ The baseline is the investigator as `.claude/agents/triage-investigator.md` ship
 | Investigator turns (median, p90)              | 14, 25                 | 6, 8                      |
 | Investigator spend for the run                | $13.11                 | $0.65                     |
 
-Spend is the investigator's model alone. The benchmark's coordinator only dispatches; the pipeline's coordinator is the skill agent, and its cost is measured from triage-suite transcripts, not here.
+Spend is the investigator's model alone; the coordinator that dispatched those subagents is excluded.
 
-Swapping the model alone does not pass the gate: `fp-* -> tp` errors rise from 3 to 4, and Haiku 5.5 cites the gold caller file half as often. Most of that evidence gap is the output contract, not the search: Haiku 5.5 sets `member_evidence` to the entry's own definition in 82 of its 84 false-positive verdicts, and `templates/prompt.md` never says the field should name a caller. Label amendments from the human review change the gold, so after applying them re-score both runs with `score_benchmark.ts --run` before comparing a change against this baseline.
+Swapping the model alone does not pass the gate: `fp-* -> tp` errors rise from 3 to 4, and Haiku 5.5 cites the gold caller file half as often. Most of that evidence gap is the output contract, not the search: Haiku 5.5 set `member_evidence` to the entry's own definition in 82 of its 84 false-positive verdicts. The investigator's system prompt requires a false positive's `member_evidence` to be the real caller's call site. Label amendments from the human review change the gold, so after applying them re-score both runs with `score_benchmark.ts --run` before comparing a change against this baseline.
 
 ## Gating a change
 
 1. Run the suite with the current configuration (two repeats) and record verdicts and usage.
-2. Run it with the change (two repeats).
+2. Run it with the change (two repeats), on `claude-haiku-4-5` for comparability with the baseline and on the pinned `claude-haiku-5-5` for the cost the change delivers.
 3. The change passes when all of these hold:
    - Kind accuracy is within 2 points of the baseline.
    - The count of `fp-* -> tp` errors does not rise. These are the costly misses: they hide a real resolver gap.
    - Rule-id accuracy does not fall.
    - Missing or invalid verdicts do not rise.
-4. Report cost per case (USD, turns, input tokens) alongside accuracy.
+4. Report cost per case (USD, turns, input tokens) and `prefix_miss` alongside accuracy. A nonzero `prefix_miss` means replays that started into a warm cache missed the shared prefix: something in the system prompt or tool definitions varies per investigation.

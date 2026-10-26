@@ -37,23 +37,30 @@ node --import tsx .claude/skills/triage/scripts/get_entry_context.ts \
 ```
 
 The script resolves the member symbol against that run's triage state and
-prints an investigation prompt built from a `DispensePayload`:
+prints the entry's investigation context — the same text a triage
+investigation receives as its first message, with paths relative to the
+project root:
 
-- **`entry_context`** (a `TriageEntry`) — the entry's `name`, `file_path`,
-  `start_line`, `kind`, `signature`, `is_exported`, `access_modifier`,
-  `diagnosis`, and pre-gathered diagnostics: `grep_call_sites` (textual callers,
-  each with `captures`), `ariadne_call_refs` (each with `caller_file`,
-  `call_line`, `call_type`, `receiver_kind`, `resolution_failure`,
-  `syntactic_features`), and `classifier_hints`.
-- **`relevant_registry_slice`** — the in-scope wip + permanent rules, capped at
-  ~20 (sorted by `observed_count`), so it is a dedup aid, not an exhaustive list.
-  Use it to avoid an obvious duplicate and to match naming style; `--stage`'s
-  duplicate-`group_id` rejection is the authoritative dedup guard.
+- **The entry** (a `TriageEntry`) — its name, kind, exported flag, access
+  modifier, definition `file:line`, signature and `diagnosis`.
+- **Its pre-gathered evidence** — grep call sites (each tagged with the call
+  references `captured` at its line), Ariadne call references (caller, call
+  type, `receiver`, what each resolved to, and an unresolved call's `failure`
+  stage and reason, plus its syntactic flags), out-of-index call sites,
+  non-call reference sites, and sub-threshold classifier hints. Each list shows
+  at most 40 rows and names how many it left out; `--enriched` carries them in
+  full.
+- **The in-scope classifier rules** — the wip + permanent rules for the entry's
+  language, capped at 20 (sorted by `observed_count`), one line each as
+  `group_id: title — description`, so the list is a dedup aid, not an
+  exhaustive one. Use it to avoid an obvious duplicate and to match naming
+  style; `--stage`'s duplicate-`group_id` rejection is the authoritative dedup
+  guard.
 
 You also read `packages/core` to model your check on the real runtime types
 (step 3).
 
-**Payload vs. check-input shape.** The investigation prompt renders a
+**Payload vs. check-input shape.** The investigation context renders a
 `TriageEntry`, but your check runs against an `EnrichedEntryPoint` — a richer
 type. `get_entry_context.ts --enriched` emits that exact `EnrichedEntryPoint`;
 you persist one per sample (step 1) so `reconcile-registry --stage` executes your

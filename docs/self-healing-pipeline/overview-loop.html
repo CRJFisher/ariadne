@@ -211,7 +211,7 @@ arc is loop closure — what one run wrote, the next run reads. Each surface nam
     A self-contained per-commit job. Calls <code>@ariadnejs/core</code> to detect entry-point
     candidates, partitions them into <em>auto-classified</em> (an existing registry rule explains
     them), <em>previously-confirmed TPs</em> (the cross-run TP cache at the same commit), and a
-    <em>residual pool</em> investigated by a pool of <code>triage-investigator</code> sub-agents.
+    <em>residual pool</em> investigated by one deterministic script, one Agent SDK call per entry.
     Finalize publishes one schema-v5 <code>triage_results/&lt;run-id&gt;.json</code> — the single
     cross-skill seam. Reads the registry as a filter; never writes it.
     </p>

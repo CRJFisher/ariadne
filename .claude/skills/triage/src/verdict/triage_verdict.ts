@@ -1,9 +1,9 @@
 /**
- * Per-entry verdict emitted by `triage-investigator`. One discriminated union
+ * Per-entry verdict a triage investigation submits. One discriminated union
  * with four `kind`s; each carries its own required payload (no
  * optional-everywhere shape).
  *
- * The investigator writes one verdict to `results/<entry_index>.json`. The
+ * `investigate_run` writes each accepted verdict to `results/<entry_index>.json`. The
  * verdict files are the single source of truth: `finalize/output.ts` reads them
  * to build the published `triage_results/<run-id>.json`. Every false-positive
  * verdict is self-contained — it carries its own evidence so offline grouping

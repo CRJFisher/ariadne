@@ -113,7 +113,7 @@ Four inconsistent test-only-caller representations exist in the registry: `test-
 
 ## Acceptance Criteria
 
-- [ ] `format_call_refs` surfaces `resolution_failure.{stage, reason}`, `receiver_kind`, `syntactic_features`, and grep `captures`
+- [x] `format_call_refs` surfaces `resolution_failure.{stage, reason}`, `receiver_kind`, `syntactic_features`, and grep `captures`
 - [ ] `grep_for_calls` excludes declaration lines; regression test added
 - [ ] Blind verification cohort implemented (or explicit decision to defer with documented rationale)
 - [ ] 60 firing uncurated placeholders flipped to `kind: none`; `wip → fixed` reconciliation run

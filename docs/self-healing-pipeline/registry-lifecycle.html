@@ -225,7 +225,7 @@
   </table>
 
   <h2>Drift detection</h2>
-  <p>A classifier can rot: its predicate stays valid but grows too narrow for the failure mode it covers, so entries it should explain leak through to investigation. When a <code>triage-investigator</code> returns an <code>fp-classifier-regression</code> verdict against a rule, finalize rolls it into the published run's <code>classifier_regressions[]</code> aggregate. The human reads that slice and records it on the rule:</p>
+  <p>A classifier can rot: its predicate stays valid but grows too narrow for the failure mode it covers, so entries it should explain leak through to investigation. When a triage investigation returns an <code>fp-classifier-regression</code> verdict against a rule, finalize rolls it into the published run's <code>classifier_regressions[]</code> aggregate. The human reads that slice and records it on the rule:</p>
   <ul>
     <li><code>drift_detected: true</code> — the flag that marks the rule for re-investigation at promotion review.</li>
     <li><code>drift_evidence[]</code> — one <code>{ entry_index, evidence_excerpt }</code> row per flagging verdict, <strong>append-only across runs</strong>, so the promotion reviewer sees every flag that recommended re-investigation.</li>

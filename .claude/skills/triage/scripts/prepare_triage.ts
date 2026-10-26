@@ -159,11 +159,11 @@ export function active_run_conflict_message(
     "",
     ...(resumable.length > 0
       ? [
-          "Continue a run — pass its id to every Phase 3-4 script, e.g.:",
+          "Continue a run — investigate and finalize it:",
           ...resumable.map(
             (run) =>
-              `  node --import tsx ${SCRIPTS_DIR}/get_next_triage_entry.ts ` +
-              `--project ${project} --run-id ${run.run_id} --count 5`,
+              `  node --import tsx ${SCRIPTS_DIR}/investigate_and_finalize.ts ` +
+              `--project ${project} --run-id ${run.run_id}`,
           ),
           "",
           "Or discard a run and start fresh:",

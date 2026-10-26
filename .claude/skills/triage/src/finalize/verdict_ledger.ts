@@ -7,7 +7,7 @@
  *
  * - `merge_results.ts` — flips state entries to `completed`/`failed` based on
  *   the verdict files' presence + parseability.
- * - `finalize/output.ts` (via its `finalize_triage.ts` orchestrator) — re-reads
+ * - `finalize/output.ts` (via its `finalize_run.ts` orchestrator) — re-reads
  *   the verdicts when building the published `triage_results/<run-id>.json`.
  *
  * Both call into this module so the absorb-time and finalize-time gates can

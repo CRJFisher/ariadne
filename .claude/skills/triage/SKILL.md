@@ -3,14 +3,14 @@ name: triage
 description: Triage stage for entry-point candidates. Detects entry points in Ariadne packages or external codebases and triages false positives via per-entry investigators, publishing each false positive raw and self-contained.
 argument-hint: "[config-name | /path/to/repo | owner/repo (GitHub)]"
 disable-model-invocation: true
-allowed-tools: Bash(bash .claude/skills/triage/scripts/ensure_environment.sh), Bash(node --import tsx:*), Read, Write, Glob, Task(triage-investigator)
+allowed-tools: Bash(bash .claude/skills/triage/scripts/ensure_environment.sh), Bash(node --import tsx:*), Read, Write, Glob
 ---
 
 # Triage Entrypoints
 
 Triage pipeline for entry point analysis: detect false positives and classify root causes. Supports both self-analysis (Ariadne packages) and external codebase analysis.
 
-**This pipeline runs headlessly, end to end, in a single turn.** Every phase — config creation, file-count checks, dispensing, investigating, finalizing — proceeds on sensible defaults without pausing for confirmation. Never call `AskUserQuestion` anywhere in this skill; it is not in this skill's `allowed-tools`. When a step below says "ask" or "confirm," that describes an interactive fallback this skill does not use — resolve it autonomously instead, per the guidance at that step, and log the decision in your reply text rather than pausing for input.
+**This pipeline runs headlessly, end to end, in a single turn.** Every phase — config creation, file-count checks, investigating, finalizing — proceeds on sensible defaults without pausing for confirmation. Never call `AskUserQuestion` anywhere in this skill; it is not in this skill's `allowed-tools`. When a step below says "ask" or "confirm," that describes an interactive fallback this skill does not use — resolve it autonomously instead, per the guidance at that step, and log the decision in your reply text rather than pausing for input.
 
 Each invocation produces a self-contained run under `triage_state/<project>/runs/<run-id>/`. Run-id format is `<short-commit>-<iso-ts>` (e.g. `deadbee-2026-04-28T13-42-07.812Z`); `nogit-...` for non-git projects. Re-running at the same target commit reuses prior `confirmed_unreachable` verdicts via the TP cache (skip with `--no-reuse-tp`). Moving the target to a new commit (`--commit <sha>`, see **Phase 1**) busts the cache: every entry re-investigates.
 
@@ -18,13 +18,14 @@ Each invocation produces a self-contained run under `triage_state/<project>/runs
 
 ## Pipeline Overview
 
-| Phase          | Script / Agent                  | Purpose                                                                                |
-| -------------- | ------------------------------- | -------------------------------------------------------------------------------------- |
-| 0. Environment | `scripts/ensure_environment.sh` | Install dependencies and build the workspace packages the scripts import, where needed |
-| 1. Detect      | `scripts/detect_entrypoints.ts` | Run entry point detection                                                              |
-| 2. Prepare     | `scripts/prepare_triage.ts`     | Classify against the known-issues registry via `enrich_call_graph`, build triage state |
-| 3. Triage Loop | triage-investigator             | Investigate residual entries; each writes one self-contained verdict to `results/`     |
-| 4. Finalize    | `scripts/finalize_triage.ts`    | Publish the v5 triage-results JSON built entirely from the per-entry verdict files     |
+| Phase                         | Script                                | Purpose                                                                                                    |
+| ----------------------------- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| 0. Environment                | `scripts/ensure_environment.sh`       | Install dependencies and build the workspace packages the scripts import, where needed                     |
+| 1. Detect                     | `scripts/detect_entrypoints.ts`       | Run entry point detection                                                                                  |
+| 2. Prepare                    | `scripts/prepare_triage.ts`           | Classify against the known-issues registry via `enrich_call_graph`, build triage state                     |
+| 3–4. Investigate and finalize | `scripts/investigate_and_finalize.ts` | Investigate every residual entry (one verdict each in `results/`), then publish the v5 triage-results JSON |
+
+Phases 3 and 4 are one deterministic script: no agent dispatches or coordinates investigations. The skill agent's own judgement is needed only for authoring a new project config.
 
 ## Phase 0: Environment
 
@@ -100,25 +101,25 @@ Scripts that operate on existing triage state take `--project <name>` (`prepare_
 
 The name is derived from the target: a GitHub target takes its owner-qualified slug (`vuejs/core` → `vuejs--core`), a directory target its resolved path, and a saved config the same rule applied to its `project_path` — the slug when that path is a `repos/` clone, the resolved path otherwise. Both halves of a slug are load-bearing — `vuejs/core` and `home-assistant/core` are unrelated codebases, and a shared name would merge their run histories behind one LATEST pointer.
 
-A project runs **one triage at a time**. `prepare_triage` refuses while another run for the project is `status: "active"`, naming each live run, the commit it was prepared at, and both remedies: continue it by passing its id to the Phase 3-4 scripts, or `abandon_run.ts` to discard it. To triage two targets concurrently, give them distinct `--project` names.
+A project runs **one triage at a time**. `prepare_triage` refuses while another run for the project is `status: "active"`, naming each live run, the commit it was prepared at, and both remedies: continue it by passing its id to `investigate_and_finalize.ts`, or `abandon_run.ts` to discard it. To triage two targets concurrently, give them distinct `--project` names.
 
-The refusal is a fail-loud check, not a lock. It reads the run set before the re-index and again immediately before claiming the run, which leaves a narrow window where two launches started at the same moment both pass. The dispense output echoes its run-id so a fork that slips through that window surfaces on the next call rather than as silently repeating entry indices.
+The refusal is a fail-loud check, not a lock. It reads the run set before the re-index and again immediately before claiming the run, which leaves a narrow window where two launches started at the same moment both pass. Every later call names the run by its `--run-id`, so a fork that slips through that window investigates only its own run.
 
-| File                                                              | Purpose                                                                                                                                          |
-| ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `project_configs/{name}.json`                                     | Per-project detection config (folders, excludes)                                                                                                 |
-| `triage_state/{project}/LATEST`                                   | Convenience pointer to the current run-id, written by `prepare_triage` and cleared by `finalize_triage`; run liveness lives in `manifest.status` |
-| `triage_state/{project}/runs/{run-id}/manifest.json`              | Per-run metadata (status, commit_hash, tp_cache record)                                                                                          |
-| `triage_state/{project}/runs/{run-id}/triage.json`                | Per-run triage state (entries, per-entry results)                                                                                                |
-| `triage_state/{project}/runs/{run-id}/results/{entry_index}.json` | Per-entry investigator verdict files (one `TriageVerdict` JSON per entry)                                                                        |
-| `analysis_output/{project}/detect_entrypoints/{ts}.json`          | Detection output (kept project-scoped; one detection feeds many triage runs)                                                                     |
-| `analysis_output/{project}/triage_results/{run-id}.json`          | Published triage results (schema v5: `novel_issues`, `classifier_regressions`, `confirmed_unreachable`, `uncertain`, with relative file paths)   |
+| File                                                              | Purpose                                                                                                                                            |
+| ----------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `project_configs/{name}.json`                                     | Per-project detection config (folders, excludes)                                                                                                   |
+| `triage_state/{project}/LATEST`                                   | Convenience pointer to the current run-id, written by `prepare_triage` and cleared when the run finalizes; run liveness lives in `manifest.status` |
+| `triage_state/{project}/runs/{run-id}/manifest.json`              | Per-run metadata (status, commit_hash, tp_cache record)                                                                                            |
+| `triage_state/{project}/runs/{run-id}/triage.json`                | Per-run triage state (entries, per-entry results)                                                                                                  |
+| `triage_state/{project}/runs/{run-id}/results/{entry_index}.json` | Per-entry investigator verdict files (one `TriageVerdict` JSON per entry)                                                                          |
+| `analysis_output/{project}/detect_entrypoints/{ts}.json`          | Detection output (kept project-scoped; one detection feeds many triage runs)                                                                       |
+| `analysis_output/{project}/triage_results/{run-id}.json`          | Published triage results (schema v5: `novel_issues`, `classifier_regressions`, `confirmed_unreachable`, `uncertain`, with relative file paths)     |
 
 All paths above are relative to `~/.ariadne/triage-entrypoints/`. Run-ids have the form `<short-commit>-<iso-ts>` (e.g. `deadbee-2026-04-28T13-42-07.812Z`); `nogit-<iso-ts>` when the target is not a git repo.
 
 **Classifier registry write boundary**: this skill reads `known_issues/registry.json` but **never writes to it**. The registry is human-maintained — every status transition (`wip`, `permanent`, `fixed`) is a human decision through `atomic_update_registry`, applied via the `reconcile-registry` skill (`.claude/skills/reconcile-registry/SKILL.md`), which reads this skill's published `classifier_regressions[]` and the repo's git log to propose the mechanical flips. See `.claude/rules/classifier-lifecycle.md` for the canonical writer matrix.
 
-Every run-scoped script takes `--run-id <id>`; this pipeline passes the run-id Phase 2 prints on every call, from the first dispense through finalize. Omitted, a script resolves the project's `LATEST` pointer, which `prepare_triage` writes and `finalize_triage` clears.
+Every run-scoped script takes `--run-id <id>`; this pipeline passes the run-id Phase 2 prints to every later call. Omitted, a script resolves the project's `LATEST` pointer, which `prepare_triage` writes and finalizing clears.
 
 The dead-code whitelist at `known_entrypoints/<package>.json` (also under `~/.ariadne/triage-entrypoints/`) is owned by the `detect_dead_code` Stop hook and is never read or written by this pipeline. See **Dead-code guardrail** below.
 
@@ -165,7 +166,7 @@ Output: `analysis_output/<project>/detect_entrypoints/<timestamp>.json`
 
 ## Phase 2: Prepare
 
-Build triage state from the latest analysis output. Use `$MAX_COUNT` (250 unless the user's arguments set `--max-count`) without checking in — proceed straight through Phase 3's full batch loop over however many `llm-triage` entries that produces, however large. Do not ask whether to run the full count or a smaller sample.
+Build triage state from the latest analysis output. Use `$MAX_COUNT` (250 unless the user's arguments set `--max-count`) without checking in — proceed straight through Phase 3 over however many `llm-triage` entries that produces, however large. Do not ask whether to run the full count or a smaller sample.
 
 ```bash
 node --import tsx .claude/skills/triage/scripts/prepare_triage.ts \
@@ -183,7 +184,7 @@ Options:
 - `--no-reuse-tp` (optional) — disable the TP cache for this run; every `llm-triage` entry will re-investigate even if a prior run at the same commit confirmed it unreachable
 - `--tp-source-run <run-id>` (optional) — pin a specific source run for the TP cache. Must be at the current HEAD commit; the script throws otherwise.
 
-`--max-count` caps how many `llm-triage` entries are kept (and thus the total number of triage-investigator agents Phase 3 dispatches — distinct from the `N = 5` batch size in Phase 3). The script keeps the top `<n>` residual entries by `tree_size`. Auto-classified entries are always kept in full and do not count toward this cap. Override the default for a smaller probe or larger sweep.
+`--max-count` caps how many `llm-triage` entries are kept, and thus how many entries Phase 3 investigates. The script keeps the top `<n>` residual entries by `tree_size`. Auto-classified entries are always kept in full and do not count toward this cap. Override the default for a smaller probe or larger sweep.
 
 The script captures the target's HEAD short-commit, generates run-id `<short-commit>-<iso-ts>`, and creates `triage_state/<project>/runs/<run-id>/`. It partitions entries into three buckets:
 
@@ -191,68 +192,61 @@ The script captures the target's HEAD short-commit, generates run-id `<short-com
 - **known-unreachable (previously-confirmed-tp)**: Reused from prior finalized runs at the same commit (accumulated across all runs, newest first). Skipped via `--no-reuse-tp`. Distinguished by `known_source: "previously-confirmed-tp"` and `tp_source_run_id`.
 - **llm-triage**: No classifier matched — marked pending for investigation.
 
-`prepare_triage` prints `{ "run_id": "...", "stats": { ... } }` to stdout. **Capture the `run_id`; every Phase 3 and Phase 4 call below passes it as `--run-id <run-id>`.**
+`prepare_triage` prints `{ "run_id": "...", "stats": { ... } }` to stdout. **Capture the `run_id`; Phase 3 passes it as `--run-id <run-id>`.**
 
 If `prepare_triage` exits non-zero reporting that the project already has an active run, report its message to the user verbatim and stop. Choosing between continuing that run and abandoning it is theirs to make — it turns on whether the run's commit is still the one they care about.
 
 Output: `triage_state/<project>/runs/<run-id>/triage.json` and `manifest.json`.
 
-## Phase 3: Triage Loop
+## Phase 3: Investigate and Finalize
 
-Run investigators as **synchronous foreground batches**: dispense a batch of up to `N` pending entries, launch one triage-investigator per index in a single message as **foreground** Task calls, and let the turn block until the whole batch has returned. Then dispense the next batch. Repeat until the pool drains. Every Task is awaited within the turn, so the entire loop — and Phase 4 finalize — runs to completion inside one `query()`: no background agents, no waiting on completion notifications, and no scheduler. The agent never yields mid-pipeline, so a headless single-turn run makes zero `ScheduleWakeup` calls and needs zero stop-hook re-continuations.
-
-**Default batch size:** `N = 5`. A batch loop averages `N/2` concurrency; that is the accepted cost of running headless in a single turn. Raise `--count` for wider batches on a fast target.
-
-Every script takes `--project <name>` and `--run-id <run-id>` — the project and run-id captured in Phase 2, on every call, for the whole loop. Entry indices are run-local, so an index is meaningful only against the run that issued it.
-
-**Crash recovery is automatic.** Entries stay `pending` until an investigator writes a result file, which the next `get_next_triage_entry` call absorbs (transitioning the entry to `completed`). If an investigator in a batch crashes before writing a result, its entry remains `pending` and is re-dispensed on a later batch. A malformed result file flips the entry to `failed`; the dispenser clears the stale file and re-dispenses it up to `MAX_TRIAGE_RETRIES` times before terminalizing the failure.
-
-### Step 1: Dispense a batch
+Run after Phase 2, with the `run_id` it printed:
 
 ```bash
-node --import tsx .claude/skills/triage/scripts/get_next_triage_entry.ts \
-  --project <name> --run-id <run-id> --count 5
-```
-
-Output: `{ "run_id": "...", "entries": [N, ...] }`. If the script exits non-zero, stop and report stderr to the user. If `entries` is empty, skip to Phase 4.
-
-The echoed `run_id` names the run these indices came from. Check it against the one captured in Phase 2; if they differ, stop and report rather than investigating entries belonging to a run you are not tracking.
-
-### Step 2: Investigate the batch to completion
-
-Launch one **triage-investigator** agent per returned index in a **single message with multiple Task calls**, all **foreground** (`run_in_background: false`). The turn blocks until every agent in the batch has returned. Prompt each with:
-
-```text
-project: <name>
-run_id: <run-id>
-entry_index: N
-Write your verdict to results/N.json, then reply with one line only: `done N: <kind>`. Emit no other text.
-```
-
-Every prompt carries the `run_id`; the investigator derives both its entry and its verdict output path from the run it resolves.
-
-The triage-investigator runs `get_entry_context.ts --project <name> --run-id <run-id> --entry <index>` itself to fetch the full investigation context (entry + in-scope registry slice) and writes its verdict to `results/{entry_index}.json`. Each agent's one-line reply is a completion acknowledgement only — the authoritative verdict is the result file, absorbed by `get_next_triage_entry.ts` on the next dispense and by `finalize_triage.ts` in Phase 4. Do not read, summarize, or act on the replies.
-
-### Step 3: Loop until drained
-
-When the batch completes, return to Step 1 to dispense the next batch. Each dispense reads `results/` fresh, absorbing the just-completed verdicts before picking the next pending entries — a batch is fully complete and absorbed before the next dispense, so no entry is ever handed to two workers. When `get_next_triage_entry` returns an empty `entries` array, the pool is drained (`phase = "complete"`) — proceed to Phase 4.
-
-Emit no interim status report during the loop — the pipeline runs to completion in this turn and produces exactly one terminal report after Phase 4. Reserve a `failed` report for a genuine crash or a finalize error; the pipeline simply not being finished yet is never `failed`. To inspect live counts across runs on demand, run the summary in **Current State** (doc tail).
-
-### Verdict schema
-
-Each `results/{entry_index}.json` is a strict `TriageVerdict` discriminated union — one of `tp`, `fp-novel`, `fp-classifier-regression`, `uncertain`. The required payload per kind is specified once in the investigator prompt's **Output** section (`templates/prompt.md`) and enforced by `parse_triage_verdict` at finalize; a malformed shape halts finalize with an explicit error. Every false-positive verdict is **self-contained** — it carries its own evidence, so there is no in-run consolidation; offline grouping of false positives happens downstream in the `plan` skill. How each kind maps into the published envelope is the **Phase 4** finalize table below.
-
-## Phase 4: Finalize
-
-Run after Phase 3 sets `phase = "complete"`.
-
-```bash
-node --import tsx .claude/skills/triage/scripts/finalize_triage.ts \
+node --import tsx .claude/skills/triage/scripts/investigate_and_finalize.ts \
   --project <name> --run-id <run-id>
 ```
 
-Finalization builds the v5 `triage_results/<run-id>.json` entirely from the per-entry verdict files in `results/` and the triage state:
+Run it through Bash with `timeout: 600000` and the network access the Anthropic API needs (`api.anthropic.com`): each investigation is an Agent SDK call. One call stops starting investigations after `--time-budget-s` (default 420) and aborts any still running two minutes later, so it always returns inside the 10-minute shell limit.
+
+It prints one JSON summary. Act on its `status`:
+
+| `status`    | Meaning                                                                                          | Next step                                                   |
+| ----------- | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------- |
+| `finalized` | Every entry has a verdict or a recorded failure, and `triage_results/<run-id>.json` is published | Report the summary and stop                                 |
+| `continue`  | The time budget ran out with entries still pending                                               | Run the same command again; repeat until `finalized`        |
+| `stopped`   | The `--max-usd` cap, or an account error (spend limit, rate limit, auth), halted dispatch        | Report `stopped` verbatim and stop; the run stays resumable |
+
+Options: `--concurrency <n>` (default 8), `--max-usd <n>` (no cap by default), `--time-budget-s <n>`.
+
+Emit no interim status report while the calls repeat; the pipeline produces exactly one terminal report after the run is finalized. Reserve a `failed` report for a genuine crash or a `stopped` status.
+
+### What one call does
+
+1. **Claims** every entry still to investigate: it absorbs any verdict files already in `results/`, and resets a `failed` entry with retry budget left (a malformed verdict file) to `pending`.
+2. **Investigates** them in a continuous pool of `--concurrency` investigations with no batch barrier: a freed slot refills at once. The pool starts one lead investigation and releases the other slots when the lead's first response arrives, so the shared prompt prefix is written to cache once and read by every later investigation.
+3. **Writes** each verdict to `results/<entry_index>.json`. An investigation that ends without a verdict is retried once; an entry whose second attempt also ends without one is recorded `failed` and counted in the published results.
+4. **Records** every investigation's usage in `runs/<run-id>/investigations.json`: USD, turns, input, output and cache tokens, and the first turn's cache read and write. The summary reports the run's spend and its `prefix_miss` count: investigations that started into a warm cache yet read under 90% of the shared prefix. A nonzero `prefix_miss` means something broke the cached prefix.
+5. **Finalizes** the run once nothing is left to investigate (the Phase 4 table below).
+
+**Crash recovery is automatic.** An entry stays `pending` until its verdict file is written, so an investigation cut short by a crash, the time budget, or a `stopped` status is picked up by the next call. Run one call at a time per run: a call claims every pending entry up front.
+
+### The investigation
+
+Each investigation is an Agent SDK `query()` on the pinned investigator model (`src/investigate/investigator_model.ts`). Its prompt is:
+
+- **System prompt:** one constant string (`src/investigate/investigator_system_prompt.ts`) holding the verdict definitions, the meaning of each evidence list, the tool rules, the output contract, and every diagnosis route's guide. It names no entry, so every investigation shares it from the prompt cache.
+- **First user message:** the entry's bounded context (`src/dispense/render_entry_context.ts`), the same text `get_entry_context.ts` prints: the entry, its pre-gathered evidence, its sub-threshold classifier hints, and the in-scope classifier rules one line each. Each evidence list shows at most 40 rows and names how many it left out, with a grep pattern that lists them. Paths are relative to the project root.
+
+It has three tools, served in-process (`src/investigate/investigation_tools.ts`): `read` (at most 200 lines per call), `grep` (at most 100 matches), and `submit_verdict`, which validates the verdict against the strict `TriageVerdict` shape, checks that `member_evidence` names a real line of the repository and that a regression cites an in-scope rule, and rejects anything else with the reason. `read` and `grep` resolve every path inside the project root and refuse anything outside it. The investigation loads no Claude Code preset, settings, CLAUDE.md, hooks or other MCP servers, runs at most 20 turns, writes 5-minute cache entries, and sets a fixed session title so no extra title call is made.
+
+### Verdict schema
+
+Each `results/{entry_index}.json` is a strict `TriageVerdict` discriminated union — one of `tp`, `fp-novel`, `fp-classifier-regression`, `uncertain`, enforced by `parse_triage_verdict` when `submit_verdict` accepts it and again at finalize. The fields per kind are the output contract in the investigator's system prompt. Every false-positive verdict is **self-contained** — it carries its own evidence, with `member_evidence` naming the real caller's call site, so there is no in-run consolidation; offline grouping of false positives happens downstream in the `plan` skill. How each kind maps into the published envelope is the **Phase 4** table below.
+
+## Phase 4: Finalize
+
+`investigate_and_finalize.ts` finalizes the run in the call that drains it. Finalization builds the v5 `triage_results/<run-id>.json` entirely from the per-entry verdict files in `results/` and the triage state:
 
 | Source                                                    | Drives                                                                                                                           |
 | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
@@ -316,13 +310,13 @@ node --import tsx scripts/detect_entrypoints.ts --config <config> > /dev/null
 
 # 2. Initial run
 node --import tsx scripts/prepare_triage.ts --analysis <analysis.json> --project <name>
-#   ... walk through Phase 3-4 ...
+#   ... then investigate_and_finalize.ts --project <name> --run-id <run-1> ...
 
 # 3. Edit registry / Ariadne core. (No commit needed; the cache gates on target HEAD.)
 
 # 4. Re-run at the same commit. Cache reuses prior TPs; LLM re-investigates only the residual.
 node --import tsx scripts/prepare_triage.ts --analysis <analysis.json> --project <name>
-#   ... walk through Phase 3-4 again ...
+#   ... then investigate_and_finalize.ts --project <name> --run-id <run-2> ...
 
 # 5. Diff to spot regressions
 node --import tsx scripts/diff_runs.ts --project <name> --from <run-1> --to <run-2>
@@ -376,11 +370,21 @@ The skill is a thin caller of `@ariadnejs/core`. Classification (`enrich_call_gr
 | `prepare_triage.ts`                           | Run-namespaced orchestration: call core's `enrich_call_graph` with the full registry, partition into known-unreachable / TP-cache / llm-triage                          |
 | `build_triage_entries.ts`                     | Assemble `TriageEntry` records from prepared buckets                                                                                                                    |
 | `finalize/output.ts`                          | Build the published v5 envelope from the per-entry verdict files (pure); attaches the deterministic core fault diagnostics to each `novel_issues[]` row                 |
-| `finalize/verdict_ledger.ts`                  | Shared per-entry verdict loader (`results/<entry_index>.json`); used by both `finalize/merge_results.ts` and `finalize_triage.ts`                                       |
+| `finalize/verdict_ledger.ts`                  | Shared per-entry verdict loader (`results/<entry_index>.json`); used by both `finalize/merge_results.ts` and `finalize/finalize_run.ts`                                 |
 | `finalize/merge_results.ts`                   | Merge investigator result files into triage state                                                                                                                       |
+| `finalize/finalize_run.ts`                    | Publish a drained run's v5 results, seal its manifest, clear `LATEST`                                                                                                   |
 | `verdict/triage_verdict.ts`                   | `TriageVerdict` discriminated union + strict runtime parser; the published `NovelIssue` row type                                                                        |
 | `finalize/classifier_regressions.ts`          | `aggregate_classifier_regressions` — finalize-time per-rule rollup of `fp-classifier-regression` verdicts (used only by triage's finalize)                              |
 | `dispense/dispense_payload.ts`                | Build the per-entry dispense payload (entry context + in-scope registry slice)                                                                                          |
+| `dispense/render_entry_context.ts`            | Render a payload as the investigation's bounded first message (capped evidence lists, one line per rule)                                                                |
+| `dispense/diagnosis_hints.ts`                 | Per-diagnosis investigation guides, rendered into the investigator's system prompt                                                                                      |
+| `dispense/claim_pending_entries.ts`           | Absorb verdict files and claim the entries still to investigate; terminalize an entry that never yields a verdict                                                       |
+| `investigate/investigate_run.ts`              | Phases 3–4: claim, investigate through the pool, write verdicts and usage, finalize a drained run                                                                       |
+| `investigate/investigation_pool.ts`           | Continuous concurrent pool with one lead investigation to warm the prompt cache; `prefix_miss` count                                                                    |
+| `investigate/run_investigation.ts`            | One investigation as an Agent SDK `query()`; its usage and why it has no verdict                                                                                        |
+| `investigate/investigator_system_prompt.ts`   | The constant system prompt every investigation shares                                                                                                                   |
+| `investigate/investigation_tools.ts`          | The in-process `read`, `grep` and `submit_verdict` tools, confined to the project root                                                                                  |
+| `investigate/investigator_model.ts`           | The pinned investigator model and its effort                                                                                                                            |
 | `triage_state_types.ts`                       | Triage state types (`TriageState`, `TriageEntry`, `TriageEntryResult`)                                                                                                  |
 | `store/paths.ts`                              | Triage state file locations; run resolution against the state file (`require_run`) or the manifest alone (`require_run_manifest`)                                       |
 | `store/latest_pointer.ts`                     | Single-slot LATEST pointer I/O naming the project's current run                                                                                                         |
@@ -395,11 +399,13 @@ The skill is a thin caller of `@ariadnejs/core`. Classification (`enrich_call_gr
 
 - [Diagnosis Routes: Routing Table and Classification Guide](reference/diagnosis_routes.md)
 
-## Sub-Agents
+## Investigator
 
-| Agent               | Model | Purpose                                                                                                              |
-| ------------------- | ----- | -------------------------------------------------------------------------------------------------------------------- |
-| triage-investigator | haiku | Investigate a single residual entry; emit one `TriageVerdict` (tp / fp-novel / fp-classifier-regression / uncertain) |
+| Model                               | Runs                                       | Purpose                                                                                                  |
+| ----------------------------------- | ------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
+| `claude-haiku-5-5`, effort `medium` | one Agent SDK `query()` per residual entry | Investigate one entry; submit one `TriageVerdict` (tp / fp-novel / fp-classifier-regression / uncertain) |
+
+The skill dispatches no sub-agents.
 
 ## Current State
 

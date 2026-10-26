@@ -1,7 +1,7 @@
 /**
  * Dispense payload assembled per investigator invocation.
  *
- * The payload carries everything the per-entry `triage-investigator` needs to
+ * The payload carries everything a per-entry investigation needs to
  * emit one `TriageVerdict` without round-tripping back through the dispatcher:
  *
  * - `entry_context` — the entry under investigation (the full `TriageEntry`

@@ -7,13 +7,13 @@
     {
       "id": "detect-triage-publish",
       "name": "Detect entry-point candidates → per-entry triage → publish v5 triage_results",
-      "description": "Four-phase pipeline: detect entry points, classify against the known-issues registry, dispatch one investigator per residual candidate, and publish a self-contained v5 triage_results envelope (novel_issues / classifier_regressions / confirmed_unreachable / uncertain).",
+      "description": "Four-phase pipeline: detect entry points, classify against the known-issues registry, investigate every residual candidate from one deterministic script (one Agent SDK investigation each, in a continuous pool), and publish a self-contained v5 triage_results envelope (novel_issues / classifier_regressions / confirmed_unreachable / uncertain).",
       "representativeness": 0.90,
       "representativeness_anchor": "purpose",
       "effects": "repo-local",
       "intentions": [
         "Write boundary: triage never writes known_issues/registry.json — it reads the registry only to filter classifier hits; every status transition is a human decision.",
-        "Every residual entry gets an investigator verdict — there is no early exit; a registry classifier match is handled upstream in Phase 2 auto-classify, before an investigator is dispatched.",
+        "Every residual entry gets an investigator verdict — there is no early exit; a registry classifier match is handled upstream in Phase 2 auto-classify, before any investigation; an entry whose investigations all end without a verdict is published as failed, never silently dropped.",
         "Auto-classify and the investigator's in-scope slice match only wip + permanent registry rows.",
         "Every false-positive verdict is self-contained — it carries its own evidence, so there is no in-run consolidation; offline grouping happens downstream in plan.",
         "Finalize builds the published envelope entirely from the per-entry verdict files in results/, re-parsing each via parse_triage_verdict — a malformed shape halts finalize, never silently skips.",
@@ -35,13 +35,13 @@
     {
       "id": "author-project-config",
       "name": "Author a new project detection config",
-      "description": "When the target is a directory path with no saved config, preview the folder tree, pick exclusions to keep the indexed file count ≤ ~4,000, confirm with the user via AskUserQuestion, and save a project config the rest of the pipeline reads.",
+      "description": "When the target is a directory path with no saved config, preview the folder tree, pick exclusions to keep the indexed file count ≤ ~4,000, record the decision in the reply, and save a project config the rest of the pipeline reads.",
       "representativeness": 0.30,
       "representativeness_anchor": "sub-mode",
       "effects": "repo-local",
       "intentions": [
-        "Keep the effective indexed file count ≤ ~4,000; present the full preview list and let the user's final answer be authoritative.",
-        "No project configs ship pre-authored — a config is authored only through this reviewed flow.",
+        "Keep the effective indexed file count ≤ ~4,000; decide the exclusions autonomously and state the full preview list in the reply as a record.",
+        "No project configs ship pre-authored — a config is authored only through this flow.",
         "project_name is auto-derived for external projects; only internal (project_path: \".\") projects carry an explicit project_name."
       ],
       "entry": {
@@ -138,7 +138,7 @@
       "path": "~/.ariadne/triage-entrypoints/analysis_output/<project>/triage_results/<run-id>.json",
       "access": "read-write",
       "writer_owner": null,
-      "semantic_role": "The published v5 envelope (novel_issues, classifier_regressions, confirmed_unreachable, uncertain). Written by finalize_triage; re-read on the next same-commit run as the TP cache (confirmed_unreachable_reuse), by diff_runs, and by downstream skills. Preserve forever — never rm -rf.",
+      "semantic_role": "The published v5 envelope (novel_issues, classifier_regressions, confirmed_unreachable, uncertain). Written by finalize_run (in investigate_and_finalize.ts); re-read on the next same-commit run as the TP cache (confirmed_unreachable_reuse), by diff_runs, and by downstream skills. Preserve forever — never rm -rf.",
       "touched_by_flows": ["detect-triage-publish", "diff-runs"]
     },
     {
@@ -151,15 +151,7 @@
     }
   ],
 
-  "sub_agents": [
-    {
-      "id": "triage-investigator",
-      "model": "haiku",
-      "max_turns": 50,
-      "multiplicity": "one per residual llm-triage entry; the main agent dispatches synchronous foreground batches of N=5 that the turn awaits, and caps total dispatch at --max-count (default 250)",
-      "used_in_flows": ["detect-triage-publish"]
-    }
-  ],
+  "sub_agents": [],
 
   "published_outputs": [
     {

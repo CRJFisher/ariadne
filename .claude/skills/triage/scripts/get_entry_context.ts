@@ -1,21 +1,17 @@
 #!/usr/bin/env node
 /**
- * Self-service context script for triage-investigator sub-agents.
- *
- * Each sub-agent runs this script to get its complete investigation prompt.
- * The script discovers the active triage state, loads the entry by index,
- * selects diagnosis-specific hints, formats diagnostics into readable text,
- * substitutes placeholders into the single prompt template, and outputs
- * the prompt to stdout.
+ * Print one triage entry's investigation context: the same bounded bundle a
+ * triage investigation receives as its first message (`render_entry_context`),
+ * or with `--enriched` the entry's full `EnrichedEntryPoint` JSON. The
+ * classifier-author and classifier-fixer agents read entries through it.
  *
  * Pass `--run-id` with either selector. It is structurally required by the
- * member-symbol mode below; with `--entry` the pipeline passes it too, because
- * an index means nothing without the run that issued it and this script also
- * derives the verdict's output path from the run it resolves.
+ * member-symbol mode below; with `--entry` it names the run the index belongs
+ * to, because an index means nothing without the run that issued it.
  *
  * The entry is selected one of two ways:
- * - `--entry <index>` — the run-local positional index, used by
- *   triage-investigator dispatch (the triage orchestrator holds indices).
+ * - `--entry <index>` — the run-local positional index, as a triage run's
+ *   state and its `drift_evidence` rows record it.
  * - `--file <path> --name <name> --kind <kind> --line <n>` — the stable
  *   `member_symbol` identity `(file_path, name, kind, start_line)`, used by
  *   classifier-author dispatch (prioritize holds member symbols from
@@ -34,40 +30,20 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { parse_project_arg, parse_run_id_arg } from "../src/cli_args.js";
-import {
-  relativize,
-  require_run,
-  results_dir_for,
-} from "../src/store/paths.js";
+import { relativize, require_run } from "../src/store/paths.js";
 import type { RunManifest, TriageEntry, TriageState } from "../src/triage_state_types.js";
-import type {
-  AnalysisResult,
-  EnrichedEntryPoint,
-  GrepHit,
-  ReferenceSiteDiagnostic,
-  CallRefDiagnostic,
-  ClassifierHint,
-  KnownIssuesRegistry,
-} from "@ariadnejs/types";
+import type { AnalysisResult, EnrichedEntryPoint } from "@ariadnejs/types";
 import type { MemberSymbol } from "@ariadnejs/skill-protocol";
-import {
-  build_dispense_payload,
-  type DispensePayload,
-} from "../src/dispense/dispense_payload.js";
-import { hints_for_diagnosis } from "../src/dispense/diagnosis_hints.js";
+import { build_dispense_payload } from "../src/dispense/dispense_payload.js";
+import { render_entry_context } from "../src/dispense/render_entry_context.js";
 import { load_registry } from "../src/known_issues_registry.js";
 import "@ariadnejs/skill-fs/require-node-import-tsx";
 
 const USAGE = [
   "Usage: get_entry_context.ts --project <name> --entry <index> [--run-id <id>] [--enriched]",
   "       get_entry_context.ts --project <name> --file <path> --name <name> --kind <kind> --line <n> --run-id <id> [--enriched]",
-  "  --enriched: emit the full EnrichedEntryPoint JSON (samples/*.json seed for the classifier-author) instead of the investigation prompt.",
+  "  --enriched: emit the full EnrichedEntryPoint JSON (samples/*.json seed for the classifier-author) instead of the investigation context.",
 ].join("\n");
-
-const THIS_FILE = fileURLToPath(import.meta.url);
-const THIS_DIR = path.dirname(THIS_FILE);
-const SKILL_DIR = path.resolve(THIS_DIR, "..");
-const TEMPLATE_PATH = path.join(SKILL_DIR, "templates", "prompt.md");
 
 // ===== CLI Argument Parsing =====
 
@@ -271,117 +247,6 @@ export function resolution_failure_message(
   return `${head}\nThe member symbol and --run-id must come from the same triage run.`;
 }
 
-// ===== Diagnostics Formatting =====
-
-export function format_grep_hits(hits: GrepHit[]): string {
-  if (hits.length === 0) return "(none found)";
-  return hits
-    .map((h) => `  ${h.file_path}:${h.line}  ${h.content.trim()}`)
-    .join("\n");
-}
-
-/**
- * Non-call reference sites. The extra fields are the whole reason this channel
- * is richer than a grep hit: they say HOW the name was reached, which is what
- * decides whether the reference is an invocation route. Only a property access
- * has a receiver, so only it reports one.
- */
-function format_reference_sites(sites: ReferenceSiteDiagnostic[]): string {
-  if (sites.length === 0) return "(none found)";
-  return sites
-    .map((s) => {
-      const receiver =
-        s.reference_kind === "property_access" ? `, receiver: ${s.receiver_kind}` : "";
-      return `  ${s.file_path}:${s.line}  [${s.reference_kind}, access: ${s.access_type}${receiver}]  ${s.content.trim()}`;
-    })
-    .join("\n");
-}
-
-export function format_call_refs(refs: CallRefDiagnostic[]): string {
-  if (refs.length === 0) return "(none found)";
-  return refs
-    .map((r) => {
-      const resolved = r.resolved_to.length > 0
-        ? `resolved to: ${r.resolved_to.join(", ")}`
-        : "unresolved";
-      return `  ${r.caller_file}:${r.call_line} (${r.call_type} call from ${r.caller_function}, resolution_count=${r.resolution_count}, ${resolved})`;
-    })
-    .join("\n");
-}
-
-/**
- * Render sub-threshold classifier hints as a markdown block. Returns an empty
- * string when there are no hints so the enclosing template contributes nothing
- * (including no trailing heading) for the common case.
- */
-export function format_classifier_hints(hints: readonly ClassifierHint[]): string {
-  if (hints.length === 0) return "";
-  const bullets = hints
-    .map((h) => `- ${h.group_id} (confidence ${h.confidence.toFixed(2)}): ${h.reasoning}`)
-    .join("\n");
-  return [
-    "",
-    "### Classifier hints (sub-threshold matches)",
-    "",
-    "Builtin classifiers from the known-issues registry matched this entry but did not reach the `min_confidence` threshold for auto-classification. Weigh these before starting the investigation — a hint often names the exact detection gap.",
-    "",
-    bullets,
-    "",
-  ].join("\n");
-}
-
-// ===== Template Substitution =====
-
-export interface SubstituteTemplateInput {
-  template: string;
-  payload: DispensePayload;
-  output_path: string;
-}
-
-export function substitute_template(input: SubstituteTemplateInput): string {
-  const entry = input.payload.entry_context;
-  const hints = hints_for_diagnosis(entry.diagnosis);
-
-  const replacements: Record<string, string> = {
-    "{{entry.name}}": entry.name,
-    "{{entry.kind}}": entry.kind,
-    "{{entry.file_path}}": entry.file_path,
-    "{{entry.start_line}}": String(entry.start_line),
-    "{{entry.signature}}": entry.signature ?? "(none)",
-    "{{entry.is_exported}}": String(entry.is_exported),
-    "{{entry.access_modifier}}": entry.access_modifier ?? "(none)",
-    "{{entry.diagnosis}}": entry.diagnosis,
-    "{{output_path}}": input.output_path,
-    "{{entry.diagnostics.grep_call_sites_formatted}}": format_grep_hits(
-      entry.diagnostics.grep_call_sites,
-    ),
-    "{{entry.diagnostics.ariadne_call_refs_formatted}}": format_call_refs(
-      entry.diagnostics.ariadne_call_refs,
-    ),
-    "{{entry.diagnostics.grep_call_sites_outside_index_formatted}}": format_grep_hits(
-      entry.diagnostics.grep_call_sites_outside_index,
-    ),
-    "{{entry.diagnostics.reference_sites_formatted}}": format_reference_sites(
-      entry.diagnostics.reference_sites,
-    ),
-    "{{classifier_hints}}": format_classifier_hints(entry.classifier_hints),
-    "{{diagnosis.title}}": hints.title,
-    "{{diagnosis.summary}}": hints.summary,
-    "{{diagnosis.investigation_guide}}": hints.investigation_guide,
-    "{{relevant_registry_slice}}": JSON.stringify(
-      input.payload.relevant_registry_slice,
-      null,
-      2,
-    ),
-  };
-
-  let result = input.template;
-  for (const [placeholder, value] of Object.entries(replacements)) {
-    result = result.replaceAll(placeholder, value);
-  }
-  return result;
-}
-
 // ===== Enriched Emit =====
 
 /**
@@ -428,7 +293,7 @@ export function emit_enriched_entry_point(manifest_path: string, entry: TriageEn
 async function main(): Promise<void> {
   const cli = parse_args(process.argv);
   const run_id_opt = parse_run_id_arg(process.argv);
-  const { run_id, state_path, manifest_path } = require_run(cli.project, run_id_opt);
+  const { state_path, manifest_path } = require_run(cli.project, run_id_opt);
 
   const state = JSON.parse(fs.readFileSync(state_path, "utf8")) as TriageState;
 
@@ -450,19 +315,8 @@ async function main(): Promise<void> {
     return;
   }
 
-  const template = fs.readFileSync(TEMPLATE_PATH, "utf8");
-
-  const output_path = path.join(results_dir_for(cli.project, run_id), `${entry.entry_index}.json`);
-
-  const registry: KnownIssuesRegistry = load_registry();
-
-  const payload = build_dispense_payload({
-    entry,
-    registry,
-  });
-
-  const prompt = substitute_template({ template, payload, output_path });
-  process.stdout.write(prompt);
+  const payload = build_dispense_payload({ entry, registry: load_registry() });
+  process.stdout.write(render_entry_context(payload, state.project_path));
 }
 
 const this_file = fileURLToPath(import.meta.url);

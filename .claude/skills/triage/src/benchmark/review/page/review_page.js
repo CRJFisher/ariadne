@@ -167,7 +167,6 @@ function model_summaries() {
       missing: pairs.length - decided.length,
       usd_per_case: pairs.length ? usd / pairs.length : 0,
       turns: median(pairs.map(({ v }) => v.turns ?? 0)),
-      exposures: run.answer_key_exposures,
     };
   });
 }
@@ -189,7 +188,7 @@ function models_html() {
     <div class="name">${esc(m.label)}</div>
     <div class="stat">matches the Opus label on <strong>${m.verdicts ? Math.round((100 * m.matches) / m.verdicts) : 0}%</strong> of verdicts (${m.matches}/${m.verdicts})</div>
     <div class="stat"><strong>$${m.usd_per_case.toFixed(4)}</strong> per case · median <strong>${m.turns ?? "?"}</strong> turns</div>
-    <div class="stat">${m.missing} without a valid verdict${m.verdicts < m.expected ? ` · <span class="warn">${m.verdicts}/${m.expected} replays recorded</span>` : ""}${m.exposures ? ` · <span class="bad">${m.exposures} saw the answer key</span>` : ""}</div>
+    <div class="stat">${m.missing} without a valid verdict${m.verdicts < m.expected ? ` · <span class="warn">${m.verdicts}/${m.expected} replays recorded</span>` : ""}</div>
   </div>`);
   const label_card = `<div class="model-card"><div class="name">Opus label</div>
     <div class="stat">the gold verdict the models are graded against</div>
@@ -270,7 +269,6 @@ function verdict_row(c, v, label) {
   const who = `${esc(v.source_label)}${v.repeat ? ` · run ${v.repeat}` : ""}`;
   const cost = v.usd != null ? `${v.turns ?? "?"} turns · $${v.usd.toFixed(4)}` : "";
   const warn = [
-    v.saw_answer_key ? `<div class="bad">This run read a benchmark label file, so it saw the answer key.</div>` : "",
     v.error ? `<div class="bad">${esc(v.error)}</div>` : "",
   ].join("");
   const tools = v.tool_calls.length

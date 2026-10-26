@@ -101,7 +101,7 @@
 
   <!-- row 1: triage side -->
   <rect x="20" y="40" width="170" height="64" rx="10" fill="#1d212b" stroke="#2a2f3a"/>
-  <text x="105" y="66" text-anchor="middle" fill="#e6e9ef" font-size="13.5" font-weight="600">triage-investigator</text>
+  <text x="105" y="66" text-anchor="middle" fill="#e6e9ef" font-size="13.5" font-weight="600">investigation</text>
   <text x="105" y="86" text-anchor="middle" fill="#9aa3b2" font-size="12">one verdict per entry</text>
 
   <rect x="240" y="40" width="200" height="64" rx="10" fill="#171a21" stroke="#2a2f3a"/>
@@ -220,7 +220,7 @@ Same <code>PublishedEntryRef</code> identifiers, always with <code>member_eviden
 
 <h2 id="verdict">The internal verdict seam — <code>TriageVerdict</code></h2>
 
-<p>Internal to the triage skill (<code>.claude/skills/triage/src/verdict/triage_verdict.ts</code>). Each <code>triage-investigator</code> writes exactly one verdict to its run's <code>results/&lt;entry_index&gt;.json</code>; the verdict files are finalize's single source of truth. A discriminated union on <code>kind</code>, with a strict parser (<code>parse_triage_verdict</code>) that rejects missing fields, wrong types, unknown kinds, <em>and extra unknown fields</em>.</p>
+<p>Internal to the triage skill (<code>.claude/skills/triage/src/verdict/triage_verdict.ts</code>). Each investigation submits exactly one verdict, which <code>investigate_and_finalize.ts</code> writes to its run's <code>results/&lt;entry_index&gt;.json</code>; the verdict files are finalize's single source of truth. A discriminated union on <code>kind</code>, with a strict parser (<code>parse_triage_verdict</code>) that rejects missing fields, wrong types, unknown kinds, <em>and extra unknown fields</em>.</p>
 
 <table>
 <tr><th><code>kind</code></th><th>Meaning</th><th>Required payload</th></tr>
@@ -305,7 +305,7 @@ example:  deadbee-2026-04-28T13-42-07.812Z</code></pre>
 <tr>
 <td>Per-run triage state</td>
 <td><code>&lt;state&gt;/triage_state/&lt;project&gt;/runs/&lt;run-id&gt;/</code> (<code>triage.json</code>, <code>manifest.json</code>, <code>results/</code>) + <code>LATEST</code> pointer</td>
-<td>Triage steps; each investigator writes only its own <code>results/&lt;entry_index&gt;.json</code></td>
+<td>Triage steps; <code>investigate_and_finalize.ts</code> writes one <code>results/&lt;entry_index&gt;.json</code> per accepted verdict</td>
 <td>Finalize (same run); run discovery scripts</td>
 <td>Disposable scratch; the verdict files are finalize's source of truth.</td>
 </tr>

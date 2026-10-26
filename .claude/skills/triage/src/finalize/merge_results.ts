@@ -1,7 +1,7 @@
 /**
  * Merge per-entry result files from a run's `results/` subdir into its triage state.
  *
- * Each triage-investigator agent writes its verdict to
+ * Each investigation's verdict is written to
  * `triage_state/<project>/runs/<run-id>/results/<entry_index>.json` as a
  * `TriageVerdict` (discriminated union). This function delegates the
  * directory listing + per-file parse to `verdict_ledger` so the absorb-time
@@ -10,7 +10,7 @@
  * the count of entries transitioned.
  *
  * The verdict itself is *not* stored on the entry — `entry.result` is left as
- * `null`. `finalize_triage` re-reads the result files (via
+ * `null`. `finalize_run` re-reads the result files (via
  * `load_verdicts_by_entry_index`) when building the published output, so the
  * verdict ledger lives on disk in `results/` and the triage state is a pure
  * control-plane log of routing + status.

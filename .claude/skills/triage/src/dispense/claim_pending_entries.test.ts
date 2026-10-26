@@ -1,27 +1,14 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { execFileSync } from "node:child_process";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import * as fs from "node:fs/promises";
-import * as fsSync from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
-import { fileURLToPath } from "node:url";
 import {
   pick_next_entries,
   absorb_and_pick,
-  dispense_batch,
+  record_investigation_failure,
   MAX_TRIAGE_RETRIES,
-} from "./get_next_triage_entry.js";
-import type { TriageEntry, TriageState } from "../src/triage_state_types.js";
-
-// vi.hoisted runs before all `import` statements, so the env var is set before
-// `paths.js` (transitively imported by the script) reads it.
-const TMP = vi.hoisted(() => {
-  const tmp_path = `${process.env.TMPDIR ?? "/tmp"}/ariadne-test-dispense-${process.pid}`;
-  process.env.ARIADNE_TRIAGE_ENTRYPOINTS_DIR_OVERRIDE = tmp_path;
-  return tmp_path;
-});
-
-const TRIAGE_STATE = path.join(TMP, "triage_state");
+} from "./claim_pending_entries.js";
+import type { TriageEntry, TriageState } from "../triage_state_types.js";
 
 function make_entry(overrides: Partial<TriageEntry> & { entry_index: number }): TriageEntry {
   return {
@@ -159,7 +146,7 @@ describe("absorb_and_pick", () => {
     await fs.writeFile(path.join(results_dir, "0.json"), tp_verdict_json());
     await fs.writeFile(path.join(results_dir, "1.json"), tp_verdict_json());
 
-    const picked = await absorb_and_pick(state_path, run_dir, 2);
+    const { picked } = await absorb_and_pick(state_path, run_dir, 2);
 
     expect(picked).toEqual([]);
     const state = await read_state();
@@ -172,7 +159,7 @@ describe("absorb_and_pick", () => {
     await write_state(make_state([make_entry({ entry_index: 0, status: "failed", retry_count: 0 })]));
     await fs.writeFile(path.join(results_dir, "0.json"), "not valid json{{{");
 
-    const picked = await absorb_and_pick(state_path, run_dir, 1);
+    const { picked } = await absorb_and_pick(state_path, run_dir, 1);
 
     expect(picked).toEqual([0]);
     const state = await read_state();
@@ -195,7 +182,7 @@ describe("absorb_and_pick", () => {
     // The retry investigator writes another malformed file; the budget is now
     // exhausted, so the entry terminalizes as failed and the gate closes.
     await fs.writeFile(path.join(results_dir, "0.json"), "malformed again{{{");
-    const picked = await absorb_and_pick(state_path, run_dir, 1);
+    const { picked } = await absorb_and_pick(state_path, run_dir, 1);
     expect(picked).toEqual([]);
     const state = await read_state();
     expect(state.entries[0].status).toEqual("failed");
@@ -206,85 +193,53 @@ describe("absorb_and_pick", () => {
   it("picks a still-running pending entry but holds phase 'triage' until it completes", async () => {
     await write_state(make_state([make_entry({ entry_index: 0, status: "pending" })]));
 
-    const picked = await absorb_and_pick(state_path, run_dir, 1);
+    const { picked, state } = await absorb_and_pick(state_path, run_dir, 1);
 
     expect(picked).toEqual([0]);
+    expect(state.phase).toEqual("triage");
     expect((await read_state()).phase).toEqual("triage");
+  });
+
+  it("only absorbs when asked for no entries, completing a run whose last verdict landed", async () => {
+    await write_state(make_state([make_entry({ entry_index: 0 }), make_entry({ entry_index: 1, status: "completed" })]));
+    await fs.writeFile(path.join(results_dir, "0.json"), tp_verdict_json());
+
+    const { picked, state } = await absorb_and_pick(state_path, run_dir, 0);
+
+    expect(picked).toEqual([]);
+    expect(state.entries.map((e) => e.status)).toEqual(["completed", "completed"]);
+    expect(state.phase).toEqual("complete");
   });
 });
 
-describe("dispense_batch", () => {
-  beforeEach(() => {
-    fsSync.rmSync(TMP, { recursive: true, force: true });
-    fsSync.mkdirSync(TMP, { recursive: true });
+describe("record_investigation_failure", () => {
+  let run_dir: string;
+  let state_path: string;
+
+  beforeEach(async () => {
+    run_dir = await fs.mkdtemp(path.join(os.tmpdir(), "triage-fail-"));
+    state_path = path.join(run_dir, "triage.json");
+    await fs.mkdir(path.join(run_dir, "results"), { recursive: true });
   });
 
-  afterEach(() => {
-    fsSync.rmSync(TMP, { recursive: true, force: true });
+  afterEach(async () => {
+    await fs.rm(run_dir, { recursive: true, force: true });
   });
 
-  function seed_run(project: string, run_id: string, entries: TriageEntry[]): void {
-    const dir = path.join(TRIAGE_STATE, project, "runs", run_id);
-    fsSync.mkdirSync(path.join(dir, "results"), { recursive: true });
-    fsSync.writeFileSync(
-      path.join(dir, "triage.json"),
-      JSON.stringify(make_state(entries), null, 2) + "\n",
+  it("terminalizes the entry so the run drains without it", async () => {
+    await fs.writeFile(state_path, JSON.stringify(make_state([make_entry({ entry_index: 3 })])));
+
+    await record_investigation_failure(state_path, 3, "reached the 20-turn cap without a verdict");
+
+    const state = JSON.parse(await fs.readFile(state_path, "utf8")) as TriageState;
+    expect(state.entries[0]).toEqual(
+      make_entry({
+        entry_index: 3,
+        status: "failed",
+        error: "reached the 20-turn cap without a verdict",
+        retry_count: MAX_TRIAGE_RETRIES,
+      }),
     );
-  }
-
-  function point_latest_at(project: string, run_id: string): void {
-    fsSync.writeFileSync(path.join(TRIAGE_STATE, project, "LATEST"), run_id + "\n");
-  }
-
-  it("echoes the LATEST run-id alongside the picked indices", async () => {
-    seed_run("proj", "run-one", [make_entry({ entry_index: 7 })]);
-    point_latest_at("proj", "run-one");
-
-    expect(await dispense_batch("proj", null, 1)).toEqual({
-      run_id: "run-one",
-      entries: [7],
-    });
-  });
-
-  it("dispenses from the pinned run and echoes it, ignoring a LATEST that moved on", async () => {
-    seed_run("proj", "run-one", [make_entry({ entry_index: 7 })]);
-    seed_run("proj", "run-two", [make_entry({ entry_index: 42 })]);
-    point_latest_at("proj", "run-two");
-
-    expect(await dispense_batch("proj", "run-one", 1)).toEqual({
-      run_id: "run-one",
-      entries: [7],
-    });
-  });
-
-  it("echoes the run-id even when the pool is drained", async () => {
-    seed_run("proj", "run-one", [make_entry({ entry_index: 7, status: "completed" })]);
-    point_latest_at("proj", "run-one");
-
-    expect(await dispense_batch("proj", null, 5)).toEqual({
-      run_id: "run-one",
-      entries: [],
-    });
-  });
-
-  // The orchestrator reads stdout, not the return value, so the JSON the script
-  // actually prints is the contract worth pinning.
-  it("prints the run-id and entries as one JSON object on stdout", () => {
-    seed_run("proj", "run-one", [make_entry({ entry_index: 7 })]);
-    seed_run("proj", "run-two", [make_entry({ entry_index: 42 })]);
-    point_latest_at("proj", "run-two");
-
-    const script = path.join(path.dirname(fileURLToPath(import.meta.url)), "get_next_triage_entry.ts");
-    const stdout = execFileSync(
-      process.execPath,
-      ["--import", "tsx", script, "--project", "proj", "--run-id", "run-one", "--count", "5"],
-      {
-        encoding: "utf8",
-        stdio: ["ignore", "pipe", "pipe"],
-        env: { ...process.env, ARIADNE_TRIAGE_ENTRYPOINTS_DIR_OVERRIDE: TMP },
-      },
-    );
-
-    expect(JSON.parse(stdout)).toEqual({ run_id: "run-one", entries: [7] });
+    expect((await absorb_and_pick(state_path, run_dir, 5)).state.phase).toEqual("complete");
   });
 });

@@ -1,34 +1,44 @@
 /**
- * Fixture integration test for `finalize_triage`.
+ * Fixture integration tests for finalizing a run.
  *
- * Stages a tmp run directory with a mixed set of investigator verdicts (one
- * each of `tp`, `fp-novel` ×2, `fp-classifier-regression`, `uncertain`) plus an
- * auto-classified registry entry, then runs the same load+build pipeline that
- * `finalize_triage.ts` exercises and asserts the published v5 `triage_results`
- * payload exactly via `toEqual`. Both `novel_issues[]` and
- * `classifier_regressions[]` are derived from the verdict files — no
- * `novel_issues.json` / `classifier_regressions.jsonl` exists in the run dir.
+ * The first stages a tmp run directory with a mixed set of investigator
+ * verdicts (one each of `tp`, `fp-novel` ×2, `fp-classifier-regression`,
+ * `uncertain`) plus an auto-classified registry entry, runs the load+build
+ * pipeline `finalize_run` uses, and asserts the published v5 `triage_results`
+ * payload exactly. Both `novel_issues[]` and `classifier_regressions[]` are
+ * derived from the verdict files — no `novel_issues.json` /
+ * `classifier_regressions.jsonl` exists in the run dir. The second runs
+ * `finalize_run` itself against a store, sealing the manifest.
  */
 
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { build_finalization_output } from "../src/finalize/output.js";
+import { build_finalization_output } from "./output.js";
 import type { TriageResultsFile } from "@ariadnejs/skill-protocol";
-import { load_verdicts_by_entry_index } from "../src/finalize/verdict_ledger.js";
+import { load_verdicts_by_entry_index } from "./verdict_ledger.js";
+import { finalize_run } from "./finalize_run.js";
 import type {
   EntryPointDiagnostics,
   FilePath,
   SyntacticFeatures,
 } from "@ariadnejs/types";
 import type {
+  RunManifest,
   TriageEntry,
   TriageState,
-} from "../src/triage_state_types.js";
-import type { TriageVerdict } from "../src/verdict/triage_verdict.js";
+} from "../triage_state_types.js";
+import type { TriageVerdict } from "../verdict/triage_verdict.js";
+
+// Set before `paths.js` reads it at import.
+const STORE = vi.hoisted(() => {
+  const dir = `${process.env.TMPDIR ?? "/tmp"}/ariadne-test-finalize-${process.pid}`;
+  process.env.ARIADNE_TRIAGE_ENTRYPOINTS_DIR_OVERRIDE = dir;
+  return dir;
+});
 
 const PROJECT_PATH = "/projects/sample";
 
@@ -114,7 +124,77 @@ async function write_verdict(entry_index: number, verdict: TriageVerdict): Promi
   );
 }
 
-describe("finalize_triage (fixture integration)", () => {
+describe("finalize_run", () => {
+  const project = "sample";
+  const run_id = "abc1234-2026-10-26T00-00-00.000Z";
+  const store_run_dir = path.join(STORE, "triage_state", project, "runs", run_id);
+
+  beforeEach(async () => {
+    await fs.rm(STORE, { recursive: true, force: true });
+    await fs.mkdir(path.join(store_run_dir, "results"), { recursive: true });
+    const manifest: RunManifest = {
+      schema_version: 1,
+      run_id,
+      project_name: project,
+      project_path: PROJECT_PATH,
+      created_at: "2026-10-26T00:00:00.000Z",
+      finalized_at: null,
+      status: "active",
+      source_analysis_path: "/analysis.json",
+      source_analysis_run_id: "analysis",
+      max_count: 250,
+      commit_hash: "abc1234",
+      tp_cache: { enabled: false, source_run_id: null, skipped_count: 0, skipped_entry_keys: [], stability: null },
+    };
+    await fs.writeFile(path.join(store_run_dir, "manifest.json"), JSON.stringify(manifest));
+    await fs.writeFile(path.join(STORE, "triage_state", project, "LATEST"), `${run_id}\n`);
+  });
+
+  afterEach(async () => {
+    await fs.rm(STORE, { recursive: true, force: true });
+  });
+
+  async function write_state(phase: TriageState["phase"]): Promise<void> {
+    const state: TriageState = {
+      project_name: project,
+      project_path: PROJECT_PATH,
+      phase,
+      entries: [make_entry({ entry_index: 0 }), make_entry({ entry_index: 1, status: "failed", error: "no verdict" })],
+      created_at: "2026-10-26T00:00:00.000Z",
+      updated_at: "2026-10-26T00:00:00.000Z",
+    };
+    await fs.writeFile(path.join(store_run_dir, "triage.json"), JSON.stringify(state));
+  }
+
+  it("publishes the results, seals the manifest and clears LATEST", async () => {
+    await write_state("complete");
+    const verdict: TriageVerdict = { kind: "tp", member_evidence: { file: "src/fn.ts", line: 1, why: "no callers" } };
+    await fs.writeFile(path.join(store_run_dir, "results", "0.json"), JSON.stringify(verdict));
+
+    const finalized = await finalize_run(project, run_id);
+
+    expect(finalized.output_file).toEqual(path.join(STORE, "analysis_output", project, "triage_results", `${run_id}.json`));
+    expect(finalized.summary).toEqual({
+      total_entries: 2,
+      confirmed_unreachable_count: 1,
+      novel_issue_count: 0,
+      classifier_regression_rule_count: 0,
+      classifier_regression_entry_count: 0,
+      uncertain_count: 0,
+      failed_count: 1,
+    });
+    const manifest = JSON.parse(await fs.readFile(path.join(store_run_dir, "manifest.json"), "utf8")) as RunManifest;
+    expect(manifest.status).toEqual("finalized");
+    await expect(fs.access(path.join(STORE, "triage_state", project, "LATEST"))).rejects.toThrow();
+  });
+
+  it("refuses a run that has not drained", async () => {
+    await write_state("triage");
+    await expect(finalize_run(project, run_id)).rejects.toThrow(`run ${run_id} is in phase "triage"; it finalizes only once complete`);
+  });
+});
+
+describe("build_finalization_output (fixture integration)", () => {
   it("publishes the exact v5 envelope, deriving novel_issues and classifier_regressions from the verdict files", async () => {
     // ===== Triage state =====
     const state: TriageState = {
@@ -203,7 +283,7 @@ describe("finalize_triage (fixture integration)", () => {
       member_evidence: { file: "src/ambig.ts", line: 40, why: "two plausible paths" },
     });
 
-    // ===== Drive the same load+build path finalize_triage.ts uses =====
+    // ===== Drive the same load+build path finalize_run uses =====
     const verdicts_by_entry_index = await load_verdicts_by_entry_index(
       path.join(run_dir, "results"),
     );

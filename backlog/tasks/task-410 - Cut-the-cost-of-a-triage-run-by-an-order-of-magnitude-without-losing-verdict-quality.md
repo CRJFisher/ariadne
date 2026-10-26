@@ -3,10 +3,10 @@ id: TASK-410
 title: >-
   Cut the cost of a triage run by an order of magnitude without losing verdict
   quality
-status: To Do
+status: In Progress
 assignee: []
 created_date: "2026-10-19 22:30"
-updated_date: "2026-10-25 21:30"
+updated_date: "2026-10-26 03:00"
 labels:
   - triage
   - performance
@@ -114,10 +114,25 @@ A change passes when, over two repeats:
 
 - [x] #1 The benchmark suite, its label-review tool, a tested TypeScript scorer, and a replay runner live under `.claude/skills/triage/benchmark/`, and a baseline of the current configuration (two repeats, with usage) is recorded
 - [ ] #2 A human has reviewed the 15 flagged labels (all medium confidence; 14 of them list two acceptable kinds) in the review tool, and every amendment in `benchmark/v1/human_review.json` is applied to `labels/`
-- [ ] #3 One deterministic script runs dispense, investigation and finalize with a continuous pool, warms the cache with one lead investigator at start and after idle gaps, records turn-1 cache usage and a `prefix_miss` count per run, and stops cleanly on spend or rate-limit errors; no agent coordinates Phases 3–4
-- [ ] #4 Investigators run with a constant purpose-written system prompt, the entry context in the first message, `Read`/`Grep`/`submit_verdict` only, a turn cap, a pinned SDK version, an explicit 5-minute cache TTL and a fixed session title; `.claude/agents/triage-investigator.md` is removed
-- [ ] #5 The entry-context bundle is bounded (rules as one line each, static instructions in the system prompt, capped evidence lists with explicit overflow counts) and coordinated with TASK-190.43 #1
+- [x] #3 One deterministic script runs dispense, investigation and finalize with a continuous pool, warms the cache with one lead investigator at start and after idle gaps, records turn-1 cache usage and a `prefix_miss` count per run, and stops cleanly on spend or rate-limit errors; no agent coordinates Phases 3–4
+- [x] #4 Investigators run with a constant purpose-written system prompt, the entry context in the first message, `Read`/`Grep`/`submit_verdict` only, a turn cap, a pinned SDK version, an explicit 5-minute cache TTL and a fixed session title; `.claude/agents/triage-investigator.md` is removed
+- [x] #5 The entry-context bundle is bounded (rules as one line each, static instructions in the system prompt, capped evidence lists with explicit overflow counts) and coordinated with TASK-190.43 #1
 - [ ] #6 The investigator model is pinned explicitly, with effort chosen by a benchmark sweep
 - [ ] #7 Every step passes the benchmark gate, and the final configuration's cost per investigation and per run is reported next to the baseline
 - [ ] #8 `SKILL.md`, the skill README and its diagrams, `meta.json` and `.claude/rules/classifier-lifecycle.md` describe the pipeline as it runs
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+
+Steps 2–5 are implemented together; none has been gated on the benchmark yet (no spend budget was set for the gate runs).
+
+- **Step 2, dispatch loop.** `scripts/investigate_and_finalize.ts` over `src/investigate/investigate_run.ts` claims every pickable entry, investigates through `src/investigate/investigation_pool.ts` (continuous pool, `--concurrency` default 8, one lead released on its first response), writes each verdict file, records per-investigation usage in `runs/<run-id>/investigations.json`, retries a verdict-less investigation once and then records the entry `failed`, and finalizes in the call that drains the run (`src/finalize/finalize_run.ts`, moved from `scripts/finalize_triage.ts`). It stops dispatching on a spend cap, an account error, or `--time-budget-s` (default 420s, hard abort two minutes later) so one call fits a 10-minute Bash timeout; `status: continue` means run it again. `get_next_triage_entry.ts` became `src/dispense/claim_pending_entries.ts`. The idle-gap re-warm is satisfied by construction: a pool never idles while it has work (every refill is a request that keeps the 5-minute entry alive), rate-limit and spend errors stop the call, and every call starts cold with a lead.
+- **Step 3, lean investigator.** `src/investigate/run_investigation.ts`: Agent SDK `query()` with `INVESTIGATOR_SYSTEM_PROMPT`, `tools: []`, one in-process MCP server `triage` with `read` (200-line cap), `grep` (git grep -P, 100-match cap, plain-directory fallback) and `submit_verdict` (strict parse, in-scope rule id, `member_evidence` must name a real line), `settingSources: []`, `persistSession: false`, `strictMcpConfig: true`, `permissionMode: "dontAsk"`, `maxTurns: 20`, `title: "investigator"`, 5-minute TTL env. `read`/`grep` are confined to the project root, which also keeps benchmark replays away from the label files (the `saw_answer_key` check and the proposed settings deny rule are no longer needed). `.claude/agents/triage-investigator.md` and `templates/prompt.md` are deleted; the benchmark runner replays through `run_investigation` and the same pool, with `--model` and `--effort` and no coordinator.
+- **Step 4, bounded bundle.** `src/dispense/render_entry_context.ts`: paths relative to the project root, rules one line each, evidence lists capped at 40 with an overflow count and a grep pattern, compact symbol ids; diagnosis guides moved into the system prompt. TASK-190.43 #1 lands in the same format: call references show `receiver`, `failure: <stage>/<reason>` (with the import specifier or file) and syntactic flags; grep hits show their captures.
+- **Step 5, model.** `INVESTIGATOR_MODEL` pins `claude-haiku-5-5` at effort `medium`, the SDK default the Haiku 5.5 comparison run used. The low/medium sweep (AC #6) is still to run; `claude-haiku-4-5` runs with thinking disabled.
+- **Smoke test (not a gate).** Two cases, one repeat, Haiku 5.5 medium: both verdicts in `acceptable_kinds`, both evidence files matching, $0.0028 per investigation over 4.5 turns, `prefix_miss` 0. The follower read 4,711 tokens of shared prefix from cache on turn 1, so the fixed prefix is about 4.7k tokens — above the 3–4k target, and above Haiku 4.5's 4,096 caching minimum.
+- **Open.** AC #2 (human label review), AC #6 (effort sweep), AC #7 (gate runs on both models, per-run cost report), and AC #8's diagram: `README.per-step.mmd` is updated but `README.per-step.svg` still needs re-rendering.
+
+<!-- SECTION:NOTES:END -->

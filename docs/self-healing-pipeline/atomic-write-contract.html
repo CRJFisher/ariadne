@@ -371,7 +371,7 @@
   </tr>
   <tr>
     <td>Published triage results<br><code>triage_results/&lt;run-id&gt;.json</code></td>
-    <td><strong>Triage finalize</strong>. Investigator sub-agents write only their own per-entry verdict files under <code>triage_state/…/results/</code>.</td>
+    <td><strong>Triage finalize</strong>. The investigation loop writes one per-entry verdict file per path under <code>triage_state/…/results/</code>.</td>
     <td><code>atomic_write_file</code> — one writer per path needs no lock.</td>
     <td>One fold step owns the published schema-v5 seam, so downstream readers (plan, the next run's TP cache) consume exactly one consistent document per run.</td>
   </tr>

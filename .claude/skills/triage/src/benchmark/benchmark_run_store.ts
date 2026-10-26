@@ -5,12 +5,15 @@
  *     run.json                     the run's configuration
  *     replays/<case_id>.r<n>.json  one ReplayRecord per case and repeat
  *     score.json                   the run graded against the suite
- *     store/                       the scratch triage store the replays read and write
  */
 
 import fs from "node:fs";
 import path from "node:path";
 
+import type { EffortLevel } from "@anthropic-ai/claude-agent-sdk";
+
+import { count_prefix_misses } from "../investigate/investigation_pool.js";
+import { describe_investigator_model } from "../investigate/investigator_model.js";
 import { default_store_dir } from "../store/store_layout.js";
 import type { LabelledCase } from "./load_benchmark_suite.js";
 import { score_benchmark_verdicts, type BenchmarkScore, type VerdictUnderTest } from "./score_benchmark_verdicts.js";
@@ -21,7 +24,8 @@ export const BENCHMARK_RUNS_SUBDIR = "benchmark_runs";
 export interface BenchmarkRunConfig {
   run_id: string;
   model: string;
-  coordinator_model: string;
+  /** `null` for a model without effort control. */
+  effort: EffortLevel | null;
   repeats: number;
   case_ids: string[];
   sdk_version: string;
@@ -33,16 +37,17 @@ export function benchmark_runs_root(store_dir: string = default_store_dir()): st
   return path.join(store_dir, BENCHMARK_RUNS_SUBDIR);
 }
 
-export function benchmark_run_id(started_at: string, model: string): string {
-  return `${started_at.replace(/[:.]/g, "-")}--${model}`;
+export function benchmark_run_id(started_at: string, run_label: string): string {
+  return `${started_at.replace(/[:.]/g, "-")}--${run_label.replace("@", "-")}`;
+}
+
+/** The configuration a run compares as: its model, with its effort when it takes one. */
+export function run_label(config: Pick<BenchmarkRunConfig, "model" | "effort">): string {
+  return describe_investigator_model(config);
 }
 
 export function replay_record_path(run_dir: string, case_id: string, repeat: number): string {
   return path.join(run_dir, "replays", `${case_id}.r${repeat}.json`);
-}
-
-export function scratch_store_dir(run_dir: string): string {
-  return path.join(run_dir, "store");
 }
 
 export function write_json(file: string, value: unknown): void {
@@ -78,12 +83,12 @@ export function list_benchmark_runs(root: string = benchmark_runs_root()): { run
 }
 
 export interface RunScore extends BenchmarkScore {
-  answer_key_exposures: string[];
   efficiency: {
     total_usd: number;
-    coordinator_usd: number;
     mean_usd_per_replay: number | null;
     mean_turns: number | null;
+    /** Replays that started into a warm cache yet missed the shared prefix (see `count_prefix_misses`). */
+    prefix_miss: number;
   };
 }
 
@@ -95,16 +100,16 @@ export interface RunScore extends BenchmarkScore {
 export function write_run_score(run_dir: string, cases: readonly LabelledCase[]): RunScore {
   const records = read_replay_records(run_dir);
   const total_usd = records.reduce((t, r) => t + (r.usage?.usd ?? 0), 0);
-  const coordinator_usd = records.reduce((t, r) => t + (r.usage?.coordinator_usd ?? 0), 0);
   const turns = records.reduce((t, r) => t + (r.usage?.turns ?? 0), 0);
   const score: RunScore = {
     ...score_benchmark_verdicts(records.map(verdict_under_test), cases),
-    answer_key_exposures: records.filter((r) => r.saw_answer_key).map((r) => `${r.case_id} r${r.repeat}`),
     efficiency: {
       total_usd: Math.round(total_usd * 10000) / 10000,
-      coordinator_usd: Math.round(coordinator_usd * 10000) / 10000,
       mean_usd_per_replay: records.length === 0 ? null : Math.round((total_usd / records.length) * 100000) / 100000,
       mean_turns: records.length === 0 ? null : Math.round((turns / records.length) * 100) / 100,
+      prefix_miss: count_prefix_misses(
+        records.map((r) => ({ lead: r.lead, turn1_cache_read_input_tokens: r.usage?.turn1_cache_read_input_tokens ?? 0 })),
+      ),
     },
   };
   write_json(path.join(run_dir, "score.json"), score);

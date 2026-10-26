@@ -17,7 +17,8 @@ import {
   type PriorVerdict,
   type VerdictKind,
 } from "../load_benchmark_suite.js";
-import type { ReplayRecord, ToolCall } from "../replay_investigation.js";
+import type { ToolCall } from "../../investigate/run_investigation.js";
+import type { ReplayRecord } from "../replay_investigation.js";
 
 export const GOLD_LABEL_SOURCE = "opus-label";
 
@@ -48,7 +49,6 @@ export interface VerdictView {
   usd: number | null;
   turns: number | null;
   tool_calls: ToolCall[];
-  saw_answer_key: boolean;
   error: string | null;
 }
 
@@ -127,11 +127,12 @@ export interface ModelRun {
   records: ReplayRecord[];
 }
 
+/** `claude-haiku-5-5@low` reads as `Haiku 5.5 (low)`. */
 export function model_label(model: string): string {
-  const match = model.match(/^claude-([a-z]+)-(\d+)-(\d+)/);
+  const match = model.match(/^claude-([a-z]+)-(\d+)-(\d+)(?:@(\w+))?/);
   if (match === null) return model;
-  const [, family, major, minor] = match;
-  return `${family[0].toUpperCase()}${family.slice(1)} ${major}.${minor}`;
+  const [, family, major, minor, effort] = match;
+  return `${family[0].toUpperCase()}${family.slice(1)} ${major}.${minor}${effort === undefined ? "" : ` (${effort})`}`;
 }
 
 /** The model a recorded pipeline verdict came from, read off its run's start date. */
@@ -319,7 +320,6 @@ export function assemble_review_case(input: AssembleInput): ReviewCase {
           usd: r.usage?.usd ?? null,
           turns: r.usage?.turns ?? null,
           tool_calls: r.tool_calls,
-          saw_answer_key: r.saw_answer_key,
           error: r.error,
         }),
       ),
@@ -336,7 +336,6 @@ export function assemble_review_case(input: AssembleInput): ReviewCase {
     usd: null,
     turns: null,
     tool_calls: [],
-    saw_answer_key: false,
     error: null,
   };
 
@@ -350,7 +349,6 @@ export function assemble_review_case(input: AssembleInput): ReviewCase {
     usd: v.usd,
     turns: v.turns,
     tool_calls: [],
-    saw_answer_key: false,
     error: null,
   }));
 

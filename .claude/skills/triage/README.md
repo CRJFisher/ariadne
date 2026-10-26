@@ -1,6 +1,6 @@
 # Triage
 
-Triage pipeline for entry point analysis: detect false positives and classify root causes. The per-entry `triage-investigator` emits one `TriageVerdict` — a discriminated union with `tp`, `fp-novel`, `fp-classifier-regression`, or `uncertain` arms. Each false-positive verdict is self-contained: it carries its own evidence and (for `fp-novel`) the deterministic core fault diagnostics, so the published `triage_results` need no in-run consolidation. Offline grouping of false positives happens downstream in the `plan` skill.
+Triage pipeline for entry point analysis: detect false positives and classify root causes. Each residual entry gets one investigation, which submits one `TriageVerdict` — a discriminated union with `tp`, `fp-novel`, `fp-classifier-regression`, or `uncertain` arms. Each false-positive verdict is self-contained: it carries its own evidence and (for `fp-novel`) the deterministic core fault diagnostics, so the published `triage_results` need no in-run consolidation. Offline grouping of false positives happens downstream in the `plan` skill.
 
 Each invocation produces a self-contained run under `triage_state/<project>/runs/<run-id>/`. Run-id format is `<short-commit>-<iso-ts>` (or `nogit-<iso-ts>` for non-git projects). Re-running at the same target commit reuses prior `confirmed_unreachable` verdicts via the TP cache (skip with `--no-reuse-tp`). The classifier registry at `known_issues/registry.json` is the canonical registry; this skill reads it to filter classifier hits and the human maintains it (the `plan` skill never reads it). A generated `permanent`-status slice is bundled into `@ariadnejs/core` at `packages/core/src/classify_entry_points/permanent_data.ts`, so library consumers of `Project.get_call_graph()` filter framework noise without depending on this skill. The slice is regenerated from the source registry when its permanent rules change.
 
@@ -24,13 +24,15 @@ This skill's internal flow is a top-down four-phase pipeline. Read-only stores s
 
 ![Triage-entrypoints four-phase pipeline](./README.per-step.svg)
 
-**What to look for**: four phase bands stacked top-to-bottom (strict reading order); two read-only stores (registry, prior triage_results) sit outside the phase bands — this skill **never** writes the registry (lifecycle contract); three Phase-2 buckets (auto / TP / residual) determine whether an entry skips the triage loop entirely. Each investigator writes one self-contained `TriageVerdict` to `results/<entry_index>.json`; finalize is the single reader, building `novel_issues[]` (one-per-`fp-novel`) and `classifier_regressions[]` (rolled up from `fp-classifier-regression`) directly from those files. Each run's published `triage_results` becomes the next same-commit run's TP cache.
+**What to look for**: three phase bands stacked top-to-bottom (strict reading order), the last one a single script for Phases 3–4; two read-only stores (registry, prior triage_results) sit outside the phase bands — this skill **never** writes the registry (lifecycle contract); three Phase-2 buckets (auto / TP / residual) determine whether an entry skips investigation entirely. Each investigation's self-contained `TriageVerdict` is written to `results/<entry_index>.json`, and its usage to `investigations.json`; finalize is the single reader, building `novel_issues[]` (one-per-`fp-novel`) and `classifier_regressions[]` (rolled up from `fp-classifier-regression`) directly from those files. Each run's published `triage_results` becomes the next same-commit run's TP cache.
 
-## Sub-Agent Summary
+## Investigation Summary
 
-| Agent               | Model | Multiplicity                     | Purpose                                                                |
-| ------------------- | ----- | -------------------------------- | ---------------------------------------------------------------------- |
-| triage-investigator | Haiku | 1 per entry (foreground batches) | Fetch own context via `get_entry_context.ts`, emit one `TriageVerdict` |
+| Investigation                                     | Model                        | Multiplicity                                    | Purpose                                                                                     |
+| ------------------------------------------------- | ---------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| Agent SDK `query()` with a constant system prompt | `claude-haiku-5-5`, `medium` | 1 per residual entry, in a continuous pool of N | Read the entry's bounded context, search with `read` and `grep`, submit one `TriageVerdict` |
+
+`scripts/investigate_and_finalize.ts` runs every investigation and finalizes the run; no agent coordinates it. The skill dispatches no sub-agents.
 
 ## Key Modules
 
@@ -38,4 +40,4 @@ See [SKILL.md → Architecture: Key Modules](SKILL.md#architecture-key-modules).
 
 ## Benchmark
 
-The investigator's verdict quality and cost are measured on a frozen suite of 63 gold-labelled cases in [benchmark/v1/](benchmark/v1/README.md). `scripts/run_benchmark.ts` replays the suite through the investigator as the pipeline dispatches it, `scripts/score_benchmark.ts` grades a run, and `scripts/serve_benchmark_review.ts` serves the page where a human casts the deciding vote between the models' verdicts. The code lives in `src/benchmark/`.
+The investigator's verdict quality and cost are measured on a frozen suite of 63 gold-labelled cases in [benchmark/v1/](benchmark/v1/README.md). `scripts/run_benchmark.ts` replays the suite through the pipeline's own investigation and pool, `scripts/score_benchmark.ts` grades a run, and `scripts/serve_benchmark_review.ts` serves the page where a human casts the deciding vote between the models' verdicts. The code lives in `src/benchmark/`.
