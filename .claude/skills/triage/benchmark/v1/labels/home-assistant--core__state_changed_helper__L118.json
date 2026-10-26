@@ -1,0 +1,29 @@
+{
+ "case_id": "home-assistant--core__state_changed_helper__L118",
+ "gold_kind": "fp-classifier-regression",
+ "acceptable_kinds": [
+  "fp-classifier-regression"
+ ],
+ "gold_rule_id": "registration-decorator-dispatch",
+ "caller_evidence": [
+  {
+   "file": "homeassistant/scripts/benchmark/__init__.py",
+   "line": 117,
+   "snippet": "@benchmark"
+  },
+  {
+   "file": "homeassistant/scripts/benchmark/__init__.py",
+   "line": 36,
+   "snippet": "bench = BENCHMARKS[args.name]"
+  },
+  {
+   "file": "homeassistant/scripts/benchmark/__init__.py",
+   "line": 47,
+   "snippet": "runtime = await bench(hass)"
+  }
+ ],
+ "tp_search_summary": null,
+ "confidence": "high",
+ "rationale": "The local @benchmark decorator enrolls the function into BENCHMARKS[func.__name__]; run() selects it via the computed key BENCHMARKS[args.name] and run_benchmark awaits bench(hass). run() is itself dispatched by homeassistant/scripts/__init__.py via importlib. This is exactly the registration-decorator-into-dispatch-table, computed-key invocation pattern that registration-decorator-dispatch describes; @benchmark is just not in its curated decorator set.",
+ "prior_verdicts_assessment": "The prior fp-classifier-regression verdict naming registration-decorator-dispatch is correct."
+}

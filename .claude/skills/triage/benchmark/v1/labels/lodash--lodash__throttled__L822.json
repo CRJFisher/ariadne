@@ -1,0 +1,14 @@
+{
+ "case_id": "lodash--lodash__throttled__L822",
+ "gold_kind": "tp",
+ "acceptable_kinds": [
+  "tp",
+  "fp-novel"
+ ],
+ "gold_rule_id": null,
+ "caller_evidence": [],
+ "tp_search_summary": "Searched all callers of the closure returned by vendored underscore.js _.throttle. underscore.js does not call _.throttle internally. The test/test.js throttled() hits are lodash's own _.throttle results (test.js loads lodash). vendor/underscore/test/functions.js calls _.throttle(...) then throttledIncr(), but test/underscore.html (the only runner, also driven by playwright-runner.spec.js) loads lodash builds (test-ui.js buildPath options are lodash only) as `_` before injecting those tests, so they exercise lodash.throttle. perf/perf.js loads vendor underscore as `_` but never calls throttle; vendor/underscore/test/utility.js loads underscore.js in a vm only for noConflict/VERSION checks.",
+ "confidence": "medium",
+ "rationale": "Nothing in the repo runs vendored underscore.js's throttle: its upstream test file is executed only against lodash via test/underscore.html, and the one harness that loads vendor underscore (perf) never invokes throttle. With no in-repo invoker of this closure, it is genuinely unreachable here. fp-novel is accepted because a reviewer could treat underscore's own functions.js (written against `_` = underscore) as a static caller through a returned-closure alias.",
+ "prior_verdicts_assessment": "The tp verdict is right and correctly traces the underscore.html loading. The fp-novel verdict assumes functions.js runs against vendored underscore, which the test harness contradicts."
+}

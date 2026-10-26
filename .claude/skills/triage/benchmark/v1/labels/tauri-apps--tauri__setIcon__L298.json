@@ -1,0 +1,13 @@
+{
+  "case_id": "tauri-apps--tauri__setIcon__L298",
+  "gold_kind": "tp",
+  "acceptable_kinds": [
+    "tp"
+  ],
+  "gold_rule_id": null,
+  "caller_evidence": [],
+  "tp_search_summary": "Grepped the repo (excluding node_modules/.git/target, Rust and CHANGELOG) for 'setIcon'. Hits: definitions on Submenu, IconMenuItem, Window and TrayIcon, a JSDoc example, examples/api/src/components/MenuBuilder.svelte:267 ((item.menu as IconMenuItem)?.setIcon, where item.menu is only ever created by MenuItem/IconMenuItem/CheckMenuItem/PredefinedMenuItem.new, never a Submenu), and examples/api/src/views/Window.svelte:187 (selectedWebview is a WebviewWindow, which resolves to Window.setIcon). crates/tauri/scripts/bundle.global.js is a minified build of the definitions. No Submenu instance ever receives setIcon.",
+  "confidence": "high",
+  "rationale": "Submenu.setIcon has no in-repo caller. Both example-app setIcon calls run on receivers that are never Submenu instances (an IconMenuItem built by MenuBuilder's create(), and a WebviewWindow/Window). It is public API reached only by external consumers.",
+  "prior_verdicts_assessment": "The single prior tp verdict is correct."
+}

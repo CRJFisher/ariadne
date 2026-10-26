@@ -1,0 +1,1178 @@
+{
+ "case_id": "django--django____init____L348",
+ "strata": "python/stable-fp-novel",
+ "project": "django--django",
+ "github": "django/django",
+ "commit": "957d0ce",
+ "source_run_id": "957d0ce-2026-07-28T12-08-24.445Z",
+ "source_entry_index": 1773,
+ "language": "python",
+ "diagnosis": "no-textual-callers",
+ "member_symbol": {
+  "file_path": "django/forms/models.py",
+  "name": "__init__",
+  "kind": "constructor",
+  "start_line": 348
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "957d0ce-2026-07-28T12-08-24.445Z",
+   "kind": "fp-novel",
+   "rule": null,
+   "root_cause": "BaseModelForm.__init__ is reached via super().__init__() calls in subclasses (e.g. UserChangeForm, BaseUserCreationForm in django/contrib/auth/forms.py) whose immediate parent class, django.forms.models.ModelForm, is a pass-through class (`class ModelForm(BaseModelForm, metaclass=ModelFormMetaclass)",
+   "evidence": {
+    "file": "django/contrib/auth/forms.py",
+    "line": 289,
+    "why": "UserChangeForm (and BaseUserCreationForm at forms.py:229) call super().__init__() whose nearest defining ancestor in the MRO is BaseModelForm.__init__ at models.py:348, since the immediate parent ModelForm is an empty pass-through class; this is a real, frequently-exercised call path that no in-scope classifier addresses."
+   },
+   "turns": null,
+   "usd": null
+  }
+ ],
+ "entry": {
+  "entry_index": 1773,
+  "name": "__init__",
+  "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/forms/models.py",
+  "start_line": 348,
+  "kind": "constructor",
+  "signature": "constructor(self: any, data: any, files: any, auto_id: any, prefix: any, initial: any, error_class: any, label_suffix: any, empty_permitted: any, instance: any, use_required_attribute: any, renderer: any)",
+  "diagnosis": "no-textual-callers",
+  "is_exported": false,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [],
+   "ariadne_call_refs": [
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/admin/filters.py",
+     "call_line": 97,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "method_lookup",
+      "reason": "method_not_on_type",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/admin/filters.py:77:7:77:17:FacetsMixin"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/admin/filters.py",
+     "call_line": 180,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "method_lookup",
+      "reason": "method_not_on_type",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/admin/filters.py:77:7:77:17:FacetsMixin"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/admin/filters.py",
+     "call_line": 231,
+     "call_type": "constructor",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/admin/filters.py:176:9:176:16:__init__"
+     ],
+     "receiver_kind": "none",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": true,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/admin/filters.py",
+     "call_line": 334,
+     "call_type": "constructor",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/admin/filters.py:176:9:176:16:__init__"
+     ],
+     "receiver_kind": "none",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": true,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/admin/filters.py",
+     "call_line": 407,
+     "call_type": "constructor",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/admin/filters.py:176:9:176:16:__init__"
+     ],
+     "receiver_kind": "none",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": true,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/admin/filters.py",
+     "call_line": 527,
+     "call_type": "constructor",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/admin/filters.py:176:9:176:16:__init__"
+     ],
+     "receiver_kind": "none",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": true,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/admin/filters.py",
+     "call_line": 582,
+     "call_type": "constructor",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/admin/filters.py:176:9:176:16:__init__"
+     ],
+     "receiver_kind": "none",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": true,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/admin/filters.py",
+     "call_line": 667,
+     "call_type": "constructor",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/admin/filters.py:176:9:176:16:__init__"
+     ],
+     "receiver_kind": "none",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": true,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/admin/helpers.py",
+     "call_line": 489,
+     "call_type": "constructor",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/admin/helpers.py:41:9:41:16:__init__"
+     ],
+     "receiver_kind": "none",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": true,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/admin/helpers.py",
+     "call_line": 543,
+     "call_type": "constructor",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/admin/helpers.py:101:9:101:16:__init__"
+     ],
+     "receiver_kind": "none",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": true,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/admin/options.py",
+     "call_line": 740,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "no_parent_class",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/admin/options.py:686:7:686:16:ModelAdmin"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/admin/options.py",
+     "call_line": 2699,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "no_parent_class",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/admin/options.py:2671:7:2671:22:InlineModelAdmin"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/admin/utils.py",
+     "call_line": 196,
+     "call_type": "constructor",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/db/models/deletion.py:118:9:118:16:__init__"
+     ],
+     "receiver_kind": "none",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": true,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/admin/widgets.py",
+     "call_line": 73,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/admin/widgets.py:64:72:73:52"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/admin/widgets.py",
+     "call_line": 89,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/admin/widgets.py:80:72:89:52"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/auth/forms.py",
+     "call_line": 230,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "method_lookup",
+      "reason": "method_not_on_type",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/auth/forms.py:79:7:79:22:SetPasswordMixin"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/auth/forms.py",
+     "call_line": 503,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "method_lookup",
+      "reason": "method_not_on_type",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/auth/forms.py:79:7:79:22:SetPasswordMixin"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/auth/forms.py",
+     "call_line": 564,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "method_lookup",
+      "reason": "method_not_on_type",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/auth/forms.py:141:7:141:30:SetUnusablePasswordMixin"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/auth/forms.py",
+     "call_line": 597,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/auth/forms.py:592:73:599:49"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/auth/management/commands/createsuperuser.py",
+     "call_line": 32,
+     "call_type": "constructor",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/core/management/base.py:285:9:285:16:__init__"
+     ],
+     "receiver_kind": "none",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": true,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/auth/middleware.py",
+     "call_line": 120,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "no_parent_class",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/auth/middleware.py:93:7:93:26:RemoteUserMiddleware"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/contenttypes/fields.py",
+     "call_line": 45,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "method_lookup",
+      "reason": "method_not_on_type",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/db/models/fields/mixins.py:7:7:7:21:FieldCacheMixin"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/contenttypes/fields.py",
+     "call_line": 321,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/contenttypes/fields.py:308:36:328:9"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/contenttypes/fields.py",
+     "call_line": 379,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "no_parent_class",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/contenttypes/fields.py:331:7:331:21:GenericRelation"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/contenttypes/fields.py",
+     "call_line": 619,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "method_lookup",
+      "reason": "method_not_on_type",
+      "partial_info": {
+       "resolved_receiver_type": "parameter:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/contenttypes/fields.py:610:36:610:45:superclass"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/contenttypes/forms.py",
+     "call_line": 47,
+     "call_type": "constructor",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/forms/models.py:692:9:692:16:__init__"
+     ],
+     "receiver_kind": "none",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": true,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/contenttypes/prefetch.py",
+     "call_line": 19,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "no_parent_class",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/contenttypes/prefetch.py:5:7:5:21:GenericPrefetch"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/backends/oracle/schema.py",
+     "call_line": 32,
+     "call_type": "constructor",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/db/backends/base/schema.py:154:9:154:16:__init__"
+     ],
+     "receiver_kind": "none",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": true,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/backends/postgis/base.py",
+     "call_line": 110,
+     "call_type": "constructor",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/db/backends/base/base.py:53:9:53:16:__init__"
+     ],
+     "receiver_kind": "none",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": true,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/backends/postgis/operations.py",
+     "call_line": 38,
+     "call_type": "constructor",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/backends/utils.py:15:9:15:16:__init__"
+     ],
+     "receiver_kind": "none",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": true,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/backends/postgis/operations.py",
+     "call_line": 109,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "no_parent_class",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/backends/postgis/operations.py:105:7:105:16:ST_Polygon"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/backends/spatialite/base.py",
+     "call_line": 38,
+     "call_type": "constructor",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/db/backends/base/base.py:53:9:53:16:__init__"
+     ],
+     "receiver_kind": "none",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": true,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/backends/spatialite/schema.py",
+     "call_line": 33,
+     "call_type": "constructor",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/db/backends/base/schema.py:154:9:154:16:__init__"
+     ],
+     "receiver_kind": "none",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": true,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/models/aggregates.py",
+     "call_line": 70,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "method_lookup",
+      "reason": "method_not_on_type",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/models/aggregates.py:13:7:13:18:GeoAggregate"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/models/aggregates.py",
+     "call_line": 81,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "method_lookup",
+      "reason": "method_not_on_type",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/models/aggregates.py:13:7:13:18:GeoAggregate"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/models/fields.py",
+     "call_line": 108,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "no_parent_class",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/models/fields.py:70:7:70:22:BaseSpatialField"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/models/fields.py",
+     "call_line": 277,
+     "call_type": "constructor",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/models/fields.py:82:9:82:16:__init__"
+     ],
+     "receiver_kind": "none",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": true,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/models/functions.py",
+     "call_line": 31,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "no_parent_class",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/models/functions.py:26:7:26:18:GeoFuncMixin"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/models/functions.py",
+     "call_line": 203,
+     "call_type": "constructor",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/models/functions.py:30:9:30:16:__init__"
+     ],
+     "receiver_kind": "none",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": true,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/models/functions.py",
+     "call_line": 220,
+     "call_type": "constructor",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/models/functions.py:30:9:30:16:__init__"
+     ],
+     "receiver_kind": "none",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": true,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/models/functions.py",
+     "call_line": 242,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/models/functions.py:235:22:242:47"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/models/functions.py",
+     "call_line": 257,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/models/functions.py:245:22:257:47"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/models/functions.py",
+     "call_line": 272,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "method_lookup",
+      "reason": "method_not_on_type",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/models/functions.py:143:7:143:26:OracleToleranceMixin"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/models/functions.py",
+     "call_line": 320,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "method_lookup",
+      "reason": "method_not_on_type",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/models/functions.py:303:7:303:25:DistanceResultMixin"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/models/functions.py",
+     "call_line": 382,
+     "call_type": "constructor",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/models/functions.py:30:9:30:16:__init__"
+     ],
+     "receiver_kind": "none",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": true,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/models/functions.py",
+     "call_line": 403,
+     "call_type": "constructor",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/models/functions.py:30:9:30:16:__init__"
+     ],
+     "receiver_kind": "none",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": true,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/models/functions.py",
+     "call_line": 472,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "method_lookup",
+      "reason": "method_not_on_type",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/models/functions.py:303:7:303:25:DistanceResultMixin"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/models/functions.py",
+     "call_line": 579,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/models/functions.py:569:33:579:47"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/models/functions.py",
+     "call_line": 591,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/models/functions.py:582:59:591:47"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/models/functions.py",
+     "call_line": 610,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/django--django/django/contrib/gis/db/models/functions.py:594:64:610:47"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    }
+   ],
+   "diagnosis": "no-textual-callers",
+   "has_uncaptured_indexed_grep_hit": false
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

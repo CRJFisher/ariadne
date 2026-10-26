@@ -220,6 +220,14 @@ export default [
     }
   },
   {
+    // The benchmark review page's script runs in the browser.
+    files: [".claude/skills/triage/src/benchmark/review/page/*.js"],
+    languageOptions: {
+      sourceType: "script",
+      globals: globals.browser
+    }
+  },
+  {
     // TASK-363: every runtime use of tree-sitter and the grammar packages must
     // route through the process-global loader (packages/core/src/native.ts) so
     // a re-evaluated module registry reuses one set of native class identities.

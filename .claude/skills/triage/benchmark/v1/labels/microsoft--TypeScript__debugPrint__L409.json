@@ -1,0 +1,13 @@
+{
+ "case_id": "microsoft--TypeScript__debugPrint__L409",
+ "gold_kind": "tp",
+ "acceptable_kinds": [
+  "tp"
+ ],
+ "gold_rule_id": null,
+ "caller_evidence": [],
+ "tp_search_summary": "Repo-wide grep for 'debugPrint' (excluding node_modules) finds only the definition at src/harness/vfsUtil.ts:409; tests/ hits are confined to unrelated conformance/compiler fixtures and baselines. No string-keyed access, re-export use, or internal this.debugPrint call exists.",
+ "confidence": "high",
+ "rationale": "debugPrint is a manual diagnostic helper on vfs.FileSystem that only console.logs getFileListing(). No code path in src, scripts or the harness tests invokes it, directly or dynamically.",
+ "prior_verdicts_assessment": "The single prior tp verdict is correct; its note that the only other grep hits are unrelated same-named fixtures checks out."
+}

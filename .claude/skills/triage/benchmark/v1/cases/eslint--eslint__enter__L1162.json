@@ -1,0 +1,115 @@
+{
+ "case_id": "eslint--eslint__enter__L1162",
+ "strata": "javascript/contested",
+ "project": "eslint--eslint",
+ "github": "eslint/eslint",
+ "commit": "c27bc92",
+ "source_run_id": "c27bc92-2026-10-18T19-23-08.191Z",
+ "source_entry_index": 61,
+ "language": "javascript",
+ "diagnosis": "callers-not-in-registry",
+ "member_symbol": {
+  "file_path": "lib/languages/js/source-code/source-code.js",
+  "name": "enter",
+  "kind": "method",
+  "start_line": 1162
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "c27bc92-2026-08-23T06-54-13.994Z",
+   "kind": "fp-novel",
+   "rule": null,
+   "root_cause": "The `enter` method is defined as a shorthand property in the object literal passed directly to `Traverser.traverse(this.ast, { enter(node, parent) {...}, leave(node) {...} })` in source-code.js's `traverse()`. Inside `Traverser.prototype.traverse` (lib/shared/traverser.js:118) the argument is captur",
+   "evidence": {
+    "file": "lib/languages/js/source-code/source-code.js",
+    "line": 1162,
+    "why": "source-code.js's own traverse() method passes this enter method as options.enter to Traverser.traverse, which static-dispatches to an instance that stores it as this._enter and invokes this._enter(node, parent) during AST walk, a genuine call chain missed by the resolver."
+   },
+   "turns": null,
+   "usd": null
+  },
+  {
+   "run_id": "c27bc92-2026-10-12T22-20-02.570Z",
+   "kind": "fp-classifier-regression",
+   "rule": "callback-passed-to-invoker",
+   "root_cause": "The `enter` method is defined as a property of an options object literal passed to `Traverser.traverse`, which stores it on `this._enter` (traverser.js:118) and invokes it indirectly as `this._enter(node, parent)` (traverser.js:137); the entry's name never appears in call position at the definition ",
+   "evidence": {
+    "file": "/Users/chuck/.ariadne/triage-entrypoints/repos/eslint--eslint/lib/languages/js/source-code/source-code.js",
+    "line": 1162,
+    "why": "The `enter` method is defined as a property of an options object literal passed to `Traverser.traverse`, which stores it on `this._enter` (traverser.js:118) and invokes it indirectly as `this._enter(node, parent)` (traverser.js:137); the entry's name never appears in call position at the definition site, matching the callback-passed-to-invoker pattern's indirect-invocation shape that the classifier should generalize to object-literal method handoffs, not only bound/`.bind(`-style references."
+   },
+   "turns": 5,
+   "usd": 0.0284
+  },
+  {
+   "run_id": "c27bc92-2026-10-18T19-23-08.191Z",
+   "kind": "fp-novel",
+   "rule": null,
+   "root_cause": "The resolver does not track callbacks that are passed in options object literals, stored in instance properties, and invoked indirectly via property access (e.g., this._enter(node, parent) after this._enter = options.enter).",
+   "evidence": {
+    "file": "/Users/chuck/.ariadne/triage-entrypoints/repos/eslint--eslint/lib/shared/traverser.js",
+    "line": 137,
+    "why": "This line invokes the stored callback: this._enter(node, parent), where this._enter contains the enter method from source-code.js:1162."
+   },
+   "turns": 12,
+   "usd": 0.0471
+  }
+ ],
+ "entry": {
+  "entry_index": 61,
+  "name": "enter",
+  "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/eslint--eslint/lib/languages/js/source-code/source-code.js",
+  "start_line": 1162,
+  "kind": "method",
+  "signature": "enter(node: any, parent: any): unknown",
+  "diagnosis": "callers-not-in-registry",
+  "is_exported": false,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/eslint--eslint/lib/rules/no-unmodified-loop-condition.js",
+     "line": 276,
+     "content": "enter(node) {",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/eslint--eslint/tests/lib/linter/linter.js",
+     "line": 11328,
+     "content": "enter(node) {",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/eslint--eslint/tests/lib/rules/utils/fix-tracker.js",
+     "line": 40,
+     "content": "enter(node, parent) {",
+     "captures": []
+    }
+   ],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/eslint--eslint/lib/shared/traverser.js",
+     "line": 118,
+     "content": "this._enter = options.enter || noop;",
+     "reference_kind": "property_access",
+     "access_type": "property",
+     "receiver_kind": "identifier"
+    }
+   ],
+   "ariadne_call_refs": [],
+   "diagnosis": "callers-not-in-registry",
+   "has_uncaptured_indexed_grep_hit": true
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

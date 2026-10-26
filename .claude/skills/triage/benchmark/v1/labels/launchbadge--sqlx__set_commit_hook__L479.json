@@ -1,0 +1,24 @@
+{
+ "case_id": "launchbadge--sqlx__set_commit_hook__L479",
+ "gold_kind": "fp-novel",
+ "acceptable_kinds": [
+  "fp-novel"
+ ],
+ "gold_rule_id": null,
+ "caller_evidence": [
+  {
+   "file": "tests/sqlite/sqlite.rs",
+   "line": 870,
+   "snippet": "conn.lock_handle().await?.set_commit_hook(move || {"
+  },
+  {
+   "file": "tests/sqlite/sqlite.rs",
+   "line": 899,
+   "snippet": "conn.lock_handle().await?.set_commit_hook(move || {"
+  }
+ ],
+ "tp_search_summary": null,
+ "confidence": "high",
+ "rationale": "SqliteConnection::lock_handle returns Result<LockedSqliteHandle<'_>, Error>, so conn.lock_handle().await?.set_commit_hook(...) in the sqlite integration tests calls this method. The miss is chained awaited/try return-type inference, which no in-scope Rust rule covers.",
+ "prior_verdicts_assessment": "The prior fp-novel verdict is correct and cites a real caller."
+}

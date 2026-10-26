@@ -1,0 +1,13 @@
+{
+ "case_id": "angular--angular__wrapHost__L92",
+ "gold_kind": "tp",
+ "acceptable_kinds": [
+  "tp"
+ ],
+ "gold_rule_id": null,
+ "caller_evidence": [],
+ "tp_search_summary": "Repo-wide grep (excluding node_modules) for wrapHost and NgTscPlugin: only the TscPlugin interface declaration (tsc_plugin.ts:48), the implementation (:92), a TODO comment (:97), an error string (:120), the public re-export in packages/compiler-cli/index.ts:34, READMEs and changelog entries. wrapHostForTest in transformers/compiler_host.ts is an unrelated variable. No in-repo code instantiates NgTscPlugin or calls any TscPlugin method; the integration bazel_ngtsc_plugin directory referenced in a README is not present.",
+ "confidence": "high",
+ "rationale": "wrapHost is part of the TscPlugin contract consumed by the external @bazel/concatjs tsc_wrapped host. NgTscPlugin is only re-exported from the package index; nothing in the repository constructs it or invokes wrapHost, so the only caller is an external consumer of the published library.",
+ "prior_verdicts_assessment": "The tp verdict is correct. The fp-novel verdict concedes the caller is the external tsc_wrapped toolchain, which by definition is not an in-repo caller."
+}

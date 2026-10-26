@@ -1,0 +1,68 @@
+{
+ "case_id": "tokio-rs--tokio__new_framed__L1034",
+ "strata": "rust/stable-tp",
+ "project": "tokio-rs--tokio",
+ "github": "tokio-rs/tokio",
+ "commit": "1a2dbba",
+ "source_run_id": "1a2dbba-2026-07-28T15-13-40.718Z",
+ "source_entry_index": 453,
+ "language": "rust",
+ "diagnosis": "callers-not-in-registry",
+ "member_symbol": {
+  "file_path": "tokio-util/src/codec/length_delimited.rs",
+  "name": "new_framed",
+  "kind": "method",
+  "start_line": 1034
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "1a2dbba-2026-07-28T15-13-40.718Z",
+   "kind": "tp",
+   "rule": null,
+   "root_cause": "The only textual match for `new_framed` outside its own definition is inside its `///` rustdoc example (line 1030); grep and Ariadne agree there is no invocation in real source, and the sibling integration-test file `tokio-util/tests/length_delimited.rs`, which extensively exercises the same Builder",
+   "evidence": {
+    "file": "tokio-util/src/codec/length_delimited.rs",
+    "line": 1034,
+    "why": "The only textual match for `new_framed` outside its own definition is inside its `///` rustdoc example (line 1030); grep and Ariadne agree there is no invocation in real source, and the sibling integration-test file `tokio-util/tests/length_delimited.rs`, which extensively exercises the same Builder's `new_read`/`new_write` methods, never calls `new_framed`, confirming no real caller exists anywhere in the repository."
+   },
+   "turns": null,
+   "usd": null
+  }
+ ],
+ "entry": {
+  "entry_index": 453,
+  "name": "new_framed",
+  "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--tokio/tokio-util/src/codec/length_delimited.rs",
+  "start_line": 1034,
+  "kind": "method",
+  "signature": "new_framed(self: Builder, inner: T): Framed<T, LengthDelimitedCodec>",
+  "diagnosis": "callers-not-in-registry",
+  "is_exported": false,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--tokio/tokio-util/src/codec/length_delimited.rs",
+     "line": 1030,
+     "content": "///     .new_framed(io);",
+     "captures": []
+    }
+   ],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [],
+   "ariadne_call_refs": [],
+   "diagnosis": "callers-not-in-registry",
+   "has_uncaptured_indexed_grep_hit": true
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

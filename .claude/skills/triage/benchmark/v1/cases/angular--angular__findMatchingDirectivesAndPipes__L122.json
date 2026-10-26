@@ -1,0 +1,74 @@
+{
+ "case_id": "angular--angular__findMatchingDirectivesAndPipes__L122",
+ "strata": "typescript/contested",
+ "project": "angular--angular",
+ "github": "angular/angular",
+ "commit": "5ad8231",
+ "source_run_id": "5ad8231-2026-07-26T22-12-58.133Z",
+ "source_entry_index": 493,
+ "language": "typescript",
+ "diagnosis": "no-textual-callers",
+ "member_symbol": {
+  "file_path": "packages/compiler/src/render3/view/t2_binder.ts",
+  "name": "findMatchingDirectivesAndPipes",
+  "kind": "function",
+  "start_line": 122
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "5ad8231-2026-07-26T21-36-25.528Z",
+   "kind": "tp",
+   "rule": null,
+   "root_cause": "Grep across the entire repo for `findMatchingDirectivesAndPipes` finds only the definition and its own spec file (binding_spec.ts); it is exported from the compiler.ts public API barrel for external tooling consumption but has no in-repo caller, and Ariadne's call graph correctly shows none.",
+   "evidence": {
+    "file": "packages/compiler/src/render3/view/t2_binder.ts",
+    "line": 122,
+    "why": "Grep across the entire repo for `findMatchingDirectivesAndPipes` finds only the definition and its own spec file (binding_spec.ts); it is exported from the compiler.ts public API barrel for external tooling consumption but has no in-repo caller, and Ariadne's call graph correctly shows none."
+   },
+   "turns": null,
+   "usd": null
+  },
+  {
+   "run_id": "5ad8231-2026-07-26T22-12-58.133Z",
+   "kind": "fp-novel",
+   "rule": null,
+   "root_cause": "findMatchingDirectivesAndPipes is re-exported from the package's public barrel (packages/compiler/src/compiler.ts) as an explicit API for external build tooling (its doc comment addresses an 'API caller' responsible for defer-block dependency decisions); the only real callers are outside this repo, ",
+   "evidence": {
+    "file": "packages/compiler/src/render3/view/t2_binder.ts",
+    "line": 122,
+    "why": "Grep across the whole repo for findMatchingDirectivesAndPipes finds only its definition and its own test spec (binding_spec.ts); it is exported through compiler.ts's public barrel with a doc comment explicitly addressing an external 'API caller', indicating real consumers exist outside this repo."
+   },
+   "turns": null,
+   "usd": null
+  }
+ ],
+ "entry": {
+  "entry_index": 493,
+  "name": "findMatchingDirectivesAndPipes",
+  "file_path": "/home/node/.ariadne/triage-entrypoints/repos/angular--angular/packages/compiler/src/render3/view/t2_binder.ts",
+  "start_line": 122,
+  "kind": "function",
+  "signature": "findMatchingDirectivesAndPipes(template: string, directiveSelectors: string[]): unknown",
+  "diagnosis": "no-textual-callers",
+  "is_exported": true,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [],
+   "ariadne_call_refs": [],
+   "diagnosis": "no-textual-callers",
+   "has_uncaptured_indexed_grep_hit": false
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

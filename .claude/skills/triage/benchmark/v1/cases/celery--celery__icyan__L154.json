@@ -1,0 +1,61 @@
+{
+ "case_id": "celery--celery__icyan__L154",
+ "strata": "python/stable-regression",
+ "project": "celery--celery",
+ "github": "celery/celery",
+ "commit": "7c5d9a6",
+ "source_run_id": "7c5d9a6-2026-07-28T09-18-21.550Z",
+ "source_entry_index": 764,
+ "language": "python",
+ "diagnosis": "no-textual-callers",
+ "member_symbol": {
+  "file_path": "celery/utils/term.py",
+  "name": "icyan",
+  "kind": "method",
+  "start_line": 154
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "7c5d9a6-2026-07-28T09-18-21.550Z",
+   "kind": "fp-classifier-regression",
+   "rule": "dynamic-property-keyed-callback",
+   "root_cause": "colored.icyan is invoked only through getattr(colored(), name)('f') in t/unit/utils/test_term.py's parametrized test_modifiers, where 'icyan' is one of the parametrize values feeding a computed getattr call on a different line — a real caller that matches dynamic-property-keyed-callback's described ",
+   "evidence": {
+    "file": "celery/utils/term.py",
+    "line": 154,
+    "why": "colored.icyan is invoked only through getattr(colored(), name)('f') in t/unit/utils/test_term.py's parametrized test_modifiers, where 'icyan' is one of the parametrize values feeding a computed getattr call on a different line — a real caller that matches dynamic-property-keyed-callback's described intent (getattr with a non-literal name arg) but was missed because the entry's grep_call_sites never contain a line where 'icyan' co-occurs textually with the getattr(...) call."
+   },
+   "turns": null,
+   "usd": null
+  }
+ ],
+ "entry": {
+  "entry_index": 764,
+  "name": "icyan",
+  "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/celery--celery/celery/utils/term.py",
+  "start_line": 154,
+  "kind": "method",
+  "signature": "icyan(self: any): colored",
+  "diagnosis": "no-textual-callers",
+  "is_exported": false,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [],
+   "ariadne_call_refs": [],
+   "diagnosis": "no-textual-callers",
+   "has_uncaptured_indexed_grep_hit": false
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

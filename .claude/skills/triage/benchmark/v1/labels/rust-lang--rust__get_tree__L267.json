@@ -1,0 +1,29 @@
+{
+ "case_id": "rust-lang--rust__get_tree__L267",
+ "gold_kind": "fp-novel",
+ "acceptable_kinds": [
+  "fp-novel"
+ ],
+ "gold_rule_id": null,
+ "caller_evidence": [
+  {
+   "file": "src/etc/htmldocck.py",
+   "line": 460,
+   "snippet": "tree = cache.get_tree(c.args[0])"
+  },
+  {
+   "file": "src/etc/htmldocck.py",
+   "line": 559,
+   "snippet": "found = get_tree_count(cache.get_tree(c.args[0]), c.args[1])"
+  },
+  {
+   "file": "src/etc/htmldocck.py",
+   "line": 573,
+   "snippet": "tree = cache.get_tree(html_path)"
+  }
+ ],
+ "tp_search_summary": null,
+ "confidence": "high",
+ "rationale": "CachedFiles is the only class in htmldocck.py defining get_tree; check() builds cache = CachedFiles(target) (line 626) and passes it to check_command(c, cache) and get_nb_matching_elements(cache, ...), which call cache.get_tree(...) at five sites. The resolver fails with receiver_type_unknown because it does not propagate argument types into untyped function parameters. No in-scope rule covers this; untyped-attribute-receiver is limited to self.<attr> receivers.",
+ "prior_verdicts_assessment": "The prior fp-novel verdict is correct: it traces the untyped cache parameter back to the CachedFiles(target) construction."
+}

@@ -1,0 +1,247 @@
+{
+ "case_id": "launchbadge--sqlx__ping__L180",
+ "strata": "rust/stable-fp-novel",
+ "project": "launchbadge--sqlx",
+ "github": "launchbadge/sqlx",
+ "commit": "1d674f5",
+ "source_run_id": "1d674f5-2026-07-28T14-27-50.303Z",
+ "source_entry_index": 292,
+ "language": "rust",
+ "diagnosis": "callers-in-registry-unresolved",
+ "member_symbol": {
+  "file_path": "sqlx-postgres/src/connection/mod.rs",
+  "name": "ping",
+  "kind": "method",
+  "start_line": 180
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "1d674f5-2026-07-28T14-27-50.303Z",
+   "kind": "fp-novel",
+   "rule": null,
+   "root_cause": "Ariadne's method-call resolver only handles receiver-dotted calls (`self.method()`) and misses Rust's fully-qualified trait syntax `Trait::method(receiver)`; the real caller `Connection::ping(self)` in sqlx-postgres/src/any.rs dispatches to this exact impl but was never indexed as a call site.",
+   "evidence": {
+    "file": "/Users/chuck/.ariadne/triage-entrypoints/repos/launchbadge--sqlx/sqlx-postgres/src/any.rs",
+    "line": 39,
+    "why": "`Connection::ping(self)` is UFCS/fully-qualified trait-method syntax that statically resolves to the `impl Connection for PgConnection` at sqlx-postgres/src/connection/mod.rs:180, but the same pattern (seen also in sqlx-sqlite/src/any.rs:40 and sqlx-mysql/src/any.rs:38) never appears in the pre-gathered grep or Ariadne call reference evidence, confirming the resolver does not detect this call form."
+   },
+   "turns": null,
+   "usd": null
+  }
+ ],
+ "entry": {
+  "entry_index": 292,
+  "name": "ping",
+  "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/launchbadge--sqlx/sqlx-postgres/src/connection/mod.rs",
+  "start_line": 180,
+  "kind": "method",
+  "signature": "ping(self: PgConnection): Result<(), Error>",
+  "diagnosis": "callers-in-registry-unresolved",
+  "is_exported": false,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/launchbadge--sqlx/sqlx-core/src/any/connection/backend.rs",
+     "line": 26,
+     "content": "fn ping(&mut self) -> BoxFuture<'_, crate::Result<()>>;",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/launchbadge--sqlx/sqlx-core/src/any/connection/mod.rs",
+     "line": 107,
+     "content": "fn ping(&mut self) -> impl Future<Output = Result<(), Error>> + Send + '_ {",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/launchbadge--sqlx/sqlx-core/src/any/connection/mod.rs",
+     "line": 108,
+     "content": "self.backend.ping()",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/launchbadge--sqlx/sqlx-core/src/connection.rs",
+     "line": 46,
+     "content": "fn ping(&mut self) -> impl Future<Output = Result<(), Error>> + Send + '_;",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/launchbadge--sqlx/sqlx-core/src/pool/connection.rs",
+     "line": 314,
+     "content": "if let Err(error) = self.raw.ping().await {",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/launchbadge--sqlx/sqlx-core/src/pool/connection.rs",
+     "line": 372,
+     "content": "pub async fn ping(&mut self) -> Result<(), Error> {",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/launchbadge--sqlx/sqlx-core/src/pool/connection.rs",
+     "line": 373,
+     "content": "self.live.raw.ping().await",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/launchbadge--sqlx/sqlx-core/src/pool/inner.rs",
+     "line": 475,
+     "content": "if let Err(error) = conn.ping().await {",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/launchbadge--sqlx/sqlx-core/src/pool/options.rs",
+     "line": 424,
+     "content": "///             conn.ping().await?;",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/launchbadge--sqlx/sqlx-mysql/src/any.rs",
+     "line": 37,
+     "content": "fn ping(&mut self) -> BoxFuture<'_, sqlx_core::Result<()>> {",
+     "captures": []
+    }
+   ],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [],
+   "ariadne_call_refs": [
+    {
+     "caller_function": "ping",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/launchbadge--sqlx/sqlx-core/src/any/connection/mod.rs",
+     "call_line": 108,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "member_type_unknown",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/launchbadge--sqlx/sqlx-core/src/any/connection/mod.rs:27:1:29:1:AnyConnection"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "return_to_pool",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/launchbadge--sqlx/sqlx-core/src/pool/connection.rs",
+     "call_line": 314,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "method_not_on_type",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/launchbadge--sqlx/sqlx-core/src/pool/connection.rs:38:1:41:1:Floating"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": true,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "ping",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/launchbadge--sqlx/sqlx-core/src/pool/connection.rs",
+     "call_line": 373,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "method_not_on_type",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/launchbadge--sqlx/sqlx-core/src/pool/connection.rs:38:1:41:1:Floating"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "check_idle_conn",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/launchbadge--sqlx/sqlx-core/src/pool/inner.rs",
+     "call_line": 475,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "receiver_type_unknown",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/launchbadge--sqlx/sqlx-core/src/pool/inner.rs:475:9:482:9"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": true,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "ping",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/launchbadge--sqlx/sqlx-sqlite/src/connection/mod.rs",
+     "call_line": 244,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/launchbadge--sqlx/sqlx-sqlite/src/connection/worker.rs:412:5:414:5:ping"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    }
+   ],
+   "diagnosis": "callers-in-registry-unresolved",
+   "has_uncaptured_indexed_grep_hit": true
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

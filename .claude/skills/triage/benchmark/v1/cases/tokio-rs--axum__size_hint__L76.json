@@ -1,0 +1,265 @@
+{
+ "case_id": "tokio-rs--axum__size_hint__L76",
+ "strata": "rust/stable-tp",
+ "project": "tokio-rs--axum",
+ "github": "tokio-rs/axum",
+ "commit": "3d78036",
+ "source_run_id": "3d78036-2026-08-23T23-02-13.248Z",
+ "source_entry_index": 342,
+ "language": "rust",
+ "diagnosis": "callers-in-registry-unresolved",
+ "member_symbol": {
+  "file_path": "axum-extra/src/middleware.rs",
+  "name": "size_hint",
+  "kind": "method",
+  "start_line": 76
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "3d78036-2026-08-23T23-02-13.248Z",
+   "kind": "tp",
+   "rule": null,
+   "root_cause": "BodyWrapper is a struct defined solely inside the `remap_response_body` test fn (only other references are its own impl blocks and its `::new` used as a layer constructor); the test never polls/serves the resulting Router, so the trait-bound `size_hint` impl exists only to satisfy `HttpBody` at comp",
+   "evidence": {
+    "file": "axum-extra/src/middleware.rs",
+    "line": 76,
+    "why": "BodyWrapper is a struct defined solely inside the `remap_response_body` test fn (only other references are its own impl blocks and its `::new` used as a layer constructor); the test never polls/serves the resulting Router, so the trait-bound `size_hint` impl exists only to satisfy `HttpBody` at compile time and is never actually invoked, and grep hits for `size_hint` elsewhere in the repo all belong to unrelated types' own trait impls, not this one."
+   },
+   "turns": null,
+   "usd": null
+  }
+ ],
+ "entry": {
+  "entry_index": 342,
+  "name": "size_hint",
+  "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum-extra/src/middleware.rs",
+  "start_line": 76,
+  "kind": "method",
+  "signature": "size_hint(self: BodyWrapper): http_body::SizeHint",
+  "diagnosis": "callers-in-registry-unresolved",
+  "is_exported": false,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/routing/route.rs",
+     "line": 158,
+     "content": "|| res.size_hint().lower() != 0",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/routing/route.rs",
+     "line": 171,
+     "content": "set_content_length(&res.size_hint(), res.headers_mut());",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum-core/src/body.rs",
+     "line": 154,
+     "content": "self.0.size_hint()",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum-core/src/body.rs",
+     "line": 190,
+     "content": "let size_hint = self.inner.size_hint();",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum-core/src/body.rs",
+     "line": 216,
+     "content": "self.inner.size_hint()",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum-extra/src/body/async_read_body.rs",
+     "line": 88,
+     "content": "self.body.size_hint()",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum-extra/src/typed_header.rs",
+     "line": 66,
+     "content": "let is_missing = values.size_hint() == (0, Some(0));",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum-extra/src/typed_header.rs",
+     "line": 93,
+     "content": "let is_missing = values.size_hint() == (0, Some(0));",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum-macros/src/with_position.rs",
+     "line": 110,
+     "content": "self.peekable.size_hint()",
+     "captures": [
+      "@reference.call"
+     ]
+    }
+   ],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [],
+   "ariadne_call_refs": [
+    {
+     "caller_function": "size_hint",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum-core/src/body.rs",
+     "call_line": 154,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "method_not_on_type",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum-core/src/body.rs:42:1:42:25:Body"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "size_hint",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum-core/src/body.rs",
+     "call_line": 190,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum-core/src/body.rs:153:5:155:5:size_hint"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "size_hint",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum-core/src/body.rs",
+     "call_line": 216,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum-core/src/body.rs:153:5:155:5:size_hint"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "from_request_parts",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum-extra/src/typed_header.rs",
+     "call_line": 66,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "receiver_type_unknown",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum-extra/src/typed_header.rs:64:32:78:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "from_request_parts",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum-extra/src/typed_header.rs",
+     "call_line": 93,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "receiver_type_unknown",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum-extra/src/typed_header.rs:88:32:102:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "size_hint",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum-macros/src/with_position.rs",
+     "call_line": 110,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "member_type_unknown",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum-macros/src/with_position.rs:31:1:37:1:WithPosition"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    }
+   ],
+   "diagnosis": "callers-in-registry-unresolved",
+   "has_uncaptured_indexed_grep_hit": true
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

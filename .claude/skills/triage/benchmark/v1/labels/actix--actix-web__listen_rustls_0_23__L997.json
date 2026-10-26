@@ -1,0 +1,13 @@
+{
+ "case_id": "actix--actix-web__listen_rustls_0_23__L997",
+ "gold_kind": "tp",
+ "acceptable_kinds": [
+  "tp"
+ ],
+ "gold_rule_id": null,
+ "caller_evidence": [],
+ "tp_search_summary": "Grepped the whole repo for 'listen_rustls' (all files, including examples, tests and docs). The only hits for listen_rustls_0_23 are its definition at actix-web/src/server.rs:997 and a CHANGES.md entry. bind_rustls_0_23 calls listen_rustls_0_23_inner directly, not the public wrapper. There are no macro invocations, trait impls or dispatch tables referencing it.",
+ "confidence": "high",
+ "rationale": "listen_rustls_0_23 is a public, feature-gated HttpServer builder method that exists only for downstream library consumers. Its in-repo sibling bind_rustls_0_23 calls the private _inner function, so nothing in the repo invokes this wrapper.",
+ "prior_verdicts_assessment": "The prior tp verdict is correct."
+}

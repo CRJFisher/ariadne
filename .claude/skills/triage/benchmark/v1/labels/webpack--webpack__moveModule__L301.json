@@ -1,0 +1,11 @@
+{
+  "case_id": "webpack--webpack__moveModule__L301",
+  "gold_kind": "tp",
+  "acceptable_kinds": ["tp"],
+  "gold_rule_id": null,
+  "caller_evidence": [],
+  "tp_search_summary": "Grepped the whole webpack checkout (lib, test, examples, types.d.ts) for `moveModule` and `MOVE_MODULE`: only the definition in lib/Chunk.js and the types.d.ts declaration match (other hits are moveModuleBetween/moveModuleConnections, different symbols). The deprecations test test/configCases/deprecations/chunk-and-module/webpack.config.js exercises other deprecated Chunk methods but not moveModule; there is no computed-key or reflective access.",
+  "confidence": "high",
+  "rationale": "Chunk.prototype.moveModule is a @deprecated public API kept for external plugins, and nothing in the repo calls it, not even the deprecation test. Only an external consumer could call it, so it is genuinely unreachable in-repo.",
+  "prior_verdicts_assessment": "The prior tp verdict is correct."
+}

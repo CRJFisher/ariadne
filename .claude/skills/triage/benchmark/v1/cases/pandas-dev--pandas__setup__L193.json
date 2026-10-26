@@ -1,0 +1,282 @@
+{
+ "case_id": "pandas-dev--pandas__setup__L193",
+ "strata": "python/stable-tp",
+ "project": "pandas-dev--pandas",
+ "github": "pandas-dev/pandas",
+ "commit": "7986b42",
+ "source_run_id": "7986b42-2026-07-27T21-55-02.639Z",
+ "source_entry_index": 1531,
+ "language": "python",
+ "diagnosis": "callers-in-registry-wrong-target",
+ "member_symbol": {
+  "file_path": "asv_bench/benchmarks/timeseries.py",
+  "name": "setup",
+  "kind": "method",
+  "start_line": 193
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "7986b42-2026-07-27T21-55-02.639Z",
+   "kind": "tp",
+   "rule": null,
+   "root_cause": "Grep across asv_bench for AsOf( instantiation and .setup( calls shows no code in the repo calls AsOf.setup; the only setup() call sites are unrelated super().setup() and tr.setup() calls in other benchmark classes, confirming this method is invoked solely by the external ASV benchmark harness via na",
+   "evidence": {
+    "file": "asv_bench/benchmarks/timeseries.py",
+    "line": 193,
+    "why": "Grep across asv_bench for AsOf( instantiation and .setup( calls shows no code in the repo calls AsOf.setup; the only setup() call sites are unrelated super().setup() and tr.setup() calls in other benchmark classes, confirming this method is invoked solely by the external ASV benchmark harness via naming-convention reflection, not from repo source."
+   },
+   "turns": null,
+   "usd": null
+  }
+ ],
+ "entry": {
+  "entry_index": 1531,
+  "name": "setup",
+  "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/timeseries.py",
+  "start_line": 193,
+  "kind": "method",
+  "signature": "setup(self: any, constructor: any): unknown",
+  "diagnosis": "callers-in-registry-wrong-target",
+  "is_exported": false,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/algorithms.py",
+     "line": 56,
+     "content": "def setup(self, unique, sort, dtype):",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/algorithms.py",
+     "line": 73,
+     "content": "def setup(self, dtype):",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/algorithms.py",
+     "line": 98,
+     "content": "def setup(self, unique, keep, dtype):",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/algorithms.py",
+     "line": 132,
+     "content": "def setup(self, unique, keep, dtype):",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/algorithms.py",
+     "line": 201,
+     "content": "def setup(self, quantile, interpolation, dtype):",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/algorithms.py",
+     "line": 218,
+     "content": "def setup(self, N):",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/algos/isin.py",
+     "line": 29,
+     "content": "def setup(self, dtype):",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/algos/isin.py",
+     "line": 96,
+     "content": "def setup(self, dtype, exponent, title):",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/algos/isin.py",
+     "line": 130,
+     "content": "def setup(self, dtype, size, title):",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/algos/isin.py",
+     "line": 155,
+     "content": "def setup(self, dtype, size):",
+     "captures": []
+    }
+   ],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [],
+   "ariadne_call_refs": [
+    {
+     "caller_function": "setup",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/groupby.py",
+     "call_line": 645,
+     "call_type": "method",
+     "resolution_count": 2,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/groupby.py:625:9:625:13:setup",
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/groupby.py:642:9:642:13:setup"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "setup",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/io/json.py",
+     "call_line": 174,
+     "call_type": "method",
+     "resolution_count": 2,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/io/json.py:107:9:107:13:setup",
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/io/json.py:173:9:173:13:setup"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "setup",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/io/stata.py",
+     "call_line": 49,
+     "call_type": "method",
+     "resolution_count": 2,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/io/stata.py:17:9:17:13:setup",
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/io/stata.py:48:9:48:13:setup"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "setup",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/strings.py",
+     "call_line": 222,
+     "call_type": "method",
+     "resolution_count": 5,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/strings.py:20:9:20:13:setup",
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/strings.py:221:9:221:13:setup",
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/strings.py:232:9:232:13:setup",
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/strings.py:247:9:247:13:setup",
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/strings.py:256:9:256:13:setup"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "setup",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/strings.py",
+     "call_line": 233,
+     "call_type": "method",
+     "resolution_count": 5,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/strings.py:20:9:20:13:setup",
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/strings.py:221:9:221:13:setup",
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/strings.py:232:9:232:13:setup",
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/strings.py:247:9:247:13:setup",
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/strings.py:256:9:256:13:setup"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "setup",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/strings.py",
+     "call_line": 248,
+     "call_type": "method",
+     "resolution_count": 5,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/strings.py:20:9:20:13:setup",
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/strings.py:221:9:221:13:setup",
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/strings.py:232:9:232:13:setup",
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/strings.py:247:9:247:13:setup",
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/strings.py:256:9:256:13:setup"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "setup",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/strings.py",
+     "call_line": 257,
+     "call_type": "method",
+     "resolution_count": 5,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/strings.py:20:9:20:13:setup",
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/strings.py:221:9:221:13:setup",
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/strings.py:232:9:232:13:setup",
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/strings.py:247:9:247:13:setup",
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/pandas-dev--pandas/asv_bench/benchmarks/strings.py:256:9:256:13:setup"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    }
+   ],
+   "diagnosis": "callers-in-registry-wrong-target",
+   "has_uncaptured_indexed_grep_hit": true
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

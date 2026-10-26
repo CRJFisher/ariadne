@@ -1,0 +1,95 @@
+{
+ "case_id": "scikit-learn--scikit-learn__make_scorers__L91",
+ "strata": "python/stable-fp-novel",
+ "project": "scikit-learn--scikit-learn",
+ "github": "scikit-learn/scikit-learn",
+ "commit": "be5a8a8",
+ "source_run_id": "be5a8a8-2026-08-23T09-21-39.883Z",
+ "source_entry_index": 521,
+ "language": "python",
+ "diagnosis": "callers-in-registry-unresolved",
+ "member_symbol": {
+  "file_path": "asv_benchmarks/benchmarks/ensemble.py",
+  "name": "make_scorers",
+  "kind": "method",
+  "start_line": 91
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "be5a8a8-2026-08-23T09-21-39.883Z",
+   "kind": "fp-novel",
+   "rule": null,
+   "root_cause": "Estimator.setup() (common.py:178) calls self.make_scorers() on an abstract base class that never defines make_scorers itself; every concrete benchmark subclass (RandomForestClassifierBenchmark, GradientBoostingClassifierBenchmark, HistGradientBoostingClassifierBenchmark, etc.) implements its own mak",
+   "evidence": {
+    "file": "asv_benchmarks/benchmarks/common.py",
+    "line": 178,
+    "why": "self.make_scorers() is called in Estimator.setup(); GradientBoostingClassifierBenchmark (a subclass of Estimator, ensemble.py:91) provides the concrete implementation that receives this call at runtime, but Ariadne's resolver only sees the base class Estimator as the static receiver type and finds no matching member there."
+   },
+   "turns": null,
+   "usd": null
+  }
+ ],
+ "entry": {
+  "entry_index": 521,
+  "name": "make_scorers",
+  "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/scikit-learn--scikit-learn/asv_benchmarks/benchmarks/ensemble.py",
+  "start_line": 91,
+  "kind": "method",
+  "signature": "make_scorers(self: any): unknown",
+  "diagnosis": "callers-in-registry-unresolved",
+  "is_exported": false,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/scikit-learn--scikit-learn/asv_benchmarks/benchmarks/common.py",
+     "line": 178,
+     "content": "self.make_scorers()",
+     "captures": [
+      "@reference.call"
+     ]
+    }
+   ],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [],
+   "ariadne_call_refs": [
+    {
+     "caller_function": "setup",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/scikit-learn--scikit-learn/asv_benchmarks/benchmarks/common.py",
+     "call_line": 178,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "method_lookup",
+      "reason": "method_not_on_type",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/scikit-learn--scikit-learn/asv_benchmarks/benchmarks/common.py:120:7:120:15:Estimator"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    }
+   ],
+   "diagnosis": "callers-in-registry-unresolved",
+   "has_uncaptured_indexed_grep_hit": false
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

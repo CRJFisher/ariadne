@@ -1,0 +1,13 @@
+{
+  "case_id": "pydantic--pydantic____init____L66",
+  "gold_kind": "tp",
+  "acceptable_kinds": [
+    "tp"
+  ],
+  "gold_rule_id": null,
+  "caller_evidence": [],
+  "tp_search_summary": "Searched for imports of pydantic.v1.color: the only one is pydantic/v1/json.py:12, which uses Color as an ENCODERS_BY_TYPE dict key (str encoder) and never instantiates it. The class itself contains no cls(...) or Color(...) call; its __get_validators__ yields cls, but no v1 model in the repo or tests declares a v1 Color field. Every grep hit for Color(...) in tests (test_color.py, test_json.py, test_deprecated.py) imports pydantic.color.Color, the v2 class. _hypothesis_plugin.py likewise references pydantic.color (v2). test_v1.py has no Color usage.",
+  "confidence": "high",
+  "rationale": "pydantic.v1.color.Color is never constructed in the repo. All Color(...) calls in the pre-gathered grep hits target the v2 pydantic.color.Color, a different class with a different __init__ (a name collision). The only reference to v1 Color is as a dict key and in isinstance checks, so __init__ has no in-repo caller.",
+  "prior_verdicts_assessment": "The prior tp verdict is correct: the v1 class is only imported as an ENCODERS_BY_TYPE key and is never instantiated."
+}

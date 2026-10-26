@@ -1,0 +1,20 @@
+{
+ "case_id": "babel--babel__assertTupleTypeAnnotation__L810",
+ "gold_kind": "fp-classifier-regression",
+ "acceptable_kinds": [
+  "fp-classifier-regression",
+  "fp-novel"
+ ],
+ "gold_rule_id": "dynamic-property-keyed-callback",
+ "caller_evidence": [
+  {
+   "file": "packages/babel-types/test/asserts.js",
+   "line": 20,
+   "snippet": "t[k]({ type: \"FlavorTownDeclaration\" }, {});"
+  }
+ ],
+ "tp_search_summary": null,
+ "confidence": "medium",
+ "rationale": "packages/babel-types/test/asserts.js imports the whole @babel/types namespace as t, iterates Object.keys(t), and for every key starting with 'assert' (except assertNode) calls t[k](...), which invokes assertTupleTypeAnnotation. That is a non-literal computed-key call on an object holding the function, exactly the obj[name]() pattern dynamic-property-keyed-callback describes. fp-novel is defensible because the 'object' is a module namespace imported via ../lib/index.js rather than a literal map.",
+ "prior_verdicts_assessment": "The tp verdict is wrong: it grepped for the literal name and missed the Object.keys(t) loop in the babel-types asserts test that calls every exported assert function."
+}

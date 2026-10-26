@@ -1,0 +1,1186 @@
+{
+ "case_id": "webpack--webpack__serialize__L366",
+ "strata": "javascript/cost-tail",
+ "project": "webpack--webpack",
+ "github": "webpack/webpack",
+ "commit": "db98306",
+ "source_run_id": "db98306-2026-10-18T19-25-24.783Z",
+ "source_entry_index": 374,
+ "language": "javascript",
+ "diagnosis": "callers-in-registry-unresolved",
+ "member_symbol": {
+  "file_path": "lib/dependencies/HarmonyImportDependency.js",
+  "name": "serialize",
+  "kind": "method",
+  "start_line": 366
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "db98306-2026-10-12T22-18-36.760Z",
+   "kind": "fp-novel",
+   "rule": null,
+   "root_cause": "Subclasses HarmonyImportSideEffectDependency and HarmonyAcceptImportDependency extend HarmonyImportDependency and call makeSerializable(Constructor, ...) without overriding serialize(), so they inherit HarmonyImportDependency.prototype.serialize unchanged; at runtime the registered ClassSerializer's",
+   "evidence": {
+    "file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/HarmonyImportSideEffectDependency.js",
+    "line": 81,
+    "why": "HarmonyImportSideEffectDependency registers itself via makeSerializable without overriding serialize(), so the generic ClassSerializer.serialize(obj, context) => obj.serialize(context) call dispatches through the prototype chain directly into HarmonyImportDependency.prototype.serialize, a real runtime caller with no textual reference to the method name."
+   },
+   "turns": 16,
+   "usd": 0.1117
+  },
+  {
+   "run_id": "db98306-2026-10-18T19-25-24.783Z",
+   "kind": "fp-novel",
+   "rule": null,
+   "root_cause": "Ariadne's resolver cannot properly resolve super method calls to parent class methods in the inheritance chain; subclasses like HarmonyImportSpecifierDependency call super.serialize(context) to invoke HarmonyImportDependency's serialize method, but these calls remain unresolved in the call graph.",
+   "evidence": {
+    "file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/HarmonyImportDependency.js",
+    "line": 366,
+    "why": "serialize method is called via super from subclass instances during webpack serialization, but resolver misses the inheritance-based dispatch."
+   },
+   "turns": 50,
+   "usd": 0.2427
+  }
+ ],
+ "entry": {
+  "entry_index": 374,
+  "name": "serialize",
+  "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/HarmonyImportDependency.js",
+  "start_line": 366,
+  "kind": "method",
+  "signature": "serialize(context: ObjectSerializerContext): unknown",
+  "diagnosis": "callers-in-registry-unresolved",
+  "is_exported": false,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/examples/manifest-plugin/webpack.config.js",
+     "line": 43,
+     "content": "serialize(manifest) {",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/AsyncDependenciesBlock.js",
+     "line": 100,
+     "content": "super.serialize(context);",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/ContextModule.js",
+     "line": 1684,
+     "content": "super.serialize(context);",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/ExternalModule.js",
+     "line": 514,
+     "content": "serialize(obj, { write }) {",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/ExternalModule.js",
+     "line": 1466,
+     "content": "super.serialize(context);",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/ManifestPlugin.js",
+     "line": 242,
+     "content": "new RawSource(serialize(manifest)),",
+     "captures": [
+      "@reference.call",
+      "@reference.constructor"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/Module.js",
+     "line": 1302,
+     "content": "super.serialize(context);",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/NormalModule.js",
+     "line": 2056,
+     "content": "super.serialize(context);",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/RawModule.js",
+     "line": 174,
+     "content": "super.serialize(context);",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/asset/RawDataUrlModule.js",
+     "line": 169,
+     "content": "super.serialize(context);",
+     "captures": [
+      "@reference.call"
+     ]
+    }
+   ],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/ManifestPlugin.js",
+     "line": 79,
+     "content": "this.options.serialize ||",
+     "reference_kind": "property_access",
+     "access_type": "property",
+     "receiver_kind": "self"
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/schemas/plugins/ManifestPlugin.check.js",
+     "line": 6,
+     "content": "const r=/^(?:[A-Za-z]:[\\\\/]|\\\\\\\\|\\/)/;function e(t,{instancePath:i=\"\",parentData:n,parentDataProperty:o,rootData:s=t}={}){if(!t||\"object\"!=typeof t||Array.isArray(t))return e.errors=[{params:{type:\"object\"}}],!1;{const i=0;for(const r in t)if(\"entrypoints\"!==r&&\"filename\"!==r&&\"filter\"!==r&&\"generate\"!==r&&\"prefix\"!==r&&\"serialize\"!==r)return e.errors=[{params:{additionalProperty:r}}],!1;if(0===i){if(void 0!==t.entrypoints){const r=0;if(\"boolean\"!=typeof t.entrypoints)return e.errors=[{params:{type:\"boolean\"}}],!1;var a=0===r}else a=!0;if(a){if(void 0!==t.filename){let i=t.filename;const n=0;if(0===n){if(\"string\"!=typeof i)return e.errors=[{params:{type:\"string\"}}],!1;if(i.includes(\"!\")||!1!==r.test(i))return e.errors=[{params:{}}],!1;if(i.length<1)return e.errors=[{params:{}}],!1}a=0===n}else a=!0;if(a){if(void 0!==t.filter){const r=0;if(!(t.filter instanceof Function))return e.errors=[{params:{}}],!1;a=0===r}else a=!0;if(a){if(void 0!==t.generate){const r=0;if(!(t.generate instanceof Function))return e.errors=[{params:{}}],!1;a=0===r}else a=!0;if(a){if(void 0!==t.prefix){const r=0;if(\"string\"!=typeof t.prefix)return e.errors=[{params:{type:\"string\"}}],!1;a=0===r}else a=!0;if(a)if(void 0!==t.serialize){const r=0;if(!(t.serialize instanceof Function))return e.errors=[{params:{}}],!1;a=0===r}else a=!0}}}}}}return e.errors=null,!0}module.exports=e,module.exports.default=e;",
+     "reference_kind": "property_access",
+     "access_type": "property",
+     "receiver_kind": "identifier"
+    }
+   ],
+   "ariadne_call_refs": [
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/AsyncDependenciesBlock.js",
+     "call_line": 100,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/DependenciesBlock.js:105:2:105:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/ContextModule.js",
+     "call_line": 1684,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/Module.js:1279:2:1279:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/ExternalModule.js",
+     "call_line": 1466,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/Module.js:1279:2:1279:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/ManifestPlugin.js",
+     "call_line": 242,
+     "call_type": "function",
+     "resolution_count": 1,
+     "resolved_to": [
+      "variable:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/ManifestPlugin.js:78:9:78:17:serialize"
+     ],
+     "receiver_kind": "none",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/Module.js",
+     "call_line": 1302,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/DependenciesBlock.js:105:2:105:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/NormalModule.js",
+     "call_line": 2056,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/Module.js:1279:2:1279:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/RawModule.js",
+     "call_line": 174,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/Module.js:1279:2:1279:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/asset/RawDataUrlModule.js",
+     "call_line": 169,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/Module.js:1279:2:1279:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/cache/PackFileCacheStrategy.js",
+     "call_line": 1591,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "member_type_unknown",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/cache/PackFileCacheStrategy.js:1123:7:1123:27:PackFileCacheStrategy"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/container/ContainerEntryModule.js",
+     "call_line": 292,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/Module.js:1279:2:1279:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/container/ContainerExposedDependency.js",
+     "call_line": 48,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/ModuleDependency.js:85:2:85:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/container/FallbackDependency.js",
+     "call_line": 48,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/Dependency.js:437:2:437:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/container/FallbackModule.js",
+     "call_line": 188,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/Module.js:1279:2:1279:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/container/RemoteModule.js",
+     "call_line": 220,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/Module.js:1279:2:1279:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/css/CssModule.js",
+     "call_line": 172,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/NormalModule.js:2047:2:2047:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/AMDDefineDependency.js",
+     "call_line": 146,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/Dependency.js:437:2:437:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/AMDRequireArrayDependency.js",
+     "call_line": 49,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/Dependency.js:437:2:437:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/AMDRequireContextDependency.js",
+     "call_line": 45,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/ContextDependency.js:150:2:150:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/AMDRequireDependency.js",
+     "call_line": 58,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/Dependency.js:437:2:437:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/CachedConstDependency.js",
+     "call_line": 82,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/Dependency.js:437:2:437:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/CommonJsExportRequireDependency.js",
+     "call_line": 373,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/ModuleDependency.js:85:2:85:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/CommonJsExportsDependency.js",
+     "call_line": 83,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/Dependency.js:437:2:437:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/CommonJsFullRequireDependency.js",
+     "call_line": 96,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/ModuleDependency.js:85:2:85:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/CommonJsRequireContextDependency.js",
+     "call_line": 68,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/ContextDependency.js:150:2:150:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/CommonJsRequireDependency.js",
+     "call_line": 138,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/ModuleDependency.js:85:2:85:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/CommonJsSelfReferenceDependency.js",
+     "call_line": 82,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/Dependency.js:437:2:437:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/ConstDependency.js",
+     "call_line": 82,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/Dependency.js:437:2:437:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/ContextDependency.js",
+     "call_line": 163,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/Dependency.js:437:2:437:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/ContextElementDependency.js",
+     "call_line": 136,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/ModuleDependency.js:85:2:85:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/CreateScriptUrlDependency.js",
+     "call_line": 39,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/Dependency.js:437:2:437:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/CssIcssExportDependency.js",
+     "call_line": 503,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/Dependency.js:437:2:437:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/CssIcssImportDependency.js",
+     "call_line": 136,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/CssImportDependency.js:104:2:104:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/CssIcssSymbolDependency.js",
+     "call_line": 81,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/Dependency.js:437:2:437:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/CssImportDependency.js",
+     "call_line": 113,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/ModuleDependency.js:85:2:85:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/CssUrlDependency.js",
+     "call_line": 112,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/ModuleDependency.js:85:2:85:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/DllEntryDependency.js",
+     "call_line": 40,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/Dependency.js:437:2:437:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/ExportsInfoDependency.js",
+     "call_line": 114,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/Dependency.js:437:2:437:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/ExternalModuleDependency.js",
+     "call_line": 65,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/CachedConstDependency.js:74:2:74:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/ExternalModuleInitFragment.js",
+     "call_line": 117,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/InitFragment.js:184:2:184:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/HarmonyAcceptDependency.js",
+     "call_line": 49,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/Dependency.js:437:2:437:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/HarmonyEvaluatedImportSpecifierDependency.js",
+     "call_line": 84,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "no_parent_class",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/HarmonyEvaluatedImportSpecifierDependency.js:37:7:37:47:HarmonyEvaluatedImportSpecifierDependency"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/HarmonyExportExpressionDependency.js",
+     "call_line": 127,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/Dependency.js:437:2:437:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/HarmonyExportHeaderDependency.js",
+     "call_line": 40,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/Dependency.js:437:2:437:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/HarmonyExportImportedSpecifierDependency.js",
+     "call_line": 1161,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "no_parent_class",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/HarmonyExportImportedSpecifierDependency.js:476:7:476:46:HarmonyExportImportedSpecifierDependency"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/HarmonyExportSpecifierDependency.js",
+     "call_line": 107,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/Dependency.js:437:2:437:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/HarmonyImportDependency.js",
+     "call_line": 371,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/ModuleDependency.js:85:2:85:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/HarmonyImportSpecifierDependency.js",
+     "call_line": 405,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "no_parent_class",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/HarmonyImportSpecifierDependency.js:59:7:59:38:HarmonyImportSpecifierDependency"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/HtmlEntryDependency.js",
+     "call_line": 133,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/ModuleDependency.js:85:2:85:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/HtmlInlineScriptDependency.js",
+     "call_line": 65,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/ModuleDependency.js:85:2:85:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "serialize",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/HtmlInlineStyleDependency.js",
+     "call_line": 90,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/webpack--webpack/lib/dependencies/ModuleDependency.js:85:2:85:10:serialize"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": true,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    }
+   ],
+   "diagnosis": "callers-in-registry-unresolved",
+   "has_uncaptured_indexed_grep_hit": true
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

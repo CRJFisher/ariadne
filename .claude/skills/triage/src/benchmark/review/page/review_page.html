@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Benchmark Review</title>
+<link rel="stylesheet" href="/review_page.css">
+</head>
+<body>
+<div class="app" id="app">
+  <main id="view" class="view"></main>
+
+  <section class="side-pane" id="side" aria-label="Help" hidden>
+    <div class="side-tabs seg" role="tablist">
+      <button type="button" data-tab="chat" role="tab">Ask Claude</button>
+      <button type="button" data-tab="glossary" role="tab">Glossary</button>
+      <button type="button" class="side-close" id="side-close" aria-label="Close panel">×</button>
+    </div>
+    <div class="tab" id="tab-chat">
+      <div class="chat-log" id="chat-log"></div>
+      <div class="chat-compose">
+        <div class="chat-quick" id="chat-quick"></div>
+        <div class="chat-selection" id="chat-selection" hidden>
+          <span class="label">Claude will see your selection:</span>
+          <span class="text" id="chat-selection-text"></span>
+          <button type="button" class="link" id="chat-selection-clear">clear</button>
+        </div>
+        <textarea id="chat-input" rows="3" placeholder="Ask about this case… (⌘/Ctrl+Enter to send)"></textarea>
+        <div class="chat-actions">
+          <button type="button" class="primary" id="chat-send">Send</button>
+          <button type="button" id="chat-reset">New session</button>
+          <span class="chat-status" id="chat-status"></span>
+        </div>
+      </div>
+    </div>
+    <div class="tab" id="tab-glossary"></div>
+  </section>
+</div>
+<button type="button" class="side-open" id="side-open" hidden>Ask Claude</button>
+<div class="popover" id="popover" role="dialog" hidden></div>
+<script src="/review_page.js"></script>
+</body>
+</html>

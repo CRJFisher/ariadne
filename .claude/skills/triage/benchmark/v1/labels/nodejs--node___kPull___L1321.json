@@ -1,0 +1,19 @@
+{
+ "case_id": "nodejs--node___kPull___L1321",
+ "gold_kind": "fp-classifier-regression",
+ "acceptable_kinds": [
+  "fp-classifier-regression"
+ ],
+ "gold_rule_id": "dynamic-property-keyed-callback",
+ "caller_evidence": [
+  {
+   "file": "lib/internal/webstreams/readablestream.js",
+   "line": 2560,
+   "snippet": "stream[kState].controller[kPull](readRequest);"
+  }
+ ],
+ "tp_search_summary": null,
+ "confidence": "high",
+ "rationale": "ReadableByteStreamController.[kPull] (kPull = Symbol('kPull'), line 153) is invoked in readableStreamDefaultReaderRead via controller[kPull](readRequest), where controller is either the default or the byte-stream controller. That is exactly the obj[name]() with non-literal key shape that dynamic-property-keyed-callback describes, and the rule did not fire.",
+ "prior_verdicts_assessment": "All three prior regression verdicts are correct and cite the right call site and rule."
+}

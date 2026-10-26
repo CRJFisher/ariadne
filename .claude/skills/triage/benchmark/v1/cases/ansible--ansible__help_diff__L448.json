@@ -1,0 +1,61 @@
+{
+ "case_id": "ansible--ansible__help_diff__L448",
+ "strata": "python/stable-fp-novel",
+ "project": "ansible--ansible",
+ "github": "ansible/ansible",
+ "commit": "b85437b",
+ "source_run_id": "b85437b-2026-08-23T23-23-16.500Z",
+ "source_entry_index": 793,
+ "language": "python",
+ "diagnosis": "no-textual-callers",
+ "member_symbol": {
+  "file_path": "lib/ansible/cli/console.py",
+  "name": "help_diff",
+  "kind": "method",
+  "start_line": 448
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "b85437b-2026-08-23T23-23-16.500Z",
+   "kind": "fp-novel",
+   "rule": null,
+   "root_cause": "ConsoleCLI subclasses Python stdlib cmd.Cmd; help_diff is invoked at runtime by cmd.Cmd.do_help via `getattr(self, 'help_' + arg)()`, a getattr-based dynamic attribute dispatch (not a bracket/subscript computed-key call), so it is never a textual call site in the ansible codebase and falls outside t",
+   "evidence": {
+    "file": "lib/ansible/cli/console.py",
+    "line": 448,
+    "why": "help_diff has no textual call anywhere in the ansible repo; its only reachability path is the stdlib cmd.Cmd.do_help method resolving 'help_' + <user-typed command> via getattr and calling it, a naming-convention-driven dispatch from outside the indexed corpus."
+   },
+   "turns": null,
+   "usd": null
+  }
+ ],
+ "entry": {
+  "entry_index": 793,
+  "name": "help_diff",
+  "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/ansible--ansible/lib/ansible/cli/console.py",
+  "start_line": 448,
+  "kind": "method",
+  "signature": "help_diff(self: any): unknown",
+  "diagnosis": "no-textual-callers",
+  "is_exported": false,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [],
+   "ariadne_call_refs": [],
+   "diagnosis": "no-textual-callers",
+   "has_uncaptured_indexed_grep_hit": false
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

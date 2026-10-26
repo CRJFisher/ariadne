@@ -1,0 +1,13 @@
+{
+  "case_id": "sveltejs--svelte__sineOut__L346",
+  "gold_kind": "tp",
+  "acceptable_kinds": [
+    "tp"
+  ],
+  "gold_rule_id": null,
+  "caller_evidence": [],
+  "tp_search_summary": "Grepped the whole repo (excluding node_modules/.git) for 'sineOut', for imports from 'svelte/easing' or '../easing/index.js', for namespace imports of easing, and for computed easing[...] lookups. Matches: the definition and the types/index.d.ts declaration only; in-repo easing imports pull only linear, cubicOut, elasticOut (docs).",
+  "confidence": "high",
+  "rationale": "sineOut is a public export of svelte/easing with no in-repo importer or caller in source, tests, playgrounds or benchmarks, and the easing module is never namespace-imported or indexed dynamically. Only external consumers could call it.",
+  "prior_verdicts_assessment": "The single prior tp verdict is correct."
+}

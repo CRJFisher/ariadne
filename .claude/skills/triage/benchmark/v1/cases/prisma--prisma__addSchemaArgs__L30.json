@@ -1,0 +1,411 @@
+{
+ "case_id": "prisma--prisma__addSchemaArgs__L30",
+ "strata": "typescript/stable-fp-novel",
+ "project": "prisma--prisma",
+ "github": "prisma/prisma",
+ "commit": "28d393d",
+ "source_run_id": "28d393d-2026-07-27T00-05-12.136Z",
+ "source_entry_index": 134,
+ "language": "typescript",
+ "diagnosis": "callers-in-registry-unresolved",
+ "member_symbol": {
+  "file_path": "packages/client-generator-js/src/TSClient/Args.ts",
+  "name": "addSchemaArgs",
+  "kind": "method",
+  "start_line": 30
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "28d393d-2026-07-27T00-05-12.136Z",
+   "kind": "fp-novel",
+   "rule": null,
+   "root_cause": "The call sites are a fluent chain rooted at `new ArgsTypeBuilder(...)` (e.g. `new ArgsTypeBuilder(...).addSelectArg().addSchemaArgs(field.args).createExport()`); Ariadne's resolver fails to propagate the constructor's return type through the chained method calls to resolve `addSchemaArgs` against th",
+   "evidence": {
+    "file": "/home/node/.ariadne/triage-entrypoints/repos/prisma--prisma/packages/client-generator-js/src/TSClient/Model.ts",
+    "line": 87,
+    "why": "Direct method-chain call on a freshly constructed ArgsTypeBuilder instance with a statically known receiver type, so this is a real caller that Ariadne's resolver missed rather than any dynamic-dispatch pattern covered by in-scope rules."
+   },
+   "turns": null,
+   "usd": null
+  }
+ ],
+ "entry": {
+  "entry_index": 134,
+  "name": "addSchemaArgs",
+  "file_path": "/home/node/.ariadne/triage-entrypoints/repos/prisma--prisma/packages/client-generator-js/src/TSClient/Args.ts",
+  "start_line": 30,
+  "kind": "method",
+  "signature": "addSchemaArgs(args: readonly DMMF.SchemaArg[]): this",
+  "diagnosis": "callers-in-registry-unresolved",
+  "is_exported": false,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/prisma--prisma/packages/client-generator-js/src/TSClient/Count.ts",
+     "line": 29,
+     "content": ".addSchemaArgs(field.args)",
+     "captures": []
+    },
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/prisma--prisma/packages/client-generator-js/src/TSClient/Model.ts",
+     "line": 88,
+     "content": ".addSchemaArgs(field.args)",
+     "captures": []
+    },
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/prisma--prisma/packages/client-generator-js/src/TSClient/Model.ts",
+     "line": 95,
+     "content": ".addSchemaArgs(field.args)",
+     "captures": []
+    },
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/prisma--prisma/packages/client-generator-js/src/TSClient/Model.ts",
+     "line": 108,
+     "content": ".addSchemaArgs(field.args)",
+     "captures": []
+    },
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/prisma--prisma/packages/client-generator-js/src/TSClient/Model.ts",
+     "line": 123,
+     "content": ".addSchemaArgs(field.args)",
+     "captures": []
+    },
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/prisma--prisma/packages/client-generator-js/src/TSClient/Model.ts",
+     "line": 142,
+     "content": ".addSchemaArgs(field.args)",
+     "captures": []
+    },
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/prisma--prisma/packages/client-generator-ts/src/TSClient/Args.ts",
+     "line": 28,
+     "content": "addSchemaArgs(args: readonly DMMF.SchemaArg[]): this {",
+     "captures": []
+    },
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/prisma--prisma/packages/client-generator-ts/src/TSClient/Count.ts",
+     "line": 28,
+     "content": ".addSchemaArgs(field.args)",
+     "captures": []
+    },
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/prisma--prisma/packages/client-generator-ts/src/TSClient/Model.ts",
+     "line": 90,
+     "content": ".addSchemaArgs(field.args)",
+     "captures": []
+    },
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/prisma--prisma/packages/client-generator-ts/src/TSClient/Model.ts",
+     "line": 97,
+     "content": ".addSchemaArgs(field.args)",
+     "captures": []
+    }
+   ],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [],
+   "ariadne_call_refs": [
+    {
+     "caller_function": "argsTypes",
+     "caller_file": "/home/node/.ariadne/triage-entrypoints/repos/prisma--prisma/packages/client-generator-js/src/TSClient/Count.ts",
+     "call_line": 28,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "call_chain",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/home/node/.ariadne/triage-entrypoints/repos/prisma--prisma/packages/client-generator-js/src/TSClient/Count.ts:26:7:33:7"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "argsTypes",
+     "caller_file": "/home/node/.ariadne/triage-entrypoints/repos/prisma--prisma/packages/client-generator-js/src/TSClient/Model.ts",
+     "call_line": 87,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "call_chain",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/home/node/.ariadne/triage-entrypoints/repos/prisma--prisma/packages/client-generator-js/src/TSClient/Model.ts:79:7:126:7"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "argsTypes",
+     "caller_file": "/home/node/.ariadne/triage-entrypoints/repos/prisma--prisma/packages/client-generator-js/src/TSClient/Model.ts",
+     "call_line": 92,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "call_chain",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/home/node/.ariadne/triage-entrypoints/repos/prisma--prisma/packages/client-generator-js/src/TSClient/Model.ts:91:14:126:7"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "argsTypes",
+     "caller_file": "/home/node/.ariadne/triage-entrypoints/repos/prisma--prisma/packages/client-generator-js/src/TSClient/Model.ts",
+     "call_line": 105,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "call_chain",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/home/node/.ariadne/triage-entrypoints/repos/prisma--prisma/packages/client-generator-js/src/TSClient/Model.ts:104:14:126:7"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "argsTypes",
+     "caller_file": "/home/node/.ariadne/triage-entrypoints/repos/prisma--prisma/packages/client-generator-js/src/TSClient/Model.ts",
+     "call_line": 119,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "call_chain",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/home/node/.ariadne/triage-entrypoints/repos/prisma--prisma/packages/client-generator-js/src/TSClient/Model.ts:117:14:126:7"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "argsTypes",
+     "caller_file": "/home/node/.ariadne/triage-entrypoints/repos/prisma--prisma/packages/client-generator-js/src/TSClient/Model.ts",
+     "call_line": 138,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "call_chain",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/home/node/.ariadne/triage-entrypoints/repos/prisma--prisma/packages/client-generator-js/src/TSClient/Model.ts:129:5:147:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "argsTypes",
+     "caller_file": "/home/node/.ariadne/triage-entrypoints/repos/prisma--prisma/packages/client-generator-ts/src/TSClient/Count.ts",
+     "call_line": 27,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "call_chain",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/home/node/.ariadne/triage-entrypoints/repos/prisma--prisma/packages/client-generator-ts/src/TSClient/Count.ts:25:7:32:7"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "argsTypes",
+     "caller_file": "/home/node/.ariadne/triage-entrypoints/repos/prisma--prisma/packages/client-generator-ts/src/TSClient/Model.ts",
+     "call_line": 89,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "call_chain",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/home/node/.ariadne/triage-entrypoints/repos/prisma--prisma/packages/client-generator-ts/src/TSClient/Model.ts:81:7:128:7"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "argsTypes",
+     "caller_file": "/home/node/.ariadne/triage-entrypoints/repos/prisma--prisma/packages/client-generator-ts/src/TSClient/Model.ts",
+     "call_line": 94,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "call_chain",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/home/node/.ariadne/triage-entrypoints/repos/prisma--prisma/packages/client-generator-ts/src/TSClient/Model.ts:93:14:128:7"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "argsTypes",
+     "caller_file": "/home/node/.ariadne/triage-entrypoints/repos/prisma--prisma/packages/client-generator-ts/src/TSClient/Model.ts",
+     "call_line": 107,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "call_chain",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/home/node/.ariadne/triage-entrypoints/repos/prisma--prisma/packages/client-generator-ts/src/TSClient/Model.ts:106:14:128:7"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "argsTypes",
+     "caller_file": "/home/node/.ariadne/triage-entrypoints/repos/prisma--prisma/packages/client-generator-ts/src/TSClient/Model.ts",
+     "call_line": 121,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "call_chain",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/home/node/.ariadne/triage-entrypoints/repos/prisma--prisma/packages/client-generator-ts/src/TSClient/Model.ts:119:14:128:7"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "argsTypes",
+     "caller_file": "/home/node/.ariadne/triage-entrypoints/repos/prisma--prisma/packages/client-generator-ts/src/TSClient/Model.ts",
+     "call_line": 140,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "call_chain",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/home/node/.ariadne/triage-entrypoints/repos/prisma--prisma/packages/client-generator-ts/src/TSClient/Model.ts:131:5:149:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    }
+   ],
+   "diagnosis": "callers-in-registry-unresolved",
+   "has_uncaptured_indexed_grep_hit": true
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

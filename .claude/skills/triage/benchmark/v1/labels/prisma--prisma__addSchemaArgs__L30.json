@@ -1,0 +1,29 @@
+{
+  "case_id": "prisma--prisma__addSchemaArgs__L30",
+  "gold_kind": "fp-novel",
+  "acceptable_kinds": [
+    "fp-novel"
+  ],
+  "gold_rule_id": null,
+  "caller_evidence": [
+    {
+      "file": "packages/client-generator-js/src/TSClient/Count.ts",
+      "line": 29,
+      "snippet": ".addSchemaArgs(field.args)"
+    },
+    {
+      "file": "packages/client-generator-js/src/TSClient/Model.ts",
+      "line": 88,
+      "snippet": ".addSchemaArgs(field.args)"
+    },
+    {
+      "file": "packages/client-generator-js/src/TSClient/Model.ts",
+      "line": 95,
+      "snippet": ".addSchemaArgs(field.args)"
+    }
+  ],
+  "tp_search_summary": null,
+  "confidence": "high",
+  "rationale": "Count.ts (which imports ArgsTypeBuilder from './Args') calls `new ArgsTypeBuilder(this.type, this.context).addSchemaArgs(field.args)`, and Model.ts calls it after `.addSelectArg(...).addOmitArg()`, which return `this`. These are real calls on ArgsTypeBuilder instances in client-generator-js. Ariadne logged all 12 call refs with resolution_count 0 because it does not resolve a method call whose receiver is a `new X(...)` expression or a fluent `this`-returning chain. No in-scope rule describes constructor-expression or fluent-chain receivers.",
+  "prior_verdicts_assessment": "The prior fp-novel verdict is correct: it identifies the fluent chain rooted at `new ArgsTypeBuilder(...)` as the unresolved pattern."
+}

@@ -1,0 +1,19 @@
+{
+ "case_id": "launchbadge--sqlx__clear_cached_statements__L210",
+ "gold_kind": "fp-novel",
+ "acceptable_kinds": [
+  "fp-novel"
+ ],
+ "gold_rule_id": null,
+ "caller_evidence": [
+  {
+   "file": "tests/postgres/postgres.rs",
+   "line": 780,
+   "snippet": "conn.clear_cached_statements().await?;"
+  }
+ ],
+ "tp_search_summary": null,
+ "confidence": "high",
+ "rationale": "In it_caches_statements, conn = new::<Postgres>().await? whose type is <Postgres as Database>::Connection = PgConnection, so conn.clear_cached_statements() dispatches to this Connection impl method. Test files are indexed (only excluded from candidacy), so this is a resolver gap on an associated-type-returned receiver; no Rust rule in scope (macro invocation, macro registration table, computed-key callback) covers it.",
+ "prior_verdicts_assessment": "The prior fp-novel verdict is correct and cites the right test caller."
+}

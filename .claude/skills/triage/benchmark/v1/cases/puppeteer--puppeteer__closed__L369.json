@@ -1,0 +1,199 @@
+{
+ "case_id": "puppeteer--puppeteer__closed__L369",
+ "strata": "diagnosis/references-without-call-syntax",
+ "project": "puppeteer--puppeteer",
+ "github": "puppeteer/puppeteer",
+ "commit": "468572e",
+ "source_run_id": "468572e-2026-08-23T23-01-31.642Z",
+ "source_entry_index": 171,
+ "language": "typescript",
+ "diagnosis": "references-without-call-syntax",
+ "member_symbol": {
+  "file_path": "packages/puppeteer-core/src/api/BrowserContext.ts",
+  "name": "closed",
+  "kind": "method",
+  "start_line": 369
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "468572e-2026-08-23T23-01-31.642Z",
+   "kind": "tp",
+   "rule": null,
+   "root_cause": "Grepped `.closed` across the entire repo (src, tests, docs, examples); every hit resolves to unrelated same-named getters on Connection/BrowsingContext/UserContext/UserPrompt/bidi core Browser, none to api/BrowserContext's `closed` getter, which is part of the @public BrowserContext class's external",
+   "evidence": {
+    "file": "packages/puppeteer-core/src/api/BrowserContext.ts",
+    "line": 369,
+    "why": "Grepped `.closed` across the entire repo (src, tests, docs, examples); every hit resolves to unrelated same-named getters on Connection/BrowsingContext/UserContext/UserPrompt/bidi core Browser, none to api/BrowserContext's `closed` getter, which is part of the @public BrowserContext class's external API surface with no internal caller."
+   },
+   "turns": null,
+   "usd": null
+  }
+ ],
+ "entry": {
+  "entry_index": 171,
+  "name": "closed",
+  "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/puppeteer--puppeteer/packages/puppeteer-core/src/api/BrowserContext.ts",
+  "start_line": 369,
+  "kind": "method",
+  "signature": "closed(): boolean",
+  "diagnosis": "references-without-call-syntax",
+  "is_exported": false,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/puppeteer--puppeteer/packages/puppeteer-core/src/bidi/CDPSession.ts",
+     "line": 98,
+     "content": "this.#connection.closed ||",
+     "reference_kind": "property_access",
+     "access_type": "property",
+     "receiver_kind": "self"
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/puppeteer--puppeteer/packages/puppeteer-core/src/bidi/Connection.test.ts",
+     "line": 58,
+     "content": "expect(transport.closed).toBeTruthy();",
+     "reference_kind": "property_access",
+     "access_type": "property",
+     "receiver_kind": "identifier"
+    }
+   ],
+   "ariadne_call_refs": [
+    {
+     "caller_function": "close",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/puppeteer--puppeteer/packages/puppeteer-core/src/bidi/Browser.ts",
+     "call_line": 259,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/puppeteer--puppeteer/packages/puppeteer-core/src/bidi/Connection.ts:85:7:85:12:closed"
+     ],
+     "receiver_kind": "none",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "detached",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/puppeteer--puppeteer/packages/puppeteer-core/src/bidi/Frame.ts",
+     "call_line": 469,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/puppeteer--puppeteer/packages/puppeteer-core/src/bidi/core/BrowsingContext.ts:325:7:325:12:closed"
+     ],
+     "receiver_kind": "none",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "[disposeSymbol]",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/puppeteer--puppeteer/packages/puppeteer-core/src/bidi/core/Browser.ts",
+     "call_line": 313,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/puppeteer--puppeteer/packages/puppeteer-core/src/bidi/core/Browser.ts:134:7:134:12:closed"
+     ],
+     "receiver_kind": "none",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "disposed",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/puppeteer--puppeteer/packages/puppeteer-core/src/bidi/core/BrowsingContext.ts",
+     "call_line": 329,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/puppeteer--puppeteer/packages/puppeteer-core/src/bidi/core/BrowsingContext.ts:325:7:325:12:closed"
+     ],
+     "receiver_kind": "none",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "disposed",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/puppeteer--puppeteer/packages/puppeteer-core/src/bidi/core/UserContext.ts",
+     "call_line": 120,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/puppeteer--puppeteer/packages/puppeteer-core/src/bidi/core/UserContext.ts:116:7:116:12:closed"
+     ],
+     "receiver_kind": "none",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "disposed",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/puppeteer--puppeteer/packages/puppeteer-core/src/bidi/core/UserPrompt.ts",
+     "call_line": 93,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/puppeteer--puppeteer/packages/puppeteer-core/src/bidi/core/UserPrompt.ts:89:7:89:12:closed"
+     ],
+     "receiver_kind": "none",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    }
+   ],
+   "diagnosis": "references-without-call-syntax",
+   "has_uncaptured_indexed_grep_hit": false
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

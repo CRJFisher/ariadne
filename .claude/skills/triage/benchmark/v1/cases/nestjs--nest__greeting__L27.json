@@ -1,0 +1,517 @@
+{
+ "case_id": "nestjs--nest__greeting__L27",
+ "strata": "typescript/stable-regression",
+ "project": "nestjs--nest",
+ "github": "nestjs/nest",
+ "commit": "d8ee014",
+ "source_run_id": "d8ee014-2026-07-26T19-58-57.163Z",
+ "source_entry_index": 516,
+ "language": "typescript",
+ "diagnosis": "callers-in-registry-wrong-target",
+ "member_symbol": {
+  "file_path": "integration/scopes/src/hello/hello.controller.ts",
+  "name": "greeting",
+  "kind": "method",
+  "start_line": 27
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "d8ee014-2026-07-26T19-58-57.163Z",
+   "kind": "fp-classifier-regression",
+   "rule": "framework-lifecycle-dispatch",
+   "root_cause": "All textual/Ariadne-resolved 'greeting(' call sites across the repo resolve to *.service.ts greeting methods (the controller's own delegate call at line 28), never to HelloController.greeting itself; the only real invocation of this route handler is NestJS's reflect-metadata dispatch via the @Get() ",
+   "evidence": {
+    "file": "/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/scopes/src/hello/hello.controller.ts",
+    "line": 27,
+    "why": "All textual/Ariadne-resolved 'greeting(' call sites across the repo resolve to *.service.ts greeting methods (the controller's own delegate call at line 28), never to HelloController.greeting itself; the only real invocation of this route handler is NestJS's reflect-metadata dispatch via the @Get() decorator on line 26, which the in-scope framework-lifecycle-dispatch rule is meant to cover but failed to match here."
+   },
+   "turns": null,
+   "usd": null
+  }
+ ],
+ "entry": {
+  "entry_index": 516,
+  "name": "greeting",
+  "file_path": "/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/scopes/src/hello/hello.controller.ts",
+  "start_line": 27,
+  "kind": "method",
+  "signature": "greeting(id: any): string",
+  "diagnosis": "callers-in-registry-wrong-target",
+  "is_exported": false,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/hello-world/src/hello/hello.controller.ts",
+     "line": 12,
+     "content": "greeting(): string {",
+     "captures": []
+    },
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/hello-world/src/hello/hello.controller.ts",
+     "line": 13,
+     "content": "return this.helloService.greeting();",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/hello-world/src/hello/hello.controller.ts",
+     "line": 18,
+     "content": "return this.helloService.greeting();",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/hello-world/src/hello/hello.controller.ts",
+     "line": 23,
+     "content": "return of(this.helloService.greeting());",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/hello-world/src/hello/hello.service.ts",
+     "line": 5,
+     "content": "greeting(): string {",
+     "captures": []
+    },
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/hello-world/src/host/host.controller.ts",
+     "line": 15,
+     "content": "greeting(@HostParam('tenant') tenant: string): string {",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/hello-world/src/host/host.controller.ts",
+     "line": 16,
+     "content": "return `${this.hostService.greeting()} tenant=${tenant}`;",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/hello-world/src/host/host.controller.ts",
+     "line": 21,
+     "content": "return `${this.hostService.greeting()} tenant=${tenant}`;",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/hello-world/src/host/host.controller.ts",
+     "line": 26,
+     "content": "return of(`${this.hostService.greeting()} tenant=${tenant}`);",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/hello-world/src/host/host.service.ts",
+     "line": 5,
+     "content": "greeting(): string {",
+     "captures": []
+    }
+   ],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [],
+   "ariadne_call_refs": [
+    {
+     "caller_function": "greeting",
+     "caller_file": "/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/hello-world/src/hello/hello.controller.ts",
+     "call_line": 13,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/hello-world/src/hello/hello.service.ts:5:3:5:10:greeting"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "asyncGreeting",
+     "caller_file": "/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/hello-world/src/hello/hello.controller.ts",
+     "call_line": 18,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/hello-world/src/hello/hello.service.ts:5:3:5:10:greeting"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "streamGreeting",
+     "caller_file": "/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/hello-world/src/hello/hello.controller.ts",
+     "call_line": 23,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/hello-world/src/hello/hello.service.ts:5:3:5:10:greeting"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "greeting",
+     "caller_file": "/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/hello-world/src/host/host.controller.ts",
+     "call_line": 16,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/hello-world/src/host/host.service.ts:5:3:5:10:greeting"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "asyncGreeting",
+     "caller_file": "/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/hello-world/src/host/host.controller.ts",
+     "call_line": 21,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/hello-world/src/host/host.service.ts:5:3:5:10:greeting"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "streamGreeting",
+     "caller_file": "/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/hello-world/src/host/host.controller.ts",
+     "call_line": 26,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/hello-world/src/host/host.service.ts:5:3:5:10:greeting"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "greeting",
+     "caller_file": "/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/hello-world/src/host-array/host-array.controller.ts",
+     "call_line": 16,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/hello-world/src/host-array/host-array.service.ts:5:3:5:10:greeting"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "asyncGreeting",
+     "caller_file": "/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/hello-world/src/host-array/host-array.controller.ts",
+     "call_line": 21,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/hello-world/src/host-array/host-array.service.ts:5:3:5:10:greeting"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "streamGreeting",
+     "caller_file": "/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/hello-world/src/host-array/host-array.controller.ts",
+     "call_line": 26,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/hello-world/src/host-array/host-array.service.ts:5:3:5:10:greeting"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "greeting",
+     "caller_file": "/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/inspector/src/circular-hello/hello.controller.ts",
+     "call_line": 28,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/inspector/src/circular-hello/hello.service.ts:10:3:10:10:greeting"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "greeting",
+     "caller_file": "/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/inspector/src/durable/durable.controller.ts",
+     "call_line": 10,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/inspector/src/durable/durable.service.ts:10:3:10:10:greeting"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "greeting",
+     "caller_file": "/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/scopes/src/circular-hello/hello.controller.ts",
+     "call_line": 28,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/scopes/src/circular-hello/hello.service.ts:10:3:10:10:greeting"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "greeting",
+     "caller_file": "/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/scopes/src/circular-transient/hello.controller.ts",
+     "call_line": 28,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/scopes/src/circular-transient/hello.service.ts:10:3:10:10:greeting"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "greeting",
+     "caller_file": "/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/scopes/src/durable/durable.controller.ts",
+     "call_line": 14,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/scopes/src/durable/durable.service.ts:20:3:20:10:greeting"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "greeting",
+     "caller_file": "/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/scopes/src/hello/hello.controller.ts",
+     "call_line": 28,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/scopes/src/hello/hello.service.ts:7:3:7:10:greeting"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "greetingTransient",
+     "caller_file": "/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/scopes/src/inject-inquirer/hello.controller.ts",
+     "call_line": 17,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/scopes/src/inject-inquirer/hello-transient/hello-transient.service.ts:10:3:10:10:greeting"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "greetingRequest",
+     "caller_file": "/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/scopes/src/inject-inquirer/hello.controller.ts",
+     "call_line": 22,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/scopes/src/inject-inquirer/hello-request/hello-request.service.ts:14:3:14:10:greeting"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "greeting",
+     "caller_file": "/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/scopes/src/msvc/hello.controller.ts",
+     "call_line": 22,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/scopes/src/msvc/hello.service.ts:7:3:7:10:greeting"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "greeting",
+     "caller_file": "/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/scopes/src/transient/hello.controller.ts",
+     "call_line": 28,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/home/node/.ariadne/triage-entrypoints/repos/nestjs--nest/integration/scopes/src/transient/hello.service.ts:7:3:7:10:greeting"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    }
+   ],
+   "diagnosis": "callers-in-registry-wrong-target",
+   "has_uncaptured_indexed_grep_hit": true
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

@@ -1,0 +1,24 @@
+{
+ "case_id": "angular--angular__findMatchingDirectivesAndPipes__L122",
+ "gold_kind": "fp-novel",
+ "acceptable_kinds": [
+  "fp-novel"
+ ],
+ "gold_rule_id": null,
+ "caller_evidence": [
+  {
+   "file": "packages/compiler/test/render3/view/binding_spec.ts",
+   "line": 120,
+   "snippet": "const result = findMatchingDirectivesAndPipes(template, directiveSelectors);"
+  },
+  {
+   "file": "packages/compiler/test/render3/view/binding_spec.ts",
+   "line": 141,
+   "snippet": "const result = findMatchingDirectivesAndPipes(template, directiveSelectors);"
+  }
+ ],
+ "tp_search_summary": null,
+ "confidence": "high",
+ "rationale": "binding_spec.ts imports findMatchingDirectivesAndPipes directly from t2_binder and calls it at lines 120, 141, 163 and 192. Test code counts as a real caller. The diagnostics report no textual callers, which implies the spec file sits outside the indexed corpus (or the grep missed it). Per the definitions, a real caller in an unindexed file is fp-novel, with the coverage gap as the cause.",
+ "prior_verdicts_assessment": "Both priors are wrong in reasoning. The tp verdict noticed the spec file but wrongly discounted test callers. The fp-novel verdict reaches the right kind but justifies it with hypothetical external consumers, which by definition would be tp."
+}

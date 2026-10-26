@@ -1,0 +1,30 @@
+{
+ "case_id": "ReactiveX--rxjs__constructor__L16",
+ "gold_kind": "fp-classifier-regression",
+ "acceptable_kinds": [
+  "fp-classifier-regression",
+  "fp-novel"
+ ],
+ "gold_rule_id": "framework-component-decorator",
+ "caller_evidence": [
+  {
+   "file": "apps/rxjs.dev/src/app/custom-elements/resource/resource-list.module.ts",
+   "line": 10,
+   "snippet": "providers: [ ResourceService ]"
+  },
+  {
+   "file": "apps/rxjs.dev/src/app/custom-elements/resource/resource-list.component.ts",
+   "line": 47,
+   "snippet": "constructor(location: PlatformLocation, private resourceService: ResourceService) {"
+  },
+  {
+   "file": "apps/rxjs.dev/src/app/custom-elements/resource/resource.service.spec.ts",
+   "line": 22,
+   "snippet": "resourceService = injector.get(ResourceService);"
+  }
+ ],
+ "tp_search_summary": null,
+ "confidence": "medium",
+ "rationale": "ResourceService is an Angular @Injectable() class. It is registered in ResourceListModule's providers, injected into ResourceListComponent's constructor, and instantiated by the DI injector in its spec through injector.get(ResourceService). The framework-component-decorator rule describes 'Angular @Component ... or similar framework class decorators [that] register the class with the framework's dependency-injection runtime', with the constructor invoked by the framework, so @Injectable falls within that stated intent. fp-novel is also defensible because the rule's title and examples centre on @Component/@Controller.",
+ "prior_verdicts_assessment": "The single prior fp-classifier-regression verdict naming framework-component-decorator is correct, and its DI-instantiation evidence checks out."
+}

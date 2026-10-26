@@ -1,0 +1,20 @@
+{
+ "case_id": "scikit-learn--scikit-learn__on_fit_task_end__L134",
+ "gold_kind": "fp-classifier-regression",
+ "acceptable_kinds": [
+  "fp-classifier-regression",
+  "fp-novel"
+ ],
+ "gold_rule_id": "dynamic-property-keyed-callback",
+ "caller_evidence": [
+  {
+   "file": "sklearn/callback/_callback_context.py",
+   "line": 351,
+   "snippet": "getattr(callback, hook_name)(estimator, self, **args_to_pass)"
+  }
+ ],
+ "tp_search_summary": null,
+ "confidence": "medium",
+ "rationale": "The pre-gathered grep hits are super().on_fit_task_end calls in test callback subclasses of RecordingCallback, so they point at the wrong target. The real caller is CallbackContext._call_hooks, which loops over the registered callbacks (ScoringMonitor instances are registered in sklearn/callback/tests/test_scoring_monitor.py) and invokes getattr(callback, hook_name)(...), with hook_name='on_fit_task_end' supplied by call_on_fit_task_end. That is the Python form of obj[name]() with a non-literal key, which is the intent of dynamic-property-keyed-callback. fp-novel stays defensible because the rule's wording is about functions stored in a map rather than getattr-based method dispatch.",
+ "prior_verdicts_assessment": "The prior fp-classifier-regression verdict is correct and cites the real getattr dispatch at _callback_context.py:351."
+}

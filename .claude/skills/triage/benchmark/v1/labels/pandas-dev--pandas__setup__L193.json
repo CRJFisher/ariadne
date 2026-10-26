@@ -1,0 +1,13 @@
+{
+ "case_id": "pandas-dev--pandas__setup__L193",
+ "gold_kind": "tp",
+ "acceptable_kinds": [
+  "tp"
+ ],
+ "gold_rule_id": null,
+ "caller_evidence": [],
+ "tp_search_summary": "Searched for AsOf instantiation/subclassing ('(AsOf)', imports of benchmarks.timeseries) and every '.setup(' call in asv_bench: only super().setup() in unrelated subclasses (stata, json, groupby, strings) and tr.setup() on TimeIntsToPydatetime/TimeResolution instances in tslibs scripts. No getattr/'setup' string-keyed dispatch in-repo.",
+ "confidence": "high",
+ "rationale": "AsOf.setup is an ASV benchmark hook invoked only by the external asv harness by naming convention; nothing in the repository instantiates AsOf or calls its setup. Ariadne's resolved setup refs point to other classes' setup methods.",
+ "prior_verdicts_assessment": "The prior tp verdict is correct."
+}

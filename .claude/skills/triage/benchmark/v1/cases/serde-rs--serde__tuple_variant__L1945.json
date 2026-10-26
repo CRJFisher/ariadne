@@ -1,0 +1,68 @@
+{
+ "case_id": "serde-rs--serde__tuple_variant__L1945",
+ "strata": "rust/stable-regression",
+ "project": "serde-rs--serde",
+ "github": "serde-rs/serde",
+ "commit": "747814f",
+ "source_run_id": "747814f-2026-07-28T16-39-37.459Z",
+ "source_entry_index": 263,
+ "language": "rust",
+ "diagnosis": "callers-not-in-registry",
+ "member_symbol": {
+  "file_path": "serde/src/private/de.rs",
+  "name": "tuple_variant",
+  "kind": "method",
+  "start_line": 1945
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "747814f-2026-07-28T16-39-37.459Z",
+   "kind": "fp-classifier-regression",
+   "rule": "rust-macro-invocation-call",
+   "root_cause": "The derive macro generates code invoking VariantAccess::tuple_variant, implemented by VariantDeserializer at serde/src/private/de.rs:1945; the call only exists inside a quote! token stream expanded in downstream derive-generated code, invisible to tree-sitter's pre-expansion .scm queries, matching t",
+   "evidence": {
+    "file": "serde_derive/src/de/tuple.rs",
+    "line": 92,
+    "why": "The derive macro generates code invoking VariantAccess::tuple_variant, implemented by VariantDeserializer at serde/src/private/de.rs:1945; the call only exists inside a quote! token stream expanded in downstream derive-generated code, invisible to tree-sitter's pre-expansion .scm queries, matching the rust-macro-invocation-call rule's described gap."
+   },
+   "turns": null,
+   "usd": null
+  }
+ ],
+ "entry": {
+  "entry_index": 263,
+  "name": "tuple_variant",
+  "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/serde-rs--serde/serde/src/private/de.rs",
+  "start_line": 1945,
+  "kind": "method",
+  "signature": "tuple_variant(self: VariantDeserializer, _len: usize, visitor: V): Result<V::Value, Self::Error>",
+  "diagnosis": "callers-not-in-registry",
+  "is_exported": false,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/serde-rs--serde/serde_derive/src/de/tuple.rs",
+     "line": 92,
+     "content": "_serde::de::VariantAccess::tuple_variant(__variant, #field_count, #visitor_expr)",
+     "captures": []
+    }
+   ],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [],
+   "ariadne_call_refs": [],
+   "diagnosis": "callers-not-in-registry",
+   "has_uncaptured_indexed_grep_hit": true
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

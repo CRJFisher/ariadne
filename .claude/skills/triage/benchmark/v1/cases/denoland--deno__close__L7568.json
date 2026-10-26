@@ -1,0 +1,1352 @@
+{
+ "case_id": "denoland--deno__close__L7568",
+ "strata": "javascript/stable-fp-novel",
+ "project": "denoland--deno",
+ "github": "denoland/deno",
+ "commit": "98f9507",
+ "source_run_id": "98f9507-2026-08-23T03-25-39.147Z",
+ "source_entry_index": 1470,
+ "language": "javascript",
+ "diagnosis": "callers-in-registry-unresolved",
+ "member_symbol": {
+  "file_path": "ext/web/06_streams.js",
+  "name": "close",
+  "kind": "method",
+  "start_line": 7568
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "98f9507-2026-08-23T03-25-39.147Z",
+   "kind": "fp-novel",
+   "rule": null,
+   "root_cause": "WritableStreamDefaultWriter.close() is reached through `stream.getWriter().close()` / `writer.close()` where `writer` is a plain untyped JS local bound to the return value of WritableStream.getWriter() (which itself returns `new WritableStreamDefaultWriter(stream)` via acquireWritableStreamDefaultWr",
+   "evidence": {
+    "file": "ext/node/polyfills/internal/streams/pipeline.js",
+    "line": 192,
+    "why": "`writer.close()` here is a genuine call into WritableStreamDefaultWriter.close() (ext/web/06_streams.js:7568) reached via the untraced return-type chain writable.getWriter() -> acquireWritableStreamDefaultWriter -> new WritableStreamDefaultWriter, none of which Ariadne's call-reference list for this entry captured."
+   },
+   "turns": null,
+   "usd": null
+  }
+ ],
+ "entry": {
+  "entry_index": 1470,
+  "name": "close",
+  "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/web/06_streams.js",
+  "start_line": 7568,
+  "kind": "method",
+  "signature": "close(err: any): unknown",
+  "diagnosis": "callers-in-registry-unresolved",
+  "is_exported": false,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/cli/js/jupyter_kernel.js",
+     "line": 356,
+     "content": "conn.close();",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/cli/js/jupyter_kernel.js",
+     "line": 437,
+     "content": "conn.close();",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/cli/js/jupyter_kernel.js",
+     "line": 459,
+     "content": "conn.close();",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/cli/js/jupyter_kernel.js",
+     "line": 514,
+     "content": "conn.close();",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/cli/lsp/documents.rs",
+     "line": 727,
+     "content": "let document = match self.close(&closed.uri) {",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/cli/lsp/documents.rs",
+     "line": 786,
+     "content": "let document = match self.close(&cell_uri) {",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/cli/lsp/documents.rs",
+     "line": 1343,
+     "content": "let document = self.documents.close(uri)?;",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/cli/rt/desktop.rs",
+     "line": 456,
+     "content": "window.close();",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/cli/rt_desktop/lib.rs",
+     "line": 288,
+     "content": "laufey::Window::from_id(window_id).close();",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/cli/rt_desktop/lib.rs",
+     "line": 821,
+     "content": "handle.close();",
+     "captures": [
+      "@reference.call"
+     ]
+    }
+   ],
+   "grep_call_sites_outside_index": [
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/cli/tsc/00_typescript.js",
+     "line": 7547,
+     "content": "watcher.close();",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/cli/tsc/00_typescript.js",
+     "line": 7838,
+     "content": "childWatcher.close();",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/cli/tsc/00_typescript.js",
+     "line": 7844,
+     "content": "watcher.targetWatcher.close();",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/cli/tsc/00_typescript.js",
+     "line": 8167,
+     "content": "watcher.close();",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/cli/tsc/00_typescript.js",
+     "line": 8175,
+     "content": "watcher.close();",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/cli/tsc/00_typescript.js",
+     "line": 21340,
+     "content": "watcher.close();",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/cli/tsc/00_typescript.js",
+     "line": 126472,
+     "content": "watcher.close();",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/cli/tsc/00_typescript.js",
+     "line": 126486,
+     "content": "existing2.watcher.close();",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/cli/tsc/00_typescript.js",
+     "line": 126495,
+     "content": "if (watcher.projects.delete(projectPath)) watcher.close();",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/cli/tsc/00_typescript.js",
+     "line": 126547,
+     "content": "existingWatcher.watcher.close();",
+     "captures": []
+    }
+   ],
+   "reference_sites": [],
+   "ariadne_call_refs": [
+    {
+     "caller_function": "send",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/cli/js/jupyter_kernel.js",
+     "call_line": 459,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "identifier",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "receiver_type_unknown",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/cli/js/jupyter_kernel.js:458:7:460:22"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "change_notebook",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/cli/lsp/documents.rs",
+     "call_line": 727,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/cli/lsp/documents.rs:656:3:669:3:close"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "close_notebook",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/cli/lsp/documents.rs",
+     "call_line": 786,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/cli/lsp/documents.rs:656:3:669:3:close"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "close_document",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/cli/lsp/documents.rs",
+     "call_line": 1343,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/cli/lsp/documents.rs:656:3:669:3:close"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "close_window",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/cli/rt_desktop/lib.rs",
+     "call_line": 288,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/cli/rt_desktop/lib.rs:285:18:289:3"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "close_notification",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/cli/rt_desktop/lib.rs",
+     "call_line": 821,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/cli/rt_desktop/lib.rs:818:5:822:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "compile_desktop",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/cli/tools/desktop.rs",
+     "call_line": 546,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/cli/tools/desktop.rs:545:3:547:3"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "lint_stdin",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/cli/tools/lint/mod.rs",
+     "call_line": 627,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "receiver_type_unknown",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/cli/tools/lint/mod.rs:589:14:629:1"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "finish",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/cli/tools/lint/mod.rs",
+     "call_line": 500,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "member_type_unknown",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/cli/tools/lint/mod.rs:256:1:266:1:WorkspaceLinter"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/libs/core/io/resource_table.rs",
+     "call_line": 161,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "receiver_type_unknown",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/libs/core/io/resource_table.rs:161:12:161:38"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "op_close",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/libs/core/ops_builtin.rs",
+     "call_line": 210,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "receiver_type_unknown",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/libs/core/ops_builtin.rs:205:16:212:1"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "op_try_close",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/libs/core/ops_builtin.rs",
+     "call_line": 219,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/libs/core/ops_builtin.rs:218:3:220:3"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "op_pipe",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/libs/core/ops_builtin.rs",
+     "call_line": 526,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/libs/core/ops_builtin.rs:523:3:527:3"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "destroy",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/libs/core/runtime/jsrealm.rs",
+     "call_line": 325,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/libs/core/runtime/jsrealm.rs:325:7:325:31"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "drop",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/libs/core/uv_compat/tests.rs",
+     "call_line": 2002,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/libs/core/uv_compat/tests.rs:2002:5:2002:34"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "stop_tty",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/libs/core/uv_compat.rs",
+     "call_line": 777,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/libs/core/uv_compat.rs:776:9:779:9"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/libs/core_testing/unit/stats_test.ts",
+     "call_line": 53,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "member_expression",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/libs/core_testing/unit/stats_test.ts:45:14:59:1"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/libs/core_testing/unit/stats_test.ts",
+     "call_line": 54,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "member_expression",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/libs/core_testing/unit/stats_test.ts:45:14:59:1"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "testStatsResources",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/libs/core_testing/unit/stats_test.ts",
+     "call_line": 53,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "member_expression",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/libs/core_testing/unit/stats_test.ts:45:14:59:1"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "testStatsResources",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/libs/core_testing/unit/stats_test.ts",
+     "call_line": 54,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "member_expression",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/libs/core_testing/unit/stats_test.ts:45:14:59:1"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "close_going_away",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/libs/inspector_server/lib.rs",
+     "call_line": 829,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/libs/inspector_server/lib.rs:825:26:831:1"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "readFirstPartOfFile",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/tools/copyright_checker.js",
+     "call_line": 19,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "identifier",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "receiver_type_unknown",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/tools/copyright_checker.js:18:5:20:3"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/cron/01_cron.ts",
+     "call_line": 159,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "identifier",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/cron/01_cron.ts:158:7:160:7"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "close",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/cron/lib.rs",
+     "call_line": 53,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "member_type_unknown",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/cron/lib.rs:43:1:45:1:CronResource"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/fetch/22_body.js",
+     "call_line": 137,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "identifier",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "receiver_type_unknown",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/fetch/22_body.js:135:11:138:11"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "close",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/fetch/22_http_client.js",
+     "call_line": 118,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "identifier",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "method:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/fetch/22_http_client.js:117:8:119:3"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "mainFetch",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/fetch/26_fetch.js",
+     "call_line": 658,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "identifier",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/fetch/26_fetch.js:657:7:670:10"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "mainFetch",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/fetch/26_fetch.js",
+     "call_line": 672,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "identifier",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/fetch/26_fetch.js:671:7:680:10"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "mainFetch",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/fetch/26_fetch.js",
+     "call_line": 687,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "identifier",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/fetch/26_fetch.js:686:3:726:3"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "mainFetch",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/fetch/26_fetch.js",
+     "call_line": 698,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "identifier",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/fetch/26_fetch.js:696:5:725:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "handleWasmStreaming",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/fetch/26_fetch.js",
+     "call_line": 1107,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "identifier",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/fetch/26_fetch.js:1041:5:1108:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "drop",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/fetch/lib.rs",
+     "call_line": 428,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "method_not_on_type",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/fetch/lib.rs:365:1:368:2:ResourceToBodyAdapter"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "close",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/ffi/00_ffi.js",
+     "call_line": 564,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "identifier",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "method:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/ffi/00_ffi.js:563:8:565:3"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "op_ffi_unsafe_callback_close",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/ffi/callback.rs",
+     "call_line": 679,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "receiver_type_unknown",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/ffi/callback.rs:673:3:680:3"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "close",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/fs/30_fs.js",
+     "call_line": 708,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "identifier",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "method:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/fs/30_fs.js:707:8:709:3"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "closeInnerRequestImmediately",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/http/00_serve.ts",
+     "call_line": 505,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "identifier",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "receiver_type_unknown",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/http/00_serve.ts:504:38:506:1"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": true,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "closeInnerRequestForNative",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/http/00_serve.ts",
+     "call_line": 509,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "identifier",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "receiver_type_unknown",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/http/00_serve.ts:508:36:510:1"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": true,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "fastSyncResponseOrStream",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/http/00_serve.ts",
+     "call_line": 588,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/http/00_serve.ts:188:3:188:7:close"
+     ],
+     "receiver_kind": "identifier",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": true,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "fastSyncResponseOrStream",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/http/00_serve.ts",
+     "call_line": 607,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/http/00_serve.ts:188:3:188:7:close"
+     ],
+     "receiver_kind": "identifier",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": true,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "fastSyncResponseOrStream",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/http/00_serve.ts",
+     "call_line": 612,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/http/00_serve.ts:188:3:188:7:close"
+     ],
+     "receiver_kind": "identifier",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": true,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "fastSyncResponseOrStream",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/http/00_serve.ts",
+     "call_line": 637,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/http/00_serve.ts:188:3:188:7:close"
+     ],
+     "receiver_kind": "identifier",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": true,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "fastSyncResponseOrStream",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/http/00_serve.ts",
+     "call_line": 652,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/http/00_serve.ts:188:3:188:7:close"
+     ],
+     "receiver_kind": "identifier",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": true,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "fastSyncResponseOrStream",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/http/00_serve.ts",
+     "call_line": 668,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/http/00_serve.ts:188:3:188:7:close"
+     ],
+     "receiver_kind": "identifier",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": true,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/http/00_serve.ts",
+     "call_line": 690,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/http/00_serve.ts:188:3:188:7:close"
+     ],
+     "receiver_kind": "identifier",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": true,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/http/00_serve.ts",
+     "call_line": 700,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/http/00_serve.ts:188:3:188:7:close"
+     ],
+     "receiver_kind": "identifier",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": true,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "mapped",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/http/00_serve.ts",
+     "call_line": 813,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "identifier",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "receiver_type_unknown",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/http/00_serve.ts:808:7:815:7"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "mapped",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/http/00_serve.ts",
+     "call_line": 821,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "identifier",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "receiver_type_unknown",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/http/00_serve.ts:819:5:824:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": true,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "mapped",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/http/00_serve.ts",
+     "call_line": 836,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "identifier",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "receiver_type_unknown",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/http/00_serve.ts:830:5:838:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": true,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "finishOrReturnNative",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/http/00_serve.ts",
+     "call_line": 964,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "identifier",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "receiver_type_unknown",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/http/00_serve.ts:963:5:967:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": true,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "finishOrReturnNative",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/http/00_serve.ts",
+     "call_line": 975,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "identifier",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "receiver_type_unknown",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/denoland--deno/ext/http/00_serve.ts:970:7:977:7"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    }
+   ],
+   "diagnosis": "callers-in-registry-unresolved",
+   "has_uncaptured_indexed_grep_hit": true
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

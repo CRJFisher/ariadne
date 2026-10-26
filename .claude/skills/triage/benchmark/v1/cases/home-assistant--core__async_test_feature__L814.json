@@ -1,0 +1,68 @@
+{
+ "case_id": "home-assistant--core__async_test_feature__L814",
+ "strata": "diagnosis/callers-outside-indexed-corpus",
+ "project": "home-assistant--core",
+ "github": "home-assistant/core",
+ "commit": "59618df",
+ "source_run_id": "59618df-2026-08-23T05-16-58.433Z",
+ "source_entry_index": 380,
+ "language": "python",
+ "diagnosis": "callers-outside-indexed-corpus",
+ "member_symbol": {
+  "file_path": "homeassistant/helpers/intent.py",
+  "name": "async_test_feature",
+  "kind": "function",
+  "start_line": 814
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "59618df-2026-08-23T05-16-58.433Z",
+   "kind": "fp-novel",
+   "rule": null,
+   "root_cause": "The project config for home-assistant--core excludes the entire `homeassistant/components` directory from indexing, so the real call site `intent.async_test_feature(state, HumidifierEntityFeature.MODES, \"modes\")` in homeassistant/components/humidifier/intent.py:117 was never indexed and no call edge",
+   "evidence": {
+    "file": "/Users/chuck/.ariadne/triage-entrypoints/repos/home-assistant--core/homeassistant/helpers/intent.py",
+    "line": 814,
+    "why": "The only textual caller is in homeassistant/components/humidifier/intent.py:117, which sits inside homeassistant/components, a directory the project config excludes wholesale from indexing."
+   },
+   "turns": null,
+   "usd": null
+  }
+ ],
+ "entry": {
+  "entry_index": 380,
+  "name": "async_test_feature",
+  "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/home-assistant--core/homeassistant/helpers/intent.py",
+  "start_line": 814,
+  "kind": "function",
+  "signature": "async_test_feature(state: State, feature: int, feature_name: str): None",
+  "diagnosis": "callers-outside-indexed-corpus",
+  "is_exported": true,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [],
+   "grep_call_sites_outside_index": [
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/home-assistant--core/homeassistant/components/humidifier/intent.py",
+     "line": 117,
+     "content": "intent.async_test_feature(state, HumidifierEntityFeature.MODES, \"modes\")",
+     "captures": []
+    }
+   ],
+   "reference_sites": [],
+   "ariadne_call_refs": [],
+   "diagnosis": "callers-outside-indexed-corpus",
+   "has_uncaptured_indexed_grep_hit": false
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

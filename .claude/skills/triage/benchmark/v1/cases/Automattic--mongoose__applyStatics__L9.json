@@ -1,0 +1,145 @@
+{
+ "case_id": "Automattic--mongoose__applyStatics__L9",
+ "strata": "javascript/stable-fp-novel",
+ "project": "Automattic--mongoose",
+ "github": "Automattic/mongoose",
+ "commit": "3e212ce",
+ "source_run_id": "3e212ce-2026-10-18T19-22-18.191Z",
+ "source_entry_index": 146,
+ "language": "javascript",
+ "diagnosis": "callers-in-registry-wrong-target",
+ "member_symbol": {
+  "file_path": "lib/helpers/model/applyStatics.js",
+  "name": "applyStatics",
+  "kind": "function",
+  "start_line": 9
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "3e212ce-2026-08-23T09-04-26.322Z",
+   "kind": "fp-novel",
+   "rule": null,
+   "root_cause": "Ariadne resolves calls to `applyStatics(...)` in model.js to the local `const applyStatics = require('./helpers/model/applyStatics')` variable binding itself rather than tracing the require() through to the `module.exports = function applyStatics(...)` definition it re-exports, so the real call grap",
+   "evidence": {
+    "file": "/Users/chuck/.ariadne/triage-entrypoints/repos/Automattic--mongoose/lib/model.js",
+    "line": 5068,
+    "why": "Both call sites (1044 and 5068) invoke the identifier imported via require() at line 37, which is bound to the module.exports function defined in applyStatics.js:9, but Ariadne's resolution terminates at the require variable instead of the actual function definition."
+   },
+   "turns": null,
+   "usd": null
+  },
+  {
+   "run_id": "3e212ce-2026-10-12T22-16-23.213Z",
+   "kind": "fp-novel",
+   "rule": null,
+   "root_cause": "applyStatics.js exports its function via `module.exports = function applyStatics(...)`, and model.js imports it with `const applyStatics = require('./helpers/model/applyStatics')` at line 37; the two call sites in model.js (lines 1044, 5068) invoke this binding, but Ariadne's resolver stops at the l",
+   "evidence": {
+    "file": "/Users/chuck/.ariadne/triage-entrypoints/repos/Automattic--mongoose/lib/model.js",
+    "line": 1044,
+    "why": "This call site invokes the require-bound applyStatics variable, which is a direct alias for the exported function at applyStatics.js:9, but Ariadne resolved the call to the local variable declaration at model.js:37 instead of the underlying function definition."
+   },
+   "turns": 6,
+   "usd": 0.0326
+  },
+  {
+   "run_id": "3e212ce-2026-10-18T19-22-18.191Z",
+   "kind": "fp-novel",
+   "rule": null,
+   "root_cause": "Ariadne's resolver halts at require/module.exports bindings and does not follow the chain to link imported variables back to their exported function definitions; the variable at lib/model.js:37 holds a direct reference to the entry function, and the calls at lines 1044 and 5068 do reach it.",
+   "evidence": {
+    "file": "/Users/chuck/.ariadne/triage-entrypoints/repos/Automattic--mongoose/lib/helpers/model/applyStatics.js",
+    "line": 9,
+    "why": "Function is exported via module.exports and imported at lib/model.js:37, then called at lines 1044 and 5068."
+   },
+   "turns": 7,
+   "usd": 0.0309
+  }
+ ],
+ "entry": {
+  "entry_index": 146,
+  "name": "applyStatics",
+  "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/Automattic--mongoose/lib/helpers/model/applyStatics.js",
+  "start_line": 9,
+  "kind": "function",
+  "signature": "applyStatics(model: any, schema: any): unknown",
+  "diagnosis": "callers-in-registry-wrong-target",
+  "is_exported": false,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/Automattic--mongoose/lib/model.js",
+     "line": 1044,
+     "content": "applyStatics(d, schema);",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/Automattic--mongoose/lib/model.js",
+     "line": 5068,
+     "content": "applyStatics(model, schema);",
+     "captures": [
+      "@reference.call"
+     ]
+    }
+   ],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [],
+   "ariadne_call_refs": [
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/Automattic--mongoose/lib/model.js",
+     "call_line": 1044,
+     "call_type": "function",
+     "resolution_count": 1,
+     "resolved_to": [
+      "variable:/Users/chuck/.ariadne/triage-entrypoints/repos/Automattic--mongoose/lib/model.js:37:7:37:18:applyStatics"
+     ],
+     "receiver_kind": "none",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "compile",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/Automattic--mongoose/lib/model.js",
+     "call_line": 5068,
+     "call_type": "function",
+     "resolution_count": 1,
+     "resolved_to": [
+      "variable:/Users/chuck/.ariadne/triage-entrypoints/repos/Automattic--mongoose/lib/model.js:37:7:37:18:applyStatics"
+     ],
+     "receiver_kind": "none",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    }
+   ],
+   "diagnosis": "callers-in-registry-wrong-target",
+   "has_uncaptured_indexed_grep_hit": false
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

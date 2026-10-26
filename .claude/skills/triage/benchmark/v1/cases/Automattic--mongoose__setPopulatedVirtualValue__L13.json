@@ -1,0 +1,117 @@
+{
+ "case_id": "Automattic--mongoose__setPopulatedVirtualValue__L13",
+ "strata": "javascript/stable-fp-novel",
+ "project": "Automattic--mongoose",
+ "github": "Automattic/mongoose",
+ "commit": "3e212ce",
+ "source_run_id": "3e212ce-2026-10-18T19-22-18.191Z",
+ "source_entry_index": 103,
+ "language": "javascript",
+ "diagnosis": "callers-in-registry-wrong-target",
+ "member_symbol": {
+  "file_path": "lib/helpers/populate/setPopulatedVirtualValue.js",
+  "name": "setPopulatedVirtualValue",
+  "kind": "function",
+  "start_line": 13
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "3e212ce-2026-08-23T09-04-26.322Z",
+   "kind": "fp-novel",
+   "rule": null,
+   "root_cause": "The call site is a plain, statically-named function call (`setPopulatedVirtualValue(this.$$populatedVirtuals, name, v, options)`) but it lives inside an anonymous callback passed to a chained method call (`virtual.set(function(v) {...})`), itself nested inside an `if` block inside `Schema.prototype.",
+   "evidence": {
+    "file": "lib/schema.js",
+    "line": 2652,
+    "why": "schema.js require()s setPopulatedVirtualValue at line 25 and calls it directly by name (not via any dynamic dispatch) at line 2652 inside the callback passed to virtual.set(), a real reachable caller Ariadne's resolver missed despite the file being indexed (has_uncaptured_indexed_grep_hit=true, ariadne_call_refs empty)."
+   },
+   "turns": null,
+   "usd": null
+  },
+  {
+   "run_id": "3e212ce-2026-10-12T22-16-23.213Z",
+   "kind": "fp-novel",
+   "rule": null,
+   "root_cause": "The call at lib/schema.js:2652 invokes the `setPopulatedVirtualValue` local binding created by `const setPopulatedVirtualValue = require('./helpers/populate/setPopulatedVirtualValue')` at schema.js:25, which is exactly `module.exports = function setPopulatedVirtualValue(...) {...}` from the target f",
+   "evidence": {
+    "file": "/Users/chuck/.ariadne/triage-entrypoints/repos/Automattic--mongoose/lib/schema.js",
+    "line": 2652,
+    "why": "This is the sole call site, and it genuinely invokes the entry's exported function via the require-bound local variable, but Ariadne resolved the call to that variable declaration (schema.js:25) rather than tracing through to the function definition in setPopulatedVirtualValue.js."
+   },
+   "turns": 5,
+   "usd": 0.0276
+  },
+  {
+   "run_id": "3e212ce-2026-10-18T19-22-18.191Z",
+   "kind": "fp-novel",
+   "rule": null,
+   "root_cause": "Ariadne's module import resolver failed to trace the require() call from the import variable in lib/schema.js:25 to the actual function export in lib/helpers/populate/setPopulatedVirtualValue.js:13, stopping at the import statement instead of following it to the function definition.",
+   "evidence": {
+    "file": "/Users/chuck/.ariadne/triage-entrypoints/repos/Automattic--mongoose/lib/schema.js",
+    "line": 2652,
+    "why": "Real caller that invokes the imported setPopulatedVirtualValue function."
+   },
+   "turns": 6,
+   "usd": 0.0368
+  }
+ ],
+ "entry": {
+  "entry_index": 103,
+  "name": "setPopulatedVirtualValue",
+  "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/Automattic--mongoose/lib/helpers/populate/setPopulatedVirtualValue.js",
+  "start_line": 13,
+  "kind": "function",
+  "signature": "setPopulatedVirtualValue(populatedVirtuals: any, name: any, v: any, options: any): unknown",
+  "diagnosis": "callers-in-registry-wrong-target",
+  "is_exported": false,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/Automattic--mongoose/lib/schema.js",
+     "line": 2652,
+     "content": "return setPopulatedVirtualValue(",
+     "captures": [
+      "@reference.call"
+     ]
+    }
+   ],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [],
+   "ariadne_call_refs": [
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/Automattic--mongoose/lib/schema.js",
+     "call_line": 2652,
+     "call_type": "function",
+     "resolution_count": 1,
+     "resolved_to": [
+      "variable:/Users/chuck/.ariadne/triage-entrypoints/repos/Automattic--mongoose/lib/schema.js:25:7:25:30:setPopulatedVirtualValue"
+     ],
+     "receiver_kind": "none",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    }
+   ],
+   "diagnosis": "callers-in-registry-wrong-target",
+   "has_uncaptured_indexed_grep_hit": false
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

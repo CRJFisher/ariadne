@@ -35,3 +35,7 @@ This skill's internal flow is a top-down four-phase pipeline. Read-only stores s
 ## Key Modules
 
 See [SKILL.md → Architecture: Key Modules](SKILL.md#architecture-key-modules).
+
+## Benchmark
+
+The investigator's verdict quality and cost are measured on a frozen suite of 63 gold-labelled cases in [benchmark/v1/](benchmark/v1/README.md). `scripts/run_benchmark.ts` replays the suite through the investigator as the pipeline dispatches it, `scripts/score_benchmark.ts` grades a run, and `scripts/serve_benchmark_review.ts` serves the page where a human casts the deciding vote between the models' verdicts. The code lives in `src/benchmark/`.

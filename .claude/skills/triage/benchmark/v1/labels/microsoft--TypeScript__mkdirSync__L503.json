@@ -1,0 +1,13 @@
+{
+ "case_id": "microsoft--TypeScript__mkdirSync__L503",
+ "gold_kind": "tp",
+ "acceptable_kinds": [
+  "tp"
+ ],
+ "gold_rule_id": null,
+ "caller_evidence": [],
+ "tp_search_summary": "Grepped every '.mkdirSync' in the repo outside node_modules/baselines: scripts/build/tests.mjs:78, src/harness/harnessIO.ts:106, src/compiler/sys.ts:1550/1702, src/compiler/tracing.ts:79. All receivers are Node's fs module (harnessIO 'import fs from \"fs\"', sys.ts '_fs: typeof import(\"fs\") = require(\"fs\")', tracing fs import). No this.mkdirSync inside vfsUtil, no string-keyed 'mkdirSync' access, and no FileSystem instance passed where mkdirSync is invoked.",
+ "confidence": "high",
+ "rationale": "Every textual mkdirSync call site targets Node's native fs, not vfs.FileSystem.mkdirSync; the vfs method exists only to mirror the fs API and nothing in-repo calls it (other vfs code uses mkdirpSync/_mkdir).",
+ "prior_verdicts_assessment": "The prior tp verdict is correct; it rightly identified all four grep hits as native fs calls."
+}

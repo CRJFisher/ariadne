@@ -1,0 +1,30 @@
+{
+ "case_id": "scikit-learn--scikit-learn____call____L444",
+ "gold_kind": "fp-novel",
+ "acceptable_kinds": [
+  "fp-novel",
+  "fp-classifier-regression"
+ ],
+ "gold_rule_id": "dynamic-property-keyed-callback",
+ "caller_evidence": [
+  {
+   "file": "sklearn/externals/_arff.py",
+   "line": 479,
+   "snippet": "values = [None if value is None else conversor(value)"
+  },
+  {
+   "file": "sklearn/externals/_arff.py",
+   "line": 539,
+   "snippet": "values = [value if value is None else conversors[key](value)"
+  },
+  {
+   "file": "sklearn/externals/_arff.py",
+   "line": 599,
+   "snippet": "yield {key: None if value is None else conversors[key](value)"
+  }
+ ],
+ "tp_search_summary": null,
+ "confidence": "medium",
+ "rationale": "NominalConversor instances are appended to self._conversors (lines 836, 844) and invoked through the callable-instance protocol. The dense path (_decode_values, line 479) calls conversor(value) on each element of zip(conversors, values), and the COO/LOD paths (539, 599) call conversors[key](value). sklearn/datasets/_arff_parser.py loads with DENSE_GEN and encode_nominal=False for pandas output, so the dense iterated call is the one exercised in-repo. The root gap is callable-instance dispatch through an untyped collection element. Only the keyed sites resemble dynamic-property-keyed-callback (which describes stored functions, not __call__ on instances), so fp-novel is gold and the regression is an arguable alternative.",
+ "prior_verdicts_assessment": "The prior fp-classifier-regression verdict correctly finds real callers at 539/599 but overlooks the unkeyed dense-path call at 479, which is the one used in-repo. It also stretches a stored-function rule to cover callable-instance __call__ dispatch."
+}

@@ -1,0 +1,61 @@
+{
+ "case_id": "fastapi--fastapi__redirect_pydantic__L8",
+ "strata": "python/stable-fp-novel",
+ "project": "fastapi--fastapi",
+ "github": "fastapi/fastapi",
+ "commit": "c3f316b",
+ "source_run_id": "c3f316b-2026-08-22T18-38-07.046Z",
+ "source_entry_index": 277,
+ "language": "python",
+ "diagnosis": "no-textual-callers",
+ "member_symbol": {
+  "file_path": "docs_src/custom_response/tutorial006c_py310.py",
+  "name": "redirect_pydantic",
+  "kind": "function",
+  "start_line": 8
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "c3f316b-2026-08-22T18-38-07.046Z",
+   "kind": "fp-novel",
+   "rule": null,
+   "root_cause": "The function is a FastAPI path operation registered via `@app.get(\"/pydantic\", ...)`; it is invoked by the Starlette/FastAPI ASGI router when a matching request arrives (confirmed by tests/test_tutorial/test_custom_response/test_tutorial006c.py calling `client.get(\"/pydantic\")`), not by any Python c",
+   "evidence": {
+    "file": "docs_src/custom_response/tutorial006c_py310.py",
+    "line": 8,
+    "why": "tests/test_tutorial/test_custom_response/test_tutorial006c.py imports this module's `app` and calls `client.get(\"/pydantic\")` on a TestClient, which the FastAPI/Starlette router dispatches to `redirect_pydantic` at runtime with no textual call site."
+   },
+   "turns": null,
+   "usd": null
+  }
+ ],
+ "entry": {
+  "entry_index": 277,
+  "name": "redirect_pydantic",
+  "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/fastapi--fastapi/docs_src/custom_response/tutorial006c_py310.py",
+  "start_line": 8,
+  "kind": "function",
+  "signature": "redirect_pydantic(): unknown",
+  "diagnosis": "no-textual-callers",
+  "is_exported": true,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [],
+   "ariadne_call_refs": [],
+   "diagnosis": "no-textual-callers",
+   "has_uncaptured_indexed_grep_hit": false
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

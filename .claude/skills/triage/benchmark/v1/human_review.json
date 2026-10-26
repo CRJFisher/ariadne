@@ -1,0 +1,47 @@
+{
+  "label_set": "benchmark/v1",
+  "updated_at": "2026-10-25T22:16:44.343Z",
+  "reviews": {
+    "lodash--lodash__throttled__L822": {
+      "decision": "agree",
+      "chosen": {
+        "kind": "tp",
+        "rule_id": null
+      },
+      "agreed_with": [
+        "opus-label",
+        "claude-haiku-5-5"
+      ],
+      "also_acceptable": [],
+      "walkthrough": {
+        "real_caller": null,
+        "reaches_definition": null,
+        "rule_covers": null
+      },
+      "feedback": null,
+      "notes": "",
+      "reviewed_at": "2026-10-25T22:14:41.093Z"
+    },
+    "angular--angular__any__L355": {
+      "decision": "agree",
+      "chosen": {
+        "kind": "fp-novel",
+        "rule_id": null
+      },
+      "agreed_with": [
+        "opus-label",
+        "claude-haiku-5-5",
+        "claude-haiku-4-5"
+      ],
+      "also_acceptable": [],
+      "walkthrough": {
+        "real_caller": null,
+        "reaches_definition": null,
+        "rule_covers": null
+      },
+      "feedback": null,
+      "notes": "",
+      "reviewed_at": "2026-10-25T22:16:44.341Z"
+    }
+  }
+}

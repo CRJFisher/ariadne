@@ -1,0 +1,721 @@
+[
+ {
+  "case_id": "sveltejs--svelte__sineOut__L346",
+  "strata": "javascript/stable-tp",
+  "project": "sveltejs--svelte",
+  "language": "javascript",
+  "diagnosis": "no-textual-callers",
+  "prior_kinds": [
+   "tp"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "webpack--webpack__moveModule__L301",
+  "strata": "javascript/stable-tp",
+  "project": "webpack--webpack",
+  "language": "javascript",
+  "diagnosis": "no-textual-callers",
+  "prior_kinds": [
+   "tp"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "sveltejs--svelte__backIn__L34",
+  "strata": "javascript/stable-tp",
+  "project": "sveltejs--svelte",
+  "language": "javascript",
+  "diagnosis": "no-textual-callers",
+  "prior_kinds": [
+   "tp"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "Automattic--mongoose__applyStatics__L9",
+  "strata": "javascript/stable-fp-novel",
+  "project": "Automattic--mongoose",
+  "language": "javascript",
+  "diagnosis": "callers-in-registry-wrong-target",
+  "prior_kinds": [
+   "fp-novel",
+   "fp-novel",
+   "fp-novel"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "Leaflet--Leaflet__pointToLatLng__L40",
+  "strata": "javascript/stable-fp-novel",
+  "project": "Leaflet--Leaflet",
+  "language": "javascript",
+  "diagnosis": "callers-in-registry-unresolved",
+  "prior_kinds": [
+   "fp-novel",
+   "fp-novel",
+   "fp-novel"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "Automattic--mongoose__setPopulatedVirtualValue__L13",
+  "strata": "javascript/stable-fp-novel",
+  "project": "Automattic--mongoose",
+  "language": "javascript",
+  "diagnosis": "callers-in-registry-wrong-target",
+  "prior_kinds": [
+   "fp-novel",
+   "fp-novel",
+   "fp-novel"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "denoland--deno__close__L7568",
+  "strata": "javascript/stable-fp-novel",
+  "project": "denoland--deno",
+  "language": "javascript",
+  "diagnosis": "callers-in-registry-unresolved",
+  "prior_kinds": [
+   "fp-novel"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "nodejs--node___kPull___L1321",
+  "strata": "javascript/stable-regression",
+  "project": "nodejs--node",
+  "language": "javascript",
+  "diagnosis": "no-textual-callers",
+  "prior_kinds": [
+   "fp-classifier-regression",
+   "fp-classifier-regression",
+   "fp-classifier-regression"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "nodejs--node___inspect.custom___L392",
+  "strata": "javascript/stable-regression",
+  "project": "nodejs--node",
+  "language": "javascript",
+  "diagnosis": "no-textual-callers",
+  "prior_kinds": [
+   "fp-classifier-regression"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "mochajs--mocha__constructor__L85",
+  "strata": "javascript/contested",
+  "project": "mochajs--mocha",
+  "language": "javascript",
+  "diagnosis": "callers-not-in-registry",
+  "prior_kinds": [
+   "fp-classifier-regression",
+   "fp-novel"
+  ],
+  "contested": true
+ },
+ {
+  "case_id": "eslint--eslint__enter__L1162",
+  "strata": "javascript/contested",
+  "project": "eslint--eslint",
+  "language": "javascript",
+  "diagnosis": "callers-not-in-registry",
+  "prior_kinds": [
+   "fp-novel",
+   "fp-classifier-regression",
+   "fp-novel"
+  ],
+  "contested": true
+ },
+ {
+  "case_id": "eslint--eslint__checkTrailingSpaces__L145",
+  "strata": "javascript/contested",
+  "project": "eslint--eslint",
+  "language": "javascript",
+  "diagnosis": "no-textual-callers",
+  "prior_kinds": [
+   "fp-classifier-regression",
+   "fp-novel",
+   "fp-classifier-regression"
+  ],
+  "contested": true
+ },
+ {
+  "case_id": "webpack--webpack__serialize__L366",
+  "strata": "javascript/cost-tail",
+  "project": "webpack--webpack",
+  "language": "javascript",
+  "diagnosis": "callers-in-registry-unresolved",
+  "prior_kinds": [
+   "fp-novel",
+   "fp-novel"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "microsoft--TypeScript__mkdirSync__L503",
+  "strata": "typescript/stable-tp",
+  "project": "microsoft--TypeScript",
+  "language": "typescript",
+  "diagnosis": "callers-in-registry-unresolved",
+  "prior_kinds": [
+   "tp"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "tauri-apps--tauri__setIcon__L298",
+  "strata": "typescript/stable-tp",
+  "project": "tauri-apps--tauri",
+  "language": "typescript",
+  "diagnosis": "no-textual-callers",
+  "prior_kinds": [
+   "tp"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "babel--babel__assertTupleTypeAnnotation__L810",
+  "strata": "typescript/stable-tp",
+  "project": "babel--babel",
+  "language": "typescript",
+  "diagnosis": "no-textual-callers",
+  "prior_kinds": [
+   "tp"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "prisma--prisma__deleteCredentials__L57",
+  "strata": "typescript/stable-fp-novel",
+  "project": "prisma--prisma",
+  "language": "typescript",
+  "diagnosis": "callers-in-registry-unresolved",
+  "prior_kinds": [
+   "fp-novel"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "typeorm--typeorm__createForeignKeys__L1553",
+  "strata": "typescript/stable-fp-novel",
+  "project": "typeorm--typeorm",
+  "language": "typescript",
+  "diagnosis": "callers-in-registry-wrong-target",
+  "prior_kinds": [
+   "fp-novel"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "prisma--prisma__addSchemaArgs__L30",
+  "strata": "typescript/stable-fp-novel",
+  "project": "prisma--prisma",
+  "language": "typescript",
+  "diagnosis": "callers-in-registry-unresolved",
+  "prior_kinds": [
+   "fp-novel"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "typeorm--typeorm__addColumns__L818",
+  "strata": "typescript/stable-fp-novel",
+  "project": "typeorm--typeorm",
+  "language": "typescript",
+  "diagnosis": "callers-in-registry-wrong-target",
+  "prior_kinds": [
+   "fp-novel"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "nestjs--nest__greeting__L27",
+  "strata": "typescript/stable-regression",
+  "project": "nestjs--nest",
+  "language": "typescript",
+  "diagnosis": "callers-in-registry-wrong-target",
+  "prior_kinds": [
+   "fp-classifier-regression"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "ReactiveX--rxjs__constructor__L16",
+  "strata": "typescript/stable-regression",
+  "project": "ReactiveX--rxjs",
+  "language": "typescript",
+  "diagnosis": "no-textual-callers",
+  "prior_kinds": [
+   "fp-classifier-regression"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "angular--angular__findMatchingDirectivesAndPipes__L122",
+  "strata": "typescript/contested",
+  "project": "angular--angular",
+  "language": "typescript",
+  "diagnosis": "no-textual-callers",
+  "prior_kinds": [
+   "tp",
+   "fp-novel"
+  ],
+  "contested": true
+ },
+ {
+  "case_id": "angular--angular__wrapHost__L92",
+  "strata": "typescript/contested",
+  "project": "angular--angular",
+  "language": "typescript",
+  "diagnosis": "callers-not-in-registry",
+  "prior_kinds": [
+   "tp",
+   "fp-novel"
+  ],
+  "contested": true
+ },
+ {
+  "case_id": "angular--angular__any__L355",
+  "strata": "typescript/contested",
+  "project": "angular--angular",
+  "language": "typescript",
+  "diagnosis": "callers-not-in-registry",
+  "prior_kinds": [
+   "tp",
+   "fp-novel"
+  ],
+  "contested": true
+ },
+ {
+  "case_id": "babel--babel__DeclareFunction__L191",
+  "strata": "typescript/cost-tail",
+  "project": "babel--babel",
+  "language": "typescript",
+  "diagnosis": "references-without-call-syntax",
+  "prior_kinds": [
+   "fp-novel",
+   "fp-novel",
+   "tp"
+  ],
+  "contested": true
+ },
+ {
+  "case_id": "sqlalchemy--sqlalchemy___get_existing_condition__L396",
+  "strata": "python/stable-tp",
+  "project": "sqlalchemy--sqlalchemy",
+  "language": "python",
+  "diagnosis": "no-textual-callers",
+  "prior_kinds": [
+   "tp"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "pydantic--pydantic____init____L66",
+  "strata": "python/stable-tp",
+  "project": "pydantic--pydantic",
+  "language": "python",
+  "diagnosis": "callers-in-registry-unresolved",
+  "prior_kinds": [
+   "tp"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "pandas-dev--pandas__setup__L193",
+  "strata": "python/stable-tp",
+  "project": "pandas-dev--pandas",
+  "language": "python",
+  "diagnosis": "callers-in-registry-wrong-target",
+  "prior_kinds": [
+   "tp"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "django--django____init____L348",
+  "strata": "python/stable-fp-novel",
+  "project": "django--django",
+  "language": "python",
+  "diagnosis": "no-textual-callers",
+  "prior_kinds": [
+   "fp-novel"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "scikit-learn--scikit-learn__make_scorers__L91",
+  "strata": "python/stable-fp-novel",
+  "project": "scikit-learn--scikit-learn",
+  "language": "python",
+  "diagnosis": "callers-in-registry-unresolved",
+  "prior_kinds": [
+   "fp-novel"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "fastapi--fastapi__redirect_pydantic__L8",
+  "strata": "python/stable-fp-novel",
+  "project": "fastapi--fastapi",
+  "language": "python",
+  "diagnosis": "no-textual-callers",
+  "prior_kinds": [
+   "fp-novel"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "ansible--ansible__help_diff__L448",
+  "strata": "python/stable-fp-novel",
+  "project": "ansible--ansible",
+  "language": "python",
+  "diagnosis": "no-textual-callers",
+  "prior_kinds": [
+   "fp-novel"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "celery--celery__icyan__L154",
+  "strata": "python/stable-regression",
+  "project": "celery--celery",
+  "language": "python",
+  "diagnosis": "no-textual-callers",
+  "prior_kinds": [
+   "fp-classifier-regression"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "home-assistant--core__state_changed_helper__L118",
+  "strata": "python/stable-regression",
+  "project": "home-assistant--core",
+  "language": "python",
+  "diagnosis": "no-textual-callers",
+  "prior_kinds": [
+   "fp-classifier-regression"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "tokio-rs--tokio__new_framed__L1034",
+  "strata": "rust/stable-tp",
+  "project": "tokio-rs--tokio",
+  "language": "rust",
+  "diagnosis": "callers-not-in-registry",
+  "prior_kinds": [
+   "tp"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "tokio-rs--axum__size_hint__L76",
+  "strata": "rust/stable-tp",
+  "project": "tokio-rs--axum",
+  "language": "rust",
+  "diagnosis": "callers-in-registry-unresolved",
+  "prior_kinds": [
+   "tp"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "actix--actix-web__listen_rustls_0_23__L997",
+  "strata": "rust/stable-tp",
+  "project": "actix--actix-web",
+  "language": "rust",
+  "diagnosis": "no-textual-callers",
+  "prior_kinds": [
+   "tp"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "launchbadge--sqlx__set_commit_hook__L479",
+  "strata": "rust/stable-fp-novel",
+  "project": "launchbadge--sqlx",
+  "language": "rust",
+  "diagnosis": "no-textual-callers",
+  "prior_kinds": [
+   "fp-novel"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "launchbadge--sqlx__ping__L180",
+  "strata": "rust/stable-fp-novel",
+  "project": "launchbadge--sqlx",
+  "language": "rust",
+  "diagnosis": "callers-in-registry-unresolved",
+  "prior_kinds": [
+   "fp-novel"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "rust-lang--cargo__bin_target__L873",
+  "strata": "rust/stable-fp-novel",
+  "project": "rust-lang--cargo",
+  "language": "rust",
+  "diagnosis": "callers-in-registry-unresolved",
+  "prior_kinds": [
+   "fp-novel"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "launchbadge--sqlx__clear_cached_statements__L210",
+  "strata": "rust/stable-fp-novel",
+  "project": "launchbadge--sqlx",
+  "language": "rust",
+  "diagnosis": "callers-in-registry-unresolved",
+  "prior_kinds": [
+   "fp-novel"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "serde-rs--serde__tuple_variant__L1945",
+  "strata": "rust/stable-regression",
+  "project": "serde-rs--serde",
+  "language": "rust",
+  "diagnosis": "callers-not-in-registry",
+  "prior_kinds": [
+   "fp-classifier-regression"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "bevyengine--bevy__default__L909",
+  "strata": "rust/stable-regression",
+  "project": "bevyengine--bevy",
+  "language": "rust",
+  "diagnosis": "callers-in-registry-unresolved",
+  "prior_kinds": [
+   "fp-classifier-regression"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "home-assistant--core__async_test_feature__L814",
+  "strata": "diagnosis/callers-outside-indexed-corpus",
+  "project": "home-assistant--core",
+  "language": "python",
+  "diagnosis": "callers-outside-indexed-corpus",
+  "prior_kinds": [
+   "fp-novel"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "tauri-apps--tauri__getCurrent__L232",
+  "strata": "diagnosis/callers-outside-indexed-corpus",
+  "project": "tauri-apps--tauri",
+  "language": "typescript",
+  "diagnosis": "callers-outside-indexed-corpus",
+  "prior_kinds": [
+   "tp"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "puppeteer--puppeteer__closed__L369",
+  "strata": "diagnosis/references-without-call-syntax",
+  "project": "puppeteer--puppeteer",
+  "language": "typescript",
+  "diagnosis": "references-without-call-syntax",
+  "prior_kinds": [
+   "tp"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "celery--celery__enable_events__L667",
+  "strata": "python/stable-tp",
+  "project": "celery--celery",
+  "language": "python",
+  "diagnosis": "callers-not-in-registry",
+  "prior_kinds": [
+   "tp"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "pandas-dev--pandas__setup__L241",
+  "strata": "python/stable-tp",
+  "project": "pandas-dev--pandas",
+  "language": "python",
+  "diagnosis": "callers-in-registry-wrong-target",
+  "prior_kinds": [
+   "tp"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "rust-lang--rust__get_tree__L267",
+  "strata": "python/stable-fp-novel",
+  "project": "rust-lang--rust",
+  "language": "python",
+  "diagnosis": "callers-in-registry-unresolved",
+  "prior_kinds": [
+   "fp-novel"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "rust-lang--rust__stop__L924",
+  "strata": "python/stable-fp-novel",
+  "project": "rust-lang--rust",
+  "language": "python",
+  "diagnosis": "callers-in-registry-unresolved",
+  "prior_kinds": [
+   "fp-novel"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "scikit-learn--scikit-learn____call____L444",
+  "strata": "python/stable-fp-classifier-regression",
+  "project": "scikit-learn--scikit-learn",
+  "language": "python",
+  "diagnosis": "callers-in-registry-unresolved",
+  "prior_kinds": [
+   "fp-classifier-regression"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "scikit-learn--scikit-learn__on_fit_task_end__L134",
+  "strata": "python/stable-fp-classifier-regression",
+  "project": "scikit-learn--scikit-learn",
+  "language": "python",
+  "diagnosis": "callers-in-registry-wrong-target",
+  "prior_kinds": [
+   "fp-classifier-regression"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "tokio-rs--axum__clone__L327",
+  "strata": "rust/stable-tp",
+  "project": "tokio-rs--axum",
+  "language": "rust",
+  "diagnosis": "callers-in-registry-unresolved",
+  "prior_kinds": [
+   "tp"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "rust-lang--cargo__match_does_not_contain__L386",
+  "strata": "rust/stable-fp-novel",
+  "project": "rust-lang--cargo",
+  "language": "rust",
+  "diagnosis": "callers-outside-indexed-corpus",
+  "prior_kinds": [
+   "fp-novel"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "pydantic--pydantic__module_init__L123",
+  "strata": "rust/stable-fp-classifier-regression",
+  "project": "pydantic--pydantic",
+  "language": "rust",
+  "diagnosis": "no-textual-callers",
+  "prior_kinds": [
+   "fp-classifier-regression"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "vuejs--core__dirty__L225",
+  "strata": "typescript/stable-fp-novel",
+  "project": "vuejs--core",
+  "language": "typescript",
+  "diagnosis": "references-without-call-syntax",
+  "prior_kinds": [
+   "fp-novel"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "microsoft--TypeScript__debugPrint__L409",
+  "strata": "typescript/stable-tp",
+  "project": "microsoft--TypeScript",
+  "language": "typescript",
+  "diagnosis": "no-textual-callers",
+  "prior_kinds": [
+   "tp"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "lodash--lodash__throttled__L822",
+  "strata": "contested-extra",
+  "project": "lodash--lodash",
+  "language": "javascript",
+  "diagnosis": "callers-outside-indexed-corpus",
+  "prior_kinds": [
+   "fp-novel",
+   "tp"
+  ],
+  "contested": true
+ },
+ {
+  "case_id": "expressjs--express__generateETag__L250",
+  "strata": "contested-extra",
+  "project": "expressjs--express",
+  "language": "javascript",
+  "diagnosis": "references-without-call-syntax",
+  "prior_kinds": [
+   "fp-novel",
+   "fp-novel",
+   "tp"
+  ],
+  "contested": true
+ },
+ {
+  "case_id": "lodash--lodash__addEvent__L15062",
+  "strata": "contested-extra",
+  "project": "lodash--lodash",
+  "language": "javascript",
+  "diagnosis": "callers-in-registry-unresolved",
+  "prior_kinds": [
+   "fp-novel",
+   "fp-classifier-regression",
+   "fp-novel"
+  ],
+  "contested": true
+ },
+ {
+  "case_id": "webpack--webpack__resolveBuildDependencies__L1858",
+  "strata": "big-bundle",
+  "project": "webpack--webpack",
+  "language": "javascript",
+  "diagnosis": "callers-in-registry-unresolved",
+  "prior_kinds": [
+   "fp-novel",
+   "fp-novel"
+  ],
+  "contested": false
+ },
+ {
+  "case_id": "babel--babel__cwrap__L298",
+  "strata": "big-bundle",
+  "project": "babel--babel",
+  "language": "javascript",
+  "diagnosis": "references-without-call-syntax",
+  "prior_kinds": [
+   "tp",
+   "tp"
+  ],
+  "contested": false
+ }
+]

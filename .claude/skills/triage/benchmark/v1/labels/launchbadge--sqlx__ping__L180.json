@@ -1,0 +1,29 @@
+{
+ "case_id": "launchbadge--sqlx__ping__L180",
+ "gold_kind": "fp-novel",
+ "acceptable_kinds": [
+  "fp-novel"
+ ],
+ "gold_rule_id": null,
+ "caller_evidence": [
+  {
+   "file": "sqlx-postgres/src/any.rs",
+   "line": 39,
+   "snippet": "Connection::ping(self).boxed()"
+  },
+  {
+   "file": "tests/postgres/postgres.rs",
+   "line": 47,
+   "snippet": "conn.ping().await?;"
+  },
+  {
+   "file": "tests/postgres/postgres.rs",
+   "line": 74,
+   "snippet": "conn.ping().await?;"
+  }
+ ],
+ "tp_search_summary": null,
+ "confidence": "high",
+ "rationale": "PgConnection's AnyConnectionBackend impl calls Connection::ping(self) with self: PgConnection (fully-qualified trait call), and the postgres integration tests call conn.ping() on a PgConnection from new::<Postgres>(). Generic pool callers (conn.ping() on DB::Connection) also reach it. These are trait-method dispatch gaps no in-scope Rust rule targets.",
+ "prior_verdicts_assessment": "The prior fp-novel verdict is correct; its cited caller sqlx-postgres/src/any.rs:39 is real."
+}

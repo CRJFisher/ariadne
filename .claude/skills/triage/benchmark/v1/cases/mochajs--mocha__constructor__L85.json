@@ -1,0 +1,156 @@
+{
+ "case_id": "mochajs--mocha__constructor__L85",
+ "strata": "javascript/contested",
+ "project": "mochajs--mocha",
+ "github": "mochajs/mocha",
+ "commit": "7cb2678",
+ "source_run_id": "7cb2678-2026-10-18T19-21-48.981Z",
+ "source_entry_index": 51,
+ "language": "javascript",
+ "diagnosis": "callers-not-in-registry",
+ "member_symbol": {
+  "file_path": "lib/nodejs/parallel-buffered-runner.cjs",
+  "name": "constructor",
+  "kind": "constructor",
+  "start_line": 85
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "7cb2678-2026-10-12T22-15-29.421Z",
+   "kind": "fp-classifier-regression",
+   "rule": "dynamic-dispatch-reporter-constructor",
+   "root_cause": "Mocha.prototype.parallelMode() assigns this._runnerClass to the required ParallelBufferedRunner class, and Mocha.prototype.run() later instantiates it via `new this._runnerClass(suite, {...})`; this is the real caller, but it is a property-based constructor-dispatch indirection structurally identica",
+   "evidence": {
+    "file": "/Users/chuck/.ariadne/triage-entrypoints/repos/mochajs--mocha/lib/mocha.cjs",
+    "line": 993,
+    "why": "Mocha.prototype.parallelMode() assigns this._runnerClass to the required ParallelBufferedRunner class, and Mocha.prototype.run() later instantiates it via `new this._runnerClass(suite, {...})`; this is the real caller, but it is a property-based constructor-dispatch indirection structurally identical to the registered `dynamic-dispatch-reporter-constructor` pattern (`new this._reporter(...)` after a builtin lookup) \u2014 just applied to `_runnerClass` instead of `_reporter` \u2014 so the classifier's scope (apparently keyed to the reporter property specifically) is too narrow to catch this sibling case in the same file."
+   },
+   "turns": 9,
+   "usd": 0.0466
+  },
+  {
+   "run_id": "7cb2678-2026-10-18T19-21-48.981Z",
+   "kind": "fp-novel",
+   "rule": null,
+   "root_cause": "The constructor is called dynamically in lib/mocha.cjs where require(\"./nodejs/parallel-buffered-runner.cjs\") is conditionally stored in this._runnerClass, then instantiated via new this._runnerClass(suite, ...) at line 993; Ariadne's resolver cannot trace module instantiation through conditional re",
+   "evidence": {
+    "file": "/Users/chuck/.ariadne/triage-entrypoints/repos/mochajs--mocha/lib/mocha.cjs",
+    "line": 993,
+    "why": "Constructor is instantiated via dynamic property access in production code within the Mocha#run method"
+   },
+   "turns": 15,
+   "usd": 0.063
+  }
+ ],
+ "entry": {
+  "entry_index": 51,
+  "name": "constructor",
+  "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/mochajs--mocha/lib/nodejs/parallel-buffered-runner.cjs",
+  "start_line": 85,
+  "kind": "constructor",
+  "signature": "constructor(args: any)",
+  "diagnosis": "callers-not-in-registry",
+  "is_exported": false,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/mochajs--mocha/test/node-unit/parallel-buffered-runner.spec.cjs",
+     "line": 65,
+     "content": "new ParallelBufferedRunner(suite),",
+     "captures": [
+      "@reference.constructor"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/mochajs--mocha/test/node-unit/parallel-buffered-runner.spec.cjs",
+     "line": 77,
+     "content": "runner = new ParallelBufferedRunner(suite);",
+     "captures": [
+      "@reference.constructor"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/mochajs--mocha/test/node-unit/parallel-buffered-runner.spec.cjs",
+     "line": 97,
+     "content": "runner = new ParallelBufferedRunner(suite);",
+     "captures": [
+      "@reference.constructor"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/mochajs--mocha/test/node-unit/parallel-buffered-runner.spec.cjs",
+     "line": 114,
+     "content": "runner = new ParallelBufferedRunner(suite);",
+     "captures": [
+      "@reference.constructor"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/mochajs--mocha/test/node-unit/parallel-buffered-runner.spec.cjs",
+     "line": 675,
+     "content": "runner = new ParallelBufferedRunner(suite);",
+     "captures": [
+      "@reference.constructor"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/mochajs--mocha/test/node-unit/parallel-buffered-runner.spec.cjs",
+     "line": 689,
+     "content": "runner = new ParallelBufferedRunner(suite);",
+     "captures": [
+      "@reference.constructor"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/mochajs--mocha/test/node-unit/parallel-buffered-runner.spec.cjs",
+     "line": 701,
+     "content": "runner = new ParallelBufferedRunner(suite);",
+     "captures": [
+      "@reference.constructor"
+     ]
+    }
+   ],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/mochajs--mocha/test/node-unit/mocha.spec.cjs",
+     "line": 72,
+     "content": "stubs.ParallelBufferedRunner,",
+     "reference_kind": "property_access",
+     "access_type": "property",
+     "receiver_kind": "identifier"
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/mochajs--mocha/test/node-unit/mocha.spec.cjs",
+     "line": 104,
+     "content": "mocha._runnerClass = stubs.ParallelBufferedRunner;",
+     "reference_kind": "property_access",
+     "access_type": "property",
+     "receiver_kind": "identifier"
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/mochajs--mocha/test/node-unit/mocha.spec.cjs",
+     "line": 111,
+     "content": "_runnerClass: stubs.ParallelBufferedRunner,",
+     "reference_kind": "property_access",
+     "access_type": "property",
+     "receiver_kind": "identifier"
+    }
+   ],
+   "ariadne_call_refs": [],
+   "diagnosis": "callers-not-in-registry",
+   "has_uncaptured_indexed_grep_hit": false
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

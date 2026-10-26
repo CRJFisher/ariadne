@@ -11,6 +11,7 @@
     "profile:simple": "NODE_ENV=production node --cpu-prof --cpu-prof-interval=100 --import tsx scripts/detect_entrypoints.ts --config $HOME/.ariadne/triage-entrypoints/project_configs/core.json"
   },
   "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "0.3.304",
     "@ariadnejs/core": "workspace:*",
     "@ariadnejs/skill-fs": "workspace:*",
     "@ariadnejs/skill-protocol": "workspace:*",

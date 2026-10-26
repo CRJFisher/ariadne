@@ -1,0 +1,125 @@
+{
+ "case_id": "rust-lang--rust__stop__L924",
+ "strata": "python/stable-fp-novel",
+ "project": "rust-lang--rust",
+ "github": "rust-lang/rust",
+ "commit": "e7b5955",
+ "source_run_id": "e7b5955-2026-07-28T12-37-38.987Z",
+ "source_entry_index": 3864,
+ "language": "python",
+ "diagnosis": "callers-in-registry-unresolved",
+ "member_symbol": {
+  "file_path": "src/ci/docker/scripts/fuchsia-test-runner.py",
+  "name": "stop",
+  "kind": "method",
+  "start_line": 924
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "e7b5955-2026-07-28T12-37-38.987Z",
+   "kind": "fp-novel",
+   "rule": null,
+   "root_cause": "The receiver `test_env` in `test_env.stop()` is produced by the classmethod `TestEnvironment.read_from_file()`, whose return type is `cls(...)` rather than a direct `TestEnvironment(...)` instantiation; Ariadne's resolver does not infer that a classmethod returning `cls(...)` yields an instance of t",
+   "evidence": {
+    "file": "src/ci/docker/scripts/fuchsia-test-runner.py",
+    "line": 1135,
+    "why": "test_env.stop() at line 1135 is a real call to TestEnvironment.stop where test_env is constructed via the classmethod factory read_from_file() returning cls(...), a pattern not covered by any in-scope classifier rule."
+   },
+   "turns": null,
+   "usd": null
+  }
+ ],
+ "entry": {
+  "entry_index": 3864,
+  "name": "stop",
+  "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/src/ci/docker/scripts/fuchsia-test-runner.py",
+  "start_line": 924,
+  "kind": "method",
+  "signature": "stop(self: any): unknown",
+  "diagnosis": "callers-in-registry-unresolved",
+  "is_exported": false,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/src/ci/docker/scripts/fuchsia-test-runner.py",
+     "line": 1132,
+     "content": "def stop(args):",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/src/ci/docker/scripts/fuchsia-test-runner.py",
+     "line": 1135,
+     "content": "test_env.stop()",
+     "captures": [
+      "@reference.call"
+     ]
+    }
+   ],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [],
+   "ariadne_call_refs": [
+    {
+     "caller_function": "stop",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/src/ci/docker/scripts/fuchsia-test-runner.py",
+     "call_line": 1135,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "identifier",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "receiver_type_unknown",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/src/ci/docker/scripts/fuchsia-test-runner.py:1132:9:1138:12"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "stop",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/src/ci/docker/scripts/fuchsia-test-runner.py",
+     "call_line": 1135,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "identifier",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "receiver_type_unknown",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/src/ci/docker/scripts/fuchsia-test-runner.py:1132:9:1138:12"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    }
+   ],
+   "diagnosis": "callers-in-registry-unresolved",
+   "has_uncaptured_indexed_grep_hit": true
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

@@ -1,0 +1,13 @@
+{
+  "case_id": "tokio-rs--axum__clone__L327",
+  "gold_kind": "tp",
+  "acceptable_kinds": [
+    "tp"
+  ],
+  "gold_rule_id": null,
+  "caller_evidence": [],
+  "tp_search_summary": "Grepped the whole repo for 'SignedCookieJar': uses are only re-exports (extract/mod.rs, cookie/mod.rs), test handler parameter types in cookie/mod.rs (cookie_test! macro and signed_cannot_access_invalid_cookies, which call add/get/remove on the jar and only clone the Router), and doc comments. Inside signed.rs the only .clone() calls are on fields (self.jar, self.key) and on state keys in doc examples. Checked whether framework traits used by the jar (FromRequestParts, IntoResponse, IntoResponseParts) clone it: they take it by value with no Clone bound. All pre-gathered clone grep hits are on unrelated receivers (AppState, handler, router, f, inner).",
+  "confidence": "high",
+  "rationale": "The Clone impl for SignedCookieJar<K> is never invoked in-repo. No code calls .clone() on a SignedCookieJar value, no #[derive]/macro expansion clones one, and no generic Clone-bounded path in the repo receives a jar. The pre-gathered call sites are clone calls on other types.",
+  "prior_verdicts_assessment": "The single prior tp verdict is correct; its dismissal of the grep hits as other types' clone methods and field clones is accurate."
+}

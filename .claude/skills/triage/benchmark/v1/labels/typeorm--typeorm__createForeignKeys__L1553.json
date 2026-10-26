@@ -1,0 +1,13 @@
+{
+  "case_id": "typeorm--typeorm__createForeignKeys__L1553",
+  "gold_kind": "fp-novel",
+  "acceptable_kinds": ["fp-novel"],
+  "gold_rule_id": null,
+  "caller_evidence": [
+    { "file": "src/schema-builder/RdbmsSchemaBuilder.ts", "line": 1219, "snippet": "await this.queryRunner.createForeignKeys(table, dbForeignKeys)" }
+  ],
+  "tp_search_summary": null,
+  "confidence": "high",
+  "rationale": "RdbmsSchemaBuilder's `queryRunner` field is typed as the `QueryRunner` interface and calls `createForeignKeys` at line 1219; SpannerQueryRunner `extends BaseQueryRunner implements QueryRunner` and is returned by SpannerDriver.createQueryRunner (`new SpannerQueryRunner(this, mode)`), so the call reaches this implementation at runtime. Ariadne resolved only the AbstractSqliteQueryRunner self-call. Interface-dispatch to implementers is not covered by any in-scope rule.",
+  "prior_verdicts_assessment": "The prior fp-novel verdict is correct; its cited caller at RdbmsSchemaBuilder.ts:1219 checks out."
+}

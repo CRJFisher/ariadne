@@ -1,0 +1,25 @@
+{
+ "case_id": "ansible--ansible__help_diff__L448",
+ "gold_kind": "fp-novel",
+ "acceptable_kinds": [
+  "fp-novel",
+  "fp-classifier-regression"
+ ],
+ "gold_rule_id": "dynamic-property-keyed-callback",
+ "caller_evidence": [
+  {
+   "file": "lib/ansible/cli/console.py",
+   "line": 138,
+   "snippet": "cmd.Cmd.cmdloop(self)"
+  },
+  {
+   "file": "lib/ansible/cli/console.py",
+   "line": 583,
+   "snippet": "self.cmdloop()"
+  }
+ ],
+ "tp_search_summary": null,
+ "confidence": "medium",
+ "rationale": "ConsoleCLI subclasses stdlib cmd.Cmd and in-repo code drives cmd.Cmd.cmdloop; typing 'help diff' makes cmd.Cmd.do_help call getattr(self, 'help_' + arg)(), so help_diff is a real framework hook reached by naming convention. The computed-name dispatch lives in the stdlib, not in repo source, and no in-scope rule targets cmd.Cmd do_/help_ conventions, so fp-novel is the best fit; dynamic-property-keyed-callback's obj[name]() description is arguably close enough to be defensible.",
+ "prior_verdicts_assessment": "The single fp-novel verdict is correct and identifies the getattr-based do_help dispatch accurately."
+}

@@ -1,0 +1,61 @@
+{
+ "case_id": "pydantic--pydantic__module_init__L123",
+ "strata": "rust/stable-fp-classifier-regression",
+ "project": "pydantic--pydantic",
+ "github": "pydantic/pydantic",
+ "commit": "2151025",
+ "source_run_id": "2151025-2026-08-23T23-09-52.885Z",
+ "source_entry_index": 731,
+ "language": "rust",
+ "diagnosis": "no-textual-callers",
+ "member_symbol": {
+  "file_path": "pydantic-core/src/lib.rs",
+  "name": "module_init",
+  "kind": "function",
+  "start_line": 123
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "2151025-2026-08-23T23-09-52.885Z",
+   "kind": "fp-classifier-regression",
+   "rule": "rust-macro-invocation-call",
+   "root_cause": "module_init is registered via PyO3's #[pymodule_init] proc-macro attribute inside the #[pymodule] mod _pydantic_core block; PyO3's macro expansion generates the actual call invoked by Python at module import time, which is invisible to Ariadne's pre-expansion AST parse, matching the in-scope rust-ma",
+   "evidence": {
+    "file": "pydantic-core/src/lib.rs",
+    "line": 122,
+    "why": "module_init is registered via PyO3's #[pymodule_init] proc-macro attribute inside the #[pymodule] mod _pydantic_core block; PyO3's macro expansion generates the actual call invoked by Python at module import time, which is invisible to Ariadne's pre-expansion AST parse, matching the in-scope rust-macro-invocation-call rule's stated coverage of custom proc macros hiding function calls."
+   },
+   "turns": null,
+   "usd": null
+  }
+ ],
+ "entry": {
+  "entry_index": 731,
+  "name": "module_init",
+  "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic-core/src/lib.rs",
+  "start_line": 123,
+  "kind": "function",
+  "signature": "module_init(m: &Bound<'_, PyModule>): PyResult<()>",
+  "diagnosis": "no-textual-callers",
+  "is_exported": false,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [],
+   "ariadne_call_refs": [],
+   "diagnosis": "no-textual-callers",
+   "has_uncaptured_indexed_grep_hit": false
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

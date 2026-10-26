@@ -1,0 +1,25 @@
+{
+ "case_id": "babel--babel__DeclareFunction__L191",
+ "gold_kind": "fp-novel",
+ "acceptable_kinds": [
+  "fp-novel",
+  "fp-classifier-regression"
+ ],
+ "gold_rule_id": "dynamic-property-keyed-callback",
+ "caller_evidence": [
+  {
+   "file": "eslint/babel-eslint-parser/src/analyze-scope.ts",
+   "line": 355,
+   "snippet": "referencer.visit(ast);"
+  },
+  {
+   "file": "eslint/babel-eslint-tests/test/integration/eslint/verify.js",
+   "line": 536,
+   "snippet": "declare function foo<T>(): void;"
+  }
+ ],
+ "tp_search_summary": null,
+ "confidence": "medium",
+ "rationale": "Referencer extends eslint-scope's Referencer (an esrecurse Visitor); analyzeScope calls referencer.visit(ast), and the base Visitor dispatches this[node.type](node), so DeclareFunction runs for every Flow DeclareFunction node. The in-repo integration test 'support declarations #132' lints `declare function foo<T>(): void;` through babel-eslint-parser, exercising this path. The computed-key dispatch is inside the external esrecurse library, so no in-scope rule clearly targets it; dynamic-property-keyed-callback's obj[name]() pattern is a defensible secondary reading.",
+ "prior_verdicts_assessment": "The two fp-novel verdicts correctly identify esrecurse's node.type dispatch. The tp verdict is wrong: Flow declarations are parsed and visited in the repo's own eslint integration tests."
+}

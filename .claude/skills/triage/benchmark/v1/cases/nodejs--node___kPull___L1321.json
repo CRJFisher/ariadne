@@ -1,0 +1,87 @@
+{
+ "case_id": "nodejs--node___kPull___L1321",
+ "strata": "javascript/stable-regression",
+ "project": "nodejs--node",
+ "github": "nodejs/node",
+ "commit": "7d69ed1",
+ "source_run_id": "7d69ed1-2026-10-18T19-33-31.063Z",
+ "source_entry_index": 560,
+ "language": "javascript",
+ "diagnosis": "no-textual-callers",
+ "member_symbol": {
+  "file_path": "lib/internal/webstreams/readablestream.js",
+  "name": "[kPull]",
+  "kind": "method",
+  "start_line": 1321
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "7d69ed1-2026-08-22T23-46-37.541Z",
+   "kind": "fp-classifier-regression",
+   "rule": "dynamic-property-keyed-callback",
+   "root_cause": "readableStreamDefaultReaderRead invokes the controller's [kPull] method through a computed symbol-keyed member expression (controller[kPull](readRequest)) rather than a literal property name, matching the dynamic-property-keyed-callback rule's shape but going unmatched for this entry.",
+   "evidence": {
+    "file": "lib/internal/webstreams/readablestream.js",
+    "line": 2560,
+    "why": "readableStreamDefaultReaderRead invokes the controller's [kPull] method through a computed symbol-keyed member expression (controller[kPull](readRequest)) rather than a literal property name, matching the dynamic-property-keyed-callback rule's shape but going unmatched for this entry."
+   },
+   "turns": null,
+   "usd": null
+  },
+  {
+   "run_id": "7d69ed1-2026-10-12T22-29-08.683Z",
+   "kind": "fp-classifier-regression",
+   "rule": "dynamic-property-keyed-callback",
+   "root_cause": "The only call site reaching [kPull] is a Symbol-keyed computed member access `controller[kPull](readRequest)` at line 2560, where `controller` is polymorphic (ReadableStreamDefaultController or ReadableByteStreamController) and `kPull` is a module-level Symbol constant rather than a literal key, mat",
+   "evidence": {
+    "file": "/Users/chuck/.ariadne/triage-entrypoints/repos/nodejs--node/lib/internal/webstreams/readablestream.js",
+    "line": 2560,
+    "why": "The only call site reaching [kPull] is a Symbol-keyed computed member access `controller[kPull](readRequest)` at line 2560, where `controller` is polymorphic (ReadableStreamDefaultController or ReadableByteStreamController) and `kPull` is a module-level Symbol constant rather than a literal key, matching the dynamic-property-keyed-callback pattern that the resolver failed to link."
+   },
+   "turns": 7,
+   "usd": 0.0315
+  },
+  {
+   "run_id": "7d69ed1-2026-10-18T19-33-31.063Z",
+   "kind": "fp-classifier-regression",
+   "rule": "dynamic-property-keyed-callback",
+   "root_cause": "Method [kPull] is invoked via symbol-keyed property access in readableStreamDefaultReaderRead at line 2560, a dynamic property keyed callback pattern that the dynamic-property-keyed-callback classifier should have detected.",
+   "evidence": {
+    "file": "/Users/chuck/.ariadne/triage-entrypoints/repos/nodejs--node/lib/internal/webstreams/readablestream.js",
+    "line": 1321,
+    "why": "Method [kPull] is invoked via symbol-keyed property access in readableStreamDefaultReaderRead at line 2560, a dynamic property keyed callback pattern that the dynamic-property-keyed-callback classifier should have detected."
+   },
+   "turns": 13,
+   "usd": 0.0434
+  }
+ ],
+ "entry": {
+  "entry_index": 560,
+  "name": "[kPull]",
+  "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/nodejs--node/lib/internal/webstreams/readablestream.js",
+  "start_line": 1321,
+  "kind": "method",
+  "signature": "[kPull](readRequest: any): unknown",
+  "diagnosis": "no-textual-callers",
+  "is_exported": false,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [],
+   "ariadne_call_refs": [],
+   "diagnosis": "no-textual-callers",
+   "has_uncaptured_indexed_grep_hit": false
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

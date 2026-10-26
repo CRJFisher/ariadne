@@ -1,0 +1,14 @@
+{
+  "case_id": "django--django____init____L348",
+  "gold_kind": "fp-novel",
+  "acceptable_kinds": ["fp-novel"],
+  "gold_rule_id": null,
+  "caller_evidence": [
+    { "file": "django/contrib/auth/forms.py", "line": 290, "snippet": "super().__init__(*args, **kwargs)" },
+    { "file": "django/contrib/auth/forms.py", "line": 230, "snippet": "super().__init__(*args, **kwargs)" }
+  ],
+  "tp_search_summary": null,
+  "confidence": "high",
+  "rationale": "The entry is BaseModelForm.__init__. ModelForm (models.py:585) is `class ModelForm(BaseModelForm, metaclass=ModelFormMetaclass): pass`, so super().__init__ in UserChangeForm(forms.ModelForm).__init__ (forms.py:289-290) resolves through the MRO to BaseModelForm.__init__. BaseUserCreationForm(SetPasswordMixin, forms.ModelForm) does the same, since SetPasswordMixin defines no __init__. Every ModelForm instantiation also reaches it. No in-scope rule covers super() or constructor resolution through an inherited pass-through class, and py-dunder-protocol explicitly excludes __init__.",
+  "prior_verdicts_assessment": "The single prior verdict (fp-novel, super() via the pass-through ModelForm) is correct."
+}

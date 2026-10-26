@@ -1,0 +1,24 @@
+{
+ "case_id": "Leaflet--Leaflet__pointToLatLng__L40",
+ "gold_kind": "fp-novel",
+ "acceptable_kinds": [
+  "fp-novel"
+ ],
+ "gold_rule_id": null,
+ "caller_evidence": [
+  {
+   "file": "src/map/Map.js",
+   "line": 1003,
+   "snippet": "return this.options.crs.pointToLatLng(new Point(point), zoom);"
+  },
+  {
+   "file": "spec/suites/geo/crs/CRSSpec.js",
+   "line": 19,
+   "snippet": "expect(crs.pointToLatLng(new Point(128, 128), 0)).nearLatLng([0, 0], 0.01);"
+  }
+ ],
+ "tp_search_summary": null,
+ "confidence": "high",
+ "rationale": "CRS.pointToLatLng is a static method inherited by EarthCRS and EPSG3857 (no subclass overrides it). Map.unproject calls it through this.options.crs, which defaults to EPSG3857 in Map's options literal. CRSSpec.js also calls it on `const crs = EPSG3857`, a class alias. The resolver misses inherited static calls through a class-valued variable or options property, and no in-scope rule covers that.",
+ "prior_verdicts_assessment": "All three prior fp-novel verdicts are correct. The first two cite Map.js:1003 accurately."
+}

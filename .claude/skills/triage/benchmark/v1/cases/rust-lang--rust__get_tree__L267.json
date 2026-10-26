@@ -1,0 +1,344 @@
+{
+ "case_id": "rust-lang--rust__get_tree__L267",
+ "strata": "python/stable-fp-novel",
+ "project": "rust-lang--rust",
+ "github": "rust-lang/rust",
+ "commit": "e7b5955",
+ "source_run_id": "e7b5955-2026-07-28T12-37-38.987Z",
+ "source_entry_index": 4016,
+ "language": "python",
+ "diagnosis": "callers-in-registry-unresolved",
+ "member_symbol": {
+  "file_path": "src/etc/htmldocck.py",
+  "name": "get_tree",
+  "kind": "method",
+  "start_line": 267
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "e7b5955-2026-07-28T12-37-38.987Z",
+   "kind": "fp-novel",
+   "rule": null,
+   "root_cause": "The `cache` parameter in `get_nb_matching_elements`/`check_command` is an untyped function parameter (no type annotation) that is bound to a `CachedFiles` instance created at `cache = CachedFiles(target)` in `main()` and threaded through several function calls before reaching `cache.get_tree(...)`; ",
+   "evidence": {
+    "file": "src/etc/htmldocck.py",
+    "line": 460,
+    "why": "cache.get_tree() is called from get_nb_matching_elements and check_command, where cache is an untyped parameter bound to CachedFiles(target) instantiated in main() at line 626 and passed down through calls, so real callers exist but the resolver cannot follow the untyped parameter to CachedFiles.get_tree."
+   },
+   "turns": null,
+   "usd": null
+  }
+ ],
+ "entry": {
+  "entry_index": 4016,
+  "name": "get_tree",
+  "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/src/etc/htmldocck.py",
+  "start_line": 267,
+  "kind": "method",
+  "signature": "get_tree(self: any, path: any): unknown",
+  "diagnosis": "callers-in-registry-unresolved",
+  "is_exported": false,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/src/etc/htmldocck.py",
+     "line": 460,
+     "content": "tree = cache.get_tree(c.args[0])",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/src/etc/htmldocck.py",
+     "line": 463,
+     "content": "tree = cache.get_tree(c.args[0])",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/src/etc/htmldocck.py",
+     "line": 470,
+     "content": "cache.get_tree(c.args[0]), pat, c.args[2], regexp, stop_at_first",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/src/etc/htmldocck.py",
+     "line": 559,
+     "content": "found = get_tree_count(cache.get_tree(c.args[0]), c.args[1])",
+     "captures": [
+      "@reference.call",
+      "@reference.constructor"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/src/etc/htmldocck.py",
+     "line": 573,
+     "content": "tree = cache.get_tree(html_path)",
+     "captures": [
+      "@reference.call"
+     ]
+    }
+   ],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [],
+   "ariadne_call_refs": [
+    {
+     "caller_function": "get_nb_matching_elements",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/src/etc/htmldocck.py",
+     "call_line": 460,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "identifier",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "receiver_type_unknown",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/src/etc/htmldocck.py:459:29:471:9"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "get_nb_matching_elements",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/src/etc/htmldocck.py",
+     "call_line": 460,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "identifier",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "receiver_type_unknown",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/src/etc/htmldocck.py:459:29:471:9"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "get_nb_matching_elements",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/src/etc/htmldocck.py",
+     "call_line": 463,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "identifier",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "receiver_type_unknown",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/src/etc/htmldocck.py:462:5:471:9"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "get_nb_matching_elements",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/src/etc/htmldocck.py",
+     "call_line": 463,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "identifier",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "receiver_type_unknown",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/src/etc/htmldocck.py:462:5:471:9"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "get_nb_matching_elements",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/src/etc/htmldocck.py",
+     "call_line": 470,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "identifier",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "receiver_type_unknown",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/src/etc/htmldocck.py:465:5:471:9"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "get_nb_matching_elements",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/src/etc/htmldocck.py",
+     "call_line": 470,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "identifier",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "receiver_type_unknown",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/src/etc/htmldocck.py:465:5:471:9"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "check_command",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/src/etc/htmldocck.py",
+     "call_line": 559,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "identifier",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "receiver_type_unknown",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/src/etc/htmldocck.py:557:13:568:82"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "check_command",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/src/etc/htmldocck.py",
+     "call_line": 559,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "identifier",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "receiver_type_unknown",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/src/etc/htmldocck.py:557:13:568:82"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "check_command",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/src/etc/htmldocck.py",
+     "call_line": 573,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "identifier",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "receiver_type_unknown",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/src/etc/htmldocck.py:571:13:596:82"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "check_command",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/src/etc/htmldocck.py",
+     "call_line": 573,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "identifier",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "receiver_type_unknown",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--rust/src/etc/htmldocck.py:571:13:596:82"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    }
+   ],
+   "diagnosis": "callers-in-registry-unresolved",
+   "has_uncaptured_indexed_grep_hit": false
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

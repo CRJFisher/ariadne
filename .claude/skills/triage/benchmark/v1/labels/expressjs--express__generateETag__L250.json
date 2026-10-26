@@ -1,0 +1,14 @@
+{
+  "case_id": "expressjs--express__generateETag__L250",
+  "gold_kind": "fp-novel",
+  "acceptable_kinds": ["fp-novel"],
+  "gold_rule_id": null,
+  "caller_evidence": [
+    { "file": "lib/response.js", "line": 188, "snippet": "if ((etag = etagFn(chunk, encoding))) {" },
+    { "file": "test/utils.js", "line": 9, "snippet": "assert.strictEqual(utils.etag('express!')," }
+  ],
+  "tp_search_summary": null,
+  "confidence": "high",
+  "rationale": "generateETag is the closure returned by createETagGenerator, which is assigned to exports.etag and exports.wetag (utils.js:40,51). The tests call it directly as utils.etag(...) (test/utils.js:9 onward). At runtime it flows through compileETag into app.set('etag fn', ...) (application.js:365) and is invoked as etagFn(chunk, encoding) in response.js:188. Both are real callers that depend on tracking a factory's returned function; no in-scope rule covers this. The generateETag references in response.js are to an unrelated local boolean.",
+  "prior_verdicts_assessment": "The two fp-novel priors are correct. The tp prior correctly spotted the same-name boolean collision but then ignored the real invocations through exports.etag/wetag and the 'etag fn' setting."
+}

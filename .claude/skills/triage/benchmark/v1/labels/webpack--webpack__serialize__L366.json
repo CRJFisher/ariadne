@@ -1,0 +1,14 @@
+{
+  "case_id": "webpack--webpack__serialize__L366",
+  "gold_kind": "fp-novel",
+  "acceptable_kinds": ["fp-novel"],
+  "gold_rule_id": null,
+  "caller_evidence": [
+    { "file": "lib/dependencies/HarmonyImportSpecifierDependency.js", "line": 405, "snippet": "super.serialize(context);" },
+    { "file": "lib/dependencies/HarmonyExportImportedSpecifierDependency.js", "line": 1161, "snippet": "super.serialize(context);" }
+  ],
+  "tp_search_summary": null,
+  "confidence": "high",
+  "rationale": "HarmonyImportSpecifierDependency and HarmonyExportImportedSpecifierDependency both `extends HarmonyImportDependency` (imported via `require(\"./HarmonyImportDependency\")`), and their serialize overrides call `super.serialize(context)`, which resolves to HarmonyImportDependency.serialize. Ariadne recorded these super calls as unresolved with `no_parent_class`, so it failed to link the CommonJS-required superclass (HarmonyImportDependency.js also adds properties to module.exports). Inherited dispatch from makeSerializable's `obj.serialize(context)` for the subclasses that do not override it is a further runtime path. No in-scope rule covers super-call or superclass resolution.",
+  "prior_verdicts_assessment": "Both prior fp-novel verdicts are correct; the second identifies the decisive unresolved super.serialize calls, and the first identifies a valid additional inherited-dispatch path."
+}

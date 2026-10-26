@@ -1,0 +1,1339 @@
+{
+ "case_id": "pydantic--pydantic____init____L66",
+ "strata": "python/stable-tp",
+ "project": "pydantic--pydantic",
+ "github": "pydantic/pydantic",
+ "commit": "2151025",
+ "source_run_id": "2151025-2026-08-23T23-09-52.885Z",
+ "source_entry_index": 620,
+ "language": "python",
+ "diagnosis": "callers-in-registry-unresolved",
+ "member_symbol": {
+  "file_path": "pydantic/v1/color.py",
+  "name": "__init__",
+  "kind": "constructor",
+  "start_line": 66
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "2151025-2026-08-23T23-09-52.885Z",
+   "kind": "tp",
+   "rule": null,
+   "root_cause": "The only import of pydantic.v1.color.Color anywhere in the repo is pydantic/v1/json.py's ENCODERS_BY_TYPE, which uses the class as a dict key mapped to str (never instantiated); no source or test file anywhere types a field as v1 Color or otherwise calls Color(...) from this module, so its __get_val",
+   "evidence": {
+    "file": "pydantic/v1/color.py",
+    "line": 66,
+    "why": "The only import of pydantic.v1.color.Color anywhere in the repo is pydantic/v1/json.py's ENCODERS_BY_TYPE, which uses the class as a dict key mapped to str (never instantiated); no source or test file anywhere types a field as v1 Color or otherwise calls Color(...) from this module, so its __get_validators__-triggered constructor invocation never fires, and all pre-gathered grep/Ariadne evidence for '__init__' calls resolves to unrelated classes (pydantic.color.Color, errors.py, mypy.py, networks.py, warnings.py) rather than this v1 legacy definition."
+   },
+   "turns": null,
+   "usd": null
+  }
+ ],
+ "entry": {
+  "entry_index": 620,
+  "name": "__init__",
+  "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/color.py",
+  "start_line": 66,
+  "kind": "constructor",
+  "signature": "constructor(self: any, value: ColorType)",
+  "diagnosis": "callers-in-registry-unresolved",
+  "is_exported": false,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/tests/test_color.py",
+     "line": 72,
+     "content": "c = Color(raw_color)",
+     "captures": [
+      "@reference.constructor"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/tests/test_color.py",
+     "line": 119,
+     "content": "Color(color)",
+     "captures": [
+      "@reference.constructor"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/tests/test_color.py",
+     "line": 128,
+     "content": "assert Model(color=Color('red')).color.as_hex() == '#f00'",
+     "captures": [
+      "@reference.call",
+      "@reference.constructor"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/tests/test_color.py",
+     "line": 143,
+     "content": "assert Color('bad').as_rgb() == 'rgb(187, 170, 221)'",
+     "captures": [
+      "@reference.call",
+      "@reference.constructor"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/tests/test_color.py",
+     "line": 144,
+     "content": "assert Color((1, 2, 3, 0.123456)).as_rgb() == 'rgba(1, 2, 3, 0.12)'",
+     "captures": [
+      "@reference.call",
+      "@reference.constructor"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/tests/test_color.py",
+     "line": 145,
+     "content": "assert Color((1, 2, 3, 0.1)).as_rgb() == 'rgba(1, 2, 3, 0.1)'",
+     "captures": [
+      "@reference.call",
+      "@reference.constructor"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/tests/test_color.py",
+     "line": 149,
+     "content": "assert Color((1, 2, 3)).as_rgb_tuple(alpha=None) == (1, 2, 3)",
+     "captures": [
+      "@reference.call",
+      "@reference.constructor"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/tests/test_color.py",
+     "line": 150,
+     "content": "assert Color((1, 2, 3, 1)).as_rgb_tuple(alpha=None) == (1, 2, 3)",
+     "captures": [
+      "@reference.call",
+      "@reference.constructor"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/tests/test_color.py",
+     "line": 151,
+     "content": "assert Color((1, 2, 3, 0.3)).as_rgb_tuple(alpha=None) == (1, 2, 3, 0.3)",
+     "captures": [
+      "@reference.call",
+      "@reference.constructor"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/tests/test_color.py",
+     "line": 152,
+     "content": "assert Color((1, 2, 3, 0.3)).as_rgb_tuple(alpha=None) == (1, 2, 3, 0.3)",
+     "captures": [
+      "@reference.call",
+      "@reference.constructor"
+     ]
+    }
+   ],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [],
+   "ariadne_call_refs": [
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/_internal/_discriminated_union.py",
+     "call_line": 25,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/_internal/_discriminated_union.py:18:47:25:68"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/_internal/_docs_extraction.py",
+     "call_line": 14,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "no_parent_class",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/_internal/_docs_extraction.py:12:7:12:22:DocstringVisitor"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/_internal/_generics.py",
+     "call_line": 44,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "no_parent_class",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/_internal/_generics.py:41:7:41:17:LimitedDict"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/errors.py",
+     "call_line": 114,
+     "call_type": "constructor",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/errors.py:89:9:89:16:__init__"
+     ],
+     "receiver_kind": "none",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": true,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/errors.py",
+     "call_line": 137,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/errors.py:129:60:137:54"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/errors.py",
+     "call_line": 148,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/errors.py:140:56:148:65"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/errors.py",
+     "call_line": 159,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/errors.py:151:55:159:65"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/errors.py",
+     "call_line": 175,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/errors.py:162:53:181:9"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/mypy.py",
+     "call_line": 137,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "no_parent_class",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/mypy.py:131:7:131:20:PydanticPlugin"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/mypy.py",
+     "call_line": 1242,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "no_parent_class",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/mypy.py:1237:7:1237:29:ChangeExplicitTypeOfAny"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/env_settings.py",
+     "call_line": 40,
+     "call_type": "constructor",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/main.py:355:9:355:16:__init__"
+     ],
+     "receiver_kind": "none",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": true,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py",
+     "call_line": 206,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py:201:41:206:57"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py",
+     "call_line": 256,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py:254:43:256:40"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py",
+     "call_line": 311,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py:306:44:311:86"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py",
+     "call_line": 319,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py:314:46:319:49"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py",
+     "call_line": 327,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py:322:46:327:49"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py",
+     "call_line": 340,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py:335:45:340:49"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py",
+     "call_line": 348,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py:343:45:348:49"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py",
+     "call_line": 356,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py:351:51:356:49"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py",
+     "call_line": 364,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py:359:51:364:49"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py",
+     "call_line": 372,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py:367:48:372:49"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py",
+     "call_line": 380,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py:375:48:380:49"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py",
+     "call_line": 392,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py:387:41:392:41"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py",
+     "call_line": 397,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py:395:45:397:49"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py",
+     "call_line": 430,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py:425:50:430:49"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py",
+     "call_line": 447,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py:442:49:447:47"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py",
+     "call_line": 455,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py:450:49:455:55"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py",
+     "call_line": 463,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py:458:51:463:51"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py",
+     "call_line": 505,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py:500:44:505:59"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py",
+     "call_line": 513,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py:508:45:513:90"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py",
+     "call_line": 526,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py:521:40:526:72"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py",
+     "call_line": 642,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/errors.py:634:48:646:9"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/mypy.py",
+     "call_line": 112,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "no_parent_class",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/mypy.py:108:7:108:20:PydanticPlugin"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/networks.py",
+     "call_line": 202,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "identifier",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "constructor:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/networks.py:187:17:212:32"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/networks.py",
+     "call_line": 427,
+     "call_type": "constructor",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/v1/networks.py:187:9:187:16:__init__"
+     ],
+     "receiver_kind": "none",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": true,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/warnings.py",
+     "call_line": 41,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "no_parent_class",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/warnings.py:22:7:22:32:PydanticDeprecationWarning"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/warnings.py",
+     "call_line": 60,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/warnings.py:56:61:60:79"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/warnings.py",
+     "call_line": 67,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/warnings.py:63:61:67:79"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/warnings.py",
+     "call_line": 74,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/warnings.py:70:61:74:79"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/warnings.py",
+     "call_line": 81,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/warnings.py:77:62:81:80"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/warnings.py",
+     "call_line": 88,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/warnings.py:84:62:88:80"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/warnings.py",
+     "call_line": 95,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic/warnings.py:91:62:95:80"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic-core/tests/serializers/test_union.py",
+     "call_line": 341,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic-core/tests/serializers/test_union.py:339:26:342:34"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic-core/tests/serializers/test_union.py",
+     "call_line": 346,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic-core/tests/serializers/test_union.py:344:24:347:46"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic-core/tests/validators/test_model.py",
+     "call_line": 533,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic-core/tests/validators/test_model.py:529:31:534:35"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic-core/tests/validators/test_model.py",
+     "call_line": 580,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic-core/tests/validators/test_model.py:574:31:581:35"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic-core/tests/validators/test_model.py",
+     "call_line": 650,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic-core/tests/validators/test_model.py:646:31:651:35"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic-core/tests/validators/test_model.py",
+     "call_line": 766,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/pydantic-core/tests/validators/test_model.py:764:31:767:35"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/tests/mypy/modules/custom_constructor.py",
+     "call_line": 10,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/tests/mypy/modules/custom_constructor.py:4:25:10:64"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__init__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/tests/mypy/outputs/mypy-plugin_ini/custom_constructor.py",
+     "call_line": 10,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "class_definition_not_found",
+      "partial_info": {
+       "last_known_scope": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/pydantic--pydantic/tests/mypy/outputs/mypy-plugin_ini/custom_constructor.py:4:25:10:64"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    }
+   ],
+   "diagnosis": "callers-in-registry-unresolved",
+   "has_uncaptured_indexed_grep_hit": false
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

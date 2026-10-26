@@ -1,0 +1,30 @@
+{
+ "case_id": "mochajs--mocha__constructor__L85",
+ "gold_kind": "fp-classifier-regression",
+ "acceptable_kinds": [
+  "fp-classifier-regression",
+  "fp-novel"
+ ],
+ "gold_rule_id": "dynamic-require-constructor",
+ "caller_evidence": [
+  {
+   "file": "lib/mocha.cjs",
+   "line": 1137,
+   "snippet": "this._runnerClass = parallel ? require(\"./nodejs/parallel-buffered-runner.cjs\") : exports.Runner;"
+  },
+  {
+   "file": "lib/mocha.cjs",
+   "line": 993,
+   "snippet": "const runner = new this._runnerClass(suite, {"
+  },
+  {
+   "file": "test/node-unit/parallel-buffered-runner.spec.cjs",
+   "line": 65,
+   "snippet": "new ParallelBufferedRunner(suite),"
+  }
+ ],
+ "tp_search_summary": null,
+ "confidence": "medium",
+ "rationale": "Mocha.prototype.parallelMode stores the required ParallelBufferedRunner class on this._runnerClass and Mocha.prototype.run instantiates it via new this._runnerClass(...); the unit tests also construct it after obtaining the class through rewiremock.proxy(() => require(...)). The dynamic-require-constructor rule's described intent (class identity flowing through a require stored on a property, e.g. this._reporter = require(...), then instantiated via new R(...)) covers this shape. fp-novel is defensible because the require here is a static literal path rather than runtime string-keyed module resolution.",
+ "prior_verdicts_assessment": "Both priors correctly found the real caller at lib/mocha.cjs:993. The regression verdict named the wrong rule (the reporter rule is specific to builtinReporters[name] string-keyed lookup); the fp-novel verdict is defensible but overlooks dynamic-require-constructor."
+}

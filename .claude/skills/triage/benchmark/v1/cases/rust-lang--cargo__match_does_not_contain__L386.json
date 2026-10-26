@@ -1,0 +1,74 @@
+{
+ "case_id": "rust-lang--cargo__match_does_not_contain__L386",
+ "strata": "rust/stable-fp-novel",
+ "project": "rust-lang--cargo",
+ "github": "rust-lang/cargo",
+ "commit": "ed4cb4f",
+ "source_run_id": "ed4cb4f-2026-08-23T06-56-38.912Z",
+ "source_entry_index": 503,
+ "language": "rust",
+ "diagnosis": "callers-outside-indexed-corpus",
+ "member_symbol": {
+  "file_path": "crates/cargo-test-support/src/compare.rs",
+  "name": "match_does_not_contain",
+  "kind": "function",
+  "start_line": 386
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "ed4cb4f-2026-08-23T06-56-38.912Z",
+   "kind": "fp-novel",
+   "rule": null,
+   "root_cause": "The caller crates/cargo-test-support/src/lib.rs was discovered by the project walk but never indexed (a coverage/config gap in the corpus), so Ariadne has no reference edge even though lib.rs calls compare::match_does_not_contain directly at two sites.",
+   "evidence": {
+    "file": "/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--cargo/crates/cargo-test-support/src/compare.rs",
+    "line": 386,
+    "why": "Real call sites confirmed at crates/cargo-test-support/src/lib.rs:1180 and :1183, in a file that was excluded from indexing rather than truly having no callers."
+   },
+   "turns": null,
+   "usd": null
+  }
+ ],
+ "entry": {
+  "entry_index": 503,
+  "name": "match_does_not_contain",
+  "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--cargo/crates/cargo-test-support/src/compare.rs",
+  "start_line": 386,
+  "kind": "function",
+  "signature": "match_does_not_contain(expected: &str, actual: &str, redactions: &snapbox::Redactions): Result<()>",
+  "diagnosis": "callers-outside-indexed-corpus",
+  "is_exported": true,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [],
+   "grep_call_sites_outside_index": [
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--cargo/crates/cargo-test-support/src/lib.rs",
+     "line": 1180,
+     "content": "compare::match_does_not_contain(expect, stdout, self.assert.redactions())?;",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/rust-lang--cargo/crates/cargo-test-support/src/lib.rs",
+     "line": 1183,
+     "content": "compare::match_does_not_contain(expect, stderr, self.assert.redactions())?;",
+     "captures": []
+    }
+   ],
+   "reference_sites": [],
+   "ariadne_call_refs": [],
+   "diagnosis": "callers-outside-indexed-corpus",
+   "has_uncaptured_indexed_grep_hit": false
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

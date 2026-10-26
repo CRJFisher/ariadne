@@ -1,0 +1,25 @@
+{
+ "case_id": "nodejs--node___inspect.custom___L392",
+ "gold_kind": "fp-classifier-regression",
+ "acceptable_kinds": [
+  "fp-classifier-regression",
+  "fp-novel"
+ ],
+ "gold_rule_id": "dynamic-property-keyed-callback",
+ "caller_evidence": [
+  {
+   "file": "lib/internal/util/inspect.js",
+   "line": 1149,
+   "snippet": "const maybeCustom = value[customInspectSymbol];"
+  },
+  {
+   "file": "lib/internal/util/inspect.js",
+   "line": 1160,
+   "snippet": "const ret = FunctionPrototypeCall("
+  }
+ ],
+ "tp_search_summary": null,
+ "confidence": "medium",
+ "rationale": "AssertionError defines [inspect.custom], where inspect.custom = customInspectSymbol (inspect.js:411). formatValue reads value[customInspectSymbol] (a non-literal computed key) and invokes it via FunctionPrototypeCall(maybeCustom, context, ...), so any util.inspect of an AssertionError (e.g. in assert tests and error printing) reaches it. This is a function looked up on an object by a computed key and invoked, the intent of dynamic-property-keyed-callback; fp-novel is defensible since the invocation goes through a local plus FunctionPrototypeCall rather than a direct obj[key]() expression and is really a symbol-protocol hook.",
+ "prior_verdicts_assessment": "The prior regression verdict citing value[customInspectSymbol] in formatValue is correct in evidence and rule."
+}

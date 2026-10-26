@@ -1,0 +1,25 @@
+{
+ "case_id": "lodash--lodash__addEvent__L15062",
+ "gold_kind": "fp-classifier-regression",
+ "acceptable_kinds": [
+  "fp-classifier-regression",
+  "fp-novel"
+ ],
+ "gold_rule_id": "dynamic-new-function-dispatch",
+ "caller_evidence": [
+  {
+   "file": "vendor/firebug-lite/src/firebug-lite-debug.js",
+   "line": 14668,
+   "snippet": "blocks.push('addEvent(node, \"', this.listeners[i], '\", __bind__(this, ', arg, '), false);');"
+  },
+  {
+   "file": "vendor/firebug-lite/src/firebug-lite-debug.js",
+   "line": 14652,
+   "snippet": "eval(js);"
+  }
+ ],
+ "tp_search_summary": null,
+ "confidence": "medium",
+ "rationale": "This addEvent is a function declaration local to the domplate IIFE (lines ~14188-15323). The only reference inside that scope is the generated-source string at 14668, which flows via blocks -> fnBlock -> js into a direct eval(js) at 14652 inside the same IIFE, so the eval'd code calls this local addEvent. The bare addEvent(...) calls elsewhere (6943, 8284, 11280, ...) sit inside `with (FBL)` blocks and resolve to FBL.addEvent (this.addEvent at 2560), a different function. dynamic-new-function-dispatch describes exactly this string-to-eval call; eval-based-dynamic-dispatch is limited to dunder-named locals. fp-novel is also defensible because the same-named FBL.addEvent tokens in the file break that rule's literal 'only textual references' precondition.",
+ "prior_verdicts_assessment": "The eval-based-dynamic-dispatch regression verdict found the right caller but named the dunder-scoped rule rather than dynamic-new-function-dispatch. The two fp-novel verdicts are wrong on the evidence: the bare calls they cite resolve to FBL.addEvent via with(FBL), not this definition."
+}

@@ -1,0 +1,1331 @@
+{
+ "case_id": "tokio-rs--axum__clone__L327",
+ "strata": "rust/stable-tp",
+ "project": "tokio-rs--axum",
+ "github": "tokio-rs/axum",
+ "commit": "3d78036",
+ "source_run_id": "3d78036-2026-08-23T23-02-13.248Z",
+ "source_entry_index": 167,
+ "language": "rust",
+ "diagnosis": "callers-in-registry-unresolved",
+ "member_symbol": {
+  "file_path": "axum-extra/src/extract/cookie/signed.rs",
+  "name": "clone",
+  "kind": "method",
+  "start_line": 327
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "3d78036-2026-08-23T23-02-13.248Z",
+   "kind": "tp",
+   "rule": null,
+   "root_cause": "SignedCookieJar<K> is referenced nowhere outside signed.rs and its module re-export chain (grep for \"SignedCookieJar\" across the repo, including examples/, returns only the definition/export files and one test in cookie/mod.rs that never calls .clone() on a jar value), and the pre-gathered call-site",
+   "evidence": {
+    "file": "axum-extra/src/extract/cookie/signed.rs",
+    "line": 327,
+    "why": "SignedCookieJar<K> is referenced nowhere outside signed.rs and its module re-export chain (grep for \"SignedCookieJar\" across the repo, including examples/, returns only the definition/export files and one test in cookie/mod.rs that never calls .clone() on a jar value), and the pre-gathered call-site evidence for the name \"clone\" all resolves to unrelated clone methods on other structs (BoxCloneService, HandleErrorLayer, etc.) or to field clones like self.jar.clone()/self.key.clone() inside the same impl block, none of which invoke SignedCookieJar::clone."
+   },
+   "turns": null,
+   "usd": null
+  }
+ ],
+ "entry": {
+  "entry_index": 167,
+  "name": "clone",
+  "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum-extra/src/extract/cookie/signed.rs",
+  "start_line": 327,
+  "kind": "method",
+  "signature": "clone(self: SignedCookieJar): Self",
+  "diagnosis": "callers-in-registry-unresolved",
+  "is_exported": false,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/benches/benches.rs",
+     "line": 82,
+     "content": ".layer(Extension(state.clone()))",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/benches/benches.rs",
+     "line": 88,
+     "content": ".with_state(state.clone())",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/boxed.rs",
+     "line": 81,
+     "content": "Box::new(self.clone())",
+     "captures": [
+      "@reference.constructor",
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/boxed.rs",
+     "line": 99,
+     "content": "handler: self.handler.clone(),",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/boxed.rs",
+     "line": 116,
+     "content": "Box::new(self.clone())",
+     "captures": [
+      "@reference.constructor",
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/boxed.rs",
+     "line": 134,
+     "content": "router: self.router.clone(),",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/boxed.rs",
+     "line": 176,
+     "content": "Box::new(self.clone())",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/error_handling/mod.rs",
+     "line": 44,
+     "content": "f: self.f.clone(),",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/error_handling/mod.rs",
+     "line": 65,
+     "content": "HandleError::new(inner, self.f.clone())",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/error_handling/mod.rs",
+     "line": 96,
+     "content": "inner: self.inner.clone(),",
+     "captures": [
+      "@reference.call"
+     ]
+    }
+   ],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [],
+   "ariadne_call_refs": [
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/benches/benches.rs",
+     "call_line": 82,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "method_lookup",
+      "reason": "method_not_on_type",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/benches/benches.rs:93:1:96:1:AppState"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/benches/benches.rs",
+     "call_line": 88,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "method_lookup",
+      "reason": "method_not_on_type",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/benches/benches.rs:93:1:96:1:AppState"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "clone_box",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/boxed.rs",
+     "call_line": 81,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/boxed.rs:97:5:102:5:clone"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "clone",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/boxed.rs",
+     "call_line": 99,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "member_type_unknown",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/boxed.rs:70:1:73:1:MakeErasedHandler"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "clone_box",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/boxed.rs",
+     "call_line": 116,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/boxed.rs:132:5:137:5:clone"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "clone",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/boxed.rs",
+     "call_line": 134,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "member_type_unknown",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/boxed.rs:106:1:109:1:MakeErasedRouter"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "clone",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/error_handling/mod.rs",
+     "call_line": 44,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "member_type_unknown",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/error_handling/mod.rs:23:1:26:1:HandleErrorLayer"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "layer",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/error_handling/mod.rs",
+     "call_line": 65,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "member_type_unknown",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/error_handling/mod.rs:23:1:26:1:HandleErrorLayer"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "clone",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/error_handling/mod.rs",
+     "call_line": 96,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "member_type_unknown",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/error_handling/mod.rs:72:1:76:1:HandleError"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "clone",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/error_handling/mod.rs",
+     "call_line": 97,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "member_type_unknown",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/error_handling/mod.rs:72:1:76:1:HandleError"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "call",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/error_handling/mod.rs",
+     "call_line": 135,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "member_type_unknown",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/error_handling/mod.rs:72:1:76:1:HandleError"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "call",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/error_handling/mod.rs",
+     "call_line": 137,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "member_type_unknown",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/error_handling/mod.rs:72:1:76:1:HandleError"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "layer",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extension.rs",
+     "call_line": 149,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "method_not_on_type",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extension.rs:72:1:72:31:Extension"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "call",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extension.rs",
+     "call_line": 184,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "member_type_unknown",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extension.rs:164:1:167:1:AddExtension"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "clone",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extract/connect_info.rs",
+     "call_line": 59,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "member_type_unknown",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extract/connect_info.rs:28:1:31:1:IntoMakeServiceWithConnectInfo"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "call",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extract/connect_info.rs",
+     "call_line": 115,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "member_type_unknown",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extract/connect_info.rs:28:1:31:1:IntoMakeServiceWithConnectInfo"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "from_request_parts",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extract/connect_info.rs",
+     "call_line": 149,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extract/connect_info.rs:149:17:149:86"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "layer",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extract/connect_info.rs",
+     "call_line": 215,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "method_lookup",
+      "reason": "method_not_on_type",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extract/connect_info.rs:206:1:206:37:MockConnectInfo"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "append_nested_matched_path",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extract/matched_path.rs",
+     "call_line": 138,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extract/matched_path.rs:126:5:139:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "from_request_parts",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extract/matched_path.rs",
+     "call_line": 74,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extract/matched_path.rs:73:32:81:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "from_request_parts",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extract/nested_path.rs",
+     "call_line": 59,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extract/nested_path.rs:59:13:59:57"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "call",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extract/nested_path.rs",
+     "call_line": 97,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extract/nested_path.rs:96:28:100:13"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "call",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extract/nested_path.rs",
+     "call_line": 104,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extract/nested_path.rs:95:9:105:9"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extract/original_uri.rs",
+     "call_line": 79,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "receiver_type_unknown",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extract/original_uri.rs:79:29:79:66"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extract/path/mod.rs",
+     "call_line": 688,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extract/path/mod.rs:687:67:689:17"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extract/path/mod.rs",
+     "call_line": 718,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extract/path/mod.rs:718:45:718:72"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extract/path/mod.rs",
+     "call_line": 734,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extract/path/mod.rs:734:45:734:72"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extract/path/mod.rs",
+     "call_line": 753,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extract/path/mod.rs:753:45:753:72"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "from_request_extensions",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extract/path/mod.rs",
+     "call_line": 524,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extract/path/mod.rs:524:13:524:72"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "from_request_extensions",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extract/path/mod.rs",
+     "call_line": 526,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extract/path/mod.rs:525:13:528:21"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "test_echo_app",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extract/ws.rs",
+     "call_line": 1253,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "receiver_type_unknown",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extract/ws.rs:1246:62:1266:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "on_upgrade",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extract/ws.rs",
+     "call_line": 356,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "member_type_unknown",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extract/ws.rs:134:1:143:1:WebSocketUpgrade"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "from_request_parts",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extract/ws.rs",
+     "call_line": 463,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/extract/ws.rs:449:33:486:9"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "clone",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/handler/mod.rs",
+     "call_line": 309,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "member_type_unknown",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/handler/mod.rs:285:1:289:1:Layered"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "clone",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/handler/mod.rs",
+     "call_line": 310,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "member_type_unknown",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/handler/mod.rs:285:1:289:1:Layered"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "clone",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/handler/service.rs",
+     "call_line": 139,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "member_type_unknown",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/handler/service.rs:22:1:26:1:HandlerService"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "clone",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/handler/service.rs",
+     "call_line": 140,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "member_type_unknown",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/handler/service.rs:22:1:26:1:HandlerService"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "call",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/handler/service.rs",
+     "call_line": 170,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "member_type_unknown",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/handler/service.rs:22:1:26:1:HandlerService"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "call",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/handler/service.rs",
+     "call_line": 171,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "member_type_unknown",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/handler/service.rs:22:1:26:1:HandlerService"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "call",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/handler/service.rs",
+     "call_line": 198,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/handler/service.rs:137:5:143:5:clone"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "clone",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/middleware/from_extractor.rs",
+     "call_line": 121,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "member_type_unknown",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/middleware/from_extractor.rs:110:1:113:1:FromExtractorLayer"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "layer",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/middleware/from_extractor.rs",
+     "call_line": 148,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "member_type_unknown",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/middleware/from_extractor.rs:110:1:113:1:FromExtractorLayer"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "clone",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/middleware/from_extractor.rs",
+     "call_line": 177,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "member_type_unknown",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/middleware/from_extractor.rs:157:1:161:1:FromExtractor"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "clone",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/middleware/from_extractor.rs",
+     "call_line": 178,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "member_type_unknown",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/middleware/from_extractor.rs:157:1:161:1:FromExtractor"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "call",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/middleware/from_extractor.rs",
+     "call_line": 216,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "member_type_unknown",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/middleware/from_extractor.rs:157:1:161:1:FromExtractor"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "call",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/middleware/from_extractor.rs",
+     "call_line": 229,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "member_type_unknown",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/middleware/from_extractor.rs:157:1:161:1:FromExtractor"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "clone",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/middleware/from_fn.rs",
+     "call_line": 191,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "member_type_unknown",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/middleware/from_fn.rs:178:1:182:1:FromFnLayer"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "clone",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/middleware/from_fn.rs",
+     "call_line": 192,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "member_type_unknown",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/middleware/from_fn.rs:178:1:182:1:FromFnLayer"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "layer",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/middleware/from_fn.rs",
+     "call_line": 207,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "member_type_unknown",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/middleware/from_fn.rs:178:1:182:1:FromFnLayer"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "layer",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/middleware/from_fn.rs",
+     "call_line": 208,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "member_type_unknown",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/tokio-rs--axum/axum/src/middleware/from_fn.rs:178:1:182:1:FromFnLayer"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    }
+   ],
+   "diagnosis": "callers-in-registry-unresolved",
+   "has_uncaptured_indexed_grep_hit": true
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

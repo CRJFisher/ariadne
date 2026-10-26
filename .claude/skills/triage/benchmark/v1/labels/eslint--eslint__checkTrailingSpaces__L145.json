@@ -1,0 +1,11 @@
+{
+  "case_id": "eslint--eslint__checkTrailingSpaces__L145",
+  "gold_kind": "fp-classifier-regression",
+  "acceptable_kinds": ["fp-classifier-regression", "fp-novel"],
+  "gold_rule_id": "dispatch-table-value-registration",
+  "caller_evidence": [{ "file": "lib/linter/linter.js", "line": 678, "snippet": ": ruleListeners[selector];" }],
+  "tp_search_summary": null,
+  "confidence": "medium",
+  "rationale": "checkTrailingSpaces is the named function expression given as the `Program` value in the object literal returned by the rule's create(). Its name appears nowhere else. The linter iterates Object.keys(ruleListeners), fetches each listener through the computed key ruleListeners[selector] (linter.js:677-678), and registers it with the visitor, which invokes it during traversal; the rule tests exercise this path. This matches dispatch-table-value-registration's intent: a callback whose only mention is its value position in an object literal, invoked through a computed key on a line that does not bear its name. fp-novel is defensible because the value is an inline named function expression rather than an identifier reference, and the dispatch passes through the visitor emitter.",
+  "prior_verdicts_assessment": "Two of the three priors chose regression on dispatch-table-value-registration, which matches the gold. The fp-novel prior traced the same caller correctly but under-read the rule's scope."
+}

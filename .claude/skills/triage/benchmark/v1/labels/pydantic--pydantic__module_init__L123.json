@@ -1,0 +1,19 @@
+{
+  "case_id": "pydantic--pydantic__module_init__L123",
+  "gold_kind": "fp-classifier-regression",
+  "acceptable_kinds": [
+    "fp-classifier-regression"
+  ],
+  "gold_rule_id": "rust-macro-invocation-call",
+  "caller_evidence": [
+    {
+      "file": "pydantic-core/src/lib.rs",
+      "line": 122,
+      "snippet": "#[pymodule_init]"
+    }
+  ],
+  "tp_search_summary": null,
+  "confidence": "high",
+  "rationale": "module_init is annotated `#[pymodule_init]` inside the `#[pymodule(gil_used = false)] pub mod _pydantic_core` block. PyO3's proc-macro expansion generates the module initialiser that calls module_init when pydantic_core._pydantic_core is imported, and the repo's Python package performs that import. The call exists only after macro expansion. The in-scope rule rust-macro-invocation-call describes exactly this: custom proc macros expanding into calls invisible on the pre-expansion AST.",
+  "prior_verdicts_assessment": "The prior fp-classifier-regression verdict naming rust-macro-invocation-call is correct."
+}

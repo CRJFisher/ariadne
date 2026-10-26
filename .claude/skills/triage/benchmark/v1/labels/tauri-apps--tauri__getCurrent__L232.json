@@ -1,0 +1,13 @@
+{
+  "case_id": "tauri-apps--tauri__getCurrent__L232",
+  "gold_kind": "tp",
+  "acceptable_kinds": [
+    "tp"
+  ],
+  "gold_rule_id": null,
+  "caller_evidence": [],
+  "tp_search_summary": "Grepped the repo (excluding node_modules/.git/target) for 'getCurrent', 'Webview.getCurrent' and bracket-string access. Hits: webview.ts:284/446/464 are JSDoc @example lines; webviewWindow.ts:125 defines WebviewWindow's own static getCurrent (the flagged out-of-index site, which is a definition, not a call); examples/api/src/views/Window.svelte:19 calls WebviewWindow.getCurrent(), which resolves to WebviewWindow's own static method. applyMixins(WebviewWindow, [Window, Webview]) copies only prototype (instance) members, never statics, and WebviewWindow does not extend Webview, so Webview.getCurrent is not reached.",
+  "confidence": "high",
+  "rationale": "Static Webview.getCurrent has no in-repo invocation. The one textual out-of-index hit is the definition of a different static method on WebviewWindow. The example app's WebviewWindow.getCurrent() call dispatches to that class's own static, and the mixin copies only prototype members, so nothing reaches Webview's static.",
+  "prior_verdicts_assessment": "The single prior tp verdict is correct; it rightly dismissed the webviewWindow.ts:125 hit as a same-named sibling definition and the webview.ts:284 hit as JSDoc."
+}

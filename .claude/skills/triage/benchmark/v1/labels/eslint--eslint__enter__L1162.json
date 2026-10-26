@@ -1,0 +1,11 @@
+{
+  "case_id": "eslint--eslint__enter__L1162",
+  "gold_kind": "fp-novel",
+  "acceptable_kinds": ["fp-novel"],
+  "gold_rule_id": null,
+  "caller_evidence": [{ "file": "lib/shared/traverser.js", "line": 137, "snippet": "this._enter(node, parent);" }],
+  "tp_search_summary": null,
+  "confidence": "high",
+  "rationale": "enter is a shorthand method in the options object literal passed to Traverser.traverse(this.ast, {...}) in source-code.js. Traverser.traverse stores it as this._enter = options.enter (traverser.js:118), and _traverse invokes it as this._enter(node, parent) (traverser.js:137). callback-passed-to-invoker only matches a this./self. reference or .bind( in argument position, which is not this form. dispatch-table-value-registration requires invocation through a computed key, but here the call goes through the fixed property _enter. No in-scope rule covers callbacks carried in an options object and stored on an instance field.",
+  "prior_verdicts_assessment": "The two fp-novel priors are correct. The callback-passed-to-invoker regression prior over-extends that rule, whose textual discriminator (a this./self. reference or .bind) is absent here."
+}

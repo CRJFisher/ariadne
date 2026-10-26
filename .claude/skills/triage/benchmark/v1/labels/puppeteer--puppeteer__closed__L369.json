@@ -1,0 +1,13 @@
+{
+  "case_id": "puppeteer--puppeteer__closed__L369",
+  "gold_kind": "tp",
+  "acceptable_kinds": [
+    "tp"
+  ],
+  "gold_rule_id": null,
+  "caller_evidence": [],
+  "tp_search_summary": "Grepped every .ts/.js/.mjs/.cjs file in the repo (excluding node_modules) for `.closed`, `['closed']` and \"closed\". The only hits are in packages/puppeteer-core/src/bidi: Browser.ts:259 (this.connection.closed, the Connection type), CDPSession.ts:98 (#connection.closed), Frame.ts:469 (browsingContext.closed, the core BrowsingContext), the own-class this.closed reads in core/Browser.ts, BrowsingContext.ts, UserContext.ts and UserPrompt.ts, and Connection.test.ts (a mock transport field). None has an api/BrowserContext receiver, and nothing in tests/ or examples reads context.closed.",
+  "confidence": "high",
+  "rationale": "The `closed` getter on api/BrowserContext is public API surface for external consumers only. Every in-repo `.closed` access resolves to a same-named member on Connection, BrowsingContext, UserContext, UserPrompt, the bidi core Browser, or a test mock transport, never to a BrowserContext instance.",
+  "prior_verdicts_assessment": "The prior tp verdict is correct; the name collisions it cites are real and none reaches this getter."
+}

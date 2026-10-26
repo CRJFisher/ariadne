@@ -54,6 +54,7 @@ import {
   build_dispense_payload,
   type DispensePayload,
 } from "../src/dispense/dispense_payload.js";
+import { hints_for_diagnosis } from "../src/dispense/diagnosis_hints.js";
 import { load_registry } from "../src/known_issues_registry.js";
 import "@ariadnejs/skill-fs/require-node-import-tsx";
 
@@ -67,195 +68,6 @@ const THIS_FILE = fileURLToPath(import.meta.url);
 const THIS_DIR = path.dirname(THIS_FILE);
 const SKILL_DIR = path.resolve(THIS_DIR, "..");
 const TEMPLATE_PATH = path.join(SKILL_DIR, "templates", "prompt.md");
-
-// ===== Diagnosis-Specific Hints =====
-
-export interface DiagnosisHints {
-  title: string;
-  summary: string;
-  investigation_guide: string;
-}
-
-const GENERIC_HINTS: DiagnosisHints = {
-  title: "General Entry Point Analysis",
-  summary:
-    "No textual callers were found by grep, or this entry did not match a specific diagnosis category. A broad investigation is needed to determine whether Ariadne missed real callers.",
-  investigation_guide: [
-    "1. **Read the definition**:",
-    "",
-    "   - Read `{{entry.file_path}}` around line {{entry.start_line}} to understand the callable",
-    "   - Understand its purpose from context, comments, and naming",
-    "",
-    "2. **Search for callers using varied patterns**:",
-    "",
-    "   - For functions: `Grep` for `{{entry.name}}(` excluding the definition file",
-    "   - For methods: `Grep` for `.{{entry.name}}(` to catch any receiver",
-    "   - For constructors: `Grep` for `new ClassName(` patterns",
-    "   - Search for dynamic references: string literals, decorator usage, configuration files",
-    "   - Check test files: `Grep` for `{{entry.name}}` in `**/*.test.ts` and `**/*.spec.ts`",
-    "",
-    "3. **Check for indirect invocation patterns**:",
-    "",
-    "   - Is the function passed as a callback? Search for the function name without parentheses",
-    "   - Is it registered in a map/object/array? Search in configuration-like structures",
-    "   - Is it invoked via reflection or string-based dispatch?",
-    "   - Is it a method on a class used via interface/base class typing?",
-    "",
-    "4. **Cross-reference the pre-gathered Ariadne call references** in your prompt:",
-    "",
-    "   - The `Pre-Gathered Evidence → Ariadne call references` block lists every call site Ariadne saw, with `resolution_count`, `resolved_to`, `call_type`, and `caller_function` — this is Ariadne's view of the callers, no live query needed",
-    "",
-    "5. **Emit a verdict** using the schema in the **Output** section below: `tp` when no real callers exist, `fp-classifier-regression` when an in-scope rule's classifier should have caught the real caller, `fp-novel` for a detection gap no in-scope rule covers, or `uncertain` when you cannot reduce to a single kind.",
-  ].join("\n"),
-};
-
-const DIAGNOSIS_HINTS: Record<string, DiagnosisHints> = {
-  "callers-outside-indexed-corpus": {
-    title: "Callers Outside the Indexed Corpus",
-    summary:
-      "The caller exists, in a file that was discovered but never indexed — held out by a project-config `exclude`, left outside a `--folders` scope, or dropped by an indexing error. This is a statement about coverage, not about the member.",
-    investigation_guide: [
-      "1. **Read the out-of-index hits** in the evidence block. Each names a file the walk found and the index did not.",
-      "",
-      "2. **Decide which kind of gap it is**:",
-      "",
-      "   - A config `exclude` naming that directory — the exclude is deleting real call edges, and detection warns about this at startup when the directory is a test tree",
-      "   - A `--folders` scope that does not reach it",
-      "   - An indexing error — detection logs `failed to index` with the file name",
-      "",
-      "3. **Emit a verdict**: a real caller in an unindexed file is `fp-novel` with the coverage gap as the root cause. Fix the corpus, not the member.",
-    ].join("\n"),
-  },
-  "references-without-call-syntax": {
-    title: "Reached Without Call Syntax",
-    summary:
-      "Nothing calls this member with parens, but the indexed corpus does reference it — a getter read, a callback handed to an invoker, a dict or list registration value. The reference sites are in the evidence block; `grep_call_sites` is empty by construction, because these forms carry no `name(`.",
-    investigation_guide: [
-      "1. **Read the reference sites** above. Each carries the reference kind, the access type and the receiver form.",
-      "",
-      "2. **Decide whether the reference is an invocation route**:",
-      "",
-      "   - A callback passed to an invoker that later calls it ⇒ the member IS reached",
-      "   - A registration value in a table dispatched through a computed key ⇒ reached",
-      "   - A property read that never invokes ⇒ genuinely unreached",
-      "",
-      "3. **This is the classifier-author surface.** If the shape is a permanent limitation of static analysis, say so — the route is deterministic and a rule can be written for it.",
-      "",
-      "4. **Emit a verdict**: reached-by-reference ⇒ `fp-novel` naming the invocation route; never invoked ⇒ `tp`.",
-    ].join("\n"),
-  },
-  "callers-not-in-registry": {
-    title: "Callers Not in Registry",
-    summary:
-      "Textual grep found call sites for this function, but the calling files are not in Ariadne's file registry. The calls exist in the codebase but Ariadne never indexed the files containing them.",
-    investigation_guide: [
-      "1. **Examine the grep call sites** listed above. For each hit:",
-      "",
-      "   - Read the file at the call site to confirm it is an actual invocation (not a comment, string, or name collision)",
-      "   - Note the file path — is it a test file, config file, script, or source file?",
-      "",
-      "2. **Check if calling files are in the project scope**:",
-      "",
-      "   - Use `Glob` to verify the calling files exist in the repository",
-      "   - Check if the calling files are in directories that Ariadne excludes (e.g., `node_modules/`, `dist/`, `build/`, `.git/`)",
-      "   - Check if the calling files use a supported language/extension",
-      "",
-      "3. **Determine why the calling files were not indexed**:",
-      "",
-      "   - Are they in an excluded folder pattern?",
-      "   - Are they a file type Ariadne does not index (e.g., `.json`, `.yaml`, `.html`, `.vue` template section)?",
-      "   - Are they generated files in an output directory?",
-      "   - Are they in a separate package/workspace not included in the analysis scope?",
-      "",
-      "4. **Cross-reference the pre-gathered Ariadne call references** in your prompt:",
-      "",
-      "   - The `Pre-Gathered Evidence → Ariadne call references` block is Ariadne's view of the callers — if it is empty for this entry, that confirms the registry gap, no live query needed",
-      "",
-      "5. **Emit a verdict** using the schema in the **Output** section below: real callers in unindexed files ⇒ `fp-novel` (or `fp-classifier-regression` if an in-scope rule should have caught it); all grep hits false with no other callers ⇒ `tp`.",
-    ].join("\n"),
-  },
-  "callers-in-registry-unresolved": {
-    title: "Resolution Failure",
-    summary:
-      "Ariadne's file registry contains files with call references matching this function's name, but the resolution phase failed to resolve them to this definition. The calls are indexed but not linked.",
-    investigation_guide: [
-      "1. **Examine the Ariadne call references** listed above. For each reference:",
-      "",
-      "   - Note the `resolution_count` — if 0, the call was detected but resolution produced no targets",
-      "   - Note the `resolved_to` list — if empty, the reference is unresolved",
-      "   - Note the `call_type` — method calls, function calls, and constructor calls use different resolution strategies",
-      "",
-      "2. **Read the source code at the call sites**:",
-      "",
-      "   - Read the caller file at the call line to understand the invocation pattern",
-      "   - Identify the receiver expression (for method calls) or import path (for function calls)",
-      "   - Check if the call uses patterns that complicate resolution:",
-      "     - Aliased imports (`import { foo as bar }`)",
-      "     - Destructured assignments (`const { method } = object`)",
-      "     - Re-exports through barrel files (`export { foo } from './module.js'`)",
-      "     - Generic type parameters affecting method dispatch",
-      "     - Prototype chain or mixin patterns",
-      "",
-      "3. **Read the definition site**:",
-      "",
-      "   - Read `{{entry.file_path}}` around line {{entry.start_line}}",
-      "   - Check how the function is defined and exported",
-      "   - For methods: check the class hierarchy and whether the method is inherited or overridden",
-      "",
-      "4. **Cross-reference the pre-gathered Ariadne call references** in your prompt:",
-      "",
-      "   - The `Pre-Gathered Evidence → Ariadne call references` block lists every reference Ariadne resolved (or failed to resolve) — compare its `resolution_count` and `resolved_to` against the grep evidence to confirm the resolver, not the call detector, is at fault",
-      "",
-      "5. **Identify the resolution failure pattern**:",
-      "",
-      "   - Is this a name resolution failure (Ariadne cannot find the symbol by name)?",
-      "   - Is this a scope resolution failure (Ariadne finds the name but in the wrong scope)?",
-      "   - Is this a type resolution failure (method call on an untyped or dynamically-typed receiver)?",
-      "   - Is this an import resolution failure (import path not followed correctly)?",
-      "",
-      "6. **Emit a verdict** using the schema in the **Output** section below: resolution genuinely failed ⇒ `fp-novel` (or `fp-classifier-regression` if an in-scope rule should have caught it); name collision with no other callers ⇒ `tp`.",
-    ].join("\n"),
-  },
-  "callers-in-registry-wrong-target": {
-    title: "Wrong Resolution Target",
-    summary:
-      "Ariadne found call references matching this function's name and resolved them, but they resolved to a different symbol. The resolution phase linked the call to the wrong definition.",
-    investigation_guide: [
-      "1. **Examine the Ariadne call references** listed above. For each reference:",
-      "",
-      "   - Note the `resolved_to` list — these are the symbols the call resolved to (not this entry)",
-      "   - Note the `call_type` — method calls are most prone to wrong-target resolution",
-      "   - Compare the resolved targets with the entry under investigation",
-      "",
-      "2. **Read the source at the call sites**:",
-      "",
-      "   - Read the caller file at the call line to understand the invocation",
-      "   - Identify the receiver type (for method calls) or the import source (for function calls)",
-      "   - Determine which definition the call SHOULD resolve to",
-      "",
-      "3. **Read the resolved-to definitions**:",
-      "",
-      "   - For each symbol in `resolved_to`, find and read its definition",
-      "   - Compare it with the entry under investigation at `{{entry.file_path}}:{{entry.start_line}}`",
-      "   - Determine why Ariadne chose the wrong target:",
-      "     - Same method name on different classes (class hierarchy confusion)?",
-      "     - Function shadowing (local definition shadows imported one)?",
-      "     - Overloaded names across modules?",
-      "     - Interface vs implementation mismatch?",
-      "",
-      "4. **Read the entry definition**:",
-      "",
-      "   - Read `{{entry.file_path}}` around line {{entry.start_line}}",
-      "   - For methods: check the class hierarchy — is this an override, implementation, or base method?",
-      "",
-      "5. **Cross-reference the pre-gathered Ariadne call references** in your prompt:",
-      "",
-      "   - The `Pre-Gathered Evidence → Ariadne call references` block already lists every call site Ariadne saw with its `resolved_to` targets — confirm whether those targets point at this entry or somewhere else",
-      "",
-      "6. **Emit a verdict** using the schema in the **Output** section below: real callers resolved to the wrong target ⇒ `fp-novel` (or `fp-classifier-regression` if an in-scope rule should have caught it); resolved targets are correct and no other callers exist ⇒ `tp`.",
-    ].join("\n"),
-  },
-};
 
 // ===== CLI Argument Parsing =====
 
@@ -528,7 +340,7 @@ export interface SubstituteTemplateInput {
 
 export function substitute_template(input: SubstituteTemplateInput): string {
   const entry = input.payload.entry_context;
-  const hints = DIAGNOSIS_HINTS[entry.diagnosis] ?? GENERIC_HINTS;
+  const hints = hints_for_diagnosis(entry.diagnosis);
 
   const replacements: Record<string, string> = {
     "{{entry.name}}": entry.name,

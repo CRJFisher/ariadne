@@ -1,0 +1,111 @@
+{
+ "case_id": "angular--angular__any__L355",
+ "strata": "typescript/contested",
+ "project": "angular--angular",
+ "github": "angular/angular",
+ "commit": "5ad8231",
+ "source_run_id": "5ad8231-2026-07-26T22-12-58.133Z",
+ "source_entry_index": 578,
+ "language": "typescript",
+ "diagnosis": "callers-not-in-registry",
+ "member_symbol": {
+  "file_path": "packages/zone.js/lib/common/promise.ts",
+  "name": "any",
+  "kind": "method",
+  "start_line": 355
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "5ad8231-2026-07-26T21-36-25.528Z",
+   "kind": "tp",
+   "rule": null,
+   "root_cause": "ZoneAwarePromise.any is a public static method on zone.js's monkey-patched Promise class (installed via `global['Promise'] = ZoneAwarePromise` at line 585); a repo-wide grep for `Promise.any(` and `.any(` across zone.js source and tests finds only an unrelated BluebirdPromise.any call and a CHANGELO",
+   "evidence": {
+    "file": "packages/zone.js/lib/common/promise.ts",
+    "line": 355,
+    "why": "ZoneAwarePromise.any is a public static method on zone.js's monkey-patched Promise class (installed via `global['Promise'] = ZoneAwarePromise` at line 585); a repo-wide grep for `Promise.any(` and `.any(` across zone.js source and tests finds only an unrelated BluebirdPromise.any call and a CHANGELOG mention, with no call site anywhere in the codebase (including the promise.spec.ts test suite, which exercises resolve/reject/race/all but never `any`) that would invoke it, so it has no real in-repo caller."
+   },
+   "turns": null,
+   "usd": null
+  },
+  {
+   "run_id": "5ad8231-2026-07-26T22-12-58.133Z",
+   "kind": "fp-novel",
+   "rule": null,
+   "root_cause": "zone.js monkey-patches the global Promise constructor (`global['Promise'] = ZoneAwarePromise;` at packages/zone.js/lib/common/promise.ts:585), so `ZoneAwarePromise.any` is invoked whenever any patched application code calls the global `Promise.any(...)`; the receiver is the built-in `Promise` identi",
+   "evidence": {
+    "file": "packages/zone.js/lib/common/promise.ts",
+    "line": 585,
+    "why": "zone.js reassigns the global Promise binding to ZoneAwarePromise, so calls to Promise.any() anywhere in patched code invoke this static method with no static-analysis-visible call site."
+   },
+   "turns": null,
+   "usd": null
+  }
+ ],
+ "entry": {
+  "entry_index": 578,
+  "name": "any",
+  "file_path": "/home/node/.ariadne/triage-entrypoints/repos/angular--angular/packages/zone.js/lib/common/promise.ts",
+  "start_line": 355,
+  "kind": "method",
+  "signature": "any(values: Iterable<PromiseLike<T>>, err: any): Promise<T>",
+  "diagnosis": "callers-not-in-registry",
+  "is_exported": false,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/angular--angular/packages/common/http/src/fetch.ts",
+     "line": 94,
+     "content": "// TODO: Replace with AbortSignal.any([aborter.signal, AbortSignal.timeout(request.timeout)])",
+     "captures": []
+    },
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/angular--angular/packages/compiler/src/render3/view/api.ts",
+     "line": 394,
+     "content": "* Name under which the directive is exported, if any (exportAs in Angular). Null otherwise.",
+     "captures": []
+    },
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/angular--angular/packages/compiler/src/render3/view/t2_api.ts",
+     "line": 146,
+     "content": "* Name under which the directive is exported, if any (exportAs in Angular).",
+     "captures": []
+    },
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/angular--angular/packages/compiler/src/schema/dom_security_schema.ts",
+     "line": 183,
+     "content": "* @param namespace The namespace of the element, if any (e.g. 'svg' or 'math')",
+     "captures": []
+    },
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/angular--angular/packages/core/src/sanitization/dom_security_schema.ts",
+     "line": 183,
+     "content": "* @param namespace The namespace of the element, if any (e.g. 'svg' or 'math')",
+     "captures": []
+    },
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/angular--angular/packages/service-worker/worker/src/driver.ts",
+     "line": 488,
+     "content": "* @param action - The action string associated with the close event, if any (usually an empty string).",
+     "captures": []
+    }
+   ],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [],
+   "ariadne_call_refs": [],
+   "diagnosis": "callers-not-in-registry",
+   "has_uncaptured_indexed_grep_hit": true
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

@@ -1,0 +1,136 @@
+{
+ "case_id": "scikit-learn--scikit-learn____call____L444",
+ "strata": "python/stable-fp-classifier-regression",
+ "project": "scikit-learn--scikit-learn",
+ "github": "scikit-learn/scikit-learn",
+ "commit": "be5a8a8",
+ "source_run_id": "be5a8a8-2026-08-23T09-21-39.883Z",
+ "source_entry_index": 501,
+ "language": "python",
+ "diagnosis": "callers-in-registry-unresolved",
+ "member_symbol": {
+  "file_path": "sklearn/externals/_arff.py",
+  "name": "__call__",
+  "kind": "method",
+  "start_line": 444
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "be5a8a8-2026-08-23T09-21-39.883Z",
+   "kind": "fp-classifier-regression",
+   "rule": "dynamic-property-keyed-callback",
+   "root_cause": "NominalConversor instances are stored in self._conversors (built via conditional .append() at line 844) and later invoked implicitly as conversors[key](value) in COOData.decode_rows (line 539) and LODGeneratorData.decode_rows (line 599), a computed-index callable-instance call whose text never conta",
+   "evidence": {
+    "file": "sklearn/externals/_arff.py",
+    "line": 539,
+    "why": "NominalConversor instances are stored in self._conversors (built via conditional .append() at line 844) and later invoked implicitly as conversors[key](value) in COOData.decode_rows (line 539) and LODGeneratorData.decode_rows (line 599), a computed-index callable-instance call whose text never contains '__call__', so it matches the dynamic-property-keyed-callback pattern but was neither surfaced by the grep evidence nor linked by Ariadne's resolver."
+   },
+   "turns": null,
+   "usd": null
+  }
+ ],
+ "entry": {
+  "entry_index": 501,
+  "name": "__call__",
+  "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/scikit-learn--scikit-learn/sklearn/externals/_arff.py",
+  "start_line": 444,
+  "kind": "method",
+  "signature": "__call__(self: any, value: any): unknown",
+  "diagnosis": "callers-in-registry-unresolved",
+  "is_exported": false,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/scikit-learn--scikit-learn/doc/conf.py",
+     "line": 628,
+     "content": "title = super().__call__(filename)",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/scikit-learn--scikit-learn/sklearn/utils/parallel.py",
+     "line": 91,
+     "content": "return super().__call__(iterable_with_config_and_warning_filters)",
+     "captures": [
+      "@reference.call"
+     ]
+    }
+   ],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/scikit-learn--scikit-learn/sklearn/metrics/pairwise.py",
+     "line": 2687,
+     "content": "func = metric.__call__",
+     "reference_kind": "property_access",
+     "access_type": "property",
+     "receiver_kind": "identifier"
+    }
+   ],
+   "ariadne_call_refs": [
+    {
+     "caller_function": "__call__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/scikit-learn--scikit-learn/doc/conf.py",
+     "call_line": 628,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "no_parent_class",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/scikit-learn--scikit-learn/doc/conf.py:624:7:624:27:SKExampleTitleSortKey"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "__call__",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/scikit-learn--scikit-learn/sklearn/utils/parallel.py",
+     "call_line": 91,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "no_parent_class",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/scikit-learn--scikit-learn/sklearn/utils/parallel.py:41:7:41:14:Parallel"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    }
+   ],
+   "diagnosis": "callers-in-registry-unresolved",
+   "has_uncaptured_indexed_grep_hit": false
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

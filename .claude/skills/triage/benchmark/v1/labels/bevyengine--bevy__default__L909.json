@@ -1,0 +1,24 @@
+{
+ "case_id": "bevyengine--bevy__default__L909",
+ "gold_kind": "fp-classifier-regression",
+ "acceptable_kinds": [
+  "fp-classifier-regression"
+ ],
+ "gold_rule_id": "rust-macro-invocation-call",
+ "caller_evidence": [
+  {
+   "file": "crates/bevy_ecs/src/entity/mod.rs",
+   "line": 705,
+   "snippet": "#[derive(Default, Debug)]"
+  },
+  {
+   "file": "crates/bevy_ecs/src/world/mod.rs",
+   "line": 134,
+   "snippet": "entity_allocator: EntityAllocator::default(),"
+  }
+ ],
+ "tp_search_summary": null,
+ "confidence": "high",
+ "rationale": "EntityAllocator derives Default and its only field is `inner: remote_allocator::Allocator`, so the derive expansion calls Allocator::default(); World::default calls EntityAllocator::default(). rust-macro-invocation-call explicitly names #[derive(...)] expansion as the hidden-call pattern.",
+ "prior_verdicts_assessment": "The fp-classifier-regression verdict naming rust-macro-invocation-call is correct."
+}

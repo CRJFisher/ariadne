@@ -1,0 +1,19 @@
+{
+ "case_id": "rust-lang--rust__stop__L924",
+ "gold_kind": "fp-novel",
+ "acceptable_kinds": [
+  "fp-novel"
+ ],
+ "gold_rule_id": null,
+ "caller_evidence": [
+  {
+   "file": "src/ci/docker/scripts/fuchsia-test-runner.py",
+   "line": 1135,
+   "snippet": "test_env.stop()"
+  }
+ ],
+ "tp_search_summary": null,
+ "confidence": "high",
+ "rationale": "The module-level stop(args) does test_env = TestEnvironment.read_from_file(), a @classmethod that returns cls(...), and then calls test_env.stop(). TestEnvironment is the only class in the file with a stop method. The resolver cannot infer the return type of a classmethod returning cls(...) (receiver_type_unknown), and no in-scope rule describes that pattern.",
+ "prior_verdicts_assessment": "The prior fp-novel verdict is correct and names the right mechanism, the classmethod cls(...) factory return."
+}

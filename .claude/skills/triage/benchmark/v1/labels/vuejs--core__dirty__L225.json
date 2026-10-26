@@ -1,0 +1,13 @@
+{
+  "case_id": "vuejs--core__dirty__L225",
+  "gold_kind": "fp-novel",
+  "acceptable_kinds": ["fp-novel"],
+  "gold_rule_id": null,
+  "caller_evidence": [
+    { "file": "packages/reactivity/src/watch.ts", "line": 237, "snippet": "(!effect.dirty && !immediateFirstRun)" }
+  ],
+  "tp_search_summary": null,
+  "confidence": "high",
+  "rationale": "`dirty` is a `get` accessor on ReactiveEffect; watch.ts declares `let effect: ReactiveEffect` (line 146), assigns `new ReactiveEffect(getter)` (line 288), and reads `effect.dirty` inside the job at line 237, which runs the getter. Property reads of TypeScript getters are not captured as calls. The only getter-access rule (py-property-decorator-access) is Python-only, so no in-scope rule covers this.",
+  "prior_verdicts_assessment": "The prior fp-novel verdict is correct."
+}

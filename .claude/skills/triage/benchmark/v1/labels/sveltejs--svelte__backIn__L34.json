@@ -1,0 +1,13 @@
+{
+  "case_id": "sveltejs--svelte__backIn__L34",
+  "gold_kind": "tp",
+  "acceptable_kinds": [
+    "tp"
+  ],
+  "gold_rule_id": null,
+  "caller_evidence": [],
+  "tp_search_summary": "Grepped the whole repo (excluding node_modules/.git) for 'backIn' (excluding backInOut), for imports from 'svelte/easing' or '../easing/index.js', for namespace imports of easing, and for computed easing[...] lookups. Matches: the definition and the generated types/index.d.ts declaration only; in-repo easing imports pull only linear, cubicOut, elasticOut (docs), and transition/index.js uses its own local easings.",
+  "confidence": "high",
+  "rationale": "backIn is a public export of the svelte/easing subpath, but no in-repo source, test sample, playground or benchmark imports or calls it, and no namespace import or computed-key access to the easing module exists. Only external consumers could call it, so it is unreachable within the repo.",
+  "prior_verdicts_assessment": "The single prior tp verdict is correct."
+}

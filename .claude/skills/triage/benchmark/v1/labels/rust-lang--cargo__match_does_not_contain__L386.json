@@ -1,0 +1,24 @@
+{
+ "case_id": "rust-lang--cargo__match_does_not_contain__L386",
+ "gold_kind": "fp-novel",
+ "acceptable_kinds": [
+  "fp-novel"
+ ],
+ "gold_rule_id": null,
+ "caller_evidence": [
+  {
+   "file": "crates/cargo-test-support/src/lib.rs",
+   "line": 1180,
+   "snippet": "compare::match_does_not_contain(expect, stdout, self.assert.redactions())?;"
+  },
+  {
+   "file": "crates/cargo-test-support/src/lib.rs",
+   "line": 1183,
+   "snippet": "compare::match_does_not_contain(expect, stderr, self.assert.redactions())?;"
+  }
+ ],
+ "tp_search_summary": null,
+ "confidence": "high",
+ "rationale": "match_does_not_contain is pub(crate) and called directly via the compare:: module path twice in crates/cargo-test-support/src/lib.rs (expect_stdout_not_contains / expect_stderr_not_contains loops). That caller file sits outside the indexed corpus, so the missing edge is a coverage gap, which the definitions assign to fp-novel; no rule targets it.",
+ "prior_verdicts_assessment": "The single prior fp-novel verdict is correct and cites the right call sites."
+}

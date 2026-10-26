@@ -1,0 +1,19 @@
+{
+  "case_id": "rust-lang--cargo__bin_target__L873",
+  "gold_kind": "fp-novel",
+  "acceptable_kinds": [
+    "fp-novel"
+  ],
+  "gold_rule_id": null,
+  "caller_evidence": [
+    {
+      "file": "src/workspace/parser/targets.rs",
+      "line": 373,
+      "snippet": "let mut target = Target::bin_target("
+    }
+  ],
+  "tp_search_summary": null,
+  "confidence": "high",
+  "rationale": "to_bin_targets in parser/targets.rs calls `Target::bin_target(...)`. There, Target is imported via `use crate::workspace::{..., Target}`, which re-exports `self::manifest::Target` (workspace/mod.rs:4), and bin_target is defined in `impl Target` in manifest.rs. Ariadne recorded the call with resolution_count 0 because it does not follow an associated-function path through a `pub use` re-export. No in-scope rule (the macro rules or the dispatch rules) covers this.",
+  "prior_verdicts_assessment": "The prior fp-novel verdict is correct; its re-export diagnosis matches the source."
+}

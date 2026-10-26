@@ -1,0 +1,145 @@
+{
+ "case_id": "typeorm--typeorm__addColumns__L818",
+ "strata": "typescript/stable-fp-novel",
+ "project": "typeorm--typeorm",
+ "github": "typeorm/typeorm",
+ "commit": "281bfba",
+ "source_run_id": "281bfba-2026-07-26T23-12-26.182Z",
+ "source_entry_index": 49,
+ "language": "typescript",
+ "diagnosis": "callers-in-registry-wrong-target",
+ "member_symbol": {
+  "file_path": "src/driver/aurora-mysql/AuroraMysqlQueryRunner.ts",
+  "name": "addColumns",
+  "kind": "method",
+  "start_line": 818
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "281bfba-2026-07-26T23-12-26.182Z",
+   "kind": "fp-novel",
+   "rule": null,
+   "root_cause": "The real caller is `await this.queryRunner.addColumns(table, newTableColumns)` in RdbmsSchemaBuilder.ts:838, where `queryRunner` is typed as the `QueryRunner` interface implemented by every driver's QueryRunner class (AuroraMysql, Mysql, Postgres, Sqlite, etc.). Ariadne's resolver only linked the ca",
+   "evidence": {
+    "file": "/home/node/.ariadne/triage-entrypoints/repos/typeorm--typeorm/src/schema-builder/RdbmsSchemaBuilder.ts",
+    "line": 838,
+    "why": "This call site invokes addColumns through the QueryRunner interface type, which AuroraMysqlQueryRunner implements, but Ariadne resolved the call only to the Sqlite implementation's addColumns rather than to every implementing class."
+   },
+   "turns": null,
+   "usd": null
+  }
+ ],
+ "entry": {
+  "entry_index": 49,
+  "name": "addColumns",
+  "file_path": "/home/node/.ariadne/triage-entrypoints/repos/typeorm--typeorm/src/driver/aurora-mysql/AuroraMysqlQueryRunner.ts",
+  "start_line": 818,
+  "kind": "method",
+  "signature": "addColumns(tableOrName: Table | string, columns: TableColumn[]): Promise<void>",
+  "diagnosis": "callers-in-registry-wrong-target",
+  "is_exported": false,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/typeorm--typeorm/src/driver/cockroachdb/CockroachQueryRunner.ts",
+     "line": 1331,
+     "content": "async addColumns(",
+     "captures": []
+    },
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/typeorm--typeorm/src/driver/mongodb/MongoQueryRunner.ts",
+     "line": 978,
+     "content": "async addColumns(",
+     "captures": []
+    },
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/typeorm--typeorm/src/driver/mysql/MysqlQueryRunner.ts",
+     "line": 1067,
+     "content": "async addColumns(",
+     "captures": []
+    },
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/typeorm--typeorm/src/driver/oracle/OracleQueryRunner.ts",
+     "line": 1069,
+     "content": "async addColumns(",
+     "captures": []
+    },
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/typeorm--typeorm/src/driver/postgres/PostgresQueryRunner.ts",
+     "line": 1256,
+     "content": "async addColumns(",
+     "captures": []
+    },
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/typeorm--typeorm/src/driver/sap/SapQueryRunner.ts",
+     "line": 1293,
+     "content": "async addColumns(",
+     "captures": []
+    },
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/typeorm--typeorm/src/driver/spanner/SpannerQueryRunner.ts",
+     "line": 913,
+     "content": "async addColumns(",
+     "captures": []
+    },
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/typeorm--typeorm/src/driver/sqlite-abstract/AbstractSqliteQueryRunner.ts",
+     "line": 581,
+     "content": "return this.addColumns(table!, [column])",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/typeorm--typeorm/src/driver/sqlite-abstract/AbstractSqliteQueryRunner.ts",
+     "line": 590,
+     "content": "async addColumns(",
+     "captures": []
+    },
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/typeorm--typeorm/src/driver/sqlserver/SqlServerQueryRunner.ts",
+     "line": 1298,
+     "content": "async addColumns(",
+     "captures": []
+    }
+   ],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [],
+   "ariadne_call_refs": [
+    {
+     "caller_function": "addColumn",
+     "caller_file": "/home/node/.ariadne/triage-entrypoints/repos/typeorm--typeorm/src/driver/sqlite-abstract/AbstractSqliteQueryRunner.ts",
+     "call_line": 581,
+     "call_type": "method",
+     "resolution_count": 1,
+     "resolved_to": [
+      "method:/home/node/.ariadne/triage-entrypoints/repos/typeorm--typeorm/src/driver/sqlite-abstract/AbstractSqliteQueryRunner.ts:590:11:590:20:addColumns"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    }
+   ],
+   "diagnosis": "callers-in-registry-wrong-target",
+   "has_uncaptured_indexed_grep_hit": true
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

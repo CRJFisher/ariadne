@@ -1,0 +1,19 @@
+{
+ "case_id": "home-assistant--core__async_test_feature__L814",
+ "gold_kind": "fp-novel",
+ "acceptable_kinds": [
+  "fp-novel"
+ ],
+ "gold_rule_id": null,
+ "caller_evidence": [
+  {
+   "file": "homeassistant/components/humidifier/intent.py",
+   "line": 117,
+   "snippet": "intent.async_test_feature(state, HumidifierEntityFeature.MODES, \"modes\")"
+  }
+ ],
+ "tp_search_summary": null,
+ "confidence": "high",
+ "rationale": "The humidifier intent handler calls intent.async_test_feature directly (module-qualified call on the imported homeassistant.helpers.intent). The caller lives under homeassistant/components, which the project config excludes from indexing, so the edge is lost to a corpus coverage gap; per the verdict definitions that is fp-novel.",
+ "prior_verdicts_assessment": "The single prior fp-novel verdict is correct and cites the right caller and cause (components/ excluded)."
+}

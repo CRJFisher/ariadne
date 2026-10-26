@@ -1,0 +1,95 @@
+{
+ "case_id": "angular--angular__wrapHost__L92",
+ "strata": "typescript/contested",
+ "project": "angular--angular",
+ "github": "angular/angular",
+ "commit": "5ad8231",
+ "source_run_id": "5ad8231-2026-07-26T22-12-58.133Z",
+ "source_entry_index": 513,
+ "language": "typescript",
+ "diagnosis": "callers-not-in-registry",
+ "member_symbol": {
+  "file_path": "packages/compiler-cli/src/ngtsc/tsc_plugin.ts",
+  "name": "wrapHost",
+  "kind": "method",
+  "start_line": 92
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "5ad8231-2026-07-26T21-36-25.528Z",
+   "kind": "tp",
+   "rule": null,
+   "root_cause": "Grep for 'wrapHost' across the repo finds only the TscPlugin interface declaration (line 48), the implementation itself (line 92), and comment/error-string mentions (lines 97, 120) — no call site anywhere; NgTscPlugin (grepped separately, 4 hits: definition, README, index.ts export, changelog) is ex",
+   "evidence": {
+    "file": "packages/compiler-cli/src/ngtsc/tsc_plugin.ts",
+    "line": 92,
+    "why": "Grep for 'wrapHost' across the repo finds only the TscPlugin interface declaration (line 48), the implementation itself (line 92), and comment/error-string mentions (lines 97, 120) — no call site anywhere; NgTscPlugin (grepped separately, 4 hits: definition, README, index.ts export, changelog) is exported for consumption by the external @bazel/concatjs tsc_wrapped plugin host (per the file's own header comment), which lives outside this repository, so no in-repo caller of wrapHost exists."
+   },
+   "turns": null,
+   "usd": null
+  },
+  {
+   "run_id": "5ad8231-2026-07-26T22-12-58.133Z",
+   "kind": "fp-novel",
+   "rule": null,
+   "root_cause": "wrapHost is a method of the exported NgTscPlugin class implementing the TscPlugin interface, which the file's own comment states mirrors @bazel/concatjs's tsc_wrapped plugin_api; the class is exported from packages/compiler-cli/index.ts and invoked by the external Bazel tsc_wrapped toolchain outside",
+   "evidence": {
+    "file": "packages/compiler-cli/src/ngtsc/tsc_plugin.ts",
+    "line": 92,
+    "why": "wrapHost implements the TscPlugin interface method invoked externally by Bazel's tsc_wrapped plugin host; NgTscPlugin is exported publicly via packages/compiler-cli/index.ts and no in-repo caller invokes wrapHost directly (the line-48 grep hit is the interface declaration, not a call)."
+   },
+   "turns": null,
+   "usd": null
+  }
+ ],
+ "entry": {
+  "entry_index": 513,
+  "name": "wrapHost",
+  "file_path": "/home/node/.ariadne/triage-entrypoints/repos/angular--angular/packages/compiler-cli/src/ngtsc/tsc_plugin.ts",
+  "start_line": 92,
+  "kind": "method",
+  "signature": "wrapHost(host: ts.CompilerHost & Partial<UnifiedModulesHost>, inputFiles: readonly string[], options: ts.CompilerOptions): PluginCompilerHost",
+  "diagnosis": "callers-not-in-registry",
+  "is_exported": false,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/angular--angular/packages/compiler-cli/src/ngtsc/tsc_plugin.ts",
+     "line": 48,
+     "content": "wrapHost(",
+     "captures": []
+    },
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/angular--angular/packages/compiler-cli/src/ngtsc/tsc_plugin.ts",
+     "line": 97,
+     "content": "// TODO(alxhub): Eventually the `wrapHost()` API will accept the old `ts.Program` (if one is",
+     "captures": []
+    },
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/angular--angular/packages/compiler-cli/src/ngtsc/tsc_plugin.ts",
+     "line": 120,
+     "content": "throw new Error('Lifecycle error: setupCompilation() before wrapHost().');",
+     "captures": [
+      "@reference.constructor"
+     ]
+    }
+   ],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [],
+   "ariadne_call_refs": [],
+   "diagnosis": "callers-not-in-registry",
+   "has_uncaptured_indexed_grep_hit": true
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

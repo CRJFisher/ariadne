@@ -1,0 +1,19 @@
+{
+ "case_id": "Automattic--mongoose__setPopulatedVirtualValue__L13",
+ "gold_kind": "fp-novel",
+ "acceptable_kinds": [
+  "fp-novel"
+ ],
+ "gold_rule_id": null,
+ "caller_evidence": [
+  {
+   "file": "lib/schema.js",
+   "line": 2652,
+   "snippet": "return setPopulatedVirtualValue("
+  }
+ ],
+ "tp_search_summary": null,
+ "confidence": "high",
+ "rationale": "setPopulatedVirtualValue.js:13 is `module.exports = function setPopulatedVirtualValue(...)`, required at lib/schema.js:25 and called directly at schema.js:2652 inside a virtual setter callback. Ariadne resolved the call to the require-bound variable at schema.js:25 instead of the exported function. This is the CommonJS require/module.exports resolution gap, which no in-scope rule targets.",
+ "prior_verdicts_assessment": "All three prior fp-novel verdicts are correct. The first one's framing (nesting inside an anonymous callback) is off, since the ariadne_call_refs show the call was captured but resolved to the variable."
+}

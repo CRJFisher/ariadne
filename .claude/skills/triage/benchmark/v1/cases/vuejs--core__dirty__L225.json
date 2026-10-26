@@ -1,0 +1,70 @@
+{
+ "case_id": "vuejs--core__dirty__L225",
+ "strata": "typescript/stable-fp-novel",
+ "project": "vuejs--core",
+ "github": "vuejs/core",
+ "commit": "e2bede9",
+ "source_run_id": "e2bede9-2026-08-22T21-30-45.403Z",
+ "source_entry_index": 30,
+ "language": "typescript",
+ "diagnosis": "references-without-call-syntax",
+ "member_symbol": {
+  "file_path": "packages/reactivity/src/effect.ts",
+  "name": "dirty",
+  "kind": "method",
+  "start_line": 225
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "e2bede9-2026-08-22T21-30-45.403Z",
+   "kind": "fp-novel",
+   "rule": null,
+   "root_cause": "`dirty` is a `get` accessor on ReactiveEffect, invoked implicitly via the bare property read `effect.dirty` in watch.ts; Ariadne's call-reference gathering only links textual call-syntax (`name(`) and does not treat property access on a class getter as an invocation of its accessor body.",
+   "evidence": {
+    "file": "packages/reactivity/src/watch.ts",
+    "line": 237,
+    "why": "effect.dirty reads the get dirty(): boolean accessor defined in effect.ts:225, the only reference site in the corpus, confirmed via grep across reactivity/runtime-core sources."
+   },
+   "turns": null,
+   "usd": null
+  }
+ ],
+ "entry": {
+  "entry_index": 30,
+  "name": "dirty",
+  "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/vuejs--core/packages/reactivity/src/effect.ts",
+  "start_line": 225,
+  "kind": "method",
+  "signature": "dirty(): boolean",
+  "diagnosis": "references-without-call-syntax",
+  "is_exported": false,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/vuejs--core/packages/reactivity/src/watch.ts",
+     "line": 237,
+     "content": "(!effect.dirty && !immediateFirstRun)",
+     "reference_kind": "property_access",
+     "access_type": "property",
+     "receiver_kind": "identifier"
+    }
+   ],
+   "ariadne_call_refs": [],
+   "diagnosis": "references-without-call-syntax",
+   "has_uncaptured_indexed_grep_hit": false
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

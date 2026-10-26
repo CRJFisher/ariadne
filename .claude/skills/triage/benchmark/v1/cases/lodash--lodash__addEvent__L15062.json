@@ -1,0 +1,1137 @@
+{
+ "case_id": "lodash--lodash__addEvent__L15062",
+ "strata": "contested-extra",
+ "project": "lodash--lodash",
+ "github": "lodash/lodash",
+ "commit": "a666ba5",
+ "source_run_id": "a666ba5-2026-10-18T19-22-17.244Z",
+ "source_entry_index": 15,
+ "language": "javascript",
+ "diagnosis": "callers-in-registry-unresolved",
+ "member_symbol": {
+  "file_path": "vendor/firebug-lite/src/firebug-lite-debug.js",
+  "name": "addEvent",
+  "kind": "function",
+  "start_line": 15062
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "a666ba5-2026-07-26T11-39-06.307Z",
+   "kind": "fp-novel",
+   "rule": null,
+   "root_cause": "addEvent is a plain top-level function declaration inside the single master IIFE that wraps the whole firebug-lite-debug.js file; callers like waitMainWindow and the keydown/mousedown/unload registration code are themselves nested function expressions several closure levels deep within that same mas",
+   "evidence": {
+    "file": "vendor/firebug-lite/src/firebug-lite-debug.js",
+    "line": 11280,
+    "why": "waitMainWindow, a nested function inside the same master IIFE as addEvent's declaration, calls addEvent(Firebug.browser.window, \"unload\", chrome.persist) via normal lexical scoping, giving addEvent a real caller that Ariadne's resolver failed to link."
+   },
+   "turns": null,
+   "usd": null
+  },
+  {
+   "run_id": "a666ba5-2026-10-12T23-08-43.591Z",
+   "kind": "fp-classifier-regression",
+   "rule": "eval-based-dynamic-dispatch",
+   "root_cause": "addEvent (defined at line 15062, inside the Domplate IIFE spanning 14188-15323) is never called as a plain identifier anywhere in the file's static source; its only reference is as a string fragment pushed into `blocks` at line 14668 and later executed via `eval(js)` at line 14652 within the same en",
+   "evidence": {
+    "file": "vendor/firebug-lite/src/firebug-lite-debug.js",
+    "line": 14668,
+    "why": "addEvent (defined at line 15062, inside the Domplate IIFE spanning 14188-15323) is never called as a plain identifier anywhere in the file's static source; its only reference is as a string fragment pushed into `blocks` at line 14668 and later executed via `eval(js)` at line 14652 within the same enclosing closure (giving it access to the sibling `addEvent` function declaration) -- the identical eval-generated-call pattern the in-scope `eval-based-dynamic-dispatch` rule already documents for this file's `__link__`/`__loop__`/`__path__` locals, but that rule's classifier appears to key on dunder-style naming and missed this non-dunder-named instance of the same mechanism. All other textual `addEvent(...)`/`this.addEvent(...)` call sites in the file live in sibling IIFEs that do not lexically enclose this definition and so cannot reach it."
+   },
+   "turns": 19,
+   "usd": 0.1025
+  },
+  {
+   "run_id": "a666ba5-2026-10-18T19-22-17.244Z",
+   "kind": "fp-novel",
+   "rule": null,
+   "root_cause": "The bare function addEvent at line 15062 is declared within a nested IIFE and has a same-named method (this.addEvent) at line 2560; Ariadne's resolver failed to link multiple direct calls at lines 6943, 8284, 10364, etc. to the function definition due to scope resolution complexity in nested IIFEs.",
+   "evidence": {
+    "file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+    "line": 15062,
+    "why": "Real callers exist at multiple lines (6943, 8284, 10364, etc.) but are unresolved due to scope/name resolution failure in nested IIFE context"
+   },
+   "turns": 21,
+   "usd": 0.0824
+  }
+ ],
+ "entry": {
+  "entry_index": 15,
+  "name": "addEvent",
+  "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+  "start_line": 15062,
+  "kind": "function",
+  "signature": "addEvent(object: any, name: any, handler: any): unknown",
+  "diagnosis": "callers-in-registry-unresolved",
+  "is_exported": false,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "line": 2609,
+     "content": "this.addEvent(doc, name, handler);",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "line": 2612,
+     "content": "this.addEvent(this.Firebug.chrome.document, name, handler);",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "line": 2618,
+     "content": "this.addEvent(frame.document, name, handler);",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "line": 2704,
+     "content": "this.addEvent(e, \"selectstart\", disableTextSelectionHandler);",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "line": 2713,
+     "content": "this.addEvent(e, \"mousedown\", disableTextSelectionHandler);",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "line": 6943,
+     "content": "addEvent(this.containerNode, \"contextmenu\", this.onContextMenu);",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "line": 8284,
+     "content": "addEvent(Firebug.chrome.document, \"mousedown\", this.handleWindowMouseDown);",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "line": 10364,
+     "content": "addEvent(Firebug.chrome.document, \"keydown\", onKeyCodeListen);",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "line": 11189,
+     "content": "addEvent(Firebug.browser.window, \"unload\", this.persist);",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "line": 11280,
+     "content": "addEvent(Firebug.browser.window, \"unload\", chrome.persist);",
+     "captures": [
+      "@reference.call"
+     ]
+    }
+   ],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "line": 7639,
+     "content": "addEvent.apply(this, arg);",
+     "reference_kind": "variable_reference",
+     "access_type": "read"
+    }
+   ],
+   "ariadne_call_refs": [
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "call_line": 2609,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "no_enclosing_class_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js:2604:31:2625:1"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "call_line": 2612,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "no_enclosing_class_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js:2611:5:2612:67"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "call_line": 2618,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "no_enclosing_class_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js:2616:9:2623:9"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "call_line": 2704,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "no_enclosing_class_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js:2703:5:2714:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "call_line": 2713,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "receiver_resolution",
+      "reason": "no_enclosing_class_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js:2712:9:2713:71"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "call_line": 6943,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js:6907:25:6955:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "call_line": 8284,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js:8273:9:8284:87"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "call_line": 10364,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js:10146:25:10459:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "call_line": 11189,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js:11186:9:11194:14"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "waitMainWindow",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "call_line": 11280,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js:11257:21:11301:21"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "onHSplitterMouseDown",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "call_line": 11416,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js:11415:5:11416:93"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "call_line": 13721,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js:13706:30:13723:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "call_line": 13722,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js:13706:30:13723:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "call_line": 17569,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js:17563:30:17617:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "call_line": 17570,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js:17563:30:17617:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "call_line": 22241,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js:22220:30:22265:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "call_line": 22390,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js:22372:25:22406:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "call_line": 22391,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js:22372:25:22406:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "call_line": 22414,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js:22411:9:22415:9"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "call_line": 22419,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js:22408:30:22420:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "call_line": 23737,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js:23728:25:23739:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "call_line": 23738,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js:23728:25:23739:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "call_line": 23780,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js:23772:9:23809:9"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "call_line": 23782,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js:23772:9:23809:9"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "call_line": 23808,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js:23772:9:23809:9"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "call_line": 24565,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js:24562:25:24584:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "call_line": 24581,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js:24562:25:24584:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "call_line": 24582,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js:24562:25:24584:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "call_line": 24583,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js:24562:25:24584:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "call_line": 25228,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js:25215:32:25233:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "call_line": 25229,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js:25215:32:25233:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "call_line": 25230,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js:25215:32:25233:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "call_line": 27340,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js:27338:13:27343:13"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "call_line": 27377,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js:27375:29:27381:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "call_line": 27378,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js:27375:29:27381:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "call_line": 28889,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js:28882:25:28890:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "call_line": 29848,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js:29845:25:29849:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "call_line": 30297,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js:30290:25:30304:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "call_line": 30303,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js:30290:25:30304:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js",
+     "call_line": 30781,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/firebug-lite/src/firebug-lite-debug.js:30778:25:30787:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    }
+   ],
+   "diagnosis": "callers-in-registry-unresolved",
+   "has_uncaptured_indexed_grep_hit": false
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

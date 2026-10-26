@@ -1,0 +1,125 @@
+{
+ "case_id": "launchbadge--sqlx__clear_cached_statements__L210",
+ "strata": "rust/stable-fp-novel",
+ "project": "launchbadge--sqlx",
+ "github": "launchbadge/sqlx",
+ "commit": "1d674f5",
+ "source_run_id": "1d674f5-2026-07-28T14-27-50.303Z",
+ "source_entry_index": 248,
+ "language": "rust",
+ "diagnosis": "callers-in-registry-unresolved",
+ "member_symbol": {
+  "file_path": "sqlx-postgres/src/connection/mod.rs",
+  "name": "clear_cached_statements",
+  "kind": "method",
+  "start_line": 210
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "1d674f5-2026-07-28T14-27-50.303Z",
+   "kind": "fp-novel",
+   "rule": null,
+   "root_cause": "The integration test binary tests/postgres/postgres.rs (declared as a [[test]] target in Cargo.toml, name = \"postgres\") calls conn.clear_cached_statements().await? directly on a PgConnection value in it_caches_statements(); this is a plain, non-dynamic method call on a concretely-typed receiver, yet",
+   "evidence": {
+    "file": "/Users/chuck/.ariadne/triage-entrypoints/repos/launchbadge--sqlx/tests/postgres/postgres.rs",
+    "line": 780,
+    "why": "grep confirms a direct, unambiguous call to clear_cached_statements() on a concrete PgConnection receiver in a real Cargo [[test]] target, but this reference is absent from Ariadne's call reference list entirely."
+   },
+   "turns": null,
+   "usd": null
+  }
+ ],
+ "entry": {
+  "entry_index": 248,
+  "name": "clear_cached_statements",
+  "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/launchbadge--sqlx/sqlx-postgres/src/connection/mod.rs",
+  "start_line": 210,
+  "kind": "method",
+  "signature": "clear_cached_statements(self: PgConnection): Result<(), Error>",
+  "diagnosis": "callers-in-registry-unresolved",
+  "is_exported": false,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/launchbadge--sqlx/sqlx-core/src/any/connection/backend.rs",
+     "line": 70,
+     "content": "fn clear_cached_statements(&mut self) -> BoxFuture<'_, crate::Result<()>> {",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/launchbadge--sqlx/sqlx-core/src/any/connection/mod.rs",
+     "line": 134,
+     "content": "fn clear_cached_statements(&mut self) -> impl Future<Output = crate::Result<()>> + Send + '_ {",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/launchbadge--sqlx/sqlx-core/src/any/connection/mod.rs",
+     "line": 135,
+     "content": "self.backend.clear_cached_statements()",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/launchbadge--sqlx/sqlx-core/src/connection.rs",
+     "line": 141,
+     "content": "fn clear_cached_statements(&mut self) -> impl Future<Output = Result<(), Error>> + Send + '_",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/launchbadge--sqlx/sqlx-mysql/src/connection/mod.rs",
+     "line": 102,
+     "content": "async fn clear_cached_statements(&mut self) -> Result<(), Error> {",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/launchbadge--sqlx/sqlx-sqlite/src/connection/mod.rs",
+     "line": 267,
+     "content": "fn clear_cached_statements(&mut self) -> impl Future<Output = Result<(), Error>> + Send + '_ {",
+     "captures": []
+    }
+   ],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [],
+   "ariadne_call_refs": [
+    {
+     "caller_function": "clear_cached_statements",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/launchbadge--sqlx/sqlx-core/src/any/connection/mod.rs",
+     "call_line": 135,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "member_type_unknown",
+      "partial_info": {
+       "resolved_receiver_type": "class:/Users/chuck/.ariadne/triage-entrypoints/repos/launchbadge--sqlx/sqlx-core/src/any/connection/mod.rs:27:1:29:1:AnyConnection"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    }
+   ],
+   "diagnosis": "callers-in-registry-unresolved",
+   "has_uncaptured_indexed_grep_hit": true
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

@@ -1,0 +1,24 @@
+{
+ "case_id": "Automattic--mongoose__applyStatics__L9",
+ "gold_kind": "fp-novel",
+ "acceptable_kinds": [
+  "fp-novel"
+ ],
+ "gold_rule_id": null,
+ "caller_evidence": [
+  {
+   "file": "lib/model.js",
+   "line": 1044,
+   "snippet": "applyStatics(d, schema);"
+  },
+  {
+   "file": "lib/model.js",
+   "line": 5068,
+   "snippet": "applyStatics(model, schema);"
+  }
+ ],
+ "tp_search_summary": null,
+ "confidence": "high",
+ "rationale": "applyStatics.js:9 is `module.exports = function applyStatics(...)`, and lib/model.js:37 binds it via `const applyStatics = require('./helpers/model/applyStatics')`. The calls at model.js:1044 and 5068 invoke that binding, but Ariadne resolved them to the local require variable rather than following the CommonJS module.exports through to the function. No in-scope rule covers CommonJS require/module.exports resolution.",
+ "prior_verdicts_assessment": "All three prior fp-novel verdicts are correct and cite the right call sites and root cause."
+}

@@ -1,0 +1,86 @@
+{
+ "case_id": "ReactiveX--rxjs__constructor__L16",
+ "strata": "typescript/stable-regression",
+ "project": "ReactiveX--rxjs",
+ "github": "ReactiveX/rxjs",
+ "commit": "54796b3",
+ "source_run_id": "54796b3-2026-08-23T06-56-26.805Z",
+ "source_entry_index": 103,
+ "language": "typescript",
+ "diagnosis": "no-textual-callers",
+ "member_symbol": {
+  "file_path": "apps/rxjs.dev/src/app/custom-elements/resource/resource.service.ts",
+  "name": "constructor",
+  "kind": "constructor",
+  "start_line": 16
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "54796b3-2026-08-23T06-56-26.805Z",
+   "kind": "fp-classifier-regression",
+   "rule": "framework-component-decorator",
+   "root_cause": "ResourceService is an @Injectable() class, provided in resource-list.module.ts and constructor-injected into ResourceListComponent (resource-list.component.ts), which the DI runtime instantiates when the lazily-loaded ResourceListModule (dynamic import in element-registry.ts) is activated for the ai",
+   "evidence": {
+    "file": "apps/rxjs.dev/src/app/custom-elements/resource/resource.service.ts",
+    "line": 16,
+    "why": "ResourceService is an @Injectable() class, provided in resource-list.module.ts and constructor-injected into ResourceListComponent (resource-list.component.ts), which the DI runtime instantiates when the lazily-loaded ResourceListModule (dynamic import in element-registry.ts) is activated for the aio-resource-list custom element \u2014 a real caller with no static call site, matching the rule's described scope of 'similar framework class decorators register the class with the framework's dependency-injection runtime... constructor... invoked by the framework without an explicit call site,' but check_framework_component_decorator's `@Component*` regex does not match `@Injectable`, and its decorator-block scan (anchored to the constructor's own start_line, not the class's) would miss even an `@Component` decorator sitting above the class when the flagged entry is a constructor several lines below it."
+   },
+   "turns": null,
+   "usd": null
+  }
+ ],
+ "entry": {
+  "entry_index": 103,
+  "name": "constructor",
+  "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/ReactiveX--rxjs/apps/rxjs.dev/src/app/custom-elements/resource/resource.service.ts",
+  "start_line": 16,
+  "kind": "constructor",
+  "signature": "constructor(http: HttpClient)",
+  "diagnosis": "no-textual-callers",
+  "is_exported": false,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [],
+   "ariadne_call_refs": [
+    {
+     "caller_function": "globalOf",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/ReactiveX--rxjs/packages/observable-polyfill/test/wpt/upstream/resources/idlharness.js",
+     "call_line": 85,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "identifier",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "receiver_type_unknown",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/ReactiveX--rxjs/packages/observable-polyfill/test/wpt/upstream/resources/idlharness.js:81:5:87:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    }
+   ],
+   "diagnosis": "no-textual-callers",
+   "has_uncaptured_indexed_grep_hit": false
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

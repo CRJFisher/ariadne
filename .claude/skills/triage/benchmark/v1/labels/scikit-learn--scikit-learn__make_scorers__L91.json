@@ -1,0 +1,19 @@
+{
+ "case_id": "scikit-learn--scikit-learn__make_scorers__L91",
+ "gold_kind": "fp-novel",
+ "acceptable_kinds": [
+  "fp-novel"
+ ],
+ "gold_rule_id": null,
+ "caller_evidence": [
+  {
+   "file": "asv_benchmarks/benchmarks/common.py",
+   "line": 178,
+   "snippet": "self.make_scorers()"
+  }
+ ],
+ "tp_search_summary": null,
+ "confidence": "high",
+ "rationale": "Estimator.setup() (the asv setup hook) calls self.make_scorers(). Estimator is an ABC that does not define make_scorers, and GradientBoostingClassifierBenchmark (ensemble.py) inherits from Estimator and supplies the implementation, so the self call dispatches polymorphically to it. The resolver stops at method_not_on_type on the base class and does not look in subclass overrides. No in-scope rule covers self-dispatch to a subclass implementation.",
+ "prior_verdicts_assessment": "The prior fp-novel verdict is correct."
+}

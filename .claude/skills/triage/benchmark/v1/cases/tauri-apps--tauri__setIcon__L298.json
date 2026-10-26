@@ -1,0 +1,61 @@
+{
+ "case_id": "tauri-apps--tauri__setIcon__L298",
+ "strata": "typescript/stable-tp",
+ "project": "tauri-apps--tauri",
+ "github": "tauri-apps/tauri",
+ "commit": "56d19c3",
+ "source_run_id": "56d19c3-2026-08-23T08-58-38.879Z",
+ "source_entry_index": 383,
+ "language": "typescript",
+ "diagnosis": "no-textual-callers",
+ "member_symbol": {
+  "file_path": "packages/api/src/menu/submenu.ts",
+  "name": "setIcon",
+  "kind": "method",
+  "start_line": 298
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "56d19c3-2026-08-23T08-58-38.879Z",
+   "kind": "tp",
+   "rule": null,
+   "root_cause": "setIcon is a public method on the exported Submenu class of the published @tauri-apps/api npm package; a repo-wide grep for 'setIcon' finds only unrelated sibling setIcon methods on Window/IconMenuItem/TrayIcon and this definition, with zero in-repo callers in examples, tests, or the Rust plugin cod",
+   "evidence": {
+    "file": "packages/api/src/menu/submenu.ts",
+    "line": 298,
+    "why": "setIcon is a public method on the exported Submenu class of the published @tauri-apps/api npm package; a repo-wide grep for 'setIcon' finds only unrelated sibling setIcon methods on Window/IconMenuItem/TrayIcon and this definition, with zero in-repo callers in examples, tests, or the Rust plugin code, so it is only ever invoked by external consumer applications outside this repo."
+   },
+   "turns": null,
+   "usd": null
+  }
+ ],
+ "entry": {
+  "entry_index": 383,
+  "name": "setIcon",
+  "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/tauri-apps--tauri/packages/api/src/menu/submenu.ts",
+  "start_line": 298,
+  "kind": "method",
+  "signature": "setIcon(icon: MenuIcon | null): Promise<void>",
+  "diagnosis": "no-textual-callers",
+  "is_exported": false,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [],
+   "ariadne_call_refs": [],
+   "diagnosis": "no-textual-callers",
+   "has_uncaptured_indexed_grep_hit": false
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

@@ -1,0 +1,11 @@
+{
+  "case_id": "fastapi--fastapi__redirect_pydantic__L8",
+  "gold_kind": "fp-novel",
+  "acceptable_kinds": ["fp-novel"],
+  "gold_rule_id": null,
+  "caller_evidence": [{ "file": "tests/test_tutorial/test_custom_response/test_tutorial006c.py", "line": 10, "snippet": "response = client.get(\"/pydantic\", follow_redirects=False)" }],
+  "tp_search_summary": null,
+  "confidence": "high",
+  "rationale": "redirect_pydantic is registered through the in-repo FastAPI decorator @app.get(\"/pydantic\", ...). The tutorial test imports this module's app and issues client.get(\"/pydantic\"), and FastAPI's own router dispatches that request to the endpoint, so in-repo code drives the call. framework-flask-route is limited to Flask @app.route/@blueprint.route, and registration-decorator-dispatch explicitly excludes dotted HTTP-route shortcuts such as @app.post, so no in-scope rule covers it.",
+  "prior_verdicts_assessment": "The single prior verdict (fp-novel, FastAPI route registration exercised by the TestClient test) is correct."
+}

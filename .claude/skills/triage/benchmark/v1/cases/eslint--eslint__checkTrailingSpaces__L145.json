@@ -1,0 +1,87 @@
+{
+ "case_id": "eslint--eslint__checkTrailingSpaces__L145",
+ "strata": "javascript/contested",
+ "project": "eslint--eslint",
+ "github": "eslint/eslint",
+ "commit": "c27bc92",
+ "source_run_id": "c27bc92-2026-10-18T19-23-08.191Z",
+ "source_entry_index": 46,
+ "language": "javascript",
+ "diagnosis": "no-textual-callers",
+ "member_symbol": {
+  "file_path": "lib/rules/no-trailing-spaces.js",
+  "name": "checkTrailingSpaces",
+  "kind": "function",
+  "start_line": 145
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "c27bc92-2026-08-23T06-54-13.994Z",
+   "kind": "fp-classifier-regression",
+   "rule": "dispatch-table-value-registration",
+   "root_cause": "checkTrailingSpaces is a named function expression assigned as the value of the `Program` key in the object literal returned from create(); ESLint's linter core (lib/linter/linter.js, Object.keys(ruleListeners).forEach) invokes it via a computed selector-key lookup (ruleListeners[selector]) rather t",
+   "evidence": {
+    "file": "lib/rules/no-trailing-spaces.js",
+    "line": 145,
+    "why": "checkTrailingSpaces is a named function expression assigned as the value of the `Program` key in the object literal returned from create(); ESLint's linter core (lib/linter/linter.js, Object.keys(ruleListeners).forEach) invokes it via a computed selector-key lookup (ruleListeners[selector]) rather than a textual call bearing its name, matching the dispatch-table-value-registration pattern that the in-scope classifier failed to flag."
+   },
+   "turns": null,
+   "usd": null
+  },
+  {
+   "run_id": "c27bc92-2026-10-12T22-20-02.570Z",
+   "kind": "fp-novel",
+   "rule": null,
+   "root_cause": "checkTrailingSpaces is the Program handler returned from the rule's create(context) object; ESLint's own lib/linter/linter.js runRules() invokes it generically via Object.keys(ruleListeners).forEach(selector => visitor.add(selector, ruleListeners[selector])), so the callback is retrieved purely as a",
+   "evidence": {
+    "file": "lib/rules/no-trailing-spaces.js",
+    "line": 145,
+    "why": "Grepped the whole repo for 'checkTrailingSpaces' and found only its own definition; traced ESLint's linter.js runRules()/createRuleListeners() to confirm the real caller is the framework's generic, name-blind Object.keys dispatch over the rule's create() return object, not a static call site Ariadne could have resolved."
+   },
+   "turns": 18,
+   "usd": 0.1359
+  },
+  {
+   "run_id": "c27bc92-2026-10-18T19-23-08.191Z",
+   "kind": "fp-classifier-regression",
+   "rule": "dispatch-table-value-registration",
+   "root_cause": "Rule listeners are accessed via computed key property access in a forEach loop over selector names",
+   "evidence": {
+    "file": "/Users/chuck/.ariadne/triage-entrypoints/repos/eslint--eslint/lib/linter/linter.js",
+    "line": 677,
+    "why": "Rule listeners are accessed via computed key property access in a forEach loop over selector names"
+   },
+   "turns": 22,
+   "usd": 0.079
+  }
+ ],
+ "entry": {
+  "entry_index": 46,
+  "name": "checkTrailingSpaces",
+  "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/eslint--eslint/lib/rules/no-trailing-spaces.js",
+  "start_line": 145,
+  "kind": "function",
+  "signature": "checkTrailingSpaces(node: any): unknown",
+  "diagnosis": "no-textual-callers",
+  "is_exported": false,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [],
+   "ariadne_call_refs": [],
+   "diagnosis": "no-textual-callers",
+   "has_uncaptured_indexed_grep_hit": false
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

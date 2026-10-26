@@ -1,0 +1,143 @@
+{
+ "case_id": "lodash--lodash__throttled__L822",
+ "strata": "contested-extra",
+ "project": "lodash--lodash",
+ "github": "lodash/lodash",
+ "commit": "a666ba5",
+ "source_run_id": "a666ba5-2026-10-12T23-08-43.591Z",
+ "source_entry_index": 23,
+ "language": "javascript",
+ "diagnosis": "callers-outside-indexed-corpus",
+ "member_symbol": {
+  "file_path": "vendor/underscore/underscore.js",
+  "name": "throttled",
+  "kind": "function",
+  "start_line": 822
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "a666ba5-2026-07-26T11-39-06.307Z",
+   "kind": "fp-novel",
+   "rule": null,
+   "root_cause": "The `throttled` closure is returned from `_.throttle(func, wait, options)` and invoked by callers only through a locally renamed variable (e.g. `var throttledIncr = _.throttle(incr, 32); throttledIncr();`), so Ariadne's resolver, which links calls by the callee's declared name, never connects the re",
+   "evidence": {
+    "file": "vendor/underscore/test/functions.js",
+    "line": 200,
+    "why": "The test file requires the underscore package and calls _.throttle(...), then invokes the returned closure under a new local name, which is the real (but renamed-variable) call site for the throttled function at underscore.js:822."
+   },
+   "turns": null,
+   "usd": null
+  },
+  {
+   "run_id": "a666ba5-2026-10-12T23-08-43.591Z",
+   "kind": "tp",
+   "rule": null,
+   "root_cause": "The vendored underscore.js is never loaded with its own global binding anywhere that would exercise throttle: perf/perf.js loads this exact file as `_` but its hardcoded suites never call `.throttle`; test/underscore.html dynamically injects vendor/underscore/test/functions.js (which does call `_.th",
+   "evidence": {
+    "file": "vendor/underscore/underscore.js",
+    "line": 822,
+    "why": "The vendored underscore.js is never loaded with its own global binding anywhere that would exercise throttle: perf/perf.js loads this exact file as `_` but its hardcoded suites never call `.throttle`; test/underscore.html dynamically injects vendor/underscore/test/functions.js (which does call `_.throttle(...)` and invoke the returned closure as `throttledIncr`) but that harness sets `_` to `../lodash.js`, not this vendor file, so the call resolves to lodash's own throttle, not this closure; and the apparent `throttled()` call sites in test/test.js are lodash's own `_.throttle` test (a same-named but unrelated local variable) and that file is explicitly excluded from this project's indexed corpus. No code path in the repo actually invokes `_.throttle` on this vendored underscore object, so the inner `throttled` closure is genuinely unreachable."
+   },
+   "turns": 25,
+   "usd": 0.1185
+  }
+ ],
+ "entry": {
+  "entry_index": 23,
+  "name": "throttled",
+  "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/underscore/underscore.js",
+  "start_line": 822,
+  "kind": "function",
+  "signature": "throttled(): unknown",
+  "diagnosis": "callers-outside-indexed-corpus",
+  "is_exported": false,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [],
+   "grep_call_sites_outside_index": [
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/test/test.js",
+     "line": 22855,
+     "content": "throttled();",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/test/test.js",
+     "line": 22856,
+     "content": "throttled();",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/test/test.js",
+     "line": 22857,
+     "content": "throttled();",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/test/test.js",
+     "line": 22874,
+     "content": "results = [throttled('a'), throttled('b')];",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/test/test.js",
+     "line": 22874,
+     "content": "results = [throttled('a'), throttled('b')];",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/test/test.js",
+     "line": 22879,
+     "content": "var results = [throttled('c'), throttled('d')];",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/test/test.js",
+     "line": 22879,
+     "content": "var results = [throttled('c'), throttled('d')];",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/test/test.js",
+     "line": 22908,
+     "content": "throttled();",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/test/test.js",
+     "line": 22909,
+     "content": "throttled();",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/test/test.js",
+     "line": 22930,
+     "content": "throttled();",
+     "captures": []
+    }
+   ],
+   "reference_sites": [
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/lodash--lodash/vendor/underscore/underscore.js",
+     "line": 848,
+     "content": "return throttled;",
+     "reference_kind": "variable_reference",
+     "access_type": "read"
+    }
+   ],
+   "ariadne_call_refs": [],
+   "diagnosis": "callers-outside-indexed-corpus",
+   "has_uncaptured_indexed_grep_hit": false
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

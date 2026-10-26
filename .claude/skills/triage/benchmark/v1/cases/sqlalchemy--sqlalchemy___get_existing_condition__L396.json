@@ -1,0 +1,61 @@
+{
+ "case_id": "sqlalchemy--sqlalchemy___get_existing_condition__L396",
+ "strata": "python/stable-tp",
+ "project": "sqlalchemy--sqlalchemy",
+ "github": "sqlalchemy/sqlalchemy",
+ "commit": "aa1a557",
+ "source_run_id": "aa1a557-2026-07-27T21-51-18.254Z",
+ "source_entry_index": 1701,
+ "language": "python",
+ "diagnosis": "no-textual-callers",
+ "member_symbol": {
+  "file_path": "lib/sqlalchemy/orm/query.py",
+  "name": "_get_existing_condition",
+  "kind": "method",
+  "start_line": 396
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "aa1a557-2026-07-27T21-51-18.254Z",
+   "kind": "tp",
+   "rule": null,
+   "root_cause": "Repo-wide grep for '_get_existing_condition' across the whole sqlalchemy checkout returns only the definition line itself; its sibling _get_condition carries a 'used by legacy BakedQuery' docstring while this method has no such caller path remaining, so it is dead legacy code with no real invocation",
+   "evidence": {
+    "file": "lib/sqlalchemy/orm/query.py",
+    "line": 396,
+    "why": "Repo-wide grep for '_get_existing_condition' across the whole sqlalchemy checkout returns only the definition line itself; its sibling _get_condition carries a 'used by legacy BakedQuery' docstring while this method has no such caller path remaining, so it is dead legacy code with no real invocation anywhere."
+   },
+   "turns": null,
+   "usd": null
+  }
+ ],
+ "entry": {
+  "entry_index": 1701,
+  "name": "_get_existing_condition",
+  "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/sqlalchemy--sqlalchemy/lib/sqlalchemy/orm/query.py",
+  "start_line": 396,
+  "kind": "method",
+  "signature": "_get_existing_condition(self: any): None",
+  "diagnosis": "no-textual-callers",
+  "is_exported": false,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [],
+   "ariadne_call_refs": [],
+   "diagnosis": "no-textual-callers",
+   "has_uncaptured_indexed_grep_hit": false
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

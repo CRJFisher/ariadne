@@ -1,0 +1,13 @@
+{
+ "case_id": "babel--babel__cwrap__L298",
+ "gold_kind": "tp",
+ "acceptable_kinds": [
+  "tp"
+ ],
+ "gold_rule_id": null,
+ "caller_evidence": [],
+ "tp_search_summary": "Counted every 'cwrap' occurrence in .yarn/releases/yarn-4.17.0.cjs: 41 on line 148 and 5 on line 298. Line 148 belongs to the libzip Emscripten module (r.cwrap=ce; e.cwrap(\"zip_...\")), a different cwrap. The 5 on line 298 (the nbind/yoga Emscripten module) are the `var cwrap,ccall` declaration, `cwrap=function cwrap(` assignment and name, and `Module.cwrap=cwrap`; no invocation. No string-keyed \"cwrap\"/'cwrap' access exists; the nbind module's consumers use Module.ccall and Module._nbind_value, not cwrap.",
+ "confidence": "high",
+ "rationale": "The cwrap defined on line 298 belongs to the bundled nbind/yoga Emscripten glue and is only exported as Module.cwrap; nothing in the file or repository invokes it. All real cwrap calls on line 148 go to the separate libzip module's cwrap.",
+ "prior_verdicts_assessment": "Both tp verdicts are correct; the first correctly separated the two Emscripten cwrap helpers."
+}

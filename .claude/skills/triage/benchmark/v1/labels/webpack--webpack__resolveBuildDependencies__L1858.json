@@ -1,0 +1,14 @@
+{
+  "case_id": "webpack--webpack__resolveBuildDependencies__L1858",
+  "gold_kind": "fp-novel",
+  "acceptable_kinds": ["fp-novel"],
+  "gold_rule_id": null,
+  "caller_evidence": [
+    { "file": "lib/cache/PackFileCacheStrategy.js", "line": 1473, "snippet": "this.fileSystemInfo.resolveBuildDependencies(" },
+    { "file": "test/FileSystemInfo.unittest.js", "line": 1439, "snippet": "fsInfo.resolveBuildDependencies(" }
+  ],
+  "tp_search_summary": null,
+  "confidence": "high",
+  "rationale": "PackFileCacheStrategy assigns `this.fileSystemInfo = new FileSystemInfo(fs, {...})` (line 1161, JSDoc `@type {FileSystemInfo}`) and calls `this.fileSystemInfo.resolveBuildDependencies(...)` at line 1473; unit tests also call it on an instance returned by a factory. The resolver failed to infer the receiver type (receiver_type_unknown). That is a type-inference gap, and no in-scope rule targets it.",
+  "prior_verdicts_assessment": "Both prior fp-novel verdicts are correct; the first cites the decisive production caller precisely."
+}

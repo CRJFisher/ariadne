@@ -1,0 +1,68 @@
+{
+ "case_id": "celery--celery__enable_events__L667",
+ "strata": "python/stable-tp",
+ "project": "celery--celery",
+ "github": "celery/celery",
+ "commit": "7c5d9a6",
+ "source_run_id": "7c5d9a6-2026-07-28T09-18-21.550Z",
+ "source_entry_index": 712,
+ "language": "python",
+ "diagnosis": "callers-not-in-registry",
+ "member_symbol": {
+  "file_path": "celery/app/control.py",
+  "name": "enable_events",
+  "kind": "method",
+  "start_line": 667
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "7c5d9a6-2026-07-28T09-18-21.550Z",
+   "kind": "tp",
+   "rule": null,
+   "root_cause": "Repo-wide grep for `.enable_events(` and `enable_events` finds no production-code call site for Control.enable_events; the pre-gathered grep hit at celery/worker/control.py:345 is an unrelated function definition (the worker-side `def enable_events(state):` control-command handler invoked by name di",
+   "evidence": {
+    "file": "celery/app/control.py",
+    "line": 667,
+    "why": "Repo-wide grep for `.enable_events(` and `enable_events` finds no production-code call site for Control.enable_events; the pre-gathered grep hit at celery/worker/control.py:345 is an unrelated function definition (the worker-side `def enable_events(state):` control-command handler invoked by name dispatch, not a caller of this client-side broadcast method). The only actual callers are t/unit/app/test_control.py:383 and :387, which are test-only invocations, out of the production-code scope this diagnosis searches."
+   },
+   "turns": null,
+   "usd": null
+  }
+ ],
+ "entry": {
+  "entry_index": 712,
+  "name": "enable_events",
+  "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/celery--celery/celery/app/control.py",
+  "start_line": 667,
+  "kind": "method",
+  "signature": "enable_events(self: any, destination: any, kwargs: any): unknown",
+  "diagnosis": "callers-not-in-registry",
+  "is_exported": false,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/celery--celery/celery/worker/control.py",
+     "line": 345,
+     "content": "def enable_events(state):",
+     "captures": []
+    }
+   ],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [],
+   "ariadne_call_refs": [],
+   "diagnosis": "callers-not-in-registry",
+   "has_uncaptured_indexed_grep_hit": true
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

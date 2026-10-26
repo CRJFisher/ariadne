@@ -1,0 +1,61 @@
+{
+ "case_id": "actix--actix-web__listen_rustls_0_23__L997",
+ "strata": "rust/stable-tp",
+ "project": "actix--actix-web",
+ "github": "actix/actix-web",
+ "commit": "6e09fdf",
+ "source_run_id": "6e09fdf-2026-07-28T15-30-38.120Z",
+ "source_entry_index": 410,
+ "language": "rust",
+ "diagnosis": "no-textual-callers",
+ "member_symbol": {
+  "file_path": "actix-web/src/server.rs",
+  "name": "listen_rustls_0_23",
+  "kind": "method",
+  "start_line": 997
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "6e09fdf-2026-07-28T15-30-38.120Z",
+   "kind": "tp",
+   "rule": null,
+   "root_cause": "listen_rustls_0_23 is a public builder-pattern method on HttpServer (sibling of listen, listen_rustls, listen_rustls_0_21/0_22) exposed for external downstream consumers of the actix-web library; grep across the whole repo (src, tests, examples) finds no call site other than the definition, and it i",
+   "evidence": {
+    "file": "actix-web/src/server.rs",
+    "line": 997,
+    "why": "listen_rustls_0_23 is a public builder-pattern method on HttpServer (sibling of listen, listen_rustls, listen_rustls_0_21/0_22) exposed for external downstream consumers of the actix-web library; grep across the whole repo (src, tests, examples) finds no call site other than the definition, and it is not invoked via macro expansion, dynamic dispatch table, or computed property key, so no in-scope classifier rule applies."
+   },
+   "turns": null,
+   "usd": null
+  }
+ ],
+ "entry": {
+  "entry_index": 410,
+  "name": "listen_rustls_0_23",
+  "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/actix--actix-web/actix-web/src/server.rs",
+  "start_line": 997,
+  "kind": "method",
+  "signature": "listen_rustls_0_23(self: HttpServer, lst: net::TcpListener, config: actix_tls::accept::rustls_0_23::reexports::ServerConfig): io::Result<Self>",
+  "diagnosis": "no-textual-callers",
+  "is_exported": false,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [],
+   "ariadne_call_refs": [],
+   "diagnosis": "no-textual-callers",
+   "has_uncaptured_indexed_grep_hit": false
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

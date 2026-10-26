@@ -1,0 +1,24 @@
+{
+ "case_id": "celery--celery__enable_events__L667",
+ "gold_kind": "fp-novel",
+ "acceptable_kinds": [
+  "fp-novel"
+ ],
+ "gold_rule_id": null,
+ "caller_evidence": [
+  {
+   "file": "t/unit/app/test_control.py",
+   "line": 383,
+   "snippet": "self.app.control.enable_events()"
+  },
+  {
+   "file": "t/unit/app/test_control.py",
+   "line": 387,
+   "snippet": "self.app.control.enable_events(destination='a@q.com', limit=3)"
+  }
+ ],
+ "tp_search_summary": null,
+ "confidence": "high",
+ "rationale": "The unit tests call Control.enable_events through app.control (a cached_property returning Control). Celery's test_*.py files are outside the indexed corpus (259 of 418 .py files analyzed; only non-test helpers under t/ appear), so this is a coverage gap no rule targets. The worker/control.py:345 grep hit is an unrelated worker-side command handler, and the CLI uses broadcast(command) rather than this method.",
+ "prior_verdicts_assessment": "The tp verdict is wrong: it dismissed the unrelated worker handler correctly but missed the direct test calls in t/unit/app/test_control.py."
+}

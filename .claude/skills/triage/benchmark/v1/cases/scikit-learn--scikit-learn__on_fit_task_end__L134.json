@@ -1,0 +1,156 @@
+{
+ "case_id": "scikit-learn--scikit-learn__on_fit_task_end__L134",
+ "strata": "python/stable-fp-classifier-regression",
+ "project": "scikit-learn--scikit-learn",
+ "github": "scikit-learn/scikit-learn",
+ "commit": "be5a8a8",
+ "source_run_id": "be5a8a8-2026-08-23T09-21-39.883Z",
+ "source_entry_index": 462,
+ "language": "python",
+ "diagnosis": "callers-in-registry-wrong-target",
+ "member_symbol": {
+  "file_path": "sklearn/callback/_scoring_monitor.py",
+  "name": "on_fit_task_end",
+  "kind": "method",
+  "start_line": 134
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "be5a8a8-2026-08-23T09-21-39.883Z",
+   "kind": "fp-classifier-regression",
+   "rule": "dynamic-property-keyed-callback",
+   "root_cause": "ScoringMonitor instances are registered into an estimator's self._callbacks list (see tests/test_scoring_monitor.py) and CallbackContext._call_hooks dispatches every registered callback's hook via getattr(callback, hook_name)(...), where hook_name is a variable equal to the literal string 'on_fit_ta",
+   "evidence": {
+    "file": "sklearn/callback/_callback_context.py",
+    "line": 351,
+    "why": "ScoringMonitor instances are registered into an estimator's self._callbacks list (see tests/test_scoring_monitor.py) and CallbackContext._call_hooks dispatches every registered callback's hook via getattr(callback, hook_name)(...), where hook_name is a variable equal to the literal string 'on_fit_task_end' passed in by call_on_fit_task_end; the call site never spells the method name textually, so it never surfaces in the entry's grep_call_sites and the dynamic-property-keyed-callback classifier (which reasons over those grep lines) never sees it, even though its stated intent - a callback in a collection invoked through a non-literal computed key - covers exactly this pattern."
+   },
+   "turns": null,
+   "usd": null
+  }
+ ],
+ "entry": {
+  "entry_index": 462,
+  "name": "on_fit_task_end",
+  "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/scikit-learn--scikit-learn/sklearn/callback/_scoring_monitor.py",
+  "start_line": 134,
+  "kind": "method",
+  "signature": "on_fit_task_end(self: any, estimator: any, context: any, X: any, y: any, fitted_estimator: any, metadata: any): unknown",
+  "diagnosis": "callers-in-registry-wrong-target",
+  "is_exported": false,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/scikit-learn--scikit-learn/sklearn/callback/tests/_common/callbacks.py",
+     "line": 150,
+     "content": "super().on_fit_task_end(estimator, context)",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/scikit-learn--scikit-learn/sklearn/callback/tests/_common/callbacks.py",
+     "line": 164,
+     "content": "super().on_fit_task_end(estimator, context)",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/scikit-learn--scikit-learn/sklearn/callback/tests/_common/callbacks.py",
+     "line": 172,
+     "content": "super().on_fit_task_end(estimator, context, X=X, y=y)",
+     "captures": [
+      "@reference.call"
+     ]
+    }
+   ],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [],
+   "ariadne_call_refs": [
+    {
+     "caller_function": "on_fit_task_end",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/scikit-learn--scikit-learn/sklearn/callback/tests/_common/callbacks.py",
+     "call_line": 150,
+     "call_type": "method",
+     "resolution_count": 4,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/scikit-learn--scikit-learn/sklearn/callback/tests/_common/callbacks.py:53:9:53:23:on_fit_task_end",
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/scikit-learn--scikit-learn/sklearn/callback/tests/_common/callbacks.py:149:9:149:23:on_fit_task_end",
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/scikit-learn--scikit-learn/sklearn/callback/tests/_common/callbacks.py:163:9:163:23:on_fit_task_end",
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/scikit-learn--scikit-learn/sklearn/callback/tests/_common/callbacks.py:171:9:171:23:on_fit_task_end"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "on_fit_task_end",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/scikit-learn--scikit-learn/sklearn/callback/tests/_common/callbacks.py",
+     "call_line": 164,
+     "call_type": "method",
+     "resolution_count": 4,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/scikit-learn--scikit-learn/sklearn/callback/tests/_common/callbacks.py:53:9:53:23:on_fit_task_end",
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/scikit-learn--scikit-learn/sklearn/callback/tests/_common/callbacks.py:149:9:149:23:on_fit_task_end",
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/scikit-learn--scikit-learn/sklearn/callback/tests/_common/callbacks.py:163:9:163:23:on_fit_task_end",
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/scikit-learn--scikit-learn/sklearn/callback/tests/_common/callbacks.py:171:9:171:23:on_fit_task_end"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "on_fit_task_end",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/scikit-learn--scikit-learn/sklearn/callback/tests/_common/callbacks.py",
+     "call_line": 172,
+     "call_type": "method",
+     "resolution_count": 4,
+     "resolved_to": [
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/scikit-learn--scikit-learn/sklearn/callback/tests/_common/callbacks.py:53:9:53:23:on_fit_task_end",
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/scikit-learn--scikit-learn/sklearn/callback/tests/_common/callbacks.py:149:9:149:23:on_fit_task_end",
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/scikit-learn--scikit-learn/sklearn/callback/tests/_common/callbacks.py:163:9:163:23:on_fit_task_end",
+      "method:/Users/chuck/.ariadne/triage-entrypoints/repos/scikit-learn--scikit-learn/sklearn/callback/tests/_common/callbacks.py:171:9:171:23:on_fit_task_end"
+     ],
+     "receiver_kind": "self_keyword",
+     "resolution_failure": null,
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    }
+   ],
+   "diagnosis": "callers-in-registry-wrong-target",
+   "has_uncaptured_indexed_grep_hit": false
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

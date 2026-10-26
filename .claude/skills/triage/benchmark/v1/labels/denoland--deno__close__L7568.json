@@ -1,0 +1,15 @@
+{
+  "case_id": "denoland--deno__close__L7568",
+  "gold_kind": "fp-novel",
+  "acceptable_kinds": ["fp-novel"],
+  "gold_rule_id": null,
+  "caller_evidence": [
+    { "file": "ext/node/polyfills/internal/streams/pipeline.js", "line": 192, "snippet": "await writer.close();" },
+    { "file": "ext/node/polyfills/internal/webstreams/adapters.js", "line": 247, "snippet": "writer.close().then(done, done);" },
+    { "file": "ext/node/polyfills/internal/streams/compose.js", "line": 177, "snippet": "writer.close().catch(() => {});" }
+  ],
+  "tp_search_summary": null,
+  "confidence": "high",
+  "rationale": "The entry is WritableStreamDefaultWriter.prototype.close. Several in-repo Node polyfills obtain a writer via `const writer = writable.getWriter()` (e.g. pipeline.js:182, adapters.js:168, compose.js:162), and WritableStream.getWriter returns a WritableStreamDefaultWriter via acquireWritableStreamDefaultWriter, and then call writer.close(). The resolver cannot follow the return type of getWriter() on an untyped parameter receiver, and no in-scope rule describes return-type inference through a method call on an untyped receiver.",
+  "prior_verdicts_assessment": "The single prior verdict (fp-novel, citing pipeline.js:192 via the getWriter return chain) is correct."
+}

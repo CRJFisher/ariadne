@@ -1,0 +1,19 @@
+{
+ "case_id": "nestjs--nest__greeting__L27",
+ "gold_kind": "fp-classifier-regression",
+ "acceptable_kinds": [
+  "fp-classifier-regression"
+ ],
+ "gold_rule_id": "framework-lifecycle-dispatch",
+ "caller_evidence": [
+  {
+   "file": "integration/scopes/e2e/request-scope.spec.ts",
+   "line": 45,
+   "snippet": ".get('/hello')"
+  }
+ ],
+ "tp_search_summary": null,
+ "confidence": "high",
+ "rationale": "HelloController.greeting is a @Get() route handler in a @Controller('hello') class; the in-repo e2e test request-scope.spec.ts boots HelloModule via createNestApplication and issues GET /hello, which NestJS's in-repo router dispatches to the method via reflect-metadata. framework-lifecycle-dispatch describes exactly this @Get-decorated NestJS handler dispatch, yet the entry was not caught. All textual greeting( calls resolve to service methods, not this handler.",
+ "prior_verdicts_assessment": "The prior regression verdict with framework-lifecycle-dispatch is correct."
+}

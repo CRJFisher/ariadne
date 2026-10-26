@@ -1,0 +1,13 @@
+{
+  "case_id": "pandas-dev--pandas__setup__L241",
+  "gold_kind": "tp",
+  "acceptable_kinds": [
+    "tp"
+  ],
+  "gold_rule_id": null,
+  "caller_evidence": [],
+  "tp_search_summary": "Grepped the whole repo for 'SortIndex' (only the class definition in asv_bench/benchmarks/timeseries.py plus unrelated TestSeriesSortIndex/TestDataFrameSortIndex test classes), for imports of the benchmarks timeseries module (none; the only 'timeseries' import is pandas.plotting._matplotlib.timeseries), and for subclasses of SortIndex (none). All pre-gathered .setup( hits are other classes' def setup lines or super().setup(...) calls inside unrelated benchmark class hierarchies.",
+  "confidence": "high",
+  "rationale": "SortIndex.setup is an asv benchmark hook invoked only by the external asv harness via reflection. SortIndex is never referenced, imported or subclassed anywhere in the repo, so none of the super().setup(...) calls Ariadne linked (groupby.py, io/json.py, io/stata.py, strings.py) can reach it.",
+  "prior_verdicts_assessment": "The single prior tp verdict is correct; its reasoning that every textual .setup( call targets a different class checks out."
+}

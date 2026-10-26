@@ -1,9 +1,12 @@
 ---
 id: TASK-410
-title: Cut the cost of a triage run by an order of magnitude without losing verdict quality
+title: >-
+  Cut the cost of a triage run by an order of magnitude without losing verdict
+  quality
 status: To Do
 assignee: []
 created_date: "2026-10-19 22:30"
+updated_date: "2026-10-25 21:30"
 labels:
   - triage
   - performance
@@ -13,7 +16,7 @@ references:
   - TASK-190.23
   - TASK-190.43
 documentation:
-  - ~/.ariadne/triage-entrypoints/benchmark/v1/README.md
+  - .claude/skills/triage/benchmark/v1/README.md
   - ~/.ariadne/triage-entrypoints/benchmark/spikes/prompt-caching.md
 priority: high
 ---
@@ -65,7 +68,7 @@ Model price: the agent definition says `model: haiku`, which resolves to `claude
 
 Each change is gated by the benchmark below. Land them in this order, so each is measured on its own.
 
-1. **Benchmark harness first.** Move the curated suite into `.claude/skills/triage/benchmark/v1/`, including its `review/` label-review tool and the recorded `review/human_review.json`. Port `score.py` to a TypeScript scorer with tests. Eleven cases were recorded in a container, and their `entry` paths start with `/home/node/.ariadne/triage-entrypoints/repos/`. The runner rebases every `…/triage-entrypoints/repos/<project>/` prefix onto the local clone before it builds the investigator's context, as `review/serve.mjs` already does. Add a runner that replays every case through the investigator, with N repeats, and records verdicts plus per-case usage (USD, turns, input, cache and output tokens) under `~/.ariadne/triage-entrypoints/benchmark_runs/<ts>/`. Record a fresh baseline of today's configuration, two repeats. Run-to-run disagreement on the same entry is about 12%, so single runs are noise.
+1. **Benchmark harness first.** Move the curated suite into `.claude/skills/triage/benchmark/v1/`, with a review page where a human casts the deciding vote between the models' verdicts into `benchmark/v1/human_review.json`. Port `score.py` to a TypeScript scorer with tests. Eleven cases were recorded in a container, and their `entry` paths start with `/home/node/.ariadne/triage-entrypoints/repos/`. The runner rebases every `…/triage-entrypoints/repos/<project>/` prefix onto the local clone before it builds the investigator's context. Add a runner that replays every case through the investigator, with N repeats, and records verdicts plus per-case usage (USD, turns, input, cache and output tokens) under `~/.ariadne/triage-entrypoints/benchmark_runs/<ts>/`. Record a fresh baseline of today's configuration, two repeats. Run-to-run disagreement on the same entry is about 12%, so single runs are noise.
 2. **Deterministic dispatch loop.** One TypeScript script owns dispense → investigate → absorb → finalize. It runs a continuous pool of N concurrent investigators: no batch barrier, so concurrency is N, not N/2. It writes each verdict through the existing parser, and stops dispatching on a spend or rate-limit error instead of burning partial investigations (93 investigations in these runs died on the monthly spend limit). The skill agent does only what needs judgement, which is authoring a new project config. Phase 3–4 prose in `SKILL.md` collapses to one command. This removes the coordinator spend: $2.27 per run, 23% overall, up to 80% on small corpora. The script, not a Claude Code dynamic workflow, hosts this loop. A workflow agent carries the Claude Code harness and injected CLAUDE.md files, takes no turn cap, reports no per-agent usage, and returns `null` on a spend limit without saying why, so it rules out step 3 and the benchmark's cost reporting. TASK-190.23 applies dynamic workflows to `plan`'s strategist wave instead.
    - **Cache warm-up:** the shared prefix becomes readable only once the first response has started, so investigators launched together each pay the full cache write. Four simultaneous starts cost $0.0283; one lead followed by four cost $0.0130. At run start, and after any idle gap over 5 minutes, the loop dispatches one lead investigator and releases the rest after its first `assistant` message. The lead is a real investigation.
    - **Cache check:** for every investigation the loop records the turn-1 `cache_read_input_tokens` and `cache_creation_input_tokens`, plus `modelUsage` cost. It counts a `prefix_miss` when a non-lead investigation's turn-1 cache read is under 90% of the expected prefix, so a silent cache regression shows up in the run summary.
@@ -93,23 +96,24 @@ Projected effect: steps 3–4 cut investigator tokens by about 60%, step 5 cuts 
 
 ## Benchmark
 
-The curated suite has 63 cases across 37 corpora and four languages. It covers all six diagnosis routes and all three verdict kinds, with 9 distinct regression rules, plus contested, expensive and oversized-evidence cases. Each case freezes the exact `TriageEntry` and names the repo and commit. Source code stays in the existing `repos/` clones, so the suite is 1.3 MB (184 KB gzipped). Gold labels come from independent Opus adjudication against source: 48 high confidence, 15 medium. The recorded Haiku 4.5 verdicts score 92.1% on verdict kind and 72.5% on caller-file evidence. The suite is staged at `~/.ariadne/triage-entrypoints/benchmark/v1/`; its README documents the contents, the labelling protocol, and the gate.
+The curated suite has 63 cases across 37 corpora and four languages. It covers all six diagnosis routes and all three verdict kinds, with 9 distinct regression rules, plus contested, expensive and oversized-evidence cases. Each case freezes the exact `TriageEntry` and names the repo and commit. Source code stays in the existing `repos/` clones, so the suite is 1.3 MB (184 KB gzipped). Gold labels come from independent Opus adjudication against source: 48 high confidence, 15 medium. The 89 verdicts recorded from earlier pipeline runs (76 Sonnet, 13 Haiku 4.5) score 92.1% on verdict kind and 72.5% on caller-file evidence. The suite lives in `.claude/skills/triage/benchmark/v1/`; its README documents the contents, the runner, the scorer, the review page, the labelling protocol, and the gate.
+
+The baseline is today's configuration, the investigator on `claude-haiku-4-5`, over two repeats (126 replays). It scores 86.5% on verdict kind, 77.0% on exact gold kind, 92.9% on rule id and 61.0% on caller-file evidence. It makes 3 `fp-* → tp` errors and leaves 6 replays without a valid verdict. Investigator cost is $0.104 per investigation (median $0.096, p90 $0.156) over 14 median turns. The same pipeline with only the model set to `claude-haiku-5-5` costs $0.0052 per investigation over 6 median turns, about 20× less, and scores 87.3% on verdict kind. It does not pass the gate on its own, because `fp-* → tp` errors rise to 4 and caller-file evidence falls to 28.0%. The benchmark README holds the full table and the run directories.
 
 A change passes when, over two repeats:
 
 - Verdict-kind accuracy stays within 2 points of the baseline.
 - `fp-* → tp` errors do not rise.
 - Rule-id accuracy does not fall.
-- Every case gets a valid verdict.
-
+- Missing or invalid verdicts do not rise.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
 
 <!-- AC:BEGIN -->
 
-- [ ] #1 The benchmark suite, its label-review tool, a tested TypeScript scorer, and a replay runner live under `.claude/skills/triage/benchmark/`, and a baseline of the current configuration (two repeats, with usage) is recorded
-- [ ] #2 A human has reviewed the 15 flagged labels (all medium confidence; 14 of them list two acceptable kinds) in the review tool, and every amendment in `review/human_review.json` is applied to `labels/`
+- [x] #1 The benchmark suite, its label-review tool, a tested TypeScript scorer, and a replay runner live under `.claude/skills/triage/benchmark/`, and a baseline of the current configuration (two repeats, with usage) is recorded
+- [ ] #2 A human has reviewed the 15 flagged labels (all medium confidence; 14 of them list two acceptable kinds) in the review tool, and every amendment in `benchmark/v1/human_review.json` is applied to `labels/`
 - [ ] #3 One deterministic script runs dispense, investigation and finalize with a continuous pool, warms the cache with one lead investigator at start and after idle gaps, records turn-1 cache usage and a `prefix_miss` count per run, and stops cleanly on spend or rate-limit errors; no agent coordinates Phases 3–4
 - [ ] #4 Investigators run with a constant purpose-written system prompt, the entry context in the first message, `Read`/`Grep`/`submit_verdict` only, a turn cap, a pinned SDK version, an explicit 5-minute cache TTL and a fixed session title; `.claude/agents/triage-investigator.md` is removed
 - [ ] #5 The entry-context bundle is bounded (rules as one line each, static instructions in the system prompt, capped evidence lists with explicit overflow counts) and coordinated with TASK-190.43 #1

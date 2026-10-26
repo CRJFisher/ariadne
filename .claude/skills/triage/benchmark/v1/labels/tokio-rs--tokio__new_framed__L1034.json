@@ -1,0 +1,11 @@
+{
+  "case_id": "tokio-rs--tokio__new_framed__L1034",
+  "gold_kind": "tp",
+  "acceptable_kinds": ["tp", "fp-novel"],
+  "gold_rule_id": null,
+  "caller_evidence": [],
+  "tp_search_summary": "Grepped the whole tokio checkout for `new_framed`: the only hits are the definition (length_delimited.rs:1034) and its own rustdoc example line (`///     .new_framed(io);`, line 1030). No call in tokio-util/tests (length_delimited.rs uses new_read/new_write only), benches, examples, or other crates; no macro or trait indirection involves this inherent Builder method.",
+  "confidence": "medium",
+  "rationale": "`Builder::new_framed` is a public inherent method with no invocation anywhere in source, tests, examples or benches. The single textual hit is the doctest inside its own doc comment. Treated as tp because a self-documenting doctest is documentation rather than an in-repo code path; fp-novel is listed as acceptable because doctests are compiled and run by `cargo test --doc`, so a reviewer could count it as an unindexed test caller.",
+  "prior_verdicts_assessment": "The single prior tp verdict is correct and its evidence (only the rustdoc example matches) checks out."
+}

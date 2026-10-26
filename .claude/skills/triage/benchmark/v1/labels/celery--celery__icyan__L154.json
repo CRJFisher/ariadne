@@ -1,0 +1,11 @@
+{
+  "case_id": "celery--celery__icyan__L154",
+  "gold_kind": "fp-classifier-regression",
+  "acceptable_kinds": ["fp-classifier-regression", "fp-novel"],
+  "gold_rule_id": "dynamic-property-keyed-callback",
+  "caller_evidence": [{ "file": "t/unit/utils/test_term.py", "line": 39, "snippet": "assert str(getattr(colored(), name)('f'))" }],
+  "tp_search_summary": null,
+  "confidence": "medium",
+  "rationale": "The only reference to icyan outside its definition is the string 'icyan' in the parametrize list of test_modifiers (t/unit/utils/test_term.py:36), which feeds getattr(colored(), name)('f') at line 39, a real invocation of colored.icyan through a computed attribute name. dynamic-property-keyed-callback (python in scope) describes invocation via obj[name]() with a non-literal key; getattr(obj, name)() is the Python form of that pattern. fp-novel is defensible because the rule's examples are subscript-based rather than getattr.",
+  "prior_verdicts_assessment": "The single prior verdict (fp-classifier-regression, dynamic-property-keyed-callback) is correct and cites the right test line."
+}

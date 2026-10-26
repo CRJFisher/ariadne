@@ -1,0 +1,187 @@
+{
+ "case_id": "microsoft--TypeScript__mkdirSync__L503",
+ "strata": "typescript/stable-tp",
+ "project": "microsoft--TypeScript",
+ "github": "microsoft/TypeScript",
+ "commit": "cc5c6e2",
+ "source_run_id": "cc5c6e2-2026-07-26T18-53-24.551Z",
+ "source_entry_index": 155,
+ "language": "typescript",
+ "diagnosis": "callers-in-registry-unresolved",
+ "member_symbol": {
+  "file_path": "src/harness/vfsUtil.ts",
+  "name": "mkdirSync",
+  "kind": "method",
+  "start_line": 503
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "cc5c6e2-2026-07-26T18-53-24.551Z",
+   "kind": "tp",
+   "rule": null,
+   "root_cause": "All 4 textual hits for mkdirSync (sys.ts:1550,1702, tracing.ts:79, harnessIO.ts:106) resolve to Node's native fs/_fs module (imported via `import fs from \"fs\"` or `import * as _fs`), not this FileSystem class's method; a repo-wide search found no `vfs.FileSystem` instance ever invoking `.mkdirSync(.",
+   "evidence": {
+    "file": "src/harness/vfsUtil.ts",
+    "line": 503,
+    "why": "All 4 textual hits for mkdirSync (sys.ts:1550,1702, tracing.ts:79, harnessIO.ts:106) resolve to Node's native fs/_fs module (imported via `import fs from \"fs\"` or `import * as _fs`), not this FileSystem class's method; a repo-wide search found no `vfs.FileSystem` instance ever invoking `.mkdirSync(...)` (only `.readFileSync`/`.writeFileSync` are used on such instances), so the method — which exists only to mirror Node's fs API surface per its own comment — is genuinely uncalled."
+   },
+   "turns": null,
+   "usd": null
+  }
+ ],
+ "entry": {
+  "entry_index": 155,
+  "name": "mkdirSync",
+  "file_path": "/home/node/.ariadne/triage-entrypoints/repos/microsoft--TypeScript/src/harness/vfsUtil.ts",
+  "start_line": 503,
+  "kind": "method",
+  "signature": "mkdirSync(path: string): void",
+  "diagnosis": "callers-in-registry-unresolved",
+  "is_exported": false,
+  "access_modifier": "public",
+  "diagnostics": {
+   "grep_call_sites": [
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/microsoft--TypeScript/src/compiler/sys.ts",
+     "line": 1550,
+     "content": "_fs.mkdirSync(directoryName);",
+     "captures": []
+    },
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/microsoft--TypeScript/src/compiler/sys.ts",
+     "line": 1702,
+     "content": "_fs.mkdirSync(_path.dirname(profilePath), { recursive: true });",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/microsoft--TypeScript/src/compiler/tracing.ts",
+     "line": 79,
+     "content": "fs.mkdirSync(traceDir, { recursive: true });",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/home/node/.ariadne/triage-entrypoints/repos/microsoft--TypeScript/src/harness/harnessIO.ts",
+     "line": 106,
+     "content": "fs.mkdirSync(path);",
+     "captures": []
+    }
+   ],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [],
+   "ariadne_call_refs": [
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/home/node/.ariadne/triage-entrypoints/repos/microsoft--TypeScript/src/compiler/sys.ts",
+     "call_line": 1702,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "identifier",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "receiver_type_unknown",
+      "partial_info": {
+       "last_known_scope": "block:/home/node/.ariadne/triage-entrypoints/repos/microsoft--TypeScript/src/compiler/sys.ts:1701:25:1706:25"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/home/node/.ariadne/triage-entrypoints/repos/microsoft--TypeScript/src/compiler/sys.ts",
+     "call_line": 1702,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "identifier",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "receiver_type_unknown",
+      "partial_info": {
+       "last_known_scope": "block:/home/node/.ariadne/triage-entrypoints/repos/microsoft--TypeScript/src/compiler/sys.ts:1701:25:1706:25"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "startTracing",
+     "caller_file": "/home/node/.ariadne/triage-entrypoints/repos/microsoft--TypeScript/src/compiler/tracing.ts",
+     "call_line": 79,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "identifier",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "receiver_type_unknown",
+      "partial_info": {
+       "last_known_scope": "block:/home/node/.ariadne/triage-entrypoints/repos/microsoft--TypeScript/src/compiler/tracing.ts:78:9:80:9"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "startTracing",
+     "caller_file": "/home/node/.ariadne/triage-entrypoints/repos/microsoft--TypeScript/src/compiler/tracing.ts",
+     "call_line": 79,
+     "call_type": "method",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "identifier",
+     "resolution_failure": {
+      "stage": "type_inference",
+      "reason": "receiver_type_unknown",
+      "partial_info": {
+       "last_known_scope": "block:/home/node/.ariadne/triage-entrypoints/repos/microsoft--TypeScript/src/compiler/tracing.ts:78:9:80:9"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    }
+   ],
+   "diagnosis": "callers-in-registry-unresolved",
+   "has_uncaptured_indexed_grep_hit": true
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

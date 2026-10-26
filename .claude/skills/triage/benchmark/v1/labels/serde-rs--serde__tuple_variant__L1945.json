@@ -1,0 +1,20 @@
+{
+ "case_id": "serde-rs--serde__tuple_variant__L1945",
+ "gold_kind": "fp-classifier-regression",
+ "acceptable_kinds": [
+  "fp-classifier-regression",
+  "fp-novel"
+ ],
+ "gold_rule_id": "rust-macro-invocation-call",
+ "caller_evidence": [
+  {
+   "file": "serde_derive/src/de/tuple.rs",
+   "line": 92,
+   "snippet": "_serde::de::VariantAccess::tuple_variant(__variant, #field_count, #visitor_expr)"
+  }
+ ],
+ "tp_search_summary": null,
+ "confidence": "medium",
+ "rationale": "No plain in-repo call to tuple_variant exists. The only invocation is the quote! template in serde_derive that #[derive(Deserialize)] expands into the test suite's types. test_suite/tests/test_annotations.rs:2738 and test_enum_internally_tagged.rs:564 explicitly note that their tests reach private::de::content::VariantDeserializer::tuple_variant (via FlatMapDeserializer/ContentDeserializer). A function reached only through #[derive] expansion is exactly what rust-macro-invocation-call describes. fp-novel is a secondary reading because the expanded call also goes through generic VariantAccess trait dispatch.",
+ "prior_verdicts_assessment": "The prior fp-classifier-regression verdict naming rust-macro-invocation-call is correct, and the test-suite comments confirm the derive-expanded path really reaches this impl."
+}

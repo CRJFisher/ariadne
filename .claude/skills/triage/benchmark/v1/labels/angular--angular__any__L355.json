@@ -1,0 +1,24 @@
+{
+ "case_id": "angular--angular__any__L355",
+ "gold_kind": "fp-novel",
+ "acceptable_kinds": [
+  "fp-novel"
+ ],
+ "gold_rule_id": null,
+ "caller_evidence": [
+  {
+   "file": "packages/zone.js/test/common/Promise.spec.ts",
+   "line": 662,
+   "snippet": "const any = (Promise as any).any;"
+  },
+  {
+   "file": "packages/zone.js/test/common/Promise.spec.ts",
+   "line": 664,
+   "snippet": "any().then("
+  }
+ ],
+ "tp_search_summary": null,
+ "confidence": "medium",
+ "rationale": "zone.js replaces the global Promise with ZoneAwarePromise (promise.ts:585, `global['Promise'] = ZoneAwarePromise`). zone.js's own Promise.spec.ts has a 'Promise.any' suite that takes `(Promise as any).any` into a local alias and calls it repeatedly (lines 664+). That is a real in-repo test caller reaching ZoneAwarePromise.any through the global monkey-patch plus a local alias. No in-scope rule covers callers that reach a method through runtime replacement of a global binding. If the spec file is outside the indexed corpus, that coverage gap also leads to fp-novel.",
+ "prior_verdicts_assessment": "The tp verdict is wrong: it claimed promise.spec.ts never exercises `any`, but Promise.spec.ts:661-700 tests it directly. The fp-novel verdict reaches the right kind but argues only from hypothetical application calls, not the actual in-repo test caller."
+}

@@ -1,0 +1,13 @@
+{
+  "case_id": "sqlalchemy--sqlalchemy___get_existing_condition__L396",
+  "gold_kind": "tp",
+  "acceptable_kinds": [
+    "tp"
+  ],
+  "gold_rule_id": null,
+  "caller_evidence": [],
+  "tp_search_summary": "Repo-wide grep (lib, test, docs, all file types) for '_get_existing_condition' and 'existing_condition'; searched for string-composed getattr names ('_get_%s', '_get_' + ..., f-strings) and getattr calls in orm/query.py and ext/baked.py. Only the definition matches.",
+  "confidence": "high",
+  "rationale": "Query._get_existing_condition (orm/query.py:396) is referenced nowhere in the checkout besides its definition, including tests and the legacy baked-query extension. No getattr/string-keyed construction of the name exists, and it is not a dunder or property, so no implicit invocation path exists.",
+  "prior_verdicts_assessment": "The single prior tp verdict is correct; its repo-wide grep claim checks out."
+}

@@ -1,0 +1,61 @@
+{
+ "case_id": "microsoft--TypeScript__debugPrint__L409",
+ "strata": "typescript/stable-tp",
+ "project": "microsoft--TypeScript",
+ "github": "microsoft/TypeScript",
+ "commit": "cc5c6e2",
+ "source_run_id": "cc5c6e2-2026-07-26T18-53-24.551Z",
+ "source_entry_index": 192,
+ "language": "typescript",
+ "diagnosis": "no-textual-callers",
+ "member_symbol": {
+  "file_path": "src/harness/vfsUtil.ts",
+  "name": "debugPrint",
+  "kind": "method",
+  "start_line": 409
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "cc5c6e2-2026-07-26T18-53-24.551Z",
+   "kind": "tp",
+   "rule": null,
+   "root_cause": "debugPrint is a manual diagnostic helper (doc comment: 'Print diagnostic information... to the console') on the VFS class with no call sites in source or test files; grep across the repo only turns up unrelated same-named functions in unrelated parser test fixtures.",
+   "evidence": {
+    "file": "src/harness/vfsUtil.ts",
+    "line": 409,
+    "why": "debugPrint is a manual diagnostic helper (doc comment: 'Print diagnostic information... to the console') on the VFS class with no call sites in source or test files; grep across the repo only turns up unrelated same-named functions in unrelated parser test fixtures."
+   },
+   "turns": null,
+   "usd": null
+  }
+ ],
+ "entry": {
+  "entry_index": 192,
+  "name": "debugPrint",
+  "file_path": "/home/node/.ariadne/triage-entrypoints/repos/microsoft--TypeScript/src/harness/vfsUtil.ts",
+  "start_line": 409,
+  "kind": "method",
+  "signature": "debugPrint(): void",
+  "diagnosis": "no-textual-callers",
+  "is_exported": false,
+  "access_modifier": "public",
+  "diagnostics": {
+   "grep_call_sites": [],
+   "grep_call_sites_outside_index": [],
+   "reference_sites": [],
+   "ariadne_call_refs": [],
+   "diagnosis": "no-textual-callers",
+   "has_uncaptured_indexed_grep_hit": false
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

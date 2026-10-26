@@ -1,0 +1,1404 @@
+{
+ "case_id": "bevyengine--bevy__default__L909",
+ "strata": "rust/stable-regression",
+ "project": "bevyengine--bevy",
+ "github": "bevyengine/bevy",
+ "commit": "17e28cd",
+ "source_run_id": "17e28cd-2026-08-22T19-11-10.963Z",
+ "source_entry_index": 1295,
+ "language": "rust",
+ "diagnosis": "callers-in-registry-unresolved",
+ "member_symbol": {
+  "file_path": "crates/bevy_ecs/src/entity/remote_allocator.rs",
+  "name": "default",
+  "kind": "method",
+  "start_line": 909
+ },
+ "prior_verdicts": [
+  {
+   "run_id": "17e28cd-2026-08-22T19-11-10.963Z",
+   "kind": "fp-classifier-regression",
+   "rule": "rust-macro-invocation-call",
+   "root_cause": "EntityAllocator derives Default, and its field `inner: remote_allocator::Allocator` causes the derive-generated Default::default() to call Allocator::default() (the entry under investigation); EntityAllocator::default() is itself called explicitly in World::new() at crates/bevy_ecs/src/world/mod.rs:",
+   "evidence": {
+    "file": "crates/bevy_ecs/src/entity/mod.rs",
+    "line": 705,
+    "why": "EntityAllocator derives Default, and its field `inner: remote_allocator::Allocator` causes the derive-generated Default::default() to call Allocator::default() (the entry under investigation); EntityAllocator::default() is itself called explicitly in World::new() at crates/bevy_ecs/src/world/mod.rs:134, so a real call chain reaches this function only through the invisible #[derive(Default)] expansion, exactly the pattern the in-scope rust-macro-invocation-call rule describes."
+   },
+   "turns": null,
+   "usd": null
+  }
+ ],
+ "entry": {
+  "entry_index": 1295,
+  "name": "default",
+  "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/crates/bevy_ecs/src/entity/remote_allocator.rs",
+  "start_line": 909,
+  "kind": "method",
+  "signature": "default(): Self",
+  "diagnosis": "callers-in-registry-unresolved",
+  "is_exported": false,
+  "access_modifier": null,
+  "diagnostics": {
+   "grep_call_sites": [
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/change_detection.rs",
+     "line": 69,
+     "content": "let mut world = World::default();",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/change_detection.rs",
+     "line": 70,
+     "content": "world.spawn_batch((0..entity_count).map(|_| T::default()));",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/change_detection.rs",
+     "line": 283,
+     "content": "let mut e = world.spawn(T::default());",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/components/add_remove_big_sparse_set.rs",
+     "line": 24,
+     "content": "let mut world = World::default();",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/components/add_remove_big_table.rs",
+     "line": 23,
+     "content": "let mut world = World::default();",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/components/add_remove_sparse_set.rs",
+     "line": 13,
+     "content": "let mut world = World::default();",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/components/add_remove_table.rs",
+     "line": 12,
+     "content": "let mut world = World::default();",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/components/add_remove_very_big_table.rs",
+     "line": 28,
+     "content": "let mut world = World::default();",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/components/archetype_updates.rs",
+     "line": 15,
+     "content": "let mut schedule = Schedule::default();",
+     "captures": [
+      "@reference.call"
+     ]
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/empty_archetypes.rs",
+     "line": 84,
+     "content": "let mut schedule = Schedule::default();",
+     "captures": [
+      "@reference.call"
+     ]
+    }
+   ],
+   "grep_call_sites_outside_index": [
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/crates/bevy_asset/src/io/embedded/mod.rs",
+     "line": 546,
+     "content": "let reg = EmbeddedAssetRegistry::default();",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/crates/bevy_camera/src/visibility/mod.rs",
+     "line": 358,
+     "content": "let mut entities = TypeIdHashMap::default();",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/crates/bevy_camera/src/visibility/mod.rs",
+     "line": 499,
+     "content": "app.add_plugins(ValidateParentHasComponentPlugin::<InheritedVisibility>::default())",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/crates/bevy_camera/src/visibility/mod.rs",
+     "line": 955,
+     "content": "let root1_child1 = app.world_mut().spawn(Visibility::default()).id();",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/crates/bevy_camera/src/visibility/mod.rs",
+     "line": 957,
+     "content": "let root1_child1_grandchild1 = app.world_mut().spawn(Visibility::default()).id();",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/crates/bevy_camera/src/visibility/mod.rs",
+     "line": 958,
+     "content": "let root1_child2_grandchild1 = app.world_mut().spawn(Visibility::default()).id();",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/crates/bevy_camera/src/visibility/mod.rs",
+     "line": 970,
+     "content": "let root2 = app.world_mut().spawn(Visibility::default()).id();",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/crates/bevy_camera/src/visibility/mod.rs",
+     "line": 971,
+     "content": "let root2_child1 = app.world_mut().spawn(Visibility::default()).id();",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/crates/bevy_camera/src/visibility/mod.rs",
+     "line": 973,
+     "content": "let root2_child1_grandchild1 = app.world_mut().spawn(Visibility::default()).id();",
+     "captures": []
+    },
+    {
+     "file_path": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/crates/bevy_camera/src/visibility/mod.rs",
+     "line": 974,
+     "content": "let root2_child2_grandchild1 = app.world_mut().spawn(Visibility::default()).id();",
+     "captures": []
+    }
+   ],
+   "reference_sites": [],
+   "ariadne_call_refs": [
+    {
+     "caller_function": "setup",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/change_detection.rs",
+     "call_line": 69,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/change_detection.rs:68:33:72:1"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/change_detection.rs",
+     "call_line": 70,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/change_detection.rs:70:45:70:60"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "add_archetypes_entities",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/change_detection.rs",
+     "call_line": 283,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/change_detection.rs:282:9:300:9"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "new",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/components/add_remove_big_sparse_set.rs",
+     "call_line": 24,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/components/add_remove_big_sparse_set.rs:23:15:41:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "new",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/components/add_remove_big_table.rs",
+     "call_line": 23,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/components/add_remove_big_table.rs:22:15:40:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "new",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/components/add_remove_sparse_set.rs",
+     "call_line": 13,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/components/add_remove_sparse_set.rs:12:15:20:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "new",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/components/add_remove_table.rs",
+     "call_line": 12,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/components/add_remove_table.rs:11:15:19:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "new",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/components/add_remove_very_big_table.rs",
+     "call_line": 28,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/components/add_remove_very_big_table.rs:27:15:90:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "setup",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/components/archetype_updates.rs",
+     "call_line": 15,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/components/archetype_updates.rs:12:9:22:1"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "setup",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/empty_archetypes.rs",
+     "call_line": 84,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/empty_archetypes.rs:82:9:95:1"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "bench_clone",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/entity_cloning.rs",
+     "call_line": 72,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/entity_cloning.rs:68:58:88:1"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "bench_clone",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/entity_cloning.rs",
+     "call_line": 77,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/entity_cloning.rs:74:22:78:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "bench_clone",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/entity_cloning.rs",
+     "call_line": 81,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/entity_cloning.rs:68:58:88:1"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "bench_clone_hierarchy",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/entity_cloning.rs",
+     "call_line": 105,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/entity_cloning.rs:99:68:140:1"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "bench_clone_hierarchy",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/entity_cloning.rs",
+     "call_line": 118,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/entity_cloning.rs:99:68:140:1"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "bench_clone_hierarchy",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/entity_cloning.rs",
+     "call_line": 130,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/entity_cloning.rs:129:13:132:13"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "bench_filter",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/entity_cloning.rs",
+     "call_line": 272,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/entity_cloning.rs:271:37:337:1"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "bench_filter",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/entity_cloning.rs",
+     "call_line": 283,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/entity_cloning.rs:281:9:284:9"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "new",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/events/iter.rs",
+     "call_line": 10,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/events/iter.rs:9:15:17:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "new",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/events/write.rs",
+     "call_line": 19,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/events/write.rs:18:15:30:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "spawn_empty_frag_archetype",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/fragmentation.rs",
+     "call_line": 93,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/fragmentation.rs:55:9:98:9"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/iteration/heavy_compute.rs",
+     "call_line": 25,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/iteration/heavy_compute.rs:22:34:50:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/iteration/heavy_compute.rs",
+     "call_line": 25,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/iteration/heavy_compute.rs:22:34:50:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "combinator_system",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/param/combinator_system.rs",
+     "call_line": 11,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/param/combinator_system.rs:4:25:31:1"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "dyn_param",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/param/dyn_param.rs",
+     "call_line": 19,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/param/dyn_param.rs:7:17:51:1"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "param_set",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/param/param_set.rs",
+     "call_line": 16,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/param/param_set.rs:4:17:38:1"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "run_condition_yes",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/scheduling/run_condition.rs",
+     "call_line": 21,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/scheduling/run_condition.rs:20:5:32:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "run_condition_no",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/scheduling/run_condition.rs",
+     "call_line": 43,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/scheduling/run_condition.rs:42:5:54:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "run_condition_yes_with_query",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/scheduling/run_condition.rs",
+     "call_line": 72,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/scheduling/run_condition.rs:71:5:85:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "run_condition_yes_with_resource",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/scheduling/run_condition.rs",
+     "call_line": 103,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/scheduling/run_condition.rs:102:5:116:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "empty_systems",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/scheduling/running_systems.rs",
+     "call_line": 24,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/scheduling/running_systems.rs:23:5:34:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "empty_systems",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/scheduling/running_systems.rs",
+     "call_line": 36,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/scheduling/running_systems.rs:35:5:46:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "busy_systems",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/scheduling/running_systems.rs",
+     "call_line": 76,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/scheduling/running_systems.rs:75:9:89:9"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "contrived",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/scheduling/running_systems.rs",
+     "call_line": 122,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/scheduling/running_systems.rs:121:9:135:9"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/scheduling/schedule.rs",
+     "call_line": 39,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/scheduling/schedule.rs:38:34:54:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/scheduling/schedule.rs",
+     "call_line": 49,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/scheduling/schedule.rs:38:34:54:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/scheduling/schedule.rs",
+     "call_line": 39,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/scheduling/schedule.rs:38:34:54:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/scheduling/schedule.rs",
+     "call_line": 49,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/scheduling/schedule.rs:38:34:54:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "empty_schedule_run",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/scheduling/schedule.rs",
+     "call_line": 123,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/scheduling/schedule.rs:122:26:140:1"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "empty_schedule_run",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/scheduling/schedule.rs",
+     "call_line": 127,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/scheduling/schedule.rs:122:26:140:1"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "empty_schedule_run",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/scheduling/schedule.rs",
+     "call_line": 133,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/scheduling/schedule.rs:122:26:140:1"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/world/commands.rs",
+     "call_line": 25,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/world/commands.rs:24:40:31:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/world/commands.rs",
+     "call_line": 26,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/world/commands.rs:24:40:31:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/world/commands.rs",
+     "call_line": 47,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/world/commands.rs:42:66:64:9"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/world/commands.rs",
+     "call_line": 81,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/world/commands.rs:76:66:92:9"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/world/commands.rs",
+     "call_line": 115,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/world/commands.rs:110:36:130:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/world/commands.rs",
+     "call_line": 126,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/world/commands.rs:123:13:127:13"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/world/commands.rs",
+     "call_line": 126,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/world/commands.rs:123:13:127:13"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/world/commands.rs",
+     "call_line": 136,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "function:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/world/commands.rs:131:42:151:5"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    },
+    {
+     "caller_function": "<anonymous>",
+     "caller_file": "/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/world/commands.rs",
+     "call_line": 146,
+     "call_type": "function",
+     "resolution_count": 0,
+     "resolved_to": [],
+     "receiver_kind": "none",
+     "resolution_failure": {
+      "stage": "name_resolution",
+      "reason": "name_not_in_scope",
+      "partial_info": {
+       "last_known_scope": "block:/Users/chuck/.ariadne/triage-entrypoints/repos/bevyengine--bevy/benches/benches/bevy_ecs/world/commands.rs:145:13:147:13"
+      }
+     },
+     "syntactic_features": {
+      "is_new_expression": false,
+      "is_super_call": false,
+      "is_optional_chain": false,
+      "is_awaited": false,
+      "is_callback_arg": false,
+      "is_dynamic_dispatch": false
+     }
+    }
+   ],
+   "diagnosis": "callers-in-registry-unresolved",
+   "has_uncaptured_indexed_grep_hit": false
+  },
+  "route": "llm-triage",
+  "known_source": null,
+  "status": "completed",
+  "result": null,
+  "error": null,
+  "retry_count": 0,
+  "auto_classified": false,
+  "classifier_hints": [],
+  "tp_source_run_id": null,
+  "tp_stability_sample": false
+ }
+}

@@ -1,0 +1,13 @@
+{
+  "case_id": "tokio-rs--axum__size_hint__L76",
+  "gold_kind": "tp",
+  "acceptable_kinds": [
+    "tp"
+  ],
+  "gold_rule_id": null,
+  "caller_evidence": [],
+  "tp_search_summary": "Read axum-extra/src/middleware.rs: BodyWrapper is a struct local to the remap_response_body test whose HttpBody methods are all unimplemented!(). The test only builds a Router with the layer and never serves or polls it, so no response body is created. Checked each pre-gathered size_hint grep hit (axum/src/routing/route.rs, axum-core/src/body.rs, axum-extra async_read_body.rs, typed_header.rs, axum-macros with_position.rs): each runs on a different body/iterator type and cannot receive a BodyWrapper because no request ever flows through the test router.",
+  "confidence": "high",
+  "rationale": "BodyWrapper::size_hint is a trait method of a test-local type that exists only to satisfy the HttpBody bound at compile time. The router that holds it is never driven, so route.rs's res.size_hint() and the Body wrappers in axum-core never run with a BodyWrapper inside. No real invocation exists.",
+  "prior_verdicts_assessment": "The single prior tp verdict is correct."
+}
